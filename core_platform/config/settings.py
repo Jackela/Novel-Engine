@@ -160,8 +160,8 @@ class SecuritySettings(BaseSettings):
 
     # JWT settings
     jwt_secret_key: str = Field(
-        default="development-secret-key-change-in-production",
-        description="JWT secret key",
+        default="",  # Must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET environment variable
+        description="JWT secret key (set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var)",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
     jwt_access_token_expires: int = Field(
@@ -498,11 +498,8 @@ class PlatformConfig:
 
         # Production-specific validations
         if self.is_production():
-            if (
-                self.security.jwt_secret_key
-                == "development-secret-key-change-in-production"
-            ):
-                errors.append("JWT secret key must be changed for production")
+            if not self.security.jwt_secret_key:
+                errors.append("JWT secret key must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var")
 
             if self.app.debug:
                 errors.append("Debug mode should be disabled in production")

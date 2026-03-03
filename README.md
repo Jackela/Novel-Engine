@@ -272,6 +272,29 @@ Novel-Engine/
   npx playwright test
   ```
 
+### CI 环境一致性
+
+为确保本地测试与 GitHub Actions CI 行为一致：
+
+```bash
+# 加载 CI 环境变量
+source .env.ci
+
+# 运行完整 CI 检查（匹配 GA 行为）
+./scripts/ci-check.sh --full
+
+# 比较本地与 CI 环境差异
+./scripts/ci-local-vs-ga.sh
+
+# 设置 pre-push 钩子（推荐）
+./scripts/setup-hooks.sh
+```
+
+**关键点:**
+- 本地默认运行 `--full` 模式以匹配 CI
+- `.env.ci` 文件包含与 GA 相同的环境变量
+- pre-push 钩子会在推送前运行完整 CI 检查
+
 ---
 
 ## 🤝 贡献指南

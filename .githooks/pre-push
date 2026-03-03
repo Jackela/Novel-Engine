@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+#
+# Pre-push hook - Runs CI checks before pushing to catch issues locally
+#
+# This hook runs the full CI validation suite before every push.
+# If checks fail, the push is blocked to prevent broken code from reaching the remote.
+#
+# To bypass (use with caution): git push --no-verify
+
+set -e  # Exit on any error
+set -o pipefail
+
+# Get the current branch
+CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
+
+echo ""
+echo "🔍 Running pre-push CI validation..."
+echo "   Branch: $CURRENT_BRANCH"
+echo ""
+
+# Source CI environment variables
+if [ -f ".env.ci" ]; then
+    echo "📋 Loading CI environment variables..."
+    source .env.ci
+fi
+
+# Run the full CI check suite
+echo "🚀 Executing full CI validation (this may take several minutes)..."
+echo ""
+
+./scripts/ci-check.sh --full
+
+EXIT_CODE=$?
+
+echo ""
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "✅ Pre-push checks passed! Proceeding with push..."
+    echo ""
+    exit 0
+else
+    echo ""
+    echo "❌ Pre-push checks failed!"
+    echo ""
+    echo "   The CI validation suite failed. Please fix the issues before pushing."
+    echo ""
+    echo "   To bypass this hook (not recommended):"
+    echo "     git push --no-verify"
+    echo ""
+    exit 1
+fi

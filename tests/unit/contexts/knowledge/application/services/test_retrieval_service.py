@@ -45,6 +45,7 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+from src.core.result import Ok
 
 pytestmark = pytest.mark.integration
 
@@ -301,44 +302,49 @@ class TestRetrievalService:
             k=5,
         )
 
-        # Verify
-        assert result.query == "brave knight"
+        # Verify - Result pattern returns Ok wrapper
+        assert result.is_ok
+        assert result.value.query == "brave knight"
         assert embedding_service.embed.called
         assert vector_store.query.called
 
         # Should filter out low-score result
-        assert len(result.chunks) == 3
-        assert result.filtered == 1
+        assert len(result.value.chunks) == 3
+        assert result.value.filtered == 1
 
     @pytest.mark.asyncio
     async def test_retrieve_relevant_empty_query(self, retrieval_service):
-        """Empty query should raise ValueError."""
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            await retrieval_service.retrieve_relevant(query="")
+        """Empty query should return Err result."""
+        result = await retrieval_service.retrieve_relevant(query="")
+        assert result.is_error
+        assert "query cannot be empty" in result.error
 
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            await retrieval_service.retrieve_relevant(query="   ")
+        result = await retrieval_service.retrieve_relevant(query="   ")
+        assert result.is_error
+        assert "query cannot be empty" in result.error
 
     @pytest.mark.asyncio
     async def test_retrieve_relevant_embedding_error(
         self, retrieval_service, embedding_service
     ):
-        """Embedding error should propagate."""
+        """Embedding error should return Err result."""
         embedding_service.embed.side_effect = EmbeddingError("API error")
 
-        with pytest.raises(EmbeddingError):
-            await retrieval_service.retrieve_relevant(query="test")
+        result = await retrieval_service.retrieve_relevant(query="test")
+        assert result.is_error
+        assert "Query embedding failed" in result.error
 
     @pytest.mark.asyncio
     async def test_retrieve_relevant_vector_store_error(
         self, retrieval_service, embedding_service, vector_store
     ):
-        """Vector store error should propagate."""
+        """Vector store error should return Err result."""
         embedding_service.embed.return_value = [0.1] * 1536
         vector_store.query.side_effect = VectorStoreError("Connection failed")
 
-        with pytest.raises(VectorStoreError):
-            await retrieval_service.retrieve_relevant(query="test")
+        result = await retrieval_service.retrieve_relevant(query="test")
+        assert result.is_error
+        assert "Vector store query failed" in result.error
 
     @pytest.mark.asyncio
     async def test_retrieve_with_source_type_filter(
@@ -398,9 +404,10 @@ class TestRetrievalService:
         )
 
         # Only results with score >= 0.8 should remain
-        assert len(result.chunks) == 2
-        assert all(c.score >= 0.8 for c in result.chunks)
-        assert result.filtered == 2
+        assert result.is_ok
+        assert len(result.value.chunks) == 2
+        assert all(c.score >= 0.8 for c in result.value.chunks)
+        assert result.value.filtered == 2
 
     @pytest.mark.asyncio
     async def test_retrieve_with_deduplication_disabled(
@@ -434,8 +441,9 @@ class TestRetrievalService:
         )
 
         # Both should be present
-        assert len(result.chunks) == 2
-        assert result.deduplicated == 0
+        assert result.is_ok
+        assert len(result.value.chunks) == 2
+        assert result.value.deduplicated == 0
 
     @pytest.mark.asyncio
     async def test_retrieve_with_deduplication_enabled(
@@ -469,9 +477,10 @@ class TestRetrievalService:
         )
 
         # Only one should remain (highest score)
-        assert len(result.chunks) == 1
-        assert result.chunks[0].score == 0.95
-        assert result.deduplicated == 1
+        assert result.is_ok
+        assert len(result.value.chunks) == 1
+        assert result.value.chunks[0].score == 0.95
+        assert result.value.deduplicated == 1
 
     @pytest.mark.asyncio
     async def test_retrieve_limits_to_k_results(
@@ -498,7 +507,8 @@ class TestRetrievalService:
         )
 
         # Should return at most k results
-        assert len(result.chunks) <= 3
+        assert result.is_ok
+        assert len(result.value.chunks) <= 3
 
     @pytest.mark.asyncio
     async def test_retrieve_custom_collection(
@@ -1279,7 +1289,8 @@ class TestRetrievalServiceReranking:
 
         # Should have applied reranking (mock reverses order)
         # Last chunk becomes first after reranking
-        assert len(result.chunks) <= 5
+        assert result.is_ok
+        assert len(result.value.chunks) <= 5
 
     @pytest.mark.asyncio
     async def test_retrieve_with_candidate_and_final_k(
@@ -1315,7 +1326,8 @@ class TestRetrievalServiceReranking:
         assert call_args.kwargs["n_results"] >= 20
 
         # Should return only 5 final results
-        assert len(result.chunks) <= 5
+        assert result.is_ok
+        assert len(result.value.chunks) <= 5
 
     @pytest.mark.asyncio
     async def test_retrieve_with_reranking_disabled_in_options(
@@ -1343,10 +1355,11 @@ class TestRetrievalServiceReranking:
 
         # Should not have called the reranker
         # Chunks should be in original order (highest score first)
-        assert len(result.chunks) <= 5
-        if result.chunks:
+        assert result.is_ok
+        assert len(result.value.chunks) <= 5
+        if result.value.chunks:
             # First chunk should be the highest scoring (Alice at 0.85)
-            assert result.chunks[0].source_id == "char_alice"
+            assert result.value.chunks[0].source_id == "char_alice"
 
     @pytest.mark.asyncio
     async def test_retrieve_without_rerank_service(
@@ -1374,10 +1387,11 @@ class TestRetrievalServiceReranking:
         )
 
         # Should return results normally
-        assert len(result.chunks) <= 5
+        assert result.is_ok
+        assert len(result.value.chunks) <= 5
         # Should be in original order
-        if result.chunks:
-            assert result.chunks[0].source_id == "char_alice"
+        if result.value.chunks:
+            assert result.value.chunks[0].source_id == "char_alice"
 
     @pytest.mark.asyncio
     async def test_retrieve_reranking_fallback_on_error(
@@ -1412,10 +1426,11 @@ class TestRetrievalServiceReranking:
         )
 
         # Should fall back to original order and still return results
-        assert len(result.chunks) <= 5
+        assert result.is_ok
+        assert len(result.value.chunks) <= 5
         # Should be in original order (highest score first)
-        if result.chunks:
-            assert result.chunks[0].source_id == "char_alice"
+        if result.value.chunks:
+            assert result.value.chunks[0].source_id == "char_alice"
 
     @pytest.mark.asyncio
     async def test_retrieve_with_candidate_k_defaults_to_2x_final_k(
@@ -1476,7 +1491,8 @@ class TestRetrievalServiceReranking:
             ),
         )
 
-        assert len(result.chunks) <= 3
+        assert result.is_ok
+        assert len(result.value.chunks) <= 3
 
     @pytest.mark.asyncio
     async def test_retrieval_options_with_rerank_fields(self):

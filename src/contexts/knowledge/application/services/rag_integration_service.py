@@ -265,12 +265,25 @@ class RAGIntegrationService:
                 min_score=config.score_threshold,
             )
 
-            retrieval_result = await self._retrieval_service.retrieve_relevant(
+            retrieval_result_wrapper = await self._retrieval_service.retrieve_relevant(
                 query=query,
                 k=config.max_chunks,
                 filters=filters,
                 options=retrieval_options,
             )
+
+            # Handle Result type from retrieval service
+            if retrieval_result_wrapper.is_error:
+                error_msg = retrieval_result_wrapper.error
+                self._metrics.failed_queries += 1
+                logger.error(
+                    "rag_retrieval_failed",
+                    query=query,
+                    error=error_msg,
+                )
+                raise VectorStoreError(f"Retrieval failed: {error_msg}")
+
+            retrieval_result = retrieval_result_wrapper.value
 
             # Step 2: Format context
             formatted_context = self._retrieval_service.format_context(

@@ -18,7 +18,7 @@ class PostgresConfig:
     compose_file: Path
     service_name: str = "postgres"
     user: str = "novel_engine"
-    password: str = "novel_engine_dev_password"
+    password: str = os.getenv("POSTGRES_TEST_PASSWORD", "")
     db_name: str = "novel_engine_test"
     host: str = "localhost"
     port: int = 5432
