@@ -81,11 +81,13 @@ def create_app(
     from src.api.routers.diplomacy import router as diplomacy_router
     from src.api.routers.events import router as events_router
     from src.api.routers.generation import router as generation_router
+    from src.api.routers.goals import router as goals_router
     from src.api.routers.guest import router as guest_router
     from src.api.routers.health import router as health_router
     from src.api.routers.items import character_inventory_router
     from src.api.routers.items import router as items_router
     from src.api.routers.lore import router as lore_router
+    from src.api.routers.memories import router as memories_router
     from src.api.routers.meta import router as meta_router
     from src.api.routers.narrative_generation import (
         router as narrative_generation_router,
@@ -112,6 +114,8 @@ def create_app(
     app.include_router(orchestration_router, prefix="/api")
     app.include_router(simulations_router, prefix="/api")
     app.include_router(characters_router, prefix="/api")
+    app.include_router(goals_router, prefix="/api")
+    app.include_router(memories_router, prefix="/api")
     app.include_router(campaigns_router, prefix="/api")
     app.include_router(guest_router, prefix="/api")
     app.include_router(events_router, prefix="/api")
@@ -146,6 +150,17 @@ def create_app(
     except ImportError as exc:
         app.state.prompts_router_available = False
         logger.warning("Prompts router not available: %s", exc)
+
+    # BRAIN-015: Prompt Management Router
+    try:
+        from src.api.routers.prompts import router as prompts_management_router
+
+        app.include_router(prompts_management_router, prefix="/api")
+        app.state.prompts_management_router_available = True
+        logger.info("Prompts management router included with prefix /api")
+    except ImportError as exc:
+        app.state.prompts_management_router_available = False
+        logger.warning("Prompts management router not available: %s", exc)
 
     try:
         from src.decision import decision_router

@@ -22,6 +22,7 @@ memory_now = datetime.now().isoformat()
 def client():
     """Create a test client for the API with mock character store."""
     from src.api.app import create_app
+    from src.api import deps
 
     app = create_app(debug=True)
 
@@ -52,16 +53,19 @@ def client():
         },
     }
 
+    # Use a list to hold the reference so we can update it
+    character_state = [mock_character]
+
     def mock_get(workspace_id, character_id):
         if character_id == "test-char-001":
-            return mock_character
+            return character_state[0]
         elif character_id == "not-found":
             return None
-        return mock_character
+        return character_state[0]
 
     def mock_update(workspace_id, character_id, updates):
         if updates.get("structured_data"):
-            mock_character["structured_data"] = updates["structured_data"]
+            character_state[0]["structured_data"] = updates["structured_data"]
         return True
 
     mock_store.get = mock_get
@@ -70,26 +74,24 @@ def client():
     # Set the mock store on app state
     app.state.workspace_character_store = mock_store
 
-    # Mock workspace_id dependency
-    from src.api import deps
+    # Set a default workspace ID
+    app.state.default_workspace_id = "test-workspace"
 
-    original_get_optional = deps.get_optional_workspace_id
-    original_require = deps.require_workspace_id
-
-    async def mock_get_optional_workspace_id():
+    # Override dependencies using FastAPI's dependency_overrides
+    def override_get_optional_workspace_id():
         return "test-workspace"
 
-    async def mock_require_workspace_id():
+    def override_require_workspace_id():
         return "test-workspace"
 
-    deps.get_optional_workspace_id = lambda: mock_get_optional_workspace_id()
-    deps.require_workspace_id = lambda: mock_require_workspace_id()
+    app.dependency_overrides[deps.get_optional_workspace_id] = override_get_optional_workspace_id
+    app.dependency_overrides[deps.require_workspace_id] = override_require_workspace_id
 
-    yield TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client
 
-    # Restore original functions
-    deps.get_optional_workspace_id = original_get_optional
-    deps.require_workspace_id = original_require
+    # Clean up overrides
+    app.dependency_overrides.clear()
 
 
 class TestMemoryAPIListEndpoints:

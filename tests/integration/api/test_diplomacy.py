@@ -80,7 +80,7 @@ class TestSetRelationEndpoint:
     def test_set_relation_success(self, client):
         """Test setting a diplomatic relation between two factions."""
         response = client.put(
-            "/api/world/test-world/world-factions/faction-A/faction-B",
+            "/api/world/test-world/diplomacy/faction-A/faction-B",
             json={"status": "allied"},
         )
 
@@ -94,7 +94,7 @@ class TestSetRelationEndpoint:
     def test_set_relation_creates_factions(self, client):
         """Test that setting relation creates factions if they don't exist."""
         response = client.put(
-            "/api/world/new-world/new-faction-1/new-faction-2",
+            "/api/world/new-world/diplomacy/new-faction-1/new-faction-2",
             json={"status": "neutral"},
         )
 
@@ -110,7 +110,7 @@ class TestSetRelationEndpoint:
 
         for status in statuses:
             response = client.put(
-                f"/api/world/status-world/faction-{status}/other-faction",
+                f"/api/world/status-world/diplomacy/faction-{status}/other-faction",
                 json={"status": status},
             )
 
@@ -119,7 +119,7 @@ class TestSetRelationEndpoint:
     def test_set_relation_invalid_status(self, client):
         """Test setting invalid status returns 400."""
         response = client.put(
-            "/api/world/test-world/faction-A/faction-B",
+            "/api/world/test-world/diplomacy/faction-A/faction-B",
             json={"status": "invalid_status"},
         )
 
@@ -128,7 +128,7 @@ class TestSetRelationEndpoint:
     def test_set_relation_case_insensitive(self, client):
         """Test that status values are case-insensitive."""
         response = client.put(
-            "/api/world/case-world/faction-A/faction-B",
+            "/api/world/case-world/diplomacy/faction-A/faction-B",
             json={"status": "ALLIED"},  # uppercase
         )
 
@@ -138,7 +138,7 @@ class TestSetRelationEndpoint:
         """Test that matrix is updated after setting relation."""
         # Set relation
         client.put(
-            "/api/world/matrix-world/faction-A/faction-B",
+            "/api/world/matrix-world/diplomacy/faction-A/faction-B",
             json={"status": "hostile"},
         )
 
@@ -172,15 +172,15 @@ class TestFactionDiplomacyEndpoint:
 
         # Create some relations
         client.put(
-            f"/api/world/{world_id}/{faction_id}/ally-faction",
+            f"/api/world/{world_id}/diplomacy/{faction_id}/ally-faction",
             json={"status": "allied"},
         )
         client.put(
-            f"/api/world/{world_id}/{faction_id}/enemy-faction",
+            f"/api/world/{world_id}/diplomacy/{faction_id}/enemy-faction",
             json={"status": "hostile"},
         )
         client.put(
-            f"/api/world/{world_id}/{faction_id}/neutral-faction",
+            f"/api/world/{world_id}/diplomacy/{faction_id}/neutral-faction",
             json={"status": "neutral"},
         )
 
@@ -210,7 +210,7 @@ class TestFactionDiplomacyEndpoint:
 
         # Just create the faction without external relations
         client.put(
-            f"/api/world/{world_id}/{faction_id}/some-other-faction",
+            f"/api/world/{world_id}/diplomacy/{faction_id}/some-other-faction",
             json={"status": "neutral"},
         )
 
@@ -229,7 +229,7 @@ class TestDiplomacySymmetry:
         """Test that setting A->B also sets B->A."""
         # Set relation
         client.put(
-            "/api/world/symmetric-world/faction-A/faction-B",
+            "/api/world/symmetric-world/diplomacy/faction-A/faction-B",
             json={"status": "allied"},
         )
 
@@ -250,13 +250,13 @@ class TestDiplomacySymmetry:
 
         # Set initial relation
         client.put(
-            f"/api/world/{world_id}/faction-A/faction-B",
+            f"/api/world/{world_id}/diplomacy/faction-A/faction-B",
             json={"status": "allied"},
         )
 
         # Change relation
         client.put(
-            f"/api/world/{world_id}/faction-A/faction-B",
+            f"/api/world/{world_id}/diplomacy/faction-A/faction-B",
             json={"status": "hostile"},
         )
 
@@ -277,7 +277,7 @@ class TestDiplomacyValidation:
     def test_set_relation_missing_status(self, client):
         """Test setting relation without status returns 422."""
         response = client.put(
-            "/api/world/test-world/faction-A/faction-B",
+            "/api/world/test-world/diplomacy/faction-A/faction-B",
             json={},
         )
 
@@ -286,7 +286,7 @@ class TestDiplomacyValidation:
     def test_set_relation_empty_status(self, client):
         """Test setting relation with empty status returns 400."""
         response = client.put(
-            "/api/world/test-world/faction-A/faction-B",
+            "/api/world/test-world/diplomacy/faction-A/faction-B",
             json={"status": ""},
         )
 

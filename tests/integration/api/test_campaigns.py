@@ -35,16 +35,7 @@ def temp_campaign_dir():
         campaigns_dir = Path(tmpdir) / "campaigns"
         campaigns_dir.mkdir()
 
-        # Store original working directory
-        original_cwd = os.getcwd()
-
-        # Change to temp directory
-        os.chdir(tmpdir)
-
         yield campaigns_dir
-
-        # Restore original directory
-        os.chdir(original_cwd)
 
 
 class TestListCampaignsEndpoint:
