@@ -37,9 +37,9 @@ RUN rm -rf /app/tests /app/docs /app/*.md
 RUN chmod -R 750 /app
 RUN find /app -type f -name "*.py" -exec chmod 644 {} \;
 
-# Health check
+# Health check - uses /health/ready to verify all dependencies are available
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/health/ready || exit 1
 
 # Switch to non-root user
 USER novelengine

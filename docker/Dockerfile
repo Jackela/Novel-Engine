@@ -64,9 +64,9 @@ RUN chmod -R 750 /app && \
 # Switch to non-root user
 USER novel
 
-# Health check
+# Health check - uses /health/ready to verify all dependencies are available
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8000/health/ready || exit 1
 
 # Environment configuration
 ENV PYTHONPATH=/app \

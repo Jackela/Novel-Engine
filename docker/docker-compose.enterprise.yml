@@ -36,7 +36,7 @@ services:
       - ./config/enterprise.yaml:/app/settings.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro  # For container management
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health/ready')"]
       interval: 30s
       timeout: 15s
       retries: 5
