@@ -427,6 +427,7 @@ class TestHistoricalEventsEndpoints:
                 "event_type": "battle",
                 "significance": "major",
                 "outcome": "positive",
+                "date_description": "Year 5, Month 3",
                 "faction_ids": ["red-faction", "blue-faction"],
             },
         )
@@ -438,6 +439,7 @@ class TestHistoricalEventsEndpoints:
                 "event_type": "discovery",
                 "significance": "minor",
                 "outcome": "positive",
+                "date_description": "Year 6, Month 1",
                 "faction_ids": [],
             },
         )

@@ -133,15 +133,19 @@ class TestUpdateAPIKeys:
         """Test updating API keys with encryption configured."""
         response = client.put(
             "/api/brain/settings/api-keys",
-            json={"openai_key": "sk-test-key-12345678"},
+            json={"openai_key": "sk-test-key-1234567890"},
         )
 
         # May succeed with 200 or fail with 503 if encryption not properly configured in test env
         assert response.status_code in [200, 503]
         if response.status_code == 200:
             data = response.json()
-            # Key should be masked
-            assert "sk-test-k" in data["openai_key"]
+            # Key should be masked - the mask uses Unicode bullets (U+2022)
+            # For key "sk-test-key-1234567890" (22 chars), mask is "sk-test-••••••••••7890"
+            # So we check for the prefix "sk-test-" and that it's masked (contains bullets)
+            assert data["openai_key"].startswith("sk-test-")
+            assert "•" in data["openai_key"]  # Check for bullet character
+            assert data["openai_key"].endswith("7890")
             assert data["has_openai"] is True
 
     def test_update_ollama_base_url(self, client):

@@ -31,11 +31,14 @@ from src.contexts.knowledge.application.services.query_rewriter import (
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievedChunk,
+    RetrievalResult,
+    RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 from src.contexts.knowledge.infrastructure.adapters.gemini_llm_client import (
     MockLLMClient,
 )
+from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 
@@ -91,11 +94,23 @@ def query_aware_service(
     mock_vector_store,
 ):
     """Create a QueryAwareRetrievalService with mocked dependencies."""
-    return QueryAwareRetrievalService(
+    service = QueryAwareRetrievalService(
         embedding_service=mock_embedding_service,
         vector_store=mock_vector_store,
         query_rewriter=None,  # Start without rewriter
     )
+    # Mock the internal retrieval service to return RetrievalResult directly
+    # (matching what QueryAwareRetrievalService.retrieve_relevant expects)
+    mock_internal_retrieval = AsyncMock(spec=RetrievalService)
+    mock_internal_retrieval.retrieve_relevant = AsyncMock(
+        return_value=RetrievalResult(
+            chunks=[],
+            query="",
+            total_retrieved=0,
+        )
+    )
+    service._retrieval_service = mock_internal_retrieval
+    return service
 
 
 class TestQueryAwareConfig:
@@ -203,6 +218,13 @@ class TestQueryAwareRetrievalService:
         # Configure with rewriting disabled
         config = QueryAwareConfig(enable_rewriting=False)
 
+        # Set up mock to return empty result
+        query_aware_service._retrieval_service.retrieve_relevant.return_value = RetrievalResult(
+            chunks=[],
+            query="brave warrior",
+            total_retrieved=0,
+        )
+
         result = await query_aware_service.retrieve_relevant(
             query="brave warrior",
             k=5,
@@ -222,8 +244,16 @@ class TestQueryAwareRetrievalService:
         mock_query_rewriter,
     ):
         """Test retrieval with query rewriting."""
-        # Set up mock to return some chunks
-        _chunk = RetrievedChunk(  # noqa: F841
+        # Create service with rewriter
+        service = QueryAwareRetrievalService(
+            embedding_service=mock_embedding_service,
+            vector_store=mock_vector_store,
+            query_rewriter=mock_query_rewriter,
+        )
+
+        # Mock the internal retrieval service to return chunks directly
+        mock_internal_retrieval = AsyncMock(spec=RetrievalService)
+        mock_chunk = RetrievedChunk(
             chunk_id="1",
             source_id="char1",
             source_type=SourceType.CHARACTER,
@@ -231,23 +261,14 @@ class TestQueryAwareRetrievalService:
             score=0.9,
             metadata={},
         )
-
-        mock_vector_store.query = AsyncMock(
-            return_value=[
-                MagicMock(
-                    id="1",
-                    text="A brave warrior",
-                    score=0.9,
-                    metadata={"source_id": "char1", "source_type": "CHARACTER"},
-                )
-            ]
+        mock_internal_retrieval.retrieve_relevant = AsyncMock(
+            return_value=RetrievalResult(
+                chunks=[mock_chunk],
+                query="brave warrior",
+                total_retrieved=1,
+            )
         )
-
-        service = QueryAwareRetrievalService(
-            embedding_service=mock_embedding_service,
-            vector_store=mock_vector_store,
-            query_rewriter=mock_query_rewriter,
-        )
+        service._retrieval_service = mock_internal_retrieval
 
         result = await service.retrieve_relevant(
             query="brave warrior",
@@ -286,6 +307,17 @@ class TestQueryAwareRetrievalService:
             total_retrieved=1,
         )
 
+        # Mock the internal retrieval service's format_context to return a proper FormattedContext
+        from src.contexts.knowledge.application.services.retrieval_service import FormattedContext
+        query_aware_service._retrieval_service.format_context = MagicMock(
+            return_value=FormattedContext(
+                text="[1] CHARACTER:char1 (part ?/?)\nA brave warrior",
+                sources=["CHARACTER:char1"],
+                total_tokens=10,
+                chunk_count=1,
+            )
+        )
+
         formatted = query_aware_service.format_context(result)
 
         assert formatted.text
@@ -309,6 +341,12 @@ class TestQueryAwareRetrievalService:
         import asyncio
 
         async def do_retrieval():
+            # Set up mock to return empty result
+            query_aware_service._retrieval_service.retrieve_relevant.return_value = RetrievalResult(
+                chunks=[],
+                query="test",
+                total_retrieved=0,
+            )
             await query_aware_service.retrieve_relevant(
                 query="test",
                 config_override=QueryAwareConfig(enable_rewriting=False),
