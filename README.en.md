@@ -2,10 +2,12 @@
 
 Languages: English | [简体中文](README.md)
 
+[![CI](https://github.com/Jackela/Novel-Engine/actions/workflows/ci.yml/badge.svg)](https://github.com/Jackela/Novel-Engine/actions/workflows/ci.yml)
+[![Tests](https://github.com/Jackela/Novel-Engine/actions/workflows/tests.yml/badge.svg)](https://github.com/Jackela/Novel-Engine/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![React 18+](https://img.shields.io/badge/react-18+-blue.svg)](https://react.dev/)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Node.js 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen.svg)](https://github.com/pre-commit/pre-commit)
 
 A production-ready AI-driven narrative generation and multi-agent simulation platform. Built on a **Modular Monolith** architecture with a **Functional Core, Imperative Shell** philosophy, ensuring high cohesion and low coupling for complex narrative orchestration.
 
@@ -175,7 +177,7 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 
 ## 🤝 Contributing
 
-1. Follow standards in `docs/coding-standards.md`.
+1. Follow standards in `CONVENTIONS.md`.
 2. Run local validation: `scripts/validate_ci_locally.sh` before pushing.       
 3. Propose architectural changes via `openspec`.
 
@@ -189,6 +191,22 @@ We enforce a strict TDD (Test-Driven Development) workflow.
 
 ---
 
+## 💬 Contact & Community
+
+- **Questions & Discussions**: [GitHub Discussions](https://github.com/Jackela/Novel-Engine/discussions)
+- **Bug Reports & Features**: [GitHub Issues](https://github.com/Jackela/Novel-Engine/issues)
+- **Author**: [@Jackela](https://github.com/Jackela)
+
+---
+
 ## 📄 License
 
 MIT License. See [LICENSE](LICENSE).
+
+---
+
+## LEGAL DISCLAIMER
+
+**LEGAL DISCLAIMER**: Novel Engine is a fan-created, educational project and is not affiliated with Games Workshop or any other intellectual property holder. This work is intended for educational and research purposes only, and it operates independently of any commercial publishing efforts. While the project embraces stylistic inspirations from narrative-rich franchises, it does not represent or endorse their official lore.
+
+For compliance, all fan-mode functionality is strictly documented and adheres to non-commercial use, local distribution, and content filtering expectations. If you build upon or share this work, please ensure that any redistribution follows those same principles and credit the original sources where appropriate.
