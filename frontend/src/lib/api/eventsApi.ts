@@ -123,6 +123,21 @@ export function useWorldEvent(
 }
 
 /**
+ * Alias for useWorldEvent for simpler naming.
+ * Hook to fetch a single historical event by ID.
+ *
+ * @param worldId - The unique identifier for the world
+ * @param eventId - The unique identifier for the event
+ * @returns Query result with event details
+ */
+export function useEvent(
+  worldId: string | undefined,
+  eventId: string | undefined
+) {
+  return useWorldEvent(worldId, eventId);
+}
+
+/**
  * Hook to create a new historical event.
  *
  * Why: Provides cache invalidation after creation to refresh timeline.

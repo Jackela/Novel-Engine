@@ -73,6 +73,9 @@ class HistoryEventResponse(BaseModel):
     structured_date: Optional[Dict[str, Any]] = Field(
         None, description="Structured calendar date for simulation events"
     )
+    generate_rumor: bool = Field(
+        default=False, description="Whether to generate a rumor from this event"
+    )
     created_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was created")
     updated_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was last updated")
 
@@ -128,6 +131,9 @@ class CreateEventRequest(BaseModel):
     )
     structured_date: Optional[Dict[str, Any]] = Field(
         None, description="Structured calendar date for simulation events"
+    )
+    generate_rumor: bool = Field(
+        default=False, description="Whether to generate a rumor from this event"
     )
 
 

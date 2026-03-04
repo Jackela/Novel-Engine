@@ -5,6 +5,7 @@ This module exports services that provide higher-level business operations
 beyond simple CRUD, such as graph analytics and social network analysis.
 """
 
+from .event_service import EventService, EventListResult
 from .faction_decision_service import (
     ACTION_DEFINITIONS,
     ActionDefinition,
@@ -28,6 +29,7 @@ from .social_graph_service import (
     SocialAnalysisResult,
     SocialGraphService,
 )
+from .rumor_service import RumorService
 from .world_simulation_service import (
     IFactionRepository,
     ISnapshotService,
@@ -49,6 +51,8 @@ __all__ = [
     "ActionDefinition",
     "CharacterCentrality",
     "DecisionContext",
+    "EventListResult",
+    "EventService",
     "FactionDecisionService",
     "IFactionRepository",
     "ILocationRepository",
@@ -60,6 +64,7 @@ __all__ = [
     "RepositoryError",
     "RollbackError",
     "RumorPropagationService",
+    "RumorService",
     "RumorStatistics",
     "SaveFailedError",
     "SanityCheckError",

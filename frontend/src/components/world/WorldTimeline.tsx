@@ -1,134 +1,176 @@
 /**
- * WorldTimeline Component (SIM-007)
+ * WorldTimeline Component (W5 Events and Rumors / SIM-007)
  *
- * Displays historical events in a vertical timeline format with
- * filtering capabilities. Follows MemoryTimeline pattern for styling.
+ * Displays historical events in a vertical chronological timeline format.
+ * Events are sorted by date (newest first) and presented as expandable cards
+ * with significance-based visual styling.
  *
  * Features:
- * - Vertical timeline with date grouping
- * - Filter controls for event_type and impact_scope
- * - Expandable descriptions (max 200 chars with expand link)
+ * - Vertical chronological list (newest first)
+ * - Event cards with name, date_description, event_type badge
+ * - Expandable details: description, involved factions/locations
+ * - Significance-based color coding (4-tier system)
+ * - Impact scope indicators
+ * - Loading skeleton state
+ * - Empty and error states
  * - Accessible with ARIA roles and keyboard navigation
- * - Virtualized list using react-window for performance with 50+ events
  */
-import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { VariableSizeList as List } from 'react-window';
-import { History, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { History, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/Badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Skeleton } from '@/shared/components/ui/Skeleton';
 import { useWorldEvents } from '@/lib/api/eventsApi';
-import type { HistoryEventResponse, EventFilterParams } from '@/types/schemas';
+import type { HistoryEventResponse } from '@/types/schemas';
+import { EventCardDetails } from './EventCardDetails';
 
 type Props = {
-  worldId: string | undefined;
-  filters?: EventFilterParams;
+  worldId: string;
 };
 
-// Impact scope badge colors
-const IMPACT_SCOPE_COLORS: Record<string, string> = {
-  local: 'bg-zinc-500/20 text-zinc-700 dark:text-zinc-300',
-  regional: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
-  global: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
+// Significance levels for styling
+// Based on significance field (minor, moderate, major, epochal)
+type SignificanceLevel = 'minor' | 'moderate' | 'major' | 'epochal';
+
+interface SignificanceConfig {
+  borderClass: string;
+  badgeClass: string;
+  indicatorClass: string;
+  label: string;
+}
+
+// Significance-based styling (left border accent + badge)
+const SIGNIFICANCE_STYLES: Record<SignificanceLevel, SignificanceConfig> = {
+  minor: {
+    borderClass: 'border-l-4 border-l-gray-400',
+    badgeClass: 'bg-gray-500/20 text-gray-700 dark:text-gray-300',
+    indicatorClass: 'bg-gray-400',
+    label: 'Minor',
+  },
+  moderate: {
+    borderClass: 'border-l-4 border-l-blue-400',
+    badgeClass: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
+    indicatorClass: 'bg-blue-400',
+    label: 'Moderate',
+  },
+  major: {
+    borderClass: 'border-l-4 border-l-amber-400',
+    badgeClass: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
+    indicatorClass: 'bg-amber-400',
+    label: 'Major',
+  },
+  epochal: {
+    borderClass: 'border-l-4 border-l-purple-500',
+    badgeClass: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
+    indicatorClass: 'bg-purple-500',
+    label: 'Epochal',
+  },
 };
 
-// Event type badge colors (subset of common types)
+// Event type badge colors
 const EVENT_TYPE_COLORS: Record<string, string> = {
-  war: 'bg-red-500/20 text-red-700 dark:text-red-300',
-  battle: 'bg-red-500/20 text-red-700 dark:text-red-300',
-  treaty: 'bg-green-500/20 text-green-700 dark:text-green-300',
-  discovery: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
-  trade: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
-  political: 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300',
-  natural: 'bg-orange-500/20 text-orange-700 dark:text-orange-300',
-  death: 'bg-gray-500/20 text-gray-700 dark:text-gray-300',
-  birth: 'bg-pink-500/20 text-pink-700 dark:text-pink-300',
-  marriage: 'bg-rose-500/20 text-rose-700 dark:text-rose-300',
+  war: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30',
+  battle: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30',
+  treaty: 'bg-green-500/20 text-green-700 dark:text-green-300 border-green-500/30',
+  discovery: 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  trade: 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  political: 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-500/30',
+  natural: 'bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  death: 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/30',
+  birth: 'bg-pink-500/20 text-pink-700 dark:text-pink-300 border-pink-500/30',
+  marriage: 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  revolution: 'bg-orange-500/20 text-orange-700 dark:text-orange-300 border-orange-500/30',
+  catastrophe: 'bg-red-600/20 text-red-800 dark:text-red-200 border-red-600/30',
+  miracle: 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border-yellow-500/30',
+  coronation: 'bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/30',
+  invasion: 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30',
+  plague: 'bg-green-800/20 text-green-800 dark:text-green-200 border-green-800/30',
+  festival: 'bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30',
 };
 
 const MAX_DESCRIPTION_LENGTH = 200;
-const LIST_HEIGHT = 400;
-const ITEM_PADDING = 12; // space-y-3 = 12px gap between items
 
 /**
- * Estimate event card height based on content.
- * Used for initial virtual list sizing.
+ * Parse significance level from event significance string.
  */
-function estimateEventHeight(event: HistoryEventResponse, isExpanded: boolean): number {
-  const baseHeight = 100; // Header + title + footer + padding
-  if (isExpanded || event.description.length <= MAX_DESCRIPTION_LENGTH) {
-    // Full content: estimate lines based on length
-    const lines = Math.ceil(event.description.length / 60); // ~60 chars per line
-    const keyFiguresHeight = event.key_figures.length > 0 ? 28 : 0;
-    return baseHeight + Math.min(lines * 20, 150) + keyFiguresHeight;
-  }
-  // Truncated: fixed height
-  return baseHeight + 40;
+function getSignificanceLevel(significance: string): SignificanceLevel {
+  const normalized = significance.toLowerCase().trim();
+  if (normalized.includes('epochal') || normalized.includes('world')) return 'epochal';
+  if (normalized.includes('major') || normalized.includes('great')) return 'major';
+  if (normalized.includes('moderate') || normalized.includes('significant')) return 'moderate';
+  return 'minor';
 }
 
-type EventCardProps = {
+/**
+ * Individual event card component.
+ */
+interface EventCardProps {
   event: HistoryEventResponse;
   isExpanded: boolean;
   onToggleExpand: () => void;
-};
+}
 
-const EventCard = React.memo(function EventCard({ event, isExpanded, onToggleExpand }: EventCardProps) {
-  const shouldTruncate = event.description.length > MAX_DESCRIPTION_LENGTH;
-  const displayDescription =
-    shouldTruncate && !isExpanded
-      ? event.description.slice(0, MAX_DESCRIPTION_LENGTH) + '...'
-      : event.description;
+const EventCard = React.memo(function EventCard({
+  event,
+  isExpanded,
+  onToggleExpand,
+}: EventCardProps) {
+  // Get significance-based styling
+  const significanceLevel = getSignificanceLevel(event.significance);
+  const significanceStyle = SIGNIFICANCE_STYLES[significanceLevel];
 
+  // Event type styling
   const typeColorClass =
     EVENT_TYPE_COLORS[event.event_type.toLowerCase()] ||
-    'bg-slate-500/20 text-slate-700 dark:text-slate-300';
+    'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/30';
 
-  const impactColorClass =
-    IMPACT_SCOPE_COLORS[event.impact_scope?.toLowerCase() || 'local'];
+  // Content truncation
+  const shouldTruncate = event.description.length > MAX_DESCRIPTION_LENGTH;
+  const displayDescription = useMemo(
+    () =>
+      shouldTruncate && !isExpanded
+        ? event.description.slice(0, MAX_DESCRIPTION_LENGTH) + '...'
+        : event.description,
+    [shouldTruncate, isExpanded, event.description]
+  );
+
+
 
   return (
     <article
-      className="relative rounded-lg border border-border bg-card p-4 transition-colors hover:border-border/80"
+      className={`relative rounded-lg border border-border bg-card p-4 transition-all hover:shadow-sm ${significanceStyle.borderClass}`}
       aria-labelledby={`event-title-${event.id}`}
-      style={{ marginBottom: ITEM_PADDING }}
     >
-      <div className="space-y-3">
+      {/* Significance indicator dot */}
+      <div
+        className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r ${significanceStyle.indicatorClass}`}
+        aria-hidden="true"
+      />
+
+      <div className="space-y-3 pl-2">
         {/* Header: Date and badges */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <History className="h-3 w-3" aria-hidden="true" />
-            <span>{event.date_description}</span>
+            <History className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="font-medium">{event.date_description}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end">
             {/* Event type badge */}
-            <Badge variant="outline" className={typeColorClass}>
+            <Badge variant="outline" className={`text-xs ${typeColorClass}`}>
               {event.event_type}
             </Badge>
-            {/* Impact scope badge */}
-            {event.impact_scope && (
-              <Badge
-                variant="outline"
-                className={impactColorClass}
-                aria-label={`Impact: ${event.impact_scope}`}
-              >
-                {event.impact_scope}
-              </Badge>
-            )}
+            {/* Significance badge */}
+            <Badge variant="outline" className={`text-xs ${significanceStyle.badgeClass}`}>
+              {significanceStyle.label}
+            </Badge>
           </div>
         </div>
 
         {/* Title */}
         <h3
           id={`event-title-${event.id}`}
-          className="text-sm font-medium leading-tight"
+          className="text-sm font-semibold leading-tight text-foreground"
         >
           {event.name}
         </h3>
@@ -139,31 +181,34 @@ const EventCard = React.memo(function EventCard({ event, isExpanded, onToggleExp
           {shouldTruncate && (
             <button
               onClick={onToggleExpand}
-              className="ml-1 text-primary underline-offset-2 hover:underline"
+              className="inline-flex items-center gap-1 ml-1 text-xs text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary/20 rounded px-1 -ml-1"
               aria-expanded={isExpanded}
               aria-label={isExpanded ? 'Show less' : 'Show more'}
             >
               {isExpanded ? (
-                <span className="flex items-center gap-1">
+                <>
                   <ChevronUp className="h-3 w-3" aria-hidden="true" />
                   Show less
-                </span>
+                </>
               ) : (
-                <span className="flex items-center gap-1">
+                <>
                   <ChevronDown className="h-3 w-3" aria-hidden="true" />
                   Show more
-                </span>
+                </>
               )}
             </button>
           )}
         </div>
 
-        {/* Key figures */}
-        {event.key_figures.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1 text-xs">
+        {/* Expanded details: Involved factions/locations */}
+        <EventCardDetails event={event} isExpanded={isExpanded} />
+
+        {/* Key figures (always visible if present) */}
+        {event.key_figures && event.key_figures.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5 text-xs pt-2 border-t border-border/30">
             <span className="text-muted-foreground">Key figures:</span>
             {event.key_figures.slice(0, 3).map((figure, idx) => (
-              <Badge key={idx} variant="secondary" className="text-xs">
+              <Badge key={idx} variant="outline" className="text-xs">
                 {figure}
               </Badge>
             ))}
@@ -180,188 +225,112 @@ const EventCard = React.memo(function EventCard({ event, isExpanded, onToggleExp
 });
 
 /**
- * Virtualized row component for react-window.
+ * Loading skeleton for the timeline.
  */
-interface EventRowProps {
-  index: number;
-  style: React.CSSProperties;
-  data: {
-    events: HistoryEventResponse[];
-    expandedIds: Set<string>;
-    onToggleExpand: (id: string) => void;
-  };
-}
-
-const EventRow = React.memo(function EventRow({ index, style, data }: EventRowProps) {
-  const { events, expandedIds, onToggleExpand } = data;
-  const event = events[index];
-
-  if (!event) return null;
-
-  const isExpanded = expandedIds.has(event.id);
-
-  return (
-    <div style={style} role="listitem">
-      <EventCard
-        event={event}
-        isExpanded={isExpanded}
-        onToggleExpand={() => onToggleExpand(event.id)}
-      />
-    </div>
-  );
-});
-
-type FilterControlsProps = {
-  filters: EventFilterParams;
-  onFiltersChange: (filters: EventFilterParams) => void;
-  onClear: () => void;
-};
-
-function FilterControls({ filters, onFiltersChange, onClear }: FilterControlsProps) {
-  const hasActiveFilters = filters.event_type || filters.impact_scope;
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {/* Event type filter */}
-      <div className="flex items-center gap-1">
-        <label
-          htmlFor="event-type-filter"
-          className="text-xs text-muted-foreground"
-        >
-          Type:
-        </label>
-        <Select
-          value={filters.event_type || 'all'}
-          onValueChange={(value) =>
-            onFiltersChange({
-              ...filters,
-              event_type: value === 'all' ? undefined : value,
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger
-            id="event-type-filter"
-            className="h-7 w-32 text-xs"
-            aria-label="Filter by event type"
-          >
-            <SelectValue placeholder="All types" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            <SelectItem value="war">War</SelectItem>
-            <SelectItem value="battle">Battle</SelectItem>
-            <SelectItem value="treaty">Treaty</SelectItem>
-            <SelectItem value="discovery">Discovery</SelectItem>
-            <SelectItem value="trade">Trade</SelectItem>
-            <SelectItem value="political">Political</SelectItem>
-            <SelectItem value="natural">Natural</SelectItem>
-            <SelectItem value="death">Death</SelectItem>
-            <SelectItem value="birth">Birth</SelectItem>
-            <SelectItem value="marriage">Marriage</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Impact scope filter */}
-      <div className="flex items-center gap-1">
-        <label
-          htmlFor="impact-scope-filter"
-          className="text-xs text-muted-foreground"
-        >
-          Scope:
-        </label>
-        <Select
-          value={filters.impact_scope || 'all'}
-          onValueChange={(value) =>
-            onFiltersChange({
-              ...filters,
-              impact_scope: value === 'all' ? undefined : value,
-              page: 1,
-            })
-          }
-        >
-          <SelectTrigger
-            id="impact-scope-filter"
-            className="h-7 w-32 text-xs"
-            aria-label="Filter by impact scope"
-          >
-            <SelectValue placeholder="All scopes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All scopes</SelectItem>
-            <SelectItem value="local">Local</SelectItem>
-            <SelectItem value="regional">Regional</SelectItem>
-            <SelectItem value="global">Global</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Clear filters button */}
-      {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs"
-          onClick={onClear}
-          aria-label="Clear all filters"
-        >
-          <X className="mr-1 h-3 w-3" />
-          Clear
-        </Button>
-      )}
-    </div>
-  );
-}
-
 function TimelineSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4" role="status" aria-label="Loading events">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-lg border border-border p-4">
+        <div
+          key={i}
+          className="rounded-lg border border-border bg-card p-4 space-y-3 border-l-4 border-l-gray-300"
+        >
           <div className="flex items-center justify-between">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-5 w-16" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-3.5 w-3.5" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="flex gap-1.5">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-14" />
+            </div>
           </div>
-          <Skeleton className="mt-3 h-4 w-3/4" />
-          <Skeleton className="mt-2 h-12 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
         </div>
       ))}
     </div>
   );
 }
 
-export default function WorldTimeline({ worldId, filters: externalFilters }: Props) {
-  const [internalFilters, setInternalFilters] = useState<EventFilterParams>({
-    page: 1,
-    page_size: 20,
-    ...externalFilters,
-  });
+/**
+ * Empty state for when no events are available.
+ */
+function EmptyState() {
+  return (
+    <div
+      className="flex flex-col items-center justify-center py-12 text-center px-4"
+      role="status"
+      aria-label="No events available"
+    >
+      <div className="rounded-full bg-muted p-4 mb-4">
+        <History className="h-8 w-8 text-muted-foreground/60" aria-hidden="true" />
+      </div>
+      <p className="text-sm font-medium text-muted-foreground">No events yet.</p>
+      <p className="mt-1 text-xs text-muted-foreground/70">
+        Historical events will appear here as your world develops.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Error state with retry option.
+ */
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      className="flex flex-col items-center justify-center py-12 text-center px-4"
+      role="alert"
+      aria-label="Error loading events"
+    >
+      <div className="rounded-full bg-destructive/10 p-4 mb-4">
+        <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
+      </div>
+      <p className="text-sm font-medium text-destructive">Failed to load events</p>
+      <p className="mt-1 text-xs text-muted-foreground mb-4">
+        Something went wrong while fetching the timeline.
+      </p>
+      <Button variant="outline" size="sm" onClick={onRetry} aria-label="Retry loading events">
+        Try again
+      </Button>
+    </div>
+  );
+}
+
+/**
+ * Main WorldTimeline component.
+ */
+export const WorldTimeline = React.memo(function WorldTimeline({ worldId }: Props) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
-  const listRef = useRef<List>(null);
-  // Cache for item sizes to avoid recalculation
-  const itemSizeCache = useRef<Map<number, number>>(new Map());
+  const { data, isLoading, isError, refetch } = useWorldEvents(worldId, {
+    page: 1,
+    page_size: 50,
+  });
 
-  // Merge external and internal filters
-  const activeFilters = useMemo(
-    () => ({
-      ...internalFilters,
-      ...externalFilters,
-    }),
-    [internalFilters, externalFilters]
-  );
-
-  const { data, isLoading, isError, refetch } = useWorldEvents(worldId, activeFilters);
-
-  const events = useMemo(() => data?.events ?? [], [data]);
-
-  // Reset expanded state and size cache when events change
-  useEffect(() => {
-    setExpandedIds(new Set());
-    itemSizeCache.current.clear();
-    listRef.current?.resetAfterIndex(0);
-  }, [events.length, activeFilters]);
+  // Sort events by date (newest first)
+  // Uses structured_date if available, otherwise falls back to string comparison
+  const events = useMemo(() => {
+    if (!data?.events) return [];
+    return [...data.events].sort((a, b) => {
+      // Try to use structured_date for sorting
+      if (a.structured_date && b.structured_date) {
+        const dateA =
+          a.structured_date.year * 10000 +
+          a.structured_date.month * 100 +
+          a.structured_date.day;
+        const dateB =
+          b.structured_date.year * 10000 +
+          b.structured_date.month * 100 +
+          b.structured_date.day;
+        return dateB - dateA; // Newest first
+      }
+      // Fall back to string comparison of date_description
+      return b.date_description.localeCompare(a.date_description);
+    });
+  }, [data?.events]);
 
   // Toggle expand/collapse for an event
   const handleToggleExpand = useCallback((eventId: string) => {
@@ -374,150 +343,49 @@ export default function WorldTimeline({ worldId, filters: externalFilters }: Pro
       }
       return next;
     });
+  }, []);
 
-    // Find the index and reset its size
-    const index = events.findIndex((e) => e.id === eventId);
-    if (index !== -1) {
-      itemSizeCache.current.delete(index);
-      listRef.current?.resetAfterIndex(index);
-    }
-  }, [events]);
-
-  const handleFiltersChange = (newFilters: EventFilterParams) => {
-    setInternalFilters(newFilters);
-  };
-
-  const handleClearFilters = () => {
-    setInternalFilters({
-      page: 1,
-      page_size: 20,
-    });
-  };
-
-  // Get item size for virtual list
-  const getItemSize = useCallback(
-    (index: number) => {
-      // Check cache first
-      if (itemSizeCache.current.has(index)) {
-        return itemSizeCache.current.get(index)!;
-      }
-
-      const event = events[index];
-      if (!event) {
-        return 140; // Default fallback
-      }
-
-      const isExpanded = expandedIds.has(event.id);
-      const height = estimateEventHeight(event, isExpanded);
-      itemSizeCache.current.set(index, height);
-      return height;
-    },
-    [events, expandedIds]
-  );
-
-  // Memoize list data to avoid unnecessary re-renders
-  const listData = useMemo(
-    () => ({ events, expandedIds, onToggleExpand: handleToggleExpand }),
-    [events, expandedIds, handleToggleExpand]
-  );
-
-  // Empty state
-  if (!isLoading && !isError && events.length === 0) {
-    return (
-      <Card data-testid="world-timeline" data-state="empty">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <History className="h-5 w-5" aria-hidden="true" />
-            Historical Events
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <History className="mb-2 h-8 w-8 opacity-50" aria-hidden="true" />
-            <p className="text-sm">No events yet.</p>
-            <p className="mt-1 text-xs">
-              Events will appear as the simulation progresses.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Error state
-  if (isError) {
-    return (
-      <Card data-testid="world-timeline" data-state="error">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <History className="h-5 w-5" aria-hidden="true" />
-            Historical Events
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-destructive">
-            <History className="mb-2 h-8 w-8 opacity-50" aria-hidden="true" />
-            <p className="text-sm">Failed to load events.</p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-3"
-              onClick={() => refetch()}
-              aria-label="Retry loading events"
-            >
-              Retry
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const handleRetry = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   return (
-    <Card data-testid="world-timeline" data-state={isLoading ? 'loading' : 'success'}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
+    <Card className="h-full" data-testid="world-timeline">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
             <History className="h-5 w-5" aria-hidden="true" />
-            Historical Events
+            World Timeline
           </CardTitle>
-          {data && (
-            <span className="text-sm text-muted-foreground">
-              {data.total_count} {data.total_count === 1 ? 'event' : 'events'}
+          {events.length > 0 && (
+            <span className="text-xs text-muted-foreground">
+              {events.length} {events.length === 1 ? 'event' : 'events'}
             </span>
           )}
-        </div>
-        {/* Filter controls */}
-        <div className="mt-2 flex items-center gap-2">
-          <Filter
-            className="h-4 w-4 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <FilterControls
-            filters={activeFilters}
-            onFiltersChange={handleFiltersChange}
-            onClear={handleClearFilters}
-          />
         </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (
           <TimelineSkeleton />
+        ) : isError ? (
+          <ErrorState onRetry={handleRetry} />
+        ) : events.length === 0 ? (
+          <EmptyState />
         ) : (
-          <div style={{ height: LIST_HEIGHT }} className="pr-4" role="list" aria-label="Historical events timeline">
-            <List
-              ref={listRef}
-              height={LIST_HEIGHT}
-              itemCount={events.length}
-              itemSize={getItemSize}
-              width="100%"
-              itemData={listData}
-            >
-              {EventRow}
-            </List>
+          <div className="space-y-4" role="list" aria-label="Historical events timeline">
+            {events.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                isExpanded={expandedIds.has(event.id)}
+                onToggleExpand={() => handleToggleExpand(event.id)}
+              />
+            ))}
           </div>
         )}
       </CardContent>
     </Card>
   );
-}
+});
+
+export default WorldTimeline;

@@ -761,8 +761,11 @@ def _register_legacy_routes(app: FastAPI):
     from src.api.routers.social import router as social_router
     from src.api.routers.structure import router as structure_router
     from src.api.routers.world import router as world_gen_router
+    from src.api.routers.world_events import router as world_events_router
     from src.api.routers.world_rules import router as world_rules_router
+    from src.api.routers.world_rumors import router as world_rumors_router
     from src.api.routers.world_state import router as world_state_router
+    from src.api.routers.world_time import router as world_time_router
 
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(auth_router, prefix="/api")
@@ -799,6 +802,9 @@ def _register_legacy_routes(app: FastAPI):
     app.include_router(simulation_router, prefix="/api")
     app.include_router(rumors_router, prefix="/api")
     app.include_router(snapshots_router, prefix="/api")
+    app.include_router(world_events_router, prefix="/api")
+    app.include_router(world_rumors_router, prefix="/api")
+    app.include_router(world_time_router, prefix="/api")
 
     @app.get("/", response_model=dict)
     async def root_index():

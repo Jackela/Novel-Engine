@@ -34,6 +34,7 @@ from .history_event import (
     EventSignificance,
     EventType,
     HistoryEvent,
+    ImpactScope,
 )
 from .item import (
     Item,
@@ -94,6 +95,7 @@ __all__ = [
     "EventType",
     "EventSignificance",
     "EventOutcome",
+    "ImpactScope",
     # Relationship
     "Relationship",
     "RelationshipType",

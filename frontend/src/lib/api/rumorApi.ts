@@ -101,5 +101,24 @@ export function useRumor(worldId: string | undefined, rumorId: string | undefine
   });
 }
 
+/**
+ * Hook to fetch rumors for a specific location.
+ * Alias for useRumors with locationId required.
+ *
+ * @param worldId - The unique identifier for the world
+ * @param locationId - The specific location to filter rumors by
+ * @param sortBy - Sort order (recent, reliable, spread)
+ * @param limit - Maximum number of results (default 20)
+ * @returns Query result with rumors list for the location
+ */
+export function useLocationRumors(
+  worldId: string | undefined,
+  locationId: string | undefined,
+  sortBy: RumorSortBy = 'recent',
+  limit: number = 20
+) {
+  return useRumors(worldId, locationId, sortBy, limit);
+}
+
 // Export raw functions for non-hook usage
 export { getRumors, getRumor };
