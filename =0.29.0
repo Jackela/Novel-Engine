@@ -1,5 +1,0 @@
-Collecting asyncpg
-  Using cached asyncpg-0.31.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (4.4 kB)
-Using cached asyncpg-0.31.0-cp312-cp312-manylinux_2_28_x86_64.whl (3.5 MB)
-Installing collected packages: asyncpg
-Successfully installed asyncpg-0.31.0
