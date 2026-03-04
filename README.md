@@ -2,10 +2,12 @@
 
 语言/Languages: [English](README.en.md) | 简体中文
 
+[![CI](https://github.com/Jackela/Novel-Engine/actions/workflows/ci.yml/badge.svg)](https://github.com/Jackela/Novel-Engine/actions/workflows/ci.yml)
+[![Tests](https://github.com/Jackela/Novel-Engine/actions/workflows/tests.yml/badge.svg)](https://github.com/Jackela/Novel-Engine/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![React 18+](https://img.shields.io/badge/react-18+-blue.svg)](https://react.dev/)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Node.js 20+](https://img.shields.io/badge/node-20+-green.svg)](https://nodejs.org/)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen.svg)](https://github.com/pre-commit/pre-commit)
 
 面向生产的 AI 驱动叙事生成与多智能体模拟平台。本项目采用**模块化单体 (Modular Monolith)** 架构，结合**函数式核心与命令式外壳**设计原则，提供高内聚、低耦合的叙事编排能力。
 
@@ -299,7 +301,7 @@ source .env.ci
 
 ## 🤝 贡献指南
 
-1. 遵循 `docs/coding-standards.md` 中的代码规范。
+1. 遵循 `CONVENTIONS.md` 中的代码规范。
 2. 提交前请运行本地验证脚本：`scripts/validate_ci_locally.sh`。
 3. 重大架构变更需通过 `openspec` 提出提案。
 
@@ -308,6 +310,14 @@ source .env.ci
 ## 🤖 AI 协作
 
 - AI 工作流、Agent 开发与契约规范以 `AGENTS.md` 为唯一真相来源。
+
+---
+
+## 💬 联系与社区
+
+- **问题与讨论**: [GitHub Discussions](https://github.com/Jackela/Novel-Engine/discussions)
+- **Bug 报告与功能请求**: [GitHub Issues](https://github.com/Jackela/Novel-Engine/issues)
+- **作者**: [@Jackela](https://github.com/Jackela)
 
 ---
 

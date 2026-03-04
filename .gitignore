@@ -497,11 +497,16 @@ frontend/test-results.json
 # Test Output Files (root level)
 test-results.xml
 pytest-report.xml
+pytest_collection.txt
 test_report.json
 benchmark.json
 test.md
 test_log.md
 campaign_log.md
+
+# Vulture reports (generated analysis files)
+vulture_report.txt
+vulture_agents.txt
 
 # Pyramid Reports
 pyramid-report.json
