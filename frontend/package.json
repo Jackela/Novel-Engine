@@ -137,7 +137,7 @@
     "@playwright/test": "^1.54.1",
     "@size-limit/file": "^11.1.0",
     "@testing-library/jest-dom": "^6.1.2",
-    "@testing-library/react": "^13.4.0",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.4.3",
     "@types/node": "^20.10.4",
     "@types/react": "^18.2.15",
