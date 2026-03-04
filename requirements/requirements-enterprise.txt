@@ -62,7 +62,7 @@ rich==13.7.0
 structlog==23.2.0
 
 # Development & Testing (Enterprise)
-pytest-benchmark==4.0.0
+pytest-benchmark==5.2.3
 pytest-xdist==3.5.0
 pytest-mock==3.12.0
 coverage[toml]==7.3.2
