@@ -38,7 +38,7 @@ jobs:
       image-tag: ${{ steps.set-env.outputs.tag }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set deployment environment
       id: set-env
@@ -66,10 +66,10 @@ jobs:
     if: ${{ !inputs.skip_tests }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.11'
 
@@ -84,7 +84,7 @@ jobs:
         python -m pytest tests/ -v --cov=src --cov-report=xml
 
     - name: Upload coverage
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.xml
 
@@ -98,13 +98,13 @@ jobs:
       image-url: ${{ steps.build.outputs.image-url }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
     - name: Log in to Container Registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
@@ -124,7 +124,7 @@ jobs:
 
     - name: Build and push Docker image
       id: build
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         file: ./Dockerfile
@@ -139,14 +139,14 @@ jobs:
         platforms: linux/amd64,linux/arm64
 
     - name: Generate SBOM
-      uses: anchore/sbom-action@v0.17.0
+      uses: anchore/sbom-action@v0.23.0
       with:
         image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
         format: spdx-json
         output-file: sbom.spdx.json
 
     - name: Upload SBOM
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: sbom
         path: sbom.spdx.json
@@ -157,20 +157,20 @@ jobs:
     needs: [build-and-push]
     steps:
     - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@0.28.0
+      uses: aquasecurity/trivy-action@0.34.2
       with:
         image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
         format: 'sarif'
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always()
       with:
         sarif_file: 'trivy-results.sarif'
 
     - name: Check for critical vulnerabilities
-      uses: aquasecurity/trivy-action@0.28.0
+      uses: aquasecurity/trivy-action@0.34.2
       with:
         image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.pre-deployment.outputs.image-tag }}
         exit-code: '1'
@@ -183,17 +183,17 @@ jobs:
     environment: ${{ needs.pre-deployment.outputs.deploy-environment }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+      uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: 1.6.0
 
@@ -225,7 +225,7 @@ jobs:
         terraform output -json > terraform-outputs.json
 
     - name: Upload Terraform outputs
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: terraform-outputs
         path: terraform/terraform-outputs.json
@@ -237,10 +237,10 @@ jobs:
     environment: ${{ needs.pre-deployment.outputs.deploy-environment }}
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -253,7 +253,7 @@ jobs:
           --name ${{ env.EKS_CLUSTER_NAME }}
 
     - name: Download Terraform outputs
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: terraform-outputs
         path: terraform/
@@ -321,10 +321,10 @@ jobs:
     needs: [deploy, pre-deployment]
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
+      uses: aws-actions/configure-aws-credentials@v6
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
