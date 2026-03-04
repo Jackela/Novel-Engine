@@ -61,6 +61,7 @@ export { useCalendar, useAdvanceCalendar } from './calendarApi';
 export {
   useWorldEvents,
   useWorldEvent,
+  useEvent,
   useCreateEvent,
   getWorldEvents,
   getWorldEvent,
@@ -78,7 +79,7 @@ export {
 } from './diplomacyApi';
 
 // Rumors API (SIM-026)
-export { useRumors, useRumor, getRumors, getRumor } from './rumorApi';
+export { useRumors, useRumor, useLocationRumors, getRumors, getRumor } from './rumorApi';
 
 // Simulation API (SIM-031)
 export {

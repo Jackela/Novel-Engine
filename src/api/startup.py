@@ -211,6 +211,8 @@ async def initialize_app_state(app: FastAPI) -> None:
         except Exception as exc:
             logger.warning("Could not register TimeAdvancedHandler: %s", exc)
 
+        # Note: RumorPropagationHandler is registered after repositories below
+
     # Register FactionIntentRepository in DI container
     try:
         from src.contexts.world.domain.ports.faction_intent_repository import (
@@ -245,6 +247,91 @@ async def initialize_app_state(app: FastAPI) -> None:
     except Exception as exc:
         app.state.calendar_repository = None
         logger.warning("Could not register CalendarRepository: %s", exc)
+
+    # Register EventRepository in DI container
+    try:
+        from src.contexts.world.domain.ports.event_repository import EventRepository
+        from src.contexts.world.infrastructure.persistence.in_memory_event_repository import (
+            InMemoryEventRepository,
+        )
+
+        event_repository = InMemoryEventRepository()
+        container.register_singleton(EventRepository, event_repository)
+        app.state.event_repository = event_repository
+        app.state.event_repository_available = True
+        logger.info("EventRepository registered in DI container")
+    except Exception as exc:
+        app.state.event_repository = None
+        app.state.event_repository_available = False
+        logger.warning("Could not register EventRepository: %s", exc)
+
+    # Register RumorRepository in DI container
+    try:
+        from src.contexts.world.domain.ports.rumor_repository import RumorRepository
+        from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository import (
+            InMemoryRumorRepository,
+        )
+
+        rumor_repository = InMemoryRumorRepository()
+        container.register_singleton(RumorRepository, rumor_repository)
+        app.state.rumor_repository = rumor_repository
+        app.state.rumor_repository_available = True
+        logger.info("RumorRepository registered in DI container")
+    except Exception as exc:
+        app.state.rumor_repository = None
+        app.state.rumor_repository_available = False
+        logger.warning("Could not register RumorRepository: %s", exc)
+
+    # Register LocationRepository in DI container
+    try:
+        from src.contexts.world.domain.ports.location_repository import (
+            LocationRepository,
+        )
+        from src.contexts.world.infrastructure.persistence.in_memory_location_repository import (
+            InMemoryLocationRepository,
+        )
+
+        location_repository = InMemoryLocationRepository()
+        container.register_singleton(LocationRepository, location_repository)
+        app.state.location_repository = location_repository
+        app.state.location_repository_available = True
+        logger.info("LocationRepository registered in DI container")
+    except Exception as exc:
+        app.state.location_repository = None
+        app.state.location_repository_available = False
+        logger.warning("Could not register LocationRepository: %s", exc)
+
+    # Register RumorPropagationHandler for rumor propagation on time advance
+    # This must happen AFTER repositories are registered above
+    if global_event_bus is not None:
+        try:
+            from src.contexts.world.application.handlers.rumor_propagation_handler import (
+                RumorPropagationHandler,
+            )
+
+            # Get repositories from app.state (set during registration above)
+            location_repo = getattr(app.state, "location_repository", None)
+            rumor_repo = getattr(app.state, "rumor_repository", None)
+
+            if location_repo is not None and rumor_repo is not None:
+                rumor_handler = RumorPropagationHandler(
+                    location_repo=location_repo,
+                    rumor_repo=rumor_repo,
+                )
+                global_event_bus.register_handler(rumor_handler)
+                logger.info(
+                    "RumorPropagationHandler registered with EventBus "
+                    "(with repositories)"
+                )
+            else:
+                logger.warning(
+                    "RumorPropagationHandler not registered: "
+                    "repositories not available (location_repo=%s, rumor_repo=%s)",
+                    location_repo is not None,
+                    rumor_repo is not None,
+                )
+        except Exception as exc:
+            logger.warning("Could not register RumorPropagationHandler: %s", exc)
 
     # Register RetrievalService reference for FactionDecisionService
     try:
