@@ -28,7 +28,8 @@ from typing import Any, Callable, Dict, List, Optional
 # Import enhanced Jinja2 for template processing
 try:
     import jinja2
-    from jinja2 import Environment, FileSystemLoader, meta, select_autoescape
+    from jinja2 import FileSystemLoader, meta, select_autoescape
+    from jinja2.sandbox import SandboxedEnvironment
     from jinja2.exceptions import TemplateError, UndefinedError
 except ImportError:
     raise ImportError(
@@ -166,8 +167,10 @@ class DynamicTemplateEngine:
         self.enable_auto_reload = enable_auto_reload
         self.cache_templates = cache_templates
 
-        # Initialize enhanced Jinja2 environment
-        self.jinja_env = Environment(
+        # Initialize enhanced Jinja2 environment with sandboxing
+        # SECURITY: SandboxedEnvironment restricts template execution
+        # to prevent code injection via user-controlled templates
+        self.jinja_env = SandboxedEnvironment(
             loader=FileSystemLoader(str(self.template_directory)),
             autoescape=select_autoescape(["html", "xml"]),
             auto_reload=enable_auto_reload,

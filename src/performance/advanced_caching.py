@@ -11,6 +11,16 @@ Key Features:
 - Sub-10ms cache hits with 99%+ hit rates
 - Adaptive eviction strategies and pattern recognition
 - Comprehensive performance analytics and optimization
+
+SECURITY NOTICE:
+================
+This module uses pickle for internal cache serialization. This is acceptable
+because:
+1. Cache keys and values are internally controlled (not user-accessible)
+2. Cache data is stored in directories with restricted permissions (0o700)
+3. All pickle operations are marked with nosec B301 for security audit tracking
+
+For user-provided data serialization, use JSON instead of pickle.
 """
 
 import asyncio
@@ -28,6 +38,55 @@ from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _validate_and_fix_cache_dir_permissions(cache_dir: str) -> None:
+    """
+    Validate cache directory has secure permissions (owner-only access).
+    
+    SECURITY: Creates new directories with 0o700 permissions.
+    Warns and attempts to fix if existing directory is too permissive.
+    
+    Args:
+        cache_dir: Path to the cache directory to validate
+    """
+    import stat
+    
+    if not os.path.exists(cache_dir):
+        # Create with restricted permissions (owner only: rwx------)
+        os.makedirs(cache_dir, mode=0o700)
+        logger.info("Created cache directory with secure permissions", extra={
+            "path": cache_dir,
+            "mode": "0o700"
+        })
+        return
+    
+    # Check existing directory permissions
+    dir_stat = os.stat(cache_dir)
+    mode = stat.S_IMODE(dir_stat.st_mode)
+    
+    # Check if group or others have any permissions (read/write/execute)
+    if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
+        logger.warning(
+            "Cache directory has insecure permissions - group or others have access",
+            extra={
+                "path": cache_dir,
+                "current_mode": oct(mode),
+                "recommended_mode": "0o700"
+            }
+        )
+        # Attempt to fix permissions
+        try:
+            os.chmod(cache_dir, 0o700)
+            logger.info("Fixed cache directory permissions", extra={
+                "path": cache_dir,
+                "new_mode": "0o700"
+            })
+        except OSError as e:
+            logger.error(
+                "Failed to fix cache directory permissions",
+                extra={"path": cache_dir, "error": str(e)}
+            )
 
 T = TypeVar("T")
 
@@ -147,9 +206,9 @@ class IntelligentCacheManager:
         self._cleanup_task: Optional[asyncio.Task] = None
         self._metrics_task: Optional[asyncio.Task] = None
 
-        # Disk cache setup
+        # Disk cache setup with permission validation
         if self.config.persist_to_disk:
-            os.makedirs(self.config.disk_cache_path, exist_ok=True)
+            _validate_and_fix_cache_dir_permissions(self.config.disk_cache_path)
 
         self._start_background_tasks()
 

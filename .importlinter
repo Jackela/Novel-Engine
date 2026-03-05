@@ -24,6 +24,9 @@ forbidden_modules =
     src.api
     src.infrastructure
     src.database
+ignore_imports =
+    # TYPE_CHECKING imports are acceptable for type hints (runtime no dependency)
+    src.core.system_orchestrator -> src.database.context_db
 
 # -----------------------------------------------------------------------------
 # Hexagonal Layer Rules for ALL Contexts

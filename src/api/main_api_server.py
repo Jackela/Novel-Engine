@@ -149,8 +149,8 @@ class APIServerConfig:
             "SECURITY_DATABASE_PATH", "data/security.db"
         )
         self.debug = (
-            os.getenv("DEBUG", "true").lower() == "true"
-        )  # Default to debug mode
+            os.getenv("DEBUG", "false").lower() == "true"
+        )  # Default to production (False)
         self.enable_docs = os.getenv("ENABLE_DOCS", "true").lower() == "true"
         self.cors_origins = os.getenv("CORS_ORIGINS", "*").split(",")
         self.max_concurrent_agents = int(os.getenv("MAX_CONCURRENT_AGENTS", "20"))

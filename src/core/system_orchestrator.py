@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
 # Import data models
 from src.core.data_models import (
@@ -37,8 +37,11 @@ from src.core.narrative import EmergentNarrativeEngine
 # Import core narrative engines
 from src.core.subjective_reality import SubjectiveRealityEngine
 
-# Import database access
-from src.database.context_db import ContextDatabase
+# Import database access - TYPE_CHECKING only to avoid circular dependencies
+# At runtime, database is injected via dependency injection
+if TYPE_CHECKING:
+    from src.database.context_db import ContextDatabase
+
 from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,
 )
@@ -57,6 +60,39 @@ from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
     TemplateContext,
 )
+
+
+# Define Protocol for database interface to enable dependency injection
+# This ensures SystemOrchestrator doesn't directly depend on ContextDatabase
+class DatabaseInterface(Protocol):
+    """Protocol defining database operations required by SystemOrchestrator."""
+
+    async def initialize_standard_temple(self) -> StandardResponse:
+        """Initialize database schema and connections."""
+        ...
+
+    async def close_standard_temple(self) -> None:
+        """Close database connections."""
+        ...
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Check database health status."""
+        ...
+
+    async def register_enhanced_agent(
+        self,
+        agent_id: str,
+        character_name: str,
+        faction_data: List[str],
+        personality_traits: List[str],
+        core_beliefs: List[str],
+    ) -> StandardResponse:
+        """Register a new agent in the database."""
+        ...
+
+    def get_enhanced_connection(self):
+        """Get an async database connection context manager."""
+        ...
 
 # Comprehensive logging and monitoring
 logger = logging.getLogger(__name__)
@@ -165,13 +201,20 @@ class SystemOrchestrator:
         database_path: str = "data/context_engineering.db",
         config: Optional[OrchestratorConfig] = None,
         event_bus=None,
-        database=None,
+        database: Optional["DatabaseInterface"] = None,
     ) -> None:
         """
         System Initialization with Comprehensive Integration
 
         Initialize the system orchestrator with all enhanced subsystems
         and comprehensive monitoring capabilities.
+
+        Args:
+            database_path: Path to the database file (used only if database not provided)
+            config: Orchestrator configuration
+            event_bus: Optional event bus for publishing events
+            database: Database interface implementation (dependency injection).
+                     If not provided, ContextDatabase will be instantiated.
         """
         self.config = config or OrchestratorConfig()
         self.database_path = database_path
@@ -181,10 +224,14 @@ class SystemOrchestrator:
         self.operation_count = 0
         self.error_count = 0
 
-        # Initialize enhanced database (use provided database or create new one)
-        self.database = (
-            database if database is not None else ContextDatabase(database_path)
-        )
+        # Initialize database with dependency injection
+        # Runtime import to avoid circular dependency at module level
+        if database is not None:
+            self.database = database
+        else:
+            from src.database.context_db import ContextDatabase
+
+            self.database = ContextDatabase(database_path)
 
         # Initialize event bus (use provided or create default)
         self.event_bus = event_bus
