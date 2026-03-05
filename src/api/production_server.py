@@ -59,7 +59,7 @@ limiter = Limiter(key_func=get_remote_address)
 class SecurityHeaders(BaseHTTPMiddleware):
     """Security headers middleware."""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         response = await call_next(request)
 
         # Security headers

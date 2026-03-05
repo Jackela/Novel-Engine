@@ -90,7 +90,7 @@ class DatabaseInterface(Protocol):
         """Register a new agent in the database."""
         ...
 
-    def get_enhanced_connection(self):
+    def get_enhanced_connection(self) -> None:
         """Get an async database connection context manager."""
         ...
 

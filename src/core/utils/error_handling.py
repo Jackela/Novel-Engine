@@ -34,7 +34,7 @@ def handle_standard_errors(
 
     Example:
         @handle_standard_errors("equipment_registration", "REGISTRATION_FAILED")
-        async def register_equipment(self, equipment_item):
+        async def register_equipment(self, equipment_item) -> None:
             # ... implementation
             return StandardResponse(success=True, data={...})
     """

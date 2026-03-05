@@ -557,17 +557,17 @@ class TestFramework:
             logger.error(f"Failed to save baseline benchmarks: {e}")
 
     # Test implementation methods
-    async def _test_api_server_startup(self):
+    async def _test_api_server_startup(self) -> None:
         """Test API server startup"""
         # This would test actual API server startup
         await asyncio.sleep(0.1)  # Simulate test
 
-    async def _test_database_connectivity(self):
+    async def _test_database_connectivity(self) -> None:
         """Test database connectivity"""
         # This would test actual database connection
         await asyncio.sleep(0.1)  # Simulate test
 
-    async def _test_service_orchestration(self):
+    async def _test_service_orchestration(self) -> None:
         """Test service orchestration"""
         # This would test service integration
         await asyncio.sleep(0.1)  # Simulate test
@@ -600,31 +600,31 @@ class TestFramework:
         await asyncio.sleep(0.1)
         return time.time() - start_time
 
-    async def _test_sql_injection(self):
+    async def _test_sql_injection(self) -> None:
         """Test SQL injection protection"""
         # This would test actual SQL injection protection
 
-    async def _test_xss_protection(self):
+    async def _test_xss_protection(self) -> None:
         """Test XSS protection"""
         # This would test actual XSS protection
 
-    async def _test_auth_bypass(self):
+    async def _test_auth_bypass(self) -> None:
         """Test authentication bypass protection"""
         # This would test actual authentication bypass protection
 
-    async def _test_input_validation(self):
+    async def _test_input_validation(self) -> None:
         """Test input validation"""
         # This would test actual input validation
 
-    async def _test_character_invariants(self):
+    async def _test_character_invariants(self) -> None:
         """Test character data invariants using property-based testing"""
         # This would use Hypothesis for property-based testing
 
-    async def _test_api_response_properties(self):
+    async def _test_api_response_properties(self) -> None:
         """Test API response properties"""
         # This would test API response properties
 
-    async def _test_serialization_roundtrip(self):
+    async def _test_serialization_roundtrip(self) -> None:
         """Test serialization roundtrip properties"""
         # This would test serialization/deserialization invariants
 

@@ -161,30 +161,30 @@ class TypeProcessors:
             )
 
     # Placeholder implementations for other interaction types
-    async def _process_negotiation_interaction(self, context, outcome):
+    async def _process_negotiation_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "negotiation_processed"}
         )
 
-    async def _process_instruction_interaction(self, context, outcome):
+    async def _process_instruction_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "instruction_processed"}
         )
 
-    async def _process_ritual_interaction(self, context, outcome):
+    async def _process_ritual_interaction(self, context, outcome) -> None:
         return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
 
-    async def _process_exploration_interaction(self, context, outcome):
+    async def _process_exploration_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "exploration_processed"}
         )
 
-    async def _process_maintenance_interaction(self, context, outcome):
+    async def _process_maintenance_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "maintenance_processed"}
         )
 
-    async def _process_emergency_interaction(self, context, outcome):
+    async def _process_emergency_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "emergency_processed"}
         )

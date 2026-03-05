@@ -152,8 +152,8 @@ class ProviderRouter:
     def select_provider_for_model(
         self,
         model_name: str,
-        preferred_providers: List[str] = None,
-        fallback_providers: List[str] = None,
+        preferred_providers: Optional[List[str]] = None,
+        fallback_providers: Optional[List[str]] = None,
     ) -> Optional[ILLMProvider]:
         """
         Select best provider for given model.

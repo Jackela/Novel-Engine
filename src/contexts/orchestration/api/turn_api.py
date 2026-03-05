@@ -289,7 +289,7 @@ def _patch_e2e_database_fixture() -> None:
             async def commit(self) -> None:
                 return
 
-            async def execute(self, query):
+            async def execute(self, query) -> None:
                 text_query = str(query).lower()
                 state = _load_e2e_state()
                 if "character_events" in text_query:

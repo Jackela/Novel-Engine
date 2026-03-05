@@ -490,7 +490,7 @@ class PerformanceMonitor:
 
                         await self._handle_alert_resolution(alert)
 
-    async def _handle_alert(self, alert: PerformanceAlert):
+    async def _handle_alert(self, alert: PerformanceAlert) -> None:
         """Handle triggered performance alert."""
         log_level = (
             logging.CRITICAL
@@ -511,7 +511,7 @@ class PerformanceMonitor:
         # - Auto-scale resources
         # - Take remedial actions
 
-    async def _handle_alert_resolution(self, alert: PerformanceAlert):
+    async def _handle_alert_resolution(self, alert: PerformanceAlert) -> None:
         """Handle resolution of performance alert."""
         logger.info(
             f"Alert Resolved: {alert.metric_name} | "

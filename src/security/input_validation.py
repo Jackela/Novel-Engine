@@ -455,7 +455,7 @@ class ValidationMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.validator = validator
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """STANDARD REQUEST VALIDATION"""
         try:
             # Skip validation for certain paths

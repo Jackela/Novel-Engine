@@ -243,7 +243,7 @@ class PerformanceTestSuite:
         self.monitor = ResourceMonitor()
         self.session = None
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         """Async context manager entry."""
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=30),

@@ -577,7 +577,7 @@ class SchedulePeriodicAnalysisCommand(InteractionCommand):
 
     session_id: UUID
     analysis_frequency_hours: int = 6
-    analysis_types: List[str] = None
+    analysis_types: Optional[List[str]] = None
     alert_thresholds: Optional[Dict[str, Any]] = None
     auto_recommendations: bool = True
 

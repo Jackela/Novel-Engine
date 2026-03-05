@@ -55,7 +55,7 @@ class SSLCertificateManager:
         logger.info(f"SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir}")
 
     def generate_self_signed_cert(
-        self, domain: str = "localhost", alt_names: List[str] = None, days: int = 365
+        self, domain: str = "localhost", alt_names: Optional[List[str]] = None, days: int = 365
     ) -> Tuple[str, str]:
         """
         STANDARD SELF-SIGNED CERTIFICATE GENERATION

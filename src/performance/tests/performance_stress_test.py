@@ -108,7 +108,7 @@ class PerformanceStressTester:
 
         return self._generate_stress_test_report()
 
-    async def _monitor_system_resources(self):
+    async def _monitor_system_resources(self) -> None:
         """Monitor system resources during testing"""
         self.monitoring_active = True
 

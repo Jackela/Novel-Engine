@@ -334,7 +334,7 @@ class QualityMonitor:
         }
 
     async def analyze_project(
-        self, file_patterns: List[str] = None
+        self, file_patterns: Optional[List[str]] = None
     ) -> ProjectQualityReport:
         """Analyze entire project quality"""
         file_patterns = file_patterns or ["**/*.py"]

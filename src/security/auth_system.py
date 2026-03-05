@@ -210,7 +210,7 @@ class User:
     role: UserRole
     is_active: bool = True
     is_verified: bool = False
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
     failed_login_attempts: int = 0
     locked_until: Optional[datetime] = None

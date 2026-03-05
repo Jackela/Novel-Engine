@@ -468,7 +468,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.metrics_collector = metrics_collector
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Process request with monitoring."""
         # Generate request ID
         request_id = str(uuid.uuid4())

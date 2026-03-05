@@ -121,7 +121,7 @@ class MetricsCollector:
 
             self._add_metric_point(name, value, MetricType.HISTOGRAM, tags)
 
-    def record_timer(self, name: str, duration: float, tags: Dict[str, str] = None) -> None:
+    def record_timer(self, name: str, duration: float, tags: Optional[Dict[str, str]] = None) -> None:
         """Record a timer metric."""
         with self.lock:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
@@ -805,7 +805,7 @@ performance_monitor = PerformanceMonitor()
 class TimerContext:
     """Context manager for timing operations."""
 
-    def __init__(self, metric_name: str, tags: Dict[str, str] = None) -> None:
+    def __init__(self, metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
         self.metric_name = metric_name
         self.tags = tags or {}
         self.start_time = None
@@ -822,7 +822,7 @@ class TimerContext:
             )
 
 
-def monitor_performance(metric_name: str, tags: Dict[str, str] = None) -> None:
+def monitor_performance(metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
     """Decorator for monitoring function performance."""
 
     def decorator(func) -> None:

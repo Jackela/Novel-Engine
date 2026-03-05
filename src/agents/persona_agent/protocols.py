@@ -67,7 +67,7 @@ class SubjectiveInterpretation:
     emotional_response: str  # Character's emotional reaction
     belief_impact: Dict[str, float]  # Changes to beliefs (-1.0 to 1.0)
     threat_assessment: ThreatLevel = ThreatLevel.NEGLIGIBLE
-    relationship_changes: Dict[str, float] = None  # Changes to relationships
+    relationship_changes: Optional[Dict[str, float]] = None  # Changes to relationships
     memory_priority: float = 0.5  # How likely this is to be remembered (0.0 to 1.0)
 
     def __post_init__(self) -> None:

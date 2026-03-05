@@ -87,17 +87,17 @@ class CharacterORM(Base):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"<CharacterORM(id={self.character_id}, name='{self.name}', level={self.level})>"
 
     @validates("level")
-    def validate_level(self, key, level) -> None:
+    def validate_level(self, key: str, level: Any) -> Any:
         if level < 1:
             raise ValueError("Character level must be at least 1")
         return level
 
     @validates("age")
-    def validate_age(self, key, age) -> None:
+    def validate_age(self, key: str, age: Any) -> Any:
         if age < 0 or age > 10000:
             raise ValueError("Character age must be between 0 and 10000")
         return age
@@ -152,17 +152,17 @@ class CharacterProfileORM(Base):
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="profile")
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"<CharacterProfileORM(character_id={self.character_id}, title='{self.title}')>"
 
     @validates("height_cm")
-    def validate_height(self, key, height) -> None:
+    def validate_height(self, key: str, height: Any) -> Any:
         if height is not None and (height < 30 or height > 300):
             raise ValueError("Height must be between 30 and 300 cm")
         return height
 
     @validates("weight_kg")
-    def validate_weight(self, key, weight) -> None:
+    def validate_weight(self, key: str, weight: Any) -> Any:
         if weight is not None and (weight < 1 or weight > 500):
             raise ValueError("Weight must be between 1 and 500 kg")
         return weight
@@ -226,7 +226,7 @@ class CharacterStatsORM(Base):
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="stats")
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"<CharacterStatsORM(character_id={self.character_id}, level={self.character.level if self.character else 'N/A'})>"
 
     @validates(
@@ -238,19 +238,19 @@ class CharacterStatsORM(Base):
         return score
 
     @validates("current_health", "current_mana", "current_stamina")
-    def validate_current_stats(self, key, value) -> None:
+    def validate_current_stats(self, key: str, value: Any) -> Any:
         if value < 0:
             raise ValueError(f"{key} cannot be negative")
         return value
 
     @validates("max_health", "max_stamina")
-    def validate_max_vital_stats(self, key, value) -> None:
+    def validate_max_vital_stats(self, key: str, value: Any) -> Any:
         if value <= 0:
             raise ValueError(f"{key} must be positive")
         return value
 
     @validates("max_mana")
-    def validate_max_mana(self, key, value) -> None:
+    def validate_max_mana(self, key: str, value: Any) -> Any:
         if value < 0:
             raise ValueError("Max mana cannot be negative")
         return value
@@ -294,7 +294,7 @@ class CharacterSkillsORM(Base):
     # Relationship back to character
     character = relationship("CharacterORM", back_populates="skills")
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"<CharacterSkillsORM(character_id={self.character_id})>"
 
     def get_skill(self, category: str, skill_name: str) -> Optional[Dict[str, Any]]:
@@ -369,17 +369,17 @@ class CharacterEventORM(Base):
     # Timestamps
     occurred_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return f"<CharacterEventORM(event_id={self.event_id}, type='{self.event_type}', character_id={self.character_id})>"
 
     @validates("event_version")
-    def validate_event_version(self, key, version) -> None:
+    def validate_event_version(self, key: str, version: Any) -> Any:
         if version < 1:
             raise ValueError("Event version must be at least 1")
         return version
 
     @validates("aggregate_version")
-    def validate_aggregate_version(self, key, version) -> None:
+    def validate_aggregate_version(self, key: str, version: Any) -> Any:
         if version < 1:
             raise ValueError("Aggregate version must be at least 1")
         return version

@@ -459,7 +459,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.logger = logger
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Log request and response with performance metrics."""
 
         # Generate request context

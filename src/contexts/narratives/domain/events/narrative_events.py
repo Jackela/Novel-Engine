@@ -362,7 +362,7 @@ class NarrativeConsistencyViolated(NarrativeEvent):
     """
 
     violation_type: str = ""
-    involved_elements: List[str] = None
+    involved_elements: Optional[List[str]] = None
     severity_level: str = "minor"  # minor, moderate, major, critical
     auto_fixable: bool = False
     suggested_resolution: str = ""
@@ -383,7 +383,7 @@ class NarrativeGoalAchieved(NarrativeEvent):
     goal_type: str = ""
     goal_description: str = ""
     achievement_sequence: int = 0
-    contributing_elements: List[str] = None
+    contributing_elements: Optional[List[str]] = None
     achievement_method: str = ""
 
     def __post_init__(self) -> None:

@@ -230,7 +230,7 @@ class NovelEngineClient:
         self.base_url = base_url
         self.token: Optional[str] = None
 
-    async def login(self, username: str, password: str):
+    async def login(self, username: str, password: str) -> None:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/api/auth/login",

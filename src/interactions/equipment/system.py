@@ -109,18 +109,18 @@ class DynamicEquipmentSystem:
         if not self._equipment_templates:
             self._equipment_templates = {}
 
-    async def _process_weapon_usage(self, equipment, usage_context, expected_duration):
+    async def _process_weapon_usage(self, equipment, usage_context, expected_duration) -> None:
         """Placeholder processor for weapon interactions."""
         return StandardResponse(
             success=True, data={"effects": ["weapon_usage"], "warnings": []}
         )
 
-    async def _process_armor_usage(self, equipment, usage_context, expected_duration):
+    async def _process_armor_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["armor_absorption"], "warnings": []}
         )
 
-    async def _process_tool_usage(self, equipment, usage_context, expected_duration):
+    async def _process_tool_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["tool_operation"], "warnings": []}
         )
@@ -139,7 +139,7 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["augmetic_interface"], "warnings": []}
         )
 
-    async def _process_relic_usage(self, equipment, usage_context, expected_duration):
+    async def _process_relic_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["relic_activation"], "warnings": []}
         )
@@ -158,12 +158,12 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["communication_link"], "warnings": []}
         )
 
-    async def _process_medical_usage(self, equipment, usage_context, expected_duration):
+    async def _process_medical_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["medical_aid"], "warnings": []}
         )
 
-    async def _process_sensor_usage(self, equipment, usage_context, expected_duration):
+    async def _process_sensor_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["sensor_scan"], "warnings": []}
         )

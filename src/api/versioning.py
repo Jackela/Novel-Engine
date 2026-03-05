@@ -45,7 +45,7 @@ class VersionInfo:
     deprecation_date: Optional[datetime] = None
     sunset_date: Optional[datetime] = None
     description: str = ""
-    breaking_changes: List[str] = None
+    breaking_changes: Optional[List[str]] = None
     migration_guide_url: Optional[str] = None
 
     def __post_init__(self) -> None:

@@ -69,7 +69,7 @@ class EnterpriseSecuritySuite:
         secret_key: Optional[str] = None,
         redis_url: str = "redis://localhost:6379",
         geoip_database_path: Optional[str] = None,
-        compliance_frameworks: List[ComplianceFramework] = None,
+        compliance_frameworks: Optional[List[ComplianceFramework]] = None,
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
@@ -534,7 +534,7 @@ async def initialize_security_suite(**kwargs) -> EnterpriseSecuritySuite:
 def create_secure_app(
     title: str = "Novel Engine API",
     version: str = "1.0.0",
-    security_config: Dict[str, Any] = None,
+    security_config: Optional[Dict[str, Any]] = None,
 ) -> FastAPI:
     """Create a FastAPI app with enterprise security pre-configured"""
 

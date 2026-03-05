@@ -399,7 +399,7 @@ class TurnBriefFactory:
         }
 
     def initialize_belief_model(
-        self, agent_id: str, personality_traits: Dict[str, float] = None
+        self, agent_id: str, personality_traits: Optional[Dict[str, float]] = None
     ) -> None:
         """初始化Agent的信念模型"""
         if personality_traits is None:
@@ -416,7 +416,7 @@ class TurnBriefFactory:
         agent_id: str,
         turn_number: int,
         global_world_state: Dict,
-        recent_events: List[Dict] = None,
+        recent_events: Optional[List[Dict]] = None,
     ) -> PersonalizedTurnBrief:
         """创建个性化回合简报"""
 
@@ -714,7 +714,7 @@ class SubjectiveRealityEngine:
     async def initialize_agent(
         self,
         agent_id: str,
-        personality_traits: Dict[str, float] = None,
+        personality_traits: Optional[Dict[str, float]] = None,
         initial_location: str = None,
     ) -> BeliefModel:
         """初始化Agent的主观现实系统"""
@@ -737,7 +737,7 @@ class SubjectiveRealityEngine:
         agent_id: str,
         turn_number: int,
         global_world_state: Dict,
-        recent_events: List[Dict] = None,
+        recent_events: Optional[List[Dict]] = None,
     ) -> PersonalizedTurnBrief:
         """生成Agent的个性化回合简报"""
 

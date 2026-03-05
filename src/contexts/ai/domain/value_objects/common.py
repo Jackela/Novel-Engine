@@ -93,7 +93,7 @@ class ProviderId:
     provider_key: Union[UUID, str] = None
     api_version: str = "1.0.0"
     region: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Validate ProviderId business rules and constraints."""
@@ -233,11 +233,11 @@ class ModelId:
     capabilities: Set[ModelCapability] = None
     max_context_tokens: int = 4096
     max_output_tokens: int = 1024
-    cost_per_input_token: Decimal = None
-    cost_per_output_token: Decimal = None
+    cost_per_input_token: Optional[Decimal] = None
+    cost_per_output_token: Optional[Decimal] = None
     model_version: str = "1.0"
     deprecated: bool = False
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Validate ModelId business rules and constraints."""
@@ -422,13 +422,13 @@ class TokenBudget:
     allocated_tokens: int
     consumed_tokens: int = 0
     reserved_tokens: int = 0
-    cost_limit: Decimal = None
-    accumulated_cost: Decimal = None
+    cost_limit: Optional[Decimal] = None
+    accumulated_cost: Optional[Decimal] = None
     period_start: Optional[Any] = None  # datetime, but avoiding import
     period_end: Optional[Any] = None  # datetime, but avoiding import
     rollover_enabled: bool = True
     priority: int = 5  # 1-10 scale, 10 = highest priority
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
         """Validate TokenBudget business rules and constraints."""
@@ -481,7 +481,7 @@ class TokenBudget:
 
     @classmethod
     def create_daily_budget(
-        cls, budget_id: str, daily_tokens: int, cost_limit: Decimal = None
+        cls, budget_id: str, daily_tokens: int, cost_limit: Optional[Decimal] = None
     ) -> "TokenBudget":
         """Factory method for daily token budget."""
         return cls(

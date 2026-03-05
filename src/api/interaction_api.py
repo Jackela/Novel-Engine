@@ -67,7 +67,7 @@ class WebSocketConnectionManager:
     def __init__(self) -> None:
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, interaction_id: str):
+    async def connect(self, websocket: WebSocket, interaction_id: str) -> None:
         """
         Connect a WebSocket to an interaction.
 
@@ -219,7 +219,7 @@ class InteractionAPI:
                 logger.exception("Error getting interaction.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-    async def _process_interaction_async(self, interaction_id: str):
+    async def _process_interaction_async(self, interaction_id: str) -> None:
         """Processes an interaction asynchronously."""
         try:
             if not self.orchestrator:

@@ -21,7 +21,7 @@ class InteractionPersistence:
     def __init__(self, db: ContextDatabase) -> None:
         self.db = db
 
-    async def _store_interaction_outcome(self, outcome: InteractionOutcome):
+    async def _store_interaction_outcome(self, outcome: InteractionOutcome) -> None:
         """Store enhanced interaction outcome in database"""
         try:
             # Create CharacterInteraction for database storage

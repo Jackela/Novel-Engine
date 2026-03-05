@@ -42,7 +42,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self.security_events = []
         self.rate_limits = {}
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Process request with enhanced security checks"""
         start_time = time.time()
 

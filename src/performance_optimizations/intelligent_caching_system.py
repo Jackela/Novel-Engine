@@ -342,7 +342,7 @@ class IntelligentCache:
         self.l2_stats.evictions += 1
         logger.debug(f"Evicted from L2: {key}")
 
-    async def _demote_to_l3(self, key: str, entry: CacheEntry):
+    async def _demote_to_l3(self, key: str, entry: CacheEntry) -> None:
         """Demote entry from L2 to L3 with disk persistence."""
         if len(self.l3_cache) >= self.l3_max_size:
             self._evict_from_l3()
@@ -398,7 +398,7 @@ class IntelligentCache:
         if len(self.access_patterns[key]) > 100:
             self.access_patterns[key] = self.access_patterns[key][-100:]
 
-    async def _trigger_prefetch(self, key: str):
+    async def _trigger_prefetch(self, key: str) -> None:
         """Trigger prefetching for related items."""
         try:
             # Add to prefetch queue for background processing
@@ -432,7 +432,7 @@ class IntelligentCache:
                 compressed_data
             )  # nosec B301 - trusted internal cache data
 
-    async def _save_to_disk(self, key: str, value: Any):
+    async def _save_to_disk(self, key: str, value: Any) -> None:
         """Save value to disk for L3 storage."""
         try:
             cache_dir = Path("cache_l3")
@@ -470,7 +470,7 @@ class IntelligentCache:
             logger.error(f"Failed to load from disk: {key} - {e}")
             return None
 
-    async def _remove_from_disk(self, key: str):
+    async def _remove_from_disk(self, key: str) -> None:
         """Remove value from disk storage."""
         try:
             cache_dir = Path("cache_l3")
@@ -594,7 +594,7 @@ class IntelligentCache:
             },
         }
 
-    async def clear_cache(self, level: Optional[CacheLevel] = None):
+    async def clear_cache(self, level: Optional[CacheLevel] = None) -> None:
         """Clear cache at specified level or all levels."""
         with self._lock:
             if level is None or level == CacheLevel.L1_MEMORY:

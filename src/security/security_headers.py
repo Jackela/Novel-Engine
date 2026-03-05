@@ -73,7 +73,7 @@ class SecurityHeadersConfig:
 
     # Permissions Policy (Feature Policy)
     enable_permissions_policy: bool = True
-    permissions_policy: Dict[str, str] = None
+    permissions_policy: Optional[Dict[str, str]] = None
 
     # HSTS (HTTP Strict Transport Security)
     enable_hsts: bool = True
@@ -84,7 +84,7 @@ class SecurityHeadersConfig:
     # HTTPS/TLS related
     force_https: bool = True
     enable_hpkp: bool = False  # HTTP Public Key Pinning (deprecated but available)
-    hpkp_pins: List[str] = None
+    hpkp_pins: Optional[List[str]] = None
 
     # Additional Security Headers
     enable_expect_ct: bool = True
@@ -94,10 +94,10 @@ class SecurityHeadersConfig:
 
     # CORS Security
     enable_cors_security: bool = True
-    allowed_origins: List[str] = None
+    allowed_origins: Optional[List[str]] = None
 
     # Custom Headers
-    custom_headers: Dict[str, str] = None
+    custom_headers: Optional[Dict[str, str]] = None
 
     def __post_init__(self) -> None:
         """STANDARD CONFIGURATION INITIALIZATION"""

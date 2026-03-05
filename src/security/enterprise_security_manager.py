@@ -207,7 +207,7 @@ class EnterpriseSecurityManager:
         geoip_database_path: Optional[str] = None,
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
-        compliance_frameworks: List[ComplianceFramework] = None,
+        compliance_frameworks: Optional[List[ComplianceFramework]] = None,
     ) -> None:
         self.database_path = database_path
         self.redis_url = redis_url
@@ -1059,7 +1059,7 @@ class EnterpriseSecurityManager:
         except Exception as e:
             logger.error(f"Failed to log security event: {e}")
 
-    async def _send_security_alert(self, event: SecurityEvent):
+    async def _send_security_alert(self, event: SecurityEvent) -> None:
         """Send real-time security alerts to administrators"""
         alert_data = {
             "event_id": event.id,

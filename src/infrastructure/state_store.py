@@ -1017,7 +1017,7 @@ class UnifiedStateManager:
 class ConfigurationManager:
     """Unified configuration manager"""
 
-    def __init__(self, config_paths: List[str] = None) -> None:
+    def __init__(self, config_paths: Optional[List[str]] = None) -> None:
         self.config_paths = config_paths or [
             "/etc/novel-engine/config/environments/development.yaml",
             "./config/environments/development.yaml",
@@ -1163,7 +1163,7 @@ def create_unified_state_manager(
 
 
 def create_configuration_manager(
-    config_paths: List[str] = None,
+    config_paths: Optional[List[str]] = None,
 ) -> ConfigurationManager:
     """Create configuration manager"""
     return ConfigurationManager(config_paths)

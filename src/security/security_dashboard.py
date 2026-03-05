@@ -265,7 +265,7 @@ class SecurityDashboard:
         finally:
             await pubsub.unsubscribe("security_alerts")
 
-    async def _process_security_alert(self, alert_data: Dict[str, Any]):
+    async def _process_security_alert(self, alert_data: Dict[str, Any]) -> None:
         """Process incoming security alert"""
         try:
             severity = AlertSeverity(alert_data.get("severity", "medium"))
@@ -307,7 +307,7 @@ class SecurityDashboard:
         except Exception as e:
             logger.error(f"Error processing security alert: {e}")
 
-    async def _create_incident_from_alert(self, alert: SecurityAlert):
+    async def _create_incident_from_alert(self, alert: SecurityAlert) -> None:
         """Create security incident from high-severity alert"""
         try:
             incident_id = f"INC_{int(datetime.now().timestamp())}"
@@ -354,7 +354,7 @@ class SecurityDashboard:
         except Exception as e:
             logger.error(f"Error creating incident from alert: {e}")
 
-    async def _save_incident(self, incident: SecurityIncident):
+    async def _save_incident(self, incident: SecurityIncident) -> None:
         """Save incident to database"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
@@ -554,7 +554,7 @@ class SecurityDashboard:
             logger.error(f"Error generating compliance report for {framework}: {e}")
             return None
 
-    async def _save_compliance_report(self, report: ComplianceReport):
+    async def _save_compliance_report(self, report: ComplianceReport) -> None:
         """Save compliance report to database"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -585,7 +585,7 @@ class SecurityDashboard:
         except Exception as e:
             logger.error(f"Error saving compliance report: {e}")
 
-    async def _broadcast_alert(self, alert: SecurityAlert):
+    async def _broadcast_alert(self, alert: SecurityAlert) -> None:
         """Broadcast alert to all connected WebSocket clients"""
         if not self.connected_clients:
             return
@@ -650,7 +650,7 @@ class SecurityDashboard:
             self.connected_clients.remove(client)
 
     # WebSocket endpoints
-    async def websocket_endpoint(self, websocket: WebSocket):
+    async def websocket_endpoint(self, websocket: WebSocket) -> None:
         """WebSocket endpoint for real-time dashboard updates"""
         await websocket.accept()
         self.connected_clients.append(websocket)
@@ -671,7 +671,7 @@ class SecurityDashboard:
             if websocket in self.connected_clients:
                 self.connected_clients.remove(websocket)
 
-    async def _send_initial_dashboard_data(self, websocket: WebSocket):
+    async def _send_initial_dashboard_data(self, websocket: WebSocket) -> None:
         """Send initial dashboard data to newly connected client"""
         # Send current metrics
         await websocket.send_text(

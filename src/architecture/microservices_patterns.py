@@ -216,7 +216,7 @@ class ServiceRegistry:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _check_instance_health(self, instance: ServiceInstance):
+    async def _check_instance_health(self, instance: ServiceInstance) -> None:
         """Check health of a single service instance"""
         try:
             async with aiohttp.ClientSession(
@@ -264,7 +264,7 @@ class CircuitBreaker:
 
         self._lock = asyncio.Lock()
 
-    async def call(self, func: Callable, *args, **kwargs):
+    async def call(self, func: Callable, *args, **kwargs) -> None:
         """Execute a function call through the circuit breaker"""
         async with self._lock:
             if self.state == CircuitState.OPEN:
@@ -324,7 +324,7 @@ class EventBus:
         self._max_history = 1000
         self._lock = asyncio.Lock()
 
-    async def subscribe(self, event_type: str, handler: Callable):
+    async def subscribe(self, event_type: str, handler: Callable) -> None:
         """Subscribe to an event type"""
         async with self._lock:
             if event_type not in self._subscribers:
@@ -333,7 +333,7 @@ class EventBus:
             self._subscribers[event_type].append(handler)
             logger.info(f"Subscribed to event type: {event_type}")
 
-    async def unsubscribe(self, event_type: str, handler: Callable):
+    async def unsubscribe(self, event_type: str, handler: Callable) -> None:
         """Unsubscribe from an event type"""
         async with self._lock:
             if event_type in self._subscribers:

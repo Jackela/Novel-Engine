@@ -9,7 +9,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 
@@ -35,8 +35,8 @@ class AgentNegotiationEngine:
     def initialize_agent_profile(
         self,
         agent_id: str,
-        negotiation_style: Dict[str, float] = None,
-        priorities: List[str] = None,
+        negotiation_style: Optional[Dict[str, float]] = None,
+        priorities: Optional[List[str]] = None,
     ) -> None:
         """初始化Agent协商档案"""
         if negotiation_style is None:
@@ -107,7 +107,7 @@ class AgentNegotiationEngine:
         proposal_id: str,
         responder_id: str,
         response_type: str,
-        response_content: Dict[str, Any] = None,
+        response_content: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """回应协商提议"""
 
@@ -199,7 +199,7 @@ class AgentNegotiationEngine:
         except Exception as e:
             logger.error(f"Failed to generate counter-proposal: {e}")
 
-    async def _evaluate_negotiation_status(self, session: NegotiationSession):
+    async def _evaluate_negotiation_status(self, session: NegotiationSession) -> None:
         """评估协商状态"""
         # 检查超时
         if datetime.now() > session.created_at + timedelta(
@@ -222,7 +222,7 @@ class AgentNegotiationEngine:
             # 所有目标Agent都已回应
             await self._attempt_resolution(session)
 
-    async def _attempt_resolution(self, session: NegotiationSession):
+    async def _attempt_resolution(self, session: NegotiationSession) -> None:
         """尝试解决协商"""
         latest_proposal = session.proposals[-1]
         responses = [

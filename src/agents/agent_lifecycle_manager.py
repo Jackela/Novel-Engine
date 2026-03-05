@@ -674,7 +674,7 @@ class AgentLifecycleManager:
         agent_id: str,
         proposed_action: ProposedAction,
         validated_action: ValidatedAction,
-        repair_log: List[str] = None,
+        repair_log: Optional[List[str]] = None,
     ) -> None:
         """Record a successfully validated action."""
         action_record = {
@@ -693,7 +693,7 @@ class AgentLifecycleManager:
         agent_id: str,
         proposed_action: ProposedAction,
         violations: List[IronLawsViolation],
-        repair_log: List[str] = None,
+        repair_log: Optional[List[str]] = None,
     ) -> None:
         """Record a failed action validation."""
         action_record = {

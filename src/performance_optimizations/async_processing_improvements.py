@@ -217,7 +217,7 @@ class AsyncTaskScheduler:
 
         raise asyncio.TimeoutError(f"Task {task_id} result timeout after {timeout}s")
 
-    async def _process_priority_queue(self, priority: TaskPriority):
+    async def _process_priority_queue(self, priority: TaskPriority) -> None:
         """Process tasks from a specific priority queue."""
         queue = self.priority_queues[priority]
 
@@ -247,7 +247,7 @@ class AsyncTaskScheduler:
                 logger.error(f"Priority queue {priority.name} processing error: {e}")
                 await asyncio.sleep(1.0)  # Brief pause on error
 
-    async def _execute_task(self, task: AsyncTask):
+    async def _execute_task(self, task: AsyncTask) -> None:
         """Execute a single async task with timeout and retry logic."""
         start_time = time.time()
 

@@ -133,14 +133,14 @@ class AsyncEventBus:
         self._subscribers: Dict[str, List[callable]] = {}
         self._lock = asyncio.Lock()
 
-    async def subscribe(self, event_type: str, callback: callable):
+    async def subscribe(self, event_type: str, callback: callable) -> None:
         """Subscribe to an event type."""
         async with self._lock:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
             self._subscribers[event_type].append(callback)
 
-    async def emit(self, event_type: str, data: Any):
+    async def emit(self, event_type: str, data: Any) -> None:
         """Emit an event to all subscribers."""
         subscribers: list[Any] = []
         async with self._lock:
@@ -171,7 +171,7 @@ class PerformanceOptimizer:
         self.event_bus = AsyncEventBus()
         self._metrics: Dict[str, List[float]] = {}
 
-    async def initialize(self, database_path: str = "data/novel_engine.db"):
+    async def initialize(self, database_path: str = "data/novel_engine.db") -> None:
         """Initialize performance optimization systems."""
         self.db_pool = AsyncDatabasePool(database_path, max_connections=20)
         await self.db_pool.initialize()

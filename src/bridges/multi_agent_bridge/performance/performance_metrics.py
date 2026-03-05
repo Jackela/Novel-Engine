@@ -77,7 +77,7 @@ class PerformanceMetrics:
             self.logger.error(f"Error recording coordination event: {e}")
 
     def record_turn_metrics(
-        self, turn_number: int, additional_metrics: Dict[str, Any] = None
+        self, turn_number: int, additional_metrics: Optional[Dict[str, Any]] = None
     ) -> None:
         """Record metrics for a completed turn."""
         try:

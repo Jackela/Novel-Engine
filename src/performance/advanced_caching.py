@@ -429,7 +429,7 @@ class IntelligentCacheManager:
             logger.error(f"Pattern invalidation error for {pattern}: {e}")
             return 0
 
-    async def warm_cache(self, keys_values: Dict[str, Any]):
+    async def warm_cache(self, keys_values: Dict[str, Any]) -> None:
         """Preload cache with key-value pairs for performance."""
         try:
             for key, value in keys_values.items():
@@ -692,7 +692,7 @@ class IntelligentCacheManager:
             logger.error(f"Disk cache get error for key {key}: {e}")
             return None
 
-    async def _save_to_disk(self, key: str, value: Any):
+    async def _save_to_disk(self, key: str, value: Any) -> None:
         """Save value to disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
@@ -704,7 +704,7 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Disk cache save error for key {key}: {e}")
 
-    async def _delete_from_disk(self, key: str):
+    async def _delete_from_disk(self, key: str) -> None:
         """Delete value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)

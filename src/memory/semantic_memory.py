@@ -321,7 +321,7 @@ class SemanticMemory:
             self.total_concepts_formed += 1
         return self._concepts[entity_lower]
 
-    async def _associate_fact_with_concepts(self, fact: KnowledgeFact):
+    async def _associate_fact_with_concepts(self, fact: KnowledgeFact) -> None:
         """Links a fact to its subject and object concepts."""
         subject_concept = await self._ensure_concept_exists(fact.subject)
         subject_concept.associated_facts.add(fact.fact_id)

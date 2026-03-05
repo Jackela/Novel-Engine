@@ -97,7 +97,7 @@ class TurnBriefORM(FullAuditModel):
         lazy="select",
     )
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return (
             f"<TurnBriefORM(turn_brief_id='{self.turn_brief_id}', "
             f"entity_id='{self.entity_id}', "
@@ -178,7 +178,7 @@ class KnowledgeItemORM(BaseModel):
     # Relationship
     turn_brief = relationship("TurnBriefORM", back_populates="knowledge_items")
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return (
             f"<KnowledgeItemORM(knowledge_item_id='{self.knowledge_item_id}', "
             f"subject='{self.subject}', "
@@ -259,7 +259,7 @@ class PerceptionRecordORM(BaseModel):
     # Relationship
     turn_brief = relationship("TurnBriefORM", back_populates="perception_records")
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return (
             f"<PerceptionRecordORM(perception_record_id='{self.perception_record_id}', "
             f"perceived_subject='{self.perceived_subject}', "
@@ -342,7 +342,7 @@ class ThreatAssessmentORM(BaseModel):
         backref=backref("threat_assessments", cascade="all, delete-orphan"),
     )
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return (
             f"<ThreatAssessmentORM(threat_assessment_id='{self.threat_assessment_id}', "
             f"threat_subject='{self.threat_subject}', "
@@ -421,7 +421,7 @@ class InformationSharingLogORM(BaseModel):
     )  # Percentage of knowledge successfully shared
     failure_reasons = Column(JSON, nullable=True)  # Reasons for any failures
 
-    def __repr__(self) -> None:
+    def __repr__(self) -> str:
         return (
             f"<InformationSharingLogORM(sharing_log_id='{self.sharing_log_id}', "
             f"source_entity_id='{self.source_entity_id}', "

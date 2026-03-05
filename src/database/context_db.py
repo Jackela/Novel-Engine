@@ -139,7 +139,7 @@ class ContextDatabase:
         self._connection_pool.clear()
         self._initialized = False
 
-    async def store_context(self, session_id: str, character_id: str, context: str):
+    async def store_context(self, session_id: str, character_id: str, context: str) -> None:
         """Store context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -172,7 +172,7 @@ class ContextDatabase:
                 ),
             )
 
-    async def get_context(self, session_id: str, character_id: str):
+    async def get_context(self, session_id: str, character_id: str) -> None:
         """Get context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -738,9 +738,9 @@ class ContextDatabase:
         self,
         agent_id: AgentID,
         character_name: str,
-        faction_data: List[str] = None,
-        personality_traits: List[str] = None,
-        core_beliefs: List[str] = None,
+        faction_data: Optional[List[str]] = None,
+        personality_traits: Optional[List[str]] = None,
+        core_beliefs: Optional[List[str]] = None,
     ) -> StandardResponse:
         """
         STANDARD AGENT REGISTRATION RITUAL ENHANCED BY IDENTITY SANCTIFICATION

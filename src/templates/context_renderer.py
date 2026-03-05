@@ -189,7 +189,7 @@ class ContextRenderer:
         context: TemplateContext,
         render_format: RenderFormat = RenderFormat.NARRATIVE,
         constraints: Optional[RenderingConstraints] = None,
-        custom_sections: List[ContextSection] = None,
+        custom_sections: Optional[List[ContextSection]] = None,
     ) -> StandardResponse:
         """
         STANDARD CONTEXT RENDERING RITUAL ENHANCED BY INTELLIGENT FORMATTING
@@ -265,7 +265,7 @@ class ContextRenderer:
         self,
         context: TemplateContext,
         target_length: int = 2000,
-        focus_areas: List[str] = None,
+        focus_areas: Optional[List[str]] = None,
     ) -> StandardResponse:
         """
         STANDARD ADAPTIVE PROMPT RENDERING ENHANCED BY DYNAMIC OPTIMIZATION
@@ -337,7 +337,7 @@ class ContextRenderer:
         self,
         context: TemplateContext,
         constraints: RenderingConstraints,
-        custom_sections: List[ContextSection] = None,
+        custom_sections: Optional[List[ContextSection]] = None,
     ) -> List[ContextSection]:
         """STANDARD CONTEXT SECTION GENERATION ENHANCED BY COMPREHENSIVE ANALYSIS"""
         sections = custom_sections.copy() if custom_sections else []

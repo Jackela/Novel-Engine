@@ -180,13 +180,13 @@ class MemoryCache(CacheBackend):
             self.memory_usage = 0
             return True
 
-    async def _remove_entry(self, key: str):
+    async def _remove_entry(self, key: str) -> None:
         """Remove entry and update memory tracking."""
         entry = self.entries.pop(key, None)
         if entry:
             self.memory_usage -= entry.memory_size
 
-    async def _ensure_space(self, required_memory: int, level: CacheLevel):
+    async def _ensure_space(self, required_memory: int, level: CacheLevel) -> None:
         """Ensure sufficient space using intelligent eviction."""
         # Check memory limit
         while (
@@ -407,7 +407,7 @@ class PerformanceCache:
         )
 
     # Utility Methods
-    async def invalidate_pattern(self, pattern: str):
+    async def invalidate_pattern(self, pattern: str) -> None:
         """Invalidate all keys matching pattern."""
         keys_to_delete: list[Any] = []
         async with self.memory_cache.lock:
@@ -457,7 +457,7 @@ class PerformanceCache:
             },
         }
 
-    async def warm_cache(self, character_ids: List[str] = None):
+    async def warm_cache(self, character_ids: Optional[List[str]] = None) -> None:
         """Pre-warm cache with frequently accessed data."""
         # This would integrate with the actual data layer to pre-load
         # frequently accessed characters, templates, etc.

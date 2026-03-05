@@ -906,7 +906,7 @@ class ContextLoaderService:
         self._circuit_breaker["failure_count"] += 0.5
         self._circuit_breaker["last_failure_time"] = datetime.now(UTC)
 
-    async def _security_check(self, character_id: str):
+    async def _security_check(self, character_id: str) -> None:
         """
         Perform security checks on character identifier and path.
 
@@ -942,7 +942,7 @@ class ContextLoaderService:
         except Exception as e:
             raise SecurityError(f"Path validation error: {str(e)}")
 
-    async def _validate_context_integrity(self, character_context: CharacterContext):
+    async def _validate_context_integrity(self, character_context: CharacterContext) -> None:
         """
         Perform comprehensive data integrity validation.
 

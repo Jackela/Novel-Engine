@@ -34,7 +34,7 @@ class NarrativeCoherenceEngine:
         self.consistency_rules.append(rule_func)
 
     async def integrate_event_into_narrative(
-        self, event: CausalNode, context_events: List[CausalNode] = None
+        self, event: CausalNode, context_events: Optional[List[CausalNode]] = None
     ) -> Dict[str, Any]:
         """将事件整合到叙事中"""
 
@@ -489,9 +489,9 @@ class NarrativeCoherenceEngine:
 
     def get_narrative_timeline(
         self,
-        start_time: datetime = None,
-        end_time: datetime = None,
-        agent_filter: List[str] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        agent_filter: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """获取叙事时间线"""
         filtered_timeline = self.story_timeline

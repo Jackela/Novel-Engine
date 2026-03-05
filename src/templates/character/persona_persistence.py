@@ -69,7 +69,7 @@ class PersonaPersistence:
             except Exception as e:
                 logger.error(f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}")
 
-    async def _save_persona_to_file(self, persona: CharacterPersona):
+    async def _save_persona_to_file(self, persona: CharacterPersona) -> None:
         """Save enhanced persona to file"""
         persona_file = self.personas_directory / f"{persona.persona_id}.json"
 

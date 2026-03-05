@@ -651,7 +651,7 @@ class EnhancedMultiAgentBridge:
             "batched_requests"
         ] / max(1, total_batches)
 
-    async def _process_request_batch(self, batch_requests: List[LLMBatchRequest]):
+    async def _process_request_batch(self, batch_requests: List[LLMBatchRequest]) -> None:
         """Process a batch of LLM requests efficiently."""
         try:
             # Group requests by type for better batching efficiency
@@ -1946,7 +1946,7 @@ class EnhancedMultiAgentBridge:
             },
         }
 
-    async def _update_agent_relationships(self, dialogue_results: List[Dict[str, Any]]):
+    async def _update_agent_relationships(self, dialogue_results: List[Dict[str, Any]]) -> None:
         """Update agent relationships based on dialogue results."""
         for dialogue_result in dialogue_results:
             if dialogue_result.get("relationship_impact"):
@@ -1966,7 +1966,7 @@ class EnhancedMultiAgentBridge:
 
                     self.communication_metrics["relationship_changes"] += 1
 
-    async def _update_narrative_intelligence(self, post_turn_analysis: Dict[str, Any]):
+    async def _update_narrative_intelligence(self, post_turn_analysis: Dict[str, Any]) -> None:
         """Update narrative intelligence based on turn analysis."""
         # Update narrative intelligence state
         if post_turn_analysis.get("narrative_insights"):
@@ -2084,7 +2084,7 @@ class EnhancedMultiAgentBridge:
 
     # Event handlers
 
-    async def _handle_dialogue_request(self, request_data: Dict[str, Any]):
+    async def _handle_dialogue_request(self, request_data: Dict[str, Any]) -> None:
         """Handle dialogue requests from agents."""
         try:
             initiator = request_data.get("initiator")
@@ -2106,7 +2106,7 @@ class EnhancedMultiAgentBridge:
         except Exception as e:
             logger.error(f"Error handling dialogue request: {e}")
 
-    async def _handle_relationship_update(self, update_data: Dict[str, Any]):
+    async def _handle_relationship_update(self, update_data: Dict[str, Any]) -> None:
         """Handle relationship update events."""
         agent_a = update_data.get("agent_a")
         agent_b = update_data.get("agent_b")
@@ -2120,7 +2120,7 @@ class EnhancedMultiAgentBridge:
             new_value = max(-1.0, min(1.0, current_value + change))
             self.agent_relationships[agent_a][agent_b] = new_value
 
-    async def _handle_narrative_pressure(self, pressure_data: Dict[str, Any]):
+    async def _handle_narrative_pressure(self, pressure_data: Dict[str, Any]) -> None:
         """Handle narrative pressure changes."""
         pressure_type = pressure_data.get("type")
         pressure_value = pressure_data.get("value", 0.0)
@@ -2133,7 +2133,7 @@ class EnhancedMultiAgentBridge:
                 pressure_type
             ] = pressure_value
 
-    async def _handle_ai_insight(self, insight_data: Dict[str, Any]):
+    async def _handle_ai_insight(self, insight_data: Dict[str, Any]) -> None:
         """Handle AI-generated insights."""
         if "ai_insights" not in self.narrative_intelligence:
             self.narrative_intelligence["ai_insights"] = []

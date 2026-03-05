@@ -225,7 +225,7 @@ class CircuitBreaker:
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half_open
 
-    async def call(self, func: Callable, *args, **kwargs):
+    async def call(self, func: Callable, *args, **kwargs) -> None:
         """Execute function with circuit breaker protection."""
         if self.state == "open":
             if (
@@ -438,7 +438,7 @@ class EventBus:
             event_ids.append(event_id)
         return event_ids
 
-    async def _process_event(self, event: Event):
+    async def _process_event(self, event: Event) -> None:
         """Process a single event through all registered handlers."""
         async with self.processing_semaphore:
             start_time = time.time()
@@ -499,7 +499,7 @@ class EventBus:
                 if self.metrics:
                     self.metrics.record_event_failed()
 
-    async def _handle_retry_or_dead_letter(self, event: Event):
+    async def _handle_retry_or_dead_letter(self, event: Event) -> None:
         """Handle event retry logic or move to dead letter queue."""
         event.retry_count += 1
 
@@ -523,12 +523,12 @@ class EventBus:
                     f"Event {event.event_id} moved to dead letter queue after {event.retry_count} attempts"
                 )
 
-    async def _retry_event_after_delay(self, event: Event, delay: int):
+    async def _retry_event_after_delay(self, event: Event, delay: int) -> None:
         """Retry an event after a delay."""
         await asyncio.sleep(delay)
         await self._process_event(event)
 
-    async def _store_event(self, event: Event):
+    async def _store_event(self, event: Event) -> None:
         """Store event for persistence."""
         if self.redis:
             key = f"{self.config.redis_key_prefix}:events:{event.event_id}"
@@ -536,7 +536,7 @@ class EventBus:
         else:
             self.event_store.append(event)
 
-    async def _publish_to_redis(self, event: Event):
+    async def _publish_to_redis(self, event: Event) -> None:
         """Publish event to Redis pub/sub for distributed processing."""
         if self.redis:
             channel = f"{self.config.redis_key_prefix}:channel:{event.event_type}"

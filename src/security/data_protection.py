@@ -113,7 +113,7 @@ class ConsentRecord:
     withdrawn_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
     consent_text: str = ""
-    processing_activities: List[str] = None
+    processing_activities: Optional[List[str]] = None
 
 
 @dataclass
@@ -660,7 +660,7 @@ class DataProtectionService:
 
             await conn.commit()
 
-    async def _delete_user_data(self, data_type: str, user_id: str):
+    async def _delete_user_data(self, data_type: str, user_id: str) -> None:
         """STANDARD USER DATA DELETION"""
         # This would implement actual data deletion based on data type
         # For now, this is a placeholder that logs the deletion
@@ -673,7 +673,7 @@ class DataProtectionService:
         # 4. Notify external processors
         # 5. Generate deletion certificate
 
-    async def _handle_consent_withdrawal(self, user_id: str, purpose: str):
+    async def _handle_consent_withdrawal(self, user_id: str, purpose: str) -> None:
         """STANDARD CONSENT WITHDRAWAL HANDLING"""
         # Schedule immediate deletion of data processed for this purpose
         await self.schedule_data_deletion(

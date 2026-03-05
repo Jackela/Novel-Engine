@@ -81,12 +81,12 @@ class PhaseResult:
         cls,
         phase_type: PhaseType,
         phase_status: PhaseStatus,
-        events_generated: List[UUID] = None,
-        events_consumed: List[UUID] = None,
-        artifacts_created: List[str] = None,
-        performance_metrics: Dict[str, float] = None,
+        events_generated: Optional[List[UUID]] = None,
+        events_consumed: Optional[List[UUID]] = None,
+        artifacts_created: Optional[List[str]] = None,
+        performance_metrics: Optional[Dict[str, float]] = None,
         ai_usage: Optional[Dict[str, Any]] = None,
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PhaseResult":
         """
         Create successful phase result.
@@ -121,10 +121,10 @@ class PhaseResult:
         phase_type: PhaseType,
         phase_status: PhaseStatus,
         error_details: Dict[str, Any],
-        events_consumed: List[UUID] = None,
-        performance_metrics: Dict[str, float] = None,
-        compensation_applied: List[str] = None,
-        metadata: Dict[str, Any] = None,
+        events_consumed: Optional[List[UUID]] = None,
+        performance_metrics: Optional[Dict[str, float]] = None,
+        compensation_applied: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PhaseResult":
         """
         Create failed phase result.
@@ -281,7 +281,7 @@ class PipelineResult:
         turn_id: UUID,
         phase_results: List[PhaseResult],
         total_execution_time: timedelta,
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PipelineResult":
         """
         Create successful pipeline result.
@@ -333,8 +333,8 @@ class PipelineResult:
         phase_results: List[PhaseResult],
         total_execution_time: timedelta,
         error_summary: Dict[str, Any],
-        saga_actions_taken: List[str] = None,
-        metadata: Dict[str, Any] = None,
+        saga_actions_taken: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PipelineResult":
         """
         Create failed pipeline result.

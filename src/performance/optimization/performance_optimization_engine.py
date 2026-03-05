@@ -240,7 +240,7 @@ class MultiTierCache:
 
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Set value in all cache levels."""
         ttl = ttl or self.config.l1_cache_ttl
 
@@ -268,7 +268,7 @@ class MultiTierCache:
                         self.l1_access_order.remove(key)
         return None
 
-    async def _set_l1(self, key: str, value: Any, ttl: int):
+    async def _set_l1(self, key: str, value: Any, ttl: int) -> None:
         """Set in L1 memory cache with LRU eviction."""
         async with self.l1_lock:
             expire_time = time.time() + ttl
@@ -298,7 +298,7 @@ class MultiTierCache:
             logger.warning(f"L2 cache get error: {e}")
         return None
 
-    async def _set_l2(self, key: str, value: Any, ttl: int):
+    async def _set_l2(self, key: str, value: Any, ttl: int) -> None:
         """Set in L2 Redis cache."""
         try:
             if self.redis_client:
@@ -394,7 +394,7 @@ class ConnectionPool:
             self.active_connections += 1
             return conn
 
-    async def return_connection(self, conn: aiosqlite.Connection):
+    async def return_connection(self, conn: aiosqlite.Connection) -> None:
         """Return a connection to the pool."""
         self.active_connections -= 1
         self.connection_stats["active"] = self.active_connections
@@ -442,7 +442,7 @@ class BatchProcessor:
 
         return await future
 
-    async def _batch_timer(self, operation_type: str):
+    async def _batch_timer(self, operation_type: str) -> None:
         """Timer to trigger batch processing."""
         try:
             await asyncio.sleep(self.config.batch_timeout)
@@ -452,7 +452,7 @@ class BatchProcessor:
         except asyncio.CancelledError:
             logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    async def _process_batch(self, operation_type: str):
+    async def _process_batch(self, operation_type: str) -> None:
         """Process a batch of operations."""
         if operation_type not in self.pending_operations:
             return

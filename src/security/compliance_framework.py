@@ -219,7 +219,7 @@ class SecurityEventMonitor:
             )
             await db.commit()
 
-    async def log_event(self, event: SecurityEvent):
+    async def log_event(self, event: SecurityEvent) -> None:
         """Log a security event"""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
@@ -249,7 +249,7 @@ class SecurityEventMonitor:
         # Check for threat patterns
         await self._analyze_threat_patterns(event)
 
-    async def _trigger_handlers(self, event: SecurityEvent):
+    async def _trigger_handlers(self, event: SecurityEvent) -> None:
         """Trigger registered event handlers"""
         handlers = self.event_handlers.get(event.event_type, [])
         handlers.extend(self.event_handlers.get("*", []))  # Wildcard handlers
@@ -263,7 +263,7 @@ class SecurityEventMonitor:
             except Exception as e:
                 logger.error(f"Event handler error: {e}")
 
-    async def _analyze_threat_patterns(self, event: SecurityEvent):
+    async def _analyze_threat_patterns(self, event: SecurityEvent) -> None:
         """Analyze event for threat patterns"""
         for pattern_name, pattern in self.threat_patterns.items():
             if await self._matches_pattern(event, pattern):

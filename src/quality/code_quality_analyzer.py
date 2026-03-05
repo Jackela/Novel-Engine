@@ -153,7 +153,7 @@ class CodeQualityAnalyzer:
         logger.info(f"CodeQualityAnalyzer initialized for {project_root}")
 
     def analyze_project(
-        self, exclude_patterns: List[str] = None, max_files: int = 50
+        self, exclude_patterns: Optional[List[str]] = None, max_files: int = 50
     ) -> Dict[str, Any]:
         """Analyze project for code quality issues with optimizations."""
         if exclude_patterns is None:

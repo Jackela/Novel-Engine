@@ -44,9 +44,9 @@ class UpdateWorldStateResult:
         world_state: Optional[WorldState] = None,
         error_message: Optional[str] = None,
         operations_applied: int = 0,
-        events_generated: List[str] = None,
+        events_generated: Optional[List[str]] = None,
         execution_time_ms: float = 0.0,
-        warnings: List[str] = None,
+        warnings: Optional[List[str]] = None,
     ) -> None:
         self.success = success
         self.world_state = world_state

@@ -226,7 +226,7 @@ class MetricsCollector:
         )
 
     def increment_counter(
-        self, name: str, labels: Dict[str, str] = None, value: float = 1.0
+        self, name: str, labels: Optional[Dict[str, str]] = None, value: float = 1.0
     ) -> None:
         """Increment a counter metric"""
         labels = labels or {}
@@ -246,7 +246,7 @@ class MetricsCollector:
                     name=name, metric_type="counter", value=value, labels=labels
                 )
 
-    def set_gauge(self, name: str, value: float, labels: Dict[str, str] = None) -> None:
+    def set_gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         """Set a gauge metric"""
         labels = labels or {}
 
@@ -263,7 +263,7 @@ class MetricsCollector:
             )
 
     def observe_histogram(
-        self, name: str, value: float, labels: Dict[str, str] = None
+        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
     ) -> None:
         """Observe a histogram metric"""
         labels = labels or {}
@@ -652,7 +652,7 @@ class SecurityAuditor:
         user_id: str,
         event_type: str,
         success: bool,
-        details: Dict[str, Any] = None,
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Log authentication event"""
         event_data = {
@@ -679,7 +679,7 @@ class SecurityAuditor:
         resource: str,
         action: str,
         granted: bool,
-        details: Dict[str, Any] = None,
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Log authorization event"""
         event_data = {
@@ -838,7 +838,7 @@ class ObservabilityManager:
     """Main observability manager orchestrating all components"""
 
     def __init__(
-        self, service_name: str = "novel-engine", config: Dict[str, Any] = None
+        self, service_name: str = "novel-engine", config: Optional[Dict[str, Any]] = None
     ) -> None:
         self.service_name = service_name
         self.config = config or {}
@@ -1118,7 +1118,7 @@ class ObservabilityManager:
 
 # Factory function
 def create_observability_manager(
-    service_name: str = "novel-engine", config: Dict[str, Any] = None
+    service_name: str = "novel-engine", config: Optional[Dict[str, Any]] = None
 ) -> ObservabilityManager:
     """Create observability manager instance"""
     return ObservabilityManager(service_name, config)

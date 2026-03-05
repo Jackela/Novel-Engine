@@ -126,12 +126,12 @@ class SecurityEvent:
     method: Optional[str] = None
     status_code: Optional[int] = None
     message: str = ""
-    details: Dict[str, Any] = None
+    details: Optional[Dict[str, Any]] = None
     threat_level: ThreatLevel = ThreatLevel.BENIGN
     geolocation: Optional[Dict[str, str]] = None
     session_id: Optional[str] = None
     request_id: Optional[str] = None
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         if self.details is None:
@@ -178,7 +178,7 @@ class ThreatIntelligence:
     source: str
     first_seen: datetime
     last_seen: datetime
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
 
 
 class SecurityLogger:
@@ -383,7 +383,7 @@ class SecurityLogger:
             await conn.commit()
             logger.info("SECURITY LOGGING DATABASE INITIALIZED")
 
-    async def log_security_event(self, event: SecurityEvent):
+    async def log_security_event(self, event: SecurityEvent) -> None:
         """STANDARD SECURITY EVENT LOGGING"""
         try:
             # Store in database
@@ -432,7 +432,7 @@ class SecurityLogger:
         except Exception as e:
             logger.error(f"SECURITY EVENT LOGGING ERROR: {e}")
 
-    async def log_audit_event(self, audit_log: SecurityAuditLog):
+    async def log_audit_event(self, audit_log: SecurityAuditLog) -> None:
         """STANDARD AUDIT EVENT LOGGING"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -474,7 +474,7 @@ class SecurityLogger:
         except Exception as e:
             logger.error(f"AUDIT EVENT LOGGING ERROR: {e}")
 
-    async def _analyze_threat(self, event: SecurityEvent):
+    async def _analyze_threat(self, event: SecurityEvent) -> None:
         """STANDARD THREAT ANALYSIS"""
         try:
             risk_score = 0.0
@@ -564,7 +564,7 @@ class SecurityLogger:
             f"Risk Score: {risk_score:.2f}"
         )
 
-    async def _auto_block_ip(self, ip_address: str, risk_score: float):
+    async def _auto_block_ip(self, ip_address: str, risk_score: float) -> None:
         """STANDARD AUTOMATIC IP BLOCKING"""
         # In production, this would integrate with firewall/WAF
         self.suspicious_ips[ip_address] = {
@@ -576,7 +576,7 @@ class SecurityLogger:
 
         logger.warning(f"IP AUTO-BLOCKED: {ip_address} | Risk Score: {risk_score:.2f}")
 
-    async def _update_session_tracking(self, event: SecurityEvent):
+    async def _update_session_tracking(self, event: SecurityEvent) -> None:
         """STANDARD SESSION TRACKING UPDATE"""
         if not event.session_id:
             return

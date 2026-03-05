@@ -258,7 +258,7 @@ class MemoryCache(CacheInterface):
                 + response_time
             ) / total_requests
 
-    async def _evict_entries(self, count: int = 1):
+    async def _evict_entries(self, count: int = 1) -> None:
         """Evict cache entries using LRU strategy"""
         evicted = 0
         while evicted < count and self._access_order:
@@ -576,7 +576,7 @@ class DistributedCache:
             result_l2 = await self.l2_cache.clear()
             return result_l1 and result_l2
 
-    async def warm_cache(self, keys: List[str]):
+    async def warm_cache(self, keys: List[str]) -> None:
         """Warm cache by preloading data"""
         logger.info(f"Warming cache with {len(keys)} keys")
 
@@ -603,7 +603,7 @@ class DistributedCache:
                     logger.error(f"Cache loader error for {key}: {e}")
         return None
 
-    async def _write_to_source(self, key: str, value: Any):
+    async def _write_to_source(self, key: str, value: Any) -> None:
         """Write data to source (write-through)"""
         # This would integrate with your database layer
         logger.debug(f"Write-through to source: {key}")
@@ -661,7 +661,7 @@ class CharacterCache:
         """Get character list with caching"""
         return await self.cache.get("character_list")
 
-    async def invalidate_character(self, character_id: str):
+    async def invalidate_character(self, character_id: str) -> None:
         """Invalidate character cache"""
         await self.cache.delete(f"character:{character_id}")
         await self.cache.delete("character_list")  # Invalidate list cache too

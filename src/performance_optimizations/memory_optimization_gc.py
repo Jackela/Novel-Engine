@@ -316,7 +316,7 @@ class MemoryOptimizer:
             memory_pressure=pressure,
         )
 
-    async def _optimize_based_on_pressure(self, metrics: MemoryMetrics):
+    async def _optimize_based_on_pressure(self, metrics: MemoryMetrics) -> None:
         """Optimize memory based on current pressure level."""
         if metrics.memory_pressure == MemoryPressureLevel.CRITICAL:
             # Aggressive optimization
