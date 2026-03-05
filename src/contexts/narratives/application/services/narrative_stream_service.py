@@ -201,7 +201,7 @@ def _select_narrative_generator() -> NarrativeGeneratorPort:
             from src.contexts.narratives.infrastructure.generators.llm_narrative_generator import (
                 LLMNarrativeGenerator,
             )
-            return LLMNarrativeGenerator()  # type: ignore[return-value]
+            return LLMNarrativeGenerator()  # type: ignore[no-any-return]
         except ImportError:
             return DeterministicNarrativeGenerator()
     return DeterministicNarrativeGenerator()

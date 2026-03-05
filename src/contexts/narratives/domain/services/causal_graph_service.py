@@ -427,7 +427,7 @@ class CausalGraphService:
         # Calculate graph metrics
         graph_complexity = self._calculate_graph_complexity()
         consistency_score = self._calculate_consistency_score()
-        _ = self._calculate_narrative_flow_score()  # Not used but kept for side effects
+        narrative_flow_score = self._calculate_narrative_flow_score()
 
         analysis = CausalAnalysis(
             root_causes=root_causes,
@@ -480,7 +480,9 @@ class CausalGraphService:
 
             if node_id in self.nodes:
                 node = self.nodes[node_id]
-                for neighbor in node.direct_effects.union(node.indirect_effects):
+                direct_effects = node.direct_effects or frozenset()
+                indirect_effects = node.indirect_effects or frozenset()
+                for neighbor in direct_effects.union(indirect_effects):
                     if neighbor in rec_stack:
                         # Found a cycle
                         cycle_start = current_path.index(neighbor)
@@ -519,13 +521,12 @@ class CausalGraphService:
         self, start_node: str, visited: Optional[Set[str]] = None
     ) -> List[CausalPath]:
         """Get all chains starting from a specific node."""
-        if visited is None:
-            visited: set[Any] = set()
-        if start_node in visited or start_node not in self.nodes:
+        visited_set: Set[str] = visited if visited is not None else set()
+        if start_node in visited_set or start_node not in self.nodes:
             return []
 
-        visited = visited.copy()
-        visited.add(start_node)
+        visited_set = visited_set.copy()
+        visited_set.add(start_node)
 
         node = self.nodes[start_node]
         chains: list[Any] = []
@@ -619,7 +620,8 @@ class CausalGraphService:
         # Check for extremely weak causal chains
         weak_chains = 0
         for node in self.nodes.values():
-            for rel_id, rel_info in node.causal_relationships.items():
+            rels = node.causal_relationships or {}
+            for rel_id, rel_info in rels.items():
                 strength_str = rel_info.get("strength", "moderate")
                 if strength_str in ["very_weak", "negligible"]:
                     weak_chains += 1
@@ -792,7 +794,7 @@ class CausalGraphService:
             "consistency_score": float(analysis.consistency_score),
             "narrative_flow_score": float(analysis.narrative_flow_score),
             "total_relationships": sum(
-                len(node.direct_causes) + len(node.direct_effects)
+                len(node.direct_causes or frozenset()) + len(node.direct_effects or frozenset())
                 for node in self.nodes.values()
             )
             // 2,

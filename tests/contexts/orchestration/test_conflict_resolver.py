@@ -9,6 +9,7 @@ lifecycle conflict detection.
 
 import pytest
 from datetime import datetime, timedelta
+from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import uuid4
 

@@ -287,7 +287,8 @@ class NarrativeFlowService:
 
         if not positioning_scores:
             return Decimal("5.0")
-        return sum(positioning_scores) / Decimal(str(len(positioning_scores)))
+        result = sum(positioning_scores) / Decimal(str(len(positioning_scores)))
+        return Decimal(result)
 
     def _assess_resolution_quality(self, arc: NarrativeArc) -> Decimal:
         """Assess the quality of story resolution."""
@@ -851,7 +852,7 @@ class NarrativeFlowService:
         # Good distribution has tension points spread throughout
         if len(high_tension_positions) >= 2:
             spread = max(high_tension_positions) - min(high_tension_positions)
-            return spread >= Decimal("0.5")  # Spread across at least half the story
+            return bool(spread >= Decimal("0.5"))  # Spread across at least half the story
 
         return False
 

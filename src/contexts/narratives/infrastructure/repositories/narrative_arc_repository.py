@@ -103,8 +103,8 @@ class NarrativeArcEntity(Base):
     # Arc metrics and properties
     target_length = Column(Integer, nullable=True)
     current_length = Column(Integer, default=0)
-    completion_percentage = Column(DECIMAL(4, 3), default=0.0)
-    complexity_score = Column(DECIMAL(3, 1), default=5.0)
+    completion_percentage: Column[Any] = Column(DECIMAL(4, 3), default=0.0)
+    complexity_score: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Arc status and lifecycle
     status = Column(String(50), default="planning", index=True)
@@ -112,9 +112,9 @@ class NarrativeArcEntity(Base):
     end_sequence = Column(Integer, nullable=True)
 
     # Quality metrics
-    narrative_coherence = Column(DECIMAL(3, 1), default=5.0)
-    thematic_consistency = Column(DECIMAL(3, 1), default=5.0)
-    pacing_effectiveness = Column(DECIMAL(3, 1), default=5.0)
+    narrative_coherence: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    thematic_consistency: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    pacing_effectiveness: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Relationships
     parent_arc_id = Column(PG_UUID(as_uuid=True), nullable=True)
@@ -187,9 +187,9 @@ class PlotPointEntity(Base):
     sequence_order = Column(Integer, nullable=False, index=True)
 
     # Intensity metrics
-    emotional_intensity = Column(DECIMAL(3, 1), default=5.0)
-    dramatic_tension = Column(DECIMAL(3, 1), default=5.0)
-    story_significance = Column(DECIMAL(3, 1), default=5.0)
+    emotional_intensity: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    dramatic_tension: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    story_significance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Character and event relationships
     involved_characters = Column(JSON, default=list)
@@ -230,11 +230,11 @@ class NarrativeThemeEntity(Base):
     description = Column(Text, nullable=False)
 
     # Theme metrics
-    moral_complexity = Column(DECIMAL(3, 1), default=5.0)
-    emotional_resonance = Column(DECIMAL(3, 1), default=5.0)
-    universal_appeal = Column(DECIMAL(3, 1), default=5.0)
-    cultural_significance = Column(DECIMAL(3, 1), default=5.0)
-    development_potential = Column(DECIMAL(3, 1), default=5.0)
+    moral_complexity: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    emotional_resonance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    universal_appeal: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    cultural_significance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    development_potential: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Theme development
     symbolic_elements = Column(JSON, default=list)
@@ -265,12 +265,12 @@ class StoryPacingEntity(Base):
     end_sequence = Column(Integer, nullable=False)
 
     # Pacing metrics
-    event_density = Column(DECIMAL(3, 1), default=5.0)
-    tension_curve = Column(JSON, default=list)
-    dialogue_ratio = Column(DECIMAL(3, 2), default=0.4)
-    action_ratio = Column(DECIMAL(3, 2), default=0.3)
-    reflection_ratio = Column(DECIMAL(3, 2), default=0.3)
-    description_density = Column(DECIMAL(3, 1), default=5.0)
+    event_density: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    tension_curve: Column[Any] = Column(JSON, default=list)
+    dialogue_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.4)
+    action_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.3)
+    reflection_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.3)
+    description_density: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Focus and techniques
     character_focus = Column(JSON, default=list)
@@ -298,7 +298,7 @@ class NarrativeContextEntity(Base):
     context_type = Column(String(100), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
-    importance = Column(DECIMAL(3, 1), default=5.0)
+    importance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
     is_persistent = Column(Boolean, default=False)
 
     # Sequence range
