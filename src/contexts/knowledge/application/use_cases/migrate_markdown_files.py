@@ -92,7 +92,7 @@ class MigrationAdapter(Protocol):
 
     async def verify_migration(self, markdown_directory: str) -> Dict[str, Any]: ...
 
-    async def rollback(
+    async def rollback_migration(
         self,
         backup_path: str,
     ) -> Dict[str, Any]:
@@ -118,7 +118,7 @@ class MigrationAdapter(Protocol):
             backup_path=backup_path,
         )
 
-        return report
+        return dict(report)
 
     async def verify(
         self,
@@ -147,4 +147,4 @@ class MigrationAdapter(Protocol):
             markdown_directory=markdown_directory,
         )
 
-        return report
+        return dict(report)

@@ -199,7 +199,7 @@ def _select_narrative_generator() -> NarrativeGeneratorPort:
     if os.getenv("ENABLE_LLM_GENERATION", "").lower() == "true":
         try:
             from src.contexts.narratives.infrastructure.generators.llm_narrative_generator import (
-                LLMNarrativeGenerator,
+                LLMNarrativeGenerator,  # type: ignore[import-not-found]
             )
 
             return LLMNarrativeGenerator()

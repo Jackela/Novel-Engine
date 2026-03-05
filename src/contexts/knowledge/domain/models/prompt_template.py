@@ -741,7 +741,7 @@ class PromptTemplate:
             ValueError: If circular reference is detected in the extends chain
         """
         if visited is None:
-            visited: set[Any] = set()
+            visited = set()
         if self.id in visited:
             raise ValueError(
                 f"Circular reference detected in extends chain: "
@@ -749,7 +749,7 @@ class PromptTemplate:
                 f"is referenced multiple times"
             )
 
-        visited.add(self.id)
+        visited.add(str(self.id))
 
         for parent_ref in self.extends:
             # Find parent by name or ID
@@ -764,7 +764,8 @@ class PromptTemplate:
                 continue
 
             # Recursively check parent's extends
-            parent.check_circular_extends(parent_templates, visited.copy())
+            if parent is not None:
+                parent.check_circular_extends(parent_templates, visited.copy())
 
     def resolve_content(
         self,
@@ -786,14 +787,14 @@ class PromptTemplate:
             ValueError: If circular reference is detected or parent template not found
         """
         if visited is None:
-            visited: set[Any] = set()
+            visited = set()
         if self.id in visited:
             raise ValueError(
                 f"Circular reference detected: template '{self.name}' (id: {self.id}) "
                 f"is referenced multiple times in the inheritance chain"
             )
 
-        visited.add(self.id)
+        visited.add(str(self.id))
         result = self.content
 
         # Process includes in order of appearance

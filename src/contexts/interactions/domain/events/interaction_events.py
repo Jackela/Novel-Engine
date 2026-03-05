@@ -104,7 +104,11 @@ class ProposalSubmitted(InteractionDomainEvent):
             raise ValueError("proposal_title cannot be empty")
         if self.terms_count <= 0:
             raise ValueError("terms_count must be positive")
-        if self.expires_at and self.expires_at <= self.submitted_at:
+        if (
+            self.expires_at is not None
+            and self.submitted_at is not None
+            and self.expires_at <= self.submitted_at
+        ):
             raise ValueError("expires_at must be after submitted_at")
 
 
@@ -119,6 +123,8 @@ class ProposalWithdrawn(InteractionDomainEvent):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        if self.withdrawn_at is None:
+            raise ValueError("withdrawn_at cannot be None")
         if self.withdrawn_at.tzinfo is None:
             raise ValueError("withdrawn_at must be timezone-aware")
 
@@ -134,6 +140,8 @@ class ProposalExpired(InteractionDomainEvent):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        if self.expired_at is None:
+            raise ValueError("expired_at cannot be None")
         if self.expired_at.tzinfo is None:
             raise ValueError("expired_at must be timezone-aware")
         if self.received_responses < 0:
@@ -218,7 +226,8 @@ class NegotiationCompleted(InteractionDomainEvent):
             raise ValueError("outcome cannot be empty")
         if not self.final_proposals:
             raise ValueError("final_proposals cannot be empty")
-        if len(self.participating_parties) < 2:
+        parties = self.participating_parties or []
+        if len(parties) < 2:
             raise ValueError("participating_parties must have at least 2 parties")
         if self.session_duration < 0:
             raise ValueError("session_duration cannot be negative")
@@ -256,6 +265,10 @@ class SessionTimeoutWarning(InteractionDomainEvent):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        if self.warning_at is None:
+            raise ValueError("warning_at cannot be None")
+        if self.expires_at is None:
+            raise ValueError("expires_at cannot be None")
         if self.expires_at <= self.warning_at:
             raise ValueError("expires_at must be after warning_at")
         if self.time_remaining <= 0:
@@ -281,7 +294,8 @@ class ConflictDetected(InteractionDomainEvent):
             object.__setattr__(self, "conflicting_parties", [])
         if not self.conflict_type.strip():
             raise ValueError("conflict_type cannot be empty")
-        if len(self.conflicting_parties) < 2:
+        conflicting = self.conflicting_parties or []
+        if len(conflicting) < 2:
             raise ValueError("conflicting_parties must have at least 2 parties")
         if not self.conflict_description.strip():
             raise ValueError("conflict_description cannot be empty")
@@ -393,11 +407,13 @@ class CommunicationStyleConflict(InteractionDomainEvent):
             object.__setattr__(self, "conflicting_parties", [])
         if self.communication_styles is None:
             object.__setattr__(self, "communication_styles", {})
-        if len(self.conflicting_parties) < 2:
+        conflicting_parties_list = self.conflicting_parties or []
+        if len(conflicting_parties_list) < 2:
             raise ValueError("conflicting_parties must have at least 2 parties")
         if not self.conflict_details.strip():
             raise ValueError("conflict_details cannot be empty")
-        if len(self.communication_styles) < 2:
+        comm_styles = self.communication_styles or {}
+        if len(comm_styles) < 2:
             raise ValueError("communication_styles must include at least 2 parties")
 
 

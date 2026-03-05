@@ -100,18 +100,12 @@ class StoryPacing:
         # Convert mutable collections to immutable for hashability
         if self.tension_curve is None:
             object.__setattr__(self, "tension_curve", ())
-        elif isinstance(self.tension_curve, list):
-            object.__setattr__(self, "tension_curve", tuple(self.tension_curve))
 
         if self.emotional_peaks is None:
             object.__setattr__(self, "emotional_peaks", ())
-        elif isinstance(self.emotional_peaks, list):
-            object.__setattr__(self, "emotional_peaks", tuple(self.emotional_peaks))
 
         if self.rest_periods is None:
             object.__setattr__(self, "rest_periods", ())
-        elif isinstance(self.rest_periods, list):
-            object.__setattr__(self, "rest_periods", tuple(self.rest_periods))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -175,19 +169,22 @@ class StoryPacing:
             )
 
         # Validate tension curve
-        for tension_value in self.tension_curve:
+        tension_curve = self.tension_curve or ()
+        for tension_value in tension_curve:
             if not (Decimal("0") <= tension_value <= Decimal("10")):
                 raise ValueError("Tension curve values must be between 0 and 10")
 
         # Validate peak and rest positions
         sequence_range = range(self.start_sequence, self.end_sequence + 1)
-        for peak_pos in self.emotional_peaks:
+        emotional_peaks = self.emotional_peaks or ()
+        for peak_pos in emotional_peaks:
             if peak_pos not in sequence_range:
                 raise ValueError(
                     f"Emotional peak position {peak_pos} outside segment range"
                 )
 
-        for rest_pos in self.rest_periods:
+        rest_periods = self.rest_periods or ()
+        for rest_pos in rest_periods:
             if rest_pos not in sequence_range:
                 raise ValueError(
                     f"Rest period position {rest_pos} outside segment range"
@@ -200,11 +197,11 @@ class StoryPacing:
         if len(self.segment_name) > 200:
             raise ValueError("Segment name too long (max 200 characters)")
 
-    def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values: Any) -> None:
+    def _hash_components(self) -> tuple[Any, ...]:
+        def _dict_to_hashable(values: Any) -> frozenset[Any]:
             if not values:
                 return frozenset()
-            items: list[Any] = []
+            items: list[tuple[str, Any]] = []
             for key, value in sorted(values.items()):
                 if isinstance(value, dict):
                     value = _dict_to_hashable(value)
@@ -324,8 +321,10 @@ class StoryPacing:
         # Add complexity for structural elements
         base_complexity += Decimal(str(self.scene_transitions * 0.5))
         base_complexity += Decimal(str(self.time_jumps * 1.0))
-        base_complexity += Decimal(str(len(self.emotional_peaks) * 0.8))
-        base_complexity += Decimal(str(len(self.rest_periods) * 0.3))
+        emotional_peaks = self.emotional_peaks or ()
+        rest_periods = self.rest_periods or ()
+        base_complexity += Decimal(str(len(emotional_peaks) * 0.8))
+        base_complexity += Decimal(str(len(rest_periods) * 0.3))
 
         # Add complexity for stylistic variation
         style_variance = (
@@ -404,11 +403,13 @@ class StoryPacing:
 
     def is_emotional_peak(self, sequence_number: int) -> bool:
         """Check if a sequence is marked as an emotional peak."""
-        return sequence_number in self.emotional_peaks
+        emotional_peaks = self.emotional_peaks or ()
+        return sequence_number in emotional_peaks
 
     def is_rest_period(self, sequence_number: int) -> bool:
         """Check if a sequence is marked as a rest period."""
-        return sequence_number in self.rest_periods
+        rest_periods = self.rest_periods or ()
+        return sequence_number in rest_periods
 
     def get_pacing_context(self) -> Dict[str, Any]:
         """
@@ -442,8 +443,8 @@ class StoryPacing:
             "structural_elements": {
                 "scene_transitions": self.scene_transitions,
                 "time_jumps": self.time_jumps,
-                "emotional_peaks": len(self.emotional_peaks),
-                "rest_periods": len(self.rest_periods),
+                "emotional_peaks": len(self.emotional_peaks or ()),
+                "rest_periods": len(self.rest_periods or ()),
                 "curiosity_hooks": self.curiosity_hooks,
             },
         }

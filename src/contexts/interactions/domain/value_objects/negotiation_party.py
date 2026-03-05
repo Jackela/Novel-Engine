@@ -194,11 +194,13 @@ class PartyPreferences:
 
         # Style compatibility (simplified)
         incompatible_styles = {
-            (NegotiationStyle.AGGRESSIVE, NegotiationStyle.AVOIDING),
+            (NegotiationStyle.COMPETITIVE, NegotiationStyle.AVOIDING),
             (NegotiationStyle.COMPETITIVE, NegotiationStyle.ACCOMMODATING),
         }
 
-        style_pair = tuple(sorted([self.negotiation_style, other.negotiation_style]))
+        styles = [self.negotiation_style, other.negotiation_style]
+        # Sort by value for consistent comparison
+        style_pair = tuple(sorted(styles, key=lambda x: x.value))
         return style_pair not in incompatible_styles
 
     def __eq__(self, other: Any) -> bool:
@@ -347,13 +349,14 @@ class NegotiationParty:
             return Decimal("0")
 
         # Weight by authority level
-        authority_multiplier = {
+        authority_multiplier_map = {
             AuthorityLevel.FULL_AUTHORITY: Decimal("1.0"),
             AuthorityLevel.LIMITED_AUTHORITY: Decimal("0.8"),
             AuthorityLevel.CONDITIONAL_AUTHORITY: Decimal("0.7"),
             AuthorityLevel.ADVISORY_ONLY: Decimal("0.3"),
             AuthorityLevel.OBSERVER_ONLY: Decimal("0.1"),
-        }[self.authority_level]
+        }
+        authority_multiplier = authority_multiplier_map[self.authority_level]
 
         # Calculate weighted average proficiency
         total_proficiency = sum(
@@ -363,8 +366,8 @@ class NegotiationParty:
 
         avg_proficiency = total_proficiency / len(relevant_capabilities)
 
-        # Apply authority multiplier
-        negotiation_power = avg_proficiency * authority_multiplier
+        # Apply authority multiplier - cast to Decimal
+        negotiation_power = avg_proficiency * Decimal(authority_multiplier)
 
         # Apply role modifier
         role_modifier = {
@@ -470,7 +473,10 @@ class NegotiationParty:
         if not self.capabilities:
             return Decimal("0")
 
-        total = sum(cap.get_effective_proficiency() for cap in self.capabilities)
+        total = Decimal("0")
+        for cap in self.capabilities:
+            effective = cap.get_effective_proficiency()
+            total += Decimal(str(effective))
         return total / len(self.capabilities)
 
     def __eq__(self, other: Any) -> bool:

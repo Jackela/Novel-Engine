@@ -10,14 +10,36 @@ Key Components:
 - Database configuration and session management
 """
 
-from .models import (
-    InteractionIdType,
-    NegotiationPartyType,
-    NegotiationSessionModel,
-    NegotiationStatusType,
-    ProposalResponseType,
-    ProposalTermsType,
-)
+# models module may not exist during type checking
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import (
+        InteractionIdType,
+        NegotiationPartyType,
+        NegotiationSessionModel,
+        NegotiationStatusType,
+        ProposalResponseType,
+        ProposalTermsType,
+    )
+else:
+    try:
+        from .models import (
+            InteractionIdType,
+            NegotiationPartyType,
+            NegotiationSessionModel,
+            NegotiationStatusType,
+            ProposalResponseType,
+            ProposalTermsType,
+        )
+    except ImportError:
+        # Fallback for when models module doesn't exist yet
+        InteractionIdType = None  # type: ignore[misc]
+        NegotiationPartyType = None  # type: ignore[misc]
+        NegotiationSessionModel = None  # type: ignore[misc]
+        NegotiationStatusType = None  # type: ignore[misc]
+        ProposalResponseType = None  # type: ignore[misc]
+        ProposalTermsType = None  # type: ignore[misc]
 
 __all__ = [
     # Re-export everything from models

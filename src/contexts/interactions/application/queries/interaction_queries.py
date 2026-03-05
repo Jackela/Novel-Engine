@@ -222,12 +222,11 @@ class GetNegotiationAnalyticsQuery(InteractionQuery):
         if self.granularity not in ["hour", "day", "phase"]:
             raise ValueError("granularity must be one of: hour, day, phase")
         if self.analytics_types is None:
-            self.analytics_types = [
-                "momentum",
-                "conflicts",
-                "viability",
-                "compatibility",
-            ]
+            object.__setattr__(
+                self,
+                "analytics_types",
+                ["momentum", "conflicts", "viability", "compatibility"],
+            )
 
 
 @dataclass(frozen=True)
@@ -296,9 +295,7 @@ class GetSessionPerformanceQuery(InteractionQuery):
     """Query to get performance metrics for a negotiation session."""
 
     session_id: UUID
-    metrics_types: List[str] = (
-        None  # efficiency, effectiveness, engagement, satisfaction
-    )
+    metrics_types: Optional[List[str]] = None
     include_benchmarks: bool = True
     include_party_performance: bool = True
     performance_period: Optional[str] = None  # overall, recent, phase-specific
@@ -306,7 +303,9 @@ class GetSessionPerformanceQuery(InteractionQuery):
     def __post_init__(self) -> None:
         super().__post_init__()
         if self.metrics_types is None:
-            self.metrics_types = ["efficiency", "effectiveness", "engagement"]
+            object.__setattr__(
+                self, "metrics_types", ["efficiency", "effectiveness", "engagement"]
+            )
         if self.performance_period is not None and self.performance_period not in [
             "overall",
             "recent",
@@ -375,9 +374,9 @@ class SearchNegotiationSessionsQuery(InteractionQuery):
         if self.offset < 0:
             raise ValueError("offset must be non-negative")
         if self.search_fields is None:
-            self.search_fields = ["session_name", "session_type"]
+            object.__setattr__(self, "search_fields", ["session_name", "session_type"])
         if self.filters is None:
-            self.filters = {}
+            object.__setattr__(self, "filters", {})
 
 
 @dataclass(frozen=True)
@@ -441,7 +440,11 @@ class GetNegotiationTrendsQuery(InteractionQuery):
         if self.group_by not in ["day", "week", "month"]:
             raise ValueError("group_by must be one of: day, week, month")
         if self.trend_metrics is None:
-            self.trend_metrics = ["success_rate", "avg_duration", "completion_rate"]
+            object.__setattr__(
+                self,
+                "trend_metrics",
+                ["success_rate", "avg_duration", "completion_rate"],
+            )
 
 
 @dataclass(frozen=True)

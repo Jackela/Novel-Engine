@@ -13,12 +13,28 @@ from .interfaces import CacheEntryMeta
 
 @dataclass(slots=True)
 class _CacheEntry:
+    """Internal cache entry.
+    
+    Attributes:
+        value: Cached value
+        created_ts: Creation timestamp
+        meta: Entry metadata
+        ttl_seconds: Time-to-live (None = no expiry)
+    """
     value: str
     created_ts: float
     meta: CacheEntryMeta
     ttl_seconds: int | None
 
     def is_expired(self, now: float) -> bool:
+        """Check if entry has expired.
+        
+        Args:
+            now: Current timestamp
+            
+        Returns:
+            True if expired
+        """
         if self.ttl_seconds is None:
             return False
         return (now - self.created_ts) >= self.ttl_seconds
@@ -28,6 +44,12 @@ class ExactCache:
     """Thread-safe LRU cache with optional TTL and tag metadata."""
 
     def __init__(self, max_size: int = 512, default_ttl_seconds: int | None = 3600) -> None:
+        """Initialize exact cache.
+        
+        Args:
+            max_size: Maximum entries to store
+            default_ttl_seconds: Default TTL (None = no expiry)
+        """
         self.max_size = max_size
         self.default_ttl = default_ttl_seconds
         self._store: "OrderedDict[str, _CacheEntry]" = OrderedDict()
@@ -36,6 +58,14 @@ class ExactCache:
         self._misses = 0
 
     def get(self, key: str) -> Optional[str]:
+        """Get value from cache.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            Cached value or None if not found/expired
+        """
         now = time.time()
         with self._lock:
             entry = self._store.get(key)
@@ -57,6 +87,14 @@ class ExactCache:
         meta: CacheEntryMeta | None = None,
         ttl_seconds: int | None = None,
     ) -> None:
+        """Store a value in cache.
+        
+        Args:
+            key: Cache key
+            value: Value to store
+            meta: Optional metadata
+            ttl_seconds: Optional TTL override
+        """
         with self._lock:
             entry = _CacheEntry(
                 value=value,
@@ -71,6 +109,14 @@ class ExactCache:
             self._evict_if_needed()
 
     def invalidate(self, tags: Sequence[str]) -> int:
+        """Invalidate entries matching any tag.
+        
+        Args:
+            tags: Tags to match
+            
+        Returns:
+            Number of entries removed
+        """
         if not tags:
             return 0
         removed = 0
@@ -89,10 +135,16 @@ class ExactCache:
         return removed
 
     def clear(self) -> None:
+        """Clear all entries from cache."""
         with self._lock:
             self._store.clear()
 
     def stats(self) -> Dict[str, int]:
+        """Get cache statistics.
+        
+        Returns:
+            Dictionary with size, hits, misses
+        """
         with self._lock:
             return {
                 "size": len(self._store),
@@ -101,6 +153,7 @@ class ExactCache:
             }
 
     def _evict_if_needed(self) -> None:
+        """Evict oldest entries if cache is full."""
         with self._lock:
             while len(self._store) > self.max_size:
                 self._store.popitem(last=False)

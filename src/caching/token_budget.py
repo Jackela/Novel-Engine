@@ -1,4 +1,8 @@
-"""Token budget management primitives used by integration tests."""
+"""Token budget management primitives used by integration tests.
+
+Provides cost estimation, budget tracking, and spending limits
+for API operations like chat completions and embeddings.
+"""
 
 from __future__ import annotations
 
@@ -12,18 +16,21 @@ from typing import Any, Dict, List
 
 
 class OperationType(str, Enum):
+    """Types of operations that consume API tokens."""
     CHAT_COMPLETION = "chat_completion"
     EMBEDDING = "embedding"
     IMAGE_GENERATION = "image_generation"
 
 
 class BudgetPeriod(str, Enum):
+    """Time periods for budget limit windows."""
     HOURLY = "hourly"
     DAILY = "daily"
     MONTHLY = "monthly"
 
     @property
     def seconds(self) -> int:
+        """Get period duration in seconds."""
         if self is BudgetPeriod.HOURLY:
             return 3600
         if self is BudgetPeriod.DAILY:
@@ -33,6 +40,14 @@ class BudgetPeriod(str, Enum):
 
 @dataclass
 class BudgetLimit:
+    """A budget limit constraint for a specific time period.
+    
+    Attributes:
+        period: Time window for the limit
+        max_tokens: Maximum tokens allowed (None = unlimited)
+        max_cost: Maximum cost allowed (None = unlimited)
+        max_operations: Maximum operations allowed (None = unlimited)
+    """
     period: BudgetPeriod
     max_tokens: int | None = None
     max_cost: float | None = None
@@ -41,6 +56,14 @@ class BudgetLimit:
 
 @dataclass
 class TokenBudgetConfig:
+    """Configuration for token budget management.
+    
+    Attributes:
+        enable_persistence: Whether to save/load usage data
+        persistence_file: Path for usage data storage
+        enable_cache_integration: Whether to integrate with caching
+        enable_debug_logging: Whether to log debug messages
+    """
     enable_persistence: bool = True
     persistence_file: Path | None = None
     enable_cache_integration: bool = True
@@ -49,6 +72,21 @@ class TokenBudgetConfig:
 
 @dataclass
 class _UsageRecord:
+    """Internal record of an API operation.
+    
+    Attributes:
+        operation_id: Unique operation identifier
+        operation_type: Type of operation performed
+        model_name: Model used for the operation
+        prompt_tokens: Tokens in the prompt
+        completion_tokens: Tokens in the completion
+        total_cost: Calculated cost of the operation
+        duration_ms: Operation duration in milliseconds
+        success: Whether the operation succeeded
+        character_id: Associated character ID if any
+        created_ts: Unix timestamp of the operation
+        context: Optional context string
+    """
     operation_id: str
     operation_type: OperationType
     model_name: str
@@ -70,17 +108,32 @@ _FALLBACK_PRICING = {"prompt": 0.002, "completion": 0.0025}
 
 
 class TokenBudgetManager:
+    """Manages token budgets and tracks API usage.
+    
+    Provides cost estimation, budget checking, and usage reporting
+    for LLM operations. Supports persistence and multiple concurrent
+    budget limits.
+    """
+    
     def __init__(self, config: TokenBudgetConfig | None = None) -> None:
+        """Initialize the token budget manager.
+        
+        Args:
+            config: Configuration options (uses defaults if None)
+        """
         self.config = config or TokenBudgetConfig()
         self._limits: List[BudgetLimit] = []
         self._usage: List[_UsageRecord] = []
         self._load_usage()
 
-    # Limit management ---------------------------------------------------
     def add_budget_limit(self, limit: BudgetLimit) -> None:
+        """Add a budget limit constraint.
+        
+        Args:
+            limit: Budget limit to enforce
+        """
         self._limits.append(limit)
 
-    # Cost estimation ----------------------------------------------------
     def estimate_operation_cost(
         self,
         operation_type: OperationType,
@@ -88,6 +141,17 @@ class TokenBudgetManager:
         model_name: str,
         completion_tokens_estimate: int,
     ) -> Dict[str, float | bool | str]:
+        """Estimate the cost of an operation before execution.
+        
+        Args:
+            operation_type: Type of operation
+            prompt_text: The prompt text
+            model_name: Model to use
+            completion_tokens_estimate: Estimated completion tokens
+            
+        Returns:
+            Dictionary with cost estimates and budget check result
+        """
         prompt_tokens = max(1, math.ceil(len(prompt_text) / 4))
         completion_tokens = max(0, completion_tokens_estimate)
         total_tokens = prompt_tokens + completion_tokens
@@ -110,6 +174,17 @@ class TokenBudgetManager:
         estimated_cost: float,
         priority: str = "normal",
     ) -> Dict[str, str | bool]:
+        """Check if an operation is within budget.
+        
+        Args:
+            operation_type: Type of operation
+            estimated_tokens: Estimated token count
+            estimated_cost: Estimated cost
+            priority: Operation priority ('low', 'normal', 'high')
+            
+        Returns:
+            Dictionary with 'approved' boolean and 'reason' string
+        """
         within_budget = self._check_limits(estimated_tokens, estimated_cost)
         if within_budget:
             return {"approved": True, "reason": "Within configured limits."}
@@ -130,6 +205,22 @@ class TokenBudgetManager:
         character_id: str | None = None,
         operation_context: str | None = None,
     ) -> bool:
+        """Record an operation and update usage tracking.
+        
+        Args:
+            operation_id: Unique operation identifier
+            operation_type: Type of operation
+            model_name: Model used
+            prompt_tokens: Actual prompt tokens
+            completion_tokens: Actual completion tokens
+            duration_ms: Operation duration
+            success: Whether operation succeeded
+            character_id: Associated character ID
+            operation_context: Optional context
+            
+        Returns:
+            True if operation was within budget and recorded
+        """
         total_tokens = prompt_tokens + completion_tokens
         total_cost = _compute_cost(model_name, prompt_tokens, completion_tokens)
         if not self._check_limits(total_tokens, total_cost):
@@ -149,8 +240,15 @@ class TokenBudgetManager:
         self._usage.append(record)
         return True
 
-    # Reporting ----------------------------------------------------------
     def get_usage_report(self, period: BudgetPeriod) -> Dict[str, object]:
+        """Generate a usage report for a time period.
+        
+        Args:
+            period: Time period for the report
+            
+        Returns:
+            Dictionary with summary metrics, operations by type, and limits
+        """
         cutoff = time.time() - period.seconds
         window = [rec for rec in self._usage if rec.created_ts >= cutoff]
         total_tokens = sum(rec.prompt_tokens + rec.completion_tokens for rec in window)
@@ -181,6 +279,11 @@ class TokenBudgetManager:
         }
 
     def optimize_costs(self) -> Dict[str, List[str]]:
+        """Generate cost optimization recommendations.
+        
+        Returns:
+            Dictionary with list of recommendation strings
+        """
         if not self._usage:
             return {"recommendations": ["Enable caching to accumulate savings."]}
         pricey_models = sorted(
@@ -195,8 +298,8 @@ class TokenBudgetManager:
         recs.append("Track semantic cache hit-rate to unlock more savings.")
         return {"recommendations": recs}
 
-    # Persistence --------------------------------------------------------
     def save_usage_data(self) -> None:
+        """Save usage data to persistence file if enabled."""
         if not self.config.enable_persistence or not self.config.persistence_file:
             return
         payload = [
@@ -219,8 +322,16 @@ class TokenBudgetManager:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    # Internal helpers ---------------------------------------------------
     def _check_limits(self, tokens: int, cost: float) -> bool:
+        """Check if usage is within all configured limits.
+        
+        Args:
+            tokens: Token count to check
+            cost: Cost to check
+            
+        Returns:
+            True if within all limits
+        """
         if not self._limits:
             return True
         for limit in self._limits:
@@ -235,10 +346,19 @@ class TokenBudgetManager:
         return True
 
     def _operations_in_period(self, period: BudgetPeriod) -> int:
+        """Count operations within a time period.
+        
+        Args:
+            period: Time period to check
+            
+        Returns:
+            Number of operations in the period
+        """
         cutoff = time.time() - period.seconds
         return sum(1 for rec in self._usage if rec.created_ts >= cutoff)
 
     def _load_usage(self) -> None:
+        """Load usage data from persistence file if enabled."""
         path = self.config.persistence_file
         if not self.config.enable_persistence or not path or not path.exists():
             return
@@ -264,6 +384,16 @@ class TokenBudgetManager:
 
 
 def _compute_cost(model_name: str, prompt_tokens: int, completion_tokens: int) -> float:
+    """Compute operation cost based on model pricing.
+    
+    Args:
+        model_name: Name of the model
+        prompt_tokens: Number of prompt tokens
+        completion_tokens: Number of completion tokens
+        
+    Returns:
+        Total cost in USD
+    """
     pricing = _MODEL_PRICING.get(model_name.lower(), _FALLBACK_PRICING)
     prompt_cost = pricing["prompt"] * (prompt_tokens / 1000)
     completion_cost = pricing["completion"] * (completion_tokens / 1000)

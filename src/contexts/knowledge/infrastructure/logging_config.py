@@ -43,7 +43,7 @@ def get_knowledge_logger(
         logger.info("Creating knowledge entry", entry_id="123")
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         user_id=user_id,
         component=f"knowledge.{component}",
     )
@@ -71,7 +71,7 @@ def log_knowledge_entry_created(
         metadata: Optional additional metadata
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         user_id=created_by,
         component="knowledge.repository",
         operation="create_entry",
@@ -104,7 +104,7 @@ def log_knowledge_entry_updated(
         changes: Optional dictionary of changed fields
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         user_id=updated_by,
         component="knowledge.repository",
         operation="update_entry",
@@ -137,7 +137,7 @@ def log_knowledge_entry_deleted(
         snapshot: Optional snapshot of deleted entry for audit trail
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         user_id=deleted_by,
         component="knowledge.repository",
         operation="delete_entry",
@@ -171,7 +171,7 @@ def log_knowledge_retrieval(
         correlation_id: Optional correlation ID
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         component="knowledge.retrieval",
         operation="retrieve_agent_context",
         metadata={
@@ -208,7 +208,7 @@ def log_access_denied(
         correlation_id: Optional correlation ID
     """
     context = LogContext(
-        correlation_id=correlation_id,
+        correlation_id=correlation_id or "",
         component="knowledge.access_control",
         operation="check_access",
         metadata={
@@ -250,7 +250,7 @@ class KnowledgePerformanceTracker(PerformanceTracker):
             metadata: Optional operation metadata
         """
         context = LogContext(
-            correlation_id=correlation_id,
+            correlation_id=correlation_id or "",
             component="knowledge.performance",
             operation=operation,
             metadata=metadata or {},
