@@ -59,92 +59,119 @@ class TestTokenCounter:
         """Test counting empty string."""
         counter = TokenCounter()
         result = counter.count("")
-        assert result.token_count == 0
-        assert result.provider == LLMProvider.OPENAI
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count == 0
+        assert token_result.provider == LLMProvider.OPENAI
 
     def test_count_simple_text(self):
         """Test counting simple text."""
         counter = TokenCounter()
         result = counter.count("Hello, world!")
-        assert result.token_count > 0
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count > 0
         if TIKTOKEN_AVAILABLE:
-            assert result.method in ("tiktoken", "estimation")
+            assert token_result.method in ("tiktoken", "estimation")
 
     def test_count_with_model_override(self):
         """Test counting with model parameter override."""
         counter = TokenCounter(default_model="gpt-4")
         result = counter.count("Test text", model="gpt-4o")
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_family == ModelFamily.GPT4O
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.provider == LLMProvider.OPENAI
+        assert token_result.model_family == ModelFamily.GPT4O
 
     def test_count_with_provider_override(self):
         """Test counting with provider parameter override."""
         counter = TokenCounter(default_provider=LLMProvider.OPENAI)
         result = counter.count("Test text", provider=LLMProvider.ANTHROPIC)
-        assert result.provider == LLMProvider.ANTHROPIC
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.provider == LLMProvider.ANTHROPIC
 
     def test_count_with_family_override(self):
         """Test counting with family parameter override."""
         counter = TokenCounter(default_model="gpt-4")
         result = counter.count("Test text", model_family=ModelFamily.GPT35)
-        assert result.model_family == ModelFamily.GPT35
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.model_family == ModelFamily.GPT35
 
-    def test_count_invalid_type_raises(self):
-        """Test that counting non-string raises ValueError."""
+    def test_count_invalid_type_returns_error(self):
+        """Test that counting non-string returns Error Result."""
         counter = TokenCounter()
-        with pytest.raises(ValueError, match="must be a string"):
-            counter.count(123)  # type: ignore
+        result = counter.count(123)  # type: ignore
+        assert result.is_error
+        assert "must be a string" in str(result.error)
 
-    def test_count_returns_token_count_result(self):
-        """Test that count returns TokenCountResult."""
+    def test_count_returns_ok_result(self):
+        """Test that count returns Ok Result with TokenCountResult."""
         counter = TokenCounter()
         result = counter.count("Hello")
-        assert isinstance(result, TokenCountResult)
-        assert hasattr(result, "token_count")
-        assert hasattr(result, "method")
-        assert hasattr(result, "provider")
-        assert hasattr(result, "model_family")
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert isinstance(token_result, TokenCountResult)
+        assert hasattr(token_result, "token_count")
+        assert hasattr(token_result, "method")
+        assert hasattr(token_result, "provider")
+        assert hasattr(token_result, "model_family")
 
     def test_count_batch_empty_list(self):
         """Test batch counting with empty list."""
         counter = TokenCounter()
-        results = counter.count_batch([])
-        assert results == []
+        result = counter.count_batch([])
+        assert result.is_ok
+        assert result.unwrap() == []
 
     def test_count_batch_multiple_texts(self):
         """Test batch counting multiple texts."""
         counter = TokenCounter()
         texts = ["Hello", "world", "test"]
-        results = counter.count_batch(texts)
+        result = counter.count_batch(texts)
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) == 3
-        for result in results:
-            assert result.token_count >= 0
+        for token_result in results:
+            assert token_result.token_count >= 0
 
     def test_count_batch_with_empty_strings(self):
         """Test batch counting with empty strings."""
         counter = TokenCounter()
         texts = ["Hello", "", "world"]
-        results = counter.count_batch(texts)
+        result = counter.count_batch(texts)
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) == 3
         assert results[0].token_count > 0
         assert results[1].token_count == 0
         assert results[2].token_count > 0
 
+    def test_count_batch_invalid_input(self):
+        """Test batch counting with invalid input type."""
+        counter = TokenCounter()
+        result = counter.count_batch("not a list")  # type: ignore
+        assert result.is_error
+
     def test_count_from_messages_empty(self):
         """Test counting empty message list."""
         counter = TokenCounter()
         result = counter.count_from_messages([])
+        assert result.is_ok
         # Should have reply priming tokens
-        assert result.token_count >= 0
+        assert result.unwrap().token_count >= 0
 
     def test_count_from_messages_single(self):
         """Test counting single message."""
         counter = TokenCounter()
         messages = [{"role": "user", "content": "Hello, world!"}]
         result = counter.count_from_messages(messages)
-        assert result.token_count > 0
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count > 0
         # Content tokens + format overhead
-        assert result.token_count >= 4  # At least format overhead
+        assert token_result.token_count >= 4  # At least format overhead
 
     def test_count_from_messages_multiple(self):
         """Test counting multiple messages."""
@@ -155,15 +182,25 @@ class TestTokenCounter:
             {"role": "assistant", "content": "Hi there!"},
         ]
         result = counter.count_from_messages(messages)
-        assert result.token_count > 10  # Multiple messages with overhead
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count > 10  # Multiple messages with overhead
 
     def test_count_from_messages_with_model(self):
         """Test counting messages with model parameter."""
         counter = TokenCounter()
         messages = [{"role": "user", "content": "Test"}]
         result = counter.count_from_messages(messages, model="gpt-4")
-        assert result.token_count > 0
-        assert result.provider == LLMProvider.OPENAI
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count > 0
+        assert token_result.provider == LLMProvider.OPENAI
+
+    def test_count_from_messages_invalid_input(self):
+        """Test counting messages with invalid input type."""
+        counter = TokenCounter()
+        result = counter.count_from_messages("not a list")  # type: ignore
+        assert result.is_error
 
     def test_estimate_max_chunks(self):
         """Test estimating max chunks that fit in budget."""
@@ -172,52 +209,84 @@ class TestTokenCounter:
 
         # First, get the token count
         count_result = counter.count(text)
-        tokens_per_chunk = count_result.token_count
+        assert count_result.is_ok
+        tokens_per_chunk = count_result.unwrap().token_count
 
         # Estimate max chunks
-        max_chunks = counter.estimate_max_chunks(text, max_tokens=tokens_per_chunk * 5)
-        assert max_chunks == 5
+        result = counter.estimate_max_chunks(text, max_tokens=tokens_per_chunk * 5)
+        assert result.is_ok
+        assert result.unwrap() == 5
 
     def test_estimate_max_chunks_empty_text(self):
         """Test estimating max chunks with empty text."""
         counter = TokenCounter()
-        max_chunks = counter.estimate_max_chunks("", max_tokens=100)
-        assert max_chunks == 0
+        result = counter.estimate_max_chunks("", max_tokens=100)
+        assert result.is_ok
+        assert result.unwrap() == 0
 
     def test_estimate_max_chunks_with_model(self):
         """Test estimating max chunks with model parameter."""
         counter = TokenCounter()
         text = "Test text for estimation."
 
-        max_chunks = counter.estimate_max_chunks(text, max_tokens=100, model="gpt-4")
-        assert max_chunks > 0
+        result = counter.estimate_max_chunks(text, max_tokens=100, model="gpt-4")
+        assert result.is_ok
+        assert result.unwrap() > 0
+
+    def test_estimate_max_chunks_invalid_input(self):
+        """Test estimating max chunks with invalid input."""
+        counter = TokenCounter()
+        result = counter.estimate_max_chunks(123, max_tokens=100)  # type: ignore
+        assert result.is_error
+
+    def test_estimate_max_chunks_negative_tokens(self):
+        """Test estimating max chunks with negative max_tokens."""
+        counter = TokenCounter()
+        result = counter.estimate_max_chunks("hello", max_tokens=-1)
+        assert result.is_error
 
     def test_truncate_to_tokens_under_budget(self):
         """Test truncating text that's under budget."""
         counter = TokenCounter()
         text = "Short text"
         result = counter.truncate_to_tokens(text, max_tokens=100)
-        assert result == text
+        assert result.is_ok
+        assert result.unwrap() == text
 
     def test_truncate_to_tokens_over_budget(self):
         """Test truncating text that's over budget."""
         counter = TokenCounter()
         text = "This is a much longer text that needs to be truncated."
         result = counter.truncate_to_tokens(text, max_tokens=5)
-        assert len(result) < len(text)
+        assert result.is_ok
+        assert len(result.unwrap()) < len(text)
 
     def test_truncate_to_tokens_with_ellipsis(self):
         """Test truncating with ellipsis."""
         counter = TokenCounter()
         text = "This is a very long text that definitely needs to be truncated."
         result = counter.truncate_to_tokens(text, max_tokens=5, add_ellipsis=True)
-        assert result.endswith("...")
+        assert result.is_ok
+        assert result.unwrap().endswith("...")
 
     def test_truncate_to_tokens_empty_text(self):
         """Test truncating empty text."""
         counter = TokenCounter()
         result = counter.truncate_to_tokens("", max_tokens=100)
-        assert result == ""
+        assert result.is_ok
+        assert result.unwrap() == ""
+
+    def test_truncate_to_tokens_invalid_input(self):
+        """Test truncating with invalid input."""
+        counter = TokenCounter()
+        result = counter.truncate_to_tokens(123, max_tokens=100)  # type: ignore
+        assert result.is_error
+
+    def test_truncate_to_tokens_negative_max(self):
+        """Test truncating with negative max_tokens."""
+        counter = TokenCounter()
+        result = counter.truncate_to_tokens("hello", max_tokens=-1)
+        assert result.is_error
 
     def test_is_available(self):
         """Test availability checker."""
@@ -293,9 +362,11 @@ class TestTokenCounterWithTiktoken:
         counter = TokenCounter()
         # "Hello, world!" should be 4 tokens in cl100k_base
         result = counter.count("Hello, world!", model="gpt-4")
+        assert result.is_ok
+        token_result = result.unwrap()
         # Using tiktoken, this should be exactly 4 tokens
-        assert result.token_count == 4
-        assert result.method == "tiktoken"
+        assert token_result.token_count == 4
+        assert token_result.method == "tiktoken"
 
     @pytest.mark.skipif(not TIKTOKEN_AVAILABLE, reason="tiktoken not available")
     def test_tiktoken_gpt4o_encoding(self):
@@ -303,25 +374,31 @@ class TestTokenCounterWithTiktoken:
         counter = TokenCounter()
         # GPT-4o uses a different encoding
         result = counter.count("Hello, world!", model="gpt-4o")
-        assert result.method == "tiktoken"
-        assert result.model_family == ModelFamily.GPT4O
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.method == "tiktoken"
+        assert token_result.model_family == ModelFamily.GPT4O
 
     @pytest.mark.skipif(not TIKTOKEN_AVAILABLE, reason="tiktoken not available")
     def test_tiktoken_anthropic_fallback(self):
         """Test that Anthropic uses tiktoken as approximation."""
         counter = TokenCounter()
         result = counter.count("Hello, world!", provider=LLMProvider.ANTHROPIC)
+        assert result.is_ok
+        token_result = result.unwrap()
         # Should use tiktoken for Anthropic (as approximation)
-        assert result.method == "tiktoken"
+        assert token_result.method == "tiktoken"
 
     @pytest.mark.skipif(not TIKTOKEN_AVAILABLE, reason="tiktoken not available")
     def test_tiktoken_batch_counting(self):
         """Test batch counting with tiktoken."""
         counter = TokenCounter()
         texts = ["Hello", "world", "test"]
-        results = counter.count_batch(texts, model="gpt-4")
-        for result in results:
-            assert result.method == "tiktoken"
+        result = counter.count_batch(texts, model="gpt-4")
+        assert result.is_ok
+        results = result.unwrap()
+        for token_result in results:
+            assert token_result.method == "tiktoken"
 
     @pytest.mark.skipif(not TIKTOKEN_AVAILABLE, reason="tiktoken not available")
     def test_tiktoken_caching(self):
@@ -345,8 +422,10 @@ class TestTokenCounterFallback:
         """Test character-based estimation when tiktoken unavailable."""
         counter = TokenCounter()
         result = counter.count("Hello, world!")
-        assert result.token_count > 0
-        assert result.method in ("estimation", "fallback")
+        assert result.is_ok
+        token_result = result.unwrap()
+        assert token_result.token_count > 0
+        assert token_result.method in ("estimation", "fallback")
 
     @pytest.mark.skipif(
         TIKTOKEN_AVAILABLE, reason="tiktoken available, testing fallback"
@@ -359,8 +438,13 @@ class TestTokenCounterFallback:
         openai_result = counter.count(text, provider=LLMProvider.OPENAI)
         gemini_result = counter.count(text, provider=LLMProvider.GEMINI)
 
+        assert openai_result.is_ok
+        assert gemini_result.is_ok
+
         # Both should have similar estimates with same text length
-        assert abs(openai_result.token_count - gemini_result.token_count) <= 1
+        openai_count = openai_result.unwrap().token_count
+        gemini_count = gemini_result.unwrap().token_count
+        assert abs(openai_count - gemini_count) <= 1
 
 
 class TestCreateTokenCounter:
@@ -437,3 +521,70 @@ class TestTokenCountResult:
         assert result.method == "estimation"
         assert result.provider == LLMProvider.GEMINI
         assert result.model_family == ModelFamily.GEMINI_1
+
+
+class TestResultPattern:
+    """Test Result pattern implementation."""
+
+    def test_count_returns_result_with_is_ok(self):
+        """Test that count returns a Result-like object with is_ok property."""
+        counter = TokenCounter()
+        result = counter.count("Hello")
+        # Result is a Union type, check for expected attributes
+        assert hasattr(result, "is_ok")
+        assert hasattr(result, "is_error")
+        assert hasattr(result, "unwrap")
+        # Check the properties work correctly
+        assert result.is_ok is True
+        assert result.is_error is False
+
+    def test_ok_result_unwrap(self):
+        """Test unwrapping Ok result."""
+        counter = TokenCounter()
+        result = counter.count("Hello")
+        assert result.is_ok
+        assert not result.is_error
+        token_result = result.unwrap()
+        assert isinstance(token_result, TokenCountResult)
+
+    def test_error_result_unwrap(self):
+        """Test error result properties."""
+        counter = TokenCounter()
+        result = counter.count(123)  # type: ignore
+        assert result.is_error
+        assert not result.is_ok
+        error = result.error
+        assert error is not None
+        assert "VALIDATION_ERROR" in str(error) or "must be a string" in str(error)
+
+    def test_result_map(self):
+        """Test Result map method."""
+        counter = TokenCounter()
+        result = counter.count("Hello")
+        mapped = result.map(lambda r: r.token_count * 2)
+        assert mapped.is_ok
+        assert mapped.unwrap() > 0
+
+    def test_result_and_then(self):
+        """Test Result and_then method."""
+        from src.core.result import Ok
+        counter = TokenCounter()
+        result = counter.count("Hello")
+        chained = result.and_then(lambda r: Ok(r.token_count))
+        assert chained.is_ok
+
+    def test_result_on_success(self):
+        """Test Result on_success callback."""
+        counter = TokenCounter()
+        success_called = []
+        result = counter.count("Hello")
+        result.on_success(lambda r: success_called.append(r.token_count))
+        assert len(success_called) == 1
+
+    def test_result_on_error(self):
+        """Test Result on_error callback."""
+        counter = TokenCounter()
+        error_called = []
+        result = counter.count(123)  # type: ignore
+        result.on_error(lambda e: error_called.append(str(e)))
+        assert len(error_called) == 1

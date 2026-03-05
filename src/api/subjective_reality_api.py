@@ -7,7 +7,7 @@ FastAPI endpoints for SubjectiveRealityEngine functionality including
 personalized turn briefs, belief models, and fog-of-war management.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from src.core.data_models import StandardResponse
 from src.security.auth_system import Permission, get_current_user, require_permission
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -245,7 +245,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting turn brief.")
+                logger.error("error_getting_turn_brief", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -314,7 +314,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting all turn briefs.")
+                logger.error("error_getting_all_turn_briefs", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -368,7 +368,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting belief model.")
+                logger.error("error_getting_belief_model", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 

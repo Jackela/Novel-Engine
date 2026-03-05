@@ -19,6 +19,8 @@ from typing import TYPE_CHECKING, Literal
 
 import structlog
 
+from src.core.result import Err, Error, Ok, Result, ValidationError
+
 try:
     import tiktoken
 
@@ -143,12 +145,11 @@ class TokenCounter:
     Example:
         >>> counter = TokenCounter()
         >>> result = counter.count("Hello, world!", model="gpt-4")
-        >>> print(result.token_count)
-        4
-        >>> # Count for Anthropic (uses OpenAI encoding as approximation)
-        >>> result = counter.count("Hello, world!", provider=LLMProvider.ANTHROPIC)
-        >>> print(result.method)
-        'tiktoken'
+        >>> match result:
+        ...     case Ok(token_result):
+        ...         print(token_result.token_count)
+        ...     case Err(error):
+        ...         print(f"Error: {error}")
     """
 
     def __init__(
@@ -186,7 +187,7 @@ class TokenCounter:
         model: str | None = None,
         provider: LLMProvider | None = None,
         model_family: ModelFamily | None = None,
-    ) -> TokenCountResult:
+    ) -> Result[TokenCountResult, Error]:
         """
         Count tokens in text.
 
@@ -197,59 +198,81 @@ class TokenCounter:
             model_family: Model family (overrides auto-detection)
 
         Returns:
-            TokenCountResult with count and metadata
-
-        Raises:
-            ValueError: If text is empty or parameters are invalid
+            Result containing TokenCountResult on success, Error on failure
         """
         if not isinstance(text, str):
-            raise ValueError(f"text must be a string, got {type(text)}")
-
-        if not text:
-            return TokenCountResult(
-                token_count=0,
-                method="fallback",
-                provider=provider or self._default_provider,
-                model_family=model_family or self._default_family,
+            return Err(
+                ValidationError(
+                    message=f"text must be a string, got {type(text).__name__}",
+                    field="text",
+                )
             )
 
-        # Detect provider and family
-        detected_provider, detected_family = self._resolve_provider_and_family(
-            model, provider, model_family
-        )
+        if not text:
+            return Ok(
+                TokenCountResult(
+                    token_count=0,
+                    method="fallback",
+                    provider=provider or self._default_provider,
+                    model_family=model_family or self._default_family,
+                )
+            )
 
-        # Try tiktoken first for supported providers
-        if self._use_tiktoken and detected_provider in {
-            LLMProvider.OPENAI,
-            LLMProvider.ANTHROPIC,
-        }:
-            try:
-                token_count = self._count_with_tiktoken(text, detected_family)
-                return TokenCountResult(
+        try:
+            # Detect provider and family
+            detected_provider, detected_family = self._resolve_provider_and_family(
+                model, provider, model_family
+            )
+
+            # Try tiktoken first for supported providers
+            if self._use_tiktoken and detected_provider in {
+                LLMProvider.OPENAI,
+                LLMProvider.ANTHROPIC,
+            }:
+                try:
+                    token_count = self._count_with_tiktoken(text, detected_family)
+                    return Ok(
+                        TokenCountResult(
+                            token_count=token_count,
+                            method="tiktoken",
+                            provider=detected_provider,
+                            model_family=detected_family,
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "tiktoken_counting_failed",
+                        text_length=len(text),
+                        provider=detected_provider.value,
+                        family=detected_family.value,
+                        error=str(e),
+                    )
+                    # Fall through to estimation
+
+            # Use character-based estimation
+            token_count = self._count_by_estimation(text, detected_provider)
+
+            return Ok(
+                TokenCountResult(
                     token_count=token_count,
-                    method="tiktoken",
+                    method="tiktoken" if self._use_tiktoken else "estimation",
                     provider=detected_provider,
                     model_family=detected_family,
                 )
-            except Exception as e:
-                logger.warning(
-                    "tiktoken_counting_failed",
-                    text_length=len(text),
-                    provider=detected_provider.value,
-                    family=detected_family.value,
-                    error=str(e),
+            )
+        except Exception as e:
+            logger.error(
+                "token_counting_failed",
+                error=str(e),
+                text_length=len(text) if isinstance(text, str) else 0,
+            )
+            return Err(
+                Error(
+                    code="TOKEN_COUNTING_ERROR",
+                    message=f"Failed to count tokens: {e}",
+                    recoverable=True,
                 )
-                # Fall through to estimation
-
-        # Use character-based estimation
-        token_count = self._count_by_estimation(text, detected_provider)
-
-        return TokenCountResult(
-            token_count=token_count,
-            method="tiktoken" if self._use_tiktoken else "estimation",
-            provider=detected_provider,
-            model_family=detected_family,
-        )
+            )
 
     def count_batch(
         self,
@@ -257,7 +280,7 @@ class TokenCounter:
         model: str | None = None,
         provider: LLMProvider | None = None,
         model_family: ModelFamily | None = None,
-    ) -> list[TokenCountResult]:
+    ) -> Result[list[TokenCountResult], Error]:
         """
         Count tokens for multiple texts.
 
@@ -268,63 +291,84 @@ class TokenCounter:
             model_family: Model family (overrides auto-detection)
 
         Returns:
-            List of TokenCountResult in same order as inputs
+            Result containing list of TokenCountResult on success, Error on failure
         """
-        detected_provider, detected_family = self._resolve_provider_and_family(
-            model, provider, model_family
-        )
-
-        results: list[TokenCountResult] = []
-
-        # For tiktoken, we can batch encode
-        if self._use_tiktoken and detected_provider in {
-            LLMProvider.OPENAI,
-            LLMProvider.ANTHROPIC,
-        }:
-            try:
-                encoding = self._get_tiktoken_encoding(detected_family)
-                for text in texts:
-                    if not text:
-                        results.append(
-                            TokenCountResult(
-                                token_count=0,
-                                method="tiktoken",
-                                provider=detected_provider,
-                                model_family=detected_family,
-                            )
-                        )
-                    else:
-                        token_count = len(encoding.encode(text))
-                        results.append(
-                            TokenCountResult(
-                                token_count=token_count,
-                                method="tiktoken",
-                                provider=detected_provider,
-                                model_family=detected_family,
-                            )
-                        )
-                return results
-            except Exception as e:
-                logger.warning(
-                    "tiktoken_batch_counting_failed",
-                    text_count=len(texts),
-                    provider=detected_provider.value,
-                    error=str(e),
+        if not isinstance(texts, list):
+            return Err(
+                ValidationError(
+                    message="texts must be a list",
+                    field="texts",
                 )
-                # Fall through to individual estimation
+            )
 
-        # Fallback to individual counting
-        for text in texts:
-            results.append(self.count(text, model, provider, model_family))
+        try:
+            detected_provider, detected_family = self._resolve_provider_and_family(
+                model, provider, model_family
+            )
 
-        return results
+            results: list[TokenCountResult] = []
+
+            # For tiktoken, we can batch encode
+            if self._use_tiktoken and detected_provider in {
+                LLMProvider.OPENAI,
+                LLMProvider.ANTHROPIC,
+            }:
+                try:
+                    encoding = self._get_tiktoken_encoding(detected_family)
+                    for text in texts:
+                        if not text:
+                            results.append(
+                                TokenCountResult(
+                                    token_count=0,
+                                    method="tiktoken",
+                                    provider=detected_provider,
+                                    model_family=detected_family,
+                                )
+                            )
+                        else:
+                            token_count = len(encoding.encode(text))
+                            results.append(
+                                TokenCountResult(
+                                    token_count=token_count,
+                                    method="tiktoken",
+                                    provider=detected_provider,
+                                    model_family=detected_family,
+                                )
+                            )
+                    return Ok(results)
+                except Exception as e:
+                    logger.warning(
+                        "tiktoken_batch_counting_failed",
+                        text_count=len(texts),
+                        provider=detected_provider.value,
+                        error=str(e),
+                    )
+                    # Fall through to individual counting
+
+            # Fallback to individual counting
+            for text in texts:
+                result = self.count(text, model, provider, model_family)
+                if result.is_error:
+                    return result  # Propagate error
+                results.append(result.unwrap())
+
+            return Ok(results)
+        except Exception as e:
+            logger.error("batch_token_counting_failed", error=str(e), text_count=len(texts))
+            return Err(
+                Error(
+                    code="BATCH_COUNTING_ERROR",
+                    message=f"Failed to count batch tokens: {e}",
+                    recoverable=True,
+                )
+            )
 
     def count_from_messages(
         self,
         messages: list[dict[str, str]],
         model: str | None = None,
         provider: LLMProvider | None = None,
-    ) -> TokenCountResult:
+    ) -> Result[TokenCountResult, Error]:
         """
         Count tokens for chat message format.
 
@@ -336,51 +380,73 @@ class TokenCounter:
             provider: LLM provider (overrides model detection)
 
         Returns:
-            Total token count including format overhead
+            Result containing total token count including format overhead
         """
-        detected_provider, detected_family = self._resolve_provider_and_family(
-            model, provider, None
-        )
+        if not isinstance(messages, list):
+            return Err(
+                ValidationError(
+                    message="messages must be a list",
+                    field="messages",
+                )
+            )
 
-        # Base tokens for message format (approximate)
-        # Each message has ~4 tokens for format: <im_start>{role}\n{content}<im_end>
-        format_overhead_per_message = 4
+        try:
+            detected_provider, detected_family = self._resolve_provider_and_family(
+                model, provider, None
+            )
 
-        total_tokens = 0
-        for message in messages:
-            content = message.get("content", "")
-            role = message.get("role", "user")
+            # Base tokens for message format (approximate)
+            # Each message has ~4 tokens for format: <im_start>{role}\n{content}<im_end>
+            format_overhead_per_message = 4
 
-            # Count content
-            content_count = self.count(
-                content,
-                model,
-                provider,
-                detected_family,
-            ).token_count
+            total_tokens = 0
+            for message in messages:
+                content = message.get("content", "")
+                role = message.get("role", "user")
 
-            # Count role (typically 1-3 tokens)
-            role_count = len(role.split()) + 1
+                # Count content
+                content_result = self.count(
+                    content,
+                    model,
+                    provider,
+                    detected_family,
+                )
+                if content_result.is_error:
+                    return content_result
+                content_count = content_result.unwrap().token_count
 
-            # Add format overhead
-            total_tokens += content_count + role_count + format_overhead_per_message
+                # Count role (typically 1-3 tokens)
+                role_count = len(role.split()) + 1
 
-        # Add reply priming tokens
-        total_tokens += 3  # <im_start>assistant\n
+                # Add format overhead
+                total_tokens += content_count + role_count + format_overhead_per_message
 
-        return TokenCountResult(
-            token_count=total_tokens,
-            method="tiktoken" if self._use_tiktoken else "estimation",
-            provider=detected_provider,
-            model_family=detected_family,
-        )
+            # Add reply priming tokens
+            total_tokens += 3  # <im_start>assistant\n
+            return Ok(
+                TokenCountResult(
+                    token_count=total_tokens,
+                    method="tiktoken" if self._use_tiktoken else "estimation",
+                    provider=detected_provider,
+                    model_family=detected_family,
+                )
+            )
+        except Exception as e:
+            logger.error("message_counting_failed", error=str(e))
+            return Err(
+                Error(
+                    code="MESSAGE_COUNTING_ERROR",
+                    message=f"Failed to count message tokens: {e}",
+                    recoverable=True,
+                )
+            )
 
     def estimate_max_chunks(
         self,
         text: str,
         max_tokens: int,
         model: str | None = None,
-    ) -> int:
+    ) -> Result[int, Error]:
         """
         Estimate how many chunks of this text fit in token budget.
 
@@ -390,12 +456,32 @@ class TokenCounter:
             model: Model name for tokenization
 
         Returns:
-            Maximum number of complete chunks that fit
+            Result containing maximum number of complete chunks that fit
         """
+        if not isinstance(text, str):
+            return Err(
+                ValidationError(
+                    message=f"text must be a string, got {type(text).__name__}",
+                    field="text",
+                )
+            )
+
+        if max_tokens < 0:
+            return Err(
+                ValidationError(
+                    message="max_tokens must be non-negative",
+                    field="max_tokens",
+                )
+            )
+
         result = self.count(text, model=model)
-        if result.token_count == 0:
-            return 0
-        return max_tokens // result.token_count
+        if result.is_error:
+            return result
+
+        token_count = result.unwrap().token_count
+        if token_count == 0:
+            return Ok(0)
+        return Ok(max_tokens // token_count)
 
     def truncate_to_tokens(
         self,
@@ -403,7 +489,7 @@ class TokenCounter:
         max_tokens: int,
         model: str | None = None,
         add_ellipsis: bool = False,
-    ) -> str:
+    ) -> Result[str, Error]:
         """
         Truncate text to fit within token budget.
 
@@ -414,14 +500,34 @@ class TokenCounter:
             add_ellipsis: Add "..." if truncated
 
         Returns:
-            Truncated text (or original if under budget)
+            Result containing truncated text (or original if under budget)
         """
+        if not isinstance(text, str):
+            return Err(
+                ValidationError(
+                    message=f"text must be a string, got {type(text).__name__}",
+                    field="text",
+                )
+            )
+
+        if max_tokens < 0:
+            return Err(
+                ValidationError(
+                    message="max_tokens must be non-negative",
+                    field="max_tokens",
+                )
+            )
+
         result = self.count(text, model=model)
-        if result.token_count <= max_tokens:
-            return text
+        if result.is_error:
+            return result
+
+        token_result = result.unwrap()
+        if token_result.token_count <= max_tokens:
+            return Ok(text)
 
         # Estimate character limit (rough approximation)
-        chars_per_token = len(text) / result.token_count
+        chars_per_token = len(text) / token_result.token_count
         max_chars = int(max_tokens * chars_per_token * 0.9)  # 90% to be safe
 
         truncated = text[:max_chars]
@@ -429,7 +535,7 @@ class TokenCounter:
         if add_ellipsis and len(truncated) < len(text):
             truncated = truncated[: max_chars - 3] + "..."
 
-        return truncated
+        return Ok(truncated)
 
     def is_available(self) -> dict[str, bool]:
         """
@@ -537,7 +643,11 @@ def create_token_counter(
     Example:
         >>> counter = create_token_counter(model="gpt-4")
         >>> result = counter.count("Hello, world!")
-        >>> print(result.token_count)
+        >>> match result:
+        ...     case Ok(token_result):
+        ...         print(token_result.token_count)
+        ...     case Err(error):
+        ...         print(f"Error: {error}")
     """
     if provider:
         return TokenCounter(default_provider=provider, use_tiktoken=TIKTOKEN_AVAILABLE)

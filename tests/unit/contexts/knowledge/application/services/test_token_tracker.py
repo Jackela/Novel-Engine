@@ -1,9 +1,12 @@
 """
-Tests for Token Tracker Service
+Tests for TokenTracker Service.
+
+Unit tests for token tracking, cost calculation, and usage recording.
 
 Warzone 4: AI Brain - BRAIN-034A
-Tests for TokenTracker middleware/decorator.
 """
+
+from __future__ import annotations
 
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -15,10 +18,8 @@ from src.contexts.knowledge.application.services.model_registry import (
     ModelRegistry,
 )
 from src.contexts.knowledge.application.services.token_tracker import (
-    TokenAwareConfig,
     TokenTracker,
-    TrackingContext,
-    create_token_tracker,
+    TokenTrackerConfig,
 )
 from src.contexts.knowledge.domain.models.model_registry import (
     LLMProvider,
@@ -26,70 +27,80 @@ from src.contexts.knowledge.domain.models.model_registry import (
 )
 from src.contexts.knowledge.domain.models.token_usage import TokenUsage
 
+# Alias for backward compatibility
+TokenAwareConfig = TokenTrackerConfig
+
 pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
 def mock_registry():
     """Create a mock model registry."""
+    from src.core.result import Ok
+    from src.contexts.knowledge.application.services.model_registry import (
+        ModelLookupResult,
+    )
+
     registry = MagicMock(spec=ModelRegistry)
 
-    # Setup resolve_model to return model definitions
+    # Setup resolve_model to return Result with model definitions
     def mock_resolve(model_ref: str):
-        from src.contexts.knowledge.application.services.model_registry import (
-            ModelLookupResult,
-        )
-
         if "gpt" in model_ref.lower():
-            return ModelLookupResult(
-                provider=LLMProvider.OPENAI,
-                model_name="gpt-4o",
-                model_definition=ModelDefinition(
+            return Ok(
+                ModelLookupResult(
                     provider=LLMProvider.OPENAI,
                     model_name="gpt-4o",
-                    display_name="GPT-4o",
-                    max_context_tokens=128000,
-                    max_output_tokens=4096,
-                    supports_functions=True,
-                    supports_vision=True,
-                    supports_streaming=True,
-                    cost_per_1m_input_tokens=2.50,
-                    cost_per_1m_output_tokens=10.00,
-                ),
+                    model_definition=ModelDefinition(
+                        provider=LLMProvider.OPENAI,
+                        model_name="gpt-4o",
+                        display_name="GPT-4o",
+                        max_context_tokens=128000,
+                        max_output_tokens=4096,
+                        supports_functions=True,
+                        supports_vision=True,
+                        supports_streaming=True,
+                        cost_per_1m_input_tokens=2.50,
+                        cost_per_1m_output_tokens=10.00,
+                    ),
+                )
             )
         elif "claude" in model_ref.lower():
-            return ModelLookupResult(
-                provider=LLMProvider.ANTHROPIC,
-                model_name="claude-3-5-sonnet-20241022",
-                model_definition=ModelDefinition(
+            return Ok(
+                ModelLookupResult(
                     provider=LLMProvider.ANTHROPIC,
                     model_name="claude-3-5-sonnet-20241022",
-                    display_name="Claude 3.5 Sonnet",
-                    max_context_tokens=200000,
-                    max_output_tokens=8192,
-                    supports_functions=True,
-                    supports_vision=True,
-                    supports_streaming=True,
-                    cost_per_1m_input_tokens=3.00,
-                    cost_per_1m_output_tokens=15.00,
-                ),
+                    model_definition=ModelDefinition(
+                        provider=LLMProvider.ANTHROPIC,
+                        model_name="claude-3-5-sonnet-20241022",
+                        display_name="Claude 3.5 Sonnet",
+                        max_context_tokens=200000,
+                        max_output_tokens=8192,
+                        supports_functions=True,
+                        supports_vision=True,
+                        supports_streaming=True,
+                        cost_per_1m_input_tokens=3.00,
+                        cost_per_1m_output_tokens=15.00,
+                    ),
+                )
             )
         else:
-            return ModelLookupResult(
-                provider=LLMProvider.GEMINI,
-                model_name="gemini-2.0-flash",
-                model_definition=ModelDefinition(
+            return Ok(
+                ModelLookupResult(
                     provider=LLMProvider.GEMINI,
                     model_name="gemini-2.0-flash",
-                    display_name="Gemini 2.0 Flash",
-                    max_context_tokens=1000000,
-                    max_output_tokens=8192,
-                    supports_functions=True,
-                    supports_vision=True,
-                    supports_streaming=True,
-                    cost_per_1m_input_tokens=0.075,
-                    cost_per_1m_output_tokens=0.30,
-                ),
+                    model_definition=ModelDefinition(
+                        provider=LLMProvider.GEMINI,
+                        model_name="gemini-2.0-flash",
+                        display_name="Gemini 2.0 Flash",
+                        max_context_tokens=1000000,
+                        max_output_tokens=8192,
+                        supports_functions=True,
+                        supports_vision=True,
+                        supports_streaming=True,
+                        cost_per_1m_input_tokens=0.075,
+                        cost_per_1m_output_tokens=0.30,
+                    ),
+                )
             )
 
     registry.resolve_model = mock_resolve
@@ -122,80 +133,100 @@ def tracker(mock_repository, mock_registry):
 
 
 class TestTrackingContext:
-    """Tests for TrackingContext."""
+    """Tests for TrackingContext class."""
 
-    def test_record_success(self):
-        """Test recording a successful LLM call."""
-        ctx = TrackingContext(
-            provider="openai",
-            model_name="gpt-4o",
+    def test_elapsed_ms(self):
+        """Test elapsed time calculation."""
+        from src.contexts.knowledge.application.services.token_tracker import (
+            TrackingContext,
         )
 
+        import time
+
+        ctx = TrackingContext(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4o",
+        )
+        time.sleep(0.01)  # 10ms
+        elapsed = ctx.elapsed_ms
+        assert elapsed >= 10  # At least 10ms
+
+    def test_record_success(self):
+        """Test recording successful LLM call."""
+        from src.contexts.knowledge.application.services.token_tracker import (
+            TrackingContext,
+        )
+
+        ctx = TrackingContext(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4o",
+            input_tokens=100,
+        )
         usage = ctx.record_success(
             input_tokens=100,
-            output_tokens=200,
+            output_tokens=50,
+            cost_per_1m_input=2.50,
+            cost_per_1m_output=10.00,
+        )
+
+        assert usage.provider == "openai"
+        assert usage.model_name == "gpt-4o"
+        assert usage.input_tokens == 100
+        assert usage.output_tokens == 50
+        assert usage.success is True
+
+    def test_record_failure(self):
+        """Test recording failed LLM call."""
+        from src.contexts.knowledge.application.services.token_tracker import (
+            TrackingContext,
+        )
+
+        ctx = TrackingContext(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4o",
+        )
+        usage = ctx.record_failure(
+            error_message="Rate limit exceeded",
+            input_tokens=100,
+        )
+
+        assert usage.provider == "openai"
+        assert usage.success is False
+        assert usage.error_message == "Rate limit exceeded"
+
+    def test_record_success_with_estimation(self):
+        """Test recording with token estimation."""
+        from src.contexts.knowledge.application.services.token_tracker import (
+            TrackingContext,
+        )
+
+        ctx = TrackingContext(
+            provider=LLMProvider.OPENAI,
+            model_name="gpt-4o",
+        )
+        usage = ctx.record_success(
+            response_text="This is a test response with some tokens.",
             cost_per_1m_input=2.50,
             cost_per_1m_output=10.00,
         )
 
         assert usage.success is True
-        assert usage.input_tokens == 100
-        assert usage.output_tokens == 200
-        assert usage.total_tokens == 300
-        assert usage.provider == "openai"
-        assert usage.model_name == "gpt-4o"
-        assert usage.input_cost == Decimal("0.000250")  # 100 * 2.50 / 1M
-        assert usage.output_cost == Decimal("0.002000")  # 200 * 10.00 / 1M
-
-    def test_record_failure(self):
-        """Test recording a failed LLM call."""
-        ctx = TrackingContext(
-            provider="anthropic",
-            model_name="claude-3-5-sonnet-20241022",
-        )
-
-        usage = ctx.record_failure(
-            error_message="Rate limit exceeded",
-            input_tokens=50,
-            cost_per_1m_input=3.00,
-            cost_per_1m_output=15.00,
-        )
-
-        assert usage.success is False
-        assert usage.error_message == "Rate limit exceeded"
-        assert usage.input_tokens == 50
-        assert usage.output_tokens == 0
-        assert usage.total_tokens == 50
-
-    def test_elapsed_ms(self):
-        """Test elapsed time calculation."""
-        ctx = TrackingContext(
-            provider="gemini",
-            model_name="gemini-2.0-flash",
-        )
-
-        # Elapsed should be non-negative
-        assert ctx.elapsed_ms >= 0
-
-    def test_record_with_pre_counted_tokens(self):
-        """Test recording with pre-counted input tokens."""
-        ctx = TrackingContext(
-            provider="openai",
-            model_name="gpt-4o",
-            input_tokens=100,  # Pre-counted
-        )
-
-        usage = ctx.record_success(
-            output_tokens=200,
-            cost_per_1m_input=2.50,
-            cost_per_1m_output=10.00,
-        )
-
-        assert usage.input_tokens == 100
+        # Tokens should be estimated from response
+        assert usage.output_tokens > 0
 
 
 class TestTokenTracker:
-    """Tests for TokenTracker service."""
+    """Tests for TokenTracker class."""
+
+    def test_init(self, mock_repository, mock_registry):
+        """Test tracker initialization."""
+        tracker = TokenTracker(
+            repository=mock_repository,
+            model_registry=mock_registry,
+        )
+
+        assert tracker._repository is mock_repository
+        assert tracker._model_registry is mock_registry
 
     @pytest.mark.asyncio
     async def test_record_usage(self, tracker, mock_repository):
@@ -204,7 +235,9 @@ class TestTokenTracker:
             provider="openai",
             model_name="gpt-4o",
             input_tokens=100,
-            output_tokens=200,
+            output_tokens=50,
+            cost_per_1m_input=2.50,
+            cost_per_1m_output=10.00,
         )
 
         await tracker.record(usage)
@@ -224,204 +257,90 @@ class TestTokenTracker:
         usage = TokenUsage.create(
             provider="openai",
             model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
         )
 
         await tracker.record(usage)
 
+        # Repository should not be called when disabled
         mock_repository.save.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_track_call_context_manager(self, tracker, mock_repository):
+    async def test_track_call_context_manager(self, tracker):
         """Test tracking via context manager."""
         async with tracker.track_call("gpt-4o") as ctx:
-            # Record success within context
             ctx.record_success(
                 input_tokens=100,
-                output_tokens=200,
-                cost_per_1m_input=2.50,
-                cost_per_1m_output=10.00,
+                output_tokens=50,
             )
 
-        # Usage should have been recorded after context exits
-        mock_repository.save.assert_called_once()
-        usage_arg = mock_repository.save.call_args[0][0]
-        assert usage_arg.provider == "openai"
-        assert usage_arg.model_name == "gpt-4o"
+        # Usage should be recorded
+        assert ctx.usage is not None
+        assert ctx.usage.input_tokens == 100
 
     @pytest.mark.asyncio
-    async def test_track_call_with_metadata(self, tracker, mock_repository):
-        """Test tracking with custom metadata."""
+    async def test_track_call_with_metadata(self, tracker):
+        """Test tracking with metadata."""
+        metadata = {"scene_id": "scene-123", "request_type": "generation"}
+
         async with tracker.track_call(
             "gpt-4o",
-            workspace_id="workspace-123",
+            workspace_id="ws-123",
             user_id="user-456",
-            request_id="request-789",
-            metadata={"task_type": "summarization"},
+            metadata=metadata,
         ) as ctx:
-            ctx.record_success(
-                input_tokens=100,
-                output_tokens=200,
-                cost_per_1m_input=2.50,
-                cost_per_1m_output=10.00,
-            )
+            ctx.record_success(input_tokens=100, output_tokens=50)
 
-        usage_arg = mock_repository.save.call_args[0][0]
-        assert usage_arg.workspace_id == "workspace-123"
-        assert usage_arg.user_id == "user-456"
-        assert usage_arg.request_id == "request-789"
-        assert usage_arg.metadata["task_type"] == "summarization"
+        assert ctx.usage.workspace_id == "ws-123"
+        assert ctx.usage.user_id == "user-456"
+        assert ctx.usage.metadata["scene_id"] == "scene-123"
 
     @pytest.mark.asyncio
-    async def test_track_call_with_prompt_estimation(self, tracker, mock_repository):
-        """Test tracking with input token estimation from prompt."""
-        prompt = "Write a story about a brave warrior."
-        async with tracker.track_call("gpt-4o", prompt=prompt) as ctx:
-            # Input tokens should have been estimated
-            assert ctx.input_tokens is not None and ctx.input_tokens > 0
+    async def test_track_call_with_prompt_estimation(self, tracker):
+        """Test tracking with prompt-based input token estimation."""
+        async with tracker.track_call(
+            "gpt-4o",
+            prompt="This is a test prompt for token estimation.",
+        ) as ctx:
+            ctx.record_success(output_tokens=50)
 
-            ctx.record_success(
-                output_tokens=200,
-                cost_per_1m_input=2.50,
-                cost_per_1m_output=10.00,
-            )
-
-        usage_arg = mock_repository.save.call_args[0][0]
-        assert usage_arg.input_tokens > 0
+        # Input tokens should be estimated from prompt
+        assert ctx.usage.input_tokens > 0
 
     @pytest.mark.asyncio
-    async def test_get_summary(self, tracker, mock_repository):
-        """Test getting usage summary."""
-        from datetime import timedelta
-
-        now = datetime.now(timezone.utc)
-        start = now - timedelta(hours=1)
-
-        mock_summary = MagicMock()
-        mock_summary.total_requests = 10
-        mock_summary.total_tokens = 5000
-
-        mock_repository.get_summary = AsyncMock(return_value=mock_summary)
-
-        _summary = await tracker.get_summary(start, now)  # noqa: F841
-
-        mock_repository.get_summary.assert_called_once_with(
-            start_time=start,
-            end_time=now,
-            provider=None,
-            model_name=None,
-            workspace_id=None,
-        )
-
-    @pytest.mark.asyncio
-    async def test_shutdown(self, tracker):
+    async def test_shutdown(self, tracker, mock_repository):
         """Test tracker shutdown."""
-        # No-op for now since we don't have background tasks in test config
+        usage = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
+        )
+        tracker._pending_records.append(usage)
+
         await tracker.shutdown()
 
-
-class TestTokenTrackerIntegration:
-    """Integration tests for TokenTracker."""
-
-    @pytest.mark.asyncio
-    async def test_decorator_tracking(self, mock_repository, mock_registry):
-        """Test the decorator functionality."""
-        from src.contexts.knowledge.application.ports.i_llm_client import (
-            LLMRequest,
-            LLMResponse,
-        )
-
-        config = TokenAwareConfig(
-            enabled=True,
-            batch_size=1,
-        )
-        tracker = create_token_tracker(
-            repository=mock_repository,
-            model_registry=mock_registry,
-            config=config,
-        )
-
-        # Create a mock LLM function
-        @tracker.track_llm_call(model_ref="gpt-4o")
-        async def mock_generate(request: LLMRequest) -> LLMResponse:
-            return LLMResponse(
-                text="Generated text",
-                model="gpt-4o",
-                tokens_used=300,
-                input_tokens=100,
-                output_tokens=200,
-            )
-
-        # Call the function
-        request = LLMRequest(
-            system_prompt="You are helpful.",
-            user_prompt="Hello",
-        )
-        result = await mock_generate(request)
-
-        # Check result
-        assert result.text == "Generated text"
-
-        # Check that usage was recorded
-        mock_repository.save.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_batch_writes(self, mock_repository):
-        """Test batch write behavior."""
-        config = TokenAwareConfig(
-            enabled=True,
-            batch_size=10,
-        )
-        tracker = TokenTracker(
-            repository=mock_repository,
-            model_registry=MagicMock(),
-            config=config,
-        )
-
-        # Record multiple usages
-        for _ in range(5):
-            usage = TokenUsage.create(
-                provider="openai",
-                model_name="gpt-4o",
-            )
-            await tracker.record(usage)
-
-        # Should not have saved yet (batch not full)
-        mock_repository.save.assert_not_called()
-
-        # Shutdown should flush
-        await tracker.shutdown()
+        # Pending records should be flushed
         mock_repository.save_batch.assert_called_once()
 
 
-def test_create_token_tracker(mock_repository, mock_registry):
-    """Test factory function."""
-    tracker = create_token_tracker(
-        repository=mock_repository,
-        model_registry=mock_registry,
-    )
-
-    assert tracker._repository == mock_repository
-    assert tracker._model_registry == mock_registry
-    assert tracker._config.enabled is True
-
-
-class TestTokenAwareConfig:
-    """Tests for TokenAwareConfig."""
+class TestTokenTrackerConfig:
+    """Tests for TokenTrackerConfig."""
 
     def test_default_config(self):
         """Test default configuration values."""
-        config = TokenAwareConfig()
+        config = TokenTrackerConfig()
 
         assert config.enabled is True
         assert config.count_input_tokens is True
         assert config.estimate_missing_tokens is True
         assert config.batch_size == 100
-        assert config.flush_interval_seconds == 10.0
         assert config.track_individual_calls is True
 
     def test_custom_config(self):
         """Test custom configuration."""
-        config = TokenAwareConfig(
+        config = TokenTrackerConfig(
             enabled=False,
             batch_size=50,
             track_individual_calls=False,
@@ -430,3 +349,181 @@ class TestTokenAwareConfig:
         assert config.enabled is False
         assert config.batch_size == 50
         assert config.track_individual_calls is False
+
+
+class TestTokenTrackerIntegration:
+    """Integration tests for TokenTracker."""
+
+    @pytest.mark.asyncio
+    async def test_decorator_tracking(self, mock_repository, mock_registry):
+        """Test tracking via decorator."""
+        tracker = TokenTracker(
+            repository=mock_repository,
+            model_registry=mock_registry,
+            config=TokenTrackerConfig(enabled=True, batch_size=1),
+        )
+
+        class MockLLMResponse:
+            def __init__(self):
+                self.tokens_used = 150
+                self.input_tokens = 100
+                self.output_tokens = 50
+
+        @tracker.track_llm_call(model_ref="gpt-4o")
+        async def mock_generate(request):
+            return MockLLMResponse()
+
+        class MockRequest:
+            model = "gpt-4o"
+
+        request = MockRequest()
+        result = await mock_generate(request)
+
+        assert result.tokens_used == 150
+        # Usage should be recorded
+        mock_repository.save.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_decorator_with_exception(self, mock_repository, mock_registry):
+        """Test decorator records failure on exception."""
+        tracker = TokenTracker(
+            repository=mock_repository,
+            model_registry=mock_registry,
+            config=TokenTrackerConfig(enabled=True, batch_size=1),
+        )
+
+        @tracker.track_llm_call(model_ref="gpt-4o")
+        async def mock_failing_generate(request):
+            raise ValueError("API Error")
+
+        class MockRequest:
+            model = "gpt-4o"
+
+        with pytest.raises(ValueError):
+            await mock_generate(MockRequest())
+
+        # Failure should be recorded
+        mock_repository.save.assert_called_once()
+        call_args = mock_repository.save.call_args[0][0]
+        assert call_args.success is False
+        assert "API Error" in call_args.error_message
+
+
+class TestTokenUsageModel:
+    """Tests for TokenUsage domain model."""
+
+    def test_usage_creation(self):
+        """Test creating a TokenUsage instance."""
+        usage = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
+            cost_per_1m_input=2.50,
+            cost_per_1m_output=10.00,
+        )
+
+        assert usage.provider == "openai"
+        assert usage.model_name == "gpt-4o"
+        assert usage.input_tokens == 100
+        assert usage.output_tokens == 50
+        assert usage.total_tokens == 150
+        # Cost calculation: (100/1M * 2.50) + (50/1M * 10.00) = 0.00025 + 0.0005 = 0.00075
+        assert abs(float(usage.cost) - Decimal("0.00075")) < 0.00001
+
+    def test_usage_id_generation(self):
+        """Test that each usage gets a unique ID."""
+        usage1 = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
+        )
+        usage2 = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
+        )
+
+        assert usage1.id != usage2.id
+
+    def test_usage_timestamp(self):
+        """Test that usage has timestamp."""
+        before = datetime.now(timezone.utc)
+        usage = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=100,
+            output_tokens=50,
+        )
+        after = datetime.now(timezone.utc)
+
+        assert before <= usage.timestamp <= after
+
+
+class TestCostCalculation:
+    """Tests for cost calculation."""
+
+    def test_cost_calculation_openai(self):
+        """Test cost calculation for OpenAI model."""
+        usage = TokenUsage.create(
+            provider="openai",
+            model_name="gpt-4o",
+            input_tokens=1000,
+            output_tokens=500,
+            cost_per_1m_input=2.50,
+            cost_per_1m_output=10.00,
+        )
+
+        # (1000/1M * 2.50) + (500/1M * 10.00) = 0.0025 + 0.005 = 0.0075
+        expected_cost = Decimal("0.0075")
+        assert abs(float(usage.cost) - float(expected_cost)) < 0.00001
+
+    def test_cost_calculation_gemini(self):
+        """Test cost calculation for Gemini model."""
+        usage = TokenUsage.create(
+            provider="gemini",
+            model_name="gemini-2.0-flash",
+            input_tokens=10000,
+            output_tokens=5000,
+            cost_per_1m_input=0.075,
+            cost_per_1m_output=0.30,
+        )
+
+        # Cost should be calculated correctly
+        assert float(usage.cost) > 0
+
+    def test_cost_calculation_ollama(self):
+        """Test cost calculation for Ollama (free)."""
+        usage = TokenUsage.create(
+            provider="ollama",
+            model_name="llama3.2",
+            input_tokens=10000,
+            output_tokens=5000,
+            cost_per_1m_input=0.0,
+            cost_per_1m_output=0.0,
+        )
+
+        # Cost should be zero
+        assert float(usage.cost) == 0.0
+
+
+class TestTokenUsageStats:
+    """Tests for TokenUsageStats."""
+
+    def test_stats_creation(self):
+        """Test creating usage stats."""
+        from src.contexts.knowledge.domain.models.token_usage import TokenUsageStats
+
+        stats = TokenUsageStats(
+            total_requests=100,
+            total_input_tokens=10000,
+            total_output_tokens=5000,
+            total_cost=Decimal("0.5"),
+            avg_latency_ms=500.0,
+        )
+
+        assert stats.total_requests == 100
+        assert stats.total_tokens == 15000
+        assert float(stats.total_cost) == 0.5

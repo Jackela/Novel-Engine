@@ -21,6 +21,15 @@ from typing import TYPE_CHECKING, Any, Optional
 import structlog
 from pydantic import BaseModel, Field
 
+from src.core.result import (
+    Err,
+    Error,
+    NotFoundError,
+    Ok,
+    Result,
+    ValidationError,
+)
+
 from ...domain.models.model_registry import (
     LLMProvider,
     ModelAlias,
@@ -614,12 +623,20 @@ class ModelRegistry:
     Example:
         >>> registry = ModelRegistry()
         >>> # Get model for task
-        >>> config = registry.get_model_for_task(TaskType.CREATIVE)
-        >>> print(config.model_name)  # "gemini-2.0-flash"
+        >>> result = registry.get_model_for_task(TaskType.CREATIVE)
+        >>> match result:
+        ...     case Ok(config):
+        ...         print(config.model_name)  # "gemini-2.0-flash"
+        ...     case Err(error):
+        ...         print(f"Error: {error}")
         >>>
         >>> # Resolve alias
         >>> result = registry.resolve_model("gpt4")
-        >>> print(result.qualified_name)  # "openai:gpt-4o"
+        >>> match result:
+        ...     case Ok(lookup):
+        ...         print(lookup.qualified_name)  # "openai:gpt-4o"
+        ...     case Err(error):
+        ...         print(f"Error: {error}")
     """
 
     def __init__(self, config: Optional[ModelRegistryConfig] = None) -> None:
@@ -766,53 +783,95 @@ class ModelRegistry:
             count=len([a for a in env_aliases.split(";") if a.strip()]),
         )
 
-    def register_model(self, model: ModelDefinition) -> None:
+    def register_model(self, model: ModelDefinition) -> Result[None, Error]:
         """
         Register a model definition.
 
         Args:
             model: Model definition to register
-        """
-        key = (model.provider, model.model_name)
-        self._models[key] = model
-        logger.debug(
-            "model_registered",
-            provider=model.provider.value,
-            model_name=model.model_name,
-        )
 
-    def register_task_config(self, config: TaskModelConfig) -> None:
+        Returns:
+            Result containing None on success, Error on failure
+        """
+        try:
+            key = (model.provider, model.model_name)
+            self._models[key] = model
+            logger.debug(
+                "model_registered",
+                provider=model.provider.value,
+                model_name=model.model_name,
+            )
+            return Ok(None)
+        except Exception as e:
+            logger.error("model_registration_failed", error=str(e))
+            return Err(
+                Error(
+                    code="MODEL_REGISTRATION_ERROR",
+                    message=f"Failed to register model: {e}",
+                    recoverable=True,
+                )
+            )
+
+    def register_task_config(self, config: TaskModelConfig) -> Result[None, Error]:
         """
         Register a task-based model configuration.
 
         Args:
             config: Task configuration to register
-        """
-        self._task_configs[config.task_type] = config
-        logger.debug(
-            "task_config_registered",
-            task_type=config.task_type.value,
-            provider=config.provider.value,
-            model_name=config.model_name,
-        )
 
-    def register_alias(self, alias: ModelAlias) -> None:
+        Returns:
+            Result containing None on success, Error on failure
+        """
+        try:
+            self._task_configs[config.task_type] = config
+            logger.debug(
+                "task_config_registered",
+                task_type=config.task_type.value,
+                provider=config.provider.value,
+                model_name=config.model_name,
+            )
+            return Ok(None)
+        except Exception as e:
+            logger.error("task_config_registration_failed", error=str(e))
+            return Err(
+                Error(
+                    code="TASK_CONFIG_REGISTRATION_ERROR",
+                    message=f"Failed to register task config: {e}",
+                    recoverable=True,
+                )
+            )
+
+    def register_alias(self, alias: ModelAlias) -> Result[None, Error]:
         """
         Register a model alias.
 
         Args:
             alias: Alias to register
+
+        Returns:
+            Result containing None on success, Error on failure
         """
-        self._aliases[alias.alias] = alias
-        logger.debug(
-            "alias_registered",
-            alias=alias.alias,
-            target=alias.target,
-        )
+        try:
+            self._aliases[alias.alias] = alias
+            logger.debug(
+                "alias_registered",
+                alias=alias.alias,
+                target=alias.target,
+            )
+            return Ok(None)
+        except Exception as e:
+            logger.error("alias_registration_failed", error=str(e))
+            return Err(
+                Error(
+                    code="ALIAS_REGISTRATION_ERROR",
+                    message=f"Failed to register alias: {e}",
+                    recoverable=True,
+                )
+            )
 
     def get_model(
         self, provider: LLMProvider, model_name: str
-    ) -> Optional[ModelDefinition]:
+    ) -> Result[ModelDefinition, Error]:
         """
         Get a model definition.
 
@@ -821,15 +880,24 @@ class ModelRegistry:
             model_name: Model name
 
         Returns:
-            ModelDefinition if found, None otherwise
+            Result containing ModelDefinition on success, NotFoundError on failure
         """
-        return self._models.get((provider, model_name))
+        key = (provider, model_name)
+        model = self._models.get(key)
+        if model is None:
+            return Err(
+                NotFoundError(
+                    message=f"Model not found: {provider.value}:{model_name}",
+                    details={"provider": provider.value, "model_name": model_name},
+                )
+            )
+        return Ok(model)
 
     def list_models(
         self,
         provider: Optional[LLMProvider] = None,
         include_deprecated: bool = False,
-    ) -> list[ModelDefinition]:
+    ) -> Result[list[ModelDefinition], Error]:
         """
         List all registered models.
 
@@ -838,19 +906,29 @@ class ModelRegistry:
             include_deprecated: Whether to include deprecated models
 
         Returns:
-            List of model definitions
+            Result containing list of model definitions
         """
-        models = list(self._models.values())
+        try:
+            models = list(self._models.values())
 
-        if provider:
-            models = [m for m in models if m.provider == provider]
+            if provider:
+                models = [m for m in models if m.provider == provider]
 
-        if not include_deprecated:
-            models = [m for m in models if not m.deprecated]
+            if not include_deprecated:
+                models = [m for m in models if not m.deprecated]
 
-        return models
+            return Ok(models)
+        except Exception as e:
+            logger.error("list_models_failed", error=str(e))
+            return Err(
+                Error(
+                    code="LIST_MODELS_ERROR",
+                    message=f"Failed to list models: {e}",
+                    recoverable=True,
+                )
+            )
 
-    def get_model_for_task(self, task_type: TaskType) -> TaskModelConfig:
+    def get_model_for_task(self, task_type: TaskType) -> Result[TaskModelConfig, Error]:
         """
         Get the model configuration for a task type.
 
@@ -858,19 +936,21 @@ class ModelRegistry:
             task_type: The task type
 
         Returns:
-            TaskModelConfig for the task
-
-        Raises:
-            ValueError: If task type has no configuration
+            Result containing TaskModelConfig on success, NotFoundError on failure
         """
         config = self._task_configs.get(task_type)
         if config is None:
-            raise ValueError(f"No model configuration for task type: {task_type}")
-        return config
+            return Err(
+                NotFoundError(
+                    message=f"No model configuration for task type: {task_type.value}",
+                    details={"task_type": task_type.value},
+                )
+            )
+        return Ok(config)
 
     def resolve_model(
         self, model_ref: str, default_provider: LLMProvider = LLMProvider.GEMINI
-    ) -> ModelLookupResult:
+    ) -> Result[ModelLookupResult, Error]:
         """
         Resolve a model reference to provider and model name.
 
@@ -884,73 +964,122 @@ class ModelRegistry:
             default_provider: Provider to use if not specified
 
         Returns:
-            ModelLookupResult with resolved provider and model name
+            Result containing ModelLookupResult on success, Error on failure
 
         Example:
-            >>> registry.resolve_model("gpt4")
-            ModelLookupResult(provider=LLMProvider.OPENAI, model_name="gpt-4o", ...)
-            >>> registry.resolve_model("anthropic:claude-3-opus-20240229")
-            ModelLookupResult(provider=LLMProvider.ANTHROPIC, model_name="claude-3-opus-20240229", ...)
+            >>> result = registry.resolve_model("gpt4")
+            >>> match result:
+            ...     case Ok(lookup):
+            ...         print(lookup.qualified_name)  # "openai:gpt-4o"
+            ...     case Err(error):
+            ...         print(f"Error: {error}")
         """
+        if not model_ref or not isinstance(model_ref, str):
+            return Err(
+                ValidationError(
+                    message="model_ref must be a non-empty string",
+                    field="model_ref",
+                )
+            )
+
         # Check if it's an alias
         if alias := self._aliases.get(model_ref):
-            return ModelLookupResult(
-                provider=alias.provider,
-                model_name=alias.model_name,
-                model_definition=self.get_model(alias.provider, alias.model_name),
-                alias_used=alias.alias,
+            model_result = self.get_model(alias.provider, alias.model_name)
+            return Ok(
+                ModelLookupResult(
+                    provider=alias.provider,
+                    model_name=alias.model_name,
+                    model_definition=model_result.unwrap() if model_result.is_ok else None,
+                    alias_used=alias.alias,
+                )
             )
 
         # Check if it's in "provider:model" format
         if ":" in model_ref:
-            provider_str, model_name = model_ref.split(":", 1)
+            parts = model_ref.split(":", 1)
+            provider_str = parts[0]
+            model_name = parts[1]
 
             try:
                 provider = LLMProvider(provider_str)
             except ValueError:
                 # Unknown provider, try to find it as an alias
                 if alias := self._aliases.get(provider_str):
-                    return ModelLookupResult(
-                        provider=alias.provider,
-                        model_name=model_name,
-                        model_definition=self.get_model(alias.provider, model_name),
-                        alias_used=f"{provider_str}:{model_name}",
+                    model_result = self.get_model(alias.provider, model_name)
+                    return Ok(
+                        ModelLookupResult(
+                            provider=alias.provider,
+                            model_name=model_name,
+                            model_definition=model_result.unwrap() if model_result.is_ok else None,
+                            alias_used=f"{provider_str}:{model_name}",
+                        )
                     )
-                raise ValueError(
-                    f"Invalid provider '{provider_str}'. "
-                    f"Must be one of: {[p.value for p in LLMProvider]}"
+                return Err(
+                    ValidationError(
+                        message=f"Invalid provider '{provider_str}'",
+                        field="provider",
+                        details={
+                            "valid_providers": [p.value for p in LLMProvider],
+                        },
+                    )
                 )
 
-            return ModelLookupResult(
-                provider=provider,
-                model_name=model_name,
-                model_definition=self.get_model(provider, model_name),
+            model_result = self.get_model(provider, model_name)
+            return Ok(
+                ModelLookupResult(
+                    provider=provider,
+                    model_name=model_name,
+                    model_definition=model_result.unwrap() if model_result.is_ok else None,
+                )
             )
 
         # Treat as model name with default provider
-        return ModelLookupResult(
-            provider=default_provider,
-            model_name=model_ref,
-            model_definition=self.get_model(default_provider, model_ref),
+        model_result = self.get_model(default_provider, model_ref)
+        return Ok(
+            ModelLookupResult(
+                provider=default_provider,
+                model_name=model_ref,
+                model_definition=model_result.unwrap() if model_result.is_ok else None,
+            )
         )
 
-    def list_aliases(self) -> list[ModelAlias]:
+    def list_aliases(self) -> Result[list[ModelAlias], Error]:
         """
         List all registered aliases.
 
         Returns:
-            List of model aliases
+            Result containing list of model aliases
         """
-        return list(self._aliases.values())
+        try:
+            return Ok(list(self._aliases.values()))
+        except Exception as e:
+            logger.error("list_aliases_failed", error=str(e))
+            return Err(
+                Error(
+                    code="LIST_ALIASES_ERROR",
+                    message=f"Failed to list aliases: {e}",
+                    recoverable=True,
+                )
+            )
 
-    def list_task_types(self) -> list[TaskType]:
+    def list_task_types(self) -> Result[list[TaskType], Error]:
         """
         List all available task types.
 
         Returns:
-            List of task types
+            Result containing list of task types
         """
-        return list(TaskType)
+        try:
+            return Ok(list(TaskType))
+        except Exception as e:
+            logger.error("list_task_types_failed", error=str(e))
+            return Err(
+                Error(
+                    code="LIST_TASK_TYPES_ERROR",
+                    message=f"Failed to list task types: {e}",
+                    recoverable=True,
+                )
+            )
 
     def get_recommended_model(
         self,
@@ -959,7 +1088,7 @@ class ModelRegistry:
         requires_vision: bool = False,
         max_cost: Optional[float] = None,
         provider_filter: Optional[list[LLMProvider]] = None,
-    ) -> Optional[ModelDefinition]:
+    ) -> Result[Optional[ModelDefinition], Error]:
         """
         Get a recommended model based on requirements.
 
@@ -971,52 +1100,68 @@ class ModelRegistry:
             provider_filter: Optional list of allowed providers
 
         Returns:
-            Best matching ModelDefinition, or None if no match
+            Result containing best matching ModelDefinition, or None if no match
         """
-        candidates: list[ModelDefinition] = []
+        try:
+            candidates: list[ModelDefinition] = []
 
-        if task_type:
-            # Start with task-based recommendation
-            task_config = self._task_configs.get(task_type)
-            if task_config:
-                model = self.get_model(task_config.provider, task_config.model_name)
-                if model:
-                    candidates.append(model)
+            if task_type:
+                # Start with task-based recommendation
+                task_config_result = self.get_model_for_task(task_type)
+                if task_config_result.is_ok:
+                    task_config = task_config_result.unwrap()
+                    model_result = self.get_model(task_config.provider, task_config.model_name)
+                    if model_result.is_ok:
+                        candidates.append(model_result.unwrap())
 
-                # Check fallback providers (null-safe iteration)
-                for provider in task_config.fallback_providers or []:
-                    if model := self.get_model(provider, task_config.model_name):
-                        candidates.append(model)
+                    # Check fallback providers (null-safe iteration)
+                    for provider in task_config.fallback_providers or []:
+                        fallback_result = self.get_model(provider, task_config.model_name)
+                        if fallback_result.is_ok:
+                            candidates.append(fallback_result.unwrap())
 
-        # If no task-based candidates, search all models
-        if not candidates:
-            candidates = self.list_models(include_deprecated=False)
+            # If no task-based candidates, search all models
+            if not candidates:
+                all_models_result = self.list_models(include_deprecated=False)
+                if all_models_result.is_error:
+                    return all_models_result
+                candidates = all_models_result.unwrap()
 
-        # Apply filters
-        if requires_functions:
-            candidates = [m for m in candidates if m.supports_functions]
+            # Apply filters
+            if requires_functions:
+                candidates = [m for m in candidates if m.supports_functions]
 
-        if requires_vision:
-            candidates = [m for m in candidates if m.supports_vision]
+            if requires_vision:
+                candidates = [m for m in candidates if m.supports_vision]
 
-        if provider_filter:
-            candidates = [m for m in candidates if m.provider in provider_filter]
+            if provider_filter:
+                candidates = [m for m in candidates if m.provider in provider_filter]
 
-        if max_cost is not None:
-            candidates = [
-                m for m in candidates if m.cost_per_1m_output_tokens <= max_cost
-            ]
+            if max_cost is not None:
+                candidates = [
+                    m for m in candidates if m.cost_per_1m_output_tokens <= max_cost
+                ]
 
-        # Return best candidate (prefer lower cost, then higher context)
-        if not candidates:
-            return None
+            # Return best candidate (prefer lower cost, then higher context)
+            if not candidates:
+                return Ok(None)
 
-        return min(
-            candidates,
-            key=lambda m: (m.cost_factor, -m.max_context_tokens),
-        )
+            best_model = min(
+                candidates,
+                key=lambda m: (m.cost_factor, -m.max_context_tokens),
+            )
+            return Ok(best_model)
+        except Exception as e:
+            logger.error("get_recommended_model_failed", error=str(e))
+            return Err(
+                Error(
+                    code="RECOMMENDATION_ERROR",
+                    message=f"Failed to get recommended model: {e}",
+                    recoverable=True,
+                )
+            )
 
-    def get_provider_for_model(self, model_ref: str) -> LLMProvider:
+    def get_provider_for_model(self, model_ref: str) -> Result[LLMProvider, Error]:
         """
         Get the provider for a model reference.
 
@@ -1024,13 +1169,12 @@ class ModelRegistry:
             model_ref: Model reference (alias, provider:model, or model name)
 
         Returns:
-            LLMProvider for the model
-
-        Raises:
-            ValueError: If model reference is invalid
+            Result containing LLMProvider on success, Error on failure
         """
         result = self.resolve_model(model_ref)
-        return result.provider
+        if result.is_error:
+            return result
+        return Ok(result.unwrap().provider)
 
     def is_model_available(self, provider: LLMProvider, model_name: str) -> bool:
         """
@@ -1043,8 +1187,11 @@ class ModelRegistry:
         Returns:
             True if model is registered and not deprecated
         """
-        model = self.get_model(provider, model_name)
-        return model is not None and not model.deprecated
+        model_result = self.get_model(provider, model_name)
+        if model_result.is_error:
+            return False
+        model = model_result.unwrap()
+        return not model.deprecated
 
     def get_stats(self) -> dict[str, Any]:
         """

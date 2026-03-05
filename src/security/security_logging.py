@@ -17,7 +17,7 @@ System保佑此安全日志系统 (May the System bless this security logging sy
 import asyncio
 import gzip
 import json
-import logging
+import structlog
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
@@ -27,9 +27,7 @@ from typing import Any, Dict, List, Optional
 
 import aiosqlite
 
-# Comprehensive logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SecurityEventType(str, Enum):
@@ -381,7 +379,7 @@ class SecurityLogger:
             )
 
             await conn.commit()
-            logger.info("SECURITY LOGGING DATABASE INITIALIZED")
+            logger.info("security_logging_database_initialized")
 
     async def log_security_event(self, event: SecurityEvent) -> None:
         """STANDARD SECURITY EVENT LOGGING"""
@@ -430,7 +428,7 @@ class SecurityLogger:
             await self._update_session_tracking(event)
 
         except Exception as e:
-            logger.error(f"SECURITY EVENT LOGGING ERROR: {e}")
+            logger.error("security_event_logging_error", error=str(e), error_type=type(e).__name__)
 
     async def log_audit_event(self, audit_log: SecurityAuditLog) -> None:
         """STANDARD AUDIT EVENT LOGGING"""
@@ -472,7 +470,7 @@ class SecurityLogger:
             self.audit_logger.info(json.dumps(asdict(audit_log), default=str))
 
         except Exception as e:
-            logger.error(f"AUDIT EVENT LOGGING ERROR: {e}")
+            logger.error("audit_event_logging_error", error=str(e), error_type=type(e).__name__)
 
     async def _analyze_threat(self, event: SecurityEvent) -> None:
         """STANDARD THREAT ANALYSIS"""
@@ -534,7 +532,7 @@ class SecurityLogger:
                 await self._auto_block_ip(event.source_ip, risk_score)
 
         except Exception as e:
-            logger.error(f"THREAT ANALYSIS ERROR: {e}")
+            logger.error("threat_analysis_error", error=str(e), error_type=type(e).__name__)
 
     async def _trigger_security_alert(
         self, event: SecurityEvent, alert_message: str, risk_score: float
@@ -559,9 +557,10 @@ class SecurityLogger:
         await self.log_security_event(alert_event)
 
         logger.critical(
-            f"SECURITY ALERT: {alert_message} | "
-            f"IP: {event.source_ip} | "
-            f"Risk Score: {risk_score:.2f}"
+            "security_alert_triggered",
+            message=alert_message,
+            source_ip=event.source_ip,
+            risk_score=round(risk_score, 2)
         )
 
     async def _auto_block_ip(self, ip_address: str, risk_score: float) -> None:
@@ -574,7 +573,7 @@ class SecurityLogger:
             "block_duration": 3600,  # 1 hour
         }
 
-        logger.warning(f"IP AUTO-BLOCKED: {ip_address} | Risk Score: {risk_score:.2f}")
+        logger.warning("ip_auto_blocked", ip_address=ip_address, risk_score=round(risk_score, 2))
 
     async def _update_session_tracking(self, event: SecurityEvent) -> None:
         """STANDARD SESSION TRACKING UPDATE"""
@@ -635,7 +634,7 @@ class SecurityLogger:
                 await conn.commit()
 
         except Exception as e:
-            logger.error(f"SESSION TRACKING UPDATE ERROR: {e}")
+            logger.error("session_tracking_update_error", error=str(e), error_type=type(e).__name__)
 
     async def _log_rotation_loop(self) -> None:
         """STANDARD LOG ROTATION LOOP"""
@@ -646,7 +645,7 @@ class SecurityLogger:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"LOG ROTATION ERROR: {e}")
+                logger.error("log_rotation_error", error=str(e), error_type=type(e).__name__)
 
     async def _threat_analysis_loop(self) -> None:
         """STANDARD THREAT ANALYSIS LOOP"""
@@ -658,7 +657,7 @@ class SecurityLogger:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"THREAT ANALYSIS LOOP ERROR: {e}")
+                logger.error("threat_analysis_loop_error", error=str(e), error_type=type(e).__name__)
 
     async def _rotate_logs(self) -> None:
         """STANDARD LOG ROTATION"""
@@ -689,10 +688,10 @@ class SecurityLogger:
 
                 open(audit_log, "w").close()
 
-            logger.info("LOG ROTATION COMPLETED")
+            logger.info("log_rotation_completed")
 
         except Exception as e:
-            logger.error(f"LOG ROTATION ERROR: {e}")
+            logger.error("log_rotation_failed", error=str(e), error_type=type(e).__name__)
 
     async def _update_threat_intelligence(self) -> None:
         """STANDARD THREAT INTELLIGENCE UPDATE"""
@@ -741,7 +740,7 @@ class SecurityLogger:
                     log_file.unlink()
 
         except Exception as e:
-            logger.error(f"OLD DATA CLEANUP ERROR: {e}")
+            logger.error("old_data_cleanup_error", error=str(e), error_type=type(e).__name__)
 
     async def get_security_events(
         self,
@@ -809,7 +808,7 @@ class SecurityLogger:
                 return events
 
         except Exception as e:
-            logger.error(f"SECURITY EVENTS RETRIEVAL ERROR: {e}")
+            logger.error("security_events_retrieval_error", error=str(e), error_type=type(e).__name__)
             return []
 
     async def get_security_statistics(
@@ -883,7 +882,7 @@ class SecurityLogger:
                 }
 
         except Exception as e:
-            logger.error(f"SECURITY STATISTICS ERROR: {e}")
+            logger.error("security_statistics_error", error=str(e), error_type=type(e).__name__)
             return {}
 
     async def shutdown(self) -> None:
@@ -901,10 +900,10 @@ class SecurityLogger:
             # Final log rotation
             await self._rotate_logs()
 
-            logger.info("SECURITY LOGGER SHUTDOWN COMPLETE")
+            logger.info("security_logger_shutdown_complete")
 
         except Exception as e:
-            logger.error(f"SECURITY LOGGER SHUTDOWN ERROR: {e}")
+            logger.error("security_logger_shutdown_error", error=str(e), error_type=type(e).__name__)
         finally:
             for handler, target_logger in (
                 (self._security_file_handler, getattr(self, "security_logger", None)),

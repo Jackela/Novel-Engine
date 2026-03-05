@@ -455,7 +455,13 @@ class ModelRouter:
         log = logger.bind(task_type=task_type.value)
 
         # Get task configuration
-        task_config = self._registry.get_model_for_task(task_type)
+        task_config_result = self._registry.get_model_for_task(task_type)
+        if task_config_result.is_error:
+            # Fallback to CHEAP task type
+            task_config_result = self._registry.get_model_for_task(TaskType.CHEAP)
+            if task_config_result.is_error:
+                raise ValueError(f"No model configuration available for task type: {task_type.value}")
+        task_config = task_config_result.unwrap()
 
         # Build candidate list with primary and fallbacks
         candidates = [(task_config.provider, task_config.model_name)]
@@ -506,19 +512,17 @@ class ModelRouter:
 
             # Check cost constraint
             if config.max_cost_per_1m_tokens is not None:
-                model_def = self._registry.get_model(provider, model_name)
-                if (
-                    model_def
-                    and model_def.cost_per_1m_output_tokens
-                    > config.max_cost_per_1m_tokens
-                ):
-                    log.debug(
-                        "model_too_expensive",
-                        model=model_key,
-                        cost=model_def.cost_per_1m_output_tokens,
-                        max_cost=config.max_cost_per_1m_tokens,
-                    )
-                    continue
+                model_result = self._registry.get_model(provider, model_name)
+                if model_result.is_ok:
+                    model_def = model_result.unwrap()
+                    if model_def.cost_per_1m_output_tokens > config.max_cost_per_1m_tokens:
+                        log.debug(
+                            "model_too_expensive",
+                            model=model_key,
+                            cost=model_def.cost_per_1m_output_tokens,
+                            max_cost=config.max_cost_per_1m_tokens,
+                        )
+                        continue
 
             # Apply preferred provider ordering
             if config.preferred_providers:
@@ -602,7 +606,14 @@ class ModelRouter:
 
         try:
             # Resolve the model reference
-            lookup_result = self._registry.resolve_model(model_ref)
+            resolve_result = self._registry.resolve_model(model_ref)
+            if resolve_result.is_error:
+                log.warning("model_resolution_failed", error=str(resolve_result.error))
+                if task_type:
+                    return self.select_model(task_type, config)
+                else:
+                    return self.select_model(TaskType.CHEAP, config)
+            lookup_result = resolve_result.unwrap()
             provider = lookup_result.provider
             model_name = lookup_result.model_name
 

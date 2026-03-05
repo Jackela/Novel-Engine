@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 import time
 from typing import List
 
@@ -12,7 +12,7 @@ from src.api.schemas import SimulationRequest, SimulationResponse
 from src.config.character_factory import CharacterFactory
 from src.core.event_bus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Simulations"])
 
@@ -54,7 +54,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         try:
             director.register_agent(agent)
         except Exception:
-            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+            logger.debug("suppressed_exception", exc_info=True)
 
     if missing_characters:
         raise HTTPException(
@@ -67,7 +67,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         try:
             director.run_turn()
         except Exception as exc:
-            logger.error("Director turn failed: %s", exc)
+            logger.error("director_turn_failed", error=str(exc), error_type=type(exc).__name__)
             continue
 
     try:

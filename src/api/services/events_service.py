@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from datetime import UTC, datetime
 from typing import Any, AsyncGenerator, Dict, Optional
@@ -16,7 +16,7 @@ from src.api.schemas import (
     SSEStatsResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EventsService:
@@ -62,14 +62,14 @@ class EventsService:
         """Broadcast event to all connected clients."""
         self._ensure_state()
         queues: dict[str, asyncio.Queue] = self.app.state.sse_event_queues
-        logger.info("Broadcasting SSE event to %d clients", len(queues))
+        logger.info("broadcasting_sse_event", client_count=len(queues))
 
         loop = getattr(self.app.state, "main_loop", None)
         if loop is None:
             try:
                 loop = asyncio.get_running_loop()
             except RuntimeError:
-                logger.warning("No event loop available for SSE broadcast")
+                logger.warning("no_event_loop_available", message="No event loop available for SSE broadcast")
                 return
 
         event_dict = event_data.model_dump()
@@ -89,7 +89,7 @@ class EventsService:
             try:
                 queue.put_nowait(data)
             except asyncio.QueueFull:
-                logger.warning("SSE queue full for client %s", client_id)
+                logger.warning("sse_queue_full", client_id=client_id)
 
         if loop and hasattr(loop, "is_running") and loop.is_running():
             loop.call_soon_threadsafe(_put_nowait)
@@ -209,7 +209,7 @@ class EventsService:
         try:
             yield "retry: 3000\n\n"
 
-            logger.info("SSE client connected: %s", client_id)
+            logger.info("sse_client_connected", client_id=client_id)
             self.app.state.active_sse_connections += 1
 
             # Send connect event
@@ -248,10 +248,10 @@ class EventsService:
                         break
 
                 except asyncio.CancelledError:
-                    logger.info("SSE client disconnected: %s", client_id)
+                    logger.info("sse_client_disconnected", client_id=client_id)
                     break
                 except Exception:
-                    logger.exception("SSE event generation error.")
+                    logger.error("sse_event_generation_error", error="exception_occurred", error_type="exception")
                     error_event = self.create_event(
                         event_type="system",
                         title="Stream Error",
@@ -268,7 +268,7 @@ class EventsService:
                 0, self.app.state.active_sse_connections - 1
             )
             queues.pop(client_id, None)
-            logger.info("SSE client %s cleaned up", client_id)
+            logger.info("sse_client_cleaned_up", client_id=client_id)
 
     async def _wait_or_generate_event(
         self,

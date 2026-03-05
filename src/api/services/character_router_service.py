@@ -21,7 +21,7 @@ Gotchas:
 
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 import re
 from datetime import datetime, timezone
@@ -34,7 +34,7 @@ from fastapi import HTTPException
 from src.api.schemas import CharacterSummary
 from src.api.services.paths import get_characters_directory_path
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _CHARACTER_ID_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
@@ -271,7 +271,7 @@ class CharacterRouterService:
                             display_name = trimmed[2:].strip() or display_name
                             break
             except Exception:
-                self.logger.debug("Failed to parse character markdown.", exc_info=True)
+                self.logger.debug("failed_to_parse_character_markdown", exc_info=True)
 
         if stats_file.exists():
             updated_ts = max(updated_ts or 0.0, stats_file.stat().st_mtime)
@@ -310,7 +310,7 @@ class CharacterRouterService:
                             ):
                                 type_value = type_candidate.strip().lower()
             except Exception:
-                self.logger.debug("Failed to parse stats.", exc_info=True)
+                self.logger.debug("failed_to_parse_stats", exc_info=True)
 
         updated_dt = datetime.fromtimestamp(
             updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc
@@ -424,19 +424,19 @@ class CharacterRouterService:
                 entries.append((timestamp, summary))
             return entries
         except FileNotFoundError as exc:
-            self.logger.error("Characters directory missing: %s", exc)
+            self.logger.error("characters_directory_missing", error=str(exc), error_type=type(exc).__name__)
             raise HTTPException(
                 status_code=404, detail="Characters directory not found."
             )
         except PermissionError as exc:
-            self.logger.error("Permission denied reading characters: %s", exc)
+            self.logger.error("permission_denied_reading_characters", error=str(exc), error_type=type(exc).__name__)
             raise HTTPException(
                 status_code=500,
                 detail="Permission denied accessing characters directory.",
             )
         except Exception as exc:
             self.logger.error(
-                "Unexpected error loading characters: %s", exc, exc_info=True
+                "unexpected_error_loading_characters", error=str(exc), error_type=type(exc).__name__, exc_info=True
             )
             raise HTTPException(
                 status_code=500, detail=f"Failed to retrieve characters: {exc}"

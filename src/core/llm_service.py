@@ -29,7 +29,7 @@ character generation services. Keep until migration completes.
 import asyncio
 import hashlib
 import json
-import logging
+import structlog
 import os
 import re
 import time
@@ -42,7 +42,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class LLMProvider(Enum):
@@ -149,9 +149,7 @@ class UnifiedLLMService:
         # HTTP session for connection pooling (from PersonaAgent)
         self._http_session = self._create_http_session()
 
-        logger.info(
-            "Unified LLM Service initialized with Gemini 2.0 Flash primary provider"
-        )
+        logger.info("llm_service_initialized", primary_provider="gemini_2.0_flash")
 
     def _initialize_providers(self) -> Dict[LLMProvider, Dict[str, Any]]:
         """Initialize provider configurations."""
@@ -167,9 +165,9 @@ class UnifiedLLMService:
                 "max_tokens": 8192,
                 "timeout": 30,
             }
-            logger.info("Gemini provider configured successfully")
+            logger.info("gemini_provider_configured")
         else:
-            logger.warning("GEMINI_API_KEY not found - Gemini provider unavailable")
+            logger.warning("gemini_provider_unavailable", reason="GEMINI_API_KEY_not_found")
 
         # Future providers (OpenAI, Anthropic) can be added here
         if os.getenv("OPENAI_API_KEY"):
@@ -226,7 +224,7 @@ class UnifiedLLMService:
                 cached_response = self._get_cached_response(request)
                 if cached_response:
                     self.metrics.cache_hits += 1
-                    logger.debug(f"Cache hit for request {request_id}")
+                    logger.debug("cache_hit", request_id=request_id)
                     return cached_response
                 else:
                     self.metrics.cache_misses += 1
@@ -274,9 +272,7 @@ class UnifiedLLMService:
             # Update metrics
             self._update_metrics(response, success=True)
 
-            logger.info(
-                f"LLM request {request_id} completed: {response_time_ms}ms, ${cost_estimate:.4f}"
-            )
+            logger.info("llm_request_completed", request_id=request_id, response_time_ms=response_time_ms, cost_estimate=round(cost_estimate, 4))
             return response
 
         except Exception as e:
@@ -289,7 +285,7 @@ class UnifiedLLMService:
             ]
 
             self.metrics.failed_requests += 1
-            logger.error(f"LLM request {request_id} failed: {str(e)}", exc_info=True)
+            logger.error("llm_request_failed", request_id=request_id, error=str(e), error_type=type(e).__name__, exc_info=True)
 
             if is_development:
                 # 开发环境: 抛出异常而不是返回错误响应
@@ -411,7 +407,7 @@ class UnifiedLLMService:
             return True  # Default validation
 
         except Exception as e:
-            logger.error(f"Format validation error: {e}")
+            logger.error("format_validation_error", error=str(e), error_type=type(e).__name__)
             return False
 
     def _generate_request_id(self, request: LLMRequest) -> str:

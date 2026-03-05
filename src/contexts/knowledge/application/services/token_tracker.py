@@ -117,15 +117,23 @@ class TrackingContext:
         elif response_text is not None:
             # Estimate from combined text
             prompt_length = len(str(self.metadata.get("prompt", "")))
-            final_input_tokens = self.token_counter.count(
+            count_result = self.token_counter.count(
                 response_text[:prompt_length] if prompt_length > 0 else ""
-            ).token_count
+            )
+            if count_result.is_error:
+                final_input_tokens = prompt_length // 4  # Fallback
+            else:
+                final_input_tokens = count_result.unwrap().token_count
         else:
             final_input_tokens = 0
 
         # Estimate output tokens from response text if not provided
         if output_tokens == 0 and response_text is not None:
-            output_tokens = self.token_counter.count(response_text).token_count
+            count_result = self.token_counter.count(response_text)
+            if count_result.is_error:
+                output_tokens = len(response_text) // 4  # Fallback
+            else:
+                output_tokens = count_result.unwrap().token_count
 
         latency_ms = self.elapsed_ms
 
@@ -427,16 +435,27 @@ class TokenTracker:
             >>>     )
         """
         # Resolve model reference
-        lookup_result = self._model_registry.resolve_model(model_ref)
+        resolve_result = self._model_registry.resolve_model(model_ref)
+        if resolve_result.is_error:
+            # Use defaults if resolution fails
+            lookup_result = type('obj', (object,), {
+                'provider': LLMProvider.OPENAI,
+                'model_name': model_ref,
+                'model_definition': None,
+            })()
+        else:
+            lookup_result = resolve_result.unwrap()
         model_def = lookup_result.model_definition
 
         # Pre-count input tokens if prompt provided
         input_tokens = None
         if prompt and self._config.count_input_tokens:
-            input_tokens = self._token_counter.count(
+            count_result = self._token_counter.count(
                 prompt,
                 model=model_def.model_name if model_def else model_ref,
-            ).token_count
+            )
+            if count_result.is_ok:
+                input_tokens = count_result.unwrap().token_count
 
         # Create tracking context
         ctx = TrackingContext(
@@ -537,17 +556,23 @@ class TokenTracker:
                     cost_per_1m_input = 0.0
                     cost_per_1m_output = 0.0
                     if actual_model_ref:
-                        lookup_result = self._model_registry.resolve_model(
+                        resolve_result = self._model_registry.resolve_model(
                             actual_model_ref
                         )
-                        model_def = lookup_result.model_definition
-                        if model_def:
-                            cost_per_1m_input = model_def.cost_per_1m_input_tokens
-                            cost_per_1m_output = model_def.cost_per_1m_output_tokens
+                        if resolve_result.is_ok:
+                            lookup_result = resolve_result.unwrap()
+                            model_def = lookup_result.model_definition
+                            if model_def:
+                                cost_per_1m_input = model_def.cost_per_1m_input_tokens
+                                cost_per_1m_output = model_def.cost_per_1m_output_tokens
 
-                        # Create usage record (we're already inside if actual_model_ref)
-                        provider_str = lookup_result.provider.value
-                        model_name_str = lookup_result.model_name
+                            # Create usage record (we're already inside if actual_model_ref)
+                            provider_str = lookup_result.provider.value
+                            model_name_str = lookup_result.model_name
+                        else:
+                            # Use defaults if resolution fails
+                            provider_str = "unknown"
+                            model_name_str = actual_model_ref
 
                         usage = TokenUsage.create(
                             provider=provider_str,
@@ -573,21 +598,31 @@ class TokenTracker:
 
                     # Record failure
                     if actual_model_ref and self._config.track_individual_calls:
-                        lookup_result = self._model_registry.resolve_model(
+                        resolve_result = self._model_registry.resolve_model(
                             actual_model_ref
                         )
-                        model_def = lookup_result.model_definition
+                        if resolve_result.is_ok:
+                            lookup_result = resolve_result.unwrap()
+                            model_def = lookup_result.model_definition
 
-                        cost_per_1m_input = (
-                            model_def.cost_per_1m_input_tokens if model_def else 0.0
-                        )
-                        cost_per_1m_output = (
-                            model_def.cost_per_1m_output_tokens if model_def else 0.0
-                        )
+                            cost_per_1m_input = (
+                                model_def.cost_per_1m_input_tokens if model_def else 0.0
+                            )
+                            cost_per_1m_output = (
+                                model_def.cost_per_1m_output_tokens if model_def else 0.0
+                            )
+                            provider_str = lookup_result.provider.value
+                            model_name_str = lookup_result.model_name
+                        else:
+                            # Use defaults if resolution fails
+                            cost_per_1m_input = 0.0
+                            cost_per_1m_output = 0.0
+                            provider_str = "unknown"
+                            model_name_str = actual_model_ref
 
                         usage = TokenUsage.create(
-                            provider=lookup_result.provider.value,
-                            model_name=lookup_result.model_name,
+                            provider=provider_str,
+                            model_name=model_name_str,
                             input_tokens=0,
                             output_tokens=0,
                             cost_per_1m_input=cost_per_1m_input,

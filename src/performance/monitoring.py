@@ -15,7 +15,7 @@ Key Features:
 
 import asyncio
 import json
-import logging
+import structlog
 import os
 import statistics
 import time
@@ -26,9 +26,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
-# Comprehensive logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(str, Enum):
@@ -258,7 +256,7 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error("monitoring_loop_error", error=str(e), error_type=type(e).__name__)
 
     async def _cleanup_loop(self) -> None:
         """Background cleanup loop for old metrics and alerts."""
@@ -270,7 +268,7 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.error("cleanup_loop_error", error=str(e), error_type=type(e).__name__)
 
     async def _collect_system_metrics(self) -> None:
         """Collect comprehensive system performance metrics."""
@@ -298,7 +296,7 @@ class PerformanceMonitor:
                 self.record_metric(name, value, MetricType.COUNTER, current_time)
 
         except Exception as e:
-            logger.error(f"Error collecting system metrics: {e}")
+            logger.error("system_metrics_collection_error", error=str(e), error_type=type(e).__name__)
 
     def record_metric(
         self,
@@ -480,6 +478,15 @@ class PerformanceMonitor:
                         self.alert_history.append(alert)
 
                         await self._handle_alert(alert)
+            else:
+                # Resolve alert if it was active
+                if alert_key in self.active_alerts:
+                    alert = self.active_alerts[alert_key]
+                    alert.resolved = True
+                    alert.resolution_timestamp = current_time
+                    del self.active_alerts[alert_key]
+
+                    await self._handle_alert_resolution(alert)
                 else:
                     # Resolve alert if it was active
                     if alert_key in self.active_alerts:
@@ -500,10 +507,12 @@ class PerformanceMonitor:
 
         logger.log(
             log_level,
-            f"Performance Alert: {alert.severity.value.upper()} | "
-            f"{alert.metric_name} = {alert.actual_value:.2f} "
-            f"(threshold: {alert.threshold_value:.2f}) | "
-            f"{alert.message}",
+            "performance_alert",
+            severity=alert.severity.value,
+            metric_name=alert.metric_name,
+            actual_value=round(alert.actual_value, 2),
+            threshold_value=round(alert.threshold_value, 2),
+            message=alert.message
         )
 
         # In a production system, you might:
@@ -514,8 +523,9 @@ class PerformanceMonitor:
     async def _handle_alert_resolution(self, alert: PerformanceAlert) -> None:
         """Handle resolution of performance alert."""
         logger.info(
-            f"Alert Resolved: {alert.metric_name} | "
-            f"Alert duration: {alert.resolution_timestamp - alert.timestamp:.1f}s"
+            "performance_alert_resolved",
+            metric_name=alert.metric_name,
+            duration_seconds=round(alert.resolution_timestamp - alert.timestamp, 1)
         )
 
     def _cleanup_old_metrics(self) -> None:
@@ -577,7 +587,7 @@ class PerformanceMonitor:
                     os.remove(os.path.join(self.config.export_path, old_file))
 
         except Exception as e:
-            logger.error(f"Error exporting metrics: {e}")
+            logger.error("metrics_export_error", error=str(e), error_type=type(e).__name__)
 
     def get_metric_stats(
         self, metric_name: str, time_range_seconds: int = 300
@@ -697,25 +707,21 @@ class PerformanceMonitor:
                 try:
                     await self._monitoring_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("monitoring_task_cancelled")
 
             if self._cleanup_task:
                 self._cleanup_task.cancel()
                 try:
                     await self._cleanup_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("cleanup_task_cancelled")
             if self.config.export_metrics:
                 await self._export_metrics()
 
-            logger.info("Performance monitor shutdown complete")
+            logger.info("performance_monitor_shutdown_complete")
 
         except Exception as e:
-            logger.error(f"Error during monitor shutdown: {e}")
+            logger.error("monitor_shutdown_error", error=str(e), error_type=type(e).__name__)
 
 
 # Performance measurement decorator

@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 import math
 from typing import Any, Optional
 
@@ -29,7 +29,7 @@ from src.contexts.knowledge.domain.models.prompt_experiment import (
     PromptExperiment,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _sanitize_float_for_json(value: Any) -> Any:

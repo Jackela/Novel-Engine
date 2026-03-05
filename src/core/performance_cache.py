@@ -8,7 +8,7 @@ and performance optimization for character data and story generation.
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(Enum):
@@ -305,7 +305,7 @@ class PerformanceCache:
             try:
                 await self.cleanup_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                logger.debug("cleanup_task_cancelled")
 
     async def _cleanup_loop(self) -> None:
         """Background cleanup for expired entries."""
@@ -316,7 +316,7 @@ class PerformanceCache:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Cache cleanup error: {e}")
+                logger.error("cache_cleanup_error", error=str(e), error_type=type(e).__name__)
 
     async def _cleanup_expired(self) -> None:
         """Remove expired entries from cache."""
@@ -330,7 +330,7 @@ class PerformanceCache:
             await self.memory_cache.delete(key)
 
         if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
+            logger.debug("expired_cache_entries_cleaned", count=len(expired_keys))
 
     # Character Caching Methods
     async def get_character(self, character_id: str) -> Optional[Dict[str, Any]]:
@@ -418,9 +418,7 @@ class PerformanceCache:
         for key in keys_to_delete:
             await self.memory_cache.delete(key)
 
-        logger.debug(
-            f"Invalidated {len(keys_to_delete)} cache entries matching '{pattern}'"
-        )
+        logger.debug("cache_entries_invalidated", count=len(keys_to_delete), pattern=pattern)
 
     async def get_comprehensive_stats(self) -> Dict[str, Any]:
         """Get comprehensive cache statistics."""
@@ -461,14 +459,14 @@ class PerformanceCache:
         """Pre-warm cache with frequently accessed data."""
         # This would integrate with the actual data layer to pre-load
         # frequently accessed characters, templates, etc.
-        logger.info("Cache warming initiated")
+        logger.info("cache_warming_initiated")
 
         if character_ids:
-            logger.info(f"Pre-warming cache for {len(character_ids)} characters")
+            logger.info("character_cache_pre_warming", character_count=len(character_ids))
             # Would load character data here
 
         # Pre-load critical templates
-        logger.info("Pre-warming template cache")
+        logger.info("template_cache_pre_warming")
         # Would load templates here
 
 

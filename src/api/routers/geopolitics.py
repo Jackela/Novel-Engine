@@ -7,7 +7,7 @@ diplomacy, territory control, and resources.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -27,7 +27,7 @@ from src.contexts.world.application.services.geopolitics_service import (
 )
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/geopolitics", tags=["geopolitics"])
 

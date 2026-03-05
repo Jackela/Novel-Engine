@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 import re
 import time
@@ -34,7 +34,7 @@ from src.contexts.knowledge.domain.models.prompt_usage import PromptUsage
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _estimate_tokens(text: str) -> int:
@@ -621,9 +621,9 @@ class PromptRouterService:
             success = False
             error_message = str(e)
             logger.warning(
-                "llm_generation_failed: prompt_id=%s error_message=%s",
-                prompt_id,
-                error_message,
+                "llm_generation_failed",
+                prompt_id=prompt_id,
+                error_message=error_message,
             )
             raise
         finally:
@@ -656,7 +656,7 @@ class PromptRouterService:
                     await self._usage_repository.record(usage)
                 except Exception as record_error:
                     # Don't fail the request if analytics recording fails
-                    logger.debug(f"Failed to record prompt usage: {record_error}")
+                    logger.debug("failed_to_record_prompt_usage", error=str(record_error), error_type=type(record_error).__name__)
 
         return {
             "rendered": rendered,

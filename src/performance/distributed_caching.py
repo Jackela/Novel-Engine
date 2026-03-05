@@ -16,7 +16,7 @@ Features:
 
 import asyncio
 import json
-import logging
+import structlog
 import os
 import time
 from abc import ABC, abstractmethod
@@ -26,9 +26,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(str, Enum):
@@ -359,7 +357,7 @@ class RedisCache(CacheInterface):
             return bool(result)
 
         except Exception as e:
-            logger.error(f"Redis set error: {e}")
+            logger.error("redis_set_error", error=str(e), error_type=type(e).__name__)
             return False
 
     async def delete(self, key: str) -> bool:
@@ -373,7 +371,7 @@ class RedisCache(CacheInterface):
             return bool(result)
 
         except Exception as e:
-            logger.error(f"Redis delete error: {e}")
+            logger.error("redis_delete_error", error=str(e), error_type=type(e).__name__)
             return False
 
     async def exists(self, key: str) -> bool:
@@ -386,7 +384,7 @@ class RedisCache(CacheInterface):
             return bool(result)
 
         except Exception as e:
-            logger.error(f"Redis exists error: {e}")
+            logger.error("redis_exists_error", error=str(e), error_type=type(e).__name__)
             return False
 
     async def clear(self) -> bool:
@@ -403,7 +401,7 @@ class RedisCache(CacheInterface):
             return True
 
         except Exception as e:
-            logger.error(f"Redis clear error: {e}")
+            logger.error("redis_clear_error", error=str(e), error_type=type(e).__name__)
             return False
 
     def get_metrics(self) -> CacheMetrics:
@@ -496,14 +494,14 @@ class DistributedCache:
         # Try L1 cache first
         value = await self.l1_cache.get(key)
         if value is not None:
-            logger.debug(f"Cache hit L1: {key}")
+            logger.debug("cache_hit_l1", key=key)
             self._update_combined_metrics("l1_hit", time.time() - start_time)
             return value
 
         # Try L2 cache
         value = await self.l2_cache.get(key)
         if value is not None:
-            logger.debug(f"Cache hit L2: {key}")
+            logger.debug("cache_hit_l2", key=key)
             # Write back to L1
             await self.l1_cache.set(key, value)
             self._update_combined_metrics("l2_hit", time.time() - start_time)
@@ -513,7 +511,7 @@ class DistributedCache:
         if self.enable_read_through:
             value = await self._load_from_source(key)
             if value is not None:
-                logger.debug(f"Cache loaded from source: {key}")
+                logger.debug("cache_loaded_from_source", key=key)
                 # Populate both caches
                 await self.l1_cache.set(key, value)
                 await self.l2_cache.set(key, value)
@@ -578,7 +576,7 @@ class DistributedCache:
 
     async def warm_cache(self, keys: List[str]) -> None:
         """Warm cache by preloading data"""
-        logger.info(f"Warming cache with {len(keys)} keys")
+        logger.info("cache_warming_started", key_count=len(keys))
 
         tasks: list[Any] = []
         for key in keys:
@@ -588,7 +586,7 @@ class DistributedCache:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-        logger.info("Cache warming completed")
+        logger.info("cache_warming_completed")
 
     async def _load_from_source(self, key: str) -> Optional[Any]:
         """Load data from source using registered loaders"""
@@ -600,13 +598,13 @@ class DistributedCache:
                     else:
                         return loader(key)
                 except Exception as e:
-                    logger.error(f"Cache loader error for {key}: {e}")
+                    logger.error("cache_loader_error", key=key, error=str(e), error_type=type(e).__name__)
         return None
 
     async def _write_to_source(self, key: str, value: Any) -> None:
         """Write data to source (write-through)"""
         # This would integrate with your database layer
-        logger.debug(f"Write-through to source: {key}")
+        logger.debug("write_through_to_source", key=key)
 
     def _update_combined_metrics(self, hit_type: str, response_time: float) -> None:
         """Update combined cache metrics"""
@@ -686,7 +684,7 @@ class CharacterCache:
 # Example usage and testing
 async def main():
     """Demonstrate distributed caching system"""
-    logger.info("Starting Novel Engine Distributed Caching Demo")
+    logger.info("distributed_caching_demo_started")
 
     # Initialize caches
     memory_cache = MemoryCache(max_size=1000)
@@ -697,15 +695,15 @@ async def main():
     character_cache = CharacterCache(distributed_cache)
 
     # Demo operations
-    logger.info("Testing character caching...")
+    logger.info("character_caching_test_started")
 
     # First access - should load from source
     character = await character_cache.get_character("test_char_1")
-    logger.info(f"First access: {character}")
+    logger.info("first_access_completed", character_id=character.get('id') if character else None)
 
     # Second access - should hit cache
     character = await character_cache.get_character("test_char_1")
-    logger.info(f"Second access (cached): {character}")
+    logger.info("second_access_completed", character_id=character.get('id') if character else None)
 
     # Set custom character
     custom_character = {
@@ -717,7 +715,7 @@ async def main():
 
     # Retrieve custom character
     retrieved = await character_cache.get_character("custom_1")
-    logger.info(f"Custom character: {retrieved}")
+    logger.info("custom_character_retrieved", character_id=retrieved.get('id') if retrieved else None)
 
     # Test cache warming
     await distributed_cache.warm_cache(
@@ -728,12 +726,14 @@ async def main():
     metrics = distributed_cache.get_comprehensive_metrics()
     for level, metric in metrics.items():
         logger.info(
-            f"{level} cache - Hit rate: {metric.hit_rate:.1f}%, "
-            f"Requests: {metric.total_requests}, "
-            f"Avg response: {metric.average_response_time*1000:.1f}ms"
+            "cache_metrics",
+            cache_level=level,
+            hit_rate_percent=round(metric.hit_rate, 1),
+            total_requests=metric.total_requests,
+            avg_response_ms=round(metric.average_response_time * 1000, 1)
         )
 
-    logger.info("Distributed caching demonstration complete")
+    logger.info("distributed_caching_demo_completed")
 
 
 if __name__ == "__main__":

@@ -107,8 +107,12 @@ async def get_rag_context(
 
         for chunk in result.chunks:
             # Count tokens for this chunk
-            token_result = token_counter.count(chunk.content)
-            token_count = token_result.token_count
+            count_result = token_counter.count(chunk.content)
+            if count_result.is_error:
+                # Fallback to rough estimation
+                token_count = len(chunk.content) // 4
+            else:
+                token_count = count_result.unwrap().token_count
 
             # BRAIN-036-03: Mark chunk as used if score meets threshold
             is_used = chunk.score >= used_threshold

@@ -21,7 +21,7 @@ Features:
 
 import hashlib
 import json
-import logging
+import structlog
 import os
 import pickle
 from abc import ABC, abstractmethod
@@ -39,7 +39,7 @@ import yaml
 from botocore.exceptions import ClientError
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class StateStoreConfig(BaseModel):
@@ -158,10 +158,10 @@ class RedisStateStore(StateStore):
             # Test connection
             await self.redis.ping()
             self._connected = True
-            logger.info("Redis connection established")
+            logger.info("redis_connection_established")
 
         except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}")
+            logger.error("redis_connection_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def get(self, key: StateKey) -> Optional[Any]:
@@ -191,7 +191,7 @@ class RedisStateStore(StateStore):
                     )
 
         except Exception as e:
-            logger.error(f"Failed to get key {key.to_string()}: {e}")
+            logger.error("redis_get_failed", key=key.to_string(), error=str(e))
             return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
@@ -216,7 +216,7 @@ class RedisStateStore(StateStore):
             return result is True
 
         except Exception as e:
-            logger.error(f"Failed to set key {key.to_string()}: {e}")
+            logger.error("redis_set_failed", key=key.to_string(), error=str(e))
             return False
 
     async def delete(self, key: StateKey) -> bool:
@@ -229,7 +229,7 @@ class RedisStateStore(StateStore):
             return result > 0
 
         except Exception as e:
-            logger.error(f"Failed to delete key {key.to_string()}: {e}")
+            logger.error("redis_delete_failed", key=key.to_string(), error=str(e))
             return False
 
     async def exists(self, key: StateKey) -> bool:
@@ -242,7 +242,7 @@ class RedisStateStore(StateStore):
             return result > 0
 
         except Exception as e:
-            logger.error(f"Failed to check existence of key {key.to_string()}: {e}")
+            logger.error("redis_exists_check_failed", key=key.to_string(), error=str(e))
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -258,7 +258,7 @@ class RedisStateStore(StateStore):
             ]
 
         except Exception as e:
-            logger.error(f"Failed to list keys with pattern {pattern}: {e}")
+            logger.error("redis_list_keys_failed", pattern=pattern, error=str(e))
             return []
 
     async def increment(self, key: StateKey, amount: int = 1) -> Optional[int]:
@@ -271,7 +271,7 @@ class RedisStateStore(StateStore):
             return result
 
         except Exception as e:
-            logger.error(f"Failed to increment key {key.to_string()}: {e}")
+            logger.error("redis_increment_failed", key=key.to_string(), error=str(e))
             return None
 
     async def expire(self, key: StateKey, ttl: int) -> bool:
@@ -284,7 +284,7 @@ class RedisStateStore(StateStore):
             return result is True
 
         except Exception as e:
-            logger.error(f"Failed to set expire for key {key.to_string()}: {e}")
+            logger.error("redis_expire_failed", key=key.to_string(), error=str(e))
             return False
 
     async def health_check(self) -> bool:
@@ -297,7 +297,7 @@ class RedisStateStore(StateStore):
             return True
 
         except Exception as e:
-            logger.error(f"Redis health check failed: {e}")
+            logger.error("redis_health_check_failed", error=str(e))
             return False
 
     async def close(self) -> None:
@@ -305,7 +305,7 @@ class RedisStateStore(StateStore):
         if self.redis:
             await self.redis.close()
             self._connected = False
-            logger.info("Redis connection closed")
+            logger.info("redis_connection_closed")
 
 
 class PostgreSQLStateStore(StateStore):
@@ -333,10 +333,10 @@ class PostgreSQLStateStore(StateStore):
             # Initialize tables
             await self._initialize_tables()
             self._connected = True
-            logger.info("PostgreSQL connection pool established")
+            logger.info("postgresql_connection_pool_established")
 
         except Exception as e:
-            logger.error(f"Failed to connect to PostgreSQL: {e}")
+            logger.error("postgresql_connection_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def _initialize_tables(self) -> None:
@@ -394,7 +394,7 @@ class PostgreSQLStateStore(StateStore):
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to get key {key.to_string()}: {e}")
+            logger.error("postgresql_get_failed", key=key.to_string(), error=str(e))
             return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
@@ -441,7 +441,7 @@ class PostgreSQLStateStore(StateStore):
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to set key {key.to_string()}: {e}")
+            logger.error("postgresql_set_failed", key=key.to_string(), error=str(e))
             return False
 
     async def delete(self, key: StateKey) -> bool:
@@ -459,7 +459,7 @@ class PostgreSQLStateStore(StateStore):
                 return result.split()[-1] != "0"  # Check if any rows were affected
 
         except Exception as e:
-            logger.error(f"Failed to delete key {key.to_string()}: {e}")
+            logger.error("postgresql_delete_failed", key=key.to_string(), error=str(e))
             return False
 
     async def exists(self, key: StateKey) -> bool:
@@ -478,7 +478,7 @@ class PostgreSQLStateStore(StateStore):
                 return row is not None
 
         except Exception as e:
-            logger.error(f"Failed to check existence of key {key.to_string()}: {e}")
+            logger.error("postgresql_exists_check_failed", key=key.to_string(), error=str(e))
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -513,7 +513,7 @@ class PostgreSQLStateStore(StateStore):
                 ]
 
         except Exception as e:
-            logger.error(f"Failed to list keys with pattern {pattern}: {e}")
+            logger.error("postgresql_list_keys_failed", pattern=pattern, error=str(e))
             return []
 
     async def query_by_namespace(
@@ -541,7 +541,7 @@ class PostgreSQLStateStore(StateStore):
                 return [dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"Failed to query namespace {namespace}: {e}")
+            logger.error("postgresql_namespace_query_failed", namespace=namespace, error=str(e))
             return []
 
     async def cleanup_expired(self) -> int:
@@ -555,11 +555,11 @@ class PostgreSQLStateStore(StateStore):
                     "DELETE FROM state_data WHERE expires_at IS NOT NULL AND expires_at <= NOW()"
                 )
                 deleted_count = int(result.split()[-1])
-                logger.info(f"Cleaned up {deleted_count} expired entries")
+                logger.info("expired_entries_cleaned", deleted_count=deleted_count)
                 return deleted_count
 
         except Exception as e:
-            logger.error(f"Failed to cleanup expired entries: {e}")
+            logger.error("expired_entries_cleanup_failed", error=str(e))
             return 0
 
     async def health_check(self) -> bool:
@@ -573,7 +573,7 @@ class PostgreSQLStateStore(StateStore):
                 return True
 
         except Exception as e:
-            logger.error(f"PostgreSQL health check failed: {e}")
+            logger.error("postgresql_health_check_failed", error=str(e))
             return False
 
     async def close(self) -> None:
@@ -581,7 +581,7 @@ class PostgreSQLStateStore(StateStore):
         if self.pool:
             await self.pool.close()
             self._connected = False
-            logger.info("PostgreSQL connection pool closed")
+            logger.info("postgresql_connection_pool_closed")
 
 
 class S3StateStore(StateStore):
@@ -619,7 +619,7 @@ class S3StateStore(StateStore):
                     raise
 
         except Exception as e:
-            logger.error(f"Failed to connect to S3: {e}")
+            logger.error("s3_connection_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def _ensure_bucket_exists(self) -> None:
@@ -639,11 +639,12 @@ class S3StateStore(StateStore):
                                 "LocationConstraint": self.config.s3_region
                             },
                         )
-                    logger.info(f"Created S3 bucket: {self.config.s3_bucket}")
+                    logger.info("s3_bucket_created", bucket=self.config.s3_bucket)
                 except Exception as create_error:
-                    logger.error(f"Failed to create S3 bucket: {create_error}")
+                    logger.error("s3_bucket_creation_failed", error=str(create_error))
                     raise
             else:
+                logger.error("s3_bucket_check_failed", error_code=e.response["Error"]["Code"])
                 raise
 
     def _key_to_s3_key(self, key: StateKey) -> str:
@@ -684,11 +685,11 @@ class S3StateStore(StateStore):
             if e.response["Error"]["Code"] == "NoSuchKey":
                 return None
             else:
-                logger.error(f"Failed to get S3 object {s3_key}: {e}")
+                logger.error("s3_get_object_failed", key=s3_key, error_code=e.response["Error"]["Code"])
                 return None
 
         except Exception as e:
-            logger.error(f"Failed to get S3 object {s3_key}: {e}")
+            logger.error("s3_get_object_failed", key=s3_key, error=str(e))
             return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
@@ -743,7 +744,7 @@ class S3StateStore(StateStore):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to set S3 object {s3_key}: {e}")
+            logger.error("s3_set_object_failed", key=s3_key, error=str(e))
             return False
 
     async def delete(self, key: StateKey) -> bool:
@@ -761,7 +762,7 @@ class S3StateStore(StateStore):
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete S3 object {s3_key}: {e}")
+            logger.error("s3_delete_object_failed", key=s3_key, error=str(e))
             return False
 
     async def exists(self, key: StateKey) -> bool:
@@ -782,11 +783,11 @@ class S3StateStore(StateStore):
             if e.response["Error"]["Code"] == "404":
                 return False
             else:
-                logger.error(f"Failed to check S3 object existence {s3_key}: {e}")
+                logger.error("s3_object_exists_check_failed", key=s3_key, error_code=e.response["Error"]["Code"])
                 return False
 
         except Exception as e:
-            logger.error(f"Failed to check S3 object existence {s3_key}: {e}")
+            logger.error("s3_object_exists_check_failed", key=s3_key, error=str(e))
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -827,7 +828,7 @@ class S3StateStore(StateStore):
             return keys
 
         except Exception as e:
-            logger.error(f"Failed to list S3 keys with prefix {prefix}: {e}")
+            logger.error("s3_list_keys_failed", prefix=prefix, error=str(e))
             return []
 
     async def health_check(self) -> bool:
@@ -840,14 +841,14 @@ class S3StateStore(StateStore):
             return True
 
         except Exception as e:
-            logger.error(f"S3 health check failed: {e}")
+            logger.error("s3_health_check_failed", error=str(e))
             return False
 
     async def close(self) -> None:
         """Close S3 client"""
         # S3 client doesn't need explicit closing
         self._connected = False
-        logger.info("S3 client closed")
+        logger.info("s3_client_closed")
 
 
 class UnifiedStateManager:
@@ -879,7 +880,7 @@ class UnifiedStateManager:
             await self.s3_store.connect()
             logger.info("Unified state manager initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize state manager: {e}")
+            logger.error("state_manager_initialization_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     def _get_store(self, key: StateKey) -> StateStore:

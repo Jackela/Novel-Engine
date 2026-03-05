@@ -14,7 +14,7 @@ within the simulation. It supports:
 """
 
 import asyncio
-import logging
+import structlog
 import time
 import uuid
 from collections import defaultdict
@@ -24,7 +24,7 @@ from enum import IntEnum
 from functools import total_ordering
 from typing import Any, Callable, Dict, List, Optional, Set
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EventPriority(IntEnum):
@@ -131,7 +131,7 @@ class EventBus:
         # Paused event types (for circuit breaker pattern)
         self._paused_types: Set[str] = set()
 
-        logger.info("Enhanced EventBus initialized.")
+        logger.info("event_bus_initialized")
 
     def subscribe(self, event_type: str, callback: Callable) -> None:
         """
@@ -143,7 +143,7 @@ class EventBus:
         """
         self._subscribers[event_type].append(callback)
         callback_name = getattr(callback, "__name__", "mock_callback")
-        logger.debug(f"Subscribed {callback_name} to event '{event_type}'")
+        logger.debug("event_subscription_added", callback=callback_name, event_type=event_type)
 
     def unsubscribe(self, event_type: str, callback: Callable) -> None:
         """
@@ -157,15 +157,13 @@ class EventBus:
             try:
                 self._subscribers[event_type].remove(callback)
                 callback_name = getattr(callback, "__name__", "unknown_callback")
-                logger.debug(f"Unsubscribed {callback_name} from event '{event_type}'")
+                logger.debug("event_subscription_removed", callback=callback_name, event_type=event_type)
 
                 # Clean up empty subscriber lists
                 if not self._subscribers[event_type]:
                     del self._subscribers[event_type]
             except ValueError:
-                logger.warning(
-                    f"Callback not found in subscribers for event '{event_type}'"
-                )
+                logger.warning("callback_not_found_in_subscribers", event_type=event_type)
 
     def emit(
         self,
@@ -191,7 +189,7 @@ class EventBus:
             Event ID if successful, None if event type is paused.
         """
         if event_type in self._paused_types:
-            logger.warning(f"Event '{event_type}' is paused (circuit breaker active)")
+            logger.warning("event_type_paused", event_type=event_type, reason="circuit_breaker_active")
             return None
 
         # Create event object
@@ -210,13 +208,15 @@ class EventBus:
 
         if event_type in self._subscribers:
             logger.info(
-                f"Emitting event '{event_type}' (id={event.event_id[:8]}) "
-                f"to {len(self._subscribers[event_type])} subscribers."
+                "event_emitting",
+                event_type=event_type,
+                event_id=event.event_id[:8],
+                subscriber_count=len(self._subscribers[event_type])
             )
             for callback in self._subscribers[event_type]:
                 self._execute_callback(event, callback, args, kwargs)
         else:
-            logger.debug(f"Event '{event_type}' emitted, but has no subscribers.")
+            logger.debug("event_emitted_no_subscribers", event_type=event_type)
 
         return event.event_id
 
@@ -236,8 +236,12 @@ class EventBus:
             return True
         except Exception as e:
             logger.error(
-                f"Error in callback '{callback_name}' for event '{event.event_type}': {e}",
-                exc_info=True,
+                "event_callback_error",
+                callback=callback_name,
+                event_type=event.event_type,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
             )
             self._metrics["events_failed"] += 1
 
@@ -267,7 +271,7 @@ class EventBus:
             Event ID if successful, None if event type is paused.
         """
         if event_type in self._paused_types:
-            logger.warning(f"Event '{event_type}' is paused (circuit breaker active)")
+            logger.warning("event_type_paused", event_type=event_type, reason="circuit_breaker_active")
             return None
 
         # Create event object
@@ -286,13 +290,15 @@ class EventBus:
 
         if event_type in self._subscribers:
             logger.info(
-                f"Publishing event '{event_type}' (id={event.event_id[:8]}) "
-                f"to {len(self._subscribers[event_type])} subscribers."
+                "event_publishing",
+                event_type=event_type,
+                event_id=event.event_id[:8],
+                subscriber_count=len(self._subscribers[event_type])
             )
             for callback in self._subscribers[event_type]:
                 await self._execute_async_callback(event, callback, data)
         else:
-            logger.debug(f"Event '{event_type}' published, but has no subscribers.")
+            logger.debug("event_published_no_subscribers", event_type=event_type)
 
         return event.event_id
 
@@ -314,8 +320,12 @@ class EventBus:
             return True
         except Exception as e:
             logger.error(
-                f"Error in callback '{callback_name}' for event '{event.event_type}': {e}",
-                exc_info=True,
+                "async_event_callback_error",
+                callback=callback_name,
+                event_type=event.event_type,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
             )
             self._metrics["events_failed"] += 1
 
@@ -354,20 +364,22 @@ class EventBus:
             self._dead_letters = self._dead_letters[-self._max_dead_letters :]
 
         logger.warning(
-            f"Event '{event.event_type}' (id={event.event_id[:8]}) "
-            f"added to dead-letter queue. Handler: {handler_name}"
+            "event_added_to_dead_letter",
+            event_type=event.event_type,
+            event_id=event.event_id[:8],
+            handler=handler_name
         )
 
     # Circuit breaker methods
     def pause_event_type(self, event_type: str) -> None:
         """Pause processing for a specific event type (circuit breaker)."""
         self._paused_types.add(event_type)
-        logger.warning(f"Circuit breaker: Paused event type '{event_type}'")
+        logger.warning("circuit_breaker_activated", event_type=event_type, action="paused")
 
     def resume_event_type(self, event_type: str) -> None:
         """Resume processing for a specific event type."""
         self._paused_types.discard(event_type)
-        logger.info(f"Circuit breaker: Resumed event type '{event_type}'")
+        logger.info("circuit_breaker_deactivated", event_type=event_type, action="resumed")
 
     def is_paused(self, event_type: str) -> bool:
         """Check if an event type is paused."""
@@ -457,8 +469,10 @@ class EventBus:
             event = entry.event
             if event.retry_count >= event.max_retries:
                 logger.warning(
-                    f"Event '{event.event_type}' (id={event.event_id[:8]}) "
-                    f"exceeded max retries ({event.max_retries})"
+                    "event_max_retries_exceeded",
+                    event_type=event.event_type,
+                    event_id=event.event_id[:8],
+                    max_retries=event.max_retries
                 )
                 continue
 
@@ -506,11 +520,11 @@ class EventBus:
     # Lifecycle methods
     async def start(self) -> None:
         """Start the event bus."""
-        logger.info("Enhanced EventBus started.")
+        logger.info("event_bus_started")
 
     async def stop(self) -> None:
         """Stop the event bus."""
-        logger.info("Enhanced EventBus stopped.")
+        logger.info("event_bus_stopped")
 
     def clear(self) -> None:
         """Clear all subscribers and history."""
@@ -519,7 +533,7 @@ class EventBus:
         self._dead_letters.clear()
         self._paused_types.clear()
         self.reset_metrics()
-        logger.info("EventBus cleared.")
+        logger.info("event_bus_cleared")
 
 
 class InMemoryEventBus:

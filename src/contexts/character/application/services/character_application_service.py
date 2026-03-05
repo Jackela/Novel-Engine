@@ -611,10 +611,34 @@ class CharacterApplicationService:
 
     async def find_characters_by_level_range(
         self, min_level: int, max_level: int
-    ) -> List[Character]:
-        """Find characters within a level range."""
+    ) -> Result[List[Character], Error]:
+        """
+        Find characters within a level range.
+
+        Why Result pattern:
+            Explicit error handling for repository failures and validation.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
-            return await self.repository.find_by_level_range(min_level, max_level)
+            if min_level < 0 or max_level < 0:
+                return Err(
+                    ValidationError(
+                        message="Level values must be non-negative",
+                        details={"min_level": min_level, "max_level": max_level},
+                    )
+                )
+            if min_level > max_level:
+                return Err(
+                    ValidationError(
+                        message="min_level cannot be greater than max_level",
+                        details={"min_level": min_level, "max_level": max_level},
+                    )
+                )
+
+            characters = await self.repository.find_by_level_range(min_level, max_level)
+            return Ok(characters)
         except Exception as e:
             self.logger.error(
                 "find_characters_by_level_range_failed",
@@ -622,7 +646,14 @@ class CharacterApplicationService:
                 max_level=max_level,
                 error=str(e)
             )
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to find characters by level range: {e}",
+                    recoverable=True,
+                    details={"min_level": min_level, "max_level": max_level},
+                )
+            )
 
     async def find_alive_characters(self) -> Result[List[Character], Error]:
         """
@@ -696,24 +727,83 @@ class CharacterApplicationService:
                 )
             )
 
-    async def count_characters_by_criteria(self, criteria: Dict[str, Any]) -> int:
-        """Count characters matching criteria."""
+    async def count_characters_by_criteria(
+        self, criteria: Dict[str, Any]
+    ) -> Result[int, Error]:
+        """
+        Count characters matching criteria.
+
+        Why Result pattern:
+            Explicit error handling for repository failures.
+
+        Returns:
+            Result with count on success, Error on failure
+        """
         try:
-            return await self.repository.count_by_criteria(criteria)
+            if not isinstance(criteria, dict):
+                return Err(
+                    ValidationError(
+                        message="Criteria must be a dictionary",
+                        field="criteria",
+                    )
+                )
+
+            count = await self.repository.count_by_criteria(criteria)
+            return Ok(count)
         except Exception as e:
-            self.logger.error("count_characters_failed", error=str(e))
-            raise
+            self.logger.error("count_characters_failed", error=str(e), criteria=criteria)
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to count characters: {e}",
+                    recoverable=True,
+                    details={"criteria": criteria},
+                )
+            )
 
     # ==================== Character Utility Operations ====================
 
-    async def character_exists(self, character_id: str) -> bool:
-        """Check if a character exists."""
+    async def character_exists(self, character_id: str) -> Result[bool, Error]:
+        """
+        Check if a character exists.
+
+        Why Result pattern:
+            Explicit error handling for invalid ID format and repository failures.
+
+        Returns:
+            Result with True/False on success, Error on failure
+        """
         try:
             char_id = CharacterID.from_string(character_id)
-            return await self.repository.exists(char_id)
+            exists = await self.repository.exists(char_id)
+            return Ok(exists)
+        except ValueError as e:
+            self.logger.error(
+                "invalid_character_id_format",
+                character_id=character_id,
+                error=str(e)
+            )
+            return Err(
+                ValidationError(
+                    message=f"Invalid character ID format: {e}",
+                    field="character_id",
+                    details={"character_id": character_id},
+                )
+            )
         except Exception as e:
-            self.logger.error("check_character_existence_failed", character_id=character_id, error=str(e))
-            raise
+            self.logger.error(
+                "check_character_existence_failed",
+                character_id=character_id,
+                error=str(e)
+            )
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to check character existence: {e}",
+                    recoverable=True,
+                    details={"character_id": character_id},
+                )
+            )
 
     async def get_character_summary(
         self, character_id: str
@@ -749,14 +839,38 @@ class CharacterApplicationService:
                 )
             )
 
-    async def validate_character_name_availability(self, name: str) -> bool:
-        """Check if a character name is available."""
+    async def validate_character_name_availability(self, name: str) -> Result[bool, Error]:
+        """
+        Check if a character name is available.
+
+        Why Result pattern:
+            Explicit error handling for validation and repository failures.
+
+        Returns:
+            Result with True if available, False if taken, Error on failure
+        """
         try:
+            if not name or not name.strip():
+                return Err(
+                    ValidationError(
+                        message="Character name cannot be empty",
+                        field="name",
+                    )
+                )
+
             existing_characters = await self.repository.find_by_name(name)
-            return len(existing_characters) == 0
+            is_available = len(existing_characters) == 0
+            return Ok(is_available)
         except Exception as e:
             self.logger.error("validate_character_name_failed", name=name, error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to validate character name availability: {e}",
+                    recoverable=True,
+                    details={"name": name},
+                )
+            )
 
     # ==================== Bulk Operations ====================
 
