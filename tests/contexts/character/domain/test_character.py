@@ -25,10 +25,8 @@ from src.contexts.character.domain.value_objects.character_goal import (
     GoalUrgency,
 )
 from src.contexts.character.domain.value_objects.character_id import CharacterID
-from src.contexts.character.domain.value_objects.character_memory import (
-    CharacterMemory,
-    MemoryType,
-)
+from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
+from src.core.data_models import MemoryType
 from src.contexts.character.domain.value_objects.character_profile import (
     CharacterClass,
     CharacterProfile,
