@@ -6,7 +6,7 @@ This module provides the SQLAlchemy implementation of the narrative arc
 repository interface defined in the application layer.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional, Tuple
@@ -47,7 +47,7 @@ from ...domain.value_objects.story_pacing import (
     StoryPacing,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Base class for all SQLAlchemy models
@@ -375,12 +375,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
             # Clear uncommitted events after successful save
             narrative_arc.clear_uncommitted_events()
 
-            logger.debug(f"Saved narrative arc: {narrative_arc.arc_id}")
+            logger.debug("narrative_arc_saved", arc_id=str(narrative_arc.arc_id))
 
         except Exception as e:
             self.session.rollback()
             logger.error(
-                f"Failed to save narrative arc {narrative_arc.arc_id}: {str(e)}"
+                "narrative_arc_save_failed", arc_id=str(narrative_arc.arc_id), error=str(e)
             )
             raise
 
@@ -399,7 +399,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return self._entity_to_aggregate(arc_entity)
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arc {arc_id}: {str(e)}")
+            logger.error("narrative_arc_retrieval_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def get_by_type(
@@ -427,7 +427,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return [self._entity_to_aggregate(entity) for entity in arc_entities]
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arcs by type {arc_type}: {str(e)}")
+            logger.error("narrative_arcs_by_type_retrieval_failed", arc_type=arc_type, error=str(e))
             raise
 
     def search(
@@ -524,7 +524,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return arcs, total_count
 
         except Exception as e:
-            logger.error(f"Failed to search narrative arcs: {str(e)}")
+            logger.error("narrative_arc_search_failed", error=str(e))
             raise
 
     def delete(self, arc_id: NarrativeId) -> bool:
@@ -542,12 +542,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
             self.session.delete(arc_entity)
             self.session.commit()
 
-            logger.debug(f"Deleted narrative arc: {arc_id}")
+            logger.debug("narrative_arc_deleted", arc_id=str(arc_id))
             return True
 
         except Exception as e:
             self.session.rollback()
-            logger.error(f"Failed to delete narrative arc {arc_id}: {str(e)}")
+            logger.error("narrative_arc_deletion_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def exists(self, arc_id: NarrativeId) -> bool:
@@ -560,7 +560,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 > 0
             )
         except Exception as e:
-            logger.error(f"Failed to check if narrative arc exists {arc_id}: {str(e)}")
+            logger.error("narrative_arc_existence_check_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def _create_arc_entity(self, narrative_arc: NarrativeArc) -> NarrativeArcEntity:

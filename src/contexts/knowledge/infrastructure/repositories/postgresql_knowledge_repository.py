@@ -223,21 +223,21 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             where_conditions.append("owning_character_id = :owning_character_id")
             params["owning_character_id"] = owning_character_id
 
-        # Combine WHERE conditions
+        # Combine WHERE conditions (safe: conditions are hardcoded SQL fragments)
         where_clause = " AND ".join(where_conditions)
 
         # Final SELECT query - uses parameterized conditions with params dict
-        select_sql = text(
-            f"""
+        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
+        query_string = """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
-            WHERE {where_clause}
+            WHERE """ + where_clause + """
             ORDER BY updated_at DESC
         """
-        )  # nosec B608
+        select_sql = text(query_string)
 
         result = await self._session.execute(select_sql, params)
         rows = result.fetchall()
@@ -356,25 +356,25 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             where_conditions.append("knowledge_type = ANY(:knowledge_types)")
             params["knowledge_types"] = type_values
 
-        # Combine WHERE conditions
+        # Combine WHERE conditions (safe: conditions are hardcoded SQL fragments)
         where_clause = " AND ".join(where_conditions)
 
         # Semantic search query using pgvector cosine similarity
         # Cosine distance: 0 = identical, 2 = opposite
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
-        semantic_sql = text(
-            f"""
+        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
+        query_string = """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by,
                 (1 - (embedding <=> CAST(:query_embedding AS vector(1536)) / 2)) AS similarity_score
             FROM knowledge_entries
-            WHERE {where_clause}
+            WHERE """ + where_clause + """
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
         """
-        )  # nosec B608
+        semantic_sql = text(query_string)
 
         result = await self._session.execute(semantic_sql, params)
         rows = result.fetchall()

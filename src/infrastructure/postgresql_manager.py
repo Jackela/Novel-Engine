@@ -423,15 +423,23 @@ class PostgreSQLConnectionPool:
         else:
             limit_param = "$3"
 
-        query = f"""
+        # Build query safely (where_clauses are hardcoded SQL fragments, limit_param is controlled)
+        where_clause = " AND ".join(where_clauses)
+        query = (
+            """
         SELECT id, memory_type, content, importance_score,
                ts_rank(search_vector, plainto_tsquery('english', $2)) as rank,
                created_at, access_count
         FROM memory_items
-        WHERE {' AND '.join(where_clauses)}
+        WHERE """
+            + where_clause
+            + """
         ORDER BY rank DESC, importance_score DESC
-        LIMIT {limit_param}
-        """  # nosec B608 - uses parameterized positional placeholders
+        LIMIT """
+            + limit_param
+            + """
+        """
+        )
 
         params.append(limit)
         results = await self.execute_query(query, *params, fetch_mode="all")

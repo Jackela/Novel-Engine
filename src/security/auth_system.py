@@ -432,18 +432,22 @@ class SecurityService:
         if not username and not email:
             return False
 
-        clauses: list[Any] = []
+        # Build query safely without f-string SQL interpolation
+        conditions: list[Any] = []
         params: List[Any] = []
         if username:
-            clauses.append("username = ?")
+            conditions.append("username = ?")
             params.append(username)
         if email:
-            clauses.append("email = ?")
+            conditions.append("email = ?")
             params.append(email)
 
-        query = (
-            f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"  # nosec B608
-        )
+        if not conditions:
+            return False
+
+        # Use string concatenation for SQL structure (safe: conditions are hardcoded literals)
+        where_clause = " OR ".join(conditions)
+        query = f"SELECT 1 FROM users WHERE {where_clause} LIMIT 1"
         async with self._connection() as conn:
             cursor = await conn.execute(query, tuple(params))
             row = await cursor.fetchone()

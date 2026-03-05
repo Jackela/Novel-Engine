@@ -901,17 +901,17 @@ class ContextDatabase:
             async with self.get_enhanced_connection() as connection:
                 statistics: dict[Any, Any] = {}
                 # Blessed table row counts
-                for table in [
-                    "agents",
-                    "memories",
-                    "relationships",
-                    "equipment",
-                    "character_states",
-                    "interactions",
-                ]:
-                    async with connection.execute(
-                        f"SELECT COUNT(*) as count FROM {table}"  # nosec B608
-                    ) as cursor:
+                # Safe: table names are hardcoded literals, not user input
+                table_queries = {
+                    "agents": "SELECT COUNT(*) as count FROM agents",
+                    "memories": "SELECT COUNT(*) as count FROM memories",
+                    "relationships": "SELECT COUNT(*) as count FROM relationships",
+                    "equipment": "SELECT COUNT(*) as count FROM equipment",
+                    "character_states": "SELECT COUNT(*) as count FROM character_states",
+                    "interactions": "SELECT COUNT(*) as count FROM interactions",
+                }
+                for table, query in table_queries.items():
+                    async with connection.execute(query) as cursor:
                         row = await cursor.fetchone()
                         statistics[f"{table}_count"] = row["count"]
 

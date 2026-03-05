@@ -7,7 +7,7 @@ Command handlers execute the business logic for commands by coordinating
 between the domain layer and infrastructure services.
 """
 
-import logging
+import structlog
 from typing import Any
 
 from ...domain.aggregates.character import Character
@@ -45,7 +45,7 @@ from .character_commands import (
     UpdateCharacterStatsCommand,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CreateCharacterCommandHandler:
@@ -153,12 +153,13 @@ class CreateCharacterCommandHandler:
             await self.repository.save(character)
 
             self.logger.info(
-                f"Character created successfully: {character.character_id}"
+                "character_created",
+                character_id=str(character.character_id)
             )
             return character.character_id
 
         except Exception as e:
-            self.logger.error(f"Error creating character: {e}")
+            self.logger.error("character_creation_failed", error=str(e))
             raise
 
 
@@ -181,7 +182,7 @@ class UpdateCharacterStatsCommandHandler:
             RepositoryException: If character not found or save fails
         """
         character_id = CharacterID.from_string(command.character_id)
-        self.logger.info(f"Updating stats for character: {character_id}")
+        self.logger.info("updating_character_stats", character_id=str(character_id))
 
         try:
             # Load character from repository
@@ -252,10 +253,10 @@ class UpdateCharacterStatsCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character stats updated successfully: {character_id}")
+            self.logger.info("character_stats_updated", character_id=str(character_id))
 
         except Exception as e:
-            self.logger.error(f"Error updating character stats: {e}")
+            self.logger.error("character_stats_update_failed", error=str(e))
             raise
 
 
@@ -279,7 +280,9 @@ class UpdateCharacterSkillCommandHandler:
         """
         character_id = CharacterID.from_string(command.character_id)
         self.logger.info(
-            f"Updating skill '{command.skill_name}' for character: {character_id}"
+            "updating_character_skill",
+            skill_name=command.skill_name,
+            character_id=str(character_id)
         )
 
         try:
@@ -347,10 +350,10 @@ class UpdateCharacterSkillCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character skill updated successfully: {character_id}")
+            self.logger.info("character_skill_updated", character_id=str(character_id))
 
         except Exception as e:
-            self.logger.error(f"Error updating character skill: {e}")
+            self.logger.error("character_skill_update_failed", error=str(e))
             raise
 
 
@@ -373,7 +376,7 @@ class LevelUpCharacterCommandHandler:
             RepositoryException: If character not found or save fails
         """
         character_id = CharacterID.from_string(command.character_id)
-        self.logger.info(f"Leveling up character: {character_id}")
+        self.logger.info("leveling_up_character", character_id=str(character_id))
 
         try:
             # Load character from repository
@@ -402,7 +405,8 @@ class LevelUpCharacterCommandHandler:
                 # - Validate improvements against level-up rules (e.g., max +2 per ability)
                 # Tracked in: https://github.com/your-repo/issues/XXX
                 self.logger.info(
-                    f"Ability improvements requested: {command.ability_score_improvements}"
+                    "ability_improvements_requested",
+                    improvements=command.ability_score_improvements
                 )
 
             # Apply skill improvements if specified
@@ -414,16 +418,17 @@ class LevelUpCharacterCommandHandler:
                 # - Validate skill selections against class/background restrictions
                 # Tracked in: https://github.com/your-repo/issues/YYY
                 self.logger.info(
-                    f"Skill improvements requested: {command.skill_improvements}"
+                    "skill_improvements_requested",
+                    improvements=command.skill_improvements
                 )
 
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character leveled up successfully: {character_id}")
+            self.logger.info("character_leveled_up", character_id=str(character_id))
 
         except Exception as e:
-            self.logger.error(f"Error leveling up character: {e}")
+            self.logger.error("character_level_up_failed", error=str(e))
             raise
 
 
@@ -449,14 +454,16 @@ class DeleteCharacterCommandHandler:
         """
         character_id = CharacterID.from_string(command.character_id)
         self.logger.info(
-            f"Deleting character: {character_id}, reason: {command.reason}"
+            "deleting_character",
+            character_id=str(character_id),
+            reason=command.reason
         )
 
         try:
             # Check if character exists first
             character = await self.repository.get_by_id(character_id)
             if not character:
-                self.logger.warning(f"Character not found for deletion: {character_id}")
+                self.logger.warning("character_not_found_for_deletion", character_id=str(character_id))
                 return False
 
             # NOTE: CharacterDeleted domain event not yet implemented.
@@ -470,14 +477,14 @@ class DeleteCharacterCommandHandler:
             deleted = await self.repository.delete(character_id)
 
             if deleted:
-                self.logger.info(f"Character deleted successfully: {character_id}")
+                self.logger.info("character_deleted", character_id=str(character_id))
             else:
-                self.logger.warning(f"Character deletion failed: {character_id}")
+                self.logger.warning("character_deletion_failed", character_id=str(character_id))
 
             return deleted
 
         except Exception as e:
-            self.logger.error(f"Error deleting character: {e}")
+            self.logger.error("character_deletion_error", error=str(e))
             raise
 
 
@@ -501,7 +508,10 @@ class HealCharacterCommandHandler:
         """
         character_id = CharacterID.from_string(command.character_id)
         self.logger.info(
-            f"Healing character {character_id} for {command.healing_amount} points ({command.healing_type})"
+            "healing_character",
+            character_id=str(character_id),
+            healing_amount=command.healing_amount,
+            healing_type=command.healing_type
         )
 
         try:
@@ -516,10 +526,10 @@ class HealCharacterCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(f"Character healed successfully: {character_id}")
+            self.logger.info("character_healed", character_id=str(character_id))
 
         except Exception as e:
-            self.logger.error(f"Error healing character: {e}")
+            self.logger.error("character_healing_failed", error=str(e))
             raise
 
 
@@ -543,7 +553,10 @@ class DamageCharacterCommandHandler:
         """
         character_id = CharacterID.from_string(command.character_id)
         self.logger.info(
-            f"Applying {command.damage_amount} {command.damage_type} damage to character {character_id}"
+            "applying_damage",
+            character_id=str(character_id),
+            damage_amount=command.damage_amount,
+            damage_type=command.damage_type
         )
 
         try:
@@ -559,11 +572,12 @@ class DamageCharacterCommandHandler:
             await self.repository.save(character)
 
             self.logger.info(
-                f"Damage applied successfully to character: {character_id}"
+                "damage_applied",
+                character_id=str(character_id)
             )
 
         except Exception as e:
-            self.logger.error(f"Error applying damage to character: {e}")
+            self.logger.error("damage_application_failed", error=str(e))
             raise
 
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -22,7 +22,7 @@ from src.api.schemas import (
 )
 from src.api.settings import APISettings
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Authentication"])
 
@@ -115,7 +115,7 @@ async def login(
             max_age=cookie_max_age,
         )
 
-        logger.info("User login successful (cookies set)")
+        logger.info("user_login_successful")
 
         return AuthResponse(
             access_token=access_token,
@@ -127,7 +127,7 @@ async def login(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Login failed: %s", exc, exc_info=True)
+        logger.error("login_failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Login failed: {exc}")
 
 
@@ -200,7 +200,7 @@ async def refresh_token(
             max_age=settings.cookie_max_age_seconds,
         )
 
-        logger.info("Token refreshed for user: %s", email)
+        logger.info("token_refreshed", email=email)
 
         return AuthResponse(
             access_token=access_token,
@@ -213,7 +213,7 @@ async def refresh_token(
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Token refresh failed: %s", exc, exc_info=True)
+        logger.error("token_refresh_failed", error=str(exc), exc_info=True)
         raise HTTPException(status_code=500, detail=f"Token refresh failed: {exc}")
 
 
@@ -234,11 +234,11 @@ async def get_csrf_token(
             max_age=settings.csrf_cookie_max_age_seconds,
         )
 
-        logger.debug("CSRF token generated and set")
+        logger.debug("csrf_token_generated")
         return CSRFTokenResponse(csrf_token=csrf_token)
 
     except Exception as exc:
-        logger.error("CSRF token generation failed: %s", exc, exc_info=True)
+        logger.error("csrf_token_generation_failed", error=str(exc), exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Failed to generate CSRF token: {exc}"
         )
@@ -265,10 +265,10 @@ async def logout(
         masked_token = f"{token[:10]}..." if token and len(token) > 10 else "no-token"
 
         logger.info(
-            "Logout event: token=%s, ip=%s, ua=%s",
-            masked_token,
-            client_ip,
-            user_agent[:50],
+            "logout_event",
+            masked_token=masked_token,
+            client_ip=client_ip,
+            user_agent=user_agent[:50]
         )
 
         response.delete_cookie(
@@ -287,11 +287,11 @@ async def logout(
             samesite="strict",
         )
 
-        logger.info("Authentication cookies cleared successfully")
+        logger.info("authentication_cookies_cleared")
         return LogoutResponse(success=True, message="Logout successful")
 
     except Exception as exc:
-        logger.warning("Logout encountered an error (still returning success): %s", exc)
+        logger.warning("logout_error", error=str(exc))
         return LogoutResponse(success=True, message="Logout successful")
 
 
@@ -366,7 +366,7 @@ async def validate_token(
             )
 
     except Exception as exc:
-        logger.error("Token validation error: %s", exc)
+        logger.error("token_validation_error", error=str(exc))
         return JSONResponse(
             status_code=401,
             content=TokenValidationResponse(
