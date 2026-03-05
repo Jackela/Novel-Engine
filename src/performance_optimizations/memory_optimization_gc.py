@@ -239,13 +239,13 @@ class MemoryOptimizer:
 
         logger.info(f"MemoryOptimizer initialized: target={target_memory_percent}%")
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start memory monitoring and optimization."""
         if self.monitoring_task is None:
             self.monitoring_task = asyncio.create_task(self._monitoring_loop())
             logger.info("Memory optimization monitoring started")
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop memory monitoring."""
         self.monitoring_active = False
         if self.monitoring_task:
@@ -260,7 +260,7 @@ class MemoryOptimizer:
         gc.set_threshold(*self.original_gc_thresholds)
         logger.info("Memory optimization monitoring stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self.monitoring_active:
             try:
@@ -335,7 +335,7 @@ class MemoryOptimizer:
         # Always perform weak reference cleanup
         self.weak_ref_manager.cleanup_dead_references()
 
-    async def _aggressive_memory_cleanup(self):
+    async def _aggressive_memory_cleanup(self) -> None:
         """Aggressive memory cleanup for critical pressure."""
         logger.warning("Critical memory pressure - performing aggressive cleanup")
 
@@ -366,7 +366,7 @@ class MemoryOptimizer:
             }
         )
 
-    async def _moderate_memory_cleanup(self):
+    async def _moderate_memory_cleanup(self) -> None:
         """Moderate memory cleanup for high pressure."""
         logger.info("High memory pressure - performing moderate cleanup")
 
@@ -413,7 +413,7 @@ class MemoryOptimizer:
             f"GC thresholds adjusted: {self.original_gc_thresholds} -> {new_thresholds}"
         )
 
-    async def _periodic_maintenance(self):
+    async def _periodic_maintenance(self) -> None:
         """Perform periodic maintenance tasks."""
         # Trim memory alerts list
         if len(self.memory_alerts) > 50:

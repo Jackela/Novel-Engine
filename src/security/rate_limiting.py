@@ -253,7 +253,7 @@ class RateLimiter:
             # No event loop running yet
             pass
 
-    async def _cleanup_old_clients(self):
+    async def _cleanup_old_clients(self) -> None:
         """STANDARD CLIENT STATE CLEANUP"""
         now = time.time()
         old_clients: list[Any] = []

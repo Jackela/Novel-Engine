@@ -6,7 +6,7 @@ Provides consistent error handling, logging, and response formatting
 across all API endpoints with proper HTTP status codes and error classification.
 """
 
-import logging
+import structlog
 import time
 import traceback
 from datetime import datetime
@@ -25,7 +25,7 @@ from .response_envelopes import (
     ValidationError,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NovelEngineException(Exception):

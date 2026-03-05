@@ -293,12 +293,12 @@ class PerformanceCache:
         }
         self.cleanup_task = None
 
-    async def start_background_tasks(self):
+    async def start_background_tasks(self) -> None:
         """Start background cache maintenance."""
         if not self.cleanup_task:
             self.cleanup_task = asyncio.create_task(self._cleanup_loop())
 
-    async def stop_background_tasks(self):
+    async def stop_background_tasks(self) -> None:
         """Stop background cache maintenance."""
         if self.cleanup_task:
             self.cleanup_task.cancel()
@@ -307,7 +307,7 @@ class PerformanceCache:
             except asyncio.CancelledError:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Background cleanup for expired entries."""
         while True:
             try:
@@ -318,7 +318,7 @@ class PerformanceCache:
             except Exception as e:
                 logger.error(f"Cache cleanup error: {e}")
 
-    async def _cleanup_expired(self):
+    async def _cleanup_expired(self) -> None:
         """Remove expired entries from cache."""
         expired_keys: list[Any] = []
         async with self.memory_cache.lock:

@@ -186,7 +186,7 @@ class PersonaAgentMemoryFixer:
     """
 
     @staticmethod
-    def fix_persona_agent_memory_leaks(persona_agent_instance) -> Dict[str, Any]:
+    def fix_persona_agent_memory_leaks(persona_agent_instance: Any) -> Dict[str, Any]:
         """
         Apply comprehensive memory leak fixes to PersonaAgent instance.
 
@@ -314,7 +314,7 @@ class PersonaAgentMemoryFixer:
 class PersonaAgentMemoryMonitor:
     """Real-time memory monitoring for PersonaAgent instances."""
 
-    def __init__(self, persona_agent_instance) -> None:
+    def __init__(self, persona_agent_instance: Any) -> None:
         self.agent_instance = weakref.ref(
             persona_agent_instance
         )  # Weak reference to prevent circular refs
@@ -368,7 +368,7 @@ class PersonaAgentMemoryMonitor:
                 logger.error(f"Memory monitor error for {self.agent_id}: {e}")
                 time.sleep(60)  # Wait longer on error
 
-    def _check_cleanup_needs(self, agent) -> None:
+    def _check_cleanup_needs(self, agent: Any) -> None:
         """Check if agent needs memory cleanup."""
         try:
             cleanup_needed = False
@@ -403,7 +403,7 @@ class PersonaAgentMemoryMonitor:
         except Exception as e:
             logger.error(f"Cleanup check failed for {self.agent_id}: {e}")
 
-    def _check_memory_alerts(self, stats: MemoryStats, agent) -> None:
+    def _check_memory_alerts(self, stats: MemoryStats, agent: Any) -> None:
         """Check for memory usage alerts."""
         # Alert if memory usage is high
         if stats.rss_mb > self.memory_threshold_mb:
@@ -672,7 +672,7 @@ def get_global_memory_manager() -> SystemWideMemoryManager:
     return _global_memory_manager
 
 
-def apply_memory_fixes_to_persona_agent(persona_agent_instance) -> bool:
+def apply_memory_fixes_to_persona_agent(persona_agent_instance: Any) -> bool:
     """
     Quick utility function to apply all memory fixes to a PersonaAgent.
 
@@ -692,7 +692,7 @@ def apply_memory_fixes_to_persona_agent(persona_agent_instance) -> bool:
         return False
 
 
-def monitor_persona_agent_memory(persona_agent_instance) -> None:
+def monitor_persona_agent_memory(persona_agent_instance: Any) -> None:
     """
     Add memory monitoring to a PersonaAgent instance.
 

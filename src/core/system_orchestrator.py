@@ -806,7 +806,7 @@ class SystemOrchestrator:
 
     # PRIVATE METHODS FOR INTERNAL OPERATIONS
 
-    async def _start_background_tasks(self):
+    async def _start_background_tasks(self) -> None:
         """Start all background monitoring and maintenance tasks."""
         if self.config.enable_metrics:
             health_check_task = asyncio.create_task(self._health_check_loop())
@@ -821,7 +821,7 @@ class SystemOrchestrator:
 
         logger.info(f"Started {len(self._background_tasks)} background tasks")
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         """Background health check monitoring loop."""
         while not self._shutdown_requested:
             try:
@@ -840,7 +840,7 @@ class SystemOrchestrator:
                 logger.error(f"Error in health check loop: {str(e)}")
                 self.system_health = SystemHealth.DEGRADED
 
-    async def _memory_cleanup_loop(self):
+    async def _memory_cleanup_loop(self) -> None:
         """Background memory cleanup and maintenance loop."""
         while not self._shutdown_requested:
             try:

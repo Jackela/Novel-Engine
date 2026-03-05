@@ -14,7 +14,7 @@ Design Principles:
 - Comprehensive validation and error handling
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -27,7 +27,7 @@ from core_platform.persistence.database import get_db_session
 
 from ..projections.world_read_model import WorldSliceReadModel
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class QueryException(Exception):

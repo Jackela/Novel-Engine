@@ -292,7 +292,7 @@ class DataProtectionService:
             ),
         }
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -621,7 +621,7 @@ class DataProtectionService:
             f"DATA DELETION SCHEDULED: {data_type} | User: {user_id} | Delete after: {delete_after}"
         )
 
-    async def process_data_deletions(self):
+    async def process_data_deletions(self) -> None:
         """STANDARD DATA DELETION PROCESSING"""
         now = datetime.now(timezone.utc)
 

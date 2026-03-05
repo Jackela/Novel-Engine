@@ -278,7 +278,7 @@ class NarrativeContext:
             raise ValueError("Context description too long (max 2000 characters)")
 
     def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values) -> None:
+        def _dict_to_hashable(values: Any) -> None:
             if not values:
                 return frozenset()
             items: list[Any] = []
@@ -333,7 +333,7 @@ class NarrativeContext:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NarrativeContext):
             return NotImplemented
         return self._hash_components() == other._hash_components()

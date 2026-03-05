@@ -241,7 +241,7 @@ class PerformanceMonitor:
             # No event loop running yet
             pass
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop for continuous metric collection."""
         while True:
             try:
@@ -260,7 +260,7 @@ class PerformanceMonitor:
             except Exception as e:
                 logger.error(f"Error in monitoring loop: {e}")
 
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Background cleanup loop for old metrics and alerts."""
         while True:
             try:
@@ -272,7 +272,7 @@ class PerformanceMonitor:
             except Exception as e:
                 logger.error(f"Error in cleanup loop: {e}")
 
-    async def _collect_system_metrics(self):
+    async def _collect_system_metrics(self) -> None:
         """Collect comprehensive system performance metrics."""
         try:
             current_time = time.time()
@@ -432,7 +432,7 @@ class PerformanceMonitor:
         """Record current number of concurrent users."""
         self.record_metric("concurrent_users", count, MetricType.GAUGE)
 
-    async def _check_alerts(self):
+    async def _check_alerts(self) -> None:
         """Check metrics against alert thresholds and trigger alerts."""
         if not self.config.enable_alerts:
             return
@@ -535,7 +535,7 @@ class PerformanceMonitor:
         while self.alert_history and self.alert_history[0].timestamp < cutoff_time:
             self.alert_history.popleft()
 
-    async def _export_metrics(self):
+    async def _export_metrics(self) -> None:
         """Export metrics to JSON files for external analysis."""
         try:
             current_time = time.time()
@@ -688,7 +688,7 @@ class PerformanceMonitor:
 
         return sorted(alerts, key=lambda x: x["timestamp"], reverse=True)
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown monitoring system and cleanup resources."""
         try:
             # Cancel background tasks

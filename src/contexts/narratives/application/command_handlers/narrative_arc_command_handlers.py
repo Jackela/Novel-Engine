@@ -6,7 +6,7 @@ This module implements command handlers for narrative arc operations.
 Handlers coordinate between the application layer and domain layer.
 """
 
-import logging
+import structlog
 from typing import Any, Dict, Optional
 
 from ...domain.aggregates.narrative_arc import NarrativeArc
@@ -57,7 +57,7 @@ from ..commands.narrative_arc_commands import (
 )
 from ..ports.narrative_arc_repository_port import INarrativeArcRepository
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeArcCommandHandler:

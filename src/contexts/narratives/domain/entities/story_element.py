@@ -50,7 +50,7 @@ class StoryElement:
     properties: Dict[str, Any] = field(default_factory=dict)
     notes: str = ""
 
-    def update_element(self, **kwargs) -> None:
+    def update_element(self, **kwargs: Any) -> None:
         """
         Update element properties and increment version.
 
@@ -108,7 +108,7 @@ class StoryElement:
         """Check if element has a specific category."""
         return category in self.categories
 
-    def get_property(self, key: str, default=None) -> None:
+    def get_property(self, key: str, default: Any = None) -> Any:
         """Get a property value with optional default."""
         return self.properties.get(key, default)
 

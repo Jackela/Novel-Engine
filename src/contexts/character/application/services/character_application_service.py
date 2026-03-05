@@ -179,17 +179,22 @@ class CharacterApplicationService:
                 )
             )
 
-    async def update_character_stats(self, character_id: str, **stat_updates) -> None:
+    async def update_character_stats(
+        self, character_id: str, **stat_updates
+    ) -> Result[None, Error]:
         """
         Update character statistics.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
             **stat_updates: Stat values to update
 
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If update fails
+        Returns:
+            Result with None on success, Error on failure
         """
         self.logger.info("updating_character_stats", character_id=character_id)
 
@@ -201,10 +206,25 @@ class CharacterApplicationService:
             await self.command_handlers.handle_command(command)
 
             self.logger.info("character_stats_updated", character_id=character_id)
+            return Ok(None)
 
+        except ValueError as e:
+            self.logger.error("character_stats_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid stat update data: {e}",
+                    details={"character_id": character_id, "updates": stat_updates},
+                )
+            )
         except Exception as e:
             self.logger.error("character_stats_update_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to update character stats: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id},
+                )
+            )
 
     async def update_character_skill(
         self,
@@ -214,9 +234,13 @@ class CharacterApplicationService:
         new_proficiency_level: str,
         modifier: int = 0,
         description: Optional[str] = None,
-    ) -> None:
+    ) -> Result[None, Error]:
         """
         Update a character's skill proficiency.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
@@ -226,9 +250,8 @@ class CharacterApplicationService:
             modifier: Skill modifier
             description: Optional skill description
 
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If update fails
+        Returns:
+            Result with None on success, Error on failure
         """
         self.logger.info("updating_character_skill", skill_name=skill_name, character_id=character_id)
 
@@ -245,28 +268,47 @@ class CharacterApplicationService:
             await self.command_handlers.handle_command(command)
 
             self.logger.info("character_skill_updated", character_id=character_id)
+            return Ok(None)
 
+        except ValueError as e:
+            self.logger.error("character_skill_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid skill update data: {e}",
+                    field="skill",
+                    details={"character_id": character_id, "skill_name": skill_name},
+                )
+            )
         except Exception as e:
             self.logger.error("character_skill_update_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to update character skill: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id, "skill_name": skill_name},
+                )
+            )
 
     async def level_up_character(
         self,
         character_id: str,
         ability_improvements: Optional[Dict[str, int]] = None,
         skill_improvements: Optional[List[Dict[str, Any]]] = None,
-    ) -> None:
+    ) -> Result[None, Error]:
         """
         Level up a character.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
             ability_improvements: Optional ability score improvements
             skill_improvements: Optional skill improvements
 
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If level up fails
+        Returns:
+            Result with None on success, Error on failure
         """
         self.logger.info("leveling_up_character", character_id=character_id)
 
@@ -280,10 +322,25 @@ class CharacterApplicationService:
             await self.command_handlers.handle_command(command)
 
             self.logger.info("character_leveled_up", character_id=character_id)
+            return Ok(None)
 
+        except ValueError as e:
+            self.logger.error("character_level_up_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid level up data: {e}",
+                    details={"character_id": character_id},
+                )
+            )
         except Exception as e:
             self.logger.error("character_level_up_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to level up character: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id},
+                )
+            )
 
     async def heal_character(
         self,
@@ -291,9 +348,13 @@ class CharacterApplicationService:
         healing_amount: int,
         healing_type: str = "natural",
         reason: str = "Healing",
-    ) -> None:
+    ) -> Result[None, Error]:
         """
         Heal a character.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
@@ -301,9 +362,8 @@ class CharacterApplicationService:
             healing_type: Type of healing
             reason: Reason for healing
 
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If healing fails
+        Returns:
+            Result with None on success, Error on failure
         """
         self.logger.info(
             "healing_character",
@@ -322,10 +382,25 @@ class CharacterApplicationService:
             await self.command_handlers.handle_command(command)
 
             self.logger.info("character_healed", character_id=character_id)
+            return Ok(None)
 
+        except ValueError as e:
+            self.logger.error("character_healing_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid healing data: {e}",
+                    details={"character_id": character_id, "amount": healing_amount},
+                )
+            )
         except Exception as e:
             self.logger.error("character_healing_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to heal character: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id},
+                )
+            )
 
     async def damage_character(
         self,
@@ -334,9 +409,13 @@ class CharacterApplicationService:
         damage_type: str = "physical",
         damage_source: Optional[str] = None,
         reason: str = "Damage taken",
-    ) -> None:
+    ) -> Result[None, Error]:
         """
         Apply damage to a character.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
@@ -345,9 +424,8 @@ class CharacterApplicationService:
             damage_source: Source of damage
             reason: Reason for damage
 
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If damage application fails
+        Returns:
+            Result with None on success, Error on failure
         """
         self.logger.info(
             "applying_damage",
@@ -368,25 +446,40 @@ class CharacterApplicationService:
             await self.command_handlers.handle_command(command)
 
             self.logger.info("damage_applied", character_id=character_id)
+            return Ok(None)
 
+        except ValueError as e:
+            self.logger.error("damage_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid damage data: {e}",
+                    details={"character_id": character_id, "amount": damage_amount},
+                )
+            )
         except Exception as e:
             self.logger.error("damage_application_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to apply damage: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id},
+                )
+            )
 
-    async def delete_character(self, character_id: str, reason: str) -> bool:
+    async def delete_character(self, character_id: str, reason: str) -> Result[bool, Error]:
         """
         Delete a character.
+
+        Why Result pattern:
+            Explicit error handling without exceptions allows routers to
+            return appropriate HTTP status codes and handle failures gracefully.
 
         Args:
             character_id: The character ID
             reason: Reason for deletion
 
         Returns:
-            True if character was deleted, False if not found
-
-        Raises:
-            ValueError: If input data is invalid
-            RepositoryException: If deletion fails
+            Result with True if deleted, False if not found, Error on failure
         """
         self.logger.info("deleting_character", character_id=character_id)
 
@@ -400,41 +493,121 @@ class CharacterApplicationService:
             else:
                 self.logger.info("character_not_found_for_deletion", character_id=character_id)
 
-            return deleted
+            return Ok(deleted)
 
+        except ValueError as e:
+            self.logger.error("character_deletion_validation_failed", error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid deletion request: {e}",
+                    details={"character_id": character_id},
+                )
+            )
         except Exception as e:
             self.logger.error("character_deletion_failed", error=str(e))
-            raise
+            return Err(
+                SaveError(
+                    message=f"Failed to delete character: {e}",
+                    entity_type="Character",
+                    details={"character_id": character_id},
+                )
+            )
 
     # ==================== Character Query Operations ====================
 
-    async def find_characters_by_name(self, name: str) -> List[Character]:
-        """Find characters by name (supports partial matching)."""
+    async def find_characters_by_name(self, name: str) -> Result[List[Character], Error]:
+        """
+        Find characters by name (supports partial matching).
+
+        Why Result pattern:
+            Explicit error handling for repository failures.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
-            return await self.repository.find_by_name(name)
+            characters = await self.repository.find_by_name(name)
+            return Ok(characters)
         except Exception as e:
             self.logger.error("find_characters_by_name_failed", name=name, error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to find characters by name: {e}",
+                    recoverable=True,
+                    details={"name": name},
+                )
+            )
 
-    async def find_characters_by_class(self, character_class: str) -> List[Character]:
-        """Find characters by class."""
+    async def find_characters_by_class(self, character_class: str) -> Result[List[Character], Error]:
+        """
+        Find characters by class.
+
+        Why Result pattern:
+            Explicit error handling for validation and repository failures.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
             char_class = CharacterClass(character_class.lower())
-            return await self.repository.find_by_class(char_class)
+            characters = await self.repository.find_by_class(char_class)
+            return Ok(characters)
+        except ValueError as e:
+            self.logger.error("find_characters_by_class_validation_failed", character_class=character_class, error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid character class: {e}",
+                    field="character_class",
+                    details={"character_class": character_class},
+                )
+            )
         except Exception as e:
             self.logger.error(
                 "find_characters_by_class_failed", character_class=character_class, error=str(e)
             )
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to find characters by class: {e}",
+                    recoverable=True,
+                    details={"character_class": character_class},
+                )
+            )
 
-    async def find_characters_by_race(self, race: str) -> List[Character]:
-        """Find characters by race."""
+    async def find_characters_by_race(self, race: str) -> Result[List[Character], Error]:
+        """
+        Find characters by race.
+
+        Why Result pattern:
+            Explicit error handling for validation and repository failures.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
             char_race = CharacterRace(race.lower())
-            return await self.repository.find_by_race(char_race)
+            characters = await self.repository.find_by_race(char_race)
+            return Ok(characters)
+        except ValueError as e:
+            self.logger.error("find_characters_by_race_validation_failed", race=race, error=str(e))
+            return Err(
+                ValidationError(
+                    message=f"Invalid character race: {e}",
+                    field="race",
+                    details={"race": race},
+                )
+            )
         except Exception as e:
             self.logger.error("find_characters_by_race_failed", race=race, error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to find characters by race: {e}",
+                    recoverable=True,
+                    details={"race": race},
+                )
+            )
 
     async def find_characters_by_level_range(
         self, min_level: int, max_level: int
@@ -451,31 +624,77 @@ class CharacterApplicationService:
             )
             raise
 
-    async def find_alive_characters(self) -> List[Character]:
-        """Find all alive characters."""
+    async def find_alive_characters(self) -> Result[List[Character], Error]:
+        """
+        Find all alive characters.
+
+        Why Result pattern:
+            Explicit error handling for repository failures.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
-            return await self.repository.find_alive_characters()
+            characters = await self.repository.find_alive_characters()
+            return Ok(characters)
         except Exception as e:
             self.logger.error("find_alive_characters_failed", error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to find alive characters: {e}",
+                    recoverable=True,
+                )
+            )
 
-    async def get_character_statistics(self) -> Dict[str, Any]:
-        """Get character statistics from the repository."""
+    async def get_character_statistics(self) -> Result[Dict[str, Any], Error]:
+        """
+        Get character statistics from the repository.
+
+        Why Result pattern:
+            Explicit error handling for repository failures.
+
+        Returns:
+            Result with statistics dict on success, Error on failure
+        """
         try:
-            return await self.repository.get_statistics()
+            stats = await self.repository.get_statistics()
+            return Ok(stats)
         except Exception as e:
             self.logger.error("get_character_statistics_failed", error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to get character statistics: {e}",
+                    recoverable=True,
+                )
+            )
 
     async def search_characters(
         self, criteria: Dict[str, Any], limit: Optional[int] = None, offset: int = 0
-    ) -> List[Character]:
-        """Search characters by multiple criteria."""
+    ) -> Result[List[Character], Error]:
+        """
+        Search characters by multiple criteria.
+
+        Why Result pattern:
+            Explicit error handling for repository failures.
+
+        Returns:
+            Result with list of characters on success, Error on failure
+        """
         try:
-            return await self.repository.find_by_criteria(criteria, limit, offset)
+            characters = await self.repository.find_by_criteria(criteria, limit, offset)
+            return Ok(characters)
         except Exception as e:
             self.logger.error("search_characters_failed", error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to search characters: {e}",
+                    recoverable=True,
+                    details={"criteria": criteria},
+                )
+            )
 
     async def count_characters_by_criteria(self, criteria: Dict[str, Any]) -> int:
         """Count characters matching criteria."""
@@ -498,18 +717,37 @@ class CharacterApplicationService:
 
     async def get_character_summary(
         self, character_id: str
-    ) -> Optional[Dict[str, Any]]:
-        """Get a summary of character information."""
-        try:
-            character = await self.get_character(character_id)
-            if not character:
-                return None
+    ) -> Result[Optional[Dict[str, Any]], Error]:
+        """
+        Get a summary of character information.
 
-            return character.get_character_summary()
+        Why Result pattern:
+            Explicit error handling for retrieval failures.
+
+        Returns:
+            Result with character summary on success, Error on failure
+        """
+        try:
+            character_result = await self.get_character(character_id)
+            if character_result.is_error:
+                return character_result
+
+            character = character_result.value
+            if character is None:
+                return Ok(None)
+
+            return Ok(character.get_character_summary())
 
         except Exception as e:
             self.logger.error("get_character_summary_failed", character_id=character_id, error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="QUERY_FAILED",
+                    message=f"Failed to get character summary: {e}",
+                    recoverable=True,
+                    details={"character_id": character_id},
+                )
+            )
 
     async def validate_character_name_availability(self, name: str) -> bool:
         """Check if a character name is available."""
@@ -524,37 +762,84 @@ class CharacterApplicationService:
 
     async def create_multiple_characters(
         self, character_data_list: List[Dict[str, Any]]
-    ) -> List[CharacterID]:
-        """Create multiple characters in batch."""
-        character_ids: list[Any] = []
+    ) -> Result[List[CharacterID], Error]:
+        """
+        Create multiple characters in batch.
+
+        Why Result pattern:
+            Explicit error handling for partial failures.
+
+        Returns:
+            Result with list of character IDs on success, Error on failure
+        """
+        character_ids: List[CharacterID] = []
         try:
             for character_data in character_data_list:
-                character_id = await self.create_character(**character_data)
-                character_ids.append(character_id)
+                result = await self.create_character(**character_data)
+                if result.is_error:
+                    return Err(
+                        Error(
+                            code="BATCH_CREATION_FAILED",
+                            message=f"Failed to create character in batch: {result.error}",
+                            recoverable=False,
+                            details={"created_so_far": len(character_ids)},
+                        )
+                    )
+                character_ids.append(result.value)
 
             self.logger.info("multiple_characters_created", count=len(character_ids))
-            return character_ids
+            return Ok(character_ids)
 
         except Exception as e:
             self.logger.error("create_multiple_characters_failed", error=str(e))
-            # If we've created some characters, we might want to clean up
-            # or return the partially successful results
-            raise
+            return Err(
+                Error(
+                    code="BATCH_CREATION_FAILED",
+                    message=f"Failed to create multiple characters: {e}",
+                    recoverable=False,
+                    details={"created_so_far": len(character_ids)},
+                )
+            )
 
     async def delete_multiple_characters(
         self, character_ids: List[str], reason: str
-    ) -> int:
-        """Delete multiple characters."""
+    ) -> Result[int, Error]:
+        """
+        Delete multiple characters.
+
+        Why Result pattern:
+            Explicit error handling for partial failures.
+
+        Returns:
+            Result with count of deleted characters on success, Error on failure
+        """
         deleted_count = 0
 
         try:
             for character_id in character_ids:
-                if await self.delete_character(character_id, reason):
+                result = await self.delete_character(character_id, reason)
+                if result.is_error:
+                    return Err(
+                        Error(
+                            code="BATCH_DELETION_FAILED",
+                            message=f"Failed to delete character in batch: {result.error}",
+                            recoverable=False,
+                            details={"deleted_so_far": deleted_count},
+                        )
+                    )
+                if result.value:
                     deleted_count += 1
 
             self.logger.info("multiple_characters_deleted", count=deleted_count)
-            return deleted_count
+            return Ok(deleted_count)
 
         except Exception as e:
             self.logger.error("delete_multiple_characters_failed", error=str(e))
-            raise
+            return Err(
+                Error(
+                    code="BATCH_DELETION_FAILED",
+                    message=f"Failed to delete multiple characters: {e}",
+                    recoverable=False,
+                    details={"deleted_so_far": deleted_count},
+                )
+            )

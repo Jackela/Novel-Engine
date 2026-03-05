@@ -7,7 +7,7 @@ using SQLAlchemy ORM for data persistence. It handles the mapping between
 domain objects and database entities.
 """
 
-import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -43,7 +43,7 @@ from ..persistence.subjective_models import (
     TurnBriefORM,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):

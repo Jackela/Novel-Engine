@@ -10,7 +10,7 @@ This service ensures eventual consistency between the write model (domain aggreg
 and the read model (denormalized views) through reliable event processing.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional, Set
 from uuid import UUID
@@ -25,7 +25,7 @@ from core_platform.persistence.database import get_db_session
 from ...domain.events.world_events import WorldChangeType, WorldStateChanged
 from .world_read_model import WorldSliceReadModel
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class WorldProjectorException(Exception):

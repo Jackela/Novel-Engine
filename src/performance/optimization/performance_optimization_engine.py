@@ -109,11 +109,11 @@ class PerformanceMonitor:
         self.start_time = time.time()
         self._monitoring_task: Optional[asyncio.Task] = None
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start background performance monitoring."""
         self._monitoring_task = asyncio.create_task(self._monitor_loop())
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         if self._monitoring_task:
             self._monitoring_task.cancel()
@@ -122,7 +122,7 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Background monitoring loop."""
         while True:
             try:
@@ -134,7 +134,7 @@ class PerformanceMonitor:
                 logger.error(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5.0)
 
-    async def _collect_metrics(self):
+    async def _collect_metrics(self) -> None:
         """Collect system performance metrics."""
         process = psutil.Process()
 
@@ -202,7 +202,7 @@ class MultiTierCache:
             "l3_misses": 0,
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize async cache components."""
         try:
             self.redis_client = aioredis.from_url(
@@ -342,7 +342,7 @@ class ConnectionPool:
             "peak_active": 0,
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize connection pool with minimum connections."""
         for _ in range(self.config.min_db_connections):
             await self._create_connection()
@@ -400,7 +400,7 @@ class ConnectionPool:
         self.connection_stats["active"] = self.active_connections
         await self.available.put(conn)
 
-    async def close_all(self):
+    async def close_all(self) -> None:
         """Close all connections in the pool."""
         async with self.pool_lock:
             for conn in self.pool:
@@ -524,7 +524,7 @@ class PerformanceOptimizationEngine:
         self._background_tasks: List[asyncio.Task] = []
         self._shutdown_event = asyncio.Event()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the optimization engine."""
         logger.info("Initializing Performance Optimization Engine")
 
@@ -539,7 +539,7 @@ class PerformanceOptimizationEngine:
 
         logger.info("Performance Optimization Engine initialized")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the optimization engine."""
         logger.info("Shutting down Performance Optimization Engine")
 
@@ -608,7 +608,7 @@ class PerformanceOptimizationEngine:
 
         return self.connection_pools[database_path]
 
-    async def _optimization_loop(self):
+    async def _optimization_loop(self) -> None:
         """Background optimization loop."""
         while not self._shutdown_event.is_set():
             try:
@@ -620,7 +620,7 @@ class PerformanceOptimizationEngine:
                 logger.error(f"Error in optimization loop: {e}")
                 await asyncio.sleep(10.0)
 
-    async def _run_optimizations(self):
+    async def _run_optimizations(self) -> None:
         """Run optimization routines."""
         # Garbage collection optimization
         if time.time() - self.last_gc_time > self.config.gc_interval:

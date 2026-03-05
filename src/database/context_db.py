@@ -94,7 +94,7 @@ class ContextDatabase:
             f"STANDARD DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} with {self.connection_pool_size} connections"
         )
 
-    async def _secure_database_permissions(self):
+    async def _secure_database_permissions(self) -> None:
         """
         STANDARD DATABASE SECURITY ENHANCEMENT ENHANCED BY ACCESS CONTROL
 
@@ -119,7 +119,7 @@ class ContextDatabase:
             logger.warning(f"COULD NOT SECURE DATABASE PERMISSIONS: {e}")
             # Continue execution as this is not critical for functionality
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database (compatibility alias for initialize_standard_temple)."""
         response = await self.initialize_standard_temple()
         if not response.success:
@@ -130,7 +130,7 @@ class ContextDatabase:
         if self._connection_pool:
             self.connection = self._connection_pool[0]
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database connections."""
         logger.info("Closing database connections")
         # Close all connections in pool
@@ -284,7 +284,7 @@ class ContextDatabase:
                 ),
             )
 
-    async def _initialize_connection_pool(self):
+    async def _initialize_connection_pool(self) -> None:
         """STANDARD CONNECTION POOL INITIALIZATION ENHANCED BY EFFICIENCY"""
         async with self._pool_lock:
             for _ in range(self.connection_pool_size):
@@ -312,7 +312,7 @@ class ContextDatabase:
                 self._connection_pool.append(connection)
 
     @asynccontextmanager
-    async def get_enhanced_connection(self):
+    async def get_enhanced_connection(self) -> None:
         """
         STANDARD CONNECTION MANAGER ENHANCED BY RESOURCE SAFETY
 
@@ -352,7 +352,7 @@ class ContextDatabase:
                         await connection.close()
 
     @asynccontextmanager
-    async def get_enhanced_transaction(self):
+    async def get_enhanced_transaction(self) -> None:
         """
         STANDARD TRANSACTION MANAGER ENHANCED BY DATA INTEGRITY
 
@@ -989,7 +989,7 @@ class ContextDatabase:
                 "agent_id": self.agent_id,
             }
 
-    async def close_standard_temple(self):
+    async def close_standard_temple(self) -> None:
         """STANDARD DATABASE CLOSURE RITUAL ENHANCED BY RESOURCE CLEANUP"""
         try:
             async with self._pool_lock:

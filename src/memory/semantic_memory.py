@@ -341,7 +341,7 @@ class SemanticMemory:
         """Determines if a string is likely to be a named entity."""
         return len(text) > 0 and text[0].isupper()
 
-    async def _prune_knowledge(self):
+    async def _prune_knowledge(self) -> None:
         """Removes low-confidence facts to manage memory size."""
         if len(self._facts) <= self.max_facts:
             return

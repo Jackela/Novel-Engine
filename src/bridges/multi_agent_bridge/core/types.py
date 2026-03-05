@@ -102,7 +102,7 @@ class LLMBatchRequest:
     result_future: Optional[Any] = None
     timeout_seconds: float = 30.0
 
-    def __lt__(self, other) -> None:
+    def __lt__(self, other: Any) -> None:
         """Enable priority queue ordering."""
         if not isinstance(other, LLMBatchRequest):
             return NotImplemented

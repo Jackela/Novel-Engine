@@ -293,7 +293,7 @@ class RedisCache(CacheInterface):
             else os.getenv("ALLOW_MOCK_REDIS", "false").lower() == "true"
         )
 
-    async def _get_redis(self):
+    async def _get_redis(self) -> None:
         """Get Redis connection (lazy initialization)"""
         if self._redis is None:
             try:

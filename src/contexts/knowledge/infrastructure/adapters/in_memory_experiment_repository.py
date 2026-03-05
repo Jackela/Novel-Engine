@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Optional
 
 from src.contexts.knowledge.application.ports.i_experiment_repository import (
@@ -23,7 +23,7 @@ from src.contexts.knowledge.domain.models.prompt_experiment import (
     PromptExperiment,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InMemoryExperimentRepository(IExperimentRepository):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Optional
@@ -17,7 +17,7 @@ from src.api.startup import (
     shutdown_app_state,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def create_app(

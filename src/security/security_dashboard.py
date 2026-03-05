@@ -164,7 +164,7 @@ class SecurityDashboard:
             compliance_score=0.0,
         )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize security dashboard"""
         try:
             # Connect to Redis
@@ -189,7 +189,7 @@ class SecurityDashboard:
             logger.error(f"❌ Failed to initialize Security Dashboard: {e}")
             raise
 
-    async def _initialize_dashboard_database(self):
+    async def _initialize_dashboard_database(self) -> None:
         """Initialize dashboard-specific database tables"""
         async with aiosqlite.connect(self.database_path) as conn:
             # Security incidents table
@@ -245,7 +245,7 @@ class SecurityDashboard:
             await conn.commit()
             logger.info("📊 Security Dashboard database schema initialized")
 
-    async def _security_alert_listener(self):
+    async def _security_alert_listener(self) -> None:
         """Listen for real-time security alerts from Redis"""
         pubsub = self.redis_client.pubsub()
         await pubsub.subscribe("security_alerts")
@@ -381,7 +381,7 @@ class SecurityDashboard:
             )
             await conn.commit()
 
-    async def _load_incidents(self):
+    async def _load_incidents(self) -> None:
         """Load existing incidents from database"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -421,7 +421,7 @@ class SecurityDashboard:
         except Exception as e:
             logger.error(f"Error loading incidents: {e}")
 
-    async def _metrics_collector(self):
+    async def _metrics_collector(self) -> None:
         """Collect security metrics periodically"""
         while True:
             try:
@@ -447,7 +447,7 @@ class SecurityDashboard:
                 logger.error(f"Error collecting metrics: {e}")
                 await asyncio.sleep(60)
 
-    async def _compliance_monitor(self):
+    async def _compliance_monitor(self) -> None:
         """Monitor compliance frameworks periodically"""
         while True:
             try:
@@ -616,7 +616,7 @@ class SecurityDashboard:
         for client in disconnected_clients:
             self.connected_clients.remove(client)
 
-    async def _broadcast_metrics(self):
+    async def _broadcast_metrics(self) -> None:
         """Broadcast metrics to all connected WebSocket clients"""
         if not self.connected_clients:
             return

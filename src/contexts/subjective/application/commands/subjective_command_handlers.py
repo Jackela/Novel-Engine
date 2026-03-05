@@ -7,7 +7,7 @@ Command handlers contain the application logic for processing commands
 and coordinating between domain objects and infrastructure services.
 """
 
-import logging
+import structlog
 
 from ...domain.aggregates.turn_brief import TurnBrief
 from ...domain.repositories.turn_brief_repository import (
@@ -28,7 +28,7 @@ from .subjective_commands import (
     UpdatePerceptionCapabilitiesCommand,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SubjectiveCommandHandlerException(Exception):

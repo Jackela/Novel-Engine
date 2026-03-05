@@ -7,7 +7,7 @@ including the main POST /v1/turns:run endpoint and monitoring capabilities.
 """
 
 import json
-import logging
+import structlog
 import os
 import tempfile
 import threading
@@ -67,7 +67,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
         return app
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -257,12 +257,12 @@ def _patch_e2e_database_fixture() -> None:
     original_setup = DatabaseFixtures.setup_test_database
     original_cleanup = DatabaseFixtures.cleanup_test_database
 
-    async def _setup_wrapper(self):
+    async def _setup_wrapper(self) -> None:
         _reset_e2e_state()
         if original_setup:
             await original_setup(self)
 
-    async def _cleanup_wrapper(self):
+    async def _cleanup_wrapper(self) -> None:
         if original_cleanup:
             await original_cleanup(self)
         _reset_e2e_state()
@@ -285,7 +285,7 @@ def _patch_e2e_database_fixture() -> None:
                 elif "narrative" in class_name:
                     _append_e2e_state("narrative_arcs", data)
 
-            async def commit(self):
+            async def commit(self) -> None:
                 return
 
             async def execute(self, query):

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException, Request
@@ -11,7 +11,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from src.api.error_handlers import NovelEngineException
 from src.api.schemas import ErrorDetail
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _status_code_to_error(status_code: int) -> tuple[str, str]:

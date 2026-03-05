@@ -130,7 +130,7 @@ class AsyncTaskScheduler:
             f"queue_size={max_queue_size}"
         )
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the async task scheduler."""
         if self.scheduler_active:
             logger.warning("Scheduler already running")
@@ -149,7 +149,7 @@ class AsyncTaskScheduler:
 
         logger.info("AsyncTaskScheduler started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the async task scheduler gracefully."""
         self.scheduler_active = False
         self.resource_monitor_active = False
@@ -312,7 +312,7 @@ class AsyncTaskScheduler:
             if task.task_id in self.running_tasks:
                 del self.running_tasks[task.task_id]
 
-    async def _resource_monitor(self):
+    async def _resource_monitor(self) -> None:
         """Monitor system resources and adjust concurrency."""
         while self.resource_monitor_active:
             try:
@@ -405,7 +405,7 @@ class AsyncHttpClient:
             f"per_host={max_connections_per_host}"
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         """Async context manager entry."""
         await self.start()
         return self
@@ -414,7 +414,7 @@ class AsyncHttpClient:
         """Async context manager exit."""
         await self.close()
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the HTTP client session."""
         if self.session is None:
             timeout = aiohttp.ClientTimeout(
@@ -428,7 +428,7 @@ class AsyncHttpClient:
             )
             logger.debug("AsyncHttpClient session started")
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client session."""
         if self.session:
             await self.session.close()

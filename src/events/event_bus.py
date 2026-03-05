@@ -348,7 +348,7 @@ class EventBus:
 
         logger.info("EventBus initialized with enterprise configuration")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the event bus and its dependencies."""
         try:
             # Initialize Redis connection if enabled
@@ -368,7 +368,7 @@ class EventBus:
             logger.error(f"Failed to initialize EventBus: {e}")
             raise
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Gracefully shutdown the event bus."""
         logger.info("Shutting down EventBus...")
         self._shutdown_event.set()
@@ -542,7 +542,7 @@ class EventBus:
             channel = f"{self.config.redis_key_prefix}:channel:{event.event_type}"
             await self.redis.publish(channel, json.dumps(event.to_dict()))
 
-    async def _batch_processing_loop(self):
+    async def _batch_processing_loop(self) -> None:
         """Background task for batch processing optimization."""
         while not self._shutdown_event.is_set():
             try:
@@ -605,7 +605,7 @@ class EventBus:
         """Get events in the dead letter queue."""
         return self.dead_letter_queue.copy()
 
-    async def clear_dead_letter_queue(self):
+    async def clear_dead_letter_queue(self) -> None:
         """Clear the dead letter queue."""
         cleared_count = len(self.dead_letter_queue)
         self.dead_letter_queue.clear()

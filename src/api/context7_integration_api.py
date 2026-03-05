@@ -7,7 +7,7 @@ FastAPI endpoints that leverage Context7 MCP server for enhanced API documentati
 code examples, framework patterns, and best practices integration.
 """
 
-import logging
+import structlog
 import os
 from datetime import datetime
 from enum import Enum
@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from src.core.data_models import StandardResponse
 from src.security.auth_system import get_current_user
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models

@@ -358,7 +358,7 @@ class InteractionPauseController:
             ),
         }
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset the controller to initial state."""
         async with self._lock:
             if self._pending:

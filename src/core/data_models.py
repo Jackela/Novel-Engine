@@ -412,7 +412,7 @@ class DynamicContext:
     def to_json(self) -> str:
         """Serialize enhanced context for standard persistence"""
 
-        def default_serializer(obj) -> None:
+        def default_serializer(obj: Any) -> Any:
             """
             Custom JSON serializer for complex objects.
 
@@ -546,8 +546,13 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
 
 # Legacy compatibility aliases and wrappers
 def Character(
-    name=None, background=None, personality=None, skills=None, equipment=None, **kwargs
-) -> None:
+    name: Optional[str] = None,
+    background: Optional[str] = None,
+    personality: Optional[str] = None,
+    skills: Optional[List[str]] = None,
+    equipment: Optional[List[str]] = None,
+    **kwargs: Any
+) -> Any:
     """
     Legacy Character constructor that wraps CharacterState with simplified interface.
     Converts old-style parameters to new CharacterState structure.
@@ -609,8 +614,12 @@ validate_blessed_data_model = validate_enhanced_data_model  # Legacy function na
 
 # Legacy ActionResult wrapper for test compatibility
 def ActionResult(
-    success=True, description="", consequences=None, world_state_changes=None, **kwargs
-) -> None:
+    success: bool = True,
+    description: str = "",
+    consequences: Optional[List[Any]] = None,
+    world_state_changes: Optional[Dict[str, Any]] = None,
+    **kwargs: Any
+) -> Any:
     """
     Legacy ActionResult constructor that wraps InteractionResult.
     Converts old-style parameters to new InteractionResult structure.
@@ -650,12 +659,12 @@ class LegacyWorldState:
 
     def __init__(
         self,
-        current_location=None,
-        time_period=None,
-        weather=None,
-        active_events=None,
-        environmental_factors=None,
-        **kwargs,
+        current_location: Optional[str] = None,
+        time_period: Optional[str] = None,
+        weather: Optional[str] = None,
+        active_events: Optional[List[Any]] = None,
+        environmental_factors: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
     ) -> None:
         self.current_location = current_location
         self.time_period = time_period

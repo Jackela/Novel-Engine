@@ -7,7 +7,7 @@ bounded context. It serves as the primary interface for external systems
 to interact with subjective perception and knowledge operations.
 """
 
-import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -44,7 +44,7 @@ from ..commands.subjective_commands import (
     UpdatePerceptionCapabilitiesCommand,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SubjectiveApplicationService:

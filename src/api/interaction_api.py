@@ -7,7 +7,7 @@ and dynamic relationship evolution.
 """
 
 import asyncio
-import logging
+import structlog
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -22,7 +22,7 @@ from src.interactions.engine import (
     InteractionType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionRequest(BaseModel):

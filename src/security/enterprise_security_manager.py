@@ -230,7 +230,7 @@ class EnterpriseSecurityManager:
         # Security rules engine
         self.security_rules = self._initialize_security_rules()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize Enterprise Security Components"""
         try:
             # Initialize Redis connection
@@ -256,7 +256,7 @@ class EnterpriseSecurityManager:
             logger.error(f"❌ Failed to initialize Enterprise Security Manager: {e}")
             raise
 
-    async def _initialize_security_database(self):
+    async def _initialize_security_database(self) -> None:
         """Initialize enhanced security database schema"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -954,7 +954,7 @@ class EnterpriseSecurityManager:
         except Exception as e:
             logger.error(f"Error updating behavioral profile for {user_id}: {e}")
 
-    async def _load_behavioral_profiles(self):
+    async def _load_behavioral_profiles(self) -> None:
         """Load behavioral profiles into memory"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -1164,7 +1164,7 @@ class EnterpriseSecurityManager:
             f"🛡️ Added IP {ip_address} to {list_type} (severity: {severity.value})"
         )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup resources"""
         if self.redis_client:
             await self.redis_client.close()

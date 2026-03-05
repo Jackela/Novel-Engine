@@ -22,7 +22,7 @@ load_dotenv(dotenv_path=env_path, override=False)
 
 import asyncio
 import json
-import logging
+import structlog
 import os
 import re
 import secrets
@@ -98,7 +98,7 @@ except ImportError:
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Global variables for system components
 global_orchestrator: Optional[SystemOrchestrator] = None

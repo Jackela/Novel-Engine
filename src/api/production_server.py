@@ -8,7 +8,7 @@ security measures for production deployment.
 """
 
 import asyncio
-import logging
+import structlog
 import os
 import secrets
 import ssl
@@ -41,7 +41,7 @@ from src.core.config.config_loader import get_config
 from src.core.event_bus import EventBus
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Security Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")

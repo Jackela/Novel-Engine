@@ -87,7 +87,7 @@ class NarrativeThread(StoryElement):
         sequence: int,
         description: str,
         significance: str = "moderate",
-        **metadata,
+        **metadata: Any,
     ) -> None:
         """Add a key moment to this thread."""
         moment = {
@@ -106,8 +106,8 @@ class NarrativeThread(StoryElement):
         sequence: int,
         description: str,
         impact_level: str = "moderate",
-        affected_elements: List[str] = None,
-        **metadata,
+        affected_elements: Optional[List[str]] = None,
+        **metadata: Any,
     ) -> None:
         """Add a turning point to this thread."""
         turning_point = {

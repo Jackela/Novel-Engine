@@ -187,7 +187,7 @@ class SecurityEventMonitor:
         self.event_handlers: Dict[str, List[Callable]] = {}
         self.threat_patterns = self._load_threat_patterns()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the security event database"""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
@@ -376,7 +376,7 @@ class ComplianceEngine:
         self.event_monitor = SecurityEventMonitor()
         self._initialize_rules()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the compliance engine"""
         await self.event_monitor.initialize()
 

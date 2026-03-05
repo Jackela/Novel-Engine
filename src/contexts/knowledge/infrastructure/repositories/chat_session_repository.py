@@ -5,7 +5,7 @@ Repository for persisting and retrieving chat sessions and messages.
 Provides an abstraction layer over the SQLAlchemy models.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
@@ -19,7 +19,7 @@ from ..models.chat_session import (
     get_db_session,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

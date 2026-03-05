@@ -579,7 +579,7 @@ class EnhancedMultiAgentBridge:
                 "error": str(e),
             }
 
-    async def _start_batch_processor(self):
+    async def _start_batch_processor(self) -> None:
         """Start the batch processing task."""
         if self._batch_processor_running:
             return
@@ -587,7 +587,7 @@ class EnhancedMultiAgentBridge:
         self._batch_processor_running = True
         self._batch_processor_task = asyncio.create_task(self._batch_processor())
 
-    async def _batch_processor(self):
+    async def _batch_processor(self) -> None:
         """Main batch processing loop."""
         try:
             while self._batch_processor_running:
@@ -598,7 +598,7 @@ class EnhancedMultiAgentBridge:
         finally:
             self._batch_processor_running = False
 
-    async def _process_batch_cycle(self):
+    async def _process_batch_cycle(self) -> None:
         """Process one cycle of batch requests."""
         if not self.llm_request_queue:
             return
@@ -962,7 +962,7 @@ class EnhancedMultiAgentBridge:
             },
         }
 
-    async def shutdown_coordination_systems(self):
+    async def shutdown_coordination_systems(self) -> None:
         """Gracefully shutdown coordination systems."""
         try:
             # Stop batch processor
@@ -1415,7 +1415,7 @@ class EnhancedMultiAgentBridge:
         )
         self.event_bus.subscribe("AI_INSIGHT_GENERATED", self._handle_ai_insight)
 
-    async def _setup_enhanced_coordination(self):
+    async def _setup_enhanced_coordination(self) -> None:
         """Setup enhanced coordination between systems."""
         # Register event handlers for coordination between AI systems
         if self.ai_orchestrator.agent_coordination:

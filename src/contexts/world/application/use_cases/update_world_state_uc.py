@@ -6,7 +6,7 @@ This module contains the use case for applying delta changes to world state.
 It orchestrates domain operations while maintaining Clean Architecture principles.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -26,7 +26,7 @@ from ..commands.world_commands import (
     WorldOperationType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class UpdateWorldStateResult:

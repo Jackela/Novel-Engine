@@ -68,7 +68,7 @@ class CausalNode:
     def __hash__(self) -> None:
         return hash(self.node_id)
 
-    def __eq__(self, other) -> None:
+    def __eq__(self, other: Any) -> None:
         if not isinstance(other, CausalNode):
             return NotImplemented
         return self.node_id == other.node_id

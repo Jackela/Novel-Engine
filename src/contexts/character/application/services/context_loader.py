@@ -860,7 +860,7 @@ class ContextLoaderService:
 
     # ==================== Enhanced Error Handling & Security ====================
 
-    async def _check_circuit_breaker(self):
+    async def _check_circuit_breaker(self) -> None:
         """Check circuit breaker state and potentially raise ServiceUnavailableError."""
         now = datetime.now(UTC)
 
@@ -878,14 +878,14 @@ class ContextLoaderService:
                     f"Service temporarily unavailable. Recovery in {remaining_time.total_seconds():.0f}s"
                 )
 
-    async def _record_success(self):
+    async def _record_success(self) -> None:
         """Record successful operation for circuit breaker."""
         if self._circuit_breaker["state"] == "HALF_OPEN":
             self._circuit_breaker["state"] = "CLOSED"
             self._circuit_breaker["failure_count"] = 0
             self.logger.info("circuit_breaker_closed")
 
-    async def _record_failure(self):
+    async def _record_failure(self) -> None:
         """Record failed operation for circuit breaker."""
         self._circuit_breaker["failure_count"] += 1
         self._circuit_breaker["last_failure_time"] = datetime.now(UTC)
@@ -900,7 +900,7 @@ class ContextLoaderService:
                 failure_count=self._circuit_breaker["failure_count"]
             )
 
-    async def _record_partial_failure(self):
+    async def _record_partial_failure(self) -> None:
         """Record partial failure (less severe than full failure)."""
         # Only count as half a failure for circuit breaker
         self._circuit_breaker["failure_count"] += 0.5
@@ -1023,7 +1023,7 @@ class ContextLoaderService:
             self._cache.pop(oldest_id, None)
             self._cache_timestamps.pop(oldest_id, None)
 
-    async def clear_cache(self):
+    async def clear_cache(self) -> None:
         """Clear all cached data."""
         self._cache.clear()
         self._cache_timestamps.clear()

@@ -471,7 +471,7 @@ class QueueManager:
 
     # Private processing methods
 
-    async def _queue_processing_loop(self):
+    async def _queue_processing_loop(self) -> None:
         """
         Main queue processing loop.
         """
@@ -601,7 +601,7 @@ class QueueManager:
                     queued_interaction.context.interaction_id, None
                 )
 
-    async def _cleanup_completed_interactions(self):
+    async def _cleanup_completed_interactions(self) -> None:
         """
         Clean up old completed and failed interactions.
         """

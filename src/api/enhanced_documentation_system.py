@@ -7,7 +7,7 @@ Comprehensive documentation system that leverages Context7 for interactive examp
 framework patterns, and best practices integration.
 """
 
-import logging
+import structlog
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedDocumentationSystem:

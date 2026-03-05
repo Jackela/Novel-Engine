@@ -467,7 +467,7 @@ class TurnBriefFactory:
 
     async def _process_recent_events(
         self, belief_model: BeliefModel, events: List[Dict]
-    ):
+    ) -> None:
         """处理最近发生的事件"""
         for event in events:
             # 将事件转换为信息片段
@@ -756,7 +756,7 @@ class SubjectiveRealityEngine:
         )
         return brief
 
-    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]):
+    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]) -> None:
         """更新Agent的知识状态"""
 
         if agent_id not in self.active_agents:
@@ -815,7 +815,7 @@ def create_subjective_reality_engine() -> SubjectiveRealityEngine:
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage():
+    async def example_usage() -> None:
         engine = create_subjective_reality_engine()
 
         # 初始化一个Agent

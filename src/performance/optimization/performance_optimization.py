@@ -32,7 +32,7 @@ class AsyncDatabasePool:
         self._busy_connections: weakref.WeakSet = weakref.WeakSet()
         self._lock = asyncio.Lock()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the connection pool."""
         async with self._lock:
             for _ in range(self.max_connections):
@@ -49,7 +49,7 @@ class AsyncDatabasePool:
         )
 
     @asynccontextmanager
-    async def get_connection(self):
+    async def get_connection(self) -> None:
         """Get a connection from the pool."""
         async with self._lock:
             if not self._pool:
@@ -112,7 +112,7 @@ class AdvancedCache:
             self._cache[key] = {"value": value, "timestamp": current_time}
             self._access_times[key] = current_time
 
-    async def _evict_lru(self):
+    async def _evict_lru(self) -> None:
         """Evict least recently used entries."""
         if not self._access_times:
             return
@@ -178,7 +178,7 @@ class PerformanceOptimizer:
         logger.info("Performance optimization systems initialized")
 
     @asynccontextmanager
-    async def get_db_connection(self):
+    async def get_db_connection(self) -> None:
         """Get optimized database connection."""
         if not self.db_pool:
             raise RuntimeError("Database pool not initialized")
@@ -391,7 +391,7 @@ class AsyncSimulationManager:
         async with self._lock:
             return self.active_simulations.get(simulation_id)
 
-    async def cleanup_completed_simulations(self):
+    async def cleanup_completed_simulations(self) -> None:
         """Clean up old completed simulations."""
         current_time = time.time()
         async with self._lock:

@@ -201,7 +201,7 @@ class StoryPacing:
             raise ValueError("Segment name too long (max 200 characters)")
 
     def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values) -> None:
+        def _dict_to_hashable(values: Any) -> None:
             if not values:
                 return frozenset()
             items: list[Any] = []
@@ -245,7 +245,7 @@ class StoryPacing:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, StoryPacing):
             return NotImplemented
         return self._hash_components() == other._hash_components()

@@ -129,7 +129,7 @@ class StateStore(ABC):
         """Check store health"""
 
     @abstractmethod
-    async def close(self):
+    async def close(self) -> None:
         """Close connections"""
 
 
@@ -141,7 +141,7 @@ class RedisStateStore(StateStore):
         self.redis: Optional[aioredis.Redis] = None
         self._connected = False
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Initialize Redis connection"""
         if self._connected:
             return
@@ -300,7 +300,7 @@ class RedisStateStore(StateStore):
             logger.error(f"Redis health check failed: {e}")
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection"""
         if self.redis:
             await self.redis.close()
@@ -316,7 +316,7 @@ class PostgreSQLStateStore(StateStore):
         self.pool: Optional[asyncpg.Pool] = None
         self._connected = False
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Initialize PostgreSQL connection pool"""
         if self._connected:
             return
@@ -339,7 +339,7 @@ class PostgreSQLStateStore(StateStore):
             logger.error(f"Failed to connect to PostgreSQL: {e}")
             raise
 
-    async def _initialize_tables(self):
+    async def _initialize_tables(self) -> None:
         """Initialize required tables"""
         create_tables_sql = """
         CREATE TABLE IF NOT EXISTS state_data (
@@ -576,7 +576,7 @@ class PostgreSQLStateStore(StateStore):
             logger.error(f"PostgreSQL health check failed: {e}")
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close PostgreSQL connection pool"""
         if self.pool:
             await self.pool.close()
@@ -592,7 +592,7 @@ class S3StateStore(StateStore):
         self.s3_client = None
         self._connected = False
 
-    async def connect(self):
+    async def connect(self) -> None:
         """Initialize S3 client"""
         if self._connected:
             return
@@ -622,7 +622,7 @@ class S3StateStore(StateStore):
             logger.error(f"Failed to connect to S3: {e}")
             raise
 
-    async def _ensure_bucket_exists(self):
+    async def _ensure_bucket_exists(self) -> None:
         """Ensure S3 bucket exists"""
         try:
             self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
@@ -843,7 +843,7 @@ class S3StateStore(StateStore):
             logger.error(f"S3 health check failed: {e}")
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close S3 client"""
         # S3 client doesn't need explicit closing
         self._connected = False
@@ -871,7 +871,7 @@ class UnifiedStateManager:
             "temp": "redis",  # Temporary data -> Redis
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize all stores"""
         try:
             await self.redis_store.connect()
@@ -1000,13 +1000,13 @@ class UnifiedStateManager:
             "s3": await self.s3_store.health_check(),
         }
 
-    async def cleanup_expired(self):
+    async def cleanup_expired(self) -> None:
         """Cleanup expired data from all stores"""
         await self.postgres_store.cleanup_expired()
         # Redis handles expiration automatically
         # S3 expiration is handled by lifecycle policies
 
-    async def close(self):
+    async def close(self) -> None:
         """Close all store connections"""
         await self.redis_store.close()
         await self.postgres_store.close()

@@ -161,7 +161,7 @@ class EnterpriseSecuritySuite:
             self.is_initialized = False
             return False
 
-    async def _ensure_admin_user(self):
+    async def _ensure_admin_user(self) -> None:
         """Ensure default admin user exists"""
         try:
             # Check if any admin users exist
@@ -203,7 +203,7 @@ class EnterpriseSecuritySuite:
         except Exception as e:
             logger.error(f"Error ensuring admin user: {e}")
 
-    async def _start_security_automation(self):
+    async def _start_security_automation(self) -> None:
         """Start automated security tasks"""
         try:
             # Start security cleanup task
@@ -217,7 +217,7 @@ class EnterpriseSecuritySuite:
         except Exception as e:
             logger.error(f"Error starting security automation: {e}")
 
-    async def _security_cleanup_task(self):
+    async def _security_cleanup_task(self) -> None:
         """Periodic security cleanup and maintenance"""
         while True:
             try:
@@ -234,7 +234,7 @@ class EnterpriseSecuritySuite:
                 logger.error(f"Security cleanup task error: {e}")
                 await asyncio.sleep(3600)
 
-    async def _threat_intelligence_updater(self):
+    async def _threat_intelligence_updater(self) -> None:
         """Update threat intelligence data periodically"""
         while True:
             try:
@@ -495,7 +495,7 @@ class EnterpriseSecuritySuite:
                 "components_status": "degraded",
             }
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup security suite resources"""
         try:
             if self.security_manager:

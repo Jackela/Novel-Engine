@@ -14,7 +14,7 @@ Warzone 4: AI Brain - BRAIN-031A
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import TYPE_CHECKING, Any
 
 import networkx as nx
@@ -37,7 +37,7 @@ from src.contexts.knowledge.domain.models.entity import EntityType, Relationship
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NetworkXGraphStore(IGraphStore):

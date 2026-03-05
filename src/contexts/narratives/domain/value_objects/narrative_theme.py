@@ -186,7 +186,7 @@ class NarrativeTheme:
             raise ValueError("Theme description too long (max 1000 characters)")
 
     def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values) -> None:
+        def _dict_to_hashable(values: Any) -> None:
             if not values:
                 return frozenset()
             items: list[Any] = []
@@ -230,7 +230,7 @@ class NarrativeTheme:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NarrativeTheme):
             return NotImplemented
         return self._hash_components() == other._hash_components()

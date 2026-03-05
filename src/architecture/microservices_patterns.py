@@ -192,7 +192,7 @@ class ServiceRegistry:
                 return instance
         return None
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         """Continuous health checking for all registered services"""
         while True:
             try:
@@ -204,7 +204,7 @@ class ServiceRegistry:
                 logger.error(f"Health check error: {e}")
                 await asyncio.sleep(5)  # Short delay on error
 
-    async def _perform_health_checks(self):
+    async def _perform_health_checks(self) -> None:
         """Perform health checks on all registered services"""
         tasks: list[Any] = []
         async with self._lock:
@@ -287,7 +287,7 @@ class CircuitBreaker:
             await self._on_failure()
             raise e
 
-    async def _on_success(self):
+    async def _on_success(self) -> None:
         """Handle successful call"""
         async with self._lock:
             self.failure_count = 0
@@ -295,7 +295,7 @@ class CircuitBreaker:
                 self.state = CircuitState.CLOSED
                 logger.info("Circuit breaker reset to CLOSED state")
 
-    async def _on_failure(self):
+    async def _on_failure(self) -> None:
         """Handle failed call"""
         async with self._lock:
             self.failure_count += 1

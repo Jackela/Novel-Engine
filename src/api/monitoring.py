@@ -7,7 +7,7 @@ for production API operations with detailed analytics and alerting.
 """
 
 import json
-import logging
+import structlog
 import threading
 import time
 import uuid
@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(str, Enum):

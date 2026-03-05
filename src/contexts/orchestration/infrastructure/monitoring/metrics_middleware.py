@@ -47,7 +47,7 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
 
         def time(self) -> None:
             class _Timer:
-                def __enter__(self):
+                def __enter__(self) -> None:
                     return self
 
                 def __exit__(self, exc_type, exc, tb):

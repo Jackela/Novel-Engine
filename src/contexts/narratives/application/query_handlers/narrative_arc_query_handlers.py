@@ -6,7 +6,7 @@ This module implements query handlers for narrative arc read operations.
 Handlers coordinate between the application layer and domain/infrastructure layers.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -29,7 +29,7 @@ from ..queries.narrative_arc_queries import (
     SearchNarrativeArcsQuery,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeArcQueryHandler:

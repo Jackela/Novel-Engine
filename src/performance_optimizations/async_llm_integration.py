@@ -116,7 +116,7 @@ class AsyncLLMClient:
             f"AsyncLLMClient initialized with {max_concurrent_requests} max concurrent requests"
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         """Async context manager entry."""
         await self.initialize()
         return self

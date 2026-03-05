@@ -10,7 +10,7 @@ Constitution Compliance:
 - Article VII (Observability): Structured logging and error handling
 """
 
-import logging
+import structlog
 from typing import Any, Dict
 
 from core_platform.messaging.kafka_client import KafkaClient, get_kafka_client
@@ -20,7 +20,7 @@ from ...application.ports.i_event_publisher import (
     IEventPublisher,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class KafkaEventPublisher(IEventPublisher):

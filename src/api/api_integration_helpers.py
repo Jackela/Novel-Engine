@@ -7,7 +7,7 @@ Utility functions and classes to enhance existing APIs with Context7 integration
 providing seamless documentation, examples, and pattern validation.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from functools import wraps
 from typing import Any, Callable, Dict, List
@@ -16,7 +16,7 @@ from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute
 from pydantic import BaseModel
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class APIEnhancementConfig(BaseModel):

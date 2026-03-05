@@ -174,12 +174,12 @@ class PersonaCore:
 
         return ActionsInterface(self.agent_id)
 
-    async def activate(self):
+    async def activate(self) -> None:
         """Activate the PersonaCore instance."""
         self.state.is_active = True
         logger.info(f"PersonaCore activated for agent: {self.agent_id}")
 
-    async def deactivate(self):
+    async def deactivate(self) -> None:
         """Deactivate the PersonaCore instance."""
         self.state.is_active = False
         logger.info(f"PersonaCore deactivated for agent: {self.agent_id}")

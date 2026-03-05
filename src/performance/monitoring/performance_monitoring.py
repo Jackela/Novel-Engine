@@ -635,7 +635,7 @@ class PerformanceMonitor:
         for threshold in default_thresholds:
             self.alert_manager.add_threshold(threshold)
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start performance monitoring."""
         if self.monitoring_active:
             return
@@ -657,7 +657,7 @@ class PerformanceMonitor:
 
         logger.info("Performance monitoring started")
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         self.monitoring_active = False
         if self.monitoring_task:
@@ -669,7 +669,7 @@ class PerformanceMonitor:
 
         logger.info("Performance monitoring stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self.monitoring_active:
             try:
@@ -698,7 +698,7 @@ class PerformanceMonitor:
             if regression_info and regression_info["is_regression"]:
                 logger.warning(f"Performance regression detected: {regression_info}")
 
-    async def _persist_metrics(self):
+    async def _persist_metrics(self) -> None:
         """Persist current metrics to database."""
         try:
             async with aiosqlite.connect(self.db_path) as conn:
@@ -810,7 +810,7 @@ class TimerContext:
         self.tags = tags or {}
         self.start_time = None
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.start_time = time.time()
         return self
 

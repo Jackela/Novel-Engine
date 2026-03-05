@@ -5,7 +5,7 @@ Character API.
 API endpoints for character creation, customization, and management.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -16,7 +16,7 @@ from src.core.data_models import CharacterIdentity, CharacterState, EmotionalSta
 from src.core.system_orchestrator import SystemOrchestrator
 from src.templates.character.persona_models import CharacterArchetype
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterCreationRequest(BaseModel):

@@ -7,7 +7,7 @@ with saga patterns, comprehensive error handling, and performance monitoring.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -39,7 +39,7 @@ from ...infrastructure.pipeline_phases import (
     WorldUpdatePhase,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TurnExecutionResult:

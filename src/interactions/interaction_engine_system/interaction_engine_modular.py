@@ -115,7 +115,7 @@ class InteractionEngine:
 
         self.logger.info("Modular interaction engine initialized")
 
-    async def _initialize_engine(self):
+    async def _initialize_engine(self) -> None:
         """Initialize engine components."""
         try:
             # Start queue processing
@@ -265,7 +265,7 @@ class InteractionEngine:
             ],
         }
 
-    async def shutdown_engine(self):
+    async def shutdown_engine(self) -> None:
         """Gracefully shutdown the engine."""
         try:
             self.logger.info("Shutting down interaction engine")

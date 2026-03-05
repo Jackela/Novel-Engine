@@ -7,7 +7,7 @@ Centralized error handling patterns for consistent error responses.
 
 import functools
 import logging
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 
@@ -43,7 +43,7 @@ def handle_standard_errors(
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
@@ -59,7 +59,7 @@ def handle_standard_errors(
                 )
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs) -> None:
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
             except Exception as e:

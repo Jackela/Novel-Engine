@@ -634,7 +634,7 @@ class TokenBudget:
     def __str__(self) -> str:
         return f"Budget[{self.budget_id}:{self.get_available_tokens()}/{self.allocated_tokens} tokens available]"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Compare TokenBudget instances for equality."""
         if not isinstance(other, TokenBudget):
             return False

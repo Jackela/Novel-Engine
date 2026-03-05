@@ -246,7 +246,7 @@ class SecurityLogger:
             # No event loop running yet
             pass
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -637,7 +637,7 @@ class SecurityLogger:
         except Exception as e:
             logger.error(f"SESSION TRACKING UPDATE ERROR: {e}")
 
-    async def _log_rotation_loop(self):
+    async def _log_rotation_loop(self) -> None:
         """STANDARD LOG ROTATION LOOP"""
         while True:
             try:
@@ -648,7 +648,7 @@ class SecurityLogger:
             except Exception as e:
                 logger.error(f"LOG ROTATION ERROR: {e}")
 
-    async def _threat_analysis_loop(self):
+    async def _threat_analysis_loop(self) -> None:
         """STANDARD THREAT ANALYSIS LOOP"""
         while True:
             try:
@@ -660,7 +660,7 @@ class SecurityLogger:
             except Exception as e:
                 logger.error(f"THREAT ANALYSIS LOOP ERROR: {e}")
 
-    async def _rotate_logs(self):
+    async def _rotate_logs(self) -> None:
         """STANDARD LOG ROTATION"""
         try:
             current_date = datetime.now().strftime("%Y%m%d")
@@ -694,12 +694,12 @@ class SecurityLogger:
         except Exception as e:
             logger.error(f"LOG ROTATION ERROR: {e}")
 
-    async def _update_threat_intelligence(self):
+    async def _update_threat_intelligence(self) -> None:
         """STANDARD THREAT INTELLIGENCE UPDATE"""
         # This would integrate with external threat feeds
         # For now, it's a placeholder
 
-    async def _clean_old_data(self):
+    async def _clean_old_data(self) -> None:
         """STANDARD OLD DATA CLEANUP"""
         try:
             # Clean events older than 90 days
@@ -886,7 +886,7 @@ class SecurityLogger:
             logger.error(f"SECURITY STATISTICS ERROR: {e}")
             return {}
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """STANDARD SECURITY LOGGER SHUTDOWN"""
         try:
             # Cancel background tasks

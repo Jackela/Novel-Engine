@@ -166,7 +166,7 @@ class IntelligentCacheManager:
                 # No event loop running yet
                 pass
 
-    async def _background_cleanup(self):
+    async def _background_cleanup(self) -> None:
         """Background task for cache cleanup and optimization."""
         while True:
             try:
@@ -179,7 +179,7 @@ class IntelligentCacheManager:
             except Exception as e:
                 logger.error(f"Error in background cleanup: {e}")
 
-    async def _metrics_collection(self):
+    async def _metrics_collection(self) -> None:
         """Background task for performance metrics collection."""
         while True:
             try:
@@ -536,7 +536,7 @@ class IntelligentCacheManager:
                     self.key_relationships[key].add(other_key)
                     self.key_relationships[other_key].add(key)
 
-    async def _optimize_cache(self):
+    async def _optimize_cache(self) -> None:
         """Perform cache optimization and maintenance tasks."""
         try:
             # Prefetch related keys
@@ -552,12 +552,12 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Cache optimization error: {e}")
 
-    async def _prefetch_related_keys(self):
+    async def _prefetch_related_keys(self) -> None:
         """Prefetch related keys based on access patterns."""
         # This would implement intelligent prefetching based on access patterns
         # For now, it's a placeholder
 
-    async def _optimize_slow_keys(self):
+    async def _optimize_slow_keys(self) -> None:
         """Optimize cache keys with slow access times."""
         for key in list(self.slow_keys):
             if key in self.cache:
@@ -592,7 +592,7 @@ class IntelligentCacheManager:
         if all_times:
             self.stats.avg_access_time_ms = sum(all_times) / len(all_times)
 
-    async def _analyze_performance(self):
+    async def _analyze_performance(self) -> None:
         """Analyze cache performance and log insights."""
         try:
             # Analyze cache performance and log insights
@@ -672,7 +672,7 @@ class IntelligentCacheManager:
             "access_patterns_tracked": len(self.access_patterns),
         }
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown cache manager and cleanup resources."""
         try:
             # Cancel background tasks

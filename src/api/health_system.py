@@ -7,7 +7,7 @@ for production readiness and operational monitoring.
 """
 
 import asyncio
-import logging
+import structlog
 import sqlite3
 import time
 from dataclasses import dataclass, field
@@ -20,7 +20,7 @@ import psutil
 
 from .response_envelopes import HealthCheckData
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class HealthStatus(str, Enum):

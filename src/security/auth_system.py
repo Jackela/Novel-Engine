@@ -313,14 +313,14 @@ class SecurityService:
         self.security_bearer = HTTPBearer()
 
     @asynccontextmanager
-    async def _connection(self):
+    async def _connection(self) -> None:
         conn = await aiosqlite.connect(self.database_path, **self._connect_kwargs)
         try:
             yield conn
         finally:
             await conn.close()
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with self._connection() as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -398,11 +398,11 @@ class SecurityService:
             await conn.commit()
         logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Compatibility wrapper to align with legacy AuthenticationManager API."""
         await self.initialize_database()
 
-    async def close(self):
+    async def close(self) -> None:
         """Compatibility wrapper to release persistent resources."""
         if self._temp_db_path and os.path.exists(self._temp_db_path):
             try:
