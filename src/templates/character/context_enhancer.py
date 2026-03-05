@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class ContextEnhancer:
     """Enhances rendering context with persona-specific adaptations."""
 
-    def __init__(self, memory_system: Optional[LayeredMemorySystem] = None):
+    def __init__(self, memory_system: Optional[LayeredMemorySystem] = None) -> None:
         self.memory_system = memory_system
 
     async def _enhance_context_for_persona(

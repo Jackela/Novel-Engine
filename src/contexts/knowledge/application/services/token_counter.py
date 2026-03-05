@@ -156,7 +156,7 @@ class TokenCounter:
         default_provider: LLMProvider = LLMProvider.OPENAI,
         default_model: str | None = None,
         use_tiktoken: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the token counter.
 

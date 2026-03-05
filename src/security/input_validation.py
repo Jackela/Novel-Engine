@@ -75,7 +75,7 @@ class SanitizationRule:
 class ValidationError(Exception):
     """ENHANCED VALIDATION EXCEPTION"""
 
-    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str):
+    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str) -> None:
         self.message = message
         self.severity = severity
         self.rule_name = rule_name
@@ -85,7 +85,7 @@ class ValidationError(Exception):
 class InputValidator:
     """STANDARD INPUT VALIDATOR ENHANCED BY THE SYSTEM"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validation_rules: List[ValidationRule] = []
         self.sanitization_rules: List[SanitizationRule] = []
         self._initialize_default_rules()
@@ -453,7 +453,7 @@ class InputValidator:
 class ValidationMiddleware(BaseHTTPMiddleware):
     """STANDARD VALIDATION MIDDLEWARE ENHANCED BY PROTECTION"""
 
-    def __init__(self, app, validator: InputValidator):
+    def __init__(self, app, validator: InputValidator) -> None:
         super().__init__(app)
         self.validator = validator
 

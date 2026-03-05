@@ -46,7 +46,7 @@ class CachedEmbeddingService(IEmbeddingService):
         delegate: IEmbeddingService,
         cache_service: Optional[EmbeddingCacheService] = None,
         model: str = "text-embedding-ada-002",
-    ):
+    ) -> None:
         """
         Initialize cached embedding service.
 

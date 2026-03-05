@@ -50,7 +50,9 @@ class SourceMetadata:
     total_chunks: int = 1
     tags: list[str] = field(default_factory=list)
     extra: dict[str, Any] = field(default_factory=dict)
-    knowledge: KnowledgeMetadata = field(default_factory=lambda: KnowledgeMetadata.create_default())
+    knowledge: KnowledgeMetadata = field(
+        default_factory=lambda: KnowledgeMetadata.create_default()
+    )
 
 
 @dataclass
@@ -108,14 +110,22 @@ class SourceKnowledgeEntry:
 
         # Normalize timestamps to UTC
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
         if self.updated_at.tzinfo is None:
-            object.__setattr__(self, "updated_at", self.updated_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "updated_at", self.updated_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "updated_at", self.updated_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "updated_at", self.updated_at.astimezone(timezone.utc)
+            )
 
         # Strip content
         object.__setattr__(self, "content", self.content.strip())
@@ -204,7 +214,9 @@ class SourceKnowledgeEntry:
 
         # Add last_accessed if present
         if self.metadata.knowledge.last_accessed:
-            base_metadata["last_accessed"] = self.metadata.knowledge.last_accessed.isoformat()
+            base_metadata["last_accessed"] = (
+                self.metadata.knowledge.last_accessed.isoformat()
+            )
 
         # Merge with extra fields (extra takes precedence for backward compatibility)
         return {**base_metadata, **self.metadata.extra}
@@ -258,7 +270,8 @@ class SourceKnowledgeEntry:
                     confidentiality_level = ConfidentialityLevel.PUBLIC
             knowledge_metadata = KnowledgeMetadata.create_default(
                 world_version=world_version or "1.0.0",
-                confidentiality_level=confidentiality_level or ConfidentialityLevel.PUBLIC,
+                confidentiality_level=confidentiality_level
+                or ConfidentialityLevel.PUBLIC,
             )
 
         metadata = SourceMetadata(

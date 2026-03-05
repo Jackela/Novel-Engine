@@ -65,7 +65,7 @@ class WorldStateManager:
 
     def __init__(
         self, state_file: Optional[str] = None, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         self.logger = logger or logging.getLogger(__name__)
         self.state_file = Path(state_file) if state_file else Path("world_state.json")
 

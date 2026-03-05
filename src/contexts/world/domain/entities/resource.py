@@ -18,11 +18,12 @@ Typical usage example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .entity import Entity
 from src.contexts.world.domain.value_objects.resource_type import ResourceType
+
+from .entity import Entity
 
 
 @dataclass(eq=False)
@@ -104,9 +105,7 @@ class Resource(Entity):
             raise ValueError("Cannot consume negative quantity, use add() instead")
 
         if quantity > self.amount:
-            raise ValueError(
-                f"Cannot consume {quantity}: only {self.amount} available"
-            )
+            raise ValueError(f"Cannot consume {quantity}: only {self.amount} available")
 
         self.amount -= quantity
         self.touch()

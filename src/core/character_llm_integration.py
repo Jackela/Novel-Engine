@@ -40,7 +40,7 @@ class LLMIntegration:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         """
         Initialize the LLM integration.
 

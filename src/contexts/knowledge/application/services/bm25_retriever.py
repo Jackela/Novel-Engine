@@ -153,7 +153,7 @@ class BM25Retriever:
         self,
         k1: float = DEFAULT_K1,
         b: float = DEFAULT_B,
-    ):
+    ) -> None:
         """
         Initialize the BM25 retriever.
 

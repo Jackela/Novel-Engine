@@ -179,7 +179,7 @@ class BeliefUpdateRequest(BaseModel):
 class SubjectiveRealityAPI:
     """API endpoints for SubjectiveRealityEngine functionality."""
 
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator=None) -> None:
         self.orchestrator = orchestrator
         self.subjective_reality_engine = None
         self.turn_brief_factory = None

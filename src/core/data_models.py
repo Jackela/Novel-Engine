@@ -98,7 +98,7 @@ class MemoryItem:
     decay_factor: float = 1.0  # Memory strength decay over time
     tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate memory item data integrity."""
         if not self.agent_id:
             raise ValueError("Sacred memory must be blessed with agent_id")
@@ -130,7 +130,7 @@ class CharacterIdentity:
     fears: List[str] = field(default_factory=list)
     motivations: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """STANDARD IDENTITY VALIDATION"""
         if not self.name:
             raise ValueError("Sacred identity requires blessed name")
@@ -656,7 +656,7 @@ class LegacyWorldState:
         active_events=None,
         environmental_factors=None,
         **kwargs,
-    ):
+    ) -> None:
         self.current_location = current_location
         self.time_period = time_period
         self.weather = weather

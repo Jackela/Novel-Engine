@@ -149,7 +149,7 @@ class QueryAwareRetrievalService:
         default_collection: str = DEFAULT_COLLECTION,
         query_rewriter: QueryRewriter | None = None,
         default_config: QueryAwareConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the query-aware retrieval service.
 

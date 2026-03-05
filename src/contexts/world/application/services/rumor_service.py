@@ -10,7 +10,7 @@ The RumorService follows the Command Query Separation principle:
 - get_rumor() is a query (read-only)
 """
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -275,3 +275,161 @@ class RumorService:
             return "Likely False"
         else:
             return "False"
+
+    async def get_propagation_graph(
+        self,
+        world_id: str,
+        rumor_id: Optional[str] = None,
+        max_hops: int = 5,
+    ) -> Dict[str, Any]:
+        """Build a propagation graph for rumors.
+
+        This query constructs a graph representation of rumor propagation,
+        including nodes (locations and rumors) and edges (spread paths).
+
+        Args:
+            world_id: World ID
+            rumor_id: Optional specific rumor to visualize
+            max_hops: Maximum spread hops to include
+
+        Returns:
+            Dictionary containing graph data (nodes and edges)
+        """
+        logger.info(
+            "get_propagation_graph_request",
+            world_id=world_id,
+            rumor_id=rumor_id,
+            max_hops=max_hops,
+        )
+
+        # Get rumors to visualize
+        if rumor_id:
+            rumor = await self.get_rumor(rumor_id, world_id)
+            rumors = [rumor] if rumor else []
+        else:
+            rumors = await self._rumor_repo.get_by_world_id(world_id)
+
+        # Build graph
+        nodes: List[Dict[str, Any]] = []
+        edges: List[Dict[str, Any]] = []
+        node_ids: set = set()
+        edge_ids: set = set()
+
+        for rumor in rumors:
+            # Add rumor node
+            rumor_node_id = f"rumor:{rumor.rumor_id}"
+            if rumor_node_id not in node_ids:
+                nodes.append(
+                    {
+                        "id": rumor_node_id,
+                        "type": "rumor",
+                        "label": f"Rumor {rumor.rumor_id[:8]}...",
+                        "metadata": {
+                            "truth_value": rumor.truth_value,
+                            "veracity_label": self.get_veracity_label(
+                                rumor.truth_value
+                            ),
+                            "content_preview": (
+                                rumor.content[:100] + "..."
+                                if len(rumor.content) > 100
+                                else rumor.content
+                            ),
+                            "spread_count": rumor.spread_count,
+                        },
+                    }
+                )
+                node_ids.add(rumor_node_id)
+
+            # Add origin location node
+            origin_node_id = f"loc:{rumor.origin_location_id}"
+            if origin_node_id not in node_ids:
+                nodes.append(
+                    {
+                        "id": origin_node_id,
+                        "type": "location",
+                        "label": rumor.origin_location_id,
+                        "metadata": {
+                            "is_origin": True,
+                        },
+                    }
+                )
+                node_ids.add(origin_node_id)
+
+            # Add origin edge
+            origin_edge_id = f"edge:{rumor.rumor_id}:origin"
+            if origin_edge_id not in edge_ids:
+                edges.append(
+                    {
+                        "id": origin_edge_id,
+                        "source": rumor_node_id,
+                        "target": origin_node_id,
+                        "type": "origin",
+                        "metadata": {
+                            "hop": 0,
+                        },
+                    }
+                )
+                edge_ids.add(origin_edge_id)
+
+            # Add spread location nodes and edges
+            for idx, location_id in enumerate(rumor.current_locations):
+                if location_id == rumor.origin_location_id:
+                    continue  # Skip origin, already added
+
+                loc_node_id = f"loc:{location_id}"
+                if loc_node_id not in node_ids:
+                    nodes.append(
+                        {
+                            "id": loc_node_id,
+                            "type": "location",
+                            "label": location_id,
+                            "metadata": {
+                                "is_origin": False,
+                            },
+                        }
+                    )
+                    node_ids.add(loc_node_id)
+
+                # Add spread edge from origin to this location
+                spread_edge_id = f"edge:{rumor.rumor_id}:spread:{idx}"
+                if spread_edge_id not in edge_ids:
+                    # Calculate truth at arrival
+                    truth_at_arrival = max(0, rumor.truth_value - (10 * (idx + 1)))
+                    edges.append(
+                        {
+                            "id": spread_edge_id,
+                            "source": origin_node_id,
+                            "target": loc_node_id,
+                            "type": "spread",
+                            "metadata": {
+                                "hop": idx + 1,
+                                "truth_at_arrival": truth_at_arrival,
+                            },
+                        }
+                    )
+                    edge_ids.add(spread_edge_id)
+
+        max_hops_found = max(
+            [edge["metadata"].get("hop", 0) for edge in edges], default=0
+        )
+
+        logger.info(
+            "get_propagation_graph_completed",
+            world_id=world_id,
+            total_nodes=len(nodes),
+            total_edges=len(edges),
+            max_hops=max_hops_found,
+        )
+
+        return {
+            "world_id": world_id,
+            "graph": {
+                "nodes": nodes,
+                "edges": edges,
+            },
+            "metadata": {
+                "total_nodes": len(nodes),
+                "total_edges": len(edges),
+                "max_hops": max_hops_found,
+            },
+        }

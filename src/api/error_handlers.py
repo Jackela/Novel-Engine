@@ -38,7 +38,7 @@ class NovelEngineException(Exception):
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail: Optional[str] = None,
         code: Optional[str] = None,
-    ):
+    ) -> None:
         self.message = message
         self.error_type = error_type
         self.status_code = status_code
@@ -52,7 +52,7 @@ class ValidationException(NovelEngineException):
 
     def __init__(
         self, message: str, field: Optional[str] = None, detail: Optional[str] = None
-    ):
+    ) -> None:
         super().__init__(
             message=message,
             error_type=APIErrorType.VALIDATION_ERROR,
@@ -65,7 +65,7 @@ class ValidationException(NovelEngineException):
 class ResourceNotFoundException(NovelEngineException):
     """Resource not found exception."""
 
-    def __init__(self, resource_type: str, resource_id: str):
+    def __init__(self, resource_type: str, resource_id: str) -> None:
         super().__init__(
             message=f"{resource_type} '{resource_id}' not found",
             error_type=APIErrorType.NOT_FOUND,
@@ -77,7 +77,7 @@ class ResourceNotFoundException(NovelEngineException):
 class ServiceUnavailableException(NovelEngineException):
     """Service unavailable exception."""
 
-    def __init__(self, service_name: str, detail: Optional[str] = None):
+    def __init__(self, service_name: str, detail: Optional[str] = None) -> None:
         super().__init__(
             message=f"{service_name} service is currently unavailable",
             error_type=APIErrorType.SERVICE_UNAVAILABLE,
@@ -89,7 +89,7 @@ class ServiceUnavailableException(NovelEngineException):
 class ConflictException(NovelEngineException):
     """Resource conflict exception."""
 
-    def __init__(self, message: str, detail: Optional[str] = None):
+    def __init__(self, message: str, detail: Optional[str] = None) -> None:
         super().__init__(
             message=message,
             error_type=APIErrorType.CONFLICT,
@@ -101,7 +101,7 @@ class ConflictException(NovelEngineException):
 class RateLimitException(NovelEngineException):
     """Rate limit exceeded exception."""
 
-    def __init__(self, retry_after: Optional[int] = None):
+    def __init__(self, retry_after: Optional[int] = None) -> None:
         super().__init__(
             message="Rate limit exceeded",
             error_type=APIErrorType.RATE_LIMITED,
@@ -117,7 +117,7 @@ class RateLimitException(NovelEngineException):
 class ErrorHandler:
     """Centralized error handling system."""
 
-    def __init__(self, debug: bool = False):
+    def __init__(self, debug: bool = False) -> None:
         self.debug = debug
         self.error_count = 0
         self.start_time = time.time()

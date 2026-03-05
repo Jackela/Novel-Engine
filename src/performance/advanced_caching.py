@@ -132,7 +132,7 @@ class CacheConfig:
 class IntelligentCacheManager:
     """Intelligent multi-layer cache manager with adaptive optimization."""
 
-    def __init__(self, config: CacheConfig):
+    def __init__(self, config: CacheConfig) -> None:
         self.config = config
         self.cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self.stats = CacheStats()

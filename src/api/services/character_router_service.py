@@ -202,7 +202,7 @@ class CharacterRouterService:
     and data transformation for the characters API endpoints.
     """
 
-    def __init__(self, characters_path: Optional[str] = None):
+    def __init__(self, characters_path: Optional[str] = None) -> None:
         """
         Initialize the service.
 
@@ -269,8 +269,6 @@ class CharacterRouterService:
                         trimmed = line.strip()
                         if trimmed.startswith("# "):
                             display_name = trimmed[2:].strip() or display_name
-                            if updated_ts is None:
-                                updated_ts = character_file.stat().st_mtime
                             break
             except Exception:
                 self.logger.debug("Failed to parse character markdown.", exc_info=True)

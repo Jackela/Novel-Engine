@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class OrchestrationService:
     """Service layer for orchestration operations."""
 
-    def __init__(self, api_service: Any = None):
+    def __init__(self, api_service: Any = None) -> None:
         self.api_service = api_service
 
     async def get_status(

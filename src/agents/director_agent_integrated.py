@@ -72,7 +72,7 @@ except ImportError:
     CampaignBriefLoader = None
 
     class NarrativeActionResolver:
-        def __init__(self):
+        def __init__(self) -> None:
             pass
 
 
@@ -102,7 +102,7 @@ class DirectorAgent:
         world_state_file_path: Optional[str] = None,
         campaign_log_path: Optional[str] = None,
         campaign_brief_path: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the DirectorAgent with modular component coordination.
 
@@ -203,7 +203,8 @@ class DirectorAgent:
         """Initialize the campaign log file."""
         try:
             # Create fresh campaign log for each simulation
-            initial_content = dedent(f"""
+            initial_content = dedent(
+                f"""
                 # Campaign Log
 
                 **Simulation Started:** {self.base.simulation_start_time.strftime('%Y-%m-%d %H:%M:%S')}
@@ -224,7 +225,8 @@ class DirectorAgent:
                 **Event:** DirectorAgent initialized with modular component architecture
                 **Participants:** System
                 **Details:** Integrated DirectorAgent successfully started with base, orchestrator, world state, and lifecycle components
-                """).strip()
+                """
+            ).strip()
 
             with open(self.base.campaign_log_path, "w", encoding="utf-8") as file:
                 file.write(initial_content)
@@ -1174,7 +1176,8 @@ class DirectorAgent:
                 end_time - self.simulation_start_time
             ).total_seconds()
 
-            closing_summary = dedent(f"""
+            closing_summary = dedent(
+                f"""
                 ## Campaign Summary
 
                 **Simulation End Time:** {end_time.strftime('%Y-%m-%d %H:%M:%S')}
@@ -1191,7 +1194,8 @@ class DirectorAgent:
                 - **Agent Lifecycle Manager:** {self.agent_lifecycle_manager.get_lifecycle_metrics().get('total_validations', 0)} validations performed
 
                 **Status:** Campaign completed successfully with modular component architecture
-                """).strip()
+                """
+            ).strip()
 
             with open(self.campaign_log_path, "a", encoding="utf-8") as file:
                 file.write(closing_summary)
@@ -1235,7 +1239,7 @@ class DirectorAgent:
 
 
 class _ConfigFacade:
-    def __init__(self, base: DirectorAgentBase):
+    def __init__(self, base: DirectorAgentBase) -> None:
         self._base = base
 
     def get_config_value(self, key: str, default: Any = None) -> Any:
@@ -1257,7 +1261,7 @@ class _ConfigFacade:
 class _AgentCollectionFacade:
     """Provides legacy list-like access while supporting get_agent_list()."""
 
-    def __init__(self, director: "DirectorAgent"):
+    def __init__(self, director: "DirectorAgent") -> None:
         self._director = director
 
     def get_agent_list(self) -> List[Dict[str, Any]]:

@@ -221,7 +221,7 @@ class Context7IntegrationAPI:
         context7_client=None,
         base_url: Optional[str] = None,
         allow_mock: Optional[bool] = None,
-    ):
+    ) -> None:
         self.orchestrator = orchestrator
         self.context7_client = context7_client
         self.base_url = base_url or os.getenv("CONTEXT7_BASE_URL")

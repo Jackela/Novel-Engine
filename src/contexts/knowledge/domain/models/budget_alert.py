@@ -289,12 +289,12 @@ class BudgetAlertState:
                 "enabled": self.config.enabled,
                 "cooldown_seconds": self.config.cooldown_seconds,
             },
-            "last_triggered": self.last_triggered.isoformat()
-            if self.last_triggered
-            else None,
-            "last_notified": self.last_notified.isoformat()
-            if self.last_notified
-            else None,
+            "last_triggered": (
+                self.last_triggered.isoformat() if self.last_triggered else None
+            ),
+            "last_notified": (
+                self.last_notified.isoformat() if self.last_notified else None
+            ),
             "trigger_count": self.trigger_count,
             "notification_count": self.notification_count,
             "created_at": self.created_at.isoformat(),

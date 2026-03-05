@@ -115,7 +115,7 @@ class NarrativeArc:
     )
     _version: int = field(default=1, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize aggregate and raise creation event."""
         if not self._uncommitted_events:  # Only on initial creation
             event = NarrativeArcCreated(

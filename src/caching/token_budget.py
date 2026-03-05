@@ -70,7 +70,7 @@ _FALLBACK_PRICING = {"prompt": 0.002, "completion": 0.0025}
 
 
 class TokenBudgetManager:
-    def __init__(self, config: TokenBudgetConfig | None = None):
+    def __init__(self, config: TokenBudgetConfig | None = None) -> None:
         self.config = config or TokenBudgetConfig()
         self._limits: List[BudgetLimit] = []
         self._usage: List[_UsageRecord] = []

@@ -58,7 +58,7 @@ class NarrativeThread(StoryElement):
     current_sequence_position: int = 0
     pacing_notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize thread-specific defaults."""
         if not hasattr(self, "element_type") or not self.element_type:
             self.element_type = "narrative_thread"

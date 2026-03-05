@@ -74,7 +74,7 @@ class DecisionEngine:
         self,
         core: "PersonaCore",
         context_manager: Optional["CharacterContextManager"] = None,
-    ):
+    ) -> None:
         """
         Initialize decision engine.
 

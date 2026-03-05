@@ -60,7 +60,7 @@ class SubjectiveApplicationService:
         self,
         repository: ITurnBriefRepository,
         fog_of_war_service: Optional[FogOfWarService] = None,
-    ):
+    ) -> None:
         """
         Initialize the SubjectiveApplicationService.
 

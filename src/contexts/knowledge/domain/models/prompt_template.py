@@ -97,9 +97,7 @@ class VariableDefinition:
             case VariableType.INTEGER:
                 return isinstance(value, int) and not isinstance(value, bool)
             case VariableType.FLOAT:
-                return isinstance(value, (int, float)) and not isinstance(
-                    value, bool
-                )
+                return isinstance(value, (int, float)) and not isinstance(value, bool)
             case VariableType.BOOLEAN:
                 return isinstance(value, bool)
             case VariableType.LIST:

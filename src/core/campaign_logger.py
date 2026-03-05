@@ -27,7 +27,7 @@ class CampaignLogger:
     - Narrative context preservation
     """
 
-    def __init__(self, campaign_log_path: Optional[str] = None):
+    def __init__(self, campaign_log_path: Optional[str] = None) -> None:
         """
         Initialize the campaign logger.
 

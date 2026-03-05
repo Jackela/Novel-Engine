@@ -92,7 +92,7 @@ class EmotionalMemory:
         database: ContextDatabase,
         max_memories: int = 500,
         threshold: float = 0.3,
-    ):
+    ) -> None:
         """Initializes the emotional memory system."""
         self.agent_id = agent_id
         self.database = database

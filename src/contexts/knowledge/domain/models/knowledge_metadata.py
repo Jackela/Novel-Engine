@@ -77,7 +77,9 @@ class KnowledgeMetadata:
         if self.last_accessed is not None:
             if self.last_accessed.tzinfo is None:
                 object.__setattr__(
-                    self, "last_accessed", self.last_accessed.replace(tzinfo=timezone.utc)
+                    self,
+                    "last_accessed",
+                    self.last_accessed.replace(tzinfo=timezone.utc),
                 )
             else:
                 object.__setattr__(
@@ -130,7 +132,9 @@ class KnowledgeMetadata:
         return {
             "world_version": self.world_version,
             "confidentiality_level": self.confidentiality_level.value,
-            "last_accessed": self.last_accessed.isoformat() if self.last_accessed else None,
+            "last_accessed": (
+                self.last_accessed.isoformat() if self.last_accessed else None
+            ),
             "source_version": self.source_version,
         }
 
@@ -162,7 +166,9 @@ class KnowledgeMetadata:
         last_accessed_str = data.get("last_accessed")
         if isinstance(last_accessed_str, str) and last_accessed_str:
             try:
-                last_accessed = datetime.fromisoformat(last_accessed_str.replace("Z", "+00:00"))
+                last_accessed = datetime.fromisoformat(
+                    last_accessed_str.replace("Z", "+00:00")
+                )
                 # Ensure UTC
                 if last_accessed.tzinfo is None:
                     last_accessed = last_accessed.replace(tzinfo=timezone.utc)

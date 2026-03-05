@@ -107,7 +107,7 @@ class LoadTestConfig:
 class ResourceMonitor:
     """System resource monitoring class."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.monitoring = False
         self.metrics: List[ResourceMetrics] = []
         self.process = None
@@ -238,7 +238,7 @@ class ResourceMonitor:
 class PerformanceTestSuite:
     """Comprehensive performance testing suite."""
 
-    def __init__(self, config: LoadTestConfig):
+    def __init__(self, config: LoadTestConfig) -> None:
         self.config = config
         self.monitor = ResourceMonitor()
         self.session = None

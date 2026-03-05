@@ -164,7 +164,9 @@ class DiplomacyChange:
         after_negative = self.status_after in negative
 
         # Significant if crossing from positive to negative or vice versa
-        return (before_positive and after_negative) or (before_negative and after_positive)
+        return (before_positive and after_negative) or (
+            before_negative and after_positive
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation.
@@ -300,8 +302,12 @@ class SimulationTick:
         return {
             "tick_id": self.tick_id,
             "world_id": self.world_id,
-            "calendar_before": self.calendar_before.to_dict() if self.calendar_before else None,
-            "calendar_after": self.calendar_after.to_dict() if self.calendar_after else None,
+            "calendar_before": (
+                self.calendar_before.to_dict() if self.calendar_before else None
+            ),
+            "calendar_after": (
+                self.calendar_after.to_dict() if self.calendar_after else None
+            ),
             "days_advanced": self.days_advanced,
             "events_generated": self.events_generated,
             "resource_changes": {
@@ -340,8 +346,7 @@ class SimulationTick:
 
         # Parse diplomacy changes
         diplomacy_changes = [
-            DiplomacyChange.from_dict(dc)
-            for dc in data.get("diplomacy_changes", [])
+            DiplomacyChange.from_dict(dc) for dc in data.get("diplomacy_changes", [])
         ]
 
         # Parse created_at

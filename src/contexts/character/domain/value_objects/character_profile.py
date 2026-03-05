@@ -81,7 +81,7 @@ class PhysicalTraits:
     distinguishing_marks: Optional[List[str]] = None
     physical_description: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate physical traits."""
         if self.height_cm is not None and (self.height_cm < 30 or self.height_cm > 300):
             raise ValueError("Height must be between 30-300 cm")
@@ -103,7 +103,7 @@ class PersonalityTraits:
     bonds: Optional[List[str]] = None
     flaws: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate personality traits."""
         if not self.traits:
             raise ValueError("Personality traits cannot be empty")
@@ -177,7 +177,7 @@ class CharacterProfile:
     traits: Optional[List[str]] = None
     appearance: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character profile data."""
         # Validate required fields
         if not self.name or not self.name.strip():

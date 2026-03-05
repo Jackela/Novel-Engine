@@ -33,7 +33,7 @@ class NarrativeProcessor:
     - Event trigger management
     """
 
-    def __init__(self, campaign_brief_path: Optional[str] = None):
+    def __init__(self, campaign_brief_path: Optional[str] = None) -> None:
         """
         Initialize the Narrative Processor.
 

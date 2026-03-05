@@ -1351,7 +1351,7 @@ class IngestionJob:
         content: str,
         tags: list[str] | None = None,
         extra_metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         self.job_id = job_id
         self.status = IngestionJobStatus.PENDING
         self.progress = 0.0
@@ -1882,8 +1882,10 @@ class ChatMessage(BaseModel):
 
 # PREP-013: Import persistent chat session repository
 from src.contexts.knowledge.infrastructure.repositories.chat_session_repository import (
-    ChatSessionRepository as PersistentChatSessionRepository,
     ChatMessage as DomainChatMessage,
+)
+from src.contexts.knowledge.infrastructure.repositories.chat_session_repository import (
+    ChatSessionRepository as PersistentChatSessionRepository,
 )
 
 # PREP-013: Use persistent repository instead of in-memory store
@@ -2099,7 +2101,9 @@ async def chat_completion(
             )
 
             # Get formatted messages for LLM (for future LLM integration)
-            _messages = managed_context.to_api_messages()  # noqa: F841 - used by future LLM integration
+            _messages = (
+                managed_context.to_api_messages()
+            )  # noqa: F841 - used by future LLM integration
             # Add current query (already included in managed_context.chat_history)
 
             # For now, return a mock streaming response

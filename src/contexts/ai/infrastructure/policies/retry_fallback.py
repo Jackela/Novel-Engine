@@ -38,7 +38,7 @@ class MutableCircuitBreakerState:
         failure_threshold: int = 5,
         success_threshold: int = 2,
         timeout_seconds: int = 60,
-    ):
+    ) -> None:
         self.state = state
         self.failure_count = 0
         self.success_count = 0
@@ -153,7 +153,7 @@ class ExponentialBackoffRetry(IRetryPolicy):
         self,
         default_config: Optional[RetryConfig] = None,
         circuit_breaker_config: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Initialize retry policy.
 

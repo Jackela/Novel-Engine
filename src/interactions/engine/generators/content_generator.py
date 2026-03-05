@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class ContentGenerator:
     """Generates interaction content and context."""
 
-    def __init__(self, context_renderer: Optional[ContextRenderer] = None):
+    def __init__(self, context_renderer: Optional[ContextRenderer] = None) -> None:
         self.context_renderer = context_renderer
 
     async def _generate_initial_context(

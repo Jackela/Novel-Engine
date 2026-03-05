@@ -42,7 +42,7 @@ class NovelEngineTracingConfig:
         otlp_endpoint: Optional[str] = None,
         sampling_rate: float = 0.1,
         enable_console_exporter: bool = False,
-    ):
+    ) -> None:
         """
         Initialize tracing configuration.
 
@@ -75,7 +75,7 @@ class IntelligentSampler:
     - Performance characteristics (sample slow operations)
     """
 
-    def __init__(self, default_rate: float = 0.1):
+    def __init__(self, default_rate: float = 0.1) -> None:
         """
         Initialize intelligent sampler.
 
@@ -153,7 +153,7 @@ class NovelEngineTracer:
     - Performance correlation with metrics
     """
 
-    def __init__(self, config: NovelEngineTracingConfig):
+    def __init__(self, config: NovelEngineTracingConfig) -> None:
         """
         Initialize Novel Engine tracer.
 

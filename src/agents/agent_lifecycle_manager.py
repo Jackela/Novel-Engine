@@ -98,7 +98,7 @@ class AgentLifecycleManager:
     - Compliance monitoring and reporting
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the AgentLifecycleManager."""
         self.validation_enabled = IRON_LAWS_AVAILABLE
         self.repair_attempts_count = 0

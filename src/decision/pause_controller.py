@@ -39,7 +39,7 @@ class InteractionPauseController:
         default_timeout: int = 120,
         on_decision_point: Optional[Callable[[DecisionPoint], None]] = None,
         on_resolution: Optional[Callable[[PendingDecision], None]] = None,
-    ):
+    ) -> None:
         """
         Initialize the pause controller.
 

@@ -13,7 +13,7 @@ The EventService follows the Command Query Separation principle:
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
 import structlog
@@ -157,7 +157,9 @@ class EventService:
         if impact_scope:
             try:
                 scope = ImpactScope(impact_scope.lower())
-                filtered_events = [e for e in filtered_events if e.impact_scope == scope]
+                filtered_events = [
+                    e for e in filtered_events if e.impact_scope == scope
+                ]
             except ValueError:
                 logger.warning(
                     "invalid_impact_scope_filter",
@@ -502,3 +504,214 @@ class EventService:
         )
 
         return rumor
+
+    async def bulk_import_events(
+        self,
+        world_id: str,
+        events_data: List[Dict[str, Any]],
+        generate_rumors: bool = False,
+        atomic: bool = True,
+    ) -> Result[Dict[str, Any], str]:
+        """Bulk import historical events.
+
+        This command creates multiple history events from parsed data,
+        optionally generating rumors for each event.
+
+        Args:
+            world_id: ID of the world for the events
+            events_data: List of event data dictionaries
+            generate_rumors: Whether to generate rumors for each event
+            atomic: Whether to treat import as a transaction (all-or-nothing)
+
+        Returns:
+            Result containing:
+            - Ok: Dict with import statistics and IDs
+            - Err: Error message string
+        """
+        logger.info(
+            "bulk_import_events_request",
+            world_id=world_id,
+            event_count=len(events_data),
+            generate_rumors=generate_rumors,
+            atomic=atomic,
+        )
+
+        imported_events: List[HistoryEvent] = []
+        generated_rumors: List[Rumor] = []
+        errors: List[Dict[str, Any]] = []
+
+        for idx, event_data in enumerate(events_data, start=1):
+            # Convert dict to CreateEventRequest
+            try:
+                request = CreateEventRequest(**event_data)
+            except Exception as e:
+                errors.append(
+                    {
+                        "row": idx,
+                        "message": f"Failed to create request: {e}",
+                    }
+                )
+                if atomic:
+                    logger.warning(
+                        "bulk_import_atomic_abort",
+                        world_id=world_id,
+                        failed_row=idx,
+                    )
+                    return Err(f"Import failed at row {idx}: {e}")
+                continue
+
+            # Create the event
+            result = await self.create_event(
+                world_id=world_id,
+                data=request,
+            )
+
+            if result.is_error:
+                errors.append(
+                    {
+                        "row": idx,
+                        "message": result.error,
+                    }
+                )
+                if atomic:
+                    logger.warning(
+                        "bulk_import_atomic_abort",
+                        world_id=world_id,
+                        failed_row=idx,
+                        error=result.error,
+                    )
+                    return Err(f"Import failed at row {idx}: {result.error}")
+                continue
+
+            event, rumor = result.value
+            imported_events.append(event)
+            if rumor:
+                generated_rumors.append(rumor)
+
+            # Log progress every 100 events
+            if idx % 100 == 0:
+                logger.info(
+                    "bulk_import_progress",
+                    world_id=world_id,
+                    processed=idx,
+                    total=len(events_data),
+                )
+
+        logger.info(
+            "bulk_import_completed",
+            world_id=world_id,
+            total=len(events_data),
+            imported=len(imported_events),
+            failed=len(errors),
+            rumors_generated=len(generated_rumors),
+        )
+
+        return Ok(
+            {
+                "imported_ids": [e.id for e in imported_events],
+                "imported_count": len(imported_events),
+                "failed_count": len(errors),
+                "errors": errors,
+                "generated_rumors": len(generated_rumors),
+            }
+        )
+
+    async def export_timeline(
+        self,
+        world_id: str,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        event_types: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Export events as a timeline.
+
+        This query retrieves events and formats them as a timeline
+        suitable for export to various formats.
+
+        Args:
+            world_id: ID of the world
+            from_date: Optional filter for events from this date
+            to_date: Optional filter for events to this date
+            event_types: Optional filter by event types
+
+        Returns:
+            Dictionary containing timeline data
+        """
+        logger.info(
+            "export_timeline_request",
+            world_id=world_id,
+            from_date=from_date,
+            to_date=to_date,
+            event_types=event_types,
+        )
+
+        # Get all events for the world
+        all_events = await self._event_repo.get_by_world_id(world_id, limit=10000)
+
+        # Apply filters
+        filtered_events = list(all_events)
+
+        if event_types:
+            type_set = {t.lower() for t in event_types}
+            filtered_events = [
+                e for e in filtered_events if e.event_type.value.lower() in type_set
+            ]
+
+        # Sort by structured date if available, otherwise by created_at
+        def sort_key(event: HistoryEvent) -> Tuple:
+            if event.structured_date:
+                return (
+                    event.structured_date.year,
+                    event.structured_date.month,
+                    event.structured_date.day,
+                )
+            if event.created_at:
+                return (0, 0, 0, event.created_at.timestamp())
+            return (0, 0, 0, 0)
+
+        filtered_events.sort(key=sort_key)
+
+        # Group by date
+        timeline: Dict[str, List[Dict[str, Any]]] = {}
+        for event in filtered_events:
+            date_key = event.date_description
+            if date_key not in timeline:
+                timeline[date_key] = []
+            timeline[date_key].append(
+                {
+                    "id": event.id,
+                    "name": event.name,
+                    "description": event.description,
+                    "event_type": event.event_type.value,
+                    "significance": event.significance.value,
+                    "date_description": event.date_description,
+                }
+            )
+
+        # Convert to sorted list
+        timeline_entries = [
+            {"date": date, "events": events} for date, events in timeline.items()
+        ]
+
+        logger.info(
+            "export_timeline_completed",
+            world_id=world_id,
+            total_events=len(filtered_events),
+            date_entries=len(timeline_entries),
+        )
+
+        return {
+            "world_id": world_id,
+            "format": "json",
+            "timeline": timeline_entries,
+            "metadata": {
+                "total_events": len(filtered_events),
+                "date_range": {
+                    "from": from_date,
+                    "to": to_date,
+                },
+                "filters_applied": {
+                    "event_types": event_types,
+                },
+            },
+        }

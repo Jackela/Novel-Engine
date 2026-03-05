@@ -56,7 +56,7 @@ class ChatMessage:
         content: Text content of the message
     """
 
-    def __init__(self, role: str, content: str):
+    def __init__(self, role: str, content: str) -> None:
         """
         Initialize a chat message.
 
@@ -129,7 +129,7 @@ class GeminiLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the Gemini LLM client.
 
@@ -437,7 +437,7 @@ class MockLLMClient:
         >>> assert response.text == "mock response"
     """
 
-    def __init__(self, responses: dict[str, str] | None = None):
+    def __init__(self, responses: dict[str, str] | None = None) -> None:
         """
         Initialize the mock client.
 

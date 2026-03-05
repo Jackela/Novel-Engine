@@ -21,7 +21,7 @@ class InteractionQuery:
     timestamp: datetime
     requested_by: UUID
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate base query data."""
         if self.timestamp.tzinfo is None:
             raise ValueError("timestamp must be timezone-aware")
@@ -58,7 +58,7 @@ class ListNegotiationSessionsQuery(InteractionQuery):
     order_by: str = "created_at"
     order_direction: str = "desc"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.limit <= 0 or self.limit > 1000:
             raise ValueError("limit must be between 1 and 1000")
@@ -87,7 +87,7 @@ class GetSessionSummaryQuery(InteractionQuery):
     include_party_details: bool = True
     summary_depth: str = "standard"  # basic, standard, detailed
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.summary_depth not in ["basic", "standard", "detailed"]:
             raise ValueError("summary_depth must be one of: basic, standard, detailed")
@@ -104,7 +104,7 @@ class GetSessionTimelineQuery(InteractionQuery):
     include_system_events: bool = False
     group_by_phase: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValueError("start_date must be before end_date")
@@ -162,7 +162,7 @@ class GetSessionProposalsQuery(InteractionQuery):
     submitted_by: Optional[UUID] = None
     proposal_type: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.proposal_status not in ["active", "withdrawn", "expired", "all"]:
             raise ValueError(
@@ -181,7 +181,7 @@ class GetProposalDetailsQuery(InteractionQuery):
     include_optimization_suggestions: bool = False
     analysis_depth: str = "standard"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_depth not in ["basic", "standard", "comprehensive"]:
             raise ValueError(
@@ -215,7 +215,7 @@ class GetNegotiationAnalyticsQuery(InteractionQuery):
     include_predictions: bool = False
     granularity: str = "hour"  # hour, day, phase
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.time_window_hours <= 0:
             raise ValueError("time_window_hours must be positive")
@@ -240,7 +240,7 @@ class GetMomentumAnalysisQuery(InteractionQuery):
     include_contributing_factors: bool = True
     momentum_factors: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_window_hours <= 0:
             raise ValueError("analysis_window_hours must be positive")
@@ -256,7 +256,7 @@ class GetConflictAnalysisQuery(InteractionQuery):
     include_resolution_suggestions: bool = True
     include_historical_conflicts: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.severity_threshold not in ["low", "medium", "high", "critical"]:
             raise ValueError(
@@ -275,7 +275,7 @@ class GetStrategyRecommendationsQuery(InteractionQuery):
     include_risk_assessment: bool = True
     timeline_constraints: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.strategy_focus not in [
             "aggressive",
@@ -303,7 +303,7 @@ class GetSessionPerformanceQuery(InteractionQuery):
     include_party_performance: bool = True
     performance_period: Optional[str] = None  # overall, recent, phase-specific
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.metrics_types is None:
             self.metrics_types = ["efficiency", "effectiveness", "engagement"]
@@ -329,7 +329,7 @@ class GenerateSessionReportQuery(InteractionQuery):
     export_format: str = "json"
     sections: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.report_type not in [
             "summary",
@@ -368,7 +368,7 @@ class SearchNegotiationSessionsQuery(InteractionQuery):
     limit: int = 50
     offset: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.limit <= 0 or self.limit > 1000:
             raise ValueError("limit must be between 1 and 1000")
@@ -394,7 +394,7 @@ class SearchProposalsQuery(InteractionQuery):
     limit: int = 50
     offset: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.limit <= 0 or self.limit > 1000:
             raise ValueError("limit must be between 1 and 1000")
@@ -420,7 +420,7 @@ class GetNegotiationTrendsQuery(InteractionQuery):
     group_by: str = "week"  # day, week, month
     filters: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.time_period not in [
             "last_7_days",
@@ -455,7 +455,7 @@ class GetHistoricalAnalysisQuery(InteractionQuery):
     pattern_types: Optional[List[str]] = None
     min_sample_size: int = 10
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_type not in [
             "success_factors",
@@ -484,7 +484,7 @@ class GetActiveSessionsQuery(InteractionQuery):
     include_alerts: bool = True
     sort_by_urgency: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.timeout_warning_threshold <= 0:
             raise ValueError("timeout_warning_threshold must be positive")
@@ -500,7 +500,7 @@ class GetSessionHealthQuery(InteractionQuery):
     health_check_depth: str = "standard"
     alert_threshold: str = "medium"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.health_check_depth not in ["basic", "standard", "comprehensive"]:
             raise ValueError(
@@ -523,7 +523,7 @@ class GetNotificationsQuery(InteractionQuery):
     limit: int = 50
     offset: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.limit <= 0 or self.limit > 200:
             raise ValueError("limit must be between 1 and 200")

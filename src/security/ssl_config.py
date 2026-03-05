@@ -48,7 +48,7 @@ class SSLConfig:
 class SSLCertificateManager:
     """STANDARD SSL CERTIFICATE MANAGER ENHANCED BY CRYPTOGRAPHY"""
 
-    def __init__(self, cert_dir: str = "certs"):
+    def __init__(self, cert_dir: str = "certs") -> None:
         self.cert_dir = Path(cert_dir)
         self.cert_dir.mkdir(exist_ok=True, mode=0o700)  # Secure permissions
 

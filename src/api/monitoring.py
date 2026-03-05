@@ -95,7 +95,7 @@ class AlertRule:
 class MetricsCollector:
     """Thread-safe metrics collection system."""
 
-    def __init__(self, max_metrics_history: int = 10000):
+    def __init__(self, max_metrics_history: int = 10000) -> None:
         self.metrics: deque = deque(maxlen=max_metrics_history)
         self.counters: Dict[str, float] = defaultdict(float)
         self.gauges: Dict[str, float] = {}
@@ -304,7 +304,7 @@ class MetricsCollector:
 class AlertManager:
     """Alert management system."""
 
-    def __init__(self, metrics_collector: MetricsCollector):
+    def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics_collector = metrics_collector
         self.alert_rules: List[AlertRule] = []
         self.active_alerts: Dict[str, datetime] = {}
@@ -464,7 +464,7 @@ class AlertManager:
 class MonitoringMiddleware(BaseHTTPMiddleware):
     """Middleware for request monitoring and metrics collection."""
 
-    def __init__(self, app, metrics_collector: MetricsCollector):
+    def __init__(self, app, metrics_collector: MetricsCollector) -> None:
         super().__init__(app)
         self.metrics_collector = metrics_collector
 

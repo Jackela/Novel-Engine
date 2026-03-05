@@ -35,7 +35,11 @@ from src.contexts.world.domain.entities.history_event import (
     ImpactScope,
 )
 from src.contexts.world.domain.entities.location import Location
-from src.contexts.world.domain.entities.rumor import Rumor, RumorOrigin, TRUTH_DECAY_PER_HOP
+from src.contexts.world.domain.entities.rumor import (
+    TRUTH_DECAY_PER_HOP,
+    Rumor,
+    RumorOrigin,
+)
 
 logger = structlog.get_logger()
 
@@ -179,6 +183,7 @@ class SpreadOperation:
         current_count: Current spread count
         current_locations: Current set of locations
     """
+
     rumor_id: str
     new_location_id: str
     current_truth: int
@@ -226,7 +231,7 @@ class RumorPropagationService:
         self,
         location_repo: ILocationRepository,
         rumor_repo: IRumorRepository,
-    ):
+    ) -> None:
         """Initialize the rumor propagation service.
 
         Args:
@@ -444,7 +449,9 @@ class RumorPropagationService:
             location_ids: Set of location IDs to prefetch.
         """
         # Find locations not already in cache
-        uncached_ids = [loc_id for loc_id in location_ids if loc_id not in self._adjacency_cache]
+        uncached_ids = [
+            loc_id for loc_id in location_ids if loc_id not in self._adjacency_cache
+        ]
 
         if not uncached_ids:
             return
@@ -496,7 +503,9 @@ class RumorPropagationService:
 
         # Optimized spread: calculate final state directly instead of iterative spread_to
         # This reduces object creation from O(spreads) to O(1)
-        final_truth = max(0, rumor.truth_value - (TRUTH_DECAY_PER_HOP * len(new_locations)))
+        final_truth = max(
+            0, rumor.truth_value - (TRUTH_DECAY_PER_HOP * len(new_locations))
+        )
         final_locations = current_locations | new_locations
         final_spread_count = rumor.spread_count + len(new_locations)
 
@@ -678,15 +687,27 @@ class RumorPropagationService:
             return f"Merchants whisper about new trade routes. {event_name}..."
 
         elif event_type == EventType.DEATH:
-            figures = ", ".join(event.key_figures) if event.key_figures else "a notable figure"
+            figures = (
+                ", ".join(event.key_figures)
+                if event.key_figures
+                else "a notable figure"
+            )
             return f"Rumors of {figures}'s passing circulate through the realm..."
 
         elif event_type == EventType.BIRTH:
-            figures = ", ".join(event.key_figures) if event.key_figures else "a notable figure"
+            figures = (
+                ", ".join(event.key_figures)
+                if event.key_figures
+                else "a notable figure"
+            )
             return f"News arrives of {figures}'s birth. A new chapter begins..."
 
         elif event_type == EventType.MARRIAGE:
-            figures = " and ".join(event.key_figures) if len(event.key_figures) >= 2 else "two noble houses"
+            figures = (
+                " and ".join(event.key_figures)
+                if len(event.key_figures) >= 2
+                else "two noble houses"
+            )
             return f"Word spreads of the union between {figures}..."
 
         elif event_type == EventType.ALLIANCE:

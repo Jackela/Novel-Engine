@@ -64,7 +64,7 @@ class InteractionResponse(BaseModel):
 class WebSocketConnectionManager:
     """Manages WebSocket connections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
     async def connect(self, websocket: WebSocket, interaction_id: str):
@@ -97,7 +97,7 @@ class WebSocketConnectionManager:
 class InteractionAPI:
     """API for real-time character interactions and conversation management."""
 
-    def __init__(self, orchestrator: Optional[SystemOrchestrator]):
+    def __init__(self, orchestrator: Optional[SystemOrchestrator]) -> None:
         """Initializes the interaction API."""
         self.orchestrator = orchestrator
         self.websocket_manager = WebSocketConnectionManager()

@@ -66,8 +66,8 @@ class PlotPoint:
     estimated_duration: Optional[int] = None  # In narrative time units
 
     # Story context
-    involved_characters: FrozenSet[UUID] = None
-    affected_themes: FrozenSet[str] = None
+    involved_characters: Optional[FrozenSet[UUID]] = None
+    affected_themes: Optional[FrozenSet[str]] = None
     location_context: Optional[str] = None
 
     # Emotional and dramatic context
@@ -76,8 +76,8 @@ class PlotPoint:
     story_significance: Decimal = Decimal("5.0")  # 0-10 scale
 
     # Cause and effect
-    prerequisite_events: List[str] = None
-    triggered_consequences: List[str] = None
+    prerequisite_events: Optional[List[str]] = None
+    triggered_consequences: Optional[List[str]] = None
 
     # Narrative mechanics
     reveals_information: bool = False
@@ -86,14 +86,14 @@ class PlotPoint:
     advances_subplot: bool = False
 
     # Metadata
-    tags: FrozenSet[str] = None
+    tags: Optional[FrozenSet[str]] = None
     narrative_notes: str = ""
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.involved_characters is None:
@@ -125,7 +125,7 @@ class PlotPoint:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.title or not self.title.strip():
             raise ValueError("Plot point title cannot be empty")

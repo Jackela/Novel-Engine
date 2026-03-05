@@ -34,7 +34,7 @@ class EventCoordinator:
     cross-system communication.
     """
 
-    def __init__(self, event_bus: Optional[EventBus] = None):
+    def __init__(self, event_bus: Optional[EventBus] = None) -> None:
         """
         Initialize the event coordinator.
 

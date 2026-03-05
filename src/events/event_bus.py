@@ -198,7 +198,7 @@ class HandlerRegistry:
 class EventBusConfig:
     """Configuration for the event bus."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.max_concurrent_events = 100
         self.default_timeout = 30
         self.max_retries = 3
@@ -218,7 +218,7 @@ class EventBusConfig:
 class CircuitBreaker:
     """Circuit breaker for event processing resilience."""
 
-    def __init__(self, failure_threshold: int = 5, timeout: int = 60):
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60) -> None:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
@@ -260,7 +260,7 @@ class CircuitBreaker:
 class EventMetrics:
     """Event processing metrics collection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.events_published = 0
         self.events_processed = 0
         self.events_failed = 0
@@ -326,7 +326,7 @@ class EventBus:
     - Event sourcing support
     """
 
-    def __init__(self, config: Optional[EventBusConfig] = None):
+    def __init__(self, config: Optional[EventBusConfig] = None) -> None:
         self.config = config or EventBusConfig()
         self.handler_registry = HandlerRegistry()
         self.circuit_breaker = (

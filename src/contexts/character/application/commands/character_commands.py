@@ -82,7 +82,7 @@ class CreateCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data after initialization."""
         errors = []
 
@@ -187,7 +187,7 @@ class UpdateCharacterStatsCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 
@@ -271,7 +271,7 @@ class UpdateCharacterSkillCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 
@@ -350,7 +350,7 @@ class LevelUpCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 
@@ -419,7 +419,7 @@ class DeleteCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 
@@ -470,7 +470,7 @@ class HealCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 
@@ -533,7 +533,7 @@ class DamageCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
         errors = []
 

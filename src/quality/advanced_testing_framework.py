@@ -131,7 +131,7 @@ class TestFramework:
     Advanced testing framework with multiple testing strategies
     """
 
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = Path(project_root)
         self.test_suites: Dict[str, TestSuite] = {}
         self.baseline_benchmarks: Dict[str, float] = {}
@@ -694,7 +694,7 @@ class QualityGates:
     Quality gates for automated validation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.gates = {
             "minimum_coverage": 80.0,
             "maximum_failure_rate": 5.0,

@@ -56,7 +56,7 @@ class PhaseResult:
     cross_context_calls: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate phase result structure and business rules."""
         # Validate phase status consistency
         if self.phase_type != self.phase_status.phase_type:
@@ -250,7 +250,7 @@ class PipelineResult:
     error_summary: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate pipeline result structure and business rules."""
         # Must have phase results
         if not self.phase_results:

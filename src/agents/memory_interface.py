@@ -35,7 +35,7 @@ class MemoryInterface:
     - Memory retrieval and analysis
     """
 
-    def __init__(self, agent_core: Any, character_directory_path: str):
+    def __init__(self, agent_core: Any, character_directory_path: str) -> None:
         """
         Initialize the MemoryInterface.
 

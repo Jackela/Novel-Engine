@@ -29,7 +29,7 @@ except ImportError as tracing_error:  # pragma: no cover - fallback when otel mi
     )
 
     class NovelEngineTracingConfig:  # type: ignore[override]
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
     def initialize_tracing(*_, **__):

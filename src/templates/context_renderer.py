@@ -141,7 +141,7 @@ class ContextRenderer:
         template_engine: DynamicTemplateEngine,
         memory_system: Optional[LayeredMemorySystem] = None,
         default_constraints: Optional[RenderingConstraints] = None,
-    ):
+    ) -> None:
         """
         STANDARD CONTEXT RENDERER INITIALIZATION ENHANCED BY INTELLIGENCE
 

@@ -176,7 +176,11 @@ class PromptModelFamily(str, Enum):
                 return PromptFormat.CODE_INSTRUCTION
             case PromptModelFamily.DEEPSEEK:
                 return PromptFormat.INSTRUCTION
-            case PromptModelFamily.LLAMA | PromptModelFamily.MISTRAL | PromptModelFamily.CODESTRAL:
+            case (
+                PromptModelFamily.LLAMA
+                | PromptModelFamily.MISTRAL
+                | PromptModelFamily.CODESTRAL
+            ):
                 return PromptFormat.INSTRUCTION
             case PromptModelFamily.PHI | PromptModelFamily.QWEN:
                 return PromptFormat.INSTRUCTION
@@ -265,7 +269,12 @@ class ModelDefinition:
         if (
             self.prompt_format == PromptFormat.CHAT_MESSAGES
             and self.model_family != PromptModelFamily.UNKNOWN
-            and self.model_family not in (PromptModelFamily.GPT, PromptModelFamily.CLAUDE, PromptModelFamily.GEMINI)
+            and self.model_family
+            not in (
+                PromptModelFamily.GPT,
+                PromptModelFamily.CLAUDE,
+                PromptModelFamily.GEMINI,
+            )
         ):
             detected_format = self.model_family.default_prompt_format
             if detected_format != PromptFormat.CHAT_MESSAGES:
@@ -285,8 +294,7 @@ class ModelDefinition:
         Combines input and output costs weighted toward output (typically more expensive).
         """
         return (
-            self.cost_per_1m_input_tokens * 0.3
-            + self.cost_per_1m_output_tokens * 0.7
+            self.cost_per_1m_input_tokens * 0.3 + self.cost_per_1m_output_tokens * 0.7
         ) / 1_000_000
 
 

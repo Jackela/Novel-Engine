@@ -33,9 +33,12 @@ import structlog
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction, FactionStatus
-from src.contexts.world.domain.entities.faction_intent import FactionIntent, ActionType
-from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent, ImpactScope
-from src.contexts.world.domain.entities.rumor import Rumor
+from src.contexts.world.domain.entities.faction_intent import ActionType, FactionIntent
+from src.contexts.world.domain.entities.history_event import (
+    EventType,
+    HistoryEvent,
+    ImpactScope,
+)
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.simulation_tick import (
@@ -49,7 +52,7 @@ from .faction_intent_generator import FactionIntentGenerator
 
 if TYPE_CHECKING:
     from .rumor_propagation_service import RumorPropagationService
-    from .simulation_sanity_checker import SanityViolation, SimulationSanityChecker
+    from .simulation_sanity_checker import SimulationSanityChecker
 
 logger = structlog.get_logger()
 
@@ -191,36 +194,43 @@ class ResolutionResult:
 
 class SimulationError(Exception):
     """Base exception for simulation errors."""
+
     pass
 
 
 class WorldNotFoundError(SimulationError):
     """Raised when the requested world is not found."""
+
     pass
 
 
 class InvalidDaysError(SimulationError):
     """Raised when the days parameter is invalid."""
+
     pass
 
 
 class RepositoryError(SimulationError):
     """Raised when a repository operation fails."""
+
     pass
 
 
 class SnapshotFailedError(SimulationError):
     """Raised when snapshot creation fails."""
+
     pass
 
 
 class SaveFailedError(SimulationError):
     """Raised when saving world state fails."""
+
     pass
 
 
 class RollbackError(SimulationError):
     """Raised when rollback to snapshot fails."""
+
     pass
 
 
@@ -366,7 +376,7 @@ class WorldSimulationService:
         snapshot_service: Optional[ISnapshotService] = None,
         rumor_service: Optional["RumorPropagationService"] = None,
         sanity_checker: Optional["SimulationSanityChecker"] = None,
-    ):
+    ) -> None:
         """Initialize the simulation service.
 
         Args:
@@ -429,9 +439,11 @@ class WorldSimulationService:
         """
         # Step 1: Validate days
         if not self.MIN_DAYS <= days <= self.MAX_DAYS:
-            return Err(InvalidDaysError(
-                f"Days must be between {self.MIN_DAYS} and {self.MAX_DAYS}, got {days}"
-            ))
+            return Err(
+                InvalidDaysError(
+                    f"Days must be between {self.MIN_DAYS} and {self.MAX_DAYS}, got {days}"
+                )
+            )
 
         # Step 2: Load WorldState
         world = await self._world_repo.get_by_id(world_id)
@@ -935,9 +947,11 @@ class WorldSimulationService:
         """
         # Step 1: Validate days
         if not self.MIN_DAYS <= days <= self.MAX_DAYS:
-            return Err(InvalidDaysError(
-                f"Days must be between {self.MIN_DAYS} and {self.MAX_DAYS}, got {days}"
-            ))
+            return Err(
+                InvalidDaysError(
+                    f"Days must be between {self.MIN_DAYS} and {self.MAX_DAYS}, got {days}"
+                )
+            )
 
         # Step 2: Load WorldState
         world = await self._world_repo.get_by_id(world_id)
@@ -1193,13 +1207,13 @@ class WorldSimulationService:
 
             # Check if this faction has territory changes (gained)
             for location_id, new_owner_id in resolution.territory_changes.items():
-                if new_owner_id == faction.id and location_id not in faction.territories:
+                if (
+                    new_owner_id == faction.id
+                    and location_id not in faction.territories
+                ):
                     faction.territories.append(location_id)
                 # Handle territory loss
-                if (
-                    new_owner_id != faction.id
-                    and location_id in faction.territories
-                ):
+                if new_owner_id != faction.id and location_id in faction.territories:
                     faction.territories.remove(location_id)
 
             updated_factions.append(faction)
@@ -1307,9 +1321,7 @@ class WorldSimulationService:
             oldest_key = next(iter(history))
             del history[oldest_key]
 
-    def get_tick_history(
-        self, world_id: str, limit: int = 20
-    ) -> List[SimulationTick]:
+    def get_tick_history(self, world_id: str, limit: int = 20) -> List[SimulationTick]:
         """Get simulation tick history for a world.
 
         Args:

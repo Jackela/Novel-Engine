@@ -166,7 +166,7 @@ class SystemOrchestrator:
         config: Optional[OrchestratorConfig] = None,
         event_bus=None,
         database=None,
-    ):
+    ) -> None:
         """
         System Initialization with Comprehensive Integration
 
@@ -855,7 +855,7 @@ class SystemOrchestrator:
             except Exception as e:
                 logger.error(f"Error in memory cleanup loop: {str(e)}")
 
-    async def _backup_loop(self):
+    async def _backup_loop(self) -> None:
         """Background backup loop."""
         while not self._shutdown_requested:
             try:
@@ -910,7 +910,7 @@ class SystemOrchestrator:
             logger.error(f"Error during health check: {str(e)}")
             return {"system_health": SystemHealth.CRITICAL, "error": str(e)}
 
-    async def _perform_memory_cleanup(self):
+    async def _perform_memory_cleanup(self) -> None:
         """Perform memory cleanup and optimization."""
         try:
             # Clean up inactive agents (inactive for more than 24 hours)
@@ -934,7 +934,7 @@ class SystemOrchestrator:
         except Exception as e:
             logger.error(f"Error during memory cleanup: {str(e)}")
 
-    async def _perform_backup(self):
+    async def _perform_backup(self) -> None:
         """Perform system state backup."""
         try:
             backup_data = {
@@ -964,7 +964,7 @@ class SystemOrchestrator:
         except Exception as e:
             logger.error(f"Error during backup: {str(e)}")
 
-    async def _save_system_state(self):
+    async def _save_system_state(self) -> None:
         """Save current system state to database."""
         try:
             state_data = {
@@ -978,7 +978,7 @@ class SystemOrchestrator:
 
             async with self.database.get_enhanced_connection() as conn:
                 await conn.execute(
-                    """INSERT OR REPLACE INTO system_state 
+                    """INSERT OR REPLACE INTO system_state
                        (state_id, state_data, timestamp) VALUES (?, ?, ?)""",
                     ("orchestrator_shutdown", json.dumps(state_data), datetime.now()),
                 )
@@ -994,6 +994,10 @@ class SystemOrchestrator:
     ) -> StandardResponse:
         """Update character state across relevant systems."""
         try:
+            assert (
+                self.character_manager is not None
+            ), "Character manager not initialized"
+            assert self.memory_system is not None, "Memory system not initialized"
             # Update in character manager
             update_result = await self.character_manager.update_character_state(
                 agent_id, character_state
@@ -1024,10 +1028,11 @@ class SystemOrchestrator:
             )
 
     async def _process_environmental_context(
-        self, agent_id: str, env_context
+        self, agent_id: str, env_context: Dict[str, Any]
     ) -> StandardResponse:
         """Process environmental context updates."""
         try:
+            assert self.memory_system is not None, "Memory system not initialized"
             # Store environmental context as memory
             env_memory = MemoryItem(
                 memory_id=f"env_context_{agent_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",

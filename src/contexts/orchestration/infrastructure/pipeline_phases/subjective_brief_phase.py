@@ -44,7 +44,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
     def __init__(
         self,
         knowledge_adapter: Optional[SubjectiveBriefPhaseAdapter] = None,
-    ):
+    ) -> None:
         """
         Initialize SubjectiveBriefPhase with optional knowledge adapter.
 
@@ -805,7 +805,7 @@ You are {agent_name}, a complex character with these defining traits: {personali
 
 CURRENT SITUATION:
 - Location: {current_location}
-- Physical state: {current_health}  
+- Physical state: {current_health}
 - Emotional state: {current_mood}
 - Time elapsed since last conscious moment: {time_passed} seconds
 {knowledge_context}

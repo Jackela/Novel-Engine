@@ -9,7 +9,7 @@ this value object is immutable and encapsulates coordinate-related logic.
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union, overload
 
 
 @dataclass(frozen=True)
@@ -330,7 +330,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x + other.x,
@@ -353,7 +353,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x - other.x,
@@ -362,9 +362,13 @@ class Coordinates:
             precision=min(self.precision, other.precision),
         )
 
-    def __mul__(
-        self, scalar: Union[int, float]
-    ) -> "Coordinates | type[NotImplemented]":
+    @overload
+    def __mul__(self, scalar: Union[int, float]) -> "Coordinates": ...
+
+    @overload
+    def __mul__(self, scalar: Any) -> "Coordinates": ...
+
+    def __mul__(self, scalar: Union[int, float]) -> "Coordinates":
         """
         Multiply coordinates by a scalar value.
 
@@ -379,7 +383,7 @@ class Coordinates:
             fallback mechanism to try the other operand's __rmul__.
         """
         if not isinstance(scalar, (int, float)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x * scalar,

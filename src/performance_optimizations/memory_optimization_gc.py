@@ -71,7 +71,7 @@ class ObjectPool:
     constantly creating and destroying them.
     """
 
-    def __init__(self, factory: Callable[[], Any], max_size: int = 100):
+    def __init__(self, factory: Callable[[], Any], max_size: int = 100) -> None:
         self.factory = factory
         self.max_size = max_size
         self.pool = deque(maxlen=max_size)
@@ -122,7 +122,7 @@ class WeakReferenceManager:
     Manages weak references to break circular references and prevent memory leaks.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.weak_refs: Dict[str, weakref.ref] = {}
         self.cleanup_callbacks: Dict[str, Callable] = {}
         self._lock = threading.Lock()
@@ -208,7 +208,7 @@ class MemoryOptimizer:
         target_memory_percent: float = 70.0,
         gc_threshold_multiplier: float = 1.5,
         monitoring_interval: float = 30.0,
-    ):
+    ) -> None:
         self.target_memory_percent = target_memory_percent
         self.gc_threshold_multiplier = gc_threshold_multiplier
         self.monitoring_interval = monitoring_interval
@@ -529,7 +529,7 @@ class PersonaAgentMemoryOptimizer:
     Focuses on optimizing decision history, context caching, and LLM response storage.
     """
 
-    def __init__(self, memory_optimizer: MemoryOptimizer):
+    def __init__(self, memory_optimizer: MemoryOptimizer) -> None:
         self.memory_optimizer = memory_optimizer
 
         # Create specialized object pools
@@ -619,7 +619,7 @@ class DirectorAgentMemoryOptimizer:
     Focuses on world state caching, agent coordination data, and turn management.
     """
 
-    def __init__(self, memory_optimizer: MemoryOptimizer):
+    def __init__(self, memory_optimizer: MemoryOptimizer) -> None:
         self.memory_optimizer = memory_optimizer
 
         # Create specialized object pools

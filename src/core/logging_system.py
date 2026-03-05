@@ -97,7 +97,7 @@ class LogEntry:
 class PerformanceTracker:
     """Tracks performance metrics for operations."""
 
-    def __init__(self, operation: str, context: Optional[LogContext] = None):
+    def __init__(self, operation: str, context: Optional[LogContext] = None) -> None:
         """Initialize performance tracker."""
         self.operation = operation
         self.context = context or LogContext()
@@ -165,7 +165,7 @@ class StructuredLogger:
     - Log aggregation and analytics
     """
 
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize structured logger."""
         self.name = name
         self.config = config or {}
@@ -450,7 +450,7 @@ class StructuredLogger:
 class StructuredFormatter(logging.Formatter):
     """Custom formatter for structured logs."""
 
-    def __init__(self, format_type: str = "json"):
+    def __init__(self, format_type: str = "json") -> None:
         """Initialize formatter."""
         super().__init__()
         self.format_type = format_type
@@ -536,7 +536,7 @@ class LoggerFactory:
 class LoggingContext:
     """Context manager for structured logging context."""
 
-    def __init__(self, logger: StructuredLogger, context: LogContext):
+    def __init__(self, logger: StructuredLogger, context: LogContext) -> None:
         """Initialize logging context."""
         self.logger = logger
         self.context = context

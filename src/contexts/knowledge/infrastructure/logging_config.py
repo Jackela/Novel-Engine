@@ -240,7 +240,7 @@ class KnowledgePerformanceTracker(PerformanceTracker):
         operation: str,
         correlation_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Initialize performance tracker for Knowledge Management.
 

@@ -177,9 +177,7 @@ class RumorPropagationHandler(EventHandler):
             )
             return False
 
-    def _create_world_state(
-        self, world_id: str, event: Event
-    ) -> "WorldState":
+    def _create_world_state(self, world_id: str, event: Event) -> "WorldState":
         """Create a minimal WorldState from event data.
 
         The RumorPropagationService only needs the world ID to fetch

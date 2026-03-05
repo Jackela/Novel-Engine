@@ -88,7 +88,7 @@ class ClaudeLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the Claude LLM client.
 

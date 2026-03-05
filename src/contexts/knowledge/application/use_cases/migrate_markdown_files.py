@@ -9,7 +9,7 @@ Constitution Compliance:
 - Article V (SOLID): Single Responsibility - migration orchestration
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Protocol
 
 
 class MigrateMarkdownFilesUseCase:
@@ -31,7 +31,7 @@ class MigrateMarkdownFilesUseCase:
         - FR-019: Verification mode
     """
 
-    def __init__(self, migration_adapter):
+    def __init__(self, migration_adapter: "MigrationAdapter") -> None:
         """
         Initialize use case with migration adapter.
 
@@ -81,6 +81,16 @@ class MigrateMarkdownFilesUseCase:
         )
 
         return report
+
+
+class MigrationAdapter(Protocol):
+    """Protocol for migration adapters."""
+
+    async def migrate_all_agents(
+        self, markdown_directory: str, create_backup: bool = True
+    ) -> Dict[str, Any]: ...
+
+    async def verify_migration(self, markdown_directory: str) -> Dict[str, Any]: ...
 
     async def rollback(
         self,

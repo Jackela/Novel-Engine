@@ -182,7 +182,7 @@ class PersonaAgent(_PersonaAgentImpl):
         event_bus: Optional[EventBus] = None,
         agent_id: Optional[str] = None,
         character_name: Optional[str] = None,
-    ):
+    ) -> None:
         is_test_runtime = "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules
 
         default_root = DEFAULT_CHARACTERS_ROOT.resolve()

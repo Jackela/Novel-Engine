@@ -97,7 +97,7 @@ class ServiceRegistry:
     Manages service instances and their health status
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._services: Dict[str, List[ServiceInstance]] = {}
         self._health_check_interval = 30  # seconds
         self._health_check_task: Optional[asyncio.Task] = None
@@ -253,7 +253,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         timeout: int = 60,
         expected_exception: type = Exception,
-    ):
+    ) -> None:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.expected_exception = expected_exception
@@ -318,7 +318,7 @@ class EventBus:
     Implements publish-subscribe pattern for loose coupling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: Dict[str, List[Callable]] = {}
         self._event_history: List[Dict] = []
         self._max_history = 1000
@@ -393,7 +393,7 @@ class APIGateway:
     Provides centralized request routing, authentication, and monitoring
     """
 
-    def __init__(self, service_registry: ServiceRegistry):
+    def __init__(self, service_registry: ServiceRegistry) -> None:
         self.service_registry = service_registry
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.request_count = 0
@@ -481,7 +481,7 @@ class APIGateway:
 class CharacterService:
     """Microservice for character management"""
 
-    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus):
+    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus) -> None:
         self.service_registry = service_registry
         self.event_bus = event_bus
         self.characters = {}
@@ -513,7 +513,7 @@ class CharacterService:
 class StoryService:
     """Microservice for story generation and management"""
 
-    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus):
+    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus) -> None:
         self.service_registry = service_registry
         self.event_bus = event_bus
         self.stories = {}

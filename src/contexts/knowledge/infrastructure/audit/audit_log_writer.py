@@ -39,7 +39,7 @@ class AuditLogWriter:
     - Article IV (SSOT): PostgreSQL as authoritative audit source
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         """
         Initialize audit log writer with database session.
 
@@ -170,13 +170,15 @@ class AuditLogWriter:
         from sqlalchemy import text
 
         # INSERT audit record
-        insert_sql = text("""
+        insert_sql = text(
+            """
             INSERT INTO knowledge_audit_log (
                 timestamp, user_id, entry_id, change_type, snapshot
             ) VALUES (
                 :timestamp, :user_id, :entry_id, :change_type, :snapshot
             )
-        """)
+        """
+        )
 
         # Execute insert
         await self._session.execute(

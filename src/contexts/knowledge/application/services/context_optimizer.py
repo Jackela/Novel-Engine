@@ -480,7 +480,7 @@ class ContextOptimizer:
         self,
         token_counter: TokenCounter | None = None,
         default_config: OptimizationConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the context optimizer.
 

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class AsyncDatabasePool:
     """High-performance async database connection pool."""
 
-    def __init__(self, database_path: str, max_connections: int = 10):
+    def __init__(self, database_path: str, max_connections: int = 10) -> None:
         self.database_path = database_path
         self.max_connections = max_connections
         self._pool: List[aiosqlite.Connection] = []
@@ -78,7 +78,7 @@ class AsyncDatabasePool:
 class AdvancedCache:
     """High-performance caching system with intelligent eviction."""
 
-    def __init__(self, max_size: int = 1000, ttl: int = 300):
+    def __init__(self, max_size: int = 1000, ttl: int = 300) -> None:
         self.max_size = max_size
         self.ttl = ttl
         self._cache: Dict[str, Dict[str, Any]] = {}
@@ -129,7 +129,7 @@ class AdvancedCache:
 class AsyncEventBus:
     """High-performance async event bus."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: Dict[str, List[callable]] = {}
         self._lock = asyncio.Lock()
 
@@ -165,7 +165,7 @@ class AsyncEventBus:
 class PerformanceOptimizer:
     """Central performance optimization coordinator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.db_pool: Optional[AsyncDatabasePool] = None
         self.cache = AdvancedCache(max_size=2000, ttl=600)
         self.event_bus = AsyncEventBus()
@@ -304,7 +304,7 @@ def cached_config_loader():
 class AsyncSimulationManager:
     """High-performance simulation manager."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_simulations: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 

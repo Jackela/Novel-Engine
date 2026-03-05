@@ -6,12 +6,9 @@ Application service for managing geopolitical actions including
 diplomatic relations, territory control, and resource tracking.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 import structlog
-
-from src.core.result import Err, Ok, Result
-from src.events.event_bus import EventBus
 
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.entities.location import Location
@@ -22,6 +19,8 @@ from src.contexts.world.domain.events.geopolitics_events import (
     WarDeclaredEvent,
 )
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
+from src.core.result import Err, Ok, Result
+from src.events.event_bus import EventBus
 
 logger = structlog.get_logger()
 
@@ -38,7 +37,7 @@ class GeopoliticsService:
     All operations emit appropriate domain events.
     """
 
-    def __init__(self, event_bus: Optional[EventBus] = None):
+    def __init__(self, event_bus: Optional[EventBus] = None) -> None:
         """Initialize the geopolitics service."""
         self._event_bus = event_bus or EventBus()
 
@@ -170,7 +169,7 @@ class GeopoliticsService:
         previous_controller_id = location.controlling_faction_id
 
         # Use the location's transfer_control method if available
-        if hasattr(location, 'transfer_control'):
+        if hasattr(location, "transfer_control"):
             location.transfer_control(new_controller_id)
         else:
             location.controlling_faction_id = new_controller_id

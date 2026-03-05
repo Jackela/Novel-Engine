@@ -58,7 +58,7 @@ class GuestSessionManager:
         secret_key: str,
         algorithm: str = "HS256",
         cookie_name: str = GUEST_SESSION_COOKIE_NAME,
-    ):
+    ) -> None:
         self._workspace_store = workspace_store
         self._secret_key = secret_key
         self._algorithm = algorithm

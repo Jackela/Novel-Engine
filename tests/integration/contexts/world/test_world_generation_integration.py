@@ -304,24 +304,15 @@ class TestWorldGenerationIntegration:
     """Integration tests for complete world generation flow."""
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_fantasy_world_parses_to_valid_entities(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         realistic_response: Dict[str, Any],
     ) -> None:
         """Test that a generated fantasy world produces valid domain entities."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(realistic_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(realistic_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             request = WorldGenerationInput(
@@ -394,12 +385,10 @@ class TestWorldGenerationIntegration:
         assert flight.id in sundering.following_event_ids
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_with_markdown_wrapped_json(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         realistic_response: Dict[str, Any],
     ) -> None:
@@ -413,12 +402,7 @@ class TestWorldGenerationIntegration:
 
 I hope this world meets your needs!"""
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": wrapped_content}]}}]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = wrapped_content
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             request = WorldGenerationInput()
@@ -428,12 +412,10 @@ I hope this world meets your needs!"""
         assert len(result.factions) == 3
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_handles_partial_data_gracefully(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
     ) -> None:
         """Test that generator handles incomplete LLM response gracefully."""
@@ -453,14 +435,7 @@ I hope this world meets your needs!"""
             "events": [],
         }
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(partial_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(partial_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             request = WorldGenerationInput()
@@ -473,24 +448,15 @@ I hope this world meets your needs!"""
         assert result.locations[0].location_type == LocationType.REGION  # Default
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_cross_references_resolve_correctly(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         realistic_response: Dict[str, Any],
     ) -> None:
         """Test that all cross-references between entities resolve correctly."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(realistic_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(realistic_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = generator.generate(WorldGenerationInput())

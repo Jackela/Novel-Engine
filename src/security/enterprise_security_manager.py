@@ -41,7 +41,7 @@ except ImportError:
 
     # Stub implementation when geoip2 is not available and mocks are allowed
     class MockGeoIP2Database:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
         def city(self, ip):
@@ -74,11 +74,11 @@ except ImportError:
 
     # Stub implementation when user_agents is not available and mocks are allowed
     class MockUserAgent:
-        def __init__(self):
+        def __init__(self) -> None:
             self.browser = type("", (), {"family": "Unknown"})()
             self.os = type("", (), {"family": "Unknown"})()
 
-    user_agents = type("", (), {"parse": lambda ua: MockUserAgent()})()
+    user_agents = type("", (), {"parse": lambda _ua: MockUserAgent()})()
 
 # Enhanced logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -188,7 +188,7 @@ class SecurityEvent:
 class SecurityMetrics:
     """Real-time Security Metrics"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.requests_per_minute = defaultdict(int)
         self.blocked_ips = set()
         self.threat_events = deque(maxlen=1000)
@@ -208,7 +208,7 @@ class EnterpriseSecurityManager:
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
         compliance_frameworks: List[ComplianceFramework] = None,
-    ):
+    ) -> None:
         self.database_path = database_path
         self.redis_url = redis_url
         self.geoip_database_path = geoip_database_path
@@ -263,7 +263,8 @@ class EnterpriseSecurityManager:
             await conn.execute("PRAGMA journal_mode = WAL")
 
             # Enhanced threat intelligence table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
                     ip_address TEXT PRIMARY KEY,
                     reputation_score REAL NOT NULL,
@@ -278,10 +279,12 @@ class EnterpriseSecurityManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Behavioral analytics table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS behavioral_profiles (
                     user_id TEXT PRIMARY KEY,
                     typical_access_hours TEXT, -- JSON array
@@ -293,10 +296,12 @@ class EnterpriseSecurityManager:
                     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             # Enhanced security events table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS enhanced_security_events (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -314,10 +319,12 @@ class EnterpriseSecurityManager:
                     resolved_at TIMESTAMP,
                     false_positive BOOLEAN DEFAULT FALSE
                 )
-            """)
+            """
+            )
 
             # IP reputation blacklist/whitelist
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS ip_reputation (
                     ip_address TEXT PRIMARY KEY,
                     list_type TEXT NOT NULL, -- 'blacklist', 'whitelist'
@@ -328,10 +335,12 @@ class EnterpriseSecurityManager:
                     expires_at TIMESTAMP,
                     is_active BOOLEAN DEFAULT TRUE
                 )
-            """)
+            """
+            )
 
             # Compliance audit trails
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS compliance_audit_trail (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -344,7 +353,8 @@ class EnterpriseSecurityManager:
                     evidence TEXT, -- JSON object
                     compliance_officer TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("🛡️ Enhanced security database schema initialized")
@@ -598,7 +608,7 @@ class EnterpriseSecurityManager:
                 # Check IP blacklist/whitelist
                 cursor = await conn.execute(
                     """
-                    SELECT list_type, severity FROM ip_reputation 
+                    SELECT list_type, severity FROM ip_reputation
                     WHERE ip_address = ? AND is_active = TRUE
                     AND (expires_at IS NULL OR expires_at > ?)
                 """,
@@ -847,7 +857,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT typical_access_hours, typical_countries, typical_user_agents,
-                           typical_request_patterns, average_session_duration, 
+                           typical_request_patterns, average_session_duration,
                            anomaly_score, last_updated
                     FROM behavioral_profiles WHERE user_id = ?
                 """,
@@ -927,7 +937,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT OR REPLACE INTO behavioral_profiles 
+                    INSERT OR REPLACE INTO behavioral_profiles
                     (user_id, typical_access_hours, typical_countries, typical_user_agents,
                      typical_request_patterns, average_session_duration, anomaly_score, last_updated)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -954,7 +964,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 cursor = await conn.execute(
                     """
-                    SELECT user_id, typical_access_hours, typical_countries, 
+                    SELECT user_id, typical_access_hours, typical_countries,
                            typical_user_agents, typical_request_patterns,
                            average_session_duration, anomaly_score, last_updated
                     FROM behavioral_profiles
@@ -1021,7 +1031,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO enhanced_security_events 
+                    INSERT INTO enhanced_security_events
                     (id, timestamp, event_type, severity, source_ip, user_id, user_agent,
                      request_path, threat_indicators, automated_response, evidence, compliance_tags)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1084,7 +1094,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT severity, COUNT(*) as count
-                    FROM enhanced_security_events 
+                    FROM enhanced_security_events
                     WHERE timestamp > ?
                     GROUP BY severity
                 """,
@@ -1093,10 +1103,12 @@ class EnterpriseSecurityManager:
                 threat_counts = dict(await cursor.fetchall())
 
                 # Get blocked IPs
-                cursor = await conn.execute("""
-                    SELECT COUNT(*) FROM ip_reputation 
+                cursor = await conn.execute(
+                    """
+                    SELECT COUNT(*) FROM ip_reputation
                     WHERE list_type = 'blacklist' AND is_active = TRUE
-                """)
+                """
+                )
                 blocked_ips_count = (await cursor.fetchone())[0]
 
                 # Get top threat indicators
@@ -1145,7 +1157,7 @@ class EnterpriseSecurityManager:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO ip_reputation 
+                INSERT OR REPLACE INTO ip_reputation
                 (ip_address, list_type, reason, severity, created_by, expires_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,

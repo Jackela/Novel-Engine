@@ -196,7 +196,7 @@ Return ONLY the optimized prompt, no explanations."""
 
 仅返回优化后的提示，不要解释。"""
 
-    def __init__(self, llm_service: Optional[Any] = None):
+    def __init__(self, llm_service: Optional[Any] = None) -> None:
         """
         Initialize the optimizer.
 

@@ -22,7 +22,7 @@ class InteractionDomainEvent:
     event_version: int = 1
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate base event data."""
         if self.occurred_at.tzinfo is None:
             raise ValueError("occurred_at must be timezone-aware")
@@ -39,7 +39,7 @@ class NegotiationSessionCreated(InteractionDomainEvent):
     max_parties: int = 2
     session_context: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.session_context is None:
             object.__setattr__(self, "session_context", {})
@@ -61,7 +61,7 @@ class PartyJoinedNegotiation(InteractionDomainEvent):
     joined_at: datetime = None
     authority_level: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.party_name.strip():
             raise ValueError("party_name cannot be empty")
@@ -78,7 +78,7 @@ class PartyLeftNegotiation(InteractionDomainEvent):
     left_at: datetime = None
     reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.party_name.strip():
             raise ValueError("party_name cannot be empty")
@@ -96,7 +96,7 @@ class ProposalSubmitted(InteractionDomainEvent):
     proposal_title: str = ""
     expires_at: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.proposal_type.strip():
             raise ValueError("proposal_type cannot be empty")
@@ -117,7 +117,7 @@ class ProposalWithdrawn(InteractionDomainEvent):
     withdrawn_at: datetime = None
     withdrawal_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.withdrawn_at.tzinfo is None:
             raise ValueError("withdrawn_at must be timezone-aware")
@@ -132,7 +132,7 @@ class ProposalExpired(InteractionDomainEvent):
     original_expiry: datetime = None
     received_responses: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.expired_at.tzinfo is None:
             raise ValueError("expired_at must be timezone-aware")
@@ -151,7 +151,7 @@ class ProposalResponseReceived(InteractionDomainEvent):
     acceptance_percentage: float = 0.0
     requires_follow_up: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.response_type.strip():
             raise ValueError("response_type cannot be empty")
@@ -169,7 +169,7 @@ class CounterProposalSubmitted(InteractionDomainEvent):
     submitted_at: datetime = None
     modified_terms: List[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.modified_terms is None:
             object.__setattr__(self, "modified_terms", [])
@@ -187,7 +187,7 @@ class NegotiationPhaseAdvanced(InteractionDomainEvent):
     forced: bool = False
     advancement_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.from_phase.strip():
             raise ValueError("from_phase cannot be empty")
@@ -208,7 +208,7 @@ class NegotiationCompleted(InteractionDomainEvent):
     session_duration: int = 0  # seconds
     agreement_terms: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.final_proposals is None:
             object.__setattr__(self, "final_proposals", [])
@@ -235,7 +235,7 @@ class NegotiationTerminated(InteractionDomainEvent):
     session_duration: int = 0  # seconds
     partial_agreements: Optional[List[UUID]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.outcome.strip():
             raise ValueError("outcome cannot be empty")
@@ -254,7 +254,7 @@ class SessionTimeoutWarning(InteractionDomainEvent):
     time_remaining: int = 0  # seconds
     warning_level: str = "standard"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.expires_at <= self.warning_at:
             raise ValueError("expires_at must be after warning_at")
@@ -275,7 +275,7 @@ class ConflictDetected(InteractionDomainEvent):
     severity_level: str = "medium"
     auto_resolution_attempted: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.conflicting_parties is None:
             object.__setattr__(self, "conflicting_parties", [])
@@ -299,7 +299,7 @@ class DeadlockDetected(InteractionDomainEvent):
     contributing_factors: List[str] = None
     suggested_resolutions: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.affected_proposals is None:
             object.__setattr__(self, "affected_proposals", [])
@@ -324,7 +324,7 @@ class BreakthroughAchieved(InteractionDomainEvent):
     contributing_parties: List[UUID] = None
     impact_assessment: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.contributing_parties is None:
             object.__setattr__(self, "contributing_parties", [])
@@ -346,7 +346,7 @@ class NegotiationMetricsUpdated(InteractionDomainEvent):
     previous_metrics: Optional[Dict[str, Any]] = None
     trend_analysis: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.current_metrics is None:
             object.__setattr__(self, "current_metrics", {})
@@ -367,7 +367,7 @@ class PartyCapabilityUpdated(InteractionDomainEvent):
     updated_at: datetime = None
     update_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.capability_name.strip():
             raise ValueError("capability_name cannot be empty")
@@ -387,7 +387,7 @@ class CommunicationStyleConflict(InteractionDomainEvent):
     communication_styles: Dict[UUID, str] = None
     resolution_suggestions: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.conflicting_parties is None:
             object.__setattr__(self, "conflicting_parties", [])
@@ -412,7 +412,7 @@ class CulturalConsiderationTriggered(InteractionDomainEvent):
     affected_parties: List[UUID] = None
     mitigation_applied: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.affected_parties is None:
             object.__setattr__(self, "affected_parties", [])

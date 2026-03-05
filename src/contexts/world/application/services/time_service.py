@@ -184,7 +184,12 @@ class TimeService:
         logger.debug("pending_events_cleared")
 
     def set_time(
-        self, world_id: str, year: int, month: int, day: int, era_name: str = "First Age"
+        self,
+        world_id: str,
+        year: int,
+        month: int,
+        day: int,
+        era_name: str = "First Age",
     ) -> Result[WorldCalendar, str]:
         """Set the time for a world to a specific date.
 
@@ -202,7 +207,11 @@ class TimeService:
             Result containing the new WorldCalendar or error message
         """
         # Type validation before attempting to create WorldCalendar
-        if not isinstance(year, int) or not isinstance(month, int) or not isinstance(day, int):
+        if (
+            not isinstance(year, int)
+            or not isinstance(month, int)
+            or not isinstance(day, int)
+        ):
             error_msg = f"Invalid date types: year={type(year).__name__}, month={type(month).__name__}, day={type(day).__name__}. All must be integers."
             logger.error(
                 "set_time_type_validation_failed",
@@ -214,7 +223,9 @@ class TimeService:
             return Err(error_msg)
 
         if not isinstance(era_name, str):
-            error_msg = f"Invalid era_name type: {type(era_name).__name__}. Must be string."
+            error_msg = (
+                f"Invalid era_name type: {type(era_name).__name__}. Must be string."
+            )
             logger.error(
                 "set_time_era_name_validation_failed",
                 world_id=world_id,
@@ -223,9 +234,7 @@ class TimeService:
             return Err(error_msg)
 
         try:
-            calendar = WorldCalendar(
-                year=year, month=month, day=day, era_name=era_name
-            )
+            calendar = WorldCalendar(year=year, month=month, day=day, era_name=era_name)
             self._repository.save(world_id, calendar)
             logger.info(
                 "time_set",

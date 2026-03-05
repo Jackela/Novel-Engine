@@ -255,7 +255,7 @@ class RelationshipRepositoryException(Exception):
 class RelationshipNotFoundException(RelationshipRepositoryException):
     """Raised when a requested relationship is not found."""
 
-    def __init__(self, relationship_id: str):
+    def __init__(self, relationship_id: str) -> None:
         super().__init__(f"Relationship not found: {relationship_id}")
         self.relationship_id = relationship_id
 
@@ -263,7 +263,7 @@ class RelationshipNotFoundException(RelationshipRepositoryException):
 class DuplicateRelationshipException(RelationshipRepositoryException):
     """Raised when attempting to create a duplicate relationship."""
 
-    def __init__(self, source_id: str, target_id: str, relationship_type: str):
+    def __init__(self, source_id: str, target_id: str, relationship_type: str) -> None:
         super().__init__(
             f"Relationship already exists: {source_id} -> {target_id} ({relationship_type})"
         )

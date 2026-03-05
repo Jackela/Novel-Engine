@@ -53,7 +53,7 @@ class OptimizedAgentRegistry:
     Replaces linear O(n) agent searches with hash-based O(1) operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._agents: List[Any] = []
         self._agent_lookup: Dict[str, Any] = {}
         self._agent_indices: Dict[str, int] = {}
@@ -130,7 +130,7 @@ class OptimizedWorldStateTracker:
     Eliminates O(n³) nested loops and implements efficient data structures.
     """
 
-    def __init__(self, max_history_turns: int = 50, cache_size: int = 1000):
+    def __init__(self, max_history_turns: int = 50, cache_size: int = 1000) -> None:
         self.max_history_turns = max_history_turns
 
         # Optimized data structures
@@ -306,7 +306,7 @@ class AsyncCampaignLogger:
 
     def __init__(
         self, log_path: str, batch_size: int = 10, flush_interval: float = 5.0
-    ):
+    ) -> None:
         self.log_path = log_path
         self.batch_size = batch_size
         self.flush_interval = flush_interval
@@ -620,7 +620,7 @@ class DirectorAgentPerformanceOptimizer:
 class PerformanceMonitor:
     """Real-time performance monitoring for optimized DirectorAgent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics_history = deque(maxlen=1000)
         self.operation_times = defaultdict(list)
         self.start_time = time.time()

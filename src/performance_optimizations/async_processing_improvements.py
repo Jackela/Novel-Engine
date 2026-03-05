@@ -95,7 +95,7 @@ class AsyncTaskScheduler:
         max_concurrent_tasks: int = 50,
         max_queue_size: int = 1000,
         enable_metrics: bool = True,
-    ):
+    ) -> None:
         self.max_concurrent_tasks = max_concurrent_tasks
         self.max_queue_size = max_queue_size
         self.enable_metrics = enable_metrics
@@ -379,7 +379,7 @@ class AsyncHttpClient:
         max_connections_per_host: int = 20,
         connection_timeout: float = 10.0,
         request_timeout: float = 30.0,
-    ):
+    ) -> None:
         self.max_connections = max_connections
         self.max_connections_per_host = max_connections_per_host
         self.connection_timeout = connection_timeout
@@ -696,7 +696,7 @@ class ConcurrentAgentProcessor:
     Eliminates agent processing bottlenecks through optimized concurrency.
     """
 
-    def __init__(self, max_concurrent_agents: int = 20):
+    def __init__(self, max_concurrent_agents: int = 20) -> None:
         self.max_concurrent_agents = max_concurrent_agents
         self.semaphore = asyncio.Semaphore(max_concurrent_agents)
         self.http_client = AsyncHttpClient()

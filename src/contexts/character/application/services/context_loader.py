@@ -87,7 +87,7 @@ class ContextLoaderService:
         enable_caching: bool = True,
         cache_ttl_minutes: int = 30,
         max_concurrent_loads: int = 5,
-    ):
+    ) -> None:
         """
         Initialize the context loader service.
 

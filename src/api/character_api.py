@@ -124,7 +124,7 @@ class CharacterListResponse(BaseModel):
 class CharacterAPI:
     """API for character creation, customization, and management."""
 
-    def __init__(self, orchestrator: Optional[SystemOrchestrator]):
+    def __init__(self, orchestrator: Optional[SystemOrchestrator]) -> None:
         """Initializes the character API."""
         self.orchestrator = orchestrator
         logger.info("Character API initialized.")

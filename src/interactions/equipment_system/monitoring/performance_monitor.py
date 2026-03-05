@@ -28,7 +28,7 @@ class PerformanceMonitor:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize performance monitor."""
         self.config = config
         self.logger = logger or logging.getLogger(__name__)

@@ -96,7 +96,7 @@ class HashingConfig:
 class StateHasher:
     """Core state hashing engine."""
 
-    def __init__(self, config: Optional[HashingConfig] = None):
+    def __init__(self, config: Optional[HashingConfig] = None) -> None:
         """Initializes the state hasher."""
 
         self.config = config or HashingConfig()
@@ -166,7 +166,7 @@ class StateHasher:
 
         return state_hash
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clears the hash cache."""
 
         self.hash_cache.clear()

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class EnhancedDocumentationSystem:
     """Enhanced documentation system with Context7 integration."""
 
-    def __init__(self, app: FastAPI, context7_api=None):
+    def __init__(self, app: FastAPI, context7_api=None) -> None:
         self.app = app
         self.context7_api = context7_api
         self.template_env = self._setup_templates()
@@ -161,14 +161,14 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                         <div class="tab-container">
                             <div class="tab-headers">
                                 {% for example in endpoint.examples %}
-                                <div class="tab-header{% if loop.first %} active{% endif %}" 
+                                <div class="tab-header{% if loop.first %} active{% endif %}"
                                      onclick="showTab(this, '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
                                      {{ example.format|title }}
                                 </div>
                                 {% endfor %}
                             </div>
                             {% for example in endpoint.examples %}
-                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}" 
+                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}"
                                  class="tab-content{% if loop.first %} active{% endif %}">
                                 <pre><code class="language-{{ example.language }}">{{ example.code }}</code></pre>
                                 {% if example.explanation %}
@@ -226,7 +226,7 @@ import httpx
 from typing import Dict, Optional
 
 class NovelEngineClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8000") -> None:
         self.base_url = base_url
         self.token: Optional[str] = None
 
@@ -331,7 +331,7 @@ except httpx.HTTPError as e:
                     <pre><code class="language-python">import asyncio
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-@retry(stop=stop_after_attempt(3), 
+@retry(stop=stop_after_attempt(3),
        wait=wait_exponential(multiplier=1, min=4, max=10))
 async def api_call_with_retry():
     return await client.get("/api/endpoint")</code></pre>

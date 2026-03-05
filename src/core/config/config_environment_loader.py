@@ -54,7 +54,7 @@ class EnvironmentConfigLoader:
     configuration selection and loading based on the current environment.
     """
 
-    def __init__(self, environment: Optional[str] = None):
+    def __init__(self, environment: Optional[str] = None) -> None:
         """
         Initialize the environment configuration loader.
 

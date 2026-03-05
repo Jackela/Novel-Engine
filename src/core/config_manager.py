@@ -131,7 +131,7 @@ class ConfigurationManager:
     - Configuration merging and inheritance
     """
 
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: Optional[str] = None) -> None:
         """
         Initialize configuration manager.
 

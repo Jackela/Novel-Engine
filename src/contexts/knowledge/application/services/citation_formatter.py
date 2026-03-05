@@ -130,7 +130,7 @@ class CitationFormatter:
         SourceType.LOCATION: "Loc",
     }
 
-    def __init__(self, config: CitationFormatterConfig | None = None):
+    def __init__(self, config: CitationFormatterConfig | None = None) -> None:
         """
         Initialize the citation formatter.
 

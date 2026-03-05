@@ -103,7 +103,7 @@ class EnhancedOrchestratorConfig:
 class SystemStartupEvent:
     """System startup event payload."""
 
-    def __init__(self, orchestrator_id: str, mode: str, timestamp: datetime):
+    def __init__(self, orchestrator_id: str, mode: str, timestamp: datetime) -> None:
         self.orchestrator_id = orchestrator_id
         self.mode = mode
         self.timestamp = timestamp
@@ -114,7 +114,7 @@ class SystemShutdownEvent:
 
     def __init__(
         self, orchestrator_id: str, uptime_seconds: float, timestamp: datetime
-    ):
+    ) -> None:
         self.orchestrator_id = orchestrator_id
         self.uptime_seconds = uptime_seconds
         self.timestamp = timestamp
@@ -125,7 +125,7 @@ class SystemHealthEvent:
 
     def __init__(
         self, previous_health: str, current_health: str, details: Dict[str, Any]
-    ):
+    ) -> None:
         self.previous_health = previous_health
         self.current_health = current_health
         self.details = details
@@ -134,7 +134,7 @@ class SystemHealthEvent:
 class SystemMetricsEvent:
     """System performance metrics event."""
 
-    def __init__(self, metrics: Dict[str, Any], timestamp: datetime):
+    def __init__(self, metrics: Dict[str, Any], timestamp: datetime) -> None:
         self.metrics = metrics
         self.timestamp = timestamp
 
@@ -142,7 +142,7 @@ class SystemMetricsEvent:
 class HealthMonitoringHandler(EventHandler):
     """Health monitoring event handler."""
 
-    def __init__(self, orchestrator: "EnhancedSystemOrchestrator"):
+    def __init__(self, orchestrator: "EnhancedSystemOrchestrator") -> None:
         self.orchestrator = orchestrator
 
     async def handle(self, event: Event) -> bool:
@@ -172,7 +172,7 @@ class HealthMonitoringHandler(EventHandler):
 class PerformanceMonitoringHandler(EventHandler):
     """Performance monitoring event handler."""
 
-    def __init__(self, orchestrator: "EnhancedSystemOrchestrator"):
+    def __init__(self, orchestrator: "EnhancedSystemOrchestrator") -> None:
         self.orchestrator = orchestrator
 
     async def handle(self, event: Event) -> bool:
@@ -208,7 +208,7 @@ class EnhancedSystemOrchestrator:
     - Error handling and recovery
     """
 
-    def __init__(self, config: Optional[EnhancedOrchestratorConfig] = None):
+    def __init__(self, config: Optional[EnhancedOrchestratorConfig] = None) -> None:
         """Initialize enhanced system orchestrator."""
         self.config = config or EnhancedOrchestratorConfig()
         self.orchestrator_id = (
@@ -434,6 +434,12 @@ class EnhancedSystemOrchestrator:
         """Register core services with dependency injection container."""
         logger.info("Registering core services...")
 
+        assert self.service_container is not None, "Service container not initialized"
+        assert self.config_manager is not None, "Config manager not initialized"
+        assert self.error_handler is not None, "Error handler not initialized"
+        assert self.event_bus is not None, "Event bus not initialized"
+        assert self.database_manager is not None, "Database manager not initialized"
+
         # Register core components as singletons
         self.service_container.register_singleton(
             ConfigurationManager, self.config_manager
@@ -499,6 +505,7 @@ class EnhancedSystemOrchestrator:
         """Initialize all registered services."""
         logger.info("Initializing services...")
 
+        assert self.service_container is not None, "Service container not initialized"
         # Initialize and start all services
         await self.service_container.initialize_all_services()
         await self.service_container.startup_all_services()
@@ -541,6 +548,8 @@ class EnhancedSystemOrchestrator:
         """Start background monitoring and maintenance tasks."""
         logger.info("Starting background tasks...")
 
+        assert self.event_bus is not None, "Event bus not initialized"
+
         # Register event handlers
         health_handler = HealthMonitoringHandler(self)
         performance_handler = PerformanceMonitoringHandler(self)
@@ -582,6 +591,7 @@ class EnhancedSystemOrchestrator:
 
     async def _publish_startup_event(self) -> None:
         """Publish system startup event."""
+        assert self.event_bus is not None, "Event bus not initialized"
         startup_event = Event(
             event_type="system.startup",
             payload=SystemStartupEvent(
@@ -599,6 +609,7 @@ class EnhancedSystemOrchestrator:
 
     async def _publish_shutdown_event(self, uptime_seconds: float) -> None:
         """Publish system shutdown event."""
+        assert self.event_bus is not None, "Event bus not initialized"
         shutdown_event = Event(
             event_type="system.shutdown",
             payload=SystemShutdownEvent(
@@ -619,6 +630,14 @@ class EnhancedSystemOrchestrator:
         logger.info("Performing initial health check...")
 
         try:
+            assert self.database_manager is not None, "Database manager not initialized"
+            assert (
+                self.service_container is not None
+            ), "Service container not initialized"
+            assert (
+                self.legacy_orchestrator is not None
+            ), "Legacy orchestrator not initialized"
+
             # Check database health
             db_health = await self.database_manager.health_check()
 
@@ -719,6 +738,12 @@ class EnhancedSystemOrchestrator:
     async def _check_system_health(self) -> None:
         """Check overall system health."""
         try:
+            assert self.database_manager is not None, "Database manager not initialized"
+            assert (
+                self.service_container is not None
+            ), "Service container not initialized"
+            assert self.event_bus is not None, "Event bus not initialized"
+
             # Check database health
             db_health = await self.database_manager.health_check()
             db_healthy = all(pool["healthy"] for pool in db_health.values())
@@ -751,6 +776,15 @@ class EnhancedSystemOrchestrator:
     async def _collect_performance_metrics(self) -> None:
         """Collect system performance metrics."""
         try:
+            assert self.database_manager is not None, "Database manager not initialized"
+            assert (
+                self.service_container is not None
+            ), "Service container not initialized"
+            assert self.event_bus is not None, "Event bus not initialized"
+            assert (
+                self.legacy_orchestrator is not None
+            ), "Legacy orchestrator not initialized"
+
             # Update system metrics
             uptime = (datetime.now() - self.startup_time).total_seconds()
 
@@ -828,17 +862,22 @@ class EnhancedSystemOrchestrator:
         # - Resource cleanup
         # - Load balancing adjustments
 
-    def get_service(self, service_type: Type) -> Any:
+    def get_service(self, service_type: Type[Any]) -> Any:
         """Get service instance from container."""
+        assert self.service_container is not None, "Service container not initialized"
         return self.service_container.get_service(service_type)
 
-    async def publish_event(self, event_type: str, payload: Any, **metadata) -> None:
+    async def publish_event(
+        self, event_type: str, payload: Any, **metadata: Any
+    ) -> None:
         """Publish event through event bus."""
+        assert self.event_bus is not None, "Event bus not initialized"
         event = Event(event_type=event_type, payload=payload, metadata=metadata)
         await self.event_bus.publish(event)
 
-    async def get_database_connection(self, pool_name: str = "default"):
+    async def get_database_connection(self, pool_name: str = "default") -> Any:
         """Get database connection from pool."""
+        assert self.database_manager is not None, "Database manager not initialized"
         return await self.database_manager.get_connection(pool_name)
 
     def get_system_status(self) -> Dict[str, Any]:
@@ -868,7 +907,9 @@ class EnhancedSystemOrchestrator:
         }
 
     # Legacy compatibility methods
-    async def create_agent_context(self, agent_id: str, initial_state=None):
+    async def create_agent_context(
+        self, agent_id: str, initial_state: Any = None
+    ) -> Any:
         """Create agent context (legacy compatibility)."""
         if self.legacy_orchestrator:
             return await self.legacy_orchestrator.create_agent_context(
@@ -877,7 +918,7 @@ class EnhancedSystemOrchestrator:
         else:
             raise RuntimeError("Legacy orchestrator not initialized")
 
-    async def process_dynamic_context(self, context):
+    async def process_dynamic_context(self, context: Any) -> Any:
         """Process dynamic context (legacy compatibility)."""
         if self.legacy_orchestrator:
             return await self.legacy_orchestrator.process_dynamic_context(context)
@@ -885,8 +926,8 @@ class EnhancedSystemOrchestrator:
             raise RuntimeError("Legacy orchestrator not initialized")
 
     async def orchestrate_multi_agent_interaction(
-        self, participants: List[str], **kwargs
-    ):
+        self, participants: List[str], **kwargs: Any
+    ) -> Any:
         """Orchestrate multi-agent interaction (legacy compatibility)."""
         if self.legacy_orchestrator:
             return await self.legacy_orchestrator.orchestrate_multi_agent_interaction(
@@ -897,7 +938,7 @@ class EnhancedSystemOrchestrator:
 
     # Enhanced properties for legacy compatibility
     @property
-    def subjective_reality_engine(self):
+    def subjective_reality_engine(self) -> Any:
         """Get subjective reality engine (legacy compatibility)."""
         try:
             return self.get_service(SubjectiveRealityEngine)
@@ -909,7 +950,7 @@ class EnhancedSystemOrchestrator:
             )
 
     @property
-    def emergent_narrative_engine(self):
+    def emergent_narrative_engine(self) -> Any:
         """Get emergent narrative engine (legacy compatibility)."""
         try:
             return self.get_service(EmergentNarrativeEngine)

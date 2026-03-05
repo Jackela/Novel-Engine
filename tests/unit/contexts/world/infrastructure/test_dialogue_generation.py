@@ -308,26 +308,16 @@ class TestDialogueGeneration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     async def test_generate_dialogue_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         sample_character: CharacterData,
         sample_dialogue_response: Dict[str, Any],
     ) -> None:
         """Test successful dialogue generation with mocked API."""
-        # Setup mock response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_dialogue_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(sample_dialogue_response)
 
         # Set API key for test
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
@@ -345,20 +335,15 @@ class TestDialogueGeneration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     async def test_generate_dialogue_api_error_returns_error_result(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         sample_character: CharacterData,
     ) -> None:
         """Test that API errors return an error result."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = await generator.generate_dialogue(

@@ -101,7 +101,7 @@ class OptimizationConfig:
 class PerformanceMonitor:
     """Real-time performance monitoring and metrics collection."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
         self.metrics: Dict[PerformanceMetric, deque] = {
             metric: deque(maxlen=1000) for metric in PerformanceMetric
@@ -181,7 +181,7 @@ class PerformanceMonitor:
 class MultiTierCache:
     """Multi-tier caching system with L1, L2, and L3 cache levels."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
 
         # L1 Cache: In-memory LRU cache
@@ -328,7 +328,7 @@ class MultiTierCache:
 class ConnectionPool:
     """High-performance database connection pool with intelligent scaling."""
 
-    def __init__(self, database_path: str, config: OptimizationConfig):
+    def __init__(self, database_path: str, config: OptimizationConfig) -> None:
         self.database_path = database_path
         self.config = config
         self.pool: List[aiosqlite.Connection] = []
@@ -415,7 +415,7 @@ class ConnectionPool:
 class BatchProcessor:
     """Batch processing system for efficient async operations."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
         self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
             defaultdict(list)
@@ -505,7 +505,7 @@ class BatchProcessor:
 class PerformanceOptimizationEngine:
     """Main performance optimization engine."""
 
-    def __init__(self, config: Optional[OptimizationConfig] = None):
+    def __init__(self, config: Optional[OptimizationConfig] = None) -> None:
         self.config = config or OptimizationConfig()
         self.targets = PerformanceTarget()
 

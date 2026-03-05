@@ -239,7 +239,9 @@ def _event_to_response(event: HistoryEvent) -> HistoryEventResponse:
         impact_scope=event.impact_scope.value if event.impact_scope else None,
         affected_faction_ids=event.affected_faction_ids,
         affected_location_ids=event.affected_location_ids,
-        structured_date=event.structured_date.to_dict() if event.structured_date else None,
+        structured_date=(
+            event.structured_date.to_dict() if event.structured_date else None
+        ),
         created_at=event.created_at.isoformat() if event.created_at else None,
         updated_at=event.updated_at.isoformat() if event.updated_at else None,
     )
@@ -342,7 +344,9 @@ async def list_historical_events(
     )
 
 
-@router.post("/world/{world_id}/events", response_model=HistoryEventResponse, status_code=201)
+@router.post(
+    "/world/{world_id}/events", response_model=HistoryEventResponse, status_code=201
+)
 async def create_historical_event(
     world_id: str,
     request: CreateEventRequest,

@@ -39,7 +39,7 @@ except ImportError:
     CampaignBrief = None
 
     class NarrativeActionResolver:
-        def __init__(self):
+        def __init__(self) -> None:
             pass
 
 
@@ -69,7 +69,7 @@ class DirectorAgentBase:
         world_state_file_path: Optional[str] = None,
         campaign_log_path: Optional[str] = None,
         campaign_brief_path: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the DirectorAgent base infrastructure.
 

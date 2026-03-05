@@ -50,7 +50,7 @@ class NarrativeFlowService:
     and overall narrative momentum.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the narrative flow service."""
         self._flow_cache: Dict[str, FlowAnalysis] = {}
         self._optimization_cache: Dict[str, SequenceOptimization] = {}

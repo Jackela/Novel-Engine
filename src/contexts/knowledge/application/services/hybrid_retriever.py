@@ -361,7 +361,7 @@ class HybridRetriever:
         bm25_retriever: Any,  # BM25Retriever
         config: HybridConfig | None = None,
         default_collection: str = DEFAULT_COLLECTION,
-    ):
+    ) -> None:
         """
         Initialize the hybrid retriever.
 

@@ -99,7 +99,7 @@ class CentralizedErrorHandler:
     - Error pattern analysis
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize centralized error handler."""
         self.logger = logger or logging.getLogger(__name__)
 

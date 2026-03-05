@@ -107,7 +107,7 @@ class IntelligentCache:
         l3_max_size: int = 50000,
         default_ttl: int = 3600,
         strategy: CacheStrategy = CacheStrategy.ADAPTIVE,
-    ):
+    ) -> None:
         self.l1_max_size = l1_max_size
         self.l2_max_size = l2_max_size
         self.l3_max_size = l3_max_size
@@ -640,7 +640,7 @@ class LLMResponseCache(IntelligentCache):
     Optimized for PersonaAgent LLM calls with context-aware caching.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             l1_max_size=500,  # Keep 500 recent LLM responses in memory
             l2_max_size=2000,  # 2000 compressed responses
@@ -757,7 +757,7 @@ class WorldStatePrefetcher:
     Predicts and preloads world state information based on agent behavior patterns.
     """
 
-    def __init__(self, cache: IntelligentCache):
+    def __init__(self, cache: IntelligentCache) -> None:
         self.cache = cache
         self.agent_behavior_patterns = defaultdict(dict)
         self.prefetch_enabled = True

@@ -73,7 +73,7 @@ class EnterpriseSecuritySuite:
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
-    ):
+    ) -> None:
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
         self.redis_url = redis_url
@@ -175,8 +175,12 @@ class EnterpriseSecuritySuite:
                 # Create default admin user - password MUST be set via environment variable
                 admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD")
                 if not admin_password:
-                    logger.error("DEFAULT_ADMIN_PASSWORD environment variable not set. Cannot create admin user.")
-                    logger.error("Set DEFAULT_ADMIN_PASSWORD to create the default admin user on first run.")
+                    logger.error(
+                        "DEFAULT_ADMIN_PASSWORD environment variable not set. Cannot create admin user."
+                    )
+                    logger.error(
+                        "Set DEFAULT_ADMIN_PASSWORD to create the default admin user on first run."
+                    )
                     return
 
                 default_admin = UserRegistration(

@@ -26,7 +26,7 @@ class DialogueManager:
     - Session state tracking and cleanup
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize dialogue manager."""
         self.logger = logger or logging.getLogger(__name__)
         self.active_dialogues: Dict[str, AgentDialogue] = {}

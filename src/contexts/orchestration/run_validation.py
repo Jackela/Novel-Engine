@@ -29,7 +29,7 @@ class M9OrchestrationValidator:
     Tests core functionality without complex dependency imports.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.test_results: List[Dict[str, Any]] = []
         self.validation_start_time = datetime.now()
 

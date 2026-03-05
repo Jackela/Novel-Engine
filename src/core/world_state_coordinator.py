@@ -35,7 +35,7 @@ class WorldStateCoordinator:
     - Environmental change tracking and notification
     """
 
-    def __init__(self, world_state_file_path: Optional[str] = None):
+    def __init__(self, world_state_file_path: Optional[str] = None) -> None:
         """
         Initialize the WorldStateCoordinator.
 

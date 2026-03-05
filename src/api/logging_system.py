@@ -105,7 +105,7 @@ class StructuredLogEntry:
 class PerformanceTracker:
     """Track performance metrics for operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_operations: Dict[str, float] = {}
         self._lock = threading.Lock()
 
@@ -127,7 +127,7 @@ class PerformanceTracker:
 class SecurityLogger:
     """Specialized logging for security events."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
         self.security_events = deque(maxlen=1000)
         self._lock = threading.Lock()
@@ -178,7 +178,7 @@ class SecurityLogger:
 class AuditLogger:
     """Specialized logging for audit trails."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
         self.audit_trail = deque(maxlen=1000)
         self._lock = threading.Lock()
@@ -230,7 +230,7 @@ class StructuredLogger:
         level: LogLevel = LogLevel.INFO,
         output_format: str = "json",
         log_file: Optional[str] = None,
-    ):
+    ) -> None:
         self.name = name
         self.level = level
         self.output_format = output_format
@@ -455,7 +455,7 @@ class StructuredLogger:
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging."""
 
-    def __init__(self, app, logger: StructuredLogger):
+    def __init__(self, app, logger: StructuredLogger) -> None:
         super().__init__(app)
         self.logger = logger
 

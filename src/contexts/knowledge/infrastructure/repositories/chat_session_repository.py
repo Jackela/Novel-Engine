@@ -66,7 +66,7 @@ class ChatSessionRepository:
     Uses SQLite for persistence via SQLAlchemy.
     """
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self, session: Optional[Session] = None) -> None:
         """
         Initialize the repository.
 

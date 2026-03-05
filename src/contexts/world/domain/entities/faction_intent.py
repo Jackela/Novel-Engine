@@ -162,7 +162,9 @@ class FactionIntent:
     def __post_init__(self) -> None:
         """Validate intent after initialization."""
         # Normalize action type to canonical form
-        object.__setattr__(self, 'action_type', _normalize_action_type(self.action_type))
+        object.__setattr__(
+            self, "action_type", _normalize_action_type(self.action_type)
+        )
         self._validate()
 
     def _validate(self) -> None:
@@ -180,7 +182,9 @@ class FactionIntent:
             errors.append("Faction ID cannot be empty")
 
         if not isinstance(self.action_type, ActionType):
-            errors.append(f"action_type must be ActionType enum, got {type(self.action_type)}")
+            errors.append(
+                f"action_type must be ActionType enum, got {type(self.action_type)}"
+            )
 
         if not isinstance(self.status, IntentStatus):
             errors.append(f"status must be IntentStatus enum, got {type(self.status)}")
@@ -286,7 +290,10 @@ class FactionIntent:
         Returns:
             True if the intent is offensive, False otherwise.
         """
-        return self.action_type in OFFENSIVE_ACTIONS or self.action_type in OFFENSIVE_INTENTS
+        return (
+            self.action_type in OFFENSIVE_ACTIONS
+            or self.action_type in OFFENSIVE_INTENTS
+        )
 
     @property
     def is_defensive(self) -> bool:

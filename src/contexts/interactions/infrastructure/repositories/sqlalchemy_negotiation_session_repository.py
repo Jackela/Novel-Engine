@@ -37,7 +37,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
     SQLAlchemy ORM and async database operations.
     """
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession) -> None:
         """
         Initialize repository with database session.
 

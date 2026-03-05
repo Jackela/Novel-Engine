@@ -19,9 +19,11 @@ try:
     )
 except ImportError:
     # Fallback for testing
-    EquipmentItem = dict
+    from enum import Enum as _Enum
 
-    class EquipmentCondition(Enum):
+    EquipmentItem = dict  # type: ignore[misc,assignment]
+
+    class EquipmentCondition(_Enum):
         EXCELLENT = "excellent"
         GOOD = "good"
         FAIR = "fair"

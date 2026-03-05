@@ -83,7 +83,7 @@ class EnterpriseStorageConfig:
     enable_migration_mode: bool = False
     sqlite_database_path: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default storage policies."""
         if not self.storage_policies:
             self.storage_policies = self._get_default_policies()
@@ -162,7 +162,7 @@ class EnterpriseStorageManager:
     - Performance optimization
     """
 
-    def __init__(self, config: EnterpriseStorageConfig):
+    def __init__(self, config: EnterpriseStorageConfig) -> None:
         """Initialize enterprise storage manager."""
         self.config = config
 
@@ -176,7 +176,7 @@ class EnterpriseStorageManager:
         self._health_check_task: Optional[asyncio.Task] = None
 
         # Metrics and monitoring
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "operations": {
                 "total": 0,
                 "by_backend": {backend.value: 0 for backend in StorageBackend},

@@ -28,7 +28,7 @@ class ProcessingStrategy(Enum):
 class EventProcessor:
     """Processes events using configurable strategies."""
 
-    def __init__(self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL):
+    def __init__(self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL) -> None:
         """Initialize the event processor."""
         self.strategy = strategy
         self.handlers: Dict[str, List[EventHandler]] = {}

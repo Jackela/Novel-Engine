@@ -42,7 +42,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         excluded_urls: Optional[list] = None,
         trace_request_payload: bool = False,
         trace_response_payload: bool = False,
-    ):
+    ) -> None:
         """
         Initialize OpenTelemetry middleware.
 

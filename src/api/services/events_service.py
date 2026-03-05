@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class EventsService:
     """Service layer for SSE events and analytics operations."""
 
-    def __init__(self, app: Any):
+    def __init__(self, app: Any) -> None:
         self.app = app
         self._ensure_state()
 
@@ -85,7 +85,7 @@ class EventsService:
     ) -> None:
         """Safely put data into queue."""
 
-        def _put_nowait():
+        def _put_nowait() -> None:
             try:
                 queue.put_nowait(data)
             except asyncio.QueueFull:
@@ -120,7 +120,8 @@ class EventsService:
         if not api_service:
             return {}
         try:
-            return await api_service.get_status()
+            result: Dict[str, Any] = await api_service.get_status()
+            return result
         except Exception:
             return {}
 
@@ -131,7 +132,8 @@ class EventsService:
 
             if chunk_cache:
                 if hasattr(chunk_cache, "get_metrics"):
-                    return chunk_cache.get_metrics()
+                    result: Dict[str, Any] = chunk_cache.get_metrics()
+                    return result
                 elif hasattr(chunk_cache, "_cache"):
                     return {
                         "cache_size": (

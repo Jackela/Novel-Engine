@@ -62,36 +62,52 @@ class NarrativeContext:
     is_persistent: bool = True
 
     # Spatial information
-    locations: FrozenSet[str] = None
-    affected_regions: FrozenSet[str] = None
+    locations: Optional[FrozenSet[str]] = None
+    affected_regions: Optional[FrozenSet[str]] = None
     geographical_scope: Optional[str] = None
 
     # Character context
-    affected_characters: FrozenSet[UUID] = None
-    character_knowledge_required: FrozenSet[UUID] = (
+    affected_characters: Optional[FrozenSet[UUID]] = None
+    character_knowledge_required: Optional[FrozenSet[UUID]] = (
         None  # Characters who must know this context
     )
-    character_reactions: Dict[UUID, str] = None  # Expected character reactions
+    character_reactions: Optional[Dict[UUID, str]] = (
+        None  # Expected character reactions
+    )
 
     # Contextual details
-    key_facts: List[str] = None
-    implicit_knowledge: List[str] = None  # Things everyone in context knows
-    hidden_information: List[str] = None  # Information not generally known
+    key_facts: Optional[List[str]] = None
+    implicit_knowledge: Optional[List[str]] = None  # Things everyone in context knows
+    hidden_information: Optional[List[str]] = None  # Information not generally known
 
     # Influence and constraints
-    narrative_constraints: List[str] = None  # What this context prevents/requires
-    behavioral_influences: List[str] = None  # How this affects character behavior
-    plot_implications: List[str] = None  # Plot consequences of this context
+    narrative_constraints: Optional[List[str]] = (
+        None  # What this context prevents/requires
+    )
+    behavioral_influences: Optional[List[str]] = (
+        None  # How this affects character behavior
+    )
+    plot_implications: Optional[List[str]] = None  # Plot consequences of this context
 
     # Atmospheric elements
-    mood_influences: Dict[str, Decimal] = None  # Mood effects (emotion -> strength)
-    tension_modifiers: Dict[str, Decimal] = None  # Tension effects (type -> modifier)
-    pacing_effects: Dict[str, Decimal] = None  # Pacing influences (aspect -> effect)
+    mood_influences: Optional[Dict[str, Decimal]] = (
+        None  # Mood effects (emotion -> strength)
+    )
+    tension_modifiers: Optional[Dict[str, Decimal]] = (
+        None  # Tension effects (type -> modifier)
+    )
+    pacing_effects: Optional[Dict[str, Decimal]] = (
+        None  # Pacing influences (aspect -> effect)
+    )
 
     # Relationship to other contexts
-    prerequisite_contexts: FrozenSet[str] = None  # Required preceding contexts
-    conflicting_contexts: FrozenSet[str] = None  # Mutually exclusive contexts
-    reinforcing_contexts: FrozenSet[str] = None  # Contexts that strengthen this one
+    prerequisite_contexts: Optional[FrozenSet[str]] = (
+        None  # Required preceding contexts
+    )
+    conflicting_contexts: Optional[FrozenSet[str]] = None  # Mutually exclusive contexts
+    reinforcing_contexts: Optional[FrozenSet[str]] = (
+        None  # Contexts that strengthen this one
+    )
 
     # Importance and priority
     narrative_importance: Decimal = Decimal("5.0")  # 1-10, how critical this context is
@@ -103,15 +119,15 @@ class NarrativeContext:
     stability: Decimal = Decimal("1.0")  # How stable context is (0-1)
 
     # Metadata
-    tags: FrozenSet[str] = None
+    tags: Optional[FrozenSet[str]] = None
     source_material: Optional[str] = None
     research_notes: str = ""
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.locations is None:
@@ -204,7 +220,7 @@ class NarrativeContext:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.context_id or not self.context_id.strip():
             raise ValueError("Context ID cannot be empty")

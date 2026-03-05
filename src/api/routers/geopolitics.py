@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
@@ -22,7 +22,9 @@ from src.api.schemas.world_schemas import (
     TerritorySummary,
     WorldResourcesResponse,
 )
-from src.contexts.world.application.services.geopolitics_service import GeopoliticsService
+from src.contexts.world.application.services.geopolitics_service import (
+    GeopoliticsService,
+)
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 
 logger = logging.getLogger(__name__)
@@ -32,8 +34,10 @@ router = APIRouter(prefix="/geopolitics", tags=["geopolitics"])
 
 # === Request Schemas ===
 
+
 class DeclareWarRequest(BaseModel):
     """Request body for declaring war."""
+
     aggressor_id: str
     defender_id: str
     reason: str
@@ -41,6 +45,7 @@ class DeclareWarRequest(BaseModel):
 
 class FormAllianceRequest(BaseModel):
     """Request body for forming alliance."""
+
     faction_a_id: str
     faction_b_id: str
     pact_type: str = "defensive_alliance"
@@ -48,12 +53,14 @@ class FormAllianceRequest(BaseModel):
 
 class TransferTerritoryRequest(BaseModel):
     """Request body for transferring territory."""
+
     location_id: str
     new_controller_id: Optional[str]
     reason: str = ""
 
 
 # === Storage Helpers ===
+
 
 def _get_world_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store from app state."""
@@ -100,12 +107,14 @@ def _save_diplomacy_matrix(
 
 # === Service Instance ===
 
+
 def _get_geopolitics_service() -> GeopoliticsService:
     """Get a GeopoliticsService instance."""
     return GeopoliticsService()
 
 
 # === Endpoints ===
+
 
 @router.get(
     "/world/{world_id}/diplomacy",
@@ -126,10 +135,16 @@ async def get_diplomacy(
             pact_id=pact.id,
             faction_a_id=pact.faction_a_id,
             faction_b_id=pact.faction_b_id,
-            pact_type=pact.pact_type.value if hasattr(pact.pact_type, 'value') else str(pact.pact_type),
-            signed_date=str(pact.signed_date) if hasattr(pact, 'signed_date') else None,
-            expires_date=str(pact.expires_date) if hasattr(pact, 'expires_date') else None,
-            is_active=pact.is_active() if hasattr(pact, 'is_active') else True,
+            pact_type=(
+                pact.pact_type.value
+                if hasattr(pact.pact_type, "value")
+                else str(pact.pact_type)
+            ),
+            signed_date=str(pact.signed_date) if hasattr(pact, "signed_date") else None,
+            expires_date=(
+                str(pact.expires_date) if hasattr(pact, "expires_date") else None
+            ),
+            is_active=pact.is_active() if hasattr(pact, "is_active") else True,
         )
         for pact in matrix.active_pacts
     ]
@@ -232,7 +247,8 @@ async def get_resources(
         faction_name = faction.get("name", "Unknown")
 
         controlled_locations = [
-            loc for loc in locations
+            loc
+            for loc in locations
             if isinstance(loc, dict) and loc.get("controlling_faction_id") == faction_id
         ]
 
@@ -246,7 +262,9 @@ async def get_resources(
                     resource_type = ry.get("resource_type", "")
                     if resource_type:
                         amount = ry.get("current_stock", 0)
-                        resources[resource_type] = resources.get(resource_type, 0) + amount
+                        resources[resource_type] = (
+                            resources.get(resource_type, 0) + amount
+                        )
 
         faction_resources = faction.get("resources", {})
         if isinstance(faction_resources, dict):
@@ -394,7 +412,10 @@ async def transfer_territory(
 
     # Emit event via service
     service = _get_geopolitics_service()
-    from src.contexts.world.domain.events.geopolitics_events import TerritoryChangedEvent
+    from src.contexts.world.domain.events.geopolitics_events import (
+        TerritoryChangedEvent,
+    )
+
     event = TerritoryChangedEvent.create(
         location_id=request_body.location_id,
         previous_controller_id=previous_controller,

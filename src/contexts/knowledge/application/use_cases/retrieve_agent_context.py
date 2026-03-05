@@ -58,7 +58,7 @@ class RetrieveAgentContextUseCase:
         knowledge_retriever: IKnowledgeRetriever,
         context_assembler: IContextAssembler,
         record_knowledge_retrieval: KnowledgeRetrievalRecorder = _noop_record_knowledge_retrieval,
-    ):
+    ) -> None:
         """
         Initialize use case with dependencies.
 

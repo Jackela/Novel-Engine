@@ -80,7 +80,7 @@ class PersonaAgent:
         character_directory_path: str,
         event_bus: EventBus,
         agent_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the PersonaAgent with modular component coordination.
 
@@ -442,7 +442,7 @@ class PersonaAgent:
 
         # Create a character object that provides the expected interface
         class CharacterCompatibilityWrapper:
-            def __init__(self, persona_agent):
+            def __init__(self, persona_agent) -> None:
                 self._agent = persona_agent
 
             @property

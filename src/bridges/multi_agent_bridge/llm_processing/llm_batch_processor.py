@@ -54,7 +54,7 @@ class LLMBatchProcessor:
         max_batch_size: int = 5,
         batch_timeout_ms: int = 150,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.cost_tracker = cost_tracker
         self.performance_budget = performance_budget
         self.max_batch_size = max_batch_size

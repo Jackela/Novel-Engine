@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class SecurityEventLogger:
     """Log security events for monitoring and analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.security_logger = logging.getLogger("security")
         handler = logging.FileHandler("logs/security.log")
         formatter = logging.Formatter(
@@ -38,7 +38,7 @@ class SecurityEventLogger:
 class IPBlocklist:
     """Manage IP address blocklist."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.blocked_ips: Set[str] = set()
         self.temp_blocked: Dict[str, datetime] = {}
         self.block_duration = timedelta(minutes=15)
@@ -72,7 +72,7 @@ class IPBlocklist:
 class RequestAnalyzer:
     """Analyze requests for suspicious patterns."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.request_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
         self.failed_attempts: Dict[str, int] = defaultdict(int)
         self.security_logger = SecurityEventLogger()
@@ -151,7 +151,7 @@ class RequestAnalyzer:
 class SecurityMiddleware:
     """Comprehensive security middleware."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.ip_blocklist = IPBlocklist()
         self.request_analyzer = RequestAnalyzer()
         self.security_logger = SecurityEventLogger()

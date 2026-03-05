@@ -65,7 +65,7 @@ class ChromaDBVectorStore(IVectorStore):
         self,
         persist_dir: str | None = None,
         embedding_dimension: int = 1536,
-    ):
+    ) -> None:
         """
         Initialize ChromaDB vector store.
 

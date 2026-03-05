@@ -254,7 +254,7 @@ class FactionIntentGenerator:
         if not enemies:
             return None
 
-        target_id = faction.territories[0] if faction.territories else None
+        faction.territories[0] if faction.territories else None
 
         return FactionIntent(
             faction_id=faction.id,

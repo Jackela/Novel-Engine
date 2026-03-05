@@ -75,7 +75,7 @@ class EpisodicMemory:
         database: ContextDatabase,
         max_episodes: int = 1000,
         consolidation_threshold: float = 0.7,
-    ):
+    ) -> None:
         """
         Initializes the EpisodicMemory system.
 

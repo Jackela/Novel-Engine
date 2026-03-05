@@ -88,12 +88,12 @@ class PostgreSQLConnectionPool:
     - Query performance monitoring
     """
 
-    def __init__(self, config: PostgreSQLConfig):
+    def __init__(self, config: PostgreSQLConfig) -> None:
         """Initialize PostgreSQL connection pool."""
         self.config = config
         self.pool: Optional[asyncpg.Pool] = None
         self._initialized = False
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "total_connections": 0,
             "active_connections": 0,
             "total_queries": 0,
@@ -261,7 +261,7 @@ class PostgreSQLConnectionPool:
                 self._metrics["active_connections"] -= 1
 
     async def execute_query(
-        self, query: str, *args, fetch_mode: str = "none"  # none, one, all
+        self, query: str, *args: Any, fetch_mode: str = "none"  # none, one, all
     ) -> Any:
         """Execute query with performance monitoring."""
         start_time = asyncio.get_running_loop().time()
@@ -348,7 +348,7 @@ class PostgreSQLConnectionPool:
     ) -> List[Dict[str, Any]]:
         """Search characters using full-text search."""
         query = """
-        SELECT id, name, character_data, 
+        SELECT id, name, character_data,
                ts_rank(search_vector, plainto_tsquery('english', $1)) as rank
         FROM characters
         WHERE search_vector @@ plainto_tsquery('english', $1)
@@ -559,7 +559,7 @@ class PostgreSQLManager:
     performance monitoring, and Novel Engine-specific functionality.
     """
 
-    def __init__(self, config: PostgreSQLConfig):
+    def __init__(self, config: PostgreSQLConfig) -> None:
         """Initialize PostgreSQL manager."""
         self.config = config
         self.connection_pool = PostgreSQLConnectionPool(config)

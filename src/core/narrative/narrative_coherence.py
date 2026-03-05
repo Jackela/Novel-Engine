@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class NarrativeCoherenceEngine:
     """叙事连贯性引擎 - 保证故事的一致性和连贯性"""
 
-    def __init__(self, causal_graph: CausalGraph, llm_service=None):
+    def __init__(self, causal_graph: CausalGraph, llm_service=None) -> None:
         self.causal_graph = causal_graph
         self.llm_service = llm_service or get_llm_service()
         self.story_timeline: List[Dict[str, Any]] = []

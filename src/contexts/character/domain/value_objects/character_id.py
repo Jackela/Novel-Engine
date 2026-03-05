@@ -27,7 +27,7 @@ class CharacterID:
 
     value: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate the character ID format."""
         if not self.value:
             raise ValueError("CharacterID cannot be empty")

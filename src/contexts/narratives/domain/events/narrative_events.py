@@ -29,7 +29,7 @@ class NarrativeEvent:
     event_version: int = 1
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -52,7 +52,7 @@ class NarrativeArcCreated(NarrativeEvent):
     expected_length: Optional[int] = None
     target_themes: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.target_themes is None:
@@ -65,11 +65,11 @@ class NarrativeArcUpdated(NarrativeEvent):
     Event raised when narrative arc properties are updated.
     """
 
-    updated_fields: Dict[str, Any] = None
-    previous_values: Dict[str, Any] = None
+    updated_fields: Optional[Dict[str, Any]] = None
+    previous_values: Optional[Dict[str, Any]] = None
     update_reason: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.updated_fields is None:
@@ -86,10 +86,10 @@ class NarrativeArcCompleted(NarrativeEvent):
 
     completion_type: str = "natural"  # natural, forced, abandoned
     final_length: int = 0
-    themes_resolved: List[str] = None
+    themes_resolved: Optional[List[str]] = None
     plot_points_count: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.themes_resolved is None:
@@ -111,7 +111,7 @@ class PlotPointAdded(NarrativeEvent):
     importance_level: str = ""
     character_ids: List[UUID] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.character_ids is None:
@@ -129,7 +129,7 @@ class PlotPointUpdated(NarrativeEvent):
     previous_values: Dict[str, Any] = None
     impact_on_narrative: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.updated_fields is None:
@@ -150,7 +150,7 @@ class PlotPointRemoved(NarrativeEvent):
         None  # Other plot points that need resequencing
     )
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.sequence_adjustments is None:
@@ -173,7 +173,7 @@ class ThemeIntroduced(NarrativeEvent):
     introduction_sequence: int = 0
     symbolic_elements: List[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.symbolic_elements is None:
@@ -192,7 +192,7 @@ class ThemeIntensityChanged(NarrativeEvent):
     affected_sequences: List[int] = None
     intensity_change_reason: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.affected_sequences is None:
@@ -211,7 +211,7 @@ class ThemeResolved(NarrativeEvent):
     narrative_impact: str = ""
     related_plot_points: List[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.related_plot_points is None:
@@ -263,7 +263,7 @@ class NarrativeFlowChanged(NarrativeEvent):
     new_flow_state: Dict[str, Any] = None
     change_rationale: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.affected_sequence_range is None:
@@ -292,7 +292,7 @@ class PacingAdjusted(NarrativeEvent):
     affected_sequences: List[int] = None
     adjustment_reason: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.affected_sequences is None:
@@ -314,7 +314,7 @@ class ContextUpdated(NarrativeEvent):
     previous_values: Dict[str, Any] = None
     affected_characters: List[UUID] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.updated_fields is None:
@@ -367,7 +367,7 @@ class NarrativeConsistencyViolated(NarrativeEvent):
     auto_fixable: bool = False
     suggested_resolution: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.involved_elements is None:
@@ -386,7 +386,7 @@ class NarrativeGoalAchieved(NarrativeEvent):
     contributing_elements: List[str] = None
     achievement_method: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
         super().__post_init__()
         if self.contributing_elements is None:

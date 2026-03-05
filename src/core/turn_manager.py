@@ -29,7 +29,7 @@ class TurnManager:
     - Turn history storage and management
     """
 
-    def __init__(self, event_bus: EventBus, max_turn_history: int = 100):
+    def __init__(self, event_bus: EventBus, max_turn_history: int = 100) -> None:
         """
         Initialize the Turn Manager.
 

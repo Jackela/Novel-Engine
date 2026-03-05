@@ -63,7 +63,7 @@ class NarrativeArcApplicationService:
         repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
-    ):
+    ) -> None:
         """
         Initialize application service.
 

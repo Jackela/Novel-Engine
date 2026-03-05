@@ -125,7 +125,7 @@ class RedisConnectionPool:
     - Performance monitoring
     """
 
-    def __init__(self, config: RedisConfig):
+    def __init__(self, config: RedisConfig) -> None:
         """Initialize Redis connection pool."""
         self.config = config
         self.pool: Optional[aioredis.ConnectionPool] = None
@@ -133,7 +133,7 @@ class RedisConnectionPool:
         self._initialized = False
 
         # Metrics tracking
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "total_commands": 0,
             "cache_hits": 0,
             "cache_misses": 0,
@@ -203,6 +203,7 @@ class RedisConnectionPool:
 
     async def _configure_redis(self) -> None:
         """Configure Redis instance settings."""
+        assert self.redis is not None, "Redis not initialized"
         try:
             # Set memory policy
             await self.redis.config_set(
@@ -223,6 +224,7 @@ class RedisConnectionPool:
                     break
 
                 # Health check
+                assert self.redis is not None, "Redis not initialized"
                 start_time = asyncio.get_running_loop().time()
                 await self.redis.ping()
                 response_time = asyncio.get_running_loop().time() - start_time
@@ -300,6 +302,7 @@ class RedisConnectionPool:
         start_time = asyncio.get_running_loop().time()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             serialized_value = self._serialize_value(value, strategy)
             expire_time = ttl or self.config.default_ttl
 
@@ -326,6 +329,7 @@ class RedisConnectionPool:
         start_time = asyncio.get_running_loop().time()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             value = await self.redis.get(key)
 
             self._metrics["total_commands"] += 1
@@ -350,6 +354,7 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             result = await self.redis.delete(key)
             self._metrics["total_commands"] += 1
             return bool(result)
@@ -664,7 +669,7 @@ class RedisManager:
     optimized for Novel Engine use cases.
     """
 
-    def __init__(self, config: RedisConfig):
+    def __init__(self, config: RedisConfig) -> None:
         """Initialize Redis manager."""
         self.config = config
         self.connection_pool = RedisConnectionPool(config)

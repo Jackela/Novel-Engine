@@ -64,7 +64,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
     aggregates using SQLAlchemy ORM and relational database storage.
     """
 
-    def __init__(self, session_factory: sessionmaker):
+    def __init__(self, session_factory: sessionmaker) -> None:
         """
         Initialize the repository with a SQLAlchemy session factory.
 

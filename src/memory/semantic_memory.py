@@ -92,7 +92,7 @@ class SemanticMemory:
         database: ContextDatabase,
         max_facts: int = 5000,
         confidence_threshold: float = 0.3,
-    ):
+    ) -> None:
         """
         Initializes the SemanticMemory system.
 

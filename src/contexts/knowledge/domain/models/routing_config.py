@@ -73,7 +73,11 @@ class TaskRoutingRule:
     @property
     def qualified_model_name(self) -> str:
         """Get the fully qualified model name (provider:model_name)."""
-        return f"{self.provider.value}:{self.model_name}" if self.model_name else self.provider.value
+        return (
+            f"{self.provider.value}:{self.model_name}"
+            if self.model_name
+            else self.provider.value
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,7 +167,9 @@ class WorkspaceRoutingConfig:
         Returns:
             The highest priority rule, or None if no enabled rule exists
         """
-        enabled_rules = [r for r in self.task_rules if r.task_type == task_type and r.enabled]
+        enabled_rules = [
+            r for r in self.task_rules if r.task_type == task_type and r.enabled
+        ]
         if not enabled_rules:
             return None
         return max(enabled_rules, key=lambda r: r.priority)
@@ -212,9 +218,19 @@ class WorkspaceRoutingConfig:
             scope=self.scope,
             task_rules=task_rules if task_rules is not None else self.task_rules,
             constraints=constraints if constraints is not None else self.constraints,
-            circuit_breaker_rules=circuit_breaker_rules if circuit_breaker_rules is not None else self.circuit_breaker_rules,
-            enable_circuit_breaker=enable_circuit_breaker if enable_circuit_breaker is not None else self.enable_circuit_breaker,
-            enable_fallback=enable_fallback if enable_fallback is not None else self.enable_fallback,
+            circuit_breaker_rules=(
+                circuit_breaker_rules
+                if circuit_breaker_rules is not None
+                else self.circuit_breaker_rules
+            ),
+            enable_circuit_breaker=(
+                enable_circuit_breaker
+                if enable_circuit_breaker is not None
+                else self.enable_circuit_breaker
+            ),
+            enable_fallback=(
+                enable_fallback if enable_fallback is not None else self.enable_fallback
+            ),
             created_at=self.created_at,
             updated_at=datetime.now(),
             version=self.version + 1,
@@ -227,10 +243,38 @@ class WorkspaceRoutingConfig:
             workspace_id="",
             scope=RoutingScope.GLOBAL,
             task_rules=(
-                TaskRoutingRule(TaskType.CREATIVE, LLMProvider.GEMINI, "gemini-2.0-flash", temperature=0.9, max_tokens=2000, priority=0),
-                TaskRoutingRule(TaskType.LOGICAL, LLMProvider.OPENAI, "gpt-4o", temperature=0.2, max_tokens=4000, priority=0),
-                TaskRoutingRule(TaskType.FAST, LLMProvider.GEMINI, "gemini-2.0-flash", temperature=0.5, max_tokens=1000, priority=0),
-                TaskRoutingRule(TaskType.CHEAP, LLMProvider.GEMINI, "gemini-2.0-flash", temperature=0.7, max_tokens=1000, priority=0),
+                TaskRoutingRule(
+                    TaskType.CREATIVE,
+                    LLMProvider.GEMINI,
+                    "gemini-2.0-flash",
+                    temperature=0.9,
+                    max_tokens=2000,
+                    priority=0,
+                ),
+                TaskRoutingRule(
+                    TaskType.LOGICAL,
+                    LLMProvider.OPENAI,
+                    "gpt-4o",
+                    temperature=0.2,
+                    max_tokens=4000,
+                    priority=0,
+                ),
+                TaskRoutingRule(
+                    TaskType.FAST,
+                    LLMProvider.GEMINI,
+                    "gemini-2.0-flash",
+                    temperature=0.5,
+                    max_tokens=1000,
+                    priority=0,
+                ),
+                TaskRoutingRule(
+                    TaskType.CHEAP,
+                    LLMProvider.GEMINI,
+                    "gemini-2.0-flash",
+                    temperature=0.7,
+                    max_tokens=1000,
+                    priority=0,
+                ),
             ),
             constraints=RoutingConstraints(),
             enable_circuit_breaker=True,
@@ -270,8 +314,12 @@ class WorkspaceRoutingConfig:
                 {
                     "max_cost_per_1m_tokens": self.constraints.max_cost_per_1m_tokens,
                     "max_latency_ms": self.constraints.max_latency_ms,
-                    "preferred_providers": [p.value for p in self.constraints.preferred_providers],
-                    "blocked_providers": [p.value for p in self.constraints.blocked_providers],
+                    "preferred_providers": [
+                        p.value for p in self.constraints.preferred_providers
+                    ],
+                    "blocked_providers": [
+                        p.value for p in self.constraints.blocked_providers
+                    ],
                     "require_capabilities": list(self.constraints.require_capabilities),
                 }
                 if self.constraints

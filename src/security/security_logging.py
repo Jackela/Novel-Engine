@@ -184,7 +184,7 @@ class ThreatIntelligence:
 class SecurityLogger:
     """STANDARD SECURITY LOGGER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, log_directory: str = "data/security_logs"):
+    def __init__(self, database_path: str, log_directory: str = "data/security_logs") -> None:
         self.database_path = database_path
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(parents=True, exist_ok=True)
@@ -254,7 +254,8 @@ class SecurityLogger:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Security events table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -275,7 +276,8 @@ class SecurityLogger:
                     request_id TEXT NULL,
                     tags TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events(timestamp)"
             )
@@ -293,7 +295,8 @@ class SecurityLogger:
             )
 
             # Audit logs table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     log_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -307,7 +310,8 @@ class SecurityLogger:
                     success BOOLEAN NOT NULL,
                     error_message TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp)"
             )
@@ -322,7 +326,8 @@ class SecurityLogger:
             )
 
             # Threat intelligence table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
                     indicator TEXT PRIMARY KEY,
                     indicator_type TEXT NOT NULL,
@@ -333,7 +338,8 @@ class SecurityLogger:
                     last_seen TIMESTAMP NOT NULL,
                     tags TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_threat_intel_type ON threat_intelligence(indicator_type)"
             )
@@ -345,7 +351,8 @@ class SecurityLogger:
             )
 
             # Session tracking table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_sessions (
                     session_id TEXT PRIMARY KEY,
                     user_id TEXT NULL,
@@ -358,7 +365,8 @@ class SecurityLogger:
                     risk_score REAL DEFAULT 0.0,
                     events_count INTEGER DEFAULT 0
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_security_sessions_user_id ON security_sessions(user_id)"
             )

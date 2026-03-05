@@ -137,7 +137,7 @@ class EventProcessingResult:
 class EventStore:
     """Simple in-memory event store for event sourcing."""
 
-    def __init__(self, max_events: int = 100000):
+    def __init__(self, max_events: int = 100000) -> None:
         """Initialize event store."""
         self.max_events = max_events
         self._events: deque = deque(maxlen=max_events)
@@ -207,7 +207,7 @@ class EventBus:
         self,
         error_handler: Optional[CentralizedErrorHandler] = None,
         enable_event_store: bool = True,
-    ):
+    ) -> None:
         """Initialize event bus."""
         self.error_handler = error_handler
 

@@ -70,7 +70,7 @@ class TermResponse:
     suggested_modification: Optional[str] = None
     confidence_level: ConfidenceLevel = ConfidenceLevel.MODERATE
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate term response data."""
         if not self.term_id.strip():
             raise ValueError("term_id cannot be empty")
@@ -160,7 +160,7 @@ class ProposalResponse:
     conditions: Optional[List[str]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate proposal response data."""
         # Ensure response_timestamp is timezone-aware
         if self.response_timestamp.tzinfo is None:

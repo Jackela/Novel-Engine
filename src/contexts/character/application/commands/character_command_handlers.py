@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 class CreateCharacterCommandHandler:
     """Handler for creating new characters."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -165,7 +165,7 @@ class CreateCharacterCommandHandler:
 class UpdateCharacterStatsCommandHandler:
     """Handler for updating character statistics."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -262,7 +262,7 @@ class UpdateCharacterStatsCommandHandler:
 class UpdateCharacterSkillCommandHandler:
     """Handler for updating character skills."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -357,7 +357,7 @@ class UpdateCharacterSkillCommandHandler:
 class LevelUpCharacterCommandHandler:
     """Handler for character level up operations."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -430,7 +430,7 @@ class LevelUpCharacterCommandHandler:
 class DeleteCharacterCommandHandler:
     """Handler for character deletion."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -484,7 +484,7 @@ class DeleteCharacterCommandHandler:
 class HealCharacterCommandHandler:
     """Handler for character healing operations."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -526,7 +526,7 @@ class HealCharacterCommandHandler:
 class DamageCharacterCommandHandler:
     """Handler for character damage operations."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -570,7 +570,7 @@ class DamageCharacterCommandHandler:
 class CharacterCommandHandlerRegistry:
     """Registry for character command handlers."""
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.handlers = {
             CreateCharacterCommand: CreateCharacterCommandHandler(character_repository),
             UpdateCharacterStatsCommand: UpdateCharacterStatsCommandHandler(

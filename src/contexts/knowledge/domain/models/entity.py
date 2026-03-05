@@ -201,7 +201,9 @@ class ExtractionResult:
     model_used: str = ""
     tokens_used: int | None = None
 
-    def get_entities_by_type(self, entity_type: EntityType) -> tuple[ExtractedEntity, ...]:
+    def get_entities_by_type(
+        self, entity_type: EntityType
+    ) -> tuple[ExtractedEntity, ...]:
         """
         Get all entities of a specific type.
 
@@ -224,9 +226,7 @@ class ExtractionResult:
             Tuple of mentions for the entity
         """
         name_lower = entity_name.lower()
-        return tuple(
-            m for m in self.mentions if m.entity_name.lower() == name_lower
-        )
+        return tuple(m for m in self.mentions if m.entity_name.lower() == name_lower)
 
     @property
     def entity_count(self) -> int:
@@ -346,7 +346,8 @@ class ExtractionResultWithRelationships(ExtractionResult):
         """
         name_lower = entity_name.lower()
         return tuple(
-            r for r in self.relationships
+            r
+            for r in self.relationships
             if r.source.lower() == name_lower or r.target.lower() == name_lower
         )
 
@@ -363,8 +364,7 @@ class ExtractionResultWithRelationships(ExtractionResult):
             Tuple of relationships matching the type
         """
         return tuple(
-            r for r in self.relationships
-            if r.relationship_type == relationship_type
+            r for r in self.relationships if r.relationship_type == relationship_type
         )
 
     def find_relationship(
@@ -388,7 +388,8 @@ class ExtractionResultWithRelationships(ExtractionResult):
         target_lower = target.lower()
 
         matches = (
-            r for r in self.relationships
+            r
+            for r in self.relationships
             if r.source.lower() == source_lower and r.target.lower() == target_lower
         )
 
@@ -487,14 +488,14 @@ class ExtractionResultWithRelationships(ExtractionResult):
         if temporal_marker is not None:
             # Exact match (empty string matches relationships without temporal info)
             filtered = tuple(
-                r for r in self.relationships
-                if r.temporal_marker == temporal_marker
+                r for r in self.relationships if r.temporal_marker == temporal_marker
             )
         elif contains_marker is not None:
             # Substring match
             marker_lower = contains_marker.lower()
             filtered = tuple(
-                r for r in self.relationships
+                r
+                for r in self.relationships
                 if marker_lower in r.temporal_marker.lower()
             )
         else:
@@ -534,7 +535,8 @@ class ExtractionResultWithRelationships(ExtractionResult):
         """
         time_lower = time_reference.lower()
         return tuple(
-            r for r in self.relationships
+            r
+            for r in self.relationships
             if not r.temporal_marker or time_lower in r.temporal_marker.lower()
         )
 
@@ -572,14 +574,16 @@ _INVERSE_RELATIONSHIP_MAP: dict[RelationshipType, RelationshipType] = {
 }
 
 # Relationship types that are inherently bidirectional (symmetric)
-_BIDIRECTIONAL_RELATIONSHIP_TYPES: frozenset[RelationshipType] = frozenset([
-    RelationshipType.KNOWS,
-    RelationshipType.LOVES,
-    RelationshipType.HATES,
-    RelationshipType.ALLIED_WITH,
-    RelationshipType.ENEMY_OF,
-    RelationshipType.LOCATED_AT,
-])
+_BIDIRECTIONAL_RELATIONSHIP_TYPES: frozenset[RelationshipType] = frozenset(
+    [
+        RelationshipType.KNOWS,
+        RelationshipType.LOVES,
+        RelationshipType.HATES,
+        RelationshipType.ALLIED_WITH,
+        RelationshipType.ENEMY_OF,
+        RelationshipType.LOCATED_AT,
+    ]
+)
 
 
 def is_naturally_bidirectional(relationship_type: RelationshipType) -> bool:
@@ -594,12 +598,25 @@ def is_naturally_bidirectional(relationship_type: RelationshipType) -> bool:
     """
     return relationship_type in _BIDIRECTIONAL_RELATIONSHIP_TYPES
 
+
 # Constants for entity extraction
 DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD = 0.5
 DEFAULT_MAX_ENTITIES = 50
 PRONOUNS = {
-    "he", "him", "his", "himself",
-    "she", "her", "hers", "herself",
-    "it", "its", "itself",
-    "they", "them", "their", "theirs", "themselves",
+    "he",
+    "him",
+    "his",
+    "himself",
+    "she",
+    "her",
+    "hers",
+    "herself",
+    "it",
+    "its",
+    "itself",
+    "they",
+    "them",
+    "their",
+    "theirs",
+    "themselves",
 }

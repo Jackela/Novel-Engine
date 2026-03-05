@@ -299,7 +299,7 @@ class QueryDecomposer:
         self,
         llm_client: ILLMClient,
         temperature: float = DEFAULT_TEMPERATURE,
-    ):
+    ) -> None:
         """
         Initialize the query decomposer.
 
@@ -589,7 +589,7 @@ class MultiHopRetriever:
         retrieval_service: RetrievalService,
         llm_client: ILLMClient,
         default_config: MultiHopConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the multi-hop retriever.
 

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class AgentNegotiationEngine:
     """多Agent协商引擎"""
 
-    def __init__(self, llm_service=None):
+    def __init__(self, llm_service=None) -> None:
         self.llm_service = llm_service or get_llm_service()
         self.active_sessions: Dict[str, NegotiationSession] = {}
         self.negotiation_history: List[NegotiationSession] = []

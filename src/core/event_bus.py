@@ -94,7 +94,7 @@ class EventBus:
         max_dead_letters: int = 100,
         enable_history: bool = True,
         default_max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize the EventBus.
 
@@ -121,7 +121,7 @@ class EventBus:
         self._default_max_retries = default_max_retries
 
         # Metrics
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "events_emitted": 0,
             "events_processed": 0,
             "events_failed": 0,

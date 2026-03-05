@@ -9,7 +9,7 @@ alliance formations, and territory transfers.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Optional
 from uuid import uuid4
 
 import structlog
@@ -21,6 +21,7 @@ logger = structlog.get_logger()
 
 class PactType(Enum):
     """Types of diplomatic pacts."""
+
     DEFENSIVE_ALLIANCE = "defensive_alliance"
     OFFENSIVE_ALLIANCE = "offensive_alliance"
     NON_AGGRESSION = "non_aggression"
@@ -43,25 +44,29 @@ class WarDeclaredEvent(Event):
 
     def __post_init__(self) -> None:
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
-        self.tags.update({
-            "context:world",
-            "event:war_declared",
-            f"aggressor:{self.aggressor_id}",
-            f"defender:{self.defender_id}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:war_declared",
+                f"aggressor:{self.aggressor_id}",
+                f"defender:{self.defender_id}",
+            }
+        )
         if self.world_id:
             self.tags.add(f"world:{self.world_id}")
 
-        self.payload.update({
-            "aggressor_id": self.aggressor_id,
-            "defender_id": self.defender_id,
-            "reason": self.reason,
-            "world_id": self.world_id,
-        })
+        self.payload.update(
+            {
+                "aggressor_id": self.aggressor_id,
+                "defender_id": self.defender_id,
+                "reason": self.reason,
+                "world_id": self.world_id,
+            }
+        )
         super().__post_init__()
 
     @classmethod
@@ -95,25 +100,29 @@ class AllianceFormedEvent(Event):
 
     def __post_init__(self) -> None:
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
-        self.tags.update({
-            "context:world",
-            "event:alliance_formed",
-            f"faction_a:{self.faction_a_id}",
-            f"faction_b:{self.faction_b_id}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:alliance_formed",
+                f"faction_a:{self.faction_a_id}",
+                f"faction_b:{self.faction_b_id}",
+            }
+        )
         if self.world_id:
             self.tags.add(f"world:{self.world_id}")
 
-        self.payload.update({
-            "faction_a_id": self.faction_a_id,
-            "faction_b_id": self.faction_b_id,
-            "pact_type": self.pact_type.value,
-            "world_id": self.world_id,
-        })
+        self.payload.update(
+            {
+                "faction_a_id": self.faction_a_id,
+                "faction_b_id": self.faction_b_id,
+                "pact_type": self.pact_type.value,
+                "world_id": self.world_id,
+            }
+        )
         super().__post_init__()
 
     @classmethod
@@ -148,25 +157,29 @@ class TerritoryChangedEvent(Event):
 
     def __post_init__(self) -> None:
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
-        self.tags.update({
-            "context:world",
-            "event:territory_changed",
-            f"location:{self.location_id}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:territory_changed",
+                f"location:{self.location_id}",
+            }
+        )
         if self.world_id:
             self.tags.add(f"world:{self.world_id}")
 
-        self.payload.update({
-            "location_id": self.location_id,
-            "previous_controller_id": self.previous_controller_id,
-            "new_controller_id": self.new_controller_id,
-            "reason": self.reason,
-            "world_id": self.world_id,
-        })
+        self.payload.update(
+            {
+                "location_id": self.location_id,
+                "previous_controller_id": self.previous_controller_id,
+                "new_controller_id": self.new_controller_id,
+                "reason": self.reason,
+                "world_id": self.world_id,
+            }
+        )
         super().__post_init__()
 
     @classmethod

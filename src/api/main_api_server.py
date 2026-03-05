@@ -119,7 +119,7 @@ class OptimizedJSONResponse(JSONResponse):
         headers: Optional[Dict[str, str]] = None,
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
-    ):
+    ) -> None:
         # Add performance headers
         if headers is None:
             headers = {}
@@ -142,7 +142,7 @@ class OptimizedJSONResponse(JSONResponse):
 class APIServerConfig:
     """Configuration for the API server."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.host = os.getenv("API_HOST", "127.0.0.1")
         self.port = int(os.getenv("API_PORT", "8000"))
         self.database_path = os.getenv("DATABASE_PATH", "data/api_server.db")

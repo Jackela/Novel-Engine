@@ -529,7 +529,9 @@ class HistoryEvent(Entity):
             "impact_scope": self.impact_scope.value if self.impact_scope else None,
             "affected_faction_ids": self.affected_faction_ids,
             "affected_location_ids": self.affected_location_ids,
-            "structured_date": self.structured_date.to_dict() if self.structured_date else None,
+            "structured_date": (
+                self.structured_date.to_dict() if self.structured_date else None
+            ),
         }
 
     @classmethod

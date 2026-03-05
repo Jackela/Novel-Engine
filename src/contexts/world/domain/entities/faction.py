@@ -482,9 +482,7 @@ class Faction(Entity):
         """
         return self.member_count
 
-    def calculate_population_from_territories(
-        self, locations: List["Location"]
-    ) -> int:
+    def calculate_population_from_territories(self, locations: List["Location"]) -> int:
         """Calculate total population from controlled locations.
 
         Args:

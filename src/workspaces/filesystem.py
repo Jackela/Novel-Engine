@@ -128,7 +128,7 @@ class WorkspaceManifest:
 
 
 class FilesystemWorkspaceStore(WorkspaceStore):
-    def __init__(self, base_dir: Path):
+    def __init__(self, base_dir: Path) -> None:
         self._base_dir = base_dir
 
     @property
@@ -185,7 +185,7 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
 
 class FilesystemCharacterStore(CharacterStore):
-    def __init__(self, workspace_store: FilesystemWorkspaceStore):
+    def __init__(self, workspace_store: FilesystemWorkspaceStore) -> None:
         self._workspace_store = workspace_store
 
     def list_ids(self, workspace_id: str) -> List[str]:

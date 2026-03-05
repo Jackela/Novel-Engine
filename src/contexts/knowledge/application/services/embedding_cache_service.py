@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 from structlog import get_logger
 
@@ -95,7 +95,7 @@ class EmbeddingCacheService:
         self,
         max_size: int = DEFAULT_MAX_SIZE,
         default_ttl_seconds: int | None = DEFAULT_TTL_SECONDS,
-    ):
+    ) -> None:
         """
         Initialize embedding cache.
 
@@ -205,7 +205,6 @@ class EmbeddingCacheService:
         # Note: This is less efficient with cachetools as we can't iterate
         # directly. We track keys by model prefix.
         count = 0
-        keys_to_remove = []
         # cachetools doesn't expose key iteration directly in a thread-safe way
         # For now, clear all on model invalidation (simple but broader)
         # A more sophisticated implementation would track keys separately

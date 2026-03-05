@@ -119,7 +119,7 @@ class MonitoringConfig:
 class SystemResourceMonitor:
     """System resource monitoring for CPU, memory, disk, and network metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.process = psutil.Process()
 
     def get_cpu_metrics(self) -> Dict[str, float]:
@@ -197,7 +197,7 @@ class SystemResourceMonitor:
 class PerformanceMonitor:
     """Main performance monitoring system with metrics collection and alerting."""
 
-    def __init__(self, config: MonitoringConfig):
+    def __init__(self, config: MonitoringConfig) -> None:
         self.config = config
         self.metrics: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=config.max_metrics_per_type)

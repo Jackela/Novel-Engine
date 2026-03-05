@@ -31,7 +31,7 @@ class TurnExecutionEngine:
 
     def __init__(
         self, agent_manager, state_manager=None, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize turn execution engine with core engines."""
         self.agent_manager = agent_manager
         self.state_manager = state_manager

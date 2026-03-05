@@ -34,7 +34,7 @@ class PerformanceTracker:
     - Detect performance anomalies
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize performance tracker."""
         self.metrics_history: List[Dict[str, Any]] = []
         self.real_time_metrics: Dict[str, Any] = {

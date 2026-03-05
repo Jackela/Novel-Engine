@@ -43,7 +43,7 @@ class DecisionPointDetector:
         intensity_threshold: float = 7.0,
         check_interval: int = 3,  # Check every N turns for demo
         always_detect_interval: Optional[int] = None,  # Force detect every N turns
-    ):
+    ) -> None:
         """
         Initialize the detector.
 

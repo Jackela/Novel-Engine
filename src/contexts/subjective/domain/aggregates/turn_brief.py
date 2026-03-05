@@ -83,7 +83,7 @@ class TurnBrief:
     # Domain events (not persisted)
     _events: List[SubjectiveDomainEvent] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate TurnBrief state after initialization."""
         if not self.entity_id or not self.entity_id.strip():
             raise ValueError("Entity ID cannot be empty")

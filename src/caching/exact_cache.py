@@ -27,7 +27,7 @@ class _CacheEntry:
 class ExactCache:
     """Thread-safe LRU cache with optional TTL and tag metadata."""
 
-    def __init__(self, max_size: int = 512, default_ttl_seconds: int | None = 3600):
+    def __init__(self, max_size: int = 512, default_ttl_seconds: int | None = 3600) -> None:
         self.max_size = max_size
         self.default_ttl = default_ttl_seconds
         self._store: "OrderedDict[str, _CacheEntry]" = OrderedDict()

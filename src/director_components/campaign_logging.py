@@ -72,7 +72,7 @@ class CampaignLoggingService:
         log_dir: str = "logs",
         session_id: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.logger = logger or logging.getLogger(__name__)
         self.log_dir = Path(log_dir)
         self.session_id = (

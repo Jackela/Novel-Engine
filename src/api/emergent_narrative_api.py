@@ -193,7 +193,7 @@ class NegotiationResponse(BaseModel):
 class EmergentNarrativeAPI:
     """API endpoints for EmergentNarrativeEngine functionality."""
 
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator=None) -> None:
         self.orchestrator = orchestrator
         self.emergent_narrative_engine = None
 

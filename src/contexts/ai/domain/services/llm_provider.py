@@ -123,7 +123,7 @@ class LLMRequest:
     stream: bool = False
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate LLM request parameters and constraints."""
         # Initialize collections if None
         if self.parameters is None:
@@ -320,7 +320,7 @@ class LLMResponse:
     error_details: Optional[str] = None
     provider_response: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate LLM response structure and constraints."""
         # Initialize collections if None
         if self.usage_stats is None:
@@ -442,7 +442,7 @@ class LLMProviderError(Exception):
         provider_id: Optional[ProviderId] = None,
         error_code: Optional[str] = None,
         retry_after: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.provider_id = provider_id
         self.error_code = error_code

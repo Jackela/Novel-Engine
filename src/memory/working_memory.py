@@ -78,7 +78,7 @@ class WorkingMemory:
         agent_id: AgentID,
         capacity: int = DEFAULT_WORKING_MEMORY_CAPACITY,
         decay_rate: float = 0.95,
-    ):
+    ) -> None:
         """
         Initializes the WorkingMemory.
 

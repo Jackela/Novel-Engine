@@ -37,7 +37,7 @@ class TraditionalSystemCoordinator:
         self,
         database_path: str = "data/context_engineering.db",
         orchestrator_config: Optional[OrchestratorConfig] = None,
-    ):
+    ) -> None:
         """
         Initialize the traditional system coordinator.
 

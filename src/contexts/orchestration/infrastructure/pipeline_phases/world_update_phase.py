@@ -25,7 +25,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
     - Create rollback snapshots for saga compensation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PhaseType.WORLD_UPDATE)
         self.execution_timeout_ms = 8000  # 8 seconds for world updates
         self.world_service_endpoint = "world_context"

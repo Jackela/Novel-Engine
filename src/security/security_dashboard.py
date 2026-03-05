@@ -137,7 +137,7 @@ class SecurityMetrics(BaseModel):
 class SecurityDashboard:
     """Enterprise Security Monitoring Dashboard"""
 
-    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379") -> None:
         self.database_path = database_path
         self.redis_url = redis_url
 
@@ -193,7 +193,8 @@ class SecurityDashboard:
         """Initialize dashboard-specific database tables"""
         async with aiosqlite.connect(self.database_path) as conn:
             # Security incidents table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_incidents (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
@@ -208,10 +209,12 @@ class SecurityDashboard:
                     resolution_notes TEXT,
                     resolved_at TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Security metrics snapshots
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_metrics_snapshots (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -219,10 +222,12 @@ class SecurityDashboard:
                     report_type TEXT NOT NULL, -- 'hourly', 'daily', 'weekly'
                     compliance_data TEXT -- JSON object
                 )
-            """)
+            """
+            )
 
             # Compliance reports
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS compliance_reports (
                     id TEXT PRIMARY KEY,
                     framework TEXT NOT NULL,
@@ -234,7 +239,8 @@ class SecurityDashboard:
                     recommendations TEXT NOT NULL, -- JSON array
                     generated_by TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("📊 Security Dashboard database schema initialized")
@@ -353,7 +359,7 @@ class SecurityDashboard:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO security_incidents 
+                INSERT OR REPLACE INTO security_incidents
                 (id, title, description, severity, status, created_at, created_by,
                  assigned_to, related_alerts, timeline, resolution_notes, resolved_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -554,7 +560,7 @@ class SecurityDashboard:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO compliance_reports 
+                    INSERT INTO compliance_reports
                     (id, framework, report_date, compliance_score, passed_controls,
                      failed_controls, findings, recommendations, generated_by)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -760,7 +766,7 @@ class SecurityDashboard:
                     cursor = await conn.execute(
                         """
                         SELECT compliance_score, passed_controls, failed_controls, report_date
-                        FROM compliance_reports 
+                        FROM compliance_reports
                         WHERE framework = ?
                         ORDER BY report_date DESC
                         LIMIT 1

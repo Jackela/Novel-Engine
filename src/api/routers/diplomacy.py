@@ -11,13 +11,14 @@ This file will be removed in a future version.
 from __future__ import annotations
 
 import warnings
+
 warnings.warn(
     "diplomacy router is deprecated. Use geopolitics router instead.",
     DeprecationWarning,
     stacklevel=2,
 )
 
-from typing import Dict, List
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException
 
@@ -122,9 +123,7 @@ def _validate_status(status_str: str) -> DiplomaticStatus:
 # === Endpoints ===
 
 
-@router.get(
-    "/world/{world_id}/diplomacy", response_model=DiplomacyMatrixResponse
-)
+@router.get("/world/{world_id}/diplomacy", response_model=DiplomacyMatrixResponse)
 async def get_diplomacy_matrix(world_id: str) -> DiplomacyMatrixResponse:
     """
     Get the full diplomacy matrix for a world.

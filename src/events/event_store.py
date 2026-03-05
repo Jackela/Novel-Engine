@@ -28,7 +28,7 @@ class EventStoreConfig:
 class EventStore:
     """Simple file-based event store for persisting events."""
 
-    def __init__(self, config: Optional[EventStoreConfig] = None):
+    def __init__(self, config: Optional[EventStoreConfig] = None) -> None:
         """Initialize the event store."""
         self.config = config or EventStoreConfig()
         self._ensure_storage_directory()

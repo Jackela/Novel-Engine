@@ -122,7 +122,7 @@ class ProviderRouter:
     performance metrics, and fallback strategies.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._providers: Dict[str, ILLMProvider] = {}
         self._provider_health: Dict[str, Dict[str, Any]] = {}
         self._performance_metrics: Dict[str, Dict[str, float]] = {}
@@ -215,7 +215,7 @@ class ExecuteLLMService:
         rate_limiter: Optional[IRateLimiter] = None,
         cost_tracker: Optional[ICostTracker] = None,
         retry_policy: Optional[IRetryPolicy] = None,
-    ):
+    ) -> None:
         """
         Initialize ExecuteLLM service.
 

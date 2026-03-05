@@ -164,7 +164,7 @@ class QueryRewriter:
         llm_client: ILLMClient,
         default_config: RewriteConfig | None = None,
         cache_enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the query rewriter.
 

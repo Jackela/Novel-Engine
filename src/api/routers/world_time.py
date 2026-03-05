@@ -54,10 +54,13 @@ def get_repository(request: Request) -> CalendarRepository:
             from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
                 InMemoryCalendarRepository,
             )
+
             repo = InMemoryCalendarRepository()
             logger.warning("using_fallback_repository_test_mode")
         else:
-            raise RuntimeError("CalendarRepository not configured. Check startup initialization.")
+            raise RuntimeError(
+                "CalendarRepository not configured. Check startup initialization."
+            )
     return repo
 
 

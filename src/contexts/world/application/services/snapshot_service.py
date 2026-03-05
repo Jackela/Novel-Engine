@@ -145,15 +145,14 @@ class SnapshotService:
         try:
             # Just verify the state_json is valid JSON
             import json
+
             json.loads(snapshot.state_json)
         except (json.JSONDecodeError, Exception):
             return Err(SnapshotError.RESTORE_FAILED)
 
         return Ok(snapshot)
 
-    def list_snapshots(
-        self, world_id: str, limit: int = 10
-    ) -> List[WorldSnapshot]:
+    def list_snapshots(self, world_id: str, limit: int = 10) -> List[WorldSnapshot]:
         """List snapshots for a world.
 
         Returns snapshots ordered by creation time (newest first).

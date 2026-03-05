@@ -55,7 +55,7 @@ class TurnExecutionResult:
         compensation_actions: List[CompensationAction],
         performance_metrics: Dict[str, float],
         error_details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.turn_id = turn_id
         self.success = success
         self.execution_time_ms = execution_time_ms

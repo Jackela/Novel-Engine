@@ -47,7 +47,7 @@ class UpdateWorldStateResult:
         events_generated: List[str] = None,
         execution_time_ms: float = 0.0,
         warnings: List[str] = None,
-    ):
+    ) -> None:
         self.success = success
         self.world_state = world_state
         self.error_message = error_message
@@ -91,7 +91,7 @@ class UpdateWorldStateUC:
     - Provide comprehensive error handling and logging
     """
 
-    def __init__(self, world_repository: IWorldStateRepository):
+    def __init__(self, world_repository: IWorldStateRepository) -> None:
         """
         Initialize the use case with required dependencies.
 

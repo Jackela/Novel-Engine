@@ -149,7 +149,7 @@ class DynamicTemplateEngine:
         query_engine: Optional[MemoryQueryEngine] = None,
         enable_auto_reload: bool = True,
         cache_templates: bool = True,
-    ):
+    ) -> None:
         """
         STANDARD TEMPLATE ENGINE INITIALIZATION ENHANCED BY CONFIGURATION
 

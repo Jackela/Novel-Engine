@@ -24,11 +24,11 @@ from src.api.schemas import (
     DiplomacyChangeResponse,
     ErrorDetail,
     ResourceChangesResponse,
+    SimulateRequest,
     SimulationHistoryResponse,
     SimulationStatusResponse,
     SimulationTickResponse,
     SimulationTickSummary,
-    SimulateRequest,
 )
 from src.contexts.world.domain.value_objects.simulation_tick import (
     DiplomacyChange,
@@ -145,7 +145,9 @@ def _get_tick_by_id(world_id: str, tick_id: str) -> Optional[SimulationTick]:
 # === Helper Functions ===
 
 
-def _calendar_to_response(calendar: Optional[WorldCalendar]) -> Optional[CalendarResponse]:
+def _calendar_to_response(
+    calendar: Optional[WorldCalendar],
+) -> Optional[CalendarResponse]:
     """Convert WorldCalendar to response model."""
     if calendar is None:
         return None

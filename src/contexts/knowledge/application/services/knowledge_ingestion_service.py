@@ -190,7 +190,7 @@ class KnowledgeIngestionService:
         processor_factory: IngestionProcessorFactory | None = None,
         default_chunking_strategy: ChunkingStrategy | None = None,
         default_collection: str = DEFAULT_COLLECTION,
-    ):
+    ) -> None:
         """
         Initialize the ingestion service.
 

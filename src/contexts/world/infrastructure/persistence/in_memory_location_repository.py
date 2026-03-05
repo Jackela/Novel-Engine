@@ -216,9 +216,7 @@ class InMemoryLocationRepository(LocationRepository):
             children.sort(key=lambda loc: loc.name)
             return children
 
-    async def get_by_type(
-        self, world_id: str, location_type: str
-    ) -> List[Location]:
+    async def get_by_type(self, world_id: str, location_type: str) -> List[Location]:
         """Retrieve all locations of a specific type in a world.
 
         Args:

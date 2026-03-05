@@ -8,7 +8,7 @@ within the Interaction bounded context.
 """
 
 from decimal import Decimal
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..value_objects.negotiation_party import (
     CommunicationPreference,
@@ -32,7 +32,7 @@ class NegotiationService:
     conflict resolution, and strategic analysis capabilities.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize negotiation service."""
 
     def assess_party_compatibility(
@@ -81,7 +81,7 @@ class NegotiationService:
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Analyze the viability of a proposal given the negotiating parties.
 
@@ -144,7 +144,7 @@ class NegotiationService:
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
         target_outcome: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Recommend negotiation strategy based on party composition and goals.
 
@@ -213,7 +213,7 @@ class NegotiationService:
 
     def detect_negotiation_conflicts(
         self, parties: List[NegotiationParty], responses: List[ProposalResponse]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """
         Detect conflicts in negotiation based on parties and responses.
 
@@ -247,8 +247,8 @@ class NegotiationService:
         self,
         responses: List[ProposalResponse],
         phase: NegotiationPhase,
-        time_factors: Optional[Dict[str, any]] = None,
-    ) -> Dict[str, any]:
+        _time_factors: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Calculate negotiation momentum and trajectory.
 
@@ -307,7 +307,7 @@ class NegotiationService:
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
         negotiation_domain: Optional[str] = None,
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Optimize proposal terms for better acceptance chances.
 
@@ -523,7 +523,7 @@ class NegotiationService:
 
     def _analyze_party_proposal_fit(
         self, proposal: ProposalTerms, party: NegotiationParty, domain: Optional[str]
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Analyze how well a proposal fits a specific party."""
         analysis = {
             "acceptance_score": Decimal("50"),
@@ -644,7 +644,7 @@ class NegotiationService:
         self,
         proposal: ProposalTerms,
         parties: List[NegotiationParty],
-        party_analyses: Dict[str, any],
+        party_analyses: Dict[str, Any],
     ) -> List[str]:
         """Generate suggestions to optimize the proposal."""
         suggestions = []
@@ -729,7 +729,7 @@ class NegotiationService:
 
     def _analyze_negotiation_power_balance(
         self, parties: List[NegotiationParty], domain: Optional[str]
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Analyze the balance of negotiation power."""
         power_analysis = {
             "total_power": Decimal("0"),
@@ -764,7 +764,7 @@ class NegotiationService:
         return power_analysis
 
     def _recommend_overall_approach(
-        self, dominant_styles: Dict[str, int], power_balance: Dict[str, any]
+        self, dominant_styles: Dict[str, int], power_balance: Dict[str, Any]
     ) -> str:
         """Recommend overall negotiation approach."""
         # If collaborative is dominant, recommend collaborative
@@ -803,7 +803,7 @@ class NegotiationService:
         self,
         parties: List[NegotiationParty],
         dominant_styles: Dict[str, int],
-        power_balance: Dict[str, any],
+        power_balance: Dict[str, Any],
     ) -> List[str]:
         """Recommend specific negotiation tactics."""
         tactics = []
@@ -859,7 +859,7 @@ class NegotiationService:
 
     def _recommend_timeline(
         self, parties: List[NegotiationParty], approach: str
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Recommend timeline for negotiation phases."""
         timeline = {}
 
@@ -893,9 +893,9 @@ class NegotiationService:
     def _recommend_party_specific_strategy(
         self,
         party: NegotiationParty,
-        all_parties: List[NegotiationParty],
+        _all_parties: List[NegotiationParty],
         domain: Optional[str],
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Recommend strategy for specific party."""
         strategy = {
             "communication_approach": "standard",
@@ -939,7 +939,7 @@ class NegotiationService:
 
     def _detect_style_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect negotiation style conflicts."""
         conflicts = []
 
@@ -967,7 +967,7 @@ class NegotiationService:
 
     def _detect_authority_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect authority-related conflicts."""
         conflicts = []
 
@@ -1007,7 +1007,7 @@ class NegotiationService:
 
     def _detect_response_conflicts(
         self, responses: List[ProposalResponse]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect conflicts in proposal responses."""
         conflicts = []
 
@@ -1050,7 +1050,7 @@ class NegotiationService:
 
     def _detect_cultural_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect cultural conflicts between parties."""
         conflicts = []
 
@@ -1093,7 +1093,7 @@ class NegotiationService:
 
     def _detect_time_conflicts(
         self, parties: List[NegotiationParty]
-    ) -> List[Dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         """Detect time-related conflicts."""
         conflicts = []
 
@@ -1282,7 +1282,7 @@ class NegotiationService:
         return inhibitors
 
     def _recommend_momentum_actions(
-        self, momentum: Dict[str, any], phase: NegotiationPhase
+        self, momentum: Dict[str, Any], phase: NegotiationPhase
     ) -> List[str]:
         """Recommend actions to improve momentum."""
         recommendations = []
@@ -1306,7 +1306,7 @@ class NegotiationService:
         term: TermCondition,
         parties: List[NegotiationParty],
         domain: Optional[str],
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Analyze how well a term performs with parties."""
         analysis = {
             "optimization_potential": Decimal("0"),
@@ -1334,7 +1334,7 @@ class NegotiationService:
     def _optimize_term(
         self,
         term: TermCondition,
-        analysis: Dict[str, any],
+        analysis: Dict[str, Any],
         parties: List[NegotiationParty],
     ) -> TermCondition:
         """Optimize a term based on analysis."""
@@ -1377,7 +1377,7 @@ class NegotiationService:
 
     def _assess_optimization_risks(
         self, optimized_terms: List[TermCondition], parties: List[NegotiationParty]
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Assess risks of proposed optimizations."""
         risks = {"risk_level": "low", "risk_factors": [], "mitigation_strategies": []}
 

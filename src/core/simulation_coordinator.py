@@ -31,7 +31,7 @@ class SimulationCoordinator:
 
     def __init__(
         self, world_state_file_path: Optional[str] = None, max_turn_history: int = 100
-    ):
+    ) -> None:
         """
         Initialize the Simulation Coordinator.
 

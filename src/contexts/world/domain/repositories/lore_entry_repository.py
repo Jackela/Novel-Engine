@@ -264,7 +264,7 @@ class LoreEntryRepositoryException(Exception):
 class LoreEntryNotFoundException(LoreEntryRepositoryException):
     """Raised when a requested lore entry is not found."""
 
-    def __init__(self, entry_id: str):
+    def __init__(self, entry_id: str) -> None:
         super().__init__(f"Lore entry not found: {entry_id}")
         self.entry_id = entry_id
 
@@ -272,7 +272,7 @@ class LoreEntryNotFoundException(LoreEntryRepositoryException):
 class DuplicateLoreEntryException(LoreEntryRepositoryException):
     """Raised when attempting to create a duplicate lore entry."""
 
-    def __init__(self, entry_id: str, title: str):
+    def __init__(self, entry_id: str, title: str) -> None:
         super().__init__(f"Lore entry already exists: {entry_id} ({title})")
         self.entry_id = entry_id
         self.title = title

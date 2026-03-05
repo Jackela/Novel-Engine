@@ -67,9 +67,9 @@ class KnowledgeItem:
     source: KnowledgeSource
     acquired_at: datetime
     expires_at: Optional[datetime] = None  # When this knowledge becomes stale
-    tags: Set[str] = None  # Additional categorization tags
+    tags: Optional[Set[str]] = None  # Additional categorization tags
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate knowledge item parameters."""
         if not self.subject or not self.subject.strip():
             raise ValueError("Knowledge subject cannot be empty")
@@ -158,7 +158,7 @@ class KnowledgeBase:
 
     knowledge_items: Dict[str, List[KnowledgeItem]]  # subject -> knowledge items
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and organize knowledge base."""
         if not isinstance(self.knowledge_items, dict):
             raise ValueError("Knowledge items must be a dictionary")

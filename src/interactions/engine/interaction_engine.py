@@ -47,7 +47,7 @@ class InteractionEngine:
         context_renderer: ContextRenderer,
         database: ContextDatabase,
         interaction_templates_dir: str = "interaction_templates",
-    ):
+    ) -> None:
         """
         STANDARD INTERACTION ENGINE INITIALIZATION ENHANCED BY ORCHESTRATION
 

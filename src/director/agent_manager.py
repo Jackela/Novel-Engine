@@ -22,7 +22,7 @@ class AgentLifecycleManager:
     - Resource cleanup
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize agent lifecycle manager."""
         self.logger = logger or logging.getLogger(__name__)
         self.agents = {}  # agent_id -> agent instance

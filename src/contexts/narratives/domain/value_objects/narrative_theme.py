@@ -56,9 +56,9 @@ class NarrativeTheme:
     description: str
 
     # Thematic details
-    symbolic_elements: FrozenSet[str] = None
-    related_motifs: FrozenSet[str] = None
-    character_archetypes: FrozenSet[str] = None
+    symbolic_elements: Optional[FrozenSet[str]] = None
+    related_motifs: Optional[FrozenSet[str]] = None
+    character_archetypes: Optional[FrozenSet[str]] = None
 
     # Narrative presence
     introduction_sequence: Optional[int] = None
@@ -67,8 +67,8 @@ class NarrativeTheme:
 
     # Thematic development
     development_trajectory: str = ""  # How theme evolves
-    conflicts_with_themes: FrozenSet[str] = None
-    reinforces_themes: FrozenSet[str] = None
+    conflicts_with_themes: Optional[FrozenSet[str]] = None
+    reinforces_themes: Optional[FrozenSet[str]] = None
 
     # Emotional and moral dimensions
     moral_complexity: Decimal = Decimal("5.0")  # 1-10, higher = more complex
@@ -85,14 +85,14 @@ class NarrativeTheme:
     # Metadata
     cultural_context: Optional[str] = None
     historical_context: Optional[str] = None
-    target_audience_relevance: Dict[str, Decimal] = None
-    tags: FrozenSet[str] = None
+    target_audience_relevance: Optional[Dict[str, Decimal]] = None
+    tags: Optional[FrozenSet[str]] = None
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.symbolic_elements is None:
@@ -142,7 +142,7 @@ class NarrativeTheme:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.name or not self.name.strip():
             raise ValueError("Theme name cannot be empty")

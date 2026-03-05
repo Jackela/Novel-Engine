@@ -45,7 +45,7 @@ class OllamaProvider(ILLMProvider):
         base_url: str = "http://localhost:11434",
         timeout_seconds: int = 60,
         max_retries: int = 2,
-    ):
+    ) -> None:
         """
         Initialize Ollama provider.
 

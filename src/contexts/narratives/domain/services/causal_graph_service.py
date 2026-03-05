@@ -55,7 +55,7 @@ class CausalGraphService:
     consistency checking, and narrative flow optimization.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the causal graph service."""
         self.nodes: Dict[str, CausalNode] = {}
         self._relationship_cache: Dict[Tuple[str, str], Dict[str, Any]] = {}

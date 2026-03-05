@@ -28,7 +28,7 @@ class ApiOrchestrationService:
         orchestrator: SystemOrchestrator,
         event_bus: EventBus,
         character_factory: Optional[CharacterFactory] = None,
-    ):
+    ) -> None:
         self.core = orchestrator
         self.event_bus = event_bus
         self.character_factory = character_factory or CharacterFactory(event_bus)

@@ -95,7 +95,7 @@ class ProviderId:
     region: Optional[str] = None
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ProviderId business rules and constraints."""
         # Auto-generate provider key if not provided
         if self.provider_key is None:
@@ -239,7 +239,7 @@ class ModelId:
     deprecated: bool = False
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ModelId business rules and constraints."""
         # Initialize collections if None
         if self.capabilities is None:
@@ -430,7 +430,7 @@ class TokenBudget:
     priority: int = 5  # 1-10 scale, 10 = highest priority
     metadata: Dict[str, Any] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate TokenBudget business rules and constraints."""
         # Initialize optional fields
         if self.cost_limit is None:

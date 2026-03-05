@@ -51,7 +51,7 @@ class EnhancedMultiAgentBridge:
         chronicler_agent: Optional[ChroniclerAgent] = None,
         coordination_config: Optional[LLMCoordinationConfig] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """
         Initialize modular enhanced multi-agent bridge.
 

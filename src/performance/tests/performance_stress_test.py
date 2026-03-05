@@ -57,7 +57,7 @@ class SystemMetrics:
 class PerformanceStressTester:
     """Comprehensive performance stress testing framework"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.results: List[StressTestResult] = []
         self.system_metrics: List[SystemMetrics] = []
         self.monitoring_active = False

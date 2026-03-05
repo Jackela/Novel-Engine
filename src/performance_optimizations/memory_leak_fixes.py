@@ -70,7 +70,7 @@ class SlidingWindowMemoryManager:
         archive_threshold: float = 0.8,
         enable_persistence: bool = True,
         archive_path: str = "memory_archive",
-    ):
+    ) -> None:
         self.max_size = max_size
         self.archive_threshold = int(max_size * archive_threshold)
         self.enable_persistence = enable_persistence
@@ -315,7 +315,7 @@ class PersonaAgentMemoryFixer:
 class PersonaAgentMemoryMonitor:
     """Real-time memory monitoring for PersonaAgent instances."""
 
-    def __init__(self, persona_agent_instance):
+    def __init__(self, persona_agent_instance) -> None:
         self.agent_instance = weakref.ref(
             persona_agent_instance
         )  # Weak reference to prevent circular refs
@@ -480,7 +480,7 @@ class SystemWideMemoryManager:
     Monitors overall application memory usage and triggers cleanup when needed.
     """
 
-    def __init__(self, memory_limit_mb: int = 1024, check_interval: int = 60):
+    def __init__(self, memory_limit_mb: int = 1024, check_interval: int = 60) -> None:
         self.memory_limit_mb = memory_limit_mb
         self.check_interval = check_interval
         self.monitoring_active = False

@@ -70,9 +70,11 @@ class StoryPacing:
     average_scene_length: Optional[int] = None  # Average scene duration
 
     # Tension management
-    tension_curve: Tuple[Decimal, ...] = None  # Tension levels throughout segment
-    emotional_peaks: Tuple[int, ...] = None  # Sequence positions of peaks
-    rest_periods: Tuple[int, ...] = None  # Positions of low-intensity moments
+    tension_curve: Optional[Tuple[Decimal, ...]] = (
+        None  # Tension levels throughout segment
+    )
+    emotional_peaks: Optional[Tuple[int, ...]] = None  # Sequence positions of peaks
+    rest_periods: Optional[Tuple[int, ...]] = None  # Positions of low-intensity moments
 
     # Reader engagement
     revelation_frequency: Decimal = Decimal("0.1")  # Major reveals per sequence
@@ -91,9 +93,9 @@ class StoryPacing:
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.tension_curve is None:
@@ -117,7 +119,7 @@ class StoryPacing:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.pacing_id or not self.pacing_id.strip():
             raise ValueError("Pacing ID cannot be empty")

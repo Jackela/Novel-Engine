@@ -27,7 +27,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
     - Handle character development tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PhaseType.NARRATIVE_INTEGRATION)
         self.execution_timeout_ms = 25000  # 25 seconds for AI-intensive operations
         self.ai_gateway_endpoint = "ai_gateway"

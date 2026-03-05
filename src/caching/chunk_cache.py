@@ -23,7 +23,7 @@ class _StreamState:
 
 
 class ChunkCache:
-    def __init__(self, ttl_seconds: int = 300):
+    def __init__(self, ttl_seconds: int = 300) -> None:
         self.ttl_seconds = ttl_seconds
         self._streams: Dict[str, _StreamState] = {}
         self._lock = RLock()

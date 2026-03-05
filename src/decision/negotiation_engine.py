@@ -70,7 +70,7 @@ class NegotiationEngine:
     3. Propose alternatives if action cannot be executed
     """
 
-    def __init__(self, llm_client: Optional[Any] = None):
+    def __init__(self, llm_client: Optional[Any] = None) -> None:
         """
         Initialize the negotiation engine.
 

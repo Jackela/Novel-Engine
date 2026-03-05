@@ -46,7 +46,7 @@ class InvalidCommandException(SubjectiveCommandHandlerException):
 class CreateTurnBriefCommandHandler:
     """Handler for CreateTurnBriefCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -102,7 +102,7 @@ class CreateTurnBriefCommandHandler:
 class UpdatePerceptionCapabilitiesCommandHandler:
     """Handler for UpdatePerceptionCapabilitiesCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -154,7 +154,7 @@ class UpdatePerceptionCapabilitiesCommandHandler:
 class UpdateAwarenessStateCommandHandler:
     """Handler for UpdateAwarenessStateCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -232,7 +232,7 @@ class AddPerceptionCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -308,7 +308,7 @@ class AddPerceptionCommandHandler:
 class RevealKnowledgeCommandHandler:
     """Handler for RevealKnowledgeCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -354,7 +354,7 @@ class RevealKnowledgeCommandHandler:
 class DetectThreatCommandHandler:
     """Handler for DetectThreatCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
         self.logger = logger.getChild(self.__class__.__name__)
 
@@ -410,7 +410,7 @@ class UpdateFogOfWarCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -477,7 +477,7 @@ class ShareInformationCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
         self.logger = logger.getChild(self.__class__.__name__)
@@ -571,7 +571,7 @@ class SubjectiveCommandHandlerRegistry:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
 

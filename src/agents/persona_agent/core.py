@@ -25,7 +25,7 @@ try:
 except ImportError:
 
     class EventBus:
-        def __init__(self):
+        def __init__(self) -> None:
             pass
 
         def subscribe(self, event, callback):
@@ -60,7 +60,7 @@ class PersonaAgentCore:
         event_bus: EventBus,
         agent_id: Optional[str] = None,
         auto_subscribe_turn_start: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the PersonaAgent core infrastructure.
 

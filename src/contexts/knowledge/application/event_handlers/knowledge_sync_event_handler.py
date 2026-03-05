@@ -107,7 +107,7 @@ class KnowledgeSyncEventHandler:
         max_queue_size: int = 1000,
         max_retries: int = 3,
         retry_strategy: RetryStrategy = RetryStrategy.EXPONENTIAL,
-    ):
+    ) -> None:
         """
         Initialize the event handler.
 

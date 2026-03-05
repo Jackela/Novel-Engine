@@ -107,7 +107,7 @@ class CacheBackend(ABC):
 class MemoryCache(CacheBackend):
     """High-performance in-memory cache with intelligent eviction."""
 
-    def __init__(self, max_size: int = 10000, max_memory_mb: int = 500):
+    def __init__(self, max_size: int = 10000, max_memory_mb: int = 500) -> None:
         self.max_size = max_size
         self.max_memory_bytes = max_memory_mb * 1024 * 1024
         self.entries: OrderedDict[str, CacheEntry] = OrderedDict()
@@ -281,7 +281,7 @@ class MemoryCache(CacheBackend):
 class PerformanceCache:
     """Main performance cache system with multiple backends and intelligent routing."""
 
-    def __init__(self, memory_cache_size: int = 10000, memory_limit_mb: int = 500):
+    def __init__(self, memory_cache_size: int = 10000, memory_limit_mb: int = 500) -> None:
         self.memory_cache = MemoryCache(memory_cache_size, memory_limit_mb)
         self.cache_stats = {
             "character_hits": 0,

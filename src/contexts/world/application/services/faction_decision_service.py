@@ -16,13 +16,11 @@ Key Features:
     - Fallback behavior when LLM fails
 """
 
-import asyncio
 import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-from uuid import uuid4
 
 import structlog
 
@@ -40,11 +38,8 @@ from src.core.result import Err, Ok, Result
 
 if TYPE_CHECKING:
     from src.contexts.knowledge.application.services.retrieval_service import (
-        RetrievalFilter,
-        RetrievalResult,
         RetrievalService,
     )
-    from src.contexts.knowledge.domain.models.source_type import SourceType
 
 logger = structlog.get_logger()
 
@@ -248,7 +243,7 @@ class FactionDecisionService:
         )
 
         # Limit to available slots and max per generation
-        intents = intents[:min(available_slots, MAX_INTENTS_PER_GENERATION)]
+        intents = intents[: min(available_slots, MAX_INTENTS_PER_GENERATION)]
 
         if not intents:
             error_msg = f"No valid intents generated for faction {faction.id}"
@@ -316,14 +311,17 @@ class FactionDecisionService:
                 reason="RetrievalService not configured",
             )
             # Return a new context with same data (no mutation)
-            return DecisionContext(
-                faction_id=context.faction_id,
-                resources=dict(context.resources),
-                diplomacy=dict(context.diplomacy),
-                territories=list(context.territories),
-                recent_events=recent_events,
-                relevant_lore=relevant_lore,
-            ), False
+            return (
+                DecisionContext(
+                    faction_id=context.faction_id,
+                    resources=dict(context.resources),
+                    diplomacy=dict(context.diplomacy),
+                    territories=list(context.territories),
+                    recent_events=recent_events,
+                    relevant_lore=relevant_lore,
+                ),
+                False,
+            )
 
         try:
             # Import here to avoid circular imports
@@ -378,14 +376,17 @@ class FactionDecisionService:
             )
 
         # Return a NEW context with enriched data (never mutate input)
-        return DecisionContext(
-            faction_id=context.faction_id,
-            resources=dict(context.resources),
-            diplomacy=dict(context.diplomacy),
-            territories=list(context.territories),
-            recent_events=recent_events,
-            relevant_lore=relevant_lore,
-        ), rag_success
+        return (
+            DecisionContext(
+                faction_id=context.faction_id,
+                resources=dict(context.resources),
+                diplomacy=dict(context.diplomacy),
+                territories=list(context.territories),
+                recent_events=recent_events,
+                relevant_lore=relevant_lore,
+            ),
+            rag_success,
+        )
 
     def _get_available_actions(
         self, context: DecisionContext
@@ -440,8 +441,7 @@ class FactionDecisionService:
 
             # Check basic requirements
             can_afford = all(
-                resources.get(res, 0) >= req
-                for res, req in action.requirements.items()
+                resources.get(res, 0) >= req for res, req in action.requirements.items()
             )
 
             if can_afford:
@@ -449,9 +449,7 @@ class FactionDecisionService:
 
         # If gold is low, deprioritize EXPAND by moving it to end
         if gold < GOLD_THRESHOLD_PRIORITIZE_TRADE:
-            available.sort(
-                key=lambda a: 0 if a.action_type != ActionType.EXPAND else 1
-            )
+            available.sort(key=lambda a: 0 if a.action_type != ActionType.EXPAND else 1)
 
         return available
 
@@ -660,7 +658,7 @@ class FactionDecisionService:
                 # Truncate rationale to MAX_RATIONALE_LENGTH
                 rationale = raw.get("rationale", "")
                 if len(rationale) > MAX_RATIONALE_LENGTH:
-                    rationale = rationale[:MAX_RATIONALE_LENGTH - 3] + "..."
+                    rationale = rationale[: MAX_RATIONALE_LENGTH - 3] + "..."
 
                 if len(rationale) < 10:
                     rationale = f"Execute {action_type.value} strategy"
@@ -737,7 +735,7 @@ class FactionDecisionService:
         lore_section = ""
         if context.relevant_lore:
             lore_section = "\nRelevant Lore:\n" + "\n".join(
-                f"- {l.get('summary', str(l))}" for l in context.relevant_lore[:3]
+                f"- {lore_item.get('summary', str(lore_item))}" for lore_item in context.relevant_lore[:3]
             )
 
         prompt = f"""You are an AI assistant generating strategic intents for a faction.
@@ -896,7 +894,9 @@ Respond with JSON in this format:
         if military >= MILITARY_THRESHOLD_NO_SABOTAGE:
             if can_use(ActionType.SABOTAGE):
                 enemies = [
-                    f for f, s in context.diplomacy.items() if s in ("enemy", "hostile", "rival")
+                    f
+                    for f, s in context.diplomacy.items()
+                    if s in ("enemy", "hostile", "rival")
                 ]
                 if enemies:
                     intents.append(
@@ -913,7 +913,9 @@ Respond with JSON in this format:
         if len(intents) < MAX_INTENTS_PER_GENERATION:
             if can_use(ActionType.STABILIZE):
                 # Only add if not already present
-                has_stabilize = any(i.action_type == ActionType.STABILIZE for i in intents)
+                has_stabilize = any(
+                    i.action_type == ActionType.STABILIZE for i in intents
+                )
                 if not has_stabilize:
                     intents.append(
                         FactionIntent(

@@ -93,7 +93,7 @@ class LayeredMemorySystem:
         episodic_max: int = 1000,
         semantic_max: int = 5000,
         emotional_max: int = 500,
-    ):
+    ) -> None:
         """
         Initializes the LayeredMemorySystem.
 
@@ -579,7 +579,7 @@ class LayeredMemorySystem:
 
         return insights
 
-    def _update_performance_metrics(self, query_duration_ms: float, result_count: int):
+    def _update_performance_metrics(self, query_duration_ms: float, _result_count: int):
         """Updates performance metrics after a query."""
         total = self.total_queries
         avg_time = self.performance_metrics["average_query_time"]

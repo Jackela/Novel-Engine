@@ -174,7 +174,7 @@ class ContextWindowManager:
         token_counter: TokenCounter | None = None,
         context_optimizer: ContextOptimizer | None = None,
         config: ContextWindowConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the context window manager.
 

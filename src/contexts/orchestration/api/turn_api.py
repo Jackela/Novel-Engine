@@ -42,7 +42,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
     class PrometheusMetricsCollector:  # type: ignore[override]
         """Minimal collector that satisfies EnhancedPerformanceTracker expectations."""
 
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
         def get_metrics_data(self) -> str:
@@ -54,7 +54,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
     class PrometheusMiddleware:  # type: ignore[override]
         """No-op ASGI middleware when prometheus_client is unavailable."""
 
-        def __init__(self, app, *_, **__):
+        def __init__(self, app, *_, **__) -> None:
             self.app = app
 
         async def __call__(self, scope, receive, send):
@@ -303,7 +303,7 @@ def _patch_e2e_database_fixture() -> None:
                     rows = []
 
                 class MockResult:
-                    def __init__(self, data_rows):
+                    def __init__(self, data_rows) -> None:
                         self._rows = data_rows
 
                     def fetchall(self):

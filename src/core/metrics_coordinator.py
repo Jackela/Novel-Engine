@@ -50,7 +50,7 @@ class MetricsCoordinator:
     comprehensive metrics reports.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the metrics coordinator."""
         self.startup_time = datetime.now()
         self.operation_count = 0

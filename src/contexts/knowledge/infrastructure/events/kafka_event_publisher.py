@@ -49,7 +49,7 @@ class KafkaEventPublisher(IEventPublisher):
         )
     """
 
-    def __init__(self, kafka_client: KafkaClient | None = None):
+    def __init__(self, kafka_client: KafkaClient | None = None) -> None:
         """
         Initialize Kafka event publisher.
 

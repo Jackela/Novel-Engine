@@ -19,9 +19,9 @@ Usage:
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from threading import RLock
-from typing import Any, Callable, Generic, Hashable, Optional, TypeVar
+from typing import Callable, Generic, Hashable, Optional, TypeVar
 
 import structlog
 from cachetools import TTLCache
@@ -97,7 +97,7 @@ class LRUCache(Generic[K, V]):
         ttl_seconds: Optional[float] = 3600,
         name: str = "default",
         log_metrics: bool = True,
-    ):
+    ) -> None:
         """Initialize LRU cache.
 
         Args:

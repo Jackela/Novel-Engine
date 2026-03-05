@@ -56,8 +56,7 @@ class SourceType(str, Enum):
             if member.value == normalized:
                 return member
         raise ValueError(
-            f"Unknown SourceType: {value}. "
-            f"Valid values: {[s.value for s in cls]}"
+            f"Unknown SourceType: {value}. " f"Valid values: {[s.value for s in cls]}"
         )
 
 

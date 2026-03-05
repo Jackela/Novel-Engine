@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class InteractionPersistence:
     """Handles interaction storage and metrics."""
 
-    def __init__(self, db: ContextDatabase):
+    def __init__(self, db: ContextDatabase) -> None:
         self.db = db
 
     async def _store_interaction_outcome(self, outcome: InteractionOutcome):

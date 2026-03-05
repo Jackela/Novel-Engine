@@ -862,8 +862,8 @@ class CharacterInteractionProcessor:
         try:
             async with self.database.get_connection() as conn:
                 await conn.execute(
-                    """INSERT INTO character_interactions 
-                       (interaction_id, participants, outcome_data, timestamp) 
+                    """INSERT INTO character_interactions
+                       (interaction_id, participants, outcome_data, timestamp)
                        VALUES (?, ?, ?, ?)""",
                     (
                         outcome.interaction_id,

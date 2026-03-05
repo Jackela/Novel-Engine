@@ -109,7 +109,7 @@ class ServiceContainer:
         self,
         config_manager: Optional[ConfigurationManager] = None,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize service container."""
         self.config_manager = config_manager
         self.error_handler = error_handler

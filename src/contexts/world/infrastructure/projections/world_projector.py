@@ -49,7 +49,7 @@ class WorldProjector:
     - Dead letter queue for failed events
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the world projector service."""
         self.logger = logger.getChild(self.__class__.__name__)
         self._metrics = ProjectorMetrics()

@@ -9,10 +9,9 @@ This module contains schemas for social systems including:
 Created as part of PREP-002 (Operation Vanguard).
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
-
 
 # === Relationship Schemas (WORLD-003) ===
 

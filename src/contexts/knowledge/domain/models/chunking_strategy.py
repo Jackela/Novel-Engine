@@ -95,7 +95,9 @@ class ChunkingStrategy:
     chunk_size: int = DEFAULT_CHUNK_SIZE
     overlap: int | None = None  # None = auto-calculate as 10% of chunk_size
     min_chunk_size: int = MIN_CHUNK_SIZE
-    _auto_calculated_overlap: int = field(default=0, init=False, repr=False, compare=False)
+    _auto_calculated_overlap: int = field(
+        default=0, init=False, repr=False, compare=False
+    )
 
     def __post_init__(self) -> None:
         """Validate chunking parameters and auto-calculate overlap if needed."""
@@ -220,7 +222,9 @@ class ChunkingStrategy:
         )
 
     @classmethod
-    def for_auto(cls, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int | None = None) -> ChunkingStrategy:
+    def for_auto(
+        cls, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int | None = None
+    ) -> ChunkingStrategy:
         """
         Create chunking strategy with auto-detection.
 

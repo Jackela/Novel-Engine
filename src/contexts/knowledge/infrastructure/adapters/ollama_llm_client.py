@@ -98,7 +98,7 @@ class OllamaLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 120,  # Longer timeout for local inference
-    ):
+    ) -> None:
         """
         Initialize the Ollama LLM client.
 

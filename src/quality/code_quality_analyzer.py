@@ -139,7 +139,7 @@ class CodeQualityAnalyzer:
     - Technical debt quantification
     """
 
-    def __init__(self, project_root: str):
+    def __init__(self, project_root: str) -> None:
         self.project_root = Path(project_root)
         self.quality_issues: List[QualityIssue] = []
         self.file_metrics: Dict[str, FileQualityMetrics] = {}

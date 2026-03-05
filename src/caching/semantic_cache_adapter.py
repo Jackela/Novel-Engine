@@ -18,7 +18,7 @@ class _BucketEntry:
 
 
 class SemanticCacheBucketed:
-    def __init__(self, ttl_seconds: int = 60 * 60):
+    def __init__(self, ttl_seconds: int = 60 * 60) -> None:
         self.ttl_seconds = ttl_seconds
         self._buckets: DefaultDict[str, List[_BucketEntry]] = defaultdict(list)
 

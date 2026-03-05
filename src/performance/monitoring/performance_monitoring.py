@@ -87,27 +87,31 @@ class PerformanceAlert:
 class MetricsCollector:
     """Collects and aggregates performance metrics."""
 
-    def __init__(self, max_points: int = 10000):
+    def __init__(self, max_points: int = 10000) -> None:
         self.max_points = max_points
-        self.metrics = defaultdict(lambda: deque(maxlen=max_points))
-        self.counters = defaultdict(float)
-        self.histograms = defaultdict(list)
+        self.metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_points))
+        self.counters: Dict[str, float] = defaultdict(float)
+        self.histograms: Dict[str, List[float]] = defaultdict(list)
         self.lock = threading.RLock()
 
     def record_counter(
-        self, name: str, value: float = 1.0, tags: Dict[str, str] = None
-    ):
+        self, name: str, value: float = 1.0, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a counter metric."""
         with self.lock:
             self.counters[name] += value
             self._add_metric_point(name, self.counters[name], MetricType.COUNTER, tags)
 
-    def record_gauge(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_gauge(
+        self, name: str, value: float, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a gauge metric."""
         with self.lock:
             self._add_metric_point(name, value, MetricType.GAUGE, tags)
 
-    def record_histogram(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_histogram(
+        self, name: str, value: float, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a histogram metric."""
         with self.lock:
             self.histograms[name].append(value)
@@ -200,7 +204,7 @@ class MetricsCollector:
 class SystemMetricsCollector:
     """Collects system-level performance metrics."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.process = psutil.Process()
         self.last_cpu_times = None
@@ -281,7 +285,7 @@ class SystemMetricsCollector:
 class ApplicationMetricsCollector:
     """Collects application-specific performance metrics."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.request_start_times = {}
 
@@ -349,7 +353,7 @@ class ApplicationMetricsCollector:
 class AlertManager:
     """Manages performance alerts and notifications."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.thresholds = {}
         self.alerts = {}
@@ -462,7 +466,7 @@ class AlertManager:
 class PerformanceRegression:
     """Detects performance regressions using statistical analysis."""
 
-    def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0):
+    def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0) -> None:
         self.collector = collector
         self.sensitivity = sensitivity  # Standard deviations for regression detection
         self.baselines = {}
@@ -542,7 +546,7 @@ class PerformanceRegression:
 class PerformanceMonitor:
     """Main performance monitoring system."""
 
-    def __init__(self, db_path: str = "data/performance_metrics.db"):
+    def __init__(self, db_path: str = "data/performance_metrics.db") -> None:
         self.db_path = db_path
         self.collector = MetricsCollector()
         self.system_collector = SystemMetricsCollector(self.collector)
@@ -562,7 +566,8 @@ class PerformanceMonitor:
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -571,12 +576,14 @@ class PerformanceMonitor:
                     tags TEXT,
                     metric_type TEXT
                 )
-            """)
+            """
+            )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_name_timestamp ON metrics(name, timestamp)"
             )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS alerts (
                     id TEXT PRIMARY KEY,
                     metric_name TEXT NOT NULL,
@@ -588,7 +595,8 @@ class PerformanceMonitor:
                     timestamp REAL NOT NULL,
                     acknowledged BOOLEAN DEFAULT FALSE
                 )
-            """)
+            """
+            )
 
     def _setup_default_thresholds(self):
         """Setup default performance thresholds."""
@@ -797,7 +805,7 @@ performance_monitor = PerformanceMonitor()
 class TimerContext:
     """Context manager for timing operations."""
 
-    def __init__(self, metric_name: str, tags: Dict[str, str] = None):
+    def __init__(self, metric_name: str, tags: Dict[str, str] = None) -> None:
         self.metric_name = metric_name
         self.tags = tags or {}
         self.start_time = None

@@ -72,7 +72,7 @@ class PersonaCore:
         character_directory_path: str,
         event_bus: "EventBus",
         agent_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize core agent infrastructure.
 
@@ -149,7 +149,7 @@ class PersonaCore:
 
         # Create a simple object with agent_id property for test compatibility
         class MemoryInterface:
-            def __init__(self, agent_id: str):
+            def __init__(self, agent_id: str) -> None:
                 self.agent_id = agent_id
 
         return MemoryInterface(self.agent_id)
@@ -159,7 +159,7 @@ class PersonaCore:
         """Get narrative interface with agent_id property for compatibility."""
 
         class NarrativeInterface:
-            def __init__(self, agent_id: str):
+            def __init__(self, agent_id: str) -> None:
                 self.agent_id = agent_id
 
         return NarrativeInterface(self.agent_id)
@@ -169,7 +169,7 @@ class PersonaCore:
         """Get actions interface with agent_id property for compatibility."""
 
         class ActionsInterface:
-            def __init__(self, agent_id: str):
+            def __init__(self, agent_id: str) -> None:
                 self.agent_id = agent_id
 
         return ActionsInterface(self.agent_id)

@@ -63,13 +63,23 @@ class CausalNode:
     node_type: str = "event"  # event, action, state, condition, etc.
 
     # Causal relationships
-    direct_causes: FrozenSet[str] = None  # Node IDs that directly cause this node
-    direct_effects: FrozenSet[str] = None  # Node IDs directly caused by this node
-    indirect_causes: FrozenSet[str] = None  # Node IDs that indirectly cause this node
-    indirect_effects: FrozenSet[str] = None  # Node IDs indirectly caused by this node
+    direct_causes: Optional[FrozenSet[str]] = (
+        None  # Node IDs that directly cause this node
+    )
+    direct_effects: Optional[FrozenSet[str]] = (
+        None  # Node IDs directly caused by this node
+    )
+    indirect_causes: Optional[FrozenSet[str]] = (
+        None  # Node IDs that indirectly cause this node
+    )
+    indirect_effects: Optional[FrozenSet[str]] = (
+        None  # Node IDs indirectly caused by this node
+    )
 
     # Relationship metadata
-    causal_relationships: Dict[str, Dict[str, Any]] = None  # Detailed relationship info
+    causal_relationships: Optional[Dict[str, Dict[str, Any]]] = (
+        None  # Detailed relationship info
+    )
 
     # Temporal context
     sequence_order: Optional[int] = None
@@ -92,18 +102,22 @@ class CausalNode:
     story_arc_impact: Decimal = Decimal("5.0")  # 1-10 scale
 
     # Conditions and constraints
-    prerequisite_conditions: FrozenSet[str] = None  # Conditions required for this node
-    blocking_conditions: FrozenSet[str] = None  # Conditions that prevent this node
+    prerequisite_conditions: Optional[FrozenSet[str]] = (
+        None  # Conditions required for this node
+    )
+    blocking_conditions: Optional[FrozenSet[str]] = (
+        None  # Conditions that prevent this node
+    )
 
     # Metadata
-    tags: FrozenSet[str] = None
+    tags: Optional[FrozenSet[str]] = None
     narrative_context: str = ""
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.direct_causes is None:
@@ -156,7 +170,7 @@ class CausalNode:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.node_id or not self.node_id.strip():
             raise ValueError("Causal node ID cannot be empty")

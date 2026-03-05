@@ -343,7 +343,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
     Handles persistence operations for narrative arcs using SQLAlchemy ORM.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize repository with database session.
 

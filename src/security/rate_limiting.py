@@ -206,7 +206,7 @@ class ClientState:
 class RateLimitExceeded(Exception):
     """ENHANCED RATE LIMIT EXCEPTION"""
 
-    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel):
+    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel) -> None:
         self.message = message
         self.retry_after = retry_after
         self.threat_level = threat_level
@@ -220,7 +220,7 @@ class RateLimiter:
         self,
         config: RateLimitConfig,
         backend: Optional["InMemoryRateLimitBackend"] = None,
-    ):
+    ) -> None:
         self.config = config
         self.clients: Dict[str, ClientState] = {}
         self.backend = backend or InMemoryRateLimitBackend()
@@ -539,7 +539,7 @@ class RateLimiter:
 class InMemoryRateLimitBackend:
     """STANDARD IN-MEMORY RATE LIMIT BACKEND"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.clients: Dict[str, ClientState] = {}
         self.global_stats = {
             "total_requests": 0,
@@ -662,7 +662,7 @@ class InMemoryRateLimitBackend:
 class DDoSDetector:
     """Lightweight async DDoS detector used in middleware tests."""
 
-    def __init__(self, threshold: int = 500, interval_seconds: int = 60):
+    def __init__(self, threshold: int = 500, interval_seconds: int = 60) -> None:
         self.threshold = threshold
         self.interval_seconds = interval_seconds
         self._request_windows: Dict[str, deque] = {}
@@ -686,7 +686,7 @@ class DDoSDetector:
 class IPWhitelist:
     """Simple IP whitelist with sensible defaults for local development."""
 
-    def __init__(self, additional_ips: Optional[List[str]] = None):
+    def __init__(self, additional_ips: Optional[List[str]] = None) -> None:
         defaults: Set[str] = {
             "127.0.0.1",
             "::1",
@@ -716,7 +716,7 @@ class RateLimitMiddleware:
         strategy: Optional[RateLimitStrategy] = None,
         config: Optional[RateLimitConfig] = None,
         rate_limiter: Optional[RateLimiter] = None,
-    ):
+    ) -> None:
         self.app = app
         self.strategy = strategy or RateLimitStrategy.TOKEN_BUCKET
         self.config = config or RateLimitConfig(strategy=self.strategy)

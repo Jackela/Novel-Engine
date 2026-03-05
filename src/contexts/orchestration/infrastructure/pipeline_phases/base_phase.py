@@ -31,7 +31,7 @@ class PhaseExecutionContext:
         configuration: TurnConfiguration,
         participants: List[str],
         execution_metadata: Dict[str, Any],
-    ):
+    ) -> None:
         self.turn_id = turn_id
         self.phase_type = phase_type
         self.configuration = configuration
@@ -128,7 +128,7 @@ class PhaseResult:
         rollback_data: Optional[Dict[str, Any]] = None,
         cross_context_calls: Optional[List[Dict[str, Any]]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.success = success
         self.events_processed = events_processed
         self.events_generated = events_generated or []
@@ -150,7 +150,7 @@ class BasePhaseImplementation(ABC):
     rollback data collection, performance monitoring, and cross-context integration.
     """
 
-    def __init__(self, phase_type: PhaseType):
+    def __init__(self, phase_type: PhaseType) -> None:
         self.phase_type = phase_type
         self.execution_timeout_ms = 10000  # 10 seconds default
         self.retry_attempts = 3

@@ -258,7 +258,10 @@ async def ready() -> ReadinessResponseV2:
             status_code=503,
             detail={
                 "status": "unhealthy",
-                "checks": {k: {"status": v.status, "message": v.message} for k, v in checks.items()},
+                "checks": {
+                    k: {"status": v.status, "message": v.message}
+                    for k, v in checks.items()
+                },
             },
         )
 

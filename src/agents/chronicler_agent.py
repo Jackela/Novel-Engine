@@ -249,7 +249,7 @@ class ChroniclerAgent:
         genre: Optional[StoryGenre] = None,
         language: Language = Language.ENGLISH,
         custom_prompt: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initializes the ChroniclerAgent.
 

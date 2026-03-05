@@ -515,7 +515,9 @@ class WorldState(Entity):
         """
         return self.get_entities_in_area(coordinates, tolerance)
 
-    def advance_time(self, days: int, reason: Optional[str] = None) -> Result["WorldState", ValueError]:
+    def advance_time(
+        self, days: int, reason: Optional[str] = None
+    ) -> Result["WorldState", ValueError]:
         """
         Advance the world calendar by a specified number of days.
 
@@ -726,23 +728,29 @@ class WorldState(Entity):
             return Ok(None)
 
         except (TypeError, ValueError) as e:
-            return Err(SaveError(
-                message=f"Failed to serialize world state: {e}",
-                entity_type="WorldState",
-                details={"error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Failed to serialize world state: {e}",
+                    entity_type="WorldState",
+                    details={"error_type": type(e).__name__},
+                )
+            )
         except OSError as e:
-            return Err(SaveError(
-                message=f"Failed to write world state file: {e}",
-                entity_type="WorldState",
-                details={"file_path": file_path, "error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Failed to write world state file: {e}",
+                    entity_type="WorldState",
+                    details={"file_path": file_path, "error_type": type(e).__name__},
+                )
+            )
         except Exception as e:
-            return Err(SaveError(
-                message=f"Unexpected error saving world state: {e}",
-                entity_type="WorldState",
-                details={"error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Unexpected error saving world state: {e}",
+                    entity_type="WorldState",
+                    details={"error_type": type(e).__name__},
+                )
+            )
 
     # Spatial Index Management
 

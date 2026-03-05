@@ -37,7 +37,7 @@ import boto3
 import redis.asyncio as aioredis
 import yaml
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,13 @@ logger = logging.getLogger(__name__)
 class StateStoreConfig(BaseModel):
     """State store configuration"""
 
-    redis_url: str = Field(default="", description="Redis connection URL (set via REDIS_URL env var)")
-    postgres_url: str = Field(default="", description="PostgreSQL connection URL (set via POSTGRES_URL env var)")
+    redis_url: str = Field(
+        default="", description="Redis connection URL (set via REDIS_URL env var)"
+    )
+    postgres_url: str = Field(
+        default="",
+        description="PostgreSQL connection URL (set via POSTGRES_URL env var)",
+    )
     s3_bucket: str = "novel-engine-storage"
     s3_region: str = "us-east-1"
     aws_access_key: Optional[str] = None
@@ -56,7 +61,7 @@ class StateStoreConfig(BaseModel):
     max_retries: int = 3
     connection_timeout: int = 30
 
-    def __init__(self, **data):
+    def __init__(self, **data) -> None:
         # Allow environment variable overrides for sensitive values
         if not data.get("redis_url"):
             data["redis_url"] = os.getenv("REDIS_URL", "")
@@ -131,7 +136,7 @@ class StateStore(ABC):
 class RedisStateStore(StateStore):
     """Redis-based state store for fast access"""
 
-    def __init__(self, config: StateStoreConfig):
+    def __init__(self, config: StateStoreConfig) -> None:
         self.config = config
         self.redis: Optional[aioredis.Redis] = None
         self._connected = False
@@ -306,7 +311,7 @@ class RedisStateStore(StateStore):
 class PostgreSQLStateStore(StateStore):
     """PostgreSQL-based state store for persistent data"""
 
-    def __init__(self, config: StateStoreConfig):
+    def __init__(self, config: StateStoreConfig) -> None:
         self.config = config
         self.pool: Optional[asyncpg.Pool] = None
         self._connected = False
@@ -419,8 +424,8 @@ class PostgreSQLStateStore(StateStore):
                     """
                     INSERT INTO state_data (key_hash, namespace, entity_type, entity_id, version, data, expires_at)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    ON CONFLICT (key_hash) 
-                    DO UPDATE SET 
+                    ON CONFLICT (key_hash)
+                    DO UPDATE SET
                         data = EXCLUDED.data,
                         updated_at = NOW(),
                         expires_at = EXCLUDED.expires_at
@@ -489,7 +494,7 @@ class PostgreSQLStateStore(StateStore):
                 rows = await conn.fetch(
                     """
                     SELECT namespace, entity_type, entity_id, version
-                    FROM state_data 
+                    FROM state_data
                     WHERE CONCAT(namespace, ':', entity_type, ':', entity_id, COALESCE(':', version, '')) LIKE $1
                     AND (expires_at IS NULL OR expires_at > NOW())
                     ORDER BY created_at DESC
@@ -523,8 +528,8 @@ class PostgreSQLStateStore(StateStore):
                 rows = await conn.fetch(
                     """
                     SELECT namespace, entity_type, entity_id, version, data, created_at, updated_at
-                    FROM state_data 
-                    WHERE namespace = $1 
+                    FROM state_data
+                    WHERE namespace = $1
                     AND (expires_at IS NULL OR expires_at > NOW())
                     ORDER BY updated_at DESC
                     LIMIT $2
@@ -582,7 +587,7 @@ class PostgreSQLStateStore(StateStore):
 class S3StateStore(StateStore):
     """S3-based state store for large files and documents"""
 
-    def __init__(self, config: StateStoreConfig):
+    def __init__(self, config: StateStoreConfig) -> None:
         self.config = config
         self.s3_client = None
         self._connected = False
@@ -848,7 +853,7 @@ class S3StateStore(StateStore):
 class UnifiedStateManager:
     """Unified state manager that routes to appropriate stores"""
 
-    def __init__(self, config: StateStoreConfig):
+    def __init__(self, config: StateStoreConfig) -> None:
         self.config = config
         self.redis_store = RedisStateStore(config)
         self.postgres_store = PostgreSQLStateStore(config)
@@ -1012,7 +1017,7 @@ class UnifiedStateManager:
 class ConfigurationManager:
     """Unified configuration manager"""
 
-    def __init__(self, config_paths: List[str] = None):
+    def __init__(self, config_paths: List[str] = None) -> None:
         self.config_paths = config_paths or [
             "/etc/novel-engine/config/environments/development.yaml",
             "./config/environments/development.yaml",

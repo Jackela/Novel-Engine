@@ -26,7 +26,7 @@ class WorldStateManager:
     - State validation and consistency
     """
 
-    def __init__(self, world_state_file_path: Optional[str] = None):
+    def __init__(self, world_state_file_path: Optional[str] = None) -> None:
         """
         Initialize the world state manager.
 

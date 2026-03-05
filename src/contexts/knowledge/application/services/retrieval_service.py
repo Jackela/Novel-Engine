@@ -239,7 +239,7 @@ class RetrievalService:
         vector_store: IVectorStore,
         default_collection: str = DEFAULT_COLLECTION,
         rerank_service: RerankService | None = None,
-    ):
+    ) -> None:
         """
         Initialize the retrieval service.
 
@@ -477,13 +477,15 @@ class RetrievalService:
             rerank_error=rerank_error,
         )
 
-        return Ok(RetrievalResult(
-            chunks=chunks,
-            query=query,
-            total_retrieved=len(query_results),
-            filtered=filtered_count,
-            deduplicated=deduplicated_count,
-        ))
+        return Ok(
+            RetrievalResult(
+                chunks=chunks,
+                query=query,
+                total_retrieved=len(query_results),
+                filtered=filtered_count,
+                deduplicated=deduplicated_count,
+            )
+        )
 
     def format_context(
         self,

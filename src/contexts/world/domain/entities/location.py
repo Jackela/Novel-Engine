@@ -194,12 +194,18 @@ class Location(Entity):
     parent_location_id: Optional[str] = None
     child_location_ids: List[str] = field(default_factory=list)
     controlling_faction_id: Optional[str] = None
-    contested_by: List[str] = field(default_factory=list)  # Faction IDs contesting control
-    resource_yields: List["ResourceYield"] = field(default_factory=list)  # Production rates
+    contested_by: List[str] = field(
+        default_factory=list
+    )  # Faction IDs contesting control
+    resource_yields: List["ResourceYield"] = field(
+        default_factory=list
+    )  # Production rates
     territory_value: int = 0  # Strategic importance (0-100)
     infrastructure_level: int = 0  # Development level (0-100)
     population: int = 0
-    demographic_breakdown: DemographicBreakdown = field(default_factory=dict)  # race/species -> percentage
+    demographic_breakdown: DemographicBreakdown = field(
+        default_factory=dict
+    )  # race/species -> percentage
     population_growth_rate: float = 0.0  # Annual growth rate (e.g., 0.02 = 2%)
     happiness_level: int = 50  # Population happiness (0-100)
     notable_features: List[str] = field(default_factory=list)
@@ -266,7 +272,10 @@ class Location(Entity):
         errors = []
 
         # Controlling faction shouldn't be in contested list
-        if self.controlling_faction_id and self.controlling_faction_id in self.contested_by:
+        if (
+            self.controlling_faction_id
+            and self.controlling_faction_id in self.contested_by
+        ):
             errors.append(
                 f"Controlling faction {self.controlling_faction_id} "
                 "should not be in contested_by list"
@@ -557,7 +566,8 @@ class Location(Entity):
         if isinstance(resource_yield, RY):
             # Remove existing yield of same type
             self.resource_yields = [
-                ry for ry in self.resource_yields
+                ry
+                for ry in self.resource_yields
                 if ry.resource_type != resource_yield.resource_type
             ]
             self.resource_yields.append(resource_yield)
@@ -604,7 +614,9 @@ class Location(Entity):
         """
         new_level = self.infrastructure_level + levels
         if new_level > 100:
-            raise ValueError(f"Infrastructure level cannot exceed 100 (would be {new_level})")
+            raise ValueError(
+                f"Infrastructure level cannot exceed 100 (would be {new_level})"
+            )
         self.infrastructure_level = new_level
         self.touch()
 

@@ -46,7 +46,7 @@ class OpenAIProvider(ILLMProvider):
         base_url: str = "https://api.openai.com/v1",
         timeout_seconds: int = 30,
         max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize OpenAI provider.
 

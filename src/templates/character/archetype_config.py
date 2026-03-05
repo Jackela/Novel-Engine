@@ -58,7 +58,7 @@ Location: {{current_location}}
 {% if equipment_states %}
 Equipment Status:
 {% for item, status in equipment_states.items() %}
-- {{item}}: {{status.condition if status.condition else status}} 
+- {{item}}: {{status.condition if status.condition else status}}
 {% endfor %}
 {% endif %}
 

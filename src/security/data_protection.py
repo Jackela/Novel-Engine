@@ -136,7 +136,7 @@ class DataProcessingRecord:
 class EncryptionService:
     """STANDARD ENCRYPTION SERVICE ENHANCED BY CRYPTOGRAPHY"""
 
-    def __init__(self, master_key: Optional[str] = None):
+    def __init__(self, master_key: Optional[str] = None) -> None:
         if master_key:
             self.master_key = master_key.encode()
         else:
@@ -215,7 +215,7 @@ class EncryptionService:
 class PseudonymizationService:
     """STANDARD PSEUDONYMIZATION SERVICE"""
 
-    def __init__(self, secret_key: str):
+    def __init__(self, secret_key: str) -> None:
         self.secret_key = secret_key.encode()
 
     def pseudonymize(self, identifier: str, purpose: str = "default") -> str:
@@ -235,7 +235,7 @@ class PseudonymizationService:
 class DataProtectionService:
     """STANDARD DATA PROTECTION SERVICE ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, master_key: Optional[str] = None):
+    def __init__(self, database_path: str, master_key: Optional[str] = None) -> None:
         self.database_path = database_path
         self.encryption_service = EncryptionService(master_key)
         self.pseudonymization_service = PseudonymizationService(
@@ -300,7 +300,8 @@ class DataProtectionService:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Consent management table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS consent_records (
                     consent_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -314,10 +315,12 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Data processing records
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS data_processing_records (
                     record_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -331,10 +334,12 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Data retention schedule
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS data_retention_schedule (
                     id TEXT PRIMARY KEY,
                     data_type TEXT NOT NULL,
@@ -345,10 +350,12 @@ class DataProtectionService:
                     deleted BOOLEAN DEFAULT FALSE,
                     deletion_reason TEXT NULL
                 )
-            """)
+            """
+            )
 
             # Pseudonym mappings (encrypted)
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS pseudonym_mappings (
                     id TEXT PRIMARY KEY,
                     purpose TEXT NOT NULL,
@@ -356,7 +363,8 @@ class DataProtectionService:
                     pseudonym TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("DATA PROTECTION DATABASE INITIALIZED")
@@ -389,7 +397,7 @@ class DataProtectionService:
             await conn.execute(
                 """
                 INSERT INTO consent_records (
-                    consent_id, user_id, purpose, status, granted_at, 
+                    consent_id, user_id, purpose, status, granted_at,
                     expires_at, consent_text, processing_activities
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -414,7 +422,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                UPDATE consent_records 
+                UPDATE consent_records
                 SET status = ?, withdrawn_at = ?, updated_at = ?
                 WHERE user_id = ? AND purpose = ? AND status = ?
             """,
@@ -467,7 +475,7 @@ class DataProtectionService:
                     # Mark as expired
                     await conn.execute(
                         """
-                        UPDATE consent_records 
+                        UPDATE consent_records
                         SET status = ?, updated_at = ?
                         WHERE user_id = ? AND purpose = ? AND status = ?
                     """,
@@ -636,7 +644,7 @@ class DataProtectionService:
                     # Mark as deleted
                     await conn.execute(
                         """
-                        UPDATE data_retention_schedule 
+                        UPDATE data_retention_schedule
                         SET deleted = TRUE, deletion_reason = 'Retention period expired'
                         WHERE id = ?
                     """,
@@ -686,7 +694,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT purpose, status, granted_at, consent_text 
+                SELECT purpose, status, granted_at, consent_text
                 FROM consent_records WHERE user_id = ?
             """,
                 (user_id,),
@@ -714,7 +722,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT processing_purpose, lawful_basis, data_categories, 
+                SELECT processing_purpose, lawful_basis, data_categories,
                        recipients, security_measures, created_at
                 FROM data_processing_records WHERE user_id = ?
             """,

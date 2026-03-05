@@ -30,7 +30,7 @@ except (
     )
 
     class _NoOpMetric:
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
         def labels(self, *_, **__):
@@ -62,7 +62,7 @@ except (
             return _Timer()
 
     class CollectorRegistry:  # type: ignore[override]
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
     Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
@@ -91,7 +91,7 @@ class PrometheusMetricsCollector:
     - Error tracking and alerting
     """
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: Optional[CollectorRegistry] = None) -> None:
         """
         Initialize Prometheus metrics collector.
 

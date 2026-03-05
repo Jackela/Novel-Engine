@@ -49,7 +49,7 @@ if WATCHDOG_AVAILABLE:
     class ConfigFileHandler(FileSystemEventHandler):
         """File system event handler for config file changes."""
 
-        def __init__(self, config_service):
+        def __init__(self, config_service) -> None:
             self.config_service = config_service
             self.logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ else:
     class ConfigFileHandler:
         """Dummy handler when watchdog is not available."""
 
-        def __init__(self, config_service):
+        def __init__(self, config_service) -> None:
             pass
 
 
@@ -91,7 +91,7 @@ class ConfigurationService:
         config_dir: str = "config",
         environment: str = "development",
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.logger = logger or logging.getLogger(__name__)
         self.config_dir = Path(config_dir)
         self.environment = environment

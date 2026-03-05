@@ -119,7 +119,7 @@ class CausalEdge:
 class CausalGraph:
     """因果关系图 - 追踪事件间的因果链"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.graph = nx.DiGraph()
         self.nodes: Dict[str, CausalNode] = {}
         self.edges: Dict[Tuple[str, str], CausalEdge] = {}

@@ -93,9 +93,7 @@ class DiplomacyMatrix(Entity):
         """
         return tuple(sorted([faction_a, faction_b]))  # type: ignore
 
-    def get_status(
-        self, faction_a: str, faction_b: str
-    ) -> Optional[DiplomaticStatus]:
+    def get_status(self, faction_a: str, faction_b: str) -> Optional[DiplomaticStatus]:
         """Get the diplomatic status between two factions.
 
         Args:
@@ -142,7 +140,9 @@ class DiplomacyMatrix(Entity):
         """
         # Can't set relation with self
         if faction_a == faction_b:
-            return Err(ValueError("A faction cannot have diplomatic relations with itself"))
+            return Err(
+                ValueError("A faction cannot have diplomatic relations with itself")
+            )
 
         key = self._normalize_key(faction_a, faction_b)
 
@@ -283,8 +283,7 @@ class DiplomacyMatrix(Entity):
 
         # Remove all relations involving this faction
         relations_to_remove = [
-            key for key in self.relations.keys()
-            if faction_id in key
+            key for key in self.relations.keys() if faction_id in key
         ]
         for key in relations_to_remove:
             del self.relations[key]
@@ -446,9 +445,7 @@ class DiplomacyMatrix(Entity):
             if pact.is_active()
         ]
 
-    def get_pacts_by_type(
-        self, pact_type: "PactType"
-    ) -> List["DiplomaticPact"]:
+    def get_pacts_by_type(self, pact_type: "PactType") -> List["DiplomaticPact"]:
         """Get all pacts of a specific type.
 
         Args:
@@ -496,8 +493,7 @@ class DiplomacyMatrix(Entity):
         initial_count = len(self.active_pacts)
 
         self.active_pacts = [
-            pact for pact in self.active_pacts
-            if pact.is_active(current_time)
+            pact for pact in self.active_pacts if pact.is_active(current_time)
         ]
 
         removed = initial_count - len(self.active_pacts)
@@ -511,8 +507,7 @@ class DiplomacyMatrix(Entity):
         return {
             "world_id": self.world_id,
             "relations": {
-                f"{a}|{b}": status.value
-                for (a, b), status in self.relations.items()
+                f"{a}|{b}": status.value for (a, b), status in self.relations.items()
             },
             "faction_ids": list(self.faction_ids),
             "faction_count": len(self.faction_ids),
@@ -557,6 +552,7 @@ class DiplomacyMatrix(Entity):
     def _parse_datetime(value: Optional[str]) -> Any:
         """Parse datetime from ISO format string."""
         from datetime import datetime
+
         if value:
             return datetime.fromisoformat(value)
         return datetime.now()

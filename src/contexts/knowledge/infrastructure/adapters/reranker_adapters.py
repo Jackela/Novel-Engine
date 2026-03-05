@@ -14,21 +14,96 @@ Warzone 4: AI Brain - BRAIN-010B
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import structlog
 
 from ...application.ports.i_reranker import (
+    IReranker,
     RerankDocument,
     RerankerError,
     RerankOutput,
     RerankResult,
 )
 
-if TYPE_CHECKING:
-    pass
-
 logger = structlog.get_logger()
+
+
+# Reranker type enumeration
+class RerankerType:
+    """
+    Enumeration of available reranker types.
+
+    Attributes:
+        COHERE: Cohere API-based reranker (requires API key)
+        LOCAL: Local sentence-transformers reranker
+        MOCK: Mock reranker for testing
+        NOOP: No-op reranker that preserves original order
+    """
+
+    COHERE = "cohere"
+    LOCAL = "local"
+    MOCK = "mock"
+    NOOP = "noop"
+
+    @classmethod
+    def all_types(cls) -> list[str]:
+        """Get all available reranker types."""
+        return [cls.COHERE, cls.LOCAL, cls.MOCK, cls.NOOP]
+
+    @classmethod
+    def is_valid(cls, reranker_type: str) -> bool:
+        """Check if a reranker type is valid."""
+        return reranker_type in cls.all_types()
+
+
+def create_reranker(
+    reranker_type: str = RerankerType.LOCAL,
+    **kwargs: Any,
+) -> IReranker | None:
+    """
+    Factory function to create a reranker instance.
+
+    Args:
+        reranker_type: Type of reranker to create (default: local)
+        **kwargs: Additional arguments passed to reranker constructor
+            - For COHERE: api_key, model, base_url
+            - For LOCAL: model, device, cache_dir
+            - For MOCK: latency_ms
+            - For NOOP: latency_ms
+
+    Returns:
+        IReranker instance or None if type is invalid
+
+    Raises:
+        ValueError: If reranker_type is not valid
+
+    Example:
+        >>> # Create local reranker
+        >>> reranker = create_reranker("local", model="ms-marco-MiniLM-L-6-v2")
+        >>> # Create Cohere reranker
+        >>> reranker = create_reranker("cohere", api_key="...")
+        >>> # Create mock reranker for testing
+        >>> reranker = create_reranker("mock")
+    """
+    if not RerankerType.is_valid(reranker_type):
+        raise ValueError(
+            f"Invalid reranker type: {reranker_type}. "
+            f"Must be one of: {RerankerType.all_types()}"
+        )
+
+    if reranker_type == RerankerType.COHERE:
+        return CohereReranker(**kwargs)
+    elif reranker_type == RerankerType.LOCAL:
+        return LocalReranker(**kwargs)
+    elif reranker_type == RerankerType.MOCK:
+        # Import here to avoid circular dependency
+        from ...application.services.rerank_service import MockReranker
+        return MockReranker(**kwargs)
+    elif reranker_type == RerankerType.NOOP:
+        return NoOpReranker(**kwargs)
+
+    return None
 
 
 # Default configuration values
@@ -71,7 +146,7 @@ class CohereReranker:
         model: str | None = None,
         api_key: str | None = None,
         base_url: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize the Cohere reranker.
 
@@ -324,7 +399,7 @@ class LocalReranker:
         model: str | None = None,
         device: str | None = None,
         cache_dir: str | None = None,
-    ):
+    ) -> None:
         """
         Initialize the local reranker.
 
@@ -524,7 +599,7 @@ class NoOpReranker:
         >>> # Results unchanged
     """
 
-    def __init__(self, latency_ms: float = 0.0):
+    def __init__(self, latency_ms: float = 0.0) -> None:
         """
         Initialize the no-op reranker.
 
@@ -582,4 +657,6 @@ __all__ = [
     "NoOpReranker",
     "DEFAULT_COHERE_MODEL",
     "DEFAULT_LOCAL_MODEL",
+    "RerankerType",
+    "create_reranker",
 ]

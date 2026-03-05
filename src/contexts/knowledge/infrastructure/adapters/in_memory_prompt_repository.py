@@ -90,7 +90,10 @@ class InMemoryPromptRepository(IPromptRepository):
                     self._name_index[template.name] = template.id
                 else:
                     existing_template = self._templates.get(existing_id)
-                    if existing_template is None or template.version >= existing_template.version:
+                    if (
+                        existing_template is None
+                        or template.version >= existing_template.version
+                    ):
                         self._name_index[template.name] = template.id
 
                 return template.id

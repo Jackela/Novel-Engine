@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class TemplateManager:
     """Manages equipment templates and configurations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.templates: Dict[str, EquipmentItem] = {}
 
     def _get_next_maintenance_due(self, equipment_id: str) -> Optional[datetime]:

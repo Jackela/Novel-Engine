@@ -99,7 +99,7 @@ class BeliefModel:
     active_hypotheses: Dict[str, float] = field(default_factory=dict)  # 假设->可信度
     cognitive_filters: Dict[KnowledgeCategory, float] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化认知过滤器"""
         if not self.cognitive_filters:
             # 默认认知偏好权重
@@ -151,7 +151,7 @@ class BeliefModel:
 
     def _resolve_conflicts(
         self, new_fragment: InformationFragment, conflicts: List[InformationFragment]
-    ):
+    ) -> None:
         """解决信息冲突"""
         new_reliability = new_fragment.get_current_reliability()
 
@@ -167,7 +167,7 @@ class BeliefModel:
                 self.information_fragments.remove(conflict)
                 logger.debug(f"Replaced conflicting information for {self.agent_id}")
 
-    def _update_hypotheses(self, fragment: InformationFragment):
+    def _update_hypotheses(self, fragment: InformationFragment) -> None:
         """根据新信息更新假设"""
         # 简化的假设更新逻辑
         category_weight = self.cognitive_filters.get(fragment.category, 1.0)
@@ -219,13 +219,15 @@ class FogOfWarState:
 class FogOfWarService:
     """迷雾战争服务 - 管理信息访问权限"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fog_states: Dict[str, FogOfWarState] = {}
         self.global_visibility_map: Dict[str, Set[str]] = defaultdict(
             set
         )  # location -> visible_agents
 
-    def initialize_agent_fog(self, agent_id: str, initial_location: str = None):
+    def initialize_agent_fog(
+        self, agent_id: str, initial_location: Optional[str] = None
+    ) -> None:
         """初始化Agent的迷雾战争状态"""
         fog_state = FogOfWarState(
             agent_id=agent_id,
@@ -247,8 +249,11 @@ class FogOfWarService:
         self.fog_states[agent_id] = fog_state
 
     def update_visibility(
-        self, agent_id: str, new_locations: List[str], lost_locations: List[str] = None
-    ):
+        self,
+        agent_id: str,
+        new_locations: List[str],
+        lost_locations: Optional[List[str]] = None,
+    ) -> None:
         """更新Agent的可见区域"""
         if agent_id not in self.fog_states:
             self.initialize_agent_fog(agent_id)
@@ -379,7 +384,7 @@ class PersonalizedTurnBrief:
 class TurnBriefFactory:
     """回合简报工厂 - 生成个性化的Turn Brief"""
 
-    def __init__(self, fog_service: FogOfWarService):
+    def __init__(self, fog_service: FogOfWarService) -> None:
         self.fog_service = fog_service
         self.belief_models: Dict[str, BeliefModel] = {}
         self.narrative_templates = self._load_narrative_templates()
@@ -700,7 +705,7 @@ class TurnBriefFactory:
 class SubjectiveRealityEngine:
     """主观现实引擎主类"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fog_service = FogOfWarService()
         self.turn_brief_factory = TurnBriefFactory(self.fog_service)
         self.active_agents: Set[str] = set()

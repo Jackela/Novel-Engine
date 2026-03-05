@@ -23,7 +23,7 @@ class InteractionSession:
         participants: List[str],
         interaction_type: str,
         context: Dict[str, Any],
-    ):
+    ) -> None:
         self.session_id = session_id
         self.participants = participants
         self.interaction_type = interaction_type
@@ -48,7 +48,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
     - Time-constrained interaction windows
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PhaseType.INTERACTION_ORCHESTRATION)
         self.execution_timeout_ms = 20000  # 20 seconds for interactions
         self.interaction_service_endpoint = "interaction_context"

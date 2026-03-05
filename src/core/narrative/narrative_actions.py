@@ -58,7 +58,7 @@ class NarrativeActionResolver:
     relationships, and current narrative state to create meaningful story progression.
     """
 
-    def __init__(self, campaign_brief=None):
+    def __init__(self, campaign_brief=None) -> None:
         """Initializes the NarrativeActionResolver."""
         self.campaign_brief = campaign_brief
         self.logger = logging.getLogger(f"{__name__}.NarrativeActionResolver")

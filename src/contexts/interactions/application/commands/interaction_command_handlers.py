@@ -54,7 +54,7 @@ class InteractionCommandHandler:
         self,
         session_repository: NegotiationSessionRepository,
         negotiation_service: NegotiationService,
-    ):
+    ) -> None:
         """Initialize command handler with required dependencies."""
         self.session_repository = session_repository
         self.negotiation_service = negotiation_service

@@ -75,7 +75,7 @@ class AsyncLLMClient:
         batch_timeout_ms: int = 100,
         max_concurrent_requests: int = 10,
         request_timeout_seconds: int = 10,
-    ):
+    ) -> None:
         """
         Initialize async LLM client with performance optimizations.
 

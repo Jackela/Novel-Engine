@@ -22,13 +22,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Set
-from uuid import uuid4
-
-from src.core.result import Err, Ok, Result
 
 # Use TYPE_CHECKING to avoid circular import
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional, Set
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar

@@ -155,7 +155,7 @@ class ProjectQualityReport:
 class ComplexityAnalyzer(ast.NodeVisitor):
     """AST-based complexity analyzer"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.complexity = 0
         self.functions = []
         self.classes = []
@@ -218,7 +218,7 @@ class ComplexityAnalyzer(ast.NodeVisitor):
 class DuplicationDetector:
     """Code duplication detection"""
 
-    def __init__(self, min_lines: int = 6):
+    def __init__(self, min_lines: int = 6) -> None:
         self.min_lines = min_lines
         self.code_blocks = {}
         self.duplications = []
@@ -256,7 +256,7 @@ class DuplicationDetector:
 class TechnicalDebtCalculator:
     """Technical debt calculation and tracking"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.debt_rules = {
             "high_complexity": {"threshold": 10, "minutes_per_point": 15},
             "long_method": {"threshold": 50, "minutes": 30},
@@ -318,7 +318,7 @@ class QualityMonitor:
     Main code quality monitoring system
     """
 
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = Path(project_root)
         self.complexity_analyzer = ComplexityAnalyzer()
         self.duplication_detector = DuplicationDetector()

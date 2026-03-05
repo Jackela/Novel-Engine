@@ -68,7 +68,7 @@ class TurnExecutionEngine:
         self,
         agent_manager: AgentManagerProtocol,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.agent_manager = agent_manager
         self.logger = logger or logging.getLogger(__name__)
 

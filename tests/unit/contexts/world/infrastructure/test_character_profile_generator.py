@@ -345,24 +345,15 @@ class TestLLMCharacterProfileGeneratorIntegration:
     """Integration-style tests with mocked API."""
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
-    )
+    @patch.object(LLMCharacterProfileGenerator, "_call_gemini")
     def test_generate_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         llm_generator: LLMCharacterProfileGenerator,
         sample_llm_response: Dict[str, Any],
     ) -> None:
         """Test successful generation with mocked API."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_llm_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(sample_llm_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             llm_generator._api_key = "test-key"
@@ -378,19 +369,14 @@ class TestLLMCharacterProfileGeneratorIntegration:
         assert "cunning" in result.traits
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
-    )
+    @patch.object(LLMCharacterProfileGenerator, "_call_gemini")
     def test_generate_api_error_returns_error_result(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         llm_generator: LLMCharacterProfileGenerator,
     ) -> None:
         """Test that API errors return error result."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             llm_generator._api_key = "test-key"
@@ -417,18 +403,14 @@ class TestLLMCharacterProfileGeneratorIntegration:
         assert "GEMINI_API_KEY" in result.appearance
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.character_profile_generator.requests.post"
-    )
+    @patch.object(LLMCharacterProfileGenerator, "_call_gemini")
     def test_generate_rate_limit_error(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         llm_generator: LLMCharacterProfileGenerator,
     ) -> None:
         """Test handling of rate limit errors."""
-        mock_response = MagicMock()
-        mock_response.status_code = 429
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API rate limit exceeded")
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             llm_generator._api_key = "test-key"

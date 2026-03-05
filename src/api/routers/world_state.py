@@ -19,6 +19,7 @@ Endpoints:
 from __future__ import annotations
 
 import warnings
+
 warnings.warn(
     "world_state router is deprecated. Use geopolitics router instead.",
     DeprecationWarning,
@@ -27,9 +28,9 @@ warnings.warn(
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from src.api.schemas.world_schemas import (
     DiplomacyMatrixDetailResponse,
@@ -228,8 +229,7 @@ async def get_resources(
         controlled_locations = [
             loc
             for loc in locations
-            if isinstance(loc, dict)
-            and loc.get("controlling_faction_id") == faction_id
+            if isinstance(loc, dict) and loc.get("controlling_faction_id") == faction_id
         ]
 
         # Calculate resources from controlled territories
@@ -245,7 +245,9 @@ async def get_resources(
                     resource_type = ry.get("resource_type", "")
                     if resource_type:
                         amount = ry.get("current_stock", 0)
-                        resources[resource_type] = resources.get(resource_type, 0) + amount
+                        resources[resource_type] = (
+                            resources.get(resource_type, 0) + amount
+                        )
 
         # Add faction's own resources
         faction_resources = faction.get("resources", {})

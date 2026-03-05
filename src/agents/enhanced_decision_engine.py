@@ -36,7 +36,7 @@ class EnhancedDecisionEngine(DecisionEngine):
     full backward compatibility with existing agent behavior.
     """
 
-    def __init__(self, agent_core: PersonaAgentCore):
+    def __init__(self, agent_core: PersonaAgentCore) -> None:
         """Initialize the enhanced decision engine."""
         super().__init__(agent_core)
         self.context_modifier_enabled = True

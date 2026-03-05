@@ -41,20 +41,27 @@ class HistoryEventResponse(BaseModel):
     key_figures: List[str] = Field(
         default_factory=list, description="Names of key individuals involved"
     )
-    causes: List[str] = Field(default_factory=list, description="What led to this event")
+    causes: List[str] = Field(
+        default_factory=list, description="What led to this event"
+    )
     consequences: List[str] = Field(
         default_factory=list, description="What resulted from this event"
     )
     preceding_event_ids: List[str] = Field(
-        default_factory=list, description="IDs of events that directly preceded this one"
+        default_factory=list,
+        description="IDs of events that directly preceded this one",
     )
     following_event_ids: List[str] = Field(
-        default_factory=list, description="IDs of events that directly followed this one"
+        default_factory=list,
+        description="IDs of events that directly followed this one",
     )
     related_event_ids: List[str] = Field(
-        default_factory=list, description="IDs of related but not directly connected events"
+        default_factory=list,
+        description="IDs of related but not directly connected events",
     )
-    is_secret: bool = Field(False, description="Whether this event is hidden from common knowledge")
+    is_secret: bool = Field(
+        False, description="Whether this event is hidden from common knowledge"
+    )
     sources: List[str] = Field(
         default_factory=list, description="Where knowledge of this event comes from"
     )
@@ -62,13 +69,15 @@ class HistoryEventResponse(BaseModel):
         50, ge=0, le=100, description="How important this is to the story (0-100)"
     )
     impact_scope: Optional[str] = Field(
-        None, description="Geographic scope of the event's impact (local, regional, global)"
+        None,
+        description="Geographic scope of the event's impact (local, regional, global)",
     )
     affected_faction_ids: Optional[List[str]] = Field(
         None, description="IDs of factions directly affected (distinct from involved)"
     )
     affected_location_ids: Optional[List[str]] = Field(
-        None, description="IDs of locations directly affected (distinct from where occurred)"
+        None,
+        description="IDs of locations directly affected (distinct from where occurred)",
     )
     structured_date: Optional[Dict[str, Any]] = Field(
         None, description="Structured calendar date for simulation events"
@@ -76,15 +85,23 @@ class HistoryEventResponse(BaseModel):
     generate_rumor: bool = Field(
         default=False, description="Whether to generate a rumor from this event"
     )
-    created_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was created")
-    updated_at: Optional[str] = Field(None, description="ISO 8601 timestamp when event was last updated")
+    created_at: Optional[str] = Field(
+        None, description="ISO 8601 timestamp when event was created"
+    )
+    updated_at: Optional[str] = Field(
+        None, description="ISO 8601 timestamp when event was last updated"
+    )
 
 
 class CreateEventRequest(BaseModel):
     """Request model for creating a new historical event."""
 
-    name: str = Field(..., min_length=1, max_length=300, description="Short name/title of the event")
-    description: str = Field(..., min_length=1, description="Detailed description of what happened")
+    name: str = Field(
+        ..., min_length=1, max_length=300, description="Short name/title of the event"
+    )
+    description: str = Field(
+        ..., min_length=1, description="Detailed description of what happened"
+    )
     event_type: str = Field(
         default="political",
         description="Classification of the event type (e.g., war, battle, treaty, discovery)",
@@ -97,13 +114,25 @@ class CreateEventRequest(BaseModel):
         default="neutral",
         description="General outcome of the event (positive, negative, neutral, mixed, unknown)",
     )
-    date_description: str = Field(..., min_length=1, description="Narrative date description")
-    duration_description: Optional[str] = Field(None, description="How long the event lasted")
-    location_ids: Optional[List[str]] = Field(None, description="IDs of locations where event occurred")
-    faction_ids: Optional[List[str]] = Field(None, description="IDs of factions involved")
-    key_figures: Optional[List[str]] = Field(None, description="Names of key individuals involved")
+    date_description: str = Field(
+        ..., min_length=1, description="Narrative date description"
+    )
+    duration_description: Optional[str] = Field(
+        None, description="How long the event lasted"
+    )
+    location_ids: Optional[List[str]] = Field(
+        None, description="IDs of locations where event occurred"
+    )
+    faction_ids: Optional[List[str]] = Field(
+        None, description="IDs of factions involved"
+    )
+    key_figures: Optional[List[str]] = Field(
+        None, description="Names of key individuals involved"
+    )
     causes: Optional[List[str]] = Field(None, description="What led to this event")
-    consequences: Optional[List[str]] = Field(None, description="What resulted from this event")
+    consequences: Optional[List[str]] = Field(
+        None, description="What resulted from this event"
+    )
     preceding_event_ids: Optional[List[str]] = Field(
         None, description="IDs of events that directly preceded this one"
     )
@@ -113,21 +142,28 @@ class CreateEventRequest(BaseModel):
     related_event_ids: Optional[List[str]] = Field(
         None, description="IDs of related but not directly connected events"
     )
-    is_secret: bool = Field(False, description="Whether this event is hidden from common knowledge")
+    is_secret: bool = Field(
+        False, description="Whether this event is hidden from common knowledge"
+    )
     sources: Optional[List[str]] = Field(
         None, description="Where knowledge of this event comes from"
     )
     narrative_importance: int = Field(
-        default=50, ge=0, le=100, description="How important this is to the story (0-100)"
+        default=50,
+        ge=0,
+        le=100,
+        description="How important this is to the story (0-100)",
     )
     impact_scope: Optional[str] = Field(
-        None, description="Geographic scope of the event's impact (local, regional, global)"
+        None,
+        description="Geographic scope of the event's impact (local, regional, global)",
     )
     affected_faction_ids: Optional[List[str]] = Field(
         None, description="IDs of factions directly affected (distinct from involved)"
     )
     affected_location_ids: Optional[List[str]] = Field(
-        None, description="IDs of locations directly affected (distinct from where occurred)"
+        None,
+        description="IDs of locations directly affected (distinct from where occurred)",
     )
     structured_date: Optional[Dict[str, Any]] = Field(
         None, description="Structured calendar date for simulation events"
@@ -141,9 +177,15 @@ class EventFilterParams(BaseModel):
     """Query parameters for filtering historical events."""
 
     event_type: Optional[str] = Field(None, description="Filter by event type")
-    impact_scope: Optional[str] = Field(None, description="Filter by impact scope (local, regional, global)")
-    from_date: Optional[str] = Field(None, description="Filter events from this date (ISO format or narrative)")
-    to_date: Optional[str] = Field(None, description="Filter events to this date (ISO format or narrative)")
+    impact_scope: Optional[str] = Field(
+        None, description="Filter by impact scope (local, regional, global)"
+    )
+    from_date: Optional[str] = Field(
+        None, description="Filter events from this date (ISO format or narrative)"
+    )
+    to_date: Optional[str] = Field(
+        None, description="Filter events to this date (ISO format or narrative)"
+    )
     faction_id: Optional[str] = Field(None, description="Filter by faction ID involved")
     location_id: Optional[str] = Field(None, description="Filter by location ID")
     is_secret: Optional[bool] = Field(None, description="Filter by secret status")
@@ -159,7 +201,9 @@ class EventListResponse(BaseModel):
     events: List[HistoryEventResponse] = Field(
         default_factory=list, description="List of historical events"
     )
-    total_count: int = Field(..., description="Total number of events matching the filter")
+    total_count: int = Field(
+        ..., description="Total number of events matching the filter"
+    )
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Number of items per page")
     total_pages: int = Field(..., description="Total number of pages")
@@ -205,7 +249,9 @@ class WorldTimeResponse(BaseModel):
 class AdvanceTimeRequest(BaseModel):
     """Request model for advancing world time."""
 
-    days: int = Field(default=1, ge=1, le=365, description="Number of days to advance (1-365)")
+    days: int = Field(
+        default=1, ge=1, le=365, description="Number of days to advance (1-365)"
+    )
 
 
 class CalendarData(BaseModel):
@@ -419,7 +465,9 @@ class TerritorySummary(BaseModel):
 
     location_id: str = Field(description="Unique identifier for the location")
     name: str = Field(description="Name of the location/territory")
-    location_type: str = Field(description="Type of location (kingdom, city, fortress, etc.)")
+    location_type: str = Field(
+        description="Type of location (kingdom, city, fortress, etc.)"
+    )
     controlling_faction_id: Optional[str] = Field(
         None, description="ID of faction controlling this territory"
     )
@@ -566,7 +614,8 @@ class GenerateIntentsResponse(BaseModel):
         description="Unique identifier for this generation batch"
     )
     event_published: bool = Field(
-        default=True, description="Whether IntentGeneratedEvent was published successfully"
+        default=True,
+        description="Whether IntentGeneratedEvent was published successfully",
     )
 
 
@@ -588,3 +637,184 @@ class SelectIntentResponse(BaseModel):
 
     intent: FactionIntentResponse = Field(description="The selected intent")
     status: str = Field(default="SELECTED", description="Confirmation of selection")
+
+
+# === Events & Rumors Extension Schemas (NE-2024-003) ===
+
+
+class BulkImportFormat(str, Enum):
+    """Supported import formats."""
+
+    CSV = "csv"
+    JSON = "json"
+
+
+class ImportOptions(BaseModel):
+    """Options for bulk import operation."""
+
+    skip_validation: bool = Field(
+        default=False, description="Skip validation for faster import"
+    )
+    atomic: bool = Field(
+        default=True, description="All-or-nothing import (transactional)"
+    )
+    generate_rumors: bool = Field(
+        default=False, description="Generate rumors from imported events"
+    )
+
+
+class BulkImportRequest(BaseModel):
+    """Request model for bulk importing events."""
+
+    format: BulkImportFormat = Field(..., description="Import format: csv or json")
+    data: str = Field(..., description="Base64-encoded file content")
+    options: Optional[ImportOptions] = Field(
+        default_factory=ImportOptions, description="Import options"
+    )
+
+
+class ImportError(BaseModel):
+    """Details of an import error."""
+
+    row: Optional[int] = Field(
+        None, description="Row number in source file (1-indexed)"
+    )
+    field: Optional[str] = Field(None, description="Field name that caused the error")
+    message: str = Field(..., description="Error message")
+    value: Optional[str] = Field(None, description="The problematic value")
+
+
+class BulkImportResponse(BaseModel):
+    """Response model for bulk import operation."""
+
+    success: bool = Field(..., description="Whether the import was successful")
+    total: int = Field(..., description="Total number of records processed")
+    imported: int = Field(..., description="Number of successfully imported records")
+    failed: int = Field(..., description="Number of failed records")
+    imported_ids: List[str] = Field(
+        default_factory=list, description="List of imported event IDs"
+    )
+    errors: List[ImportError] = Field(
+        default_factory=list, description="List of import errors"
+    )
+    generated_rumors: int = Field(default=0, description="Number of rumors generated")
+    processing_time_ms: int = Field(
+        default=0, description="Processing time in milliseconds"
+    )
+
+
+# === Visualization Schemas ===
+
+
+class GraphNodeType(str, Enum):
+    """Types of nodes in the propagation graph."""
+
+    LOCATION = "location"
+    RUMOR = "rumor"
+
+
+class GraphEdgeType(str, Enum):
+    """Types of edges in the propagation graph."""
+
+    ORIGIN = "origin"
+    SPREAD = "spread"
+
+
+class GraphNode(BaseModel):
+    """A node in the propagation graph."""
+
+    id: str = Field(..., description="Unique identifier for the node")
+    type: GraphNodeType = Field(..., description="Type of node")
+    label: str = Field(..., description="Display label")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional node metadata"
+    )
+
+
+class GraphEdge(BaseModel):
+    """An edge in the propagation graph."""
+
+    id: str = Field(..., description="Unique identifier for the edge")
+    source: str = Field(..., description="Source node ID")
+    target: str = Field(..., description="Target node ID")
+    type: GraphEdgeType = Field(..., description="Type of edge")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional edge metadata"
+    )
+
+
+class GraphData(BaseModel):
+    """Graph data containing nodes and edges."""
+
+    nodes: List[GraphNode] = Field(default_factory=list, description="Graph nodes")
+    edges: List[GraphEdge] = Field(default_factory=list, description="Graph edges")
+
+
+class VisualizationMetadata(BaseModel):
+    """Metadata for visualization response."""
+
+    total_nodes: int = Field(default=0, description="Total number of nodes")
+    total_edges: int = Field(default=0, description="Total number of edges")
+    max_hops: int = Field(default=0, description="Maximum spread hops")
+    generated_at: str = Field(..., description="ISO 8601 timestamp")
+
+
+class RumorVisualizationResponse(BaseModel):
+    """Response model for rumor propagation visualization."""
+
+    world_id: str = Field(..., description="World ID")
+    graph: GraphData = Field(..., description="Graph data")
+    metadata: VisualizationMetadata = Field(..., description="Visualization metadata")
+
+
+# === Export Schemas ===
+
+
+class ExportFormat(str, Enum):
+    """Supported export formats."""
+
+    JSON = "json"
+    PDF = "pdf"
+    PNG = "png"
+
+
+class TimelineEvent(BaseModel):
+    """An event in the timeline export."""
+
+    id: str = Field(..., description="Event ID")
+    name: str = Field(..., description="Event name")
+    description: str = Field(..., description="Event description")
+    event_type: str = Field(..., description="Event type")
+    significance: str = Field(..., description="Event significance")
+    date_description: str = Field(..., description="Narrative date")
+
+
+class TimelineEntry(BaseModel):
+    """A date entry in the timeline."""
+
+    date: str = Field(..., description="Date string")
+    events: List[TimelineEvent] = Field(
+        default_factory=list, description="Events on this date"
+    )
+
+
+class ExportMetadata(BaseModel):
+    """Metadata for export response."""
+
+    total_events: int = Field(default=0, description="Total number of events")
+    date_range: Optional[Dict[str, str]] = Field(None, description="Date range")
+    filters_applied: Dict[str, Any] = Field(
+        default_factory=dict, description="Filters that were applied"
+    )
+    generated_at: str = Field(..., description="ISO 8601 timestamp")
+
+
+class EventTimelineExport(BaseModel):
+    """Response model for event timeline export (JSON format)."""
+
+    world_id: str = Field(..., description="World ID")
+    format: str = Field(..., description="Export format")
+    timeline: List[TimelineEntry] = Field(
+        default_factory=list, description="Timeline entries"
+    )
+    metadata: ExportMetadata = Field(..., description="Export metadata")

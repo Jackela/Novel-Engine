@@ -89,7 +89,7 @@ class OpenAILLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the OpenAI LLM client.
 

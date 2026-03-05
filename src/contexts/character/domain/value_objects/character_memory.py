@@ -15,7 +15,7 @@ Why memories matter:
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 
@@ -173,7 +173,7 @@ class CharacterMemory:
         content: str,
         importance: int,
         tags: List[str],
-        timestamp: datetime = None,
+        timestamp: Optional[datetime] = None,
     ) -> "CharacterMemory":
         """
         Factory method to create a new memory.

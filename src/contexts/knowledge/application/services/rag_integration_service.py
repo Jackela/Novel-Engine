@@ -146,7 +146,7 @@ class RAGIntegrationService:
         self,
         retrieval_service: RetrievalService,
         config: RAGConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the RAG integration service.
 

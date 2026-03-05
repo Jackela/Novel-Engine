@@ -40,7 +40,7 @@ class InteractionQueryHandler:
         self,
         session_repository: NegotiationSessionRepository,
         negotiation_service: Optional[NegotiationService] = None,
-    ):
+    ) -> None:
         """Initialize query handler with required dependencies."""
         self.session_repository = session_repository
         self.negotiation_service = negotiation_service or NegotiationService()

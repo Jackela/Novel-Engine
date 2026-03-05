@@ -167,7 +167,7 @@ class SecurityHeadersConfig:
 class SecurityHeaders:
     """STANDARD SECURITY HEADERS MANAGER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, config: SecurityHeadersConfig):
+    def __init__(self, config: SecurityHeadersConfig) -> None:
         self.config = config
 
     def _build_csp_header(self) -> str:
@@ -434,7 +434,7 @@ class SecurityHeaders:
 class SecurityHeadersMiddleware:
     """STANDARD SECURITY HEADERS MIDDLEWARE (ASGI)"""
 
-    def __init__(self, app, security_headers: SecurityHeaders):
+    def __init__(self, app, security_headers: SecurityHeaders) -> None:
         self.app = app
         self.security_headers = security_headers
 

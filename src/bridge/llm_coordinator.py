@@ -35,7 +35,7 @@ class LLMCoordinator:
 
     def __init__(
         self, config: LLMCoordinationConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize LLM coordinator."""
         self.config = config
         self.logger = logger or logging.getLogger(__name__)

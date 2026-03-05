@@ -197,7 +197,7 @@ class WorldRuleRepositoryException(Exception):
 class WorldRuleNotFoundException(WorldRuleRepositoryException):
     """Raised when a requested world rule is not found."""
 
-    def __init__(self, rule_id: str):
+    def __init__(self, rule_id: str) -> None:
         super().__init__(f"World rule not found: {rule_id}")
         self.rule_id = rule_id
 
@@ -205,7 +205,7 @@ class WorldRuleNotFoundException(WorldRuleRepositoryException):
 class DuplicateWorldRuleException(WorldRuleRepositoryException):
     """Raised when attempting to create a duplicate world rule."""
 
-    def __init__(self, rule_id: str, name: str):
+    def __init__(self, rule_id: str, name: str) -> None:
         super().__init__(f"World rule already exists: {rule_id} ({name})")
         self.rule_id = rule_id
         self.name = name

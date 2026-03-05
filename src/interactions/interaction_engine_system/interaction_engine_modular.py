@@ -27,7 +27,7 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
@@ -40,7 +40,7 @@ except ImportError:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -77,7 +77,7 @@ class InteractionEngine:
         character_manager=None,
         equipment_manager=None,
         logger=None,
-    ):
+    ) -> None:
         """Initialize modular interaction engine."""
         self.config = config or InteractionEngineConfig()
         self.memory_manager = memory_manager

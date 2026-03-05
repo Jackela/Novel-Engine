@@ -28,7 +28,7 @@ class NarrativeId:
     _context_name: ClassVar[str] = "narratives"
     _type_name: ClassVar[str] = "NarrativeId"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate the UUID value after initialization."""
         if not isinstance(self.value, UUID):
             raise TypeError(f"NarrativeId value must be a UUID, got {type(self.value)}")

@@ -168,7 +168,7 @@ class ChunkCoherenceAnalyzer:
         internal_weight: float = DEFAULT_INTERNAL_WEIGHT,
         boundary_weight: float = DEFAULT_BOUNDARY_WEIGHT,
         size_weight: float = DEFAULT_SIZE_WEIGHT,
-    ):
+    ) -> None:
         """
         Initialize the coherence analyzer.
 
@@ -503,7 +503,7 @@ class FixedChunkingStrategy:
         >>> # Chunks overlap by 20 words
     """
 
-    def __init__(self, default_config: ChunkingStrategy | None = None):
+    def __init__(self, default_config: ChunkingStrategy | None = None) -> None:
         """
         Initialize the fixed chunking strategy.
 
@@ -700,7 +700,7 @@ class SentenceChunkingStrategy:
         1
     """
 
-    def __init__(self, default_config: ChunkingStrategy | None = None):
+    def __init__(self, default_config: ChunkingStrategy | None = None) -> None:
         """
         Initialize the sentence chunking strategy.
 
@@ -930,7 +930,7 @@ class ParagraphChunkingStrategy:
         3
     """
 
-    def __init__(self, default_config: ChunkingStrategy | None = None):
+    def __init__(self, default_config: ChunkingStrategy | None = None) -> None:
         """
         Initialize the paragraph chunking strategy.
 
@@ -1177,7 +1177,7 @@ class SemanticChunkingStrategy:
         self,
         embedding_service: IEmbeddingService,
         default_config: ChunkingStrategy | None = None,
-    ):
+    ) -> None:
         """
         Initialize the semantic chunking strategy.
 
@@ -1674,7 +1674,7 @@ class NarrativeFlowChunkingStrategy:
         default_config: ChunkingStrategy | None = None,
         preserve_dialogue: bool = True,
         preserve_paragraphs: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the narrative flow chunking strategy.
 
@@ -2210,7 +2210,7 @@ class AutoChunkingStrategy:
         self,
         embedding_service: IEmbeddingService | None = None,
         default_config: ChunkingStrategy | None = None,
-    ):
+    ) -> None:
         """
         Initialize the auto chunking strategy.
 

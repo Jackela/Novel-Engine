@@ -103,7 +103,7 @@ class DefaultCostTracker(ICostTracker):
     usage analytics, and projection capabilities.
     """
 
-    def __init__(self, retention_days: int = 90):
+    def __init__(self, retention_days: int = 90) -> None:
         """
         Initialize cost tracker.
 

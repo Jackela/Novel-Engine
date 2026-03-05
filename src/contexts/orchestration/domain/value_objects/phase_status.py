@@ -176,10 +176,10 @@ class PhaseStatus:
     progress_percentage: int = 0
     events_processed: int = 0
     error_message: Optional[str] = None
-    compensation_actions: List[str] = None
-    metadata: Dict[str, Any] = None
+    compensation_actions: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate phase status structure and business rules."""
         # Initialize mutable defaults
         if self.compensation_actions is None:

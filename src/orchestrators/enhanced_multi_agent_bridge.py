@@ -275,7 +275,7 @@ class EnhancedMultiAgentBridge:
             Union["BridgeConfiguration", DirectorAgent]
         ] = None,
         llm_coordination_config: Optional[LLMCoordinationConfig] = None,
-    ):
+    ) -> None:
         """
         Initialize the Enhanced Multi-Agent Bridge.
 

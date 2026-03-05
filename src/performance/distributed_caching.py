@@ -141,7 +141,7 @@ class MemoryCache(CacheInterface):
     High-speed in-process cache with intelligent eviction
     """
 
-    def __init__(self, max_size: int = 10000, default_ttl: int = 3600):
+    def __init__(self, max_size: int = 10000, default_ttl: int = 3600) -> None:
         self.max_size = max_size
         self.default_ttl = default_ttl
         self._cache: Dict[str, CacheEntry] = {}
@@ -281,7 +281,7 @@ class RedisCache(CacheInterface):
         prefix: str = "novel_engine:",
         default_ttl: int = 3600,
         allow_mock: Optional[bool] = None,
-    ):
+    ) -> None:
         self.redis_url = redis_url
         self.prefix = prefix
         self.default_ttl = default_ttl
@@ -424,7 +424,7 @@ class RedisCache(CacheInterface):
 class MockRedis:
     """Mock Redis implementation for testing without Redis server"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._data = {}
         self._expiry = {}
 
@@ -476,7 +476,7 @@ class DistributedCache:
         l2_cache: Optional[RedisCache] = None,
         enable_write_through: bool = True,
         enable_read_through: bool = True,
-    ):
+    ) -> None:
         self.l1_cache = l1_cache or MemoryCache()
         self.l2_cache = l2_cache or RedisCache()
         self.enable_write_through = enable_write_through
@@ -640,7 +640,7 @@ class DistributedCache:
 class CharacterCache:
     """Specialized cache for character data"""
 
-    def __init__(self, distributed_cache: DistributedCache):
+    def __init__(self, distributed_cache: DistributedCache) -> None:
         self.cache = distributed_cache
 
         # Register cache loaders

@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncContextManager, Dict, List, Optional
+from typing import Any, AsyncContextManager, AsyncGenerator, Dict, List, Optional
 
 import aiosqlite
 
@@ -83,7 +83,7 @@ class ConnectionMetrics:
 class DatabaseConnection:
     """Managed database connection wrapper."""
 
-    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig):
+    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig) -> None:
         """Initialize database connection wrapper."""
         self.connection = connection
         self.config = config
@@ -130,7 +130,9 @@ class DatabaseConnection:
 
         await self.connection.commit()
 
-    async def execute(self, query: str, parameters: tuple = None) -> aiosqlite.Cursor:
+    async def execute(
+        self, query: str, parameters: Optional[tuple] = None
+    ) -> aiosqlite.Cursor:
         """Execute query with metrics tracking."""
         async with self._lock:
             self.state = ConnectionState.ACTIVE
@@ -347,7 +349,7 @@ class DatabaseConnectionPool:
         self,
         config: DatabaseConfig,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize connection pool."""
         self.config = config
         self.error_handler = error_handler
@@ -367,7 +369,7 @@ class DatabaseConnectionPool:
         self._maintenance_task: Optional[asyncio.Task] = None
 
         # Metrics
-        self._pool_metrics = {
+        self._pool_metrics: Dict[str, Any] = {
             "total_connections_created": 0,
             "total_connections_closed": 0,
             "peak_active_connections": 0,
@@ -417,7 +419,7 @@ class DatabaseConnectionPool:
         return self._connection_context()
 
     @asynccontextmanager
-    async def _connection_context(self) -> DatabaseConnection:
+    async def _connection_context(self) -> AsyncGenerator[DatabaseConnection, None]:
         """Connection context manager."""
         connection = await self._acquire_connection()
         try:
@@ -697,7 +699,7 @@ class DatabaseManager:
         self,
         config_manager: Optional[ConfigurationManager] = None,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize database manager."""
         self.config_manager = config_manager
         self.error_handler = error_handler

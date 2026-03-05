@@ -73,7 +73,7 @@ class NegotiationCapability:
     applicable_domains: Set[str]
     prerequisites: Optional[Set[str]] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate negotiation capability data."""
         if not self.capability_name.strip():
             raise ValueError("capability_name cannot be empty")
@@ -137,7 +137,7 @@ class PartyPreferences:
     preferred_meeting_times: Optional[Dict[str, Any]] = None
     language_preferences: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate party preferences data."""
         if not (0 <= self.risk_tolerance <= 100):
             raise ValueError("risk_tolerance must be between 0 and 100")
@@ -239,7 +239,7 @@ class NegotiationParty:
     reputation_modifiers: Dict[str, Decimal] = field(default_factory=dict)
     active_mandates: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate negotiation party data."""
         if not self.party_name.strip():
             raise ValueError("party_name cannot be empty")

@@ -107,7 +107,7 @@ class Character:
     # Domain events (not persisted)
     _events: List[CharacterEvent] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize aggregate and validate invariants."""
         self._validate_character_consistency()
 

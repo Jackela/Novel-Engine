@@ -43,7 +43,7 @@ class SemanticCache:
     sufficient for contract and integration tests.
     """
 
-    def __init__(self, config: SemanticCacheConfig | None = None):
+    def __init__(self, config: SemanticCacheConfig | None = None) -> None:
         self.config = config or SemanticCacheConfig()
         self._store: "OrderedDict[str, _SemanticEntry]" = OrderedDict()
         self._hits = 0

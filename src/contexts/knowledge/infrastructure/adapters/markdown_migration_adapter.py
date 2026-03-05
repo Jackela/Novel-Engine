@@ -47,7 +47,7 @@ class MarkdownMigrationAdapter:
         - FR-019: Verification mode
     """
 
-    def __init__(self, repository: IKnowledgeRepository):
+    def __init__(self, repository: IKnowledgeRepository) -> None:
         """
         Initialize migration adapter with repository.
 

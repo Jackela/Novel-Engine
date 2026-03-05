@@ -24,7 +24,7 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
     )
 
     class _NoOpMetric:
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
         def labels(self, *_, **__):
@@ -83,7 +83,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         group_paths: bool = True,
         ignored_paths: Optional[list] = None,
         metrics_collector: Optional[PrometheusMetricsCollector] = None,
-    ):
+    ) -> None:
         """
         Initialize Prometheus middleware.
 

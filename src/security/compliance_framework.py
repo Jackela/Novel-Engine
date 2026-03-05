@@ -182,7 +182,7 @@ class ComplianceReport:
 class SecurityEventMonitor:
     """Real-time security event monitoring and analysis"""
 
-    def __init__(self, db_path: str = "security_events.db"):
+    def __init__(self, db_path: str = "security_events.db") -> None:
         self.db_path = db_path
         self.event_handlers: Dict[str, List[Callable]] = {}
         self.threat_patterns = self._load_threat_patterns()
@@ -190,7 +190,8 @@ class SecurityEventMonitor:
     async def initialize(self):
         """Initialize the security event database"""
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -202,15 +203,20 @@ class SecurityEventMonitor:
                     timestamp TEXT NOT NULL,
                     metadata TEXT
                 )
-            """)
-            await db.execute("""
-                CREATE INDEX IF NOT EXISTS idx_events_timestamp 
+            """
+            )
+            await db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_events_timestamp
                 ON security_events(timestamp)
-            """)
-            await db.execute("""
-                CREATE INDEX IF NOT EXISTS idx_events_severity 
+            """
+            )
+            await db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_events_severity
                 ON security_events(severity)
-            """)
+            """
+            )
             await db.commit()
 
     async def log_event(self, event: SecurityEvent):
@@ -218,8 +224,8 @@ class SecurityEventMonitor:
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT INTO security_events 
-                (event_id, event_type, severity, source_ip, user_id, endpoint, 
+                INSERT INTO security_events
+                (event_id, event_type, severity, source_ip, user_id, endpoint,
                  description, timestamp, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -366,7 +372,7 @@ class SecurityEventMonitor:
 class ComplianceEngine:
     """Main compliance monitoring and assessment engine"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: Dict[ComplianceStandard, List[ComplianceRule]] = {}
         self.event_monitor = SecurityEventMonitor()
         self._initialize_rules()

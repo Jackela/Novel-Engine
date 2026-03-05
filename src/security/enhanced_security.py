@@ -36,7 +36,7 @@ class SecurityEvent:
 class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
     """Enhanced security middleware with threat detection"""
 
-    def __init__(self, app, config: Optional[Dict] = None):
+    def __init__(self, app, config: Optional[Dict] = None) -> None:
         super().__init__(app)
         self.config = config or {}
         self.security_events = []

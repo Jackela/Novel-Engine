@@ -133,9 +133,7 @@ class LocationRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_type(
-        self, world_id: str, location_type: str
-    ) -> List[Location]:
+    async def get_by_type(self, world_id: str, location_type: str) -> List[Location]:
         """Retrieve all locations of a specific type in a world.
 
         Args:

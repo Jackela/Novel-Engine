@@ -88,6 +88,9 @@ forbidden_modules =
     src.contexts.story.infrastructure
     src.infrastructure
     src.database
+ignore_imports =
+    # TYPE_CHECKING imports for cross-context service collaboration
+    src.contexts.world.application.services.faction_decision_service -> src.contexts.knowledge.application.services.retrieval_service
 
 # -----------------------------------------------------------------------------
 # Bounded Context Isolation Rules
@@ -107,6 +110,10 @@ forbidden_modules =
     src.contexts.knowledge
     src.contexts.subjective
     src.contexts.world
+ignore_imports =
+    # TYPE_CHECKING imports for WorldCalendar type hints (runtime no dependency)
+    src.contexts.character.domain.aggregates.character -> src.contexts.world.domain.value_objects.world_calendar
+    src.contexts.character.domain.events.character_events -> src.contexts.world.domain.value_objects.world_calendar
 
 # Rule 5: Story Context Isolation
 # Note: Story context is allowed to import character value objects for scene generation
@@ -188,3 +195,7 @@ forbidden_modules =
     src.contexts.knowledge
     src.contexts.subjective
     src.contexts.world
+ignore_imports =
+    # Optional knowledge system integration with graceful fallback (try/except pattern)
+    src.contexts.orchestration.infrastructure.pipeline_phases.subjective_brief_phase -> src.contexts.knowledge.infrastructure.adapters.subjective_brief_phase_adapter
+    src.contexts.orchestration.infrastructure.pipeline_phases.subjective_brief_phase -> src.contexts.knowledge.infrastructure.config.feature_flags

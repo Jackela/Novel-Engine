@@ -62,7 +62,7 @@ class KnowledgeEventSubscriber:
         event_bus: EventBus,
         sync_handler: KnowledgeSyncEventHandler,
         tagging_handler: Any | None = None,  # SmartTaggingEventHandler
-    ):
+    ) -> None:
         """
         Initialize the subscriber.
 

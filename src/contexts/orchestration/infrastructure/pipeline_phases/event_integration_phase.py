@@ -26,7 +26,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
     - Create integration events for downstream processing
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PhaseType.EVENT_INTEGRATION)
         self.execution_timeout_ms = 12000  # 12 seconds for event processing
         self.world_service_endpoint = "world_context"

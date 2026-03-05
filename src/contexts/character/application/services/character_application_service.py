@@ -41,7 +41,7 @@ class CharacterApplicationService:
     transactions across the domain and infrastructure layers.
     """
 
-    def __init__(self, character_repository: ICharacterRepository):
+    def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.command_handlers = CharacterCommandHandlerRegistry(character_repository)
         self.logger = logger.getChild(self.__class__.__name__)

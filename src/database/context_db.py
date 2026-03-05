@@ -66,7 +66,7 @@ class ContextDatabase:
         database_path: str = "context.db",
         connection_pool_size: int = SacredConstants.CONNECTION_POOL_SIZE,
         agent_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         STANDARD DATABASE INITIALIZATION ENHANCED BY CONFIGURATION
 
@@ -447,13 +447,15 @@ class ContextDatabase:
         try:
             async with self.get_enhanced_connection() as connection:
                 # Construct enhanced query with standard parameters
-                query_parts = ["""
+                query_parts = [
+                    """
                     SELECT memory_id, agent_id, memory_type, content, emotional_weight,
                            relevance_score, participants, location, tags, decay_factor,
                            created_at, last_accessed, access_count
                     FROM memories
                     WHERE agent_id = ? AND relevance_score >= ?
-                """]
+                """
+                ]
 
                 params = [agent_id, relevance_threshold]
 
@@ -464,10 +466,12 @@ class ContextDatabase:
                     params.extend([mem_type.value for mem_type in memory_types])
 
                 # Sacred ordering enhanced by relevance and recency
-                query_parts.append("""
+                query_parts.append(
+                    """
                     ORDER BY relevance_score * decay_factor DESC, last_accessed DESC
                     LIMIT ?
-                """)
+                """
+                )
                 params.append(limit)
 
                 final_query = " ".join(query_parts)
@@ -523,7 +527,7 @@ class ContextDatabase:
             async with self.get_enhanced_connection() as connection:
                 await connection.execute(
                     """
-                    UPDATE memories 
+                    UPDATE memories
                     SET last_accessed = ?, access_count = access_count + 1
                     WHERE memory_id = ?
                 """,
@@ -618,7 +622,7 @@ class ContextDatabase:
                 async with connection.execute(
                     """
                     SELECT relationship_id, agent_id, target_agent_id, target_name,
-                           relationship_type, trust_level, emotional_bond, 
+                           relationship_type, trust_level, emotional_bond,
                            interaction_count, shared_experiences, relationship_notes,
                            last_interaction, last_updated
                     FROM relationships
@@ -845,10 +849,10 @@ class ContextDatabase:
                 # Sacred cleanup of old memories beyond capacity
                 await connection.execute(
                     """
-                    DELETE FROM memories 
+                    DELETE FROM memories
                     WHERE memory_id NOT IN (
-                        SELECT memory_id FROM memories 
-                        ORDER BY relevance_score * decay_factor DESC 
+                        SELECT memory_id FROM memories
+                        ORDER BY relevance_score * decay_factor DESC
                         LIMIT ?
                     )
                 """,
@@ -858,7 +862,7 @@ class ContextDatabase:
                 # Update enhanced maintenance timestamp
                 await connection.execute(
                     """
-                    UPDATE system_config 
+                    UPDATE system_config
                     SET config_value = ?, last_updated = ?
                     WHERE config_key = 'last_maintenance'
                 """,
@@ -916,13 +920,15 @@ class ContextDatabase:
                 statistics["database_size_bytes"] = self.database_path.stat().st_size
 
                 # Blessed memory statistics
-                async with connection.execute("""
-                    SELECT 
+                async with connection.execute(
+                    """
+                    SELECT
                         AVG(emotional_weight) as avg_emotional_weight,
                         AVG(relevance_score) as avg_relevance_score,
                         MAX(access_count) as max_access_count
                     FROM memories
-                """) as cursor:
+                """
+                ) as cursor:
                     row = await cursor.fetchone()
                     statistics.update(
                         {

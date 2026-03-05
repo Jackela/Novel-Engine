@@ -25,7 +25,7 @@ class CharacterSheetParser:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, character_directory_path: str):
+    def __init__(self, character_directory_path: str) -> None:
         """
         Initialize the character sheet parser.
 

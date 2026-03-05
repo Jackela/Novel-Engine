@@ -27,7 +27,7 @@ class AgentCoordinator:
     - Agent communication and isolation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the agent coordinator."""
         self.registered_agents: List[PersonaAgent] = []
         self.total_actions_processed = 0

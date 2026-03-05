@@ -43,7 +43,7 @@ class SubjectiveBriefPhaseAdapter(IContextAssembler):
         - Article VII (Observability): Metrics and tracing integration points
     """
 
-    def __init__(self, retrieve_context_use_case: RetrieveAgentContextUseCase):
+    def __init__(self, retrieve_context_use_case: RetrieveAgentContextUseCase) -> None:
         """
         Initialize adapter with use case dependency.
 

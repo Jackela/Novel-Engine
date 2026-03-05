@@ -4,12 +4,12 @@
 This module exports all domain entities for the World context.
 """
 
-from .entity import Entity
 from .diplomatic_pact import (
-    DiplomaticPact,
     INCOMPATIBLE_PACTS,
+    DiplomaticPact,
     PactType,
 )
+from .entity import Entity
 from .faction import (
     Faction,
     FactionAlignment,
@@ -18,15 +18,15 @@ from .faction import (
     FactionType,
 )
 from .faction_intent import (
-    ActionType,
     DEFENSIVE_ACTIONS,
     DEFENSIVE_INTENTS,  # Legacy alias
-    FactionIntent,
-    IntentStatus,
-    IntentType,  # Backward compatibility alias for ActionType
     OFFENSIVE_ACTIONS,
     OFFENSIVE_INTENTS,  # Legacy alias
     VALID_STATUS_TRANSITIONS,
+    ActionType,
+    FactionIntent,
+    IntentStatus,
+    IntentType,  # Backward compatibility alias for ActionType
     _normalize_action_type,
 )
 from .history_event import (

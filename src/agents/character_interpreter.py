@@ -38,7 +38,7 @@ class CharacterInterpreter:
     - Validating character data integrity
     """
 
-    def __init__(self, character_directory_path: str):
+    def __init__(self, character_directory_path: str) -> None:
         """
         Initialize the CharacterInterpreter.
 

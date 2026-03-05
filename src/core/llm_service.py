@@ -127,7 +127,7 @@ class UnifiedLLMService:
     with advanced caching, cost controls, and performance optimization.
     """
 
-    def __init__(self, cost_control: Optional[CostControl] = None):
+    def __init__(self, cost_control: Optional[CostControl] = None) -> None:
         """
         Initialize the unified LLM service.
 
@@ -623,7 +623,7 @@ Context: {json.dumps(story_context, ensure_ascii=False)}
 Return in JSON format:
 {{
     "description": "Brief description of what happens",
-    "details": "Specific details of the event", 
+    "details": "Specific details of the event",
     "impact": "How this affects the story",
     "emotion": "Emotional tone"
 }}"""

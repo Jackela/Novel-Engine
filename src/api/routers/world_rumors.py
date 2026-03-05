@@ -24,9 +24,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from src.api.schemas.system_schemas import ErrorDetail
 from src.api.schemas.world_schemas import (
     CalendarData,
+    GraphData,
+    GraphEdge,
+    GraphNode,
     RumorListResponse,
     RumorResponse,
+    RumorVisualizationResponse,
     SortByEnum,
+    VisualizationMetadata,
 )
 from src.contexts.world.application.services.rumor_service import RumorService
 from src.contexts.world.domain.entities import Rumor
@@ -172,6 +177,94 @@ async def get_location_rumors(
     return RumorListResponse(
         rumors=[_rumor_to_response(r) for r in rumors],
         total=len(rumors),
+    )
+
+
+@router.get(
+    "/world/{world_id}/rumors/visualization", response_model=RumorVisualizationResponse
+)
+async def get_rumor_visualization(
+    world_id: str,
+    rumor_id: Optional[str] = Query(None, description="Filter by specific rumor ID"),
+    from_date: Optional[str] = Query(None, description="Filter from date (ISO format)"),
+    to_date: Optional[str] = Query(None, description="Filter to date (ISO format)"),
+    max_hops: int = Query(default=5, ge=1, le=10, description="Maximum spread hops"),
+    service: RumorService = Depends(get_rumor_service),
+) -> RumorVisualizationResponse:
+    """Get rumor propagation visualization data.
+
+    Returns graph data (nodes and edges) representing rumor propagation
+    across locations. Nodes include both rumors and locations; edges
+    represent spread paths.
+
+    Args:
+        world_id: World ID to get rumors from
+        rumor_id: Optional specific rumor to visualize
+        from_date: Optional filter for rumors from this date
+        to_date: Optional filter for rumors to this date
+        max_hops: Maximum number of spread hops to include
+        service: Injected RumorService
+
+    Returns:
+        RumorVisualizationResponse with graph data
+
+    Example:
+        GET /api/world/default/rumors/visualization?max_hops=3
+    """
+    logger.debug(
+        "get_rumor_visualization_request",
+        world_id=world_id,
+        rumor_id=rumor_id,
+        max_hops=max_hops,
+    )
+
+    # Get propagation graph
+    graph_data = await service.get_propagation_graph(
+        world_id=world_id,
+        rumor_id=rumor_id,
+        max_hops=max_hops,
+    )
+
+    # Convert to response model
+    nodes = [
+        GraphNode(
+            id=node["id"],
+            type=node["type"],
+            label=node["label"],
+            metadata=node.get("metadata", {}),
+        )
+        for node in graph_data["graph"]["nodes"]
+    ]
+
+    edges = [
+        GraphEdge(
+            id=edge["id"],
+            source=edge["source"],
+            target=edge["target"],
+            type=edge["type"],
+            metadata=edge.get("metadata", {}),
+        )
+        for edge in graph_data["graph"]["edges"]
+    ]
+
+    logger.debug(
+        "get_rumor_visualization_response",
+        world_id=world_id,
+        total_nodes=len(nodes),
+        total_edges=len(edges),
+    )
+
+    from datetime import datetime
+
+    return RumorVisualizationResponse(
+        world_id=world_id,
+        graph=GraphData(nodes=nodes, edges=edges),
+        metadata=VisualizationMetadata(
+            total_nodes=graph_data["metadata"]["total_nodes"],
+            total_edges=graph_data["metadata"]["total_edges"],
+            max_hops=graph_data["metadata"]["max_hops"],
+            generated_at=datetime.utcnow().isoformat(),
+        ),
     )
 
 

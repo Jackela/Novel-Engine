@@ -15,7 +15,6 @@ Why reactions matter:
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import uuid4
 
 
@@ -105,6 +104,7 @@ class CharacterReaction:
 
     def __post_init__(self) -> None:
         """Validate reaction data upon creation."""
+        super().__setattr__("__validated__", True)  # Mark validation complete
         # Validate reaction_id
         if not isinstance(self.reaction_id, str):
             raise TypeError(
@@ -263,7 +263,9 @@ class CharacterReaction:
         elif isinstance(reaction_type_raw, ReactionType):
             reaction_type = reaction_type_raw
         else:
-            raise ValueError("reaction_type is required and must be a string or ReactionType")
+            raise ValueError(
+                "reaction_type is required and must be a string or ReactionType"
+            )
 
         # Parse created_at
         created_at_raw = data.get("created_at")

@@ -46,7 +46,7 @@ class CharacterTemplateManager:
         memory_system: Optional[LayeredMemorySystem] = None,
         personas_directory: str = "personas",
         enable_learning: bool = True,
-    ):
+    ) -> None:
         """
         STANDARD CHARACTER TEMPLATE MANAGER INITIALIZATION ENHANCED BY ORGANIZATION
 

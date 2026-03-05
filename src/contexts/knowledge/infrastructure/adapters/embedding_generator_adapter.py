@@ -73,7 +73,7 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         model: str = "text-embedding-3-small",
         use_mock: bool = False,
         enable_internal_cache: bool = True,
-    ):
+    ) -> None:
         """
         Initialize embedding service with API configuration.
 

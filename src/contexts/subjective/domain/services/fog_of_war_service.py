@@ -206,7 +206,7 @@ class FogOfWarService:
     degrades over time.
     """
 
-    def __init__(self, visibility_calculator: Optional[IVisibilityCalculator] = None):
+    def __init__(self, visibility_calculator: Optional[IVisibilityCalculator] = None) -> None:
         """
         Initialize the FogOfWarService.
 
@@ -356,8 +356,8 @@ class FogOfWarService:
         source_turn_brief: TurnBrief,
         target_turn_brief: TurnBrief,
         knowledge_types: Optional[List[KnowledgeType]] = None,
-        max_propagation_distance: float = 10.0,
-        source_reliability_modifier: float = 0.9,
+        _max_propagation_distance: float = 10.0,
+        _source_reliability_modifier: float = 0.9,
     ) -> List[KnowledgeItem]:
         """
         Propagate knowledge from one entity to another.

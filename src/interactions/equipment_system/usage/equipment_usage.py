@@ -24,7 +24,7 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
@@ -37,7 +37,7 @@ except ImportError:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -60,7 +60,7 @@ class EquipmentUsageProcessor:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """
         Initialize equipment usage processor.
 

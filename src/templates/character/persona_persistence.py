@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class PersonaPersistence:
     """Handles persona file persistence and discovery."""
 
-    def __init__(self, personas_dir: Path):
+    def __init__(self, personas_dir: Path) -> None:
         self.personas_dir = personas_dir
 
     def _discover_personas(self):

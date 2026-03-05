@@ -68,11 +68,15 @@ def get_repository(request: Request) -> FactionIntentRepository:
             from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
                 InMemoryFactionIntentRepository,
             )
+
             repo = InMemoryFactionIntentRepository()
             logger.warning("using_fallback_repository_test_mode")
         else:
-            raise RuntimeError("FactionIntentRepository not configured. Check startup initialization.")
+            raise RuntimeError(
+                "FactionIntentRepository not configured. Check startup initialization."
+            )
     return repo
+
 
 def _get_event_bus(request: Request):
     """Get the EventBus from app.state.
@@ -165,8 +169,18 @@ def _generate_mock_intents(faction_id: str) -> list[FactionIntent]:
     # Generate 2-3 varied intents for demonstration
     intent_configs = [
         (ActionType.STABILIZE, None, "Consolidate resources and strengthen borders", 1),
-        (ActionType.EXPAND, "unclaimed-territory-1", "Expand influence into neighboring regions", 2),
-        (ActionType.TRADE, "neutral-faction-1", "Establish trade routes for economic growth", 3),
+        (
+            ActionType.EXPAND,
+            "unclaimed-territory-1",
+            "Expand influence into neighboring regions",
+            2,
+        ),
+        (
+            ActionType.TRADE,
+            "neutral-faction-1",
+            "Establish trade routes for economic growth",
+            3,
+        ),
     ]
 
     for action_type, target_id, rationale, priority in intent_configs:

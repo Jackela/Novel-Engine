@@ -31,7 +31,7 @@ class CharacterContextManager:
     - Personality trait extraction and quantification
     """
 
-    def __init__(self, core: "PersonaCore"):
+    def __init__(self, core: "PersonaCore") -> None:
         """
         Initialize context manager.
 

@@ -144,7 +144,7 @@ class S3StorageManager:
     - Metadata management
     """
 
-    def __init__(self, config: S3Config):
+    def __init__(self, config: S3Config) -> None:
         """Initialize S3 storage manager."""
         self.config = config
         self.session: Optional[aioboto3.Session] = None
@@ -156,7 +156,7 @@ class S3StorageManager:
         self._cache_directory = Path(config.cache_directory)
 
         # Metrics
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "uploads": 0,
             "downloads": 0,
             "bytes_uploaded": 0,
@@ -403,7 +403,7 @@ class S3StorageManager:
             file_size = local_path.stat().st_size
             progress = UploadProgress(total_bytes=file_size)
 
-            def progress_handler(bytes_transferred: int):
+            def progress_handler(bytes_transferred: int) -> None:
                 progress.bytes_transferred = bytes_transferred
                 progress.percentage = (
                     (bytes_transferred / file_size) * 100 if file_size > 0 else 0

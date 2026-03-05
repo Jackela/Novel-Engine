@@ -34,7 +34,7 @@ class SagaCoordinator:
     - Coordinate cross-context compensation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize saga coordinator."""
         self.active_compensations: Dict[UUID, List[CompensationAction]] = {}
         self.compensation_strategies: Dict[str, Dict[str, Any]] = {}

@@ -108,11 +108,11 @@ class EventRegistry:
     Provides type-safe event creation, validation, and documentation.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._schemas: Dict[EventType, EventSchema] = {}
         self._initialize_schemas()
 
-    def _initialize_schemas(self):
+    def _initialize_schemas(self) -> None:
         """Initialize all event schemas."""
 
         # Character Events
@@ -308,7 +308,7 @@ class EventRegistry:
             )
         )
 
-    def register_schema(self, schema: EventSchema):
+    def register_schema(self, schema: EventSchema) -> None:
         """Register an event schema."""
         self._schemas[schema.event_type] = schema
 

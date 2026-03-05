@@ -47,7 +47,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
     - Performance optimization through spatial indexing
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the repository."""
         self.logger = logger.getChild(self.__class__.__name__)
 

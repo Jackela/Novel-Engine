@@ -56,7 +56,7 @@ class VersionInfo:
 class APIVersionRegistry:
     """Registry for managing API versions and their metadata."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.versions: Dict[APIVersion, VersionInfo] = {}
         self._initialize_versions()
 
@@ -144,7 +144,7 @@ class APIVersionRegistry:
 class VersionExtractor:
     """Extract API version from requests."""
 
-    def __init__(self, default_version: APIVersion = APIVersion.V1_0):
+    def __init__(self, default_version: APIVersion = APIVersion.V1_0) -> None:
         self.default_version = default_version
 
     def extract_from_request(self, request: Request) -> APIVersion:
@@ -195,7 +195,7 @@ class VersionExtractor:
 class CompatibilityLayer:
     """Handle backward compatibility transformations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.transformers: Dict[APIVersion, List[Callable]] = {
             APIVersion.V1_0: [self._transform_to_v1_0],
             APIVersion.V1_1: [self._transform_to_v1_1],
@@ -248,7 +248,7 @@ class CompatibilityLayer:
 class VersionMiddleware:
     """Middleware to handle API versioning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.registry = APIVersionRegistry()
         self.extractor = VersionExtractor()
         self.compatibility = CompatibilityLayer()
@@ -305,7 +305,7 @@ class VersionedRoute(APIRoute):
         *args,
         version_handlers: Optional[Dict[APIVersion, Callable]] = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.version_handlers = version_handlers or {}
 

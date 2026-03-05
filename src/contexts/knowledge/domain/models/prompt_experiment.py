@@ -271,15 +271,23 @@ class PromptExperiment:
 
         # Normalize timestamps to UTC
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
         if self.started_at is not None and self.started_at.tzinfo is None:
-            object.__setattr__(self, "started_at", self.started_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "started_at", self.started_at.replace(tzinfo=timezone.utc)
+            )
 
         if self.ended_at is not None and self.ended_at.tzinfo is None:
-            object.__setattr__(self, "ended_at", self.ended_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "ended_at", self.ended_at.replace(tzinfo=timezone.utc)
+            )
 
     def assign_variant(
         self,
@@ -340,11 +348,15 @@ class PromptExperiment:
 
         if variant_id == self.prompt_a_id:
             object.__setattr__(
-                self, "metrics_a", self.metrics_a.record_run(True, tokens, latency_ms, rating)
+                self,
+                "metrics_a",
+                self.metrics_a.record_run(True, tokens, latency_ms, rating),
             )
         else:
             object.__setattr__(
-                self, "metrics_b", self.metrics_b.record_run(True, tokens, latency_ms, rating)
+                self,
+                "metrics_b",
+                self.metrics_b.record_run(True, tokens, latency_ms, rating),
             )
 
     def record_failure(
@@ -490,13 +502,18 @@ class PromptExperiment:
 
             case ExperimentMetric.TOKEN_EFFICIENCY:
                 # Lower token efficiency (fewer tokens per success) wins
-                if (
-                    self.metrics_a.token_efficiency != float("inf")
-                    and self.metrics_b.token_efficiency != float("inf")
-                ):
-                    if self.metrics_a.token_efficiency < self.metrics_b.token_efficiency:
+                if self.metrics_a.token_efficiency != float(
+                    "inf"
+                ) and self.metrics_b.token_efficiency != float("inf"):
+                    if (
+                        self.metrics_a.token_efficiency
+                        < self.metrics_b.token_efficiency
+                    ):
                         return self.prompt_a_id
-                    elif self.metrics_b.token_efficiency < self.metrics_a.token_efficiency:
+                    elif (
+                        self.metrics_b.token_efficiency
+                        < self.metrics_a.token_efficiency
+                    ):
                         return self.prompt_b_id
                 # Handle infinite values (no successes)
                 elif self.metrics_a.token_efficiency != float("inf"):
@@ -521,7 +538,11 @@ class PromptExperiment:
         Returns:
             Dictionary containing experiment results and comparison
         """
-        winner_name = "A" if self.winner == self.prompt_a_id else "B" if self.winner == self.prompt_b_id else None
+        winner_name = (
+            "A"
+            if self.winner == self.prompt_a_id
+            else "B" if self.winner == self.prompt_b_id else None
+        )
 
         return {
             "experiment_id": self.id,
@@ -557,6 +578,7 @@ class PromptExperiment:
         Returns:
             Dictionary containing comparison data
         """
+
         # Calculate relative differences
         def safe_divide(a: float, b: float) -> float:
             if b == 0:
@@ -583,7 +605,10 @@ class PromptExperiment:
                 self.metrics_a.avg_latency_ms - self.metrics_b.avg_latency_ms, 2
             ),
             "avg_latency_rel_diff": round(
-                safe_divide(self.metrics_a.avg_latency_ms, self.metrics_b.avg_latency_ms), 2
+                safe_divide(
+                    self.metrics_a.avg_latency_ms, self.metrics_b.avg_latency_ms
+                ),
+                2,
             ),
         }
 
@@ -660,9 +685,21 @@ class PromptExperiment:
             metrics_a=metrics_a,
             metrics_b=metrics_b,
             winner=data.get("winner"),
-            created_at=datetime.fromisoformat(data["created_at"]) if "created_at" in data else _utcnow(),
-            started_at=datetime.fromisoformat(data["started_at"]) if data.get("started_at") else None,
-            ended_at=datetime.fromisoformat(data["ended_at"]) if data.get("ended_at") else None,
+            created_at=(
+                datetime.fromisoformat(data["created_at"])
+                if "created_at" in data
+                else _utcnow()
+            ),
+            started_at=(
+                datetime.fromisoformat(data["started_at"])
+                if data.get("started_at")
+                else None
+            ),
+            ended_at=(
+                datetime.fromisoformat(data["ended_at"])
+                if data.get("ended_at")
+                else None
+            ),
             created_by=data.get("created_by"),
             min_sample_size=data.get("min_sample_size", 100),
             confidence_threshold=data.get("confidence_threshold", 0.95),

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class EquipmentProcessorRegistry:
     """Registry for category-specific equipment processors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.processors = {}
 
     def register_processor(self, category: EquipmentCategory, processor_func):

@@ -37,7 +37,7 @@ class DialogueManager:
 
     def __init__(
         self, llm_processor: LLMBatchProcessor, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         self.llm_processor = llm_processor
         self.logger = logger or logging.getLogger(__name__)
 

@@ -15,7 +15,7 @@ from typing import List
 class EmbeddingError(Exception):
     """Exception raised for embedding service errors."""
 
-    def __init__(self, message: str, code: str = "EMBEDDING_ERROR"):
+    def __init__(self, message: str, code: str = "EMBEDDING_ERROR") -> None:
         """
         Initialize embedding error.
 

@@ -85,7 +85,7 @@ class HealthChecker:
         check_func: Callable[[], Awaitable[Dict[str, Any]]],
         timeout_seconds: float = 5.0,
         critical: bool = True,
-    ):
+    ) -> None:
         self.name = name
         self.component_type = component_type
         self.check_func = check_func
@@ -142,7 +142,7 @@ class HealthChecker:
 class HealthMonitor:
     """Comprehensive health monitoring system."""
 
-    def __init__(self, app_start_time: Optional[datetime] = None):
+    def __init__(self, app_start_time: Optional[datetime] = None) -> None:
         self.app_start_time = app_start_time or datetime.now()
         self.health_checkers: List[HealthChecker] = []
         self.last_check_time: Optional[datetime] = None

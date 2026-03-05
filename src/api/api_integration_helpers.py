@@ -33,7 +33,7 @@ class APIEnhancementConfig(BaseModel):
 class Context7EnhancedRoute(APIRoute):
     """Enhanced API route with Context7 integration."""
 
-    def __init__(self, *args, context7_api=None, **kwargs):
+    def __init__(self, *args, context7_api=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.context7_api = context7_api
         self.example_cache: Dict[str, Any] = {}
@@ -77,7 +77,7 @@ class Context7EnhancedRoute(APIRoute):
 class APIDocumentationEnhancer:
     """Enhances existing API endpoints with Context7-powered documentation."""
 
-    def __init__(self, context7_api=None):
+    def __init__(self, context7_api=None) -> None:
         self.context7_api = context7_api
         self.enhancement_cache: Dict[str, Any] = {}
 
@@ -185,7 +185,7 @@ class APIDocumentationEnhancer:
 class APIValidationEnhancer:
     """Provides Context7-powered API validation capabilities."""
 
-    def __init__(self, context7_api=None):
+    def __init__(self, context7_api=None) -> None:
         self.context7_api = context7_api
 
     async def validate_api_implementation(
@@ -257,7 +257,7 @@ class APIIntegrationManager:
 
     def __init__(
         self, app: FastAPI, context7_api=None, config: APIEnhancementConfig = None
-    ):
+    ) -> None:
         self.app = app
         self.context7_api = context7_api
         self.config = config or APIEnhancementConfig()
@@ -371,7 +371,7 @@ def create_context7_middleware():
 class APISchemaEnhancer:
     """Enhances OpenAPI schema with Context7 information."""
 
-    def __init__(self, context7_api=None):
+    def __init__(self, context7_api=None) -> None:
         self.context7_api = context7_api
 
     def enhance_openapi_schema(self, app: FastAPI) -> Dict[str, Any]:

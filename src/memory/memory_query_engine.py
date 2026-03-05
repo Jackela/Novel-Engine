@@ -84,7 +84,7 @@ class MemoryQueryEngine:
         enable_semantic_search: bool = True,
         enable_query_cache: bool = True,
         cache_expiry_minutes: int = 30,
-    ):
+    ) -> None:
         """
         Initializes the MemoryQueryEngine.
 

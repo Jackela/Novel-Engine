@@ -22,7 +22,7 @@ class MemoryManager:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, agent_id: str, max_memory_items: int = 1000):
+    def __init__(self, agent_id: str, max_memory_items: int = 1000) -> None:
         """
         Initialize the memory manager.
 

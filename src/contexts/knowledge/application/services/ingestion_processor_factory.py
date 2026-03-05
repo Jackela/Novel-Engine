@@ -64,7 +64,7 @@ class IngestionProcessorFactory:
         self,
         custom_processors: Dict[SourceType, IIngestionProcessor] | None = None,
         fallback_processor: IIngestionProcessor | None = None,
-    ):
+    ) -> None:
         """
         Initialize the processor factory.
 
