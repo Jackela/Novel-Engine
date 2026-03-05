@@ -33,30 +33,30 @@ except (
         def __init__(self, *_, **__) -> None:
             pass
 
-        def labels(self, *_, **__) -> None:
+        def labels(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def inc(self, *_, **__) -> None:
+        def inc(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def dec(self, *_, **__) -> None:
+        def dec(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def observe(self, *_, **__) -> None:
+        def observe(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def set(self, *_, **__) -> None:
+        def set(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def info(self, *_, **__) -> None:
+        def info(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
         def time(self) -> None:
             class _Timer:
-                def __enter__(self) -> None:
+                def __enter__(self) -> "_Timer":
                     return self
 
-                def __exit__(self, exc_type, exc, tb):
+                def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
                     return False
 
             return _Timer()
@@ -68,7 +68,7 @@ except (
     Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
     CONTENT_TYPE_LATEST = "text/plain"
 
-    def generate_latest(_registry) -> bytes:
+    def generate_latest(_registry: Any) -> bytes:
         return b""
 
 

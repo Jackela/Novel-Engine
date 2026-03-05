@@ -205,7 +205,7 @@ class NegotiationSessionRepository(ABC):
 
     @abstractmethod
     async def find_sessions_by_date_range(
-        self, start_date, end_date, date_field: str = "created_at"
+        self, start_date: Any, end_date: Any, date_field: str = "created_at"
     ) -> List[NegotiationSession]:
         """
         Find sessions within a specific date range.

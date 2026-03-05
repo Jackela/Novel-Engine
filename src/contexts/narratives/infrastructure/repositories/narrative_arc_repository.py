@@ -9,7 +9,7 @@ repository interface defined in the application layer.
 import structlog
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import (

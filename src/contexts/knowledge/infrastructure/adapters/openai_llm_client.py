@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 import httpx
 import structlog

@@ -5,7 +5,7 @@ Interaction phase processing and template initialization.
 
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (

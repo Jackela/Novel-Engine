@@ -15,7 +15,7 @@ Why Big Five:
 """
 
 from dataclasses import dataclass
-from typing import Dict
+from typing import Any, Dict
 
 
 @dataclass(frozen=True)

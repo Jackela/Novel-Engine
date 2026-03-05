@@ -4,7 +4,7 @@ Content generation for interactions.
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (

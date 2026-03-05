@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import List
+from typing import Any, List
 
 from structlog import get_logger
 

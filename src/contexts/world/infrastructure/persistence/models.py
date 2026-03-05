@@ -8,7 +8,7 @@ These models map domain aggregates to database tables.
 
 import uuid
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from sqlalchemy import (
     JSON,

@@ -235,7 +235,7 @@ class NarrativeFlowService:
         }
         return tension_modifiers.get(plot_type, Decimal("1.0"))
 
-    def _get_importance_modifier(self, importance) -> Decimal:
+    def _get_importance_modifier(self, importance: Any) -> Decimal:
         """Get modifier based on plot point importance."""
         importance_modifiers = {
             "critical": Decimal("1.3"),

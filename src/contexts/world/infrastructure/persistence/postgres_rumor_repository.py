@@ -10,7 +10,7 @@ Hexagonal Architecture:
 - Maps between database rows and Rumor domain entities
 """
 
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 from uuid import UUID
 
 import asyncpg

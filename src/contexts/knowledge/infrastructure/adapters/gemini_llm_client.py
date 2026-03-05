@@ -14,7 +14,7 @@ Warzone 4: AI Brain - BRAIN-009A, BRAIN-025A
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import structlog

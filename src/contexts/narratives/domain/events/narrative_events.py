@@ -109,7 +109,7 @@ class PlotPointAdded(NarrativeEvent):
     plot_point_type: str = ""
     sequence_order: int = 0
     importance_level: str = ""
-    character_ids: List[UUID] = None
+    character_ids: Optional[List[UUID]] = None
 
     def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
@@ -125,8 +125,8 @@ class PlotPointUpdated(NarrativeEvent):
     """
 
     plot_point_id: str = ""
-    updated_fields: Dict[str, Any] = None
-    previous_values: Dict[str, Any] = None
+    updated_fields: Optional[Dict[str, Any]] = None
+    previous_values: Optional[Dict[str, Any]] = None
     impact_on_narrative: str = ""
 
     def __post_init__(self) -> None:
@@ -146,7 +146,7 @@ class PlotPointRemoved(NarrativeEvent):
 
     plot_point_id: str = ""
     removal_reason: str = ""
-    sequence_adjustments: Dict[str, int] = (
+    sequence_adjustments: Optional[Dict[str, int]] = (
         None  # Other plot points that need resequencing
     )
 
@@ -171,7 +171,7 @@ class ThemeIntroduced(NarrativeEvent):
     theme_name: str = ""
     intensity_level: str = ""
     introduction_sequence: int = 0
-    symbolic_elements: List[str] = None
+    symbolic_elements: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
@@ -189,7 +189,7 @@ class ThemeIntensityChanged(NarrativeEvent):
     theme_id: str = ""
     previous_intensity: str = ""
     new_intensity: str = ""
-    affected_sequences: List[int] = None
+    affected_sequences: Optional[List[int]] = None
     intensity_change_reason: str = ""
 
     def __post_init__(self) -> None:
@@ -209,7 +209,7 @@ class ThemeResolved(NarrativeEvent):
     resolution_type: str = "complete"  # complete, partial, open-ended, subverted
     resolution_sequence: int = 0
     narrative_impact: str = ""
-    related_plot_points: List[str] = None
+    related_plot_points: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""
@@ -257,10 +257,10 @@ class NarrativeFlowChanged(NarrativeEvent):
     Event raised when narrative flow is modified.
     """
 
-    affected_sequence_range: List[int] = None  # [start, end]
+    affected_sequence_range: Optional[List[int]] = None  # [start, end]
     flow_change_type: str = "restructure"  # restructure, reorder, insert, delete
-    previous_flow_state: Dict[str, Any] = None
-    new_flow_state: Dict[str, Any] = None
+    previous_flow_state: Optional[Dict[str, Any]] = None
+    new_flow_state: Optional[Dict[str, Any]] = None
     change_rationale: str = ""
 
     def __post_init__(self) -> None:
@@ -289,7 +289,7 @@ class PacingAdjusted(NarrativeEvent):
     new_pacing_type: str = ""
     previous_intensity: str = ""
     new_intensity: str = ""
-    affected_sequences: List[int] = None
+    affected_sequences: Optional[List[int]] = None
     adjustment_reason: str = ""
 
     def __post_init__(self) -> None:
@@ -310,9 +310,9 @@ class ContextUpdated(NarrativeEvent):
 
     context_id: str = ""
     context_type: str = ""
-    updated_fields: Dict[str, Any] = None
-    previous_values: Dict[str, Any] = None
-    affected_characters: List[UUID] = None
+    updated_fields: Optional[Dict[str, Any]] = None
+    previous_values: Optional[Dict[str, Any]] = None
+    affected_characters: Optional[List[UUID]] = None
 
     def __post_init__(self) -> None:
         """Initialize default values for mutable fields."""

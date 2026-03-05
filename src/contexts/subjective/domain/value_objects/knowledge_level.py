@@ -9,7 +9,7 @@ information certainty levels, and knowledge propagation in the subjective contex
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class KnowledgeType(Enum):

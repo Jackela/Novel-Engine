@@ -10,7 +10,7 @@ Hexagonal Architecture:
 - Maps between database rows and HistoryEvent domain entities
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 import asyncpg

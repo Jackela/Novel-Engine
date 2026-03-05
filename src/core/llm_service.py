@@ -734,7 +734,7 @@ def create_llm_service_for_testing(
         # Override the _call_gemini method for testing
         original_call = service._call_gemini
 
-        async def mock_call(request, provider_config):
+        async def mock_call(request: Any, provider_config: Any) -> Any:
             for pattern, response in mock_responses.items():
                 if pattern in request.prompt:
                     return response

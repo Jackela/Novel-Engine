@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Final, List, Tuple
+from typing import Any, Final, List, Tuple
 
 from ..models.chunking_strategy import (
     ChunkingStrategy,

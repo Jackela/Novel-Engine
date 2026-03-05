@@ -23,20 +23,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None) -> None:
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-        def __getitem__(self, key) -> None:
+        def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True) -> None:
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable

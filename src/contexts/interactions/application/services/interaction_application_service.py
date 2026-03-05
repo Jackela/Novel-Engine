@@ -65,7 +65,7 @@ class InteractionApplicationService:
     # High-Level Business Operations
 
     async def create_negotiation_session(
-        self, session_name: str, session_type: str, created_by: UUID, **kwargs
+        self, session_name: str, session_type: str, created_by: UUID, **kwargs: Any
     ) -> Dict[str, Any]:
         """
         Create a new negotiation session with specified parameters.

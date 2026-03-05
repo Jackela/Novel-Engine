@@ -6,7 +6,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
-from typing import DefaultDict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, DefaultDict, Iterable, List, Optional, Sequence, Tuple
 
 
 @dataclass

@@ -445,7 +445,7 @@ class NovelEngineTracer:
         propagate.extract(carrier)
 
 
-def trace_async_operation(operation_name: str, **span_attributes) -> None:
+def trace_async_operation(operation_name: str, **span_attributes: Any) -> Callable[[Callable], Callable]:
     """
     Decorator for tracing async operations.
 
@@ -459,7 +459,7 @@ def trace_async_operation(operation_name: str, **span_attributes) -> None:
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             tracer = trace.get_tracer(__name__)
 
             with tracer.start_as_current_span(
@@ -481,7 +481,7 @@ def trace_async_operation(operation_name: str, **span_attributes) -> None:
 
 @asynccontextmanager
 async def trace_context(
-    operation_name: str, **attributes
+    operation_name: str, **attributes: Any
 ) -> AsyncGenerator[Span, None]:
     """
     Async context manager for tracing operations.

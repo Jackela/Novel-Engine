@@ -8,7 +8,7 @@ Constitution Compliance:
 - Article IV (SSOT): PostgreSQL as authoritative source, no caching for MVP
 """
 
-from typing import List
+from typing import Any, List
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession

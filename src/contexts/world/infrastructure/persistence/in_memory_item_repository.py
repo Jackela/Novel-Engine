@@ -9,7 +9,7 @@ setup. The repository interface ensures we can swap to PostgreSQL later
 without changing domain or application code.
 """
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.contexts.world.domain.entities.item import Item, ItemRarity, ItemType
 from src.contexts.world.domain.repositories.item_repository import IItemRepository

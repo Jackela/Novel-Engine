@@ -10,7 +10,7 @@ without changing domain or application code.
 """
 
 import threading
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 

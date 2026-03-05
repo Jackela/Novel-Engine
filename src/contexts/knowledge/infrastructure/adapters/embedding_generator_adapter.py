@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, List, Union
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
     EmbeddingError,

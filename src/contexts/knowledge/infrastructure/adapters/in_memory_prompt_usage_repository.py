@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from ...application.ports.i_prompt_usage_repository import (
     IPromptUsageRepository,

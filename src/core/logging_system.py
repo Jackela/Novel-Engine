@@ -125,7 +125,7 @@ class PerformanceTracker:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit."""
         # Get logger from thread local or create new one
         logger_ref = getattr(threading.current_thread(), "_structured_logger", None)
@@ -319,23 +319,23 @@ class StructuredLogger:
 
     # Convenience methods for different log levels
 
-    def trace(self, message: str, **kwargs) -> None:
+    def trace(self, message: str, **kwargs: Any) -> None:
         """Log trace level message."""
         self._log(LogLevel.TRACE, message, **kwargs)
 
-    def debug(self, message: str, **kwargs) -> None:
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug level message."""
         self._log(LogLevel.DEBUG, message, **kwargs)
 
-    def info(self, message: str, **kwargs) -> None:
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info level message."""
         self._log(LogLevel.INFO, message, **kwargs)
 
-    def success(self, message: str, **kwargs) -> None:
+    def success(self, message: str, **kwargs: Any) -> None:
         """Log success message."""
         self._log(LogLevel.SUCCESS, message, **kwargs)
 
-    def warning(self, message: str, **kwargs) -> None:
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
         self._log(LogLevel.WARNING, message, **kwargs)
 
@@ -365,17 +365,17 @@ class StructuredLogger:
 
         self._log(LogLevel.CRITICAL, message, error_details=error_details, **kwargs)
 
-    def audit(self, message: str, **kwargs) -> None:
+    def audit(self, message: str, **kwargs: Any) -> None:
         """Log audit trail message."""
         kwargs["category"] = LogCategory.AUDIT
         self._log(LogLevel.AUDIT, message, **kwargs)
 
-    def performance(self, message: str, **kwargs) -> None:
+    def performance(self, message: str, **kwargs: Any) -> None:
         """Log performance metric."""
         kwargs["category"] = LogCategory.PERFORMANCE
         self._log(LogLevel.PERFORMANCE, message, **kwargs)
 
-    def security(self, message: str, **kwargs) -> None:
+    def security(self, message: str, **kwargs: Any) -> None:
         """Log security event."""
         kwargs["category"] = LogCategory.SECURITY
         self._log(LogLevel.SECURITY, message, **kwargs)
@@ -391,12 +391,12 @@ class StructuredLogger:
     def time_operation(self, operation: str, context: Optional[LogContext] = None) -> None:
         """Decorator/context manager for timing operations."""
 
-        def decorator(func) -> None:
-            async def async_wrapper(*args, **kwargs):
+        def decorator(func: Any) -> Any:
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.track_performance(operation, context):
                     return await func(*args, **kwargs)
 
-            def sync_wrapper(*args, **kwargs) -> None:
+            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 

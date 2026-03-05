@@ -7,6 +7,7 @@ including the main POST /v1/turns:run endpoint and monitoring capabilities.
 """
 
 import json
+import logging
 import structlog
 import os
 import tempfile
