@@ -12,8 +12,9 @@ context-loading stack.
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
+
+import structlog
 import re
 import sys
 from dataclasses import asdict
@@ -27,7 +28,7 @@ from src.agents.persona_agent.protocols import ThreatLevel
 from src.core.event_bus import EventBus
 from src.core.types.shared_types import ActionPriority, CharacterAction
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _find_characters_root() -> Path:
@@ -77,7 +78,7 @@ def _get_llm_service() -> Any:
 
             _llm_service_instance = UnifiedLLMService()
         except ImportError as e:
-            logger.error(f"Failed to import UnifiedLLMService: {e}")
+            logger.error("failed_to_import_unified_llm_service", error=str(e))
             raise RuntimeError("UnifiedLLMService not available")
     return _llm_service_instance
 
@@ -137,12 +138,13 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
 
     # Check for errors
     if "[LLM Error:" in response.content:
-        logger.error(f"LLM generation failed: {response.content}")
+        logger.error("llm_generation_failed", response=response.content)
         raise RuntimeError(f"Gemini API call failed: {response.content}")
 
     logger.info(
-        f"Gemini API call successful: {response.tokens_used} tokens, "
-        f"${response.cost_estimate:.4f}"
+        "gemini_api_call_successful",
+        tokens_used=response.tokens_used,
+        cost_estimate=response.cost_estimate
     )
     return response.content
 
@@ -263,7 +265,7 @@ class PersonaAgent(_PersonaAgentImpl):
         self._llm_response_history: List[str] = []
 
     @property
-    def character_name(self) -> Optional[str]:
+    def character_name(self) -> str:
         legacy_name = getattr(self, "_legacy_character_name", None)
         return legacy_name or super().character_name
 
@@ -336,13 +338,13 @@ class PersonaAgent(_PersonaAgentImpl):
         try:
             action = self._make_decision(world_state)
         except Exception as exc:  # pragma: no cover - defensive logging
-            logger.error("PersonaAgent failed to process turn: %s", exc)
+            logger.error("persona_agent_failed_to_process_turn", error=str(exc))
             action = None
         finally:
             try:
                 self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=action)
             except Exception:
-                logger.debug("Event bus unavailable during AGENT_ACTION_COMPLETE emit")
+                logger.debug("event_bus_unavailable_during_emit")
         return action
 
     def _make_decision(
@@ -361,7 +363,7 @@ class PersonaAgent(_PersonaAgentImpl):
                     state, situation, available_actions
                 )
             except Exception as exc:
-                logger.warning("LLM-enhanced decision failed: %s", exc)
+                logger.warning("llm_enhanced_decision_failed", error=str(exc))
 
             if llm_action:
                 return llm_action
@@ -377,7 +379,7 @@ class PersonaAgent(_PersonaAgentImpl):
 
             return self.decision_engine.make_decision(state)
         except Exception as exc:
-            logger.error("Legacy decision loop failed: %s", exc)
+            logger.error("legacy_decision_loop_failed", error=str(exc))
             return None
 
     def _process_world_state_update(self, world_state_update: Dict[str, Any]) -> None:
@@ -418,8 +420,8 @@ class PersonaAgent(_PersonaAgentImpl):
     ) -> ThreatLevel:
         return self._assess_threat_from_description(description or "")
 
-    def _assess_available_resources(self, overrides: Optional[Dict[str, Any]] = None) -> None:
-        resources = {
+    def _assess_available_resources(self, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        resources: Dict[str, Any] = {
             "energy": 75,
             "supplies": 60,
             "support": 50,
@@ -496,6 +498,7 @@ class PersonaAgent(_PersonaAgentImpl):
             "Respond with ACTION, TARGET, REASONING."
         )
         self._llm_prompt_history.append(prompt)
+        return None
         self._llm_prompt_history[:] = self._llm_prompt_history[-50:]
         return prompt
 
@@ -519,7 +522,7 @@ class PersonaAgent(_PersonaAgentImpl):
                 )
             else:
                 # 生产环境：允许 fallback
-                logger.warning("Gemini API key not configured, using fallback response")
+                logger.warning("gemini_api_key_not_configured")
                 return "[LLM-Fallback] Gemini API key not configured."
 
         try:
@@ -539,7 +542,9 @@ class PersonaAgent(_PersonaAgentImpl):
             else:
                 # 生产环境：记录错误但继续运行
                 logger.error(
-                    "Gemini API request failed in production: %s", exc, exc_info=True
+                    "gemini_api_request_failed_in_production",
+                    error=str(exc),
+                    exc_info=True
                 )
                 return "[LLM-Fallback] Gemini service unavailable."
 
@@ -742,8 +747,9 @@ class PersonaAgent(_PersonaAgentImpl):
     def _extract_knowledge_domains(self) -> Any:
         return self.character_interpreter._extract_knowledge_domains()
 
-    def _initialize_subjective_worldview(self) -> None:  # type: ignore[override]
-        return super()._initialize_subjective_worldview()
+    def _initialize_subjective_worldview(self) -> None:
+        if hasattr(super(), '_initialize_subjective_worldview'):
+            getattr(super(), '_initialize_subjective_worldview')()  # type: ignore[misc]
 
 
 __all__ = [

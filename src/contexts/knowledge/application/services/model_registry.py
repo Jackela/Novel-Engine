@@ -1110,22 +1110,30 @@ class ModelRegistry:
                 task_config_result = self.get_model_for_task(task_type)
                 if task_config_result.is_ok:
                     task_config = task_config_result.unwrap()
-                    model_result = self.get_model(task_config.provider, task_config.model_name)
-                    if model_result.is_ok:
-                        candidates.append(model_result.unwrap())
+                    if task_config is not None:
+                        model_result = self.get_model(task_config.provider, task_config.model_name)
+                        if model_result.is_ok:
+                            model_def = model_result.unwrap()
+                            if model_def is not None:
+                                candidates.append(model_def)
 
-                    # Check fallback providers (null-safe iteration)
-                    for provider in task_config.fallback_providers or []:
-                        fallback_result = self.get_model(provider, task_config.model_name)
-                        if fallback_result.is_ok:
-                            candidates.append(fallback_result.unwrap())
+                        # Check fallback providers (null-safe iteration)
+                        for provider in task_config.fallback_providers or []:
+                            fallback_result = self.get_model(provider, task_config.model_name)
+                            if fallback_result.is_ok:
+                                fallback_model = fallback_result.unwrap()
+                                if fallback_model is not None:
+                                    candidates.append(fallback_model)
 
             # If no task-based candidates, search all models
             if not candidates:
                 all_models_result = self.list_models(include_deprecated=False)
                 if all_models_result.is_error:
-                    return all_models_result
-                candidates = all_models_result.unwrap()
+                    return all_models_result  # type: ignore[return-value]
+                all_models = all_models_result.unwrap()
+                if all_models is None:
+                    return Ok(None)
+                candidates = all_models
 
             # Apply filters
             if requires_functions:
@@ -1173,8 +1181,17 @@ class ModelRegistry:
         """
         result = self.resolve_model(model_ref)
         if result.is_error:
-            return result
-        return Ok(result.unwrap().provider)
+            return result  # type: ignore[return-value]
+        lookup_result = result.unwrap()
+        if lookup_result is None:
+            return Err(
+                Error(
+                    code="MODEL_RESOLUTION_ERROR",
+                    message=f"Could not resolve model: {model_ref}",
+                    recoverable=True,
+                )
+            )
+        return Ok(lookup_result.provider)
 
     def is_model_available(self, provider: LLMProvider, model_name: str) -> bool:
         """
@@ -1191,6 +1208,8 @@ class ModelRegistry:
         if model_result.is_error:
             return False
         model = model_result.unwrap()
+        if model is None:
+            return False
         return not model.deprecated
 
     def get_stats(self) -> dict[str, Any]:

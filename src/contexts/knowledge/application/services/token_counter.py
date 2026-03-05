@@ -347,10 +347,12 @@ class TokenCounter:
 
             # Fallback to individual counting
             for text in texts:
-                result = self.count(text, model, provider, model_family)
-                if result.is_error:
-                    return result  # Propagate error
-                results.append(result.unwrap())
+                count_result = self.count(text, model, provider, model_family)
+                if count_result.is_error:
+                    return count_result  # type: ignore[return-value]
+                token_result = count_result.unwrap()
+                if token_result is not None:
+                    results.append(token_result)
 
             return Ok(results)
         except Exception as e:
@@ -413,7 +415,16 @@ class TokenCounter:
                 )
                 if content_result.is_error:
                     return content_result
-                content_count = content_result.unwrap().token_count
+                content_token_result = content_result.unwrap()
+                if content_token_result is None:
+                    return Err(
+                        Error(
+                            code="TOKEN_COUNTING_ERROR",
+                            message="Failed to count tokens: result is None",
+                            recoverable=True,
+                        )
+                    )
+                content_count = content_token_result.token_count
 
                 # Count role (typically 1-3 tokens)
                 role_count = len(role.split()) + 1
@@ -476,9 +487,16 @@ class TokenCounter:
 
         result = self.count(text, model=model)
         if result.is_error:
-            return result
-
-        token_count = result.unwrap().token_count
+            return result  # type: ignore[return-value]  # type: ignore[unreachable]
+        token_result = result.unwrap()
+        if token_result is None:
+            return Err(
+                ValidationError(
+                    message="Token counting returned None",
+                    field="text",
+                )
+            )
+        token_count = token_result.token_count
         if token_count == 0:
             return Ok(0)
         return Ok(max_tokens // token_count)
@@ -520,9 +538,16 @@ class TokenCounter:
 
         result = self.count(text, model=model)
         if result.is_error:
-            return result
+            return result  # type: ignore[return-value]  # type: ignore[unreachable]
 
         token_result = result.unwrap()
+        if token_result is None:
+            return Err(
+                ValidationError(
+                    message="Token counting returned None",
+                    field="text",
+                )
+            )
         if token_result.token_count <= max_tokens:
             return Ok(text)
 

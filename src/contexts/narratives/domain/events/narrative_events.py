@@ -34,9 +34,6 @@ class NarrativeEvent:
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
 
-        if self.occurred_at is None:
-            object.__setattr__(self, "occurred_at", datetime.now(timezone.utc))
-
 
 # Narrative Arc Events
 
@@ -272,7 +269,8 @@ class NarrativeFlowChanged(NarrativeEvent):
             object.__setattr__(self, "previous_flow_state", {})
         if self.new_flow_state is None:
             object.__setattr__(self, "new_flow_state", {})
-        if len(self.affected_sequence_range) != 2:
+        seq_range = self.affected_sequence_range or [0, 0]
+        if len(seq_range) != 2:
             raise ValueError(
                 "affected_sequence_range must contain exactly 2 elements [start, end]"
             )

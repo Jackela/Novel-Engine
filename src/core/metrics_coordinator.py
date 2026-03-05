@@ -17,12 +17,12 @@ This class follows the Single Responsibility Principle by focusing solely on
 metrics management, separate from integration orchestration.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

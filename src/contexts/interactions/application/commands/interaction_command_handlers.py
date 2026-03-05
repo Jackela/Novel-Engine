@@ -725,7 +725,7 @@ class InteractionCommandHandler:
             if response_found:
                 break
 
-        if not response_found:
+        if not response_found or updated_response is None:
             raise ValueError(f"Response {command.response_id} not found")
 
         # Persist changes

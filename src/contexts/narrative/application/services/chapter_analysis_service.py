@@ -9,6 +9,10 @@ Why a separate service:
     scene-level data into actionable insights about narrative structure.
     Unlike PacingService which focuses on tension/energy flow, this service
     evaluates overall chapter balance and story structure.
+
+Result Pattern:
+    All public methods return Result[T, Error] for explicit error handling
+    and consistency with other narrative services.
 """
 
 from __future__ import annotations
@@ -16,12 +20,26 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict
+
+from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:
     from uuid import UUID
 
     from src.contexts.narrative.domain.entities.scene import Scene
+
+
+class ChapterAnalysisError(Error):
+    """Error raised when chapter analysis fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="CHAPTER_ANALYSIS_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
 
 
 class HealthScore(str, Enum):
@@ -205,7 +223,7 @@ class ChapterAnalysisService:
 
     def analyze_chapter_structure(
         self, chapter_id: UUID, scenes: list[Scene]
-    ) -> ChapterHealthReport:
+    ) -> Result[ChapterHealthReport, Error]:
         """Perform comprehensive structural analysis of a chapter.
 
         Analyzes scene distribution, word counts, tension arc, and
@@ -216,51 +234,63 @@ class ChapterAnalysisService:
             scenes: List of scenes belonging to the chapter.
 
         Returns:
-            ChapterHealthReport with complete analysis.
+            Result containing:
+            - Ok: ChapterHealthReport with complete analysis
+            - Err: Error if analysis fails
 
         Why scenes as parameter:
             Keeps the service stateless and independent of repositories.
             The caller (router/controller) handles data fetching.
         """
-        if not scenes:
-            return self._empty_report(chapter_id)
+        try:
+            if not scenes:
+                return Ok(self._empty_report(chapter_id))
 
-        # Sort scenes by order_index for analysis
-        sorted_scenes = sorted(scenes, key=lambda s: s.order_index)
+            # Sort scenes by order_index for analysis
+            sorted_scenes = sorted(scenes, key=lambda s: s.order_index)
 
-        # Calculate basic metrics
-        total_scenes = len(sorted_scenes)
-        total_beats = sum(len(scene.beats) for scene in sorted_scenes)
+            # Calculate basic metrics
+            total_scenes = len(sorted_scenes)
+            total_beats = sum(len(scene.beats) for scene in sorted_scenes)
 
-        # Analyze phase distribution
-        phase_dist = self._analyze_phase_distribution(sorted_scenes)
+            # Analyze phase distribution
+            phase_dist = self._analyze_phase_distribution(sorted_scenes)
 
-        # Estimate word count
-        word_count = self._estimate_word_count(sorted_scenes)
+            # Estimate word count
+            word_count = self._estimate_word_count(sorted_scenes)
 
-        # Analyze tension arc
-        tension_arc = self._analyze_tension_arc(sorted_scenes)
+            # Analyze tension arc
+            tension_arc = self._analyze_tension_arc(sorted_scenes)
 
-        # Generate warnings
-        warnings = self._generate_warnings(sorted_scenes, phase_dist, tension_arc)
+            # Generate warnings
+            warnings = self._generate_warnings(sorted_scenes, phase_dist, tension_arc)
 
-        # Calculate overall health score
-        health_score = self._calculate_health_score(warnings, total_scenes)
+            # Calculate overall health score
+            health_score = self._calculate_health_score(warnings, total_scenes)
 
-        # Generate recommendations
-        recommendations = self._generate_recommendations(warnings)
+            # Generate recommendations
+            recommendations = self._generate_recommendations(warnings)
 
-        return ChapterHealthReport(
-            chapter_id=chapter_id,
-            health_score=health_score,
-            phase_distribution=phase_dist,
-            word_count=word_count,
-            total_scenes=total_scenes,
-            total_beats=total_beats,
-            tension_arc=tension_arc,
-            warnings=warnings,
-            recommendations=recommendations,
-        )
+            return Ok(
+                ChapterHealthReport(
+                    chapter_id=chapter_id,
+                    health_score=health_score,
+                    phase_distribution=phase_dist,
+                    word_count=word_count,
+                    total_scenes=total_scenes,
+                    total_beats=total_beats,
+                    tension_arc=tension_arc,
+                    warnings=warnings,
+                    recommendations=recommendations,
+                )
+            )
+        except Exception as e:
+            return Err(
+                ChapterAnalysisError(
+                    f"Failed to analyze chapter {chapter_id}: {e}",
+                    details={"chapter_id": str(chapter_id)},
+                )
+            )
 
     def _empty_report(self, chapter_id: UUID) -> ChapterHealthReport:
         """Return an empty report for chapters with no scenes."""

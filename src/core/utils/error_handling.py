@@ -6,12 +6,12 @@ Centralized error handling patterns for consistent error responses.
 """
 
 import functools
-import logging
+import structlog
 from typing import Any, Callable, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def handle_standard_errors(

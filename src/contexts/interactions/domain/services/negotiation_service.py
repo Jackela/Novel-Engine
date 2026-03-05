@@ -21,6 +21,7 @@ from ..value_objects.proposal_response import ProposalResponse, ResponseType
 from ..value_objects.proposal_terms import (
     ProposalPriority,
     ProposalTerms,
+    ProposalType,
     TermCondition,
 )
 
@@ -89,7 +90,7 @@ class NegotiationService:
         Returns comprehensive analysis including acceptance probability,
         risk factors, and optimization suggestions.
         """
-        analysis = {
+        analysis: Dict[str, Any] = {
             "overall_viability_score": Decimal("0"),
             "acceptance_probability": Decimal("0"),
             "risk_factors": [],
@@ -313,7 +314,7 @@ class NegotiationService:
 
         Returns optimization suggestions and predicted improvements.
         """
-        optimization = {
+        optimization: Dict[str, Any] = {
             "optimized_terms": [],
             "expected_improvement": Decimal("0"),
             "optimization_rationale": {},
@@ -525,7 +526,7 @@ class NegotiationService:
         self, proposal: ProposalTerms, party: NegotiationParty, domain: Optional[str]
     ) -> Dict[str, Any]:
         """Analyze how well a proposal fits a specific party."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "acceptance_score": Decimal("50"),
             "concerns": [],
             "positive_factors": [],
@@ -602,8 +603,8 @@ class NegotiationService:
             return Decimal("0")
 
         # Base probability from average scores
-        avg_score = sum(party_scores) / len(party_scores)
-        base_probability = avg_score
+        avg_score: Decimal = Decimal(sum(party_scores) / len(party_scores))
+        base_probability: Decimal = avg_score
 
         # Adjust for proposal characteristics
         if proposal.is_expired:
@@ -702,7 +703,7 @@ class NegotiationService:
 
         # Check proposal type - access via attribute
         if hasattr(proposal, 'proposal_type') and proposal.proposal_type in [
-            "ALLIANCE_REQUEST", "RESOURCE_EXCHANGE",
+            ProposalType.ALLIANCE_REQUEST, ProposalType.RESOURCE_EXCHANGE,
         ]:
             factors.append("Proposal type typically has good success rate")
 
@@ -727,7 +728,7 @@ class NegotiationService:
         self, parties: List[NegotiationParty], domain: Optional[str]
     ) -> Dict[str, Any]:
         """Analyze the balance of negotiation power."""
-        power_analysis = {
+        power_analysis: Dict[str, Any] = {
             "total_power": Decimal("0"),
             "power_distribution": {},
             "imbalance_score": Decimal("0"),
@@ -890,7 +891,7 @@ class NegotiationService:
         domain: Optional[str],
     ) -> Dict[str, Any]:
         """Recommend strategy for specific party."""
-        strategy = {
+        strategy: Dict[str, Any] = {
             "communication_approach": "standard",
             "key_motivators": [],
             "potential_concerns": [],
@@ -1292,7 +1293,7 @@ class NegotiationService:
         domain: Optional[str],
     ) -> Dict[str, Any]:
         """Analyze how well a term performs with parties."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "optimization_potential": Decimal("0"),
             "reasoning": "",
             "suggested_changes": [],
@@ -1355,7 +1356,8 @@ class NegotiationService:
                 party_scores.append(analysis["acceptance_score"])
 
         if party_scores:
-            return sum(party_scores) / len(party_scores)
+            result: Decimal = Decimal(sum(party_scores) / len(party_scores))
+            return result
 
         return Decimal("0")
 
@@ -1363,7 +1365,7 @@ class NegotiationService:
         self, optimized_terms: List[TermCondition], parties: List[NegotiationParty]
     ) -> Dict[str, Any]:
         """Assess risks of proposed optimizations."""
-        risks = {"risk_level": "low", "risk_factors": [], "mitigation_strategies": []}
+        risks: Dict[str, Any] = {"risk_level": "low", "risk_factors": [], "mitigation_strategies": []}
 
         if len(optimized_terms) > 3:
             risks["risk_level"] = "medium"

@@ -8,9 +8,16 @@ may indicate bugs in the simulation logic.
 Typical usage example:
     >>> from src.contexts.world.application.services import SimulationSanityChecker
     >>> checker = SimulationSanityChecker()
-    >>> violations = checker.check(world_state)
-    >>> for v in violations:
-    ...     print(f"{v.severity.value}: {v.message}")
+    >>> result = checker.check(world_state)
+    >>> if result.is_ok:
+    ...     violations = result.value
+    ...     for v in violations:
+    ...         print(f"{v.severity.value}: {v.message}")
+
+Result Pattern:
+    The check() method returns Result[List[SanityViolation], Error] for explicit
+    error handling. The legacy check_and_raise() method is deprecated in favor
+    of Result pattern.
 """
 
 from dataclasses import dataclass, field
@@ -19,6 +26,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import structlog
 
+from src.core.result import Err, Error, Ok, Result
+
 if TYPE_CHECKING:
     from src.contexts.character.domain.aggregates.character import Character
     from src.contexts.world.domain.aggregates.world_state import WorldState
@@ -26,6 +35,18 @@ if TYPE_CHECKING:
     from src.contexts.world.domain.entities.location import Location
 
 logger = structlog.get_logger()
+
+
+class SanityCheckError(Error):
+    """Error raised when sanity check execution fails (not for violations)."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="SANITY_CHECK_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
 
 
 class Severity(Enum):
@@ -70,18 +91,7 @@ class SanityViolation:
         }
 
 
-class SanityCheckError(Exception):
-    """Raised when sanity check finds ERROR-level violations."""
 
-    def __init__(self, violations: List[SanityViolation]) -> None:
-        """Initialize with list of violations.
-
-        Args:
-            violations: List of ERROR-level SanityViolation instances.
-        """
-        self.violations = violations
-        messages = [v.message for v in violations]
-        super().__init__(f"Sanity check failed: {'; '.join(messages)}")
 
 
 class SimulationSanityChecker:
@@ -147,7 +157,9 @@ class SimulationSanityChecker:
         if locations is not None:
             self._locations = locations
 
-    def check(self, world: Optional["WorldState"] = None) -> List[SanityViolation]:
+    def check(
+        self, world: Optional["WorldState"] = None
+    ) -> Result[List[SanityViolation], Error]:
         """Check all sanity rules and return violations.
 
         Runs all defined sanity checks against the configured entities
@@ -157,69 +169,90 @@ class SimulationSanityChecker:
             world: Optional WorldState for context (currently unused).
 
         Returns:
-            List of SanityViolation instances, empty if no issues.
+            Result containing:
+            - Ok: List of SanityViolation instances, empty if no issues
+            - Err: Error if check execution fails
 
         Example:
-            >>> violations = checker.check(world)
-            >>> for v in violations:
-            ...     print(f"[{v.severity.value}] {v.rule_name}: {v.message}")
+            >>> result = checker.check(world)
+            >>> if result.is_ok:
+            ...     violations = result.value
+            ...     for v in violations:
+            ...         print(f"[{v.severity.value}] {v.rule_name}: {v.message}")
         """
-        violations: List[SanityViolation] = []
+        try:
+            violations: List[SanityViolation] = []
 
-        # Rule 1: Dead character has location
-        violations.extend(self._check_dead_character_has_location())
+            # Rule 1: Dead character has location
+            violations.extend(self._check_dead_character_has_location())
 
-        # Rule 2: Faction with no influence has territories
-        violations.extend(self._check_faction_no_influence_has_territories())
+            # Rule 2: Faction with no influence has territories
+            violations.extend(self._check_faction_no_influence_has_territories())
 
-        # Rule 3: Circular location hierarchy
-        violations.extend(self._check_circular_location_hierarchy())
+            # Rule 3: Circular location hierarchy
+            violations.extend(self._check_circular_location_hierarchy())
 
-        # Rule 4: Orphaned entities
-        violations.extend(self._check_orphaned_entities())
+            # Rule 4: Orphaned entities
+            violations.extend(self._check_orphaned_entities())
 
-        # Rule 5: Duplicate faction relations
-        violations.extend(self._check_duplicate_faction_relations())
+            # Rule 5: Duplicate faction relations
+            violations.extend(self._check_duplicate_faction_relations())
 
-        if violations:
-            logger.warning(
-                "sanity_check_violations_found",
-                total_violations=len(violations),
-                errors=sum(1 for v in violations if v.severity == Severity.ERROR),
-                warnings=sum(1 for v in violations if v.severity == Severity.WARNING),
+            if violations:
+                logger.warning(
+                    "sanity_check_violations_found",
+                    total_violations=len(violations),
+                    errors=sum(1 for v in violations if v.severity == Severity.ERROR),
+                    warnings=sum(
+                        1 for v in violations if v.severity == Severity.WARNING
+                    ),
+                )
+
+            return Ok(violations)
+        except Exception as e:
+            logger.error("sanity_check_failed", error=str(e))
+            return Err(
+                SanityCheckError(
+                    f"Failed to execute sanity check: {e}",
+                )
             )
 
-        return violations
+    def has_error_violations(
+        self, world: Optional["WorldState"] = None
+    ) -> Result[bool, Error]:
+        """Check if any ERROR-level violations exist.
 
-    def check_and_raise(self, world: Optional["WorldState"] = None) -> None:
-        """Check all rules and raise exception on ERROR severity.
-
-        Like check(), but raises SanityCheckError if any ERROR-level
-        violations are found. WARNING-level violations are logged but
-        do not cause an exception.
+        This is the Result-pattern replacement for check_and_raise().
+        Returns True if any ERROR-level violations are found.
 
         Args:
             world: Optional WorldState for context.
 
-        Raises:
-            SanityCheckError: If any ERROR-level violations are found.
+        Returns:
+            Result containing:
+            - Ok: True if ERROR-level violations exist, False otherwise
+            - Err: Error if check execution fails
 
         Example:
-            >>> try:
-            ...     checker.check_and_raise(world)
-            ... except SanityCheckError as e:
-            ...     print(f"Found {len(e.violations)} errors")
+            >>> result = checker.has_error_violations(world)
+            >>> if result.is_ok and result.value:
+            ...     print("Error-level violations found!")
         """
-        violations = self.check(world)
+        check_result = self.check(world)
+        if check_result.is_error:
+            return check_result  # type: ignore
+
+        violations = check_result.value
         errors = [v for v in violations if v.severity == Severity.ERROR]
 
         if errors:
             logger.error(
-                "sanity_check_failed",
+                "sanity_check_errors_found",
                 error_count=len(errors),
                 rules=[v.rule_name for v in errors],
             )
-            raise SanityCheckError(errors)
+
+        return Ok(len(errors) > 0)
 
     def _check_dead_character_has_location(self) -> List[SanityViolation]:
         """Check that deceased characters don't have current_location_id.

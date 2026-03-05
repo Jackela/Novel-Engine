@@ -24,7 +24,7 @@ Typical usage example:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
+from typing import Any, Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
 
 import structlog
 
@@ -40,8 +40,33 @@ from src.contexts.world.domain.entities.rumor import (
     Rumor,
     RumorOrigin,
 )
+from src.core.result import Err, Error, Ok, Result
 
 logger = structlog.get_logger()
+
+
+class RumorPropagationError(Error):
+    """Error raised when rumor propagation fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="RUMOR_PROPAGATION_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
+
+
+class RumorCreationError(Error):
+    """Error raised when creating a rumor from an event fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="RUMOR_CREATION_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
 
 
 @runtime_checkable
@@ -244,7 +269,9 @@ class RumorPropagationService:
         # This cache persists for the lifetime of the service instance
         self._adjacency_cache: Dict[str, List[str]] = {}
 
-    async def propagate_rumors(self, world: WorldState) -> List[Rumor]:
+    async def propagate_rumors(
+        self, world: WorldState
+    ) -> Result[List[Rumor], Error]:
         """Propagate all active rumors to adjacent locations.
 
         This is the main entry point for rumor propagation. It processes
@@ -262,11 +289,15 @@ class RumorPropagationService:
             world: Current WorldState aggregate.
 
         Returns:
-            List of updated Rumor entities after propagation.
+            Result containing:
+            - Ok: List of updated Rumor entities after propagation
+            - Err: Error if propagation fails
 
         Example:
-            >>> rumors = await service.propagate_rumors(world)
-            >>> print(f"Propagated {len(rumors)} rumors")
+            >>> result = await service.propagate_rumors(world)
+            >>> if result.is_ok:
+            ...     rumors = result.value
+            ...     print(f"Propagated {len(rumors)} rumors")
         """
         try:
             # Get all active rumors
@@ -277,7 +308,7 @@ class RumorPropagationService:
                     "rumor_propagation_no_active_rumors",
                     world_id=world.id,
                 )
-                return []
+                return Ok([])
 
             logger.info(
                 "rumor_propagation_started",
@@ -306,7 +337,7 @@ class RumorPropagationService:
                 cache_size=len(self._adjacency_cache),
             )
 
-            return updated_rumors
+            return Ok(updated_rumors)
 
         except Exception as e:
             logger.error(
@@ -314,14 +345,18 @@ class RumorPropagationService:
                 world_id=world.id,
                 error=str(e),
             )
-            # Return empty list on error - don't crash simulation
-            return []
+            return Err(
+                RumorPropagationError(
+                    f"Failed to propagate rumors: {e}",
+                    details={"world_id": world.id},
+                )
+            )
 
     async def propagate_rumors_batch(
         self,
         world: WorldState,
         batch_size: int = 500,
-    ) -> List[Rumor]:
+    ) -> Result[List[Rumor], Error]:
         """Propagate rumors in batches for memory-constrained environments.
 
         This method processes rumors in configurable batch sizes to control
@@ -332,17 +367,21 @@ class RumorPropagationService:
             batch_size: Number of rumors to process per batch. Default 500.
 
         Returns:
-            List of all updated Rumor entities after propagation.
+            Result containing:
+            - Ok: List of all updated Rumor entities after propagation
+            - Err: Error if propagation fails
 
         Example:
             >>> # Process 10,000 rumors in batches of 500
-            >>> rumors = await service.propagate_rumors_batch(world, batch_size=500)
+            >>> result = await service.propagate_rumors_batch(world, batch_size=500)
+            >>> if result.is_ok:
+            ...     rumors = result.value
         """
         try:
             active_rumors = await self._rumor_repo.get_active_rumors(world.id)
 
             if not active_rumors:
-                return []
+                return Ok([])
 
             all_updated_rumors: List[Rumor] = []
             all_rumors_to_delete: List[str] = []
@@ -385,7 +424,7 @@ class RumorPropagationService:
                 total_deleted=len(all_rumors_to_delete),
             )
 
-            return all_updated_rumors
+            return Ok(all_updated_rumors)
 
         except Exception as e:
             logger.error(
@@ -393,7 +432,12 @@ class RumorPropagationService:
                 world_id=world.id,
                 error=str(e),
             )
-            return []
+            return Err(
+                RumorPropagationError(
+                    f"Failed to propagate rumors in batches: {e}",
+                    details={"world_id": world.id, "batch_size": batch_size},
+                )
+            )
 
     async def _process_rumors_optimized(
         self,
@@ -579,7 +623,7 @@ class RumorPropagationService:
         self,
         event: HistoryEvent,
         world: WorldState,
-    ) -> Rumor:
+    ) -> Result[Rumor, Error]:
         """Create a new rumor from a historical event.
 
         The rumor's initial truth value is based on the event's impact_scope:
@@ -594,15 +638,25 @@ class RumorPropagationService:
             world: Current WorldState aggregate (for calendar).
 
         Returns:
-            A new Rumor entity based on the event.
-
-        Raises:
-            ValueError: If event has no location_ids.
+            Result containing:
+            - Ok: A new Rumor entity based on the event
+            - Err: Error if creation fails (e.g., event has no locations)
 
         Example:
-            >>> rumor = service.create_rumor_from_event(war_event, world)
-            >>> print(f"New rumor: {rumor.content[:50]}...")
+            >>> result = service.create_rumor_from_event(war_event, world)
+            >>> if result.is_ok:
+            ...     rumor = result.value
+            ...     print(f"New rumor: {rumor.content[:50]}...")
         """
+        # Validate event has locations
+        if not event.location_ids and not event.affected_location_ids:
+            return Err(
+                RumorCreationError(
+                    "Cannot create rumor from event without location information",
+                    details={"event_id": event.id, "event_name": event.name},
+                )
+            )
+
         # Determine origin location
         origin_location = self._get_origin_location(event)
 
@@ -633,7 +687,7 @@ class RumorPropagationService:
             initial_truth=initial_truth,
         )
 
-        return rumor
+        return Ok(rumor)
 
     def _get_origin_location(self, event: HistoryEvent) -> str:
         """Determine the origin location for an event's rumor.
@@ -781,40 +835,58 @@ class RumorPropagationService:
 
         return "several locations"
 
-    def get_statistics(self, rumors: List[Rumor]) -> RumorStatistics:
+    def get_statistics(self, rumors: List[Rumor]) -> Result[RumorStatistics, Error]:
         """Calculate statistics about a list of rumors.
 
         Args:
             rumors: List of Rumor entities to analyze.
 
         Returns:
-            RumorStatistics with calculated values.
+            Result containing:
+            - Ok: RumorStatistics with calculated values
+            - Err: Error if calculation fails
 
         Example:
-            >>> stats = service.get_statistics(rumors)
-            >>> print(f"Active: {stats.active_rumors}, Avg Truth: {stats.avg_truth}")
+            >>> result = service.get_statistics(rumors)
+            >>> if result.is_ok:
+            ...     stats = result.value
+            ...     print(f"Active: {stats.active_rumors}, Avg Truth: {stats.avg_truth}")
         """
-        if not rumors:
-            return RumorStatistics()
+        try:
+            if not rumors:
+                return Ok(RumorStatistics())
 
-        active_rumors = [r for r in rumors if not r.is_dead]
-        dead_rumors = [r for r in rumors if r.is_dead]
+            active_rumors = [r for r in rumors if not r.is_dead]
+            dead_rumors = [r for r in rumors if r.is_dead]
 
-        avg_truth = 0.0
-        if active_rumors:
-            avg_truth = sum(r.truth_value for r in active_rumors) / len(active_rumors)
+            avg_truth = 0.0
+            if active_rumors:
+                avg_truth = sum(r.truth_value for r in active_rumors) / len(
+                    active_rumors
+                )
 
-        most_spread: Rumor | None = None
-        if rumors:
-            most_spread = max(rumors, key=lambda r: r.spread_count)
+            most_spread: Rumor | None = None
+            if rumors:
+                most_spread = max(rumors, key=lambda r: r.spread_count)
 
-        return RumorStatistics(
-            total_rumors=len(rumors),
-            active_rumors=len(active_rumors),
-            avg_truth=round(avg_truth, 2),
-            most_spread=most_spread,
-            dead_rumors=len(dead_rumors),
-        )
+            return Ok(
+                RumorStatistics(
+                    total_rumors=len(rumors),
+                    active_rumors=len(active_rumors),
+                    avg_truth=round(avg_truth, 2),
+                    most_spread=most_spread,
+                    dead_rumors=len(dead_rumors),
+                )
+            )
+        except Exception as e:
+            logger.error("get_statistics_failed", error=str(e))
+            return Err(
+                Error(
+                    code="STATISTICS_CALCULATION_ERROR",
+                    message=f"Failed to calculate rumor statistics: {e}",
+                    recoverable=True,
+                )
+            )
 
     @property
     def total_rumors(self) -> int:

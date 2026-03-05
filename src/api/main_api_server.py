@@ -22,6 +22,7 @@ load_dotenv(dotenv_path=env_path, override=False)
 
 import asyncio
 import json
+import logging
 import structlog
 import os
 import re

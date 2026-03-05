@@ -14,7 +14,7 @@ Key Components:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import (
+    from .models import (  # type: ignore[import-not-found]
         InteractionIdType,
         NegotiationPartyType,
         NegotiationSessionModel,

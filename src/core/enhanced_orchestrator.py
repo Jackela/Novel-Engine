@@ -8,7 +8,7 @@ and enterprise-grade resource management.
 """
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -41,7 +41,7 @@ from .system_orchestrator import (
     SystemOrchestrator,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedOrchestratorMode(Enum):

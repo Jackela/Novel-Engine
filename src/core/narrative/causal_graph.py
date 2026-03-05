@@ -5,7 +5,7 @@ Causal graph for tracking event relationships.
 因果关系图 - 追踪行动-结果的链式关系
 """
 
-import logging
+import structlog
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Tuple
@@ -14,7 +14,7 @@ import networkx as nx
 
 from .types import CausalEdge, CausalNode, CausalRelationType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CausalGraph:

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 from ..value_objects import (
@@ -494,7 +494,7 @@ class Turn:
                         turn_id=self.turn_id.turn_uuid,
                         failed_phase=phase_name,
                         compensation_type=compensation_type,
-                        rollback_data=self.rollback_snapshots.get(phase_name, {}),
+                        rollback_data=cast(Dict[str, Any], self.rollback_snapshots.get(phase_name, {})),
                         affected_entities=self.configuration.participants,
                         metadata={
                             "original_failure": failed_phase.value,
@@ -582,8 +582,8 @@ class Turn:
                 "compensation_type": completed_action.compensation_type.value,
                 "target_phase": completed_action.target_phase,
                 "execution_time_ms": (
-                    completed_action.get_execution_time().total_seconds() * 1000
-                    if completed_action.get_execution_time()
+                    (execution_time.total_seconds() * 1000)
+                    if (execution_time := completed_action.get_execution_time())
                     else None
                 ),
                 "results_summary": results,

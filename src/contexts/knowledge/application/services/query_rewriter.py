@@ -372,12 +372,13 @@ class QueryRewriter:
 
         # Parse based on strategy
         if config.strategy == RewriteStrategy.CLARIFICATION:
-            clarifications = self._parse_clarifications(response.text)
+            parsed_clarifications = self._parse_clarifications(response.text)
             # For clarification, also generate search queries
             variants = [query]  # Include original as search query
+            clarifications: list[Any] = parsed_clarifications
         else:
             variants = self._parse_response(response.text, config.max_variants)
-            clarifications: list[Any] = []
+            clarifications = []
         return {
             "variants": variants,
             "clarifications": clarifications,
@@ -492,7 +493,7 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: split by newlines and commas
-        result: list[Any] = []
+        parsed_result: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Remove common prefixes
@@ -501,9 +502,9 @@ Return ONLY a valid JSON array of strings, like this:
                     line = line[len(prefix) :].strip('"').strip()
                     break
             if line and len(line) > 2:
-                result.append(line)
+                parsed_result.append(line)
 
-        return result[:max_variants]
+        return parsed_result[:max_variants]
 
     def _generate_simple_variants(
         self,
@@ -649,8 +650,8 @@ Return ONLY a valid JSON array of strings, like this:
 
             if isinstance(questions, list):
                 # Ensure all items are strings
-                result = [str(q).strip() for q in questions if q]
-                return result[:4]  # Max 4 clarifying questions
+                parsed_questions = [str(q).strip() for q in questions if q]
+                return parsed_questions[:4]  # Max 4 clarifying questions
 
         except (json.JSONDecodeError, ValueError, TypeError):
             logger.warning(
@@ -659,14 +660,14 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: extract questions from text
-        result: list[Any] = []
+        extracted_questions: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Lines ending with '?' are likely questions
             if line.endswith("?") and len(line) > 5:
-                result.append(line)
+                extracted_questions.append(line)
 
-        return result[:4]
+        return extracted_questions[:4]
 
     def _estimate_tokens(self, text: str) -> int:
         """

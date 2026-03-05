@@ -7,7 +7,7 @@ Main emergent narrative engine orchestrating all subsystems.
 """
 
 import json
-import logging
+import structlog
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -27,7 +27,7 @@ from .types import CausalEdge, CausalNode, CausalRelationType
 # Type alias for compatibility
 LLMService = UnifiedLLMService
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EmergentNarrativeEngine:

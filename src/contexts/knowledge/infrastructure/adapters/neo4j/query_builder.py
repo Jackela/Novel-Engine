@@ -23,7 +23,7 @@ class QueryBuilder:
         """Convert EntityType to string."""
         if isinstance(entity_type, str):
             return entity_type
-        return entity_type.value
+        return entity_type.value  # type: ignore[unreachable]
 
     @staticmethod
     def str_to_entity_type(value: str) -> EntityType:
@@ -38,7 +38,7 @@ class QueryBuilder:
         """Convert RelationshipType to string."""
         if isinstance(relationship_type, str):
             return relationship_type
-        return relationship_type.value
+        return relationship_type.value  # type: ignore[unreachable]
 
     @staticmethod
     def str_to_relationship_type(value: str) -> RelationshipType:

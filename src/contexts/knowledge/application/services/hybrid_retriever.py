@@ -19,6 +19,10 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.core.result import Err, Ok, Result
+
+from ...domain.errors import RetrievalError, ValidationError
+
 if TYPE_CHECKING:
     from .knowledge_ingestion_service import RetrievedChunk
 
@@ -105,7 +109,7 @@ class HybridResult:
     fusion_method: str = "rrf"
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class FusionMetadata:
     """
     Metadata for fusion operations.
@@ -350,9 +354,13 @@ class HybridRetriever:
         ...     bm25_retriever=bm25_svc,
         ...     config=HybridConfig(vector_weight=0.7, bm25_weight=0.3),
         ... )
-        >>> results = await retriever.search("brave warrior", k=5)
-        >>> for chunk in results.chunks:
-        ...     print(f"{chunk.chunk_id}: {chunk.score:.2f}")
+        >>> result = await retriever.search("brave warrior", k=5)
+        >>> match result:
+        ...     case Ok(hybrid_result):
+        ...         for chunk in hybrid_result.chunks:
+        ...             print(f"{chunk.chunk_id}: {chunk.score:.2f}")
+        ...     case Err(error):
+        ...         print(f"Search failed: {error.message}")
     """
 
     def __init__(
@@ -393,7 +401,7 @@ class HybridRetriever:
         options: Any | None = None,  # RetrievalOptions
         collection: str | None = None,
         config_override: HybridConfig | None = None,
-    ) -> HybridResult:
+    ) -> Result[HybridResult, ValidationError | RetrievalError]:
         """
         Perform hybrid search combining vector and BM25 results.
 
@@ -406,22 +414,35 @@ class HybridRetriever:
             config_override: Override hybrid config for this search
 
         Returns:
-            HybridResult with fused results
-
-        Raises:
-            ValueError: If query is empty
+            Result containing HybridResult on success.
+            - Ok: HybridResult with fused results
+            - Err(ValidationError): If query is empty or parameters are invalid
+            - Err(RetrievalError): If retrieval fails
 
         Example:
-            >>> results = await retriever.search(
+            >>> result = await retriever.search(
             ...     query="brave knight",
             ...     k=5,
             ...     config_override=HybridConfig(vector_weight=0.5, bm25_weight=0.5),
             ... )
-            >>> for chunk in results.chunks:
-            ...     print(f"{chunk.chunk_id}: {chunk.score:.2f}")
+            >>> match result:
+            ...     case Ok(hybrid_result):
+            ...         for chunk in hybrid_result.chunks:
+            ...             print(f"{chunk.chunk_id}: {chunk.score:.2f}")
+            ...     case Err(error):
+            ...         print(f"Search failed: {error.message}")
         """
         if not query or not query.strip():
-            raise ValueError("query cannot be empty")
+            return Err(ValidationError(
+                message="query cannot be empty",
+                field="query",
+            ))
+
+        if k < 1:
+            return Err(ValidationError(
+                message="k must be at least 1",
+                field="k",
+            ))
 
         target_collection = collection or self._default_collection
         config = config_override or self._config
@@ -440,6 +461,7 @@ class HybridRetriever:
         # For now, we execute sequentially since both are async
 
         # Step 1: Vector search
+        vector_chunks: list[Any] = []
         try:
             vector_result = await self._retrieval_service.retrieve_relevant(
                 query=query,
@@ -448,33 +470,48 @@ class HybridRetriever:
                 options=options,
                 collection=target_collection,
             )
-            vector_chunks = vector_result.chunks
+            if vector_result.is_ok:
+                vector_chunks = vector_result.value.chunks
+            else:
+                logger.warning(
+                    "hybrid_vector_search_failed",
+                    query=query,
+                    error=vector_result.error.message if hasattr(vector_result.error, 'message') else str(vector_result.error),
+                )
         except Exception as e:
             logger.warning(
                 "hybrid_vector_search_failed",
                 query=query,
                 error=str(e),
             )
-            vector_chunks: list[Any] = []
+
         # Step 2: BM25 search
+        bm25_chunks: list[Any] = []
         try:
             # Convert RetrievalFilter to dict filters for BM25
             bm25_filters = self._convert_filters(filters) if filters else None
 
-            bm25_results = self._bm25_retriever.search(
+            bm25_result = self._bm25_retriever.search(
                 query=query,
                 k=k * 2,  # Get more candidates for fusion
                 collection=target_collection,
                 filters=bm25_filters,
             )
-            bm25_chunks = self._bm25_to_retrieved(bm25_results)
+            if bm25_result.is_ok:
+                bm25_chunks = self._bm25_to_retrieved(bm25_result.value)
+            else:
+                logger.warning(
+                    "hybrid_bm25_search_failed",
+                    query=query,
+                    error=bm25_result.error.message if hasattr(bm25_result.error, 'message') else str(bm25_result.error),
+                )
         except Exception as e:
             logger.warning(
                 "hybrid_bm25_search_failed",
                 query=query,
                 error=str(e),
             )
-            bm25_chunks: list[Any] = []
+
         logger.debug(
             "hybrid_search_results",
             query=query,
@@ -509,12 +546,12 @@ class HybridRetriever:
             fusion_method=fusion_method,
         )
 
-        return HybridResult(
+        return Ok(HybridResult(
             chunks=fused_chunks,
             vector_results=vector_chunks,
             bm25_results=bm25_chunks,
             fusion_method=fusion_method,
-        )
+        ))
 
     def _convert_filters(self, filters: Any) -> dict[str, Any] | None:
         """
@@ -531,17 +568,17 @@ class HybridRetriever:
 
         bm25_filters: dict[str, Any] = {}
 
-        if filters.source_types:
+        if hasattr(filters, 'source_types') and filters.source_types:
             if len(filters.source_types) == 1:
                 bm25_filters["source_type"] = filters.source_types[0].value
             else:
                 # BM25 filter method doesn't support list, take first
                 bm25_filters["source_type"] = filters.source_types[0].value
 
-        if filters.tags:
+        if hasattr(filters, 'tags') and filters.tags:
             bm25_filters["tags"] = filters.tags
 
-        if filters.custom_metadata:
+        if hasattr(filters, 'custom_metadata') and filters.custom_metadata:
             bm25_filters.update(filters.custom_metadata)
 
         return bm25_filters if bm25_filters else None

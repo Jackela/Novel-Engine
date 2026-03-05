@@ -6,7 +6,7 @@ Narrative coherence engine for story consistency.
 """
 
 import json
-import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
@@ -15,7 +15,7 @@ from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 from .causal_graph import CausalGraph
 from .types import CausalNode
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeCoherenceEngine:

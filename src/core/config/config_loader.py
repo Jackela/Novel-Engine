@@ -16,7 +16,7 @@ Key Features:
 - Configuration caching for performance.
 """
 
-import logging
+import structlog
 import os
 import threading
 from dataclasses import dataclass, field
@@ -32,7 +32,7 @@ except ImportError:
     yaml = None
 
 # Configure logging for configuration operations
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

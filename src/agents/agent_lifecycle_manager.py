@@ -13,7 +13,7 @@ This component ensures all agent actions comply with simulation rules while
 providing repair mechanisms for common violations.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -33,30 +33,38 @@ except ImportError:
     # Create fallback types for graceful degradation
     IRON_LAWS_AVAILABLE = False
 
-    class ValidationResult:
+    class ValidationResult:  # type: ignore[no-redef]
         VALID = "valid"
         INVALID = "invalid"
         REQUIRES_REPAIR = "requires_repair"
 
     @dataclass
-    class IronLawsViolation:
+    class IronLawsViolation:  # type: ignore[no-redef]
         law_code: str = "E000"
+        law_name: str = "Unknown"
         description: str = "Unknown violation"
         severity: str = "low"
 
     @dataclass
-    class ValidatedAction:
+    class ValidatedAction:  # type: ignore[no-redef]
         action_id: str = "unknown"
-        status: str = ValidationResult.VALID
+        character_id: str = "unknown"
+        action_type: str = "unknown"
+        target: Any = None
+        parameters: Dict[str, Any] = field(default_factory=dict)
+        validation_result: str = "valid"
+        validation_details: Dict[str, Any] = field(default_factory=dict)
+        repairs_applied: List[str] = field(default_factory=list)
+        estimated_effects: Dict[str, Any] = field(default_factory=dict)
 
     @dataclass
-    class ProposedAction:
+    class ProposedAction:  # type: ignore[no-redef]
         action_id: str = "unknown"
         action_type: str = "unknown"
         target: Any = None
 
     @dataclass
-    class CharacterData:
+    class CharacterData:  # type: ignore[no-redef]
         """Minimal fallback when shared types are unavailable."""
 
         character_id: str = "unknown"
@@ -69,10 +77,9 @@ except ImportError:
 try:
     from src.agents.persona_agent.agent import PersonaAgent
 except ImportError:
-    PersonaAgent = None
+    PersonaAgent = None  # type: ignore[misc,assignment]
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -113,8 +120,8 @@ class AgentLifecycleManager:
         self.total_validations = 0
 
         logger.info(
-            f"AgentLifecycleManager initialized "
-            f"(Iron Laws: {'enabled' if self.validation_enabled else 'disabled'})"
+            "agent_lifecycle_manager_initialized",
+            iron_laws_enabled=self.validation_enabled
         )
 
     def adjudicate_agent_action(
@@ -142,7 +149,9 @@ class AgentLifecycleManager:
             agent_id = getattr(agent, "agent_id", "unknown")
 
             logger.info(
-                f"Adjudicating action {proposed_action.action_id} from agent {agent_id}"
+                "adjudicating_action",
+                action_id=proposed_action.action_id,
+                agent_id=agent_id
             )
 
             if not self.validation_enabled:
@@ -184,47 +193,48 @@ class AgentLifecycleManager:
 
             # Violations found - attempt repairs
             logger.warning(
-                f"Action {proposed_action.action_id} has {len(violations)} "
-                f"violations, attempting repairs"
+                "action_has_violations",
+                action_id=proposed_action.action_id,
+                violation_count=len(violations)
             )
 
             validated_action, repair_log = self._attempt_action_repairs(
                 proposed_action, violations, character_data
             )
 
-            if (
-                validated_action
-                and validated_action.validation_result == ValidationResult.VALID
-            ):
-                # Repairs successful
-                self.successful_repairs_count += 1
-                self._record_successful_action(
-                    agent_id, proposed_action, validated_action, repair_log
-                )
+            if validated_action is not None:
+                # Check validation result
+                result = getattr(validated_action, 'validation_result', None)
+                if result == ValidationResult.VALID:
+                    # Repairs successful
+                    self.successful_repairs_count += 1
+                    self._record_successful_action(
+                        agent_id, proposed_action, validated_action, repair_log
+                    )
 
-                return ActionAdjudicationResult(
-                    success=True,
-                    validated_action=validated_action,
-                    violations=violations,
-                    repair_log=repair_log,
-                    adjudication_notes=["Action repaired and validated"],
-                )
-            else:
-                # Repairs failed
-                self._record_failed_action(
-                    agent_id, proposed_action, violations, repair_log
-                )
+                    return ActionAdjudicationResult(
+                        success=True,
+                        validated_action=validated_action,
+                        violations=violations,
+                        repair_log=repair_log,
+                        adjudication_notes=["Action repaired and validated"],
+                    )
+                else:
+                    # Repairs failed
+                    self._record_failed_action(
+                        agent_id, proposed_action, violations, repair_log
+                    )
 
-                return ActionAdjudicationResult(
-                    success=False,
-                    validated_action=validated_action,
-                    violations=violations,
-                    repair_log=repair_log,
-                    adjudication_notes=["Action could not be repaired"],
-                )
+                    return ActionAdjudicationResult(
+                        success=False,
+                        validated_action=validated_action,
+                        violations=violations,
+                        repair_log=repair_log,
+                        adjudication_notes=["Action could not be repaired"],
+                    )
 
         except Exception as e:
-            logger.error(f"Error during action adjudication: {str(e)}")
+            logger.error("error_during_action_adjudication", error=str(e))
             return ActionAdjudicationResult(
                 success=False,
                 validated_action=None,
@@ -279,7 +289,7 @@ class AgentLifecycleManager:
                 self._record_violations(proposed_action, violations)
 
         except Exception as e:
-            logger.error(f"Error during Iron Laws validation: {str(e)}")
+            logger.error("error_during_iron_laws_validation", error=str(e))
             violations.append(
                 IronLawsViolation(
                     law_code="E000",
@@ -323,7 +333,7 @@ class AgentLifecycleManager:
                 )
 
         except Exception as e:
-            logger.error(f"Error validating causality law: {str(e)}")
+            logger.error("error_validating_causality_law", error=str(e))
 
         return violations
 
@@ -342,7 +352,7 @@ class AgentLifecycleManager:
                 pass
 
         except Exception as e:
-            logger.error(f"Error validating resource law: {str(e)}")
+            logger.error("error_validating_resource_law", error=str(e))
 
         return violations
 
@@ -371,7 +381,7 @@ class AgentLifecycleManager:
                     )
 
         except Exception as e:
-            logger.error(f"Error validating physics law: {str(e)}")
+            logger.error("error_validating_physics_law", error=str(e))
 
         return violations
 
@@ -395,7 +405,7 @@ class AgentLifecycleManager:
                     )
 
         except Exception as e:
-            logger.error(f"Error validating narrative law: {str(e)}")
+            logger.error("error_validating_narrative_law", error=str(e))
 
         return violations
 
@@ -412,7 +422,7 @@ class AgentLifecycleManager:
                 pass
 
         except Exception as e:
-            logger.error(f"Error validating social law: {str(e)}")
+            logger.error("error_validating_social_law", error=str(e))
 
         return violations
 
@@ -503,7 +513,9 @@ class AgentLifecycleManager:
                 )
 
                 logger.info(
-                    f"Action {proposed_action.action_id} repaired: {len(repair_log)} repairs applied"
+                    "action_repaired",
+                    action_id=proposed_action.action_id,
+                    repair_count=len(repair_log)
                 )
                 return validated_action, repair_log
             else:
@@ -517,7 +529,9 @@ class AgentLifecycleManager:
 
         except Exception as e:
             logger.error(
-                f"Repair system failure for action {proposed_action.action_id}: {e}"
+                "repair_system_failure",
+                action_id=proposed_action.action_id,
+                error=str(e)
             )
             repair_log.append(f"Repair system error: {str(e)}")
             return None, repair_log
@@ -751,7 +765,7 @@ class AgentLifecycleManager:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error generating lifecycle metrics: {str(e)}")
+            logger.error("error_generating_lifecycle_metrics", error=str(e))
             return {"error": str(e)}
 
     def get_violation_summary(self) -> Dict[str, Any]:
@@ -785,5 +799,5 @@ class AgentLifecycleManager:
                 ),
             }
         except Exception as e:
-            logger.error(f"Error generating violation summary: {str(e)}")
+            logger.error("error_generating_violation_summary", error=str(e))
             return {"error": str(e)}

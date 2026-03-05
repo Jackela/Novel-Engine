@@ -9,15 +9,16 @@ Extracted from PersonaAgent for better separation of concerns.
 Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
-import logging
 import re
+
+import structlog
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from src.agents.persona_core import PersonaCore
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterContextManager:
@@ -39,7 +40,7 @@ class CharacterContextManager:
             core: PersonaCore instance for file operations
         """
         self.core = core
-        self.logger = logging.getLogger(f"{__name__}.{core.agent_id}")
+        self.logger = structlog.get_logger(__name__, agent_id=core.agent_id)
 
     def load_character_context(self) -> None:
         """
@@ -52,14 +53,15 @@ class CharacterContextManager:
             character_sheet_path = self.core.identity.character_sheet_path
 
             if not Path(character_sheet_path).exists():
-                self.logger.error(f"Character sheet not found: {character_sheet_path}")
+                self.logger.error("character_sheet_not_found", character_sheet_path=character_sheet_path)
                 return
 
             # Read character sheet content
             content = self.core._read_cached_file(character_sheet_path)
             if not content:
                 self.logger.error(
-                    f"Failed to read character sheet: {character_sheet_path}"
+                    "failed_to_read_character_sheet",
+                    character_sheet_path=character_sheet_path
                 )
                 return
 
@@ -73,11 +75,12 @@ class CharacterContextManager:
             self._extract_core_identity()
 
             self.logger.info(
-                f"Character context loaded successfully for {self.core.identity.character_name}"
+                "character_context_loaded",
+                character_name=self.core.identity.character_name
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to load character context: {e}")
+            self.logger.error("failed_to_load_character_context", error=str(e))
 
     def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
         """
@@ -109,7 +112,9 @@ class CharacterContextManager:
                         parsed_data[section_name] = parser_method(section_content)
                     except Exception as e:
                         self.logger.warning(
-                            f"Failed to parse {section_name} section: {e}"
+                            "failed_to_parse_section",
+                            section_name=section_name,
+                            error=str(e)
                         )
                         parsed_data[section_name] = {}
                 else:
@@ -290,11 +295,13 @@ class CharacterContextManager:
                 self.core.identity.backstory = identity_data["backstory"]
 
             self.logger.debug(
-                f"Core identity extracted: {self.core.identity.character_name} ({self.core.identity.primary_faction})"
+                "core_identity_extracted",
+                character_name=self.core.identity.character_name,
+                faction=self.core.identity.primary_faction
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to extract core identity: {e}")
+            self.logger.error("failed_to_extract_core_identity", error=str(e))
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get summary of loaded character data."""

@@ -358,7 +358,7 @@ class PhaseStatus:
             compensation_actions=updates.get(
                 "compensation_actions", self.compensation_actions
             ),
-            metadata={**self.metadata, **updates.get("metadata", {})},
+            metadata={**self.metadata, **(updates.get("metadata") or {})},
         )
 
     def update_progress(
@@ -396,7 +396,7 @@ class PhaseStatus:
             events_processed=events_processed or self.events_processed,
             error_message=self.error_message,
             compensation_actions=self.compensation_actions,
-            metadata={**self.metadata, **updates["metadata"]},
+            metadata={**self.metadata, **(updates.get("metadata") or {})},
         )
 
     def get_execution_time(self) -> Optional[timedelta]:

@@ -7,7 +7,7 @@ Handles decision-making logic for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import logging
+import structlog
 import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -26,7 +26,7 @@ class ThreatLevel(Enum):
     CRITICAL = "critical"
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DecisionMaker:

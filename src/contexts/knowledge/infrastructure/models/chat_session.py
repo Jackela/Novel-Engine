@@ -7,7 +7,7 @@ This allows chat history to persist across server restarts.
 
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, String, Text, create_engine
 from sqlalchemy.dialects.sqlite import JSON
@@ -84,7 +84,7 @@ _engine = None
 _session_factory: Optional[sessionmaker] = None
 
 
-def get_engine() -> None:
+def get_engine() -> Any:
     """Get or create the database engine."""
     global _engine
     if _engine is None:

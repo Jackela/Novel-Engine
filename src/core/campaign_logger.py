@@ -6,14 +6,14 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles campaign log initialization, event logging, and narrative tracking.
 """
 
-import logging
+import structlog
 import os
 from datetime import datetime
 from typing import Optional
 
 from src.core.config.config_loader import get_campaign_log_filename
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CampaignLogger:

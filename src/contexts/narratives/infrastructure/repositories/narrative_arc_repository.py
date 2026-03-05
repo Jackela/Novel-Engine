@@ -809,22 +809,11 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 emotional_intensity=plot_entity.emotional_intensity,
                 dramatic_tension=plot_entity.dramatic_tension,
                 story_significance=plot_entity.story_significance,
-                involved_characters=set(
-                    UUID(cid) for cid in plot_entity.involved_characters
+                involved_characters=frozenset(
+                    UUID(cid) for cid in (plot_entity.involved_characters or [])
                 ),
-                prerequisite_events=set(plot_entity.prerequisite_events),
-                consequence_events=set(plot_entity.consequence_events),
-                location=plot_entity.location,
-                time_context=plot_entity.time_context,
-                pov_character=plot_entity.pov_character,
-                outcome=plot_entity.outcome,
-                conflict_type=plot_entity.conflict_type,
-                thematic_relevance={
-                    k: Decimal(str(v))
-                    for k, v in plot_entity.thematic_relevance.items()
-                },
-                tags=set(plot_entity.tags),
-                notes=plot_entity.notes,
+                prerequisite_events=list(plot_entity.prerequisite_events or []),
+                tags=frozenset(plot_entity.tags or []),
             )
             plot_points[plot_point.plot_point_id] = plot_point
 
@@ -840,19 +829,17 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 moral_complexity=theme_entity.moral_complexity,
                 emotional_resonance=theme_entity.emotional_resonance,
                 universal_appeal=theme_entity.universal_appeal,
-                cultural_significance=theme_entity.cultural_significance,
-                development_potential=theme_entity.development_potential,
-                symbolic_elements=set(theme_entity.symbolic_elements),
+                symbolic_elements=frozenset(theme_entity.symbolic_elements or []),
                 introduction_sequence=theme_entity.introduction_sequence,
                 resolution_sequence=theme_entity.resolution_sequence,
-                tags=set(theme_entity.tags),
-                notes=theme_entity.notes,
+                tags=frozenset(theme_entity.tags or []),
             )
             themes[theme.theme_id] = theme
 
         # Convert pacing segments
         pacing_segments: dict[Any, Any] = {}
         for pacing_entity in arc_entity.pacing_segments:
+            tension_curve_tuple = tuple(Decimal(str(t)) for t in (pacing_entity.tension_curve or []))
             pacing = StoryPacing(
                 pacing_id=pacing_entity.id,
                 pacing_type=PacingType(pacing_entity.pacing_type),
@@ -860,16 +847,10 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 start_sequence=pacing_entity.start_sequence,
                 end_sequence=pacing_entity.end_sequence,
                 event_density=pacing_entity.event_density,
-                tension_curve=[Decimal(str(t)) for t in pacing_entity.tension_curve],
+                tension_curve=tension_curve_tuple,
                 dialogue_ratio=pacing_entity.dialogue_ratio,
                 action_ratio=pacing_entity.action_ratio,
                 reflection_ratio=pacing_entity.reflection_ratio,
-                description_density=pacing_entity.description_density,
-                character_focus=set(UUID(cid) for cid in pacing_entity.character_focus),
-                narrative_techniques=set(pacing_entity.narrative_techniques),
-                reader_engagement_target=pacing_entity.reader_engagement_target,
-                tags=set(pacing_entity.tags),
-                notes=pacing_entity.notes,
             )
             pacing_segments[pacing.pacing_id] = pacing
 
@@ -879,24 +860,16 @@ class NarrativeArcRepository(INarrativeArcRepository):
             context = NarrativeContext(
                 context_id=context_entity.id,
                 context_type=context_entity.context_type,
+                scope=context_entity.scope,
                 name=context_entity.name,
                 description=context_entity.description,
-                importance=context_entity.importance,
+                applies_from_sequence=context_entity.applies_from_sequence,
+                applies_to_sequence=context_entity.applies_to_sequence,
                 is_persistent=context_entity.is_persistent,
-                start_sequence=context_entity.start_sequence,
-                end_sequence=context_entity.end_sequence,
-                location=context_entity.location,
-                time_period=context_entity.time_period,
-                mood=context_entity.mood,
-                atmosphere=context_entity.atmosphere,
-                social_context=context_entity.social_context,
-                cultural_context=context_entity.cultural_context,
-                affected_characters=set(
-                    UUID(cid) for cid in context_entity.affected_characters
+                affected_characters=frozenset(
+                    UUID(cid) for cid in (context_entity.affected_characters or [])
                 ),
-                related_themes=set(context_entity.related_themes),
-                tags=set(context_entity.tags),
-                notes=context_entity.notes,
+                tags=frozenset(context_entity.tags or []),
             )
             narrative_contexts[context.context_id] = context
 

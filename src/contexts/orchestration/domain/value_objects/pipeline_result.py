@@ -297,7 +297,7 @@ class PipelineResult:
         """
         # Calculate aggregated metrics
         total_events = sum(len(r.events_consumed) for r in phase_results)
-        total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
+        total_ai_cost = sum((r.get_ai_cost() for r in phase_results), Decimal("0"))
 
         # Build performance summary
         performance_summary = {
@@ -363,7 +363,7 @@ class PipelineResult:
 
         # Calculate metrics for completed phases
         total_events = sum(len(r.events_consumed) for r in phase_results)
-        total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
+        total_ai_cost = sum((r.get_ai_cost() for r in phase_results), Decimal("0"))
 
         return cls(
             turn_id=turn_id,

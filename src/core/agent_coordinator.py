@@ -6,14 +6,14 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles agent registration, lifecycle management, and coordination.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.types.shared_types import CharacterAction
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AgentCoordinator:

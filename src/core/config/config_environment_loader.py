@@ -14,7 +14,7 @@ Features:
 - Thread-safe operation
 """
 
-import logging
+import structlog
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class Environment(Enum):

@@ -8,7 +8,7 @@ data for various query scenarios.
 """
 
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from ...domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,
@@ -62,7 +62,7 @@ class InteractionQueryHandler:
                 "error": "Session not found",
             }
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(session.session_id),
             "session_name": session.session_name,
@@ -94,7 +94,7 @@ class InteractionQueryHandler:
         if query.include_parties:
             result["parties"] = []
             for party_id, party in session.parties.items():
-                party_data = {
+                party_data: Dict[str, Any] = {
                     "party_id": str(party_id),
                     "entity_id": str(party.entity_id),
                     "party_name": party.party_name,
@@ -448,9 +448,8 @@ class InteractionQueryHandler:
 
         # Response events (approximated)
         for party_id, responses in session.responses.items():
-            party_name = session.parties.get(
-                party_id, type("Party", (), {"party_name": "Unknown"})
-            ).party_name
+            party_obj = session.parties.get(party_id)
+            party_name = party_obj.party_name if party_obj else "Unknown"
             for response in responses:
                 timeline_events.append(
                     {
@@ -540,7 +539,7 @@ class InteractionQueryHandler:
             ):
                 continue
 
-            party_data = {
+            party_data: Dict[str, Any] = {
                 "party_id": str(party.party_id),
                 "entity_id": str(party.entity_id),
                 "party_name": party.party_name,
@@ -666,7 +665,7 @@ class InteractionQueryHandler:
             else 0
         )
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(query.session_id),
             "analyzed_parties": [str(p.party_id) for p in parties],

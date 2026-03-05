@@ -8,7 +8,8 @@ Enterprise-grade error handling with recovery, monitoring, and alerting.
 
 import asyncio
 import json
-import logging
+import logging  # noqa: F401 - for type annotations
+import structlog
 import threading
 import traceback
 import uuid

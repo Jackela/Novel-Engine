@@ -9,7 +9,7 @@ lifecycle management, and configuration integration.
 
 import asyncio
 import inspect
-import logging
+import structlog
 import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -30,7 +30,7 @@ from typing import (
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 

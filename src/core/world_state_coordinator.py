@@ -14,13 +14,13 @@ separation from turn orchestration and agent lifecycle concerns.
 """
 
 import json
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class WorldStateCoordinator:

@@ -13,7 +13,7 @@ This module provides the fundamental infrastructure that other director componen
 build upon while maintaining clean separation of concerns.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -26,26 +26,24 @@ try:
     from src.core.config.config_loader import get_config
 except ImportError:
 
-    def get_config() -> None:
+    def get_config() -> Optional[Any]:  # type: ignore[misc]
         return None
 
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief
+    from campaign_brief import CampaignBrief  # type: ignore[import-not-found]
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
-    CampaignBrief = None
+    CampaignBrief = None  # type: ignore[misc,assignment]
 
-    class NarrativeActionResolver:
+    class NarrativeActionResolver:  # type: ignore[no-redef]
         def __init__(self) -> None:
             pass
 
 
-# Configure logging for the director agent base
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DirectorAgentBase:
@@ -86,7 +84,7 @@ class DirectorAgentBase:
             ValueError: If configuration is invalid
             OSError: If file operations fail
         """
-        logger.info("Initializing DirectorAgent base infrastructure...")
+        logger.info("initializing_director_agent_base")
 
         self.event_bus = event_bus
 
@@ -95,7 +93,7 @@ class DirectorAgentBase:
             config = get_config()
             self._config = config
         except Exception as e:
-            logger.warning(f"Failed to load configuration, using defaults: {e}")
+            logger.warning("failed_to_load_configuration", error=str(e))
             self._config = None
 
         # Core agent management system
@@ -122,7 +120,7 @@ class DirectorAgentBase:
         # Dynamic world state tracker
         self._initialize_world_state_tracker()
 
-        logger.info("DirectorAgent base infrastructure initialized successfully")
+        logger.info("director_agent_base_initialized")
 
     def _setup_file_paths(
         self,
@@ -208,14 +206,15 @@ class DirectorAgentBase:
 
     def _initialize_world_state_tracker(self) -> None:
         """Initialize dynamic world state tracking system."""
-        self.world_state_tracker = {
+        from typing import Dict, List, Any
+        self.world_state_tracker: Dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes
             "agent_discoveries": {},  # turn_number -> {agent_id: discoveries}
             "temporal_markers": {},  # timestamp -> events
             "investigation_history": [],  # chronological list of all investigations
         }
-        """Dynamic world state tracker."""
+        """Dynamic world state tracker."""  # type: ignore[assignment]
 
     def register_agent(self, agent: PersonaAgent) -> bool:
         """
@@ -232,27 +231,28 @@ class DirectorAgentBase:
             bool: True if registration successful, False if validation failed
         """
         try:
-            logger.info("Attempting to register agent for simulation management")
+            logger.info("attempting_to_register_agent")
 
             # Validate the agent instance
             if not isinstance(agent, PersonaAgent):
                 logger.error(
-                    f"Invalid agent type: {type(agent)}. Expected PersonaAgent instance"
+                    "invalid_agent_type",
+                    agent_type=str(type(agent))
                 )
                 return False
 
             # Validate required methods
             if not hasattr(agent, "handle_turn_start"):
-                logger.error("Agent missing required 'handle_turn_start' method")
+                logger.error("agent_missing_handle_turn_start_method")
                 return False
 
             if not callable(getattr(agent, "handle_turn_start")):
-                logger.error("Agent 'handle_turn_start' is not callable")
+                logger.error("agent_handle_turn_start_not_callable")
                 return False
 
             # Validate agent ID
             if not hasattr(agent, "agent_id") or not agent.agent_id:
-                logger.error("Agent missing valid agent_id")
+                logger.error("agent_missing_valid_agent_id")
                 return False
 
             # Check for duplicate registration
@@ -260,19 +260,21 @@ class DirectorAgentBase:
                 existing_agent.agent_id for existing_agent in self.registered_agents
             ]
             if agent.agent_id in existing_ids:
-                logger.warning(f"Agent with ID '{agent.agent_id}' already registered")
+                logger.warning("agent_already_registered", agent_id=agent.agent_id)
                 return False
 
             # Register the agent
             self.registered_agents.append(agent)
             logger.info(
-                f"Successfully registered agent '{agent.agent_id}' (total: {len(self.registered_agents)})"
+                "agent_registered",
+                agent_id=agent.agent_id,
+                total_agents=len(self.registered_agents)
             )
 
             return True
 
         except Exception as e:
-            logger.error(f"Error during agent registration: {str(e)}")
+            logger.error("error_during_agent_registration", error=str(e))
             return False
 
     def remove_agent(self, agent_id: str) -> bool:
@@ -297,11 +299,11 @@ class DirectorAgentBase:
                 )
                 return True
             else:
-                logger.warning(f"Agent '{agent_id}' not found for removal")
+                logger.warning("agent_not_found_for_removal", agent_id=agent_id)
                 return False
 
         except Exception as e:
-            logger.error(f"Error removing agent '{agent_id}': {str(e)}")
+            logger.error("error_removing_agent", agent_id=agent_id, error=str(e))
             return False
 
     def get_agent_list(self) -> List[Dict[str, str]]:
@@ -325,7 +327,7 @@ class DirectorAgentBase:
             return agent_list
 
         except Exception as e:
-            logger.error(f"Error getting agent list: {str(e)}")
+            logger.error("error_getting_agent_list", error=str(e))
             return []
 
     def get_simulation_status(self) -> Dict[str, Any]:
@@ -361,7 +363,7 @@ class DirectorAgentBase:
             return status
 
         except Exception as e:
-            logger.error(f"Error getting simulation status: {str(e)}")
+            logger.error("error_getting_simulation_status", error=str(e))
             return {"simulation_status": "error", "error_message": str(e)}
 
     def log_event(self, event_description: str) -> None:
@@ -378,10 +380,10 @@ class DirectorAgentBase:
             with open(self.campaign_log_path, "a", encoding="utf-8") as file:
                 file.write(log_entry)
 
-            logger.info(f"Event logged to campaign log: {event_description[:50]}...")
+            logger.info("event_logged_to_campaign", event_preview=event_description[:50])
 
         except Exception as e:
-            logger.error(f"Error logging event: {str(e)}")
+            logger.error("error_logging_event", error=str(e))
 
     def _handle_error(
         self, error_message: str, exception: Optional[Exception] = None
@@ -398,16 +400,18 @@ class DirectorAgentBase:
 
         if exception:
             logger.error(
-                f"DirectorAgent error: {error_message} - Exception: {str(exception)}"
+                "director_agent_error",
+                error_message=error_message,
+                exception=str(exception)
             )
         else:
-            logger.error(f"DirectorAgent error: {error_message}")
+            logger.error("director_agent_error", error_message=error_message)
 
         # Log to campaign log if possible
         try:
             self.log_event(f"ERROR: {error_message}")
         except Exception:
-            logger.debug("Failed to log error event", exc_info=True)
+            logger.debug("failed_to_log_error_event")
 
     def get_config(self) -> Optional[Any]:
         """

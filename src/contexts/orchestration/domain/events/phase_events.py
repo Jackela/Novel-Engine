@@ -369,7 +369,7 @@ class PhaseFailed:
         if phase_type in {PhaseType.WORLD_UPDATE, PhaseType.EVENT_INTEGRATION}:
             return "high"
 
-        return error_details.get("severity", "medium")
+        return str(error_details.get("severity", "medium"))
 
     @staticmethod
     def _affects_downstream_phases(phase_type: PhaseType) -> bool:

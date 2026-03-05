@@ -174,7 +174,7 @@ class YAMLPromptMigrator:
             PromptMigrationError: If circular reference detected or referenced prompt not found
         """
         if visited is None:
-            visited: set[Any] = set()
+            visited = set()
         result = content
 
         # Find all {{> prompt_name}} includes
@@ -183,7 +183,7 @@ class YAMLPromptMigrator:
             include_marker = match.group(0)
 
             # Check for circular references
-            if ref_name in visited:
+            if visited and ref_name in visited:
                 raise PromptMigrationError(
                     f"Circular reference detected: {' -> '.join(sorted(visited))} -> {ref_name}"
                 )

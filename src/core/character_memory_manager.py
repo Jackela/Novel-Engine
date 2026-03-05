@@ -7,11 +7,11 @@ Handles memory management and updates for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import logging
+import structlog
 import time
 from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryManager:

@@ -5,16 +5,33 @@ It calculates resource yields, updates faction wealth, and handles
 diplomatic state changes.
 
 Called by TimeAdvancedHandler when world.time_advanced events are emitted.
+
+Result Pattern:
+    All public methods return Result[T, Error] for explicit error handling.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import Any, Dict, List
 
 import structlog
 
+from src.core.result import Err, Error, Ok, Result
+
 logger = structlog.get_logger()
+
+
+class FactionTickError(Error):
+    """Error raised when faction tick processing fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="FACTION_TICK_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
 
 
 @dataclass
@@ -56,7 +73,9 @@ class FactionTickService:
         """Initialize the FactionTickService."""
         logger.debug("faction_tick_service_initialized")
 
-    def process_tick(self, world_id: str, days_advanced: int) -> TickResult:
+    def process_tick(
+        self, world_id: str, days_advanced: int
+    ) -> Result[TickResult, Error]:
         """Process a simulation tick for the given world.
 
         Args:
@@ -64,7 +83,9 @@ class FactionTickService:
             days_advanced: Number of days that advanced
 
         Returns:
-            TickResult with processing details
+            Result containing:
+            - Ok: TickResult with processing details
+            - Err: Error if processing fails
         """
         logger.info(
             "faction_tick_started",
@@ -72,35 +93,51 @@ class FactionTickService:
             days_advanced=days_advanced,
         )
 
-        errors: List[str] = []
+        try:
+            errors: List[str] = []
 
-        # TODO: Implement resource yield calculation
-        # resources_updated = self._calculate_resource_yields(world_id, days_advanced)
-        resources_updated = self._calculate_resource_yields(world_id, days_advanced)
+            # TODO: Implement resource yield calculation
+            resources_updated = self._calculate_resource_yields(world_id, days_advanced)
 
-        # TODO: Implement diplomatic decay/progression
-        # diplomatic_changes = self._process_diplomatic_changes(world_id, days_advanced)
-        diplomatic_changes = self._process_diplomatic_changes(world_id, days_advanced)
+            # TODO: Implement diplomatic decay/progression
+            diplomatic_changes = self._process_diplomatic_changes(
+                world_id, days_advanced
+            )
 
-        success = len(errors) == 0
+            success = len(errors) == 0
 
-        logger.info(
-            "faction_tick_completed",
-            world_id=world_id,
-            days_advanced=days_advanced,
-            resources_updated=resources_updated,
-            diplomatic_changes=diplomatic_changes,
-            success=success,
-        )
+            logger.info(
+                "faction_tick_completed",
+                world_id=world_id,
+                days_advanced=days_advanced,
+                resources_updated=resources_updated,
+                diplomatic_changes=diplomatic_changes,
+                success=success,
+            )
 
-        return TickResult(
-            world_id=world_id,
-            days_advanced=days_advanced,
-            success=success,
-            resources_updated=resources_updated,
-            diplomatic_changes=diplomatic_changes,
-            errors=errors,
-        )
+            return Ok(
+                TickResult(
+                    world_id=world_id,
+                    days_advanced=days_advanced,
+                    success=success,
+                    resources_updated=resources_updated,
+                    diplomatic_changes=diplomatic_changes,
+                    errors=errors,
+                )
+            )
+        except Exception as e:
+            logger.error(
+                "faction_tick_failed",
+                world_id=world_id,
+                days_advanced=days_advanced,
+                error=str(e),
+            )
+            return Err(
+                FactionTickError(
+                    f"Failed to process faction tick: {e}",
+                    details={"world_id": world_id, "days_advanced": days_advanced},
+                )
+            )
 
     def _calculate_resource_yields(self, world_id: str, days: int) -> int:
         """Calculate and apply resource yields for all factions.

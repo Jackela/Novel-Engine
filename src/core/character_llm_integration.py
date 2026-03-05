@@ -8,7 +8,7 @@ Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
 import asyncio
-import logging
+import structlog
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -29,7 +29,7 @@ def _get_llm_service() -> Any:
     return _llm_service_instance
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class LLMIntegration:

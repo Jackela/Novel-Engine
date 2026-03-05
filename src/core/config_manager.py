@@ -7,7 +7,7 @@ into a single, consistent, and maintainable configuration manager.
 """
 
 import json
-import logging
+import structlog
 import os
 from dataclasses import dataclass, field
 from enum import Enum
@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ConfigFormat(Enum):

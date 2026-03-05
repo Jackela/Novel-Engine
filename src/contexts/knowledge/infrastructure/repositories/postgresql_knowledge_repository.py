@@ -278,7 +278,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         result = await self._session.execute(delete_sql, {"entry_id": UUID(entry_id)})
 
         # Check if entry was actually deleted
-        if result.rowcount == 0:
+        if getattr(result, 'rowcount', 0) == 0:
             raise ValueError(f"Knowledge entry not found: {entry_id}")
 
     async def retrieve_for_agent_semantic(

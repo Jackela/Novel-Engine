@@ -5,7 +5,7 @@ Shared types for emergent narrative system.
 Contains enums and dataclasses used across narrative modules.
 """
 
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CausalRelationType(Enum):

@@ -790,7 +790,7 @@ class NetworkXGraphStore(IGraphStore):
         try:
             # NetworkX in-memory graph is always "healthy"
             # Just verify the graph object exists
-            return self._graph is not None  # type: ignore[no-any-return]
+            return bool(self._graph is not None)
         except Exception:
             return False
 

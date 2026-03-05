@@ -231,7 +231,7 @@ class OpenAILLMClient:
 
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._api_key}",  # type: ignore[dict-item]
+            "Authorization": f"Bearer {self._api_key}",
         }
 
         try:
@@ -328,7 +328,7 @@ class OpenAILLMClient:
         """
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._api_key}",  # type: ignore[dict-item]
+            "Authorization": f"Bearer {self._api_key}",
         }
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:

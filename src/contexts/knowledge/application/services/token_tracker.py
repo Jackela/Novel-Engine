@@ -123,7 +123,9 @@ class TrackingContext:
             if count_result.is_error:
                 final_input_tokens = prompt_length // 4  # Fallback
             else:
-                final_input_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is not None:
+                    final_input_tokens = count_res.token_count
         else:
             final_input_tokens = 0
 
@@ -133,7 +135,9 @@ class TrackingContext:
             if count_result.is_error:
                 output_tokens = len(response_text) // 4  # Fallback
             else:
-                output_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is not None:
+                    output_tokens = count_res.token_count
 
         latency_ms = self.elapsed_ms
 
@@ -141,7 +145,7 @@ class TrackingContext:
         if isinstance(self.provider, str):
             provider_str = self.provider
         else:
-            provider_str = str(self.provider)  # type: ignore[arg-type]
+            provider_str = str(self.provider)
 
         self._usage = TokenUsage.create(
             provider=provider_str,
@@ -194,7 +198,7 @@ class TrackingContext:
         if isinstance(self.provider, str):
             provider_str = self.provider
         else:
-            provider_str = str(self.provider)  # type: ignore[arg-type]
+            provider_str = str(self.provider)
 
         self._usage = TokenUsage.create(
             provider=provider_str,
@@ -411,7 +415,7 @@ class TokenTracker:
         request_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         prompt: str | None = None,
-    ):
+    ) -> Any:
         """
         Context manager for tracking an LLM call.
 
@@ -455,7 +459,9 @@ class TokenTracker:
                 model=model_def.model_name if model_def else model_ref,
             )
             if count_result.is_ok:
-                input_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is not None:
+                    input_tokens = count_res.token_count
 
         # Create tracking context
         ctx = TrackingContext(
@@ -650,7 +656,7 @@ class TokenTracker:
         provider: str | None = None,
         model_name: str | None = None,
         workspace_id: str | None = None,
-    ):
+    ) -> dict[str, Any]:
         """
         Get usage summary for a time period.
 

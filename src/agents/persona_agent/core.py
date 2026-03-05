@@ -13,8 +13,9 @@ This module provides the fundamental infrastructure for character AI agents
 while maintaining clean separation from decision-making and memory systems.
 """
 
-import logging
 import os
+
+import structlog
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
@@ -23,20 +24,20 @@ from typing import Any, Dict, List, Optional
 try:
     from src.core.event_bus import EventBus
 except ImportError:
+    from typing import Callable
 
-    class EventBus:
+    class EventBus:  # type: ignore[no-redef]
         def __init__(self) -> None:
             pass
 
-        def subscribe(self, event, callback) -> None:
+        def subscribe(self, event: str, callback: Callable[..., None]) -> None:
             pass
 
-        def emit(self, event, **kwargs) -> None:
+        def emit(self, event: str, **kwargs: Any) -> None:
             pass
 
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PersonaAgentCore:
@@ -72,7 +73,7 @@ class PersonaAgentCore:
             event_bus: EventBus instance for decoupled communication
             agent_id: Optional unique identifier for this agent
         """
-        logger.info("Initializing PersonaAgent core infrastructure")
+        logger.info("initializing_persona_agent_core")
 
         # Core agent identification
         self.character_directory_path = character_directory_path
@@ -107,7 +108,7 @@ class PersonaAgentCore:
         # Event system integration
         self._setup_event_handling()
 
-        logger.info("PersonaAgent core initialized successfully")
+        logger.info("persona_agent_core_initialized")
 
     def _derive_agent_id_from_path(self, path: str) -> str:
         """
@@ -125,7 +126,7 @@ class PersonaAgentCore:
             timestamp_suffix = datetime.now().strftime("%H%M%S")
             return f"{base_name}_{timestamp_suffix}"
         except Exception:
-            logger.warning("Error deriving agent ID from path", exc_info=True)
+            logger.warning("error_deriving_agent_id_from_path")
             return f"agent_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     def _initialize_character_state(self) -> None:
@@ -194,11 +195,11 @@ class PersonaAgentCore:
             return
         try:
             self.event_bus.subscribe("TURN_START", self.handle_turn_start)
-            logger.info("PersonaAgent subscribed to TURN_START events")
+            logger.info("persona_agent_subscribed_to_turn_start")
         except Exception:
-            logger.error("Failed to set up event handling", exc_info=True)
+            logger.error("failed_to_set_up_event_handling")
 
-    def handle_turn_start(self, world_state_update: Dict[str, Any]) -> None:
+    def handle_turn_start(self, world_state_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Handle the TURN_START event by processing the world state and initiating decision-making.
 
@@ -209,7 +210,7 @@ class PersonaAgentCore:
             world_state_update: Current world state information from the DirectorAgent
         """
         try:
-            logger.info(f"Agent {self.agent_id} processing TURN_START event")
+            logger.info("agent_processing_turn_start", agent_id=self.agent_id)
 
             # Update internal state with world information
             self._process_world_state_update(world_state_update)
@@ -223,10 +224,13 @@ class PersonaAgentCore:
 
         except Exception as e:
             logger.error(
-                f"Error handling TURN_START for agent {self.agent_id}: {str(e)}"
+                "error_handling_turn_start",
+                agent_id=self.agent_id,
+                error=str(e)
             )
             # Emit a safe fallback action
             self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=None)
+        return None
 
     def _process_world_state_update(self, world_state_update: Dict[str, Any]) -> None:
         """
@@ -267,12 +271,16 @@ class PersonaAgentCore:
                     )
 
                 logger.debug(
-                    f"Agent {self.agent_id} processed world state update for turn {event_summary['turn_number']}"
-                )
+                "agent_processed_world_state_update",
+                agent_id=self.agent_id,
+                turn_number=event_summary["turn_number"]
+            )
 
         except Exception as e:
             logger.error(
-                f"Error processing world state update for agent {self.agent_id}: {str(e)}"
+                "error_processing_world_state_update",
+                agent_id=self.agent_id,
+                error=str(e)
             )
 
     def _create_basic_action(
@@ -303,7 +311,9 @@ class PersonaAgentCore:
 
         except Exception as e:
             logger.error(
-                f"Error creating basic action for agent {self.agent_id}: {str(e)}"
+                "error_creating_basic_action",
+                agent_id=self.agent_id,
+                error=str(e)
             )
             return None
 
@@ -316,7 +326,10 @@ class PersonaAgentCore:
         Returns:
             str: Character's name or 'Unknown' if not available
         """
-        return self.character_data.get("name", f"Agent_{self.agent_id}")
+        name = self.character_data.get("name")
+        if isinstance(name, str):
+            return name
+        return f"Agent_{self.agent_id}"
 
     @property
     def character_directory_name(self) -> str:
@@ -338,9 +351,12 @@ class PersonaAgentCore:
         """
         try:
             hybrid_context = self.character_data.get("hybrid_context", {})
-            return hybrid_context.get("markdown_content", "")
+            content = hybrid_context.get("markdown_content", "")
+            if isinstance(content, str):
+                return content
+            return ""
         except Exception as e:
-            logger.error(f"Error accessing character context for {self.agent_id}: {e}")
+            logger.error("error_accessing_character_context", agent_id=self.agent_id, error=str(e))
             return ""
 
     @property
@@ -351,7 +367,10 @@ class PersonaAgentCore:
         Returns:
             str: Character's faction or 'Unknown' if not available
         """
-        return self.character_data.get("faction", "Unknown")
+        faction = self.character_data.get("faction")
+        if isinstance(faction, str):
+            return faction
+        return "Unknown"
 
     def get_agent_info(self) -> Dict[str, Any]:
         """
@@ -382,7 +401,7 @@ class PersonaAgentCore:
                 "initialization_time": getattr(self, "_initialization_time", "unknown"),
             }
         except Exception as e:
-            logger.error(f"Error generating agent info for {self.agent_id}: {e}")
+            logger.error("error_generating_agent_info", agent_id=self.agent_id, error=str(e))
             return {"agent_id": self.agent_id, "error": str(e)}
 
     def update_character_state(
@@ -402,24 +421,29 @@ class PersonaAgentCore:
         try:
             if status is not None:
                 self.current_status = status
-                logger.info(f"Agent {self.agent_id} status updated to: {status}")
+                logger.info("agent_status_updated", agent_id=self.agent_id, status=status)
 
             if location is not None:
                 old_location = self.current_location
                 self.current_location = location
                 logger.info(
-                    f"Agent {self.agent_id} moved from {old_location} to {location}"
+                    "agent_moved",
+                    agent_id=self.agent_id,
+                    from_location=old_location,
+                    to_location=location
                 )
 
             if morale is not None:
                 # Clamp morale to valid range
                 self.morale_level = max(-1.0, min(1.0, morale))
                 logger.info(
-                    f"Agent {self.agent_id} morale updated to: {self.morale_level}"
+                    "agent_morale_updated",
+                    agent_id=self.agent_id,
+                    morale=self.morale_level
                 )
 
         except Exception as e:
-            logger.error(f"Error updating character state for {self.agent_id}: {e}")
+            logger.error("error_updating_character_state", agent_id=self.agent_id, error=str(e))
 
     def add_relationship(self, entity_id: str, relationship_strength: float) -> None:
         """
@@ -435,11 +459,14 @@ class PersonaAgentCore:
             self.relationships[entity_id] = strength
 
             logger.info(
-                f"Agent {self.agent_id} relationship with {entity_id} set to {strength}"
+                "agent_relationship_updated",
+                agent_id=self.agent_id,
+                entity_id=entity_id,
+                strength=strength
             )
 
         except Exception as e:
-            logger.error(f"Error adding relationship for {self.agent_id}: {e}")
+            logger.error("error_adding_relationship", agent_id=self.agent_id, error=str(e))
 
     def get_relationship_strength(self, entity_id: str) -> float:
         """
@@ -470,16 +497,23 @@ class PersonaAgentCore:
                     self.subjective_worldview[category].append({key: value})
 
                 logger.debug(
-                    f"Agent {self.agent_id} updated subjective worldview: {category}[{key}]"
-                )
+                "agent_updated_subjective_worldview",
+                agent_id=self.agent_id,
+                category=category,
+                key=key
+            )
             else:
                 logger.warning(
-                    f"Unknown worldview category '{category}' for agent {self.agent_id}"
-                )
+                "unknown_worldview_category",
+                agent_id=self.agent_id,
+                category=category
+            )
 
         except Exception as e:
             logger.error(
-                f"Error updating subjective worldview for {self.agent_id}: {e}"
+                "error_updating_subjective_worldview",
+                agent_id=self.agent_id,
+                error=str(e)
             )
 
     def is_active(self) -> bool:
@@ -523,5 +557,5 @@ class PersonaAgentCore:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error generating core metrics for {self.agent_id}: {e}")
+            logger.error("error_generating_core_metrics", agent_id=self.agent_id, error=str(e))
             return {"agent_id": self.agent_id, "error": str(e)}

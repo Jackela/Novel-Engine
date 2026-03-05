@@ -6,14 +6,14 @@ This module implements the CausalGraphService, a key domain service for
 managing cause-and-effect relationships within narrative structures.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..value_objects.causal_node import CausalNode, CausalRelationType, CausalStrength
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -90,12 +90,36 @@ class CausalGraphService:
 
         # Remove references to this node from other nodes
         for node in self.nodes.values():
-            node.direct_causes.discard(node_id)
-            node.direct_effects.discard(node_id)
-            node.indirect_causes.discard(node_id)
-            node.indirect_effects.discard(node_id)
-            if node_id in node.causal_relationships:
-                del node.causal_relationships[node_id]
+            # Update direct_causes
+            dc = node.direct_causes
+            if dc is not None:
+                new_dc = set(dc)
+                new_dc.discard(node_id)
+                object.__setattr__(node, "direct_causes", frozenset(new_dc))
+            # Update direct_effects
+            de = node.direct_effects
+            if de is not None:
+                new_de = set(de)
+                new_de.discard(node_id)
+                object.__setattr__(node, "direct_effects", frozenset(new_de))
+            # Update indirect_causes
+            ic = node.indirect_causes
+            if ic is not None:
+                new_ic = set(ic)
+                new_ic.discard(node_id)
+                object.__setattr__(node, "indirect_causes", frozenset(new_ic))
+            # Update indirect_effects
+            ie = node.indirect_effects
+            if ie is not None:
+                new_ie = set(ie)
+                new_ie.discard(node_id)
+                object.__setattr__(node, "indirect_effects", frozenset(new_ie))
+            # Update causal_relationships
+            cr = node.causal_relationships
+            if cr is not None:
+                new_cr = dict(cr)
+                new_cr.pop(node_id, None)
+                object.__setattr__(node, "causal_relationships", new_cr)
 
         self._invalidate_cache()
         logger.debug(f"Removed causal node: {node_id}")
@@ -143,32 +167,44 @@ class CausalGraphService:
         effect_node = self.nodes[effect_id]
 
         # Add relationship to cause node
-        if relationship_type == CausalRelationType.DIRECT_CAUSE:
-            cause_node.direct_effects.add(effect_id)
-        else:
-            cause_node.indirect_effects.add(effect_id)
+        cause_direct_effects = cause_node.direct_effects or frozenset()
+        cause_indirect_effects = cause_node.indirect_effects or frozenset()
+        cause_rels = cause_node.causal_relationships or {}
 
-        cause_node.causal_relationships[effect_id] = {
+        if relationship_type == CausalRelationType.DIRECT_CAUSE:
+            object.__setattr__(cause_node, "direct_effects", cause_direct_effects | {effect_id})
+        else:
+            object.__setattr__(cause_node, "indirect_effects", cause_indirect_effects | {effect_id})
+
+        new_cause_rels = dict(cause_rels)
+        new_cause_rels[effect_id] = {
             "relationship_type": relationship_type.value,
             "strength": strength.value,
             "certainty": float(certainty),
             "direction": "outgoing",
             "metadata": metadata or {},
         }
+        object.__setattr__(cause_node, "causal_relationships", new_cause_rels)
 
         # Add relationship to effect node
-        if relationship_type == CausalRelationType.DIRECT_CAUSE:
-            effect_node.direct_causes.add(cause_id)
-        else:
-            effect_node.indirect_causes.add(cause_id)
+        effect_direct_causes = effect_node.direct_causes or frozenset()
+        effect_indirect_causes = effect_node.indirect_causes or frozenset()
+        effect_rels = effect_node.causal_relationships or {}
 
-        effect_node.causal_relationships[cause_id] = {
+        if relationship_type == CausalRelationType.DIRECT_CAUSE:
+            object.__setattr__(effect_node, "direct_causes", effect_direct_causes | {cause_id})
+        else:
+            object.__setattr__(effect_node, "indirect_causes", effect_indirect_causes | {cause_id})
+
+        new_effect_rels = dict(effect_rels)
+        new_effect_rels[cause_id] = {
             "relationship_type": relationship_type.value,
             "strength": strength.value,
             "certainty": float(certainty),
             "direction": "incoming",
             "metadata": metadata or {},
         }
+        object.__setattr__(effect_node, "causal_relationships", new_effect_rels)
 
         self._invalidate_cache()
         logger.info(
@@ -194,14 +230,38 @@ class CausalGraphService:
         effect_node = self.nodes[effect_id]
 
         # Remove from cause node
-        cause_node.direct_effects.discard(effect_id)
-        cause_node.indirect_effects.discard(effect_id)
-        cause_node.causal_relationships.pop(effect_id, None)
+        cause_de = cause_node.direct_effects
+        if cause_de is not None:
+            new_cause_de = set(cause_de)
+            new_cause_de.discard(effect_id)
+            object.__setattr__(cause_node, "direct_effects", frozenset(new_cause_de))
+        cause_ie = cause_node.indirect_effects
+        if cause_ie is not None:
+            new_cause_ie = set(cause_ie)
+            new_cause_ie.discard(effect_id)
+            object.__setattr__(cause_node, "indirect_effects", frozenset(new_cause_ie))
+        cause_rels = cause_node.causal_relationships
+        if cause_rels is not None:
+            new_cause_rels = dict(cause_rels)
+            new_cause_rels.pop(effect_id, None)
+            object.__setattr__(cause_node, "causal_relationships", new_cause_rels)
 
         # Remove from effect node
-        effect_node.direct_causes.discard(cause_id)
-        effect_node.indirect_causes.discard(cause_id)
-        effect_node.causal_relationships.pop(cause_id, None)
+        effect_dc = effect_node.direct_causes
+        if effect_dc is not None:
+            new_effect_dc = set(effect_dc)
+            new_effect_dc.discard(cause_id)
+            object.__setattr__(effect_node, "direct_causes", frozenset(new_effect_dc))
+        effect_ic = effect_node.indirect_causes
+        if effect_ic is not None:
+            new_effect_ic = set(effect_ic)
+            new_effect_ic.discard(cause_id)
+            object.__setattr__(effect_node, "indirect_causes", frozenset(new_effect_ic))
+        effect_rels = effect_node.causal_relationships
+        if effect_rels is not None:
+            new_effect_rels = dict(effect_rels)
+            new_effect_rels.pop(cause_id, None)
+            object.__setattr__(effect_node, "causal_relationships", new_effect_rels)
 
         self._invalidate_cache()
         logger.info(f"Removed causal link: {cause_id} -> {effect_id}")
@@ -225,8 +285,8 @@ class CausalGraphService:
 
             if current in self.nodes:
                 node = self.nodes[current]
-                stack.extend(node.direct_effects)
-                stack.extend(node.indirect_effects)
+                stack.extend(node.direct_effects or frozenset())
+                stack.extend(node.indirect_effects or frozenset())
 
         return False
 
@@ -276,11 +336,15 @@ class CausalGraphService:
         node = self.nodes[current]
 
         # Check all outgoing relationships
-        for next_node in node.direct_effects.union(node.indirect_effects):
+        direct_effects = node.direct_effects or frozenset()
+        indirect_effects = node.indirect_effects or frozenset()
+        rels = node.causal_relationships or {}
+
+        for next_node in direct_effects.union(indirect_effects):
             if next_node in path:  # Avoid cycles
                 continue
 
-            rel_info = node.causal_relationships.get(next_node, {})
+            rel_info = rels.get(next_node, {})
             rel_type_str = rel_info.get("relationship_type", "direct_cause")
             rel_type = CausalRelationType(rel_type_str)
 
@@ -363,7 +427,7 @@ class CausalGraphService:
         # Calculate graph metrics
         graph_complexity = self._calculate_graph_complexity()
         consistency_score = self._calculate_consistency_score()
-        narrative_flow_score = self._calculate_narrative_flow_score()
+        _ = self._calculate_narrative_flow_score()  # Not used but kept for side effects
 
         analysis = CausalAnalysis(
             root_causes=root_causes,
@@ -477,11 +541,15 @@ class CausalGraphService:
             )
         else:
             # Continue chains through effects
-            for effect_id in node.direct_effects.union(node.indirect_effects):
-                if effect_id not in visited:
-                    sub_chains = self._get_chains_from_node(effect_id, visited)
+            direct_effects = node.direct_effects or frozenset()
+            indirect_effects = node.indirect_effects or frozenset()
+            rels = node.causal_relationships or {}
 
-                    rel_info = node.causal_relationships.get(effect_id, {})
+            for effect_id in direct_effects.union(indirect_effects):
+                if effect_id not in visited_set:
+                    sub_chains = self._get_chains_from_node(effect_id, visited_set)
+
+                    rel_info = rels.get(effect_id, {})
                     rel_type_str = rel_info.get("relationship_type", "direct_cause")
                     rel_type = CausalRelationType(rel_type_str)
                     strength_str = rel_info.get("strength", "moderate")
@@ -513,10 +581,10 @@ class CausalGraphService:
         # Add complexity from relationships
         total_relationships = (
             sum(
-                len(node.direct_causes)
-                + len(node.direct_effects)
-                + len(node.indirect_causes)
-                + len(node.indirect_effects)
+                len(node.direct_causes or frozenset())
+                + len(node.direct_effects or frozenset())
+                + len(node.indirect_causes or frozenset())
+                + len(node.indirect_effects or frozenset())
                 for node in self.nodes.values()
             )
             / 2
@@ -573,11 +641,13 @@ class CausalGraphService:
                 continue
 
             # Check that causes come before effects temporally
-            for cause_id in node.direct_causes.union(node.indirect_causes):
+            causes = (node.direct_causes or frozenset()) | (node.indirect_causes or frozenset())
+            for cause_id in causes:
                 if cause_id in self.nodes:
                     cause_node = self.nodes[cause_id]
                     if (
                         cause_node.sequence_order is not None
+                        and node.sequence_order is not None
                         and cause_node.sequence_order >= node.sequence_order
                     ):
                         issues += 1
@@ -675,10 +745,11 @@ class CausalGraphService:
         node = self.nodes[node_id]
         downstream_influence = Decimal("0")
 
-        for effect_id in node.direct_effects:
+        for effect_id in node.direct_effects or frozenset():
             if effect_id in self.nodes and effect_id not in visited:
                 effect_node = self.nodes[effect_id]
-                rel_info = node.causal_relationships.get(effect_id, {})
+                rels = node.causal_relationships or {}
+                rel_info = rels.get(effect_id, {})
                 strength_str = rel_info.get("strength", "moderate")
                 strength_modifier = self._get_strength_modifier(
                     CausalStrength(strength_str)

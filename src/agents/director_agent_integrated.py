@@ -15,8 +15,9 @@ The integrated DirectorAgent coordinates:
 """
 
 import asyncio
-import logging
 import os
+
+import structlog
 from datetime import datetime
 from textwrap import dedent
 from types import SimpleNamespace
@@ -53,33 +54,38 @@ try:
     IRON_LAWS_AVAILABLE = True
 except ImportError:
     IRON_LAWS_AVAILABLE = False
-    ActionTarget = ActionType = CharacterData = EntityType = (
-        ProposedAction
-    ) = IronLawsReport = IronLawsViolation = ValidatedAction = ValidationResult = Any  # type: ignore
+    ActionTarget = Any  # type: ignore[misc]
+    ActionType = Any  # type: ignore[misc]
+    CharacterData = Any  # type: ignore[misc]
+    EntityType = Any  # type: ignore[misc]
+    ProposedAction = Any  # type: ignore[misc]
+    IronLawsReport = Any  # type: ignore[misc]
+    IronLawsViolation = Any  # type: ignore[misc]
+    ValidatedAction = Any  # type: ignore[misc]
+    ValidationResult = Any  # type: ignore[misc]
 
 # Import configuration and narrative components
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader
+    from campaign_brief import CampaignBrief, CampaignBriefLoader  # type: ignore[import-not-found]
 
     from src.core.config.config_loader import get_config
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
 
-    def get_config() -> None:
+    def get_config() -> Optional[Any]:  # type: ignore[misc]
         return None
 
-    CampaignBrief = None
-    CampaignBriefLoader = None
+    CampaignBrief = None  # type: ignore[misc,assignment]
+    CampaignBriefLoader = None  # type: ignore[misc,assignment]
 
-    class NarrativeActionResolver:
+    class NarrativeActionResolver:  # type: ignore[no-redef]
         def __init__(self) -> None:
             pass
 
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
-_EVENT_BUS_MISSING = object()
+_EVENT_BUS_MISSING: Any = object()
 
 
 class DirectorAgent:
@@ -98,7 +104,7 @@ class DirectorAgent:
 
     def __init__(
         self,
-        event_bus: Optional[EventBus] = _EVENT_BUS_MISSING,
+        event_bus: Any = _EVENT_BUS_MISSING,
         world_state_file_path: Optional[str] = None,
         campaign_log_path: Optional[str] = None,
         campaign_brief_path: Optional[str] = None,
@@ -112,7 +118,7 @@ class DirectorAgent:
             campaign_log_path: Optional path to campaign log file
             campaign_brief_path: Optional path to campaign brief file
         """
-        logger.info("Initializing integrated DirectorAgent with modular components...")
+        logger.info("initializing_integrated_director_agent")
         if event_bus is _EVENT_BUS_MISSING:
             event_bus = EventBus()
         elif event_bus is None:
@@ -157,7 +163,7 @@ class DirectorAgent:
         self._active_turn_errors: List[str] = []
         self._suspended_agent_action_handlers: List[Any] = []
 
-        logger.info("DirectorAgent integrated architecture initialized successfully")
+        logger.info("director_agent_architecture_initialized")
 
     def _initialize_narrative_components(self) -> None:
         """Initialize narrative and campaign systems."""
@@ -172,13 +178,14 @@ class DirectorAgent:
                     brief_loader = CampaignBriefLoader(self.campaign_brief_path)
                     self.campaign_brief = brief_loader.load_campaign_brief()
                     logger.info(
-                        f"Campaign brief loaded from: {self.campaign_brief_path}"
-                    )
+                    "campaign_brief_loaded",
+                    path=self.campaign_brief_path
+                )
                 except Exception as e:
-                    logger.warning(f"Failed to load campaign brief: {e}")
+                    logger.warning("failed_to_load_campaign_brief", error=str(e))
 
         except Exception as e:
-            logger.error(f"Error initializing narrative components: {e}")
+            logger.error("error_initializing_narrative_components", error=str(e))
 
     def _setup_component_coordination(self) -> None:
         """Set up coordination between components."""
@@ -194,10 +201,10 @@ class DirectorAgent:
                 "AGENT_ACTION_COMPLETE", self._bus_agent_action_handler
             )
 
-            logger.info("Component coordination established successfully")
+            logger.info("component_coordination_established")
 
         except Exception as e:
-            logger.error(f"Error setting up component coordination: {e}")
+            logger.error("error_setting_up_component_coordination", error=str(e))
 
     def _initialize_campaign_log(self) -> None:
         """Initialize the campaign log file."""
@@ -231,10 +238,10 @@ class DirectorAgent:
             with open(self.base.campaign_log_path, "w", encoding="utf-8") as file:
                 file.write(initial_content)
 
-            logger.info(f"Campaign log initialized: {self.base.campaign_log_path}")
+            logger.info("campaign_log_initialized", path=self.base.campaign_log_path)
 
         except Exception as e:
-            logger.error(f"Failed to initialize campaign log: {e}")
+            logger.error("failed_to_initialize_campaign_log", error=str(e))
 
     # Public API methods - maintaining backward compatibility
 
@@ -253,15 +260,14 @@ class DirectorAgent:
         success = self.base.register_agent(agent)
         if success:
             logger.info(
-                f"Agent {getattr(agent, 'agent_id', 'unknown')} registered successfully"
+                "agent_registered",
+                agent_id=getattr(agent, "agent_id", "unknown")
             )
             return True
 
         # Fallback for legacy mock agents used in test suites
         if not self._is_legacy_agent_compatible(agent):
-            logger.error(
-                "Legacy agent missing required attributes; registration rejected"
-            )
+            logger.error("legacy_agent_missing_required_attributes")
             return self._handle_invalid_agent("Agent is missing required interface")
 
         agent_id = getattr(agent, "agent_id", getattr(agent, "character_name", None))
@@ -356,7 +362,7 @@ class DirectorAgent:
                 asyncio.get_running_loop()
                 # If we're already in an async context, we can't use asyncio.run()
                 # Instead, we need to handle this synchronously
-                logger.warning("Cannot use asyncio.run() inside an existing event loop")
+                logger.warning("cannot_use_asyncio_run_in_event_loop")
                 return {
                     "status": "error",
                     "message": "run_turn called from async context - use async version",
@@ -406,12 +412,12 @@ class DirectorAgent:
                     )
                     self._adjudicate_action(heartbeat_action, primary_agent)
                 except Exception as validation_error:
-                    logger.debug("Heartbeat adjudication failed: %s", validation_error)
+                    logger.debug("heartbeat_adjudication_failed", error=str(validation_error))
 
             return turn_result
 
         except Exception as e:
-            logger.exception("Error executing turn")
+            logger.error("error_executing_turn", exc_info=True)
             return {
                 "status": "error",
                 "message": str(e),
@@ -436,7 +442,7 @@ class DirectorAgent:
                     act_fn()
                     processed += 1
                 except Exception as exc:
-                    logger.error(f"Legacy agent action failed: {exc}")
+                    logger.error("legacy_agent_action_failed", error=str(exc))
 
         self.log_event(f"TURN {self.base.current_turn_number} COMPLETED (legacy mode)")
         return {
@@ -560,7 +566,7 @@ class DirectorAgent:
         """Handle invalid agent inputs based on validation mode."""
         if self._should_raise_on_invalid_agent():
             raise ValueError(message)
-        logger.warning(message)
+        logger.warning("invalid_agent", message=message)
         return False
 
     @staticmethod
@@ -785,8 +791,8 @@ class DirectorAgent:
             agent: PersonaAgent that performed the action
             action: Action taken by the agent (or None if waiting)
         """
-        proposed_action: Optional["ProposedAction"] = None
-        character_data: Optional["CharacterData"] = None
+        proposed_action: Optional[Any] = None
+        character_data: Optional[Any] = None
         if action:
             proposed_action = self._convert_to_proposed_action(action, agent)
             character_data = self._extract_character_data(agent)
@@ -850,12 +856,14 @@ class DirectorAgent:
                     self._adjudicate_action(proposed_action, agent)
                 except Exception as validation_error:
                     logger.warning(
-                        f"Global adjudication failed for {agent.agent_id}: {validation_error}"
-                    )
+                    "global_adjudication_failed",
+                    agent_id=agent.agent_id,
+                    error=str(validation_error)
+                )
                     self._record_turn_error(str(validation_error))
 
         except Exception as e:
-            logger.error(f"Error handling agent action: {str(e)}")
+            logger.error("error_handling_agent_action", error=str(e))
 
     def _convert_to_proposed_action(
         self, action: CharacterAction, agent: PersonaAgent
@@ -978,11 +986,17 @@ class DirectorAgent:
                 name=character_name,
                 faction=faction,
                 position=Position(x=0.0, y=0.0, z=0.0),
-                stats=CharacterStats(),  # Uses defaults
-                resources=CharacterResources(),  # Uses defaults
+                stats=CharacterStats(
+                    strength=5, dexterity=5, intelligence=5, willpower=5, perception=5, charisma=5
+                ),
+                resources=CharacterResources(
+                    health=ResourceValue(current=100, maximum=100),
+                    stamina=ResourceValue(current=100, maximum=100),
+                    morale=ResourceValue(current=100, maximum=100),
+                ),
             )
         except Exception as e:
-            logger.error(f"Error extracting character data: {e}")
+            logger.error("error_extracting_character_data", error=str(e))
             return None
 
     def _adjudicate_action(

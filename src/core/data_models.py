@@ -14,7 +14,7 @@ Author: Novel Engine Development Team
 """
 
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -23,7 +23,7 @@ from uuid import uuid4
 
 T = TypeVar("T")
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryType(Enum):

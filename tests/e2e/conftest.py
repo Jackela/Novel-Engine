@@ -20,7 +20,7 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
-from src.api.main_api_server import create_app
+from src.api.app import create_app
 
 # Note: event_loop fixture removed - pytest-asyncio 0.21+ handles this automatically
 # Defining a custom event_loop fixture is deprecated and causes conflicts

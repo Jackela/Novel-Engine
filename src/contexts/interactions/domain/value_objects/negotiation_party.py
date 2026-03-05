@@ -364,7 +364,7 @@ class NegotiationParty:
             for cap in relevant_capabilities
         )
 
-        avg_proficiency = total_proficiency / len(relevant_capabilities)
+        avg_proficiency = Decimal(total_proficiency / len(relevant_capabilities))
 
         # Apply authority multiplier - cast to Decimal
         negotiation_power = avg_proficiency * Decimal(authority_multiplier)

@@ -7,7 +7,7 @@ narrative context generation, story state management, and narrative action proce
 Extracted from DirectorAgent for better modularity and maintainability.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -18,7 +18,7 @@ from narrative_actions import NarrativeActionResolver, NarrativeOutcome
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.types.shared_types import CharacterAction
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeProcessor:

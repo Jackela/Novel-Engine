@@ -6,10 +6,10 @@ This module implements domain events for the Interaction bounded context,
 representing significant business events that occur during negotiations.
 """
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 
 @dataclass(frozen=True)
@@ -17,8 +17,8 @@ class InteractionDomainEvent:
     """Base class for all interaction domain events."""
 
     session_id: UUID
-    occurred_at: datetime
-    event_id: UUID
+    occurred_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    event_id: UUID = field(default_factory=uuid4)
     event_version: int = 1
     metadata: Optional[Dict[str, Any]] = None
 

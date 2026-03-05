@@ -7,7 +7,7 @@ world state preparation, agent action handling, and turn history management.
 Extracted from DirectorAgent for better modularity and maintainability.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -15,7 +15,7 @@ from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus
 from src.core.types.shared_types import CharacterAction
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TurnManager:

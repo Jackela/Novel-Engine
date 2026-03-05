@@ -14,7 +14,7 @@ clear separation from world state management and agent lifecycle concerns.
 """
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -25,7 +25,7 @@ from src.core.event_bus import EventBus
 from src.core.types.shared_types import CharacterAction
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

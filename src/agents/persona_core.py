@@ -9,8 +9,9 @@ Handles basic agent identity, lifecycle, and fundamental properties.
 Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
-import logging
 import os
+
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +29,7 @@ from src.events.event_bus import EventBus
 
 # Import shared types
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -105,7 +106,7 @@ class PersonaCore:
         # File caching for performance
         self._file_cache: Dict[str, Tuple[str, float]] = {}  # path -> (content, mtime)
 
-        logger.info(f"PersonaCore initialized for agent: {self.identity.agent_id}")
+        logger.info("persona_core_initialized", agent_id=self.identity.agent_id)
 
         # Initialize core systems
         self.logger = get_logger(f"{self.__class__.__name__}_{id(self)}")
@@ -144,7 +145,7 @@ class PersonaCore:
         return self.state.is_active
 
     @property
-    def memory(self) -> None:
+    def memory(self) -> Any:
         """Get memory interface with agent_id property for compatibility."""
 
         # Create a simple object with agent_id property for test compatibility
@@ -155,7 +156,7 @@ class PersonaCore:
         return MemoryInterface(self.agent_id)
 
     @property
-    def narrative(self) -> None:
+    def narrative(self) -> Any:
         """Get narrative interface with agent_id property for compatibility."""
 
         class NarrativeInterface:
@@ -165,7 +166,7 @@ class PersonaCore:
         return NarrativeInterface(self.agent_id)
 
     @property
-    def actions(self) -> None:
+    def actions(self) -> Any:
         """Get actions interface with agent_id property for compatibility."""
 
         class ActionsInterface:
@@ -177,12 +178,12 @@ class PersonaCore:
     async def activate(self) -> None:
         """Activate the PersonaCore instance."""
         self.state.is_active = True
-        logger.info(f"PersonaCore activated for agent: {self.agent_id}")
+        logger.info("persona_core_activated", agent_id=self.agent_id)
 
     async def deactivate(self) -> None:
         """Deactivate the PersonaCore instance."""
         self.state.is_active = False
-        logger.info(f"PersonaCore deactivated for agent: {self.agent_id}")
+        logger.info("persona_core_deactivated", agent_id=self.agent_id)
 
     async def read_character_file(self, filename: str) -> str:
         """
@@ -255,7 +256,7 @@ class PersonaCore:
         try:
             path_obj = Path(file_path)
             if not path_obj.exists():
-                logger.warning(f"File not found: {file_path}")
+                logger.warning("file_not_found", file_path=file_path)
                 return ""
 
             current_mtime = path_obj.stat().st_mtime
@@ -274,7 +275,7 @@ class PersonaCore:
             return content
 
         except Exception as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+            logger.error("error_reading_file", file_path=file_path, error=str(e))
             return ""
 
     def _parse_cached_yaml(self, file_path: str) -> Dict[str, Any]:
@@ -297,7 +298,7 @@ class PersonaCore:
             return yaml.safe_load(content) or {}
 
         except Exception as e:
-            logger.error(f"Error parsing YAML file {file_path}: {e}")
+            logger.error("error_parsing_yaml", file_path=file_path, error=str(e))
             return {}
 
     def handle_turn_start(self, world_state_update: Dict[str, Any]) -> None:
@@ -310,7 +311,7 @@ class PersonaCore:
         self.state.turn_count += 1
         self.state.last_world_state_update = world_state_update.copy()
 
-        logger.debug(f"Agent {self.agent_id} starting turn {self.state.turn_count}")
+        logger.debug("agent_starting_turn", agent_id=self.agent_id, turn_count=self.state.turn_count)
 
     def get_agent_state(self) -> Dict[str, Any]:
         """
@@ -345,6 +346,4 @@ class PersonaCore:
         """Clean up resources."""
         self._file_cache.clear()
         self.state.is_active = False
-        logger.info(
-            f"PersonaCore cleanup completed for agent: {self.identity.agent_id}"
-        )
+        logger.info("persona_core_cleanup_completed", agent_id=self.identity.agent_id)

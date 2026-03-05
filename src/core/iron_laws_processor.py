@@ -7,7 +7,7 @@ of the Novel Engine. It provides comprehensive validation with automatic repair
 capabilities for minor violations. Extracted from DirectorAgent for better modularity.
 """
 
-import logging
+import structlog
 import math
 import time
 from copy import deepcopy
@@ -42,7 +42,7 @@ except ImportError as e:  # pragma: no cover - fallback for tooling-only context
     IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore
     ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class _ReportWrapper(dict):

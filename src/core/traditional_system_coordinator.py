@@ -16,13 +16,13 @@ This class follows the Single Responsibility Principle by focusing solely on
 traditional system coordination, separate from integration orchestration.
 """
 
-import logging
+import structlog
 from typing import Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.core.system_orchestrator import OrchestratorConfig, SystemOrchestrator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TraditionalSystemCoordinator:

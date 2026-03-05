@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional, Protocol
 try:
     from src.core.types.shared_types import CharacterAction
 except ImportError:
-    CharacterAction = Dict
+    CharacterAction = Dict[str, Any]  # type: ignore[misc,assignment]
 
 
 class ThreatLevel(Enum):

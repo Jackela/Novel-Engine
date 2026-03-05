@@ -123,7 +123,11 @@ class NarrativeArcCommandHandler:
     def handle_update_narrative_arc(self, command: UpdateNarrativeArcCommand) -> None:
         """Handle narrative arc updates."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -155,7 +159,11 @@ class NarrativeArcCommandHandler:
     def handle_add_plot_point(self, command: AddPlotPointCommand) -> None:
         """Handle plot point addition."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -205,7 +213,11 @@ class NarrativeArcCommandHandler:
     def handle_update_plot_point(self, command: UpdatePlotPointCommand) -> None:
         """Handle plot point updates."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -278,7 +290,11 @@ class NarrativeArcCommandHandler:
     def handle_remove_plot_point(self, command: RemovePlotPointCommand) -> None:
         """Handle plot point removal."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -303,7 +319,11 @@ class NarrativeArcCommandHandler:
     def handle_add_theme(self, command: AddThemeCommand) -> None:
         """Handle theme addition."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -337,7 +357,11 @@ class NarrativeArcCommandHandler:
     def handle_develop_theme(self, command: DevelopThemeCommand) -> None:
         """Handle theme development."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -355,7 +379,11 @@ class NarrativeArcCommandHandler:
     def handle_add_pacing_segment(self, command: AddPacingSegmentCommand) -> None:
         """Handle pacing segment addition."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -392,7 +420,11 @@ class NarrativeArcCommandHandler:
     def handle_add_narrative_context(self, command: AddNarrativeContextCommand) -> None:
         """Handle narrative context addition."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -429,7 +461,11 @@ class NarrativeArcCommandHandler:
     def handle_activate_context(self, command: ActivateContextCommand) -> None:
         """Handle context activation."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -447,7 +483,11 @@ class NarrativeArcCommandHandler:
     def handle_deactivate_context(self, command: DeactivateContextCommand) -> None:
         """Handle context deactivation."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -465,7 +505,11 @@ class NarrativeArcCommandHandler:
     def handle_add_character_to_arc(self, command: AddCharacterToArcCommand) -> None:
         """Handle character addition to arc."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -493,7 +537,11 @@ class NarrativeArcCommandHandler:
     def handle_start_narrative_arc(self, command: StartNarrativeArcCommand) -> None:
         """Handle narrative arc start."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -513,7 +561,11 @@ class NarrativeArcCommandHandler:
     ) -> None:
         """Handle narrative arc completion."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -533,7 +585,11 @@ class NarrativeArcCommandHandler:
     ) -> Dict[str, Any]:
         """Handle narrative flow analysis."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -564,7 +620,11 @@ class NarrativeArcCommandHandler:
     ) -> Dict[str, Any]:
         """Handle sequence optimization."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -589,7 +649,11 @@ class NarrativeArcCommandHandler:
     def handle_establish_causal_link(self, command: EstablishCausalLinkCommand) -> None:
         """Handle causal link establishment."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
@@ -642,7 +706,11 @@ class NarrativeArcCommandHandler:
     ) -> Dict[str, Any]:
         """Handle causality analysis."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(command.arc_id))
+            from uuid import UUID
+            arc_id = command.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
