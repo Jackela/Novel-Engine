@@ -262,7 +262,7 @@ class ChromaDBVectorStore(IVectorStore):
             )
 
             # Format results
-            query_results = []
+            query_results: list[Any] = []
             if result and result["ids"] and result["ids"][0]:
                 for i, doc_id in enumerate(result["ids"][0]):
                     query_results.append(

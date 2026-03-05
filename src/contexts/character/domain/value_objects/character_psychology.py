@@ -167,7 +167,7 @@ class CharacterPsychology:
         dominant = self.get_dominant_traits()
         weak = self.get_weak_traits()
 
-        parts = []
+        parts: list[Any] = []
         if dominant:
             parts.append(f"High in: {', '.join(dominant)}")
         if weak:

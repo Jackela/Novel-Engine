@@ -50,7 +50,7 @@ def _get_world_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store from app state."""
     store = getattr(request.app.state, "world_store", None)
     if store is None:
-        store = {}
+        store: dict[Any, Any] = {}
         request.app.state.world_store = store
     return store
 
@@ -87,7 +87,7 @@ async def get_territories(
 
     # Extract locations from world data
     locations = world_data.get("locations", [])
-    territories = []
+    territories: list[Any] = []
     controlled_count = 0
     contested_count = 0
 
@@ -161,8 +161,7 @@ async def get_diplomacy(
 
     # Get active pacts
     pacts_data = diplomacy_data.get("active_pacts", [])
-    active_pacts = []
-
+    active_pacts: list[Any] = []
     for pact in pacts_data:
         if not isinstance(pact, dict):
             continue
@@ -215,7 +214,7 @@ async def get_resources(
     locations = world_data.get("locations", [])
 
     # Build faction resource summaries
-    faction_summaries = []
+    faction_summaries: list[Any] = []
     total_resources: Dict[str, int] = {}
 
     for faction in factions_data:

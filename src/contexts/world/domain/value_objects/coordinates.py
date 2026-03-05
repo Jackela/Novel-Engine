@@ -53,8 +53,7 @@ class Coordinates:
         Raises:
             ValueError: If coordinates are invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Check for valid numeric values first
         coords_are_numeric = True
         for coord_name, coord_value in [("x", self.x), ("y", self.y), ("z", self.z)]:

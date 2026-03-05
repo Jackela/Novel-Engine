@@ -142,13 +142,13 @@ class AsyncEventBus:
 
     async def emit(self, event_type: str, data: Any):
         """Emit an event to all subscribers."""
-        subscribers = []
+        subscribers: list[Any] = []
         async with self._lock:
             subscribers = self._subscribers.get(event_type, []).copy()
 
         if subscribers:
             # Process events concurrently
-            tasks = []
+            tasks: list[Any] = []
             for callback in subscribers:
                 if asyncio.iscoroutinefunction(callback):
                     tasks.append(callback(data))
@@ -227,7 +227,7 @@ class PerformanceOptimizer:
 
     def get_performance_stats(self) -> Dict[str, Dict[str, float]]:
         """Get performance statistics."""
-        stats = {}
+        stats: dict[Any, Any] = {}
         for operation, times in self._metrics.items():
             if times:
                 stats[operation] = {
@@ -294,7 +294,7 @@ async def optimize_simulation_execution(director, turns: int):
 
 
 @lru_cache(maxsize=128)
-def cached_config_loader():
+def cached_config_loader() -> None:
     """Cached configuration loading."""
     from src.core.config.config_loader import get_config
 
@@ -395,7 +395,7 @@ class AsyncSimulationManager:
         """Clean up old completed simulations."""
         current_time = time.time()
         async with self._lock:
-            to_remove = []
+            to_remove: list[Any] = []
             for sim_id, sim_data in self.active_simulations.items():
                 if (
                     sim_data["status"] in ["completed", "failed"]
@@ -412,7 +412,7 @@ simulation_manager = AsyncSimulationManager()
 
 
 # Memory optimization utilities
-def optimize_memory():
+def optimize_memory() -> None:
     """Optimize memory usage."""
     # Force garbage collection
     gc.collect()

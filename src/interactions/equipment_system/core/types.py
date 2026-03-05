@@ -161,7 +161,7 @@ class DynamicEquipment:
     compatible_modifications: Set[str] = field(default_factory=set)
     incompatible_with: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize enhanced equipment performance metrics"""
         # Initialize performance metrics based on equipment type
         if not self.performance_metrics:

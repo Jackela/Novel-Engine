@@ -528,7 +528,7 @@ class ContextLoaderService:
             psychological_profile = PsychologicalProfile(traits=psych_data)
 
             # Extract relationships
-            relationships = {}
+            relationships: dict[Any, Any] = {}
             relationship_data = yaml_data.get("relationships", {})
             for rel_type, rel_list in relationship_data.items():
                 if isinstance(rel_list, list):
@@ -602,10 +602,9 @@ class ContextLoaderService:
         """
         try:
             # Simplified parsing - extract character mentions and relationships
-            formative_events = []
-            relationships = []
-            behavioral_triggers = []
-
+            formative_events: list[Any] = []
+            relationships: list[Any] = []
+            behavioral_triggers: list[Any] = []
             # Extract character names mentioned in relationships
             relationship_pattern = (
                 r"\*\*([^*]+)\*\*[^*]*trust.*?(\d+).*?relationship.*?[:\-]?\s*([^*\n]+)"
@@ -674,10 +673,9 @@ class ContextLoaderService:
             ObjectivesContext: Parsed objectives context
         """
         try:
-            core_objectives = []
-            strategic_objectives = []
-            tactical_objectives = []
-
+            core_objectives: list[Any] = []
+            strategic_objectives: list[Any] = []
+            tactical_objectives: list[Any] = []
             # Extract objectives by tier (simplified pattern matching)
             tier_patterns = {
                 "Core Life": (ObjectiveTier.CORE_LIFE, core_objectives),
@@ -755,7 +753,7 @@ class ContextLoaderService:
             )
 
             # Extract emotional drives (simplified)
-            emotional_drives = []
+            emotional_drives: list[Any] = []
             drive_pattern = r"\*\*(\d+\..*?)\*\*[^*]*?([^*]+)"
             for match in re.finditer(drive_pattern, content):
                 drive_name = match.group(1).strip()
@@ -945,10 +943,9 @@ class ContextLoaderService:
         Raises:
             ValidationError: If critical integrity issues found
         """
-        warnings = []
-
+        warnings: list[Any] = []
         # Name consistency validation
-        names = []
+        names: list[Any] = []
         if character_context.profile_context:
             names.append(character_context.profile_context.name)
         if character_context.stats_context:
@@ -959,7 +956,7 @@ class ContextLoaderService:
             warnings.append(f"Name inconsistency: {unique_names}")
 
         # Age consistency validation
-        ages = []
+        ages: list[Any] = []
         if character_context.profile_context:
             ages.append(character_context.profile_context.age)
         if character_context.stats_context:
@@ -1027,7 +1024,7 @@ class ContextLoaderService:
         self, character_id: str, files_info: List[LoadedFileInfo]
     ) -> str:
         """Generate cache key based on character ID and file modification times."""
-        file_hashes = []
+        file_hashes: list[Any] = []
         for file_info in files_info:
             if file_info.loaded_successfully:
                 # Use file path and timestamp for cache key

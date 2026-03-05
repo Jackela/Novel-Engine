@@ -5,6 +5,8 @@ Interaction context validation and prerequisite checking.
 
 import logging
 
+from typing import Any
+
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
@@ -21,9 +23,8 @@ class InteractionValidator:
         self, context: InteractionContext
     ) -> StandardResponse:
         """Validate enhanced interaction context completeness and consistency"""
-        errors = []
-        warnings = []
-
+        errors: list[Any] = []
+        warnings: list[Any] = []
         # Check enhanced required fields
         if not context.interaction_id:
             errors.append("Interaction ID is required")
@@ -75,8 +76,7 @@ class InteractionValidator:
                 success=True, metadata={"blessing": "no_prerequisites"}
             )
 
-        unmet_prerequisites = []
-
+        unmet_prerequisites: list[Any] = []
         for prerequisite in context.prerequisites:
             # This would implement actual prerequisite checking logic
             # For now, we'll simulate basic checks

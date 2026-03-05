@@ -418,7 +418,7 @@ class PersonaAgent(_PersonaAgentImpl):
     ) -> ThreatLevel:
         return self._assess_threat_from_description(description or "")
 
-    def _assess_available_resources(self, overrides: Optional[Dict[str, Any]] = None):
+    def _assess_available_resources(self, overrides: Optional[Dict[str, Any]] = None) -> None:
         resources = {
             "energy": 75,
             "supplies": 60,

@@ -33,25 +33,25 @@ except (
         def __init__(self, *_, **__) -> None:
             pass
 
-        def labels(self, *_, **__):
+        def labels(self, *_, **__) -> None:
             return self
 
-        def inc(self, *_, **__):
+        def inc(self, *_, **__) -> None:
             return self
 
-        def dec(self, *_, **__):
+        def dec(self, *_, **__) -> None:
             return self
 
-        def observe(self, *_, **__):
+        def observe(self, *_, **__) -> None:
             return self
 
-        def set(self, *_, **__):
+        def set(self, *_, **__) -> None:
             return self
 
-        def info(self, *_, **__):
+        def info(self, *_, **__) -> None:
             return self
 
-        def time(self):
+        def time(self) -> None:
             class _Timer:
                 def __enter__(self):
                     return self

@@ -595,7 +595,7 @@ class ConfigLoader:
         }
 
         # Apply environment overrides
-        applied_overrides = []
+        applied_overrides: list[Any] = []
         for env_var, setter in env_mappings.items():
             env_value = os.environ.get(env_var)
             if env_value is not None:
@@ -809,7 +809,7 @@ def get_campaign_log_filename() -> str:
 # Example usage and testing functions
 
 
-def example_usage():
+def example_usage() -> None:
     """
     Example usage of the configuration system.
 

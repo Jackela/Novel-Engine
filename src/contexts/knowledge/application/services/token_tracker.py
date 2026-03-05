@@ -462,7 +462,7 @@ class TokenTracker:
         workspace_id: str | None = None,
         user_id: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         """
         Decorator for automatic tracking of LLM calls.
 

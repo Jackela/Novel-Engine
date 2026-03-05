@@ -122,8 +122,7 @@ class OptimizedJSONResponse(JSONResponse):
     ) -> None:
         # Add performance headers
         if headers is None:
-            headers = {}
-
+            headers: dict[Any, Any] = {}
         # Add cache control headers for performance
         if cache_control:
             headers["Cache-Control"] = cache_control
@@ -687,7 +686,7 @@ def create_app() -> FastAPI:
     return app
 
 
-def _register_api_routes(app: FastAPI):
+def _register_api_routes(app: FastAPI) -> None:
     """Register all API routes immediately."""
     # Create API instances; orchestrator will be injected during lifespan
     character_api = create_character_api(None)
@@ -722,7 +721,7 @@ def _register_api_routes(app: FastAPI):
     logger.info("API routes registered successfully with Context7 integration.")
 
 
-def _register_legacy_routes(app: FastAPI):
+def _register_legacy_routes(app: FastAPI) -> None:
     """Register legacy routes for backward compatibility."""
     import os
 
@@ -830,7 +829,7 @@ def _register_legacy_routes(app: FastAPI):
             if not os.path.isdir(characters_path):
                 return {"characters": []}
 
-            characters = []
+            characters: list[Any] = []
             for item in os.listdir(characters_path):
                 item_path = os.path.join(characters_path, item)
                 if os.path.isdir(item_path):
@@ -988,7 +987,7 @@ def _register_legacy_routes(app: FastAPI):
     def _get_world_store() -> Dict[str, Dict[str, Any]]:
         store = getattr(app.state, "world_store", None)
         if store is None:
-            store = {}
+            store: dict[Any, Any] = {}
             app.state.world_store = store
         return store
 
@@ -1396,14 +1395,14 @@ def _register_legacy_routes(app: FastAPI):
 
             # Validate characters exist
             characters_path = os.path.join(os.getcwd(), "characters")
-            available_character_dirs = set()
+            available_character_dirs: set[Any] = set()
             if os.path.isdir(characters_path):
                 available_character_dirs = {
                     item
                     for item in os.listdir(characters_path)
                     if os.path.isdir(os.path.join(characters_path, item))
                 }
-            missing_characters = []
+            missing_characters: list[Any] = []
             for char_name in character_names:
                 raw_char_name = (char_name or "").strip()
                 safe_char_name = os.path.basename(raw_char_name)
@@ -1489,7 +1488,7 @@ def _register_legacy_routes(app: FastAPI):
     logger.info("Legacy routes registered successfully.")
 
 
-def main():
+def main() -> None:
     """Enhanced main entry point for the API server with comprehensive initialization."""
     config = APIServerConfig()
 

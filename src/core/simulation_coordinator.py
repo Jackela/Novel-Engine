@@ -186,7 +186,7 @@ class SimulationCoordinator:
         ).total_seconds()
 
         # Calculate agent statistics
-        agent_stats = {}
+        agent_stats: dict[Any, Any] = {}
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
             faction = agent.subjective_worldview.get("primary_faction", "Unknown")
@@ -229,7 +229,7 @@ class SimulationCoordinator:
         Returns:
             List of dictionaries containing agent information
         """
-        agent_list = []
+        agent_list: list[Any] = []
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
             faction = agent.subjective_worldview.get("primary_faction", "Unknown")

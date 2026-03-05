@@ -80,7 +80,7 @@ def get_time_service(request: Request) -> TimeService:
     return TimeService(repo)
 
 
-def _get_event_bus(request: Request):
+def _get_event_bus(request: Request) -> None:
     """Get the EventBus from app.state.
 
     Reads the EventBus from request.app.state.event_bus which is

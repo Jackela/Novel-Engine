@@ -194,7 +194,7 @@ class DefaultCostTracker(ICostTracker):
             output_cost = sum(entry.output_cost for entry in filtered_entries)
 
             # Provider breakdown
-            provider_breakdown = {}
+            provider_breakdown: dict[Any, Any] = {}
             for entry in filtered_entries:
                 provider_name = entry.provider_id.provider_name
                 if provider_name not in provider_breakdown:
@@ -209,7 +209,7 @@ class DefaultCostTracker(ICostTracker):
                 provider_breakdown[provider_name]["cost"] += entry.total_cost
 
             # Model breakdown
-            model_breakdown = {}
+            model_breakdown: dict[Any, Any] = {}
             for entry in filtered_entries:
                 model_name = entry.model_id.model_name
                 if model_name not in model_breakdown:

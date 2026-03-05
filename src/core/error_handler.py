@@ -567,8 +567,7 @@ class CentralizedErrorHandler:
     def _get_recent_critical_errors(self) -> List[Dict[str, Any]]:
         """Get recent critical errors."""
         cutoff = datetime.now() - timedelta(hours=24)
-        critical_errors = []
-
+        critical_errors: list[Any] = []
         for record in self.error_records.values():
             if (
                 record.severity == ErrorSeverity.CRITICAL
@@ -616,7 +615,7 @@ async def handle_error(
     """
     extra_kwargs = dict(kwargs)
 
-    context_kwargs = {}
+    context_kwargs: dict[Any, Any] = {}
     for context_key in ("user_id", "session_id", "request_id"):
         if context_key in extra_kwargs:
             context_kwargs[context_key] = extra_kwargs.pop(context_key)

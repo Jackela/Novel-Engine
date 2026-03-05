@@ -30,10 +30,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -256,8 +256,7 @@ class StateManager:
             StandardResponse with generated memory items
         """
         try:
-            memories = []
-
+            memories: list[Any] = []
             # Generate episodic memories for each participant
             for participant in context.participants:
                 episodic_memory = await self._create_episodic_memory(
@@ -330,8 +329,7 @@ class StateManager:
             StandardResponse with relationship update results
         """
         try:
-            relationship_updates = []
-
+            relationship_updates: list[Any] = []
             # Calculate base relationship change
             base_change = self._calculate_base_relationship_change(
                 interaction_type, interaction_outcome
@@ -446,8 +444,7 @@ class StateManager:
     ) -> StandardResponse:
         """Update character states based on interaction."""
         try:
-            state_updates = []
-
+            state_updates: list[Any] = []
             for participant in context.participants:
                 # Calculate state changes based on interaction type and outcome
                 changes = self._calculate_character_state_changes(
@@ -494,8 +491,7 @@ class StateManager:
     ) -> StandardResponse:
         """Generate memory items from interaction."""
         try:
-            memory_updates = []
-
+            memory_updates: list[Any] = []
             for participant in context.participants:
                 # Create episodic memory
                 memory_item = {
@@ -576,8 +572,7 @@ class StateManager:
     ) -> StandardResponse:
         """Process emotional state changes."""
         try:
-            emotional_changes = []
-
+            emotional_changes: list[Any] = []
             for participant in context.participants:
                 emotional_impact = interaction_data.get("emotional_impacts", {}).get(
                     participant, {}
@@ -663,8 +658,7 @@ class StateManager:
         interaction_data: Dict[str, Any],
     ) -> Dict[str, Dict[str, Any]]:
         """Calculate character state changes."""
-        changes = {}
-
+        changes: dict[Any, Any] = {}
         # Basic state changes based on interaction type
         if context.interaction_type == InteractionType.COMBAT:
             changes["stamina"] = {"change": -10, "old_value": 100, "new_value": 90}

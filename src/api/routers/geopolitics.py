@@ -66,7 +66,7 @@ def _get_world_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store from app state."""
     store = getattr(request.app.state, "world_store", None)
     if store is None:
-        store = {}
+        store: dict[Any, Any] = {}
         request.app.state.world_store = store
     return store
 
@@ -174,7 +174,7 @@ async def get_territories(
         raise HTTPException(status_code=404, detail=f"World {world_id} not found")
 
     locations = world_data.get("locations", [])
-    territories = []
+    territories: list[Any] = []
     controlled_count = 0
     contested_count = 0
 
@@ -236,7 +236,7 @@ async def get_resources(
     factions_data = world_data.get("factions", [])
     locations = world_data.get("locations", [])
 
-    faction_summaries = []
+    faction_summaries: list[Any] = []
     total_resources: Dict[str, int] = {}
 
     for faction in factions_data:

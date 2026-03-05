@@ -124,10 +124,9 @@ class CachedEmbeddingService(IEmbeddingService):
         cached_results = self._cache.get_batch(texts, self._model)
 
         # Separate cache hits from misses
-        hit_indices = []
-        miss_indices = []
-        miss_texts = []
-
+        hit_indices: list[Any] = []
+        miss_indices: list[Any] = []
+        miss_texts: list[Any] = []
         for i, text in enumerate(texts):
             if text in cached_results:
                 hit_indices.append(i)

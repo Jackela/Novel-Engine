@@ -33,10 +33,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -245,7 +245,7 @@ class InteractionEngine:
                 ),
             )
 
-    def get_engine_status(self):
+    def get_engine_status(self) -> None:
         """Get comprehensive engine status."""
         current_time = datetime.now()
         uptime = (current_time - self.engine_stats["startup_time"]).total_seconds()
@@ -296,7 +296,7 @@ class InteractionEngine:
                 ),
             )
 
-    def validate_interaction_context(self, context):
+    def validate_interaction_context(self, context) -> None:
         """Validate interaction context without processing."""
         try:
             return asyncio.run(self.validator.validate_interaction_context(context))
@@ -310,14 +310,14 @@ class InteractionEngine:
                 ),
             )
 
-    def calculate_interaction_risk(self, context):
+    def calculate_interaction_risk(self, context) -> None:
         """Calculate risk assessment for interaction."""
         try:
             return self.validator.calculate_risk_assessment(context)
         except Exception as e:
             return {"risk_score": 0.5, "risk_level": "Unknown", "error": str(e)}
 
-    def _update_engine_stats(self, success, processing_time):
+    def _update_engine_stats(self, success, processing_time) -> None:
         """Update engine processing statistics."""
         self.engine_stats["total_interactions_processed"] += 1
 
@@ -337,7 +337,7 @@ class InteractionEngine:
 
 def create_interaction_engine(
     config=None, memory_manager=None, character_manager=None, equipment_manager=None
-):
+) -> None:
     """Factory function to create interaction engine with optimal defaults."""
     if config is None:
         config = InteractionEngineConfig(
@@ -357,7 +357,7 @@ def create_interaction_engine(
     )
 
 
-def create_performance_optimized_config():
+def create_performance_optimized_config() -> None:
     """Create performance-optimized configuration."""
     return InteractionEngineConfig(
         max_concurrent_interactions=5,

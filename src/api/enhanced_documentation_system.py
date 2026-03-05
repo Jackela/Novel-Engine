@@ -40,7 +40,7 @@ class EnhancedDocumentationSystem:
 
         return Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
 
-    def _create_default_template(self, template_path: Path):
+    def _create_default_template(self, template_path: Path) -> None:
         """Create default documentation template."""
         template_content = """<!DOCTYPE html>
 <html lang="en">
@@ -504,8 +504,7 @@ novel-engine stories generate --title "My Story"</code></pre>
 
         try:
             formats = ["python", "curl", "javascript"]
-            examples = []
-
+            examples: list[Any] = []
             for format_type in formats:
                 context7_response = await self.context7_api._call_context7(
                     "generate_code_example",
@@ -610,7 +609,7 @@ console.log(data);"""
         """Generate enhanced HTML documentation."""
         try:
             # Enhance endpoints with Context7 examples
-            enhanced_endpoints = []
+            enhanced_endpoints: list[Any] = []
             for endpoint in self._api_inventory["endpoints"]:
                 examples = await self.generate_code_examples_for_endpoint(
                     endpoint["path"]
@@ -658,7 +657,7 @@ console.log(data);"""
         </html>
         """
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup enhanced documentation routes."""
 
         @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)

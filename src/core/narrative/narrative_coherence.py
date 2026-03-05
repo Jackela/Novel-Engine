@@ -29,7 +29,7 @@ class NarrativeCoherenceEngine:
         self.plot_threads: Dict[str, Dict[str, Any]] = {}
         self.consistency_rules: List[Callable[[Dict], bool]] = []
 
-    def register_consistency_rule(self, rule_func: Callable[[Dict], bool]):
+    def register_consistency_rule(self, rule_func: Callable[[Dict], bool]) -> None:
         """注册一致性检查规则"""
         self.consistency_rules.append(rule_func)
 
@@ -102,8 +102,7 @@ class NarrativeCoherenceEngine:
         self, event: CausalNode, time_window: timedelta = timedelta(hours=2)
     ) -> List[CausalNode]:
         """获取相关的上下文事件"""
-        relevant_events = []
-
+        relevant_events: list[Any] = []
         # 时间窗口内的事件
         cutoff_time = event.timestamp - time_window
         for node in self.causal_graph.nodes.values():
@@ -116,8 +115,8 @@ class NarrativeCoherenceEngine:
                 relevant_events.append(self.causal_graph.nodes[pred])
 
         # 去重并按时间排序
-        seen = set()
-        unique_events = []
+        seen: set[Any] = set()
+        unique_events: list[Any] = []
         for evt in relevant_events:
             if evt.node_id not in seen:
                 seen.add(evt.node_id)
@@ -130,8 +129,7 @@ class NarrativeCoherenceEngine:
         self, event: CausalNode, context_events: List[CausalNode]
     ) -> Dict[str, Any]:
         """检查事件一致性"""
-        issues = []
-
+        issues: list[Any] = []
         # 应用注册的一致性规则
         for rule in self.consistency_rules:
             try:
@@ -259,7 +257,7 @@ class NarrativeCoherenceEngine:
 
         return None
 
-    def _update_character_arc(self, agent_id: str, event: CausalNode):
+    def _update_character_arc(self, agent_id: str, event: CausalNode) -> None:
         """更新角色弧线"""
         if agent_id not in self.character_arcs:
             self.character_arcs[agent_id] = {
@@ -350,7 +348,7 @@ class NarrativeCoherenceEngine:
 
         return None
 
-    def _update_plot_thread(self, thread_id: str, event: CausalNode):
+    def _update_plot_thread(self, thread_id: str, event: CausalNode) -> None:
         """更新情节线索"""
         if thread_id not in self.plot_threads:
             return
@@ -425,7 +423,7 @@ class NarrativeCoherenceEngine:
         # 按时间排序并选取最相关的事件
         recent_events = sorted(context_events, key=lambda x: x.timestamp)[-5:]
 
-        summary_parts = []
+        summary_parts: list[Any] = []
         for event in recent_events:
             agent_name = event.agent_id or "某人"
             action_desc = event.event_type

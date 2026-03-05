@@ -130,8 +130,7 @@ class DiplomaticPact(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate DiplomaticPact-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_a_id or not self.faction_a_id.strip():
             errors.append("Faction A ID cannot be empty")
 
@@ -361,7 +360,7 @@ class DiplomaticPact(Entity):
         Returns:
             A new DiplomaticPact configured as a war declaration.
         """
-        terms = {}
+        terms: dict[Any, Any] = {}
         if casus_belli:
             terms["casus_belli"] = casus_belli
 

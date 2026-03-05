@@ -150,12 +150,12 @@ class HealthMonitor:
         self.check_history: List[SystemHealth] = []
         self.max_history_size = 100
 
-    def register_checker(self, checker: HealthChecker):
+    def register_checker(self, checker: HealthChecker) -> None:
         """Register a health checker."""
         self.health_checkers.append(checker)
         logger.info(f"Registered health checker: {checker.name}")
 
-    def register_database_check(self, database_path: str):
+    def register_database_check(self, database_path: str) -> None:
         """Register database connectivity check."""
 
         async def check_database():
@@ -202,7 +202,7 @@ class HealthMonitor:
         )
         self.register_checker(checker)
 
-    def register_orchestrator_check(self, orchestrator):
+    def register_orchestrator_check(self, orchestrator) -> None:
         """Register system orchestrator check."""
 
         async def check_orchestrator():
@@ -245,7 +245,7 @@ class HealthMonitor:
         )
         self.register_checker(checker)
 
-    def register_system_resource_checks(self):
+    def register_system_resource_checks(self) -> None:
         """Register system resource health checks."""
 
         # Memory check
@@ -352,7 +352,7 @@ class HealthMonitor:
             )
         )
 
-    def register_chromadb_check(self, persist_dir: str = ".data/chroma"):
+    def register_chromadb_check(self, persist_dir: str = ".data/chroma") -> None:
         """
         Register ChromaDB vector store health check.
 

@@ -527,7 +527,7 @@ just the pure narrative prose that could be published in an anthology.
 
     def handle_agent_action(
         self, agent: PersonaAgent, action: Optional[CharacterAction]
-    ):
+    ) -> None:
         """Handles the AGENT_ACTION_COMPLETE event."""
         if not action:
             return
@@ -555,7 +555,7 @@ just the pure narrative prose that could be published in an anthology.
                 )
             )
 
-    def handle_simulation_end(self):
+    def handle_simulation_end(self) -> None:
         """Handles the SIMULATION_END event, finalizing the narrative."""
         logger.info("Simulation ended, generating final narrative.")
         complete_story = self._combine_narrative_segments(self.narrative_segments)
@@ -877,7 +877,7 @@ just the pure narrative prose that could be published in an anthology.
 
     def _extract_participants(self, line: str) -> List[str]:
         """Extract known character names from a log line."""
-        participants = []
+        participants: list[Any] = []
         lower_line = line.lower()
         for char_name in self.character_names:
             if char_name.lower() in lower_line:
@@ -906,7 +906,7 @@ just the pure narrative prose that could be published in an anthology.
         return segments
 
 
-def example_usage():
+def example_usage() -> None:
     """Example usage of the ChroniclerAgent class."""
     print("ChroniclerAgent class is ready for use.")
 

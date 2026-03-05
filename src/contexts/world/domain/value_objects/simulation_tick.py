@@ -35,8 +35,7 @@ class ResourceChanges:
 
     def __post_init__(self) -> None:
         """Validate resource change values."""
-        errors = []
-
+        errors: list[Any] = []
         if not -100 <= self.wealth_delta <= 100:
             errors.append(f"Wealth delta must be -100 to 100, got {self.wealth_delta}")
 
@@ -130,8 +129,7 @@ class DiplomacyChange:
 
     def __post_init__(self) -> None:
         """Validate diplomacy change values."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_a or not self.faction_a.strip():
             errors.append("Faction A ID cannot be empty")
 
@@ -239,8 +237,7 @@ class SimulationTick:
 
     def __post_init__(self) -> None:
         """Validate simulation tick values."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.tick_id:
             errors.append("Tick ID cannot be empty")
 

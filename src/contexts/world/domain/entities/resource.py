@@ -56,8 +56,7 @@ class Resource(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate Resource-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if self.amount < 0:
             errors.append("Resource amount cannot be negative")
 

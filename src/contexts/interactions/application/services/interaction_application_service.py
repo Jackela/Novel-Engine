@@ -492,8 +492,7 @@ class InteractionApplicationService:
         if not session:
             raise ValueError(f"Session {session_id} not found")
 
-        optimization_results = []
-
+        optimization_results: list[Any] = []
         for proposal_id in session.active_proposals.keys():
             # Analyze current proposal
             analysis_command = AnalyzeProposalViabilityCommand(
@@ -602,8 +601,7 @@ class InteractionApplicationService:
             momentum_result["momentum_analysis"],
         )
 
-        health_alerts = []
-
+        health_alerts: list[Any] = []
         if timeout_approaching:
             health_alerts.append(
                 {
@@ -697,8 +695,7 @@ class InteractionApplicationService:
         momentum_result: Dict[str, Any],
     ) -> List[str]:
         """Generate actionable recommendations based on analysis results."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Compatibility recommendations
         if compatibility_result["overall_compatibility"] < 50:
             recommendations.append(
@@ -727,15 +724,14 @@ class InteractionApplicationService:
         self, optimization_results: List[Dict[str, Any]]
     ) -> List[str]:
         """Generate recommendations for proposal optimization."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Analyze common issues across proposals
-        all_suggestions = []
+        all_suggestions: list[Any] = []
         for result in optimization_results:
             all_suggestions.extend(result["optimization_suggestions"])
 
         # Find most common suggestions
-        suggestion_counts = {}
+        suggestion_counts: dict[Any, Any] = {}
         for suggestion in all_suggestions:
             suggestion_counts[suggestion] = suggestion_counts.get(suggestion, 0) + 1
 
@@ -823,8 +819,7 @@ class InteractionApplicationService:
         self, health_score: float, health_alerts: List[Dict[str, Any]]
     ) -> List[str]:
         """Generate recommendations for improving session health."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Address specific alerts
         for alert in health_alerts:
             if alert["type"] == "timeout_warning":

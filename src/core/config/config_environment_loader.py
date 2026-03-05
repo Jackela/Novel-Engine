@@ -127,8 +127,7 @@ class EnvironmentConfigLoader:
         Returns:
             Dict[str, Any]: Merged configuration dictionary
         """
-        config = {}
-
+        config: dict[Any, Any] = {}
         try:
             # Load base environments configuration
             environments_config = self._load_environments_config()
@@ -353,8 +352,7 @@ class EnvironmentConfigLoader:
         Returns:
             List[str]: List of validation errors (empty if valid)
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.config_cache:
             self.load_configuration()
 

@@ -181,8 +181,7 @@ class InteractionCommandHandler:
             raise ValueError(f"Session {command.session_id} not found")
 
         # Update configuration fields
-        updates_made = []
-
+        updates_made: list[Any] = []
         if command.max_parties is not None:
             session.max_parties = command.max_parties
             updates_made.append("max_parties")
@@ -289,8 +288,7 @@ class InteractionCommandHandler:
         if command.validate_compatibility and session.parties:
             # Check compatibility with existing parties
             existing_parties = list(session.parties.values())
-            compatibility_scores = []
-
+            compatibility_scores: list[Any] = []
             for existing_party in existing_parties:
                 score = self.negotiation_service.assess_party_compatibility(
                     command.party, existing_party, session.negotiation_domain
@@ -603,7 +601,7 @@ class InteractionCommandHandler:
         )
 
         # Apply optimizations if they meet criteria
-        optimizations_applied = []
+        optimizations_applied: list[Any] = []
         if (
             optimization_result["expected_improvement"] > 10
         ):  # 10% improvement threshold
@@ -805,7 +803,7 @@ class InteractionCommandHandler:
             raise ValueError(f"Session {command.session_id} not found")
 
         # Get parties to assess
-        parties_to_assess = []
+        parties_to_assess: list[Any] = []
         if command.party_ids:
             for party_id in command.party_ids:
                 if party_id not in session.parties:
@@ -815,7 +813,7 @@ class InteractionCommandHandler:
             parties_to_assess = list(session.parties.values())
 
         # Assess compatibility between all party pairs
-        compatibility_matrix = {}
+        compatibility_matrix: dict[Any, Any] = {}
         for i, party1 in enumerate(parties_to_assess):
             for j, party2 in enumerate(parties_to_assess[i + 1 :], i + 1):
                 compatibility_score = (
@@ -894,7 +892,7 @@ class InteractionCommandHandler:
             raise ValueError(f"Session {command.session_id} not found")
 
         parties = list(session.parties.values())
-        all_responses = []
+        all_responses: list[Any] = []
         for party_responses in session.responses.values():
             all_responses.extend(party_responses)
 
@@ -947,8 +945,7 @@ class InteractionCommandHandler:
         cutoff_time = datetime.now(timezone.utc) - timedelta(
             hours=command.analysis_window_hours
         )
-        recent_responses = []
-
+        recent_responses: list[Any] = []
         for party_responses in session.responses.values():
             for response in party_responses:
                 if response.response_timestamp >= cutoff_time:
@@ -986,9 +983,8 @@ class InteractionCommandHandler:
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
 
-        successful_updates = []
-        failed_updates = []
-
+        successful_updates: list[Any] = []
+        failed_updates: list[Any] = []
         for update_data in command.party_updates:
             try:
                 party_id = UUID(update_data["party_id"])
@@ -1054,9 +1050,8 @@ class InteractionCommandHandler:
         if not session:
             raise ValueError(f"Session {command.session_id} not found")
 
-        successful_submissions = []
-        failed_submissions = []
-
+        successful_submissions: list[Any] = []
+        failed_submissions: list[Any] = []
         for response in command.responses:
             try:
                 # Validate response

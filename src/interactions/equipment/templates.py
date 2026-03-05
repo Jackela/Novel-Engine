@@ -61,7 +61,7 @@ class TemplateManager:
                 error=ErrorInfo(code="TEMPLATE_APPLICATION_FAILED", message=str(e)),
             )
 
-    def load_equipment_templates(self):
+    def load_equipment_templates(self) -> None:
         """Load enhanced equipment templates from files"""
         # This would load from actual template files
         # For now, we'll define some basic templates

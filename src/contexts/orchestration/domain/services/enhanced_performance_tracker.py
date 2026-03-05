@@ -145,7 +145,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         )
 
         # Collect phase results for detailed metrics
-        phase_results = {}
+        phase_results: dict[Any, Any] = {}
         if hasattr(pipeline_result, "phase_results"):
             for phase_result in pipeline_result.phase_results:
                 phase_name = (

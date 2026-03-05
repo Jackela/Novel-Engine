@@ -39,7 +39,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
     )
 
     missing_characters: List[str] = []
-    agents = []
+    agents: list[Any] = []
     for name in sim_request.character_names:
         try:
             agent = character_factory.create_character(name)

@@ -144,7 +144,7 @@ class PersonaCore:
         return self.state.is_active
 
     @property
-    def memory(self):
+    def memory(self) -> None:
         """Get memory interface with agent_id property for compatibility."""
 
         # Create a simple object with agent_id property for test compatibility
@@ -155,7 +155,7 @@ class PersonaCore:
         return MemoryInterface(self.agent_id)
 
     @property
-    def narrative(self):
+    def narrative(self) -> None:
         """Get narrative interface with agent_id property for compatibility."""
 
         class NarrativeInterface:
@@ -165,7 +165,7 @@ class PersonaCore:
         return NarrativeInterface(self.agent_id)
 
     @property
-    def actions(self):
+    def actions(self) -> None:
         """Get actions interface with agent_id property for compatibility."""
 
         class ActionsInterface:

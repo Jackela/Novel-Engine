@@ -353,7 +353,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 )
 
                 # Filter by certainty level (simplified - in production, this would be more sophisticated)
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for result in results:
                     entity_id = result[0]
                     # Get the best certainty level for this entity about the subject
@@ -412,7 +412,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 # complex spatial queries and perception capability analysis
                 orm_entities = session.query(TurnBriefORM).all()
 
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for orm_entity in orm_entities:
                     # Check if entity's visible subjects include the location
                     visible_subjects = orm_entity.visible_subjects or {}
@@ -448,7 +448,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             with self.session_factory() as session:
                 orm_entities = session.query(TurnBriefORM).all()
 
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for orm_entity in orm_entities:
                     perception_capabilities = orm_entity.perception_capabilities or {}
                     if perception_type.value in perception_capabilities.get(
@@ -793,7 +793,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         if not data:
             return {}
 
-        result = {}
+        result: dict[Any, Any] = {}
         for key, value in data.items():
             try:
                 modifier = AwarenessModifier(key)
@@ -866,7 +866,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
 
         from ...domain.value_objects.perception_range import VisibilityLevel
 
-        result = {}
+        result: dict[Any, Any] = {}
         for subject, level_str in data.items():
             try:
                 level = VisibilityLevel(level_str)

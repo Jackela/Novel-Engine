@@ -84,8 +84,7 @@ class CreateCharacterCommand:
 
     def __post_init__(self) -> None:
         """Validate command data after initialization."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_name or not self.character_name.strip():
             errors.append("Character name is required")
@@ -189,8 +188,7 @@ class UpdateCharacterStatsCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -273,8 +271,7 @@ class UpdateCharacterSkillCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -352,8 +349,7 @@ class LevelUpCharacterCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -421,8 +417,7 @@ class DeleteCharacterCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -472,8 +467,7 @@ class HealCharacterCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -535,8 +529,7 @@ class DamageCharacterCommand:
 
     def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")

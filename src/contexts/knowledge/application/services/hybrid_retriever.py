@@ -455,8 +455,7 @@ class HybridRetriever:
                 query=query,
                 error=str(e),
             )
-            vector_chunks = []
-
+            vector_chunks: list[Any] = []
         # Step 2: BM25 search
         try:
             # Convert RetrievalFilter to dict filters for BM25
@@ -475,8 +474,7 @@ class HybridRetriever:
                 query=query,
                 error=str(e),
             )
-            bm25_chunks = []
-
+            bm25_chunks: list[Any] = []
         logger.debug(
             "hybrid_search_results",
             query=query,

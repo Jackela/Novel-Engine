@@ -641,7 +641,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         )
 
         # Create skills ORM
-        skill_groups_data = {}
+        skill_groups_data: dict[Any, Any] = {}
         for category, skill_group in character.skills.skill_groups.items():
             skill_groups_data[category.value] = {
                 skill_name: {
@@ -737,7 +737,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             skills_orm = CharacterSkillsORM(character_id=character.character_id.value)
             character_orm.skills = skills_orm
 
-        skill_groups_data = {}
+        skill_groups_data: dict[Any, Any] = {}
         for category, skill_group in character.skills.skill_groups.items():
             skill_groups_data[category.value] = {
                 skill_name: {
@@ -829,12 +829,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         )
 
         # Map skills
-        skill_groups = {}
+        skill_groups: dict[Any, Any] = {}
         if character_orm.skills.skill_groups:
             for category_name, skills_data in character_orm.skills.skill_groups.items():
                 category = SkillCategory(category_name)
-                skills_dict = {}
-
+                skills_dict: dict[Any, Any] = {}
                 for skill_name, skill_data in skills_data.items():
                     skill = Skill(
                         name=skill_name,

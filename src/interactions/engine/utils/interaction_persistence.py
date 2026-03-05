@@ -57,7 +57,7 @@ class InteractionPersistence:
         context: InteractionContext,
         outcome: InteractionOutcome,
         duration_ms: float,
-    ):
+    ) -> None:
         """Update enhanced performance metrics"""
         self.performance_metrics["total_interactions_processed"] += 1
 

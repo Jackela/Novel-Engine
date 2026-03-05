@@ -518,8 +518,7 @@ class CharacterApplicationService:
         self, character_data_list: List[Dict[str, Any]]
     ) -> List[CharacterID]:
         """Create multiple characters in batch."""
-        character_ids = []
-
+        character_ids: list[Any] = []
         try:
             for character_data in character_data_list:
                 character_id = await self.create_character(**character_data)

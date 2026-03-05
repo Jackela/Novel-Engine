@@ -388,15 +388,15 @@ class StructuredLogger:
         """Create performance tracker for operation."""
         return PerformanceTracker(operation, context or self.get_current_context())
 
-    def time_operation(self, operation: str, context: Optional[LogContext] = None):
+    def time_operation(self, operation: str, context: Optional[LogContext] = None) -> None:
         """Decorator/context manager for timing operations."""
 
-        def decorator(func):
+        def decorator(func) -> None:
             async def async_wrapper(*args, **kwargs):
                 with self.track_performance(operation, context):
                     return await func(*args, **kwargs)
 
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args, **kwargs) -> None:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
@@ -410,8 +410,7 @@ class StructuredLogger:
         self, operation_filter: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get performance metrics summary."""
-        relevant_metrics = []
-
+        relevant_metrics: list[Any] = []
         for entry in self.performance_metrics:
             if operation_filter is None or operation_filter in entry.get(
                 "context", {}

@@ -512,7 +512,7 @@ class NetworkXGraphStore(IGraphStore):
                 )
 
             # Convert normalized names back to display names
-            display_names = []
+            display_names: list[Any] = []
             for node in path_nodes:
                 node_data = self._graph.nodes[node]
                 display_names.append(node_data.get("name", node))
@@ -897,7 +897,7 @@ class NetworkXGraphStore(IGraphStore):
         # Convert normalized names back to display names and sort by size
         cliques_with_display_names: list[tuple[str, ...]] = []
         for clique in sorted(filtered_cliques, key=len, reverse=True):
-            display_names = []
+            display_names: list[Any] = []
             for node in clique:
                 node_data = self._graph.nodes[node]
                 display_names.append(node_data.get("name", node))
@@ -1062,7 +1062,7 @@ class NetworkXGraphStore(IGraphStore):
                         )
 
                     # Convert normalized names to display names
-                    display_names = []
+                    display_names: list[Any] = []
                     for node in path_nodes:
                         node_data = self._graph.nodes[node]
                         display_names.append(node_data.get("name", node))

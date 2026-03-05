@@ -595,10 +595,10 @@ class MemoryInterface:
             List of matching memory entries
         """
         try:
-            matching_memories = []
+            matching_memories: list[Any] = []
             search_lower = search_term.lower()
 
-            memories_to_search = []
+            memories_to_search: list[Any] = []
             if memory_type in ["short_term", "all"]:
                 memories_to_search.extend(self.agent_core.short_term_memory)
             if memory_type in ["long_term", "all"]:

@@ -28,7 +28,7 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
     class ErrorInfo:
@@ -107,8 +107,7 @@ class InteractionValidator:
             StandardResponse with validation results
         """
         try:
-            validation_results = []
-
+            validation_results: list[Any] = []
             # Basic context validation
             basic_validation = self._validate_basic_context(context)
             if not basic_validation["valid"]:
@@ -225,9 +224,8 @@ class InteractionValidator:
                     metadata={"blessing": "no_prerequisites"},
                 )
 
-            satisfied_prerequisites = []
-            failed_prerequisites = []
-
+            satisfied_prerequisites: list[Any] = []
+            failed_prerequisites: list[Any] = []
             for prerequisite in context.prerequisites:
                 if await self._check_single_prerequisite(context, prerequisite):
                     satisfied_prerequisites.append(prerequisite)
@@ -452,8 +450,7 @@ class InteractionValidator:
         self, context: InteractionContext, risk_score: float
     ) -> List[str]:
         """Generate risk mitigation suggestions."""
-        mitigations = []
-
+        mitigations: list[Any] = []
         if risk_score > 0.6:
             mitigations.append("Consider reducing participant count")
             mitigations.append("Add additional safety constraints")

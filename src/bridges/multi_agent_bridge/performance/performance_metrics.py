@@ -32,7 +32,7 @@ class PerformanceMetrics:
     performance_budget: PerformanceBudget
     logger: Optional[logging.Logger] = field(default=None, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
 
         # Coordination metrics
@@ -241,8 +241,7 @@ class PerformanceMetrics:
     def _calculate_system_health_score(self) -> float:
         """Calculate overall system health score (0-1)."""
         try:
-            scores = []
-
+            scores: list[Any] = []
             # Cost health (budget utilization)
             cost_stats = self.cost_tracker.get_cost_efficiency_stats()
             remaining_budget_pct = (
@@ -275,8 +274,7 @@ class PerformanceMetrics:
     def _get_combined_recommendations(self) -> List[Dict[str, Any]]:
         """Get combined recommendations from all components."""
         try:
-            recommendations = []
-
+            recommendations: list[Any] = []
             # Cost recommendations
             recommendations.extend(self.cost_tracker.get_optimization_recommendations())
 

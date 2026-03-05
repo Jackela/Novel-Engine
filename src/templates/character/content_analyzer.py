@@ -89,7 +89,7 @@ class ContentAnalyzer:
             ],
         }
 
-        archetype_scores = {}
+        archetype_scores: dict[Any, Any] = {}
         for archetype, keywords in archetype_keywords.items():
             score = sum(1 for keyword in keywords if keyword in content_lower)
             if score > 0:

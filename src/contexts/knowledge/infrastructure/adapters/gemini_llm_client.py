@@ -297,8 +297,7 @@ class GeminiLLMClient:
         Returns:
             Contents array for Gemini API
         """
-        contents = []
-
+        contents: list[Any] = []
         # Add chat history if provided
         if chat_history:
             for msg in chat_history:

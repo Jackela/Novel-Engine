@@ -127,7 +127,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
                     span.set_status(Status(StatusCode.OK))
 
                 # Inject trace context into response headers for downstream services
-                response_carrier = {}
+                response_carrier: dict[Any, Any] = {}
                 propagate.inject(response_carrier)
 
                 for key, value in response_carrier.items():

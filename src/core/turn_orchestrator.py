@@ -243,7 +243,7 @@ class TurnOrchestrator:
         start_time = datetime.now()
 
         # Create concurrent context refresh tasks
-        refresh_tasks = []
+        refresh_tasks: list[Any] = []
         for agent in agents:
             if hasattr(agent, "refresh_context"):
                 task = asyncio.create_task(agent.refresh_context())
@@ -457,7 +457,7 @@ class TurnOrchestrator:
             List of turn summary dictionaries
         """
         try:
-            history_data = []
+            history_data: list[Any] = []
             recent_turns = self.turn_history[-limit:] if limit else self.turn_history
 
             for turn_state in reversed(recent_turns):  # Most recent first

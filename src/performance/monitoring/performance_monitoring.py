@@ -121,14 +121,14 @@ class MetricsCollector:
 
             self._add_metric_point(name, value, MetricType.HISTOGRAM, tags)
 
-    def record_timer(self, name: str, duration: float, tags: Dict[str, str] = None):
+    def record_timer(self, name: str, duration: float, tags: Dict[str, str] = None) -> None:
         """Record a timer metric."""
         with self.lock:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
 
     def _add_metric_point(
         self, name: str, value: float, metric_type: MetricType, tags: Dict[str, str]
-    ):
+    ) -> None:
         """Add a metric point to the collection."""
         point = MetricPoint(
             name=name,
@@ -188,7 +188,7 @@ class MetricsCollector:
     def get_all_metrics(self) -> Dict[str, Any]:
         """Get all current metrics."""
         with self.lock:
-            result = {}
+            result: dict[Any, Any] = {}
             for name in self.metrics.keys():
                 current_value = self.get_current_value(name)
                 if current_value is not None:
@@ -210,7 +210,7 @@ class SystemMetricsCollector:
         self.last_cpu_times = None
         self.last_io_counters = None
 
-    def collect_system_metrics(self):
+    def collect_system_metrics(self) -> None:
         """Collect comprehensive system metrics."""
         try:
             # CPU metrics
@@ -289,13 +289,13 @@ class ApplicationMetricsCollector:
         self.collector = collector
         self.request_start_times = {}
 
-    def start_request(self, request_id: str):
+    def start_request(self, request_id: str) -> None:
         """Start tracking a request."""
         self.request_start_times[request_id] = time.time()
 
     def end_request(
         self, request_id: str, status_code: int = 200, endpoint: str = "unknown"
-    ):
+    ) -> None:
         """End tracking a request."""
         start_time = self.request_start_times.pop(request_id, None)
         if start_time:
@@ -313,7 +313,7 @@ class ApplicationMetricsCollector:
 
     def record_database_query(
         self, query_type: str, duration: float, success: bool = True
-    ):
+    ) -> None:
         """Record database query metrics."""
         self.collector.record_timer(
             "database.query.duration",
@@ -326,7 +326,7 @@ class ApplicationMetricsCollector:
             {"query_type": query_type, "success": str(success)},
         )
 
-    def record_cache_operation(self, operation: str, hit: bool = True):
+    def record_cache_operation(self, operation: str, hit: bool = True) -> None:
         """Record cache operation metrics."""
         self.collector.record_counter(
             "cache.operations.total",
@@ -336,7 +336,7 @@ class ApplicationMetricsCollector:
 
     def record_task_execution(
         self, task_type: str, duration: float, success: bool = True
-    ):
+    ) -> None:
         """Record task execution metrics."""
         self.collector.record_timer(
             "task.execution.duration",
@@ -360,23 +360,23 @@ class AlertManager:
         self.violation_counts = defaultdict(int)
         self.alert_callbacks = []
 
-    def add_threshold(self, threshold: PerformanceThreshold):
+    def add_threshold(self, threshold: PerformanceThreshold) -> None:
         """Add a performance threshold."""
         self.thresholds[threshold.metric_name] = threshold
         logger.info(
             f"Added performance threshold: {threshold.metric_name} {threshold.operator} {threshold.threshold_value}"
         )
 
-    def remove_threshold(self, metric_name: str):
+    def remove_threshold(self, metric_name: str) -> None:
         """Remove a performance threshold."""
         self.thresholds.pop(metric_name, None)
         self.violation_counts.pop(metric_name, 0)
 
-    def add_alert_callback(self, callback: Callable[[PerformanceAlert], None]):
+    def add_alert_callback(self, callback: Callable[[PerformanceAlert], None]) -> None:
         """Add a callback for alert notifications."""
         self.alert_callbacks.append(callback)
 
-    def check_thresholds(self):
+    def check_thresholds(self) -> None:
         """Check all thresholds and generate alerts."""
         for metric_name, threshold in self.thresholds.items():
             if not threshold.enabled:
@@ -421,7 +421,7 @@ class AlertManager:
 
     def _generate_alert(
         self, metric_name: str, current_value: float, threshold: PerformanceThreshold
-    ):
+    ) -> None:
         """Generate a performance alert."""
         alert_id = f"{metric_name}_{int(time.time())}"
 
@@ -446,7 +446,7 @@ class AlertManager:
 
         logger.warning(f"Performance alert: {alert.message}")
 
-    def acknowledge_alert(self, alert_id: str):
+    def acknowledge_alert(self, alert_id: str) -> None:
         """Acknowledge an alert."""
         if alert_id in self.alerts:
             self.alerts[alert_id].acknowledged = True
@@ -471,7 +471,7 @@ class PerformanceRegression:
         self.sensitivity = sensitivity  # Standard deviations for regression detection
         self.baselines = {}
 
-    def establish_baseline(self, metric_name: str, duration_hours: int = 24):
+    def establish_baseline(self, metric_name: str, duration_hours: int = 24) -> None:
         """Establish a performance baseline for a metric."""
         history = self.collector.get_metric_history(metric_name, duration_hours * 3600)
         if len(history) < 10:
@@ -561,7 +561,7 @@ class PerformanceMonitor:
         self._init_database()
         self._setup_default_thresholds()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize metrics database."""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
@@ -598,7 +598,7 @@ class PerformanceMonitor:
             """
             )
 
-    def _setup_default_thresholds(self):
+    def _setup_default_thresholds(self) -> None:
         """Setup default performance thresholds."""
         default_thresholds = [
             PerformanceThreshold(
@@ -691,7 +691,7 @@ class PerformanceMonitor:
                 logger.error(f"Monitoring loop error: {e}")
                 await asyncio.sleep(self.collection_interval)
 
-    def _check_regressions(self):
+    def _check_regressions(self) -> None:
         """Check for performance regressions."""
         for metric_name in self.regression_detector.baselines.keys():
             regression_info = self.regression_detector.check_regression(metric_name)
@@ -734,7 +734,7 @@ class PerformanceMonitor:
         active_alerts = self.alert_manager.get_active_alerts()
 
         # Get recent performance trends
-        trends = {}
+        trends: dict[Any, Any] = {}
         key_metrics = [
             "process.memory.rss_mb",
             "system.cpu.usage_percent",
@@ -822,17 +822,17 @@ class TimerContext:
             )
 
 
-def monitor_performance(metric_name: str, tags: Dict[str, str] = None):
+def monitor_performance(metric_name: str, tags: Dict[str, str] = None) -> None:
     """Decorator for monitoring function performance."""
 
-    def decorator(func):
+    def decorator(func) -> None:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             with TimerContext(metric_name, tags):
                 return await func(*args, **kwargs)
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> None:
             with TimerContext(metric_name, tags):
                 return func(*args, **kwargs)
 

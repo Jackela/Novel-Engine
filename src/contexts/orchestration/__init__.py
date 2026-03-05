@@ -1,3 +1,4 @@
+from typing import Any
 """
 Orchestration Context - M9 Turn Pipeline Implementation
 ========================================================
@@ -32,4 +33,4 @@ __description__ = "M9 Turn Pipeline Orchestration with Saga Patterns"
 __author__ = "Novel Engine Orchestration Team"
 
 # Core exports will be added as implementation progresses
-__all__ = []
+__all__: list[Any] = []

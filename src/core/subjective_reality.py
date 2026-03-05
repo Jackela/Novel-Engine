@@ -131,7 +131,7 @@ class BeliefModel:
         self, new_fragment: InformationFragment
     ) -> List[InformationFragment]:
         """检测信息冲突"""
-        conflicts = []
+        conflicts: list[Any] = []
         for existing in self.information_fragments:
             if (
                 existing.category == new_fragment.category
@@ -279,8 +279,7 @@ class FogOfWarService:
             return []
 
         fog_state = self.fog_states[agent_id]
-        visible_agents = set()
-
+        visible_agents: set[Any] = set()
         # 在可见位置查找其他Agent
         for location in fog_state.visible_locations:
             visible_agents.update(self.global_visibility_map[location])
@@ -401,11 +400,10 @@ class TurnBriefFactory:
 
     def initialize_belief_model(
         self, agent_id: str, personality_traits: Dict[str, float] = None
-    ):
+    ) -> None:
         """初始化Agent的信念模型"""
         if personality_traits is None:
-            personality_traits = {}
-
+            personality_traits: dict[Any, Any] = {}
         belief_model = BeliefModel(
             agent_id=agent_id, personality_bias=personality_traits
         )
@@ -510,8 +508,7 @@ class TurnBriefFactory:
         self, belief_model: BeliefModel, world_state: Dict
     ) -> List[InformationFragment]:
         """提取可用的信息片段"""
-        available_info = []
-
+        available_info: list[Any] = []
         # 从信念模型中提取可靠的信息
         for fragment in belief_model.information_fragments:
             if fragment.get_current_reliability() > 0.3:
@@ -651,8 +648,7 @@ class TurnBriefFactory:
         for info in available_info[:5]:  # 只取前5个最重要的信息
             categorized_info[info.category].append(info)
 
-        summary_parts = []
-
+        summary_parts: list[Any] = []
         # 生成每个类别的摘要
         for category, infos in categorized_info.items():
             if category == KnowledgeCategory.SPATIAL:
@@ -675,8 +671,7 @@ class TurnBriefFactory:
         self, belief_model: BeliefModel, available_info: List[InformationFragment]
     ) -> Dict[str, float]:
         """计算各类信息的可信度"""
-        confidence = {}
-
+        confidence: dict[Any, Any] = {}
         # 计算各知识类别的平均可信度
         for category in KnowledgeCategory:
             relevant_info = [

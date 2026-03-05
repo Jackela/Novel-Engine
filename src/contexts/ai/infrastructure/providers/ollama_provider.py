@@ -474,9 +474,8 @@ class OllamaProvider(ILLMProvider):
         Returns:
             Collected response data
         """
-        content_parts = []
-        final_data = {}
-
+        content_parts: list[Any] = []
+        final_data: dict[Any, Any] = {}
         async for line in response.content:
             line_str = line.decode("utf-8").strip()
 

@@ -757,9 +757,8 @@ class DynamicEquipmentSystem:
                     metadata={"blessing": "empty_inventory_retrieved"},
                 )
 
-            equipment_list = []
-            category_counts = {}
-
+            equipment_list: list[Any] = []
+            category_counts: dict[Any, Any] = {}
             for equipment_id in agent_equipment_ids:
                 equipment = self._equipment_registry.get(equipment_id)
                 if equipment:

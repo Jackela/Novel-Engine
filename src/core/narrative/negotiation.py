@@ -37,7 +37,7 @@ class AgentNegotiationEngine:
         agent_id: str,
         negotiation_style: Dict[str, float] = None,
         priorities: List[str] = None,
-    ):
+    ) -> None:
         """初始化Agent协商档案"""
         if negotiation_style is None:
             negotiation_style = {
@@ -386,7 +386,7 @@ class AgentNegotiationEngine:
             logger.error(f"Mediation failed: {e}")
             session.status = NegotiationStatus.DEADLOCK
 
-    def _update_agent_reputations(self, session: NegotiationSession, success: bool):
+    def _update_agent_reputations(self, session: NegotiationSession, success: bool) -> None:
         """更新Agent声誉"""
         for agent_id in session.participants:
             if agent_id in self.agent_negotiation_profiles:
@@ -398,7 +398,7 @@ class AgentNegotiationEngine:
                     profile["failed_negotiations"] += 1
                     profile["reputation"] = max(0.0, profile["reputation"] - 0.05)
 
-    def _finalize_session(self, session: NegotiationSession):
+    def _finalize_session(self, session: NegotiationSession) -> None:
         """结束协商会话"""
         if session.session_id in self.active_sessions:
             del self.active_sessions[session.session_id]

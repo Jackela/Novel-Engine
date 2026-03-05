@@ -22,7 +22,7 @@ try:
     from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 except ImportError:
     # Fallback for testing
-    def get_llm_service():
+    def get_llm_service() -> None:
         return None
 
     class LLMRequest:
@@ -293,7 +293,7 @@ class LLMBatchProcessor:
                 return
 
             # Extract requests for batching
-            batch_requests = []
+            batch_requests: list[Any] = []
             with self._queue_lock:
                 while self._request_queue and len(batch_requests) < self.max_batch_size:
                     batch_requests.append(heapq.heappop(self._request_queue))
@@ -465,8 +465,7 @@ class LLMBatchProcessor:
     ) -> List[Dict[str, Any]]:
         """Parse batch response into individual results."""
         try:
-            results = []
-
+            results: list[Any] = []
             # Split response by response markers
             import re
 

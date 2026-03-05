@@ -454,7 +454,7 @@ class DecisionPointDetector:
             for i, opt in enumerate(base_options)
         ]
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the detector state."""
         self._turns_since_last_decision = 0
         self._decision_count = 0

@@ -316,7 +316,7 @@ class MetricsCollector:
             return generate_latest(self.registry).decode("utf-8")
         else:
             # Generate simple text format for fallback metrics
-            lines = []
+            lines: list[Any] = []
             for key, record in self.fallback_metrics.items():
                 labels_str = ""
                 if record.labels:
@@ -549,8 +549,7 @@ class TracingManager:
 
     def get_trace_summary(self, trace_id: str) -> List[Dict[str, Any]]:
         """Get trace summary for a trace ID"""
-        spans = []
-
+        spans: list[Any] = []
         # Check active spans
         for span in self.active_spans.values():
             if span.trace_id == trace_id:
@@ -613,8 +612,7 @@ class PerformanceProfiler:
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics"""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         for operation_name, times in self.operation_times.items():
             if times:
                 times_list = list(times)
@@ -754,7 +752,7 @@ class HealthMonitor:
 
     async def run_health_checks(self) -> Dict[str, Any]:
         """Run all health checks"""
-        results = {}
+        results: dict[Any, Any] = {}
         overall_healthy = True
 
         for name, check_func in self.health_checks.items():
@@ -1141,7 +1139,7 @@ if __name__ == "__main__":
             return f"Processed {name}"
 
         # Run some operations
-        results = []
+        results: list[Any] = []
         for i in range(5):
             result = await example_operation(f"item_{i}")
             results.append(result)

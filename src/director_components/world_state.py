@@ -124,8 +124,7 @@ class WorldStateManager:
         """
         async with self._state_lock:
             try:
-                changes = []
-
+                changes: list[Any] = []
                 for path, new_value in updates.items():
                     change = await self._apply_single_update(path, new_value)
                     if change:

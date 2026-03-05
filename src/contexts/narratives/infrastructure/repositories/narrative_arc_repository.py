@@ -797,7 +797,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
     def _entity_to_aggregate(self, arc_entity: NarrativeArcEntity) -> NarrativeArc:
         """Convert SQLAlchemy entity to domain aggregate."""
         # Convert plot points
-        plot_points = {}
+        plot_points: dict[Any, Any] = {}
         for plot_entity in arc_entity.plot_points:
             plot_point = PlotPoint(
                 plot_point_id=plot_entity.id,
@@ -829,7 +829,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             plot_points[plot_point.plot_point_id] = plot_point
 
         # Convert themes
-        themes = {}
+        themes: dict[Any, Any] = {}
         for theme_entity in arc_entity.themes:
             theme = NarrativeTheme(
                 theme_id=theme_entity.id,
@@ -851,7 +851,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             themes[theme.theme_id] = theme
 
         # Convert pacing segments
-        pacing_segments = {}
+        pacing_segments: dict[Any, Any] = {}
         for pacing_entity in arc_entity.pacing_segments:
             pacing = StoryPacing(
                 pacing_id=pacing_entity.id,
@@ -874,7 +874,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             pacing_segments[pacing.pacing_id] = pacing
 
         # Convert narrative contexts
-        narrative_contexts = {}
+        narrative_contexts: dict[Any, Any] = {}
         for context_entity in arc_entity.narrative_contexts:
             context = NarrativeContext(
                 context_id=context_entity.id,

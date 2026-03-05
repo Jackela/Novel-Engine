@@ -48,7 +48,7 @@ class AsyncTask:
     max_retries: int = 3
     tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timeout_seconds is None:
             # Set default timeout based on priority
             if self.priority == TaskPriority.CRITICAL:
@@ -744,7 +744,7 @@ class ConcurrentAgentProcessor:
             results = await asyncio.gather(*processing_tasks, return_exceptions=True)
 
             # Process results
-            processed_results = []
+            processed_results: list[Any] = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     processed_results.append(

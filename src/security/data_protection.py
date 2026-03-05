@@ -757,7 +757,7 @@ def get_data_protection_service() -> DataProtectionService:
 
 def initialize_data_protection_service(
     database_path: str, master_key: Optional[str] = None
-):
+) -> None:
     """STANDARD DATA PROTECTION SERVICE INITIALIZATION"""
     global data_protection_service
     data_protection_service = DataProtectionService(database_path, master_key)

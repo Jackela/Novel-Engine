@@ -124,7 +124,7 @@ class TextChunker:
     def _chunk_fixed(text: str, strategy: ChunkingStrategy) -> list[TextChunk]:
         """Chunk by fixed word count with overlap."""
         words = TextChunker._WORD_PATTERN.findall(text)
-        chunks = []
+        chunks: list[Any] = []
         chunk_index = 0
 
         if not words:

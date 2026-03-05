@@ -184,7 +184,7 @@ class SubjectiveRealityAPI:
         self.subjective_reality_engine = None
         self.turn_brief_factory = None
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup all subjective reality API routes."""
 
         @app.get(
@@ -282,7 +282,7 @@ class SubjectiveRealityAPI:
                     raise HTTPException(status_code=500, detail=error_msg)
 
                 # Transform results
-                agent_briefs = {}
+                agent_briefs: dict[Any, Any] = {}
                 for agent_id, brief_data in result.get("agent_briefs", {}).items():
                     agent_briefs[agent_id] = TurnBriefData(
                         agent_id=agent_id,

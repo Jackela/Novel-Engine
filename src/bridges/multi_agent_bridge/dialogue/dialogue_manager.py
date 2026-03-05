@@ -353,7 +353,7 @@ class DialogueManager:
             content = llm_result.get("content", "")
 
             # Extract dialogue components
-            dialogue_lines = []
+            dialogue_lines: list[Any] = []
             outcome = "No outcome determined"
             relationship_impact = "No relationship impact assessed"
 

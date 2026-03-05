@@ -41,7 +41,7 @@ class KnowledgeFact:
     last_confirmed: datetime = field(default_factory=datetime.now)
     confirmation_count: int = 1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validates data and generates a fact ID if not provided."""
         self.confidence = max(0.0, min(1.0, self.confidence))
         if not self.fact_id:
@@ -51,7 +51,7 @@ class KnowledgeFact:
             ).hexdigest()[:8]
             self.fact_id = f"fact_{fact_hash}"
 
-    def confirm_fact(self, source_memory_id: str = ""):
+    def confirm_fact(self, source_memory_id: str = "") -> None:
         """Increases confirmation count and confidence in the fact."""
         self.confirmation_count += 1
         self.last_confirmed = datetime.now()
@@ -170,7 +170,7 @@ class SemanticMemory:
         self, content: str, memory_id: str, relevance: float
     ) -> List[KnowledgeFact]:
         """Extracts facts from a string of text using regex patterns."""
-        facts = []
+        facts: list[Any] = []
         for pattern, predicate in self._fact_patterns:
             for match in re.findall(pattern, content, re.IGNORECASE):
                 subject, object_value = match

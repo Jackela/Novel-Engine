@@ -121,8 +121,7 @@ class UpdateWorldStateUC:
         """
         start_time = datetime.now()
         operations_applied = 0
-        warnings = []
-
+        warnings: list[Any] = []
         try:
             logger.info(
                 f"Starting world delta application for command {command.command_id}"
@@ -265,9 +264,8 @@ class UpdateWorldStateUC:
             )
 
         # Validate entity operations don't conflict
-        entity_ids_being_added = set()
-        entity_ids_being_modified = set()
-
+        entity_ids_being_added: set[Any] = set()
+        entity_ids_being_modified: set[Any] = set()
         for op in command.entity_operations:
             if op.operation_type == WorldOperationType.ADD_ENTITY:
                 if op.entity_id in entity_ids_being_added:

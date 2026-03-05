@@ -191,14 +191,13 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         if not texts:
             return []
 
-        embeddings = []
-
+        embeddings: list[Any] = []
         # Process in batches
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
 
             if self._use_mock:
-                batch_embeddings = []
+                batch_embeddings: list[Any] = []
                 for t in batch:
                     # Check cache first for each text (if enabled)
                     if self._cache_enabled:

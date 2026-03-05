@@ -53,7 +53,7 @@ if WATCHDOG_AVAILABLE:
             self.config_service = config_service
             self.logger = logging.getLogger(__name__)
 
-        def on_modified(self, event):
+        def on_modified(self, event) -> None:
             if (
                 not event.is_directory
                 and event.src_path in self.config_service._watched_files
@@ -594,7 +594,7 @@ class ConfigurationService:
             self._file_observer = Observer()
 
             # Watch each directory containing config files
-            watched_dirs = set()
+            watched_dirs: set[Any] = set()
             for file_path in self._watched_files:
                 dir_path = str(Path(file_path).parent)
                 if dir_path not in watched_dirs:

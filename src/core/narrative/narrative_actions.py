@@ -221,7 +221,7 @@ class NarrativeActionResolver:
 
     def _check_story_advancement(self, action_type: str) -> List[str]:
         """Checks if this action triggers story progression markers."""
-        advancement = []
+        advancement: list[Any] = []
         if self.campaign_brief:
             if action_type == "investigation" and self.investigation_counter >= 3:
                 advancement.append("Investigation milestone reached")

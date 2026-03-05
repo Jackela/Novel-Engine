@@ -132,7 +132,7 @@ class PersonaAgentAsyncPatch:
 
         def optimized_enhanced_decision_making(
             world_state_update, situation_assessment, available_actions
-        ):
+        ) -> None:
             """
             Optimized version of LLM-enhanced decision making with caching and performance improvements.
             """
@@ -226,7 +226,7 @@ class PersonaAgentAsyncPatch:
                 "average_decision_time": 0.0,
             }
 
-        def get_performance_stats():
+        def get_performance_stats() -> None:
             """Get agent performance statistics."""
             stats = persona_agent_instance._performance_stats.copy()
             if stats["decision_count"] > 0:

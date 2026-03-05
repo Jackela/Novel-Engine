@@ -73,7 +73,7 @@ def initialize_decision_system(
     decision_detector: DecisionPointDetector,
     negotiation_engine: NegotiationEngine,
     broadcast_sse_event,
-):
+) -> None:
     """
     Initialize the decision system with required components.
     Called by api_server.py during startup.
@@ -109,7 +109,7 @@ def get_negotiation_engine() -> NegotiationEngine:
     return _negotiation_engine
 
 
-def broadcast_decision_event(event_type: str, data: Dict[str, Any]):
+def broadcast_decision_event(event_type: str, data: Dict[str, Any]) -> None:
     """Broadcast a decision-related SSE event."""
     if _broadcast_sse_event:
         _broadcast_sse_event(

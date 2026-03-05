@@ -440,7 +440,7 @@ class AsyncLLMClient:
         self._batch_queue = self._batch_queue[self.max_batch_size :]
 
         # Process batch concurrently
-        tasks = []
+        tasks: list[Any] = []
         for agent_id, prompt, context, future in current_batch:
             if not future.cancelled():
                 task = asyncio.create_task(self._make_async_api_call(agent_id, prompt))

@@ -101,8 +101,7 @@ async def test_api_endpoints(base_url: str = "http://localhost:8000"):
         ("GET", "/api/characters", "Characters API"),
     ]
 
-    results = []
-
+    results: list[Any] = []
     async with aiohttp.ClientSession() as session:
         for method, endpoint, description in endpoints:
             try:
@@ -159,7 +158,7 @@ async def run_quick_load_test(
     async def user_session(user_id: int):
         """Single user session."""
         async with aiohttp.ClientSession() as session:
-            response_times = []
+            response_times: list[Any] = []
             errors = 0
 
             for i in range(requests_per_user):
@@ -193,7 +192,7 @@ async def run_quick_load_test(
     total_time = time.time() - start_time
 
     # Aggregate results
-    all_response_times = []
+    all_response_times: list[Any] = []
     total_requests = 0
     total_errors = 0
     successful_users = 0
@@ -309,7 +308,7 @@ async def validate_performance():
     return validation_results
 
 
-def print_validation_summary(results: Dict[str, Any]):
+def print_validation_summary(results: Dict[str, Any]) -> None:
     """Print validation summary."""
     logger.info("\n" + "=" * 60)
     logger.info("PERFORMANCE VALIDATION SUMMARY")
@@ -374,7 +373,7 @@ def print_validation_summary(results: Dict[str, Any]):
     logger.info("=" * 60)
 
 
-def save_validation_results(results: Dict[str, Any]):
+def save_validation_results(results: Dict[str, Any]) -> None:
     """Save validation results to file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"performance_validation_{timestamp}.json"

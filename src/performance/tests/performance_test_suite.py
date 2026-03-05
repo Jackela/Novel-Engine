@@ -56,7 +56,7 @@ class PerformanceMetrics:
     max_response_time: float = 0.0
     errors: List[str] = field(default_factory=list)
 
-    def calculate_statistics(self):
+    def calculate_statistics(self) -> None:
         """Calculate statistical metrics from response times."""
         if self.response_times:
             self.avg_response_time = statistics.mean(self.response_times)
@@ -113,7 +113,7 @@ class ResourceMonitor:
         self.process = None
         self._start_time = None
 
-    def start_monitoring(self, target_process_name: str = "python"):
+    def start_monitoring(self, target_process_name: str = "python") -> None:
         """Start monitoring system resources."""
         self.monitoring = True
         self.metrics = []
@@ -143,13 +143,13 @@ class ResourceMonitor:
         self._monitor_thread.daemon = True
         self._monitor_thread.start()
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop monitoring system resources."""
         self.monitoring = False
         if hasattr(self, "_monitor_thread"):
             self._monitor_thread.join(timeout=5)
 
-    def _monitor_resources(self):
+    def _monitor_resources(self) -> None:
         """Monitor resources in background thread."""
         while self.monitoring:
             try:
@@ -358,7 +358,7 @@ class PerformanceTestSuite:
         """Progressive stress test to find breaking point."""
         logger.info(f"Running stress test for {endpoint}: 0 to {max_users} users")
 
-        results = []
+        results: list[Any] = []
         current_users = step_size
 
         while current_users <= max_users:
@@ -401,8 +401,7 @@ class PerformanceTestSuite:
             f"Running endpoint load test with {concurrent_users} users across {len(endpoints)} endpoints"
         )
 
-        results = {}
-
+        results: dict[Any, Any] = {}
         # Test each endpoint
         for endpoint in endpoints:
             try:
@@ -424,7 +423,7 @@ class PerformanceTestSuite:
             f"Running simulation load test with {concurrent_simulations} concurrent simulations"
         )
 
-        def run_single_simulation():
+        def run_single_simulation() -> None:
             """Run a single story simulation."""
             import httpx
 
@@ -467,8 +466,7 @@ class PerformanceTestSuite:
                 executor.submit(run_single_simulation)
                 for _ in range(concurrent_simulations)
             ]
-            results = []
-
+            results: list[Any] = []
             for future in as_completed(futures):
                 try:
                     result = future.result()
@@ -617,7 +615,7 @@ class PerformanceTestSuite:
 
     def generate_performance_report(self, results: Dict[str, Any]) -> str:
         """Generate a comprehensive performance test report."""
-        report = []
+        report: list[Any] = []
         report.append("# Novel Engine Performance Test Report")
         report.append(f"Generated: {results['test_start_time']}")
         report.append(
@@ -629,7 +627,7 @@ class PerformanceTestSuite:
         report.append("## Executive Summary")
 
         # Analyze baseline performance
-        baseline_avg_times = []
+        baseline_avg_times: list[Any] = []
         baseline_errors = 0
         for endpoint, metrics in results.get("baseline_tests", {}).items():
             if "error" not in metrics:
@@ -862,7 +860,7 @@ class PerformanceTestSuite:
         report.append("### Specific Recommendations")
 
         # Analyze error patterns
-        high_error_endpoints = []
+        high_error_endpoints: list[Any] = []
         for test_name, test_results in results.get("load_tests", {}).items():
             if "error" not in test_results:
                 for endpoint, metrics in test_results.items():
@@ -886,7 +884,7 @@ class PerformanceTestSuite:
             report.append("   - Implement circuit breaker patterns for resilience")
 
         # Response time recommendations
-        slow_endpoints = []
+        slow_endpoints: list[Any] = []
         for endpoint, metrics in results.get("baseline_tests", {}).items():
             if "error" not in metrics and metrics.get("avg_response_time", 0) > 0.2:
                 slow_endpoints.append(endpoint)
@@ -935,8 +933,7 @@ class PerformanceTestSuite:
         report.append("## Production Readiness Assessment")
 
         # Calculate overall score
-        score_factors = []
-
+        score_factors: list[Any] = []
         # Response time score
         if baseline_avg_times:
             avg_baseline = statistics.mean(baseline_avg_times)

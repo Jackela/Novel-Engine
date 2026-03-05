@@ -640,8 +640,7 @@ class TurnOrchestrator:
         self, phase_results: Dict[PhaseType, PhaseResult]
     ) -> Dict[str, Dict[str, Any]]:
         """Extract metadata from previous phase results for context."""
-        metadata = {}
-
+        metadata: dict[Any, Any] = {}
         for phase_type, result in phase_results.items():
             metadata[phase_type.value] = {
                 "success": result.success,
@@ -738,8 +737,7 @@ class TurnOrchestrator:
         Returns:
             Tuple of (is_valid, validation_errors)
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate participants
         if not participants:
             errors.append("At least one participant is required")

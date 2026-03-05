@@ -152,7 +152,7 @@ class PerformanceStressTester:
         requests_per_user = 100
 
         start_time = time.time()
-        response_times = []
+        response_times: list[Any] = []
         success_count = 0
         error_count = 0
 
@@ -176,7 +176,7 @@ class PerformanceStressTester:
                 return False
 
         # Run concurrent requests
-        tasks = []
+        tasks: list[Any] = []
         for _ in range(concurrent_users):
             for _ in range(requests_per_user):
                 task = asyncio.create_task(simulate_api_request())
@@ -238,7 +238,7 @@ class PerformanceStressTester:
         operations_per_second = 1000
 
         start_time = time.time()
-        response_times = []
+        response_times: list[Any] = []
         success_count = 0
         error_count = 0
 
@@ -265,8 +265,7 @@ class PerformanceStressTester:
 
         # Generate operations
         total_operations = operations_per_second * test_duration
-        tasks = []
-
+        tasks: list[Any] = []
         for _ in range(total_operations):
             task = asyncio.create_task(cache_operation())
             tasks.append(task)
@@ -326,13 +325,13 @@ class PerformanceStressTester:
         operations_per_worker = 50
 
         start_time = time.time()
-        response_times = []
+        response_times: list[Any] = []
         success_count = 0
         error_count = 0
 
         async def worker_operations(worker_id: int):
             """Simulate worker operations"""
-            worker_times = []
+            worker_times: list[Any] = []
             worker_successes = 0
             worker_errors = 0
 
@@ -358,7 +357,7 @@ class PerformanceStressTester:
             return worker_times, worker_successes, worker_errors
 
         # Create concurrent workers
-        tasks = []
+        tasks: list[Any] = []
         for worker_id in range(concurrent_workers):
             task = asyncio.create_task(worker_operations(worker_id))
             tasks.append(task)
@@ -414,7 +413,7 @@ class PerformanceStressTester:
 
     async def _test_memory_stress(self) -> StressTestResult:
         """Test memory usage under stress"""
-        allocations = []
+        allocations: list[Any] = []
         start_time = time.time()
 
         try:
@@ -471,13 +470,13 @@ class PerformanceStressTester:
         queries_per_connection = 20
 
         start_time = time.time()
-        response_times = []
+        response_times: list[Any] = []
         success_count = 0
         error_count = 0
 
         async def database_operations(connection_id: int):
             """Simulate database operations"""
-            connection_times = []
+            connection_times: list[Any] = []
             connection_successes = 0
             connection_errors = 0
 
@@ -501,7 +500,7 @@ class PerformanceStressTester:
             return connection_times, connection_successes, connection_errors
 
         # Create concurrent database connections
-        tasks = []
+        tasks: list[Any] = []
         for connection_id in range(concurrent_connections):
             task = asyncio.create_task(database_operations(connection_id))
             tasks.append(task)
@@ -615,8 +614,7 @@ class PerformanceStressTester:
 
     def _calculate_performance_grade(self) -> str:
         """Calculate overall performance grade"""
-        scores = []
-
+        scores: list[Any] = []
         for result in self.results:
             # Score based on various factors
             rps_score = (
@@ -683,8 +681,7 @@ class PerformanceStressTester:
 
     def _generate_performance_recommendations(self) -> List[str]:
         """Generate performance optimization recommendations"""
-        recommendations = []
-
+        recommendations: list[Any] = []
         for result in self.results:
             if result.error_rate > 1.0:
                 recommendations.append(

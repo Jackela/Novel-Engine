@@ -155,8 +155,7 @@ class UnifiedLLMService:
 
     def _initialize_providers(self) -> Dict[LLMProvider, Dict[str, Any]]:
         """Initialize provider configurations."""
-        providers = {}
-
+        providers: dict[Any, Any] = {}
         # Gemini configuration (extracted from PersonaAgent)
         gemini_key = os.getenv("GEMINI_API_KEY")
         if gemini_key and gemini_key.strip():

@@ -19,11 +19,11 @@ class EquipmentProcessorRegistry:
     def __init__(self) -> None:
         self.processors = {}
 
-    def register_processor(self, category: EquipmentCategory, processor_func):
+    def register_processor(self, category: EquipmentCategory, processor_func) -> None:
         """Register a processor for a specific category."""
         self.processors[category] = processor_func
 
-    def get_processor(self, category: EquipmentCategory):
+    def get_processor(self, category: EquipmentCategory) -> None:
         """Get the processor for a category."""
         return self.processors.get(category)
 
@@ -31,8 +31,7 @@ class EquipmentProcessorRegistry:
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
     ) -> StandardResponse:
         """Process enhanced weapon usage with combat effectiveness analysis"""
-        effects = []
-
+        effects: list[Any] = []
         # Simulate enhanced weapon effects
         weapon_type = equipment.base_equipment.properties.get("weapon_type", "melee")
         if weapon_type == "ranged":
@@ -77,8 +76,7 @@ class EquipmentProcessorRegistry:
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
     ) -> StandardResponse:
         """Process enhanced armor usage with protection analysis"""
-        effects = []
-
+        effects: list[Any] = []
         damage_absorbed = usage_context.get("damage_absorbed", 0)
         if damage_absorbed > 0:
             effects.append(f"Damage absorbed: {damage_absorbed} points")
@@ -105,8 +103,7 @@ class EquipmentProcessorRegistry:
         self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
     ) -> StandardResponse:
         """Process enhanced tool usage with efficiency analysis"""
-        effects = []
-
+        effects: list[Any] = []
         task_type = usage_context.get("task_type", "general")
         task_complexity = usage_context.get("complexity", 1.0)
 

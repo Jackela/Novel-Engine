@@ -168,9 +168,8 @@ class CodeQualityAnalyzer:
         if len(python_files) > max_files:
             logger.info(f"Limiting analysis to {max_files} files for performance")
             # Prioritize key files by size and name patterns
-            priority_files = []
-            regular_files = []
-
+            priority_files: list[Any] = []
+            regular_files: list[Any] = []
             for file_path in python_files:
                 file_name = file_path.name.lower()
                 if any(
@@ -224,8 +223,7 @@ class CodeQualityAnalyzer:
 
     def _find_python_files(self, exclude_patterns: List[str]) -> List[Path]:
         """Find all Python files in project, excluding test files and patterns."""
-        python_files = []
-
+        python_files: list[Any] = []
         for py_file in self.project_root.rglob("*.py"):
             # Check exclude patterns
             should_exclude = False
@@ -365,7 +363,7 @@ class CodeQualityAnalyzer:
 
     def _analyze_complexity_issues(
         self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
-    ):
+    ) -> None:
         """Analyze complexity-related issues."""
         content.split("\n")
 
@@ -462,7 +460,7 @@ class CodeQualityAnalyzer:
 
     def _analyze_design_issues(
         self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
-    ):
+    ) -> None:
         """Analyze design pattern and architecture issues."""
         lines = content.split("\n")
 
@@ -513,7 +511,7 @@ class CodeQualityAnalyzer:
 
     def _analyze_error_handling(
         self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
-    ):
+    ) -> None:
         """Analyze error handling patterns."""
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler):
@@ -551,7 +549,7 @@ class CodeQualityAnalyzer:
 
     def _analyze_documentation_issues(
         self, file_path: Path, tree: ast.AST, content: str, metrics: FileQualityMetrics
-    ):
+    ) -> None:
         """Analyze documentation and type hint issues."""
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
@@ -618,7 +616,7 @@ class CodeQualityAnalyzer:
             issues_by_category[issue.category.value].append(issue)
 
         # Calculate file quality scores
-        quality_scores = []
+        quality_scores: list[Any] = []
         for metrics in self.file_metrics.values():
             quality_scores.append(metrics.calculate_quality_score())
 
@@ -694,8 +692,7 @@ class CodeQualityAnalyzer:
 
     def _generate_recommendations(self) -> List[Dict[str, Any]]:
         """Generate prioritized recommendations for improvement."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Critical issues first
         critical_issues = [
             i for i in self.quality_issues if i.severity == SeverityLevel.CRITICAL
@@ -748,7 +745,7 @@ class CodeQualityAnalyzer:
 
         return recommendations
 
-    def export_report(self, output_path: str):
+    def export_report(self, output_path: str) -> None:
         """Export quality report to file."""
         report = self._generate_quality_report()
 

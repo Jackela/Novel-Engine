@@ -196,8 +196,7 @@ class Relationship(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate Relationship-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.source_id or not self.source_id.strip():
             errors.append("Source ID cannot be empty")
 
@@ -223,8 +222,7 @@ class Relationship(Entity):
 
     def _validate_type_compatibility(self) -> List[str]:
         """Validate that relationship type is compatible with entity types."""
-        errors = []
-
+        errors: list[Any] = []
         # FAMILY relationships should primarily be between characters
         if self.relationship_type == RelationshipType.FAMILY:
             if self.source_type != EntityType.CHARACTER:

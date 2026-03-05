@@ -266,8 +266,7 @@ class NarrativeProcessor:
         Returns:
             List of active narrative events
         """
-        active_events = []
-
+        active_events: list[Any] = []
         if not self.campaign_brief:
             return active_events
 

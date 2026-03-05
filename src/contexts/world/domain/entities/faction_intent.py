@@ -173,8 +173,7 @@ class FactionIntent:
         Raises:
             ValueError: If any validation rule is violated.
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.id:
             errors.append("Intent ID cannot be empty")
 

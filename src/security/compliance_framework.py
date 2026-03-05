@@ -317,7 +317,7 @@ class SecurityEventMonitor:
             },
         }
 
-    def register_handler(self, event_type: str, handler: Callable):
+    def register_handler(self, event_type: str, handler: Callable) -> None:
         """Register event handler"""
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
@@ -332,8 +332,7 @@ class SecurityEventMonitor:
     ) -> List[SecurityEvent]:
         """Get security events with filtering"""
         query = "SELECT * FROM security_events WHERE 1=1"
-        params = []
-
+        params: list[Any] = []
         if start_time:
             query += " AND timestamp >= ?"
             params.append(start_time.isoformat())
@@ -349,7 +348,7 @@ class SecurityEventMonitor:
         query += " ORDER BY timestamp DESC LIMIT ?"
         params.append(limit)
 
-        events = []
+        events: list[Any] = []
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(query, params) as cursor:
                 async for row in cursor:
@@ -381,7 +380,7 @@ class ComplianceEngine:
         """Initialize the compliance engine"""
         await self.event_monitor.initialize()
 
-    def _initialize_rules(self):
+    def _initialize_rules(self) -> None:
         """Initialize compliance rules for different standards"""
 
         # OWASP Top 10 Rules
@@ -483,8 +482,7 @@ class ComplianceEngine:
         """Perform comprehensive compliance assessment"""
         context = context or {}
         assessment_id = f"assessment_{int(time.time())}"
-        all_results = []
-
+        all_results: list[Any] = []
         logger.info(f"Starting compliance assessment: {assessment_id}")
 
         # Evaluate rules for each standard
@@ -662,7 +660,7 @@ class ComplianceEngine:
 
     def _generate_console_compliance_report(self, report: ComplianceReport) -> str:
         """Generate console compliance report"""
-        output = []
+        output: list[Any] = []
         output.append("=" * 60)
         output.append("COMPLIANCE ASSESSMENT REPORT")
         output.append("=" * 60)

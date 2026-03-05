@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class _RateLimitStrategyMeta(EnumMeta):
     """Enum meta class that provides a sensible default when instantiated without a value."""
 
-    def __call__(self, value=None, *args, **kwargs):
+    def __call__(self, value=None, *args, **kwargs) -> None:
         if isinstance(value, self):
             return value
         if value is None:
@@ -121,7 +121,7 @@ class TokenBucket:
             return True
         return False
 
-    def _refill(self):
+    def _refill(self) -> None:
         """STANDARD TOKEN REFILL"""
         now = time.time()
         tokens_to_add = (now - self.last_refill) * self.refill_rate
@@ -235,7 +235,7 @@ class RateLimiter:
         self.whitelist = IPWhitelist(config.whitelist_ips)
         self._start_cleanup_task()
 
-    def _start_cleanup_task(self):
+    def _start_cleanup_task(self) -> None:
         """STANDARD CLEANUP TASK INITIALIZATION"""
 
         async def cleanup_loop():
@@ -256,8 +256,7 @@ class RateLimiter:
     async def _cleanup_old_clients(self):
         """STANDARD CLIENT STATE CLEANUP"""
         now = time.time()
-        old_clients = []
-
+        old_clients: list[Any] = []
         for client_id, client in self.clients.items():
             # Remove clients inactive for more than 1 hour
             if now - client.last_request > 3600:
@@ -312,7 +311,7 @@ class RateLimiter:
 
         return self.clients[client_id]
 
-    def _initialize_client_buckets(self, client: ClientState):
+    def _initialize_client_buckets(self, client: ClientState) -> None:
         """STANDARD CLIENT BUCKET INITIALIZATION"""
         role_multiplier = self.config.role_multipliers.get(
             client.user_role or "guest", 1.0
@@ -389,7 +388,7 @@ class RateLimiter:
 
         return threat_level
 
-    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel):
+    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel) -> None:
         """STANDARD ADAPTIVE LIMIT APPLICATION"""
         if not self.config.enable_adaptive:
             return
@@ -552,11 +551,11 @@ class InMemoryRateLimitBackend:
         """Retrieve client state from memory backend"""
         return self.clients.get(client_id)
 
-    def set_client_state(self, client_id: str, client_state: ClientState):
+    def set_client_state(self, client_id: str, client_state: ClientState) -> None:
         """Store client state in memory backend"""
         self.clients[client_id] = client_state
 
-    def update_stats(self, stat_name: str, increment: int = 1):
+    def update_stats(self, stat_name: str, increment: int = 1) -> None:
         """Update global statistics"""
         if stat_name in self.global_stats:
             self.global_stats[stat_name] += increment
@@ -644,11 +643,10 @@ class InMemoryRateLimitBackend:
                 retry_after=retry_after,
             )
 
-    def cleanup_old_clients(self, max_age: float = 3600.0):
+    def cleanup_old_clients(self, max_age: float = 3600.0) -> None:
         """Remove clients inactive for more than max_age seconds"""
         now = time.time()
-        old_clients = []
-
+        old_clients: list[Any] = []
         for client_id, client in self.clients.items():
             if now - client.last_request > max_age:
                 old_clients.append(client_id)
@@ -857,7 +855,7 @@ def get_rate_limiter() -> RateLimiter:
     return rate_limiter
 
 
-def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
+def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None) -> None:
     """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:

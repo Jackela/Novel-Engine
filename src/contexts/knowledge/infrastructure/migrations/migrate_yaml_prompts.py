@@ -174,8 +174,7 @@ class YAMLPromptMigrator:
             PromptMigrationError: If circular reference detected or referenced prompt not found
         """
         if visited is None:
-            visited = set()
-
+            visited: set[Any] = set()
         result = content
 
         # Find all {{> prompt_name}} includes

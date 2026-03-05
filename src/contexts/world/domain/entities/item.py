@@ -112,8 +112,7 @@ class Item(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate Item-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("Item name cannot be empty")
 
@@ -133,8 +132,7 @@ class Item(Entity):
 
     def _validate_type_rules(self) -> List[str]:
         """Validate rules specific to item type."""
-        errors = []
-
+        errors: list[Any] = []
         # Consumables should be marked as consumable
         if self.item_type == ItemType.CONSUMABLE and not self.is_consumable:
             # Auto-correct rather than error - consumable type implies is_consumable

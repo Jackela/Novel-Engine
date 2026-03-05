@@ -210,7 +210,7 @@ class CausalGraphService:
     def _would_create_cycle(self, cause_id: str, effect_id: str) -> bool:
         """Check if adding a link would create a cycle."""
         # Use DFS to see if effect_id can reach cause_id
-        visited = set()
+        visited: set[Any] = set()
         stack = [effect_id]
 
         while stack:
@@ -247,7 +247,7 @@ class CausalGraphService:
         if start_node not in self.nodes or end_node not in self.nodes:
             return []
 
-        paths = []
+        paths: list[Any] = []
         self._find_paths_recursive(
             start_node, end_node, [start_node], [], Decimal("1.0"), max_depth, paths
         )
@@ -383,8 +383,7 @@ class CausalGraphService:
 
     def _identify_critical_nodes(self) -> List[str]:
         """Identify nodes that are critical to narrative flow."""
-        critical = []
-
+        critical: list[Any] = []
         for node_id, node in self.nodes.items():
             # Node is critical if:
             # 1. High narrative importance
@@ -407,10 +406,9 @@ class CausalGraphService:
 
     def _detect_feedback_loops(self) -> List[List[str]]:
         """Detect feedback loops in the causal graph."""
-        feedback_loops = []
-        visited = set()
-        rec_stack = set()
-
+        feedback_loops: list[Any] = []
+        visited: set[Any] = set()
+        rec_stack: set[Any] = set()
         def dfs_cycle_detection(node_id: str, path: List[str]) -> None:
             visited.add(node_id)
             rec_stack.add(node_id)
@@ -438,8 +436,7 @@ class CausalGraphService:
 
     def _find_longest_chains(self, max_chains: int = 5) -> List[CausalPath]:
         """Find the longest causal chains in the graph."""
-        all_chains = []
-
+        all_chains: list[Any] = []
         # Start from root causes
         root_causes = [
             node_id for node_id, node in self.nodes.items() if not node.has_causes
@@ -459,8 +456,7 @@ class CausalGraphService:
     ) -> List[CausalPath]:
         """Get all chains starting from a specific node."""
         if visited is None:
-            visited = set()
-
+            visited: set[Any] = set()
         if start_node in visited or start_node not in self.nodes:
             return []
 
@@ -468,8 +464,7 @@ class CausalGraphService:
         visited.add(start_node)
 
         node = self.nodes[start_node]
-        chains = []
-
+        chains: list[Any] = []
         if not node.has_effects:
             # Terminal node - create single-node chain
             chains.append(

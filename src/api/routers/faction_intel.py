@@ -78,7 +78,7 @@ def get_repository(request: Request) -> FactionIntentRepository:
     return repo
 
 
-def _get_event_bus(request: Request):
+def _get_event_bus(request: Request) -> None:
     """Get the EventBus from app.state.
 
     Reads the EventBus from request.app.state.event_bus which is
@@ -163,7 +163,7 @@ def _generate_mock_intents(faction_id: str) -> list[FactionIntent]:
     Returns:
         List of generated FactionIntent objects
     """
-    intents = []
+    intents: list[Any] = []
     now = datetime.now()
 
     # Generate 2-3 varied intents for demonstration

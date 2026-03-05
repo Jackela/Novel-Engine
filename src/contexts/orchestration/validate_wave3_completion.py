@@ -8,9 +8,10 @@ for the complete run_turn orchestration flow as required by M10 milestone.
 
 import sys
 from pathlib import Path
+from typing import Any
 
 
-def validate_tracing_files():
+def validate_tracing_files() -> None:
     """Validate that all tracing implementation files are present."""
     print("🔍 VALIDATING WAVE 3 IMPLEMENTATION FILES")
     print("=" * 60)
@@ -25,8 +26,7 @@ def validate_tracing_files():
         "api/turn_api.py": "Updated FastAPI app with tracing middleware",
     }
 
-    validation_results = []
-
+    validation_results: list[Any] = []
     for file_path, description in required_files.items():
         full_path = base_path / file_path
         exists = full_path.exists()
@@ -44,14 +44,13 @@ def validate_tracing_files():
     return validation_results
 
 
-def validate_implementation_features():
+def validate_implementation_features() -> None:
     """Validate key implementation features by checking code content."""
     print("\n🔍 VALIDATING IMPLEMENTATION FEATURES")
     print("=" * 60)
 
     base_path = Path(__file__).parent
-    validations = []
-
+    validations: list[Any] = []
     # Check tracing.py for core features
     tracing_file = base_path / "infrastructure/monitoring/tracing.py"
     if tracing_file.exists():
@@ -145,7 +144,7 @@ def validate_implementation_features():
     return validations
 
 
-def validate_requirements():
+def validate_requirements() -> None:
     """Validate OpenTelemetry requirements are specified."""
     print("\n🔍 VALIDATING OPENTELEMETRY REQUIREMENTS")
     print("=" * 60)
@@ -181,7 +180,7 @@ def validate_requirements():
     return all_found
 
 
-def validate_m10_requirements():
+def validate_m10_requirements() -> None:
     """Validate M10 specific requirements are met."""
     print("\n🔍 VALIDATING M10 MILESTONE REQUIREMENTS")
     print("=" * 60)
@@ -240,7 +239,7 @@ def validate_m10_requirements():
     return True
 
 
-def main():
+def main() -> None:
     """Run complete Wave 3 validation."""
     print("M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING - COMPLETION VALIDATION")
     print("=" * 80)

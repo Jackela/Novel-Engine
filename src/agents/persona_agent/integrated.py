@@ -437,7 +437,7 @@ class PersonaAgent:
         self.core.communication_style = style
 
     @property
-    def character(self):
+    def character(self) -> None:
         """Get character object for backward compatibility with api_server.py expectations."""
 
         # Create a character object that provides the expected interface
@@ -497,7 +497,7 @@ class PersonaAgent:
                 if isinstance(yaml_stats, dict):
                     stats = yaml_stats
                 else:
-                    stats = {}
+                    stats: dict[Any, Any] = {}
                     for key in (
                         "character",
                         "combat_stats",

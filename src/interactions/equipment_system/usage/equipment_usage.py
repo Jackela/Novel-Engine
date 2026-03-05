@@ -30,10 +30,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -219,8 +219,7 @@ class EquipmentUsageProcessor:
             "intensity", "normal"
         )  # low, normal, high, extreme
 
-        effects = []
-
+        effects: list[Any] = []
         # Calculate weapon wear based on usage intensity
         intensity_multipliers = {"low": 0.5, "normal": 1.0, "high": 1.5, "extreme": 2.0}
         intensity_factor = intensity_multipliers.get(combat_intensity, 1.0)
@@ -269,8 +268,7 @@ class EquipmentUsageProcessor:
             "environment", "normal"
         )  # normal, harsh, extreme
 
-        effects = []
-
+        effects: list[Any] = []
         # Track damage absorption
         if "damage_stats" not in equipment.usage_statistics:
             equipment.usage_statistics["damage_stats"] = {
@@ -320,8 +318,7 @@ class EquipmentUsageProcessor:
         )  # simple, normal, complex, expert
         success_rate = usage_context.get("success", True)
 
-        effects = []
-
+        effects: list[Any] = []
         # Track tool performance
         if "task_stats" not in equipment.usage_statistics:
             equipment.usage_statistics["task_stats"] = {
@@ -373,8 +370,7 @@ class EquipmentUsageProcessor:
         quantity_used = usage_context.get("quantity", 1)
         effectiveness = usage_context.get("effectiveness", 1.0)
 
-        effects = []
-
+        effects: list[Any] = []
         # Consumables have quantity-based usage
         current_quantity = equipment.usage_statistics.get(
             "remaining_quantity", 100

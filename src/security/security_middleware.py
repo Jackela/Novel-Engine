@@ -30,7 +30,7 @@ class SecurityEventLogger:
         self.security_logger.addHandler(handler)
         self.security_logger.setLevel(logging.WARNING)
 
-    def log_event(self, event_type: str, client_ip: str, details: Dict[str, Any]):
+    def log_event(self, event_type: str, client_ip: str, details: Dict[str, Any]) -> None:
         """Log a security event."""
         self.security_logger.warning(f"{event_type} from {client_ip}: {details}")
 
@@ -58,12 +58,12 @@ class IPBlocklist:
 
         return False
 
-    def temp_block(self, ip: str):
+    def temp_block(self, ip: str) -> None:
         """Temporarily block an IP address."""
         self.temp_blocked[ip] = datetime.now(timezone.utc) + self.block_duration
         logger.warning(f"Temporarily blocked IP: {ip}")
 
-    def permanent_block(self, ip: str):
+    def permanent_block(self, ip: str) -> None:
         """Permanently block an IP address."""
         self.blocked_ips.add(ip)
         logger.warning(f"Permanently blocked IP: {ip}")

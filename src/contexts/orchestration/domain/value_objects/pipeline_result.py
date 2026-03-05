@@ -269,7 +269,7 @@ class PipelineResult:
             raise ValueError("Total AI cost cannot be negative")
 
         # Validate phase result consistency
-        phase_types_seen = set()
+        phase_types_seen: set[Any] = set()
         for result in self.phase_results:
             if result.phase_type in phase_types_seen:
                 raise ValueError(f"Duplicate phase result for {result.phase_type}")

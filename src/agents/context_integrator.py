@@ -324,7 +324,7 @@ class ContextIntegrator:
             if not enhanced_context:
                 return {"integration_status": "no_context", "components": []}
 
-            components_integrated = []
+            components_integrated: list[Any] = []
             if "memory_context" in merged_data:
                 components_integrated.append("memory")
             if "objectives_context" in merged_data:

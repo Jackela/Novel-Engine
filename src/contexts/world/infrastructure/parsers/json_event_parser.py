@@ -214,7 +214,7 @@ class JSONEventParser:
         Returns:
             Tuple of (event_dict or None, list of errors)
         """
-        errors = []
+        errors: list[Any] = []
         event: Dict[str, Any] = {}
 
         # Check required fields
@@ -388,9 +388,8 @@ class JSONEventParser:
         Returns:
             Tuple of (valid_events, errors)
         """
-        valid_events = []
-        errors = []
-
+        valid_events: list[Any] = []
+        errors: list[Any] = []
         for i, event in enumerate(events):
             event_errors = self._validate_event(event, i + 1)
             if event_errors:
@@ -412,8 +411,7 @@ class JSONEventParser:
         Returns:
             List of validation errors
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate name length
         name = event.get("name", "")
         if len(name) > 300:

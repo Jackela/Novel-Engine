@@ -47,7 +47,7 @@ class CacheEntry:
             return False
         return time.time() - self.created_at > self.ttl
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access statistics."""
         self.last_accessed = time.time()
         self.access_count += 1
@@ -206,7 +206,7 @@ class MemoryCache(CacheBackend):
 
     def _find_eviction_candidate(self, new_level: CacheLevel) -> Optional[str]:
         """Find best entry to evict using intelligent strategy."""
-        candidates = []
+        candidates: list[Any] = []
         current_time = time.time()
 
         for key, entry in self.entries.items():
@@ -320,7 +320,7 @@ class PerformanceCache:
 
     async def _cleanup_expired(self):
         """Remove expired entries from cache."""
-        expired_keys = []
+        expired_keys: list[Any] = []
         async with self.memory_cache.lock:
             for key, entry in self.memory_cache.entries.items():
                 if entry.is_expired():
@@ -409,7 +409,7 @@ class PerformanceCache:
     # Utility Methods
     async def invalidate_pattern(self, pattern: str):
         """Invalidate all keys matching pattern."""
-        keys_to_delete = []
+        keys_to_delete: list[Any] = []
         async with self.memory_cache.lock:
             for key in self.memory_cache.entries.keys():
                 if pattern in key:

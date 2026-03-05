@@ -11,6 +11,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +25,7 @@ class TypeProcessors:
         """Process enhanced dialogue interaction"""
         try:
             # Generate dialogue content for each participant
-            dialogue_content = []
-
+            dialogue_content: list[Any] = []
             for participant in context.participants:
                 # Generate character-specific dialogue
                 template_context = TemplateContext(

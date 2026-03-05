@@ -164,8 +164,7 @@ class WorldSetting(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate WorldSetting-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("World name cannot be empty")
 
@@ -194,8 +193,7 @@ class WorldSetting(Entity):
 
     def _validate_genre_era_compatibility(self) -> List[str]:
         """Validate that genre and era are compatible."""
-        errors = []
-
+        errors: list[Any] = []
         # Science fiction requires appropriate era
         sci_fi_genres = {
             Genre.SCIENCE_FICTION,
@@ -228,8 +226,7 @@ class WorldSetting(Entity):
 
     def _validate_theme_consistency(self) -> List[str]:
         """Validate theme consistency with tone."""
-        errors = []
-
+        errors: list[Any] = []
         dark_themes = {"death", "corruption", "despair", "betrayal", "tragedy"}
         light_themes = {"hope", "redemption", "love", "friendship", "triumph"}
 

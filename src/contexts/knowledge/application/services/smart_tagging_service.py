@@ -283,7 +283,7 @@ Rules:
             data = json.loads(text)
 
             # Validate structure
-            result = {}
+            result: dict[Any, Any] = {}
             for category in self._config.categories:
                 cat_name = category.value
                 if cat_name in data:

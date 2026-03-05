@@ -221,8 +221,7 @@ class Faction(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate Faction-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("Faction name cannot be empty")
 
@@ -284,8 +283,7 @@ class Faction(Entity):
 
     def _validate_relations(self) -> List[str]:
         """Validate faction relationships."""
-        errors = []
-
+        errors: list[Any] = []
         seen_targets: Set[str] = set()
         for relation in self.relations:
             if relation.target_faction_id in seen_targets:

@@ -336,9 +336,8 @@ class KnowledgeIngestionService:
         )
 
         # Step 3: Create VectorDocuments and store
-        vector_documents = []
-        entries = []
-
+        vector_documents: list[Any] = []
+        entries: list[Any] = []
         for i, (chunk, embedding) in enumerate(zip(chunked_doc.chunks, embeddings)):
             # Create SourceKnowledgeEntry with enriched metadata
             entry = SourceKnowledgeEntry.create(
@@ -703,7 +702,7 @@ class KnowledgeIngestionService:
             return []
 
         # Convert to RetrievedChunk
-        retrieved = []
+        retrieved: list[Any] = []
         for qr in query_results:
             retrieved.append(
                 RetrievedChunk(

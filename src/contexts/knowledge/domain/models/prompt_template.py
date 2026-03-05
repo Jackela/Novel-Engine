@@ -148,7 +148,7 @@ class VariableDefinition:
                 case VariableType.DICT:
                     if isinstance(value, str):
                         # Simple key=value,key2=value2 format
-                        result = {}
+                        result: dict[Any, Any] = {}
                         for pair in value.split(","):
                             if "=" in pair:
                                 k, v = pair.split("=", 1)
@@ -741,8 +741,7 @@ class PromptTemplate:
             ValueError: If circular reference is detected in the extends chain
         """
         if visited is None:
-            visited = set()
-
+            visited: set[Any] = set()
         if self.id in visited:
             raise ValueError(
                 f"Circular reference detected in extends chain: "
@@ -787,8 +786,7 @@ class PromptTemplate:
             ValueError: If circular reference is detected or parent template not found
         """
         if visited is None:
-            visited = set()
-
+            visited: set[Any] = set()
         if self.id in visited:
             raise ValueError(
                 f"Circular reference detected: template '{self.name}' (id: {self.id}) "

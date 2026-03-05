@@ -296,8 +296,7 @@ class OpenAILLMClient:
         Returns:
             Request body dict for OpenAI API
         """
-        messages = []
-
+        messages: list[Any] = []
         # Add system message if provided
         if request.system_prompt:
             messages.append({"role": "system", "content": request.system_prompt})

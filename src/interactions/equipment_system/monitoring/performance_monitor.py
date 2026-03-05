@@ -189,8 +189,7 @@ class PerformanceMonitor:
         self, equipment: DynamicEquipment
     ) -> List[Dict[str, Any]]:
         """Generate optimization recommendations for equipment."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         try:
             # High wear recommendation
             if equipment.wear_accumulation > 0.7:

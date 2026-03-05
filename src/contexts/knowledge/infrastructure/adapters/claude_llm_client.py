@@ -417,8 +417,7 @@ class ClaudeLLMClient:
         try:
             # Extract text from content blocks
             content_blocks = response_json["content"]
-            text_parts = []
-
+            text_parts: list[Any] = []
             for block in content_blocks:
                 if block.get("type") == "text":
                     text_parts.append(block.get("text", ""))

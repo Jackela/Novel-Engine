@@ -201,13 +201,12 @@ class MemoryQueryEngine:
                 )
 
             seed_memory = seed_memories[0]
-            associated_memories = []
+            associated_memories: list[Any] = []
             processed_ids = {seed_memory_id}
 
             current_level = [seed_memory]
             for depth in range(association_depth):
-                next_level = []
-
+                next_level: list[Any] = []
                 for memory in current_level:
                     # This is a simplified stand-in for a real association logic
                     associations = await self._find_contextual_associations(
@@ -412,7 +411,7 @@ class MemoryQueryEngine:
         if not result.memories:
             return result
 
-        enhanced_scores = []
+        enhanced_scores: list[Any] = []
         for i, memory in enumerate(result.memories):
             score = result.relevance_scores[i]
             if context.active_participants and set(memory.participants) & set(
@@ -441,7 +440,7 @@ class MemoryQueryEngine:
         self, memory: MemoryItem, max_results: int
     ) -> List[Tuple[MemoryItem, float]]:
         """Finds contextually associated memories."""
-        associations = []
+        associations: list[Any] = []
         if memory.participants:
             query = MemoryQueryRequest(
                 query_text="", participants=memory.participants, max_results=max_results
@@ -488,7 +487,7 @@ class MemoryQueryEngine:
         # This is a placeholder for a more sophisticated NLP-based implementation.
         from .emotional_memory import EmotionalValence
 
-        filters = {}
+        filters: dict[Any, Any] = {}
         if "happy" in query_text.lower():
             filters["valence"] = EmotionalValence.POSITIVE
         if "sad" in query_text.lower():
@@ -547,7 +546,7 @@ class MemoryQueryEngine:
         context_str = f"{context.current_situation}|{context.active_participants}"
         return str(hash(f"{query_text}|{context_str}"))
 
-    def _cleanup_expired_cache(self):
+    def _cleanup_expired_cache(self) -> None:
         """Removes expired entries from the query cache."""
         expiry_limit = datetime.now() - timedelta(minutes=self.cache_expiry_minutes)
         expired_keys = [
@@ -556,7 +555,7 @@ class MemoryQueryEngine:
         for key in expired_keys:
             del self._query_cache[key]
 
-    def _update_query_statistics(self, query_type: QueryType, metrics: QueryMetrics):
+    def _update_query_statistics(self, query_type: QueryType, metrics: QueryMetrics) -> None:
         """Updates query statistics."""
         self._query_statistics["total_queries"] += 1
         self._query_statistics[f"{query_type.value}_queries"] += 1

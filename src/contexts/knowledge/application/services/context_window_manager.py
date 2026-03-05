@@ -310,7 +310,7 @@ class ContextWindowManager:
         if not config.enable_rag_optimization:
             # Simple truncation without optimization
             total = 0
-            kept = []
+            kept: list[Any] = []
             for chunk in chunks:
                 chunk_tokens = self._token_counter.count(chunk.content).token_count
                 if total + chunk_tokens > available_tokens:
@@ -358,7 +358,7 @@ class ContextWindowManager:
             )
 
         # Count tokens for all history messages
-        history_with_tokens = []
+        history_with_tokens: list[Any] = []
         for msg in history:
             tokens = self._token_counter.count(msg.content).token_count
             history_with_tokens.append(msg.with_tokens(tokens))

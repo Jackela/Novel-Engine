@@ -78,7 +78,7 @@ class DecisionContext:
 
     def get_resource_summary(self) -> str:
         """Get a brief summary of resources for logging/events."""
-        parts = []
+        parts: list[Any] = []
         for key, value in sorted(self.resources.items()):
             parts.append(f"{key}={value}")
         return ", ".join(parts) if parts else "no resources"
@@ -409,8 +409,7 @@ class FactionDecisionService:
         military = resources.get("military", 0)
         gold = resources.get("gold", 0)
 
-        available = []
-
+        available: list[Any] = []
         for action in ACTION_DEFINITIONS:
             # Skip ATTACK if food or military is too low
             if action.action_type == ActionType.ATTACK:
@@ -708,7 +707,7 @@ class FactionDecisionService:
             Formatted prompt string
         """
         # Build action definitions section
-        action_descs = []
+        action_descs: list[Any] = []
         for action in available_actions:
             reqs = (
                 ", ".join(f"{k}>={v}" for k, v in action.requirements.items())
@@ -781,7 +780,7 @@ Respond with JSON in this format:
         """Format diplomacy dict for prompt."""
         if not diplomacy:
             return "No diplomatic relations"
-        lines = []
+        lines: list[Any] = []
         for faction_id, status in diplomacy.items():
             lines.append(f"- {faction_id}: {status}")
         return "\n".join(lines)

@@ -217,8 +217,7 @@ class LLMCoordinator:
     async def _process_priority_batch(self, priority: RequestPriority) -> None:
         """Process a batch of requests with the same priority."""
         try:
-            requests_to_process = []
-
+            requests_to_process: list[Any] = []
             # Collect batch
             while (
                 len(requests_to_process) < self.config.max_batch_size
@@ -277,8 +276,7 @@ class LLMCoordinator:
             from src.core.llm_service import get_llm_service
 
             get_llm_service()
-            results = []
-
+            results: list[Any] = []
             # Process each request in the batch
             for request in requests:
                 try:
@@ -416,8 +414,7 @@ class LLMCoordinator:
                 await asyncio.sleep(60)  # Check every minute
 
                 current_time = datetime.now()
-                expired_keys = []
-
+                expired_keys: list[Any] = []
                 for cache_key, (_, timestamp) in self.cache.items():
                     if current_time - timestamp > timedelta(
                         seconds=self.config.cache_ttl_seconds

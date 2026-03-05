@@ -171,9 +171,8 @@ class NarrativeOrchestrator:
             Dict containing processing results
         """
         try:
-            processed_events = []
-            failed_events = []
-
+            processed_events: list[Any] = []
+            failed_events: list[Any] = []
             for event_data in events:
                 try:
                     # Create narrative event
@@ -285,8 +284,7 @@ class NarrativeOrchestrator:
         self, agent_id: str, limit: int = 10
     ) -> List[NarrativeEvent]:
         """Get events relevant to specific agent."""
-        relevant_events = []
-
+        relevant_events: list[Any] = []
         for event in reversed(self._narrative_events[-50:]):  # Check last 50 events
             if agent_id in event.participants or event.event_type in [
                 EventType.WORLD_CHANGE,
@@ -301,8 +299,7 @@ class NarrativeOrchestrator:
 
     async def _get_agent_threads(self, agent_id: str) -> List[Dict[str, Any]]:
         """Get narrative threads involving specific agent."""
-        agent_threads = []
-
+        agent_threads: list[Any] = []
         async with self._thread_lock:
             for thread_id, thread_data in self._active_threads.items():
                 if agent_id in thread_data.get("participants", []):
@@ -322,8 +319,7 @@ class NarrativeOrchestrator:
         self, agent_id: str
     ) -> List[Dict[str, Any]]:
         """Identify narrative opportunities for agent."""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Check for unresolved conflicts
         for event in self._narrative_events[-20:]:
             if (
@@ -456,7 +452,7 @@ class NarrativeOrchestrator:
 
             # Close threads for resolutions
             elif event.event_type == EventType.RESOLUTION:
-                threads_to_close = []
+                threads_to_close: list[Any] = []
                 for thread_id, thread_data in self._active_threads.items():
                     if any(
                         p in event.participants

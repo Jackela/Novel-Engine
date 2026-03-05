@@ -46,7 +46,7 @@ def _get_faction_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store which contains factions."""
     store = getattr(request.app.state, "world_store", None)
     if store is None:
-        store = {}
+        store: dict[Any, Any] = {}
         request.app.state.world_store = store
     return store
 
@@ -106,7 +106,7 @@ def _get_characters_in_faction(
     if not store or not workspace_id:
         return []
 
-    members = []
+    members: list[Any] = []
     try:
         char_ids = store.list_ids(workspace_id)
         for char_id in char_ids:
@@ -152,7 +152,7 @@ async def get_faction_detail(
         )
 
     # Get members from character store
-    members_data = []
+    members_data: list[Any] = []
     leader_id = faction.get("leader_id")
 
     if workspace_id:

@@ -183,7 +183,7 @@ class OptimizedWorldStateTracker:
         self.cache_misses += 1
 
         # Efficient single-loop implementation
-        discoveries = []
+        discoveries: list[Any] = []
         current_turn = (
             max(self.agent_discoveries.keys()) if self.agent_discoveries else 0
         )
@@ -353,8 +353,7 @@ class AsyncCampaignLogger:
         """Background worker that batches and writes logs."""
         while self.is_running:
             try:
-                events = []
-
+                events: list[Any] = []
                 # Collect batch of events
                 batch_timeout = self.flush_interval
                 start_time = time.time()
@@ -399,8 +398,7 @@ class AsyncCampaignLogger:
 
     async def _flush_remaining_logs(self) -> None:
         """Flush any remaining logs in the queue."""
-        remaining_events = []
-
+        remaining_events: list[Any] = []
         while not self.log_queue.empty():
             try:
                 event = self.log_queue.get_nowait()
@@ -487,7 +485,7 @@ class DirectorAgentPerformanceOptimizer:
                 # Replace synchronous log_event with async version
                 original_log_event = getattr(director_instance, "log_event", None)
 
-                def optimized_log_event(event_description: str):
+                def optimized_log_event(event_description: str) -> None:
                     """Optimized non-blocking log event."""
                     try:
                         loop = asyncio.get_running_loop()
@@ -565,8 +563,7 @@ class DirectorAgentPerformanceOptimizer:
         before_metrics: Dict, after_metrics: Dict
     ) -> Dict[str, str]:
         """Calculate performance improvements."""
-        improvements = {}
-
+        improvements: dict[Any, Any] = {}
         try:
             both_metrics = before_metrics.keys() & after_metrics.keys()
             if "memory_usage_mb" in both_metrics:
@@ -654,7 +651,7 @@ class PerformanceMonitor:
         total_operations = len(self.metrics_history)
         uptime = time.time() - self.start_time
 
-        operation_stats = {}
+        operation_stats: dict[Any, Any] = {}
         for operation, times in self.operation_times.items():
             if times:
                 operation_stats[operation] = {

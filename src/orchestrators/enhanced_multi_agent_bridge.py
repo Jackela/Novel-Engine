@@ -134,7 +134,7 @@ class LLMBatchRequest:
     estimated_cost: float = 0.0
     tokens_estimate: int = 0
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> None:
         """For priority queue ordering."""
         if not isinstance(other, LLMBatchRequest):
             return NotImplemented
@@ -143,7 +143,7 @@ class LLMBatchRequest:
             other.created_at,
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> None:
         if not isinstance(other, LLMBatchRequest):
             return NotImplemented
         return (self.priority.value, self.created_at) == (
@@ -216,7 +216,7 @@ class PerformanceBudget:
     llm_call_timings: List[float] = field(default_factory=list)
     budget_violations: int = 0
 
-    def start_turn(self):
+    def start_turn(self) -> None:
         """Start turn timing."""
         self.turn_start_time = time.time()
 
@@ -231,13 +231,13 @@ class PerformanceBudget:
         """Check if time budget is exceeded."""
         return self.get_remaining_time() <= 0
 
-    def record_batch_time(self, duration: float):
+    def record_batch_time(self, duration: float) -> None:
         """Record batch processing time."""
         self.batch_timings.append(duration)
         if duration > self.max_batch_time:
             self.budget_violations += 1
 
-    def record_llm_time(self, duration: float):
+    def record_llm_time(self, duration: float) -> None:
         """Record LLM call time."""
         self.llm_call_timings.append(duration)
         if duration > self.max_llm_call_time:
@@ -604,8 +604,7 @@ class EnhancedMultiAgentBridge:
             return
 
         batch_start_time = time.time()
-        batch_requests = []
-
+        batch_requests: list[Any] = []
         # Collect requests for batching
         with self.batch_lock:
             batch_size = min(
@@ -794,7 +793,7 @@ class EnhancedMultiAgentBridge:
         self, response_content: str, requests: List[LLMBatchRequest]
     ) -> List[Dict[str, Any]]:
         """Parse batch response into individual results."""
-        results = []
+        results: list[Any] = []
         lines = response_content.split("\n")
 
         # Simple parsing - look for response markers
@@ -980,7 +979,7 @@ class EnhancedMultiAgentBridge:
                 logger.info(
                     f"Processing {len(self.llm_request_queue)} remaining requests"
                 )
-                remaining_requests = []
+                remaining_requests: list[Any] = []
                 while self.llm_request_queue:
                     remaining_requests.append(heapq.heappop(self.llm_request_queue))
 
@@ -1021,7 +1020,7 @@ class EnhancedMultiAgentBridge:
             dialogue_opportunities = await self._identify_dialogue_opportunities()
 
             # Phase 4: Execute dialogues if any are initiated (with performance budgets)
-            dialogue_results = []
+            dialogue_results: list[Any] = []
             max_dialogues = 3  # Limit dialogues per turn for performance
 
             for opportunity in dialogue_opportunities[:max_dialogues]:
@@ -1211,14 +1210,14 @@ class EnhancedMultiAgentBridge:
         return sum(vals) / max(1, len(vals))
 
     async def _build_enhanced_context(self, agent: Any) -> Dict[str, Any]:
-        dialogues = []
+        dialogues: list[Any] = []
         if self.dialogue_manager is not None and hasattr(
             self.dialogue_manager, "get_agent_dialogues"
         ):
             try:
                 dialogues = await self.dialogue_manager.get_agent_dialogues(agent)
             except Exception:
-                dialogues = []
+                dialogues: list[Any] = []
         return {
             "agent_id": getattr(agent, "agent_id", "unknown"),
             "world_state": getattr(self.director_agent, "world_state", {}),
@@ -1403,7 +1402,7 @@ class EnhancedMultiAgentBridge:
 
     # Private helper methods
 
-    def _setup_enhanced_event_handlers(self):
+    def _setup_enhanced_event_handlers(self) -> None:
         """Setup enhanced event handlers for agent communication."""
         self.event_bus.subscribe(
             "AGENT_DIALOGUE_REQUEST", self._handle_dialogue_request
@@ -1488,8 +1487,7 @@ class EnhancedMultiAgentBridge:
 
     async def _identify_dialogue_opportunities(self) -> List[Dict[str, Any]]:
         """Identify opportunities for agent dialogue based on current state."""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Check relationship-based opportunities
         for agent_id, relationships in self.agent_relationships.items():
             for other_agent, relationship_value in relationships.items():
@@ -1758,8 +1756,7 @@ class EnhancedMultiAgentBridge:
         self, dialogue_outcome: Dict[str, Any], llm_result: Dict[str, Any]
     ) -> float:
         """Calculate quality score for dialogue."""
-        quality_factors = []
-
+        quality_factors: list[Any] = []
         # Response length factor (not too short, not too long)
         response_length = len(llm_result.get("response", ""))
         if 50 <= response_length <= 500:
@@ -2076,8 +2073,7 @@ class EnhancedMultiAgentBridge:
 
     async def _gather_ai_insights(self) -> List[Dict[str, Any]]:
         """Gather insights from AI intelligence systems."""
-        insights = []
-
+        insights: list[Any] = []
         # Get insights from AI orchestrator
         if self.ai_orchestrator:
             dashboard = await self.ai_orchestrator.get_system_dashboard()
@@ -2185,8 +2181,7 @@ class EnhancedMultiAgentBridge:
         metrics = self.get_coordination_performance_metrics()
         performance_score = metrics["performance_metrics"]["performance_score"]
 
-        optimizations = []
-
+        optimizations: list[Any] = []
         # Adjust batch size based on performance
         if performance_score < 0.7:
             if self.llm_config.max_batch_size > 3:

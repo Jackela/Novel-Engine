@@ -159,8 +159,6 @@ def reset_events_storage() -> None:
     """Reset events storage (for testing)."""
     global _world_events
     _world_events = {}
-
-
 # === Helper Functions ===
 
 

@@ -24,7 +24,7 @@ class PersonaPersistence:
     def __init__(self, personas_dir: Path) -> None:
         self.personas_dir = personas_dir
 
-    def _discover_personas(self):
+    def _discover_personas(self) -> None:
         """Discover enhanced existing personas from files"""
         for persona_file in self.personas_directory.glob("*.json"):
             try:

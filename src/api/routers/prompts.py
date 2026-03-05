@@ -325,7 +325,7 @@ async def export_prompt_analytics(
         )
 
         # Create streaming response with generator
-        def generate():
+        def generate() -> None:
             yield csv_data
 
         return StreamingResponse(

@@ -46,7 +46,7 @@ class WorldEvent:
     data: Dict[str, Any] = field(default_factory=dict)
     timestamp: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp == 0.0:
             from datetime import datetime
 
@@ -70,7 +70,7 @@ class SubjectiveInterpretation:
     relationship_changes: Dict[str, float] = None  # Changes to relationships
     memory_priority: float = 0.5  # How likely this is to be remembered (0.0 to 1.0)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.belief_impact is None:
             self.belief_impact = {}
         if self.relationship_changes is None:

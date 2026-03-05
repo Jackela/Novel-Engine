@@ -29,10 +29,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -107,7 +107,7 @@ class BaseInteractionProcessor(ABC):
         """Get processing statistics for this processor."""
         return {"interaction_type": self.supported_type.value, **self.processing_stats}
 
-    def _update_stats(self, success: bool, duration: float):
+    def _update_stats(self, success: bool, duration: float) -> None:
         """Update processing statistics."""
         self.processing_stats["processed_count"] += 1
         if success:
@@ -231,8 +231,7 @@ class DialogueProcessor(BaseInteractionProcessor):
         """Generate dialogue content for participants."""
         try:
             # Simulate dialogue generation
-            exchanges = []
-
+            exchanges: list[Any] = []
             for i, participant in enumerate(
                 context.participants[: self.config.max_dialogue_exchanges]
             ):
@@ -272,7 +271,7 @@ class DialogueProcessor(BaseInteractionProcessor):
     ) -> Dict[str, Any]:
         """Calculate emotional impacts of dialogue."""
         try:
-            impacts = {}
+            impacts: dict[Any, Any] = {}
             for participant in context.participants:
                 impacts[participant] = {
                     "mood_change": 0.1,
@@ -424,7 +423,7 @@ class CombatProcessor(BaseInteractionProcessor):
     ) -> Dict[str, Any]:
         """Process combat rounds."""
         try:
-            rounds = []
+            rounds: list[Any] = []
             max_rounds = 5  # Prevent infinite combat
 
             for round_num in range(1, max_rounds + 1):
@@ -659,7 +658,7 @@ class InteractionTypeProcessorManager:
             f"Interaction type processor manager initialized with {len(self.processors)} processors"
         )
 
-    def _initialize_processors(self):
+    def _initialize_processors(self) -> None:
         """Initialize all interaction type processors."""
         try:
             # Core processors

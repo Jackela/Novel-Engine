@@ -121,7 +121,7 @@ class MaintenanceEngine:
 
     def apply_maintenance_performance_boost(
         self, equipment: DynamicEquipment, maintenance_type: str
-    ):
+    ) -> None:
         """Apply enhanced performance boost from maintenance"""
         boost_factors = {
             "routine": 1.02,

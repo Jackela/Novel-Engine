@@ -84,7 +84,7 @@ _engine = None
 _session_factory: Optional[sessionmaker] = None
 
 
-def get_engine():
+def get_engine() -> None:
     """Get or create the database engine."""
     global _engine
     if _engine is None:

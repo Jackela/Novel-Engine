@@ -599,8 +599,7 @@ class DatabaseConnectionPool:
         """Perform connection pool maintenance."""
         async with self._pool_lock:
             # Remove unhealthy connections from available pool
-            healthy_connections = []
-
+            healthy_connections: list[Any] = []
             for connection in self._available_connections:
                 if connection.is_healthy:
                     healthy_connections.append(connection)
@@ -732,8 +731,7 @@ class DatabaseManager:
         if self.config_manager:
             database_config_dict = self.config_manager.get_section("database")
         else:
-            database_config_dict = {}
-
+            database_config_dict: dict[Any, Any] = {}
         # Create database config
         config = DatabaseConfig(
             database_type=DatabaseType.SQLITE,
@@ -838,8 +836,7 @@ class DatabaseManager:
 
     async def health_check(self) -> Dict[str, Dict[str, Any]]:
         """Perform health check on all pools."""
-        health_results = {}
-
+        health_results: dict[Any, Any] = {}
         for name, pool in self._pools.items():
             try:
                 # Test connection from pool

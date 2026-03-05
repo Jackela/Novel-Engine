@@ -1,0 +1,2 @@
+src/contexts/knowledge/infrastructure/chunking/strategies/narrative.py:411: error: Unterminated string literal (detected at line 411)  [syntax]
+Found 1 error in 1 file (errors prevented further checking)

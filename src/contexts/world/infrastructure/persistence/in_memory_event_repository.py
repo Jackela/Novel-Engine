@@ -113,7 +113,7 @@ class InMemoryEventRepository(EventRepository):
             List of saved HistoryEvent objects
         """
         with self._lock:
-            saved_events = []
+            saved_events: list[Any] = []
             for event in events:
                 saved = await self.save(event)
                 saved_events.append(saved)

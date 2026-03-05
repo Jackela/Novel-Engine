@@ -206,7 +206,7 @@ class ServiceRegistry:
 
     async def _perform_health_checks(self):
         """Perform health checks on all registered services"""
-        tasks = []
+        tasks: list[Any] = []
         async with self._lock:
             for service_name, instances in self._services.items():
                 for instance in instances:
@@ -366,7 +366,7 @@ class EventBus:
 
         # Notify subscribers
         if event_type in self._subscribers:
-            tasks = []
+            tasks: list[Any] = []
             for handler in self._subscribers[event_type]:
                 if asyncio.iscoroutinefunction(handler):
                     tasks.append(asyncio.create_task(handler(event)))

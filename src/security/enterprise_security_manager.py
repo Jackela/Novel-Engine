@@ -44,7 +44,7 @@ except ImportError:
         def __init__(self, *args, **kwargs) -> None:
             pass
 
-        def city(self, ip):
+        def city(self, ip) -> None:
             class MockCity:
                 country = type("", (), {"iso_code": "US"})()
                 city = type("", (), {"name": "Unknown"})()
@@ -399,8 +399,8 @@ class EnterpriseSecurityManager:
         user_agent = request.headers.get("user-agent", "unknown")
         request_path = str(request.url.path)
 
-        threat_indicators = []
-        security_actions = []
+        threat_indicators: list[Any] = []
+        security_actions: list[Any] = []
         max_threat_level = ThreatLevel.LOW
 
         try:
@@ -524,7 +524,7 @@ class EnterpriseSecurityManager:
         day_count = results[4]
 
         # Check if any limit exceeded
-        exceeded = []
+        exceeded: list[Any] = []
         if minute_count > MAX_REQUESTS_PER_MINUTE:
             exceeded.append("minute")
         if hour_count > MAX_REQUESTS_PER_HOUR:
@@ -579,8 +579,7 @@ class EnterpriseSecurityManager:
         """Analyze IP reputation using multiple threat intelligence sources"""
         threat_level = ThreatLevel.LOW
         reputation_score = 0.0
-        threat_categories = []
-
+        threat_categories: list[Any] = []
         try:
             # Check database for known threats
             async with aiosqlite.connect(self.database_path) as conn:
@@ -676,8 +675,7 @@ class EnterpriseSecurityManager:
             re.match(pattern, user_agent) for pattern in ALLOWED_USER_AGENTS_PATTERNS
         )
 
-        suspicious_indicators = []
-
+        suspicious_indicators: list[Any] = []
         if not is_valid_pattern:
             suspicious_indicators.append("unknown_pattern")
 
@@ -715,8 +713,7 @@ class EnterpriseSecurityManager:
             return {"anomaly_score": 0.0, "is_first_time": True}
 
         anomaly_score = 0.0
-        anomalies = []
-
+        anomalies: list[Any] = []
         # Check time-based patterns
         if current_hour not in profile.typical_access_hours:
             anomaly_score += 0.2
@@ -764,8 +761,7 @@ class EnterpriseSecurityManager:
         self, ip_address: str, request_path: str, user_agent: str
     ) -> Dict[str, Any]:
         """Analyze for attack patterns and suspicious behavior"""
-        attack_indicators = []
-
+        attack_indicators: list[Any] = []
         # SQL injection patterns
         sql_patterns = [
             r"union.*select",
@@ -1127,10 +1123,9 @@ class EnterpriseSecurityManager:
 
         except Exception as e:
             logger.error(f"Error retrieving security metrics: {e}")
-            threat_counts = {}
+            threat_counts: dict[Any, Any] = {}
             blocked_ips_count = 0
-            threat_indicators = []
-
+            threat_indicators: list[Any] = []
         return {
             "threat_events_24h": threat_counts,
             "blocked_ips": blocked_ips_count,

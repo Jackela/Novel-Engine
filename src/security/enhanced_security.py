@@ -104,8 +104,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self, request: Request, client_ip: str, user_agent: str, endpoint: str
     ) -> Dict[str, Any]:
         """Perform comprehensive security checks"""
-        checks = []
-
+        checks: list[Any] = []
         # Rate limiting check
         rate_check = self._check_rate_limit(client_ip, endpoint)
         checks.append(rate_check)
@@ -236,7 +235,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             "details": {"sql_detected": sql_detected, "query": query_string[:100]},
         }
 
-    def _add_security_headers(self, response: Response):
+    def _add_security_headers(self, response: Response) -> None:
         """Add comprehensive security headers"""
         security_headers = {
             "X-Content-Type-Options": "nosniff",
@@ -289,9 +288,8 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             if current_time - event.timestamp < 3600  # Last hour
         ]
 
-        event_types = {}
-        severity_counts = {}
-
+        event_types: dict[Any, Any] = {}
+        severity_counts: dict[Any, Any] = {}
         for event in recent_events:
             event_types[event.event_type] = event_types.get(event.event_type, 0) + 1
             severity_counts[event.severity] = severity_counts.get(event.severity, 0) + 1
@@ -305,6 +303,6 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
 
 
 # Factory function for easy integration
-def create_enhanced_security_middleware(config: Optional[Dict] = None):
+def create_enhanced_security_middleware(config: Optional[Dict] = None) -> None:
     """Create enhanced security middleware with configuration"""
     return EnhancedSecurityMiddleware, config or {}

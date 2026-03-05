@@ -181,7 +181,7 @@ class EmbeddingCacheService:
         Returns:
             Dict mapping text to cached embedding (only hits included)
         """
-        results = {}
+        results: dict[Any, Any] = {}
         for text in texts:
             embedding = self.get(text, model)
             if embedding is not None:

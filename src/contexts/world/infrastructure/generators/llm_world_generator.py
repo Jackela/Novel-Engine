@@ -503,7 +503,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             headquarters_id = location_id_map.get(hq_temp_id) if hq_temp_id else None
 
             # Resolve territories
-            territories = []
+            territories: list[Any] = []
             for terr_temp_id in item.get("territories", []) or []:
                 if terr_temp_id in location_id_map:
                     territories.append(location_id_map[terr_temp_id])
@@ -567,13 +567,13 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             temp_id = item.get("temp_id", f"temp_event_{len(events)}")
 
             # Resolve location IDs
-            location_ids = []
+            location_ids: list[Any] = []
             for loc_temp_id in item.get("location_ids", []) or []:
                 if loc_temp_id in location_id_map:
                     location_ids.append(location_id_map[loc_temp_id])
 
             # Resolve faction IDs
-            faction_ids = []
+            faction_ids: list[Any] = []
             for fac_temp_id in item.get("faction_ids", []) or []:
                 if fac_temp_id in faction_id_map:
                     faction_ids.append(faction_id_map[fac_temp_id])
@@ -766,8 +766,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         Returns:
             Search query string for RAG retrieval
         """
-        parts = []
-
+        parts: list[Any] = []
         # Add scene context keywords
         context_words = scene_context.split()[:8]
         parts.extend(context_words)
@@ -1378,8 +1377,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
         payload = self._extract_json(content)
 
         suggestions_data = payload.get("suggestions", [])
-        suggestions = []
-
+        suggestions: list[Any] = []
         for item in suggestions_data[:3]:  # Limit to 3 suggestions
             suggestion = BeatSuggestion(
                 beat_type=str(item.get("beat_type", "action")).lower(),
@@ -1550,8 +1548,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
         # Parse category scores
         category_scores_data = payload.get("category_scores", [])
-        category_scores = []
-
+        category_scores: list[Any] = []
         valid_categories = {"pacing", "voice", "showing", "dialogue"}
 
         for cat_data in category_scores_data:
@@ -1568,10 +1565,9 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
             # Ensure lists
             if not isinstance(issues, list):
-                issues = []
+                issues: list[Any] = []
             if not isinstance(suggestions, list):
-                suggestions = []
-
+                suggestions: list[Any] = []
             category_scores.append(
                 CritiqueCategoryScore(
                     category=category,
@@ -1584,7 +1580,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
         # Parse highlights
         highlights_data = payload.get("highlights", []) or []
         if not isinstance(highlights_data, list):
-            highlights_data = []
+            highlights_data: list[Any] = []
         highlights = [str(h) for h in highlights_data]
 
         # Parse summary

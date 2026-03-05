@@ -105,8 +105,7 @@ class IntentGeneratedEvent(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate faction_id
         if not self.faction_id:
             errors.append("faction_id is required")
@@ -266,8 +265,7 @@ class IntentSelectedEvent(Event):
 
     def _validate_selection_event(self) -> None:
         """Validate selection event data."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_id:
             errors.append("faction_id is required")
         if not self.intent_id:

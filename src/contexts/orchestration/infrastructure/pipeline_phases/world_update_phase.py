@@ -424,8 +424,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         Returns:
             List of generated event IDs
         """
-        events_generated = []
-
+        events_generated: list[Any] = []
         # Generate turn world update summary event
         summary_event_id = self._record_event_generation(
             context,
@@ -470,8 +469,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         Returns:
             Dictionary of updates to apply
         """
-        updates = {}
-
+        updates: dict[Any, Any] = {}
         # Example entity update calculations
         # In a real implementation, this would use game-specific logic
 
@@ -489,7 +487,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         # Update status effects based on time
         status_effects = entity_data.get("status_effects", [])
         if status_effects:
-            updated_effects = []
+            updated_effects: list[Any] = []
             for effect in status_effects:
                 remaining_duration = effect.get("duration", 0) - time_advanced_seconds
                 if remaining_duration > 0:
@@ -502,7 +500,7 @@ class WorldUpdatePhase(BasePhaseImplementation):
         # Update resources (health, mana, etc.) based on regeneration
         resources = entity_data.get("resources", {})
         if resources:
-            resource_updates = {}
+            resource_updates: dict[Any, Any] = {}
             for resource_name, resource_value in resources.items():
                 regen_rate = entity_data.get(f"{resource_name}_regen", 0)
                 if regen_rate > 0:

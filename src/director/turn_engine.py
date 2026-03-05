@@ -471,9 +471,8 @@ class TurnExecutionEngine:
             target_turn = turn_number or self.current_turn_number
             target_world_state = world_state or {}
 
-            briefs = {}
-            errors = {}
-
+            briefs: dict[Any, Any] = {}
+            errors: dict[Any, Any] = {}
             # Generate briefs for all agents
             for agent_id, agent in self.agent_manager.agents.items():
                 try:

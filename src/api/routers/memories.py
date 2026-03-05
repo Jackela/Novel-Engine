@@ -180,8 +180,7 @@ async def create_character_memory(
     structured_data = record.get("structured_data", {}) or {}
     memories_list = structured_data.get("memories", [])
     if not isinstance(memories_list, list):
-        memories_list = []
-
+        memories_list: list[Any] = []
     # Append new memory
     memories_list.append(memory_data)
     structured_data["memories"] = memories_list

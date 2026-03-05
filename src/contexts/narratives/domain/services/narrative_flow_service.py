@@ -97,7 +97,7 @@ class NarrativeFlowService:
         if not arc.pacing_segments:
             return Decimal("5.0")  # Neutral score for no pacing data
 
-        pacing_scores = []
+        pacing_scores: list[Any] = []
         total_coverage = 0
 
         for pacing in arc.pacing_segments.values():
@@ -195,8 +195,7 @@ class NarrativeFlowService:
             return [Decimal("5.0")]  # Neutral tension
 
         plot_points = arc.get_plot_points_in_sequence()
-        tension_levels = []
-
+        tension_levels: list[Any] = []
         for plot_point in plot_points:
             # Base tension from plot point dramatic tension
             base_tension = plot_point.dramatic_tension
@@ -255,7 +254,7 @@ class NarrativeFlowService:
         plot_points = arc.get_plot_points_in_sequence()
         total_points = len(plot_points)
 
-        climax_positions = []
+        climax_positions: list[Any] = []
         for i, plot_point in enumerate(plot_points):
             if plot_point.plot_point_type == PlotPointType.CLIMAX:
                 position_ratio = i / (total_points - 1) if total_points > 1 else 0.5
@@ -264,7 +263,7 @@ class NarrativeFlowService:
         if not climax_positions:
             return Decimal("7.0")  # No explicit climax, but not necessarily bad
 
-        positioning_scores = []
+        positioning_scores: list[Any] = []
         for pos in climax_positions:
             # Ideal climax position is around 70-80% through the story
             ideal_range_start = 0.65
@@ -595,8 +594,7 @@ class NarrativeFlowService:
 
     def _generate_flow_recommendations(self, arc: NarrativeArc) -> List[Dict[str, Any]]:
         """Generate recommendations for improving narrative flow."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Analyze tension progression
         tension_levels = self._calculate_tension_progression(arc)
         if tension_levels:
@@ -685,8 +683,7 @@ class NarrativeFlowService:
         plot_points.sort(key=lambda pp: pp.sequence_order)
 
         # Apply optimization rules
-        optimized = []
-
+        optimized: list[Any] = []
         # Group by importance and type
         critical_points = [
             pp for pp in plot_points if pp.importance.value == "critical"
@@ -740,8 +737,7 @@ class NarrativeFlowService:
         self, original: List[str], optimized: List[str]
     ) -> List[Dict[str, Any]]:
         """Identify what changes were made in sequence optimization."""
-        changes = []
-
+        changes: list[Any] = []
         for i, plot_id in enumerate(optimized):
             original_index = original.index(plot_id) if plot_id in original else -1
             if original_index != i:
@@ -839,8 +835,7 @@ class NarrativeFlowService:
     ) -> bool:
         """Check if tension progression is improved."""
         # Simple heuristic: check if high-tension plot points are better distributed
-        high_tension_positions = []
-
+        high_tension_positions: list[Any] = []
         for i, plot_id in enumerate(sequence):
             plot_point = arc.plot_points[plot_id]
             if plot_point.dramatic_tension >= Decimal("7.0"):
@@ -860,8 +855,7 @@ class NarrativeFlowService:
         if not changes:
             return "No changes needed - sequence is already optimal"
 
-        rationale_parts = []
-
+        rationale_parts: list[Any] = []
         if improvement_score > Decimal("5.0"):
             rationale_parts.append(
                 "Significant improvements to story structure and flow."

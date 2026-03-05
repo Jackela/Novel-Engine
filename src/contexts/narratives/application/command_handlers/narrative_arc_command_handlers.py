@@ -670,7 +670,7 @@ class NarrativeArcCommandHandler:
             }
 
             if command.include_paths:
-                longest_chains = []
+                longest_chains: list[Any] = []
                 for chain in analysis.longest_chains:
                     longest_chains.append(
                         {

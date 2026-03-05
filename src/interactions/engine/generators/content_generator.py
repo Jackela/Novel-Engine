@@ -30,8 +30,7 @@ class ContentGenerator:
     ) -> StandardResponse:
         """Generate enhanced initial context for interaction participants"""
         try:
-            participant_contexts = {}
-
+            participant_contexts: dict[Any, Any] = {}
             for participant in context.participants:
                 # Create enhanced template context for participant
                 template_context = TemplateContext(
@@ -105,8 +104,7 @@ class ContentGenerator:
     ) -> StandardResponse:
         """Generate enhanced content outputs for interaction"""
         try:
-            generated_content = []
-
+            generated_content: list[Any] = []
             # Generate interaction summary
             summary_template_context = TemplateContext(
                 agent_id=context.initiator or "system",

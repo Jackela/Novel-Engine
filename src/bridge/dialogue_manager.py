@@ -319,7 +319,7 @@ class DialogueManager:
             if now - self._last_cleanup < timedelta(seconds=self._cleanup_interval):
                 return 0
 
-            expired_dialogues = []
+            expired_dialogues: list[Any] = []
             cutoff_time = now - timedelta(hours=1)  # 1 hour timeout
 
             for dialogue_id, dialogue in self.active_dialogues.items():

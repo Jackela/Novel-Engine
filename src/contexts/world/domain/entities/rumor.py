@@ -103,8 +103,7 @@ class Rumor:
         Raises:
             ValueError: If any validation rule is violated.
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.rumor_id:
             errors.append("Rumor ID cannot be empty")
 
@@ -264,8 +263,7 @@ class Rumor:
         if isinstance(current_locations, list):
             current_locations = set(current_locations)
         elif not isinstance(current_locations, set):
-            current_locations = set()
-
+            current_locations: set[Any] = set()
         # Handle created_date - keep as-is for now (could be dict or WorldCalendar)
         created_date = data.get("created_date")
 

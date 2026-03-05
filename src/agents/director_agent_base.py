@@ -26,7 +26,7 @@ try:
     from src.core.config.config_loader import get_config
 except ImportError:
 
-    def get_config():
+    def get_config() -> None:
         return None
 
 
@@ -312,7 +312,7 @@ class DirectorAgentBase:
             List of dictionaries containing agent information
         """
         try:
-            agent_list = []
+            agent_list: list[Any] = []
             for agent in self.registered_agents:
                 agent_info = {
                     "agent_id": getattr(agent, "agent_id", "Unknown"),

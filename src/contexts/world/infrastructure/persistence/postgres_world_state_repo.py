@@ -384,7 +384,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             world_state = await self.get_by_id_or_raise(world_state_id)
 
             # Filter entities by type
-            matching_entities = []
+            matching_entities: list[Any] = []
             count = 0
 
             for entity_id, entity in world_state.entities.items():
@@ -418,8 +418,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             world_state = await self.get_by_id_or_raise(world_state_id)
 
             # Filter entities within radius
-            matching_entities = []
-
+            matching_entities: list[Any] = []
             for entity_id, entity in world_state.entities.items():
                 # Calculate distance from center
                 distance = entity.coordinates.distance_to(center)
@@ -450,8 +449,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         try:
             world_state = await self.get_by_id_or_raise(world_state_id)
 
-            matching_entities = []
-
+            matching_entities: list[Any] = []
             for entity_id, entity in world_state.entities.items():
                 distance = entity.coordinates.distance_to(coordinates)
 
@@ -786,8 +784,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
 
         try:
             with get_db_session() as session:
-                saved_states = []
-
+                saved_states: list[Any] = []
                 for world_state in world_states:
                     # Similar logic to save() but within the same transaction
                     existing_model = (
@@ -852,8 +849,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         if not world_state_ids:
             return {}
 
-        results = {}
-
+        results: dict[Any, Any] = {}
         try:
             with get_db_session() as session:
                 for world_state_id in world_state_ids:
@@ -1088,7 +1084,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .all()
                 )
 
-                events = []
+                events: list[Any] = []
                 for version in versions:
                     # Extract change information as events
                     event_data = {
@@ -1217,7 +1213,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             from ...domain.value_objects.coordinates import Coordinates
 
             # Parse entities
-            domain_entities = {}
+            domain_entities: dict[Any, Any] = {}
             if version_data.get("entities"):
                 for entity_id, entity_data in version_data["entities"].items():
                     if entity_data:

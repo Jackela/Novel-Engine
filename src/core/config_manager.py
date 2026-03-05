@@ -271,8 +271,7 @@ class ConfigurationManager:
 
     def _validate_configuration(self) -> None:
         """Validate the final configuration."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required sections
         required_sections = ["server", "database", "security"]
         for section in required_sections:

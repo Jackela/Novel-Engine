@@ -28,10 +28,10 @@ except ImportError:
         def __init__(self) -> None:
             pass
 
-        def subscribe(self, event, callback):
+        def subscribe(self, event, callback) -> None:
             pass
 
-        def emit(self, event, **kwargs):
+        def emit(self, event, **kwargs) -> None:
             pass
 
 

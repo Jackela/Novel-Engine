@@ -118,8 +118,7 @@ class ApiOrchestrationService:
         try:
             # 1. Initialize Components
             # Use injected factory (allows mocking)
-            agents = []
-
+            agents: list[Any] = []
             # 2. Create Agents
             for name in character_names:
                 try:
@@ -181,7 +180,7 @@ class ApiOrchestrationService:
             )
 
             # 4. Turn Loop
-            turn_times = []
+            turn_times: list[Any] = []
             for turn_num in range(1, total_turns + 1):
                 # Check for stop flag
                 if self._stop_flag:

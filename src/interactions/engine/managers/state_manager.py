@@ -5,6 +5,8 @@ State and memory management for interactions.
 
 import logging
 
+from typing import Any
+
 from src.core.data_models import (
     ErrorInfo,
     MemoryItem,
@@ -71,8 +73,7 @@ class StateManager:
     ) -> StandardResponse:
         """Generate enhanced memory updates for interaction participants"""
         try:
-            memory_updates = []
-
+            memory_updates: list[Any] = []
             for participant in context.participants:
                 # Create interaction memory
                 interaction_memory = MemoryItem(

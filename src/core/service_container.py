@@ -276,7 +276,7 @@ class ServiceContainer:
             if tag not in self._tags:
                 return []
 
-            services = []
+            services: list[Any] = []
             for service_type in self._tags[tag]:
                 try:
                     services.append(self.get_service(service_type))
@@ -292,8 +292,7 @@ class ServiceContainer:
         logger.info("Initializing all services...")
 
         initialized_count = 0
-        failed_services = []
-
+        failed_services: list[Any] = []
         for service_type in self._initialization_order:
             try:
                 await self._initialize_service(service_type)
@@ -349,11 +348,9 @@ class ServiceContainer:
 
     async def perform_health_checks(self) -> Dict[str, Dict[str, Any]]:
         """Perform health checks on all services."""
-        health_results = {}
-
+        health_results: dict[Any, Any] = {}
         with self._lock:
-            all_instances = []
-
+            all_instances: list[Any] = []
             # Collect all instances
             all_instances.extend(self._singletons.values())
             for instances_dict in self._instances.values():
@@ -386,8 +383,7 @@ class ServiceContainer:
     def get_service_registry(self) -> Dict[str, Dict[str, Any]]:
         """Get complete service registry information."""
         with self._lock:
-            registry = {}
-
+            registry: dict[Any, Any] = {}
             for service_type, descriptor in self._services.items():
                 service_name = service_type.__name__
 
@@ -417,8 +413,7 @@ class ServiceContainer:
 
     def _analyze_dependencies(self, implementation: Type) -> List[Type]:
         """Analyze constructor dependencies using type hints."""
-        dependencies = []
-
+        dependencies: list[Any] = []
         try:
             # Get constructor signature
             init_signature = inspect.signature(implementation.__init__)
@@ -485,7 +480,7 @@ class ServiceContainer:
 
         try:
             # Resolve dependencies
-            dependencies = {}
+            dependencies: dict[Any, Any] = {}
             for dep_type in descriptor.dependencies:
                 dependencies[dep_type] = self.get_service(dep_type)
 
@@ -530,7 +525,7 @@ class ServiceContainer:
             type_hints = get_type_hints(implementation.__init__)
 
             # Build constructor arguments
-            constructor_args = {}
+            constructor_args: dict[Any, Any] = {}
             for param_name, param in init_signature.parameters.items():
                 if param_name == "self":
                     continue
@@ -576,11 +571,10 @@ class ServiceContainer:
     def _update_initialization_order(self) -> None:
         """Update service initialization order based on dependencies."""
         # Topological sort of services based on dependencies
-        visited = set()
-        temp_visited = set()
-        order = []
-
-        def visit(service_type: Type):
+        visited: set[Any] = set()
+        temp_visited: set[Any] = set()
+        order: list[Any] = []
+        def visit(service_type: Type) -> None:
             if service_type in temp_visited:
                 raise DependencyResolutionError(
                     f"Circular dependency involving {service_type.__name__}"

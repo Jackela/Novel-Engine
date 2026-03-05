@@ -35,10 +35,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -81,13 +81,13 @@ class QueuedInteraction:
     error_callback: Optional[Callable] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __lt__(self, other):
+    def __lt__(self, other) -> None:
         """Priority comparison for queue ordering (higher priority first)."""
         if not isinstance(other, QueuedInteraction):
             return NotImplemented
         return self.priority_score > other.priority_score
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> None:
         if not isinstance(other, QueuedInteraction):
             return NotImplemented
         return self.priority_score == other.priority_score
@@ -674,7 +674,7 @@ class QueueManager:
 
         return (estimated_position / processing_capacity) * average_processing_time
 
-    def _update_queue_time_stats(self, queue_time: float):
+    def _update_queue_time_stats(self, queue_time: float) -> None:
         """
         Update queue time statistics.
         """
@@ -685,7 +685,7 @@ class QueueManager:
                 (current_avg * (total_processed - 1)) + queue_time
             ) / total_processed
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Cleanup resources on destruction.
         """

@@ -80,7 +80,7 @@ class Event:
     timeout_seconds: int = 30
     tags: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate event structure."""
         if not self.event_type:
             raise ValueError("Event type is required")
@@ -158,7 +158,7 @@ class HandlerRegistry:
 
     def register(
         self, handler: EventHandler, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """Register an event handler."""
         handler_id = handler.handler_id
 
@@ -175,7 +175,7 @@ class HandlerRegistry:
             f"Registered handler {handler_id} for events: {handler.handled_event_types}"
         )
 
-    def unregister(self, handler: EventHandler):
+    def unregister(self, handler: EventHandler) -> None:
         """Unregister an event handler."""
         handler_id = handler.handler_id
 
@@ -269,11 +269,11 @@ class EventMetrics:
         self.handler_metrics = {}
         self.start_time = time.time()
 
-    def record_event_published(self):
+    def record_event_published(self) -> None:
         """Record an event publication."""
         self.events_published += 1
 
-    def record_event_processed(self, processing_time: float):
+    def record_event_processed(self, processing_time: float) -> None:
         """Record successful event processing."""
         self.events_processed += 1
         self.processing_times.append(processing_time)
@@ -282,11 +282,11 @@ class EventMetrics:
         if len(self.processing_times) > 1000:
             self.processing_times = self.processing_times[-1000:]
 
-    def record_event_failed(self):
+    def record_event_failed(self) -> None:
         """Record failed event processing."""
         self.events_failed += 1
 
-    def record_dead_letter(self):
+    def record_dead_letter(self) -> None:
         """Record event moved to dead letter queue."""
         self.events_dead_letter += 1
 
@@ -387,11 +387,11 @@ class EventBus:
 
     def register_handler(
         self, handler: EventHandler, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """Register an event handler."""
         self.handler_registry.register(handler, metadata)
 
-    def unregister_handler(self, handler: EventHandler):
+    def unregister_handler(self, handler: EventHandler) -> None:
         """Unregister an event handler."""
         self.handler_registry.unregister(handler)
 
@@ -432,7 +432,7 @@ class EventBus:
 
     async def publish_batch(self, events: List[Event]) -> List[str]:
         """Publish multiple events as a batch."""
-        event_ids = []
+        event_ids: list[Any] = []
         for event in events:
             event_id = await self.publish(event)
             event_ids.append(event_id)
@@ -685,7 +685,7 @@ class EventBus:
         )
         return event_id
 
-    def get_simulation_outbox(self):
+    def get_simulation_outbox(self) -> None:
         """Get the simulation outbox for batch processing."""
         if not hasattr(self, "_simulation_outbox"):
             from .outbox import Outbox

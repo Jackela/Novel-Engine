@@ -24,6 +24,8 @@ from src.contexts.narrative.application.ports.narrative_repository_port import (
 )
 from src.contexts.narrative.domain.entities.scene import Scene, StoryPhase
 
+from typing import Any
+
 from .common import (
     _delete_scene,
     _get_plotline,
@@ -462,7 +464,7 @@ async def set_scene_plotlines(
 
     from uuid import UUID
 
-    plotline_uuids = []
+    plotline_uuids: list[Any] = []
     for pid_str in request.plotline_ids:
         try:
             pid = UUID(pid_str)

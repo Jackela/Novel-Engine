@@ -278,10 +278,10 @@ class NarrativeContext:
             raise ValueError("Context description too long (max 2000 characters)")
 
     def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values):
+        def _dict_to_hashable(values) -> None:
             if not values:
                 return frozenset()
-            items = []
+            items: list[Any] = []
             for key, value in sorted(
                 values.items(), key=lambda item: (str(item[0]), str(item[1]))
             ):

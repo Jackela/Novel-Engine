@@ -497,11 +497,10 @@ class InteractionEngine:
         """
         try:
             async with self._processing_lock:
-                processed_interactions = []
-                failed_interactions = []
-
+                processed_interactions: list[Any] = []
+                failed_interactions: list[Any] = []
                 # Filter enhanced queue by priority if specified
-                eligible_interactions = []
+                eligible_interactions: list[Any] = []
                 for timestamp, context in self._processing_queue:
                     if priority_filter is None or context.priority == priority_filter:
                         eligible_interactions.append((timestamp, context))
@@ -554,8 +553,7 @@ class InteractionEngine:
 
     def get_active_interactions(self) -> List[Dict[str, Any]]:
         """Get enhanced list of active interactions"""
-        active_list = []
-
+        active_list: list[Any] = []
         for interaction_id, context in self._active_interactions.items():
             active_list.append(
                 {
@@ -578,7 +576,7 @@ class InteractionEngine:
             else self._interaction_history
         )
 
-        history_list = []
+        history_list: list[Any] = []
         for outcome in recent_history:
             history_list.append(
                 {

@@ -83,7 +83,7 @@ class DecisionMaker:
             return None
 
         # Evaluate each action
-        action_evaluations = []
+        action_evaluations: list[Any] = []
         for action in available_actions:
             score = self._evaluate_action_option(
                 action,
@@ -133,8 +133,7 @@ class DecisionMaker:
         subjective_worldview: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Identify actions available to the character in current situation."""
-        available_actions = []
-
+        available_actions: list[Any] = []
         # Basic actions always available
         basic_actions = [
             {
@@ -288,8 +287,7 @@ class DecisionMaker:
         self, character_data: Dict[str, Any], subjective_worldview: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Get current character goals."""
-        goals = []
-
+        goals: list[Any] = []
         # Primary mission goals
         mission_data = subjective_worldview.get("current_mission", {})
         if mission_data:
@@ -345,7 +343,7 @@ class DecisionMaker:
         self, subjective_worldview: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Assess social obligations and relationships."""
-        obligations = []
+        obligations: list[Any] = []
         relationships = subjective_worldview.get("relationships", {})
 
         for entity, relationship_data in relationships.items():
@@ -392,8 +390,7 @@ class DecisionMaker:
     ) -> List[Dict[str, Any]]:
         """Get actions specific to character's profession."""
         profession = character_data.get("rank_role", "").lower()
-        profession_actions = []
-
+        profession_actions: list[Any] = []
         if "tech" in profession or "engineer" in profession:
             profession_actions.extend(
                 [

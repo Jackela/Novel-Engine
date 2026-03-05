@@ -175,7 +175,7 @@ class PostgreSQLRumorRepository(RumorRepository):
         """
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                saved_rumors = []
+                saved_rumors: list[Any] = []
                 for rumor in rumors:
                     await self.save(rumor)
                     saved_rumors.append(rumor)

@@ -114,8 +114,7 @@ class IntelligentSampler:
             Sampling decision
         """
         if not attributes:
-            attributes = {}
-
+            attributes: dict[Any, Any] = {}
         # Always sample errors
         if any(key.startswith("error") for key in attributes.keys()):
             return self.error_sampler.should_sample(
@@ -432,7 +431,7 @@ class NovelEngineTracer:
         Returns:
             Trace context headers for HTTP propagation
         """
-        carrier = {}
+        carrier: dict[Any, Any] = {}
         propagate.inject(carrier)
         return carrier
 
@@ -446,7 +445,7 @@ class NovelEngineTracer:
         propagate.extract(carrier)
 
 
-def trace_async_operation(operation_name: str, **span_attributes):
+def trace_async_operation(operation_name: str, **span_attributes) -> None:
     """
     Decorator for tracing async operations.
 

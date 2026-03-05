@@ -1,3 +1,4 @@
+from typing import Any
 #!/usr/bin/env python3
 """
 Orchestration Domain Layer
@@ -11,4 +12,4 @@ Core domain abstractions for turn pipeline orchestration including:
 """
 
 # Core exports will be added as components are implemented
-__all__ = []
+__all__: list[Any] = []

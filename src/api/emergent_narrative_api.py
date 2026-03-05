@@ -197,7 +197,7 @@ class EmergentNarrativeAPI:
         self.orchestrator = orchestrator
         self.emergent_narrative_engine = None
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup all emergent narrative API routes."""
 
         @app.post(

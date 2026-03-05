@@ -119,7 +119,7 @@ class DecisionEngine:
                 return None
 
             # Evaluate each action
-            action_evaluations = []
+            action_evaluations: list[Any] = []
             for action in available_actions:
                 evaluation = self._evaluate_action(action, situation)
                 if evaluation.modified_score >= self.action_threshold:
@@ -202,8 +202,7 @@ class DecisionEngine:
         if not isinstance(situation, SituationAssessment):
             situation = self._coerce_situation_assessment(situation or {})
 
-        available_actions = []
-
+        available_actions: list[Any] = []
         # Basic actions always available
         basic_actions = [
             {
@@ -240,7 +239,7 @@ class DecisionEngine:
         available_actions.extend(social_actions)
 
         # Remove duplicates based on action type
-        unique_actions = {}
+        unique_actions: dict[Any, Any] = {}
         for action in available_actions:
             action_key = action.get("type", "unknown")
             if action_key not in unique_actions:

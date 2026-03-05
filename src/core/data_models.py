@@ -177,7 +177,7 @@ class EquipmentItem:
         """Legacy alias for blessed_modifications"""
         return self.blessed_modifications
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """EQUIPMENT SANCTIFICATION RITUAL"""
         if not self.name:
             raise ValueError("Sacred equipment must be blessed with a name")
@@ -239,7 +239,7 @@ class RelationshipState:
     shared_experiences: List[str] = field(default_factory=list)
     relationship_notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """RELATIONSHIP SANCTIFICATION RITUAL"""
         if not self.target_agent_id:
             raise ValueError("Sacred relationship requires blessed target_agent_id")
@@ -250,7 +250,7 @@ class RelationshipState:
 
     def update_from_interaction(
         self, interaction_outcome: str, emotional_impact: float
-    ):
+    ) -> None:
         """Update relationship enhanced by recent interaction"""
         self.last_interaction = datetime.now()
         self.interaction_count += 1
@@ -298,7 +298,7 @@ class CharacterState:
 
         return health_factor * equipment_factor * mood_factor * stress_factor
 
-    def update_from_interaction(self, interaction_data: Dict[str, Any]):
+    def update_from_interaction(self, interaction_data: Dict[str, Any]) -> None:
         """Update character state enhanced by interaction outcomes"""
         self.last_updated = datetime.now()
 
@@ -310,7 +310,7 @@ class CharacterState:
 
     def _update_relationship(
         self, participant_id: str, interaction_data: Dict[str, Any]
-    ):
+    ) -> None:
         """Sacred relationship update ritual"""
         if participant_id not in self.active_relationships:
             self.active_relationships[participant_id] = RelationshipState(
@@ -369,7 +369,7 @@ class DynamicContext:
     available_actions: List[str] = field(default_factory=list)
     context_metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """DYNAMIC CONTEXT SANCTIFICATION RITUAL"""
         if not self.agent_id:
             raise ValueError("Sacred context requires blessed agent_id")
@@ -381,7 +381,7 @@ class DynamicContext:
         if not self.character_state:
             return {}
 
-        relevant_relationships = {}
+        relevant_relationships: dict[Any, Any] = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
                 relevant_relationships[agent_id] = (
@@ -412,7 +412,7 @@ class DynamicContext:
     def to_json(self) -> str:
         """Serialize enhanced context for standard persistence"""
 
-        def default_serializer(obj):
+        def default_serializer(obj) -> None:
             """
             Custom JSON serializer for complex objects.
 
@@ -469,7 +469,7 @@ class CampaignState:
     campaign_metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """CAMPAIGN STATE SANCTIFICATION RITUAL"""
         if not self.campaign_id:
             raise ValueError("Sacred campaign requires blessed campaign_id")
@@ -492,7 +492,7 @@ class CharacterInteraction:
     emotional_impact: Dict[str, float] = field(default_factory=dict)  # per participant
     world_state_changes: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """INTERACTION SANCTIFICATION RITUAL"""
         if len(self.participants) < 1:
             raise ValueError("Sacred interaction requires blessed participants")
@@ -547,7 +547,7 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
 # Legacy compatibility aliases and wrappers
 def Character(
     name=None, background=None, personality=None, skills=None, equipment=None, **kwargs
-):
+) -> None:
     """
     Legacy Character constructor that wraps CharacterState with simplified interface.
     Converts old-style parameters to new CharacterState structure.
@@ -576,7 +576,7 @@ def Character(
     )
 
     # Create equipment items from simple strings
-    equipment_items = []
+    equipment_items: list[Any] = []
     if equipment:
         for item_name in equipment:
             equipment_items.append(EquipmentItem(name=item_name))
@@ -610,7 +610,7 @@ validate_blessed_data_model = validate_enhanced_data_model  # Legacy function na
 # Legacy ActionResult wrapper for test compatibility
 def ActionResult(
     success=True, description="", consequences=None, world_state_changes=None, **kwargs
-):
+) -> None:
     """
     Legacy ActionResult constructor that wraps InteractionResult.
     Converts old-style parameters to new InteractionResult structure.

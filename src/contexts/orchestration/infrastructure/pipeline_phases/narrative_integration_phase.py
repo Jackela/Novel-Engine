@@ -63,8 +63,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
             narrative_context = await self._analyze_narrative_context(context)
 
             # Step 3: Generate narrative content for turn events
-            narrative_results = {}
-
+            narrative_results: dict[Any, Any] = {}
             for perspective in narrative_context.get(
                 "active_perspectives", ["omniscient"]
             ):
@@ -214,8 +213,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         Returns:
             List of all turn events for narrative integration
         """
-        all_events = []
-
+        all_events: list[Any] = []
         # Collect events from execution metadata
         generated_events_details = context.execution_metadata.get(
             "generated_events_details", []
@@ -239,7 +237,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         all_events.extend(turn_events)
 
         # Deduplicate events by event_id
-        unique_events = {}
+        unique_events: dict[Any, Any] = {}
         for event in all_events:
             event_id = event.get("event_id")
             if event_id and event_id not in unique_events:
@@ -487,8 +485,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         Returns:
             List of generated event IDs
         """
-        events_generated = []
-
+        events_generated: list[Any] = []
         # Generate narrative integration summary event
         summary_event_id = self._record_event_generation(
             context,
@@ -661,7 +658,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
                 event_categories["interaction_events"].append(event)
 
         # Convert to narrative summaries
-        summaries = {}
+        summaries: dict[Any, Any] = {}
         for category, events in event_categories.items():
             if events:
                 summaries[category] = self._create_event_category_summary(
@@ -761,8 +758,7 @@ class NarrativeIntegrationPhase(BasePhaseImplementation):
         self, turn_events: List[Dict[str, Any]], participants: List[str]
     ) -> List[Dict[str, Any]]:
         """Analyze how turn events impact story arcs."""
-        arc_updates = []
-
+        arc_updates: list[Any] = []
         # Analyze events for story progression
         for event in turn_events:
             event_type = event.get("event_type", "")

@@ -203,7 +203,7 @@ class EnhancedMultiAgentBridge:
             dialogue_opportunities = await self._identify_dialogue_opportunities()
 
             # Execute agent dialogues
-            dialogue_results = []
+            dialogue_results: list[Any] = []
             fast_mode = self._should_use_fast_mode()
 
             for opportunity in dialogue_opportunities:
@@ -226,7 +226,7 @@ class EnhancedMultiAgentBridge:
                 dialogue_results.append(dialogue_result)
 
             # Run base simulation turn if director agent is available
-            base_turn_result = {}
+            base_turn_result: dict[Any, Any] = {}
             if self.director_agent and hasattr(self.director_agent, "run_turn"):
                 try:
                     base_turn_result = await self.director_agent.run_turn(turn_data)
@@ -352,7 +352,7 @@ class EnhancedMultiAgentBridge:
                 return {"error": "agent_not_found", "agent_id": agent_id}
 
             # Get basic agent data
-            basic_status = {}
+            basic_status: dict[Any, Any] = {}
             if hasattr(agent, "get_current_state"):
                 basic_status = await agent.get_current_state()
 
@@ -434,7 +434,7 @@ class EnhancedMultiAgentBridge:
     async def _identify_dialogue_opportunities(self) -> List[Dict[str, Any]]:
         """Identify opportunities for agent dialogues."""
         try:
-            opportunities = []
+            opportunities: list[Any] = []
             agents = list(self._agents.keys())
 
             # Simple opportunity identification - could be enhanced with AI
@@ -568,7 +568,7 @@ class EnhancedMultiAgentBridge:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> None:
         """Provide backward compatibility for legacy method calls."""
         # Common legacy method mappings
         legacy_mappings = {

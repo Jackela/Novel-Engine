@@ -76,8 +76,6 @@ def reset_simulation_storage() -> None:
     _simulation_history = {}
     _commit_timestamps = {}
     _active_simulations = {}
-
-
 def _get_or_create_calendar(world_id: str) -> WorldCalendar:
     """Get existing calendar for world or create a default one."""
     if world_id not in _world_calendars:

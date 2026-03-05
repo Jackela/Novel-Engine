@@ -99,7 +99,7 @@ class SecurityHeadersConfig:
     # Custom Headers
     custom_headers: Dict[str, str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """STANDARD CONFIGURATION INITIALIZATION"""
         if self.csp_directives is None:
             self.csp_directives = self._get_default_csp_directives()
@@ -172,8 +172,7 @@ class SecurityHeaders:
 
     def _build_csp_header(self) -> str:
         """STANDARD CSP HEADER CONSTRUCTION"""
-        csp_parts = []
-
+        csp_parts: list[Any] = []
         for directive, values in self.config.csp_directives.items():
             if values:  # Only add directive if it has values
                 directive_str = f"{directive.value} {' '.join(values)}"
@@ -188,8 +187,7 @@ class SecurityHeaders:
 
     def _build_permissions_policy_header(self) -> str:
         """STANDARD PERMISSIONS POLICY HEADER CONSTRUCTION"""
-        policy_parts = []
-
+        policy_parts: list[Any] = []
         for feature, allowlist in self.config.permissions_policy.items():
             if allowlist == "none":
                 policy_parts.append(f"{feature}=()")
@@ -517,7 +515,7 @@ class SecurityHeadersMiddleware:
 
 def create_security_headers_middleware(
     app, config: Optional[SecurityHeadersConfig] = None
-):
+) -> None:
     """STANDARD SECURITY HEADERS MIDDLEWARE CREATOR"""
     if config is None:
         config = SecurityHeadersConfig()

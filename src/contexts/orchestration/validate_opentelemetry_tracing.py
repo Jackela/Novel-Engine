@@ -10,6 +10,7 @@ import logging
 import sys
 from pathlib import Path
 from uuid import uuid4
+from typing import Any
 
 # Add current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
@@ -21,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def test_tracing_infrastructure():
+def test_tracing_infrastructure() -> None:
     """Test basic tracing infrastructure components."""
     print("\n🔍 Testing OpenTelemetry Infrastructure...")
 
@@ -73,7 +74,7 @@ def test_tracing_infrastructure():
         return False
 
 
-def test_span_creation():
+def test_span_creation() -> None:
     """Test span creation and management."""
     print("\n🔍 Testing Span Creation and Management...")
 
@@ -184,7 +185,7 @@ def test_span_creation():
         return False
 
 
-def test_middleware_integration():
+def test_middleware_integration() -> None:
     """Test FastAPI middleware integration."""
     print("\n🔍 Testing FastAPI Middleware Integration...")
 
@@ -227,7 +228,7 @@ def test_middleware_integration():
         return False
 
 
-def test_cross_context_tracing():
+def test_cross_context_tracing() -> None:
     """Test cross-context service call tracing."""
     print("\n🔍 Testing Cross-Context Service Call Tracing...")
 
@@ -309,7 +310,7 @@ def test_cross_context_tracing():
         return False
 
 
-def test_requirements_compliance():
+def test_requirements_compliance() -> None:
     """Test compliance with M10 requirements."""
     print("\n🔍 Testing M10 Requirements Compliance...")
 
@@ -423,14 +424,13 @@ def test_requirements_compliance():
         return False
 
 
-def main():
+def main() -> None:
     """Run all OpenTelemetry distributed tracing validation tests."""
     print("=" * 80)
     print("M10 OPENTELEMETRY DISTRIBUTED TRACING VALIDATION")
     print("=" * 80)
 
-    test_results = []
-
+    test_results: list[Any] = []
     # Run all tests
     test_results.append(("Tracing Infrastructure", test_tracing_infrastructure()))
     test_results.append(("Span Creation & Management", test_span_creation()))

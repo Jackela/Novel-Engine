@@ -8,7 +8,7 @@ Integrates with the PrometheusMetricsCollector to provide comprehensive API obse
 
 import logging
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -27,25 +27,25 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
         def __init__(self, *_, **__) -> None:
             pass
 
-        def labels(self, *_, **__):
+        def labels(self, *_, **__) -> None:
             return self
 
-        def inc(self, *_, **__):
+        def inc(self, *_, **__) -> None:
             return self
 
-        def dec(self, *_, **__):
+        def dec(self, *_, **__) -> None:
             return self
 
-        def observe(self, *_, **__):
+        def observe(self, *_, **__) -> None:
             return self
 
-        def set(self, *_, **__):
+        def set(self, *_, **__) -> None:
             return self
 
-        def info(self, *_, **__):
+        def info(self, *_, **__) -> None:
             return self
 
-        def time(self):
+        def time(self) -> None:
             class _Timer:
                 def __enter__(self):
                     return self
@@ -409,9 +409,8 @@ class MetricsRegistry:
     """
 
     _instance = None
-    _collectors = {}
-
-    def __new__(cls):
+    _collectors: dict[Any, Any] = {}
+    def __new__(cls) -> None:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -449,7 +448,7 @@ class MetricsRegistry:
         Returns:
             Combined metrics data
         """
-        all_data = []
+        all_data: list[Any] = []
         for name, collector in self._collectors.items():
             try:
                 data = collector.get_metrics_data()

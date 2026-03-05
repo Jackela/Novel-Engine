@@ -217,7 +217,7 @@ class PostgreSQLEventRepository(EventRepository):
         """
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                saved_events = []
+                saved_events: list[Any] = []
                 for event in events:
                     await self.save(event)
                     saved_events.append(event)

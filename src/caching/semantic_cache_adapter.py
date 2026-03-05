@@ -73,7 +73,7 @@ class SemanticCacheBucketed:
         tags_set = {t for t in tags if t}
         removed = 0
         for bucket, entries in list(self._buckets.items()):
-            kept = []
+            kept: list[Any] = []
             for entry in entries:
                 if tags_set.issubset(set(entry.tags)):
                     removed += 1

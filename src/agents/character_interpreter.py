@@ -146,9 +146,8 @@ class CharacterInterpreter:
         Returns:
             Tuple of (markdown_files, yaml_files) lists with full paths
         """
-        md_files = []
-        yaml_files = []
-
+        md_files: list[Any] = []
+        yaml_files: list[Any] = []
         try:
             for filename in os.listdir(self.character_directory_path):
                 file_lower = filename.lower()
@@ -180,8 +179,7 @@ class CharacterInterpreter:
         """
         try:
             logger.info(f"Processing {len(md_files)} markdown files")
-            markdown_parts = []
-
+            markdown_parts: list[Any] = []
             for file_path in sorted(md_files):  # Sort for consistent ordering
                 logger.debug(f"Reading markdown file: {file_path}")
 
@@ -214,8 +212,7 @@ class CharacterInterpreter:
         """
         try:
             logger.info(f"Processing {len(yaml_files)} YAML files")
-            yaml_data = {}
-
+            yaml_data: dict[Any, Any] = {}
             for file_path in sorted(yaml_files):  # Sort for consistent ordering
                 logger.debug(f"Reading YAML file: {file_path}")
 
@@ -333,8 +330,7 @@ class CharacterInterpreter:
             Dictionary containing extracted character information
         """
         try:
-            character_data = {}
-
+            character_data: dict[Any, Any] = {}
             # Extract basic character information
             character_data.update(self._extract_basic_info(markdown_content))
 
@@ -362,8 +358,7 @@ class CharacterInterpreter:
 
     def _extract_basic_info(self, content: str) -> Dict[str, Any]:
         """Extract basic character information (name, faction, etc.)."""
-        basic_info = {}
-
+        basic_info: dict[Any, Any] = {}
         try:
             # Extract name (skip file separator headers marked with ===)
             name_patterns = [
@@ -421,8 +416,7 @@ class CharacterInterpreter:
 
     def _extract_character_stats(self, content: str) -> Dict[str, Any]:
         """Extract character statistics and attributes."""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         try:
             # Look for stat blocks in various formats
             stat_patterns = [
@@ -450,8 +444,7 @@ class CharacterInterpreter:
 
     def _extract_background_info(self, content: str) -> Dict[str, Any]:
         """Extract background and narrative information."""
-        background_info = {}
-
+        background_info: dict[Any, Any] = {}
         try:
             # Extract background sections
             section_patterns = {
@@ -472,8 +465,7 @@ class CharacterInterpreter:
 
     def _extract_personality_info(self, content: str) -> Dict[str, Any]:
         """Extract personality traits and behavioral patterns."""
-        personality_info = {}
-
+        personality_info: dict[Any, Any] = {}
         try:
             # Extract personality traits
             traits_pattern = (
@@ -508,8 +500,7 @@ class CharacterInterpreter:
 
     def _extract_relationship_info(self, content: str) -> Dict[str, Any]:
         """Extract relationship and social connection information."""
-        relationship_info = {}
-
+        relationship_info: dict[Any, Any] = {}
         try:
             # Extract relationships section
             relationships_pattern = r"relationships?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
@@ -520,8 +511,7 @@ class CharacterInterpreter:
             if match:
                 relationships_text = match.group(1).strip()
                 # Parse relationships into structured format
-                relationships = {}
-
+                relationships: dict[Any, Any] = {}
                 for line in relationships_text.split("\n"):
                     line = line.strip()
                     if ":" in line:
@@ -538,8 +528,7 @@ class CharacterInterpreter:
 
     def _extract_skills_info(self, content: str) -> Dict[str, Any]:
         """Extract skills and capabilities information."""
-        skills_info = {}
-
+        skills_info: dict[Any, Any] = {}
         try:
             # Extract skills section
             skills_pattern = r"skills?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
@@ -611,8 +600,7 @@ class CharacterInterpreter:
     def _extract_personality_traits(self) -> None:
         """Extract and quantify personality traits for behavioral modeling."""
         try:
-            traits_dict = {}
-
+            traits_dict: dict[Any, Any] = {}
             # Extract from parsed personality traits
             personality_traits = self.character_data.get("personality_traits", [])
 
@@ -703,8 +691,7 @@ class CharacterInterpreter:
     def _extract_relationships(self) -> None:
         """Extract and quantify relationships with other entities."""
         try:
-            relationships_dict = {}
-
+            relationships_dict: dict[Any, Any] = {}
             # Process relationships from character data
             relationships = self.character_data.get("relationships", {})
 
@@ -745,8 +732,7 @@ class CharacterInterpreter:
     def _extract_knowledge_domains(self) -> None:
         """Extract knowledge domains and areas of expertise."""
         try:
-            knowledge_domains = []
-
+            knowledge_domains: list[Any] = []
             # Extract from skills
             skills = self.character_data.get("skills", [])
             if isinstance(skills, list):
@@ -814,8 +800,7 @@ class CharacterInterpreter:
         Returns:
             Tuple of (is_valid, list_of_issues)
         """
-        issues = []
-
+        issues: list[Any] = []
         try:
             # Check essential fields
             if not self.character_data.get("name"):

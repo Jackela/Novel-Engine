@@ -31,10 +31,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -459,8 +459,7 @@ class MaintenanceSystem:
         self, equipment_registry: Dict[str, DynamicEquipment]
     ) -> List[Dict[str, Any]]:
         """Get list of equipment with overdue maintenance."""
-        overdue_equipment = []
-
+        overdue_equipment: list[Any] = []
         for equipment_id, equipment in equipment_registry.items():
             maintenance_status = await self.get_maintenance_due(equipment)
 
@@ -496,9 +495,8 @@ class MaintenanceSystem:
                 maintenance_type, self._maintenance_litanies["routine"]
             )
 
-            completed_procedures = []
-            performed_litanies = []
-
+            completed_procedures: list[Any] = []
+            performed_litanies: list[Any] = []
             # Execute each procedure
             for procedure in procedures:
                 # Simulate procedure execution with success chance

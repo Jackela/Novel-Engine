@@ -224,8 +224,7 @@ class Location(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate Location-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("Location name cannot be empty")
 
@@ -269,8 +268,7 @@ class Location(Entity):
 
     def _validate_territory_control(self) -> List[str]:
         """Validate territory control consistency."""
-        errors = []
-
+        errors: list[Any] = []
         # Controlling faction shouldn't be in contested list
         if (
             self.controlling_faction_id
@@ -285,8 +283,7 @@ class Location(Entity):
 
     def _validate_demographics(self) -> List[str]:
         """Validate demographic breakdown consistency."""
-        errors = []
-
+        errors: list[Any] = []
         if self.demographic_breakdown:
             # Check that all percentages are valid
             for group, percentage in self.demographic_breakdown.items():
@@ -306,8 +303,7 @@ class Location(Entity):
 
     def _validate_type_specific_rules(self) -> List[str]:
         """Validate rules specific to location type."""
-        errors = []
-
+        errors: list[Any] = []
         # Settlements should have population
         settlement_types = {
             LocationType.CITY,
@@ -351,8 +347,7 @@ class Location(Entity):
 
     def _validate_hierarchy(self) -> List[str]:
         """Validate location hierarchy consistency."""
-        errors = []
-
+        errors: list[Any] = []
         # Can't be own parent
         if self.parent_location_id == self.id:
             errors.append("Location cannot be its own parent")
@@ -595,7 +590,7 @@ class Location(Entity):
         Returns:
             Dictionary mapping resource type names to collected amounts
         """
-        collected = {}
+        collected: dict[Any, Any] = {}
         for ry in self.resource_yields:
             yield_amount = ry.calculate_yield()
             if yield_amount > 0:

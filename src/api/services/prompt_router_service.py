@@ -256,7 +256,7 @@ class PromptRouterService:
         ]
 
         # Check for missing required variables
-        variables_missing = []
+        variables_missing: list[Any] = []
         if strict:
             for var in template.variables:
                 if var.required and var.name not in variables:
@@ -383,7 +383,7 @@ class PromptRouterService:
         removed_vars = set(variables_a.keys()) - set(variables_b.keys())
         common_vars = set(variables_a.keys()) & set(variables_b.keys())
 
-        changed_vars = []
+        changed_vars: list[Any] = []
         for var_name in common_vars:
             var_a = variables_a[var_name]
             var_b = variables_b[var_name]
@@ -509,7 +509,7 @@ class PromptRouterService:
 
         matcher = difflib.SequenceMatcher(None, lines_a, lines_b, autojunk=False)
 
-        diffs = []
+        diffs: list[Any] = []
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             if tag == "equal":
                 continue
@@ -1259,7 +1259,7 @@ class PromptRouterService:
             grouped[key].append(usage)
 
         # Convert to data points
-        data_points = []
+        data_points: list[Any] = []
         for period_key in sorted(grouped.keys(), reverse=True)[:limit]:
             period_usages = grouped[period_key]
 

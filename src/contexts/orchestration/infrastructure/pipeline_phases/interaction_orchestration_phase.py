@@ -84,7 +84,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             )
 
             # Step 3: Execute interaction sessions
-            session_results = {}
+            session_results: dict[Any, Any] = {}
             for session in active_sessions:
                 try:
                     result = await self._execute_interaction_session(context, session)
@@ -206,7 +206,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             List of interaction opportunities
         """
         # Get current agent states and positions
-        agent_states = {}
+        agent_states: dict[Any, Any] = {}
         for participant_id in context.participants:
             try:
                 agent_response = await self._call_external_service(
@@ -224,8 +224,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
                 agent_states[participant_id] = self._get_default_agent_state()
 
         # Analyze opportunities based on proximity, goals, and context
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Direct agent-to-agent interactions
         if len(context.participants) > 1:
             opportunities.extend(
@@ -259,7 +258,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Find opportunities for direct agent-to-agent interactions."""
-        opportunities = []
+        opportunities: list[Any] = []
         participants = context.participants
 
         # Check all pairs of agents
@@ -300,8 +299,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Find opportunities for agent-environment interactions."""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Get environmental interaction possibilities
         env_response = await self._call_external_service(
             context,
@@ -320,7 +318,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         for opportunity in env_opportunities:
             # Check if any agents can interact with this opportunity
-            eligible_agents = []
+            eligible_agents: list[Any] = []
             for agent_id, agent_state in agent_states.items():
                 if self._can_agent_interact_with_environment(agent_state, opportunity):
                     eligible_agents.append(agent_id)
@@ -345,8 +343,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Find opportunities for agent-NPC interactions."""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Get NPCs in the area
         npc_response = await self._call_external_service(
             context,
@@ -365,7 +362,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
 
         for npc in npcs:
             # Find agents that can interact with this NPC
-            eligible_agents = []
+            eligible_agents: list[Any] = []
             for agent_id, agent_state in agent_states.items():
                 if self._can_agent_interact_with_npc(agent_state, npc):
                     eligible_agents.append(agent_id)
@@ -388,8 +385,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, context: PhaseExecutionContext, agent_states: Dict[str, Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Find opportunities for multi-agent collaboration."""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # Check for collaborative goals or tasks
         collaborative_tasks = await self._identify_collaborative_tasks(
             context, agent_states
@@ -419,7 +415,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, context: PhaseExecutionContext, opportunities: List[Dict[str, Any]]
     ) -> List[InteractionSession]:
         """Create interaction sessions from opportunities."""
-        sessions = []
+        sessions: list[Any] = []
         used_participants: Set[str] = set()
 
         # Create sessions for highest priority opportunities first
@@ -490,7 +486,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         interaction_subtype = session.context.get("interaction_subtype")
 
         # Get agent intentions and proposals
-        agent_proposals = {}
+        agent_proposals: dict[Any, Any] = {}
         for agent_id in session.participants:
             proposal_response = await self._call_external_service(
                 context,
@@ -685,7 +681,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
     ) -> Dict[str, Any]:
         """Resolve cooperation between agents."""
         # Cooperative interactions generally succeed if agents can contribute
-        contributions = {}
+        contributions: dict[Any, Any] = {}
         total_benefit = 0
 
         for agent_id, proposal in agent_proposals.items():
@@ -899,8 +895,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         negotiations_resolved: int,
     ) -> List:
         """Generate events for interaction results."""
-        events_generated = []
-
+        events_generated: list[Any] = []
         # Generate interaction summary event
         summary_event_id = self._record_event_generation(
             context,
@@ -963,7 +958,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
         self, proposals: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Merge compatible proposals into agreed terms."""
-        merged = {}
+        merged: dict[Any, Any] = {}
         for proposal in proposals:
             merged.update(proposal.get("terms", {}))
         return merged
@@ -977,7 +972,7 @@ class InteractionOrchestrationPhase(BasePhaseImplementation):
             proposal_a, proposal_b = proposals
 
             # Find middle ground in numeric values
-            compromise = {}
+            compromise: dict[Any, Any] = {}
             terms_a = proposal_a.get("terms", {})
             terms_b = proposal_b.get("terms", {})
 

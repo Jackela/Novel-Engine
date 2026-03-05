@@ -241,8 +241,7 @@ class ApplyWorldDelta:
         Raises:
             ValueError: If command data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.world_state_id:
             errors.append("world_state_id is required")
@@ -323,10 +322,9 @@ class ApplyWorldDelta:
 
     def get_operation_summary(self) -> str:
         """Get a human-readable summary of operations in this command."""
-        summary_parts = []
-
+        summary_parts: list[Any] = []
         if self.entity_operations:
-            entity_counts = {}
+            entity_counts: dict[Any, Any] = {}
             for op in self.entity_operations:
                 op_type = op.operation_type.value
                 entity_counts[op_type] = entity_counts.get(op_type, 0) + 1

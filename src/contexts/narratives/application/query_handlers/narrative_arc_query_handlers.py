@@ -135,7 +135,7 @@ class NarrativeArcQueryHandler:
                 offset=query.offset,
             )
 
-            result = []
+            result: list[Any] = []
             for arc in arcs:
                 result.append(
                     {
@@ -182,7 +182,7 @@ class NarrativeArcQueryHandler:
                 sort_order=query.sort_order,
             )
 
-            results = []
+            results: list[Any] = []
             for arc in arcs:
                 results.append(
                     {
@@ -283,7 +283,7 @@ class NarrativeArcQueryHandler:
 
             # Filter by sequence range if specified
             if query.start_sequence is not None or query.end_sequence is not None:
-                filtered_points = []
+                filtered_points: list[Any] = []
                 for pp in plot_points:
                     if (
                         query.start_sequence is not None
@@ -298,7 +298,7 @@ class NarrativeArcQueryHandler:
                     filtered_points.append(pp)
                 plot_points = filtered_points
 
-            results = []
+            results: list[Any] = []
             for plot_point in plot_points:
                 results.append(
                     {
@@ -332,7 +332,7 @@ class NarrativeArcQueryHandler:
             if not arc:
                 return []
 
-            results = []
+            results: list[Any] = []
             for plot_point in arc.plot_points.values():
                 if plot_point.plot_point_type.value in query.plot_point_types:
                     plot_data = {
@@ -420,7 +420,7 @@ class NarrativeArcQueryHandler:
 
             active_themes = arc.get_themes_at_sequence(query.sequence)
 
-            results = []
+            results: list[Any] = []
             for theme in active_themes:
                 results.append(
                     {
@@ -516,14 +516,14 @@ class NarrativeArcQueryHandler:
 
             if query.include_statistics:
                 # Add statistical information
-                plot_types_distribution = {}
+                plot_types_distribution: dict[Any, Any] = {}
                 for plot_point in arc.plot_points.values():
                     plot_type = plot_point.plot_point_type.value
                     plot_types_distribution[plot_type] = (
                         plot_types_distribution.get(plot_type, 0) + 1
                     )
 
-                theme_types_distribution = {}
+                theme_types_distribution: dict[Any, Any] = {}
                 for theme in arc.themes.values():
                     theme_type = theme.theme_type.value
                     theme_types_distribution[theme_type] = (
@@ -550,7 +550,7 @@ class NarrativeArcQueryHandler:
             if query.include_progression:
                 # Add progression information
                 plot_points = arc.get_plot_points_in_sequence()
-                progression = []
+                progression: list[Any] = []
                 for pp in plot_points:
                     progression.append(
                         {
@@ -643,7 +643,7 @@ class NarrativeArcQueryHandler:
                 result["feedback_loops"] = analysis.feedback_loops
 
             if query.include_paths:
-                longest_chains = []
+                longest_chains: list[Any] = []
                 for chain in analysis.longest_chains:
                     longest_chains.append(
                         {

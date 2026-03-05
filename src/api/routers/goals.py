@@ -182,8 +182,7 @@ async def create_character_goal(
     structured_data = record.get("structured_data", {}) or {}
     goals_list = structured_data.get("goals", [])
     if not isinstance(goals_list, list):
-        goals_list = []
-
+        goals_list: list[Any] = []
     # Append new goal
     goals_list.append(goal_data)
     structured_data["goals"] = goals_list

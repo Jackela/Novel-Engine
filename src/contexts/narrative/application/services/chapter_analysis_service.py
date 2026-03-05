@@ -475,7 +475,7 @@ class ChapterAnalysisService:
 
         # Check for "too much action, no rest"
         high_energy_count = 0
-        high_energy_scenes = []
+        high_energy_scenes: list[Any] = []
         for scene in scenes:
             if scene.energy_level >= self.HIGH_ENERGY_THRESHOLD:
                 high_energy_count += 1
@@ -501,8 +501,7 @@ class ChapterAnalysisService:
                         )
                     )
                 high_energy_count = 0
-                high_energy_scenes = []
-
+                high_energy_scenes: list[Any] = []
         # Check for flat tension arc
         if tension_arc.is_monotonic and len(scenes) >= 3:
             warnings.append(
@@ -605,7 +604,7 @@ class ChapterAnalysisService:
             category_map[cat].add(warning.recommendation)
 
         # Flatten to list
-        recommendations = []
+        recommendations: list[Any] = []
         for rec_set in category_map.values():
             recommendations.extend(list(rec_set))
 

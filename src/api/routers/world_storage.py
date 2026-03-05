@@ -45,14 +45,10 @@ def reset_events_storage() -> None:
     """Reset events storage (for testing)."""
     global _events_storage
     _events_storage = {}
-
-
 def reset_rumors_storage() -> None:
     """Reset rumors storage (for testing)."""
     global _rumors_storage
     _rumors_storage = {}
-
-
 def reset_all_storage() -> None:
     """Reset all world storage (for testing)."""
     reset_events_storage()

@@ -65,7 +65,7 @@ class MetricsCoordinator:
     # Metrics Recording Methods
     # ===================================================================
 
-    def record_operation(self, response_time: float, success: bool = True):
+    def record_operation(self, response_time: float, success: bool = True) -> None:
         """
         Record an operation and its outcome.
 
@@ -79,7 +79,7 @@ class MetricsCoordinator:
         if not success:
             self.error_count += 1
 
-    def record_error(self):
+    def record_error(self) -> None:
         """Record an error occurrence."""
         self.error_count += 1
 

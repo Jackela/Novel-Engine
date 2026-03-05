@@ -162,7 +162,7 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         self.current_function = None
         self.current_class = None
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node) -> None:
         """Analyze function complexity"""
         self.current_function = {
             "name": node.name,
@@ -183,7 +183,7 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         self.complexity += self.current_function["complexity"]
         self.generic_visit(node)
 
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node) -> None:
         """Analyze class complexity"""
         self.current_class = {
             "name": node.name,
@@ -199,17 +199,17 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         self.classes.append(self.current_class)
         self.generic_visit(node)
 
-    def visit_If(self, node):
+    def visit_If(self, node) -> None:
         """Count conditional complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_While(self, node):
+    def visit_While(self, node) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_For(self, node):
+    def visit_For(self, node) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
@@ -342,7 +342,7 @@ class QualityMonitor:
         logger.info("Starting comprehensive project quality analysis")
 
         # Find all Python files
-        python_files = []
+        python_files: list[Any] = []
         for pattern in file_patterns:
             python_files.extend(self.project_root.glob(pattern))
 
@@ -357,7 +357,7 @@ class QualityMonitor:
         ]
 
         # Analyze each file
-        file_reports = {}
+        file_reports: dict[Any, Any] = {}
         total_loc = 0
         total_complexity = 0
         total_debt_minutes = 0
@@ -513,7 +513,7 @@ class QualityMonitor:
         self, file_path: Path, content: str, complexity: float, duplication: float
     ) -> List[QualityIssue]:
         """Detect quality issues in file"""
-        issues = []
+        issues: list[Any] = []
         lines = content.split("\n")
 
         # High complexity issues
@@ -634,7 +634,7 @@ class QualityMonitor:
 
     def _generate_console_report(self, report: ProjectQualityReport) -> str:
         """Generate console-friendly report"""
-        output = []
+        output: list[Any] = []
         output.append("=" * 60)
         output.append(f"CODE QUALITY REPORT - {report.project_name}")
         output.append("=" * 60)
@@ -664,7 +664,7 @@ class QualityMonitor:
         output.append("")
 
         # Top issues
-        all_issues = []
+        all_issues: list[Any] = []
         for file_report in report.file_reports.values():
             all_issues.extend(file_report.issues)
 

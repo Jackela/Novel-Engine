@@ -36,19 +36,19 @@ class WorkingMemoryItem:
     last_activation: datetime = field(default_factory=datetime.now)
     access_frequency: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validates the initial values of the working memory item."""
         self.attention_weight = max(0.0, min(1.0, self.attention_weight))
         self.activation_level = max(0.0, min(2.0, self.activation_level))
 
-    def activate(self, boost: float = 0.1):
+    def activate(self, boost: float = 0.1) -> None:
         """Increases the activation level and attention weight of the item."""
         self.activation_level = min(2.0, self.activation_level + boost)
         self.last_activation = datetime.now()
         self.access_frequency += 1
         self.attention_weight = min(1.0, self.attention_weight + boost * 0.5)
 
-    def decay(self, decay_rate: float = 0.95):
+    def decay(self, decay_rate: float = 0.95) -> None:
         """Applies decay to the item's activation and attention."""
         self.activation_level *= decay_rate
         self.attention_weight *= decay_rate
@@ -273,14 +273,14 @@ class WorkingMemory:
         self.total_evictions += 1
         return lowest_priority_item
 
-    def _remove_item(self, item: WorkingMemoryItem):
+    def _remove_item(self, item: WorkingMemoryItem) -> None:
         """Removes an item from the working memory."""
         if item in self._items:
             self._items.remove(item)
         if item.memory_item.memory_id in self._priority_index:
             del self._priority_index[item.memory_item.memory_id]
 
-    def _rebalance_priorities(self):
+    def _rebalance_priorities(self) -> None:
         """Normalizes attention weights to prevent runaway inflation."""
         if not self._items:
             return
@@ -289,7 +289,7 @@ class WorkingMemory:
             for item in self._items:
                 item.attention_weight /= max_attention
 
-    def clear(self):
+    def clear(self) -> None:
         """Clears all items from working memory."""
         self._items.clear()
         self._priority_index.clear()

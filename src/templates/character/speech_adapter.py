@@ -88,7 +88,7 @@ class SpeechAdapter:
             if structure_config == "short":
                 # Split long sentences (very basic)
                 sentences = content.split(". ")
-                short_sentences = []
+                short_sentences: list[Any] = []
                 for sentence in sentences:
                     if len(sentence) > 100:  # Arbitrary threshold
                         # Try to split on conjunctions

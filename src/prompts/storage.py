@@ -256,7 +256,7 @@ class PromptStorage:
         query += " ORDER BY updated_at DESC LIMIT ? OFFSET ?"
         params.extend([limit, offset])
 
-        prompts = []
+        prompts: list[Any] = []
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute(query, params) as cursor:
@@ -372,8 +372,7 @@ class PromptStorage:
         await self.initialize()
 
         search_pattern = f"%{query}%"
-        prompts = []
-
+        prompts: list[Any] = []
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
             async with db.execute(

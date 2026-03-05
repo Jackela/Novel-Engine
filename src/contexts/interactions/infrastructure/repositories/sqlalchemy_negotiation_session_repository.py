@@ -135,8 +135,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             query = select(NegotiationSessionModel)
 
             # Apply filters
-            conditions = []
-
+            conditions: list[Any] = []
             if "created_by" in filters:
                 conditions.append(
                     NegotiationSessionModel.created_by == filters["created_by"]
@@ -334,8 +333,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             List of matching NegotiationSession objects
         """
         try:
-            conditions = []
-
+            conditions: list[Any] = []
             if phase:
                 conditions.append(
                     text("status->>'phase' = :phase").bindparam(phase=phase)
@@ -468,8 +466,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
             # Build query similar to find_by_filters but count only
             query = select(func.count(NegotiationSessionModel.session_id))
 
-            conditions = []
-
+            conditions: list[Any] = []
             if "created_by" in filters:
                 conditions.append(
                     NegotiationSessionModel.created_by == filters["created_by"]
@@ -638,7 +635,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         Returns:
             List of NegotiationSession objects within the date range
         """
-        filters = {}
+        filters: dict[Any, Any] = {}
         if date_field == "created_at":
             filters["created_after"] = start_date
             filters["created_before"] = end_date
@@ -664,8 +661,7 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
         Returns:
             List of session IDs that were successfully updated
         """
-        updated_session_ids = []
-
+        updated_session_ids: list[Any] = []
         try:
             for update_data in session_updates:
                 session_id = update_data.get("session_id")

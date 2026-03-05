@@ -205,7 +205,7 @@ class Scene:
         if existing_ids != provided_ids:
             missing = existing_ids - provided_ids
             extra = provided_ids - existing_ids
-            error_parts = []
+            error_parts: list[Any] = []
             if missing:
                 error_parts.append(f"missing: {missing}")
             if extra:

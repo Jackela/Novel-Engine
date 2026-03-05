@@ -101,7 +101,7 @@ class AgentCoordinator:
         Returns:
             List of dicts containing agent information
         """
-        agent_list = []
+        agent_list: list[Any] = []
         for agent in self.registered_agents:
             agent_info = {
                 "agent_id": agent.agent_id,
@@ -145,7 +145,7 @@ class AgentCoordinator:
         for agent in self.registered_agents:
             try:
                 # Get world state for this agent
-                world_state = {}
+                world_state: dict[Any, Any] = {}
                 if world_state_callback:
                     world_state = world_state_callback(agent)
 
@@ -239,8 +239,7 @@ class AgentCoordinator:
         Returns:
             List of validation issue descriptions
         """
-        issues = []
-
+        issues: list[Any] = []
         for agent in self.registered_agents:
             # Check required attributes
             if not hasattr(agent, "agent_id") or not agent.agent_id:

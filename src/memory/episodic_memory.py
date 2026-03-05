@@ -37,11 +37,11 @@ class EpisodicEvent:
     emotional_peaks: List[Tuple[str, float]] = field(default_factory=list)
     significance_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Calculates the event's significance after initialization."""
         self._calculate_significance()
 
-    def _calculate_significance(self):
+    def _calculate_significance(self) -> None:
         """Calculates the significance of the event based on various factors."""
         base_significance = abs(self.memory_item.emotional_weight) * 0.1
         social_factor = len(self.social_context) * 0.05
@@ -55,7 +55,7 @@ class EpisodicEvent:
             base_significance + social_factor + causal_factor + emotional_peak_factor,
         )
 
-    def add_causal_link(self, linked_memory_id: str, link_type: str = "follows"):
+    def add_causal_link(self, linked_memory_id: str, link_type: str = "follows") -> None:
         """Adds a causal link to another memory and recalculates significance."""
         causal_link = f"{link_type}:{linked_memory_id}"
         if causal_link not in self.causal_links:
@@ -162,8 +162,7 @@ class EpisodicMemory:
         Retrieves episodes within a specific timeframe, sorted by time and significance.
         """
         try:
-            matching_episodes = []
-
+            matching_episodes: list[Any] = []
             current_date = start_time.date()
             end_date = end_time.date()
 
@@ -212,11 +211,10 @@ class EpisodicMemory:
         Retrieves episodes involving specific participants.
         """
         try:
-            matching_episodes = []
+            matching_episodes: list[Any] = []
             participant_scores = defaultdict(int)
 
-            unique_episode_ids = set()
-
+            unique_episode_ids: set[Any] = set()
             for participant in participants:
                 if participant in self._participant_index:
                     for memory_id in self._participant_index[participant]:
@@ -267,10 +265,9 @@ class EpisodicMemory:
         Retrieves episodes matching thematic keywords.
         """
         try:
-            matching_episodes = []
+            matching_episodes: list[Any] = []
             theme_scores = defaultdict(int)
-            unique_episode_ids = set()
-
+            unique_episode_ids: set[Any] = set()
             for theme in theme_keywords:
                 theme_lower = theme.lower()
                 if theme_lower in self._thematic_index:
@@ -433,7 +430,7 @@ class EpisodicMemory:
         }
         return list(detected_themes)
 
-    def _update_indices(self, memory: MemoryItem, themes: List[str]):
+    def _update_indices(self, memory: MemoryItem, themes: List[str]) -> None:
         """Updates internal indices for efficient querying."""
         memory_id = memory.memory_id
 
@@ -475,7 +472,7 @@ async def test_episodic_memory():
 
     episodic_memory = EpisodicMemory("test_agent_001", db)
 
-    test_memories = []
+    test_memories: list[Any] = []
     for i in range(5):
         memory = MemoryItem(
             agent_id="test_agent_001",

@@ -26,6 +26,7 @@ from ...application.ports.i_reranker import (
 )
 from ...application.ports.i_reranker import RerankResult as PortRerankResult
 from ..services.knowledge_ingestion_service import RetrievedChunk
+from typing import Any
 
 logger = structlog.get_logger()
 
@@ -404,7 +405,7 @@ class MockReranker:
         query_lower = query.lower()
         query_words = set(query_lower.split())
 
-        scored_results = []
+        scored_results: list[Any] = []
         for doc in documents:
             content_lower = doc.content.lower()
             # Count how many query words appear in content

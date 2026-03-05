@@ -41,10 +41,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -513,7 +513,7 @@ class DynamicEquipmentSystem:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> None:
         """Provide backward compatibility for legacy method calls."""
         legacy_mappings = {
             "get_equipment": "registry.get_equipment",

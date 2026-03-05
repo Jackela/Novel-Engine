@@ -59,7 +59,7 @@ def handle_standard_errors(
                 )
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> None:
             try:
                 return func(*args, **kwargs)
             except Exception as e:

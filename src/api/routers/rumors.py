@@ -35,8 +35,6 @@ def reset_rumors_storage() -> None:
     """Reset rumors storage (for testing)."""
     global _rumors_storage
     _rumors_storage = {}
-
-
 def _get_mock_rumors(
     world_id: str, location_id: Optional[str] = None
 ) -> List[Dict[str, Any]]:

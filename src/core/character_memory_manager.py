@@ -110,8 +110,7 @@ class MemoryManager:
         Returns:
             List of relevant memory entries
         """
-        relevant_memories = []
-
+        relevant_memories: list[Any] = []
         # Search by entity
         entities = context.get("entities", [])
         for entity in entities:
@@ -166,8 +165,7 @@ class MemoryManager:
 
     def _extract_entities(self, log_entry: Dict[str, Any]) -> List[str]:
         """Extract entity names from log entry."""
-        entities = []
-
+        entities: list[Any] = []
         # Extract from explicit entity fields
         if "entities" in log_entry:
             entities.extend(log_entry["entities"])

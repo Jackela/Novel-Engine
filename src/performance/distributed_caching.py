@@ -101,7 +101,7 @@ class CacheEntry:
         """Get age of cache entry in seconds"""
         return (datetime.now() - self.created_at).total_seconds()
 
-    def update_access(self):
+    def update_access(self) -> None:
         """Update access metadata"""
         self.last_accessed = datetime.now()
         self.access_count += 1
@@ -243,13 +243,13 @@ class MemoryCache(CacheInterface):
         self.metrics.last_updated = datetime.now()
         return self.metrics
 
-    def _update_access_order(self, key: str):
+    def _update_access_order(self, key: str) -> None:
         """Update LRU access order"""
         if key in self._access_order:
             self._access_order.remove(key)
         self._access_order.append(key)
 
-    def _update_response_time(self, response_time: float):
+    def _update_response_time(self, response_time: float) -> None:
         """Update average response time"""
         total_requests = self.metrics.hits + self.metrics.misses
         if total_requests > 0:
@@ -411,7 +411,7 @@ class RedisCache(CacheInterface):
         self.metrics.last_updated = datetime.now()
         return self.metrics
 
-    def _update_response_time(self, response_time: float):
+    def _update_response_time(self, response_time: float) -> None:
         """Update average response time"""
         total_requests = self.metrics.hits + self.metrics.misses
         if total_requests > 0:
@@ -485,7 +485,7 @@ class DistributedCache:
         self.combined_metrics = CacheMetrics()
         self._cache_loaders: Dict[str, Callable] = {}
 
-    def register_cache_loader(self, key_pattern: str, loader: Callable):
+    def register_cache_loader(self, key_pattern: str, loader: Callable) -> None:
         """Register a cache loader for specific key patterns"""
         self._cache_loaders[key_pattern] = loader
 
@@ -525,8 +525,7 @@ class DistributedCache:
 
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in multi-tier cache"""
-        results = []
-
+        results: list[Any] = []
         # Set in L1 cache
         result_l1 = await self.l1_cache.set(key, value, ttl)
         results.append(result_l1)
@@ -544,8 +543,7 @@ class DistributedCache:
 
     async def delete(self, key: str) -> bool:
         """Delete value from all cache tiers"""
-        results = []
-
+        results: list[Any] = []
         # Delete from L1
         result_l1 = await self.l1_cache.delete(key)
         results.append(result_l1)
@@ -582,7 +580,7 @@ class DistributedCache:
         """Warm cache by preloading data"""
         logger.info(f"Warming cache with {len(keys)} keys")
 
-        tasks = []
+        tasks: list[Any] = []
         for key in keys:
             task = asyncio.create_task(self.get(key))
             tasks.append(task)
@@ -610,7 +608,7 @@ class DistributedCache:
         # This would integrate with your database layer
         logger.debug(f"Write-through to source: {key}")
 
-    def _update_combined_metrics(self, hit_type: str, response_time: float):
+    def _update_combined_metrics(self, hit_type: str, response_time: float) -> None:
         """Update combined cache metrics"""
         self.combined_metrics.total_requests += 1
 

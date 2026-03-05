@@ -32,10 +32,10 @@ except ImportError as tracing_error:  # pragma: no cover - fallback when otel mi
         def __init__(self, *_, **__) -> None:
             pass
 
-    def initialize_tracing(*_, **__):
+    def initialize_tracing(*_, **__) -> None:
         return None
 
-    def setup_fastapi_tracing(app, *_args, **_kwargs):
+    def setup_fastapi_tracing(app, *_args, **_kwargs) -> None:
         return app
 
 

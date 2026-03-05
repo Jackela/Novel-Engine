@@ -471,8 +471,8 @@ class SecurityDashboard:
             # This would integrate with actual compliance checking logic
             # For now, we'll simulate basic compliance checking
 
-            findings = []
-            recommendations = []
+            findings: list[Any] = []
+            recommendations: list[Any] = []
             passed_controls = 0
             failed_controls = 0
 
@@ -605,7 +605,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients = []
+        disconnected_clients: list[Any] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -638,7 +638,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients = []
+        disconnected_clients: list[Any] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -761,7 +761,7 @@ class SecurityDashboard:
         """Get compliance summary"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
-                reports = {}
+                reports: dict[Any, Any] = {}
                 for framework in ComplianceFramework.__members__.values():
                     cursor = await conn.execute(
                         """

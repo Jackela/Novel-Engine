@@ -126,8 +126,7 @@ class WorldStateChanged(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         if not isinstance(self.change_type, WorldChangeType):
             errors.append("change_type must be a WorldChangeType enum value")
 

@@ -1,3 +1,4 @@
+from typing import Any
 #!/usr/bin/env python3
 """
 AI Gateway Domain Events
@@ -8,4 +9,4 @@ provider health changes.
 """
 
 # Future events will be imported here
-__all__ = []
+__all__: list[Any] = []

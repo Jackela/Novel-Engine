@@ -127,7 +127,7 @@ class WeakReferenceManager:
         self.cleanup_callbacks: Dict[str, Callable] = {}
         self._lock = threading.Lock()
 
-    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None):
+    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None) -> None:
         """Register object with weak reference."""
         with self._lock:
             if cleanup_callback:
@@ -152,7 +152,7 @@ class WeakReferenceManager:
                 return obj
             return None
 
-    def _cleanup_callback(self, key: str):
+    def _cleanup_callback(self, key: str) -> None:
         """Handle object cleanup when it's garbage collected."""
         if key in self.cleanup_callbacks:
             try:
@@ -166,7 +166,7 @@ class WeakReferenceManager:
 
     def cleanup_dead_references(self) -> int:
         """Remove dead weak references."""
-        dead_refs = []
+        dead_refs: list[Any] = []
         with self._lock:
             for key, weak_ref in list(self.weak_refs.items()):
                 if weak_ref() is None:
@@ -385,13 +385,13 @@ class MemoryOptimizer:
 
         self.optimization_stats["memory_cleanups"] += 1
 
-    def _light_memory_cleanup(self):
+    def _light_memory_cleanup(self) -> None:
         """Light memory cleanup for moderate pressure."""
         # Just collect generation 0 garbage
         collected = gc.collect(0)
         self.gc_stats["light_collection"] += collected
 
-    def _tune_gc_for_pressure(self, aggressive: bool = False):
+    def _tune_gc_for_pressure(self, aggressive: bool = False) -> None:
         """Tune garbage collection thresholds based on memory pressure."""
         if aggressive:
             # More aggressive GC - lower thresholds
@@ -438,7 +438,7 @@ class MemoryOptimizer:
 
     def register_weak_reference(
         self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None
-    ):
+    ) -> None:
         """Register object with weak reference management."""
         self.weak_ref_manager.register(key, obj, cleanup_callback)
 
@@ -459,7 +459,7 @@ class MemoryOptimizer:
             memory_trend = 0.0
 
         # Object pool statistics
-        pool_stats = {}
+        pool_stats: dict[Any, Any] = {}
         for name, pool in self.object_pools.items():
             pool_stats[name] = pool.get_stats()
 

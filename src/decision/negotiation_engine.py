@@ -204,7 +204,7 @@ class NegotiationEngine:
             )
 
             # Parse alternatives
-            alternatives = []
+            alternatives: list[Any] = []
             for i, alt in enumerate(data.get("alternatives", [])[:4]):
                 alternatives.append(
                     DecisionOption(
@@ -310,6 +310,6 @@ class NegotiationEngine:
             ),
         ]
 
-    def set_llm_client(self, llm_client: Any):
+    def set_llm_client(self, llm_client: Any) -> None:
         """Set or update the LLM client."""
         self._llm_client = llm_client

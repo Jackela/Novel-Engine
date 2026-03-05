@@ -48,7 +48,7 @@ class VersionInfo:
     breaking_changes: List[str] = None
     migration_guide_url: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.breaking_changes is None:
             self.breaking_changes = []
 
@@ -60,7 +60,7 @@ class APIVersionRegistry:
         self.versions: Dict[APIVersion, VersionInfo] = {}
         self._initialize_versions()
 
-    def _initialize_versions(self):
+    def _initialize_versions(self) -> None:
         """Initialize default version information."""
 
         # Version 1.0 - Initial API version
@@ -132,7 +132,7 @@ class APIVersionRegistry:
 
     def mark_deprecated(
         self, version: APIVersion, sunset_date: Optional[datetime] = None
-    ):
+    ) -> None:
         """Mark a version as deprecated."""
         if version in self.versions:
             self.versions[version].status = VersionStatus.DEPRECATED
@@ -323,14 +323,14 @@ class VersionedRoute(APIRoute):
         return await super().handle_request(request)
 
 
-def create_version_info_endpoint():
+def create_version_info_endpoint() -> None:
     """Create endpoint that returns API version information."""
 
-    def get_api_versions():
+    def get_api_versions() -> None:
         """Get information about all API versions."""
         registry = APIVersionRegistry()
 
-        versions_info = {}
+        versions_info: dict[Any, Any] = {}
         for version, info in registry.versions.items():
             versions_info[version.value] = {
                 "status": info.status.value,
@@ -355,7 +355,7 @@ def create_version_info_endpoint():
     return get_api_versions
 
 
-def setup_versioning(app):
+def setup_versioning(app) -> None:
     """Setup API versioning middleware and endpoints."""
 
     # Add versioning middleware

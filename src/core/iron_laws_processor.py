@@ -162,8 +162,7 @@ class IronLawsProcessor:
                 )
 
             # Initialize violation collection
-            all_violations = []
-
+            all_violations: list[Any] = []
             # Validate against each Iron Law
             all_violations.extend(
                 self._validate_causality_law(
@@ -192,7 +191,7 @@ class IronLawsProcessor:
 
             # Attempt repairs if there are violations
             repaired_action = None
-            repair_log = []
+            repair_log: list[Any] = []
             if all_violations and validation_result not in {
                 ValidationResult.INVALID,
                 ValidationResult.CATASTROPHIC_FAILURE,

@@ -74,7 +74,7 @@ class CharacterTemplate:
     performance_metrics: Dict[str, float] = field(default_factory=dict)
     metadata: TemplateMetadata = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
             self.metadata = TemplateMetadata(
                 template_id=self.template_id,

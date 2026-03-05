@@ -96,8 +96,7 @@ class TimeAdvancedEvent(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate days_advanced
         if self.days_advanced < 0:
             errors.append(f"days_advanced must be >= 0, got {self.days_advanced}")

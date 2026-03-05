@@ -196,7 +196,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Build dynamic WHERE clause
-        where_conditions = []
+        where_conditions: list[Any] = []
         params = {
             "character_id": agent.character_id,
             "roles": list(agent.roles) if agent.roles else [],
@@ -329,7 +329,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         )
 
         # Build dynamic WHERE clause for filters
-        where_conditions = []
+        where_conditions: list[Any] = []
         params = {
             "character_id": agent.character_id,
             "roles": list(agent.roles) if agent.roles else [],
@@ -380,7 +380,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         rows = result.fetchall()
 
         # Map rows to domain models and filter by threshold
-        entries = []
+        entries: list[Any] = []
         for row in rows:
             # Apply similarity threshold
             similarity_score = row.similarity_score

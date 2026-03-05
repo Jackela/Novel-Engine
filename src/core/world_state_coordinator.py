@@ -254,7 +254,7 @@ class WorldStateCoordinator:
         Returns:
             Dictionary containing world state feedback or None if no feedback available
         """
-        feedback = {}
+        feedback: dict[Any, Any] = {}
         has_feedback = False
 
         try:
@@ -309,7 +309,7 @@ class WorldStateCoordinator:
         if not discovered_clues:
             return []
 
-        feedback = []
+        feedback: list[Any] = []
         for clue in discovered_clues[-3:]:  # Most recent 3 discoveries
             feedback.append(f"You recall discovering: {clue}")
 
@@ -329,7 +329,7 @@ class WorldStateCoordinator:
             "environmental_changes", {}
         )
 
-        feedback = []
+        feedback: list[Any] = []
         for location, changes in environmental_changes.items():
             for change in changes[-2:]:  # Most recent 2 changes per location
                 feedback.append(f"Environmental change in {location}: {change}")

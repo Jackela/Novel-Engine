@@ -39,7 +39,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("archetype", mode="before")
     @classmethod
-    def normalize_archetype(cls, value):
+    def normalize_archetype(cls, value) -> None:
         """
         Normalize archetype input for case-insensitive matching.
 
@@ -56,7 +56,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("agent_id")
     @classmethod
-    def validate_agent_id(cls, v):
+    def validate_agent_id(cls, v) -> None:
         """
         Validate agent ID format.
 
@@ -77,7 +77,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("skills")
     @classmethod
-    def validate_skills(cls, v):
+    def validate_skills(cls, v) -> None:
         """
         Validate skill values are within acceptable range.
 
@@ -129,12 +129,12 @@ class CharacterAPI:
         self.orchestrator = orchestrator
         logger.info("Character API initialized.")
 
-    def set_orchestrator(self, orchestrator: SystemOrchestrator):
+    def set_orchestrator(self, orchestrator: SystemOrchestrator) -> None:
         """Set the orchestrator after initialization."""
         self.orchestrator = orchestrator
         logger.info("Character API orchestrator set.")
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Sets up API routes."""
 
         @app.post("/api/characters", response_model=dict)
@@ -217,8 +217,7 @@ class CharacterAPI:
             try:
                 # Get active agents from orchestrator
                 active_agents = getattr(self.orchestrator, "active_agents", {})
-                characters = []
-
+                characters: list[Any] = []
                 for agent_id, last_activity in active_agents.items():
                     characters.append(
                         CharacterResponse(
@@ -296,7 +295,7 @@ class CharacterAPI:
 
                 # For now, just acknowledge the update
                 # In the future, this would update the character state in the database
-                updates = {}
+                updates: dict[Any, Any] = {}
                 if request.name:
                     updates["name"] = request.name
                 if request.background_summary:

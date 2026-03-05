@@ -187,7 +187,7 @@ class CharacterFactory:
                 f"Character base directory not found: {self.base_character_path}"
             )
 
-        characters = []
+        characters: list[Any] = []
         for item in os.listdir(self.base_character_path):
             item_path = os.path.join(self.base_character_path, item)
             if os.path.isdir(item_path):

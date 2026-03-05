@@ -133,7 +133,7 @@ class SecurityEvent:
     request_id: Optional[str] = None
     tags: List[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.details is None:
             self.details = {}
         if self.tags is None:
@@ -207,7 +207,7 @@ class SecurityLogger:
         self._setup_logging()
         self._start_background_tasks()
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """STANDARD LOGGING SETUP"""
         # Configure security-specific logger
         self.security_logger = logging.getLogger("security")
@@ -236,7 +236,7 @@ class SecurityLogger:
         self._audit_file_handler = audit_handler
         self.audit_logger.addHandler(audit_handler)
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """STANDARD BACKGROUND TASKS"""
         try:
             loop = asyncio.get_event_loop()
@@ -756,8 +756,7 @@ class SecurityLogger:
         """STANDARD SECURITY EVENTS RETRIEVAL"""
         try:
             query = "SELECT * FROM security_events WHERE 1=1"
-            params = []
-
+            params: list[Any] = []
             if event_type:
                 query += " AND event_type = ?"
                 params.append(event_type.value)
@@ -791,8 +790,7 @@ class SecurityLogger:
 
                 # Convert to dictionaries
                 columns = [description[0] for description in cursor.description]
-                events = []
-
+                events: list[Any] = []
                 for row in rows:
                     event_dict = dict(zip(columns, row))
 
@@ -942,7 +940,7 @@ def get_security_logger() -> SecurityLogger:
 
 def initialize_security_logger(
     database_path: str, log_directory: str = "data/security_logs"
-):
+) -> None:
     """STANDARD SECURITY LOGGER INITIALIZATION"""
     global security_logger
     security_logger = SecurityLogger(database_path, log_directory)

@@ -151,7 +151,7 @@ class PerformanceMonitor:
         if memory_mb > self.config.memory_threshold_mb:
             gc.collect()
 
-    def add_metric(self, metric: PerformanceMetric, value: float):
+    def add_metric(self, metric: PerformanceMetric, value: float) -> None:
         """Add a metric value with timestamp."""
         self.metrics[metric].append((time.time(), value))
 
@@ -562,10 +562,10 @@ class PerformanceOptimizationEngine:
 
         logger.info("Performance Optimization Engine shutdown complete")
 
-    def performance_track(self, operation_name: str):
+    def performance_track(self, operation_name: str) -> None:
         """Decorator to track operation performance."""
 
-        def decorator(func):
+        def decorator(func) -> None:
             @wraps(func)
             async def wrapper(*args, **kwargs):
                 start_time = time.time()

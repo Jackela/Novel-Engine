@@ -807,7 +807,7 @@ class S3StateStore(StateStore):
                 Bucket=self.config.s3_bucket, Prefix=prefix, MaxKeys=1000
             )
 
-            keys = []
+            keys: list[Any] = []
             for obj in response.get("Contents", []):
                 s3_key = obj["Key"]
                 try:
@@ -982,7 +982,7 @@ class UnifiedStateManager:
                 return await self.postgres_store.list_keys(pattern)
         else:
             # Search all stores and combine results
-            all_keys = []
+            all_keys: list[Any] = []
             for store in [self.redis_store, self.postgres_store, self.s3_store]:
                 try:
                     keys = await store.list_keys(pattern)
@@ -1082,7 +1082,7 @@ class ConfigurationManager:
             },
         }
 
-    def _merge_config(self, base: Dict[str, Any], override: Dict[str, Any]):
+    def _merge_config(self, base: Dict[str, Any], override: Dict[str, Any]) -> None:
         """Merge configuration dictionaries"""
         for key, value in override.items():
             if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -1090,7 +1090,7 @@ class ConfigurationManager:
             else:
                 base[key] = value
 
-    def _apply_env_overrides(self):
+    def _apply_env_overrides(self) -> None:
         """Apply environment variable overrides"""
         env_mappings = {
             "REDIS_URL": ["state_store", "redis_url"],

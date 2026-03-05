@@ -67,8 +67,7 @@ class DiplomacyMatrix(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate DiplomacyMatrix-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.world_id or not self.world_id.strip():
             errors.append("World ID cannot be empty")
 
@@ -169,7 +168,7 @@ class DiplomacyMatrix(Entity):
             >>> allies = matrix.get_allies("kingdom-a")
             >>> print(f"Allies: {allies}")
         """
-        allies = []
+        allies: list[Any] = []
         for (a, b), status in self.relations.items():
             if status == DiplomaticStatus.ALLIED:
                 if a == faction_id:
@@ -191,7 +190,7 @@ class DiplomacyMatrix(Entity):
             >>> enemies = matrix.get_enemies("kingdom-a")
             >>> print(f"Enemies: {enemies}")
         """
-        enemies = []
+        enemies: list[Any] = []
         for (a, b), status in self.relations.items():
             if status in (DiplomaticStatus.HOSTILE, DiplomaticStatus.AT_WAR):
                 if a == faction_id:
@@ -213,7 +212,7 @@ class DiplomacyMatrix(Entity):
             >>> neutral = matrix.get_neutral("kingdom-a")
             >>> print(f"Neutral: {neutral}")
         """
-        neutral = []
+        neutral: list[Any] = []
         for (a, b), status in self.relations.items():
             if status == DiplomaticStatus.NEUTRAL:
                 if a == faction_id:
@@ -311,7 +310,7 @@ class DiplomacyMatrix(Entity):
         Example:
             >>> friendly = matrix.get_factions_by_status("kingdom-a", DiplomaticStatus.FRIENDLY)
         """
-        result = []
+        result: list[Any] = []
         for (a, b), rel_status in self.relations.items():
             if rel_status == status:
                 if a == faction_id:
@@ -421,7 +420,7 @@ class DiplomacyMatrix(Entity):
             >>> for pact in pacts:
             ...     print(f"{pact.pact_type.value}: active={pact.is_active()}")
         """
-        result = []
+        result: list[Any] = []
         for pact in self.active_pacts:
             if pact.involves_faction(faction_a) and pact.involves_faction(faction_b):
                 result.append(pact)

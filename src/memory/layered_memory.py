@@ -146,9 +146,8 @@ class LayeredMemorySystem:
         """
         try:
             async with self._memory_coordination_lock:
-                storage_results = []
-                stored_layers = []
-
+                storage_results: list[Any] = []
+                stored_layers: list[Any] = []
                 target_layers = self._determine_storage_layers(memory, force_layer)
 
                 if "working" in target_layers:
@@ -230,10 +229,9 @@ class LayeredMemorySystem:
         """
         query_start_time = datetime.now()
         try:
-            all_memories = []
-            all_scores = []
-            all_sources = []
-
+            all_memories: list[Any] = []
+            all_scores: list[Any] = []
+            all_sources: list[Any] = []
             async with self._memory_coordination_lock:
                 # Simplified query execution for now
                 if query_request.include_working_memory:
@@ -319,8 +317,7 @@ class LayeredMemorySystem:
         """
         try:
             consolidation_start = datetime.now()
-            consolidation_results = {}
-
+            consolidation_results: dict[Any, Any] = {}
             async with self._memory_coordination_lock:
                 working_result = self.working_memory.perform_maintenance()
                 consolidation_results["working"] = working_result.success
@@ -542,7 +539,7 @@ class LayeredMemorySystem:
     ) -> Tuple[List[MemoryItem], List[float], List[str]]:
         """Filters, ranks, and de-duplicates query results."""
 
-        unique_results = {}
+        unique_results: dict[Any, Any] = {}
         for mem, score, src in zip(memories, scores, sources):
             if score >= query.relevance_threshold:
                 if (
@@ -568,7 +565,7 @@ class LayeredMemorySystem:
         if not memories:
             return []
 
-        insights = []
+        insights: list[Any] = []
         type_counts = defaultdict(int)
         for mem in memories:
             type_counts[mem.memory_type] += 1
@@ -579,7 +576,7 @@ class LayeredMemorySystem:
 
         return insights
 
-    def _update_performance_metrics(self, query_duration_ms: float, _result_count: int):
+    def _update_performance_metrics(self, query_duration_ms: float, _result_count: int) -> None:
         """Updates performance metrics after a query."""
         total = self.total_queries
         avg_time = self.performance_metrics["average_query_time"]

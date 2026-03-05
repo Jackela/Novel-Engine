@@ -602,7 +602,7 @@ class SystemOrchestrator:
             self.active_agents[context.agent_id] = datetime.now()
 
             # Process memory context if present
-            memory_results = []
+            memory_results: list[Any] = []
             if context.memory_context:
                 for memory_item in context.memory_context:
                     memory_result = await self.memory_system.store_memory(memory_item)

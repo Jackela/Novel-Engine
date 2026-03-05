@@ -689,7 +689,7 @@ class S3StorageManager:
 
             response = await self.s3_client.list_objects_v2(**list_args)
 
-            objects = []
+            objects: list[Any] = []
             for obj in response.get("Contents", []):
                 objects.append(
                     S3ObjectInfo(

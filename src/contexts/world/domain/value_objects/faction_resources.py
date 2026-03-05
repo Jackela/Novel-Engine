@@ -213,7 +213,7 @@ class FactionResources:
         Returns:
             A new FactionResources instance.
         """
-        resources = {}
+        resources: dict[Any, Any] = {}
         for key, value in data.items():
             try:
                 resource_type = ResourceType(key)

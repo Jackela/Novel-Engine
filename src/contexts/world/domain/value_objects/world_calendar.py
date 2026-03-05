@@ -46,8 +46,7 @@ class WorldCalendar:
         Raises:
             ValueError: If any calendar values are invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         if self.year < 1:
             errors.append(f"Year must be >= 1, got {self.year}")
 

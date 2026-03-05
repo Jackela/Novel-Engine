@@ -216,7 +216,7 @@ class User:
     locked_until: Optional[datetime] = None
     api_key: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.now(timezone.utc)
 
@@ -432,7 +432,7 @@ class SecurityService:
         if not username and not email:
             return False
 
-        clauses = []
+        clauses: list[Any] = []
         params: List[Any] = []
         if username:
             clauses.append("username = ?")
@@ -902,7 +902,7 @@ class SecurityService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    def require_permission(self, permission: Permission):
+    def require_permission(self, permission: Permission) -> None:
         """STANDARD PERMISSION REQUIREMENT DECORATOR"""
 
         def permission_checker(
@@ -951,7 +951,7 @@ class SecurityService:
                 return set()
         return set(ROLE_PERMISSIONS.get(role, set()))
 
-    def require_role(self, required_role: UserRole):
+    def require_role(self, required_role: UserRole) -> None:
         """STANDARD ROLE REQUIREMENT DECORATOR"""
 
         def role_checker(current_user: User = Depends(self.get_current_user)) -> User:
@@ -1039,7 +1039,7 @@ def get_security_service() -> SecurityService:
     return security_service
 
 
-def initialize_security_service(database_path: str, secret_key: str):
+def initialize_security_service(database_path: str, secret_key: str) -> None:
     """STANDARD SECURITY SERVICE INITIALIZATION"""
     global security_service
     security_service = SecurityService(database_path, secret_key)
@@ -1055,13 +1055,13 @@ async def get_current_user(
     return await service.get_current_user(credentials)
 
 
-def require_permission(permission: Permission):
+def require_permission(permission: Permission) -> None:
     """Standalone wrapper for requiring permission"""
     service = get_security_service()
     return service.require_permission(permission)
 
 
-def require_role(required_role: UserRole):
+def require_role(required_role: UserRole) -> None:
     """Standalone wrapper for requiring a minimum role level."""
 
     async def role_checker(

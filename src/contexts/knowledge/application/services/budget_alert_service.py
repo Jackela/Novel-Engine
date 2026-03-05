@@ -622,7 +622,7 @@ class BudgetAlertService:
         threshold_type_name = config.threshold_type.value.replace("_", " ").title()
 
         # Build scope description
-        scope_parts = []
+        scope_parts: list[Any] = []
         if config.workspace_id:
             scope_parts.append(f"workspace {config.workspace_id}")
         if config.user_id:

@@ -603,7 +603,7 @@ class SearchWorldsQueryHandler:
                 worlds = worlds_query.all()
 
                 # Format results
-                results = []
+                results: list[Any] = []
                 for world in worlds:
                     result = {
                         "world_id": str(world.world_state_id),

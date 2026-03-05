@@ -484,7 +484,7 @@ class DynamicTemplateEngine:
                 result_data = query_result.data["query_result"]
 
                 # Format enhanced memories for template context
-                formatted_memories = []
+                formatted_memories: list[Any] = []
                 for memory in result_data.memories:
                     formatted_memories.append(
                         {
@@ -525,8 +525,7 @@ class DynamicTemplateEngine:
         Resolve enhanced cross-document references in templates with
         intelligent content loading and recursive reference handling.
         """
-        cross_references = {}
-
+        cross_references: dict[Any, Any] = {}
         # Find enhanced cross-reference patterns
         reference_pattern = r'\{\{\s*ref\(([\'"])([^\'\"]+)\1\)\s*\}\}'
         references = re.findall(reference_pattern, template_content)
@@ -648,8 +647,7 @@ class DynamicTemplateEngine:
                 query_result = await self.query_engine.execute_query(query_text)
                 if query_result.success:
                     result_data = query_result.data["query_result"]
-                    formatted_memories = []
-
+                    formatted_memories: list[Any] = []
                     for memory in result_data.memories[:limit]:
                         formatted_memories.append(
                             {
@@ -704,7 +702,7 @@ class DynamicTemplateEngine:
 
         return ref
 
-    def _register_custom_functions(self):
+    def _register_custom_functions(self) -> None:
         """Register enhanced custom Jinja2 functions and filters"""
 
         # Sacred timestamp formatting filter
@@ -808,7 +806,7 @@ class DynamicTemplateEngine:
         self.jinja_env.globals["zip"] = zip
         self.jinja_env.globals["sorted"] = sorted
 
-    def _discover_templates(self):
+    def _discover_templates(self) -> None:
         """Discover enhanced templates in template directory"""
         if not self.template_directory.exists():
             self.template_directory.mkdir(parents=True, exist_ok=True)
@@ -871,7 +869,7 @@ class DynamicTemplateEngine:
 
     def _update_performance_metrics(
         self, metadata: TemplateMetadata, render_time: float
-    ):
+    ) -> None:
         """Update enhanced performance metrics for template"""
         metadata.usage_count += 1
 
@@ -904,7 +902,7 @@ class DynamicTemplateEngine:
 
         return f"template_cache_{hash('_'.join(key_elements))}"
 
-    def _cleanup_template_cache(self):
+    def _cleanup_template_cache(self) -> None:
         """Clean up enhanced template cache to prevent memory bloat"""
         if len(self._template_cache) > 100:  # Max enhanced cache size
             # Remove oldest enhanced entries (simple FIFO)
@@ -914,8 +912,7 @@ class DynamicTemplateEngine:
 
     def get_template_list(self) -> List[Dict[str, Any]]:
         """Get enhanced list of all registered templates"""
-        template_list = []
-
+        template_list: list[Any] = []
         for template_id, metadata in self._templates.items():
             template_list.append(
                 {

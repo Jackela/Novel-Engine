@@ -263,7 +263,7 @@ class NarrativeArc:
 
     def get_themes_at_sequence(self, sequence: int) -> List[NarrativeTheme]:
         """Get all themes active at a specific sequence."""
-        active_themes = []
+        active_themes: list[Any] = []
         for theme_id, theme in self.themes.items():
             development_sequences = self.theme_development.get(theme_id, [])
 

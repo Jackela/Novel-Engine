@@ -32,10 +32,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -352,7 +352,7 @@ class InteractionProcessor:
         self, context: InteractionContext
     ) -> List[InteractionPhase]:
         """Generate standard processing phases for interaction context."""
-        phases = []
+        phases: list[Any] = []
         sequence_order = 0
 
         for phase_name, phase_info in self._standard_phases.items():
@@ -541,8 +541,7 @@ class InteractionProcessor:
 
     def _generate_execution_objectives(self, context: InteractionContext) -> List[str]:
         """Generate context-specific execution objectives."""
-        objectives = []
-
+        objectives: list[Any] = []
         if context.interaction_type == InteractionType.DIALOGUE:
             objectives = ["Generate dialogue content", "Process conversational flow"]
         elif context.interaction_type == InteractionType.COMBAT:
@@ -556,7 +555,7 @@ class InteractionProcessor:
 
         return objectives
 
-    def _update_processing_stats(self, outcome: InteractionOutcome):
+    def _update_processing_stats(self, outcome: InteractionOutcome) -> None:
         """Update processing performance statistics."""
         self.processing_stats["total_processed"] += 1
 
@@ -709,7 +708,7 @@ class InteractionProcessor:
                 ),
             )
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup resources on destruction."""
         if self.executor:
             self.executor.shutdown(wait=True)

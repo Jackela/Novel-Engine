@@ -481,7 +481,7 @@ class ContextDatabase:
                     rows = await cursor.fetchall()
 
                 # Transform enhanced rows to standard memory objects
-                memories = []
+                memories: list[Any] = []
                 for row in rows:
                     memory = MemoryItem(
                         memory_id=row["memory_id"],
@@ -634,7 +634,7 @@ class ContextDatabase:
                     rows = await cursor.fetchall()
 
                 # Transform enhanced rows to standard relationship objects
-                relationships = {}
+                relationships: dict[Any, Any] = {}
                 for row in rows:
                     relationship = RelationshipState(
                         target_agent_id=row["target_agent_id"],
@@ -899,8 +899,7 @@ class ContextDatabase:
         """
         try:
             async with self.get_enhanced_connection() as connection:
-                statistics = {}
-
+                statistics: dict[Any, Any] = {}
                 # Blessed table row counts
                 for table in [
                     "agents",

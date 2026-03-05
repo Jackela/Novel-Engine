@@ -156,7 +156,7 @@ class KafkaEventPublisher(IEventPublisher):
             if headers is None:
                 headers = [None] * batch_size
 
-            processed_headers = []
+            processed_headers: list[Any] = []
             for i, event_headers in enumerate(headers):
                 event_headers = event_headers or {}
                 event_headers.setdefault("event_type", topic)

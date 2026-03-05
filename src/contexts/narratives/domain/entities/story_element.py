@@ -108,7 +108,7 @@ class StoryElement:
         """Check if element has a specific category."""
         return category in self.categories
 
-    def get_property(self, key: str, default=None):
+    def get_property(self, key: str, default=None) -> None:
         """Get a property value with optional default."""
         return self.properties.get(key, default)
 

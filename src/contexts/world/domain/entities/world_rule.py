@@ -67,8 +67,7 @@ class WorldRule(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate WorldRule-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("World rule name cannot be empty")
 

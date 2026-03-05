@@ -501,7 +501,7 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: split by newlines
-        result = []
+        result: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Remove common prefixes
@@ -1007,7 +1007,7 @@ class MultiHopRetriever:
             return None
 
         # Build a concise context from top chunks
-        context_parts = []
+        context_parts: list[Any] = []
         for chunk in chunks[:3]:  # Top 3 chunks
             context_parts.append(f"- {chunk.content[:200]}...")
 
@@ -1119,7 +1119,7 @@ class MultiHopRetriever:
             Synthesized answer
         """
         # Build context from chunks
-        context_parts = []
+        context_parts: list[Any] = []
         for i, chunk in enumerate(chunks[:5], 1):  # Top 5 chunks
             context_parts.append(f"[{i}] {chunk.content[:300]}...")
 

@@ -35,7 +35,7 @@ class InteractionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v):
+    def validate_participants(cls, v) -> None:
         """
         Validate that all participants are unique.
 
@@ -80,7 +80,7 @@ class WebSocketConnectionManager:
             self.active_connections[interaction_id] = []
         self.active_connections[interaction_id].append(websocket)
 
-    def disconnect(self, websocket: WebSocket, interaction_id: str):
+    def disconnect(self, websocket: WebSocket, interaction_id: str) -> None:
         """
         Disconnect a WebSocket from an interaction.
 
@@ -104,12 +104,12 @@ class InteractionAPI:
         self.active_interactions: Dict[str, Any] = {}
         logger.info("Interaction API initialized.")
 
-    def set_orchestrator(self, orchestrator: SystemOrchestrator):
+    def set_orchestrator(self, orchestrator: SystemOrchestrator) -> None:
         """Set the orchestrator after initialization."""
         self.orchestrator = orchestrator
         logger.info("Interaction API orchestrator set.")
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Sets up API routes for interaction management."""
 
         @app.post("/api/interactions", response_model=InteractionResponse)
@@ -170,7 +170,7 @@ class InteractionAPI:
                 )
 
             try:
-                interactions = []
+                interactions: list[Any] = []
                 for interaction_id, data in self.active_interactions.items():
                     interactions.append(
                         {

@@ -47,8 +47,6 @@ def reset_diplomacy_storage() -> None:
     """Reset diplomacy storage (for testing)."""
     global _diplomacy_matrices
     _diplomacy_matrices = {}
-
-
 # === Helper Functions ===
 
 

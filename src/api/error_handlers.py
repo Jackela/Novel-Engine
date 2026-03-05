@@ -227,7 +227,7 @@ class ErrorHandler:
         request: Optional[Request],
         api_error: APIError,
         status_code: int,
-    ):
+    ) -> None:
         """Log error with appropriate level and context."""
 
         # Determine log level
@@ -267,7 +267,7 @@ class ErrorHandler:
         )
 
 
-def setup_error_handlers(app, debug: bool = False):
+def setup_error_handlers(app, debug: bool = False) -> None:
     """Setup error handlers for FastAPI application."""
 
     error_handler = ErrorHandler(debug=debug)
@@ -319,7 +319,7 @@ def setup_error_handlers(app, debug: bool = False):
         request_id = getattr(request.state, "request_id", None)
 
         # Convert Pydantic errors to our validation error format
-        validation_errors = []
+        validation_errors: list[Any] = []
         for error in exc.errors():
             field_path = ".".join(str(loc) for loc in error["loc"])
             # Safely serialize the input value to avoid JSON serialization errors

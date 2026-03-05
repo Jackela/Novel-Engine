@@ -28,7 +28,7 @@ Example imports (would work without platform naming conflicts)::
 from typing import Any, Dict
 
 
-def example_cqrs_workflow():
+def example_cqrs_workflow() -> None:
     """
     Example demonstrating the complete CQRS workflow:
 
@@ -64,7 +64,7 @@ def example_cqrs_workflow():
     example_summary_queries()
 
 
-def example_world_slice_query():
+def example_world_slice_query() -> None:
     """Example of the main GetWorldSlice query."""
 
     print("\n   GetWorldSlice Query (Circular Area):")
@@ -115,7 +115,7 @@ def example_world_slice_query():
     print(f"   # Response: {format_example_json(expected_response)}")
 
 
-def example_spatial_queries():
+def example_spatial_queries() -> None:
     """Example spatial queries for different use cases."""
 
     print("\n   Rectangular Bounds Query:")
@@ -135,7 +135,7 @@ def example_spatial_queries():
     print("   )")
 
 
-def example_summary_queries():
+def example_summary_queries() -> None:
     """Example summary queries for dashboards and analytics."""
 
     print("\n   World Summary for Dashboard:")
@@ -162,7 +162,7 @@ def example_summary_queries():
     print(f"   # Response: {format_example_json(expected_summary)}")
 
 
-def example_read_model_structure():
+def example_read_model_structure() -> None:
     """Example showing the read model's optimized structure."""
 
     print("\n=== Read Model Structure ===")
@@ -183,7 +183,7 @@ def example_read_model_structure():
     print("• Minimal database round-trips via denormalization")
 
 
-def example_event_projections():
+def example_event_projections() -> None:
     """Example showing how domain events update the read model."""
 
     print("\n=== Event Projection Examples ===")
@@ -204,7 +204,7 @@ def example_event_projections():
     print("• Rebuild capability for recovery scenarios")
 
 
-def example_query_patterns():
+def example_query_patterns() -> None:
     """Example query patterns optimized by the CQRS design."""
 
     print("\n=== Optimized Query Patterns ===")
@@ -247,7 +247,7 @@ def example_query_patterns():
         print(f"  Performance: {performance}")
 
 
-def example_architecture_benefits():
+def example_architecture_benefits() -> None:
     """Example showing CQRS architecture benefits."""
 
     print("\n=== CQRS Architecture Benefits ===")
@@ -282,7 +282,7 @@ def format_example_json(data: Dict[str, Any]) -> str:
     return json.dumps(data, indent=4)[:200] + "..."
 
 
-def main():
+def main() -> None:
     """Run all examples."""
     example_cqrs_workflow()
     example_read_model_structure()

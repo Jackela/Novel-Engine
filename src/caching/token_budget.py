@@ -160,7 +160,7 @@ class TokenBudgetManager:
             "total_tokens": total_tokens,
             "total_cost": total_cost,
         }
-        by_operation = {}
+        by_operation: dict[Any, Any] = {}
         for rec in window:
             by_operation.setdefault(rec.operation_type.value, 0)
             by_operation[rec.operation_type.value] += 1

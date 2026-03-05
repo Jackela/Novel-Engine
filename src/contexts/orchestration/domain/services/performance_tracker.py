@@ -385,8 +385,7 @@ class PerformanceTracker:
         if not recent_completions:
             return []
 
-        anomalies = []
-
+        anomalies: list[Any] = []
         # Check execution time anomalies
         execution_times = [entry["execution_time_ms"] for entry in recent_completions]
         if execution_times:
@@ -562,8 +561,7 @@ class PerformanceTracker:
         self, performance_metrics: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Detect performance anomalies in current metrics."""
-        anomalies = []
-
+        anomalies: list[Any] = []
         # Check execution time
         execution_time = performance_metrics["execution_time_ms"]
         baseline_time = self.performance_baselines["target_execution_time_ms"]
@@ -603,8 +601,7 @@ class PerformanceTracker:
         self, performance_metrics: Dict[str, Any], anomalies: List[Dict[str, Any]]
     ) -> List[str]:
         """Generate optimization recommendations based on metrics and anomalies."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Execution time recommendations
         if any(a["type"] == "execution_time" for a in anomalies):
             recommendations.append(
@@ -678,7 +675,7 @@ class PerformanceTracker:
             return {}
 
         # Extract cost data where available
-        costs = []
+        costs: list[Any] = []
         for entry in turn_completions:
             cost_metrics = entry.get("cost_metrics", {})
             if "total_ai_cost" in cost_metrics:
@@ -711,8 +708,7 @@ class PerformanceTracker:
         self, recent_metrics: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """Analyze performance by phase type."""
-        phase_metrics = {}
-
+        phase_metrics: dict[Any, Any] = {}
         phase_entries = [
             entry
             for entry in recent_metrics
@@ -756,8 +752,7 @@ class PerformanceTracker:
         self, turn_completions: List[Dict[str, Any]], trends: Dict[str, Any]
     ) -> List[str]:
         """Generate performance optimization recommendations."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         if not turn_completions:
             return recommendations
 

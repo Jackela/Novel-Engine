@@ -248,8 +248,7 @@ class AgentLifecycleManager:
         Returns:
             List of violations found (empty if action is valid)
         """
-        violations = []
-
+        violations: list[Any] = []
         try:
             # E001 - Causality Law validation
             causality_violations = self._validate_causality_law(proposed_action)
@@ -296,8 +295,7 @@ class AgentLifecycleManager:
         self, proposed_action: ProposedAction
     ) -> List[IronLawsViolation]:
         """Validate E001 - Causality Law: Actions must have clear cause-effect relationships."""
-        violations = []
-
+        violations: list[Any] = []
         try:
             # Check if action has valid target specification
             if not hasattr(proposed_action, "target") or not proposed_action.target:
@@ -335,8 +333,7 @@ class AgentLifecycleManager:
         character_data: Optional[CharacterData] = None,
     ) -> List[IronLawsViolation]:
         """Validate E002 - Resource Law: Actions cannot exceed character resource limits."""
-        violations = []
-
+        violations: list[Any] = []
         try:
             # Basic resource validation - can be extended with character_data
             if hasattr(proposed_action, "resource_cost"):
@@ -355,8 +352,7 @@ class AgentLifecycleManager:
         character_data: Optional[CharacterData] = None,
     ) -> List[IronLawsViolation]:
         """Validate E003 - Physics Law: Actions must be physically possible."""
-        violations = []
-
+        violations: list[Any] = []
         try:
             # Basic physics validation
             if hasattr(proposed_action, "action_type"):
@@ -383,8 +379,7 @@ class AgentLifecycleManager:
         self, proposed_action: ProposedAction
     ) -> List[IronLawsViolation]:
         """Validate E004 - Narrative Law: Actions must maintain story consistency."""
-        violations = []
-
+        violations: list[Any] = []
         try:
             # Basic narrative consistency checks
             if hasattr(proposed_action, "reasoning"):
@@ -408,8 +403,7 @@ class AgentLifecycleManager:
         self, proposed_action: ProposedAction
     ) -> List[IronLawsViolation]:
         """Validate E005 - Social Law: Actions must respect character relationships and hierarchy."""
-        violations = []
-
+        violations: list[Any] = []
         try:
             # Basic social validation
             if hasattr(proposed_action, "target") and proposed_action.target:
@@ -439,7 +433,7 @@ class AgentLifecycleManager:
         Returns:
             Tuple of (repaired_validated_action, repair_log)
         """
-        repair_log = []
+        repair_log: list[Any] = []
         modified_action = proposed_action
         self.repair_attempts_count += 1
 
@@ -532,7 +526,7 @@ class AgentLifecycleManager:
         self, action: ProposedAction, violations: List[IronLawsViolation]
     ) -> Tuple[ProposedAction, List[str]]:
         """Repair E001 Causality Law violations."""
-        repairs_made = []
+        repairs_made: list[Any] = []
         modified_action = action
 
         for violation in violations:
@@ -560,7 +554,7 @@ class AgentLifecycleManager:
         character_data: Optional[CharacterData],
     ) -> Tuple[ProposedAction, List[str]]:
         """Repair E002 Resource Law violations."""
-        repairs_made = []
+        repairs_made: list[Any] = []
         modified_action = action
 
         # Resource repair logic would be implemented here
@@ -576,7 +570,7 @@ class AgentLifecycleManager:
         character_data: Optional[CharacterData],
     ) -> Tuple[ProposedAction, List[str]]:
         """Repair E003 Physics Law violations."""
-        repairs_made = []
+        repairs_made: list[Any] = []
         modified_action = action
 
         for violation in violations:
@@ -602,7 +596,7 @@ class AgentLifecycleManager:
         self, action: ProposedAction, violations: List[IronLawsViolation]
     ) -> Tuple[ProposedAction, List[str]]:
         """Repair E004 Narrative Law violations."""
-        repairs_made = []
+        repairs_made: list[Any] = []
         modified_action = action
 
         for violation in violations:
@@ -621,7 +615,7 @@ class AgentLifecycleManager:
         self, action: ProposedAction, violations: List[IronLawsViolation]
     ) -> Tuple[ProposedAction, List[str]]:
         """Repair E005 Social Law violations."""
-        repairs_made = []
+        repairs_made: list[Any] = []
         modified_action = action
 
         # Social repair logic would be implemented here
@@ -633,7 +627,7 @@ class AgentLifecycleManager:
         self, violations: List[IronLawsViolation]
     ) -> Dict[str, List[IronLawsViolation]]:
         """Group violations by law code for systematic processing."""
-        grouped = {}
+        grouped: dict[Any, Any] = {}
         for violation in violations:
             law_code = violation.law_code
             if law_code not in grouped:
@@ -768,7 +762,7 @@ class AgentLifecycleManager:
             Dictionary containing violation analysis
         """
         try:
-            law_violations = {}
+            law_violations: dict[Any, Any] = {}
             severity_counts = {"low": 0, "medium": 0, "high": 0}
 
             for record in self.violation_history:

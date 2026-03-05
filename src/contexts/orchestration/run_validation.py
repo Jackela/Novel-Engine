@@ -117,8 +117,7 @@ class M9OrchestrationValidator:
 
     async def _validate_architecture(self) -> List[Dict[str, Any]]:
         """Validate architecture and file structure."""
-        results = []
-
+        results: list[Any] = []
         # Test 1: Core domain structure exists
         Path("domain")
         domain_files = [
@@ -189,8 +188,7 @@ class M9OrchestrationValidator:
 
     async def _validate_component_structure(self) -> List[Dict[str, Any]]:
         """Validate component code structure."""
-        results = []
-
+        results: list[Any] = []
         # Test 1: TurnId value object structure
         turn_id_path = Path("domain/value_objects/turn_id.py")
         if turn_id_path.exists():
@@ -290,8 +288,7 @@ class M9OrchestrationValidator:
 
     async def _validate_api_structure(self) -> List[Dict[str, Any]]:
         """Validate REST API structure."""
-        results = []
-
+        results: list[Any] = []
         # Test 1: API module exists
         api_path = Path("api/turn_api.py")
         if api_path.exists():
@@ -358,8 +355,7 @@ class M9OrchestrationValidator:
 
     async def _validate_configuration(self) -> List[Dict[str, Any]]:
         """Validate configuration and dependencies."""
-        results = []
-
+        results: list[Any] = []
         # Test 1: Requirements file
         req_path = Path("requirements.txt")
         if req_path.exists():
@@ -426,8 +422,7 @@ class M9OrchestrationValidator:
 
     async def _validate_documentation(self) -> List[Dict[str, Any]]:
         """Validate documentation coverage."""
-        results = []
-
+        results: list[Any] = []
         # Test 1: Architecture documentation
         arch_path = Path("ARCHITECTURE.md")
         if arch_path.exists():

@@ -65,7 +65,7 @@ try:
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
 
-    def get_config():
+    def get_config() -> None:
         return None
 
     CampaignBrief = None
@@ -511,27 +511,27 @@ class DirectorAgent:
         return self._agent_facade
 
     @property
-    def world_state(self):
+    def world_state(self) -> None:
         return self.world_state_coordinator
 
     @property
-    def turns(self):
+    def turns(self) -> None:
         return self.turn_orchestrator
 
     @property
-    def narrative(self):
+    def narrative(self) -> None:
         return getattr(self, "narrative_resolver", None)
 
     @property
-    def logging(self):
+    def logging(self) -> None:
         return self.base
 
     @property
-    def config(self):
+    def config(self) -> None:
         return _ConfigFacade(self.base)
 
     @property
-    def errors(self):
+    def errors(self) -> None:
         return SimpleNamespace(
             get_error_statistics=lambda: {
                 "total_errors": self.base.error_count,
@@ -540,12 +540,12 @@ class DirectorAgent:
         )
 
     @property
-    def validation(self):
+    def validation(self) -> None:
         return self.agent_lifecycle_manager
 
     def _get_legacy_agent_instances(self) -> List[Any]:
         """Return the actual mock agent instances used for regression shims."""
-        instances = []
+        instances: list[Any] = []
         for entry in self._legacy_agents:
             instance = entry.get("instance")
             if instance is not None:
@@ -1267,7 +1267,7 @@ class _AgentCollectionFacade:
     def get_agent_list(self) -> List[Dict[str, Any]]:
         return self._director.get_agent_list()
 
-    def __iter__(self):
+    def __iter__(self) -> None:
         yield from self._director._get_all_agent_instances()
 
     def __contains__(self, item: PersonaAgent) -> bool:

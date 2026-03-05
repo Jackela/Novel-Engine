@@ -98,7 +98,7 @@ class MonitoringConfig:
     export_metrics: bool = False
     export_path: str = "data/metrics"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.alert_thresholds:
             self.alert_thresholds = self._get_default_thresholds()
 
@@ -231,7 +231,7 @@ class PerformanceMonitor:
 
         self._start_monitoring()
 
-    def _start_monitoring(self):
+    def _start_monitoring(self) -> None:
         """Initialize monitoring background tasks."""
         try:
             loop = asyncio.get_running_loop()
@@ -307,14 +307,13 @@ class PerformanceMonitor:
         metric_type: MetricType,
         timestamp: Optional[float] = None,
         tags: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         """Record a performance metric with timestamp and optional tags."""
         if timestamp is None:
             timestamp = time.time()
 
         if tags is None:
-            tags = {}
-
+            tags: dict[Any, Any] = {}
         metric = PerformanceMetric(
             name=name,
             value=value,
@@ -331,7 +330,7 @@ class PerformanceMonitor:
         duration_ms: float,
         status_code: int = 200,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """Record HTTP request duration and performance metrics."""
         current_time = time.time()
 
@@ -373,7 +372,7 @@ class PerformanceMonitor:
         duration_ms: float,
         table: Optional[str] = None,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """Record database query performance metrics."""
         current_time = time.time()
         tags = {"query_type": query_type}
@@ -390,7 +389,7 @@ class PerformanceMonitor:
                 "database_error_count", 1, MetricType.COUNTER, current_time, tags
             )
 
-    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float):
+    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float) -> None:
         """Record cache operation performance and hit rate metrics."""
         current_time = time.time()
         tags = {"operation": operation}
@@ -429,7 +428,7 @@ class PerformanceMonitor:
             "cache_hit_rate_percent", hit_rate, MetricType.GAUGE, current_time
         )
 
-    def record_concurrent_users(self, count: int):
+    def record_concurrent_users(self, count: int) -> None:
         """Record current number of concurrent users."""
         self.record_metric("concurrent_users", count, MetricType.GAUGE)
 
@@ -519,7 +518,7 @@ class PerformanceMonitor:
             f"Alert duration: {alert.resolution_timestamp - alert.timestamp:.1f}s"
         )
 
-    def _cleanup_old_metrics(self):
+    def _cleanup_old_metrics(self) -> None:
         """Remove old metrics beyond retention period."""
         cutoff_time = time.time() - self.config.retention_period
 
@@ -528,7 +527,7 @@ class PerformanceMonitor:
             while metric_list and metric_list[0].timestamp < cutoff_time:
                 metric_list.popleft()
 
-    def _cleanup_old_alerts(self):
+    def _cleanup_old_alerts(self) -> None:
         """Remove old alerts from history."""
         cutoff_time = time.time() - 86400  # Keep alerts for 24 hours
 
@@ -618,8 +617,7 @@ class PerformanceMonitor:
 
     def get_endpoint_stats(self) -> Dict[str, Dict[str, Any]]:
         """Get performance statistics for all monitored endpoints."""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         for endpoint, metrics in self.endpoint_metrics.items():
             if metrics["count"] > 0:
                 stats[endpoint] = {
@@ -677,8 +675,7 @@ class PerformanceMonitor:
 
     def get_alerts(self, include_resolved: bool = False) -> List[Dict[str, Any]]:
         """Get list of active and optionally resolved alerts."""
-        alerts = []
-
+        alerts: list[Any] = []
         # Active alerts
         for alert in self.active_alerts.values():
             alerts.append(alert.__dict__)
@@ -722,7 +719,7 @@ class PerformanceMonitor:
 
 
 # Performance measurement decorator
-def measure_performance(metric_name: str = None):
+def measure_performance(metric_name: str = None) -> None:
     """Decorator to measure and record function performance metrics."""
 
     def decorator(func: Callable) -> Callable:
@@ -773,7 +770,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return performance_monitor
 
 
-def initialize_performance_monitor(config: Optional[MonitoringConfig] = None):
+def initialize_performance_monitor(config: Optional[MonitoringConfig] = None) -> None:
     """Initialize the global performance monitor with configuration."""
     global performance_monitor
     if config is None:

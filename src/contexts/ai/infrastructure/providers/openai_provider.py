@@ -353,8 +353,7 @@ class OpenAIProvider(ILLMProvider):
 
     def _initialize_supported_models(self) -> Dict[str, ModelId]:
         """Initialize supported models with capabilities and pricing."""
-        models = {}
-
+        models: dict[Any, Any] = {}
         # GPT-4 models
         models["gpt-4"] = ModelId(
             model_name="gpt-4",
@@ -440,8 +439,7 @@ class OpenAIProvider(ILLMProvider):
             Dictionary for OpenAI API request
         """
         # Convert prompt to messages format for chat completions
-        messages = []
-
+        messages: list[Any] = []
         if request.system_prompt:
             messages.append({"role": "system", "content": request.system_prompt})
 

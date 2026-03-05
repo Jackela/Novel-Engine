@@ -403,7 +403,7 @@ class NegotiationSession:
 
     def get_proposal_responses(self, proposal_id: UUID) -> List[ProposalResponse]:
         """Get all responses for a specific proposal."""
-        responses = []
+        responses: list[Any] = []
         for party_responses in self.responses.values():
             for response in party_responses:
                 if response.proposal_id == proposal_id:

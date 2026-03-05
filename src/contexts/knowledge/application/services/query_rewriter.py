@@ -377,8 +377,7 @@ class QueryRewriter:
             variants = [query]  # Include original as search query
         else:
             variants = self._parse_response(response.text, config.max_variants)
-            clarifications = []
-
+            clarifications: list[Any] = []
         return {
             "variants": variants,
             "clarifications": clarifications,
@@ -493,7 +492,7 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: split by newlines and commas
-        result = []
+        result: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Remove common prefixes
@@ -521,8 +520,7 @@ Return ONLY a valid JSON array of strings, like this:
         Returns:
             List of basic query variants
         """
-        variants = []
-
+        variants: list[Any] = []
         if config.include_original:
             variants.append(query)
 
@@ -561,8 +559,7 @@ Return ONLY a valid JSON array of strings, like this:
         Returns:
             Final list of variants
         """
-        variants = []
-
+        variants: list[Any] = []
         if config.include_original:
             variants.append(original)
 
@@ -662,7 +659,7 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: extract questions from text
-        result = []
+        result: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Lines ending with '?' are likely questions

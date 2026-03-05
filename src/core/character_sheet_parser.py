@@ -110,8 +110,7 @@ class CharacterSheetParser:
 
     def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
         """Parse character sheet content into structured data."""
-        character_data = {}
-
+        character_data: dict[Any, Any] = {}
         # Parse different sections
         sections = {
             "identity": self._parse_identity_section,
@@ -137,8 +136,7 @@ class CharacterSheetParser:
 
     def _parse_identity_section(self, section_content: str) -> Dict[str, Any]:
         """Parse the identity section of character sheet."""
-        identity_data = {}
-
+        identity_data: dict[Any, Any] = {}
         # Extract basic identity fields
         fields = ["name", "rank_role", "faction", "homeworld", "age"]
         for field in fields:
@@ -177,7 +175,7 @@ class CharacterSheetParser:
 
     def _extract_bullet_points(self, content: str) -> Dict[str, str]:
         """Extract bullet points from content."""
-        bullet_points = {}
+        bullet_points: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:
@@ -197,7 +195,7 @@ class CharacterSheetParser:
 
     def _extract_weighted_items(self, content: str) -> Dict[str, float]:
         """Extract weighted items from content."""
-        weighted_items = {}
+        weighted_items: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:
@@ -214,7 +212,7 @@ class CharacterSheetParser:
 
     def _parse_simple_field_format(self, content: str) -> Dict[str, Any]:
         """Parse simple field: value format."""
-        parsed_data = {}
+        parsed_data: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:

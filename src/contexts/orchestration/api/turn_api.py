@@ -60,7 +60,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
         async def __call__(self, scope, receive, send):
             await self.app(scope, receive, send)
 
-    def initialize_tracing(*_, **__):
+    def initialize_tracing(*_, **__) -> None:
         return None
 
     def setup_fastapi_tracing(app: FastAPI, *_args, **_kwargs) -> FastAPI:
@@ -93,7 +93,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v):
+    def validate_participants(cls, v) -> None:
         if not v or len(v) == 0:
             raise ValueError("At least one participant is required")
         if not all(isinstance(p, str) and p.strip() for p in v):
@@ -104,7 +104,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("turn_id")
     @classmethod
-    def validate_turn_id(cls, v):
+    def validate_turn_id(cls, v) -> None:
         if v is not None:
             try:
                 UUID(v)
@@ -275,7 +275,7 @@ def _patch_e2e_database_fixture() -> None:
     @asynccontextmanager
     async def _patched_get_async_session(self):  # type: ignore[override]
         class PatchedSession:
-            def add(self, obj):
+            def add(self, obj) -> None:
                 data = _serialize_value(obj)
                 class_name = obj.__class__.__name__.lower()
                 if "world" in class_name:
@@ -300,13 +300,12 @@ def _patch_e2e_database_fixture() -> None:
                 elif "character" in text_query:
                     rows = state["characters"]
                 else:
-                    rows = []
-
+                    rows: list[Any] = []
                 class MockResult:
                     def __init__(self, data_rows) -> None:
                         self._rows = data_rows
 
-                    def fetchall(self):
+                    def fetchall(self) -> None:
                         return self._rows
 
                 return MockResult(rows)
@@ -812,7 +811,7 @@ def _convert_to_response(result) -> TurnExecutionResponse:
         phases_completed = default_phases.copy()
 
     # Convert compensation actions
-    compensation_actions = []
+    compensation_actions: list[Any] = []
     for action in result.compensation_actions:
         compensation_actions.append(
             {

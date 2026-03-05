@@ -82,7 +82,7 @@ class CacheEntry(Generic[T]):
             return False
         return time.time() > (self.created_at + self.ttl)
 
-    def touch(self):
+    def touch(self) -> None:
         """Update access time and count for LRU/LFU tracking."""
         self.accessed_at = time.time()
         self.access_count += 1
@@ -101,7 +101,7 @@ class CacheStats:
     avg_access_time_ms: float = 0.0
     hit_rate: float = 0.0
 
-    def update_hit_rate(self):
+    def update_hit_rate(self) -> None:
         """Calculate and update cache hit rate percentage."""
         total_requests = self.hits + self.misses
         self.hit_rate = (
@@ -153,7 +153,7 @@ class IntelligentCacheManager:
 
         self._start_background_tasks()
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """Initialize background cleanup and metrics tasks."""
         if self.config.background_cleanup:
             try:
@@ -381,11 +381,10 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Cache warming error: {e}")
 
-    def _cleanup_expired(self):
+    def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
         time.time()
-        expired_keys = []
-
+        expired_keys: list[Any] = []
         for key, entry in self.cache.items():
             if entry.is_expired():
                 expired_keys.append(key)
@@ -398,7 +397,7 @@ class IntelligentCacheManager:
         if expired_keys:
             logger.debug(f"Cleaned {len(expired_keys)} expired keys")
 
-    def _enforce_size_limits(self):
+    def _enforce_size_limits(self) -> None:
         """Enforce cache size and memory limits through eviction."""
         # Check memory limit
         max_memory_bytes = self.config.max_memory_mb * 1024 * 1024
@@ -452,7 +451,7 @@ class IntelligentCacheManager:
             return None
 
         # Score each key based on multiple factors
-        scores = {}
+        scores: dict[Any, Any] = {}
         current_time = time.time()
 
         for key, entry in self.cache.items():
@@ -502,7 +501,7 @@ class IntelligentCacheManager:
 
         return frequency * trend
 
-    def _record_access_pattern(self, key: str):
+    def _record_access_pattern(self, key: str) -> None:
         """Record access time for pattern analysis."""
         current_time = time.time()
         self.access_patterns[key].append(current_time)
@@ -513,7 +512,7 @@ class IntelligentCacheManager:
             t for t in self.access_patterns[key] if t > cutoff_time
         ]
 
-    def _record_access_time(self, key: str, access_time: float):
+    def _record_access_time(self, key: str, access_time: float) -> None:
         """Record access time for performance monitoring."""
         access_time_ms = access_time * 1000
         self.performance_metrics[key].append(access_time_ms)
@@ -526,7 +525,7 @@ class IntelligentCacheManager:
         if access_time_ms > 10:  # 10ms threshold
             self.slow_keys.add(key)
 
-    def _record_key_relationship(self, key: str):
+    def _record_key_relationship(self, key: str) -> None:
         """Record relationships between cache keys for prefetching."""
         # Simple relationship detection based on key patterns
         key_parts = key.split(":")
@@ -581,12 +580,12 @@ class IntelligentCacheManager:
                         )
         self.slow_keys.clear()
 
-    def _update_cache_statistics(self):
+    def _update_cache_statistics(self) -> None:
         """Update cache performance statistics."""
         self.stats.update_hit_rate()
 
         # Calculate average access time
-        all_times = []
+        all_times: list[Any] = []
         for times in self.performance_metrics.values():
             all_times.extend(times)
 
@@ -703,7 +702,7 @@ class IntelligentCacheManager:
 
 
 # Cache decorator for functions
-def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
+def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> None:
     """Decorator to cache function results with optional TTL."""
 
     def decorator(func: Callable) -> Callable:
@@ -730,7 +729,7 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
             await cache_manager.set(cache_key, result, ttl)
             return result
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> None:
             # For synchronous functions, create async context
             async def async_func():
                 return await async_wrapper(*args, **kwargs)
@@ -763,7 +762,7 @@ def get_cache_manager() -> IntelligentCacheManager:
     return cache_manager
 
 
-def initialize_cache_manager(config: Optional[CacheConfig] = None):
+def initialize_cache_manager(config: Optional[CacheConfig] = None) -> None:
     """Initialize the global cache manager with configuration."""
     global cache_manager
     if config is None:

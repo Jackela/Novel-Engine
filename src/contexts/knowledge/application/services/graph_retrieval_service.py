@@ -650,7 +650,7 @@ class GraphRetrievalService:
         lines.append("")
 
         # Entities examined
-        entities_seen = set()
+        entities_seen: set[Any] = set()
         for step in steps:
             if step.step_type == "entity_lookup" and step.metadata.get("found"):
                 entities_seen.add(step.entity_name)

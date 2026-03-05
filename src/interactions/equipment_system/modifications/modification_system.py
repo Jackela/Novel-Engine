@@ -29,10 +29,10 @@ except ImportError:
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
@@ -188,7 +188,7 @@ class ModificationSystem:
 
     def get_compatible_modifications(self, equipment: DynamicEquipment) -> List[str]:
         """Get list of compatible modifications for equipment."""
-        compatible = []
+        compatible: list[Any] = []
         equipment_category = self._get_equipment_category(equipment)
 
         for mod_id, template in self._modification_templates.items():

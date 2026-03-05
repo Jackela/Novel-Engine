@@ -199,7 +199,7 @@ class ProposalResponse:
                 if not isinstance(condition, str) or not condition.strip():
                     raise ValueError("All conditions must be non-empty strings")
 
-    def _validate_response_consistency(self):
+    def _validate_response_consistency(self) -> None:
         """Validate consistency between overall response and term responses."""
         acceptance_count = sum(1 for tr in self.term_responses if tr.is_acceptance())
         rejection_count = sum(1 for tr in self.term_responses if tr.is_rejection())

@@ -347,7 +347,7 @@ class EnterpriseSecuritySuite:
         logger.info("✅ FastAPI configured with Enterprise Security")
         return app
 
-    def _add_security_api_endpoints(self, app: FastAPI):
+    def _add_security_api_endpoints(self, app: FastAPI) -> None:
         """Add security-related API endpoints"""
 
         # Authentication endpoints
@@ -439,7 +439,7 @@ class EnterpriseSecuritySuite:
         ):
             return await self.security_dashboard.get_compliance_summary()
 
-    def _add_dashboard_endpoints(self, app: FastAPI):
+    def _add_dashboard_endpoints(self, app: FastAPI) -> None:
         """Add security dashboard endpoints"""
 
         @app.get("/api/dashboard/overview")

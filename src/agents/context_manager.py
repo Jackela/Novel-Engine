@@ -89,8 +89,7 @@ class CharacterContextManager:
         Returns:
             Dict: Structured character data
         """
-        parsed_data = {}
-
+        parsed_data: dict[Any, Any] = {}
         # Extract major sections
         sections = {
             "identity": self._extract_section(content, "identity"),
@@ -148,8 +147,7 @@ class CharacterContextManager:
 
     def _parse_identity_section(self, section_content: str) -> Dict[str, Any]:
         """Parse identity section from character sheet."""
-        identity_data = {}
-
+        identity_data: dict[Any, Any] = {}
         # Extract basic identity fields
         fields = ["name", "faction", "rank", "age", "gender", "homeworld", "profession"]
 
@@ -173,8 +171,7 @@ class CharacterContextManager:
 
     def _parse_psychological_section(self, section_content: str) -> Dict[str, Any]:
         """Parse psychological profile section."""
-        psychological_data = {}
-
+        psychological_data: dict[Any, Any] = {}
         # Extract personality traits with weights
         traits = self._extract_weighted_items(section_content)
         psychological_data["personality_traits"] = traits
@@ -187,8 +184,7 @@ class CharacterContextManager:
 
     def _parse_behavioral_section(self, section_content: str) -> Dict[str, Any]:
         """Parse behavioral patterns section."""
-        behavioral_data = {}
-
+        behavioral_data: dict[Any, Any] = {}
         # Extract decision weights
         weights = self._extract_weighted_items(section_content)
         behavioral_data["decision_weights"] = weights
@@ -201,8 +197,7 @@ class CharacterContextManager:
 
     def _extract_bullet_points(self, content: str) -> Dict[str, str]:
         """Extract bullet points from content."""
-        bullet_points = {}
-
+        bullet_points: dict[Any, Any] = {}
         # Find all bullet point patterns
         lines = content.split("\n")
         current_category = None
@@ -238,8 +233,7 @@ class CharacterContextManager:
 
     def _extract_weighted_items(self, content: str) -> Dict[str, float]:
         """Extract weighted items (traits with numerical values)."""
-        weighted_items = {}
-
+        weighted_items: dict[Any, Any] = {}
         # Pattern for "Item: value" or "Item (value)" formats
         patterns = [
             r"(?:^|\n)\s*\*?\s*([^:\n]+?):\s*(\d*\.?\d+)",  # "Trait: 0.8"
@@ -260,8 +254,7 @@ class CharacterContextManager:
 
     def _parse_simple_field_format(self, content: str) -> Dict[str, Any]:
         """Parse simple field: value format content."""
-        parsed_data = {}
-
+        parsed_data: dict[Any, Any] = {}
         # Extract field: value pairs
         field_pattern = r"(?:^|\n)\s*\*?\s*([^:\n]+):\s*([^\n]+)"
         matches = re.findall(field_pattern, content, re.MULTILINE)

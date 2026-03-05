@@ -163,8 +163,7 @@ async def check_llm() -> tuple[bool, str]:
         openai_key = os.getenv("OPENAI_API_KEY", "")
         anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
 
-        configured_providers = []
-
+        configured_providers: list[Any] = []
         if gemini_key:
             configured_providers.append("gemini")
         if openai_key:

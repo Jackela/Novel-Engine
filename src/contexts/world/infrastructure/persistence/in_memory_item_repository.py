@@ -133,7 +133,7 @@ class InMemoryItemRepository(IItemRepository):
         Returns:
             List of found Items.
         """
-        results = []
+        results: list[Any] = []
         for item_id in item_ids:
             item = self._items.get(item_id)
             if item:
@@ -195,7 +195,7 @@ class InMemoryItemRepository(IItemRepository):
             List of matching Items.
         """
         query_lower = query.lower()
-        results = []
+        results: list[Any] = []
         for item in self._items.values():
             if query_lower in item.name.lower():
                 results.append(item)

@@ -226,7 +226,7 @@ class RumorService:
         if sort_by == SortByEnum.RECENT:
             # Sort by created_date descending (most recent first)
             # Handle None created_date by putting at end
-            def recent_key(r: Rumor):
+            def recent_key(r: Rumor) -> None:
                 if r.created_date:
                     return (
                         -r.created_date.year,

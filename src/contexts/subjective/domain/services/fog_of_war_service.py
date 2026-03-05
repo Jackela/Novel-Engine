@@ -84,8 +84,7 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
         dz = target_position[2] - observer_position[2]
         distance = math.sqrt(dx * dx + dy * dy + dz * dz)
 
-        visibility_results = {}
-
+        visibility_results: dict[Any, Any] = {}
         # Get awareness bonus
         awareness_bonus = awareness_state.get_perception_bonus()
 
@@ -272,9 +271,8 @@ class FogOfWarService:
 
         observer_position = world_positions[turn_brief.entity_id]
         old_visible = set(turn_brief.visible_subjects.keys())
-        new_visible = set()
-        visibility_changes = {}
-
+        new_visible: set[Any] = set()
+        visibility_changes: dict[Any, Any] = {}
         # Calculate visibility for all subjects
         for subject_id, position in world_positions.items():
             if subject_id == turn_brief.entity_id:
@@ -334,11 +332,9 @@ class FogOfWarService:
             Filtered knowledge base
         """
         check_time = current_time or datetime.now()
-        filtered_items = {}
-
+        filtered_items: dict[Any, Any] = {}
         for subject, items in knowledge_base.knowledge_items.items():
-            reliable_items = []
-
+            reliable_items: list[Any] = []
             for item in items:
                 if (
                     item.is_current(check_time)
@@ -381,7 +377,7 @@ class FogOfWarService:
         ):
             return []
 
-        propagatable_knowledge = []
+        propagatable_knowledge: list[Any] = []
         filter_types = set(knowledge_types) if knowledge_types else None
 
         for subject, items in source_turn_brief.knowledge_base.knowledge_items.items():
@@ -477,8 +473,7 @@ class FogOfWarService:
         current_time = datetime.now()
         cutoff_time = current_time - staleness_threshold
 
-        stale_subjects = []
-
+        stale_subjects: list[Any] = []
         for subject, items in turn_brief.knowledge_base.knowledge_items.items():
             # Check if all knowledge about this subject is stale
             has_current_knowledge = any(

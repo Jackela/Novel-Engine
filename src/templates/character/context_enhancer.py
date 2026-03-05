@@ -48,7 +48,7 @@ class ContextEnhancer:
 
         # Apply enhanced memory priorities
         if self.memory_system and enhanced_context.memory_context:
-            prioritized_memories = []
+            prioritized_memories: list[Any] = []
             for memory in enhanced_context.memory_context:
                 priority_boost = 0.0
 

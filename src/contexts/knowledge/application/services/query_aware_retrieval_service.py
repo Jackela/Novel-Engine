@@ -467,7 +467,7 @@ class QueryAwareRetrievalService:
         )
 
         # Update chunk scores to RRF scores and return
-        result = []
+        result: list[Any] = []
         for chunk, rrf_score in sorted_chunks:
             # Create a new chunk with the RRF score
             updated_chunk = RetrievedChunk(

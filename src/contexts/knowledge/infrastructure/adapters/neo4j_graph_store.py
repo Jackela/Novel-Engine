@@ -1175,7 +1175,7 @@ class Neo4jGraphStore(IGraphStore):
             # Convert to display names
             cliques_with_display_names: list[tuple[str, ...]] = []
             for clique in sorted(filtered_cliques, key=len, reverse=True):
-                display_names = []
+                display_names: list[Any] = []
                 for node in clique:
                     if node in graph.nodes:
                         display_names.append(

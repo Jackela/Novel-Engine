@@ -233,7 +233,7 @@ class Context7IntegrationAPI:
         self.context7_available = False
         self._check_context7_availability()
 
-    def _check_context7_availability(self):
+    def _check_context7_availability(self) -> None:
         """Check if Context7 MCP server is available."""
         # Availability requires an injected client or configured base URL
         self.context7_available = bool(self.context7_client or self.base_url)
@@ -388,7 +388,7 @@ if (response.ok) {{
         else:
             return f"# Example code for {endpoint} in {format_type} format"
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup Context7 integration API routes."""
 
         @app.post(

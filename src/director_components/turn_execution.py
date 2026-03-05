@@ -298,9 +298,8 @@ class TurnExecutionEngine:
         self, context: TurnContext, agents: List[Any]
     ) -> Dict[str, Dict[str, Any]]:
         """Execute agent decisions in parallel."""
-        decision_tasks = []
-        agent_ids = []
-
+        decision_tasks: list[Any] = []
+        agent_ids: list[Any] = []
         for agent in agents:
             if hasattr(agent, "agent_id") and hasattr(agent, "make_decision"):
                 agent_ids.append(agent.agent_id)
@@ -313,7 +312,7 @@ class TurnExecutionEngine:
         # Limit concurrent execution
         if len(decision_tasks) > self._max_concurrent_agents:
             # Process in batches
-            results = {}
+            results: dict[Any, Any] = {}
             for i in range(0, len(decision_tasks), self._max_concurrent_agents):
                 batch_tasks = decision_tasks[i : i + self._max_concurrent_agents]
                 batch_ids = agent_ids[i : i + self._max_concurrent_agents]
@@ -333,7 +332,7 @@ class TurnExecutionEngine:
             # Process all at once
             results_list = await asyncio.gather(*decision_tasks, return_exceptions=True)
 
-            results = {}
+            results: dict[Any, Any] = {}
             for agent_id, result in zip(agent_ids, results_list):
                 if isinstance(result, Exception):
                     results[agent_id] = {"success": False, "error": str(result)}
@@ -346,8 +345,7 @@ class TurnExecutionEngine:
         self, context: TurnContext, agents: List[Any]
     ) -> Dict[str, Dict[str, Any]]:
         """Execute agent decisions sequentially."""
-        results = {}
-
+        results: dict[Any, Any] = {}
         for agent in agents:
             if hasattr(agent, "agent_id") and hasattr(agent, "make_decision"):
                 agent_id = agent.agent_id
@@ -441,7 +439,7 @@ class TurnExecutionEngine:
             self.logger.debug(f"Turn {context.turn_number}: State update phase")
 
             # Aggregate state changes from agent decisions
-            state_changes = {}
+            state_changes: dict[Any, Any] = {}
             for agent_id, decision in context.agent_decisions.items():
                 if isinstance(decision, dict) and "world_state_changes" in decision:
                     agent_changes = decision["world_state_changes"]
@@ -493,10 +491,9 @@ class TurnExecutionEngine:
         self, agent_decisions: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Identify conflicts between agent decisions."""
-        conflicts = []
-
+        conflicts: list[Any] = []
         # Simple conflict detection - can be enhanced
-        decision_types = {}
+        decision_types: dict[Any, Any] = {}
         for agent_id, decision in agent_decisions.items():
             if isinstance(decision, dict) and "action_type" in decision:
                 action_type = decision["action_type"]
@@ -559,8 +556,7 @@ class TurnExecutionEngine:
         self, context: TurnContext
     ) -> List[Dict[str, Any]]:
         """Generate narrative events based on turn results."""
-        events = []
-
+        events: list[Any] = []
         # Generate events for successful decisions
         for agent_id, decision in context.agent_decisions.items():
             if isinstance(decision, dict) and not decision.get("overridden", False):

@@ -102,7 +102,7 @@ class ContextSection:
     character_count: int = 0
     relevance_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.character_count = len(self.content)
 
 
@@ -421,11 +421,10 @@ class ContextRenderer:
         self, sections: List[ContextSection], constraints: RenderingConstraints
     ) -> Dict[str, Any]:
         """STANDARD CONSTRAINT APPLICATION ENHANCED BY OPTIMIZATION"""
-        included_sections = []
-        excluded_sections = []
+        included_sections: list[Any] = []
+        excluded_sections: list[Any] = []
         total_characters = 0
-        decisions = []
-
+        decisions: list[Any] = []
         for section in sections:
             # Check enhanced length constraints
             if constraints.max_length:
@@ -583,10 +582,9 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> List[ContextSection]:
         """Process enhanced memories into context sections"""
-        sections = []
-
+        sections: list[Any] = []
         # Filter enhanced memories by constraints
-        filtered_memories = []
+        filtered_memories: list[Any] = []
         for memory in memories:
             # Apply enhanced time window
             if constraints.time_window_hours:
@@ -615,7 +613,7 @@ class ContextRenderer:
         limited_memories = sorted_memories[: constraints.max_memories]
 
         # Group enhanced memories by type
-        memory_groups = {}
+        memory_groups: dict[Any, Any] = {}
         for memory in limited_memories:
             mem_type = memory.memory_type.value
             if mem_type not in memory_groups:
@@ -624,7 +622,7 @@ class ContextRenderer:
 
         # Create enhanced sections for each memory type
         for mem_type, mem_list in memory_groups.items():
-            content_parts = []
+            content_parts: list[Any] = []
             for memory in mem_list:
                 timestamp_str = memory.timestamp.strftime("%H:%M")
                 emotion_str = self._format_emotion(memory.emotional_weight)
@@ -661,8 +659,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced environmental context into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for key, value in env_context.items():
             if isinstance(value, (str, int, float, bool)):
                 content_parts.append(f"{key.replace('_', ' ').title()}: {value}")
@@ -721,8 +718,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced relationship context into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for agent_id, relationship_data in rel_context.items():
             if isinstance(relationship_data, dict):
                 trust = relationship_data.get("trust_level", 0)
@@ -752,8 +748,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced equipment states into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for equipment_name, equipment_data in equipment_states.items():
             if isinstance(equipment_data, dict):
                 condition = equipment_data.get("condition", "Unknown")
@@ -824,7 +819,7 @@ class ContextRenderer:
         if not truncated_content:
             # Blessed word-based truncation as fallback
             words = content.split()
-            truncated_words = []
+            truncated_words: list[Any] = []
             char_count = 0
 
             for word in words:
@@ -885,8 +880,7 @@ class ContextRenderer:
 
         # Try enhanced progressive section removal
         included_sections = render_result.sections_included.copy()
-        removed_sections = []
-
+        removed_sections: list[Any] = []
         # Remove enhanced optional and low priority sections first
         priority_order = [
             ContextPriority.OPTIONAL,
@@ -1036,7 +1030,7 @@ Content: {{section.content}}
 
     def _update_rendering_statistics(
         self, render_format: RenderFormat, render_time: float, result: RenderResult
-    ):
+    ) -> None:
         """Update enhanced rendering statistics"""
         self.rendering_stats["total_renders"] += 1
         self.rendering_stats["format_usage"][render_format.value] += 1

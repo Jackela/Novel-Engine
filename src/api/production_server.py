@@ -103,8 +103,7 @@ class InputValidator:
     @staticmethod
     def validate_character_names(names: List[str]) -> List[str]:
         """Validate character names with strict rules."""
-        validated_names = []
-
+        validated_names: list[Any] = []
         for name in names:
             # Sanitize
             name = InputValidator.sanitize_string(name, 50)
@@ -125,7 +124,7 @@ class AuthenticationManager:
     """JWT-based authentication manager."""
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> None:
         """Create JWT access token."""
         to_encode = data.copy()
 
@@ -161,7 +160,7 @@ class SimulationRequest(BaseModel):
 
     @field_validator("character_names")
     @classmethod
-    def validate_names(cls, v):
+    def validate_names(cls, v) -> None:
         return InputValidator.validate_character_names(v)
 
 
@@ -485,7 +484,7 @@ async def run_simulation(
         )
 
 
-def run_production_server(host: str = "127.0.0.1", port: int = 8000):
+def run_production_server(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Run the production-hardened FastAPI server."""
     # Production configuration
     ssl_context = None
