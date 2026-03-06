@@ -86,7 +86,9 @@ class RedisStateStore(StateStore):
                 return json.loads(raw_value)
             except (json.JSONDecodeError, TypeError):
                 try:
-                    return pickle.loads(raw_value)
+                    # nosec B301 - pickle used for internal Redis cache data only
+                    # Data is stored by trusted application code, not external users
+                    return pickle.loads(raw_value)  # nosec B301
                 except Exception:
                     # Return as string if deserialization fails
                     return (

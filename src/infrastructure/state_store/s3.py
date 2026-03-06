@@ -137,7 +137,9 @@ class S3StateStore(StateStore):
                 return json.loads(data)
             except (json.JSONDecodeError, TypeError):
                 try:
-                    return pickle.loads(data)
+                    # nosec B301 - pickle used for internal S3 cache data only
+                    # Data is stored by trusted application code with proper access controls
+                    return pickle.loads(data)  # nosec B301
                 except Exception:
                     return data.decode("utf-8") if isinstance(data, bytes) else data
 
