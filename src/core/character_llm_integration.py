@@ -392,13 +392,18 @@ Agent State: Active and operational with current morale {morale_level:.2f}
                     requester=f"character_llm_{self.agent_id}",
                 )
 
+                # Use safe async execution without deprecated get_event_loop()
                 try:
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
+                    llm_response = loop.run_until_complete(llm_service.generate(request))
                 except RuntimeError:
+                    # No running loop - create a new one and run
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-
-                llm_response = loop.run_until_complete(llm_service.generate(request))
+                    try:
+                        llm_response = loop.run_until_complete(llm_service.generate(request))
+                    finally:
+                        loop.close()
 
                 if "[LLM Error:" in llm_response.content:
                     logger.warning(f"Agent {self.agent_id}: LLM error, using fallback")

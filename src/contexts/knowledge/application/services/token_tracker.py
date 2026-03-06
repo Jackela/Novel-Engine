@@ -317,7 +317,7 @@ class TokenTracker:
     def _start_flush_task(self) -> None:
         """Start background task to periodically flush pending records."""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError as exc:
             logger.warning(
                 "token_tracker_flush_not_started",

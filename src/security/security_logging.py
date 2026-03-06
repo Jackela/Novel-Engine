@@ -238,7 +238,7 @@ class SecurityLogger:
     def _start_background_tasks(self) -> None:
         """STANDARD BACKGROUND TASKS"""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._log_rotation_task = loop.create_task(self._log_rotation_loop())
             self._threat_analysis_task = loop.create_task(self._threat_analysis_loop())
         except RuntimeError:

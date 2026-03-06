@@ -128,13 +128,19 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
 
     nest_asyncio.apply()
 
+    # Use nest_asyncio-compatible approach without deprecated get_event_loop()
+    # First try to get the running loop (works with nest_asyncio)
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        response = loop.run_until_complete(llm_service.generate(request))
     except RuntimeError:
+        # No running loop - create a new one and run
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-
-    response = loop.run_until_complete(llm_service.generate(request))
+        try:
+            response = loop.run_until_complete(llm_service.generate(request))
+        finally:
+            loop.close()
 
     # Check for errors
     if "[LLM Error:" in response.content:
