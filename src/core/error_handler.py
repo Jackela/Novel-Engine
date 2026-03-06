@@ -639,12 +639,56 @@ class CentralizedErrorHandler:
             distribution[record.severity.value] += record.occurrence_count
         return dict(distribution)
 
+    def _get_severity_distribution_result(self) -> Result[Dict[str, int], ErrorHandlerError]:
+        """
+        Get distribution of errors by severity (Result pattern).
+
+        Returns:
+            Result containing severity distribution on success.
+            - Ok: Dict mapping severity to occurrence count
+            - Err(ErrorHandlerError): If distribution calculation fails
+        """
+        try:
+            distribution: dict[str, int] = defaultdict(int)
+            for record in self.error_records.values():
+                distribution[record.severity.value] += record.occurrence_count
+            return Ok(dict(distribution))
+        except Exception as e:
+            return Err(
+                ErrorHandlerError(
+                    message=f"Failed to get severity distribution: {e}",
+                    operation="_get_severity_distribution",
+                )
+            )
+
     def _get_category_distribution(self) -> Dict[str, int]:
         """Get distribution of errors by category."""
         distribution: dict[str, int] = defaultdict(int)
         for record in self.error_records.values():
             distribution[record.category.value] += record.occurrence_count
         return dict(distribution)
+
+    def _get_category_distribution_result(self) -> Result[Dict[str, int], ErrorHandlerError]:
+        """
+        Get distribution of errors by category (Result pattern).
+
+        Returns:
+            Result containing category distribution on success.
+            - Ok: Dict mapping category to occurrence count
+            - Err(ErrorHandlerError): If distribution calculation fails
+        """
+        try:
+            distribution: dict[str, int] = defaultdict(int)
+            for record in self.error_records.values():
+                distribution[record.category.value] += record.occurrence_count
+            return Ok(dict(distribution))
+        except Exception as e:
+            return Err(
+                ErrorHandlerError(
+                    message=f"Failed to get category distribution: {e}",
+                    operation="_get_category_distribution",
+                )
+            )
 
     def _get_recovery_statistics(self) -> Dict[str, Any]:
         """Get recovery attempt statistics."""
@@ -658,6 +702,34 @@ class CentralizedErrorHandler:
             "successful_recoveries": successful,
             "success_rate": successful / attempted if attempted > 0 else 0.0,
         }
+
+    def _get_recovery_statistics_result(self) -> Result[Dict[str, Any], ErrorHandlerError]:
+        """
+        Get recovery attempt statistics (Result pattern).
+
+        Returns:
+            Result containing recovery statistics on success.
+            - Ok: Dict with recovery attempt and success statistics
+            - Err(ErrorHandlerError): If statistics calculation fails
+        """
+        try:
+            attempted = sum(1 for r in self.error_records.values() if r.recovery_attempted)
+            successful = sum(
+                1 for r in self.error_records.values() if r.recovery_successful
+            )
+
+            return Ok({
+                "recovery_attempts": attempted,
+                "successful_recoveries": successful,
+                "success_rate": successful / attempted if attempted > 0 else 0.0,
+            })
+        except Exception as e:
+            return Err(
+                ErrorHandlerError(
+                    message=f"Failed to get recovery statistics: {e}",
+                    operation="_get_recovery_statistics",
+                )
+            )
 
     def _get_recent_critical_errors(self) -> List[Dict[str, Any]]:
         """Get recent critical errors."""

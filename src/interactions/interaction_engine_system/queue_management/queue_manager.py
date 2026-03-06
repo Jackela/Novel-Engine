@@ -7,6 +7,7 @@ Handles queuing, prioritization, and scheduling of interaction requests.
 """
 
 import asyncio
+import logging
 import structlog
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field

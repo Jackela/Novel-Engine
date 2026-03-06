@@ -38,6 +38,15 @@ def result_to_standard_response(result: Result[T, Error]) -> StandardResponse:
         return StandardResponse(success=True, data=result.value)
     else:
         error = result.error
+        if error is None:
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="UNKNOWN_ERROR",
+                    message="Unknown error",
+                    details={},
+                ),
+            )
         return StandardResponse(
             success=False,
             error=ErrorInfo(
@@ -162,7 +171,10 @@ def map_result_list(results: list[Result[T, Error]]) -> Result[list[T], Error]:
     for result in results:
         if result.is_error:
             return cast(Result[list[T], Error], result)
-        values.append(result.value)
+        value = result.value
+        if value is None:
+            return Err(Error(code="NULL_VALUE", message="Result contained null value"))
+        values.append(value)
     return Ok(values)
 
 
@@ -183,16 +195,20 @@ def wrap_with_fallback(
         The value from Result or fallback
     """
     if result.is_ok:
-        return result.value
+        value = result.value
+        if value is None:
+            return fallback
+        return value
     else:
         if log_fallback:
             import structlog
 
             logger = structlog.get_logger(__name__)
+            error = result.error
             logger.warning(
                 "result_fallback_used",
-                error_code=result.error.code,
-                error_message=result.error.message,
+                error_code=error.code if error else "UNKNOWN_ERROR",
+                error_message=error.message if error else "Unknown error",
             )
         return fallback
 

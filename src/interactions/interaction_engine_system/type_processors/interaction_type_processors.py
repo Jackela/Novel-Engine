@@ -6,6 +6,7 @@ Specialized processors for different interaction types with category-specific lo
 content generation, and outcome handling for each interaction category.
 """
 
+import logging
 import structlog
 from abc import ABC, abstractmethod
 from datetime import datetime

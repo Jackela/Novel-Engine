@@ -11,6 +11,9 @@ import structlog
 import time
 from typing import Any, Dict, List
 
+from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.core.result import Err, Ok, Result
+
 logger = structlog.get_logger(__name__)
 
 
@@ -137,6 +140,58 @@ class MemoryManager:
 
         return list(sorted_memories)[:limit]
 
+    def get_relevant_memories_result(
+        self, context: Dict[str, Any], limit: int = 10
+    ) -> Result[List[Dict[str, Any]], ServiceError]:
+        """
+        Retrieve relevant memories based on context (Result pattern).
+
+        Args:
+            context: Context for memory retrieval
+            limit: Maximum number of memories to return
+
+        Returns:
+            Result containing list of relevant memory entries on success.
+            - Ok: List of relevant memory entries
+            - Err(ServiceError): If memory retrieval fails
+        """
+        try:
+            relevant_memories: list[Any] = []
+            # Search by entity
+            entities = context.get("entities", [])
+            for entity in entities:
+                if entity in self.memory_by_entity:
+                    relevant_memories.extend(self.memory_by_entity[entity])
+
+            # Search by location
+            location = context.get("location")
+            if location and location in self.memory_by_location:
+                relevant_memories.extend(self.memory_by_location[location])
+
+            # Search by event type
+            event_type = context.get("event_type")
+            if event_type and event_type in self.memory_by_event_type:
+                relevant_memories.extend(self.memory_by_event_type[event_type])
+
+            # Remove duplicates and sort by importance and recency
+            unique_memories = {id(mem): mem for mem in relevant_memories}.values()
+            sorted_memories = sorted(
+                unique_memories,
+                key=lambda m: (m.get("importance_score", 0), m.get("timestamp", 0)),
+                reverse=True,
+            )
+
+            return Ok(list(sorted_memories)[:limit])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get relevant memories: {e}",
+                    service_name="MemoryManager",
+                    operation="get_relevant_memories",
+                    details={"agent_id": self.agent_id},
+                )
+            )
+
     def get_memory_summary(self) -> Dict[str, Any]:
         """Get summary of current memory state."""
         return {
@@ -147,6 +202,34 @@ class MemoryManager:
             "locations_known": len(self.memory_by_location),
             "event_types_seen": len(self.memory_by_event_type),
         }
+
+    def get_memory_summary_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get summary of current memory state (Result pattern).
+
+        Returns:
+            Result containing memory state summary on success.
+            - Ok: Dict with memory state information
+            - Err(ServiceError): If summary generation fails
+        """
+        try:
+            return Ok({
+                "short_term_count": len(self.short_term_memory),
+                "long_term_count": len(self.long_term_memory),
+                "working_memory_items": len(self.working_memory),
+                "entities_tracked": len(self.memory_by_entity),
+                "locations_known": len(self.memory_by_location),
+                "event_types_seen": len(self.memory_by_event_type),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get memory summary: {e}",
+                    service_name="MemoryManager",
+                    operation="get_memory_summary",
+                    details={"agent_id": self.agent_id},
+                )
+            )
 
     def _generate_personal_interpretation(self, log_entry: Dict[str, Any]) -> str:
         """Generate personal interpretation of log entry."""

@@ -87,6 +87,28 @@ class DecisionContext:
             parts.append(f"{key}={value}")
         return ", ".join(parts) if parts else "no resources"
 
+    def get_resource_summary_result(self) -> Result[str, FactionError]:
+        """
+        Get a brief summary of resources for logging/events (Result pattern).
+
+        Returns:
+            Result containing resource summary string on success.
+            - Ok: Summary string of resources (e.g., "gold=100, food=50")
+            - Err(FactionError): If summary generation fails
+        """
+        try:
+            parts: list[Any] = []
+            for key, value in sorted(self.resources.items()):
+                parts.append(f"{key}={value}")
+            return Ok(", ".join(parts) if parts else "no resources")
+        except Exception as e:
+            return Err(
+                FactionError(
+                    message=f"Failed to generate resource summary: {e}",
+                    details={"faction_id": self.faction_id},
+                )
+            )
+
 
 @dataclass
 class ActionDefinition:

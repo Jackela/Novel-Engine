@@ -22,6 +22,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 logger = structlog.get_logger(__name__)
 
 
@@ -96,6 +99,26 @@ class MetricsCoordinator:
         """
         return (datetime.now() - self.startup_time).total_seconds()
 
+    def get_uptime_seconds_result(self) -> Result[float, ServiceError]:
+        """
+        Calculate uptime in seconds (Result pattern).
+
+        Returns:
+            Result containing uptime in seconds on success.
+            - Ok: Seconds since initialization
+            - Err(ServiceError): If calculation fails
+        """
+        try:
+            return Ok((datetime.now() - self.startup_time).total_seconds())
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to calculate uptime: {e}",
+                    service_name="MetricsCoordinator",
+                    operation="get_uptime_seconds",
+                )
+            )
+
     def get_average_response_time(self, window_size: int = 100) -> float:
         """
         Calculate average response time over recent operations.
@@ -134,6 +157,78 @@ class MetricsCoordinator:
         error_rate = self.get_error_rate()
         # Convert error rate to health score (10% error = 0.0 health)
         return max(0.0, 1.0 - min(error_rate * 10, 1.0))
+
+    def get_system_health_score_result(self) -> Result[float, ServiceError]:
+        """
+        Calculate overall system health score (Result pattern).
+
+        Returns:
+            Result containing health score on success.
+            - Ok: Health score (0.0 - 1.0), where 1.0 is perfect health
+            - Err(ServiceError): If calculation fails
+        """
+        try:
+            error_rate = self.get_error_rate()
+            # Convert error rate to health score (10% error = 0.0 health)
+            return Ok(max(0.0, 1.0 - min(error_rate * 10, 1.0)))
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to calculate health score: {e}",
+                    service_name="MetricsCoordinator",
+                    operation="get_system_health_score",
+                )
+            )
+
+    def get_error_rate_result(self) -> Result[float, ServiceError]:
+        """
+        Calculate current error rate (Result pattern).
+
+        Returns:
+            Result containing error rate on success.
+            - Ok: Error rate (0.0 - 1.0)
+            - Err(ServiceError): If calculation fails
+        """
+        try:
+            if self.operation_count == 0:
+                return Ok(0.0)
+            return Ok(self.error_count / self.operation_count)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to calculate error rate: {e}",
+                    service_name="MetricsCoordinator",
+                    operation="get_error_rate",
+                )
+            )
+
+    def get_average_response_time_result(
+        self, window_size: int = 100
+    ) -> Result[float, ServiceError]:
+        """
+        Calculate average response time over recent operations (Result pattern).
+
+        Args:
+            window_size: Number of recent operations to consider
+
+        Returns:
+            Result containing average response time on success.
+            - Ok: Average response time in seconds
+            - Err(ServiceError): If calculation fails
+        """
+        try:
+            if not self.response_times:
+                return Ok(0.0)
+            recent_times = self.response_times[-window_size:]
+            return Ok(sum(recent_times) / len(recent_times))
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to calculate average response time: {e}",
+                    service_name="MetricsCoordinator",
+                    operation="get_average_response_time",
+                )
+            )
 
     # ===================================================================
     # Integration Metrics Generation

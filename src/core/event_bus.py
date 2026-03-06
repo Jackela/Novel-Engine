@@ -85,14 +85,14 @@ class Event:
     def __lt__(self, other: "Event") -> bool:
         """Compare events by priority (higher first) then timestamp (older first)."""
         if not isinstance(other, Event):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         if self.priority != other.priority:
             return self.priority > other.priority  # Higher priority first
         return self.timestamp < other.timestamp  # Older events first
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Event):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         return self.event_id == other.event_id
 
 
@@ -656,6 +656,31 @@ class EventBus:
             "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
         }
 
+    def get_metrics_result(self) -> Result[Dict[str, Any], EventBusError]:
+        """
+        Get event bus metrics (Result pattern).
+
+        Returns:
+            Result containing event bus metrics on success.
+            - Ok: Dict with event bus metrics
+            - Err(EventBusError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                **self._metrics,
+                "history_size": len(self._history),
+                "dead_letter_size": len(self._dead_letters),
+                "paused_event_types": list(self._paused_types),
+                "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
+            })
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to get metrics: {e}",
+                    operation="get_metrics",
+                )
+            )
+
     def reset_metrics(self) -> None:
         """Reset event bus metrics."""
         self._metrics = {
@@ -664,6 +689,31 @@ class EventBus:
             "events_failed": 0,
             "retries_attempted": 0,
         }
+
+    def reset_metrics_result(self) -> Result[None, EventBusError]:
+        """
+        Reset event bus metrics (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(EventBusError): If reset fails
+        """
+        try:
+            self._metrics = {
+                "events_emitted": 0,
+                "events_processed": 0,
+                "events_failed": 0,
+                "retries_attempted": 0,
+            }
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to reset metrics: {e}",
+                    operation="reset_metrics",
+                )
+            )
 
     # Lifecycle methods
     async def start(self) -> None:

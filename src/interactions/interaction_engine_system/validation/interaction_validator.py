@@ -6,6 +6,7 @@ Interaction context validation, prerequisite checking, and constraint verificati
 Ensures interaction integrity and validates all requirements before processing.
 """
 
+import logging
 import structlog
 from typing import Any, Dict, List, Optional
 

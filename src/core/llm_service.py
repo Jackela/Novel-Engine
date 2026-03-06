@@ -237,11 +237,15 @@ class UnifiedLLMService:
         """
         result = await self.generate_result(request)
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
+            # Fall through to error case if value is None
 
         # Create error response
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=request.provider,
             format_validated=False,
             cached=False,
@@ -596,10 +600,13 @@ class UnifiedLLMService:
         """Generate action response. (Legacy - use generate_action_result)"""
         result = await self.generate_action_result(prompt, requester)
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
         # Return error response
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=LLMProvider.GEMINI,
             format_validated=False,
             cached=False,
@@ -638,9 +645,12 @@ class UnifiedLLMService:
         """Generate narrative text. (Legacy - use generate_narrative_result)"""
         result = await self.generate_narrative_result(prompt, style, requester)
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=LLMProvider.GEMINI,
             format_validated=False,
             cached=False,
@@ -681,9 +691,12 @@ class UnifiedLLMService:
         """Generate investigation clue. (Legacy - use generate_clue_result)"""
         result = await self.generate_clue_result(target, action_type, requester)
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=LLMProvider.GEMINI,
             format_validated=False,
             cached=False,
@@ -731,9 +744,12 @@ class UnifiedLLMService:
             character_name, personality, emotion, context, requester
         )
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=LLMProvider.GEMINI,
             format_validated=False,
             cached=False,
@@ -802,9 +818,12 @@ Output only the dialogue line:"""
             event_type, characters, story_context, plot_stage, requester
         )
         if result.is_ok:
-            return result.value
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
         return LLMResponse(
-            content=f"[LLM Error: {result.error.message}]",
+            content=f"[LLM Error: {error_msg}]",
             provider=LLMProvider.GEMINI,
             format_validated=False,
             cached=False,
@@ -896,6 +915,59 @@ Return in JSON format:
                 "primary": self.primary_provider.value,
             },
         }
+
+    def get_metrics_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get performance metrics (Result pattern).
+
+        Returns:
+            Result containing performance metrics on success.
+            - Ok: Dict with performance metrics
+            - Err(ServiceError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "requests": {
+                    "total": self.metrics.total_requests,
+                    "successful": self.metrics.successful_requests,
+                    "failed": self.metrics.failed_requests,
+                    "success_rate": self.metrics.successful_requests
+                    / max(1, self.metrics.total_requests),
+                },
+                "cache": {
+                    "hits": self.metrics.cache_hits,
+                    "misses": self.metrics.cache_misses,
+                    "hit_rate": self.metrics.cache_hits
+                    / max(1, self.metrics.cache_hits + self.metrics.cache_misses),
+                },
+                "performance": {
+                    "average_response_time_ms": self.metrics.average_response_time,
+                    "total_tokens_used": self.metrics.total_tokens_used,
+                },
+                "cost": {
+                    "total_cost": self.metrics.total_cost,
+                    "daily_spend": self.metrics.daily_spend,
+                    "budget_remaining": max(
+                        0, self.cost_control.daily_budget - self.metrics.daily_spend
+                    ),
+                },
+                "providers": {
+                    "available": [
+                        p.value
+                        for p, config in self.providers.items()
+                        if config["available"]
+                    ],
+                    "primary": self.primary_provider.value,
+                },
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get metrics: {e}",
+                    service_name="UnifiedLLMService",
+                    operation="get_metrics",
+                )
+            )
 
 
 # Global service instance

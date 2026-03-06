@@ -358,6 +358,45 @@ class DatabaseConnection:
             "last_error": self.metrics.last_error,
         }
 
+    def get_metrics_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get connection metrics (Result pattern).
+
+        Returns:
+            Result containing connection metrics dictionary on success.
+            - Ok: Dictionary with connection metrics
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "state": self.state.value,
+                "created_at": self.metrics.created_at.isoformat(),
+                "last_used": self.metrics.last_used.isoformat(),
+                "total_queries": self.metrics.total_queries,
+                "successful_queries": self.metrics.successful_queries,
+                "failed_queries": self.metrics.failed_queries,
+                "success_rate": (
+                    self.metrics.successful_queries / self.metrics.total_queries
+                    if self.metrics.total_queries > 0
+                    else 0.0
+                ),
+                "average_query_time": self.metrics.average_query_time,
+                "health_status": self.metrics.health_status,
+                "last_health_check": (
+                    self.metrics.last_health_check.isoformat()
+                    if self.metrics.last_health_check
+                    else None
+                ),
+                "last_error": self.metrics.last_error,
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get connection metrics: {e}",
+                    operation="get_metrics",
+                )
+            )
+
 
 class DatabaseConnectionPool:
     """
@@ -676,6 +715,43 @@ class DatabaseConnectionPool:
             "closed": self._closed,
         }
 
+    def get_pool_status_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get current pool status (Result pattern).
+
+        Returns:
+            Result containing pool status dictionary on success.
+            - Ok: Dictionary with pool status metrics
+            - Err(DatabaseError): If status retrieval fails
+        """
+        try:
+            total_connections = len(self._available_connections) + len(
+                self._active_connections
+            )
+
+            return Ok({
+                "total_connections": total_connections,
+                "available_connections": len(self._available_connections),
+                "active_connections": len(self._active_connections),
+                "min_pool_size": self.config.min_pool_size,
+                "max_pool_size": self.config.max_pool_size,
+                "pool_utilization": (
+                    len(self._active_connections) / total_connections
+                    if total_connections > 0
+                    else 0.0
+                ),
+                "initialized": self._initialized,
+                "closed": self._closed,
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get pool status: {e}",
+                    operation="get_pool_status",
+                    pool_name=self.config.database_type.value,
+                )
+            )
+
     def get_pool_metrics(self) -> Dict[str, Any]:
         """Get pool performance metrics."""
         wait_times = self._pool_metrics["connection_wait_times"]
@@ -694,12 +770,69 @@ class DatabaseConnectionPool:
             "total_wait_samples": len(wait_times),
         }
 
+    def get_pool_metrics_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get pool performance metrics (Result pattern).
+
+        Returns:
+            Result containing pool metrics dictionary on success.
+            - Ok: Dictionary with pool performance metrics
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            wait_times = self._pool_metrics["connection_wait_times"]
+
+            return Ok({
+                "total_connections_created": self._pool_metrics[
+                    "total_connections_created"
+                ],
+                "total_connections_closed": self._pool_metrics["total_connections_closed"],
+                "peak_active_connections": self._pool_metrics["peak_active_connections"],
+                "average_pool_utilization": self._pool_metrics["average_pool_utilization"],
+                "average_wait_time": (
+                    sum(wait_times) / len(wait_times) if wait_times else 0.0
+                ),
+                "max_wait_time": max(wait_times) if wait_times else 0.0,
+                "total_wait_samples": len(wait_times),
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get pool metrics: {e}",
+                    operation="get_pool_metrics",
+                    pool_name=self.config.database_type.value,
+                )
+            )
+
     def get_connection_metrics(self) -> List[Dict[str, Any]]:
         """Get metrics for all connections."""
         all_connections = list(self._available_connections) + list(
             self._active_connections.values()
         )
         return [conn.get_metrics() for conn in all_connections]
+
+    def get_connection_metrics_result(self) -> Result[List[Dict[str, Any]], DatabaseError]:
+        """
+        Get metrics for all connections (Result pattern).
+
+        Returns:
+            Result containing list of connection metrics on success.
+            - Ok: List of connection metrics dictionaries
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            all_connections = list(self._available_connections) + list(
+                self._active_connections.values()
+            )
+            return Ok([conn.get_metrics() for conn in all_connections])
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get connection metrics: {e}",
+                    operation="get_connection_metrics",
+                    pool_name=self.config.database_type.value,
+                )
+            )
 
 
 class DatabaseManager:

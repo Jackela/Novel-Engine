@@ -14,6 +14,7 @@ caching optimization, and state change detection.
 import hashlib
 import importlib.util
 import json
+import logging
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime

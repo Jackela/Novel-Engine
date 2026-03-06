@@ -150,7 +150,7 @@ class LRUCache(Generic[K, V]):
         """
         with self._lock:
             self._prev_size = len(self._cache)
-            value = self._cache.get(key)
+            value: Optional[V] = self._cache.get(key)
             if value is not None:
                 self._hits += 1
                 logger.debug(

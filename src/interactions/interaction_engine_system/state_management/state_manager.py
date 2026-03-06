@@ -6,6 +6,7 @@ Character state updates, memory management, and relationship tracking system.
 Handles all state changes resulting from interaction processing.
 """
 
+import logging
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime

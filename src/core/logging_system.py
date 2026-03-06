@@ -20,7 +20,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
 
 
 class LogLevel(Enum):
@@ -92,6 +95,10 @@ class LogEntry:
             "error_details": self.error_details,
             "performance_metrics": self.performance_metrics,
         }
+
+
+# Type variable for generic function types
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 class PerformanceTracker:
@@ -388,10 +395,12 @@ class StructuredLogger:
         """Create performance tracker for operation."""
         return PerformanceTracker(operation, context or self.get_current_context())
 
-    def time_operation(self, operation: str, context: Optional[LogContext] = None) -> None:
+    def time_operation(
+        self, operation: str, context: Optional[LogContext] = None
+    ) -> Callable[[F], F]:
         """Decorator/context manager for timing operations."""
 
-        def decorator(func: Any) -> Any:
+        def decorator(func: F) -> F:
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.track_performance(operation, context):
                     return await func(*args, **kwargs)
@@ -400,7 +409,8 @@ class StructuredLogger:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper  # type: ignore[no-any-return]
+            wrapper = async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            return cast(F, wrapper)
 
         return decorator
 
@@ -431,9 +441,76 @@ class StructuredLogger:
             "total_duration_ms": sum(durations),
         }
 
+    def get_performance_summary_result(
+        self, operation_filter: Optional[str] = None
+    ) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get performance metrics summary (Result pattern).
+
+        Args:
+            operation_filter: Optional filter for specific operations
+
+        Returns:
+            Result containing performance summary on success.
+            - Ok: Dict with performance metrics
+            - Err(ServiceError): If summary generation fails
+        """
+        try:
+            relevant_metrics: list[Any] = []
+            for entry in self.performance_metrics:
+                if operation_filter is None or operation_filter in entry.get(
+                    "context", {}
+                ).get("operation", ""):
+                    relevant_metrics.append(entry)
+
+            if not relevant_metrics:
+                return Ok({"message": "No performance data available"})
+
+            durations = [m.get("duration_ms", 0) for m in relevant_metrics]
+
+            return Ok({
+                "operation_filter": operation_filter,
+                "total_operations": len(relevant_metrics),
+                "avg_duration_ms": sum(durations) / len(durations),
+                "min_duration_ms": min(durations),
+                "max_duration_ms": max(durations),
+                "total_duration_ms": sum(durations),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get performance summary: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_performance_summary",
+                )
+            )
+
     def get_audit_trail(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent audit trail entries."""
         return list(self.audit_trail)[-limit:]
+
+    def get_audit_trail_result(self, limit: int = 100) -> Result[List[Dict[str, Any]], ServiceError]:
+        """
+        Get recent audit trail entries (Result pattern).
+
+        Args:
+            limit: Maximum number of entries to return
+
+        Returns:
+            Result containing list of audit entries on success.
+            - Ok: List of audit trail entries
+            - Err(ServiceError): If retrieval fails
+        """
+        try:
+            return Ok(list(self.audit_trail)[-limit:])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get audit trail: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_audit_trail",
+                )
+            )
 
     def get_log_statistics(self) -> Dict[str, Any]:
         """Get logging system statistics."""
@@ -444,6 +521,32 @@ class StructuredLogger:
             "handlers_configured": len(self._logger.handlers),
             "current_log_level": self._logger.level,
         }
+
+    def get_log_statistics_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get logging system statistics (Result pattern).
+
+        Returns:
+            Result containing logging statistics on success.
+            - Ok: Dict with logging system statistics
+            - Err(ServiceError): If statistics retrieval fails
+        """
+        try:
+            return Ok({
+                "performance_entries": len(self.performance_metrics),
+                "audit_entries": len(self.audit_trail),
+                "context_stack_depth": len(self._context_stack),
+                "handlers_configured": len(self._logger.handlers),
+                "current_log_level": self._logger.level,
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get log statistics: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_log_statistics",
+                )
+            )
 
 
 class StructuredFormatter(logging.Formatter):
@@ -488,7 +591,7 @@ class AuditFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter audit records."""
         if hasattr(record, "structured_data"):
-            data: dict[str, Any] = record.structured_data  # type: ignore[attr-defined]
+            data: dict[str, Any] = getattr(record, "structured_data", {})
             return data.get("level") == "AUDIT" or data.get("category") == "audit"
         return False
 

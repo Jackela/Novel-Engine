@@ -21,7 +21,6 @@ from src.core.result import Err, Error, Ok, Result
 logger = structlog.get_logger(__name__)
 
 
-@dataclass
 class EventsServiceError(Error):
     """Error raised when events service operations fail."""
 

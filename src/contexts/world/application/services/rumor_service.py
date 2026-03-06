@@ -346,6 +346,53 @@ class RumorService:
         else:
             return "False"
 
+    @staticmethod
+    def get_veracity_label_result(truth_value: int) -> Result[str, RumorValidationError]:
+        """Get the veracity label for a truth value (Result pattern).
+
+        This utility method converts a numeric truth value to a
+        human-readable label with explicit error handling.
+
+        Args:
+            truth_value: Truth percentage (0-100)
+
+        Returns:
+            Result containing veracity label on success.
+            - Ok: Veracity label string
+            - Err(RumorValidationError): If truth_value is invalid
+
+        Example:
+            >>> result = RumorService.get_veracity_label_result(85)
+            >>> if result.is_ok:
+            ...     print(result.value)  # "Confirmed"
+        """
+        # Validate truth value range
+        if not isinstance(truth_value, int):
+            return Err(
+                RumorValidationError(
+                    message=f"Truth value must be an integer, got {type(truth_value).__name__}",
+                    details={"truth_value": truth_value},
+                )
+            )
+        if truth_value < 0 or truth_value > 100:
+            return Err(
+                RumorValidationError(
+                    message=f"Truth value must be between 0 and 100, got {truth_value}",
+                    details={"truth_value": truth_value},
+                )
+            )
+
+        if truth_value >= 80:
+            return Ok("Confirmed")
+        elif truth_value >= 60:
+            return Ok("Likely True")
+        elif truth_value >= 40:
+            return Ok("Uncertain")
+        elif truth_value >= 20:
+            return Ok("Likely False")
+        else:
+            return Ok("False")
+
     async def get_propagation_graph(
         self,
         world_id: str,

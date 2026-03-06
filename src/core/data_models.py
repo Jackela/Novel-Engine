@@ -21,6 +21,9 @@ from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import uuid4
 
+from src.contexts.shared.domain.errors import ServiceError, StateError
+from src.core.result import Err, Ok, Result
+
 T = TypeVar("T")
 
 logger = structlog.get_logger(__name__)
@@ -298,6 +301,35 @@ class CharacterState:
 
         return health_factor * equipment_factor * mood_factor * stress_factor
 
+    def get_combat_readiness_result(self) -> Result[float, StateError]:
+        """
+        Calculate enhanced combat readiness validated by all factors (Result pattern).
+
+        Returns:
+            Result containing combat readiness score on success.
+            - Ok: Combat readiness score (0.0 - 1.0)
+            - Err(StateError): If calculation fails
+        """
+        try:
+            health_factor = self.physical_condition.health_percentage
+            equipment_factor = self.equipment_state.calculate_combat_effectiveness()
+            mood_factor = (
+                1.2
+                if self.current_mood
+                in [EmotionalState.AGGRESSIVE, EmotionalState.CONFIDENT]
+                else 1.0
+            )
+            stress_factor = max(0.3, 1.0 - (self.physical_condition.stress_level / 100.0))
+
+            return Ok(health_factor * equipment_factor * mood_factor * stress_factor)
+        except Exception as e:
+            return Err(
+                StateError(
+                    message=f"Failed to calculate combat readiness: {e}",
+                    entity_id=self.base_identity.agent_id,
+                )
+            )
+
     def update_from_interaction(self, interaction_data: Dict[str, Any]) -> None:
         """Update character state enhanced by interaction outcomes"""
         self.last_updated = datetime.now()
@@ -348,6 +380,32 @@ class EnvironmentalState:
             "resource_abundance": sum(self.resources_available.values()),
         }
 
+    def get_tactical_assessment_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Generate enhanced tactical situation report (Result pattern).
+
+        Returns:
+            Result containing tactical assessment on success.
+            - Ok: Dict with tactical situation data
+            - Err(ServiceError): If assessment generation fails
+        """
+        try:
+            return Ok({
+                "overall_danger": self.threat_level,
+                "visibility": "good" if self.lighting in ["normal", "bright"] else "poor",
+                "concealment_options": len(self.available_cover),
+                "social_complexity": len(self.nearby_agents),
+                "resource_abundance": sum(self.resources_available.values()),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get tactical assessment: {e}",
+                    service_name="EnvironmentalState",
+                    operation="get_tactical_assessment",
+                )
+            )
+
 
 @dataclass
 class DynamicContext:
@@ -390,6 +448,40 @@ class DynamicContext:
 
         return relevant_relationships
 
+    def get_relationship_context_result(
+        self, target_agents: List[str]
+    ) -> Result[Dict[str, RelationshipState], StateError]:
+        """
+        Extract enhanced relationship context for specific agents (Result pattern).
+
+        Args:
+            target_agents: List of agent IDs to get relationships for
+
+        Returns:
+            Result containing relationship context on success.
+            - Ok: Dict mapping agent_id to RelationshipState
+            - Err(StateError): If character state is invalid
+        """
+        try:
+            if not self.character_state:
+                return Ok({})
+
+            relevant_relationships: dict[Any, Any] = {}
+            for agent_id in target_agents:
+                if agent_id in self.character_state.active_relationships:
+                    relevant_relationships[agent_id] = (
+                        self.character_state.active_relationships[agent_id]
+                    )
+
+            return Ok(relevant_relationships)
+        except Exception as e:
+            return Err(
+                StateError(
+                    message=f"Failed to get relationship context: {e}",
+                    entity_id=self.agent_id,
+                )
+            )
+
     def get_relevant_memories(
         self, max_memories: int = 10, memory_types: Optional[List[MemoryType]] = None
     ) -> List[MemoryItem]:
@@ -408,6 +500,46 @@ class DynamicContext:
         )
 
         return relevant_memories[:max_memories]
+
+    def get_relevant_memories_result(
+        self, max_memories: int = 10, memory_types: Optional[List[MemoryType]] = None
+    ) -> Result[List[MemoryItem], ServiceError]:
+        """
+        Retrieve enhanced memories filtered by standard criteria (Result pattern).
+
+        Args:
+            max_memories: Maximum number of memories to return
+            memory_types: Optional list of memory types to filter by
+
+        Returns:
+            Result containing filtered memories on success.
+            - Ok: List of MemoryItem objects
+            - Err(ServiceError): If memory retrieval fails
+        """
+        try:
+            relevant_memories = self.memory_context
+
+            if memory_types:
+                relevant_memories = [
+                    mem for mem in relevant_memories if mem.memory_type in memory_types
+                ]
+
+            # Sort by standard relevance and recency
+            relevant_memories.sort(
+                key=lambda m: (m.relevance_score * m.decay_factor, m.timestamp),
+                reverse=True,
+            )
+
+            return Ok(relevant_memories[:max_memories])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get relevant memories: {e}",
+                    service_name="DynamicContext",
+                    operation="get_relevant_memories",
+                    details={"agent_id": self.agent_id},
+                )
+            )
 
     def to_json(self) -> str:
         """Serialize enhanced context for standard persistence"""
