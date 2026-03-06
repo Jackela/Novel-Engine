@@ -51,9 +51,10 @@ class TestRetrievalFilterExtended:
         
         assert "source_type" in clause
         assert "$in" in clause["source_type"]
-        assert "character" in clause["source_type"]["$in"]
-        assert "lore" in clause["source_type"]["$in"]
-        assert "scene" in clause["source_type"]["$in"]
+        # Source types are uppercase (CHARACTER, LORE, SCENE)
+        assert "CHARACTER" in clause["source_type"]["$in"]
+        assert "LORE" in clause["source_type"]["$in"]
+        assert "SCENE" in clause["source_type"]["$in"]
 
     def test_to_where_clause_with_tags(self):
         """Test where clause with tags filter."""
