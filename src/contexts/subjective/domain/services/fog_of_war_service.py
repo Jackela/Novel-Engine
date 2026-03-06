@@ -105,12 +105,14 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
             # Create temporary modified perception range
             from ..value_objects.perception_range import PerceptionRange
 
+            # Clamp accuracy modifier to valid range [0.0, 1.0]
+            modified_accuracy = min(1.0, perception_range.accuracy_modifier
+                * (1.0 + awareness_bonus * 0.5))
             modified_range = PerceptionRange(
                 perception_type=perception_type,
                 base_range=perception_range.base_range,
                 effective_range=effective_range,
-                accuracy_modifier=perception_range.accuracy_modifier
-                * (1.0 + awareness_bonus * 0.5),
+                accuracy_modifier=modified_accuracy,
                 environmental_modifiers=perception_range.environmental_modifiers,
             )
 
