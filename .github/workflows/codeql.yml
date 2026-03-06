@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - language: python
-            build-mode: autobuild
+            build-mode: none
           - language: javascript
             build-mode: autobuild
 
