@@ -22,7 +22,7 @@ from src.contexts.knowledge.application.services.smart_tagging_service import (
     TaggingResult,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

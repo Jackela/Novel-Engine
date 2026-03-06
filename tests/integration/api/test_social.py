@@ -7,6 +7,9 @@ verify endpoint availability when the router is properly included.
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app

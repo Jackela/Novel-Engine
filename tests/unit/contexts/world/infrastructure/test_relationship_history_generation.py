@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,

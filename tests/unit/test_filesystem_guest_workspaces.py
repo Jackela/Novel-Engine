@@ -4,7 +4,7 @@ import pytest
 
 from src.workspaces.filesystem import FilesystemCharacterStore, FilesystemWorkspaceStore
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

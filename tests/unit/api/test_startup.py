@@ -4,6 +4,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 from src.api.startup import (
     NON_EMPTY_WHEN_SET,
     PRODUCTION_REQUIRED_ENV_VARS,

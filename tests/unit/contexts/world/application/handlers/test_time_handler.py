@@ -4,6 +4,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.application.handlers.time_handler import TimeAdvancedHandler
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 

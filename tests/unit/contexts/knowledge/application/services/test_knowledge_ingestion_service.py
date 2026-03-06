@@ -40,7 +40,7 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture

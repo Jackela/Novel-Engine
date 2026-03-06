@@ -4,7 +4,7 @@ import pytest
 
 from src.core.world_state_coordinator import WorldStateCoordinator
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

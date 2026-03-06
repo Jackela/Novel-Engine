@@ -13,6 +13,9 @@ from uuid import uuid4
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 from src.contexts.ai.domain.services.llm_provider import (
     ILLMProvider,
     InvalidRequestError,

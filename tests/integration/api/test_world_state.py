@@ -7,6 +7,9 @@ These tests verify backward compatibility for existing clients.
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app

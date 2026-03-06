@@ -10,6 +10,9 @@ import uuid
 from typing import AsyncGenerator
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 import pytest_asyncio
 
 # Skip all tests in this module if asyncpg is not installed

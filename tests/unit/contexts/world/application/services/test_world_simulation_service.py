@@ -16,7 +16,7 @@ from uuid import uuid4
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()

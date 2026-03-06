@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 try:
     from rank_bm25 import BM25Okapi  # noqa: F401 - imported for availability check
 

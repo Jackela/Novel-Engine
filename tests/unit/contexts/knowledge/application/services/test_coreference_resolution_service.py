@@ -37,7 +37,7 @@ from src.contexts.knowledge.domain.models.entity import (
 
 # Sample LLM response for co-reference resolution
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 SAMPLE_COREF_JSON = """{
   "entity_name": "Alice",

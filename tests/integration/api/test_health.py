@@ -4,6 +4,9 @@ Tests the health check endpoints for liveness, readiness, and detailed health ch
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app

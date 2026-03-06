@@ -16,7 +16,7 @@ from src.contexts.narrative.application.services.pacing_service import (
 )
 from src.contexts.narrative.domain.entities.scene import Scene
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 class TestScenePacingMetrics:

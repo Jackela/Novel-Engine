@@ -9,6 +9,9 @@ Tests the EventService application layer, verifying:
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 from src.api.schemas.world_schemas import CreateEventRequest
 from src.contexts.world.application.services.event_service import EventService
 from src.contexts.world.domain.entities import (

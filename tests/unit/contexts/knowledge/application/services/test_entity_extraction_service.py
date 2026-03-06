@@ -41,7 +41,7 @@ from src.contexts.knowledge.domain.models.entity import (
 
 # Sample LLM response for entity extraction
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 SAMPLE_EXTRACTION_JSON = """{
   "entities": [

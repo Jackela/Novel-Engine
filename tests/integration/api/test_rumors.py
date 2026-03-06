@@ -4,6 +4,9 @@ Tests the rumor system endpoints for listing, filtering, and retrieving rumors.
 """
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app
