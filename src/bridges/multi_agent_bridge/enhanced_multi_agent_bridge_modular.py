@@ -6,6 +6,7 @@ Modular implementation of the enhanced multi-agent bridge using component-based 
 Maintains full backward compatibility while providing enterprise-grade modularity.
 """
 
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional

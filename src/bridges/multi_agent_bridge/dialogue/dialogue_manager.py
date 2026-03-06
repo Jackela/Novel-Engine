@@ -5,6 +5,7 @@ Dialogue Manager
 Manages agent-to-agent dialogues and conversation coordination.
 """
 
+import logging
 import structlog
 import uuid
 from dataclasses import asdict

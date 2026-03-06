@@ -15,6 +15,9 @@ warnings.warn(
 )
 
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
+    DEFAULT_ALIASES,
+    DEFAULT_MODELS,
+    DEFAULT_TASK_CONFIGS,
     ModelLookupResult,
     ModelRegistryConfig,
     ModelRegistryConfigFile,
@@ -27,6 +30,9 @@ from src.contexts.knowledge.application.services.model_registry_pkg.factory impo
 )
 
 __all__ = [
+    "DEFAULT_ALIASES",
+    "DEFAULT_MODELS",
+    "DEFAULT_TASK_CONFIGS",
     "ModelLookupResult",
     "ModelRegistryConfig",
     "ModelRegistryConfigFile",

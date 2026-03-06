@@ -45,6 +45,12 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 
+# Custom exception for entity extraction errors (for backward compatibility)
+class EntityExtractionError(Exception):
+    """Raised when entity extraction fails."""
+    pass
+
+
 # Configuration constants
 DEFAULT_TEMPERATURE = 0.3  # Lower for more deterministic extraction
 DEFAULT_MAX_TOKENS = 2000

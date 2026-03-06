@@ -7,6 +7,7 @@ Intelligent batching and processing of LLM requests for optimal performance and 
 
 import asyncio
 import heapq
+import logging
 import structlog
 import threading
 import time
