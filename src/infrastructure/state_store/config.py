@@ -1,78 +1,30 @@
-#!/usr/bin/env python3
-"""
-State Store Infrastructure
-========================
+"""State Store Configuration.
 
-Milestone 3 Implementation: Redis/Postgres/S3 State Externalization
-
-核心设计：
-- Redis: 快速访问的会话状态和缓存
-- PostgreSQL: 持久化的结构化数据存储
-- S3: 大文件存储（叙事文档、媒体文件）
-- 统一配置管理和环境感知部署
-
-Features:
-- StateStore抽象层: 统一的状态管理接口
-- RedisStateStore: 高性能会话数据存储
-- PostgreSQLStateStore: 关系型数据持久化
-- S3StateStore: 大文件和叙事文档存储
-- ConfigurationManager: 统一配置管理
+Configuration classes and key management for state stores.
 """
 
-import hashlib
-import json
-import structlog
-import os
-import pickle
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import asyncpg
-import boto3
-
-# External dependencies
-import redis.asyncio as aioredis
-import yaml
-from botocore.exceptions import ClientError
-from pydantic import BaseModel, Field
-
-logger = structlog.get_logger(__name__)
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Optional
 
 
-class StateStoreConfig(BaseModel):
-    """State store configuration"""
+class StateStoreType(Enum):
+    """Types of state store backends."""
 
-    redis_url: str = Field(
-        default="", description="Redis connection URL (set via REDIS_URL env var)"
-    )
-    postgres_url: str = Field(
-        default="",
-        description="PostgreSQL connection URL (set via POSTGRES_URL env var)",
-    )
-    s3_bucket: str = "novel-engine-storage"
-    s3_region: str = "us-east-1"
-    aws_access_key: Optional[str] = None
-    aws_secret_key: Optional[str] = None
-    encryption_key: Optional[str] = None
-    cache_ttl: int = 3600  # 1 hour
-    max_retries: int = 3
-    connection_timeout: int = 30
-
-    def __init__(self, **data) -> None:
-        # Allow environment variable overrides for sensitive values
-        if not data.get("redis_url"):
-            data["redis_url"] = os.getenv("REDIS_URL", "")
-        if not data.get("postgres_url"):
-            data["postgres_url"] = os.getenv("POSTGRES_URL", "")
-        super().__init__(**data)
+    REDIS = "redis"
+    POSTGRES = "postgres"
+    POSTGRESQL = "postgresql"
+    S3 = "s3"
+    MEMORY = "memory"
 
 
 @dataclass
 class StateKey:
-    """State key structure"""
+    """Structured key for state storage.
+
+    Provides a consistent naming convention for state keys
+    across different storage backends.
+    """
 
     namespace: str
     entity_type: str
@@ -80,18 +32,29 @@ class StateKey:
     version: Optional[str] = None
 
     def to_string(self) -> str:
-        """Convert to string key"""
+        """Convert key to string representation.
+
+        Returns:
+            Colon-separated key string
+        """
         parts = [self.namespace, self.entity_type, self.entity_id]
         if self.version:
             parts.append(self.version)
         return ":".join(parts)
 
     @classmethod
-    def from_string(cls, key: str) -> "StateKey":
-        """Create from string key"""
-        parts = key.split(":")
+    def from_string(cls, key_str: str) -> "StateKey":
+        """Parse key from string representation.
+
+        Args:
+            key_str: Colon-separated key string
+
+        Returns:
+            StateKey instance
+        """
+        parts = key_str.split(":")
         if len(parts) < 3:
-            raise ValueError(f"Invalid state key format: {key}")
+            raise ValueError(f"Invalid key format: {key_str}")
 
         return cls(
             namespace=parts[0],
@@ -100,36 +63,94 @@ class StateKey:
             version=parts[3] if len(parts) > 3 else None,
         )
 
+    def __hash__(self) -> int:
+        """Hash based on string representation."""
+        return hash(self.to_string())
 
-class StateStore(ABC):
-    """Abstract state store interface"""
-
-    @abstractmethod
-    async def get(self, key: StateKey) -> Optional[Any]:
-        """Retrieve value by key"""
-
-    @abstractmethod
-    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
-        """Store value with key"""
-
-    @abstractmethod
-    async def delete(self, key: StateKey) -> bool:
-        """Delete value by key"""
-
-    @abstractmethod
-    async def exists(self, key: StateKey) -> bool:
-        """Check if key exists"""
-
-    @abstractmethod
-    async def list_keys(self, pattern: str) -> List[StateKey]:
-        """List keys matching pattern"""
-
-    @abstractmethod
-    async def health_check(self) -> bool:
-        """Check store health"""
-
-    @abstractmethod
-    async def close(self) -> None:
-        """Close connections"""
+    def __eq__(self, other: object) -> bool:
+        """Equality based on string representation."""
+        if not isinstance(other, StateKey):
+            return False
+        return self.to_string() == other.to_string()
 
 
+@dataclass
+class StateStoreConfig:
+    """Configuration for state store connections.
+
+    Contains all necessary configuration for connecting to
+    Redis, PostgreSQL, and S3 backends.
+    """
+
+    # Store type selection
+    store_type: StateStoreType = StateStoreType.REDIS
+    default_store: StateStoreType = StateStoreType.REDIS
+
+    # Redis configuration
+    redis_url: str = "redis://localhost:6379/0"
+    redis_password: Optional[str] = None
+
+    # PostgreSQL configuration
+    postgres_url: str = "postgresql://user:pass@localhost/db"
+    connection_string: str = "postgresql://user:pass@localhost/db"
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+    postgres_user: str = "user"
+    postgres_password: str = "password"
+    postgres_database: str = "novel_engine"
+
+    # S3 configuration
+    aws_access_key: Optional[str] = None
+    aws_secret_key: Optional[str] = None
+    s3_bucket: str = "novel-engine-state"
+    s3_region: str = "us-east-1"
+    s3_endpoint: Optional[str] = None
+
+    # Connection settings
+    connection_timeout: int = 30
+    cache_ttl: int = 3600  # 1 hour default
+    max_retries: int = 3
+
+    # Cache settings
+    max_cache_size: int = 1000
+    cache_ttl: int = 3600  # 1 hour default
+
+    # Feature flags
+    enable_caching: bool = True
+    enable_compression: bool = True
+    enable_encryption: bool = False
+
+    @classmethod
+    def from_env(cls) -> "StateStoreConfig":
+        """Create configuration from environment variables.
+
+        Returns:
+            StateStoreConfig with values from environment
+        """
+        import os
+
+        return cls(
+            default_store=StateStoreType(
+                os.getenv("STATE_STORE_TYPE", "redis")
+            ),
+            redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+            redis_password=os.getenv("REDIS_PASSWORD"),
+            postgres_url=os.getenv(
+                "DATABASE_URL",
+                "postgresql://user:pass@localhost/db"
+            ),
+            postgres_host=os.getenv("POSTGRES_HOST", "localhost"),
+            postgres_port=int(os.getenv("POSTGRES_PORT", "5432")),
+            postgres_user=os.getenv("POSTGRES_USER", "user"),
+            postgres_password=os.getenv("POSTGRES_PASSWORD", "password"),
+            postgres_database=os.getenv("POSTGRES_DB", "novel_engine"),
+            aws_access_key=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            s3_bucket=os.getenv("S3_BUCKET", "novel-engine-state"),
+            s3_region=os.getenv("AWS_REGION", "us-east-1"),
+            s3_endpoint=os.getenv("S3_ENDPOINT"),
+            connection_timeout=int(os.getenv("STATE_STORE_TIMEOUT", "30")),
+            cache_ttl=int(os.getenv("STATE_STORE_CACHE_TTL", "3600")),
+            enable_caching=os.getenv("STATE_STORE_ENABLE_CACHE", "true").lower() == "true",
+            enable_encryption=os.getenv("STATE_STORE_ENABLE_ENCRYPTION", "false").lower() == "true",
+        )

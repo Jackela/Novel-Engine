@@ -15,10 +15,17 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-# Mock asyncpg module
+# Mock asyncpg module with proper async context manager support
 asyncpg_mock = MagicMock()
 asyncpg_mock.Pool = MagicMock
-asyncpg_mock.create_pool = AsyncMock()
+
+# Create a mock pool that supports async context manager protocol
+_mock_conn = AsyncMock()
+_mock_pool = MagicMock()
+_mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=_mock_conn)
+_mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
+
+asyncpg_mock.create_pool = AsyncMock(return_value=_mock_pool)
 
 # Patch asyncpg before importing
 with patch.dict('sys.modules', {'asyncpg': asyncpg_mock}):
@@ -211,10 +218,9 @@ class TestFactoryFunctions:
         """Test creating and initializing PostgreSQL manager."""
         config = PostgreSQLConfig()
         
-        with patch('src.infrastructure.postgresql_manager.PostgreSQLManager.initialize', new_callable=AsyncMock):
-            manager = await create_postgresql_manager(config)
-            assert isinstance(manager, PostgreSQLManager)
-            assert manager.config == config
+        manager = await create_postgresql_manager(config)
+        assert isinstance(manager, PostgreSQLManager)
+        assert manager.config == config
 
 
 # ============================================================================

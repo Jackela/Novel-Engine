@@ -14,12 +14,20 @@ import pytest
 
 # Try to import state store components
 try:
-    from src.infrastructure.state_store.base import RedisStateStore
+    from src.infrastructure.state_store.base import StateStore
     from src.infrastructure.state_store.config import StateStoreConfig, StateStoreType
-    from src.infrastructure.state_store.factory import StateStoreFactory
-    from src.infrastructure.state_store.managers import StateStoreManager
-    from src.infrastructure.state_store.postgres import PostgresStateStore
-    from src.infrastructure.state_store.redis import RedisStateStore as RedisStore
+    from src.infrastructure.state_store.factory import (
+        StateStoreFactory,
+        create_configuration_manager,
+        create_unified_state_manager,
+    )
+    from src.infrastructure.state_store.managers import (
+        ConfigurationManager,
+        StateStoreManager,
+        UnifiedStateManager,
+    )
+    from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+    from src.infrastructure.state_store.redis import RedisStateStore
     from src.infrastructure.state_store.s3 import S3StateStore
     STATE_STORE_AVAILABLE = True
 except ImportError as e:
@@ -177,7 +185,7 @@ class TestRedisStateStoreUnit:
         mock_redis = AsyncMock()
         mock_redis.ping = AsyncMock()
         
-        with patch('aioredis.from_url', return_value=mock_redis):
+        with patch('redis.asyncio.from_url', return_value=mock_redis):
             await store.connect()
             assert store._connected
 

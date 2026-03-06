@@ -1,276 +1,284 @@
-class PostgreSQLStateStore(StateStore):
-    """PostgreSQL-based state store for persistent data"""
+"""Redis State Store.
+
+Redis-based implementation of the StateStore interface.
+"""
+
+import json
+import pickle
+from typing import Any, List, Optional
+
+import structlog
+
+from src.infrastructure.state_store.base import StateStore
+from src.infrastructure.state_store.config import StateKey, StateStoreConfig
+
+# Import redis with async support
+try:
+    from redis import asyncio as aioredis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+
+logger = structlog.get_logger(__name__)
+
+
+class RedisStateStore(StateStore):
+    """Redis-based state store for fast access."""
 
     def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize Redis state store.
+
+        Args:
+            config: State store configuration
+        """
         self.config = config
-        self.pool: Optional[asyncpg.Pool] = None
+        self.redis: Optional[Any] = None
         self._connected = False
 
+        if not REDIS_AVAILABLE:
+            logger.warning("redis_not_available")
+
     async def connect(self) -> None:
-        """Initialize PostgreSQL connection pool"""
-        if self._connected:
+        """Initialize Redis connection."""
+        if self._connected or not REDIS_AVAILABLE:
             return
 
         try:
-            self.pool = await asyncpg.create_pool(
-                self.config.postgres_url,
-                min_size=5,
-                max_size=20,
-                command_timeout=self.config.connection_timeout,
-                server_settings={"jit": "off"},  # Disable JIT for better predictability
+            self.redis = aioredis.from_url(
+                self.config.redis_url,
+                socket_timeout=self.config.connection_timeout,
+                socket_connect_timeout=self.config.connection_timeout,
+                retry_on_timeout=True,
+                health_check_interval=30,
             )
 
-            # Initialize tables
-            await self._initialize_tables()
+            # Test connection
+            await self.redis.ping()
             self._connected = True
-            logger.info("postgresql_connection_pool_established")
+            logger.info("redis_connection_established")
 
         except Exception as e:
-            logger.error("postgresql_connection_failed", error=str(e), error_type=type(e).__name__)
+            logger.error("redis_connection_failed", error=str(e))
             raise
 
-    async def _initialize_tables(self) -> None:
-        """Initialize required tables"""
-        create_tables_sql = """
-        CREATE TABLE IF NOT EXISTS state_data (
-            key_hash VARCHAR(64) PRIMARY KEY,
-            namespace VARCHAR(100) NOT NULL,
-            entity_type VARCHAR(100) NOT NULL,
-            entity_id VARCHAR(100) NOT NULL,
-            version VARCHAR(50),
-            data JSONB NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            expires_at TIMESTAMP WITH TIME ZONE
-        );
-
-        CREATE INDEX IF NOT EXISTS idx_state_data_namespace ON state_data(namespace);
-        CREATE INDEX IF NOT EXISTS idx_state_data_entity ON state_data(entity_type, entity_id);
-        CREATE INDEX IF NOT EXISTS idx_state_data_created ON state_data(created_at);
-        CREATE INDEX IF NOT EXISTS idx_state_data_expires ON state_data(expires_at) WHERE expires_at IS NOT NULL;
-
-        CREATE TABLE IF NOT EXISTS state_metadata (
-            key_hash VARCHAR(64) PRIMARY KEY,
-            metadata JSONB NOT NULL,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-            FOREIGN KEY (key_hash) REFERENCES state_data(key_hash) ON DELETE CASCADE
-        );
-        """
-
-        async with self.pool.acquire() as conn:
-            await conn.execute(create_tables_sql)
-
-    def _hash_key(self, key: StateKey) -> str:
-        """Generate hash for state key"""
-        key_str = key.to_string()
-        return hashlib.sha256(key_str.encode()).hexdigest()
-
     async def get(self, key: StateKey) -> Optional[Any]:
-        """Retrieve value from PostgreSQL"""
+        """Retrieve value from Redis.
+
+        Args:
+            key: State key to look up
+
+        Returns:
+            Stored value or None
+        """
         if not self._connected:
             await self.connect()
 
-        key_hash = self._hash_key(key)
+        if not self.redis:
+            return None
 
         try:
-            async with self.pool.acquire() as conn:
-                row = await conn.fetchrow(
-                    "SELECT data FROM state_data WHERE key_hash = $1 AND (expires_at IS NULL OR expires_at > NOW())",
-                    key_hash,
-                )
-
-                if row:
-                    return row["data"]
+            raw_value = await self.redis.get(key.to_string())
+            if raw_value is None:
                 return None
 
+            # Try to deserialize as JSON first, then pickle
+            try:
+                return json.loads(raw_value)
+            except (json.JSONDecodeError, TypeError):
+                try:
+                    return pickle.loads(raw_value)
+                except Exception:
+                    # Return as string if deserialization fails
+                    return (
+                        raw_value.decode("utf-8")
+                        if isinstance(raw_value, bytes)
+                        else raw_value
+                    )
+
         except Exception as e:
-            logger.error("postgresql_get_failed", key=key.to_string(), error=str(e))
+            logger.error("redis_get_failed", key=key.to_string(), error=str(e))
             return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
-        """Store value in PostgreSQL"""
+        """Store value in Redis.
+
+        Args:
+            key: State key
+            value: Value to store
+            ttl: Optional time-to-live in seconds
+
+        Returns:
+            True if successful
+        """
         if not self._connected:
             await self.connect()
 
-        key_hash = self._hash_key(key)
-        expires_at = datetime.now() + timedelta(seconds=ttl) if ttl else None
-
-        # Ensure value is JSON serializable
-        try:
-            if not isinstance(value, (dict, list, str, int, float, bool, type(None))):
-                # Convert complex objects to dict if possible
-                if hasattr(value, "__dict__"):
-                    value = value.__dict__
-                elif hasattr(value, "_asdict"):  # namedtuple
-                    value = value._asdict()
-                else:
-                    value = str(value)
-        except Exception:
-            value = str(value)
+        if not self.redis:
+            return False
 
         try:
-            async with self.pool.acquire() as conn:
-                await conn.execute(
-                    """
-                    INSERT INTO state_data (key_hash, namespace, entity_type, entity_id, version, data, expires_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    ON CONFLICT (key_hash)
-                    DO UPDATE SET
-                        data = EXCLUDED.data,
-                        updated_at = NOW(),
-                        expires_at = EXCLUDED.expires_at
-                    """,
-                    key_hash,
-                    key.namespace,
-                    key.entity_type,
-                    key.entity_id,
-                    key.version,
-                    value,
-                    expires_at,
-                )
-                return True
+            # Serialize value
+            if isinstance(value, (dict, list)):
+                serialized_value = json.dumps(value, default=str)
+            elif isinstance(value, str):
+                serialized_value = value
+            else:
+                serialized_value = pickle.dumps(value)
+
+            # Set with TTL
+            ttl_seconds = ttl or self.config.cache_ttl
+            result = await self.redis.setex(
+                key.to_string(), ttl_seconds, serialized_value
+            )
+            return result is True
 
         except Exception as e:
-            logger.error("postgresql_set_failed", key=key.to_string(), error=str(e))
+            logger.error("redis_set_failed", key=key.to_string(), error=str(e))
             return False
 
     async def delete(self, key: StateKey) -> bool:
-        """Delete value from PostgreSQL"""
+        """Delete value from Redis.
+
+        Args:
+            key: State key to delete
+
+        Returns:
+            True if deleted
+        """
         if not self._connected:
             await self.connect()
 
-        key_hash = self._hash_key(key)
+        if not self.redis:
+            return False
 
         try:
-            async with self.pool.acquire() as conn:
-                result = await conn.execute(
-                    "DELETE FROM state_data WHERE key_hash = $1", key_hash
-                )
-                return result.split()[-1] != "0"  # Check if any rows were affected
+            result = await self.redis.delete(key.to_string())
+            return result > 0
 
         except Exception as e:
-            logger.error("postgresql_delete_failed", key=key.to_string(), error=str(e))
+            logger.error("redis_delete_failed", key=key.to_string(), error=str(e))
             return False
 
     async def exists(self, key: StateKey) -> bool:
-        """Check if key exists in PostgreSQL"""
+        """Check if key exists in Redis.
+
+        Args:
+            key: State key to check
+
+        Returns:
+            True if exists
+        """
         if not self._connected:
             await self.connect()
 
-        key_hash = self._hash_key(key)
+        if not self.redis:
+            return False
 
         try:
-            async with self.pool.acquire() as conn:
-                row = await conn.fetchrow(
-                    "SELECT 1 FROM state_data WHERE key_hash = $1 AND (expires_at IS NULL OR expires_at > NOW())",
-                    key_hash,
-                )
-                return row is not None
+            result = await self.redis.exists(key.to_string())
+            return result > 0
 
         except Exception as e:
-            logger.error("postgresql_exists_check_failed", key=key.to_string(), error=str(e))
+            logger.error("redis_exists_check_failed", key=key.to_string(), error=str(e))
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
-        """List keys matching pattern"""
+        """List keys matching pattern.
+
+        Args:
+            pattern: Pattern to match (e.g., "namespace:*")
+
+        Returns:
+            List of matching keys
+        """
         if not self._connected:
             await self.connect()
 
-        # Convert Redis-style pattern to SQL LIKE pattern
-        sql_pattern = pattern.replace("*", "%").replace("?", "_")
-
-        try:
-            async with self.pool.acquire() as conn:
-                rows = await conn.fetch(
-                    """
-                    SELECT namespace, entity_type, entity_id, version
-                    FROM state_data
-                    WHERE CONCAT(namespace, ':', entity_type, ':', entity_id, COALESCE(':', version, '')) LIKE $1
-                    AND (expires_at IS NULL OR expires_at > NOW())
-                    ORDER BY created_at DESC
-                    """,
-                    sql_pattern,
-                )
-
-                return [
-                    StateKey(
-                        namespace=row["namespace"],
-                        entity_type=row["entity_type"],
-                        entity_id=row["entity_id"],
-                        version=row["version"],
-                    )
-                    for row in rows
-                ]
-
-        except Exception as e:
-            logger.error("postgresql_list_keys_failed", pattern=pattern, error=str(e))
+        if not self.redis:
             return []
 
-    async def query_by_namespace(
-        self, namespace: str, limit: int = 100
-    ) -> List[Dict[str, Any]]:
-        """Query data by namespace"""
-        if not self._connected:
-            await self.connect()
-
         try:
-            async with self.pool.acquire() as conn:
-                rows = await conn.fetch(
-                    """
-                    SELECT namespace, entity_type, entity_id, version, data, created_at, updated_at
-                    FROM state_data
-                    WHERE namespace = $1
-                    AND (expires_at IS NULL OR expires_at > NOW())
-                    ORDER BY updated_at DESC
-                    LIMIT $2
-                    """,
-                    namespace,
-                    limit,
-                )
-
-                return [dict(row) for row in rows]
+            keys = await self.redis.keys(pattern)
+            return [
+                StateKey.from_string(key.decode() if isinstance(key, bytes) else key)
+                for key in keys
+            ]
 
         except Exception as e:
-            logger.error("postgresql_namespace_query_failed", namespace=namespace, error=str(e))
+            logger.error("redis_list_keys_failed", pattern=pattern, error=str(e))
             return []
 
-    async def cleanup_expired(self) -> int:
-        """Clean up expired entries"""
+    async def increment(self, key: StateKey, amount: int = 1) -> Optional[int]:
+        """Increment counter value.
+
+        Args:
+            key: Counter key
+            amount: Amount to increment
+
+        Returns:
+            New counter value
+        """
         if not self._connected:
             await self.connect()
 
+        if not self.redis:
+            return None
+
         try:
-            async with self.pool.acquire() as conn:
-                result = await conn.execute(
-                    "DELETE FROM state_data WHERE expires_at IS NOT NULL AND expires_at <= NOW()"
-                )
-                deleted_count = int(result.split()[-1])
-                logger.info("expired_entries_cleaned", deleted_count=deleted_count)
-                return deleted_count
+            result = await self.redis.incrby(key.to_string(), amount)
+            return result
 
         except Exception as e:
-            logger.error("expired_entries_cleanup_failed", error=str(e))
-            return 0
+            logger.error("redis_increment_failed", key=key.to_string(), error=str(e))
+            return None
+
+    async def expire(self, key: StateKey, ttl: int) -> bool:
+        """Set TTL for existing key.
+
+        Args:
+            key: State key
+            ttl: Time-to-live in seconds
+
+        Returns:
+            True if successful
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.redis:
+            return False
+
+        try:
+            result = await self.redis.expire(key.to_string(), ttl)
+            return result is True
+
+        except Exception as e:
+            logger.error("redis_expire_failed", key=key.to_string(), error=str(e))
+            return False
 
     async def health_check(self) -> bool:
-        """Check PostgreSQL health"""
+        """Check Redis health.
+
+        Returns:
+            True if healthy
+        """
         try:
             if not self._connected:
                 await self.connect()
 
-            async with self.pool.acquire() as conn:
-                await conn.fetchval("SELECT 1")
-                return True
+            if not self.redis:
+                return False
+
+            await self.redis.ping()
+            return True
 
         except Exception as e:
-            logger.error("postgresql_health_check_failed", error=str(e))
+            logger.error("redis_health_check_failed", error=str(e))
             return False
 
     async def close(self) -> None:
-        """Close PostgreSQL connection pool"""
-        if self.pool:
-            await self.pool.close()
+        """Close Redis connection."""
+        if self.redis:
+            await self.redis.close()
             self._connected = False
-            logger.info("postgresql_connection_pool_closed")
-
-
+            logger.info("redis_connection_closed")

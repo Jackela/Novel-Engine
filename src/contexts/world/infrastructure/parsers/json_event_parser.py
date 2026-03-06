@@ -252,12 +252,12 @@ class JSONEventParser:
             elif opt_field == "narrative_importance":
                 # Parse integer
                 try:
-                    event[field] = int(value) if value is not None else default_value
-                    if not 0 <= event[field] <= 100:
+                    event[opt_field] = int(value) if value is not None else default_value
+                    if not 0 <= event[opt_field] <= 100:
                         errors.append(
                             {
                                 "row": index,
-                                "field": field_name,
+                                "field": opt_field,
                                 "message": "narrative_importance must be between 0 and 100",
                                 "value": str(value),
                             }
@@ -266,13 +266,13 @@ class JSONEventParser:
                     errors.append(
                         {
                             "row": index,
-                            "field": field_name,
+                            "field": opt_field,
                             "message": "Invalid integer value",
                             "value": str(value),
                         }
                     )
-                    event[field] = default_value
-            elif field in [
+                    event[opt_field] = default_value
+            elif opt_field in [
                 "location_ids",
                 "faction_ids",
                 "key_figures",
@@ -287,14 +287,14 @@ class JSONEventParser:
             ]:
                 # Parse list fields
                 if isinstance(value, list):
-                    event[field] = [str(v) for v in value if v is not None]
+                    event[opt_field] = [str(v) for v in value if v is not None]
                 elif isinstance(value, str):
                     # Support semicolon-separated string
-                    event[field] = [v.strip() for v in value.split(";") if v.strip()]
+                    event[opt_field] = [v.strip() for v in value.split(";") if v.strip()]
                 else:
-                    event[field] = [str(value)] if value is not None else []
+                    event[opt_field] = [str(value)] if value is not None else []
             else:
-                event[field] = value
+                event[opt_field] = value
 
         # Validate enum values
         event_type = event.get("event_type", "").lower()

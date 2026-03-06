@@ -232,25 +232,25 @@ class CSVEventParser:
 
         # Parse optional fields
         for opt_field, default_value in self.OPTIONAL_FIELDS.items():
-            value = row.get(field_name, "").strip()
+            value = row.get(opt_field, "").strip()
 
             if not value:
-                event[field] = default_value
-            elif field in self.LIST_FIELDS:
+                event[opt_field] = default_value
+            elif opt_field in self.LIST_FIELDS:
                 # Parse semicolon-separated list
-                event[field] = [v.strip() for v in value.split(";") if v.strip()]
-            elif field == "is_secret":
+                event[opt_field] = [v.strip() for v in value.split(";") if v.strip()]
+            elif opt_field == "is_secret":
                 # Parse boolean
-                event[field_name] = value.lower() in ("true", "1", "yes", "t")
-            elif field == "narrative_importance":
+                event[opt_field] = value.lower() in ("true", "1", "yes", "t")
+            elif opt_field == "narrative_importance":
                 # Parse integer
                 try:
-                    event[field] = int(value)
-                    if not 0 <= event[field] <= 100:
+                    event[opt_field] = int(value)
+                    if not 0 <= event[opt_field] <= 100:
                         errors.append(
                             {
                                 "row": row_num,
-                                "field": field_name,
+                                "field": opt_field,
                                 "message": "narrative_importance must be between 0 and 100",
                                 "value": value,
                             }
@@ -259,14 +259,14 @@ class CSVEventParser:
                     errors.append(
                         {
                             "row": row_num,
-                            "field": field_name,
+                            "field": opt_field,
                             "message": "Invalid integer value",
                             "value": value,
                         }
                     )
-                    event[field] = default_value
+                    event[opt_field] = default_value
             else:
-                event[field_name] = value
+                event[opt_field] = value
 
         # Validate enum values
         event_type = event.get("event_type", "").lower()

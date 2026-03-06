@@ -1,136 +1,346 @@
-class ConfigurationManager:
-    """Unified configuration manager"""
+"""State Store Managers.
 
-    def __init__(self, config_paths: Optional[List[str]] = None) -> None:
-        self.config_paths = config_paths or [
-            "/etc/novel-engine/config/environments/development.yaml",
-            "./config/environments/development.yaml",
-            "./config/environments/environments.yaml",
-        ]
-        self.config_data: Dict[str, Any] = {}
-        self.environment = os.getenv("ENVIRONMENT", "development")
+High-level managers for state storage operations.
+"""
 
-    def load_configuration(self) -> Dict[str, Any]:
-        """Load configuration from files and environment"""
+from typing import Any, Dict, Optional
 
-        # Start with default configuration
-        self.config_data = self._get_default_config()
+import structlog
 
-        # Load from config files
-        for config_path in self.config_paths:
-            if Path(config_path).exists():
-                try:
-                    with open(config_path, "r") as f:
-                        file_config = yaml.safe_load(f)
-                        if file_config:
-                            self._merge_config(self.config_data, file_config)
-                            logger.info(f"Loaded configuration from {config_path}")
-                except Exception as e:
-                    logger.warning(f"Failed to load config from {config_path}: {e}")
+from src.infrastructure.state_store.base import StateStore
+from src.infrastructure.state_store.config import StateKey, StateStoreConfig, StateStoreType
 
-        # Apply environment-specific overrides
-        env_config = self.config_data.get("environments", {}).get(self.environment, {})
-        if env_config:
-            self._merge_config(self.config_data, env_config)
+logger = structlog.get_logger(__name__)
 
-        # Override with environment variables
-        self._apply_env_overrides()
 
-        return self.config_data
+class UnifiedStateManager:
+    """Unified state manager that routes to appropriate stores.
 
-    def _get_default_config(self) -> Dict[str, Any]:
-        """Get default configuration"""
+    Provides intelligent routing of data to different storage backends
+    based on data type and access patterns.
+    """
+
+    def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize unified state manager.
+
+        Args:
+            config: State store configuration
+        """
+        self.config = config
+
+        # Lazy imports to avoid circular dependencies
+        from src.infrastructure.state_store.redis import RedisStateStore
+        from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+        from src.infrastructure.state_store.s3 import S3StateStore
+
+        self.redis_store = RedisStateStore(config)
+        self.postgres_store = PostgreSQLStateStore(config)
+        self.s3_store = S3StateStore(config)
+
+        # Routing rules based on data type and size
+        self.routing_rules = {
+            "session": "redis",
+            "cache": "redis",
+            "agent": "postgres",
+            "world": "postgres",
+            "narrative": "s3",
+            "media": "s3",
+            "config": "postgres",
+            "temp": "redis",
+        }
+
+    async def initialize(self) -> None:
+        """Initialize all stores."""
+        try:
+            await self.redis_store.connect()
+            await self.postgres_store.connect()
+            await self.s3_store.connect()
+            logger.info("unified_state_manager_initialized")
+        except Exception as e:
+            logger.error("state_manager_initialization_failed", error=str(e))
+            raise
+
+    def _get_store(self, key: StateKey) -> StateStore:
+        """Get appropriate store for key.
+
+        Args:
+            key: State key
+
+        Returns:
+            Appropriate StateStore instance
+        """
+        store_type = self.routing_rules.get(key.entity_type, "postgres")
+
+        if store_type == "redis":
+            return self.redis_store
+        elif store_type == "s3":
+            return self.s3_store
+        else:
+            return self.postgres_store
+
+    async def get(self, key: StateKey, use_cache: bool = True) -> Optional[Any]:
+        """Get value with intelligent routing and caching.
+
+        Args:
+            key: State key
+            use_cache: Whether to use cache layer
+
+        Returns:
+            Stored value or None
+        """
+        # Try cache first for non-cache keys
+        if use_cache and key.entity_type != "cache":
+            cache_key = StateKey(
+                namespace=f"cache:{key.namespace}",
+                entity_type="cache",
+                entity_id=key.to_string(),
+            )
+            cached = await self.redis_store.get(cache_key)
+            if cached is not None:
+                return cached
+
+        # Get from primary store
+        store = self._get_store(key)
+        value = await store.get(key)
+
+        # Cache the result if not from cache already
+        if value is not None and use_cache and key.entity_type != "cache":
+            await self.redis_store.set(cache_key, value, ttl=300)  # 5 min cache
+
+        return value
+
+    async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
+        """Set value with intelligent routing.
+
+        Args:
+            key: State key
+            value: Value to store
+            ttl: Optional time-to-live
+
+        Returns:
+            True if successful
+        """
+        store = self._get_store(key)
+        result = await store.set(key, value, ttl)
+
+        # Invalidate cache if applicable
+        if key.entity_type != "cache":
+            cache_key = StateKey(
+                namespace=f"cache:{key.namespace}",
+                entity_type="cache",
+                entity_id=key.to_string(),
+            )
+            await self.redis_store.delete(cache_key)
+
+        return result
+
+    async def delete(self, key: StateKey) -> bool:
+        """Delete value from appropriate store.
+
+        Args:
+            key: State key
+
+        Returns:
+            True if deleted
+        """
+        store = self._get_store(key)
+        result = await store.delete(key)
+
+        # Also delete from cache if exists
+        if key.entity_type != "cache":
+            cache_key = StateKey(
+                namespace=f"cache:{key.namespace}",
+                entity_type="cache",
+                entity_id=key.to_string(),
+            )
+            await self.redis_store.delete(cache_key)
+
+        return result
+
+    async def exists(self, key: StateKey) -> bool:
+        """Check if key exists.
+
+        Args:
+            key: State key
+
+        Returns:
+            True if exists
+        """
+        store = self._get_store(key)
+        return await store.exists(key)
+
+    async def health_check(self) -> Dict[str, bool]:
+        """Check health of all stores.
+
+        Returns:
+            Dictionary of store health status
+        """
         return {
-            "state_store": {
-                "redis_url": "",  # Set via REDIS_URL environment variable
-                "postgres_url": "",  # Set via POSTGRES_URL environment variable
-                "s3_bucket": "novel-engine-storage",
-                "s3_region": "us-east-1",
-                "cache_ttl": 3600,
-                "max_retries": 3,
-                "connection_timeout": 30,
-            },
-            "logging": {
-                "level": "INFO",
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            },
-            "api": {
-                "host": "0.0.0.0",
-                "port": 8000,
-                "workers": 4,
-            },  # nosec B104 - default config
-            "security": {
-                "encryption_key": None,
-                "jwt_secret": None,
-                "cors_origins": ["http://localhost:3000"],
-            },
+            "redis": await self.redis_store.health_check(),
+            "postgres": await self.postgres_store.health_check(),
+            "s3": await self.s3_store.health_check(),
         }
 
-    def _merge_config(self, base: Dict[str, Any], override: Dict[str, Any]) -> None:
-        """Merge configuration dictionaries"""
-        for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
-                self._merge_config(base[key], value)
-            else:
-                base[key] = value
-
-    def _apply_env_overrides(self) -> None:
-        """Apply environment variable overrides"""
-        env_mappings = {
-            "REDIS_URL": ["state_store", "redis_url"],
-            "POSTGRES_URL": ["state_store", "postgres_url"],
-            "S3_BUCKET": ["state_store", "s3_bucket"],
-            "S3_REGION": ["state_store", "s3_region"],
-            "AWS_ACCESS_KEY_ID": ["state_store", "aws_access_key"],
-            "AWS_SECRET_ACCESS_KEY": ["state_store", "aws_secret_key"],
-            "ENCRYPTION_KEY": ["security", "encryption_key"],
-            "JWT_SECRET": ["security", "jwt_secret"],
-            "API_HOST": ["api", "host"],
-            "API_PORT": ["api", "port"],
-        }
-
-        for env_var, config_path in env_mappings.items():
-            env_value = os.getenv(env_var)
-            if env_value:
-                # Navigate to the nested config key
-                current = self.config_data
-                for key in config_path[:-1]:
-                    if key not in current:
-                        current[key] = {}
-                    current = current[key]
-
-                # Set the value, converting to appropriate type
-                final_key = config_path[-1]
-                if final_key in [
-                    "port",
-                    "workers",
-                    "cache_ttl",
-                    "max_retries",
-                    "connection_timeout",
-                ]:
-                    current[final_key] = int(env_value)
-                elif env_value.lower() in ["true", "false"]:
-                    current[final_key] = env_value.lower() == "true"
-                else:
-                    current[final_key] = env_value
-
-    def get(self, key_path: str, default: Any = None) -> Any:
-        """Get configuration value by dot-separated path"""
-        keys = key_path.split(".")
-        current = self.config_data
-
-        for key in keys:
-            if isinstance(current, dict) and key in current:
-                current = current[key]
-            else:
-                return default
-
-        return current
-
-    def get_state_store_config(self) -> StateStoreConfig:
-        """Get state store configuration"""
-        state_config = self.config_data.get("state_store", {})
-        return StateStoreConfig(**state_config)
+    async def close(self) -> None:
+        """Close all stores."""
+        await self.redis_store.close()
+        await self.postgres_store.close()
+        await self.s3_store.close()
+        logger.info("unified_state_manager_closed")
 
 
-# Factory functions
+class StateStoreManager:
+    """Manager for a single state store.
+
+    Provides a simple interface for managing a single state store instance.
+    """
+
+    def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize state store manager.
+
+        Args:
+            config: State store configuration
+        """
+        self.config = config
+        self._store = None
+        self._initialized = False
+
+        # Create the appropriate store based on config
+        from src.infrastructure.state_store.factory import StateStoreFactory
+        self._store = StateStoreFactory.create_store(config)
+
+    async def _initialize_store(self) -> None:
+        """Initialize the underlying store."""
+        if self._store and hasattr(self._store, 'connect'):
+            await self._store.connect()
+
+    async def initialize(self) -> None:
+        """Initialize the state store manager."""
+        await self._initialize_store()
+        self._initialized = True
+
+    def get_store(self) -> Optional[StateStore]:
+        """Get the underlying store.
+
+        Returns:
+            The state store instance
+        """
+        return self._store
+
+    async def get(self, key):
+        """Get value from store."""
+        if self._store:
+            return await self._store.get(key)
+        return None
+
+    async def set(self, key, value, ttl=None):
+        """Set value in store."""
+        if self._store:
+            return await self._store.set(key, value, ttl)
+        return False
+
+    async def delete(self, key):
+        """Delete value from store."""
+        if self._store:
+            return await self._store.delete(key)
+        return False
+
+
+class ConfigurationManager:
+    """Manager for configuration storage.
+
+    Provides specialized interface for configuration data
+    with PostgreSQL as the backend.
+    """
+
+    def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize configuration manager.
+
+        Args:
+            config: State store configuration
+        """
+        self.config = config
+
+        from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+        self.store = PostgreSQLStateStore(config)
+
+    async def initialize(self) -> None:
+        """Initialize configuration manager."""
+        await self.store.connect()
+
+    async def get_config(self, config_type: str, config_id: str) -> Optional[Dict[str, Any]]:
+        """Get configuration by type and ID.
+
+        Args:
+            config_type: Type of configuration
+            config_id: Configuration identifier
+
+        Returns:
+            Configuration dictionary or None
+        """
+        key = StateKey(
+            namespace="config",
+            entity_type=config_type,
+            entity_id=config_id,
+        )
+        return await self.store.get(key)
+
+    async def set_config(
+        self, config_type: str, config_id: str, config_data: Dict[str, Any]
+    ) -> bool:
+        """Set configuration.
+
+        Args:
+            config_type: Type of configuration
+            config_id: Configuration identifier
+            config_data: Configuration data
+
+        Returns:
+            True if successful
+        """
+        key = StateKey(
+            namespace="config",
+            entity_type=config_type,
+            entity_id=config_id,
+        )
+        return await self.store.set(key, config_data)
+
+    async def delete_config(self, config_type: str, config_id: str) -> bool:
+        """Delete configuration.
+
+        Args:
+            config_type: Type of configuration
+            config_id: Configuration identifier
+
+        Returns:
+            True if deleted
+        """
+        key = StateKey(
+            namespace="config",
+            entity_type=config_type,
+            entity_id=config_id,
+        )
+        return await self.store.delete(key)
+
+    async def list_configs(self, config_type: str) -> list:
+        """List all configurations of a type.
+
+        Args:
+            config_type: Type of configuration
+
+        Returns:
+            List of configuration keys
+        """
+        return await self.store.list_keys(f"config:{config_type}:*")
+
+    async def health_check(self) -> bool:
+        """Check store health.
+
+        Returns:
+            True if healthy
+        """
+        return await self.store.health_check()
+
+    async def close(self) -> None:
+        """Close configuration manager."""
+        await self.store.close()

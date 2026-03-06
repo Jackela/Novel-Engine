@@ -1,267 +1,350 @@
-class S3StateStore(StateStore):
-    """S3-based state store for large files and documents"""
+"""PostgreSQL State Store.
+
+PostgreSQL-based implementation of the StateStore interface.
+"""
+
+import json
+import pickle
+from typing import Any, List, Optional
+
+import structlog
+
+from src.infrastructure.state_store.base import StateStore
+from src.infrastructure.state_store.config import StateKey, StateStoreConfig
+
+# Import asyncpg if available
+try:
+    import asyncpg
+    ASYNCPG_AVAILABLE = True
+except ImportError:
+    ASYNCPG_AVAILABLE = False
+
+logger = structlog.get_logger(__name__)
+
+
+class PostgreSQLStateStore(StateStore):
+    """PostgreSQL-based state store for persistent data."""
 
     def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize PostgreSQL state store.
+
+        Args:
+            config: State store configuration
+        """
         self.config = config
-        self.s3_client = None
+        self.pool: Optional[Any] = None
         self._connected = False
 
+        if not ASYNCPG_AVAILABLE:
+            logger.warning("asyncpg_not_available")
+
     async def connect(self) -> None:
-        """Initialize S3 client"""
-        if self._connected:
+        """Initialize PostgreSQL connection pool."""
+        if self._connected or not ASYNCPG_AVAILABLE:
             return
 
         try:
-            session = boto3.Session(
-                aws_access_key_id=self.config.aws_access_key,
-                aws_secret_access_key=self.config.aws_secret_key,
-                region_name=self.config.s3_region,
+            self.pool = await asyncpg.create_pool(
+                self.config.postgres_url,
+                min_size=5,
+                max_size=20,
+                command_timeout=self.config.connection_timeout,
+                server_settings={"jit": "off"},
             )
 
-            self.s3_client = session.client("s3")
-
-            # Test connection and create bucket if not exists
-            try:
-                await self._ensure_bucket_exists()
-                self._connected = True
-                logger.info("S3 connection established")
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "NoCredentialsError":
-                    logger.warning("S3 credentials not configured, S3 storage disabled")
-                    self._connected = False
-                else:
-                    raise
+            # Initialize tables
+            await self._initialize_tables()
+            self._connected = True
+            logger.info("postgresql_connection_pool_established")
 
         except Exception as e:
-            logger.error("s3_connection_failed", error=str(e), error_type=type(e).__name__)
+            logger.error("postgresql_connection_failed", error=str(e))
             raise
 
-    async def _ensure_bucket_exists(self) -> None:
-        """Ensure S3 bucket exists"""
-        try:
-            self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                # Create bucket
-                try:
-                    if self.config.s3_region == "us-east-1":
-                        self.s3_client.create_bucket(Bucket=self.config.s3_bucket)
-                    else:
-                        self.s3_client.create_bucket(
-                            Bucket=self.config.s3_bucket,
-                            CreateBucketConfiguration={
-                                "LocationConstraint": self.config.s3_region
-                            },
-                        )
-                    logger.info("s3_bucket_created", bucket=self.config.s3_bucket)
-                except Exception as create_error:
-                    logger.error("s3_bucket_creation_failed", error=str(create_error))
-                    raise
-            else:
-                logger.error("s3_bucket_check_failed", error_code=e.response["Error"]["Code"])
-                raise
+    async def _initialize_tables(self) -> None:
+        """Initialize required tables."""
+        if not self.pool:
+            return
 
-    def _key_to_s3_key(self, key: StateKey) -> str:
-        """Convert StateKey to S3 object key"""
-        parts = [key.namespace, key.entity_type, key.entity_id]
-        if key.version:
-            parts.append(key.version)
-        return "/".join(parts)
+        create_tables_sql = """
+        CREATE TABLE IF NOT EXISTS state_data (
+            key_hash VARCHAR(64) PRIMARY KEY,
+            namespace VARCHAR(100) NOT NULL,
+            entity_type VARCHAR(100) NOT NULL,
+            entity_id VARCHAR(100) NOT NULL,
+            version VARCHAR(50),
+            data JSONB NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            expires_at TIMESTAMP WITH TIME ZONE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_state_data_namespace ON state_data(namespace);
+        CREATE INDEX IF NOT EXISTS idx_state_data_entity ON state_data(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_state_data_created ON state_data(created_at);
+        CREATE INDEX IF NOT EXISTS idx_state_data_expires ON state_data(expires_at) WHERE expires_at IS NOT NULL;
+        """
+
+        async with self.pool.acquire() as conn:
+            await conn.execute(create_tables_sql)
 
     async def get(self, key: StateKey) -> Optional[Any]:
-        """Retrieve value from S3"""
+        """Retrieve value from PostgreSQL.
+
+        Args:
+            key: State key to look up
+
+        Returns:
+            Stored value or None
+        """
         if not self._connected:
             await self.connect()
 
-        if not self._connected:
+        if not self.pool:
             return None
 
-        s3_key = self._key_to_s3_key(key)
-
         try:
-            response = self.s3_client.get_object(
-                Bucket=self.config.s3_bucket, Key=s3_key
-            )
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchrow(
+                    "SELECT data FROM state_data WHERE key_hash = $1 AND (expires_at IS NULL OR expires_at > NOW())",
+                    key.to_string(),
+                )
 
-            content = response["Body"].read()
-
-            # Try to deserialize based on content type
-            content_type = response.get("ContentType", "application/octet-stream")
-
-            if content_type == "application/json":
-                return json.loads(content.decode("utf-8"))
-            elif content_type.startswith("text/"):
-                return content.decode("utf-8")
-            else:
-                return content
-
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "NoSuchKey":
-                return None
-            else:
-                logger.error("s3_get_object_failed", key=s3_key, error_code=e.response["Error"]["Code"])
+                if row:
+                    return row["data"]
                 return None
 
         except Exception as e:
-            logger.error("s3_get_object_failed", key=s3_key, error=str(e))
+            logger.error("postgres_get_failed", key=key.to_string(), error=str(e))
             return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
-        """Store value in S3"""
+        """Store value in PostgreSQL.
+
+        Args:
+            key: State key
+            value: Value to store
+            ttl: Optional time-to-live in seconds
+
+        Returns:
+            True if successful
+        """
         if not self._connected:
             await self.connect()
 
-        if not self._connected:
+        if not self.pool:
             return False
 
-        s3_key = self._key_to_s3_key(key)
-
         try:
-            # Prepare content and metadata
-            if isinstance(value, str):
-                content = value.encode("utf-8")
-                content_type = "text/plain"
-            elif isinstance(value, (dict, list)):
-                content = json.dumps(value, default=str).encode("utf-8")
-                content_type = "application/json"
-            elif isinstance(value, bytes):
-                content = value
-                content_type = "application/octet-stream"
-            else:
-                # Serialize as JSON
-                content = json.dumps(value, default=str).encode("utf-8")
-                content_type = "application/json"
-
-            # Prepare metadata
-            metadata = {
-                "namespace": key.namespace,
-                "entity-type": key.entity_type,
-                "entity-id": key.entity_id,
-                "created-at": datetime.now().isoformat(),
-            }
-
-            if key.version:
-                metadata["version"] = key.version
-
-            # Set expiration if TTL provided
-            extra_args = {"ContentType": content_type, "Metadata": metadata}
-
+            # Calculate expiration
+            expires_at = None
             if ttl:
-                expires = datetime.now() + timedelta(seconds=ttl)
-                extra_args["Expires"] = expires
+                from datetime import datetime, timedelta
+                expires_at = datetime.now() + timedelta(seconds=ttl)
 
-            # Upload to S3
-            self.s3_client.put_object(
-                Bucket=self.config.s3_bucket, Key=s3_key, Body=content, **extra_args
-            )
-
-            return True
+            async with self.pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO state_data (key_hash, namespace, entity_type, entity_id, version, data, expires_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    ON CONFLICT (key_hash) DO UPDATE
+                    SET data = EXCLUDED.data, updated_at = NOW(), expires_at = EXCLUDED.expires_at
+                    """,
+                    key.to_string(),
+                    key.namespace,
+                    key.entity_type,
+                    key.entity_id,
+                    key.version,
+                    json.dumps(value, default=str),
+                    expires_at,
+                )
+                return True
 
         except Exception as e:
-            logger.error("s3_set_object_failed", key=s3_key, error=str(e))
+            logger.error("postgres_set_failed", key=key.to_string(), error=str(e))
             return False
 
     async def delete(self, key: StateKey) -> bool:
-        """Delete value from S3"""
+        """Delete value from PostgreSQL.
+
+        Args:
+            key: State key to delete
+
+        Returns:
+            True if deleted
+        """
         if not self._connected:
             await self.connect()
 
-        if not self._connected:
+        if not self.pool:
             return False
 
-        s3_key = self._key_to_s3_key(key)
-
         try:
-            self.s3_client.delete_object(Bucket=self.config.s3_bucket, Key=s3_key)
-            return True
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    "DELETE FROM state_data WHERE key_hash = $1",
+                    key.to_string(),
+                )
+                return "DELETE 1" in result
 
         except Exception as e:
-            logger.error("s3_delete_object_failed", key=s3_key, error=str(e))
+            logger.error("postgres_delete_failed", key=key.to_string(), error=str(e))
             return False
 
     async def exists(self, key: StateKey) -> bool:
-        """Check if key exists in S3"""
+        """Check if key exists in PostgreSQL.
+
+        Args:
+            key: State key to check
+
+        Returns:
+            True if exists
+        """
         if not self._connected:
             await self.connect()
 
-        if not self._connected:
+        if not self.pool:
             return False
 
-        s3_key = self._key_to_s3_key(key)
-
         try:
-            self.s3_client.head_object(Bucket=self.config.s3_bucket, Key=s3_key)
-            return True
-
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                return False
-            else:
-                logger.error("s3_object_exists_check_failed", key=s3_key, error_code=e.response["Error"]["Code"])
-                return False
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchval(
+                    "SELECT 1 FROM state_data WHERE key_hash = $1 AND (expires_at IS NULL OR expires_at > NOW())",
+                    key.to_string(),
+                )
+                return row is not None
 
         except Exception as e:
-            logger.error("s3_object_exists_check_failed", key=s3_key, error=str(e))
+            logger.error("postgres_exists_check_failed", key=key.to_string(), error=str(e))
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
-        """List keys matching pattern"""
+        """List keys matching pattern.
+
+        Args:
+            pattern: Pattern to match (SQL LIKE pattern)
+
+        Returns:
+            List of matching keys
+        """
         if not self._connected:
             await self.connect()
 
-        if not self._connected:
+        if not self.pool:
             return []
-
-        # Convert pattern to S3 prefix
-        prefix = pattern.replace("*", "").replace(":", "/")
-        if prefix.endswith("/"):
-            prefix = prefix[:-1]
 
         try:
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.config.s3_bucket, Prefix=prefix, MaxKeys=1000
-            )
+            # Convert Redis-style pattern to SQL LIKE
+            sql_pattern = pattern.replace("*", "%")
 
-            keys: list[Any] = []
-            for obj in response.get("Contents", []):
-                s3_key = obj["Key"]
-                try:
-                    # Convert S3 key back to StateKey
-                    parts = s3_key.split("/")
-                    if len(parts) >= 3:
-                        state_key = StateKey(
-                            namespace=parts[0],
-                            entity_type=parts[1],
-                            entity_id=parts[2],
-                            version=parts[3] if len(parts) > 3 else None,
-                        )
-                        keys.append(state_key)
-                except Exception:
-                    continue
-
-            return keys
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    "SELECT key_hash FROM state_data WHERE key_hash LIKE $1 AND (expires_at IS NULL OR expires_at > NOW())",
+                    sql_pattern,
+                )
+                return [StateKey.from_string(row["key_hash"]) for row in rows]
 
         except Exception as e:
-            logger.error("s3_list_keys_failed", prefix=prefix, error=str(e))
+            logger.error("postgres_list_keys_failed", pattern=pattern, error=str(e))
             return []
+
+    async def increment(self, key: StateKey, amount: int = 1) -> Optional[int]:
+        """Increment counter value.
+
+        Args:
+            key: Counter key
+            amount: Amount to increment
+
+        Returns:
+            New counter value
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.pool:
+            return None
+
+        try:
+            async with self.pool.acquire() as conn:
+                # Use PostgreSQL's atomic increment
+                row = await conn.fetchrow(
+                    """
+                    INSERT INTO state_data (key_hash, namespace, entity_type, entity_id, version, data)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (key_hash) DO UPDATE
+                    SET data = (COALESCE(state_data.data::text::int, 0) + $6)::text::jsonb,
+                        updated_at = NOW()
+                    RETURNING data
+                    """,
+                    key.to_string(),
+                    key.namespace,
+                    key.entity_type,
+                    key.entity_id,
+                    key.version,
+                    str(amount),
+                )
+                return int(row["data"]) if row else None
+
+        except Exception as e:
+            logger.error("postgres_increment_failed", key=key.to_string(), error=str(e))
+            return None
+
+    async def expire(self, key: StateKey, ttl: int) -> bool:
+        """Set TTL for existing key.
+
+        Args:
+            key: State key
+            ttl: Time-to-live in seconds
+
+        Returns:
+            True if successful
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.pool:
+            return False
+
+        try:
+            from datetime import datetime, timedelta
+            expires_at = datetime.now() + timedelta(seconds=ttl)
+
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    "UPDATE state_data SET expires_at = $1, updated_at = NOW() WHERE key_hash = $2",
+                    expires_at,
+                    key.to_string(),
+                )
+                return "UPDATE 1" in result
+
+        except Exception as e:
+            logger.error("postgres_expire_failed", key=key.to_string(), error=str(e))
+            return False
 
     async def health_check(self) -> bool:
-        """Check S3 health"""
-        if not self._connected:
-            await self.connect()
+        """Check PostgreSQL health.
 
+        Returns:
+            True if healthy
+        """
         try:
-            self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
-            return True
+            if not self._connected:
+                await self.connect()
+
+            if not self.pool:
+                return False
+
+            async with self.pool.acquire() as conn:
+                await conn.fetchval("SELECT 1")
+                return True
 
         except Exception as e:
-            logger.error("s3_health_check_failed", error=str(e))
+            logger.error("postgres_health_check_failed", error=str(e))
             return False
 
     async def close(self) -> None:
-        """Close S3 client"""
-        # S3 client doesn't need explicit closing
-        self._connected = False
-        logger.info("s3_client_closed")
-
-
+        """Close PostgreSQL connection pool."""
+        if self.pool:
+            await self.pool.close()
+            self._connected = False
+            logger.info("postgresql_connection_pool_closed")

@@ -1,67 +1,138 @@
+"""State Store Factory.
+
+Factory functions for creating state store instances.
+"""
+
+from typing import Optional
+
+from src.infrastructure.state_store.config import StateStoreConfig, StateStoreType
+from src.infrastructure.state_store.managers import (
+    ConfigurationManager,
+    UnifiedStateManager,
+)
+
+
+class StateStoreFactory:
+    """Factory for creating state store instances."""
+
+    @staticmethod
+    def create_redis_store(config: Optional[StateStoreConfig] = None):
+        """Create Redis state store.
+
+        Args:
+            config: Optional configuration
+
+        Returns:
+            RedisStateStore instance
+        """
+        from src.infrastructure.state_store.redis import RedisStateStore
+
+        if config is None:
+            config = StateStoreConfig()
+        return RedisStateStore(config)
+
+    @staticmethod
+    def create_postgres_store(config: Optional[StateStoreConfig] = None):
+        """Create PostgreSQL state store.
+
+        Args:
+            config: Optional configuration
+
+        Returns:
+            PostgreSQLStateStore instance
+        """
+        from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+
+        if config is None:
+            config = StateStoreConfig()
+        return PostgreSQLStateStore(config)
+
+    @staticmethod
+    def create_s3_store(config: Optional[StateStoreConfig] = None):
+        """Create S3 state store.
+
+        Args:
+            config: Optional configuration
+
+        Returns:
+            S3StateStore instance
+        """
+        from src.infrastructure.state_store.s3 import S3StateStore
+
+        if config is None:
+            config = StateStoreConfig()
+        return S3StateStore(config)
+
+    @staticmethod
+    def create_memory_store(config: Optional[StateStoreConfig] = None):
+        """Create memory state store.
+
+        Args:
+            config: Optional configuration
+
+        Returns:
+            MemoryStateStore instance (uses Redis as fallback for now)
+        """
+        from src.infrastructure.state_store.redis import RedisStateStore
+
+        if config is None:
+            config = StateStoreConfig()
+        return RedisStateStore(config)
+
+    @staticmethod
+    def create_store(config: Optional[StateStoreConfig] = None):
+        """Create state store based on config.
+
+        Args:
+            config: Optional configuration
+
+        Returns:
+            StateStore instance based on store_type
+        """
+        if config is None:
+            config = StateStoreConfig()
+
+        if config.store_type == StateStoreType.REDIS:
+            return StateStoreFactory.create_redis_store(config)
+        elif config.store_type in (StateStoreType.POSTGRES, StateStoreType.POSTGRESQL):
+            return StateStoreFactory.create_postgres_store(config)
+        elif config.store_type == StateStoreType.S3:
+            return StateStoreFactory.create_s3_store(config)
+        else:
+            return StateStoreFactory.create_redis_store(config)
+
+
 def create_unified_state_manager(
     config: Optional[StateStoreConfig] = None,
 ) -> UnifiedStateManager:
-    """Create unified state manager"""
+    """Create unified state manager.
+
+    Args:
+        config: Optional state store configuration.
+            If not provided, creates default configuration.
+
+    Returns:
+        Initialized UnifiedStateManager instance
+    """
     if config is None:
-        config_manager = ConfigurationManager()
-        config_manager.load_configuration()
-        config = config_manager.get_state_store_config()
+        config = StateStoreConfig()
 
     return UnifiedStateManager(config)
 
 
 def create_configuration_manager(
-    config_paths: Optional[List[str]] = None,
+    config: Optional[StateStoreConfig] = None,
 ) -> ConfigurationManager:
-    """Create configuration manager"""
-    return ConfigurationManager(config_paths)
+    """Create configuration manager.
 
+    Args:
+        config: Optional state store configuration.
+            If not provided, creates default configuration.
 
-if __name__ == "__main__":
-    # Example usage
-    async def example_usage():
-        # Load configuration
-        config_manager = create_configuration_manager()
-        config_manager.load_configuration()
+    Returns:
+        Initialized ConfigurationManager instance
+    """
+    if config is None:
+        config = StateStoreConfig()
 
-        # Create state manager
-        state_manager = create_unified_state_manager()
-        await state_manager.initialize()
-
-        # Test different data types
-        # Session data (Redis)
-        session_key = StateKey("game_session", "session", "player_123")
-        await state_manager.set(
-            session_key, {"player_id": "123", "current_location": "forest"}
-        )
-
-        # Agent state (PostgreSQL)
-        agent_key = StateKey("simulation", "agent", "alice")
-        await state_manager.set(
-            agent_key, {"name": "Alice", "personality": {"curiosity": 0.8}}
-        )
-
-        # Narrative document (S3)
-        narrative_key = StateKey("story", "narrative", "chapter_1")
-        await state_manager.set(
-            narrative_key, "In the beginning, there was a mysterious forest..."
-        )
-
-        # Retrieve data
-        session_data = await state_manager.get(session_key)
-        agent_data = await state_manager.get(agent_key)
-        narrative_data = await state_manager.get(narrative_key)
-
-        logger.info(f"Session: {session_data}")
-        logger.info(f"Agent: {agent_data}")
-        logger.info(f"Narrative: {narrative_data}")
-
-        # Health check
-        health = await state_manager.health_check()
-        logger.info(f"Health: {health}")
-
-        # Cleanup
-        await state_manager.close()
-
-    # Run example
-    # asyncio.run(example_usage())
+    return ConfigurationManager(config)

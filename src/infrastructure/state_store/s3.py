@@ -1,164 +1,361 @@
-class UnifiedStateManager:
-    """Unified state manager that routes to appropriate stores"""
+"""S3 State Store.
+
+S3-based implementation of the StateStore interface for large files.
+"""
+
+import json
+import pickle
+from typing import Any, List, Optional
+
+import structlog
+
+from src.infrastructure.state_store.base import StateStore
+from src.infrastructure.state_store.config import StateKey, StateStoreConfig
+
+# Import boto3 if available
+try:
+    import boto3
+    from botocore.exceptions import ClientError
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
+    ClientError = Exception
+
+logger = structlog.get_logger(__name__)
+
+
+class S3StateStore(StateStore):
+    """S3-based state store for large files and documents."""
 
     def __init__(self, config: StateStoreConfig) -> None:
+        """Initialize S3 state store.
+
+        Args:
+            config: State store configuration
+        """
         self.config = config
-        self.redis_store = RedisStateStore(config)
-        self.postgres_store = PostgreSQLStateStore(config)
-        self.s3_store = S3StateStore(config)
+        self.s3_client = None
+        self._connected = False
 
-        # Routing rules based on data type and size
-        self.routing_rules = {
-            "session": "redis",  # Session data -> Redis
-            "cache": "redis",  # Cache data -> Redis
-            "agent": "postgres",  # Agent state -> PostgreSQL
-            "world": "postgres",  # World state -> PostgreSQL
-            "narrative": "s3",  # Narrative documents -> S3
-            "media": "s3",  # Media files -> S3
-            "config": "postgres",  # Configuration -> PostgreSQL
-            "temp": "redis",  # Temporary data -> Redis
-        }
+        if not BOTO3_AVAILABLE:
+            logger.warning("boto3_not_available")
 
-    async def initialize(self) -> None:
-        """Initialize all stores"""
+    async def connect(self) -> None:
+        """Initialize S3 client."""
+        if self._connected or not BOTO3_AVAILABLE:
+            return
+
         try:
-            await self.redis_store.connect()
-            await self.postgres_store.connect()
-            await self.s3_store.connect()
-            logger.info("Unified state manager initialized")
+            session = boto3.Session(
+                aws_access_key_id=self.config.aws_access_key,
+                aws_secret_access_key=self.config.aws_secret_key,
+                region_name=self.config.s3_region,
+            )
+
+            self.s3_client = session.client("s3")
+
+            # Test connection and create bucket if not exists
+            try:
+                await self._ensure_bucket_exists()
+                self._connected = True
+                logger.info("s3_connection_established")
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "Unknown")
+                if error_code == "NoCredentialsError":
+                    logger.warning("s3_credentials_not_configured")
+                    self._connected = False
+                else:
+                    raise
+
         except Exception as e:
-            logger.error("state_manager_initialization_failed", error=str(e), error_type=type(e).__name__)
+            logger.error("s3_connection_failed", error=str(e))
             raise
 
-    def _get_store(self, key: StateKey) -> StateStore:
-        """Get appropriate store for key"""
-        store_type = self.routing_rules.get(key.entity_type, "postgres")
+    async def _ensure_bucket_exists(self) -> None:
+        """Ensure S3 bucket exists."""
+        if not self.s3_client:
+            return
 
-        if store_type == "redis":
-            return self.redis_store
-        elif store_type == "s3":
-            return self.s3_store
-        else:
-            return self.postgres_store
+        try:
+            self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "404")
+            if error_code == "404":
+                # Create bucket
+                try:
+                    if self.config.s3_region == "us-east-1":
+                        self.s3_client.create_bucket(Bucket=self.config.s3_bucket)
+                    else:
+                        self.s3_client.create_bucket(
+                            Bucket=self.config.s3_bucket,
+                            CreateBucketConfiguration={
+                                "LocationConstraint": self.config.s3_region
+                            },
+                        )
+                    logger.info("s3_bucket_created", bucket=self.config.s3_bucket)
+                except Exception as e:
+                    logger.error("s3_bucket_creation_failed", error=str(e))
+                    raise
+            else:
+                raise
 
-    async def get(self, key: StateKey, use_cache: bool = True) -> Optional[Any]:
-        """Get value with intelligent routing and caching"""
+    def _get_s3_key(self, key: StateKey) -> str:
+        """Convert StateKey to S3 key.
 
-        # Try cache first for non-cache keys
-        if use_cache and key.entity_type != "cache":
-            cache_key = StateKey(
-                namespace=f"cache:{key.namespace}",
-                entity_type="cache",
-                entity_id=f"{key.entity_type}:{key.entity_id}",
-                version=key.version,
+        Args:
+            key: State key
+
+        Returns:
+            S3 object key
+        """
+        return f"{key.namespace}/{key.entity_type}/{key.entity_id}"
+
+    async def get(self, key: StateKey) -> Optional[Any]:
+        """Retrieve value from S3.
+
+        Args:
+            key: State key to look up
+
+        Returns:
+            Stored value or None
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.s3_client:
+            return None
+
+        try:
+            s3_key = self._get_s3_key(key)
+            response = self.s3_client.get_object(
+                Bucket=self.config.s3_bucket, Key=s3_key
             )
+            data = response["Body"].read()
 
-            cached_value = await self.redis_store.get(cache_key)
-            if cached_value is not None:
-                return cached_value
+            # Try to deserialize
+            try:
+                return json.loads(data)
+            except (json.JSONDecodeError, TypeError):
+                try:
+                    return pickle.loads(data)
+                except Exception:
+                    return data.decode("utf-8") if isinstance(data, bytes) else data
 
-        # Get from primary store
-        primary_store = self._get_store(key)
-        value = await primary_store.get(key)
-
-        # Cache in Redis if fetched from slower store
-        if (
-            value is not None
-            and use_cache
-            and key.entity_type != "cache"
-            and primary_store != self.redis_store
-        ):
-            cache_key = StateKey(
-                namespace=f"cache:{key.namespace}",
-                entity_type="cache",
-                entity_id=f"{key.entity_type}:{key.entity_id}",
-                version=key.version,
-            )
-            await self.redis_store.set(cache_key, value, ttl=300)  # 5 minute cache
-
-        return value
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            if error_code == "NoSuchKey":
+                return None
+            logger.error("s3_get_failed", key=key.to_string(), error=str(e))
+            return None
+        except Exception as e:
+            logger.error("s3_get_failed", key=key.to_string(), error=str(e))
+            return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
-        """Set value with intelligent routing"""
-        primary_store = self._get_store(key)
-        success = await primary_store.set(key, value, ttl)
+        """Store value in S3.
 
-        # Invalidate cache
-        if success and key.entity_type != "cache":
-            cache_key = StateKey(
-                namespace=f"cache:{key.namespace}",
-                entity_type="cache",
-                entity_id=f"{key.entity_type}:{key.entity_id}",
-                version=key.version,
+        Args:
+            key: State key
+            value: Value to store
+            ttl: Optional time-to-live (not directly supported by S3, use lifecycle policies)
+
+        Returns:
+            True if successful
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.s3_client:
+            return False
+
+        try:
+            s3_key = self._get_s3_key(key)
+
+            # Serialize value
+            if isinstance(value, (dict, list)):
+                data = json.dumps(value, default=str).encode("utf-8")
+                content_type = "application/json"
+            elif isinstance(value, str):
+                data = value.encode("utf-8")
+                content_type = "text/plain"
+            else:
+                data = pickle.dumps(value)
+                content_type = "application/octet-stream"
+
+            self.s3_client.put_object(
+                Bucket=self.config.s3_bucket,
+                Key=s3_key,
+                Body=data,
+                ContentType=content_type,
             )
-            await self.redis_store.delete(cache_key)
+            return True
 
-        return success
+        except Exception as e:
+            logger.error("s3_set_failed", key=key.to_string(), error=str(e))
+            return False
 
     async def delete(self, key: StateKey) -> bool:
-        """Delete value from appropriate store"""
-        primary_store = self._get_store(key)
-        success = await primary_store.delete(key)
+        """Delete value from S3.
 
-        # Invalidate cache
-        if success and key.entity_type != "cache":
-            cache_key = StateKey(
-                namespace=f"cache:{key.namespace}",
-                entity_type="cache",
-                entity_id=f"{key.entity_type}:{key.entity_id}",
-                version=key.version,
+        Args:
+            key: State key to delete
+
+        Returns:
+            True if deleted
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.s3_client:
+            return False
+
+        try:
+            s3_key = self._get_s3_key(key)
+            self.s3_client.delete_object(
+                Bucket=self.config.s3_bucket, Key=s3_key
             )
-            await self.redis_store.delete(cache_key)
+            return True
 
-        return success
+        except Exception as e:
+            logger.error("s3_delete_failed", key=key.to_string(), error=str(e))
+            return False
 
     async def exists(self, key: StateKey) -> bool:
-        """Check if key exists in appropriate store"""
-        primary_store = self._get_store(key)
-        return await primary_store.exists(key)
+        """Check if key exists in S3.
 
-    async def list_keys(
-        self, pattern: str, store_type: Optional[str] = None
-    ) -> List[StateKey]:
-        """List keys from appropriate store(s)"""
-        if store_type:
-            if store_type == "redis":
-                return await self.redis_store.list_keys(pattern)
-            elif store_type == "s3":
-                return await self.s3_store.list_keys(pattern)
-            else:
-                return await self.postgres_store.list_keys(pattern)
-        else:
-            # Search all stores and combine results
-            all_keys: list[Any] = []
-            for store in [self.redis_store, self.postgres_store, self.s3_store]:
-                try:
-                    keys = await store.list_keys(pattern)
-                    all_keys.extend(keys)
-                except Exception as e:
-                    logger.warning("Failed to list keys from store: %s", e)
+        Args:
+            key: State key to check
 
-            return all_keys
+        Returns:
+            True if exists
+        """
+        if not self._connected:
+            await self.connect()
 
-    async def health_check(self) -> Dict[str, bool]:
-        """Check health of all stores"""
-        return {
-            "redis": await self.redis_store.health_check(),
-            "postgres": await self.postgres_store.health_check(),
-            "s3": await self.s3_store.health_check(),
-        }
+        if not self.s3_client:
+            return False
 
-    async def cleanup_expired(self) -> None:
-        """Cleanup expired data from all stores"""
-        await self.postgres_store.cleanup_expired()
-        # Redis handles expiration automatically
-        # S3 expiration is handled by lifecycle policies
+        try:
+            s3_key = self._get_s3_key(key)
+            self.s3_client.head_object(
+                Bucket=self.config.s3_bucket, Key=s3_key
+            )
+            return True
+
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            if error_code == "404":
+                return False
+            logger.error("s3_exists_check_failed", key=key.to_string(), error=str(e))
+            return False
+        except Exception as e:
+            logger.error("s3_exists_check_failed", key=key.to_string(), error=str(e))
+            return False
+
+    async def list_keys(self, pattern: str) -> List[StateKey]:
+        """List keys matching prefix.
+
+        Args:
+            pattern: Prefix pattern (S3 uses prefixes, not wildcards)
+
+        Returns:
+            List of matching keys
+        """
+        if not self._connected:
+            await self.connect()
+
+        if not self.s3_client:
+            return []
+
+        try:
+            # Convert pattern to prefix (S3 only supports prefixes)
+            prefix = pattern.replace("*", "").replace("?", "")
+
+            response = self.s3_client.list_objects_v2(
+                Bucket=self.config.s3_bucket, Prefix=prefix
+            )
+
+            keys = []
+            for obj in response.get("Contents", []):
+                key_str = obj["Key"]
+                # Convert S3 key back to StateKey format
+                parts = key_str.split("/")
+                if len(parts) >= 3:
+                    keys.append(
+                        StateKey(
+                            namespace=parts[0],
+                            entity_type=parts[1],
+                            entity_id="/".join(parts[2:]),
+                        )
+                    )
+
+            return keys
+
+        except Exception as e:
+            logger.error("s3_list_keys_failed", pattern=pattern, error=str(e))
+            return []
+
+    async def increment(self, key: StateKey, amount: int = 1) -> Optional[int]:
+        """Increment counter value (not atomically supported in S3).
+
+        Args:
+            key: Counter key
+            amount: Amount to increment
+
+        Returns:
+            New counter value or None
+        """
+        # S3 doesn't support atomic increments
+        # This is a best-effort implementation
+        current = await self.get(key)
+        if current is None:
+            current = 0
+        try:
+            new_value = int(current) + amount
+            await self.set(key, new_value)
+            return new_value
+        except (ValueError, TypeError):
+            logger.error("s3_increment_failed", key=key.to_string())
+            return None
+
+    async def expire(self, key: StateKey, ttl: int) -> bool:
+        """Set TTL for existing key (not directly supported by S3).
+
+        Args:
+            key: State key
+            ttl: Time-to-live in seconds
+
+        Returns:
+            True if successful
+        """
+        # S3 doesn't support per-object TTL
+        # This would require lifecycle policies at bucket level
+        logger.warning("s3_expire_not_supported", key=key.to_string())
+        return True
+
+    async def health_check(self) -> bool:
+        """Check S3 health.
+
+        Returns:
+            True if healthy
+        """
+        try:
+            if not self._connected:
+                await self.connect()
+
+            if not self.s3_client:
+                return False
+
+            self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
+            return True
+
+        except Exception as e:
+            logger.error("s3_health_check_failed", error=str(e))
+            return False
 
     async def close(self) -> None:
-        """Close all store connections"""
-        await self.redis_store.close()
-        await self.postgres_store.close()
-        await self.s3_store.close()
-        logger.info("Unified state manager closed")
-
-
+        """Close S3 client."""
+        if self.s3_client:
+            # boto3 client doesn't need explicit close
+            self._connected = False
+            logger.info("s3_connection_closed")
