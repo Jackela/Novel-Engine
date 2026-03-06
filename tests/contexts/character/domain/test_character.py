@@ -24,9 +24,10 @@ from src.contexts.character.domain.value_objects.character_goal import (
     GoalStatus,
     GoalUrgency,
 )
+from src.contexts.character.domain.value_objects.context_models import MemoryType
 from src.contexts.character.domain.value_objects.character_id import CharacterID
 from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
-from src.core.data_models import MemoryType
+# Note: Using MemoryType from context_models instead of core.data_models
 from src.contexts.character.domain.value_objects.character_profile import (
     CharacterClass,
     CharacterProfile,
@@ -150,15 +151,20 @@ class TestCharacterCreation:
 
     def test_character_validation_level(self, character_id, character_stats, character_skills):
         """Test character validation for level < 1."""
-        invalid_profile = CharacterProfile.create_default(
+        # Create an invalid profile by bypassing validation
+        from dataclasses import replace
+        
+        valid_profile = CharacterProfile.create_default(
             name="Invalid",
             gender=Gender.MALE,
             race=CharacterRace.HUMAN,
             character_class=CharacterClass.FIGHTER,
             age=25,
         )
-        # Override level to invalid value
-        invalid_profile = invalid_profile.with_level(0)
+        # Use object.__setattr__ to bypass frozen dataclass validation for testing
+        invalid_profile = object.__new__(CharacterProfile)
+        invalid_profile.__dict__ = valid_profile.__dict__.copy()
+        object.__setattr__(invalid_profile, 'level', 0)
         
         with pytest.raises(ValueError, match="level must be at least 1"):
             Character(
@@ -285,7 +291,7 @@ class TestCharacterMemoryOperations:
         memory = CharacterMemory(
             memory_id="mem123",
             content="Test memory",
-            memory_type=MemoryType.EXPERIENCE,
+            memory_type=MemoryType.ACHIEVEMENT_MILESTONE,
             importance=5,
             timestamp=datetime.now(),
         )
@@ -305,14 +311,14 @@ class TestCharacterMemoryOperations:
         memory1 = CharacterMemory(
             memory_id="mem1",
             content="Memory 1",
-            memory_type=MemoryType.EXPERIENCE,
+            memory_type=MemoryType.FOUNDATIONAL_LEARNING,
             importance=5,
             timestamp=datetime.now(),
         )
         memory2 = CharacterMemory(
             memory_id="mem2",
             content="Memory 2",
-            memory_type=MemoryType.EXPERIENCE,
+            memory_type=MemoryType.ACHIEVEMENT_MILESTONE,
             importance=9,  # Core memory (> 8)
             timestamp=datetime.now(),
         )
@@ -332,8 +338,7 @@ class TestCharacterGoalOperations:
         """Test adding goal."""
         goal = CharacterGoal(
             goal_id="goal1",
-            title="Defeat the dragon",
-            description="Kill the red dragon",
+            description="Defeat the dragon - Kill the red dragon",
             urgency=GoalUrgency.HIGH,
             status=GoalStatus.ACTIVE,
         )
@@ -347,8 +352,7 @@ class TestCharacterGoalOperations:
         """Test adding duplicate goal raises error."""
         goal = CharacterGoal(
             goal_id="goal1",
-            title="Goal",
-            description="Description",
+            description="Goal - Description",
         )
         
         character.add_goal(goal)
@@ -360,8 +364,7 @@ class TestCharacterGoalOperations:
         """Test completing goal."""
         goal = CharacterGoal(
             goal_id="goal1",
-            title="Goal",
-            description="Description",
+            description="Goal - Description",
             status=GoalStatus.ACTIVE,
         )
         
@@ -374,13 +377,13 @@ class TestCharacterGoalOperations:
         """Test getting urgent goals."""
         urgent_goal = CharacterGoal(
             goal_id="goal1",
-            title="Urgent",
+            description="Urgent goal",
             urgency=GoalUrgency.CRITICAL,
             status=GoalStatus.ACTIVE,
         )
         normal_goal = CharacterGoal(
             goal_id="goal2",
-            title="Normal",
+            description="Normal goal",
             urgency=GoalUrgency.LOW,
             status=GoalStatus.ACTIVE,
         )
