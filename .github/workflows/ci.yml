@@ -25,6 +25,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
@@ -42,13 +45,19 @@ jobs:
           SCORE=$(python -c "import json; print(json.load(open('pyramid-report.json'))['score'])")
           echo "Test Pyramid Score: $SCORE"
 
-          if (( $(echo "$SCORE < $MIN_PYRAMID_SCORE" | bc -l) )); then
-            echo "::error::Test pyramid score ($SCORE) is below minimum threshold ($MIN_PYRAMID_SCORE)"
-            echo "::error::Please improve test distribution to match the pyramid (70% unit, 20% integration, 10% e2e)"
-            exit 1
-          else
-            echo "::notice::Test pyramid score: $SCORE (threshold: $MIN_PYRAMID_SCORE)"
-          fi
+          # Use Python for float comparison instead of bc (which may not be available)
+          python -c "
+import json
+import sys
+score = json.load(open('pyramid-report.json'))['score']
+threshold = float('$MIN_PYRAMID_SCORE')
+if score < threshold:
+    print(f'::error::Test pyramid score ({score}) is below minimum threshold ({threshold})')
+    print('::error::Please improve test distribution to match the pyramid (70% unit, 20% integration, 10% e2e)')
+    sys.exit(1)
+else:
+    print(f'::notice::Test pyramid score: {score} (threshold: {threshold})')
+"
 
       - name: Upload pyramid report
         if: always()
@@ -135,6 +144,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
@@ -149,7 +161,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          pytest -m "unit" --tb=short --durations=10 --junitxml=reports/unit-tests.xml
+          pytest -m "unit" --tb=short --durations=10 -v --junitxml=reports/unit-tests.xml
 
       - name: Upload unit test results
         if: always()
@@ -174,6 +186,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
@@ -188,7 +203,7 @@ jobs:
 
       - name: Run integration tests
         run: |
-          pytest -m "integration" --tb=short --durations=10 --junitxml=reports/integration-tests.xml
+          pytest -m "integration" --tb=short --durations=10 -v --junitxml=reports/integration-tests.xml
 
       - name: Upload integration test results
         if: always()
@@ -214,6 +229,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
@@ -228,7 +246,7 @@ jobs:
 
       - name: Run E2E tests
         run: |
-          pytest -m "e2e" --tb=short --durations=10 --junitxml=reports/e2e-tests.xml
+          pytest -m "e2e" --tb=short --durations=10 -v --junitxml=reports/e2e-tests.xml
 
       - name: Upload E2E test results
         if: always()
@@ -253,6 +271,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
@@ -271,7 +292,7 @@ jobs:
 
       - name: Run smoke tests with JUnit XML
         run: |
-          pytest -q tests/test_character_system_comprehensive.py tests/smoke/ --junitxml=reports/smoke-tests.xml
+          pytest -v tests/test_character_system_comprehensive.py tests/smoke/ --junitxml=reports/smoke-tests.xml
 
       - name: Upload smoke test results
         if: always()
@@ -296,6 +317,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements/requirements-test.txt
 
       - name: Install dependencies
         run: |
