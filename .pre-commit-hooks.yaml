@@ -1,0 +1,13 @@
+# Pre-commit hooks exported by this repository
+# Usage in other projects:
+# - repo: https://github.com/your-org/novel-engine
+#   rev: v1.0.0
+#   hooks:
+#     - id: novel-engine-pyramid-check
+
+- id: novel-engine-pyramid-check
+  name: Novel Engine Test Pyramid Check
+  entry: python scripts/testing/test-pyramid-monitor-fast.py
+  language: python
+  files: ^tests/.*\.py$
+  additional_dependencies: [pytest]

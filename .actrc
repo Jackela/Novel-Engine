@@ -1,0 +1,38 @@
+# ACT Configuration for Novel-Engine
+# Usage: act [options] [job-name]
+# Documentation: https://github.com/nektos/act
+
+# Use medium-sized runner (enough for most workflows)
+# Available images:
+#   - catthehacker/ubuntu:act-latest (recommended, ~1.5GB)
+#   - catthehacker/ubuntu:act-20.04 (smaller, ~800MB)
+#   - catthehacker/ubuntu:act-22.04 (medium, ~1GB)
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Default workflow to run when no -W flag is provided
+-W .github/workflows/ci.yml
+
+# Secrets file (copy from .github/act-secrets.sample and fill in your tokens)
+--secret-file .github/act-secrets
+
+# Environment variables file
+--env-file .env.ci
+
+# Bind workspace (mounts current directory into container)
+# Set to false for faster runs but less accurate file system behavior
+--bind
+
+# Use local actions when available (faster for self-hosted actions)
+--use-local-actions
+
+# Artifact server path (where workflow artifacts are stored)
+--artifact-server-path /tmp/act-artifacts
+
+# Default job to run (can be overridden on command line)
+# -j tests
+
+# Additional options for debugging:
+# --verbose          # Enable verbose logging
+# --dryrun           # Dry run mode (show what would be executed)
+# --graph            # Display workflow graph
+# --watch            # Watch for file changes and re-run
