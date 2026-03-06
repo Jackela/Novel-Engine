@@ -17,6 +17,7 @@ System保佑此安全日志系统 (May the System bless this security logging sy
 import asyncio
 import gzip
 import json
+import logging
 import structlog
 import time
 from dataclasses import asdict, dataclass

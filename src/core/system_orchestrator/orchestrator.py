@@ -2,30 +2,38 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import structlog
+
+from src.core.data_models import ErrorInfo, StandardResponse
+from src.core.narrative import EmergentNarrativeEngine
+from src.core.subjective_reality import SubjectiveRealityEngine
+from src.core.system_orchestrator.types import (
+    OrchestratorConfig,
+    OrchestratorMode,
+    SystemHealth,
+    SystemMetrics,
+)
+from src.interactions.character_interaction_processor import (
+    CharacterInteractionProcessor,
+)
+from src.interactions.engine import InteractionEngine
+from src.interactions.equipment import DynamicEquipmentSystem
+from src.memory.layered_memory import LayeredMemorySystem
+from src.memory.memory_query_engine import MemoryQueryEngine
+from src.templates.character import CharacterTemplateManager
+from src.templates.dynamic_template_engine import DynamicTemplateEngine
+
+logger = structlog.get_logger(__name__)
 
 if TYPE_CHECKING:
     from src.core.data_models import CharacterState, DynamicContext
-    from src.core.narrative import EmergentNarrativeEngine
-    from src.core.subjective_reality import SubjectiveRealityEngine
-    from src.core.system_orchestrator.types import (
-        OrchestratorConfig,
-        SystemHealth,
-        SystemMetrics,
-    )
-    from src.interactions.character_interaction_processor import (
-        CharacterInteractionProcessor,
-    )
     from src.interactions.engine import (
         InteractionContext,
-        InteractionEngine,
         InteractionType,
     )
-    from src.interactions.equipment import DynamicEquipmentSystem
-    from src.memory.layered_memory import LayeredMemorySystem
-    from src.memory.memory_query_engine import MemoryQueryEngine
-    from src.templates.character import CharacterTemplateManager
-    from src.templates.dynamic_template_engine import DynamicTemplateEngine
 
 class SystemOrchestrator:
     """
