@@ -355,21 +355,57 @@ class ConfigurationManager:
 
     def set(self, key_path: str, value: Any) -> None:
         """
-        Set configuration value by dot-separated key path.
+        Set configuration value by dot-separated key path. (Legacy - use set_result)
 
         Args:
             key_path: Dot-separated path (e.g., "server.host")
             value: Value to set
         """
-        keys = key_path.split(".")
-        current = self.config_data
+        result = self.set_result(key_path, value)
+        if result.is_error:
+            logger.warning("configuration_set_failed", error=result.error.message)
 
-        for key in keys[:-1]:
-            if key not in current:
-                current[key] = {}
-            current = current[key]
+    def set_result(self, key_path: str, value: Any) -> Result[bool, ConfigError]:
+        """
+        Set configuration value by dot-separated key path using Result pattern.
 
-        current[keys[-1]] = value
+        Args:
+            key_path: Dot-separated path (e.g., "server.host")
+            value: Value to set
+
+        Returns:
+            Result containing True on success or error
+        """
+        try:
+            if not key_path:
+                return Err(
+                    ConfigError(
+                        message="Configuration key path cannot be empty",
+                        operation="set",
+                        key_path=key_path,
+                    )
+                )
+
+            keys = key_path.split(".")
+            current = self.config_data
+
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+            current[keys[-1]] = value
+            logger.debug("configuration_set", key_path=key_path)
+            return Ok(True)
+        except Exception as e:
+            return Err(
+                ConfigError(
+                    message=f"Failed to set configuration: {e}",
+                    operation="set",
+                    key_path=key_path,
+                    details={"value_type": type(value).__name__},
+                )
+            )
 
     def get_section(self, section: str) -> Dict[str, Any]:
         """Get entire configuration section. (Legacy - use get_section_result)"""
