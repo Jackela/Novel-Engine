@@ -32,6 +32,8 @@ from src.contexts.interactions.domain.value_objects import (
     TermResponse,
     TermType,
 )
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

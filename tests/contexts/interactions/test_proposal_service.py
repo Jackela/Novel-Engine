@@ -18,6 +18,8 @@ from src.contexts.interactions.domain.value_objects.proposal_terms import (
     TermCondition,
     TermType,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestProposalType:

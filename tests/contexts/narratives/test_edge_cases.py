@@ -16,6 +16,8 @@ from src.contexts.narratives.domain.value_objects.plot_point import PlotPoint, P
 from src.contexts.narratives.domain.value_objects.narrative_theme import NarrativeTheme, ThemeType, ThemeIntensity
 from src.contexts.narratives.domain.value_objects.story_pacing import StoryPacing, PacingType
 from src.contexts.narratives.domain.value_objects.causal_node import CausalNode
+pytestmark = pytest.mark.unit
+
 
 
 class TestNarrativeIdEdgeCases:

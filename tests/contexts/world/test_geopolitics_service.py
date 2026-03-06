@@ -19,6 +19,8 @@ from src.contexts.world.domain.entities.diplomatic_pact import DiplomaticPact, P
 from src.contexts.world.domain.entities.location import Location, LocationType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.events.event_bus import EventBus
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

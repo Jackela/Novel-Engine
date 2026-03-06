@@ -16,6 +16,8 @@ from src.contexts.knowledge.domain.models.access_level import AccessLevel
 from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUsageStats
 from src.contexts.knowledge.domain.models.source_type import SourceType
+pytestmark = pytest.mark.unit
+
 
 
 class TestKnowledgeEntryBoundaryCases:

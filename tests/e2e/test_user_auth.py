@@ -33,7 +33,7 @@ def client():
         yield test_client
 
 # Mark all tests in this module as e2e tests
-pytestmark = [pytest.mark.e2e]
+pytestmark = pytest.mark.e2e
 
 
 @pytest.mark.e2e

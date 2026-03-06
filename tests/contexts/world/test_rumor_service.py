@@ -27,6 +27,8 @@ from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository im
     InMemoryRumorRepository,
 )
 from src.core.result import Ok, Err
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

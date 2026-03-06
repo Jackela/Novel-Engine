@@ -17,6 +17,8 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     DEFAULT_DEDUPLICATION_SIMILARITY,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+pytestmark = pytest.mark.unit
+
 
 
 class TestRetrievalFilter:

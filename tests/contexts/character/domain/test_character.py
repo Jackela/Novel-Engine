@@ -47,6 +47,8 @@ from src.contexts.character.domain.value_objects.skills import (
     SkillCategory,
     Skills,
 )
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

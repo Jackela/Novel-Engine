@@ -12,6 +12,8 @@ from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service imp
 from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter import EmbeddingServiceAdapter
 from src.contexts.knowledge.application.services.embedding_cache_service import CacheStats
 from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+pytestmark = pytest.mark.unit
+
 
 
 class TestEmbeddingServiceAdapter:

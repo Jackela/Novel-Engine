@@ -24,6 +24,8 @@ from src.contexts.knowledge.domain.models.source_type import SourceType
 from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError, QueryResult as QueryResult
 from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
 from src.core.result import Ok, Err
+pytestmark = pytest.mark.unit
+
 
 
 class TestRetrievalFilterExtended:

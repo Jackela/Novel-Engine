@@ -18,6 +18,8 @@ from src.contexts.knowledge.infrastructure.chunking.factory import ChunkingStrat
 from src.contexts.knowledge.infrastructure.chunking.base import BaseChunkingStrategy
 from src.contexts.knowledge.domain.models.chunking_strategy import ChunkStrategyType
 from src.contexts.knowledge.application.ports.i_chunking_strategy import ChunkingError
+pytestmark = pytest.mark.unit
+
 
 
 class TestChunkingStrategyFactoryInit:

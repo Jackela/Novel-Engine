@@ -16,6 +16,8 @@ from src.contexts.subjective.domain.value_objects.awareness import (
     AwarenessModifier,
     AwarenessState,
 )
+pytestmark = pytest.mark.unit
+
 
 
 # ============================================================================

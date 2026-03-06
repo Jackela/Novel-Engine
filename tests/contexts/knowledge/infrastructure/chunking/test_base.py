@@ -23,6 +23,8 @@ from src.contexts.knowledge.infrastructure.chunking.base import (
     MAX_COHERENCE_THRESHOLD,
     DEFAULT_COHERENCE_THRESHOLD,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestCoherenceScoreCreation:

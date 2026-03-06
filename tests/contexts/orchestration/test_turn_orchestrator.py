@@ -27,6 +27,8 @@ from src.contexts.orchestration.domain.value_objects import (
     TurnConfiguration,
     TurnId,
 )
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

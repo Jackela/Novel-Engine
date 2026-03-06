@@ -21,6 +21,8 @@ from src.contexts.world.domain.value_objects.resource_type import ResourceType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 from src.contexts.world.domain.value_objects.simulation_tick import SimulationTick
+pytestmark = pytest.mark.unit
+
 
 
 class TestDiplomaticStatusIntegration:

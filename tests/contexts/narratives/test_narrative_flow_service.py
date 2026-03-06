@@ -28,6 +28,8 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
     PacingType,
     StoryPacing,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestNarrativeFlowServiceInitialization:

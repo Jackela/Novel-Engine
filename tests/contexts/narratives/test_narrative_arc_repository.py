@@ -28,6 +28,8 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
 from src.contexts.narratives.infrastructure.repositories.narrative_arc_repository import (
     NarrativeArcRepository,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestNarrativeArcRepositoryInitialization:

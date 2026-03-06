@@ -16,6 +16,8 @@ from src.contexts.knowledge.application.services.bm25_retriever import (
     DEFAULT_K1,
     DEFAULT_B,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestTokenize:

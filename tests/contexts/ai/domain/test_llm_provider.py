@@ -32,6 +32,8 @@ from src.contexts.ai.domain.value_objects.common import (
     ProviderType,
     TokenBudget,
 )
+pytestmark = pytest.mark.unit
+
 
 
 # ============================================================================

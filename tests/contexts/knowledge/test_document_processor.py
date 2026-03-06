@@ -18,6 +18,8 @@ from src.contexts.knowledge.application.services.ingestion_processors import (
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import ChunkingStrategy, ChunkStrategyType
 from src.contexts.knowledge.domain.models.source_type import SourceType
+pytestmark = pytest.mark.unit
+
 
 
 class TestGenericProcessor:

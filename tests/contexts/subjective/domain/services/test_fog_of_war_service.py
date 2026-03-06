@@ -37,6 +37,8 @@ from src.contexts.subjective.domain.value_objects.perception_range import (
     PerceptionType,
     VisibilityLevel,
 )
+pytestmark = pytest.mark.unit
+
 
 
 # Helper function to create test perception capabilities

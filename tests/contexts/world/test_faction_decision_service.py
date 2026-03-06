@@ -33,6 +33,8 @@ from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repo
     InMemoryFactionIntentRepository,
 )
 from src.core.result import Ok, Err
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

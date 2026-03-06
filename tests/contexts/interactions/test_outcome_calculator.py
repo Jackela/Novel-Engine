@@ -23,6 +23,8 @@ from src.contexts.interactions.domain.value_objects.proposal_response import (
     ResponseType,
     TermResponse,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestNegotiationPhase:

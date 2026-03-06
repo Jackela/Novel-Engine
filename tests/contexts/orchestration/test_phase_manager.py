@@ -14,6 +14,8 @@ from src.contexts.orchestration.domain.value_objects.phase_status import (
     PhaseStatusEnum,
     PhaseType,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestPhaseType:

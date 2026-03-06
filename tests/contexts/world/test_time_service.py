@@ -22,6 +22,8 @@ from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository
     InMemoryCalendarRepository,
 )
 from src.core.result import Ok, Err
+pytestmark = pytest.mark.unit
+
 
 
 @pytest.fixture

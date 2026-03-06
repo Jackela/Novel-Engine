@@ -18,6 +18,8 @@ from src.contexts.subjective.domain.value_objects.knowledge_level import (
     KnowledgeSource,
     KnowledgeType,
 )
+pytestmark = pytest.mark.unit
+
 
 
 # ============================================================================

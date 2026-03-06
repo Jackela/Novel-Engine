@@ -17,6 +17,8 @@ from src.contexts.knowledge.domain.models.access_control_rule import AccessContr
 from src.contexts.knowledge.domain.models.access_level import AccessLevel
 from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
 from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUsageStats
+pytestmark = pytest.mark.unit
+
 
 
 class TestKnowledgeEntryErrorPaths:

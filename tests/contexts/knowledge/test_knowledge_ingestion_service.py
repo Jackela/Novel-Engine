@@ -24,6 +24,8 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 )
 from src.contexts.knowledge.domain.models.chunking_strategy import ChunkingStrategy
 from src.contexts.knowledge.domain.models.source_type import SourceType
+pytestmark = pytest.mark.unit
+
 
 
 class TestIngestionProgress:

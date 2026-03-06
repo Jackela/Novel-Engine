@@ -16,6 +16,8 @@ from src.contexts.narratives.domain.value_objects import (
     StoryArcPhase,
     StoryArcState,
 )
+pytestmark = pytest.mark.unit
+
 
 
 class TestPacingManagerInitialization:

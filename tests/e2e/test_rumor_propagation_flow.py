@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional
 from fastapi.testclient import TestClient
 
 # Mark all tests in this module as e2e tests
-pytestmark = [pytest.mark.e2e]
+pytestmark = pytest.mark.e2e
 
 
 class TestRumorPropagationFlow:

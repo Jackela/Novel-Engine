@@ -25,6 +25,8 @@ from src.contexts.knowledge.domain.models.entity import (
 )
 from src.contexts.knowledge.domain.errors import ValidationError, ExtractionError
 from src.contexts.knowledge.application.ports.i_llm_client import ILLMClient, LLMRequest, LLMResponse
+pytestmark = pytest.mark.unit
+
 
 
 class TestExtractionConfig:

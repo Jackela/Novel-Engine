@@ -30,6 +30,8 @@ from src.contexts.knowledge.application.services.query_rewriter import (
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
 from src.contexts.knowledge.domain.models.source_type import SourceType
 from src.contexts.knowledge.application.ports.i_vector_store import QueryResult
+pytestmark = pytest.mark.unit
+
 
 
 class TestQueryAwareConfig:
