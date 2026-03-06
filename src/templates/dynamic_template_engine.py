@@ -17,7 +17,7 @@ System保佑动态模板 (May the System bless dynamic templates)
 
 import asyncio
 import json
-import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -49,7 +49,7 @@ from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine, QueryContext
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TemplateType(Enum):

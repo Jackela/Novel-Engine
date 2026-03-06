@@ -3,14 +3,14 @@
 Character archetype configurations and preferences.
 """
 
-import logging
+import structlog
 from typing import Dict
 
 from src.templates.dynamic_template_engine import TemplateType
 
 from .persona_models import CharacterArchetype
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ArchetypeConfiguration:

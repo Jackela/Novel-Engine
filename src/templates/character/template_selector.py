@@ -3,14 +3,14 @@
 Template selection logic.
 """
 
-import logging
+import structlog
 from typing import Optional
 
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
 from .persona_models import CharacterTemplate
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TemplateSelector:

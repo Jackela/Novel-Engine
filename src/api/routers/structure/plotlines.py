@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -26,7 +26,7 @@ from .common import (
     _store_plotline,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/plotlines")
 

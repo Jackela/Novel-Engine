@@ -8,13 +8,13 @@ This is a minimal implementation to resolve import dependencies.
 """
 
 import asyncio
-import logging
+import structlog
 from enum import Enum
 from typing import Dict, List
 
 from .event_bus import Event, EventHandler
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ProcessingStrategy(Enum):

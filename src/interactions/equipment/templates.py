@@ -3,7 +3,7 @@
 Equipment template management.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -11,7 +11,7 @@ from src.core.data_models import EquipmentItem, ErrorInfo, StandardResponse
 
 from .models import DynamicEquipment
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TemplateManager:

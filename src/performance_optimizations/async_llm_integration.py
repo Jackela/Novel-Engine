@@ -23,7 +23,7 @@ import asyncio
 import atexit
 import hashlib
 import json
-import logging
+import structlog
 import os
 import threading
 import time
@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -163,7 +163,7 @@ class AsyncLLMClient:
             try:
                 await self._batch_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
         if self._session:
             await self._session.close()

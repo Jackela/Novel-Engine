@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import io
 import json
-import logging
+import structlog
 import os
 import re
 import shutil
@@ -19,7 +19,7 @@ from .interfaces import CharacterStore, Workspace, WorkspaceStore
 _WORKSPACE_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 _RESOURCE_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{1,128}$")
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 SCHEMA_VERSION = 1
 
@@ -65,7 +65,7 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
             if tmp_path.exists():
                 tmp_path.unlink()
         except OSError:
-            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+            structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
 
 def _atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:

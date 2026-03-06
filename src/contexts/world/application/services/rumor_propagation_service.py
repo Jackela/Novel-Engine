@@ -40,33 +40,17 @@ from src.contexts.world.domain.entities.rumor import (
     Rumor,
     RumorOrigin,
 )
+from src.contexts.world.domain.errors import (
+    RumorCreationError,
+    RumorError,
+    RumorPropagationError,
+)
 from src.core.result import Err, Error, Ok, Result
 
 logger = structlog.get_logger()
 
 
-class RumorPropagationError(Error):
-    """Error raised when rumor propagation fails."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="RUMOR_PROPAGATION_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
-
-
-class RumorCreationError(Error):
-    """Error raised when creating a rumor from an event fails."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="RUMOR_CREATION_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
+# Note: Error types are now imported from src.contexts.world.domain.errors
 
 
 @runtime_checkable

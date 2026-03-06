@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -43,7 +43,7 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_routing_config_rep
     InMemoryRoutingConfigRepository,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["routing"])
 

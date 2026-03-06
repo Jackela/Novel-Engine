@@ -10,7 +10,7 @@ Wave 5.4 - Memory Management & Garbage Collection Enhancement
 
 import asyncio
 import gc
-import logging
+import structlog
 import threading
 import weakref
 from collections import defaultdict, deque
@@ -22,7 +22,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryPressureLevel(Enum):
@@ -253,7 +253,7 @@ class MemoryOptimizer:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
             self.monitoring_task = None
 
         # Restore original GC thresholds

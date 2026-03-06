@@ -9,6 +9,7 @@ core functionality without complex imports.
 import asyncio
 import json
 import logging
+import structlog
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -19,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class M9OrchestrationValidator:

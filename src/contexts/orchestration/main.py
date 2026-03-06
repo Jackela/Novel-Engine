@@ -14,6 +14,7 @@ Provides the complete M9 Orchestration milestone implementation with:
 """
 
 import logging
+import structlog
 import os
 import sys
 from pathlib import Path
@@ -39,7 +40,7 @@ logging.basicConfig(
     ],
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def main() -> None:

@@ -313,7 +313,7 @@ class KnowledgeSyncEventHandler:
         )
 
         try:
-            result: IngestionResult = await self._ingestion_service.ingest(
+            ingest_result = await self._ingestion_service.ingest(
                 content=task.content,
                 source_type=task.source_type,
                 source_id=task.source_id,
@@ -321,17 +321,24 @@ class KnowledgeSyncEventHandler:
                 extra_metadata=task.extra_metadata,
             )
 
-            if result.success:
-                self._metrics["tasks_completed"] += 1
-                logger.info(
-                    "knowledge_sync_ingestion_success",
-                    source_id=task.source_id,
-                    source_type=task.source_type.value,
-                    chunk_count=result.chunk_count,
-                )
+            if ingest_result.is_ok:
+                result = ingest_result.value
+                if result is not None and result.success:
+                    self._metrics["tasks_completed"] += 1
+                    logger.info(
+                        "knowledge_sync_ingestion_success",
+                        source_id=task.source_id,
+                        source_type=task.source_type.value,
+                        chunk_count=result.chunk_count,
+                    )
+                else:
+                    # Ingestion returned None or failed
+                    await self._handle_failure(task, "Ingestion returned invalid result")
             else:
                 # Ingestion failed - retry or dead letter
-                await self._handle_failure(task, result.error or "Unknown error")
+                err = ingest_result.error
+                error_msg = err.message if err is not None else "Unknown error"
+                await self._handle_failure(task, error_msg)
 
         except Exception as e:
             # Exception during ingestion - retry or dead letter

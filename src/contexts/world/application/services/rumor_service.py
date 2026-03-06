@@ -20,34 +20,18 @@ import structlog
 
 from src.api.schemas.world_schemas import SortByEnum
 from src.contexts.world.domain.entities import Rumor
+from src.contexts.world.domain.errors import (
+    RumorError,
+    RumorNotFoundError,
+    RumorValidationError,
+)
 from src.contexts.world.domain.ports.rumor_repository import RumorRepository
 from src.core.result import Err, Error, Ok, Result
 
 logger = structlog.get_logger()
 
 
-class RumorNotFoundError(Error):
-    """Error raised when a requested rumor is not found."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="RUMOR_NOT_FOUND",
-            message=message,
-            recoverable=False,
-            details=details,
-        )
-
-
-class RumorValidationError(Error):
-    """Error raised when rumor data validation fails."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="RUMOR_VALIDATION_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
+# Note: Error types are now imported from src.contexts.world.domain.errors
 
 
 class RumorService:

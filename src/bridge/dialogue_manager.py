@@ -6,7 +6,7 @@ Dialogue Manager
 Manages agent-to-agent dialogue sessions and communication coordination.
 """
 
-import logging
+import structlog
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -28,7 +28,7 @@ class DialogueManager:
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize dialogue manager."""
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.active_dialogues: Dict[str, AgentDialogue] = {}
         self.agent_dialogues: Dict[str, Set[str]] = defaultdict(set)
         self.dialogue_history: List[Dict[str, Any]] = []

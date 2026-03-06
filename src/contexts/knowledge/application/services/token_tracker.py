@@ -27,11 +27,11 @@ from __future__ import annotations
 import asyncio
 import functools
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional, TypeVar
+from typing import Any, Optional, TypeVar, cast
 
 import structlog
 
@@ -40,7 +40,7 @@ from ...domain.models.model_registry import LLMProvider
 from ...domain.models.token_usage import TokenUsage, TokenUsageStats
 
 # Need LLMResponse at runtime for decorator isinstance checks
-from ..services.model_registry import ModelRegistry
+from ..services.model_registry import ModelLookupResult, ModelRegistry
 from ..services.token_counter import TokenCounter
 
 logger = structlog.get_logger()
@@ -440,19 +440,29 @@ class TokenTracker:
         """
         # Resolve model reference
         resolve_result = self._model_registry.resolve_model(model_ref)
+        lookup_result: ModelLookupResult
         if resolve_result.is_error:
             # Use defaults if resolution fails
-            lookup_result = type('obj', (object,), {
-                'provider': LLMProvider.OPENAI,
-                'model_name': model_ref,
-                'model_definition': None,
-            })()
+            lookup_result = ModelLookupResult(
+                provider=LLMProvider.OPENAI,
+                model_name=model_ref,
+                model_definition=None,
+            )
         else:
-            lookup_result = resolve_result.unwrap()
+            maybe_lookup = resolve_result.unwrap()
+            if maybe_lookup is None:
+                lookup_result = ModelLookupResult(
+                    provider=LLMProvider.OPENAI,
+                    model_name=model_ref,
+                    model_definition=None,
+                )
+            else:
+                lookup_result = maybe_lookup
+
         model_def = lookup_result.model_definition
 
         # Pre-count input tokens if prompt provided
-        input_tokens = None
+        input_tokens: int | None = None
         if prompt and self._config.count_input_tokens:
             count_result = self._token_counter.count(
                 prompt,
@@ -487,7 +497,7 @@ class TokenTracker:
         workspace_id: str | None = None,
         user_id: str | None = None,
         metadata: dict[str, Any] | None = None,
-    ) -> None:
+    ) -> Callable[[Callable[..., T]], Callable[..., T]]:
         """
         Decorator for automatic tracking of LLM calls.
 
@@ -512,7 +522,7 @@ class TokenTracker:
             @functools.wraps(func)
             async def wrapper(*args: Any, **kwargs: Any) -> T:
                 if not self._config.enabled:
-                    return await func(*args, **kwargs)
+                    return await func(*args, **kwargs)  # type: ignore[misc]
 
                 start_time = time.monotonic()
 
@@ -520,18 +530,18 @@ class TokenTracker:
                 actual_model_ref = model_ref
                 if actual_model_ref is None:
                     # Check for 'request' parameter
-                    request = kwargs.get("request")
-                    if request is None and args:
-                        request = args[0]
-                    if hasattr(request, "model"):
-                        actual_model_ref = request.model
+                    req = kwargs.get("request")
+                    if req is None and args:
+                        req = args[0]
+                    if req is not None and hasattr(req, "model"):
+                        actual_model_ref = req.model
 
                 # Try to extract workspace_id and user_id
                 actual_workspace_id = workspace_id or kwargs.get("workspace_id")
                 actual_user_id = user_id or kwargs.get("user_id")
 
                 try:
-                    result = await func(*args, **kwargs)
+                    result = await func(*args, **kwargs)  # type: ignore[misc]
                     latency_ms = (time.monotonic() - start_time) * 1000
 
                     # Extract token usage from result
@@ -549,38 +559,38 @@ class TokenTracker:
                             or result.tokens_used - input_tokens
                         )
                     elif hasattr(result, "usage"):
-                        usage = result.usage
-                        if isinstance(usage, dict):
-                            input_tokens = usage.get("prompt_tokens", 0) or usage.get(
+                        usage_attr = result.usage
+                        if isinstance(usage_attr, dict):
+                            input_tokens = usage_attr.get("prompt_tokens", 0) or usage_attr.get(
                                 "input_tokens", 0
                             )
-                            output_tokens = usage.get(
+                            output_tokens = usage_attr.get(
                                 "completion_tokens", 0
-                            ) or usage.get("output_tokens", 0)
+                            ) or usage_attr.get("output_tokens", 0)
 
-                    # Get model pricing
-                    cost_per_1m_input = 0.0
-                    cost_per_1m_output = 0.0
+                    # Get model pricing and record usage
                     if actual_model_ref:
                         resolve_result = self._model_registry.resolve_model(
                             actual_model_ref
                         )
+                        cost_per_1m_input = 0.0
+                        cost_per_1m_output = 0.0
+                        provider_str = "unknown"
+                        model_name_str = actual_model_ref
+
                         if resolve_result.is_ok:
                             lookup_result = resolve_result.unwrap()
-                            model_def = lookup_result.model_definition
-                            if model_def:
-                                cost_per_1m_input = model_def.cost_per_1m_input_tokens
-                                cost_per_1m_output = model_def.cost_per_1m_output_tokens
+                            if lookup_result is not None:
+                                model_def = lookup_result.model_definition
+                                if model_def:
+                                    cost_per_1m_input = model_def.cost_per_1m_input_tokens
+                                    cost_per_1m_output = model_def.cost_per_1m_output_tokens
 
-                            # Create usage record (we're already inside if actual_model_ref)
-                            provider_str = lookup_result.provider.value
-                            model_name_str = lookup_result.model_name
-                        else:
-                            # Use defaults if resolution fails
-                            provider_str = "unknown"
-                            model_name_str = actual_model_ref
+                                # Create usage record
+                                provider_str = str(lookup_result.provider.value) if hasattr(lookup_result.provider, 'value') else str(lookup_result.provider)
+                                model_name_str = lookup_result.model_name
 
-                        usage = TokenUsage.create(
+                        usage_record = TokenUsage.create(
                             provider=provider_str,
                             model_name=model_name_str,
                             input_tokens=input_tokens,
@@ -595,9 +605,9 @@ class TokenTracker:
                         )
 
                         if self._config.track_individual_calls:
-                            await self.record(usage)
+                            await self.record(usage_record)
 
-                    return result
+                    return result  # type: ignore[no-any-return]
 
                 except Exception as e:
                     latency_ms = (time.monotonic() - start_time) * 1000
@@ -607,26 +617,25 @@ class TokenTracker:
                         resolve_result = self._model_registry.resolve_model(
                             actual_model_ref
                         )
+                        cost_per_1m_input = 0.0
+                        cost_per_1m_output = 0.0
+                        provider_str = "unknown"
+                        model_name_str = actual_model_ref
+
                         if resolve_result.is_ok:
                             lookup_result = resolve_result.unwrap()
-                            model_def = lookup_result.model_definition
+                            if lookup_result is not None:
+                                model_def = lookup_result.model_definition
+                                cost_per_1m_input = (
+                                    model_def.cost_per_1m_input_tokens if model_def else 0.0
+                                )
+                                cost_per_1m_output = (
+                                    model_def.cost_per_1m_output_tokens if model_def else 0.0
+                                )
+                                provider_str = str(lookup_result.provider.value) if hasattr(lookup_result.provider, 'value') else str(lookup_result.provider)
+                                model_name_str = lookup_result.model_name
 
-                            cost_per_1m_input = (
-                                model_def.cost_per_1m_input_tokens if model_def else 0.0
-                            )
-                            cost_per_1m_output = (
-                                model_def.cost_per_1m_output_tokens if model_def else 0.0
-                            )
-                            provider_str = lookup_result.provider.value
-                            model_name_str = lookup_result.model_name
-                        else:
-                            # Use defaults if resolution fails
-                            cost_per_1m_input = 0.0
-                            cost_per_1m_output = 0.0
-                            provider_str = "unknown"
-                            model_name_str = actual_model_ref
-
-                        usage = TokenUsage.create(
+                        usage_record = TokenUsage.create(
                             provider=provider_str,
                             model_name=model_name_str,
                             input_tokens=0,
@@ -641,11 +650,11 @@ class TokenTracker:
                             metadata=metadata or {},
                         )
 
-                        await self.record(usage)
+                        await self.record(usage_record)
 
                     raise
 
-            return wrapper
+            return wrapper  # type: ignore[return-value]
 
         return decorator
 
@@ -656,7 +665,7 @@ class TokenTracker:
         provider: str | None = None,
         model_name: str | None = None,
         workspace_id: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> TokenUsageStats:
         """
         Get usage summary for a time period.
 
@@ -668,7 +677,7 @@ class TokenTracker:
             workspace_id: Optional workspace filter
 
         Returns:
-            TokenUsageSummary with aggregated metrics
+            TokenUsageStats with aggregated metrics
         """
         return await self._repository.get_summary(
             start_time=start_time,

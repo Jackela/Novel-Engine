@@ -9,7 +9,7 @@ dashboard capabilities, alerting system, and performance regression detection.
 import asyncio
 import gc
 import json
-import logging
+import structlog
 import os
 import sqlite3
 import statistics
@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 import aiosqlite
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(Enum):
@@ -665,7 +665,7 @@ class PerformanceMonitor:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
         logger.info("Performance monitoring stopped")
 

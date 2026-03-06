@@ -30,11 +30,15 @@ from src.contexts.world.domain.entities.faction_intent import (
     FactionIntent,
     IntentStatus,
 )
+from src.contexts.world.domain.errors import (
+    FactionError,
+    IntentGenerationError,
+)
 from src.contexts.world.domain.events.intent_events import IntentGeneratedEvent
 from src.contexts.world.domain.ports.faction_intent_repository import (
     FactionIntentRepository,
 )
-from src.core.result import Err, Ok, Result
+from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:
     from src.contexts.knowledge.application.services.retrieval_service import (
@@ -188,7 +192,7 @@ class FactionDecisionService:
         self,
         faction: Faction,
         context: DecisionContext,
-    ) -> Result[Tuple[List[FactionIntent], IntentGeneratedEvent], str]:
+    ) -> Result[Tuple[List[FactionIntent], IntentGeneratedEvent], Error]:
         """Generate intent options for a faction.
 
         This is the main entry point for decision generation. It:
@@ -229,7 +233,12 @@ class FactionDecisionService:
                 faction_id=faction.id,
                 active_count=active_count,
             )
-            return Err(error_msg)
+            return Err(
+                IntentGenerationError(
+                    error_msg,
+                    details={"faction_id": faction.id, "active_count": active_count},
+                )
+            )
 
         # Enrich context with RAG data (async) - Issue 7: track RAG success
         enriched_context, rag_success = await self._enrich_context_with_rag(context)
@@ -252,7 +261,12 @@ class FactionDecisionService:
                 faction_id=faction.id,
                 fallback_used=fallback_used,
             )
-            return Err(error_msg)
+            return Err(
+                IntentGenerationError(
+                    error_msg,
+                    details={"faction_id": faction.id, "fallback_used": fallback_used},
+                )
+            )
 
         # Persist intents in batch (fixes N+1 query pattern)
         self._repository.save_batch(intents)
@@ -929,18 +943,41 @@ Respond with JSON in this format:
         intents.sort(key=lambda i: i.priority)
         return intents[:MAX_INTENTS_PER_GENERATION]
 
-    def get_pending_events(self) -> List[IntentGeneratedEvent]:
-        """Get all pending events that haven't been cleared."""
-        return list(self._events)
+    def get_pending_events(self) -> Result[List[IntentGeneratedEvent], Error]:
+        """Get all pending events that haven't been cleared.
 
-    def clear_pending_events(self) -> None:
-        """Clear all pending events after they've been processed."""
-        self._events.clear()
-        logger.debug("pending_events_cleared")
+        Returns:
+            Result containing list of pending events or error
+        """
+        try:
+            return Ok(list(self._events))
+        except Exception as e:
+            return Err(
+                FactionError(
+                    f"Failed to get pending events: {e}",
+                )
+            )
+
+    def clear_pending_events(self) -> Result[None, Error]:
+        """Clear all pending events after they've been processed.
+
+        Returns:
+            Result containing None on success or error
+        """
+        try:
+            self._events.clear()
+            logger.debug("pending_events_cleared")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                FactionError(
+                    f"Failed to clear pending events: {e}",
+                )
+            )
 
     def select_intent(
         self, intent_id: str, faction_id: str
-    ) -> Result[FactionIntent, str]:
+    ) -> Result[FactionIntent, Error]:
         """Select an intent for execution.
 
         Marks the intent as SELECTED and clears other active intents
@@ -955,15 +992,30 @@ Respond with JSON in this format:
         """
         intent = self._repository.find_by_id(intent_id)
         if intent is None:
-            return Err(f"Intent {intent_id} not found")
+            return Err(
+                FactionError(
+                    f"Intent {intent_id} not found",
+                    details={"intent_id": intent_id},
+                )
+            )
 
         if intent.faction_id != faction_id:
-            return Err(f"Intent {intent_id} does not belong to faction {faction_id}")
+            return Err(
+                FactionError(
+                    f"Intent {intent_id} does not belong to faction {faction_id}",
+                    details={"intent_id": intent_id, "faction_id": faction_id},
+                )
+            )
 
         # Mark as selected
         success = self._repository.mark_selected(intent_id)
         if not success:
-            return Err(f"Failed to select intent {intent_id}")
+            return Err(
+                FactionError(
+                    f"Failed to select intent {intent_id}",
+                    details={"intent_id": intent_id},
+                )
+            )
 
         logger.info(
             "intent_selected",

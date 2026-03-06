@@ -6,7 +6,7 @@ Modular implementation of the enhanced multi-agent bridge using component-based 
 Maintains full backward compatibility while providing enterprise-grade modularity.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -66,7 +66,7 @@ class EnhancedMultiAgentBridge:
         self.director_agent = director_agent
         self.chronicler_agent = chronicler_agent
         self.config = coordination_config or LLMCoordinationConfig()
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Agent registry
         self._agents: Dict[str, PersonaAgent] = {}
@@ -108,13 +108,13 @@ class EnhancedMultiAgentBridge:
                 performance_budget=self.performance_budget,
                 max_batch_size=self.config.max_batch_size,
                 batch_timeout_ms=self.config.batch_timeout_ms,
-                logger=self.logger.getChild("llm_processor"),
+                logger=self.logger.bind(component="llm_processor"),
             )
 
             # Dialogue manager
             self.dialogue_manager = DialogueManager(
                 llm_processor=self.llm_processor,
-                logger=self.logger.getChild("dialogue"),
+                logger=self.logger.bind(component="dialogue"),
             )
 
             # Performance metrics

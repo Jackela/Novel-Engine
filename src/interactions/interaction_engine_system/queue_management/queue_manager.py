@@ -7,7 +7,7 @@ Handles queuing, prioritization, and scheduling of interaction requests.
 """
 
 import asyncio
-import logging
+import structlog
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -116,7 +116,7 @@ class QueueManager:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Queue management
         self.interaction_queue: PriorityQueue = PriorityQueue(
@@ -299,7 +299,7 @@ class QueueManager:
                 try:
                     await self.queue_processor_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
                 self.queue_processor_task = None

@@ -3,7 +3,7 @@
 Interaction persistence and metrics tracking.
 """
 
-import logging
+import structlog
 
 from src.core.data_models import CharacterInteraction
 from src.database.context_db import ContextDatabase
@@ -12,7 +12,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionPersistence:

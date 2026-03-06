@@ -3,7 +3,7 @@
 Content generation for interactions.
 """
 
-import logging
+import structlog
 from typing import Any, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
@@ -16,7 +16,7 @@ from src.interactions.interaction_engine_system.core.types import (
 from src.templates.context_renderer import ContextRenderer, RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContentGenerator:

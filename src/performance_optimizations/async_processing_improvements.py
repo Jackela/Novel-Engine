@@ -10,7 +10,7 @@ Wave 5.3 - Async Processing & Concurrency Enhancement
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from collections import deque
 from contextlib import asynccontextmanager
@@ -23,7 +23,7 @@ import aiofiles
 import aiohttp
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TaskPriority(Enum):

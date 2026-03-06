@@ -8,6 +8,7 @@ for the complete run_turn orchestration flow as required by M10 milestone.
 
 import asyncio
 import logging
+import structlog
 from decimal import Decimal
 from uuid import UUID
 
@@ -25,7 +26,7 @@ from infrastructure.monitoring.tracing_middleware import (
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 async def demonstrate_turn_tracing():

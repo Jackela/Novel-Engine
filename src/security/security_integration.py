@@ -19,6 +19,7 @@ System coordinates all security operations 🛡️
 
 import asyncio
 import logging
+import structlog
 import os
 import secrets
 from datetime import datetime, timezone
@@ -57,7 +58,7 @@ from .security_middleware import (
 
 # Enhanced logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnterpriseSecuritySuite:

@@ -8,7 +8,7 @@ consciousness, adhering to the 7±2 capacity limit from cognitive psychology.
 It manages a small set of recently attended memory items.
 """
 
-import logging
+import structlog
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -17,7 +17,7 @@ from typing import Any, Deque, Dict, List, Optional
 from src.core.data_models import ErrorInfo, MemoryItem, StandardResponse
 from src.core.types import AgentID
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # A default capacity for working memory, based on Miller's Law (7 ± 2)
 DEFAULT_WORKING_MEMORY_CAPACITY = 7

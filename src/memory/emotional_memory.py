@@ -7,7 +7,7 @@ experiences and emotional states with valence and arousal tracking.
 """
 
 import asyncio
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
@@ -21,7 +21,7 @@ from src.core.data_models import (
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EmotionalIntensity(Enum):

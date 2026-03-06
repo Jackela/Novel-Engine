@@ -8,7 +8,7 @@ Handles loading, validation, hot-reloading, and environment-specific configs.
 
 import asyncio
 import json
-import logging
+import structlog
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -51,7 +51,7 @@ if WATCHDOG_AVAILABLE:
 
         def __init__(self, config_service) -> None:
             self.config_service = config_service
-            self.logger = logging.getLogger(__name__)
+            self.logger = structlog.get_logger(__name__)
 
         def on_modified(self, event) -> None:
             if (
@@ -92,7 +92,7 @@ class ConfigurationService:
         environment: str = "development",
         logger: Optional[logging.Logger] = None,
     ) -> None:
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.config_dir = Path(config_dir)
         self.environment = environment
 

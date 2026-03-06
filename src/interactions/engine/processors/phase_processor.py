@@ -3,7 +3,7 @@
 Interaction phase processing and template initialization.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict
 
@@ -15,7 +15,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PhaseProcessor:

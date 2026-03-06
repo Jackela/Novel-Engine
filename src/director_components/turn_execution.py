@@ -7,7 +7,7 @@ Handles turn preparation, agent coordination, and result processing.
 """
 
 import asyncio
-import logging
+import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -70,7 +70,7 @@ class TurnExecutionEngine:
         logger: Optional[logging.Logger] = None,
     ) -> None:
         self.agent_manager = agent_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         self._turn_counter = 0
         self._current_context: Optional[TurnContext] = None

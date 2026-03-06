@@ -5,13 +5,13 @@ Analyzes turn results to detect narrative moments that warrant user intervention
 Uses configurable thresholds based on PlotPoint model attributes.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
 
 from .models import DecisionOption, DecisionPoint, DecisionPointType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Decision point type mappings from PlotPointType

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 
 from fastapi import APIRouter, HTTPException
 
@@ -29,7 +29,7 @@ from .common import (
     _store_conflict,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter()
 

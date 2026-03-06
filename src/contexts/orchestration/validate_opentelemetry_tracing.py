@@ -7,6 +7,7 @@ Can be run independently to verify Wave 3 functionality.
 """
 
 import logging
+import structlog
 import sys
 from pathlib import Path
 from uuid import uuid4
@@ -19,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def test_tracing_infrastructure() -> None:

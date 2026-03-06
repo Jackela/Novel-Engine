@@ -256,7 +256,7 @@ class GetWorldSliceQueryHandler:
     """
 
     def __init__(self) -> None:
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetWorldSlice) -> Dict[str, Any]:
         """
@@ -429,7 +429,7 @@ class GetWorldSummaryQueryHandler:
     """Handler for GetWorldSummary queries."""
 
     def __init__(self) -> None:
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetWorldSummary) -> Dict[str, Any]:
         """Execute the GetWorldSummary query."""
@@ -468,7 +468,7 @@ class GetEntitiesInAreaQueryHandler:
     """Handler for GetEntitiesInArea queries."""
 
     def __init__(self) -> None:
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetEntitiesInArea) -> Dict[str, Any]:
         """Execute the GetEntitiesInArea query."""
@@ -523,7 +523,7 @@ class GetEntitiesByTypeQueryHandler:
     """Handler for GetEntitiesByType queries."""
 
     def __init__(self) -> None:
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetEntitiesByType) -> Dict[str, Any]:
         """Execute the GetEntitiesByType query."""
@@ -574,7 +574,7 @@ class SearchWorldsQueryHandler:
     """Handler for SearchWorlds queries."""
 
     def __init__(self) -> None:
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: SearchWorlds) -> Dict[str, Any]:
         """Execute the SearchWorlds query."""

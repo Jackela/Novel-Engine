@@ -7,7 +7,7 @@ with the existing performance tracking capabilities. Provides backward compatibi
 while adding enterprise-grade observability features.
 """
 
-import logging
+import structlog
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
@@ -22,7 +22,7 @@ from ..value_objects import (
 )
 from .performance_tracker import PerformanceTracker
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedPerformanceTracker(PerformanceTracker):

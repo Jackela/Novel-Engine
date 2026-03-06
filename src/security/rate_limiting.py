@@ -17,6 +17,7 @@ System保佑此限流系统 (May the System bless this rate limiting system)
 import asyncio
 import hashlib
 import logging
+import structlog
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -27,7 +28,7 @@ from fastapi import Request
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class _RateLimitStrategyMeta(EnumMeta):

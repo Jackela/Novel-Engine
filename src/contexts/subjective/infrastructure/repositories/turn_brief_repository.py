@@ -62,7 +62,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             session_factory: Factory for creating database sessions
         """
         self.session_factory = session_factory
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def get_by_id(self, turn_brief_id: SubjectiveId) -> Optional[TurnBrief]:
         """

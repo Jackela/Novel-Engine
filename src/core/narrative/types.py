@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import networkx as nx
+import networkx as nx  # type: ignore[import-untyped]
 
 logger = structlog.get_logger(__name__)
 
@@ -65,12 +65,12 @@ class CausalNode:
     narrative_weight: float = 1.0  # 叙事权重
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __hash__(self) -> None:
+    def __hash__(self) -> int:
         return hash(self.node_id)
 
-    def __eq__(self, other: Any) -> None:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, CausalNode):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         return self.node_id == other.node_id
 
     def to_dict(self) -> Dict[str, Any]:
@@ -203,7 +203,7 @@ class CausalGraph:
 
     def detect_narrative_patterns(self) -> Dict[str, Any]:
         """检测叙事模式"""
-        patterns = {
+        patterns: dict[str, Any] = {
             "conflict_nodes": [],
             "resolution_nodes": [],
             "catalyst_events": [],

@@ -8,7 +8,7 @@ Provides additional security layers beyond basic headers.
 """
 
 import json
-import logging
+import structlog
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
@@ -17,7 +17,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

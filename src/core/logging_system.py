@@ -149,7 +149,7 @@ class _ClosingRotatingFileHandler(logging.handlers.RotatingFileHandler):
             try:
                 self.stream.close()
             finally:
-                self.stream = None
+                self.stream = None  # type: ignore[assignment]
 
 
 class StructuredLogger:
@@ -180,7 +180,7 @@ class StructuredLogger:
 
         # Performance tracking
         self.performance_metrics: deque = deque(maxlen=10000)
-        self.operation_stats = defaultdict(list)
+        self.operation_stats: dict[str, list[Any]] = defaultdict(list)
 
         # Audit trail
         self.audit_trail: deque = deque(maxlen=50000)
@@ -189,7 +189,7 @@ class StructuredLogger:
         self._setup_handlers()
 
         # Thread local logger reference (weak to avoid leaking file handles in tests)
-        threading.current_thread()._structured_logger = weakref.ref(self)
+        setattr(threading.current_thread(), "_structured_logger", weakref.ref(self))
 
     def close(self) -> None:
         """Close and remove all handlers for this logger instance."""
@@ -339,7 +339,7 @@ class StructuredLogger:
         """Log warning message."""
         self._log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, error: Optional[Exception] = None, **kwargs) -> None:
+    def error(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
         """Log error message with optional exception details."""
         error_details = None
         if error:
@@ -352,7 +352,7 @@ class StructuredLogger:
         self._log(LogLevel.ERROR, message, error_details=error_details, **kwargs)
 
     def critical(
-        self, message: str, error: Optional[Exception] = None, **kwargs
+        self, message: str, error: Optional[Exception] = None, **kwargs: Any
     ) -> None:
         """Log critical message with optional exception details."""
         error_details = None
@@ -400,9 +400,9 @@ class StructuredLogger:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper  # type: ignore[return-value]
 
-        return decorator
+        return decorator  # type: ignore[no-any-return]
 
     # Analytics and reporting
 
@@ -488,7 +488,7 @@ class AuditFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter audit records."""
         if hasattr(record, "structured_data"):
-            data = record.structured_data
+            data: dict[str, Any] = record.structured_data  # type: ignore[attr-defined]
             return data.get("level") == "AUDIT" or data.get("category") == "audit"
         return False
 
@@ -545,7 +545,7 @@ class LoggingContext:
         self.logger.push_context(self.context)
         return self.context
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context."""
         self.logger.pop_context()
 
@@ -556,7 +556,7 @@ def get_logger(name: str, config: Optional[Dict[str, Any]] = None) -> Structured
     return LoggerFactory.get_logger(name, config)
 
 
-def with_context(logger: StructuredLogger, **context_data) -> LoggingContext:
+def with_context(logger: StructuredLogger, **context_data: Any) -> LoggingContext:
     """Create logging context with given data."""
     context = LogContext()
     for key, value in context_data.items():

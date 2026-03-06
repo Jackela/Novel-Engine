@@ -9,7 +9,7 @@ PREP-013: Persistent chat session repository
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 from typing import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -22,7 +22,7 @@ from src.api.routers.brain.dependencies import (
 )
 from src.api.routers.brain.repositories.brain_settings import BrainSettingsRepository
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 

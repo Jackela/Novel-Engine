@@ -600,11 +600,11 @@ def Character(
     )
 
     # Add legacy attributes for test compatibility
-    character_state.name = name
-    character_state.background = background
-    character_state.personality = personality
-    character_state.skills = skills or []
-    character_state.equipment = equipment or []
+    character_state.name = name  # type: ignore[attr-defined]
+    character_state.background = background  # type: ignore[attr-defined]
+    character_state.personality = personality  # type: ignore[attr-defined]
+    character_state.skills = skills or []  # type: ignore[attr-defined]
+    character_state.equipment = equipment or []  # type: ignore[attr-defined]
 
     return character_state
 
@@ -643,9 +643,9 @@ def ActionResult(
     )
 
     # Add legacy attributes for test compatibility
-    result.description = description
-    result.consequences = consequences or []
-    result.world_state_changes = world_state_changes or {}
+    result.description = description  # type: ignore[attr-defined]
+    result.consequences = consequences or []  # type: ignore[attr-defined]
+    result.world_state_changes = world_state_changes or {}  # type: ignore[attr-defined]
 
     return result
 

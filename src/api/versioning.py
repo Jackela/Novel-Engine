@@ -6,7 +6,7 @@ Provides comprehensive API versioning, backward compatibility handling,
 and smooth migration paths for API consumers.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import Request, Response, status
 from fastapi.routing import APIRoute
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class APIVersion(str, Enum):

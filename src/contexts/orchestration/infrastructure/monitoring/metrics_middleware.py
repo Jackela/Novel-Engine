@@ -6,7 +6,7 @@ FastAPI middleware for automatic HTTP metrics collection and request monitoring.
 Integrates with the PrometheusMetricsCollector to provide comprehensive API observability.
 """
 
-import logging
+import structlog
 import time
 from typing import Any, Callable, Optional
 
@@ -17,7 +17,7 @@ from starlette.types import ASGIApp
 try:
     from prometheus_client import Counter, Gauge, Histogram, Info
 except ImportError as prometheus_error:  # pragma: no cover - dependency-light mode
-    logger = logging.getLogger(__name__)
+    logger = structlog.get_logger(__name__)
     logger.warning(
         "prometheus_client unavailable (%s); Prometheus middleware will operate in no-op mode.",
         prometheus_error,
@@ -59,7 +59,7 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
 
 from .prometheus_collector import PrometheusMetricsCollector
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):

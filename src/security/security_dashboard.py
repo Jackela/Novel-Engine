@@ -20,6 +20,7 @@ System monitors all security events 📊🛡️
 import asyncio
 import json
 import logging
+import structlog
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -46,7 +47,7 @@ from .enterprise_security_manager import (
 
 # Enhanced logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AlertSeverity(str, Enum):

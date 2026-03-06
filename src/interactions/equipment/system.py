@@ -4,7 +4,7 @@ Dynamic Equipment System - Main orchestrator.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -27,7 +27,7 @@ from .models import (
 )
 from .validators import EquipmentValidator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DynamicEquipmentSystem:

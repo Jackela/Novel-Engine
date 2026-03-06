@@ -509,7 +509,10 @@ class KnowledgeIngestionService:
                     successful += 1
                 else:
                     failed += 1
-                    error_msg = f"{result.error.code}: {result.error.message}"
+                    if result.error is not None:
+                        error_msg = f"{result.error.code}: {result.error.message}"
+                    else:
+                        error_msg = "Unknown error"
                     errors[source_id] = error_msg
 
                     logger.warning(
@@ -720,9 +723,17 @@ class KnowledgeIngestionService:
         )
 
         if delete_result.is_error:
-            return Err(delete_result.error)
+            err = delete_result.error
+            if err is None:
+                err = VectorStoreError(
+                    message="Delete operation failed with unknown error",
+                    collection=target_collection,
+                )
+            return Err(err)
 
         deleted_count = delete_result.unwrap()
+        if deleted_count is None:
+            deleted_count = 0
 
         logger.debug(
             "ingestion_update_deleted_old",
@@ -746,6 +757,11 @@ class KnowledgeIngestionService:
             return ingest_result
 
         original_result = ingest_result.value
+        if original_result is None:
+            return Err(ValidationError(
+                message="Ingest operation returned None",
+                field="ingest_result",
+            ))
         return Ok(IngestionResult(
             success=original_result.success,
             source_id=source_id,

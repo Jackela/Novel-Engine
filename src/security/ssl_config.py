@@ -15,6 +15,7 @@ System保佑此SSL配置系统 (May the System bless this SSL configuration syst
 """
 
 import logging
+import structlog
 import os
 import ssl
 from dataclasses import dataclass
@@ -29,7 +30,7 @@ from cryptography.x509.oid import NameOID
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

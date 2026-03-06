@@ -7,7 +7,7 @@ Handles category-specific usage patterns and system core interactions.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -69,7 +69,7 @@ class EquipmentUsageProcessor:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Usage processing state
         self._processing_lock = asyncio.Lock()
@@ -626,7 +626,7 @@ class EquipmentUsageProcessor:
             try:
                 return EquipmentCategory(equipment.base_equipment.category)
             except (ValueError, AttributeError):
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment.base_equipment, "name", "").lower()
 
         # Basic category inference

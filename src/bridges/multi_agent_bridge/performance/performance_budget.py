@@ -5,11 +5,12 @@ Performance Budget Manager
 Manages performance budgets and time constraints for multi-agent coordination.
 """
 
-import logging
+import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import logging
 
 __all__ = ["PerformanceBudget"]
 

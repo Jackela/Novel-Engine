@@ -8,7 +8,7 @@ Handles local API communication and response mapping for Ollama's REST API.
 
 import asyncio
 import json
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, AsyncIterator, Dict, List, Optional
 
@@ -29,7 +29,7 @@ from ...domain.value_objects.common import (
     TokenBudget,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class OllamaProvider(ILLMProvider):

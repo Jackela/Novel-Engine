@@ -75,7 +75,7 @@ class ChatSessionRepository:
                     will be created for each operation.
         """
         self._session = session
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(repository=self.__class__.__name__)
 
     def _get_session(self) -> Session:
         """Get a database session."""

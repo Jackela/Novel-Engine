@@ -8,7 +8,7 @@ Handles story state, event processing, and narrative context generation.
 
 import asyncio
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -67,7 +67,7 @@ class NarrativeOrchestrator:
     """
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Story state
         self._story_state: Dict[str, Any] = {}

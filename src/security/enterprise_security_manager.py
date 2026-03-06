@@ -55,6 +55,7 @@ except ImportError:
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
     )()
 import logging
+import structlog
 import re
 import secrets
 from collections import defaultdict, deque
@@ -82,7 +83,7 @@ except ImportError:
 
 # Enhanced logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Enterprise Security Constants
 MAX_REQUESTS_PER_MINUTE = 60

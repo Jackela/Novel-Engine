@@ -7,7 +7,7 @@ Intelligent batching and processing of LLM requests for optimal performance and 
 
 import asyncio
 import heapq
-import logging
+import structlog
 import threading
 import time
 from collections import defaultdict
@@ -59,7 +59,7 @@ class LLMBatchProcessor:
         self.performance_budget = performance_budget
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Request queuing
         self._request_queue: List[LLMBatchRequest] = []
@@ -566,7 +566,7 @@ class LLMBatchProcessor:
                 try:
                     await self._batch_processor_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             if self._request_queue:

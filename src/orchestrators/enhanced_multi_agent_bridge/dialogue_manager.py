@@ -5,7 +5,7 @@ Manages agent dialogues, execution, and quality tracking.
 
 from __future__ import annotations
 
-import logging
+import structlog
 import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
         RequestPriority,
     )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DialogueManager:

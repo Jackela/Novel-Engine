@@ -9,7 +9,7 @@ and various query types to retrieve relevant information efficiently.
 """
 
 import asyncio
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ from src.database.context_db import ContextDatabase
 
 from .layered_memory import LayeredMemorySystem, MemoryQueryRequest, MemoryQueryResult
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class QueryType(Enum):

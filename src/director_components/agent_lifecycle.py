@@ -7,7 +7,7 @@ Handles registration, validation, health monitoring, and cleanup.
 """
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -38,7 +38,7 @@ class AgentLifecycleManager:
     """
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self._agents: Dict[str, Any] = {}
         self._agent_metrics: Dict[str, AgentMetrics] = {}
         self._agent_lock = asyncio.Lock()

@@ -5,7 +5,7 @@ FastAPI router for decision-related endpoints.
 To be imported and included in the main api_server.py.
 """
 
-import logging
+import structlog
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -16,7 +16,7 @@ from .models import FeasibilityResult, UserDecision
 from .negotiation_engine import NegotiationEngine
 from .pause_controller import InteractionPauseController
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Create router
 router = APIRouter(prefix="/decision", tags=["decision"])

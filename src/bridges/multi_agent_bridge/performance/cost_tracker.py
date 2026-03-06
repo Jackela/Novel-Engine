@@ -6,6 +6,7 @@ Tracks and manages LLM usage costs and budgets for multi-agent coordination.
 """
 
 import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional

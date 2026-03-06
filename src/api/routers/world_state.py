@@ -26,7 +26,7 @@ warnings.warn(
     stacklevel=2,
 )
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -41,7 +41,7 @@ from src.api.schemas.world_schemas import (
     WorldResourcesResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/world", tags=["world-state"])
 

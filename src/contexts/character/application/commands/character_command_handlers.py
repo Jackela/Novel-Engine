@@ -53,7 +53,7 @@ class CreateCharacterCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: CreateCharacterCommand) -> CharacterID:
         """
@@ -168,7 +168,7 @@ class UpdateCharacterStatsCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: UpdateCharacterStatsCommand) -> None:
         """
@@ -265,7 +265,7 @@ class UpdateCharacterSkillCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: UpdateCharacterSkillCommand) -> None:
         """
@@ -362,7 +362,7 @@ class LevelUpCharacterCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: LevelUpCharacterCommand) -> None:
         """
@@ -437,7 +437,7 @@ class DeleteCharacterCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: DeleteCharacterCommand) -> bool:
         """
@@ -493,7 +493,7 @@ class HealCharacterCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: HealCharacterCommand) -> None:
         """
@@ -538,7 +538,7 @@ class DamageCharacterCommandHandler:
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, command: DamageCharacterCommand) -> None:
         """

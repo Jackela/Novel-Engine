@@ -491,8 +491,8 @@ Return ONLY a valid JSON array of strings, like this:
 
             if isinstance(sub_queries, list):
                 # Ensure all items are strings and end with '?'
-                result = [str(q).strip() for q in sub_queries if q]
-                return result[:max_hops]
+                parsed_result = [str(q).strip() for q in sub_queries if q]
+                return parsed_result[:max_hops]
 
         except (json.JSONDecodeError, ValueError, TypeError):
             logger.warning(
@@ -694,16 +694,24 @@ class MultiHopRetriever:
 
             # Execute retrieval
             try:
-                hop_result = await self._retrieval.retrieve_relevant(
+                retrieval_result = await self._retrieval.retrieve_relevant(
                     query=hop_query,
                     k=multi_hop_config.default_hop_config.k,
                 )
 
                 hop_latency = int((time.time() - hop_start) * 1000)
 
+                # Handle Result type
+                if retrieval_result.is_error:
+                    raise RuntimeError(retrieval_result.error)
+
+                hop_data = retrieval_result.value
+                if hop_data is None:
+                    raise RuntimeError("Retrieval returned None")
+
                 # Deduplicate chunks
                 unique_chunks = [
-                    c for c in hop_result.chunks if c.chunk_id not in seen_chunk_ids
+                    c for c in hop_data.chunks if c.chunk_id not in seen_chunk_ids
                 ]
                 for c in unique_chunks:
                     seen_chunk_ids.add(c.chunk_id)
@@ -864,17 +872,25 @@ class MultiHopRetriever:
 
         # Single retrieval
         try:
-            hop_result = await self._retrieval.retrieve_relevant(
+            retrieval_result = await self._retrieval.retrieve_relevant(
                 query=query,
                 k=multi_hop_config.default_hop_config.k,
             )
 
             latency = int((time.time() - start_time) * 1000)
 
+            # Handle Result type
+            if retrieval_result.is_error:
+                raise RuntimeError(retrieval_result.error)
+
+            hop_data = retrieval_result.value
+            if hop_data is None:
+                raise RuntimeError("Retrieval returned None")
+
             hop = HopResult(
                 hop_number=0,
                 query=query,
-                chunks=hop_result.chunks,
+                chunks=hop_data.chunks,
                 status=HopStatus.COMPLETED,
                 latency_ms=latency,
             )
@@ -882,7 +898,7 @@ class MultiHopRetriever:
             return MultiHopResult(
                 original_query=query,
                 hops=[hop],
-                all_chunks=hop_result.chunks,
+                all_chunks=hop_data.chunks,
                 final_answer=None,
                 reasoning_chain=f"Single-hop: {query}",
                 total_hops=1,
@@ -932,34 +948,42 @@ class MultiHopRetriever:
             MultiHopResult with single hop
         """
         try:
-            hop_result = await self._retrieval.retrieve_relevant(
+            retrieval_result = await self._retrieval.retrieve_relevant(
                 query=query,
                 k=config.default_hop_config.k,
             )
 
             latency = int((time.time() - start_time) * 1000)
 
+            # Handle Result type
+            if retrieval_result.is_error:
+                raise RuntimeError(retrieval_result.error)
+
+            hop_data = retrieval_result.value
+            if hop_data is None:
+                raise RuntimeError("Retrieval returned None")
+
             hop = HopResult(
                 hop_number=0,
                 query=query,
-                chunks=hop_result.chunks,
+                chunks=hop_data.chunks,
                 status=HopStatus.COMPLETED,
                 latency_ms=latency,
             )
 
             # Synthesize answer if enabled
             final_answer = None
-            if config.enable_answer_synthesis and hop_result.chunks:
+            if config.enable_answer_synthesis and hop_data.chunks:
                 final_answer = await self._synthesize_answer(
                     query,
                     [hop],
-                    hop_result.chunks,
+                    hop_data.chunks,
                 )
 
             return MultiHopResult(
                 original_query=query,
                 hops=[hop],
-                all_chunks=hop_result.chunks,
+                all_chunks=hop_data.chunks,
                 final_answer=final_answer,
                 reasoning_chain=f"Single-hop retrieval: {query}",
                 total_hops=1,

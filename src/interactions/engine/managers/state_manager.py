@@ -3,7 +3,7 @@
 State and memory management for interactions.
 """
 
-import logging
+import structlog
 
 from typing import Any
 
@@ -18,7 +18,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class StateManager:

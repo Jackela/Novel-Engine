@@ -15,6 +15,7 @@ System保佑此安全头系统 (May the System bless this security headers syste
 """
 
 import logging
+import structlog
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
@@ -24,7 +25,7 @@ from starlette.responses import Response
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CSPDirective(str, Enum):

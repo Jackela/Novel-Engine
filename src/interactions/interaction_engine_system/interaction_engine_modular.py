@@ -7,7 +7,7 @@ backward compatibility while providing enhanced enterprise-grade functionality.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Optional
 
@@ -84,7 +84,7 @@ class InteractionEngine:
         self.memory_manager = memory_manager
         self.character_manager = character_manager
         self.equipment_manager = equipment_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Initialize modular components
         self.validator = InteractionValidator(self.config, self.logger)

@@ -6,7 +6,7 @@ Character state updates, memory management, and relationship tracking system.
 Handles all state changes resulting from interaction processing.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -116,7 +116,7 @@ class StateManager:
         self.config = config
         self.memory_manager = memory_manager
         self.character_manager = character_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # State tracking
         self.pending_state_updates: Dict[str, List[StateUpdate]] = {}

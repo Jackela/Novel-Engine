@@ -9,7 +9,7 @@ Wave 6.1 - Code Quality Analysis & Technical Debt Assessment
 """
 
 import ast
-import logging
+import structlog
 import os
 import re
 from dataclasses import dataclass, field
@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Optional
 import radon.complexity as radon_cc
 import radon.metrics as radon_metrics
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SeverityLevel(Enum):

@@ -18,6 +18,7 @@ System保佑此数据库访问层 (May the System bless this database access lay
 import asyncio
 import json
 import logging
+import structlog
 import os
 import stat
 from contextlib import asynccontextmanager
@@ -45,7 +46,7 @@ from src.core.types import (
 
 # Comprehensive logging configuration enhanced by diagnostic clarity
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SacredDatabaseError(Exception):

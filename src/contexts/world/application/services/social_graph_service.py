@@ -31,6 +31,7 @@ from src.contexts.world.domain.entities.relationship import (
     EntityType,
     Relationship,
 )
+from src.contexts.world.domain.errors import SocialGraphError
 from src.contexts.world.domain.repositories.relationship_repository import (
     IRelationshipRepository,
 )

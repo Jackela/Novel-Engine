@@ -20,6 +20,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -29,7 +30,7 @@ from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class QualityMetric(str, Enum):

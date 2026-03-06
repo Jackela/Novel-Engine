@@ -3,14 +3,14 @@
 Equipment category processors for usage tracking.
 """
 
-import logging
+import structlog
 from typing import Any, Dict
 
 from src.core.data_models import StandardResponse
 
 from .models import DynamicEquipment, EquipmentCategory, EquipmentStatus
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EquipmentProcessorRegistry:

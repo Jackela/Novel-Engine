@@ -284,6 +284,8 @@ class RAGIntegrationService:
                 raise VectorStoreError(f"Retrieval failed: {error_msg}")
 
             retrieval_result = retrieval_result_wrapper.value
+            if retrieval_result is None:
+                raise VectorStoreError("Retrieval returned None result")
 
             # Step 2: Format context
             formatted_context = self._retrieval_service.format_context(

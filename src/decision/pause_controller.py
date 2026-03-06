@@ -6,7 +6,7 @@ Uses asyncio.Event for non-blocking wait with timeout support.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
@@ -18,7 +18,7 @@ from .models import (
     UserDecision,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionPauseController:

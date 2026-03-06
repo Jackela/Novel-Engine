@@ -10,7 +10,7 @@ Wave 5.1.3 - Memory Management and Leak Prevention
 
 import gc
 import json
-import logging
+import structlog
 import sys
 import threading
 import time
@@ -22,7 +22,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional
 
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -749,7 +749,7 @@ def emergency_memory_cleanup() -> None:
 
         functools._CacheInfo.cache_clear()  # This won't work, but shows intent
     except Exception:
-        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+        structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
     logger.info("Emergency memory cleanup completed")
 

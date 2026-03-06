@@ -8,7 +8,7 @@ and large object storage in the Novel Engine framework.
 """
 
 import hashlib
-import logging
+import structlog
 import mimetypes
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional, Union
 import aioboto3
 import aiofiles
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class S3StorageClass(Enum):

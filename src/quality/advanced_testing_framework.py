@@ -18,6 +18,7 @@ Features:
 import asyncio
 import json
 import logging
+import structlog
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -28,7 +29,7 @@ from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TestCategory(str, Enum):

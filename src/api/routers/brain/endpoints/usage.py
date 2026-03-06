@@ -11,7 +11,7 @@ import asyncio
 import csv
 import io
 import json
-import logging
+import structlog
 from datetime import UTC, datetime, timedelta
 from typing import AsyncIterator
 
@@ -26,7 +26,7 @@ from src.api.routers.brain.dependencies import (
 from src.api.routers.brain.repositories.token_usage import InMemoryTokenUsageRepository
 from src.api.routers.brain.services.usage_broadcaster import RealtimeUsageBroadcaster
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 

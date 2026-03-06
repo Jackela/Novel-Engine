@@ -6,7 +6,7 @@ adjusted actions or alternatives when needed.
 """
 
 import json
-import logging
+import structlog
 import re
 from typing import Any, Dict, List, Optional
 
@@ -18,7 +18,7 @@ from .models import (
     UserDecision,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Prompt template for feasibility evaluation

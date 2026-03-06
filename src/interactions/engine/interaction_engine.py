@@ -8,7 +8,7 @@ pipeline will migrate interaction logic into contract-first services.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -27,7 +27,7 @@ from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.character import CharacterTemplateManager
 from src.templates.context_renderer import ContextRenderer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionEngine:

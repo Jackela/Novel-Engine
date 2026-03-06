@@ -20,7 +20,7 @@ Expected Performance Improvements:
 """
 
 import asyncio
-import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 import aiofiles
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

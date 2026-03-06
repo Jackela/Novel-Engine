@@ -425,6 +425,14 @@ Respond with ONLY valid JSON matching the schema above."""
             ))
 
         parsed = parse_result.value
+        if parsed is None:
+            return Ok(ExtractionResult(
+                entities=(),
+                mentions=(),
+                source_length=source_length,
+                model_used=model_used,
+                tokens_used=tokens_used,
+            ))
 
         # Build entities and mentions
         entities_data_raw = parsed.get("entities", [])
@@ -497,9 +505,18 @@ Respond with ONLY valid JSON matching the schema above."""
                 index=i,
                 total=len(texts),
             )
-            result = await self.extract(text, config)
-            if result.is_ok:
-                results.append(result.value)
+            extract_result = await self.extract(text, config)
+            if extract_result.is_ok:
+                extraction = extract_result.value
+                if extraction is not None:
+                    results.append(extraction)
+                else:
+                    # Return empty result on None extraction
+                    results.append(ExtractionResult(
+                        entities=(),
+                        mentions=(),
+                        source_length=len(text) if isinstance(text, str) else 0,
+                    ))
             else:
                 # Return empty result on individual failure
                 results.append(ExtractionResult(
@@ -593,11 +610,15 @@ Respond with ONLY valid JSON matching the schema above."""
                 total_chunks=len(chunks),
             )
 
-            result = await self.extract(chunk, effective_config)
-            if result.is_error:
-                return result  # Propagate error
+            extract_result = await self.extract(chunk, effective_config)
+            if extract_result.is_error:
+                return extract_result  # Propagate error
 
-            chunk_result = result.value
+            chunk_result = extract_result.value
+            if chunk_result is None:
+                # Skip None results - use empty extraction
+                offset += len(chunk) - overlap if i < len(chunks) - 1 else len(chunk)
+                continue
 
             # Adjust entity and mention positions for original text
             adjusted_entities = [
@@ -887,9 +908,28 @@ Respond with ONLY valid JSON matching the schema above."""
         # First extract entities
         entity_result = await self.extract(text, extraction_config)
         if entity_result.is_error:
-            return entity_result  # Propagate error
+            # Propagate error - convert to ExtractionError if needed
+            err = entity_result.error
+            if err is None:
+                return Err(ExtractionError(
+                    message="Unknown extraction error",
+                    text_length=len(text),
+                ))
+            if isinstance(err, ExtractionError):
+                return Err(err)
+            if isinstance(err, ValidationError):
+                return Err(err)
+            return Err(ExtractionError(
+                message=str(err),
+                text_length=len(text),
+            ))
 
         entity_data = entity_result.value
+        if entity_data is None:
+            return Err(ExtractionError(
+                message="Entity extraction returned None",
+                text_length=len(text),
+            ))
 
         self._logger.info(
             "starting_relationship_extraction",
@@ -941,6 +981,17 @@ Respond with ONLY valid JSON matching the schema above."""
             ))
 
         parsed = parse_result.value
+        if parsed is None:
+            # Return entities only when parsed is None
+            return Ok(ExtractionResultWithRelationships(
+                entities=entity_data.entities,
+                mentions=entity_data.mentions,
+                source_length=entity_data.source_length,
+                relationships=(),
+                timestamp=entity_data.timestamp,
+                model_used=entity_data.model_used,
+                tokens_used=entity_data.tokens_used,
+            ))
 
         # Build relationships
         relationships_data_raw = parsed.get("relationships", [])

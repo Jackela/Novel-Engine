@@ -4,6 +4,10 @@ Centralized Error Handling System
 ==================================
 
 Enterprise-grade error handling with recovery, monitoring, and alerting.
+
+Result Pattern Migration:
+    - handle_error() -> Result[ErrorRecord, ErrorHandlerError]
+    - get_error_statistics() -> Result[Dict[str, Any], ErrorHandlerError]
 """
 
 import asyncio
@@ -18,6 +22,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+
+from .result import Error, Err, Ok, Result
 
 
 class ErrorSeverity(Enum):
@@ -68,6 +74,23 @@ class ErrorContext:
     timestamp: datetime = field(default_factory=datetime.now)
 
 
+class ErrorHandlerError(Error):
+    """Error raised when error handling operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code="ERROR_HANDLER_ERROR",
+            message=message,
+            recoverable=False,
+            details={"operation": operation, **(details or {})},
+        )
+
+
 @dataclass
 class ErrorRecord:
     """Complete error record for tracking and analysis."""
@@ -102,7 +125,7 @@ class CentralizedErrorHandler:
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize centralized error handler."""
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Error tracking
         self.error_records: Dict[str, ErrorRecord] = {}
@@ -114,7 +137,7 @@ class CentralizedErrorHandler:
         self.circuit_breakers: Dict[str, Dict[str, Any]] = {}
 
         # Monitoring and alerting
-        self.error_counts = defaultdict(int)
+        self.error_counts: dict[str, int] = defaultdict(int)
         self.alert_thresholds = {
             ErrorSeverity.CRITICAL: 1,  # Alert immediately
             ErrorSeverity.HIGH: 5,  # Alert after 5 occurrences
@@ -156,8 +179,34 @@ class CentralizedErrorHandler:
         category: Optional[ErrorCategory] = None,
         recovery_strategy: Optional[RecoveryStrategy] = None,
     ) -> ErrorRecord:
+        """Handle an error with full context and recovery. (Legacy - use handle_error_result)"""
+        result = await self.handle_error_result(
+            error, context, severity, category, recovery_strategy
+        )
+        if result.is_ok:
+            return result.value
+        # Return minimal record on error
+        return ErrorRecord(
+            error_id="handler_error",
+            error_type="ErrorHandlerFailure",
+            message=result.error.message,
+            severity=ErrorSeverity.CRITICAL,
+            category=ErrorCategory.SYSTEM,
+            context=context,
+            stack_trace=traceback.format_exc(),
+            recovery_strategy=RecoveryStrategy.USER_INTERVENTION,
+        )
+
+    async def handle_error_result(
+        self,
+        error: Exception,
+        context: ErrorContext,
+        severity: Optional[ErrorSeverity] = None,
+        category: Optional[ErrorCategory] = None,
+        recovery_strategy: Optional[RecoveryStrategy] = None,
+    ) -> Result[ErrorRecord, ErrorHandlerError]:
         """
-        Handle an error with full context and recovery.
+        Handle an error with full context and recovery using Result pattern.
 
         Args:
             error: The exception that occurred
@@ -167,7 +216,7 @@ class CentralizedErrorHandler:
             recovery_strategy: Recovery strategy (auto-selected if not provided)
 
         Returns:
-            ErrorRecord: Complete error record
+            Result containing complete error record or error handler error
         """
         try:
             # Generate unique error ID
@@ -233,21 +282,18 @@ class CentralizedErrorHandler:
                 }
             )
 
-            return error_record
+            return Ok(error_record)
 
         except Exception as handler_error:
-            # Error in error handler - log and return minimal record
+            # Error in error handler - log and return error
             self.logger.critical(f"Error handler failure: {handler_error}")
 
-            return ErrorRecord(
-                error_id="handler_error",
-                error_type="ErrorHandlerFailure",
-                message=str(handler_error),
-                severity=ErrorSeverity.CRITICAL,
-                category=ErrorCategory.SYSTEM,
-                context=context,
-                stack_trace=traceback.format_exc(),
-                recovery_strategy=RecoveryStrategy.USER_INTERVENTION,
+            return Err(
+                ErrorHandlerError(
+                    message=f"Error handler failure: {handler_error}",
+                    operation="handle_error",
+                    details={"original_error": str(error)},
+                )
             )
 
     def _detect_error_severity(
@@ -527,27 +573,57 @@ class CentralizedErrorHandler:
         self._alert_callbacks.append(callback)
 
     def get_error_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive error statistics."""
-        with self._lock:
-            return {
-                "total_errors": len(self.error_records),
-                "performance_metrics": self.performance_metrics.copy(),
-                "severity_distribution": self._get_severity_distribution(),
-                "category_distribution": self._get_category_distribution(),
-                "recovery_statistics": self._get_recovery_statistics(),
-                "recent_critical_errors": self._get_recent_critical_errors(),
-            }
+        """Get comprehensive error statistics. (Legacy - use get_error_statistics_result)"""
+        result = self.get_error_statistics_result()
+        if result.is_ok:
+            return result.value
+        return {
+            "total_errors": 0,
+            "performance_metrics": {},
+            "severity_distribution": {},
+            "category_distribution": {},
+            "recovery_statistics": {},
+            "recent_critical_errors": [],
+            "error": result.error.message,
+        }
+
+    def get_error_statistics_result(self) -> Result[Dict[str, Any], ErrorHandlerError]:
+        """
+        Get comprehensive error statistics using Result pattern.
+
+        Returns:
+            Result containing error statistics or error
+        """
+        try:
+            with self._lock:
+                return Ok(
+                    {
+                        "total_errors": len(self.error_records),
+                        "performance_metrics": self.performance_metrics.copy(),
+                        "severity_distribution": self._get_severity_distribution(),
+                        "category_distribution": self._get_category_distribution(),
+                        "recovery_statistics": self._get_recovery_statistics(),
+                        "recent_critical_errors": self._get_recent_critical_errors(),
+                    }
+                )
+        except Exception as e:
+            return Err(
+                ErrorHandlerError(
+                    message=f"Failed to get error statistics: {e}",
+                    operation="get_error_statistics",
+                )
+            )
 
     def _get_severity_distribution(self) -> Dict[str, int]:
         """Get distribution of errors by severity."""
-        distribution = defaultdict(int)
+        distribution: dict[str, int] = defaultdict(int)
         for record in self.error_records.values():
             distribution[record.severity.value] += record.occurrence_count
         return dict(distribution)
 
     def _get_category_distribution(self) -> Dict[str, int]:
         """Get distribution of errors by category."""
-        distribution = defaultdict(int)
+        distribution: dict[str, int] = defaultdict(int)
         for record in self.error_records.values():
             distribution[record.category.value] += record.occurrence_count
         return dict(distribution)
@@ -600,7 +676,7 @@ def get_error_handler() -> CentralizedErrorHandler:
 
 
 async def handle_error(
-    error: Exception, component: str, operation: str, **kwargs
+    error: Exception, component: str, operation: str, **kwargs: Any
 ) -> ErrorRecord:
     """
     Convenient function to handle errors with global handler.

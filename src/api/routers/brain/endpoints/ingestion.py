@@ -6,7 +6,7 @@ OPT-005: Async Ingestion Job API
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -24,7 +24,7 @@ from src.api.schemas import (
     StartIngestionJobResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 

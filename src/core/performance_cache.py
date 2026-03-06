@@ -4,6 +4,14 @@ Performance Cache System for Novel Engine.
 
 Intelligent caching layer with memory management, TTL support,
 and performance optimization for character data and story generation.
+
+Result Pattern Migration:
+    - get_character() -> Result[Dict[str, Any], CacheError]
+    - set_character() -> Result[bool, CacheError]
+    - get_story_generation() -> Result[Dict[str, Any], CacheError]
+    - set_story_generation() -> Result[bool, CacheError]
+    - get_template() -> Result[str, CacheError]
+    - set_template() -> Result[bool, CacheError]
 """
 
 import asyncio
@@ -16,7 +24,31 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from .result import Error, Err, Ok, Result
+
 logger = structlog.get_logger(__name__)
+
+
+class CacheError(Error):
+    """Error raised when cache operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        key: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if key:
+            full_details["key"] = key
+        super().__init__(
+            code="CACHE_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class CacheLevel(Enum):
@@ -215,19 +247,19 @@ class MemoryCache(CacheBackend):
                 continue
 
             # Calculate eviction score (higher = better candidate)
-            score = 0
+            score = 0.0
 
             # Age factor (older = higher score)
             age = current_time - entry.created_at
-            score += age / 3600  # Age in hours
+            score += age / 3600.0  # Age in hours
 
             # Access frequency (less frequent = higher score)
-            frequency = entry.access_count / max(age / 3600, 0.1)
-            score += 10 / max(frequency, 0.1)
+            frequency = entry.access_count / max(age / 3600.0, 0.1)
+            score += 10.0 / max(frequency, 0.1)
 
             # Last access time (longer ago = higher score)
             last_access = current_time - entry.last_accessed
-            score += last_access / 1800  # 30 minutes
+            score += last_access / 1800.0  # 30 minutes
 
             # Level priority (lower level = higher score)
             level_scores = {
@@ -239,7 +271,7 @@ class MemoryCache(CacheBackend):
             score += level_scores.get(entry.level, 2)
 
             # Memory size (larger = higher score for space efficiency)
-            score += entry.memory_size / (1024 * 1024)  # MB
+            score += float(entry.memory_size) / (1024 * 1024)  # MB
 
             candidates.append((key, score))
 
@@ -247,7 +279,8 @@ class MemoryCache(CacheBackend):
             return None
 
         # Return key with highest eviction score
-        return max(candidates, key=lambda x: x[1])[0]
+        result: str = max(candidates, key=lambda x: x[1])[0]
+        return result
 
     def _calculate_memory_size(self, value: Any) -> int:
         """Estimate memory size of value."""
@@ -291,16 +324,16 @@ class PerformanceCache:
             "template_hits": 0,
             "template_misses": 0,
         }
-        self.cleanup_task = None
+        self.cleanup_task: asyncio.Task[None] | None = None
 
     async def start_background_tasks(self) -> None:
         """Start background cache maintenance."""
-        if not self.cleanup_task:
+        if self.cleanup_task is None:
             self.cleanup_task = asyncio.create_task(self._cleanup_loop())
 
     async def stop_background_tasks(self) -> None:
         """Stop background cache maintenance."""
-        if self.cleanup_task:
+        if self.cleanup_task is not None:
             self.cleanup_task.cancel()
             try:
                 await self.cleanup_task
@@ -334,16 +367,48 @@ class PerformanceCache:
 
     # Character Caching Methods
     async def get_character(self, character_id: str) -> Optional[Dict[str, Any]]:
-        """Get character data from cache."""
+        """Get character data from cache. (Legacy - use get_character_result)"""
+        result = await self.get_character_result(character_id)
+        if result.is_ok:
+            return result.value
+        return None
+
+    async def get_character_result(
+        self, character_id: str
+    ) -> Result[Dict[str, Any], CacheError]:
+        """
+        Get character data from cache using Result pattern.
+
+        Args:
+            character_id: ID of the character to retrieve
+
+        Returns:
+            Result containing character data or cache error
+        """
         key = f"character:{character_id}"
-        result = await self.memory_cache.get(key)
+        try:
+            value = await self.memory_cache.get(key)
 
-        if result:
-            self.cache_stats["character_hits"] += 1
-        else:
-            self.cache_stats["character_misses"] += 1
-
-        return result
+            if value:
+                self.cache_stats["character_hits"] += 1
+                return Ok(value)
+            else:
+                self.cache_stats["character_misses"] += 1
+                return Err(
+                    CacheError(
+                        message=f"Character {character_id} not found in cache",
+                        operation="get_character",
+                        key=key,
+                    )
+                )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Failed to get character from cache: {e}",
+                    operation="get_character",
+                    key=key,
+                )
+            )
 
     async def set_character(
         self,
@@ -351,26 +416,96 @@ class PerformanceCache:
         character_data: Dict[str, Any],
         ttl: Optional[float] = 3600,
     ) -> bool:
-        """Cache character data with 1-hour TTL."""
+        """Cache character data with 1-hour TTL. (Legacy - use set_character_result)"""
+        result = await self.set_character_result(character_id, character_data, ttl)
+        return bool(result.is_ok and result.value)
+
+    async def set_character_result(
+        self,
+        character_id: str,
+        character_data: Dict[str, Any],
+        ttl: Optional[float] = 3600,
+    ) -> Result[bool, CacheError]:
+        """
+        Cache character data with 1-hour TTL using Result pattern.
+
+        Args:
+            character_id: ID of the character to cache
+            character_data: Character data to cache
+            ttl: Time to live in seconds (default: 3600 = 1 hour)
+
+        Returns:
+            Result containing True on success or cache error
+        """
         key = f"character:{character_id}"
-        return await self.memory_cache.set(
-            key, character_data, ttl=ttl, level=CacheLevel.HIGH
-        )
+        try:
+            success = await self.memory_cache.set(
+                key, character_data, ttl=ttl, level=CacheLevel.HIGH
+            )
+            if success:
+                return Ok(True)
+            return Err(
+                CacheError(
+                    message=f"Failed to set character {character_id} in cache",
+                    operation="set_character",
+                    key=key,
+                )
+            )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Exception setting character in cache: {e}",
+                    operation="set_character",
+                    key=key,
+                )
+            )
 
     # Story Generation Caching
     async def get_story_generation(
         self, generation_id: str
     ) -> Optional[Dict[str, Any]]:
-        """Get story generation data from cache."""
+        """Get story generation data from cache. (Legacy - use get_story_generation_result)"""
+        result = await self.get_story_generation_result(generation_id)
+        if result.is_ok:
+            return result.value
+        return None
+
+    async def get_story_generation_result(
+        self, generation_id: str
+    ) -> Result[Dict[str, Any], CacheError]:
+        """
+        Get story generation data from cache using Result pattern.
+
+        Args:
+            generation_id: ID of the story generation to retrieve
+
+        Returns:
+            Result containing story generation data or cache error
+        """
         key = f"story_gen:{generation_id}"
-        result = await self.memory_cache.get(key)
+        try:
+            value = await self.memory_cache.get(key)
 
-        if result:
-            self.cache_stats["story_hits"] += 1
-        else:
-            self.cache_stats["story_misses"] += 1
-
-        return result
+            if value:
+                self.cache_stats["story_hits"] += 1
+                return Ok(value)
+            else:
+                self.cache_stats["story_misses"] += 1
+                return Err(
+                    CacheError(
+                        message=f"Story generation {generation_id} not found in cache",
+                        operation="get_story_generation",
+                        key=key,
+                    )
+                )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Failed to get story generation from cache: {e}",
+                    operation="get_story_generation",
+                    key=key,
+                )
+            )
 
     async def set_story_generation(
         self,
@@ -378,33 +513,138 @@ class PerformanceCache:
         generation_data: Dict[str, Any],
         ttl: Optional[float] = 7200,
     ) -> bool:
-        """Cache story generation data with 2-hour TTL."""
-        key = f"story_gen:{generation_id}"
-        return await self.memory_cache.set(
-            key, generation_data, ttl=ttl, level=CacheLevel.MEDIUM
+        """Cache story generation data with 2-hour TTL. (Legacy - use set_story_generation_result)"""
+        result = await self.set_story_generation_result(
+            generation_id, generation_data, ttl
         )
+        return bool(result.is_ok and result.value)
+
+    async def set_story_generation_result(
+        self,
+        generation_id: str,
+        generation_data: Dict[str, Any],
+        ttl: Optional[float] = 7200,
+    ) -> Result[bool, CacheError]:
+        """
+        Cache story generation data with 2-hour TTL using Result pattern.
+
+        Args:
+            generation_id: ID of the story generation to cache
+            generation_data: Story generation data to cache
+            ttl: Time to live in seconds (default: 7200 = 2 hours)
+
+        Returns:
+            Result containing True on success or cache error
+        """
+        key = f"story_gen:{generation_id}"
+        try:
+            success = await self.memory_cache.set(
+                key, generation_data, ttl=ttl, level=CacheLevel.MEDIUM
+            )
+            if success:
+                return Ok(True)
+            return Err(
+                CacheError(
+                    message=f"Failed to set story generation {generation_id} in cache",
+                    operation="set_story_generation",
+                    key=key,
+                )
+            )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Exception setting story generation in cache: {e}",
+                    operation="set_story_generation",
+                    key=key,
+                )
+            )
 
     # Template Caching
     async def get_template(self, template_key: str) -> Optional[str]:
-        """Get template from cache."""
+        """Get template from cache. (Legacy - use get_template_result)"""
+        result = await self.get_template_result(template_key)
+        if result.is_ok:
+            return result.value
+        return None
+
+    async def get_template_result(self, template_key: str) -> Result[str, CacheError]:
+        """
+        Get template from cache using Result pattern.
+
+        Args:
+            template_key: Key of the template to retrieve
+
+        Returns:
+            Result containing template content or cache error
+        """
         key = f"template:{template_key}"
-        result = await self.memory_cache.get(key)
+        try:
+            value = await self.memory_cache.get(key)
 
-        if result:
-            self.cache_stats["template_hits"] += 1
-        else:
-            self.cache_stats["template_misses"] += 1
-
-        return result
+            if value:
+                self.cache_stats["template_hits"] += 1
+                return Ok(value)
+            else:
+                self.cache_stats["template_misses"] += 1
+                return Err(
+                    CacheError(
+                        message=f"Template {template_key} not found in cache",
+                        operation="get_template",
+                        key=key,
+                    )
+                )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Failed to get template from cache: {e}",
+                    operation="get_template",
+                    key=key,
+                )
+            )
 
     async def set_template(
         self, template_key: str, template_content: str, ttl: Optional[float] = None
     ) -> bool:
-        """Cache template with no expiration (templates rarely change)."""
+        """Cache template with no expiration. (Legacy - use set_template_result)"""
+        result = await self.set_template_result(template_key, template_content, ttl)
+        return bool(result.is_ok and result.value)
+
+    async def set_template_result(
+        self, template_key: str, template_content: str, ttl: Optional[float] = None
+    ) -> Result[bool, CacheError]:
+        """
+        Cache template with no expiration using Result pattern.
+
+        Args:
+            template_key: Key for the template
+            template_content: Template content to cache
+            ttl: Optional time to live (default: None = no expiration)
+
+        Returns:
+            Result containing True on success or cache error
+        """
         key = f"template:{template_key}"
-        return await self.memory_cache.set(
-            key, template_content, ttl=ttl, level=CacheLevel.CRITICAL
-        )
+        try:
+            success = await self.memory_cache.set(
+                key, template_content, ttl=ttl, level=CacheLevel.CRITICAL
+            )
+            if success:
+                return Ok(True)
+            return Err(
+                CacheError(
+                    message=f"Failed to set template {template_key} in cache",
+                    operation="set_template",
+                    key=key,
+                )
+            )
+        except Exception as e:
+            return Err(
+                CacheError(
+                    message=f"Exception setting template in cache: {e}",
+                    operation="set_template",
+                    key=key,
+                )
+            )
 
     # Utility Methods
     async def invalidate_pattern(self, pattern: str) -> None:
@@ -483,7 +723,7 @@ async def get_global_cache() -> PerformanceCache:
     return _global_cache
 
 
-async def close_global_cache():
+async def close_global_cache() -> None:
     """Close global cache and cleanup resources."""
     global _global_cache
     if _global_cache:
@@ -496,6 +736,7 @@ __all__ = [
     "PerformanceCache",
     "CacheLevel",
     "CacheEntry",
+    "CacheError",
     "MemoryCache",
     "get_global_cache",
     "close_global_cache",

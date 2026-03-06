@@ -6,7 +6,7 @@ Main orchestration class that coordinates all components of the enhanced multi-a
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -29,7 +29,7 @@ from .types import (
     RequestPriority,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedMultiAgentBridge:

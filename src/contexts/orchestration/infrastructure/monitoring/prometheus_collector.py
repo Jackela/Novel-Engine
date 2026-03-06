@@ -7,7 +7,7 @@ Implements the core KPIs requested in M10: llm_cost_per_req and turn_duration_se
 along with extended metrics for complete observability.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
@@ -25,7 +25,7 @@ try:
 except (
     ImportError
 ) as prometheus_error:  # pragma: no cover - exercised in dependency-light env
-    logging.getLogger(__name__).warning(
+    structlog.get_logger(__name__).warning(
         "prometheus_client unavailable (%s); using no-op collectors.", prometheus_error
     )
 
@@ -72,7 +72,7 @@ except (
         return b""
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PrometheusMetricsCollector:

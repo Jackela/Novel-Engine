@@ -218,7 +218,10 @@ class RelevancePackingStrategy(IPackingStrategy):
         if result.is_error:
             # Fallback to rough estimation on error
             return len(text) // 4
-        return result.unwrap().token_count
+        count_res = result.unwrap()
+        if count_res is None:
+            return len(text) // 4
+        return count_res.token_count
 
 
 class DiversityPackingStrategy(IPackingStrategy):
@@ -270,7 +273,10 @@ class DiversityPackingStrategy(IPackingStrategy):
                 count_result = token_counter.count(chunk.content)
                 if count_result.is_error:
                     continue
-                chunk_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    continue
+                chunk_tokens = count_res.token_count
 
                 if total_tokens + chunk_tokens > available_tokens:
                     continue
@@ -347,7 +353,10 @@ class RemoveRedundancyPackingStrategy(IPackingStrategy):
             count_result = token_counter.count(chunk.content)
             if count_result.is_error:
                 continue
-            chunk_tokens = count_result.unwrap().token_count
+            count_res = count_result.unwrap()
+            if count_res is None:
+                continue
+            chunk_tokens = count_res.token_count
             if total_tokens + chunk_tokens > available_tokens:
                 break
             packed.append(chunk)
@@ -413,7 +422,10 @@ class CompressSummariesPackingStrategy(IPackingStrategy):
             count_result = token_counter.count(chunk.content)
             if count_result.is_error:
                 continue
-            chunk_tokens = count_result.unwrap().token_count
+            count_res = count_result.unwrap()
+            if count_res is None:
+                continue
+            chunk_tokens = count_res.token_count
             if total_tokens + chunk_tokens > available_tokens:
                 break
             packed.append(chunk)
@@ -426,7 +438,10 @@ class CompressSummariesPackingStrategy(IPackingStrategy):
             summary_count_result = token_counter.count(summary)
             if summary_count_result.is_error:
                 continue
-            summary_tokens = summary_count_result.unwrap().token_count
+            summary_count_res = summary_count_result.unwrap()
+            if summary_count_res is None:
+                continue
+            summary_tokens = summary_count_res.token_count
 
             if total_tokens + summary_tokens > available_tokens:
                 break
@@ -629,7 +644,11 @@ class ContextOptimizer:
             if result.is_error:
                 token_counts.append(len(chunk.content) // 4)  # Fallback estimation
             else:
-                token_counts.append(result.unwrap().token_count)
+                count_res = result.unwrap()
+                if count_res is None:
+                    token_counts.append(len(chunk.content) // 4)
+                else:
+                    token_counts.append(count_res.token_count)
         return token_counts
 
     def _resolve_config(

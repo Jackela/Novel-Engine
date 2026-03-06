@@ -7,12 +7,12 @@ Stores usage events for cost tracking and visualization.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InMemoryTokenUsageRepository:

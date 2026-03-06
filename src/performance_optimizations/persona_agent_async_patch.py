@@ -16,12 +16,12 @@ Wave 5.1.1 CRITICAL Performance Improvements:
 """
 
 import asyncio
-import logging
+import structlog
 from typing import Any, Dict
 
 from .async_llm_integration import call_llm_async_wrapper
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PersonaAgentAsyncPatch:

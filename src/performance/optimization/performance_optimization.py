@@ -10,7 +10,7 @@ Addresses the critical performance gaps identified in production readiness asses
 
 import asyncio
 import gc
-import logging
+import structlog
 import time
 import weakref
 from contextlib import asynccontextmanager
@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 
 import aiosqlite
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AsyncDatabasePool:

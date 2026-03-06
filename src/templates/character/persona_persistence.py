@@ -4,7 +4,7 @@ Persona persistence and file I/O.
 """
 
 import json
-import logging
+import structlog
 from pathlib import Path
 
 from src.templates.context_renderer import RenderFormat
@@ -15,7 +15,7 @@ from .persona_models import (
     CharacterPersona,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PersonaPersistence:

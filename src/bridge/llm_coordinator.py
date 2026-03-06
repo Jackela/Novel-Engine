@@ -8,7 +8,7 @@ Manages LLM request batching, caching, and optimization for enhanced performance
 
 import asyncio
 import hashlib
-import logging
+import structlog
 import time
 from collections import deque
 from datetime import datetime, timedelta
@@ -38,7 +38,7 @@ class LLMCoordinator:
     ) -> None:
         """Initialize LLM coordinator."""
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Request management
         self.pending_requests: Dict[RequestPriority, deque] = {

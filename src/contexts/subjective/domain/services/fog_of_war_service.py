@@ -7,7 +7,7 @@ visibility calculations, information filtering, and knowledge propagation
 mechanics in the subjective context.
 """
 
-import logging
+import structlog
 import math
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
@@ -28,7 +28,7 @@ from ..value_objects.perception_range import (
     VisibilityLevel,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class IVisibilityCalculator(ABC):
@@ -215,7 +215,7 @@ class FogOfWarService:
         self.visibility_calculator = (
             visibility_calculator or BasicVisibilityCalculator()
         )
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def calculate_visibility_between_positions(
         self,

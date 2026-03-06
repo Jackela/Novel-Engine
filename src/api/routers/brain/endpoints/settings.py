@@ -6,7 +6,7 @@ Settings CRUD endpoints for API keys, RAG configuration, and knowledge base stat
 
 from __future__ import annotations
 
-import logging
+import structlog
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -25,7 +25,7 @@ from src.api.schemas import (
     RAGConfigResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 

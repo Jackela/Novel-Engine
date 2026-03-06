@@ -7,7 +7,7 @@ BRAIN-036-03: Highlight used chunks based on relevance threshold
 
 from __future__ import annotations
 
-import logging
+import structlog
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -15,7 +15,7 @@ from src.api.routers.brain.dependencies import get_brain_settings_repository
 from src.api.routers.brain.repositories.brain_settings import BrainSettingsRepository
 from src.api.schemas import RAGContextResponse, RetrievedChunkResponse
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["brain-settings"])
 

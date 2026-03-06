@@ -9,7 +9,7 @@ working, episodic, semantic, and emotional memories.
 """
 
 import asyncio
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -30,7 +30,7 @@ from .episodic_memory import EpisodicMemory
 from .semantic_memory import SemanticMemory
 from .working_memory import WorkingMemory
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryPriority(Enum):

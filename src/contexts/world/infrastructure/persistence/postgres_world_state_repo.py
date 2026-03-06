@@ -49,7 +49,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
 
     def __init__(self) -> None:
         """Initialize the repository."""
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     # Basic CRUD Operations
 

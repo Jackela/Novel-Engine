@@ -7,7 +7,7 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -93,7 +93,7 @@ class DynamicEquipmentSystem:
             equipment_template_path: Path to equipment templates
             logger: Optional logger instance
         """
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Create system configuration
         self.config = EquipmentSystemConfig(
@@ -106,19 +106,19 @@ class DynamicEquipmentSystem:
 
         # Initialize components
         self.registry = EquipmentRegistry(
-            self.config, context_db, self.logger.getChild("registry")
+            self.config, context_db, self.logger.bind(component="registry")
         )
         self.usage_processor = EquipmentUsageProcessor(
-            self.config, self.logger.getChild("usage")
+            self.config, self.logger.bind(component="usage")
         )
         self.maintenance_system = MaintenanceSystem(
-            self.config, self.logger.getChild("maintenance")
+            self.config, self.logger.bind(component="maintenance")
         )
         self.modification_system = ModificationSystem(
-            self.config, self.logger.getChild("modifications")
+            self.config, self.logger.bind(component="modifications")
         )
         self.performance_monitor = PerformanceMonitor(
-            self.config, self.logger.getChild("monitor")
+            self.config, self.logger.bind(component="monitor")
         )
 
         # System state

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import heapq
-import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 if TYPE_CHECKING:
     from .types import LLMBatchRequest, LLMCoordinationConfig, PerformanceBudget
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TaskScheduler:

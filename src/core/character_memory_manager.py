@@ -246,10 +246,11 @@ class MemoryManager:
         emotional_impact = memory_entry.get("emotional_impact", 0.5)
 
         # Store if high importance or strong emotional impact
-        return (
+        result = (
             importance > importance_threshold
             or abs(emotional_impact - 0.5) > emotional_threshold - 0.5
         )
+        return bool(result)
 
     def _update_memory_indices(self, memory_entry: Dict[str, Any]) -> None:
         """Update memory indices for quick lookup."""
@@ -311,7 +312,7 @@ class MemoryManager:
                         if not self.memory_by_entity[entity]:
                             del self.memory_by_entity[entity]
                     except ValueError:
-                        logging.getLogger(__name__).debug(
+                        structlog.get_logger(__name__).debug(
                             "Suppressed exception", exc_info=True
                         )
 
@@ -323,7 +324,7 @@ class MemoryManager:
                     if not self.memory_by_location[location]:
                         del self.memory_by_location[location]
                 except ValueError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             event_type = memory.get("event_type")
@@ -333,6 +334,6 @@ class MemoryManager:
                     if not self.memory_by_event_type[event_type]:
                         del self.memory_by_event_type[event_type]
                 except ValueError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )

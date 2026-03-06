@@ -211,7 +211,7 @@ class CharacterRouterService:
                 If not provided, uses the default from get_characters_directory_path().
         """
         self._characters_path = characters_path
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     @property
     def characters_path(self) -> str:

@@ -6,7 +6,7 @@ Agent Lifecycle Manager
 Manages agent registration, deregistration, and lifecycle events.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -24,7 +24,7 @@ class AgentLifecycleManager:
 
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize agent lifecycle manager."""
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.agents = {}  # agent_id -> agent instance
         self.agent_metadata = {}  # agent_id -> metadata
         self._initialized = False

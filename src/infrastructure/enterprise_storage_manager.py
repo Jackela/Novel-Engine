@@ -8,7 +8,7 @@ for complete state externalization in the Novel Engine framework.
 """
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -22,7 +22,7 @@ from .postgresql_manager import (
 from .redis_manager import RedisConfig, RedisManager, create_redis_config_from_env
 from .s3_manager import S3Config, S3StorageManager, create_s3_config_from_env
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class StorageBackend(Enum):
@@ -813,7 +813,7 @@ class EnterpriseStorageManager:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         if self.postgresql:
             await self.postgresql.close()
 

@@ -5,7 +5,7 @@ Bridges the REST API (Imperative Shell) and the System Orchestrator
 """
 
 import asyncio
-import logging
+import structlog
 import time
 import uuid
 from datetime import UTC, datetime
@@ -20,7 +20,7 @@ from src.config.character_factory import CharacterFactory
 from src.core.event_bus import EventBus
 from src.core.system_orchestrator import SystemOrchestrator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ApiOrchestrationService:

@@ -44,7 +44,7 @@ class CharacterApplicationService:
     def __init__(self, character_repository: ICharacterRepository) -> None:
         self.repository = character_repository
         self.command_handlers = CharacterCommandHandlerRegistry(character_repository)
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     # ==================== Character Management Operations ====================
 

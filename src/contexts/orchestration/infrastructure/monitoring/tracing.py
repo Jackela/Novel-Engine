@@ -7,7 +7,7 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 """
 
 import functools
-import logging
+import structlog
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 from uuid import UUID
@@ -27,7 +27,7 @@ from opentelemetry.sdk.trace.sampling import (
 )
 from opentelemetry.util.types import Attributes
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NovelEngineTracingConfig:

@@ -25,6 +25,7 @@ Features:
 import asyncio
 import json
 import logging
+import structlog
 import os
 import threading
 import time
@@ -72,7 +73,7 @@ try:
 except ImportError:
     FASTAPI_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

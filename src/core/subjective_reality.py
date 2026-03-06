@@ -198,7 +198,7 @@ class FogOfWarState:
     last_update: datetime = field(default_factory=datetime.now)
 
     def can_access_information(
-        self, category: KnowledgeCategory, location: str = None
+        self, category: KnowledgeCategory, location: Optional[str] = None
     ) -> float:
         """判断能否访问某类信息，返回访问程度(0-1)"""
         base_access = self.information_access_level.get(category, 0.3)
@@ -299,7 +299,7 @@ class FogOfWarService:
             }
 
         fog_state = self.fog_states[agent_id]
-        filtered_state = {
+        filtered_state: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "visible_locations": list(fog_state.visible_locations),
             "known_agents": [],
@@ -400,10 +400,10 @@ class TurnBriefFactory:
 
     def initialize_belief_model(
         self, agent_id: str, personality_traits: Optional[Dict[str, float]] = None
-    ) -> None:
+    ) -> BeliefModel:
         """初始化Agent的信念模型"""
         if personality_traits is None:
-            personality_traits: dict[Any, Any] = {}
+            personality_traits = {}
         belief_model = BeliefModel(
             agent_id=agent_id, personality_bias=personality_traits
         )
@@ -622,7 +622,7 @@ class TurnBriefFactory:
         """确定当前情境类型"""
 
         # 统计信息类型
-        info_categories = defaultdict(int)
+        info_categories: dict[KnowledgeCategory, int] = defaultdict(int)
         for info in available_info:
             info_categories[info.category] += 1
 
@@ -715,7 +715,7 @@ class SubjectiveRealityEngine:
         self,
         agent_id: str,
         personality_traits: Optional[Dict[str, float]] = None,
-        initial_location: str = None,
+        initial_location: Optional[str] = None,
     ) -> BeliefModel:
         """初始化Agent的主观现实系统"""
 

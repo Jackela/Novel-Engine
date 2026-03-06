@@ -27,6 +27,7 @@ import asyncio
 import gzip
 import hashlib
 import logging
+import structlog
 import os
 import pickle
 import time
@@ -37,7 +38,7 @@ from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _validate_and_fix_cache_dir_permissions(cache_dir: str) -> None:

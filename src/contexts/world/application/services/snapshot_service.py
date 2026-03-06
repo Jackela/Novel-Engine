@@ -15,26 +15,15 @@ Typical usage example:
 from __future__ import annotations
 
 from collections import OrderedDict
-from enum import Enum
 from typing import Dict, List, Optional
 
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
+from src.contexts.world.domain.errors import (
+    SnapshotError,
+    SnapshotNotFoundError,
+)
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-from src.core.result import Err, Ok, Result
-
-
-class SnapshotError(Enum):
-    """Error types for snapshot operations.
-
-    Attributes:
-        NOT_FOUND: Snapshot with given ID does not exist.
-        RESTORE_FAILED: Failed to restore world state from snapshot.
-        STORAGE_ERROR: Failed to store or retrieve snapshot.
-    """
-
-    NOT_FOUND = "not_found"
-    RESTORE_FAILED = "restore_failed"
-    STORAGE_ERROR = "storage_error"
+from src.core.result import Err, Error, Ok, Result
 
 
 # Maximum snapshots per world before FIFO eviction
@@ -67,7 +56,7 @@ class SnapshotService:
         state_json: str,
         tick_number: int,
         description: str = "",
-    ) -> WorldSnapshot:
+    ) -> Result[WorldSnapshot, Error]:
         """Create a new snapshot for a world.
 
         Creates a snapshot with auto-generated name if description not provided.
@@ -81,42 +70,54 @@ class SnapshotService:
             description: Optional description (auto-generated if empty).
 
         Returns:
-            The created WorldSnapshot.
+            Result containing:
+            - Ok: The created WorldSnapshot
+            - Err: Error if creation fails
 
         Example:
-            >>> snapshot = service.create_snapshot(
+            >>> result = service.create_snapshot(
             ...     world_id="world-123",
             ...     calendar=calendar,
             ...     state_json='{"factions": []}',
             ...     tick_number=5,
             ... )
+            >>> if result.is_ok:
+            ...     snapshot = result.value
         """
-        snapshot = WorldSnapshot.create(
-            world_id=world_id,
-            calendar=calendar,
-            state_json=state_json,
-            tick_number=tick_number,
-            description=description,
-        )
+        try:
+            snapshot = WorldSnapshot.create(
+                world_id=world_id,
+                calendar=calendar,
+                state_json=state_json,
+                tick_number=tick_number,
+                description=description,
+            )
 
-        # Initialize storage for world if not exists
-        if world_id not in self._storage:
-            self._storage[world_id] = OrderedDict()
+            # Initialize storage for world if not exists
+            if world_id not in self._storage:
+                self._storage[world_id] = OrderedDict()
 
-        # Add snapshot
-        world_snapshots = self._storage[world_id]
-        world_snapshots[snapshot.snapshot_id] = snapshot
+            # Add snapshot
+            world_snapshots = self._storage[world_id]
+            world_snapshots[snapshot.snapshot_id] = snapshot
 
-        # Enforce FIFO eviction
-        while len(world_snapshots) > self.max_per_world:
-            oldest_key = next(iter(world_snapshots))
-            del world_snapshots[oldest_key]
+            # Enforce FIFO eviction
+            while len(world_snapshots) > self.max_per_world:
+                oldest_key = next(iter(world_snapshots))
+                del world_snapshots[oldest_key]
 
-        return snapshot
+            return Ok(snapshot)
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to create snapshot: {e}",
+                    details={"world_id": world_id},
+                )
+            )
 
     def restore_snapshot(
         self, snapshot_id: str
-    ) -> Result["WorldSnapshot", SnapshotError]:
+    ) -> Result[WorldSnapshot, Error]:
         """Restore world state from a snapshot.
 
         Finds the snapshot by ID and returns it for restoration.
@@ -126,9 +127,10 @@ class SnapshotService:
             snapshot_id: ID of the snapshot to restore.
 
         Returns:
-            Ok(WorldSnapshot) if found and valid.
-            Err(SnapshotError.NOT_FOUND) if snapshot doesn't exist.
-            Err(SnapshotError.RESTORE_FAILED) if restoration fails.
+            Result containing:
+            - Ok: WorldSnapshot if found and valid
+            - Err: SnapshotNotFoundError if snapshot doesn't exist
+            - Err: SnapshotError if restoration fails
 
         Example:
             >>> result = service.restore_snapshot("snap-123")
@@ -139,7 +141,7 @@ class SnapshotService:
         snapshot = self._find_snapshot(snapshot_id)
 
         if snapshot is None:
-            return Err(SnapshotError.NOT_FOUND)
+            return Err(SnapshotNotFoundError(snapshot_id))
 
         # Verify snapshot can be restored
         try:
@@ -147,12 +149,19 @@ class SnapshotService:
             import json
 
             json.loads(snapshot.state_json)
-        except (json.JSONDecodeError, Exception):
-            return Err(SnapshotError.RESTORE_FAILED)
+        except (json.JSONDecodeError, Exception) as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to restore snapshot: {e}",
+                    details={"snapshot_id": snapshot_id},
+                )
+            )
 
         return Ok(snapshot)
 
-    def list_snapshots(self, world_id: str, limit: int = 10) -> List[WorldSnapshot]:
+    def list_snapshots(
+        self, world_id: str, limit: int = 10
+    ) -> Result[List[WorldSnapshot], Error]:
         """List snapshots for a world.
 
         Returns snapshots ordered by creation time (newest first).
@@ -162,63 +171,101 @@ class SnapshotService:
             limit: Maximum number of snapshots to return (default 10).
 
         Returns:
-            List of WorldSnapshot objects, newest first.
+            Result containing:
+            - Ok: List of WorldSnapshot objects, newest first
+            - Err: Error if operation fails
 
         Example:
-            >>> snapshots = service.list_snapshots("world-123", limit=5)
+            >>> result = service.list_snapshots("world-123", limit=5)
+            >>> if result.is_ok:
+            ...     snapshots = result.value
         """
-        if world_id not in self._storage:
-            return []
+        try:
+            if world_id not in self._storage:
+                return Ok([])
 
-        world_snapshots = self._storage[world_id]
-        snapshots = list(world_snapshots.values())
+            world_snapshots = self._storage[world_id]
+            snapshots = list(world_snapshots.values())
 
-        # Return newest first (reverse of insertion order for OrderedDict)
-        return snapshots[::-1][:limit]
+            # Return newest first (reverse of insertion order for OrderedDict)
+            return Ok(snapshots[::-1][:limit])
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to list snapshots: {e}",
+                    details={"world_id": world_id},
+                )
+            )
 
-    def delete_snapshot(self, snapshot_id: str) -> bool:
+    def delete_snapshot(self, snapshot_id: str) -> Result[bool, Error]:
         """Delete a snapshot.
 
         Args:
             snapshot_id: ID of the snapshot to delete.
 
         Returns:
-            True if deleted, False if not found.
+            Result containing:
+            - Ok: True if deleted, False if not found
+            - Err: Error if operation fails
 
         Example:
-            >>> deleted = service.delete_snapshot("snap-123")
+            >>> result = service.delete_snapshot("snap-123")
+            >>> if result.is_ok:
+            ...     deleted = result.value
         """
-        # Find and delete snapshot
-        for world_id, world_snapshots in self._storage.items():
-            if snapshot_id in world_snapshots:
-                del world_snapshots[snapshot_id]
-                return True
+        try:
+            # Find and delete snapshot
+            for world_id, world_snapshots in self._storage.items():
+                if snapshot_id in world_snapshots:
+                    del world_snapshots[snapshot_id]
+                    return Ok(True)
 
-        return False
+            return Ok(False)
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to delete snapshot: {e}",
+                    details={"snapshot_id": snapshot_id},
+                )
+            )
 
-    def get_latest_snapshot(self, world_id: str) -> Optional[WorldSnapshot]:
+    def get_latest_snapshot(
+        self, world_id: str
+    ) -> Result[Optional[WorldSnapshot], Error]:
         """Get the most recent snapshot for a world.
 
         Args:
             world_id: ID of the world.
 
         Returns:
-            The most recent WorldSnapshot, or None if no snapshots exist.
+            Result containing:
+            - Ok: The most recent WorldSnapshot, or None if no snapshots exist
+            - Err: Error if operation fails
 
         Example:
-            >>> latest = service.get_latest_snapshot("world-123")
-            >>> if latest:
-            ...     print(f"Latest tick: {latest.tick_number}")
+            >>> result = service.get_latest_snapshot("world-123")
+            >>> if result.is_ok:
+            ...     latest = result.value
+            ...     if latest:
+            ...         print(f"Latest tick: {latest.tick_number}")
         """
-        if world_id not in self._storage:
-            return None
+        try:
+            if world_id not in self._storage:
+                return Ok(None)
 
-        world_snapshots = self._storage[world_id]
-        if not world_snapshots:
-            return None
+            world_snapshots = self._storage[world_id]
+            if not world_snapshots:
+                return Ok(None)
 
-        # Return last (most recent) item in OrderedDict
-        return list(world_snapshots.values())[-1]
+            # Return last (most recent) item in OrderedDict
+            return Ok(list(world_snapshots.values())[-1])
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to get latest snapshot: {e}",
+                    details={"world_id": world_id},
+                )
+            )
 
     def _find_snapshot(self, snapshot_id: str) -> Optional[WorldSnapshot]:
         """Find a snapshot by ID across all worlds.
@@ -234,22 +281,45 @@ class SnapshotService:
                 return world_snapshots[snapshot_id]
         return None
 
-    def clear_storage(self) -> None:
+    def clear_storage(self) -> Result[None, Error]:
         """Clear all stored snapshots.
 
         Used for testing.
-        """
-        self._storage.clear()
 
-    def get_snapshot_count(self, world_id: str) -> int:
+        Returns:
+            Result containing:
+            - Ok: None on success
+            - Err: Error if operation fails
+        """
+        try:
+            self._storage.clear()
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to clear storage: {e}",
+                )
+            )
+
+    def get_snapshot_count(self, world_id: str) -> Result[int, Error]:
         """Get the number of snapshots for a world.
 
         Args:
             world_id: ID of the world.
 
         Returns:
-            Number of snapshots for the world.
+            Result containing:
+            - Ok: Number of snapshots for the world
+            - Err: Error if operation fails
         """
-        if world_id not in self._storage:
-            return 0
-        return len(self._storage[world_id])
+        try:
+            if world_id not in self._storage:
+                return Ok(0)
+            return Ok(len(self._storage[world_id]))
+        except Exception as e:
+            return Err(
+                SnapshotError(
+                    f"Failed to get snapshot count: {e}",
+                    details={"world_id": world_id},
+                )
+            )

@@ -3,14 +3,14 @@
 Usage learning and optimization system.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any
 
 from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class LearningSystem:

@@ -16,6 +16,7 @@ System保佑此认证系统 (May the System bless this authentication system)
 
 import hashlib
 import logging
+import structlog
 import os
 import secrets
 import tempfile
@@ -34,7 +35,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # STANDARD SECURITY CONSTANTS
 JWT_ALGORITHM = "HS256"

@@ -72,7 +72,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             session_factory: SQLAlchemy session factory for database connections
         """
         self.session_factory = session_factory
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     # ==================== Basic CRUD Operations ====================
 

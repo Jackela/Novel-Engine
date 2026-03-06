@@ -17,7 +17,7 @@ Usage:
     ork_agent = factory.create_character('ork')
 """
 
-import logging
+import structlog
 import os
 import re
 from typing import Optional
@@ -26,7 +26,7 @@ from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 

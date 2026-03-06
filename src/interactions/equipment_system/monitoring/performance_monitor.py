@@ -6,7 +6,7 @@ Equipment performance monitoring, failure prediction, and analytics system.
 Tracks equipment health, predicts failures, and provides optimization recommendations.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -31,7 +31,7 @@ class PerformanceMonitor:
     ) -> None:
         """Initialize performance monitor."""
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         self.logger.info("Performance monitor initialized")
 

@@ -17,21 +17,10 @@ from typing import Any, Dict, List
 
 import structlog
 
+from src.contexts.world.domain.errors import FactionTickError
 from src.core.result import Err, Error, Ok, Result
 
 logger = structlog.get_logger()
-
-
-class FactionTickError(Error):
-    """Error raised when faction tick processing fails."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="FACTION_TICK_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
 
 
 @dataclass

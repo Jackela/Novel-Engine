@@ -6,7 +6,7 @@ Interaction context validation, prerequisite checking, and constraint verificati
 Ensures interaction integrity and validates all requirements before processing.
 """
 
-import logging
+import structlog
 from typing import Any, Dict, List, Optional
 
 from ..core.types import (
@@ -64,7 +64,7 @@ class InteractionValidator:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Validation rules and constraints
         self._validation_rules = {

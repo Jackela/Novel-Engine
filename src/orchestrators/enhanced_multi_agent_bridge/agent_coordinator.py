@@ -5,13 +5,13 @@ Manages agent-to-agent interactions, relationship tracking, and dialogue coordin
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from .types import AgentDialogue, CommunicationType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AgentCoordinator:

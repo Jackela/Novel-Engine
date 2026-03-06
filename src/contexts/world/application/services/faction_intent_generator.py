@@ -29,19 +29,8 @@ from src.contexts.world.domain.entities.faction_intent import (
     ActionType,
     FactionIntent,
 )
+from src.contexts.world.domain.errors import IntentGenerationError
 from src.core.result import Err, Error, Ok, Result
-
-
-class IntentGenerationError(Error):
-    """Error raised when faction intent generation fails."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="INTENT_GENERATION_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
 
 
 class FactionIntentGenerator:

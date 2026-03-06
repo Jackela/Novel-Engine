@@ -26,6 +26,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import structlog
 
+from src.contexts.world.domain.errors import SanityCheckError
 from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:
@@ -37,16 +38,7 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 
-class SanityCheckError(Error):
-    """Error raised when sanity check execution fails (not for violations)."""
-
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="SANITY_CHECK_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
+# Note: SanityCheckError is now imported from src.contexts.world.domain.errors
 
 
 class Severity(Enum):

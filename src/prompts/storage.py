@@ -9,7 +9,7 @@ including CRUD operations and optimization history tracking.
 from __future__ import annotations
 
 import json
-import logging
+import structlog
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -20,7 +20,7 @@ import aiosqlite
 
 from .base import Language, StoryGenre
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Default database path
 DEFAULT_DB_PATH = Path("data/user_prompts.db")

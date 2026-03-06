@@ -9,7 +9,7 @@ and real-time data management in the Novel Engine framework.
 
 import asyncio
 import json
-import logging
+import structlog
 import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, Set
 
 import aioredis
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RedisDataType(Enum):
@@ -626,7 +626,7 @@ class RedisConnectionPool:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
         if self.redis:
             await self.redis.close()

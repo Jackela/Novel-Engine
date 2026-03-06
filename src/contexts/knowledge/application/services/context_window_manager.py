@@ -242,7 +242,11 @@ class ContextWindowManager:
                 using_fallback=True,
             )
         else:
-            system_tokens = system_count_result.unwrap().token_count
+            count_res = system_count_result.unwrap()
+            if count_res is None:
+                system_tokens = len(system_prompt) // 4
+            else:
+                system_tokens = count_res.token_count
 
         if system_tokens > cfg.model_context_window:
             raise ValueError(
@@ -327,7 +331,10 @@ class ContextWindowManager:
                 count_result = self._token_counter.count(chunk.content)
                 if count_result.is_error:
                     continue
-                chunk_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    continue
+                chunk_tokens = count_res.token_count
                 if total + chunk_tokens > available_tokens:
                     break
                 kept.append(chunk)
@@ -369,7 +376,11 @@ class ContextWindowManager:
             if query_count_result.is_error:
                 query_tokens = len(query) // 4
             else:
-                query_tokens = query_count_result.unwrap().token_count
+                count_res = query_count_result.unwrap()
+                if count_res is None:
+                    query_tokens = len(query) // 4
+                else:
+                    query_tokens = count_res.token_count
             return (
                 [ChatMessage(role="user", content=query, tokens=query_tokens)],
                 query_tokens,
@@ -383,7 +394,11 @@ class ContextWindowManager:
             if count_result.is_error:
                 tokens = len(msg.content) // 4
             else:
-                tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    tokens = len(msg.content) // 4
+                else:
+                    tokens = count_res.token_count
             history_with_tokens.append(msg.with_tokens(tokens))
 
         # Calculate current query tokens
@@ -391,7 +406,11 @@ class ContextWindowManager:
         if query_count_result.is_error:
             query_tokens = len(query) // 4
         else:
-            query_tokens = query_count_result.unwrap().token_count
+            count_res = query_count_result.unwrap()
+            if count_res is None:
+                query_tokens = len(query) // 4
+            else:
+                query_tokens = count_res.token_count
 
         # Pruning strategy: OLDEST_FIRST (default)
         # Keep recent messages, remove oldest first
@@ -468,7 +487,11 @@ class ContextWindowManager:
             if count_result.is_error:
                 system_tokens = len(system_prompt) // 4
             else:
-                system_tokens = count_result.unwrap().token_count
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    system_tokens = len(system_prompt) // 4
+                else:
+                    system_tokens = count_res.token_count
         else:
             system_tokens = self._config.system_prompt_tokens
 

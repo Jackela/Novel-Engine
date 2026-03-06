@@ -264,14 +264,21 @@ class QueryAwareRetrievalService:
 
         if len(queries_to_execute) == 1:
             # Single query - no need for concurrency control
-            result = await self._retrieval_service.retrieve_relevant(
+            retrieval_result = await self._retrieval_service.retrieve_relevant(
                 query=queries_to_execute[0],
                 k=k,
                 filters=filters,
                 options=retrieval_options,
                 collection=target_collection,
             )
-            chunks_by_query.append((queries_to_execute[0], result.chunks))
+            if retrieval_result.is_error:
+                chunks_by_query.append((queries_to_execute[0], []))
+            else:
+                result_data = retrieval_result.value
+                if result_data is None:
+                    chunks_by_query.append((queries_to_execute[0], []))
+                else:
+                    chunks_by_query.append((queries_to_execute[0], result_data.chunks))
         else:
             # Multiple queries - use semaphore for concurrency control
             semaphore = asyncio.Semaphore(config.max_concurrent)
@@ -280,14 +287,19 @@ class QueryAwareRetrievalService:
                 q: str,
             ) -> tuple[str, list[RetrievedChunk]]:
                 async with semaphore:
-                    result = await self._retrieval_service.retrieve_relevant(
+                    r_result = await self._retrieval_service.retrieve_relevant(
                         query=q,
                         k=k,
                         filters=filters,
                         options=retrieval_options,
                         collection=target_collection,
                     )
-                    return (q, result.chunks)
+                    if r_result.is_error:
+                        return (q, [])
+                    result_data = r_result.value
+                    if result_data is None:
+                        return (q, [])
+                    return (q, result_data.chunks)
 
             tasks = [retrieve_with_semaphore(q) for q in queries_to_execute]
             chunks_by_query = await asyncio.gather(*tasks)

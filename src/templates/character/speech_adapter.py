@@ -3,14 +3,14 @@
 Speech and format adaptation for personas.
 """
 
-import logging
+import structlog
 from typing import Any
 
 from src.templates.dynamic_template_engine import TemplateContext
 
 from .persona_models import CharacterArchetype, CharacterPersona
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SpeechAdapter:

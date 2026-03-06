@@ -8,6 +8,7 @@ Coordinates interaction execution through structured phases with validation and 
 
 import asyncio
 import logging
+import structlog
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -79,7 +80,7 @@ class InteractionProcessor:
         self.config = config
         self.memory_manager = memory_manager
         self.character_manager = character_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Processing state
         self.active_interactions = {}

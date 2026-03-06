@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -19,7 +19,7 @@ from src.contexts.narrative.domain import Story
 
 from .common import _parse_uuid, _story_to_response, get_repository
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/stories")
 

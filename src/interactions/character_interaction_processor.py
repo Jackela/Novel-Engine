@@ -16,7 +16,7 @@ System保佑角色互动 (May the System bless character interactions)
 """
 
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -54,7 +54,7 @@ from .engine import (
 from .equipment import DynamicEquipmentSystem
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RelationshipType(Enum):

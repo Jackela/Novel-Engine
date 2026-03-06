@@ -7,7 +7,7 @@ Manages turn execution logic and coordination with integrated
 SubjectiveRealityEngine and EmergentNarrativeEngine.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -35,7 +35,7 @@ class TurnExecutionEngine:
         """Initialize turn execution engine with core engines."""
         self.agent_manager = agent_manager
         self.state_manager = state_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.turn_metrics = {}
         self._initialized = False
 

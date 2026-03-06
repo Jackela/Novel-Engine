@@ -217,7 +217,7 @@ class Rumor:
         Returns:
             Dictionary representation of the rumor.
         """
-        created_date_dict = None
+        created_date_dict: dict[str, Any] | str | None = None
         if self.created_date is not None:
             if hasattr(self.created_date, "to_dict"):
                 created_date_dict = self.created_date.to_dict()
@@ -259,11 +259,13 @@ class Rumor:
             origin_type = RumorOrigin.UNKNOWN
 
         # Handle current_locations parsing
-        current_locations = data.get("current_locations", [])
-        if isinstance(current_locations, list):
-            current_locations = set(current_locations)
-        elif not isinstance(current_locations, set):
-            current_locations: set[Any] = set()
+        current_locations_data = data.get("current_locations", [])
+        if isinstance(current_locations_data, list):
+            current_locations: set[Any] = set(current_locations_data)
+        elif isinstance(current_locations_data, set):
+            current_locations = current_locations_data
+        else:
+            current_locations = set()
         # Handle created_date - keep as-is for now (could be dict or WorldCalendar)
         created_date = data.get("created_date")
 

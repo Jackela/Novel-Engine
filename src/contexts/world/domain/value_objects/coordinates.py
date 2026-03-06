@@ -329,7 +329,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
 
         return Coordinates(
             x=self.x + other.x,
@@ -352,7 +352,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
 
         return Coordinates(
             x=self.x - other.x,
@@ -382,7 +382,7 @@ class Coordinates:
             fallback mechanism to try the other operand's __rmul__.
         """
         if not isinstance(scalar, (int, float)):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
 
         return Coordinates(
             x=self.x * scalar,

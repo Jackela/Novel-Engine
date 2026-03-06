@@ -7,7 +7,7 @@ Handles equipment registration, agent assignment, and equipment discovery.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
@@ -78,7 +78,7 @@ class EquipmentRegistry:
         """
         self.config = config
         self.context_db = context_db
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Equipment storage
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
@@ -461,7 +461,7 @@ class EquipmentRegistry:
             try:
                 return EquipmentCategory(equipment_item.category)
             except ValueError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment_item, "name", "").lower()
 
         # Basic category inference

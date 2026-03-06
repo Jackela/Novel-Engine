@@ -16,7 +16,7 @@ System保佑上下文渲染 (May the System bless context rendering)
 """
 
 import asyncio
-import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -40,7 +40,7 @@ from .dynamic_template_engine import (
 )
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RenderFormat(Enum):

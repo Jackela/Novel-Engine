@@ -6,7 +6,7 @@ Equipment modification installation, compatibility checking, and enhancement man
 Handles modification installation, compatibility validation, and performance tracking.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -61,7 +61,7 @@ class ModificationSystem:
     ) -> None:
         """Initialize modification system."""
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Modification templates and compatibility rules
         self._modification_templates = {

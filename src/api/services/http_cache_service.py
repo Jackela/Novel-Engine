@@ -43,7 +43,7 @@ class HttpCacheService:
 
     def __init__(self) -> None:
         """Initialize the cache service."""
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def build_etag(self, identifier: str, updated: datetime) -> str:
         """

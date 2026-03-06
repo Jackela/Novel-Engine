@@ -7,7 +7,7 @@ in-memory storage for MVP.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -36,7 +36,7 @@ from src.contexts.narrative.infrastructure.repositories.in_memory_narrative_repo
     InMemoryNarrativeRepository,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Module-level repository instance for development/testing
 _repository: Optional[INarrativeRepository] = None

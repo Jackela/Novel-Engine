@@ -48,7 +48,7 @@ class WorldStateCoordinator:
         self.world_state_data: Dict[str, Any] = {}
 
         # Dynamic world state tracker
-        self.world_state_tracker = {
+        self.world_state_tracker: dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes
             "agent_discoveries": {},  # turn_number -> {agent_id: discoveries}
@@ -221,7 +221,7 @@ class WorldStateCoordinator:
 
     def _get_faction_updates(self) -> Dict[str, Any]:
         """Get current faction status information."""
-        faction_status = self.world_state_data.get("faction_status", {})
+        faction_status: dict[str, Any] = self.world_state_data.get("faction_status", {})
 
         if not faction_status:
             return {
@@ -230,16 +230,16 @@ class WorldStateCoordinator:
                 "freewind_collective": {"activity": "moderate", "influence": 0.2},
             }
 
-        return faction_status.copy()
+        return dict(faction_status)
 
     def _get_environmental_updates(self) -> Dict[str, Any]:
         """Get environmental status updates."""
-        environmental_state = self.world_state_data.get("environmental_state", {})
+        environmental_state: dict[str, Any] = self.world_state_data.get("environmental_state", {})
 
         if not environmental_state:
             return {"weather": "stable", "visibility": "normal", "hazards": []}
 
-        return environmental_state.copy()
+        return dict(environmental_state)
 
     def generate_world_state_feedback(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """

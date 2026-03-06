@@ -3,7 +3,7 @@
 Context enhancement for persona-specific rendering.
 """
 
-import logging
+import structlog
 from typing import Optional
 
 from src.memory.layered_memory import LayeredMemorySystem
@@ -17,7 +17,7 @@ from .persona_models import (
     CharacterTemplate,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContextEnhancer:

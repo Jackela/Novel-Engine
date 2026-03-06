@@ -11,7 +11,7 @@ Wave 5.2 - Smart Caching Infrastructure
 import asyncio
 import hashlib
 import json
-import logging
+import structlog
 import pickle
 import threading
 import time
@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiofiles
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(Enum):

@@ -18,6 +18,7 @@ import base64
 import hashlib
 import json
 import logging
+import structlog
 import os
 import secrets
 from dataclasses import dataclass
@@ -33,7 +34,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DataClassification(str, Enum):

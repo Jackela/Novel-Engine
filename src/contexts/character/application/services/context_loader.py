@@ -100,7 +100,7 @@ class ContextLoaderService:
         """
         self.base_path = Path(base_characters_path)
         self.max_file_size = max_file_size
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
         # Security and reliability configuration
         self.max_concurrent_loads = max_concurrent_loads

@@ -6,7 +6,7 @@ Specialized processors for different interaction types with category-specific lo
 content generation, and outcome handling for each interaction category.
 """
 
-import logging
+import structlog
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -64,7 +64,7 @@ class BaseInteractionProcessor(ABC):
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.processing_stats = {
             "processed_count": 0,
             "success_count": 0,
@@ -648,7 +648,7 @@ class InteractionTypeProcessorManager:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Initialize processors
         self.processors: Dict[InteractionType, BaseInteractionProcessor] = {}

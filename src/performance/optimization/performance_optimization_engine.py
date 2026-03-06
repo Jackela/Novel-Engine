@@ -19,7 +19,7 @@ Key Optimizations:
 import asyncio
 import gc
 import json
-import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -32,7 +32,7 @@ import aioredis
 import aiosqlite
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(Enum):
@@ -120,7 +120,7 @@ class PerformanceMonitor:
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _monitor_loop(self) -> None:
         """Background monitoring loop."""
@@ -450,7 +450,7 @@ class BatchProcessor:
                 if operation_type in self.pending_operations:
                     await self._process_batch(operation_type)
         except asyncio.CancelledError:
-            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+            structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
     async def _process_batch(self, operation_type: str) -> None:
         """Process a batch of operations."""

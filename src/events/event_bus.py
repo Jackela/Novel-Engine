@@ -13,7 +13,7 @@ This module provides a production-ready event bus implementation with:
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -31,7 +31,7 @@ except ImportError:
     AIOREDIS_AVAILABLE = False
     aioredis = None
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EventPriority(Enum):
@@ -379,7 +379,7 @@ class EventBus:
             try:
                 await task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         if self.redis:
             await self.redis.close()
 

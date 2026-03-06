@@ -10,7 +10,7 @@ import asyncio
 import gzip
 import hashlib
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -73,7 +73,7 @@ class CampaignLoggingService:
         session_id: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
     ) -> None:
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.log_dir = Path(log_dir)
         self.session_id = (
             session_id or f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -714,7 +714,7 @@ class CampaignLoggingService:
                 try:
                     file_handle.close()
                 except Exception:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             self._log_entries.clear()

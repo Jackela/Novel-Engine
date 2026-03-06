@@ -8,6 +8,7 @@ Validates that the performance optimizations are working correctly and meeting t
 import asyncio
 import json
 import logging
+import structlog
 import os
 import sys
 import time
@@ -22,7 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 try:
     from src.performance.production_performance_engine import (

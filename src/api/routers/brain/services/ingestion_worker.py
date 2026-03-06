@@ -7,7 +7,7 @@ OPT-005: Async Ingestion Job API
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
         KnowledgeIngestionService,
     )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 async def run_ingestion_job(

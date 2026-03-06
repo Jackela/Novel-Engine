@@ -73,7 +73,7 @@ class SubjectiveApplicationService:
         self.command_handlers = SubjectiveCommandHandlerRegistry(
             repository, self.fog_of_war_service
         )
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     # Core TurnBrief Operations
 

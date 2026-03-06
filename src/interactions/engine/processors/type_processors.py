@@ -3,7 +3,7 @@
 Type-specific interaction processors.
 """
 
-import logging
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
@@ -13,7 +13,7 @@ from src.interactions.interaction_engine_system.core.types import (
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TypeProcessors:

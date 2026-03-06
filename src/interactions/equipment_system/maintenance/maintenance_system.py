@@ -8,7 +8,7 @@ Handles maintenance procedures, condition improvement, and preventive care.
 
 import asyncio
 import heapq
-import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -78,7 +78,7 @@ class MaintenanceSystem:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Maintenance scheduling
         self._maintenance_queue: List[Tuple[datetime, str]] = []  # (time, equipment_id)

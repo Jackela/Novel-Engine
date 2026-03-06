@@ -7,6 +7,7 @@ This module provides comprehensive security middleware for the FastAPI applicati
 """
 
 import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta, timezone
@@ -14,7 +15,7 @@ from typing import Any, Dict, Set
 
 from fastapi import HTTPException, Request, status
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SecurityEventLogger:

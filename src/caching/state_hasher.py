@@ -14,7 +14,7 @@ caching optimization, and state change detection.
 import hashlib
 import importlib.util
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -29,7 +29,7 @@ if not SHARED_TYPES_AVAILABLE:
     logging.warning("Shared types not available, using fallback hashing.")
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass

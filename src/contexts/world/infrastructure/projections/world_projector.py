@@ -51,7 +51,7 @@ class WorldProjector:
 
     def __init__(self) -> None:
         """Initialize the world projector service."""
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
         self._metrics = ProjectorMetrics()
         self._processed_events: Set[str] = set()  # Simple deduplication
         self._batch_size = 50

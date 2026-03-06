@@ -5,6 +5,13 @@ Database Connection Pool Manager
 
 Enterprise-grade database connection management with connection pooling,
 health monitoring, and automatic failover.
+
+Result Pattern Migration:
+    - initialize() -> Result[bool, DatabaseError]
+    - add_pool() -> Result[bool, DatabaseError]
+    - execute_query() -> Result[aiosqlite.Cursor, DatabaseError]
+    - execute_transaction() -> Result[bool, DatabaseError]
+    - health_check() -> Result[Dict[str, Any], DatabaseError]
 """
 
 import asyncio
@@ -21,8 +28,31 @@ import aiosqlite
 
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
+from .result import Error, Err, Ok, Result
 
 logger = structlog.get_logger(__name__)
+
+
+class DatabaseError(Error):
+    """Error raised when database operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        pool_name: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if pool_name:
+            full_details["pool_name"] = pool_name
+        super().__init__(
+            code="DATABASE_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class DatabaseType(Enum):
@@ -704,16 +734,36 @@ class DatabaseManager:
         logger.info("database_manager_initialized")
 
     async def initialize(self) -> None:
-        """Initialize database manager."""
+        """Initialize database manager. (Legacy - use initialize_result)"""
+        result = await self.initialize_result()
+        if result.is_error:
+            raise RuntimeError(result.error.message)
+
+    async def initialize_result(self) -> Result[bool, DatabaseError]:
+        """
+        Initialize database manager using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
         async with self._lock:
             if self._initialized:
-                return
+                return Ok(True)
 
-            # Create default pool from configuration
-            await self._create_default_pool()
+            try:
+                # Create default pool from configuration
+                await self._create_default_pool()
 
-            self._initialized = True
-            logger.info("database_manager_initialization_complete")
+                self._initialized = True
+                logger.info("database_manager_initialization_complete")
+                return Ok(True)
+            except Exception as e:
+                return Err(
+                    DatabaseError(
+                        message=f"Failed to initialize database manager: {e}",
+                        operation="initialize",
+                    )
+                )
 
     async def _create_default_pool(self) -> None:
         """Create default database pool from configuration."""
@@ -739,16 +789,49 @@ class DatabaseManager:
         logger.info(f"Default database pool created: {config.connection_string}")
 
     async def add_pool(self, name: str, config: DatabaseConfig) -> None:
-        """Add named database pool."""
+        """Add named database pool. (Legacy - use add_pool_result)"""
+        result = await self.add_pool_result(name, config)
+        if result.is_error:
+            raise ValueError(result.error.message)
+
+    async def add_pool_result(
+        self, name: str, config: DatabaseConfig
+    ) -> Result[bool, DatabaseError]:
+        """
+        Add named database pool using Result pattern.
+
+        Args:
+            name: Name of the pool
+            config: Database configuration
+
+        Returns:
+            Result containing True on success or error
+        """
         async with self._lock:
             if name in self._pools:
-                raise ValueError(f"Pool {name} already exists")
+                return Err(
+                    DatabaseError(
+                        message=f"Pool {name} already exists",
+                        operation="add_pool",
+                        pool_name=name,
+                    )
+                )
 
-            pool = DatabaseConnectionPool(config, self.error_handler)
-            await pool.initialize()
+            try:
+                pool = DatabaseConnectionPool(config, self.error_handler)
+                await pool.initialize()
 
-            self._pools[name] = pool
-            logger.info("database_pool_added", pool_name=name)
+                self._pools[name] = pool
+                logger.info("database_pool_added", pool_name=name)
+                return Ok(True)
+            except Exception as e:
+                return Err(
+                    DatabaseError(
+                        message=f"Failed to add pool {name}: {e}",
+                        operation="add_pool",
+                        pool_name=name,
+                    )
+                )
 
     async def get_connection(
         self, pool_name: Optional[str] = None
@@ -768,28 +851,90 @@ class DatabaseManager:
     async def execute_query(
         self, query: str, parameters: tuple = None, pool_name: Optional[str] = None
     ) -> aiosqlite.Cursor:
-        """Execute query on specified or default pool."""
-        async with await self.get_connection(pool_name) as conn:
-            return await conn.execute(query, parameters)
+        """Execute query on specified or default pool. (Legacy - use execute_query_result)"""
+        result = await self.execute_query_result(query, parameters, pool_name)
+        if result.is_ok:
+            return result.value
+        raise RuntimeError(result.error.message)
+
+    async def execute_query_result(
+        self,
+        query: str,
+        parameters: tuple = None,
+        pool_name: Optional[str] = None,
+    ) -> Result[aiosqlite.Cursor, DatabaseError]:
+        """
+        Execute query on specified or default pool using Result pattern.
+
+        Args:
+            query: SQL query to execute
+            parameters: Query parameters
+            pool_name: Name of the pool to use
+
+        Returns:
+            Result containing cursor or error
+        """
+        try:
+            async with await self.get_connection(pool_name) as conn:
+                cursor = await conn.execute(query, parameters)
+                return Ok(cursor)
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Query execution failed: {e}",
+                    operation="execute_query",
+                    pool_name=pool_name,
+                    details={"query": query[:100]},
+                )
+            )
 
     async def execute_transaction(
         self,
         queries: List[tuple],  # List of (query, parameters) tuples
         pool_name: Optional[str] = None,
     ) -> bool:
-        """Execute multiple queries in a transaction."""
+        """Execute multiple queries in a transaction. (Legacy - use execute_transaction_result)"""
+        result = await self.execute_transaction_result(queries, pool_name)
+        if result.is_ok:
+            return result.value
+        raise RuntimeError(result.error.message)
+
+    async def execute_transaction_result(
+        self,
+        queries: List[tuple],
+        pool_name: Optional[str] = None,
+    ) -> Result[bool, DatabaseError]:
+        """
+        Execute multiple queries in a transaction using Result pattern.
+
+        Args:
+            queries: List of (query, parameters) tuples
+            pool_name: Name of the pool to use
+
+        Returns:
+            Result containing True on success or error
+        """
         async with await self.get_connection(pool_name) as conn:
             try:
                 for query, parameters in queries:
                     await conn.execute(query, parameters)
 
                 await conn.commit()
-                return True
+                return Ok(True)
 
             except Exception as e:
                 await conn.rollback()
-                logger.error("transaction_failed", error=str(e), error_type=type(e).__name__)
-                raise
+                logger.error(
+                    "transaction_failed", error=str(e), error_type=type(e).__name__
+                )
+                return Err(
+                    DatabaseError(
+                        message=f"Transaction failed: {e}",
+                        operation="execute_transaction",
+                        pool_name=pool_name,
+                        details={"query_count": len(queries)},
+                    )
+                )
 
     async def close_all_pools(self) -> None:
         """Close all database pools."""
@@ -825,28 +970,50 @@ class DatabaseManager:
         return {name: pool.get_pool_metrics() for name, pool in self._pools.items()}
 
     async def health_check(self) -> Dict[str, Dict[str, Any]]:
-        """Perform health check on all pools."""
-        health_results: dict[Any, Any] = {}
-        for name, pool in self._pools.items():
-            try:
-                # Test connection from pool
-                async with await pool.get_connection() as conn:
-                    await conn.health_check()
+        """Perform health check on all pools. (Legacy - use health_check_result)"""
+        result = await self.health_check_result()
+        if result.is_ok:
+            return result.value
+        return {"error": {"healthy": False, "message": result.error.message}}
 
-                health_results[name] = {
-                    "healthy": True,
-                    "status": pool.get_pool_status(),
-                    "metrics": pool.get_pool_metrics(),
-                }
+    async def health_check_result(
+        self,
+    ) -> Result[Dict[str, Dict[str, Any]], DatabaseError]:
+        """
+        Perform health check on all pools using Result pattern.
 
-            except Exception as e:
-                health_results[name] = {
-                    "healthy": False,
-                    "error": str(e),
-                    "status": pool.get_pool_status(),
-                }
+        Returns:
+            Result containing health check results or error
+        """
+        try:
+            health_results: dict[str, dict[str, Any]] = {}
+            for name, pool in self._pools.items():
+                try:
+                    # Test connection from pool
+                    async with await pool.get_connection() as conn:
+                        await conn.health_check()
 
-        return health_results
+                    health_results[name] = {
+                        "healthy": True,
+                        "status": pool.get_pool_status(),
+                        "metrics": pool.get_pool_metrics(),
+                    }
+
+                except Exception as e:
+                    health_results[name] = {
+                        "healthy": False,
+                        "error": str(e),
+                        "status": pool.get_pool_status(),
+                    }
+
+            return Ok(health_results)
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Health check failed: {e}",
+                    operation="health_check",
+                )
+            )
 
 
 # Global database manager instance
