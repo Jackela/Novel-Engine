@@ -321,7 +321,7 @@ print("Progress:", progress_response.json())</code></pre>
     response.raise_for_status()
     return response.json()
 except httpx.HTTPError as e:
-    logger.error(f"API call failed: {e}")
+    logger.error("API call failed: %s", e)
     return None</code></pre>
                 </div>
 
@@ -628,7 +628,7 @@ console.log(data);"""
             )
 
         except Exception as e:
-            logger.error(f"Failed to generate enhanced documentation: {e}")
+            logger.error("Failed to generate enhanced documentation: %s", e)
             return self._generate_fallback_documentation()
 
     def _generate_fallback_documentation(self) -> str:

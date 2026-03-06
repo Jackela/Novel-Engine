@@ -580,7 +580,7 @@ class SecurityService:
                     },
                 )
 
-                logger.info(f"USER REGISTERED: {user.username} ({user.role.value})")
+                logger.info("USER REGISTERED: %s (%s)", user.username, user.role.value)
                 return user
 
         except aiosqlite.IntegrityError as e:
@@ -660,10 +660,10 @@ class SecurityService:
             )
 
         except AuthenticationError as e:
-            logger.warning(f"PASSWORD REJECTION: {e}")
+            logger.warning("PASSWORD REJECTION: %s", e)
             raise
         except Exception as e:
-            logger.error(f"USER CREATION FAILED: {e}")
+            logger.error("USER CREATION FAILED: %s", e)
             return OperationResult(
                 success=False,
                 error=OperationError(

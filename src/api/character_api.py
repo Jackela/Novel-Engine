@@ -203,7 +203,7 @@ class CharacterAPI:
             except ValueError as e:
                 raise HTTPException(status_code=422, detail=str(e))
             except Exception as e:
-                logger.error(f"Error creating character: {e}")
+                logger.error("Error creating character: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/characters", response_model=CharacterListResponse)
@@ -231,7 +231,7 @@ class CharacterAPI:
 
                 return CharacterListResponse(characters=characters)
             except Exception as e:
-                logger.error(f"Error listing characters: {e}")
+                logger.error("Error listing characters: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/characters/{character_id}", response_model=dict)

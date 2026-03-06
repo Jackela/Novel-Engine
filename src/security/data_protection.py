@@ -168,7 +168,7 @@ class EncryptionService:
             encrypted_data = self.fernet.encrypt(data.encode())
             return base64.urlsafe_b64encode(encrypted_data).decode()
         except Exception as e:
-            logger.error(f"ENCRYPTION FAILED: {e}")
+            logger.error("ENCRYPTION FAILED: %s", e)
             raise
 
     def decrypt(self, encrypted_data: str) -> str:
@@ -181,7 +181,7 @@ class EncryptionService:
             decrypted_data = self.fernet.decrypt(decoded_data)
             return decrypted_data.decode()
         except Exception as e:
-            logger.error(f"DECRYPTION FAILED: {e}")
+            logger.error("DECRYPTION FAILED: %s", e)
             raise
 
     def encrypt_dict(
@@ -415,7 +415,7 @@ class DataProtectionService:
             )
             await conn.commit()
 
-        logger.info(f"CONSENT RECORDED: {user_id} | Purpose: {purpose}")
+        logger.info("CONSENT RECORDED: %s | Purpose: %s", user_id, purpose)
         return consent_record
 
     async def withdraw_consent(self, user_id: str, purpose: str) -> bool:
@@ -441,7 +441,7 @@ class DataProtectionService:
             await conn.commit()
 
         if rows_affected > 0:
-            logger.info(f"CONSENT WITHDRAWN: {user_id} | Purpose: {purpose}")
+            logger.info("CONSENT WITHDRAWN: %s | Purpose: %s", user_id, purpose)
             # Trigger data deletion for withdrawn consent
             await self._handle_consent_withdrawal(user_id, purpose)
             return True
@@ -619,7 +619,8 @@ class DataProtectionService:
             await conn.commit()
 
         logger.info(
-            f"DATA DELETION SCHEDULED: {data_type} | User: {user_id} | Delete after: {delete_after}"
+            "DATA DELETION SCHEDULED: %s | User: %s | Delete after: %s",
+            data_type, user_id, delete_after
         )
 
     async def process_data_deletions(self) -> None:
@@ -652,11 +653,12 @@ class DataProtectionService:
                         (deletion_id,),
                     )
 
-                    logger.info(f"DATA DELETED: {data_type} | User: {user_id}")
+                    logger.info("DATA DELETED: %s | User: %s", data_type, user_id)
 
                 except Exception as e:
                     logger.error(
-                        f"DATA DELETION FAILED: {data_type} | User: {user_id} | Error: {e}"
+                        "DATA DELETION FAILED: %s | User: %s | Error: %s",
+                        data_type, user_id, e
                     )
 
             await conn.commit()
@@ -665,7 +667,7 @@ class DataProtectionService:
         """STANDARD USER DATA DELETION"""
         # This would implement actual data deletion based on data type
         # For now, this is a placeholder that logs the deletion
-        logger.info(f"DELETING USER DATA: {data_type} | User: {user_id}")
+        logger.info("DELETING USER DATA: %s | User: %s", data_type, user_id)
 
         # In a real implementation, this would:
         # 1. Delete from main application database
@@ -715,7 +717,7 @@ class DataProtectionService:
         # Export other user data (implement based on your data model)
         # This would include decrypted personal data that the user has rights to
 
-        logger.info(f"USER DATA EXPORTED: {user_id}")
+        logger.info("USER DATA EXPORTED: %s", user_id)
         return exported_data
 
     async def get_processing_activities(self, user_id: str) -> List[Dict[str, Any]]:

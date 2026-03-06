@@ -198,7 +198,7 @@ class RedisConnectionPool:
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize Redis pool: {e}")
+            logger.error("Failed to initialize Redis pool: %s", e)
             raise
 
     async def _configure_redis(self) -> None:
@@ -209,10 +209,10 @@ class RedisConnectionPool:
             await self.redis.config_set(
                 "maxmemory-policy", self.config.max_memory_policy
             )
-            logger.debug(f"Set Redis memory policy: {self.config.max_memory_policy}")
+            logger.debug("Set Redis memory policy: %s", self.config.max_memory_policy)
 
         except Exception as e:
-            logger.warning(f"Failed to configure Redis: {e}")
+            logger.warning("Failed to configure Redis: %s", e)
 
     async def _health_check_loop(self) -> None:
         """Background health check loop."""
@@ -246,7 +246,7 @@ class RedisConnectionPool:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.warning(f"Redis health check failed: {e}")
+                logger.warning("Redis health check failed: %s", e)
                 self._is_healthy = False
 
     def _serialize_value(
@@ -283,7 +283,7 @@ class RedisConnectionPool:
                 # Default to JSON
                 return json.loads(value)
         except Exception as e:
-            logger.warning(f"Failed to deserialize value: {e}")
+            logger.warning("Failed to deserialize value: %s", e)
             return value
 
     # Basic Redis operations with monitoring
@@ -316,7 +316,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis SET failed for key {key}: {e}")
+            logger.error("Redis SET failed for key %s: %s", key, e)
             raise
 
     async def get(
@@ -345,7 +345,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis GET failed for key {key}: {e}")
+            logger.error("Redis GET failed for key %s: %s", key, e)
             raise
 
     async def delete(self, key: str) -> bool:
@@ -361,7 +361,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis DELETE failed for key {key}: {e}")
+            logger.error("Redis DELETE failed for key %s: %s", key, e)
             raise
 
     async def exists(self, key: str) -> bool:
@@ -376,7 +376,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis EXISTS failed for key {key}: {e}")
+            logger.error("Redis EXISTS failed for key %s: %s", key, e)
             raise
 
     async def expire(self, key: str, ttl: int) -> bool:
@@ -391,7 +391,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis EXPIRE failed for key {key}: {e}")
+            logger.error("Redis EXPIRE failed for key %s: %s", key, e)
             raise
 
     # Hash operations
@@ -415,7 +415,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis HSET failed for key {key}, field {field}: {e}")
+            logger.error("Redis HSET failed for key %s, field %s: %s", key, field, e)
             raise
 
     async def hget(self, key: str, field: str) -> Any:
@@ -433,7 +433,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis HGET failed for key {key}, field {field}: {e}")
+            logger.error("Redis HGET failed for key %s, field %s: %s", key, field, e)
             raise
 
     async def hgetall(self, key: str) -> Dict[str, Any]:
@@ -452,7 +452,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis HGETALL failed for key {key}: {e}")
+            logger.error("Redis HGETALL failed for key %s: %s", key, e)
             raise
 
     # List operations
@@ -474,7 +474,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis LPUSH failed for key {key}: {e}")
+            logger.error("Redis LPUSH failed for key %s: %s", key, e)
             raise
 
     async def lrange(self, key: str, start: int = 0, stop: int = -1) -> List[Any]:
@@ -490,7 +490,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis LRANGE failed for key {key}: {e}")
+            logger.error("Redis LRANGE failed for key %s: %s", key, e)
             raise
 
     # Set operations
@@ -512,7 +512,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis SADD failed for key {key}: {e}")
+            logger.error("Redis SADD failed for key %s: %s", key, e)
             raise
 
     async def smembers(self, key: str) -> Set[Any]:
@@ -528,7 +528,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Redis SMEMBERS failed for key {key}: {e}")
+            logger.error("Redis SMEMBERS failed for key %s: %s", key, e)
             raise
 
     # Novel Engine specific operations

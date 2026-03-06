@@ -153,7 +153,7 @@ class HealthMonitor:
     def register_checker(self, checker: HealthChecker) -> None:
         """Register a health checker."""
         self.health_checkers.append(checker)
-        logger.info(f"Registered health checker: {checker.name}")
+        logger.info("Registered health checker: %s", checker.name)
 
     def register_database_check(self, database_path: str) -> None:
         """Register database connectivity check."""

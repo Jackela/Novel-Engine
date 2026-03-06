@@ -187,7 +187,7 @@ class SecurityDashboard:
             logger.info("🚀 SECURITY DASHBOARD INITIALIZED")
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Security Dashboard: {e}")
+            logger.error("❌ Failed to initialize Security Dashboard: %s", e)
             raise
 
     async def _initialize_dashboard_database(self) -> None:
@@ -260,9 +260,9 @@ class SecurityDashboard:
                         alert_data = json.loads(message["data"])
                         await self._process_security_alert(alert_data)
                     except Exception as e:
-                        logger.error(f"Error processing security alert: {e}")
+                        logger.error("Error processing security alert: %s", e)
         except Exception as e:
-            logger.error(f"Security alert listener error: {e}")
+            logger.error("Security alert listener error: %s", e)
         finally:
             await pubsub.unsubscribe("security_alerts")
 
@@ -303,10 +303,10 @@ class SecurityDashboard:
             # Broadcast to connected WebSocket clients
             await self._broadcast_alert(alert)
 
-            logger.info(f"🚨 Processed {severity.upper()} alert: {alert.title}")
+            logger.info("🚨 Processed %s alert: %s", severity.upper(), alert.title)
 
         except Exception as e:
-            logger.error(f"Error processing security alert: {e}")
+            logger.error("Error processing security alert: %s", e)
 
     async def _create_incident_from_alert(self, alert: SecurityAlert) -> None:
         """Create security incident from high-severity alert"""
@@ -350,10 +350,10 @@ class SecurityDashboard:
                 ]
             )
 
-            logger.info(f"📋 Created incident {incident_id} from alert {alert.id}")
+            logger.info("📋 Created incident %s from alert %s", incident_id, alert.id)
 
         except Exception as e:
-            logger.error(f"Error creating incident from alert: {e}")
+            logger.error("Error creating incident from alert: %s", e)
 
     async def _save_incident(self, incident: SecurityIncident) -> None:
         """Save incident to database"""
@@ -417,10 +417,10 @@ class SecurityDashboard:
                     )
                     self.incidents[incident.id] = incident
 
-                logger.info(f"📊 Loaded {len(self.incidents)} security incidents")
+                logger.info("📊 Loaded %d security incidents", len(self.incidents))
 
         except Exception as e:
-            logger.error(f"Error loading incidents: {e}")
+            logger.error("Error loading incidents: %s", e)
 
     async def _metrics_collector(self) -> None:
         """Collect security metrics periodically"""
@@ -445,7 +445,7 @@ class SecurityDashboard:
                 await self._broadcast_metrics()
 
             except Exception as e:
-                logger.error(f"Error collecting metrics: {e}")
+                logger.error("Error collecting metrics: %s", e)
                 await asyncio.sleep(60)
 
     async def _compliance_monitor(self) -> None:
@@ -461,7 +461,7 @@ class SecurityDashboard:
                         await self._save_compliance_report(report)
 
             except Exception as e:
-                logger.error(f"Error in compliance monitoring: {e}")
+                logger.error("Error in compliance monitoring: %s", e)
                 await asyncio.sleep(3600)
 
     async def _generate_compliance_report(
@@ -552,7 +552,7 @@ class SecurityDashboard:
             )
 
         except Exception as e:
-            logger.error(f"Error generating compliance report for {framework}: {e}")
+            logger.error("Error generating compliance report for %s: %s", framework, e)
             return None
 
     async def _save_compliance_report(self, report: ComplianceReport) -> None:
@@ -584,7 +584,7 @@ class SecurityDashboard:
             self.current_metrics.compliance_score = report.compliance_score
 
         except Exception as e:
-            logger.error(f"Error saving compliance report: {e}")
+            logger.error("Error saving compliance report: %s", e)
 
     async def _broadcast_alert(self, alert: SecurityAlert) -> None:
         """Broadcast alert to all connected WebSocket clients"""
@@ -667,7 +667,7 @@ class SecurityDashboard:
         except WebSocketDisconnect:
             logger.info("Dashboard WebSocket client disconnected")
         except Exception as e:
-            logger.error(f"Dashboard WebSocket error: {e}")
+            logger.error("Dashboard WebSocket error: %s", e)
         finally:
             if websocket in self.connected_clients:
                 self.connected_clients.remove(websocket)

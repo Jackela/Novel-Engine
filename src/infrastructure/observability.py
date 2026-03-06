@@ -146,7 +146,7 @@ class MetricsCollector:
         if PROMETHEUS_AVAILABLE:
             self._initialize_prometheus_metrics()
 
-        logger.info(f"Metrics collector initialized with namespace: {namespace}")
+        logger.info("Metrics collector initialized with namespace: %s", namespace)
 
     def _initialize_prometheus_metrics(self) -> None:
         """Initialize common Prometheus metrics"""
@@ -309,7 +309,7 @@ class MetricsCollector:
             self.set_gauge("cpu_usage_percent", cpu_percent)
 
         except Exception as e:
-            logger.warning(f"Failed to update system metrics: {e}")
+            logger.warning("Failed to update system metrics: %s", e)
 
     def get_prometheus_metrics(self) -> str:
         """Get metrics in Prometheus format"""
@@ -471,7 +471,7 @@ class TracingManager:
         if OTEL_AVAILABLE and jaeger_endpoint:
             self._setup_jaeger(jaeger_endpoint)
 
-        logger.info(f"Tracing manager initialized for service: {service_name}")
+        logger.info("Tracing manager initialized for service: %s", service_name)
 
     def _setup_jaeger(self, endpoint: str) -> None:
         """Setup Jaeger tracing"""
@@ -491,7 +491,7 @@ class TracingManager:
             logger.info("Jaeger tracing configured")
 
         except Exception as e:
-            logger.warning(f"Failed to setup Jaeger tracing: {e}")
+            logger.warning("Failed to setup Jaeger tracing: %s", e)
             self.tracer = None
 
     def start_span(
@@ -522,7 +522,7 @@ class TracingManager:
     def finish_span(self, span_id: str, status: str = "OK", error: str = None) -> None:
         """Finish a trace span"""
         if span_id not in self.active_spans:
-            logger.warning(f"Attempted to finish unknown span: {span_id}")
+            logger.warning("Attempted to finish unknown span: %s", span_id)
             return
 
         span = self.active_spans[span_id]
@@ -535,7 +535,7 @@ class TracingManager:
         self.span_history.append(span)
         del self.active_spans[span_id]
 
-        logger.debug(f"Finished span {span.operation_name}: {span.duration_ms:.2f}ms")
+        logger.debug("Finished span %s: %.2fms", span.operation_name, span.duration_ms)
 
     @contextmanager
     def trace_operation(self, operation_name: str, **labels: Any) -> Any:
@@ -583,7 +583,7 @@ class PerformanceProfiler:
     ) -> float:
         """Finish timing an operation"""
         if operation_id not in self.start_times:
-            logger.warning(f"Attempted to finish unknown operation: {operation_id}")
+            logger.warning("Attempted to finish unknown operation: %s", operation_id)
             return 0.0
 
         duration = (datetime.now() - self.start_times[operation_id]).total_seconds()
@@ -669,9 +669,9 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if success:
-            self.logger.info(f"Authentication {event_type} successful", **event_data)
+            self.logger.info("Authentication %s successful", event_type, **event_data)
         else:
-            self.logger.warning(f"Authentication {event_type} failed", **event_data)
+            self.logger.warning("Authentication %s failed", event_type, **event_data)
             self.threat_counts[f"auth_failure_{event_type}"] += 1
 
     def log_authorization_event(
@@ -696,9 +696,9 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if granted:
-            self.logger.debug(f"Access granted to {resource}", **event_data)
+            self.logger.debug("Access granted to %s", resource, **event_data)
         else:
-            self.logger.warning(f"Access denied to {resource}", **event_data)
+            self.logger.warning("Access denied to %s", resource, **event_data)
             self.threat_counts[f"access_denied_{action}"] += 1
 
     def log_security_threat(
@@ -749,7 +749,7 @@ class HealthMonitor:
     def register_health_check(self, name: str, check_func: Callable) -> None:
         """Register a health check function"""
         self.health_checks[name] = check_func
-        logger.info(f"Registered health check: {name}")
+        logger.info("Registered health check: %s", name)
 
     async def run_health_checks(self) -> Dict[str, Any]:
         """Run all health checks"""

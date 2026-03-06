@@ -236,7 +236,7 @@ class DynamicTemplateEngine:
             if self.cache_templates and cache_key in self._template_cache:
                 cached_result = self._template_cache[cache_key]
                 self.render_statistics["cache_hits"] += 1
-                logger.info(f"TEMPLATE CACHE HIT: {template_id}")
+                logger.info("TEMPLATE CACHE HIT: %s", template_id)
                 return StandardResponse(
                     success=True, data={"render_result": cached_result}
                 )
@@ -307,7 +307,7 @@ class DynamicTemplateEngine:
                 self._template_cache[cache_key] = render_result
                 self._cleanup_template_cache()
 
-            logger.info(f"TEMPLATE RENDERED: {template_id} ({render_duration:.2f}ms)")
+            logger.info("TEMPLATE RENDERED: %s (%.2fms)", template_id, render_duration)
 
             return StandardResponse(
                 success=True,
@@ -316,7 +316,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"TEMPLATE RENDERING FAILED: {e}")
+            logger.error("TEMPLATE RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -393,7 +393,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"INLINE TEMPLATE RENDERING FAILED: {e}")
+            logger.error("INLINE TEMPLATE RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="INLINE_TEMPLATE_FAILED", message=str(e)),
@@ -443,7 +443,7 @@ class DynamicTemplateEngine:
             # Register enhanced template
             self._templates[template_id] = metadata
 
-            logger.info(f"TEMPLATE CREATED: {template_id} ({template_type.value})")
+            logger.info("TEMPLATE CREATED: %s (%s)", template_id, template_type.value)
 
             return StandardResponse(
                 success=True,
@@ -452,7 +452,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"TEMPLATE CREATION FAILED: {e}")
+            logger.error("TEMPLATE CREATION FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="TEMPLATE_CREATION_FAILED", message=str(e)),
@@ -516,7 +516,7 @@ class DynamicTemplateEngine:
                 }
 
         except Exception as e:
-            logger.error(f"MEMORY CONTEXT QUERY FAILED: {e}")
+            logger.error("MEMORY CONTEXT QUERY FAILED: %s", e)
             return {"memories": [], "context_available": False, "error": str(e)}
 
     async def resolve_cross_references(
@@ -577,10 +577,10 @@ class DynamicTemplateEngine:
                         cross_references[ref_path] = memory_text
                         context.cross_references.append(ref_path)
 
-                logger.info(f"CROSS-REFERENCE RESOLVED: {ref_path}")
+                logger.info("CROSS-REFERENCE RESOLVED: %s", ref_path)
 
             except Exception as e:
-                logger.error(f"CROSS-REFERENCE RESOLUTION FAILED FOR {ref_path}: {e}")
+                logger.error("CROSS-REFERENCE RESOLUTION FAILED FOR %s: %s", ref_path, e)
                 cross_references[ref_path] = f"[Reference Error: {ref_path}]"
 
         return cross_references
@@ -665,7 +665,7 @@ class DynamicTemplateEngine:
 
                     return formatted_memories
             except Exception as e:
-                logger.error(f"TEMPLATE MEMORY QUERY FAILED: {e}")
+                logger.error("TEMPLATE MEMORY QUERY FAILED: %s", e)
 
             return []
 
@@ -838,7 +838,7 @@ class DynamicTemplateEngine:
                         tags=metadata_dict.get("tags", []),
                     )
                 except Exception as e:
-                    logger.warning(f"FAILED TO LOAD METADATA FOR {template_id}: {e}")
+                    logger.warning("FAILED TO LOAD METADATA FOR %s: %s", template_id, e)
                     metadata = TemplateMetadata(
                         template_id=template_id,
                         template_type=TemplateType.CHARACTER_PROMPT,
@@ -852,7 +852,7 @@ class DynamicTemplateEngine:
                 )
 
             self._templates[template_id] = metadata
-            logger.info(f"DISCOVERED TEMPLATE: {template_id}")
+            logger.info("DISCOVERED TEMPLATE: %s", template_id)
 
     def _analyze_template_variables(
         self, template, context: Dict[str, Any]
@@ -1023,11 +1023,11 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         logger.info(
             f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)"
         )
-        logger.info(f"Variables used: {result_data.context_variables_used}")
+        logger.info("Variables used: %s", result_data.context_variables_used)
         logger.info("Rendered content preview:")
         logger.info(result_data.rendered_content[:200] + "...")
     else:
-        logger.error(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
+        logger.error("TEMPLATE RENDERING FAILED: %s", render_result.error.message)
 
     # Test enhanced inline template rendering
     inline_template = (
@@ -1048,7 +1048,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     creation_result = await template_engine.create_template(
         "equipment_status", new_template_content, TemplateType.EQUIPMENT_STATUS
     )
-    logger.info(f"TEMPLATE CREATION: {creation_result.success}")
+    logger.info("TEMPLATE CREATION: %s", creation_result.success)
 
     # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
@@ -1058,7 +1058,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
     # Get enhanced template list
     template_list = template_engine.get_template_list()
-    logger.info(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
+    logger.info("DISCOVERED TEMPLATES: %s", [t['template_id'] for t in template_list])
 
     # Cleanup enhanced test files
     import shutil

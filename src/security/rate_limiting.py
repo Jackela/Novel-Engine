@@ -267,7 +267,7 @@ class RateLimiter:
             del self.clients[client_id]
 
         if old_clients:
-            logger.info(f"CLEANED UP {len(old_clients)} INACTIVE CLIENTS")
+            logger.info("CLEANED UP %d INACTIVE CLIENTS", len(old_clients))
 
     def _get_client_identifier(self, request: Request) -> str:
         """STANDARD CLIENT IDENTIFICATION"""

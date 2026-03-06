@@ -455,7 +455,7 @@ def create_app() -> FastAPI:
             app.state.security_service = security_service
             logger.info("Security service initialized for API routing.")
         except Exception as exc:
-            logger.error(f"Failed to initialize security service: {exc}")
+            logger.error("Failed to initialize security service: %s", exc)
             raise
 
     def _normalize_cors_origins(origins: list[str]) -> list[str]:
@@ -649,7 +649,7 @@ def create_app() -> FastAPI:
 
         except Exception as e:
             response_time = (time.time() - start_time) * 1000
-            logger.error(f"Health check failed: {e}")
+            logger.error("Health check failed: %s", e)
 
             # Fallback health response
             fallback_data = HealthCheckData(
@@ -842,7 +842,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
             )
             return {"characters": characters}
         except Exception as e:
-            logger.error(f"Error in legacy characters endpoint: {e}")
+            logger.error("Error in legacy characters endpoint: %s", e)
             raise HTTPException(status_code=500, detail="Failed to retrieve characters")
 
     @app.get("/characters/{character_id}", response_model=dict)
@@ -1240,7 +1240,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
                     f"SSE client connected: {client_id}", category=LogCategory.SYSTEM
                 )
             else:
-                logger.info(f"SSE client connected: {client_id}")
+                logger.info("SSE client connected: %s", client_id)
 
             active_sse_connections["count"] += 1
 
@@ -1254,7 +1254,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
                             category=LogCategory.SYSTEM,
                         )
                     else:
-                        logger.info(f"SSE limit reached for {client_id}")
+                        logger.info("SSE limit reached for %s", client_id)
                     break
 
                 try:
@@ -1293,7 +1293,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
                             category=LogCategory.SYSTEM,
                         )
                     else:
-                        logger.info(f"SSE client disconnected: {client_id}")
+                        logger.info("SSE client disconnected: %s", client_id)
                     disconnected_logged = True
                     raise
 
@@ -1327,7 +1327,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
                         category=LogCategory.SYSTEM,
                     )
                 else:
-                    logger.info(f"SSE client disconnected: {client_id}")
+                    logger.info("SSE client disconnected: %s", client_id)
             raise
         except Exception as fatal_error:
             # Fatal error - log and terminate
@@ -1481,7 +1481,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error in legacy simulation endpoint: {e}")
+            logger.error("Error in legacy simulation endpoint: %s", e)
             raise HTTPException(
                 status_code=500, detail=f"Simulation execution failed: {str(e)}"
             )
@@ -1503,11 +1503,11 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("🚀 Starting Enhanced Novel Engine API Server")
     logger.info("=" * 60)
-    logger.info(f"📡 Server: {config.host}:{config.port}")
-    logger.info(f"🔧 Mode: {'Development' if config.debug else 'Production'}")
-    logger.info(f"📊 Logging: {config.log_level}")
-    logger.info(f"💾 Database: {config.database_path}")
-    logger.info(f"🔒 Security: {'Enhanced' if SECURITY_AVAILABLE else 'Basic'}")
+    logger.info("📡 Server: %s:%s", config.host, config.port)
+    logger.info("🔧 Mode: %s", 'Development' if config.debug else 'Production')
+    logger.info("📊 Logging: %s", config.log_level)
+    logger.info("💾 Database: %s", config.database_path)
+    logger.info("🔒 Security: %s", 'Enhanced' if SECURITY_AVAILABLE else 'Basic')
     logger.info("📈 Monitoring: Enabled")
     logger.info("📚 Documentation: Enhanced")
     logger.info("=" * 60)

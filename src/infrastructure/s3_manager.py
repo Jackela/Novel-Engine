@@ -213,7 +213,7 @@ class S3StorageManager:
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize S3 storage manager: {e}")
+            logger.error("Failed to initialize S3 storage manager: %s", e)
             raise
 
     async def _ensure_bucket_exists(self) -> None:
@@ -221,7 +221,7 @@ class S3StorageManager:
         try:
             # Check if bucket exists
             await self.s3_client.head_bucket(Bucket=self.config.bucket_name)
-            logger.debug(f"S3 bucket exists: {self.config.bucket_name}")
+            logger.debug("S3 bucket exists: %s", self.config.bucket_name)
 
         except Exception:
             # Bucket doesn't exist, create it
@@ -236,7 +236,7 @@ class S3StorageManager:
                 else:
                     await self.s3_client.create_bucket(Bucket=self.config.bucket_name)
 
-                logger.info(f"Created S3 bucket: {self.config.bucket_name}")
+                logger.info("Created S3 bucket: %s", self.config.bucket_name)
 
                 # Configure bucket
                 await self._configure_bucket()
@@ -285,7 +285,7 @@ class S3StorageManager:
                 logger.debug("Enabled S3 bucket encryption")
 
         except Exception as e:
-            logger.warning(f"Failed to configure S3 bucket: {e}")
+            logger.warning("Failed to configure S3 bucket: %s", e)
 
     def _detect_content_type(self, file_path: Union[str, Path]) -> str:
         """Detect content type from file extension."""
@@ -327,7 +327,7 @@ class S3StorageManager:
                         del self._local_cache[s3_key]
 
         except Exception as e:
-            logger.debug(f"Cache read failed for {s3_key}: {e}")
+            logger.debug("Cache read failed for %s: %s", s3_key, e)
 
         self._metrics["cache_misses"] += 1
         return None
@@ -362,7 +362,7 @@ class S3StorageManager:
             }
 
         except Exception as e:
-            logger.debug(f"Cache save failed for {s3_key}: {e}")
+            logger.debug("Cache save failed for %s: %s", s3_key, e)
 
     async def upload_file(
         self,
@@ -469,7 +469,7 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to upload file {local_path} to S3 key {s3_key}: {e}")
+            logger.error("Failed to upload file %s to S3 key %s: %s", local_path, s3_key, e)
             raise
 
     async def upload_bytes(
@@ -514,7 +514,7 @@ class S3StorageManager:
             self._metrics["bytes_uploaded"] += len(content)
             self._metrics["upload_times"].append(upload_time)
 
-            logger.debug(f"Uploaded bytes to S3: {s3_key} ({len(content)} bytes)")
+            logger.debug("Uploaded bytes to S3: %s (%d bytes)", s3_key, len(content))
 
             return S3ObjectInfo(
                 key=s3_key,
@@ -529,7 +529,7 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to upload bytes to S3 key {s3_key}: {e}")
+            logger.error("Failed to upload bytes to S3 key %s: %s", s3_key, e)
             raise
 
     async def download_file(
@@ -595,7 +595,7 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to download S3 key {s3_key} to {local_path}: {e}")
+            logger.error("Failed to download S3 key %s to %s: %s", s3_key, local_path, e)
             raise
 
     async def download_bytes(self, s3_key: str, use_cache: bool = True) -> bytes:
@@ -629,12 +629,12 @@ class S3StorageManager:
             self._metrics["bytes_downloaded"] += len(content)
             self._metrics["download_times"].append(download_time)
 
-            logger.debug(f"Downloaded bytes from S3: {s3_key} ({len(content)} bytes)")
+            logger.debug("Downloaded bytes from S3: %s (%d bytes)", s3_key, len(content))
             return content
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to download S3 key {s3_key}: {e}")
+            logger.error("Failed to download S3 key %s: %s", s3_key, e)
             raise
 
     async def delete_object(
@@ -660,12 +660,12 @@ class S3StorageManager:
                     cache_file.unlink()
                 del self._local_cache[s3_key]
 
-            logger.debug(f"Deleted S3 object: {s3_key}")
+            logger.debug("Deleted S3 object: %s", s3_key)
             return True
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to delete S3 key {s3_key}: {e}")
+            logger.error("Failed to delete S3 key %s: %s", s3_key, e)
             raise
 
     async def list_objects(
@@ -711,7 +711,7 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"Failed to list S3 objects with prefix {prefix}: {e}")
+            logger.error("Failed to list S3 objects with prefix %s: %s", prefix, e)
             raise
 
     async def object_exists(self, s3_key: str) -> bool:
@@ -748,7 +748,7 @@ class S3StorageManager:
             )
 
         except Exception as e:
-            logger.debug(f"Failed to get S3 object info for {s3_key}: {e}")
+            logger.debug("Failed to get S3 object info for %s: %s", s3_key, e)
             return None
 
     # Novel Engine specific operations

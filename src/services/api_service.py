@@ -161,7 +161,7 @@ class ApiOrchestrationService:
             character_names: List of character names to simulate
             total_turns: Number of turns to run
         """
-        logger.info(f"Starting orchestration service loop: {character_names}")
+        logger.info("Starting orchestration service loop: %s", character_names)
 
         try:
             # 1. Initialize Components
@@ -180,7 +180,7 @@ class ApiOrchestrationService:
                     )
                 except FileNotFoundError:
                     logger.error(
-                        f"Character '{name}' not found in characters directory"
+                        "Character '%s' not found in characters directory", name
                     )
                     await self._broadcast_sse(
                         "system",
@@ -190,7 +190,7 @@ class ApiOrchestrationService:
                     )
                     continue
                 except Exception as e:
-                    logger.error(f"Failed to create agent '{name}': {e}", exc_info=True)
+                    logger.error("Failed to create agent '%s': %s", name, e, exc_info=True)
                     await self._broadcast_sse(
                         "system", f"Agent Creation Failed: {name}", str(e), "high"
                     )
@@ -299,7 +299,7 @@ class ApiOrchestrationService:
             )
 
         except Exception as e:
-            logger.error(f"Orchestration loop error: {e}", exc_info=True)
+            logger.error("Orchestration loop error: %s", e, exc_info=True)
             self._state["status"] = "error"
             await self._broadcast_sse("system", "Orchestration Error", str(e), "high")
         finally:
@@ -326,4 +326,4 @@ class ApiOrchestrationService:
                 severity=severity,
             )
         else:
-            logger.warning(f"No EventBus available to broadcast: {title}")
+            logger.warning("No EventBus available to broadcast: %s", title)

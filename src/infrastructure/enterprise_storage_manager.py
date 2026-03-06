@@ -221,7 +221,7 @@ class EnterpriseStorageManager:
             logger.info("Enterprise storage manager initialization complete")
 
         except Exception as e:
-            logger.error(f"Failed to initialize enterprise storage manager: {e}")
+            logger.error("Failed to initialize enterprise storage manager: %s", e)
             raise
 
     async def _health_check_loop(self) -> None:
@@ -242,7 +242,7 @@ class EnterpriseStorageManager:
                         )
                     except Exception as e:
                         self._metrics["health"]["postgresql"] = False
-                        logger.warning(f"PostgreSQL health check failed: {e}")
+                        logger.warning("PostgreSQL health check failed: %s", e)
 
                 # Check Redis health
                 if self.redis:
@@ -251,7 +251,7 @@ class EnterpriseStorageManager:
                         self._metrics["health"]["redis"] = health.get("healthy", False)
                     except Exception as e:
                         self._metrics["health"]["redis"] = False
-                        logger.warning(f"Redis health check failed: {e}")
+                        logger.warning("Redis health check failed: %s", e)
 
                 # Check S3 health
                 if self.s3:
@@ -260,12 +260,12 @@ class EnterpriseStorageManager:
                         self._metrics["health"]["s3"] = health.get("healthy", False)
                     except Exception as e:
                         self._metrics["health"]["s3"] = False
-                        logger.warning(f"S3 health check failed: {e}")
+                        logger.warning("S3 health check failed: %s", e)
 
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Health check loop error: {e}")
+                logger.error("Health check loop error: %s", e)
 
     def _get_backend_for_category(self, category: DataCategory) -> StorageBackend:
         """Get primary storage backend for data category."""
@@ -351,12 +351,12 @@ class EnterpriseStorageManager:
                 DataCategory.CHARACTERS, StorageBackend.POSTGRESQL, response_time
             )
 
-            logger.debug(f"Stored character {character_id} across enterprise backends")
+            logger.debug("Stored character %s across enterprise backends", character_id)
             return True
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to store character {character_id}: {e}")
+            logger.error("Failed to store character %s: %s", character_id, e)
             raise
 
     async def get_character(self, character_id: str) -> Optional[Dict[str, Any]]:
@@ -410,7 +410,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to get character {character_id}: {e}")
+            logger.error("Failed to get character %s: %s", character_id, e)
             raise
 
     # Memory operations
@@ -470,7 +470,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to store memory for agent {agent_id}: {e}")
+            logger.error("Failed to store memory for agent %s: %s", agent_id, e)
             raise
 
     async def search_memories(
@@ -508,7 +508,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to search memories for agent {agent_id}: {e}")
+            logger.error("Failed to search memories for agent %s: %s", agent_id, e)
             raise
 
     # Session operations
@@ -544,7 +544,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to store session {session_id}: {e}")
+            logger.error("Failed to store session %s: %s", session_id, e)
             raise
 
     async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
@@ -570,7 +570,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to get session {session_id}: {e}")
+            logger.error("Failed to get session %s: %s", session_id, e)
             raise
 
     # System state operations
@@ -616,7 +616,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to get system state {key}: {e}")
+            logger.error("Failed to get system state %s: %s", key, e)
             raise
 
     async def set_system_state(
@@ -652,7 +652,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to set system state {key}: {e}")
+            logger.error("Failed to set system state %s: %s", key, e)
             raise
 
     # File operations
@@ -691,7 +691,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to store file {file_path}: {e}")
+            logger.error("Failed to store file %s: %s", file_path, e)
             raise
 
     async def get_file(self, file_path: str, use_cache: bool = True) -> Optional[bytes]:
@@ -717,7 +717,7 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             self._metrics["operations"]["errors"] += 1
-            logger.error(f"Failed to get file {file_path}: {e}")
+            logger.error("Failed to get file %s: %s", file_path, e)
             raise
 
     # Migration operations
@@ -727,7 +727,7 @@ class EnterpriseStorageManager:
         if not self._initialized:
             await self.initialize()
 
-        logger.info(f"Starting migration from SQLite: {sqlite_db_path}")
+        logger.info("Starting migration from SQLite: %s", sqlite_db_path)
 
         migration_results = {
             "started_at": datetime.now().isoformat(),
@@ -754,7 +754,7 @@ class EnterpriseStorageManager:
         except Exception as e:
             migration_results["errors"].append(str(e))
             migration_results["success"] = False
-            logger.error(f"Migration failed: {e}")
+            logger.error("Migration failed: %s", e)
             raise
 
     # Health and metrics

@@ -353,7 +353,7 @@ class AlertManager:
     def add_alert_rule(self, rule: AlertRule) -> None:
         """Add a new alert rule."""
         self.alert_rules.append(rule)
-        logger.info(f"Added alert rule: {rule.name}")
+        logger.info("Added alert rule: %s", rule.name)
 
     def check_alerts(self) -> List[Dict[str, Any]]:
         """Check all alert rules and return triggered alerts."""

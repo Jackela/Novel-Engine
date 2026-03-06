@@ -158,7 +158,7 @@ class InteractionAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error creating interaction: {e}")
+                logger.error("Error creating interaction: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions", response_model=dict)
@@ -186,7 +186,7 @@ class InteractionAPI:
 
                 return {"interactions": interactions, "total": len(interactions)}
             except Exception as e:
-                logger.error(f"Error listing interactions: {e}")
+                logger.error("Error listing interactions: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions/{interaction_id}", response_model=dict)

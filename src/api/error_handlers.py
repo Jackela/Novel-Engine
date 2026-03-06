@@ -152,12 +152,14 @@ class ErrorHandler:
             status_code = error.status_code
         else:
             # Generic exception
+            # SECURITY: Never expose stack traces in API responses (CWE-209)
+            # Stack traces are logged internally but never sent to clients
             api_error = APIError(
                 type=APIErrorType.INTERNAL_ERROR,
                 message=(
                     "An unexpected error occurred" if not self.debug else str(error)
                 ),
-                detail=traceback.format_exc() if self.debug else None,
+                detail=None,  # Stack traces never exposed in API responses
             )
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 

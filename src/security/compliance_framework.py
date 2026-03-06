@@ -262,7 +262,7 @@ class SecurityEventMonitor:
                 else:
                     handler(event)
             except Exception as e:
-                logger.error(f"Event handler error: {e}")
+                logger.error("Event handler error: %s", e)
 
     async def _analyze_threat_patterns(self, event: SecurityEvent) -> None:
         """Analyze event for threat patterns"""
@@ -484,12 +484,12 @@ class ComplianceEngine:
         context = context or {}
         assessment_id = f"assessment_{int(time.time())}"
         all_results: list[Any] = []
-        logger.info(f"Starting compliance assessment: {assessment_id}")
+        logger.info("Starting compliance assessment: %s", assessment_id)
 
         # Evaluate rules for each standard
         for standard in standards:
             if standard in self.rules:
-                logger.info(f"Evaluating {standard.value} compliance rules")
+                logger.info("Evaluating %s compliance rules", standard.value)
 
                 for rule in self.rules[standard]:
                     result = await rule.evaluate(context)
@@ -543,7 +543,7 @@ class ComplianceEngine:
             results=all_results,
         )
 
-        logger.info(f"Compliance assessment complete: {overall_score:.1f}% compliant")
+        logger.info("Compliance assessment complete: %.1f%% compliant", overall_score)
 
         return report
 
@@ -804,7 +804,7 @@ async def main():
 
     # Get recent events
     recent_events = await event_monitor.get_events(limit=10)
-    logger.info(f"Logged {len(recent_events)} security events")
+    logger.info("Logged %d security events", len(recent_events))
 
     logger.info("Compliance framework demonstration complete")
 

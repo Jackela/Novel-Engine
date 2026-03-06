@@ -70,7 +70,7 @@ class Context7EnhancedRoute(APIRoute):
             return examples
 
         except Exception as e:
-            logger.warning(f"Failed to get Context7 examples for {self.path}: {e}")
+            logger.warning("Failed to get Context7 examples for %s: %s", self.path, e)
             return []
 
 
@@ -110,7 +110,7 @@ class APIDocumentationEnhancer:
             return enhanced_docs
 
         except Exception as e:
-            logger.error(f"Failed to enhance documentation for {endpoint_path}: {e}")
+            logger.error("Failed to enhance documentation for %s: %s", endpoint_path, e)
             return existing_docs
 
     async def _get_endpoint_examples(
@@ -134,7 +134,7 @@ class APIDocumentationEnhancer:
             return []
 
         except Exception as e:
-            logger.warning(f"Failed to get examples for {endpoint_path}: {e}")
+            logger.warning("Failed to get examples for %s: %s", endpoint_path, e)
             return []
 
     async def _get_best_practices(self, endpoint_path: str, method: str) -> List[str]:
@@ -154,7 +154,7 @@ class APIDocumentationEnhancer:
             return []
 
         except Exception as e:
-            logger.warning(f"Failed to get best practices for {endpoint_path}: {e}")
+            logger.warning("Failed to get best practices for %s: %s", endpoint_path, e)
             return []
 
     async def _get_framework_patterns(
@@ -215,7 +215,7 @@ class APIValidationEnhancer:
             return {"valid": False, "message": "Validation failed"}
 
         except Exception as e:
-            logger.error(f"API validation failed: {e}")
+            logger.error("API validation failed: %s", e)
             return {"valid": False, "message": f"Validation error: {str(e)}"}
 
 
@@ -242,7 +242,7 @@ def enhance_api_with_context7(context7_api=None, config: Optional[APIEnhancement
                             datetime.now().isoformat()
                         )
                 except Exception as e:
-                    logger.debug(f"Failed to add Context7 metadata: {e}")
+                    logger.debug("Failed to add Context7 metadata: %s", e)
 
             return result
 
@@ -294,7 +294,7 @@ class APIIntegrationManager:
             route.endpoint = enhanced_endpoint
 
         except Exception as e:
-            logger.warning(f"Failed to enhance route {route.path}: {e}")
+            logger.warning("Failed to enhance route %s: %s", route.path, e)
 
     def _add_integration_endpoints(self) -> None:
         """Add integration-specific endpoints."""
@@ -417,7 +417,7 @@ async def get_context7_enhanced_response(
             original_response.__dict__["_context7_enhanced"] = True
             original_response.__dict__["_context7_endpoint"] = endpoint_path
     except Exception as e:
-        logger.debug(f"Could not enhance response with Context7 metadata: {e}")
+        logger.debug("Could not enhance response with Context7 metadata: %s", e)
 
     return original_response
 

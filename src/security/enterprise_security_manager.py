@@ -254,7 +254,7 @@ class EnterpriseSecurityManager:
             logger.info("🛡️ ENTERPRISE SECURITY MANAGER INITIALIZED")
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Enterprise Security Manager: {e}")
+            logger.error("❌ Failed to initialize Enterprise Security Manager: %s", e)
             raise
 
     async def _initialize_security_database(self) -> None:
@@ -488,7 +488,7 @@ class EnterpriseSecurityManager:
             return is_allowed, security_actions, max_threat_level
 
         except Exception as e:
-            logger.error(f"❌ Security evaluation failed: {e}")
+            logger.error("❌ Security evaluation failed: %s", e)
             # Fail secure - block on errors
             return False, [SecurityAction.BLOCK_TEMPORARY], ThreatLevel.HIGH
 
@@ -626,7 +626,7 @@ class EnterpriseSecurityManager:
                         reputation_score = 0.0
 
         except Exception as e:
-            logger.error(f"Error analyzing IP reputation for {ip_address}: {e}")
+            logger.error("Error analyzing IP reputation for %s: %s", ip_address, e)
 
         return {
             "threat_level": threat_level,
@@ -660,7 +660,7 @@ class EnterpriseSecurityManager:
             }
 
         except Exception as e:
-            logger.warning(f"GeoIP analysis failed for {ip_address}: {e}")
+            logger.warning("GeoIP analysis failed for %s: %s", ip_address, e)
             return {"is_high_risk": False, "country_code": None}
 
     def _analyze_user_agent(self, user_agent: str) -> Dict[str, Any]:
@@ -878,7 +878,7 @@ class EnterpriseSecurityManager:
                         ),
                     )
         except Exception as e:
-            logger.error(f"Error retrieving behavioral profile for {user_id}: {e}")
+            logger.error("Error retrieving behavioral profile for %s: %s", user_id, e)
 
         return None
 
@@ -953,7 +953,7 @@ class EnterpriseSecurityManager:
                 await conn.commit()
 
         except Exception as e:
-            logger.error(f"Error updating behavioral profile for {user_id}: {e}")
+            logger.error("Error updating behavioral profile for %s: %s", user_id, e)
 
     async def _load_behavioral_profiles(self) -> None:
         """Load behavioral profiles into memory"""
@@ -989,11 +989,12 @@ class EnterpriseSecurityManager:
                     self.behavioral_profiles[row[0]] = profile
 
                 logger.info(
-                    f"📊 Loaded {len(self.behavioral_profiles)} behavioral profiles"
+                    "📊 Loaded %d behavioral profiles",
+                    len(self.behavioral_profiles)
                 )
 
         except Exception as e:
-            logger.error(f"Error loading behavioral profiles: {e}")
+            logger.error("Error loading behavioral profiles: %s", e)
 
     async def _log_security_event(
         self,
@@ -1058,7 +1059,7 @@ class EnterpriseSecurityManager:
                 await self._send_security_alert(event)
 
         except Exception as e:
-            logger.error(f"Failed to log security event: {e}")
+            logger.error("Failed to log security event: %s", e)
 
     async def _send_security_alert(self, event: SecurityEvent) -> None:
         """Send real-time security alerts to administrators"""
@@ -1077,7 +1078,8 @@ class EnterpriseSecurityManager:
         )
 
         logger.warning(
-            f"🚨 SECURITY ALERT: {event.severity.value.upper()} - {event.event_type} from {event.source_ip}"
+            "🚨 SECURITY ALERT: %s - %s from %s",
+            event.severity.value.upper(), event.event_type, event.source_ip
         )
 
     async def get_security_metrics(self) -> Dict[str, Any]:
@@ -1123,7 +1125,7 @@ class EnterpriseSecurityManager:
                 threat_indicators = await cursor.fetchall()
 
         except Exception as e:
-            logger.error(f"Error retrieving security metrics: {e}")
+            logger.error("Error retrieving security metrics: %s", e)
             threat_counts: dict[Any, Any] = {}
             blocked_ips_count = 0
             threat_indicators: list[Any] = []
@@ -1162,7 +1164,8 @@ class EnterpriseSecurityManager:
             await conn.commit()
 
         logger.info(
-            f"🛡️ Added IP {ip_address} to {list_type} (severity: {severity.value})"
+            "🛡️ Added IP %s to %s (severity: %s)",
+            ip_address, list_type, severity.value
         )
 
     async def cleanup(self) -> None:

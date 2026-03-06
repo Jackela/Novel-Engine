@@ -261,7 +261,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error generating emergent narrative: {e}")
+                logger.error("Error generating emergent narrative: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post(
@@ -325,7 +325,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error building narrative: {e}")
+                logger.error("Error building narrative: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -373,7 +373,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting causal graph: {e}")
+                logger.error("Error getting causal graph: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(

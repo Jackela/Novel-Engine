@@ -136,7 +136,7 @@ class UnifiedStateManager:
                     keys = await store.list_keys(pattern)
                     all_keys.extend(keys)
                 except Exception as e:
-                    logger.warning(f"Failed to list keys from store: {e}")
+                    logger.warning("Failed to list keys from store: %s", e)
 
             return all_keys
 

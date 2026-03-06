@@ -251,7 +251,7 @@ class ContextRenderer:
             )
 
         except Exception as e:
-            logger.error(f"CONTEXT RENDERING FAILED: {e}")
+            logger.error("CONTEXT RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -327,7 +327,7 @@ class ContextRenderer:
                 return render_result
 
         except Exception as e:
-            logger.error(f"ADAPTIVE PROMPT RENDERING FAILED: {e}")
+            logger.error("ADAPTIVE PROMPT RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="ADAPTIVE_PROMPT_FAILED", message=str(e)),
@@ -1156,7 +1156,7 @@ async def test_standard_context_renderer():
         logger.info(
             f"Sections included: {[s.section_id for s in result_data.sections_included]}"
         )
-        logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
+        logger.info("Adaptive decisions: %d", len(result_data.adaptive_decisions))
 
     # Test enhanced custom constraints
     custom_constraints = RenderingConstraints(
@@ -1174,7 +1174,7 @@ async def test_standard_context_renderer():
         logger.info(
             f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"
         )
-        logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
+        logger.info("Excluded sections: %d", len(result_data.sections_excluded))
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()
