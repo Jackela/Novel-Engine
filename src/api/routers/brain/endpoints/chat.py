@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import structlog
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse

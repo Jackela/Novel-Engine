@@ -7,6 +7,7 @@ of the Novel Engine. It provides comprehensive validation with automatic repair
 capabilities for minor violations. Extracted from DirectorAgent for better modularity.
 """
 
+import logging
 import structlog
 import math
 import time

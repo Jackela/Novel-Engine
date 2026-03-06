@@ -7,6 +7,7 @@ Handles registration, validation, health monitoring, and cleanup.
 """
 
 import asyncio
+import logging
 import structlog
 from dataclasses import dataclass
 from datetime import datetime

@@ -8,6 +8,7 @@ Provides error classification, recovery strategies, and system resilience.
 
 import asyncio
 import hashlib
+import logging
 import structlog
 import traceback
 from dataclasses import dataclass

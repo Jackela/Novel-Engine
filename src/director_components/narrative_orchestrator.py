@@ -8,6 +8,7 @@ Handles story state, event processing, and narrative context generation.
 
 import asyncio
 import json
+import logging
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime

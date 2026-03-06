@@ -1,16 +1,25 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import structlog
 
-from src.core.data_models import ErrorInfo, StandardResponse
+from src.core.data_models import (
+    CharacterIdentity,
+    EmotionalState,
+    ErrorInfo,
+    MemoryItem,
+    MemoryType,
+    StandardResponse,
+)
 from src.core.narrative import EmergentNarrativeEngine
 from src.core.subjective_reality import SubjectiveRealityEngine
 from src.core.system_orchestrator.types import (
+    DatabaseInterface,
     OrchestratorConfig,
     OrchestratorMode,
     SystemHealth,
@@ -24,7 +33,7 @@ from src.interactions.equipment import DynamicEquipmentSystem
 from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine
 from src.templates.character import CharacterTemplateManager
-from src.templates.dynamic_template_engine import DynamicTemplateEngine
+from src.templates.dynamic_template_engine import DynamicTemplateEngine, TemplateContext
 
 logger = structlog.get_logger(__name__)
 

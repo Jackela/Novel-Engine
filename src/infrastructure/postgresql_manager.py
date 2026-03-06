@@ -9,6 +9,7 @@ and production-ready configuration for high-scale novel engine deployments.
 
 import asyncio
 import json
+import logging
 import structlog
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field

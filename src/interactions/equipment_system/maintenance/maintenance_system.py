@@ -8,6 +8,7 @@ Handles maintenance procedures, condition improvement, and preventive care.
 
 import asyncio
 import heapq
+import logging
 import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple

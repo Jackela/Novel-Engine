@@ -4,7 +4,7 @@ Content analysis and archetype detection.
 """
 
 import structlog
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from src.templates.dynamic_template_engine import TemplateType
 

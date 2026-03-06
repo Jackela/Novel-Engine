@@ -7,6 +7,7 @@ Handles category-specific usage patterns and system core interactions.
 """
 
 import asyncio
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional

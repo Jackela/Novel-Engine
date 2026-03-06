@@ -20,7 +20,7 @@ Usage:
 import structlog
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus

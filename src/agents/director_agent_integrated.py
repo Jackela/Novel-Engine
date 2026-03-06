@@ -43,10 +43,14 @@ try:
         ActionTarget,
         ActionType,
         CharacterData,
+        CharacterResources,
+        CharacterStats,
         EntityType,
         IronLawsReport,
         IronLawsViolation,
+        Position,
         ProposedAction,
+        ResourceValue,
         ValidatedAction,
         ValidationResult,
     )
@@ -57,8 +61,12 @@ except ImportError:
     ActionTarget = Any  # type: ignore[misc]
     ActionType = Any  # type: ignore[misc]
     CharacterData = Any  # type: ignore[misc]
+    CharacterResources = Any  # type: ignore[misc]
+    CharacterStats = Any  # type: ignore[misc]
     EntityType = Any  # type: ignore[misc]
+    Position = Any  # type: ignore[misc]
     ProposedAction = Any  # type: ignore[misc]
+    ResourceValue = Any  # type: ignore[misc]
     IronLawsReport = Any  # type: ignore[misc]
     IronLawsViolation = Any  # type: ignore[misc]
     ValidatedAction = Any  # type: ignore[misc]

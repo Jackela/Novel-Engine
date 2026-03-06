@@ -6,11 +6,12 @@ This module implements story-driven action types that extend beyond combat mecha
 to enable rich narrative interactions in the multi-agent simulator.
 """
 
+import logging
 import structlog
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from ..types.shared_types import CharacterAction
 

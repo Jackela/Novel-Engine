@@ -6,11 +6,11 @@ Provides consistent error handling, logging, and response formatting
 across all API endpoints with proper HTTP status codes and error classification.
 """
 
+import logging
 import structlog
 import time
-import traceback
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import structlog
 import time
-from typing import List
+from typing import Any, List
 
 from fastapi import APIRouter, HTTPException
 

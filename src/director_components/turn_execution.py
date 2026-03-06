@@ -7,6 +7,7 @@ Handles turn preparation, agent coordination, and result processing.
 """
 
 import asyncio
+import logging
 import structlog
 import time
 from dataclasses import dataclass, field

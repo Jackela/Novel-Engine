@@ -10,6 +10,7 @@ import asyncio
 import gzip
 import hashlib
 import json
+import logging
 import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta

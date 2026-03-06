@@ -5,6 +5,7 @@ Character API.
 API endpoints for character creation, customization, and management.
 """
 
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional

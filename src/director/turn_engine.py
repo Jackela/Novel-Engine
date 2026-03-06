@@ -7,6 +7,7 @@ Manages turn execution logic and coordination with integrated
 SubjectiveRealityEngine and EmergentNarrativeEngine.
 """
 
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional

@@ -4,7 +4,7 @@ Context enhancement for persona-specific rendering.
 """
 
 import structlog
-from typing import Optional
+from typing import Any, Optional
 
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.context_renderer import RenderFormat

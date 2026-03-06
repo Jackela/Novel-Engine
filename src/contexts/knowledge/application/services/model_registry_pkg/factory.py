@@ -32,10 +32,5 @@ def create_model_registry(
 __all__ = [
     "ModelRegistry",
     "ModelRegistryConfig",
-    "ModelLookupResult",
-    "ModelRegistryConfigFile",
     "create_model_registry",
-    "DEFAULT_MODELS",
-    "DEFAULT_TASK_CONFIGS",
-    "DEFAULT_ALIASES",
 ]

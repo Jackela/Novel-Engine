@@ -24,8 +24,10 @@ from src.contexts.world.domain.errors import (
     RepositoryError,
     RollbackError,
     SaveFailedError,
+    SimulationError,
     WorldNotFoundError,
 )
+from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.simulation_tick import SimulationTick
 from src.core.result import Err, Error, Ok, Result
 

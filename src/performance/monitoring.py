@@ -15,6 +15,7 @@ Key Features:
 
 import asyncio
 import json
+import logging
 import structlog
 import os
 import statistics

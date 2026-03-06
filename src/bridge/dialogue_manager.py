@@ -6,6 +6,7 @@ Dialogue Manager
 Manages agent-to-agent dialogue sessions and communication coordination.
 """
 
+import logging
 import structlog
 import uuid
 from collections import defaultdict

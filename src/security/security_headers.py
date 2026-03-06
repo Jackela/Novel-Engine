@@ -18,7 +18,7 @@ import logging
 import structlog
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Request
 from starlette.responses import Response

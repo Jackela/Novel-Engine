@@ -7,6 +7,7 @@ Handles equipment registration, agent assignment, and equipment discovery.
 """
 
 import asyncio
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set

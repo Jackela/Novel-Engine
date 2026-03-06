@@ -6,6 +6,7 @@ Equipment performance monitoring, failure prediction, and analytics system.
 Tracks equipment health, predicts failures, and provides optimization recommendations.
 """
 
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional

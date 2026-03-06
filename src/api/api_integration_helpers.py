@@ -10,7 +10,7 @@ providing seamless documentation, examples, and pattern validation.
 import structlog
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import FastAPI, Request
 from fastapi.routing import APIRoute

@@ -7,6 +7,7 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import asyncio
+import logging
 import structlog
 from datetime import datetime
 from pathlib import Path

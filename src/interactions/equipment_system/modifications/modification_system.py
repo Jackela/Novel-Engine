@@ -6,6 +6,7 @@ Equipment modification installation, compatibility checking, and enhancement man
 Handles modification installation, compatibility validation, and performance tracking.
 """
 
+import logging
 import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional

@@ -8,6 +8,7 @@ Manages LLM request batching, caching, and optimization for enhanced performance
 
 import asyncio
 import hashlib
+import logging
 import structlog
 import time
 from collections import deque
