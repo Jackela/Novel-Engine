@@ -47,6 +47,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from src.contexts.shared.domain.errors import ServiceError
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry

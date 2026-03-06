@@ -1,3 +1,32 @@
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from src.core.data_models import CharacterState, DynamicContext
+    from src.core.narrative import EmergentNarrativeEngine
+    from src.core.subjective_reality import SubjectiveRealityEngine
+    from src.core.system_orchestrator.types import (
+        OrchestratorConfig,
+        SystemHealth,
+        SystemMetrics,
+    )
+    from src.interactions.character_interaction_processor import (
+        CharacterInteractionProcessor,
+    )
+    from src.interactions.engine import (
+        InteractionContext,
+        InteractionEngine,
+        InteractionType,
+    )
+    from src.interactions.equipment import DynamicEquipmentSystem
+    from src.memory.layered_memory import LayeredMemorySystem
+    from src.memory.memory_query_engine import MemoryQueryEngine
+    from src.templates.character import CharacterTemplateManager
+    from src.templates.dynamic_template_engine import DynamicTemplateEngine
+
 class SystemOrchestrator:
     """
     System Orchestrator - Unified Coordination
@@ -540,9 +569,13 @@ class SystemOrchestrator:
     async def orchestrate_multi_agent_interaction(
         self,
         participants: List[str],
-        interaction_type: InteractionType = InteractionType.DIALOGUE,
+        interaction_type: "InteractionType" = None,
         context: Optional[Dict[str, Any]] = None,
     ) -> StandardResponse:
+        # Import and set default value at runtime to avoid circular imports
+        if interaction_type is None:
+            from src.interactions.engine import InteractionType
+            interaction_type = InteractionType.DIALOGUE
         """
         Multi-Agent Interaction Orchestration
 
