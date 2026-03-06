@@ -15,6 +15,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.caching.lru_cache import LRUCache, CacheStats, CacheConfig, create_embedding_cache
 
 

@@ -12,6 +12,8 @@ from unittest.mock import Mock
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.memory_interface import MemoryInterface
 
 

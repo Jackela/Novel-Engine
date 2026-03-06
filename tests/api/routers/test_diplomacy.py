@@ -10,6 +10,9 @@ import sys
 from unittest.mock import MagicMock
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 # Mock problematic dependencies

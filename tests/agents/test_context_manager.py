@@ -11,6 +11,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.context_manager import CharacterContextManager
 
 

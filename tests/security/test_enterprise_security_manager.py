@@ -9,6 +9,9 @@ Coverage targets:
 """
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from dataclasses import dataclass, field

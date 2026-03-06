@@ -5,6 +5,9 @@ Tests metrics collection, reporting, and alerting.
 """
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock
 from collections import deque
 

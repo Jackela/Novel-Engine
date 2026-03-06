@@ -5,6 +5,9 @@ Tests distributed cache operations and consistency.
 """
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock
 
 from src.performance.distributed_caching import (

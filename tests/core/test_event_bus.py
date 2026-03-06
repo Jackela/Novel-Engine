@@ -6,6 +6,9 @@ Tests event publishing, subscribing, async handlers, and error handling.
 
 import asyncio
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 

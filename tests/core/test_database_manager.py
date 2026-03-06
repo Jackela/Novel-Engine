@@ -18,6 +18,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 import pytest_asyncio
 
+pytestmark = pytest.mark.unit
+
 from src.core.database_manager import (
     ConnectionState,
     DatabaseConfig,

@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.director_agent_base import DirectorAgentBase
 from src.core.event_bus import EventBus
 

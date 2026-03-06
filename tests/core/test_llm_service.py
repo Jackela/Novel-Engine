@@ -17,6 +17,8 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 import pytest_asyncio
 
+pytestmark = pytest.mark.unit
+
 from src.core.llm_service import (
     CostControl,
     LLMProvider,

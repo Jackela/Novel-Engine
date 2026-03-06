@@ -11,6 +11,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.agent_lifecycle_manager import (
     ActionAdjudicationResult,
     AgentLifecycleManager,

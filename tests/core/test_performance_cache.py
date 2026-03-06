@@ -6,6 +6,9 @@ Tests cache strategies, eviction policies, and memory management.
 
 import asyncio
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock, patch, AsyncMock
 
 from src.core.performance_cache import (

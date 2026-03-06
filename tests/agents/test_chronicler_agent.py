@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.chronicler_agent import (
     CampaignEvent,
     ChroniclerAgent,

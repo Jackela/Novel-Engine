@@ -19,6 +19,8 @@ import jwt
 import pytest
 import pytest_asyncio
 
+pytestmark = pytest.mark.unit
+
 from src.security.auth_system import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     JWT_ALGORITHM,

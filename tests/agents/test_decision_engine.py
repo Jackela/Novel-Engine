@@ -10,6 +10,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.decision_engine import (
     ActionEvaluation,
     DecisionEngine,

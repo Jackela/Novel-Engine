@@ -19,6 +19,8 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 import pytest_asyncio
 
+pytestmark = pytest.mark.unit
+
 from src.performance.advanced_caching import (
     CacheConfig,
     CacheEntry,

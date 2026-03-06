@@ -13,11 +13,9 @@ import pytest_asyncio
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+pytestmark = pytest.mark.unit
+
 # Import only what exists in the actual module
-import pytest
-import pytest_asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 # Define test types locally to avoid import issues
 from enum import Enum

@@ -12,6 +12,8 @@ from unittest.mock import Mock
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.context_integrator import ContextIntegrator
 
 

@@ -2,6 +2,8 @@
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.infrastructure.parsers.csv_event_parser import CSVEventParser
 
 

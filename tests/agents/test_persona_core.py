@@ -13,6 +13,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.agents.persona_core import AgentIdentity, AgentState, PersonaCore
 
 

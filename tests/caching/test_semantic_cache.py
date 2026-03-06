@@ -18,6 +18,8 @@ from typing import Generator
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from src.caching.semantic_cache import (
     SemanticCache,
     SemanticCacheConfig,

@@ -5,6 +5,9 @@ Tests state transitions, persistence, and recovery for interaction engine.
 """
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock
 from datetime import datetime
 

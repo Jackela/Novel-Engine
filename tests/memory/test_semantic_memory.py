@@ -13,6 +13,8 @@ import pytest_asyncio
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+pytestmark = pytest.mark.unit
+
 from src.memory.semantic_memory import (
     ConceptNode,
     KnowledgeFact,

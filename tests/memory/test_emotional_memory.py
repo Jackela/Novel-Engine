@@ -5,6 +5,9 @@ Tests emotional state tracking, decay, and retrieval.
 """
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import Mock
 
 from src.memory.emotional_memory import (
