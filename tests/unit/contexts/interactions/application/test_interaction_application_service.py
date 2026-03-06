@@ -160,17 +160,17 @@ class TestNegotiationSessionOperations:
         ].handle_create_negotiation_session.assert_called_once()
 
         # Verify result structure
-        assert result["operation"] == "create_negotiation_session"
-        assert result["success"] is True
-        assert result["session_id"] == session_id
-        assert result["session_name"] == "Test Negotiation"
-        assert result["created_at"] == created_at
-        assert result["status"] == "initiation"
-        assert result["configuration"]["max_parties"] == 5
-        assert result["configuration"]["timeout_hours"] == 48
-        assert result["configuration"]["auto_advance_phases"] is True
-        assert result["configuration"]["require_unanimous"] is False
-        assert result["events_generated"] == ["session_created"]
+        assert result.value["operation"] == "create_negotiation_session"
+        assert result.value["success"] is True
+        assert result.value["session_id"] == session_id
+        assert result.value["session_name"] == "Test Negotiation"
+        assert result.value["created_at"] == created_at
+        assert result.value["status"] == "initiation"
+        assert result.value["configuration"]["max_parties"] == 5
+        assert result.value["configuration"]["timeout_hours"] == 48
+        assert result.value["configuration"]["auto_advance_phases"] is True
+        assert result.value["configuration"]["require_unanimous"] is False
+        assert result.value["events_generated"] == ["session_created"]
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -254,14 +254,14 @@ class TestNegotiationSessionOperations:
         assert call_args.validate_compatibility is True
 
         # Verify result structure
-        assert result["operation"] == "add_party_to_negotiation"
-        assert result["success"] is True
-        assert result["session_id"] == session_id
-        assert result["party_added"]["party_id"] == party_id
-        assert result["party_added"]["party_name"] == "Test Party"
-        assert result["party_added"]["compatibility_score"] == 0.85
-        assert result["session_status"]["total_parties"] == 3
-        assert result["session_status"]["can_start"] is True  # >= 2 parties
+        assert result.value["operation"] == "add_party_to_negotiation"
+        assert result.value["success"] is True
+        assert result.value["session_id"] == session_id
+        assert result.value["party_added"]["party_id"] == party_id
+        assert result.value["party_added"]["party_name"] == "Test Party"
+        assert result.value["party_added"]["compatibility_score"] == 0.85
+        assert result.value["session_status"]["total_parties"] == 3
+        assert result.value["session_status"]["can_start"] is True  # >= 2 parties
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -293,7 +293,7 @@ class TestNegotiationSessionOperations:
             session_id=session_id, party=sample_negotiation_party, initiated_by=uuid4()
         )
 
-        assert result["session_status"]["can_start"] is False  # < 2 parties
+        assert result.value["session_status"]["can_start"] is False  # < 2 parties
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -337,11 +337,11 @@ class TestNegotiationSessionOperations:
         assert call_args.force_advancement is False
 
         # Verify result
-        assert result["operation"] == "advance_negotiation_phase"
-        assert result["success"] is True
-        assert result["phase_transition"]["from_phase"] == "initiation"
-        assert result["phase_transition"]["to_phase"] == "preparation"
-        assert result["phase_transition"]["forced"] is False
+        assert result.value["operation"] == "advance_negotiation_phase"
+        assert result.value["success"] is True
+        assert result.value["phase_transition"]["from_phase"] == "initiation"
+        assert result.value["phase_transition"]["to_phase"] == "preparation"
+        assert result.value["phase_transition"]["forced"] is False
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -373,7 +373,7 @@ class TestNegotiationSessionOperations:
             force_advancement=True,
         )
 
-        assert result["phase_transition"]["forced"] is True
+        assert result.value["phase_transition"]["forced"] is True
 
 
 class TestProposalOperations:
@@ -463,12 +463,12 @@ class TestProposalOperations:
         mock_dependencies["command_handler"].handle_submit_proposal.assert_called_once()
 
         # Verify result structure
-        assert result["operation"] == "submit_proposal"
-        assert result["success"] is True
-        assert result["proposal_submitted"]["viability_score"] == 0.78
-        assert result["proposal_submitted"]["acceptance_probability"] == 0.65
+        assert result.value["operation"] == "submit_proposal"
+        assert result.value["success"] is True
+        assert result.value["proposal_submitted"]["viability_score"] == 0.78
+        assert result.value["proposal_submitted"]["acceptance_probability"] == 0.65
         assert (
-            result["pre_submission_analysis"] == mock_analysis_result["analysis_result"]
+            result.value["pre_submission_analysis"] == mock_analysis_result["analysis_result"]
         )
 
     @pytest.mark.asyncio
@@ -530,13 +530,13 @@ class TestProposalOperations:
         ].handle_calculate_negotiation_momentum.assert_called_once()
 
         # Verify result structure
-        assert result["operation"] == "submit_proposal_response"
-        assert result["success"] is True
-        assert result["response_submitted"]["response_id"] == response_id
-        assert result["response_submitted"]["overall_response"] == "partial_accept"
-        assert result["response_submitted"]["acceptance_percentage"] == 0.75
+        assert result.value["operation"] == "submit_proposal_response"
+        assert result.value["success"] is True
+        assert result.value["response_submitted"]["response_id"] == response_id
+        assert result.value["response_submitted"]["overall_response"] == "partial_accept"
+        assert result.value["response_submitted"]["acceptance_percentage"] == 0.75
         assert (
-            result["session_status"]["momentum"]
+            result.value["session_status"]["momentum"]
             == mock_momentum_result["momentum_analysis"]
         )
 
@@ -587,8 +587,8 @@ class TestProposalOperations:
             submitted_by=uuid4(),
         )
 
-        assert result["session_status"]["momentum"]["direction"] == "negative"
-        assert result["session_status"]["momentum"]["momentum_score"] == 0.25
+        assert result.value["session_status"]["momentum"]["direction"] == "negative"
+        assert result.value["session_status"]["momentum"]["momentum_score"] == 0.25
 
 
 class TestNegotiationCompletion:
@@ -681,20 +681,20 @@ class TestNegotiationCompletion:
         )
 
         # Verify result structure
-        assert result["operation"] == "complete_negotiation"
-        assert result["success"] is True
-        assert result["completion_summary"]["outcome"] == "agreement_reached"
-        assert result["completion_summary"]["termination_reason"] == "mutual_agreement"
+        assert result.value["operation"] == "complete_negotiation"
+        assert result.value["success"] is True
+        assert result.value["completion_summary"]["outcome"] == "agreement_reached"
+        assert result.value["completion_summary"]["termination_reason"] == "mutual_agreement"
         assert (
-            result["completion_summary"]["completion_notes"]
+            result.value["completion_summary"]["completion_notes"]
             == "Successfully reached agreement"
         )
         assert (
-            result["final_analysis"]["momentum"]
+            result.value["final_analysis"]["momentum"]
             == mock_momentum_result["momentum_analysis"]
         )
         assert (
-            result["final_analysis"]["conflicts"]
+            result.value["final_analysis"]["conflicts"]
             == mock_conflicts_result["conflicts_detected"]
         )
 
@@ -758,9 +758,9 @@ class TestNegotiationCompletion:
             initiated_by=uuid4(),
         )
 
-        assert result["completion_summary"]["outcome"] == "stalemate"
-        assert len(result["final_analysis"]["conflicts"]) == 3
-        assert result["final_analysis"]["momentum"]["direction"] == "negative"
+        assert result.value["completion_summary"]["outcome"] == "stalemate"
+        assert len(result.value["final_analysis"]["conflicts"]) == 3
+        assert result.value["final_analysis"]["momentum"]["direction"] == "negative"
 
 
 class TestAnalyticalOperations:
@@ -859,32 +859,32 @@ class TestAnalyticalOperations:
         ].handle_calculate_negotiation_momentum.assert_called_once()
 
         # Verify result structure
-        assert result["operation"] == "get_negotiation_insights"
-        assert result["success"] is True
-        assert result["analysis_depth"] == "comprehensive"
-        assert result["insights"]["party_compatibility"] == mock_compatibility_result
+        assert result.value["operation"] == "get_negotiation_insights"
+        assert result.value["success"] is True
+        assert result.value["analysis_depth"] == "comprehensive"
+        assert result.value["insights"]["party_compatibility"] == mock_compatibility_result
         assert (
-            result["insights"]["recommended_strategy"]
+            result.value["insights"]["recommended_strategy"]
             == mock_strategy_result["strategy_recommendation"]
         )
         assert (
-            result["insights"]["detected_conflicts"]
+            result.value["insights"]["detected_conflicts"]
             == mock_conflicts_result["conflicts_detected"]
         )
         assert (
-            result["insights"]["momentum_analysis"]
+            result.value["insights"]["momentum_analysis"]
             == mock_momentum_result["momentum_analysis"]
         )
 
         # Verify overall assessment
-        assert result["overall_assessment"]["compatibility_score"] == 0.75
-        assert result["overall_assessment"]["conflict_level"] == 1
-        assert result["overall_assessment"]["momentum_direction"] == "positive"
-        assert "success_probability" in result["overall_assessment"]
+        assert result.value["overall_assessment"]["compatibility_score"] == 0.75
+        assert result.value["overall_assessment"]["conflict_level"] == 1
+        assert result.value["overall_assessment"]["momentum_direction"] == "positive"
+        assert "success_probability" in result.value["overall_assessment"]
 
         # Verify recommendations are included
-        assert "recommendations" in result
-        assert isinstance(result["recommendations"], list)
+        assert "recommendations" in result.value
+        assert isinstance(result.value["recommendations"], list)
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -949,14 +949,14 @@ class TestAnalyticalOperations:
         )
 
         # Verify overall assessment reflects poor conditions
-        assert result["overall_assessment"]["compatibility_score"] == 0.25
+        assert result.value["overall_assessment"]["compatibility_score"] == 0.25
         assert (
-            result["overall_assessment"]["conflict_level"] == 3
+            result.value["overall_assessment"]["conflict_level"] == 3
         )  # High number of conflicts
-        assert result["overall_assessment"]["momentum_direction"] == "negative"
+        assert result.value["overall_assessment"]["momentum_direction"] == "negative"
 
         # Success probability should be low due to poor conditions
-        success_prob = result["overall_assessment"]["success_probability"]
+        success_prob = result.value["overall_assessment"]["success_probability"]
         assert (
             success_prob < 50
         )  # Should be low due to poor compatibility, high conflicts, low momentum
@@ -1044,19 +1044,19 @@ class TestProposalOptimization:
         )
 
         # Verify result structure
-        assert result["operation"] == "optimize_active_proposals"
-        assert result["success"] is True
-        assert result["optimization_target"] == "maximize_acceptance"
-        assert result["proposals_analyzed"] == 3
-        assert len(result["proposal_optimizations"]) == 3
+        assert result.value["operation"] == "optimize_active_proposals"
+        assert result.value["success"] is True
+        assert result.value["optimization_target"] == "maximize_acceptance"
+        assert result.value["proposals_analyzed"] == 3
+        assert len(result.value["proposal_optimizations"]) == 3
 
         # Verify average viability calculation
         expected_avg = (0.6 + 0.7 + 0.8) / 3
-        assert result["average_viability"] == expected_avg
+        assert result.value["average_viability"] == expected_avg
 
         # Verify optimization recommendations are included
-        assert "overall_recommendations" in result
-        assert isinstance(result["overall_recommendations"], list)
+        assert "overall_recommendations" in result.value
+        assert isinstance(result.value["overall_recommendations"], list)
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -1070,10 +1070,13 @@ class TestProposalOptimization:
         session_id = uuid4()
         mock_dependencies["repository"].get_by_id.return_value = None
 
-        with pytest.raises(ValueError, match=f"Session {session_id} not found"):
-            await service.optimize_active_proposals(
-                session_id=session_id, initiated_by=uuid4()
-            )
+        result = await service.optimize_active_proposals(
+            session_id=session_id, initiated_by=uuid4()
+        )
+
+        # Verify error result
+        assert result.is_error
+        assert f"Session {session_id} not found" in result.error.message
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -1102,9 +1105,9 @@ class TestProposalOptimization:
         ].handle_analyze_proposal_viability.assert_not_called()
 
         # Verify result indicates no proposals
-        assert result["proposals_analyzed"] == 0
-        assert result["average_viability"] == 0
-        assert len(result["proposal_optimizations"]) == 0
+        assert result.value["proposals_analyzed"] == 0
+        assert result.value["average_viability"] == 0
+        assert len(result.value["proposal_optimizations"]) == 0
 
 
 class TestSessionHealthMonitoring:
@@ -1196,24 +1199,24 @@ class TestSessionHealthMonitoring:
         )
 
         # Verify result structure
-        assert result["operation"] == "monitor_session_health"
-        assert result["success"] is True
+        assert result.value["operation"] == "monitor_session_health"
+        assert result.value["success"] is True
 
         # Should have good health score (few/no alerts for healthy session)
-        health_score = result["health_summary"]["health_score"]
+        health_score = result.value["health_summary"]["health_score"]
         assert health_score > 70  # Should be reasonably high
 
         # Should have minimal alerts
-        active_alerts = result["health_summary"]["active_alerts"]
+        active_alerts = result.value["health_summary"]["active_alerts"]
         assert len(active_alerts) <= 1  # Healthy session should have few alerts
 
         # Verify key metrics
-        assert result["key_metrics"]["total_parties"] == 3
-        assert result["key_metrics"]["active_proposals"] == 2
-        assert result["key_metrics"]["total_responses"] == 15
-        assert result["key_metrics"]["current_phase"] == "bargaining"
-        assert result["key_metrics"]["momentum_direction"] == "positive"
-        assert result["key_metrics"]["conflict_count"] == 1
+        assert result.value["key_metrics"]["total_parties"] == 3
+        assert result.value["key_metrics"]["active_proposals"] == 2
+        assert result.value["key_metrics"]["total_responses"] == 15
+        assert result.value["key_metrics"]["current_phase"] == "bargaining"
+        assert result.value["key_metrics"]["momentum_direction"] == "positive"
+        assert result.value["key_metrics"]["conflict_count"] == 1
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -1256,11 +1259,11 @@ class TestSessionHealthMonitoring:
         )
 
         # Should have poor health score
-        health_score = result["health_summary"]["health_score"]
+        health_score = result.value["health_summary"]["health_score"]
         assert health_score < 50  # Should be low due to multiple issues
 
         # Should have multiple alerts
-        active_alerts = result["health_summary"]["active_alerts"]
+        active_alerts = result.value["health_summary"]["active_alerts"]
         alert_types = [alert["type"] for alert in active_alerts]
 
         # Should have timeout warning (session.is_timeout_approaching returns True)
@@ -1276,10 +1279,10 @@ class TestSessionHealthMonitoring:
         assert "momentum_warning" in alert_types
 
         # Verify key metrics reflect unhealthy state
-        assert result["key_metrics"]["total_parties"] == 1
-        assert result["key_metrics"]["active_proposals"] == 0
-        assert result["key_metrics"]["momentum_direction"] == "negative"
-        assert result["key_metrics"]["conflict_count"] == 4
+        assert result.value["key_metrics"]["total_parties"] == 1
+        assert result.value["key_metrics"]["active_proposals"] == 0
+        assert result.value["key_metrics"]["momentum_direction"] == "negative"
+        assert result.value["key_metrics"]["conflict_count"] == 4
 
     @pytest.mark.asyncio
     @pytest.mark.unit
@@ -1293,10 +1296,13 @@ class TestSessionHealthMonitoring:
         session_id = uuid4()
         mock_dependencies["repository"].get_by_id.return_value = None
 
-        with pytest.raises(ValueError, match=f"Session {session_id} not found"):
-            await service.monitor_session_health(
-                session_id=session_id, initiated_by=uuid4()
-            )
+        result = await service.monitor_session_health(
+            session_id=session_id, initiated_by=uuid4()
+        )
+
+        # Verify error result
+        assert result.is_error
+        assert f"Session {session_id} not found" in result.error.message
 
 
 class TestPrivateHelperMethods:

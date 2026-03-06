@@ -8,7 +8,7 @@ Application service for batch operations using Result pattern.
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from ......core.result import Err, Ok, Result
+from .....core.result import Err, Ok, Result
 from .shared.errors import (
     InteractionError,
     ValidationError,

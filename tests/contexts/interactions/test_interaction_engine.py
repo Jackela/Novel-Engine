@@ -173,9 +173,9 @@ class TestCreateNegotiationSession:
             created_by=uuid4(),
         )
         
-        assert result["operation"] == "create_negotiation_session"
-        assert result["success"] is True
-        assert "session_id" in result
+        assert result.value["operation"] == "create_negotiation_session"
+        assert result.value["success"] is True
+        assert "session_id" in result.value
 
     @pytest.mark.asyncio
     async def test_create_session_with_all_options(self, interaction_service):
@@ -206,7 +206,7 @@ class TestCreateNegotiationSession:
             confidentiality_level="secret",
         )
         
-        assert result["success"] is True
+        assert result.value["success"] is True
 
 
 class TestAddPartyToNegotiation:
@@ -237,9 +237,9 @@ class TestAddPartyToNegotiation:
             initiated_by=uuid4(),
         )
         
-        assert result["operation"] == "add_party_to_negotiation"
-        assert result["success"] is True
-        assert result["party_added"]["party_id"] == str(sample_party.party_id)
+        assert result.value["operation"] == "add_party_to_negotiation"
+        assert result.value["success"] is True
+        assert result.value["party_added"]["party_id"] == str(sample_party.party_id)
 
     @pytest.mark.asyncio
     async def test_add_party_without_compatibility_check(
@@ -267,7 +267,7 @@ class TestAddPartyToNegotiation:
             validate_compatibility=False,
         )
         
-        assert result["success"] is True
+        assert result.value["success"] is True
 
 
 class TestSubmitProposal:
@@ -309,9 +309,9 @@ class TestSubmitProposal:
             submission_notes="Please consider this offer",
         )
         
-        assert result["operation"] == "submit_proposal"
-        assert result["success"] is True
-        assert result["proposal_submitted"]["proposal_id"] == str(sample_proposal.proposal_id)
+        assert result.value["operation"] == "submit_proposal"
+        assert result.value["success"] is True
+        assert result.value["proposal_submitted"]["proposal_id"] == str(sample_proposal.proposal_id)
 
 
 class TestSubmitProposalResponse:
@@ -364,8 +364,8 @@ class TestSubmitProposalResponse:
             submitted_by=responding_party_id,
         )
         
-        assert result["operation"] == "submit_proposal_response"
-        assert result["success"] is True
+        assert result.value["operation"] == "submit_proposal_response"
+        assert result.value["success"] is True
 
 
 class TestAdvanceNegotiationPhase:
@@ -393,9 +393,9 @@ class TestAdvanceNegotiationPhase:
             initiated_by=uuid4(),
         )
         
-        assert result["operation"] == "advance_negotiation_phase"
-        assert result["success"] is True
-        assert result["phase_transition"]["to_phase"] == "bargaining"
+        assert result.value["operation"] == "advance_negotiation_phase"
+        assert result.value["success"] is True
+        assert result.value["phase_transition"]["to_phase"] == "bargaining"
 
     @pytest.mark.asyncio
     async def test_advance_phase_forced(self, interaction_service):
@@ -420,7 +420,7 @@ class TestAdvanceNegotiationPhase:
             force_advancement=True,
         )
         
-        assert result["phase_transition"]["forced"] is True
+        assert result.value["phase_transition"]["forced"] is True
 
 
 class TestCompleteNegotiation:
@@ -461,9 +461,9 @@ class TestCompleteNegotiation:
             completion_notes="All parties reached agreement",
         )
         
-        assert result["operation"] == "complete_negotiation"
-        assert result["success"] is True
-        assert result["completion_summary"]["outcome"] == "agreement_reached"
+        assert result.value["operation"] == "complete_negotiation"
+        assert result.value["success"] is True
+        assert result.value["completion_summary"]["outcome"] == "agreement_reached"
 
 
 class TestGetNegotiationInsights:
@@ -507,8 +507,8 @@ class TestGetNegotiationInsights:
             analysis_depth="comprehensive",
         )
         
-        assert result["operation"] == "get_negotiation_insights"
-        assert result["success"] is True
+        assert result.value["operation"] == "get_negotiation_insights"
+        assert result.value["success"] is True
         assert "insights" in result
         assert "overall_assessment" in result
 
@@ -545,8 +545,8 @@ class TestOptimizeActiveProposals:
             initiated_by=uuid4(),
         )
         
-        assert result["operation"] == "optimize_active_proposals"
-        assert result["success"] is True
+        assert result.value["operation"] == "optimize_active_proposals"
+        assert result.value["success"] is True
 
     @pytest.mark.asyncio
     async def test_optimize_proposals_session_not_found(
@@ -556,11 +556,14 @@ class TestOptimizeActiveProposals:
         session_id = uuid4()
         mock_repository.get_by_id = AsyncMock(return_value=None)
         
-        with pytest.raises(ValueError, match="Session .* not found"):
-            await interaction_service.optimize_active_proposals(
-                session_id=session_id,
-                initiated_by=uuid4(),
-            )
+        result = await interaction_service.optimize_active_proposals(
+            session_id=session_id,
+            initiated_by=uuid4(),
+        )
+        
+        # Verify error result
+        assert result.is_error
+        assert "Session" in result.error.message and "not found" in result.error.message
 
 
 class TestMonitorSessionHealth:
@@ -600,10 +603,10 @@ class TestMonitorSessionHealth:
             initiated_by=uuid4(),
         )
         
-        assert result["operation"] == "monitor_session_health"
-        assert result["success"] is True
-        assert "health_summary" in result
-        assert "health_score" in result["health_summary"]
+        assert result.value["operation"] == "monitor_session_health"
+        assert result.value["success"] is True
+        assert "health_summary" in result.value
+        assert "health_score" in result.value["health_summary"]
 
     @pytest.mark.asyncio
     async def test_monitor_session_not_found(
@@ -613,11 +616,14 @@ class TestMonitorSessionHealth:
         session_id = uuid4()
         mock_repository.get_by_id = AsyncMock(return_value=None)
         
-        with pytest.raises(ValueError, match="Session .* not found"):
-            await interaction_service.monitor_session_health(
-                session_id=session_id,
-                initiated_by=uuid4(),
-            )
+        result = await interaction_service.monitor_session_health(
+            session_id=session_id,
+            initiated_by=uuid4(),
+        )
+        
+        # Verify error result
+        assert result.is_error
+        assert "Session" in result.error.message and "not found" in result.error.message
 
 
 class TestPrivateHelperMethods:

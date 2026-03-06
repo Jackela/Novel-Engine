@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from ......core.result import Err, Ok, Result
+from .....core.result import Err, Ok, Result
 from ....interactions.domain.value_objects.negotiation_party import NegotiationParty
 from ....interactions.domain.value_objects.proposal_response import ProposalResponse, ResponseType
 from .shared.errors import (

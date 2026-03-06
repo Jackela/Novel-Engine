@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from ......core.result import Err, Ok, Result
+from .....core.result import Err, Ok, Result
 from ....interactions.domain.aggregates.negotiation_session import NegotiationSession
 from ....interactions.domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,

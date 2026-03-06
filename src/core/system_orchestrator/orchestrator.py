@@ -997,3 +997,9 @@ class SystemOrchestrator:
     async def _count_equipment(self) -> int:
         """Count total equipment items."""
         try:
+            async with self.database.get_enhanced_connection() as conn:
+                cursor = await conn.execute("SELECT COUNT(*) FROM equipment")
+                result = await cursor.fetchone()
+                return result[0] if result else 0
+        except Exception:
+            return 0

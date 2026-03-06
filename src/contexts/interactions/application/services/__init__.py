@@ -6,6 +6,9 @@ This module exports all application services for the Interaction bounded context
 Services use the Result[T,E] pattern for explicit error handling.
 """
 
+# Core Result imports
+from .....core.result import Err, Ok, Result
+
 # Shared error types and Result wrapper
 from .shared.errors import (
     AuthorizationError,
@@ -36,6 +39,10 @@ from .session_management_service import SessionManagementService
 from .strategy_service import StrategyService
 
 __all__ = [
+    # Core Result types
+    "Result",
+    "Ok",
+    "Err",
     # Error types
     "InteractionError",
     "NegotiationError",
