@@ -184,12 +184,22 @@ class CentralizedErrorHandler:
             error, context, severity, category, recovery_strategy
         )
         if result.is_ok:
-            return result.value
+            return result.value or ErrorRecord(
+                error_id="handler_error",
+                error_type="ErrorHandlerFailure",
+                message="Failed to handle error",
+                severity=ErrorSeverity.CRITICAL,
+                category=ErrorCategory.SYSTEM,
+                context=context,
+                stack_trace="",
+                recovery_strategy=RecoveryStrategy.USER_INTERVENTION,
+            )
         # Return minimal record on error
+        error_message = result.error.message if result.error else "Unknown error"
         return ErrorRecord(
             error_id="handler_error",
             error_type="ErrorHandlerFailure",
-            message=result.error.message,
+            message=error_message,
             severity=ErrorSeverity.CRITICAL,
             category=ErrorCategory.SYSTEM,
             context=context,
@@ -576,7 +586,15 @@ class CentralizedErrorHandler:
         """Get comprehensive error statistics. (Legacy - use get_error_statistics_result)"""
         result = self.get_error_statistics_result()
         if result.is_ok:
-            return result.value
+            return result.value or {
+                "total_errors": 0,
+                "performance_metrics": {},
+                "severity_distribution": {},
+                "category_distribution": {},
+                "recovery_statistics": {},
+                "recent_critical_errors": [],
+            }
+        error_message = result.error.message if result.error else "Unknown error"
         return {
             "total_errors": 0,
             "performance_metrics": {},
@@ -584,7 +602,7 @@ class CentralizedErrorHandler:
             "category_distribution": {},
             "recovery_statistics": {},
             "recent_critical_errors": [],
-            "error": result.error.message,
+            "error": error_message,
         }
 
     def get_error_statistics_result(self) -> Result[Dict[str, Any], ErrorHandlerError]:

@@ -29,6 +29,7 @@ from typing import (
 
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
+from .result import Error, Err, Ok, Result
 
 logger = structlog.get_logger(__name__)
 
@@ -94,6 +95,24 @@ class DependencyResolutionError(Exception):
 
 class ServiceNotFoundError(Exception):
     """Raised when a service is not found."""
+
+
+class ServiceContainerError(Error):
+    """Error raised when service container operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        service_name: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            code="SERVICE_CONTAINER_ERROR",
+            message=message,
+            recoverable=True,
+            details={"operation": operation, "service_name": service_name, **(details or {})},
+        )
 
 
 class ServiceContainer:

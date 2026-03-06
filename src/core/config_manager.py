@@ -372,14 +372,36 @@ class ConfigurationManager:
         current[keys[-1]] = value
 
     def get_section(self, section: str) -> Dict[str, Any]:
-        """Get entire configuration section."""
-        result: dict[str, Any] = self.config_data.get(section, {})
-        return result
+        """Get entire configuration section. (Legacy - use get_section_result)"""
+        result = self.get_section_result(section)
+        if result.is_ok:
+            return result.value
+        return {}
+
+    def get_section_result(self, section: str) -> Result[Dict[str, Any], ConfigError]:
+        """
+        Get entire configuration section using Result pattern.
+
+        Args:
+            section: Name of the configuration section
+
+        Returns:
+            Result containing configuration section or error
+        """
+        if section in self.config_data:
+            return Ok(self.config_data[section])
+        return Err(
+            ConfigError(
+                message=f"Configuration section not found: {section}",
+                operation="get_section",
+                key_path=section,
+            )
+        )
 
     def reload(self) -> None:
         """Reload configuration from files. (Legacy - use reload_result)"""
         result = self.reload_result()
-        if result.is_error:
+        if result.is_error and result.error:
             logger.error(
                 "configuration_reload_failed", error=result.error.message
             )
@@ -400,6 +422,7 @@ class ConfigurationManager:
                 ConfigError(
                     message=f"Failed to reload configuration: {e}",
                     operation="reload",
+                    key_path=None,
                 )
             )
 

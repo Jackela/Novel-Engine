@@ -169,7 +169,7 @@ class EventBus:
         Subscribe a callback function to a specific event type. (Legacy - use subscribe_result)
         """
         result = self.subscribe_result(event_type, callback)
-        if result.is_error:
+        if result.is_error and result.error:
             logger.warning(
                 "subscribe_failed",
                 event_type=event_type,
@@ -581,7 +581,7 @@ class EventBus:
         """Retry failed events from the dead-letter queue. (Legacy - use retry_dead_letters_result)"""
         result = await self.retry_dead_letters_result(event_type, max_items)
         if result.is_ok:
-            return result.value
+            return result.value or 0
         return 0
 
     async def retry_dead_letters_result(
