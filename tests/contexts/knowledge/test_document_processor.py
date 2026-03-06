@@ -37,7 +37,7 @@ class TestGenericProcessor:
         strategy = processor.get_chunking_strategy()
         
         assert isinstance(strategy, ChunkingStrategy)
-        assert strategy.strategy == ChunkStrategyType.FIXED_SIZE
+        assert strategy.strategy == ChunkStrategyType.FIXED
 
     def test_get_chunking_strategy_custom(self, processor):
         """Test getting custom chunking strategy."""
@@ -85,7 +85,7 @@ class TestLoreProcessor:
 
     def test_get_chunking_strategy_custom_override(self, processor):
         """Test that custom strategy overrides default."""
-        custom_strategy = ChunkingStrategy(strategy=ChunkStrategyType.FIXED_SIZE, chunk_size=200)
+        custom_strategy = ChunkingStrategy(strategy=ChunkStrategyType.FIXED, chunk_size=200)
         strategy = processor.get_chunking_strategy(custom_strategy)
         
         assert strategy == custom_strategy
@@ -197,7 +197,7 @@ class TestCharacterProcessor:
 
     def test_enrich_metadata_detects_ally_role(self, processor):
         """Test detecting ally role."""
-        content = "The companion helps the hero on their journey."
+        content = "The friend provides support and companionship."
         enriched = processor.enrich_metadata({}, content)
         
         assert enriched["role_hint"] == "ally"

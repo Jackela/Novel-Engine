@@ -27,7 +27,7 @@ from src.contexts.world.domain.errors import (
     WorldNotFoundError,
 )
 from src.contexts.world.domain.value_objects.simulation_tick import SimulationTick
-from src.core.result import Err, Ok, Result
+from src.core.result import Err, Error, Ok, Result
 
 from ..faction_intent_generator import FactionIntentGenerator
 from .exceptions import InvalidDaysError, SnapshotFailedError
@@ -1025,7 +1025,9 @@ class WorldSimulationService:
             oldest_key = next(iter(history))
             del history[oldest_key]
 
-    def get_tick_history(self, world_id: str, limit: int = 20) -> List[SimulationTick]:
+    def get_tick_history(
+        self, world_id: str, limit: int = 20
+    ) -> Result[List[SimulationTick], Error]:
         """Get simulation tick history for a world.
 
         Args:
@@ -1033,17 +1035,31 @@ class WorldSimulationService:
             limit: Maximum number of ticks to return (default 20)
 
         Returns:
-            List of SimulationTick entities, most recent first
+            Result containing:
+            - Ok: List of SimulationTick entities, most recent first
+            - Err: Error if operation fails
         """
-        if world_id not in self._tick_history:
-            return []
+        try:
+            if world_id not in self._tick_history:
+                return Ok([])
 
-        history = self._tick_history[world_id]
-        # Return most recent first
-        ticks = list(history.values())
-        return ticks[-limit:][::-1]
+            history = self._tick_history[world_id]
+            # Return most recent first
+            ticks = list(history.values())
+            return Ok(ticks[-limit:][::-1])
+        except Exception as e:
+            return Err(
+                Error(
+                    code="SIMULATION_ERROR",
+                    message=f"Failed to get tick history: {e}",
+                    recoverable=True,
+                    details={"world_id": world_id},
+                )
+            )
 
-    def get_tick_by_id(self, world_id: str, tick_id: str) -> Optional[SimulationTick]:
+    def get_tick_by_id(
+        self, world_id: str, tick_id: str
+    ) -> Result[Optional[SimulationTick], Error]:
         """Get a specific tick by ID.
 
         Args:
@@ -1051,25 +1067,49 @@ class WorldSimulationService:
             tick_id: ID of the tick to retrieve
 
         Returns:
-            SimulationTick if found, None otherwise
+            Result containing:
+            - Ok: SimulationTick if found, None otherwise
+            - Err: Error if operation fails
         """
-        if world_id not in self._tick_history:
-            return None
+        try:
+            if world_id not in self._tick_history:
+                return Ok(None)
 
-        return self._tick_history[world_id].get(tick_id)
+            return Ok(self._tick_history[world_id].get(tick_id))
+        except Exception as e:
+            return Err(
+                Error(
+                    code="SIMULATION_ERROR",
+                    message=f"Failed to get tick by ID: {e}",
+                    recoverable=True,
+                    details={"world_id": world_id, "tick_id": tick_id},
+                )
+            )
 
-    def clear_history(self, world_id: str) -> int:
+    def clear_history(self, world_id: str) -> Result[int, Error]:
         """Clear simulation history for a world.
 
         Args:
             world_id: ID of the world
 
         Returns:
-            Number of entries cleared
+            Result containing:
+            - Ok: Number of entries cleared
+            - Err: Error if operation fails
         """
-        if world_id not in self._tick_history:
-            return 0
+        try:
+            if world_id not in self._tick_history:
+                return Ok(0)
 
-        count = len(self._tick_history[world_id])
-        del self._tick_history[world_id]
-        return count
+            count = len(self._tick_history[world_id])
+            del self._tick_history[world_id]
+            return Ok(count)
+        except Exception as e:
+            return Err(
+                Error(
+                    code="SIMULATION_ERROR",
+                    message=f"Failed to clear history: {e}",
+                    recoverable=True,
+                    details={"world_id": world_id},
+                )
+            )

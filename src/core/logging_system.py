@@ -400,9 +400,9 @@ class StructuredLogger:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper  # type: ignore[return-value]
+            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper  # type: ignore[no-any-return]
 
-        return decorator  # type: ignore[no-any-return]
+        return decorator
 
     # Analytics and reporting
 

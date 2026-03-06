@@ -726,8 +726,8 @@ class KnowledgeIngestionService:
             err = delete_result.error
             if err is None:
                 err = VectorStoreError(
-                    message="Delete operation failed with unknown error",
-                    collection=target_collection,
+                    message=f"Delete operation failed with unknown error in collection {target_collection}",
+                    operation="delete",
                 )
             return Err(err)
 

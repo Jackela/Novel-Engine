@@ -375,7 +375,7 @@ class ConfigurationManager:
         """Get entire configuration section. (Legacy - use get_section_result)"""
         result = self.get_section_result(section)
         if result.is_ok:
-            return result.value
+            return result.value or {}
         return {}
 
     def get_section_result(self, section: str) -> Result[Dict[str, Any], ConfigError]:

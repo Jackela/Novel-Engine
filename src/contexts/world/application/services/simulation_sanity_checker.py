@@ -134,20 +134,33 @@ class SimulationSanityChecker:
         characters: Optional[List["Character"]] = None,
         factions: Optional[List["Faction"]] = None,
         locations: Optional[List["Location"]] = None,
-    ) -> None:
+    ) -> Result[None, Error]:
         """Update entity lists for checking.
 
         Args:
             characters: List of Character aggregates to check.
             factions: List of Faction entities to check.
             locations: List of Location entities to check.
+
+        Returns:
+            Result containing:
+            - Ok: None on success
+            - Err: Error if operation fails
         """
-        if characters is not None:
-            self._characters = characters
-        if factions is not None:
-            self._factions = factions
-        if locations is not None:
-            self._locations = locations
+        try:
+            if characters is not None:
+                self._characters = characters
+            if factions is not None:
+                self._factions = factions
+            if locations is not None:
+                self._locations = locations
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                SanityCheckError(
+                    f"Failed to set entities: {e}",
+                )
+            )
 
     def check(
         self, world: Optional["WorldState"] = None

@@ -65,7 +65,7 @@ class JSONEventParser:
     }
 
     # Optional fields with their default values
-    OPTIONAL_FIELDS = {
+    OPTIONAL_FIELDS: dict[str, Any] = {
         "duration_description": None,
         "location_ids": [],
         "faction_ids": [],

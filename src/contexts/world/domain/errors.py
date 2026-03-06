@@ -202,6 +202,36 @@ class SimulationValidationError(Error):
         )
 
 
+class InvalidDaysError(SimulationError):
+    """Error raised when days parameter is invalid."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            message=message,
+            details=details or {},
+        )
+
+
+class SaveFailedError(SimulationError):
+    """Error raised when saving world state fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            message=message,
+            details=details or {},
+        )
+
+
+class SnapshotFailedError(SimulationError):
+    """Error raised when snapshot creation fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            message=message,
+            details=details or {},
+        )
+
+
 class SnapshotError(Error):
     """Error raised when snapshot operation fails."""
 
@@ -364,6 +394,18 @@ class RepositoryError(Error):
     def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
         super().__init__(
             code="REPOSITORY_ERROR",
+            message=message,
+            recoverable=True,
+            details=details,
+        )
+
+
+class RollbackError(Error):
+    """Error raised when rollback operation fails."""
+
+    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
+        super().__init__(
+            code="ROLLBACK_ERROR",
             message=message,
             recoverable=True,
             details=details,

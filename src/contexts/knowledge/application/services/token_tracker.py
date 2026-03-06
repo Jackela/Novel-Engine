@@ -37,7 +37,7 @@ import structlog
 
 from ...application.ports.i_token_usage_repository import ITokenUsageRepository
 from ...domain.models.model_registry import LLMProvider
-from ...domain.models.token_usage import TokenUsage, TokenUsageStats
+from ...domain.models.token_usage import TokenUsage, TokenUsageStats, TokenUsageSummary
 
 # Need LLMResponse at runtime for decorator isinstance checks
 from ..services.model_registry import ModelLookupResult, ModelRegistry
@@ -522,7 +522,7 @@ class TokenTracker:
             @functools.wraps(func)
             async def wrapper(*args: Any, **kwargs: Any) -> T:
                 if not self._config.enabled:
-                    return await func(*args, **kwargs)  # type: ignore[misc]
+                    return await func(*args, **kwargs)  # type: ignore[misc, no-any-return]
 
                 start_time = time.monotonic()
 
@@ -665,7 +665,7 @@ class TokenTracker:
         provider: str | None = None,
         model_name: str | None = None,
         workspace_id: str | None = None,
-    ) -> TokenUsageStats:
+    ) -> TokenUsageSummary:
         """
         Get usage summary for a time period.
 

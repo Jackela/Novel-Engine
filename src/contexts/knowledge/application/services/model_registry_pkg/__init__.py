@@ -1,18 +1,7 @@
-"""Model Registry Service (Shim).
+"""Model Registry Package.
 
-⚠️  DEPRECATION NOTICE:
-    This module is kept for backward compatibility.
-    Please use `src.contexts.knowledge.application.services.model_registry_pkg` instead.
+Service for managing AI model configurations and selection.
 """
-
-import warnings
-
-warnings.warn(
-    "model_registry.py is deprecated. "
-    "Use src.contexts.knowledge.application.services.model_registry_pkg instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
     ModelLookupResult,

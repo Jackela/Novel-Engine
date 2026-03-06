@@ -1,18 +1,7 @@
-"""State Store (Shim).
+"""State Store Package.
 
-⚠️  DEPRECATION NOTICE:
-    This module is kept for backward compatibility.
-    Please use `src.infrastructure.state_store` instead.
+Unified state management with multiple backends (Redis, PostgreSQL, S3).
 """
-
-import warnings
-
-warnings.warn(
-    "state_store.py is deprecated. "
-    "Use src.infrastructure.state_store instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
 
 from src.infrastructure.state_store.base import StateStore
 from src.infrastructure.state_store.config import StateKey, StateStoreConfig

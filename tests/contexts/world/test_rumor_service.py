@@ -52,7 +52,7 @@ def sample_rumor():
         origin_type=RumorOrigin.EVENT,
         origin_location_id="loc-north",
         current_locations={"loc-north", "loc-capital"},
-        created_date=WorldCalendar(year=1000, month=1, day=1),
+        created_date=WorldCalendar(year=1000, month=1, day=1, era_name="First Age"),
         spread_count=2,
     )
 
@@ -68,7 +68,7 @@ def multiple_rumors():
             origin_type=RumorOrigin.EVENT,
             origin_location_id="loc-1",
             current_locations={"loc-1", "loc-2"},
-            created_date=WorldCalendar(year=1000, month=1, day=1),
+            created_date=WorldCalendar(year=1000, month=1, day=1, era_name="First Age"),
             spread_count=5,
         ),
         Rumor(
@@ -78,7 +78,7 @@ def multiple_rumors():
             origin_type=RumorOrigin.NPC,
             origin_location_id="loc-2",
             current_locations={"loc-2", "loc-3"},
-            created_date=WorldCalendar(year=1000, month=2, day=1),
+            created_date=WorldCalendar(year=1000, month=2, day=1, era_name="First Age"),
             spread_count=10,
         ),
         Rumor(
@@ -88,7 +88,7 @@ def multiple_rumors():
             origin_type=RumorOrigin.UNKNOWN,
             origin_location_id="loc-3",
             current_locations={"loc-3"},
-            created_date=WorldCalendar(year=999, month=12, day=1),
+            created_date=WorldCalendar(year=999, month=12, day=1, era_name="First Age"),
             spread_count=1,
         ),
     ]

@@ -582,26 +582,48 @@ class RumorPropagationService:
 
         return deleted_count
 
-    def clear_adjacency_cache(self) -> None:
+    def clear_adjacency_cache(self) -> Result[None, Error]:
         """Clear the adjacency cache.
 
         This can be called periodically if location connections change,
         or to free memory in long-running simulations.
-        """
-        cache_size = len(self._adjacency_cache)
-        self._adjacency_cache.clear()
-        logger.debug("adjacency_cache_cleared", previous_size=cache_size)
 
-    def get_cache_stats(self) -> Dict[str, int]:
+        Returns:
+            Result containing:
+            - Ok: None on success
+            - Err: Error if operation fails
+        """
+        try:
+            cache_size = len(self._adjacency_cache)
+            self._adjacency_cache.clear()
+            logger.debug("adjacency_cache_cleared", previous_size=cache_size)
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                RumorError(
+                    f"Failed to clear adjacency cache: {e}",
+                )
+            )
+
+    def get_cache_stats(self) -> Result[Dict[str, int], Error]:
         """Get statistics about the adjacency cache.
 
         Returns:
-            Dictionary with cache statistics.
+            Result containing:
+            - Ok: Dictionary with cache statistics
+            - Err: Error if operation fails
         """
-        return {
-            "cache_size": len(self._adjacency_cache),
-            "cached_location_count": len(self._adjacency_cache),
-        }
+        try:
+            return Ok({
+                "cache_size": len(self._adjacency_cache),
+                "cached_location_count": len(self._adjacency_cache),
+            })
+        except Exception as e:
+            return Err(
+                RumorError(
+                    f"Failed to get cache stats: {e}",
+                )
+            )
 
     def create_rumor_from_event(
         self,
