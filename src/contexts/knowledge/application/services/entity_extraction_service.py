@@ -368,7 +368,7 @@ Respond with ONLY valid JSON matching the schema above."""
             ...         print(f"Extraction failed: {error.message}")
         """
         if not isinstance(text, str):
-            return Err(ValidationError(
+            return Err(ValidationError(  # type: ignore[unreachable]
                 message=f"text must be a string, got {type(text).__name__}",
                 field="text",
             ))
@@ -554,7 +554,7 @@ Respond with ONLY valid JSON matching the schema above."""
             - Err(ExtractionError): If extraction fails
         """
         if not isinstance(text, str):
-            return Err(ValidationError(
+            return Err(ValidationError(  # type: ignore[unreachable]
                 message=f"text must be a string, got {type(text).__name__}",
                 field="text",
             ))
@@ -919,7 +919,7 @@ Respond with ONLY valid JSON matching the schema above."""
                 return Err(err)
             if isinstance(err, ValidationError):
                 return Err(err)
-            return Err(ExtractionError(
+            return Err(ExtractionError(  # type: ignore[unreachable]
                 message=str(err),
                 text_length=len(text),
             ))

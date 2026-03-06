@@ -160,7 +160,7 @@ class CohereReranker:
         """
         self._model: str = model or os.getenv(
             "COHERE_RERANK_MODEL", DEFAULT_COHERE_MODEL
-        )
+        ) or DEFAULT_COHERE_MODEL
         self._api_key = api_key or os.getenv("COHERE_API_KEY", "")
 
         if not self._api_key:
@@ -306,7 +306,8 @@ class CohereReranker:
                         f"Cohere API error {response.status_code}: {error_message}"
                     )
 
-                return response.json()
+                result: dict[str, Any] = response.json()
+                return result
 
             except httpx.TimeoutException as e:
                 raise RerankerError("Cohere API request timed out") from e
@@ -410,8 +411,8 @@ class LocalReranker:
         """
         self._model_name: str = model or os.getenv(
             "LOCAL_RERANK_MODEL", DEFAULT_LOCAL_MODEL
-        )
-        self._device: str = device or os.getenv("LOCAL_RERANK_DEVICE", "cpu")
+        ) or DEFAULT_LOCAL_MODEL
+        self._device: str = device or os.getenv("LOCAL_RERANK_DEVICE", "cpu") or "cpu"
         self._cache_dir = cache_dir
         self._model: Any = None  # Lazy loaded
         self._load_attempted = False
@@ -468,7 +469,7 @@ class LocalReranker:
             pairs = [[query, doc] for doc in doc_contents]
 
             # Run cross-encoder scoring
-            import torch
+            import torch  # type: ignore[import-not-found]
 
             with torch.no_grad():
                 scores = model.predict(pairs, convert_to_tensor=True)
@@ -562,7 +563,7 @@ class LocalReranker:
         self._load_attempted = True
 
         try:
-            from sentence_transformers import CrossEncoder
+            from sentence_transformers import CrossEncoder  # type: ignore[import-not-found]
 
             logger.info(
                 "local_rerank_loading_model",

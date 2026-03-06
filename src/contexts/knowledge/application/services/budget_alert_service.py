@@ -470,7 +470,7 @@ class BudgetAlertService:
                 # Check if at least a week has passed
                 return (now - alert_state.last_triggered) >= timedelta(weeks=1)
             case _:
-                return True
+                return True  # type: ignore[unreachable]
 
     async def _evaluate_single_alert(
         self,
@@ -600,7 +600,7 @@ class BudgetAlertService:
             case AlertComparisonOperator.LESS_THAN_OR_EQUAL:
                 return current_value <= threshold_value
             case _:
-                return False
+                return False  # type: ignore[unreachable]
 
     def _format_alert_message(
         self,

@@ -305,6 +305,7 @@ class YAMLPromptMigrator:
 
         model_config = ModelConfig(
             provider=provider,
+            model=model_name,
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,

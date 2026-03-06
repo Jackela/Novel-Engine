@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result
 
 from ...application.ports.i_embedding_service import EmbeddingError, IEmbeddingService
@@ -684,6 +685,88 @@ class RetrievalService:
         # Sort by relevance score
         sources.sort(key=lambda s: s["relevance_score"], reverse=True)
         return sources
+
+    def get_sources_result(
+        self,
+        chunks: list[RetrievedChunk],
+        source_names: dict[str, str] | None = None,
+    ) -> Result[list[dict[str, Any]], ServiceError]:
+        """
+        Extract unique sources from retrieved chunks (Result pattern).
+
+        Provides a summary of all sources that contributed to the retrieved
+        chunks, including chunk counts and average relevance scores.
+
+        Args:
+            chunks: List of retrieved chunks
+            source_names: Optional mapping of source_id to display names
+
+        Returns:
+            Result containing list of source dictionaries on success.
+            - Ok: List of source dictionaries with metadata
+            - Err(ServiceError): If source extraction fails
+
+        Example:
+            >>> result = service.get_sources_result(result.chunks)
+            >>> if result.is_ok:
+            ...     for source in result.value:
+            ...         print(f"{source['source_type']}:{source['source_id']}")
+        """
+        try:
+            if not chunks:
+                return Ok([])
+
+            # Group chunks by source
+            from collections import defaultdict
+
+            source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = defaultdict(
+                list
+            )
+            for chunk in chunks:
+                key = (chunk.source_type, chunk.source_id)
+                source_groups[key].append(chunk)
+
+            # Build source list
+            sources: list[dict[str, Any]] = []
+            for idx, ((source_type, source_id), group_chunks) in enumerate(
+                source_groups.items(), 1
+            ):
+                avg_score = sum(c.score for c in group_chunks) / len(group_chunks)
+
+                # Get display name
+                if source_names and source_id in source_names:
+                    display_name = source_names[source_id]
+                else:
+                    # Try to extract from metadata
+                    metadata = group_chunks[0].metadata or {}
+                    display_name = metadata.get("name", source_id)
+
+                # Generate citation ID with source type prefix
+                prefix = self._get_source_type_prefix(source_type)
+                citation_id = f"{prefix}{idx}"
+
+                sources.append(
+                    {
+                        "source_type": source_type.value,
+                        "source_id": source_id,
+                        "display_name": display_name,
+                        "chunk_count": len(group_chunks),
+                        "relevance_score": round(avg_score, 3),
+                        "citation_id": citation_id,
+                    }
+                )
+
+            # Sort by relevance score
+            sources.sort(key=lambda s: s["relevance_score"], reverse=True)
+            return Ok(sources)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get sources: {e}",
+                    service_name="RetrievalService",
+                    operation="get_sources",
+                )
+            )
 
     def _get_source_type_prefix(self, source_type: SourceType) -> str:
         """

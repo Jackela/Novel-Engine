@@ -59,8 +59,8 @@ from ..chunking import (
 from ..chunking.base import BaseChunkingStrategy
 
 if TYPE_CHECKING:
-    from ....application.ports.i_chunking_strategy import Chunk
-    from ....domain.models.chunking_strategy import ChunkingStrategy
+    from ...application.ports.i_chunking_strategy import Chunk
+    from ...domain.models.chunking_strategy import ChunkingStrategy
 
 # Emit deprecation warning
 warnings.warn(

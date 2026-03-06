@@ -20,6 +20,9 @@ from typing import TYPE_CHECKING
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ..ports.i_vector_store import VectorStoreError
 from .retrieval_service import (
     DEFAULT_RELEVANCE_THRESHOLD,
@@ -400,6 +403,113 @@ class RAGIntegrationService:
             Copy of current config
         """
         return self._config
+
+
+    def get_metrics_result(self) -> Result[RAGMetrics, ServiceError]:
+        """
+        Get current RAG operation metrics (Result pattern).
+
+        Returns:
+            Result containing RAGMetrics on success.
+            - Ok: Copy of current metrics
+            - Err(ServiceError): If metrics retrieval fails
+        """
+        try:
+            return Ok(
+                RAGMetrics(
+                    queries_total=self._metrics.queries_total,
+                    chunks_retrieved_total=self._metrics.chunks_retrieved_total,
+                    tokens_added_total=self._metrics.tokens_added_total,
+                    failed_queries=self._metrics.failed_queries,
+                )
+            )
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get metrics: {e}",
+                    service_name="RAGIntegrationService",
+                    operation="get_metrics",
+                )
+            )
+
+    def reset_metrics_result(self) -> Result[None, ServiceError]:
+        """
+        Reset all metrics to zero (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If reset fails
+        """
+        try:
+            self._metrics = RAGMetrics()
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to reset metrics: {e}",
+                    service_name="RAGIntegrationService",
+                    operation="reset_metrics",
+                )
+            )
+
+    def update_config_result(self, config: RAGConfig) -> Result[None, ServiceError]:
+        """
+        Update the service configuration (Result pattern).
+
+        Args:
+            config: New configuration to apply
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If config is invalid or update fails
+        """
+        try:
+            if config is None:
+                return Err(  # type: ignore[unreachable]
+                    ServiceError(
+                        message="Config cannot be None",
+                        service_name="RAGIntegrationService",
+                        operation="update_config",
+                    )
+                )
+            self._config = config
+            logger.debug(
+                "rag_config_updated",
+                max_chunks=config.max_chunks,
+                score_threshold=config.score_threshold,
+                enabled=config.enabled,
+            )
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to update config: {e}",
+                    service_name="RAGIntegrationService",
+                    operation="update_config",
+                )
+            )
+
+    def get_config_result(self) -> Result[RAGConfig, ServiceError]:
+        """
+        Get the current configuration (Result pattern).
+
+        Returns:
+            Result containing RAGConfig on success.
+            - Ok: Copy of current config
+            - Err(ServiceError): If config retrieval fails
+        """
+        try:
+            return Ok(self._config)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get config: {e}",
+                    service_name="RAGIntegrationService",
+                    operation="get_config",
+                )
+            )
 
 
 __all__ = [

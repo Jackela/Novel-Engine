@@ -481,7 +481,7 @@ class KnowledgeIngestionService:
             ...         print(f"Batch error: {error.message}")
         """
         if not isinstance(entries, list):
-            return Err(ValidationError(
+            return Err(ValidationError(  # type: ignore[unreachable]
                 message="entries must be a list",
                 field="entries",
             ))
@@ -940,7 +940,7 @@ class KnowledgeIngestionService:
             progress: Progress data to report
         """
         try:
-            if callback:
+            if callback is not None:
                 # Check if callback is async
                 import inspect
 

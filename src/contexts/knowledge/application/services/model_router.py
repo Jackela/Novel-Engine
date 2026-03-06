@@ -23,6 +23,9 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...domain.models.model_registry import (
     LLMProvider,
     TaskType,
@@ -839,6 +842,66 @@ class ModelRouter:
             "open_circuits": open_circuits,
             "total_circuits": len(self._circuit_breakers),
         }
+
+    def get_routing_stats_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get routing statistics (Result pattern).
+
+        Returns:
+            Result containing routing analytics dictionary on success.
+            - Ok: Dictionary with routing statistics
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            if not self._routing_history:
+                return Ok({"total_decisions": 0})
+
+            # Count by reason
+            reason_counts: dict[str, int] = {}
+            fallback_count = 0
+
+            for decision in self._routing_history:
+                reason = decision.reason.value
+                reason_counts[reason] = reason_counts.get(reason, 0) + 1
+                if decision.fallback_used:
+                    fallback_count += 1
+
+            # Count by provider
+            provider_counts: dict[str, int] = {}
+            for decision in self._routing_history:
+                provider = decision.selected_provider.value
+                provider_counts[provider] = provider_counts.get(provider, 0) + 1
+
+            # Calculate avg execution time
+            avg_time = sum(d.execution_time_ms for d in self._routing_history) / len(
+                self._routing_history
+            )
+
+            # Circuit breaker stats
+            open_circuits = [
+                (k, v.get_state_info())
+                for k, v in self._circuit_breakers.items()
+                if v.is_open()
+            ]
+
+            return Ok({
+                "total_decisions": len(self._routing_history),
+                "fallback_count": fallback_count,
+                "fallback_rate": fallback_count / len(self._routing_history),
+                "reason_counts": reason_counts,
+                "provider_counts": provider_counts,
+                "avg_routing_time_ms": avg_time,
+                "open_circuits": open_circuits,
+                "total_circuits": len(self._circuit_breakers),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get routing stats: {e}",
+                    service_name="ModelRouter",
+                    operation="get_routing_stats",
+                )
+            )
 
     def get_circuit_breaker_state(self, model_key: str) -> Optional[dict[str, Any]]:
         """

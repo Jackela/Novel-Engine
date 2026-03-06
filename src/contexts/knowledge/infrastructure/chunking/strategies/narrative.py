@@ -511,7 +511,7 @@ class NarrativeStructureStrategy(BaseChunkingStrategy):
                         # Keep overlap units for next chunk
                         overlap_to_keep = self._get_overlap_units(
                             current_units,
-                            config.overlap,
+                            config.overlap or 0,
                         )
                         current_units = overlap_to_keep
                         current_word_count = sum(

@@ -37,7 +37,8 @@ import structlog
 
 from ...application.ports.i_token_usage_repository import ITokenUsageRepository
 from ...domain.models.model_registry import LLMProvider
-from ...domain.models.token_usage import TokenUsage, TokenUsageStats, TokenUsageSummary
+from ...application.ports.i_token_usage_repository import TokenUsageSummary
+from ...domain.models.token_usage import TokenUsage, TokenUsageStats
 
 # Need LLMResponse at runtime for decorator isinstance checks
 from ..services.model_registry import ModelLookupResult, ModelRegistry
@@ -145,7 +146,7 @@ class TrackingContext:
         if isinstance(self.provider, str):
             provider_str = self.provider
         else:
-            provider_str = str(self.provider)
+            provider_str = str(self.provider)  # type: ignore[unreachable]
 
         self._usage = TokenUsage.create(
             provider=provider_str,
@@ -198,7 +199,7 @@ class TrackingContext:
         if isinstance(self.provider, str):
             provider_str = self.provider
         else:
-            provider_str = str(self.provider)
+            provider_str = str(self.provider)  # type: ignore[unreachable]
 
         self._usage = TokenUsage.create(
             provider=provider_str,

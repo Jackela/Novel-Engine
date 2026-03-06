@@ -18,6 +18,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.core.result import Err, Ok, Result
+
 from ...domain.models.model_registry import (
     PromptFormat,
     PromptModelFamily,
@@ -405,6 +408,44 @@ class PromptFormatter:
         """
         family = PromptModelFamily.from_model_name(model_name)
         return family.default_prompt_format
+
+    def get_format_for_model_result(
+        self, model_name: str
+    ) -> Result[PromptFormat, ValidationError]:
+        """
+        Get the prompt format for a given model name (Result pattern).
+
+        Args:
+            model_name: Model identifier
+
+        Returns:
+            Result containing PromptFormat on success.
+            - Ok: PromptFormat for the model
+            - Err(ValidationError): If model name is invalid
+
+        Example:
+            >>> result = formatter.get_format_for_model_result("gpt-4")
+            >>> if result.is_ok:
+            ...     format = result.value
+        """
+        try:
+            if not model_name:
+                return Err(
+                    ValidationError(
+                        message="Model name cannot be empty",
+                        field="model_name",
+                    )
+                )
+            family = PromptModelFamily.from_model_name(model_name)
+            return Ok(family.default_prompt_format)
+        except Exception as e:
+            return Err(
+                ValidationError(
+                    message=f"Failed to get format for model: {e}",
+                    field="model_name",
+                    value=model_name,
+                )
+            )
 
 
 def create_prompt_formatter(

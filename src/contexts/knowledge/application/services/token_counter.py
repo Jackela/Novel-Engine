@@ -22,7 +22,7 @@ import structlog
 from src.core.result import Err, Error, Ok, Result, ValidationError
 
 try:
-    import tiktoken
+    import tiktoken  # type: ignore[import-not-found]
 
     TIKTOKEN_AVAILABLE = True
 except ImportError:
@@ -201,7 +201,7 @@ class TokenCounter:
             Result containing TokenCountResult on success, Error on failure
         """
         if not isinstance(text, str):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message=f"text must be a string, got {type(text).__name__}",
                     field="text",
@@ -294,7 +294,7 @@ class TokenCounter:
             Result containing list of TokenCountResult on success, Error on failure
         """
         if not isinstance(texts, list):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="texts must be a list",
                     field="texts",
@@ -385,7 +385,7 @@ class TokenCounter:
             Result containing total token count including format overhead
         """
         if not isinstance(messages, list):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="messages must be a list",
                     field="messages",
@@ -470,7 +470,7 @@ class TokenCounter:
             Result containing maximum number of complete chunks that fit
         """
         if not isinstance(text, str):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message=f"text must be a string, got {type(text).__name__}",
                     field="text",
@@ -521,7 +521,7 @@ class TokenCounter:
             Result containing truncated text (or original if under budget)
         """
         if not isinstance(text, str):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message=f"text must be a string, got {type(text).__name__}",
                     field="text",

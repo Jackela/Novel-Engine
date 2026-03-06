@@ -45,7 +45,7 @@ class ConnectionManager:
         """Get or create Neo4j driver instance."""
         if self._driver is None:
             try:
-                from neo4j import GraphDatabase
+                from neo4j import GraphDatabase  # type: ignore[import-not-found]
 
                 self._driver = GraphDatabase.driver(
                     self._uri,

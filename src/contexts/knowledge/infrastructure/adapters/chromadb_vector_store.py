@@ -98,8 +98,8 @@ class ChromaDBVectorStore(IVectorStore):
             return self._client
 
         try:
-            import chromadb
-            from chromadb.config import Settings
+            import chromadb  # type: ignore[import-not-found]
+            from chromadb.config import Settings  # type: ignore[import-not-found]
         except ImportError as e:
             raise VectorStoreError(
                 "ChromaDB is not installed. Run: pip install chromadb",
@@ -354,7 +354,7 @@ class ChromaDBVectorStore(IVectorStore):
             # Count after deletion
             count_after = chroma_collection.count()
 
-            deleted_count = count_before - count_after
+            deleted_count = int(count_before) - int(count_after)
 
             logger.debug(
                 "chromadb_delete",
@@ -453,7 +453,8 @@ class ChromaDBVectorStore(IVectorStore):
         """
         try:
             chroma_collection = self._get_collection(collection)
-            return chroma_collection.count()
+            count: int = chroma_collection.count()
+            return count
 
         except Exception as e:
             raise VectorStoreError(

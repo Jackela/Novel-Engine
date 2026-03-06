@@ -21,7 +21,7 @@ from ...domain.models.access_level import AccessLevel
 from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
-from ..adapters.embedding_generator_adapter import EmbeddingGeneratorAdapter
+from ..adapters.embedding_generator_adapter import EmbeddingServiceAdapter
 
 
 class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
@@ -43,7 +43,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
     def __init__(
         self,
         session: AsyncSession,
-        embedding_generator: EmbeddingGeneratorAdapter | None = None,
+        embedding_generator: EmbeddingServiceAdapter | None = None,
     ) -> None:
         """
         Initialize repository with database session.
@@ -56,7 +56,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         - Article V (SOLID): DIP - Depend on AsyncSession abstraction
         """
         self._session = session
-        self._embedding_generator = embedding_generator or EmbeddingGeneratorAdapter()
+        self._embedding_generator = embedding_generator or EmbeddingServiceAdapter()
 
     async def save(self, entry: KnowledgeEntry) -> None:
         """
@@ -324,7 +324,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Generate embedding for search query
-        query_embedding = await self._embedding_generator.generate_embedding(
+        query_embedding = await self._embedding_generator.embed(
             semantic_query
         )
 
@@ -396,7 +396,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
 
         return entries
 
-    def _row_to_domain_model(self, row) -> KnowledgeEntry:
+    def _row_to_domain_model(self, row: Any) -> KnowledgeEntry:
         """
         Map database row to KnowledgeEntry domain model.
 

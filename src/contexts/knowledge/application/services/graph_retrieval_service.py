@@ -20,6 +20,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_graph_store import (
     CentralityResult,
     CliqueResult,
@@ -762,6 +765,28 @@ class GraphRetrievalService:
         self._cache_hits = 0
         self._cache_misses = 0
 
+    def reset_cache_stats_result(self) -> Result[None, ServiceError]:
+        """
+        Reset cache hit/miss counters (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If reset fails
+        """
+        try:
+            self._cache_hits = 0
+            self._cache_misses = 0
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to reset cache stats: {e}",
+                    service_name="GraphRetrievalService",
+                    operation="reset_cache_stats",
+                )
+            )
+
     def get_cache_stats(self) -> dict[str, float]:
         """Get cache statistics."""
         total = self._cache_hits + self._cache_misses
@@ -773,6 +798,34 @@ class GraphRetrievalService:
             "total": float(total),
             "hit_rate": hit_rate,
         }
+
+    def get_cache_stats_result(self) -> Result[dict[str, float], ServiceError]:
+        """
+        Get cache statistics (Result pattern).
+
+        Returns:
+            Result containing cache statistics on success.
+            - Ok: Dict with cache hits, misses, and hit rate
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            total = self._cache_hits + self._cache_misses
+            hit_rate = self._cache_hits / total if total > 0 else 0.0
+
+            return Ok({
+                "hits": float(self._cache_hits),
+                "misses": float(self._cache_misses),
+                "total": float(total),
+                "hit_rate": hit_rate,
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get cache stats: {e}",
+                    service_name="GraphRetrievalService",
+                    operation="get_cache_stats",
+                )
+            )
 
 
 __all__ = [

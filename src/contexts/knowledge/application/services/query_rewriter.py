@@ -21,6 +21,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 
 if TYPE_CHECKING:
@@ -328,6 +331,28 @@ class QueryRewriter:
         self._cache.clear()
         logger.debug("query_rewrite_cache_cleared")
 
+    def clear_cache_result(self) -> Result[None, ServiceError]:
+        """
+        Clear the rewrite cache (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If cache clear fails
+        """
+        try:
+            self._cache.clear()
+            logger.debug("query_rewrite_cache_cleared")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to clear cache: {e}",
+                    service_name="QueryRewriter",
+                    operation="clear_cache",
+                )
+            )
+
     def get_cache_stats(self) -> dict[str, Any]:
         """
         Get cache statistics including token tracking.
@@ -340,6 +365,30 @@ class QueryRewriter:
             "cache_enabled": self._cache_enabled,
             "total_tokens_saved": self._total_tokens_saved,
         }
+
+    def get_cache_stats_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get cache statistics including token tracking (Result pattern).
+
+        Returns:
+            Result containing cache stats dictionary on success.
+            - Ok: Dict with cache size, tokens saved, and related stats
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            return Ok({
+                "cache_size": len(self._cache),
+                "cache_enabled": self._cache_enabled,
+                "total_tokens_saved": self._total_tokens_saved,
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get cache stats: {e}",
+                    service_name="QueryRewriter",
+                    operation="get_cache_stats",
+                )
+            )
 
     async def _generate_variants(
         self,

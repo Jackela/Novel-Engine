@@ -17,7 +17,7 @@ from __future__ import annotations
 import structlog
 from typing import TYPE_CHECKING, Any
 
-import networkx as nx
+import networkx as nx  # type: ignore[import-untyped]
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
     CentralityResult,

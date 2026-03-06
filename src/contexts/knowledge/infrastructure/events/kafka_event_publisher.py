@@ -164,10 +164,14 @@ class KafkaEventPublisher(IEventPublisher):
                 processed_headers.append(event_headers)
 
             # Publish batch to Kafka
+            # Filter out None keys and use empty string as default
+            processed_keys: list[str] | None = None
+            if keys is not None:
+                processed_keys = [k or "" for k in keys]
             await self._kafka_client.publish_batch(
                 topic=topic,
                 messages=events,
-                keys=keys,
+                keys=processed_keys,
                 headers=processed_headers,
             )
 

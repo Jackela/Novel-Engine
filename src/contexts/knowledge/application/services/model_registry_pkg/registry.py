@@ -2,21 +2,36 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-from src.core.result import Error, Result
+import structlog
+
+from src.core.result import Err, Error, NotFoundError, Ok, Result, ValidationError
+
+from src.contexts.knowledge.domain.models.model_registry import LLMProvider
 
 if TYPE_CHECKING:
-    from ....domain.models.model_registry import ModelDefinition
+    from ....domain.models.model_registry import (
+        ModelAlias,
+        ModelDefinition,
+        TaskModelConfig,
+        TaskType,
+    )
 
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
+    DEFAULT_ALIASES,
+    DEFAULT_MODELS,
+    DEFAULT_TASK_CONFIGS,
     ModelLookupResult,
     ModelRegistryConfig,
+    ModelRegistryConfigFile,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 class ModelRegistry:
     """
@@ -126,8 +141,6 @@ class ModelRegistry:
         if not path.exists():
             logger.debug("alias_config_file_not_found", path=str(path))
             return
-
-        import json
 
         try:
             with open(path, "r") as f:

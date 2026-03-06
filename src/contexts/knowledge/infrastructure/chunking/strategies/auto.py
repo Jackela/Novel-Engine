@@ -21,7 +21,7 @@ from .semantic import SemanticSimilarityStrategy as SemanticSimilarityStrategy
 from .sentence import SentenceBoundaryStrategy as SentenceBoundaryStrategy
 
 if TYPE_CHECKING:
-    from ...application.ports.i_embedding_service import IEmbeddingService
+    from ....application.ports.i_embedding_service import IEmbeddingService
 
 logger = structlog.get_logger()
 
@@ -337,17 +337,21 @@ class AutoSelectStrategy(BaseChunkingStrategy):
             min_chunk_size=config.min_chunk_size,
         )
 
+        chunks: list[Chunk]
         if strategy_type == ChunkStrategyType.FIXED:
             delegate = self._get_fixed_strategy()
-            return await delegate.chunk(text, target_config)
+            chunks = await delegate.chunk(text, target_config)
+            return chunks
 
         if strategy_type == ChunkStrategyType.SENTENCE:
             delegate = self._get_sentence_strategy()
-            return await delegate.chunk(text, target_config)
+            chunks = await delegate.chunk(text, target_config)
+            return chunks
 
         if strategy_type == ChunkStrategyType.PARAGRAPH:
             delegate = self._get_paragraph_strategy()
-            return await delegate.chunk(text, target_config)
+            chunks = await delegate.chunk(text, target_config)
+            return chunks
 
         if strategy_type == ChunkStrategyType.SEMANTIC:
             if self._embedding_service is None:
@@ -359,10 +363,12 @@ class AutoSelectStrategy(BaseChunkingStrategy):
                     overlap=config.overlap,
                     min_chunk_size=config.min_chunk_size,
                 )
-                return await delegate.chunk(text, para_config)
+                chunks = await delegate.chunk(text, para_config)
+                return chunks
 
             delegate = self._get_semantic_strategy()
-            return await delegate.chunk(text, target_config)
+            chunks = await delegate.chunk(text, target_config)
+            return chunks
 
         # Should never reach here
         raise ChunkingError(

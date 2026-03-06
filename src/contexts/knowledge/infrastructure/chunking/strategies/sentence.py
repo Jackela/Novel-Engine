@@ -156,10 +156,11 @@ class SentenceBoundaryStrategy(BaseChunkingStrategy):
                     # Keep overlap sentences for next chunk
                     overlap_to_keep: list[tuple[int, int]] = []
                     overlap_count = 0
+                    overlap_limit = strategy_config.overlap or 0
                     # Walk backwards from the end of current sentences
                     for s_start, s_end in reversed(current_sentences):
                         s_words = len(_WORD_PATTERN.findall(text[s_start:s_end]))
-                        if overlap_count + s_words <= strategy_config.overlap:
+                        if overlap_count + s_words <= overlap_limit:
                             overlap_to_keep.insert(0, (s_start, s_end))
                             overlap_count += s_words
                         else:

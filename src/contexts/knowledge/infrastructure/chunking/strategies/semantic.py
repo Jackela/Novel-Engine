@@ -18,7 +18,7 @@ from ..base import _SENTENCE_END, _WORD_PATTERN, BaseChunkingStrategy
 from .fixed_size import FixedSizeStrategy as FixedSizeStrategy
 
 if TYPE_CHECKING:
-    from ...application.ports.i_embedding_service import IEmbeddingService
+    from ....application.ports.i_embedding_service import IEmbeddingService
 
 logger = structlog.get_logger()
 
@@ -319,8 +319,9 @@ class SemanticSimilarityStrategy(BaseChunkingStrategy):
             end_pos = group[-1][1]
 
             # Apply overlap by including sentences from previous group
-            if chunk_index > 0 and config.overlap > 0:
-                overlap_words = config.overlap
+            overlap_limit = config.overlap or 0
+            if chunk_index > 0 and overlap_limit > 0:
+                overlap_words = overlap_limit
                 # Find sentences to include for overlap
                 overlap_sentences = self._get_overlap_sentences(
                     semantic_groups[chunk_index - 1],

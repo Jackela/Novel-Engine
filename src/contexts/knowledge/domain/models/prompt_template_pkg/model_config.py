@@ -5,8 +5,8 @@ Model configuration for prompt templates.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Any, Optional
 
 from src.contexts.knowledge.domain.models.prompt_template_pkg.variable import (
     VariableType,
@@ -35,6 +35,7 @@ class ModelConfig:
 
     provider: str = "gemini"
     model: str = "gemini-2.0-flash"
+    model_name: str = "gemini-2.0-flash"  # Alias for model, for backward compatibility
     temperature: float = 0.7
     max_tokens: int = 2048
     top_p: Optional[float] = None
@@ -42,6 +43,8 @@ class ModelConfig:
     presence_penalty: Optional[float] = None
     frequency_penalty: Optional[float] = None
     stop_sequences: Optional[tuple[str, ...]] = None
+    supports_functions: bool = False  # Whether the model supports function calling
+    extra: dict[str, Any] = field(default_factory=dict)  # Extra model-specific parameters
 
     def __post_init__(self) -> None:
         """Validate model configuration."""
@@ -70,17 +73,20 @@ class ModelConfig:
         if self.stop_sequences is not None and not isinstance(
             self.stop_sequences, tuple
         ):
-            object.__setattr__(
+            object.__setattr__(  # type: ignore[unreachable]
                 self, "stop_sequences", tuple(self.stop_sequences)
             )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
-        result = {
+        result: dict[str, Any] = {
             "provider": self.provider,
             "model": self.model,
+            "model_name": self.model_name,
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
+            "supports_functions": self.supports_functions,
+            "extra": self.extra,
         }
         if self.top_p is not None:
             result["top_p"] = self.top_p
@@ -95,12 +101,13 @@ class ModelConfig:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict) -> ModelConfig:
+    def from_dict(cls, data: dict[str, Any]) -> ModelConfig:
         """Create from dictionary."""
         stop_seq = data.get("stop_sequences")
         return cls(
             provider=data.get("provider", "gemini"),
             model=data.get("model", "gemini-2.0-flash"),
+            model_name=data.get("model_name", data.get("model", "gemini-2.0-flash")),
             temperature=data.get("temperature", 0.7),
             max_tokens=data.get("max_tokens", 2048),
             top_p=data.get("top_p"),
@@ -108,6 +115,8 @@ class ModelConfig:
             presence_penalty=data.get("presence_penalty"),
             frequency_penalty=data.get("frequency_penalty"),
             stop_sequences=tuple(stop_seq) if stop_seq else None,
+            supports_functions=data.get("supports_functions", False),
+            extra=data.get("extra", {}),
         )
 
     def with_temperature(self, temperature: float) -> ModelConfig:
@@ -115,6 +124,7 @@ class ModelConfig:
         return ModelConfig(
             provider=self.provider,
             model=self.model,
+            model_name=self.model_name,
             temperature=temperature,
             max_tokens=self.max_tokens,
             top_p=self.top_p,
@@ -122,4 +132,6 @@ class ModelConfig:
             presence_penalty=self.presence_penalty,
             frequency_penalty=self.frequency_penalty,
             stop_sequences=self.stop_sequences,
+            supports_functions=self.supports_functions,
+            extra=self.extra.copy(),
         )

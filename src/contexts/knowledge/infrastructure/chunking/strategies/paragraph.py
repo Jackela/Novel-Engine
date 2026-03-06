@@ -155,9 +155,10 @@ class ParagraphBoundaryStrategy(BaseChunkingStrategy):
                     # Keep overlap paragraphs
                     overlap_to_keep: list[tuple[int, int]] = []
                     overlap_count = 0
+                    overlap_limit = strategy_config.overlap or 0
                     for p_start, p_end in reversed(current_paragraphs):
                         p_words = len(_WORD_PATTERN.findall(text[p_start:p_end]))
-                        if overlap_count + p_words <= strategy_config.overlap:
+                        if overlap_count + p_words <= overlap_limit:
                             overlap_to_keep.insert(0, (p_start, p_end))
                             overlap_count += p_words
                         else:

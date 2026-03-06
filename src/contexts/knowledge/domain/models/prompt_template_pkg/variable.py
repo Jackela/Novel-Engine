@@ -64,12 +64,44 @@ class VariableDefinition:
         # Validate enum values
         if self.enum_values is not None:
             if not isinstance(self.enum_values, tuple):
-                object.__setattr__(
+                object.__setattr__(  # type: ignore[unreachable]
                     self, "enum_values", tuple(self.enum_values)
                 )
             for val in self.enum_values:
                 self._validate_value(val)
 
+    def coerce_value(self, value: Any) -> Any:
+        """Coerce a value to match this variable's type.
+        
+        Args:
+            value: The value to coerce
+            
+        Returns:
+            The coerced value
+            
+        Raises:
+            ValueError: If the value cannot be coerced
+        """
+        if value is None:
+            return self.default_value
+            
+        coercers = {
+            VariableType.STRING: lambda v: str(v),
+            VariableType.INTEGER: lambda v: int(v) if isinstance(v, (int, float, str)) and not isinstance(v, bool) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to int")),
+            VariableType.FLOAT: lambda v: float(v) if isinstance(v, (int, float, str)) and not isinstance(v, bool) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to float")),
+            VariableType.BOOLEAN: lambda v: bool(v) if not isinstance(v, str) else v.lower() in ('true', '1', 'yes', 'on'),
+            VariableType.LIST: lambda v: list(v) if isinstance(v, (list, tuple)) else [v],
+            VariableType.DICT: lambda v: dict(v) if isinstance(v, dict) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to dict")),
+        }
+        
+        coercer = coercers.get(self.type)
+        if coercer:
+            result = coercer(value)
+            # Validate after coercion
+            self._validate_value(result)
+            return result
+        return value
+    
     def _validate_value(self, value: Any) -> None:
         """Validate a value against this variable's type."""
         type_validators = {

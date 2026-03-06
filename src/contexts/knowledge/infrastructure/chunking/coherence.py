@@ -217,6 +217,8 @@ class ChunkCoherenceAnalyzer:
 
         try:
             # Generate embeddings for all sentences
+            if self._embedding_service is None:
+                return self._heuristic_coherence(text, {})
             embeddings = await self._embedding_service.embed_batch(sentences)
 
             # Calculate pairwise similarities between adjacent sentences
@@ -327,11 +329,12 @@ class ChunkCoherenceAnalyzer:
         Returns:
             Size score from 0.0 to 1.0
         """
-        word_count = chunk.metadata.get(
+        word_count_raw = chunk.metadata.get(
             "word_count", len(_WORD_PATTERN.findall(chunk.text))
         )
-        target = getattr(config, "chunk_size", 500)
-        min_size = getattr(config, "min_chunk_size", 50)
+        word_count = int(word_count_raw) if word_count_raw is not None else 0
+        target = int(getattr(config, "chunk_size", 500) or 500)
+        min_size = int(getattr(config, "min_chunk_size", 50) or 50)
 
         if word_count < min_size:
             # Penalty for being too small

@@ -19,6 +19,8 @@ from typing import Any, List
 from structlog import get_logger
 
 from src.caching.lru_cache import LRUCache
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
 
 logger = get_logger()
 
@@ -188,6 +190,40 @@ class EmbeddingCacheService:
                 results[text] = embedding
         return results
 
+    def get_batch_result(
+        self,
+        texts: List[str],
+        model: str = "text-embedding-ada-002",
+    ) -> Result[dict[str, List[float]], ServiceError]:
+        """
+        Retrieve multiple cached embeddings (Result pattern).
+
+        Args:
+            texts: List of text contents to look up
+            model: Model identifier for cache keys
+
+        Returns:
+            Result containing dict mapping text to cached embedding on success.
+            - Ok: Dict with cached embeddings (only hits)
+            - Err(ServiceError): If batch retrieval fails
+        """
+        try:
+            results: dict[Any, Any] = {}
+            for text in texts:
+                embedding = self.get(text, model)
+                if embedding is not None:
+                    results[text] = embedding
+            return Ok(results)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get batch embeddings: {e}",
+                    service_name="EmbeddingCacheService",
+                    operation="get_batch",
+                    details={"text_count": len(texts), "model": model},
+                )
+            )
+
     def invalidate(self, model: str | None = None) -> int:
         """
         Invalidate cache entries.
@@ -230,6 +266,34 @@ class EmbeddingCacheService:
             evictions=stats.evictions,
             size=stats.size,
         )
+
+    def get_stats_result(self) -> Result[CacheStats, ServiceError]:
+        """
+        Get cache performance statistics (Result pattern).
+
+        Returns:
+            Result containing CacheStats on success.
+            - Ok: CacheStats with current metrics
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            stats = self._cache.stats()
+            return Ok(
+                CacheStats(
+                    hits=stats.hits,
+                    misses=stats.misses,
+                    evictions=stats.evictions,
+                    size=stats.size,
+                )
+            )
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get cache stats: {e}",
+                    service_name="EmbeddingCacheService",
+                    operation="get_stats",
+                )
+            )
 
     def clear(self) -> None:
         """Clear all cache entries and reset stats."""

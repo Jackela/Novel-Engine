@@ -13,6 +13,9 @@ from __future__ import annotations
 
 from typing import Dict
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_ingestion_processor import IIngestionProcessor
 from ...domain.models.source_type import SourceType
 from .ingestion_processors import (
@@ -123,6 +126,58 @@ class IngestionProcessorFactory:
 
         return self._processors[SourceType.LORE]
 
+    def get_processor_result(
+        self, source_type: SourceType
+    ) -> Result[IIngestionProcessor, ServiceError]:
+        """
+        Get the processor for a given source type (Result pattern).
+
+        Args:
+            source_type: The SourceType to get a processor for
+
+        Returns:
+            Result containing IIngestionProcessor on success.
+            - Ok: IIngestionProcessor instance for the source type
+            - Err(ServiceError): If processor cannot be retrieved
+
+        Example:
+            >>> factory = IngestionProcessorFactory()
+            >>> result = factory.get_processor_result(SourceType.LORE)
+            >>> if result.is_ok:
+            ...     processor = result.value
+            ...     strategy = processor.get_chunking_strategy()
+        """
+        try:
+            # Check for cached instance
+            if source_type in self._processors:
+                return Ok(self._processors[source_type])
+
+            # Check for processor class to instantiate
+            if source_type in self._processor_classes:
+                processor_class = self._processor_classes[source_type]
+                instance = processor_class()
+                self._processors[source_type] = instance
+                return Ok(instance)
+
+            # Use fallback
+            if self._fallback_processor:
+                return Ok(self._fallback_processor)
+
+            # Default fallback to GenericProcessor
+            if SourceType.LORE not in self._processors:
+                self._processors[SourceType.LORE] = GenericProcessor()
+
+            return Ok(self._processors[SourceType.LORE])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get processor for {source_type}: {e}",
+                    service_name="IngestionProcessorFactory",
+                    operation="get_processor",
+                    details={"source_type": str(source_type)},
+                )
+            )
+
     def register_processor(
         self,
         source_type: SourceType,
@@ -195,6 +250,43 @@ class IngestionProcessorFactory:
         """
         self._fallback_processor = processor
 
+    def set_fallback_processor_result(
+        self, processor: IIngestionProcessor
+    ) -> Result[None, ServiceError]:
+        """
+        Set the fallback processor for unknown source types (Result pattern).
+
+        Args:
+            processor: The processor to use as fallback
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If setting fallback fails
+
+        Why:
+            Allows custom fallback behavior for new content types with explicit error handling.
+        """
+        try:
+            if processor is None:
+                return Err(  # type: ignore[unreachable]
+                    ServiceError(
+                        message="Fallback processor cannot be None",
+                        service_name="IngestionProcessorFactory",
+                        operation="set_fallback_processor",
+                    )
+                )
+            self._fallback_processor = processor
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to set fallback processor: {e}",
+                    service_name="IngestionProcessorFactory",
+                    operation="set_fallback_processor",
+                )
+            )
+
     @classmethod
     def get_default_factory(cls) -> IngestionProcessorFactory:
         """
@@ -208,6 +300,30 @@ class IngestionProcessorFactory:
         """
         return cls()
 
+    @classmethod
+    def get_default_factory_result(cls) -> Result[IngestionProcessorFactory, ServiceError]:
+        """
+        Get a factory instance with all default processors (Result pattern).
+
+        Returns:
+            Result containing IngestionProcessorFactory on success.
+            - Ok: IngestionProcessorFactory with default configuration
+            - Err(ServiceError): If factory creation fails
+
+        Why:
+            Convenience method for getting a standard factory with explicit error handling.
+        """
+        try:
+            return Ok(cls())
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to create default factory: {e}",
+                    service_name="IngestionProcessorFactory",
+                    operation="get_default_factory",
+                )
+            )
+
     def get_registered_types(self) -> list[SourceType]:
         """
         Get all source types with registered processors.
@@ -220,6 +336,30 @@ class IngestionProcessorFactory:
         """
         types = set(self._processors.keys()) | set(self._processor_classes.keys())
         return list(types)
+
+    def get_registered_types_result(self) -> Result[list[SourceType], ServiceError]:
+        """
+        Get all source types with registered processors (Result pattern).
+
+        Returns:
+            Result containing list of SourceType on success.
+            - Ok: List of SourceType values that have processors
+            - Err(ServiceError): If retrieval fails
+
+        Why:
+            Useful for debugging and introspection with explicit error handling.
+        """
+        try:
+            types = set(self._processors.keys()) | set(self._processor_classes.keys())
+            return Ok(list(types))
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get registered types: {e}",
+                    service_name="IngestionProcessorFactory",
+                    operation="get_registered_types",
+                )
+            )
 
 
 __all__ = ["IngestionProcessorFactory"]

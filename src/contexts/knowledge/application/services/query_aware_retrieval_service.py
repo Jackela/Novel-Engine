@@ -19,6 +19,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_embedding_service import IEmbeddingService
 from ...application.ports.i_vector_store import IVectorStore
 from .knowledge_ingestion_service import RetrievedChunk
@@ -407,10 +410,64 @@ class QueryAwareRetrievalService:
             ),
         }
 
+    def get_metrics_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get service metrics (Result pattern).
+
+        Returns:
+            Result containing metrics dictionary on success.
+            - Ok: Dict with metrics including cache efficiency
+            - Err(ServiceError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "queries_total": self._metrics.queries_total,
+                "rewrites_total": self._metrics.rewrites_total,
+                "cache_hits_total": self._metrics.cache_hits_total,
+                "tokens_used_total": self._metrics.tokens_used_total,
+                "tokens_saved_total": self._metrics.tokens_saved_total,
+                "merged_results_total": self._metrics.merged_results_total,
+                "cache_hit_rate": (
+                    self._metrics.cache_hits_total / self._metrics.rewrites_total
+                    if self._metrics.rewrites_total > 0
+                    else 0.0
+                ),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get metrics: {e}",
+                    service_name="QueryAwareRetrievalService",
+                    operation="get_metrics",
+                )
+            )
+
     def reset_metrics(self) -> None:
         """Reset all metrics to zero."""
         self._metrics = QueryAwareMetrics()
         logger.debug("query_aware_metrics_reset")
+
+    def reset_metrics_result(self) -> Result[None, ServiceError]:
+        """
+        Reset all metrics to zero (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If reset fails
+        """
+        try:
+            self._metrics = QueryAwareMetrics()
+            logger.debug("query_aware_metrics_reset")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to reset metrics: {e}",
+                    service_name="QueryAwareRetrievalService",
+                    operation="reset_metrics",
+                )
+            )
 
     def _merge_results(
         self,

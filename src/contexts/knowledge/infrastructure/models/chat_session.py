@@ -104,4 +104,5 @@ def get_session_factory() -> sessionmaker:
 
 def get_db_session() -> Session:
     """Get a database session."""
-    return get_session_factory()()
+    session: Session = get_session_factory()()
+    return session

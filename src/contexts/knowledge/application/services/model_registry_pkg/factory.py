@@ -1,5 +1,7 @@
 """Model Registry Factory."""
 
+from typing import Optional
+
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
     ModelRegistryConfig,
 )
