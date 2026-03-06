@@ -88,15 +88,15 @@ class TestNoOpReranker:
     @pytest.mark.asyncio
     async def test_rerank_with_latency(self):
         """Test that NoOpReranker simulates latency."""
-        import asyncio
+        import time
 
         reranker = NoOpReranker(latency_ms=100.0)
 
         documents = [RerankDocument(index=0, content="test", score=0.5)]
 
-        start = asyncio.get_event_loop().time()
+        start = time.monotonic()
         output = await reranker.rerank("test query", documents)
-        elapsed = asyncio.get_event_loop().time() - start
+        elapsed = time.monotonic() - start
 
         assert output.latency_ms == 100.0
         assert elapsed >= 0.05  # At least 50ms actual delay

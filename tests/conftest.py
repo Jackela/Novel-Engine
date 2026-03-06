@@ -112,12 +112,18 @@ def clean_db():
     # Cleanup: close the database connection
     try:
         # Try async close if available
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Schedule cleanup task
-            asyncio.create_task(db.close())
-        else:
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                # Schedule cleanup task
+                asyncio.create_task(db.close())
+            else:
+                loop.run_until_complete(db.close())
+        except RuntimeError:
+            # No running loop, use new event loop
+            loop = asyncio.new_event_loop()
             loop.run_until_complete(db.close())
+            loop.close()
     except Exception:
         pass  # Ignore cleanup errors
 
