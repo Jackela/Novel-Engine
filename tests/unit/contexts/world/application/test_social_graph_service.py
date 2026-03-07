@@ -55,6 +55,7 @@ class TestEmptyGraph:
     ):
         """Empty graph should return an empty analysis result."""
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.character_centralities == {}
         assert result.most_connected is None
@@ -70,7 +71,7 @@ class TestEmptyGraph:
     ):
         """Unknown character should return None."""
         result = await service.get_character_centrality("nonexistent-char")
-        assert result is None
+        assert result.unwrap() is None
 
 
 class TestSingleRelationship:
@@ -93,6 +94,7 @@ class TestSingleRelationship:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.total_relationships == 1
         assert result.total_characters == 2
@@ -122,6 +124,7 @@ class TestSingleRelationship:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         hero = result.character_centralities["hero"]
         assert hero.negative_count == 1
@@ -149,6 +152,7 @@ class TestCentralityCalculation:
             await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # Center should have centrality_score of 100 (most connected)
         center = result.character_centralities["center"]
@@ -182,6 +186,7 @@ class TestCentralityCalculation:
         await repository.save(rel3)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # All should have centrality_score of 100 (2 relationships each = max)
         assert result.character_centralities["a"].relationship_count == 2
@@ -209,6 +214,7 @@ class TestFindExtremes:
             await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.most_connected == "popular"
 
@@ -227,6 +233,7 @@ class TestFindExtremes:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.most_hated is None
 
@@ -255,6 +262,7 @@ class TestFindExtremes:
         await repository.save(ally_rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # villain has 3 negative, heroes have 1 each
         assert result.most_hated == "villain"
@@ -287,6 +295,7 @@ class TestFindExtremes:
         await repository.save(rel2)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # beloved: 90*0.6 + 80*0.4 = 54 + 32 = 86
         # popular: 70*0.6 + 0*0.4 = 42
@@ -318,6 +327,7 @@ class TestNetworkDensity:
         await repository.save(rel3)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # Max possible for 3 nodes = 3*(3-1)/2 = 3
         # Actual = 3, density = 1.0
@@ -340,6 +350,7 @@ class TestNetworkDensity:
             await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         # 5 characters, max possible = 5*4/2 = 10
         # Actual = 4, density = 0.4
@@ -374,6 +385,7 @@ class TestIndividualCharacterCentrality:
         await repository.save(rel2)
 
         result = await service.get_character_centrality("alice")
+        result = result.unwrap()
 
         assert result is not None
         assert result.character_id == "alice"
@@ -407,6 +419,7 @@ class TestIndividualCharacterCentrality:
         await repository.save(faction_rel)
 
         result = await service.get_character_centrality("alice")
+        result = result.unwrap()
 
         # Only the character-to-character relationship should be counted
         assert result.relationship_count == 1
@@ -430,6 +443,7 @@ class TestRelationshipTypeClassification:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.character_centralities["parent"].positive_count == 1
 
@@ -448,6 +462,7 @@ class TestRelationshipTypeClassification:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.character_centralities["master"].positive_count == 1
 
@@ -466,6 +481,7 @@ class TestRelationshipTypeClassification:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         assert result.character_centralities["athlete1"].negative_count == 1
 
@@ -484,6 +500,7 @@ class TestRelationshipTypeClassification:
         await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         char = result.character_centralities["stranger1"]
         assert char.positive_count == 0
@@ -512,6 +529,7 @@ class TestAverageMetrics:
             await repository.save(rel)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         alice = result.character_centralities["alice"]
         # Alice has 3 relationships, average trust = (60+80+100)/3 = 80
@@ -543,6 +561,7 @@ class TestAverageMetrics:
         await repository.save(rel2)
 
         result = await service.analyze_social_network()
+        result = result.unwrap()
 
         alice = result.character_centralities["alice"]
         # Average romance = (0 + 90) / 2 = 45

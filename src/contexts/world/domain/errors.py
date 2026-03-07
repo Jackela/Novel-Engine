@@ -5,7 +5,7 @@ This module provides centralized error types for the world context.
 All errors use the Result[T, Error] pattern for explicit error handling.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from src.core.result import Error
 
@@ -364,16 +364,38 @@ class FactionTickError(Error):
         )
 
 
-class SanityCheckError(Error):
-    """Error raised when sanity check execution fails."""
+class SanityCheckError(Exception):
+    """Exception raised when sanity check violations are found.
+    
+    This exception is raised by check_and_raise() when ERROR-level
+    violations are detected. It contains the list of violations
+    for inspection and reporting.
+    
+    Can also be used with a simple message string for backward compatibility
+    with Result-pattern error handling.
+    
+    Attributes:
+        violations: List of SanityViolation instances that caused the error.
+                    Empty if initialized with just a message.
+    """
 
-    def __init__(self, message: str, details: Dict[str, Any] | None = None) -> None:
-        super().__init__(
-            code="SANITY_CHECK_ERROR",
-            message=message,
-            recoverable=True,
-            details=details,
-        )
+    def __init__(self, violations: List[Any] | str) -> None:
+        if isinstance(violations, str):
+            # Backward compatibility: initialize with a message string
+            self.violations: List[Any] = []
+            super().__init__(violations)
+        else:
+            # Normal case: initialize with list of violations
+            self.violations = violations
+            # Build a readable message from violations
+            messages = []
+            for v in violations:
+                messages.append(f"[{v.severity.value}] {v.rule_name}: {v.message}")
+            message = "Sanity check failed with {} violation(s):\n  - {}".format(
+                len(violations),
+                "\n  - ".join(messages)
+            )
+            super().__init__(message)
 
 
 class SocialGraphError(Error):

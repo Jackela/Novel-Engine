@@ -259,6 +259,50 @@ class SimulationSanityChecker:
 
         return Ok(len(errors) > 0)
 
+    def check_and_raise(self, world: Optional["WorldState"] = None) -> None:
+        """Check sanity and raise SanityCheckError if ERROR-level violations exist.
+
+        This is the exception-based alternative to check() for callers that
+        prefer exceptions over Result types. Only raises for ERROR-level
+        violations; WARNING-level violations are logged but don't raise.
+
+        Args:
+            world: Optional WorldState for context.
+
+        Raises:
+            SanityCheckError: If any ERROR-level violations are found.
+
+        Example:
+            >>> try:
+            ...     checker.check_and_raise(world)
+            ... except SanityCheckError as e:
+            ...     for v in e.violations:
+            ...         print(f"Error: {v.message}")
+        """
+        check_result = self.check(world)
+        if check_result.is_error:
+            # If check() itself failed, we need to raise an exception
+            # The error from check() is a domain Error, not an Exception
+            # So we convert it to a SanityCheckError with a message
+            raise SanityCheckError([
+                SanityViolation(
+                    rule_name="check_execution_failed",
+                    severity=Severity.ERROR,
+                    message=str(check_result.error),
+                )
+            ])
+
+        violations = check_result.value
+        errors = [v for v in violations if v.severity == Severity.ERROR]
+
+        if errors:
+            logger.error(
+                "sanity_check_failed_with_errors",
+                error_count=len(errors),
+                rules=[v.rule_name for v in errors],
+            )
+            raise SanityCheckError(errors)
+
     def _check_dead_character_has_location(self) -> List[SanityViolation]:
         """Check that deceased characters don't have current_location_id.
 
