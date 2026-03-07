@@ -114,38 +114,45 @@ class TestBM25Retriever:
 
     def test_index_empty_list(self, retriever):
         """Test indexing empty document list."""
-        count = retriever.index_documents([])
-        assert count == 0
+        result = retriever.index_documents([])
+        assert result.is_ok
+        assert result.unwrap() == 0
 
     def test_search_empty_query(self, retriever):
         """Test search with empty query."""
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            retriever.search("")
+        result = retriever.search("")
+        assert result.is_error
+        assert "query cannot be empty" in result.error.message
 
     def test_search_whitespace_query(self, retriever):
         """Test search with whitespace-only query."""
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            retriever.search("   ")
+        result = retriever.search("   ")
+        assert result.is_error
+        assert "query cannot be empty" in result.error.message
 
     def test_search_nonexistent_collection(self, retriever):
         """Test search on non-existent collection."""
-        results = retriever.search("query", collection="nonexistent")
-        assert results == []
+        result = retriever.search("query", collection="nonexistent")
+        assert result.is_error
+        assert "Collection not found" in result.error.message
 
     def test_remove_nonexistent_document(self, retriever):
         """Test removing a non-existent document."""
         result = retriever.remove_document("nonexistent")
-        assert result is False
+        assert result.is_ok
+        assert result.unwrap() is False
 
     def test_clear_nonexistent_collection(self, retriever):
         """Test clearing a non-existent collection."""
-        count = retriever.clear_collection(collection="nonexistent")
-        assert count == 0
+        result = retriever.clear_collection(collection="nonexistent")
+        assert result.is_ok
+        assert result.unwrap() == 0
 
     def test_get_stats_nonexistent_collection(self, retriever):
         """Test getting stats for non-existent collection."""
-        stats = retriever.get_stats(collection="nonexistent")
-        assert stats is None
+        result = retriever.get_stats(collection="nonexistent")
+        assert result.is_error
+        assert "Collection not found" in result.error.message
 
 
 class TestBM25RetrieverFilters:

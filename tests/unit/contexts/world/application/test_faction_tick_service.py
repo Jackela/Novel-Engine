@@ -28,19 +28,23 @@ class TestFactionTickService:
         """Test that process_tick returns a TickResult."""
         result = service.process_tick(world_id="test-world", days_advanced=1)
 
-        assert isinstance(result, TickResult)
-        assert result.world_id == "test-world"
-        assert result.days_advanced == 1
-        assert result.resources_updated == 0  # No factions yet
-        assert result.diplomatic_changes == 0
+        assert result.is_ok
+        tick_result = result.unwrap()
+        assert isinstance(tick_result, TickResult)
+        assert tick_result.world_id == "test-world"
+        assert tick_result.days_advanced == 1
+        assert tick_result.resources_updated == 0  # No factions yet
+        assert tick_result.diplomatic_changes == 0
 
     def test_process_tick_with_factions(self, service: FactionTickService) -> None:
         """Test process_tick with mock faction data."""
         # This will be expanded when we integrate with actual faction data
         result = service.process_tick(world_id="test-world", days_advanced=5)
 
-        assert result.days_advanced == 5
-        assert result.success is True
+        assert result.is_ok
+        tick_result = result.unwrap()
+        assert tick_result.days_advanced == 5
+        assert tick_result.success is True
 
     def test_tick_result_dataclass_fields(self) -> None:
         """Test that TickResult has all required fields with correct defaults."""

@@ -366,6 +366,40 @@ def ensure_required_services(request):
         request.getfixturevalue("postgres_service")
 
 
+@pytest.fixture(autouse=True, scope="session")
+def configure_test_logging():
+    """Configure logging for tests to prevent structlog/standard logging conflicts.
+    
+    This prevents KeyError: "Attempt to overwrite 'message' in LogRecord" errors
+    that can occur when structlog and standard library logging interact.
+    """
+    # Import and configure structlog for test environment
+    try:
+        import structlog
+        # Use a simple console renderer for tests to avoid conflicts
+        structlog.configure(
+            processors=[
+                structlog.stdlib.filter_by_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.dev.ConsoleRenderer(colors=False),  # Disable colors for tests
+            ],
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+    except Exception:
+        # If structlog configuration fails, continue with default logging
+        pass
+    yield
+    # No cleanup needed - logging configuration persists for test session
+
+
 @pytest.fixture
 def characters_directory(temp_dir):
     """创建临时的角色目录结构"""

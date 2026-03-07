@@ -306,6 +306,10 @@ class StructuredLogger:
         # Log using standard logger
         log_level = self._map_to_standard_level(level)
         extra = {"structured_data": entry.to_dict()}
+        # Protect against LogRecord KeyError when 'message' key exists in extra
+        # This prevents conflicts between structlog and standard library logging
+        if isinstance(extra, dict) and "message" in extra:
+            extra = {k: v for k, v in extra.items() if k != "message"}
         self._logger.log(log_level, message, extra=extra)
 
     def _map_to_standard_level(self, level: LogLevel) -> int:

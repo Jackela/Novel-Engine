@@ -162,7 +162,10 @@ class TestKnowledgeIngestionService:
     async def mock_embedding_service(self):
         """Create a mock embedding service."""
         service = AsyncMock()
-        service.embed_batch = AsyncMock(return_value=[[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        # Dynamic mock: return same number of embeddings as input texts
+        async def mock_embed_batch(texts):
+            return [[0.1, 0.2, 0.3] for _ in texts]
+        service.embed_batch = AsyncMock(side_effect=mock_embed_batch)
         service.get_dimension = Mock(return_value=3)
         return service
 
@@ -218,10 +221,12 @@ class TestKnowledgeIngestionService:
             tags=["test", "lore"],
         )
         
-        assert result.success is True
-        assert result.source_id == "lore_001"
-        assert result.chunk_count > 0
-        assert result.entries_created > 0
+        assert result.is_ok
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
+        assert ingestion_result.source_id == "lore_001"
+        assert ingestion_result.chunk_count > 0
+        assert ingestion_result.entries_created > 0
         
         # Verify embedding service was called
         mock_embedding_service.embed_batch.assert_called_once()
@@ -230,22 +235,24 @@ class TestKnowledgeIngestionService:
         mock_vector_store.upsert.assert_called_once()
 
     async def test_ingest_empty_content(self, ingestion_service):
-        """Test ingestion with empty content raises error."""
-        with pytest.raises(ValueError, match="content cannot be empty"):
-            await ingestion_service.ingest(
-                content="",
-                source_type=SourceType.LORE,
-                source_id="lore_001",
-            )
+        """Test ingestion with empty content returns error result."""
+        result = await ingestion_service.ingest(
+            content="",
+            source_type=SourceType.LORE,
+            source_id="lore_001",
+        )
+        assert result.is_error
+        assert "content cannot be empty" in result.error.message
 
     async def test_ingest_empty_source_id(self, ingestion_service):
-        """Test ingestion with empty source_id raises error."""
-        with pytest.raises(ValueError, match="source_id cannot be empty"):
-            await ingestion_service.ingest(
-                content="Some content",
-                source_type=SourceType.LORE,
-                source_id="",
-            )
+        """Test ingestion with empty source_id returns error result."""
+        result = await ingestion_service.ingest(
+            content="Some content",
+            source_type=SourceType.LORE,
+            source_id="",
+        )
+        assert result.is_error
+        assert "source_id cannot be empty" in result.error.message
 
     async def test_ingest_with_string_source_type(self, ingestion_service, mock_embedding_service):
         """Test ingestion with string source type."""
@@ -255,22 +262,25 @@ class TestKnowledgeIngestionService:
             source_id="lore_001",
         )
         
-        assert result.success is True
+        assert result.is_ok
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
 
     async def test_ingest_embedding_error(self, ingestion_service, mock_embedding_service):
-        """Test ingestion with embedding error."""
+        """Test ingestion with embedding error returns error result."""
         from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
         
         mock_embedding_service.embed_batch = AsyncMock(
             side_effect=EmbeddingError("Embedding failed")
         )
         
-        with pytest.raises(EmbeddingError, match="Embedding failed"):
-            await ingestion_service.ingest(
-                content="Test content",
-                source_type=SourceType.LORE,
-                source_id="lore_001",
-            )
+        result = await ingestion_service.ingest(
+            content="Test content",
+            source_type=SourceType.LORE,
+            source_id="lore_001",
+        )
+        assert result.is_error
+        assert "Embedding failed" in result.error.message
 
     async def test_batch_ingest_success(self, ingestion_service):
         """Test successful batch ingestion."""
@@ -289,10 +299,12 @@ class TestKnowledgeIngestionService:
         
         result = await ingestion_service.batch_ingest(entries)
         
-        assert result.success is True
-        assert result.total_entries == 2
-        assert result.successful == 2
-        assert result.failed == 0
+        assert result.is_ok
+        batch_result = result.unwrap()
+        assert batch_result.success is True
+        assert batch_result.total_entries == 2
+        assert batch_result.successful == 2
+        assert batch_result.failed == 0
 
     async def test_batch_ingest_partial_failure(self, ingestion_service):
         """Test batch ingestion with partial failures."""
@@ -311,11 +323,13 @@ class TestKnowledgeIngestionService:
         
         result = await ingestion_service.batch_ingest(entries)
         
-        assert result.success is False
-        assert result.total_entries == 2
-        assert result.successful == 1
-        assert result.failed == 1
-        assert "lore_002" in result.errors
+        assert result.is_ok
+        batch_result = result.unwrap()
+        assert batch_result.success is False
+        assert batch_result.total_entries == 2
+        assert batch_result.successful == 1
+        assert batch_result.failed == 1
+        assert "lore_002" in batch_result.errors
 
     async def test_batch_ingest_with_progress_callback(self, ingestion_service):
         """Test batch ingestion with progress callback."""
@@ -337,19 +351,21 @@ class TestKnowledgeIngestionService:
 
     async def test_delete(self, ingestion_service, mock_vector_store):
         """Test deleting chunks by source."""
-        deleted_count = await ingestion_service.delete(
+        result = await ingestion_service.delete(
             source_id="source_001",
             source_type=SourceType.LORE,
         )
         
-        assert deleted_count == 5
+        assert result.is_ok
+        assert result.unwrap() == 5
         mock_vector_store.delete.assert_called_once()
 
     async def test_delete_without_source_type(self, ingestion_service, mock_vector_store):
         """Test deleting chunks without specifying source type."""
-        deleted_count = await ingestion_service.delete(source_id="source_001")
+        result = await ingestion_service.delete(source_id="source_001")
         
-        assert deleted_count == 5
+        assert result.is_ok
+        assert result.unwrap() == 5
         # Should not include source_type in filter
         call_args = mock_vector_store.delete.call_args
         assert "source_type" not in call_args.kwargs.get("where", {})
@@ -363,19 +379,22 @@ class TestKnowledgeIngestionService:
             tags=["updated"],
         )
         
-        assert result.success is True
-        assert result.source_id == "source_001"
-        assert result.entries_deleted > 0  # Old chunks deleted
-        assert result.entries_created > 0  # New chunks created
+        assert result.is_ok
+        update_result = result.unwrap()
+        assert update_result.success is True
+        assert update_result.source_id == "source_001"
+        assert update_result.entries_deleted > 0  # Old chunks deleted
+        assert update_result.entries_created > 0  # New chunks created
 
     async def test_update_empty_content(self, ingestion_service):
-        """Test update with empty content raises error."""
-        with pytest.raises(ValueError, match="new_content cannot be empty"):
-            await ingestion_service.update(
-                source_id="source_001",
-                new_content="",
-                source_type=SourceType.LORE,
-            )
+        """Test update with empty content returns error result."""
+        result = await ingestion_service.update(
+            source_id="source_001",
+            new_content="",
+            source_type=SourceType.LORE,
+        )
+        assert result.is_error
+        assert "new_content cannot be empty" in result.error.message
 
     async def test_query_by_source(self, ingestion_service, mock_vector_store):
         """Test querying chunks by source."""
@@ -387,11 +406,13 @@ class TestKnowledgeIngestionService:
         mock_result.metadata = {"source_id": "source_001", "source_type": "LORE"}
         mock_vector_store.query = AsyncMock(return_value=[mock_result])
         
-        chunks = await ingestion_service.query_by_source(
+        result = await ingestion_service.query_by_source(
             source_id="source_001",
             source_type=SourceType.LORE,
         )
         
+        assert result.is_ok
+        chunks = result.unwrap()
         assert len(chunks) == 1
         assert chunks[0].chunk_id == "chunk_001"
         assert chunks[0].source_id == "source_001"
@@ -400,29 +421,33 @@ class TestKnowledgeIngestionService:
         """Test querying by source with no results."""
         mock_vector_store.query = AsyncMock(return_value=[])
         
-        chunks = await ingestion_service.query_by_source(source_id="nonexistent")
+        result = await ingestion_service.query_by_source(source_id="nonexistent")
         
-        assert len(chunks) == 0
+        assert result.is_ok
+        assert len(result.unwrap()) == 0
 
     async def test_health_check(self, ingestion_service, mock_vector_store):
         """Test health check."""
         result = await ingestion_service.health_check()
         
-        assert result is True
+        assert result.is_ok
+        assert result.unwrap() is True
         mock_vector_store.health_check.assert_called_once()
 
     async def test_get_count(self, ingestion_service, mock_vector_store):
         """Test getting chunk count."""
-        count = await ingestion_service.get_count()
+        result = await ingestion_service.get_count()
         
-        assert count == 100
+        assert result.is_ok
+        assert result.unwrap() == 100
         mock_vector_store.count.assert_called_once_with(DEFAULT_COLLECTION)
 
     async def test_get_count_custom_collection(self, ingestion_service, mock_vector_store):
         """Test getting chunk count for custom collection."""
-        count = await ingestion_service.get_count(collection="custom")
+        result = await ingestion_service.get_count(collection="custom")
         
-        assert count == 100
+        assert result.is_ok
+        assert result.unwrap() == 100
         mock_vector_store.count.assert_called_once_with("custom")
 
     async def test_call_progress_callback_sync(self, ingestion_service):

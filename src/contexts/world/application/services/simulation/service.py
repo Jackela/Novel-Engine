@@ -21,6 +21,7 @@ from src.contexts.world.domain.entities.history_event import (
 )
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 from src.contexts.world.domain.errors import (
+    IntentGenerationError,
     RepositoryError,
     RollbackError,
     SaveFailedError,
@@ -181,12 +182,17 @@ class WorldSimulationService:
             if faction.status == FactionStatus.DISBANDED:
                 continue
 
-            intents = self._intent_generator.generate_intents(
+            intents_result = self._intent_generator.generate_intents(
                 faction=faction,
                 world=world,
                 diplomacy=diplomacy,
             )
-            all_intents.extend(intents)
+            if intents_result.is_error:
+                error = intents_result.error
+                if error is not None:
+                    return Err(error)
+                return Err(IntentGenerationError("Unknown intent generation error"))
+            all_intents.extend(intents_result.value)
 
         # Step 8: Create SimulationTick with results
         tick = SimulationTick(
@@ -708,12 +714,17 @@ class WorldSimulationService:
         for faction in factions:
             if faction.status == FactionStatus.DISBANDED:
                 continue
-            intents = self._intent_generator.generate_intents(
+            intents_result = self._intent_generator.generate_intents(
                 faction=faction,
                 world=world,
                 diplomacy=diplomacy,
             )
-            all_intents.extend(intents)
+            if intents_result.is_error:
+                error = intents_result.error
+                if error is not None:
+                    return Err(error)
+                return Err(IntentGenerationError("Unknown intent generation error"))
+            all_intents.extend(intents_result.value)
 
         resolution = self._resolve_intents(all_intents, world, factions, diplomacy)
 
@@ -1029,7 +1040,7 @@ class WorldSimulationService:
 
     def get_tick_history(
         self, world_id: str, limit: int = 20
-    ) -> Result[List[SimulationTick], Error]:
+    ) -> List[SimulationTick]:
         """Get simulation tick history for a world.
 
         Args:
@@ -1037,31 +1048,19 @@ class WorldSimulationService:
             limit: Maximum number of ticks to return (default 20)
 
         Returns:
-            Result containing:
-            - Ok: List of SimulationTick entities, most recent first
-            - Err: Error if operation fails
+            List of SimulationTick entities, most recent first
         """
-        try:
-            if world_id not in self._tick_history:
-                return Ok([])
+        if world_id not in self._tick_history:
+            return []
 
-            history = self._tick_history[world_id]
-            # Return most recent first
-            ticks = list(history.values())
-            return Ok(ticks[-limit:][::-1])
-        except Exception as e:
-            return Err(
-                Error(
-                    code="SIMULATION_ERROR",
-                    message=f"Failed to get tick history: {e}",
-                    recoverable=True,
-                    details={"world_id": world_id},
-                )
-            )
+        history = self._tick_history[world_id]
+        # Return most recent first
+        ticks = list(history.values())
+        return ticks[-limit:][::-1]
 
     def get_tick_by_id(
         self, world_id: str, tick_id: str
-    ) -> Result[Optional[SimulationTick], Error]:
+    ) -> Optional[SimulationTick]:
         """Get a specific tick by ID.
 
         Args:
@@ -1069,49 +1068,25 @@ class WorldSimulationService:
             tick_id: ID of the tick to retrieve
 
         Returns:
-            Result containing:
-            - Ok: SimulationTick if found, None otherwise
-            - Err: Error if operation fails
+            SimulationTick if found, None otherwise
         """
-        try:
-            if world_id not in self._tick_history:
-                return Ok(None)
+        if world_id not in self._tick_history:
+            return None
 
-            return Ok(self._tick_history[world_id].get(tick_id))
-        except Exception as e:
-            return Err(
-                Error(
-                    code="SIMULATION_ERROR",
-                    message=f"Failed to get tick by ID: {e}",
-                    recoverable=True,
-                    details={"world_id": world_id, "tick_id": tick_id},
-                )
-            )
+        return self._tick_history[world_id].get(tick_id)
 
-    def clear_history(self, world_id: str) -> Result[int, Error]:
+    def clear_history(self, world_id: str) -> int:
         """Clear simulation history for a world.
 
         Args:
             world_id: ID of the world
 
         Returns:
-            Result containing:
-            - Ok: Number of entries cleared
-            - Err: Error if operation fails
+            Number of entries cleared
         """
-        try:
-            if world_id not in self._tick_history:
-                return Ok(0)
+        if world_id not in self._tick_history:
+            return 0
 
-            count = len(self._tick_history[world_id])
-            del self._tick_history[world_id]
-            return Ok(count)
-        except Exception as e:
-            return Err(
-                Error(
-                    code="SIMULATION_ERROR",
-                    message=f"Failed to clear history: {e}",
-                    recoverable=True,
-                    details={"world_id": world_id},
-                )
-            )
+        count = len(self._tick_history[world_id])
+        del self._tick_history[world_id]
+        return count
