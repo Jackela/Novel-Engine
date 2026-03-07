@@ -499,7 +499,7 @@ class TestDecisionEngineHelperMethods:
 
     def test_assess_environmental_factors(self, engine):
         """Test environmental factors assessment."""
-        world_state = {"weather": "clear", "time": "day"}
+        world_state = {"environmental_factors": {"weather": "clear", "time": "day"}}
 
         factors = engine._assess_environmental_factors(world_state)
 
@@ -507,7 +507,7 @@ class TestDecisionEngineHelperMethods:
 
     def test_assess_mission_status(self, engine):
         """Test mission status assessment."""
-        world_state = {"mission": "active", "progress": 50}
+        world_state = {"mission_status": {"mission": "active", "progress": 50}}
 
         status = engine._assess_mission_status(world_state)
 

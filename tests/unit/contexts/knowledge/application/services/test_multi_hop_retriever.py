@@ -40,6 +40,7 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 
@@ -104,11 +105,11 @@ def mock_retrieval_service():
                 ),
             ]
 
-        return RetrievalResult(
+        return Ok(RetrievalResult(
             chunks=chunks,
             query=query,
             total_retrieved=len(chunks),
-        )
+        ))
 
     service.retrieve_relevant = mock_retrieve
     return service

@@ -463,9 +463,11 @@ class TestEntityExtractionService:
 
         result = await entity_extraction_service.extract(text)
 
-        assert result.entity_count == 5
-        assert result.mention_count == 3
-        assert result.source_length == len(text)
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.entity_count == 5
+        assert extraction.mention_count == 3
+        assert extraction.source_length == len(text)
 
     @pytest.mark.asyncio
     async def test_extract_characters(self, entity_extraction_service):
@@ -473,7 +475,9 @@ class TestEntityExtractionService:
         text = "Alice entered the tavern."
 
         result = await entity_extraction_service.extract(text)
-        characters = result.get_entities_by_type(EntityType.CHARACTER)
+        assert result.is_ok
+        extraction = result.unwrap()
+        characters = extraction.get_entities_by_type(EntityType.CHARACTER)
 
         assert len(characters) >= 1
         assert any(e.name == "Alice" for e in characters)
@@ -484,7 +488,9 @@ class TestEntityExtractionService:
         text = "Alice entered the Golden Dragon Tavern."
 
         result = await entity_extraction_service.extract(text)
-        locations = result.get_entities_by_type(EntityType.LOCATION)
+        assert result.is_ok
+        extraction = result.unwrap()
+        locations = extraction.get_entities_by_type(EntityType.LOCATION)
 
         assert len(locations) >= 1
         assert any(
@@ -497,7 +503,9 @@ class TestEntityExtractionService:
         text = "Alice found The Rusty Sword in the tavern."
 
         result = await entity_extraction_service.extract(text)
-        items = result.get_entities_by_type(EntityType.ITEM)
+        assert result.is_ok
+        extraction = result.unwrap()
+        items = extraction.get_entities_by_type(EntityType.ITEM)
 
         assert len(items) >= 1
         assert any("sword" in e.name.lower() for e in items)
@@ -508,7 +516,9 @@ class TestEntityExtractionService:
         text = "They spoke of the Battle of Three Peaks."
 
         result = await entity_extraction_service.extract(text)
-        events = result.get_entities_by_type(EntityType.EVENT)
+        assert result.is_ok
+        extraction = result.unwrap()
+        events = extraction.get_entities_by_type(EntityType.EVENT)
 
         assert len(events) >= 1
         assert any("battle" in e.name.lower() for e in events)
@@ -519,7 +529,9 @@ class TestEntityExtractionService:
         text = "She was a member of the Adventurers Guild."
 
         result = await entity_extraction_service.extract(text)
-        organizations = result.get_entities_by_type(EntityType.ORGANIZATION)
+        assert result.is_ok
+        extraction = result.unwrap()
+        organizations = extraction.get_entities_by_type(EntityType.ORGANIZATION)
 
         assert len(organizations) >= 1
         assert any("guild" in e.name.lower() for e in organizations)
@@ -539,7 +551,9 @@ class TestEntityExtractionService:
         result = await service.extract(text)
 
         # With higher threshold, some entities may be filtered out
-        assert result.entity_count <= 10
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.entity_count <= 10
 
     @pytest.mark.asyncio
     async def test_extract_without_mentions(self, mock_llm_client):
@@ -552,7 +566,9 @@ class TestEntityExtractionService:
 
         result = await service.extract(text)
 
-        assert result.mention_count == 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.mention_count == 0
 
     @pytest.mark.asyncio
     async def test_extract_llm_error(self, failing_llm_client):
@@ -560,8 +576,11 @@ class TestEntityExtractionService:
         service = EntityExtractionService(llm_client=failing_llm_client)
         text = "Alice entered the tavern."
 
-        with pytest.raises(EntityExtractionError, match="LLM generation failed"):
-            await service.extract(text)
+        result = await service.extract(text)
+
+        # Should return error Result instead of raising
+        assert result.is_error
+        assert "LLM generation failed" in str(result.error)
 
     @pytest.mark.asyncio
     async def test_extract_invalid_json(self, invalid_json_llm_client):
@@ -572,8 +591,10 @@ class TestEntityExtractionService:
         result = await service.extract(text)
 
         # Should return empty result on parse failure
-        assert result.entity_count == 0
-        assert result.mention_count == 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.entity_count == 0
+        assert extraction.mention_count == 0
 
     @pytest.mark.asyncio
     async def test_extract_markdown_json(self, markdown_json_llm_client):
@@ -584,7 +605,9 @@ class TestEntityExtractionService:
         result = await service.extract(text)
 
         # Should successfully extract from markdown-wrapped JSON
-        assert result.entity_count > 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.entity_count > 0
 
     @pytest.mark.asyncio
     async def test_extract_batch(self, entity_extraction_service):
@@ -595,11 +618,13 @@ class TestEntityExtractionService:
             "The guild master watched.",
         ]
 
-        results = await entity_extraction_service.extract_batch(texts)
+        result = await entity_extraction_service.extract_batch(texts)
 
-        assert len(results) == 3
-        for result in results:
-            assert isinstance(result, ExtractionResult)
+        assert result.is_ok
+        extractions = result.unwrap()
+        assert len(extractions) == 3
+        for extraction in extractions:
+            assert isinstance(extraction, ExtractionResult)
 
     @pytest.mark.asyncio
     async def test_extract_with_alias_matching(self, entity_extraction_service):
@@ -609,7 +634,9 @@ class TestEntityExtractionService:
         result = await entity_extraction_service.extract(text)
 
         # Find the tavern entity and check aliases
-        tavern = next((e for e in result.entities if "tavern" in e.name.lower()), None)
+        assert result.is_ok
+        extraction = result.unwrap()
+        tavern = next((e for e in extraction.entities if "tavern" in e.name.lower()), None)
         assert tavern is not None
         assert tavern.has_alias("the tavern") or tavern.has_alias("the inn")
 
@@ -651,20 +678,22 @@ class TestEntityExtractionServiceIntegration:
         result = await service.extract(text)
 
         # Verify result structure
-        assert isinstance(result, ExtractionResult)
-        assert isinstance(result.entities, tuple)
-        assert isinstance(result.mentions, tuple)
-        assert result.source_length == len(text)
-        assert result.model_used == "test-model"
-        assert result.tokens_used == 150
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert isinstance(extraction, ExtractionResult)
+        assert isinstance(extraction.entities, tuple)
+        assert isinstance(extraction.mentions, tuple)
+        assert extraction.source_length == len(text)
+        assert extraction.model_used == "test-model"
+        assert extraction.tokens_used == 150
 
         # Verify we got expected entity types
-        entity_types = {e.entity_type for e in result.entities}
+        entity_types = {e.entity_type for e in extraction.entities}
         assert EntityType.CHARACTER in entity_types
         assert EntityType.LOCATION in entity_types
 
         # Verify mention tracking
-        alice_mentions = result.get_entity_mentions("Alice")
+        alice_mentions = extraction.get_entity_mentions("Alice")
         assert len(alice_mentions) >= 1
 
 
@@ -1074,9 +1103,11 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        assert isinstance(result, ExtractionResultWithRelationships)
-        assert result.entity_count > 0
-        assert result.relationship_count > 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert isinstance(extraction, ExtractionResultWithRelationships)
+        assert extraction.entity_count > 0
+        assert extraction.relationship_count > 0
 
     @pytest.mark.asyncio
     async def test_extract_with_relationships_filters_by_strength(
@@ -1092,7 +1123,9 @@ class TestRelationshipExtraction:
         result = await service.extract_with_relationships(text)
 
         # Only relationships with strength >= 0.95 should be included
-        for rel in result.relationships:
+        assert result.is_ok
+        extraction = result.unwrap()
+        for rel in extraction.relationships:
             assert rel.strength >= 0.95
 
     @pytest.mark.asyncio
@@ -1106,7 +1139,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        assert result.relationship_count <= 2
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.relationship_count <= 2
 
     @pytest.mark.asyncio
     async def test_extract_with_relationships_ignores_unknown_entities(
@@ -1137,7 +1172,9 @@ class TestRelationshipExtraction:
         result = await service.extract_with_relationships("Alice entered the tavern.")
 
         # Relationship to UnknownPerson should be skipped
-        assert result.relationship_count == 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.relationship_count == 0
 
     @pytest.mark.asyncio
     async def test_extract_with_relationships_handles_parse_failure(
@@ -1164,8 +1201,10 @@ class TestRelationshipExtraction:
         result = await service.extract_with_relationships("Alice entered the tavern.")
 
         # Should return entities even if relationship parsing fails
-        assert result.entity_count > 0
-        assert result.relationship_count == 0
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert extraction.entity_count > 0
+        assert extraction.relationship_count == 0
 
     @pytest.mark.asyncio
     async def test_extract_killed_relationship(self, relationship_llm_client):
@@ -1175,7 +1214,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        killed_rels = result.get_relationships_by_type(RelationshipType.KILLED)
+        assert result.is_ok
+        extraction = result.unwrap()
+        killed_rels = extraction.get_relationships_by_type(RelationshipType.KILLED)
         assert len(killed_rels) > 0
         assert killed_rels[0].source == "Alice"
         assert killed_rels[0].target == "Bob"
@@ -1188,7 +1229,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        knows_rels = result.get_relationships_by_type(RelationshipType.KNOWS)
+        assert result.is_ok
+        extraction = result.unwrap()
+        knows_rels = extraction.get_relationships_by_type(RelationshipType.KNOWS)
         assert len(knows_rels) > 0
 
     @pytest.mark.asyncio
@@ -1199,7 +1242,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        owns_rels = result.get_relationships_by_type(RelationshipType.OWNS)
+        assert result.is_ok
+        extraction = result.unwrap()
+        owns_rels = extraction.get_relationships_by_type(RelationshipType.OWNS)
         assert len(owns_rels) > 0
 
     @pytest.mark.asyncio
@@ -1210,7 +1255,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        member_rels = result.get_relationships_by_type(RelationshipType.MEMBER_OF)
+        assert result.is_ok
+        extraction = result.unwrap()
+        member_rels = extraction.get_relationships_by_type(RelationshipType.MEMBER_OF)
         assert len(member_rels) > 0
 
     @pytest.mark.asyncio
@@ -1221,7 +1268,9 @@ class TestRelationshipExtraction:
 
         result = await service.extract_with_relationships(text)
 
-        located_rels = result.get_relationships_by_type(RelationshipType.LOCATED_AT)
+        assert result.is_ok
+        extraction = result.unwrap()
+        located_rels = extraction.get_relationships_by_type(RelationshipType.LOCATED_AT)
         assert len(located_rels) > 0
 
 
@@ -1243,14 +1292,16 @@ class TestRelationshipExtractionIntegration:
         result = await service.extract_with_relationships(text)
 
         # Verify result structure
-        assert isinstance(result, ExtractionResultWithRelationships)
-        assert result.entity_count > 0
-        assert result.source_length == len(text)
+        assert result.is_ok
+        extraction = result.unwrap()
+        assert isinstance(extraction, ExtractionResultWithRelationships)
+        assert extraction.entity_count > 0
+        assert extraction.source_length == len(text)
 
         # Verify we can query relationships
-        if result.relationship_count > 0:
+        if extraction.relationship_count > 0:
             # Check that relationships have valid source/target
-            for rel in result.relationships:
+            for rel in extraction.relationships:
                 assert rel.source
                 assert rel.target
                 assert isinstance(rel.relationship_type, RelationshipType)

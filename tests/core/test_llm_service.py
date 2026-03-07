@@ -282,17 +282,21 @@ class TestUnifiedLLMService:
         llm_service.cost_control.rate_limit_enabled = True
         llm_service.cost_control.hourly_limit = 100
         
-        # Should allow requests under limit
-        assert llm_service._check_rate_limits() is True
+        # Clear any existing request times from previous tests
+        llm_service._request_times.clear()
         
-        # Fill up to limit
+        # Each call to _check_rate_limits() appends a timestamp when under limit
+        # So we need to account for the call itself adding to the count
+        
+        # Fill up to limit (but account for the fact that each check appends)
+        now = datetime.now()
         for _ in range(99):
-            llm_service._request_times.append(datetime.now())
+            llm_service._request_times.append(now)
         
-        # Should still allow one more
+        # We have 99, limit is 100, so this call should succeed and append 100th
         assert llm_service._check_rate_limits() is True
         
-        # Next should fail
+        # Now we have 100, next should fail (won't append since at limit)
         assert llm_service._check_rate_limits() is False
 
     def test_check_budget_limits(self, llm_service):
@@ -508,92 +512,120 @@ class TestGenerateMethods:
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             service = UnifiedLLMService(CostControl(rate_limit_enabled=False))
             
-            # Mock the generate method
-            service.generate = AsyncMock(return_value=LLMResponse(
-                content="ACTION: Test\nTARGET: Test\nREASONING: Test",
-                provider=LLMProvider.GEMINI,
-                format_validated=True,
-                cached=False,
-                tokens_used=10,
-                response_time_ms=100,
-                cost_estimate=0.001,
-                timestamp=datetime.now(),
-                request_id="req123",
-            ))
+            # Mock the generate_result method to capture the request
+            captured_request = None
+            async def mock_generate_result(request):
+                nonlocal captured_request
+                captured_request = request
+                from src.core.result import Ok
+                return Ok(LLMResponse(
+                    content="ACTION: Test\nTARGET: Test\nREASONING: Test",
+                    provider=LLMProvider.GEMINI,
+                    format_validated=True,
+                    cached=False,
+                    tokens_used=10,
+                    response_time_ms=100,
+                    cost_estimate=0.001,
+                    timestamp=datetime.now(),
+                    request_id="req123",
+                ))
+            
+            service.generate_result = mock_generate_result
             
             response = await service.generate_action("Test prompt", "test_agent")
             
-            # Check that generate was called with correct request
-            call_args = service.generate.call_args[0][0]
-            assert call_args.prompt == "Test prompt"
-            assert call_args.response_format == ResponseFormat.ACTION_FORMAT
-            assert call_args.requester == "test_agent"
-            assert call_args.priority == 1
+            # Check that generate_result was called with correct request
+            assert captured_request is not None
+            assert captured_request.prompt == "Test prompt"
+            assert captured_request.response_format == ResponseFormat.ACTION_FORMAT
+            assert captured_request.requester == "test_agent"
+            assert captured_request.priority == 1
 
     async def test_generate_narrative_request(self):
         """Test generate narrative creates correct request."""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             service = UnifiedLLMService(CostControl(rate_limit_enabled=False))
             
-            service.generate = AsyncMock(return_value=LLMResponse(
-                content="Narrative text",
-                provider=LLMProvider.GEMINI,
-                format_validated=True,
-                cached=False,
-                tokens_used=10,
-                response_time_ms=100,
-                cost_estimate=0.001,
-                timestamp=datetime.now(),
-                request_id="req123",
-            ))
+            captured_request = None
+            async def mock_generate_result(request):
+                nonlocal captured_request
+                captured_request = request
+                from src.core.result import Ok
+                return Ok(LLMResponse(
+                    content="Narrative text",
+                    provider=LLMProvider.GEMINI,
+                    format_validated=True,
+                    cached=False,
+                    tokens_used=10,
+                    response_time_ms=100,
+                    cost_estimate=0.001,
+                    timestamp=datetime.now(),
+                    request_id="req123",
+                ))
+            
+            service.generate_result = mock_generate_result
             
             response = await service.generate_narrative("Test prompt", "dramatic")
             
-            call_args = service.generate.call_args[0][0]
-            assert "dramatic narrative" in call_args.prompt.lower()
-            assert call_args.response_format == ResponseFormat.NARRATIVE_FORMAT
-            assert call_args.temperature == 0.8
+            assert captured_request is not None
+            assert "dramatic narrative" in captured_request.prompt.lower()
+            assert captured_request.response_format == ResponseFormat.NARRATIVE_FORMAT
+            assert captured_request.temperature == 0.8
 
     async def test_generate_clue_request(self):
         """Test generate clue creates correct request."""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             service = UnifiedLLMService(CostControl(rate_limit_enabled=False))
             
-            service.generate = AsyncMock(return_value=LLMResponse(
-                content="A mysterious clue",
-                provider=LLMProvider.GEMINI,
-                format_validated=True,
-                cached=False,
-                tokens_used=10,
-                response_time_ms=100,
-                cost_estimate=0.001,
-                timestamp=datetime.now(),
-                request_id="req123",
-            ))
+            captured_request = None
+            async def mock_generate_result(request):
+                nonlocal captured_request
+                captured_request = request
+                from src.core.result import Ok
+                return Ok(LLMResponse(
+                    content="A mysterious clue",
+                    provider=LLMProvider.GEMINI,
+                    format_validated=True,
+                    cached=False,
+                    tokens_used=10,
+                    response_time_ms=100,
+                    cost_estimate=0.001,
+                    timestamp=datetime.now(),
+                    request_id="req123",
+                ))
+            
+            service.generate_result = mock_generate_result
             
             response = await service.generate_clue("treasure", "searching")
             
-            call_args = service.generate.call_args[0][0]
-            assert "treasure" in call_args.prompt.lower()
-            assert "searching" in call_args.prompt.lower()
-            assert call_args.response_format == ResponseFormat.CLUE_TEXT
+            assert captured_request is not None
+            assert "treasure" in captured_request.prompt.lower()
+            assert "searching" in captured_request.prompt.lower()
+            assert captured_request.response_format == ResponseFormat.CLUE_TEXT
 
     async def test_generate_dialogue_request(self):
         """Test generate dialogue creates correct request."""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             service = UnifiedLLMService(CostControl(rate_limit_enabled=False))
             
-            service.generate = AsyncMock(return_value=LLMResponse(
-                content="Character dialogue line",
-                provider=LLMProvider.GEMINI,
-                format_validated=True,
-                cached=False,
-                tokens_used=10,
-                response_time_ms=100,
-                cost_estimate=0.001,
-                timestamp=datetime.now(),
-                request_id="req123",
-            ))
+            captured_request = None
+            async def mock_generate_result(request):
+                nonlocal captured_request
+                captured_request = request
+                from src.core.result import Ok
+                return Ok(LLMResponse(
+                    content="Character dialogue line",
+                    provider=LLMProvider.GEMINI,
+                    format_validated=True,
+                    cached=False,
+                    tokens_used=10,
+                    response_time_ms=100,
+                    cost_estimate=0.001,
+                    timestamp=datetime.now(),
+                    request_id="req123",
+                ))
+            
+            service.generate_result = mock_generate_result
             
             personality = {"bravery": 0.8, "intelligence": 0.6}
             context = {"location": "castle", "situation": "battle"}
@@ -602,27 +634,34 @@ class TestGenerateMethods:
                 "Arthur", personality, "angry", context
             )
             
-            call_args = service.generate.call_args[0][0]
-            assert "Arthur" in call_args.prompt
-            assert "angry" in call_args.prompt
-            assert call_args.response_format == ResponseFormat.DIALOGUE_TEXT
+            assert captured_request is not None
+            assert "Arthur" in captured_request.prompt
+            assert "angry" in captured_request.prompt
+            assert captured_request.response_format == ResponseFormat.DIALOGUE_TEXT
 
     async def test_generate_event_request(self):
         """Test generate event creates correct request."""
         with patch.dict(os.environ, {"GEMINI_API_KEY": "test_key"}):
             service = UnifiedLLMService(CostControl(rate_limit_enabled=False))
             
-            service.generate = AsyncMock(return_value=LLMResponse(
-                content='{"description": "Event desc"}',
-                provider=LLMProvider.GEMINI,
-                format_validated=True,
-                cached=False,
-                tokens_used=10,
-                response_time_ms=100,
-                cost_estimate=0.001,
-                timestamp=datetime.now(),
-                request_id="req123",
-            ))
+            captured_request = None
+            async def mock_generate_result(request):
+                nonlocal captured_request
+                captured_request = request
+                from src.core.result import Ok
+                return Ok(LLMResponse(
+                    content='{"description": "Event desc"}',
+                    provider=LLMProvider.GEMINI,
+                    format_validated=True,
+                    cached=False,
+                    tokens_used=10,
+                    response_time_ms=100,
+                    cost_estimate=0.001,
+                    timestamp=datetime.now(),
+                    request_id="req123",
+                ))
+            
+            service.generate_result = mock_generate_result
             
             response = await service.generate_event(
                 event_type="battle",
@@ -631,8 +670,8 @@ class TestGenerateMethods:
                 plot_stage="climax",
             )
             
-            call_args = service.generate.call_args[0][0]
-            assert "battle" in call_args.prompt
-            assert "Arthur" in call_args.prompt
-            assert "Mordred" in call_args.prompt
-            assert call_args.response_format == ResponseFormat.EVENT_JSON
+            assert captured_request is not None
+            assert "battle" in captured_request.prompt
+            assert "Arthur" in captured_request.prompt
+            assert "Mordred" in captured_request.prompt
+            assert captured_request.response_format == ResponseFormat.EVENT_JSON

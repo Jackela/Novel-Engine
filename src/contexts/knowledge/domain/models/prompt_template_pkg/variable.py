@@ -52,7 +52,7 @@ class VariableDefinition:
         # Validate name format
         if not self.name:
             raise ValueError("Variable name cannot be empty")
-        if not self.name.replace("_", "").isalnum():
+        if not self.name.replace("_", "").isalnum() or self.name[0].isdigit():
             raise ValueError(
                 f"Variable name '{self.name}' must be alphanumeric or underscore"
             )

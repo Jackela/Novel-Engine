@@ -181,7 +181,7 @@ class MemoryInterface:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Format the log entry
-            log_entry = f"[{timestamp}] {event_string}\\n"
+            log_entry = f"[{timestamp}] {event_string}\n"
 
             # Append to memory.log file
             with open(self.memory_log_path, "a", encoding="utf-8") as file:

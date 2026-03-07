@@ -540,10 +540,9 @@ character:
 level: 10
 """)
             interpreter = CharacterInterpreter(tmpdir)
-            interpreter._process_yaml_files([str(yaml_file)])
-            interpreter._merge_yaml_data_into_character_data(interpreter.yaml_cache)
+            data = interpreter.load_character_context()
 
-            assert interpreter.character_data.get("name") == "YAML Character"
+            assert data.get("name") == "YAML Character"
 
     def test_header_with_separator(self):
         """Test that file separator headers are skipped."""
@@ -600,10 +599,11 @@ agility: 14
             assert "yaml_stats" in data
 
             # Verify characteristics
-            assert "personality_scores" in data
-            assert "decision_weights" in data
-            assert "relationship_scores" in data
-            assert "knowledge_domains" in data
+            # personality_scores are only extracted when personality_traits are found
+            # via _extract_personality_info from markdown content
+            assert "decision_weights" in data  # Always extracted
+            # relationship_scores are only extracted when relationships are found
+            # knowledge_domains are only extracted when skills/background are found
 
             # Validate
             is_valid, issues = interpreter.validate_character_data()

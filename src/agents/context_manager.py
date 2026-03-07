@@ -157,14 +157,15 @@ class CharacterContextManager:
         fields = ["name", "faction", "rank", "age", "gender", "homeworld", "profession"]
 
         for field in fields:
-            pattern = rf"(?:^|\n)\s*\*?\s*{field}:?\s*(.+?)(?=\n|$)"
+            # Match field with optional bullet points (-, *, or none)
+            pattern = rf"(?:^|\n)\s*[-*]?\s*{field}:?\s*(.+?)(?=\n|$)"
             match = re.search(pattern, section_content, re.IGNORECASE | re.MULTILINE)
             if match:
                 identity_data[field] = match.group(1).strip()
 
         # Extract backstory if present
         backstory_pattern = (
-            r"(?:^|\n)\s*(?:backstory|background):\s*(.*?)(?=\n\s*\*|\Z)"
+            r"(?:^|\n)\s*[-*]?\s*(?:backstory|background):\s*(.*?)(?=\n\s*[-*]|\Z)"
         )
         backstory_match = re.search(
             backstory_pattern, section_content, re.IGNORECASE | re.DOTALL
@@ -210,20 +211,23 @@ class CharacterContextManager:
         for line in lines:
             line = line.strip()
 
-            # Check for category headers
-            if (
-                line
-                and line.endswith(":")
-                and not line.startswith("*")
-                and not line.startswith("-")
-            ):
-                current_category = line[:-1].lower().replace(" ", "_")
+            # Check for category headers (with or without bullet prefix)
+            # Examples: "motivations:", "- motivations:", "* motivations:"
+            if line and line.endswith(":"):
+                # Remove bullet prefix if present
+                header_line = line
+                if line.startswith("- ") or line.startswith("* "):
+                    header_line = line[2:]
+                current_category = header_line[:-1].lower().replace(" ", "_")
                 bullet_points[current_category] = []
                 continue
 
-            # Check for bullet points
+            # Check for bullet points (skip nested weighted items like "- brave: 0.8")
             if line.startswith("* ") or line.startswith("- "):
                 bullet_text = line[2:].strip()
+                # Skip lines that look like weighted items (already handled by _extract_weighted_items)
+                if ": " in bullet_text and any(c.isdigit() for c in bullet_text):
+                    continue
                 if current_category and isinstance(
                     bullet_points.get(current_category), list
                 ):
@@ -240,15 +244,19 @@ class CharacterContextManager:
         """Extract weighted items (traits with numerical values)."""
         weighted_items: dict[Any, Any] = {}
         # Pattern for "Item: value" or "Item (value)" formats
+        # Handles both "- brave: 0.8" and "brave: 0.8" formats
         patterns = [
-            r"(?:^|\n)\s*\*?\s*([^:\n]+?):\s*(\d*\.?\d+)",  # "Trait: 0.8"
-            r"(?:^|\n)\s*\*?\s*([^(\n]+?)\s*\((\d*\.?\d+)\)",  # "Trait (0.8)"
+            r"(?:^|\n)\s*[-*]?\s*([^:\n]+?):\s*(\d*\.?\d+)",  # "- Trait: 0.8" or "Trait: 0.8"
+            r"(?:^|\n)\s*[-*]?\s*([^(\n]+?)\s*\((\d*\.?\d+)\)",  # "- Trait (0.8)" or "Trait (0.8)"
         ]
 
         for pattern in patterns:
             matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
             for trait, value_str in matches:
                 trait_clean = trait.strip().lower().replace(" ", "_")
+                # Skip if trait_clean looks like a category header (ends with colon content)
+                if trait_clean in ("personality_traits", "decision_weights", "traits"):
+                    continue
                 try:
                     value = float(value_str)
                     weighted_items[trait_clean] = value
@@ -261,7 +269,8 @@ class CharacterContextManager:
         """Parse simple field: value format content."""
         parsed_data: dict[Any, Any] = {}
         # Extract field: value pairs
-        field_pattern = r"(?:^|\n)\s*\*?\s*([^:\n]+):\s*([^\n]+)"
+        # Match fields with optional bullet points (-, *, or none)
+        field_pattern = r"(?:^|\n)\s*[-*]?\s*([^:\n]+):\s*([^\n]+)"
         matches = re.findall(field_pattern, content, re.MULTILINE)
 
         for field, value in matches:

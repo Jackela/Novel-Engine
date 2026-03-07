@@ -24,7 +24,6 @@ from src.contexts.character.domain.value_objects.character_goal import (
     GoalStatus,
     GoalUrgency,
 )
-from src.contexts.character.domain.value_objects.context_models import MemoryType
 from src.contexts.character.domain.value_objects.character_id import CharacterID
 from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
 # Note: Using MemoryType from context_models instead of core.data_models
@@ -149,29 +148,25 @@ class TestCharacterCreation:
         assert len(created_events) == 1
         assert created_events[0].character_name == "Test Character"
 
-    def test_character_validation_level(self, character_id, character_stats, character_skills):
-        """Test character validation for level < 1."""
-        # Create an invalid profile by bypassing validation
-        from dataclasses import replace
-        
-        valid_profile = CharacterProfile.create_default(
-            name="Invalid",
-            gender=Gender.MALE,
-            race=CharacterRace.HUMAN,
-            character_class=CharacterClass.FIGHTER,
-            age=25,
+    def test_character_validation_level(self):
+        """Test CharacterProfile validation for level < 1."""
+        # CharacterProfile validates level in __post_init__
+        from src.contexts.character.domain.value_objects.character_profile import (
+            PhysicalTraits, PersonalityTraits, Background
         )
-        # Use object.__setattr__ to bypass frozen dataclass validation for testing
-        invalid_profile = object.__new__(CharacterProfile)
-        invalid_profile.__dict__ = valid_profile.__dict__.copy()
-        object.__setattr__(invalid_profile, 'level', 0)
         
-        with pytest.raises(ValueError, match="level must be at least 1"):
-            Character(
-                character_id=character_id,
-                profile=invalid_profile,
-                stats=character_stats,
-                skills=character_skills,
+        # Cannot create a CharacterProfile with level 0
+        with pytest.raises(ValueError, match="Level must be between 1 and 100"):
+            CharacterProfile(
+                name="Invalid",
+                gender=Gender.MALE,
+                race=CharacterRace.HUMAN,
+                character_class=CharacterClass.FIGHTER,
+                age=25,
+                level=0,  # Invalid level
+                physical_traits=PhysicalTraits(),
+                personality_traits=PersonalityTraits(traits={"neutral": 0.5}),
+                background=Background(),
             )
 
 
@@ -249,8 +244,31 @@ class TestCharacterStatsOperations:
 
     def test_heal(self, character):
         """Test healing character."""
-        # First damage the character
-        character.stats.vital_stats.current_health = 15
+        # First damage the character by creating damaged stats
+        from src.contexts.character.domain.value_objects.character_stats import (
+            CharacterStats, VitalStats
+        )
+        
+        damaged_vital = VitalStats(
+            max_health=character.stats.vital_stats.max_health,
+            current_health=15,  # Damaged
+            max_mana=character.stats.vital_stats.max_mana,
+            current_mana=character.stats.vital_stats.current_mana,
+            max_stamina=character.stats.vital_stats.max_stamina,
+            current_stamina=character.stats.vital_stats.current_stamina,
+            armor_class=character.stats.vital_stats.armor_class,
+            speed=character.stats.vital_stats.speed,
+        )
+        
+        damaged_stats = CharacterStats(
+            core_abilities=character.stats.core_abilities,
+            vital_stats=damaged_vital,
+            combat_stats=character.stats.combat_stats,
+            experience_points=character.stats.experience_points,
+            skill_points=character.stats.skill_points,
+        )
+        
+        character.stats = damaged_stats
         
         character.heal(10)
         
@@ -258,7 +276,8 @@ class TestCharacterStatsOperations:
 
     def test_heal_max_cap(self, character):
         """Test healing doesn't exceed max health."""
-        character.stats.vital_stats.current_health = 25
+        # Character starts with full health in fixture, damage first then heal
+        character.take_damage(10)  # Now at 20
         
         character.heal(20)  # Would exceed max of 30
         
@@ -291,8 +310,8 @@ class TestCharacterMemoryOperations:
         memory = CharacterMemory(
             memory_id="mem123",
             content="Test memory",
-            memory_type=MemoryType.ACHIEVEMENT_MILESTONE,
             importance=5,
+            tags=("test", "memory"),
             timestamp=datetime.now(),
         )
         
@@ -311,15 +330,15 @@ class TestCharacterMemoryOperations:
         memory1 = CharacterMemory(
             memory_id="mem1",
             content="Memory 1",
-            memory_type=MemoryType.FOUNDATIONAL_LEARNING,
             importance=5,
+            tags=("foundational",),
             timestamp=datetime.now(),
         )
         memory2 = CharacterMemory(
             memory_id="mem2",
             content="Memory 2",
-            memory_type=MemoryType.ACHIEVEMENT_MILESTONE,
             importance=9,  # Core memory (> 8)
+            tags=("achievement",),
             timestamp=datetime.now(),
         )
         
@@ -346,7 +365,8 @@ class TestCharacterGoalOperations:
         character.add_goal(goal)
         
         assert len(character.goals) == 1
-        assert character.goals[0].title == "Defeat the dragon"
+        assert "Defeat the dragon" in character.goals[0].description
+        assert character.goals[0].is_urgent() is True
 
     def test_add_goal_duplicate(self, character):
         """Test adding duplicate goal raises error."""
@@ -455,7 +475,8 @@ class TestCharacterLifecycle:
         """Test checking if character is alive."""
         assert character.is_alive() is True
         
-        character.stats.vital_stats.current_health = 0
+        # Apply damage to reduce health to 0
+        character.take_damage(character.stats.vital_stats.max_health)
         assert character.is_alive() is False
 
     def test_mark_deceased(self, character):

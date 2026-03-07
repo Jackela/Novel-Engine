@@ -27,7 +27,8 @@ class TestPersonaAgentDetailed:
                 sheet = Path(tmpdir) / "character_sheet.md"
                 sheet.write_text("# Test\n\nname: Test Character\n")
 
-                agent = PersonaAgent(character_directory=str(tmpdir))
+                from src.core.event_bus import EventBus
+                agent = PersonaAgent(character_directory_path=str(tmpdir), event_bus=EventBus())
 
                 # Test properties exist
                 assert hasattr(agent, "agent_id")
@@ -42,7 +43,8 @@ class TestPersonaAgentDetailed:
             from src.agents.persona_agent.agent import PersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
-                agent = PersonaAgent(character_directory=str(tmpdir))
+                from src.core.event_bus import EventBus
+                agent = PersonaAgent(character_directory_path=str(tmpdir), event_bus=EventBus())
 
                 # Test handle turn
                 world_state = {"turn": 1, "location": "Station"}
@@ -59,7 +61,8 @@ class TestPersonaAgentDetailed:
             from src.agents.persona_agent.agent import PersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
-                agent = PersonaAgent(character_directory=str(tmpdir))
+                from src.core.event_bus import EventBus
+                agent = PersonaAgent(character_directory_path=str(tmpdir), event_bus=EventBus())
 
                 # Test character_data property
                 if hasattr(agent, "character_data"):
@@ -78,9 +81,11 @@ class TestPersonaAgentCoreDetailed:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 # Test relationship methods
@@ -101,9 +106,11 @@ class TestPersonaAgentCoreDetailed:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 # Test worldview methods
@@ -118,9 +125,11 @@ class TestPersonaAgentCoreDetailed:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 # Test memory access
@@ -138,9 +147,11 @@ class TestPersonaAgentCoreDetailed:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 if hasattr(core, "morale_level"):
@@ -158,8 +169,10 @@ class TestPersonaAgentIntegratedDetailed:
             from src.agents.persona_agent.integrated import IntegratedPersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 agent = IntegratedPersonaAgent(
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 assert agent is not None
@@ -174,8 +187,10 @@ class TestPersonaAgentIntegratedDetailed:
             from src.agents.persona_agent.integrated import IntegratedPersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 agent = IntegratedPersonaAgent(
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 # Test decision making if available
@@ -193,8 +208,10 @@ class TestPersonaAgentIntegratedDetailed:
             from src.agents.persona_agent.integrated import IntegratedPersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 agent = IntegratedPersonaAgent(
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
 
                 # Check for expected attributes

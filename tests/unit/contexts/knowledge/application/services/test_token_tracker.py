@@ -400,7 +400,7 @@ class TestTokenTrackerIntegration:
             model = "gpt-4o"
 
         with pytest.raises(ValueError):
-            await mock_generate(MockRequest())
+            await mock_failing_generate(MockRequest())
 
         # Failure should be recorded
         mock_repository.save.assert_called_once()
@@ -429,7 +429,7 @@ class TestTokenUsageModel:
         assert usage.output_tokens == 50
         assert usage.total_tokens == 150
         # Cost calculation: (100/1M * 2.50) + (50/1M * 10.00) = 0.00025 + 0.0005 = 0.00075
-        assert abs(float(usage.cost) - Decimal("0.00075")) < 0.00001
+        assert abs(float(usage.total_cost) - float(Decimal("0.00075"))) < 0.00001
 
     def test_usage_id_generation(self):
         """Test that each usage gets a unique ID."""
@@ -478,7 +478,7 @@ class TestCostCalculation:
 
         # (1000/1M * 2.50) + (500/1M * 10.00) = 0.0025 + 0.005 = 0.0075
         expected_cost = Decimal("0.0075")
-        assert abs(float(usage.cost) - float(expected_cost)) < 0.00001
+        assert abs(float(usage.total_cost) - float(expected_cost)) < 0.00001
 
     def test_cost_calculation_gemini(self):
         """Test cost calculation for Gemini model."""
@@ -492,7 +492,7 @@ class TestCostCalculation:
         )
 
         # Cost should be calculated correctly
-        assert float(usage.cost) > 0
+        assert float(usage.total_cost) > 0
 
     def test_cost_calculation_ollama(self):
         """Test cost calculation for Ollama (free)."""
@@ -506,7 +506,7 @@ class TestCostCalculation:
         )
 
         # Cost should be zero
-        assert float(usage.cost) == 0.0
+        assert float(usage.total_cost) == 0.0
 
 
 class TestTokenUsageStats:
@@ -514,14 +514,23 @@ class TestTokenUsageStats:
 
     def test_stats_creation(self):
         """Test creating usage stats."""
+        from datetime import datetime, timezone
         from src.contexts.knowledge.domain.models.token_usage import TokenUsageStats
 
+        now = datetime.now(timezone.utc)
         stats = TokenUsageStats(
+            provider="openai",
+            model_name="gpt-4o",
+            workspace_id=None,
+            period_start=now,
+            period_end=now,
             total_requests=100,
+            successful_requests=95,
+            failed_requests=5,
+            total_tokens=15000,
             total_input_tokens=10000,
             total_output_tokens=5000,
             total_cost=Decimal("0.5"),
-            avg_latency_ms=500.0,
         )
 
         assert stats.total_requests == 100

@@ -151,9 +151,10 @@ class TestFactionIntentGenerator:
             status=FactionStatus.DISBANDED,
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
-        assert intents == []
+        assert result.is_ok
+        assert result.value == []
 
     # === Rule 1: STABILIZE Intent Tests (Critical Resources) ===
 
@@ -169,8 +170,10 @@ class TestFactionIntentGenerator:
             military_strength=50,
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         assert len(intents) >= 1
         assert intents[0].action_type == ActionType.STABILIZE
         assert intents[0].priority == 1  # Highest priority
@@ -189,8 +192,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy-faction", DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         # STABILIZE should be first (priority 1 = highest)
         assert intents[0].action_type == ActionType.STABILIZE
         assert intents[0].priority == 1
@@ -211,8 +216,10 @@ class TestFactionIntentGenerator:
         enemy_id = "enemy-faction"
         diplomacy.set_status(faction.id, enemy_id, DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         attack_intents = [i for i in intents if i.action_type == ActionType.ATTACK]
         assert len(attack_intents) == 1
         assert attack_intents[0].target_id == enemy_id
@@ -231,8 +238,10 @@ class TestFactionIntentGenerator:
         )
         # No enemies set
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         attack_intents = [i for i in intents if i.action_type == ActionType.ATTACK]
         assert len(attack_intents) == 0
 
@@ -249,8 +258,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy-faction", DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         attack_intents = [i for i in intents if i.action_type == ActionType.ATTACK]
         assert len(attack_intents) == 0
 
@@ -270,8 +281,10 @@ class TestFactionIntentGenerator:
         neutral_faction = "neutral-faction"
         diplomacy.set_status(faction.id, neutral_faction, DiplomaticStatus.NEUTRAL)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         trade_intents = [i for i in intents if i.action_type == ActionType.TRADE]
         assert len(trade_intents) == 1
         assert trade_intents[0].target_id == neutral_faction
@@ -290,8 +303,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "neutral-faction", DiplomaticStatus.NEUTRAL)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         trade_intents = [i for i in intents if i.action_type == ActionType.TRADE]
         assert len(trade_intents) == 0
 
@@ -310,8 +325,10 @@ class TestFactionIntentGenerator:
             territories=["territory-1"],  # Only 1 territory (< 3)
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         expand_intents = [i for i in intents if i.action_type == ActionType.EXPAND]
         assert len(expand_intents) == 1
         assert expand_intents[0].priority == 2
@@ -329,8 +346,10 @@ class TestFactionIntentGenerator:
             territories=["t1", "t2", "t3"],  # 3 territories
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         expand_intents = [i for i in intents if i.action_type == ActionType.EXPAND]
         assert len(expand_intents) == 0
 
@@ -346,8 +365,10 @@ class TestFactionIntentGenerator:
             territories=["t1"],
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         expand_intents = [i for i in intents if i.action_type == ActionType.EXPAND]
         assert len(expand_intents) == 0
 
@@ -367,8 +388,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy-faction", DiplomaticStatus.AT_WAR)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         sabotage_intents = [i for i in intents if i.action_type == ActionType.SABOTAGE]
         assert len(sabotage_intents) == 1
         assert sabotage_intents[0].priority == 2
@@ -385,8 +408,10 @@ class TestFactionIntentGenerator:
         )
         # No enemies
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         sabotage_intents = [i for i in intents if i.action_type == ActionType.SABOTAGE]
         assert len(sabotage_intents) == 0
 
@@ -402,8 +427,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy-faction", DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         sabotage_intents = [i for i in intents if i.action_type == ActionType.SABOTAGE]
         assert len(sabotage_intents) == 0
 
@@ -423,8 +450,10 @@ class TestFactionIntentGenerator:
         )
         # No allies, no enemies
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         assert len(intents) == 1
         assert intents[0].action_type == ActionType.STABILIZE
         assert intents[0].priority == 3
@@ -447,8 +476,10 @@ class TestFactionIntentGenerator:
         diplomacy.set_status(faction.id, "enemy", DiplomaticStatus.HOSTILE)
         diplomacy.set_status(faction.id, "neutral", DiplomaticStatus.NEUTRAL)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         assert len(intents) <= 3
 
     @pytest.mark.integration
@@ -465,8 +496,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy", DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         # Should be sorted by priority ascending (1 = highest priority)
         priorities = [i.priority for i in intents]
         assert priorities == sorted(priorities)
@@ -488,8 +521,10 @@ class TestFactionIntentGenerator:
         diplomacy.set_status(faction.id, "enemy", DiplomaticStatus.HOSTILE)
         diplomacy.set_status(faction.id, "neutral", DiplomaticStatus.NEUTRAL)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         # Should generate multiple intents: EXPAND, TRADE, possibly SABOTAGE
         assert len(intents) >= 2
 
@@ -504,8 +539,10 @@ class TestFactionIntentGenerator:
             economic_power=10,
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         for intent in intents:
             assert intent.faction_id == "faction-test-123"
 
@@ -523,8 +560,10 @@ class TestFactionIntentGenerator:
         )
         diplomacy.set_status(faction.id, "enemy", DiplomaticStatus.HOSTILE)
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         attack_intents = [i for i in intents if i.action_type == ActionType.ATTACK]
         if attack_intents:
             assert attack_intents[0].is_offensive is True
@@ -541,8 +580,10 @@ class TestFactionIntentGenerator:
             economic_power=10,  # Triggers STABILIZE
         )
 
-        intents = generator.generate_intents(faction, world, diplomacy)
+        result = generator.generate_intents(faction, world, diplomacy)
 
+        assert result.is_ok
+        intents = result.value
         stabilize_intents = [i for i in intents if i.action_type == ActionType.STABILIZE]
         if stabilize_intents:
             assert stabilize_intents[0].is_defensive is True

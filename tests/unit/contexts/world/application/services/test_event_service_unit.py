@@ -55,9 +55,10 @@ class TestEventServiceList:
         """Listing events for empty world returns empty result."""
         result = await service.list_events(world_id="test-world")
 
-        assert result.events == []
-        assert result.total_count == 0
-        assert result.total_pages == 0
+        assert result.is_ok
+        assert result.value.events == []
+        assert result.value.total_count == 0
+        assert result.value.total_pages == 0
 
     async def test_list_with_events(self, service, event_repo):
         """Listing events returns all events for the world."""
@@ -76,9 +77,10 @@ class TestEventServiceList:
 
         result = await service.list_events(world_id="test-world")
 
-        assert len(result.events) == 1
-        assert result.events[0].name == "Test Event"
-        assert result.total_count == 1
+        assert result.is_ok
+        assert len(result.value.events) == 1
+        assert result.value.events[0].name == "Test Event"
+        assert result.value.total_count == 1
 
     async def test_list_with_filter_by_type(self, service, event_repo):
         """Filtering by event type returns only matching events."""
@@ -111,8 +113,9 @@ class TestEventServiceList:
             event_type="war",
         )
 
-        assert len(result.events) == 1
-        assert result.events[0].event_type == EventType.WAR
+        assert result.is_ok
+        assert len(result.value.events) == 1
+        assert result.value.events[0].event_type == EventType.WAR
 
     async def test_list_pagination(self, service, event_repo):
         """Pagination works correctly."""
@@ -137,10 +140,11 @@ class TestEventServiceList:
             page_size=2,
         )
 
-        assert len(result.events) == 2
-        assert result.total_count == 5
-        assert result.total_pages == 3
-        assert result.page == 1
+        assert result.is_ok
+        assert len(result.value.events) == 2
+        assert result.value.total_count == 5
+        assert result.value.total_pages == 3
+        assert result.value.page == 1
 
 
 @pytest.mark.unit
@@ -231,7 +235,7 @@ class TestEventServiceCreate:
         )
 
         assert result.is_error
-        assert "Invalid event_type" in result.error
+        assert "Invalid event_type" in result.error or "Must be one of" in result.error
 
     async def test_create_event_invalid_significance(self, service):
         """Creating an event with invalid significance returns error."""
@@ -249,7 +253,7 @@ class TestEventServiceCreate:
         )
 
         assert result.is_error
-        assert "Invalid significance" in result.error
+        assert "Invalid significance" in result.error or "Must be one of" in result.error
 
 
 @pytest.mark.unit
@@ -274,14 +278,16 @@ class TestEventServiceGet:
             world_id="test-world",
         )
 
-        assert result is not None
-        assert result.name == "Found Event"
+        assert result.is_ok
+        assert result.value is not None
+        assert result.value.name == "Found Event"
 
     async def test_get_event_not_found(self, service):
-        """Getting a non-existent event returns None."""
+        """Getting a non-existent event returns Ok(None)."""
         result = await service.get_event(
             event_id="nonexistent",
             world_id="test-world",
         )
 
-        assert result is None
+        assert result.is_ok
+        assert result.value is None

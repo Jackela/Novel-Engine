@@ -97,7 +97,8 @@ class TestGetTime:
 
         result = service.get_time("world-123")
 
-        assert result == default_calendar
+        assert result.is_ok
+        assert result.value == default_calendar
         mock_repository.get_or_create.assert_called_once_with("world-123")
 
     def test_get_time_creates_default(
@@ -112,10 +113,11 @@ class TestGetTime:
 
         result = service.get_time("new-world")
 
-        assert result.year == 1
-        assert result.month == 1
-        assert result.day == 1
-        assert result.era_name == "First Age"
+        assert result.is_ok
+        assert result.value.year == 1
+        assert result.value.month == 1
+        assert result.value.day == 1
+        assert result.value.era_name == "First Age"
 
     def test_get_time_logs_warning_for_new_calendar(
         self,
@@ -233,7 +235,7 @@ class TestAdvanceTime:
         result = service.advance_time("world-123", 0)
 
         assert result.is_error
-        assert "must be >= 1" in result.error
+        assert "must be >= 1" in str(result.error)
 
     def test_advance_time_negative_days_fails(
         self,
@@ -243,7 +245,7 @@ class TestAdvanceTime:
         result = service.advance_time("world-123", -5)
 
         assert result.is_error
-        assert "must be >= 1" in result.error
+        assert "must be >= 1" in str(result.error)
 
     def test_advance_time_creates_event(
         self,
@@ -273,8 +275,10 @@ class TestAdvanceTime:
         mock_repository.get_or_create.return_value = default_calendar
 
         service.advance_time("world-123", 5)
-        events = service.get_pending_events()
+        events_result = service.get_pending_events()
 
+        assert events_result.is_ok
+        events = events_result.value
         assert len(events) == 1
         assert events[0].days_advanced == 5
 
@@ -367,7 +371,7 @@ class TestSetTime:
         result = service.set_time("world-123", year=100, month=13, day=1)
 
         assert result.is_error
-        assert "Invalid date" in result.error
+        assert "Invalid date" in str(result.error)
 
     def test_set_time_invalid_day(
         self,
@@ -377,7 +381,7 @@ class TestSetTime:
         result = service.set_time("world-123", year=100, month=1, day=35)
 
         assert result.is_error
-        assert "Invalid date" in result.error
+        assert "Invalid date" in str(result.error)
 
     def test_set_time_invalid_year(
         self,
@@ -387,7 +391,7 @@ class TestSetTime:
         result = service.set_time("world-123", year=0, month=1, day=1)
 
         assert result.is_error
-        assert "Invalid date" in result.error
+        assert "Invalid date" in str(result.error)
 
     def test_set_time_invalid_types(
         self,
@@ -399,7 +403,7 @@ class TestSetTime:
         )
 
         assert result.is_error
-        assert "Invalid date types" in result.error
+        assert "Invalid date types" in str(result.error)
 
     def test_set_time_invalid_era_type(
         self,
@@ -411,7 +415,7 @@ class TestSetTime:
         )
 
         assert result.is_error
-        assert "Invalid era_name type" in result.error
+        assert "Invalid era_name type" in str(result.error)
 
     def test_set_time_saves_repository(
         self,
@@ -450,9 +454,10 @@ class TestEventManagement:
 
     def test_get_pending_events_empty(self, service: TimeService) -> None:
         """Should return empty list when no events."""
-        events = service.get_pending_events()
+        result = service.get_pending_events()
 
-        assert events == []
+        assert result.is_ok
+        assert result.value == []
 
     def test_get_pending_events_returns_copy(
         self,
@@ -481,9 +486,10 @@ class TestEventManagement:
         service.advance_time("world-123", 5)
 
         service.clear_pending_events()
-        events = service.get_pending_events()
+        events_result = service.get_pending_events()
 
-        assert events == []
+        assert events_result.is_ok
+        assert events_result.value == []
 
     def test_multiple_advances_accumulate_events(
         self,
@@ -497,8 +503,9 @@ class TestEventManagement:
         service.advance_time("world-123", 5)
         service.advance_time("world-123", 10)
 
-        events = service.get_pending_events()
-        assert len(events) == 2
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        assert len(events_result.value) == 2
 
     def test_clear_pending_events_logs_debug(
         self,
@@ -580,5 +587,7 @@ class TestEdgeCases:
         result1 = service1.get_time("world-1")
         result2 = service2.get_time("world-2")
 
-        assert result1.year == 1
-        assert result2.year == 100
+        assert result1.is_ok
+        assert result2.is_ok
+        assert result1.value.year == 1
+        assert result2.value.year == 100

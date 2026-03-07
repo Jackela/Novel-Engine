@@ -48,10 +48,18 @@ class ModelConfig:
 
     def __post_init__(self) -> None:
         """Validate model configuration."""
+        # Validate provider
+        if not self.provider or not self.provider.strip():
+            raise ValueError("provider cannot be empty")
+
+        # Validate model/model_name
+        if not self.model_name or not self.model_name.strip():
+            raise ValueError("model_name cannot be empty")
+
         # Validate temperature
         if not 0.0 <= self.temperature <= 2.0:
             raise ValueError(
-                f"Temperature must be between 0.0 and 2.0, got {self.temperature}"
+                f"temperature must be between 0.0 and 2.0, got {self.temperature}"
             )
 
         # Validate max_tokens
@@ -68,6 +76,18 @@ class ModelConfig:
 
         if self.top_k is not None and self.top_k < 1:
             raise ValueError(f"top_k must be positive, got {self.top_k}")
+
+        # Validate frequency_penalty (-2.0 to 2.0 is standard range)
+        if self.frequency_penalty is not None and not -2.0 <= self.frequency_penalty <= 2.0:
+            raise ValueError(
+                f"frequency_penalty must be between -2.0 and 2.0, got {self.frequency_penalty}"
+            )
+
+        # Validate presence_penalty (-2.0 to 2.0 is standard range)
+        if self.presence_penalty is not None and not -2.0 <= self.presence_penalty <= 2.0:
+            raise ValueError(
+                f"presence_penalty must be between -2.0 and 2.0, got {self.presence_penalty}"
+            )
 
         # Convert stop_sequences to tuple if provided
         if self.stop_sequences is not None and not isinstance(

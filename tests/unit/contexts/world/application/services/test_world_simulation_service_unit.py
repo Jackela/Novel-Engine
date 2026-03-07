@@ -854,6 +854,8 @@ class TestWorldSimulationCommit:
         from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 
         # Create mock snapshot service
+        from src.core.result import Ok
+
         mock_snapshot_service = MagicMock()
         mock_snapshot = WorldSnapshot(
             world_id=world.id,
@@ -861,9 +863,9 @@ class TestWorldSimulationCommit:
             state_json='{"id": "test"}',
             tick_number=0,
         )
-        mock_snapshot_service.create_snapshot = MagicMock(return_value=mock_snapshot)
+        mock_snapshot_service.create_snapshot = MagicMock(return_value=Ok(mock_snapshot))
         mock_snapshot_service.restore_snapshot = MagicMock(
-            return_value=MagicMock(is_ok=True)
+            return_value=Ok(mock_snapshot)
         )
 
         faction_repo = MockFactionRepository({world.id: [faction_active]})

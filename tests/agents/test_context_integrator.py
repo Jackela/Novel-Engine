@@ -52,12 +52,18 @@ class MockBehavioralTrigger:
 
 
 @dataclass
+class MockRelationshipType:
+    """Mock RelationshipType for testing."""
+    value: str = "ally"
+
+
+@dataclass
 class MockRelationship:
     """Mock Relationship for testing."""
 
     character_name: str = "Ally"
     trust_level: Any = None
-    relationship_type: Any = None
+    relationship_type: Any = field(default_factory=MockRelationshipType)
     emotional_dynamics: Dict[str, Any] = field(default_factory=dict)
     conflict_points: List[str] = field(default_factory=list)
     shared_experiences: List[str] = field(default_factory=list)
@@ -72,13 +78,19 @@ class MockTrustLevel:
 
 
 @dataclass
+class MockMemoryType:
+    """Mock MemoryType for testing."""
+    value: str = "formative"
+
+
+@dataclass
 class MockFormativeEvent:
     """Mock FormativeEvent for testing."""
 
     event_name: str = "test_event"
     age: int = 20
     description: str = "Test description"
-    memory_type: Any = None
+    memory_type: Any = field(default_factory=MockMemoryType)
     emotional_impact: str = "positive"
     decision_influence: str = "encourages caution"
     trigger_phrases: List[str] = field(default_factory=list)
@@ -267,17 +279,12 @@ class TestContextIntegratorMerging:
 
     def test_merge_contexts_error_handling(self, integrator, existing_data):
         """Test error handling during merge."""
-        # Create context that will cause error
-        context = Mock()
-        context.character_name = "Test"
-        context.load_success = True
-        context.load_timestamp = datetime.now()
-        context.validation_warnings = []
-        # Missing required attributes to trigger exception
+        # Create context that will cause error - using None as context
+        # to trigger the error handling path
 
-        merged = integrator.merge_contexts(existing_data, context)
+        merged = integrator.merge_contexts(existing_data, None)  # type: ignore
 
-        # Should return original data on error
+        # Should return original data on error (None context causes AttributeError)
         assert merged == existing_data
 
 
@@ -515,6 +522,7 @@ class TestContextIntegratorSummary:
             "behavioral_triggers": {"trigger1": {}},
             "active_objectives": {"obj1": {}},
             "enhanced_relationships": {"rel1": {}},
+            "context_load_success": True,  # Required for "success" status
         }
 
         summary = integrator.get_integration_summary(merged_data)

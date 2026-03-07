@@ -76,6 +76,8 @@ class TestCharacterContextManagerLoading:
             core.identity.primary_faction = ""
             core.identity.backstory = ""
             core.character_data = {}
+            # Mock the _read_cached_file method to actually read the file
+            core._read_cached_file = lambda path: Path(path).read_text()
 
             manager = CharacterContextManager(core=core)
             yield manager, core, str(sheet_path)
@@ -425,6 +427,8 @@ class TestCharacterContextManagerIntegration:
             core.identity.primary_faction = ""
             core.identity.backstory = ""
             core.character_data = {}
+            # Mock the _read_cached_file method to actually read the file
+            core._read_cached_file = lambda path: Path(path).read_text()
 
             manager = CharacterContextManager(core=core)
             manager.load_character_context()

@@ -21,6 +21,8 @@ from typing import Any, Dict, List, Optional, Tuple
 # Try to import Iron Laws types
 try:
     from src.core.types.shared_types import (
+        ActionTarget,
+        ActionType,
         CharacterData,
         IronLawsViolation,
         ProposedAction,
@@ -44,6 +46,12 @@ except ImportError:
         law_name: str = "Unknown"
         description: str = "Unknown violation"
         severity: str = "low"
+
+    @dataclass
+    class ActionTarget:  # type: ignore[no-redef]
+        """Fallback ActionTarget for when shared types unavailable."""
+        entity_id: str = ""
+        entity_type: str = "character"
 
     @dataclass
     class ValidatedAction:  # type: ignore[no-redef]
@@ -156,11 +164,15 @@ class AgentLifecycleManager:
 
             if not self.validation_enabled:
                 # Return success if Iron Laws not available
+                validated_action = self._create_fallback_validated_action(
+                    proposed_action
+                )
+                self._record_successful_action(
+                    agent_id, proposed_action, validated_action
+                )
                 return ActionAdjudicationResult(
                     success=True,
-                    validated_action=self._create_fallback_validated_action(
-                        proposed_action
-                    ),
+                    validated_action=validated_action,
                     violations=[],
                     repair_log=[
                         "Iron Laws validation not available - action approved by default"
@@ -654,11 +666,30 @@ class AgentLifecycleManager:
     ) -> ValidatedAction:
         """Convert a ProposedAction to ValidatedAction with validation status."""
         parameters = getattr(proposed_action, "parameters", None)
+        target = getattr(proposed_action, "target", None)
+        action_type = getattr(proposed_action, "action_type", "unknown")
+        
+        # Handle Pydantic types when Iron Laws available
+        if IRON_LAWS_AVAILABLE:
+            # Convert action_type string to ActionType enum
+            if isinstance(action_type, str):
+                try:
+                    action_type = ActionType(action_type.lower()) if action_type else ActionType.OTHER
+                except (ValueError, AttributeError):
+                    action_type = ActionType.OTHER
+            
+            # Convert target string to ActionTarget or None
+            if isinstance(target, str):
+                target = ActionTarget(entity_id=target, entity_type="character")
+            # If target is not an ActionTarget, set to None for compatibility
+            elif target is not None and not hasattr(target, 'entity_id'):
+                target = None
+        
         return ValidatedAction(
             action_id=getattr(proposed_action, "action_id", "unknown"),
             character_id=getattr(proposed_action, "character_id", "unknown"),
-            action_type=getattr(proposed_action, "action_type", "unknown"),
-            target=getattr(proposed_action, "target", None),
+            action_type=action_type,
+            target=target,
             parameters=parameters if parameters is not None else {},
             validation_result=validation_result,
             validation_details={},
@@ -671,11 +702,30 @@ class AgentLifecycleManager:
     ) -> ValidatedAction:
         """Create a fallback validated action when Iron Laws not available."""
         parameters = getattr(proposed_action, "parameters", None)
+        target = getattr(proposed_action, "target", None)
+        action_type = getattr(proposed_action, "action_type", "unknown")
+        
+        # Handle Pydantic types when Iron Laws available
+        if IRON_LAWS_AVAILABLE:
+            # Convert action_type string to ActionType enum
+            if isinstance(action_type, str):
+                try:
+                    action_type = ActionType(action_type.lower()) if action_type else ActionType.OTHER
+                except (ValueError, AttributeError):
+                    action_type = ActionType.OTHER
+            
+            # Convert target string to ActionTarget or None
+            if isinstance(target, str):
+                target = ActionTarget(entity_id=target, entity_type="character")
+            # If target is not an ActionTarget, set to None for compatibility
+            elif target is not None and not hasattr(target, 'entity_id'):
+                target = None
+        
         return ValidatedAction(
             action_id=getattr(proposed_action, "action_id", "unknown"),
             character_id=getattr(proposed_action, "character_id", "unknown"),
-            action_type=getattr(proposed_action, "action_type", "unknown"),
-            target=getattr(proposed_action, "target", None),
+            action_type=action_type,
+            target=target,
             parameters=parameters if parameters is not None else {},
             validation_result=ValidationResult.VALID,
             validation_details={},

@@ -33,9 +33,11 @@ class TestPersonaAgentCore:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
                 assert core is not None
         except ImportError:
@@ -108,8 +110,10 @@ class TestPersonaAgent:
             from src.agents.persona_agent.agent import PersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 agent = PersonaAgent(
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
                 assert agent is not None
         except ImportError:
@@ -134,8 +138,10 @@ class TestPersonaAgentIntegrated:
             from src.agents.persona_agent.integrated import IntegratedPersonaAgent
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 agent = IntegratedPersonaAgent(
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
                 assert agent is not None
         except ImportError:
@@ -186,7 +192,11 @@ class TestPersonaAgentEdgeCases:
             from src.agents.persona_agent.agent import PersonaAgent
 
             # Should handle gracefully
-            agent = PersonaAgent(character_directory="/nonexistent/path")
+            from src.core.event_bus import EventBus
+            agent = PersonaAgent(
+                character_directory_path="/nonexistent/path",
+                event_bus=EventBus(),
+            )
             assert agent is not None
         except ImportError:
             pytest.skip("PersonaAgent not available")
@@ -200,9 +210,11 @@ class TestPersonaAgentEdgeCases:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
                 # Test memory access
                 short_term = core.short_term_memory
@@ -216,9 +228,11 @@ class TestPersonaAgentEdgeCases:
             from src.agents.persona_agent.core import PersonaAgentCore
 
             with tempfile.TemporaryDirectory() as tmpdir:
+                from src.core.event_bus import EventBus
                 core = PersonaAgentCore(
                     agent_id="test",
-                    character_directory=str(tmpdir),
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
                 )
                 # Test relationship methods
                 strength = core.get_relationship_strength("test_entity")
@@ -240,7 +254,11 @@ class TestPersonaAgentIntegration:
                 sheet = Path(tmpdir) / "character_sheet.md"
                 sheet.write_text("# Test Character\n\nname: Test\n")
 
-                agent = PersonaAgent(character_directory=str(tmpdir))
+                from src.core.event_bus import EventBus
+                agent = PersonaAgent(
+                    character_directory_path=str(tmpdir),
+                    event_bus=EventBus(),
+                )
 
                 # Test basic properties
                 assert hasattr(agent, "agent_id")

@@ -111,12 +111,13 @@ class TestProcessTick:
     """Tests for process_tick method."""
 
     def test_process_tick_returns_result(self, service: FactionTickService) -> None:
-        """Should return a TickResult."""
+        """Should return a Result containing TickResult."""
         result = service.process_tick(world_id="world-123", days_advanced=5)
 
-        assert isinstance(result, TickResult)
-        assert result.world_id == "world-123"
-        assert result.days_advanced == 5
+        assert result.is_ok
+        assert isinstance(result.value, TickResult)
+        assert result.value.world_id == "world-123"
+        assert result.value.days_advanced == 5
 
     def test_process_tick_success_no_errors(
         self, service: FactionTickService
@@ -124,8 +125,9 @@ class TestProcessTick:
         """Should return success=True when no errors."""
         result = service.process_tick(world_id="world-123", days_advanced=1)
 
-        assert result.success is True
-        assert result.errors == []
+        assert result.is_ok
+        assert result.value.success is True
+        assert result.value.errors == []
 
     def test_process_tick_calls_resource_calculation(
         self, service: FactionTickService
@@ -137,7 +139,8 @@ class TestProcessTick:
             result = service.process_tick(world_id="world-123", days_advanced=5)
 
             mock_calc.assert_called_once_with("world-123", 5)
-            assert result.resources_updated == 10
+            assert result.is_ok
+            assert result.value.resources_updated == 10
 
     def test_process_tick_calls_diplomatic_changes(
         self, service: FactionTickService
@@ -149,7 +152,8 @@ class TestProcessTick:
             result = service.process_tick(world_id="world-123", days_advanced=5)
 
             mock_diplo.assert_called_once_with("world-123", 5)
-            assert result.diplomatic_changes == 3
+            assert result.is_ok
+            assert result.value.diplomatic_changes == 3
 
     def test_process_tick_logs_start_and_completion(
         self, service: FactionTickService
@@ -181,15 +185,17 @@ class TestProcessTick:
         """Should handle zero days advanced."""
         result = service.process_tick(world_id="world-123", days_advanced=0)
 
-        assert result.days_advanced == 0
-        assert result.success is True
+        assert result.is_ok
+        assert result.value.days_advanced == 0
+        assert result.value.success is True
 
     def test_process_tick_large_days_value(self, service: FactionTickService) -> None:
         """Should handle large days values."""
         result = service.process_tick(world_id="world-123", days_advanced=365)
 
-        assert result.days_advanced == 365
-        assert result.success is True
+        assert result.is_ok
+        assert result.value.days_advanced == 365
+        assert result.value.success is True
 
     def test_process_tick_multiple_worlds(
         self, service: FactionTickService
@@ -198,10 +204,12 @@ class TestProcessTick:
         result1 = service.process_tick(world_id="world-1", days_advanced=5)
         result2 = service.process_tick(world_id="world-2", days_advanced=10)
 
-        assert result1.world_id == "world-1"
-        assert result1.days_advanced == 5
-        assert result2.world_id == "world-2"
-        assert result2.days_advanced == 10
+        assert result1.is_ok
+        assert result2.is_ok
+        assert result1.value.world_id == "world-1"
+        assert result1.value.days_advanced == 5
+        assert result2.value.world_id == "world-2"
+        assert result2.value.days_advanced == 10
 
 
 # ============================================================================
@@ -275,12 +283,13 @@ class TestFactionTickServiceIntegration:
         )
 
         # Verify result structure
-        assert result.world_id == "test-world"
-        assert result.days_advanced == 30
-        assert isinstance(result.success, bool)
-        assert isinstance(result.resources_updated, int)
-        assert isinstance(result.diplomatic_changes, int)
-        assert isinstance(result.errors, list)
+        assert result.is_ok
+        assert result.value.world_id == "test-world"
+        assert result.value.days_advanced == 30
+        assert isinstance(result.value.success, bool)
+        assert isinstance(result.value.resources_updated, int)
+        assert isinstance(result.value.diplomatic_changes, int)
+        assert isinstance(result.value.errors, list)
 
     def test_service_is_stateless(self) -> None:
         """Service should not maintain state between calls."""
@@ -291,8 +300,10 @@ class TestFactionTickServiceIntegration:
         result2 = service2.process_tick("world-2", 10)
 
         # Results should be independent
-        assert result1.world_id == "world-1"
-        assert result2.world_id == "world-2"
+        assert result1.is_ok
+        assert result2.is_ok
+        assert result1.value.world_id == "world-1"
+        assert result2.value.world_id == "world-2"
 
     def test_concurrent_ticks_simulated(self, service: FactionTickService) -> None:
         """Should handle sequential ticks on same world."""
@@ -303,10 +314,11 @@ class TestFactionTickServiceIntegration:
             results.append(result)
 
         # All should succeed
-        assert all(r.success for r in results)
+        assert all(r.is_ok for r in results)
+        assert all(r.value.success for r in results)
 
         # Days should match what was passed
-        assert results[0].days_advanced == 1
-        assert results[1].days_advanced == 7
-        assert results[2].days_advanced == 30
-        assert results[3].days_advanced == 365
+        assert results[0].value.days_advanced == 1
+        assert results[1].value.days_advanced == 7
+        assert results[2].value.days_advanced == 30
+        assert results[3].value.days_advanced == 365
