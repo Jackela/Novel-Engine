@@ -93,12 +93,35 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
     async def _validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
+        # Convert errors to JSON-serializable format
+        # Pydantic errors may contain non-serializable objects like ValueError
+        serializable_errors = []
+        for error in exc.errors():
+            # Convert each error dict, handling non-serializable values
+            serializable_error = {}
+            for key, value in error.items():
+                if isinstance(value, Exception):
+                    # Convert exception to string
+                    serializable_error[key] = str(value)
+                elif key == "ctx" and isinstance(value, dict):
+                    # Handle ctx which may contain exception objects
+                    serializable_ctx = {}
+                    for ctx_key, ctx_value in value.items():
+                        if isinstance(ctx_value, Exception):
+                            serializable_ctx[ctx_key] = str(ctx_value)
+                        else:
+                            serializable_ctx[ctx_key] = ctx_value
+                    serializable_error[key] = serializable_ctx
+                else:
+                    serializable_error[key] = value
+            serializable_errors.append(serializable_error)
+        
         return JSONResponse(
             status_code=422,
             content=_envelope(
                 status_code=422,
                 detail="Request validation failed.",
-                extra={"fields": exc.errors()},
+                extra={"fields": serializable_errors},
             ),
         )
 

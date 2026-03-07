@@ -170,11 +170,11 @@ class TestAnalyzeSocialNetwork:
 
         result = await service.analyze_social_network()
 
-        assert result.total_characters == 0
-        assert result.total_relationships == 0
-        assert result.most_connected is None
-        assert result.most_hated is None
-        assert result.most_loved is None
+        assert result.unwrap().total_characters == 0
+        assert result.unwrap().total_relationships == 0
+        assert result.unwrap().most_connected is None
+        assert result.unwrap().most_hated is None
+        assert result.unwrap().most_loved is None
 
     @pytest.mark.asyncio
     async def test_single_relationship(
@@ -188,9 +188,9 @@ class TestAnalyzeSocialNetwork:
 
         result = await service.analyze_social_network()
 
-        assert result.total_characters == 2
-        assert result.total_relationships == 1
-        assert result.most_connected in ["char-001", "char-002"]
+        assert result.unwrap().total_characters == 2
+        assert result.unwrap().total_relationships == 1
+        assert result.unwrap().most_connected in ["char-001", "char-002"]
 
     @pytest.mark.asyncio
     async def test_multiple_relationships(
@@ -206,8 +206,8 @@ class TestAnalyzeSocialNetwork:
 
         result = await service.analyze_social_network()
 
-        assert result.total_characters == 3
-        assert result.total_relationships == 3
+        assert result.unwrap().total_characters == 3
+        assert result.unwrap().total_relationships == 3
 
     @pytest.mark.asyncio
     async def test_calculates_centrality_correctly(
@@ -233,11 +233,11 @@ class TestAnalyzeSocialNetwork:
         # char-002: 2 relationships (to 001, 003)
         # char-003: 2 relationships (to 001, 002)
         # char-004: 1 relationship (to 001)
-        assert result.character_centralities["char-001"].relationship_count == 3
-        assert result.character_centralities["char-002"].relationship_count == 2
-        assert result.character_centralities["char-003"].relationship_count == 2
-        assert result.character_centralities["char-004"].relationship_count == 1
-        assert result.most_connected == "char-001"
+        assert result.unwrap().character_centralities["char-001"].relationship_count == 3
+        assert result.unwrap().character_centralities["char-002"].relationship_count == 2
+        assert result.unwrap().character_centralities["char-003"].relationship_count == 2
+        assert result.unwrap().character_centralities["char-004"].relationship_count == 1
+        assert result.unwrap().most_connected == "char-001"
 
     @pytest.mark.asyncio
     async def test_identifies_most_hated(
@@ -254,7 +254,7 @@ class TestAnalyzeSocialNetwork:
         result = await service.analyze_social_network()
 
         # char-001 has 2 enemy relationships (counted bidirectionally)
-        assert result.most_hated == "char-001"
+        assert result.unwrap().most_hated == "char-001"
 
     @pytest.mark.asyncio
     async def test_identifies_most_loved(
@@ -271,7 +271,7 @@ class TestAnalyzeSocialNetwork:
         result = await service.analyze_social_network()
 
         # char-001 has highest average trust (87.5)
-        assert result.most_loved == "char-001"
+        assert result.unwrap().most_loved == "char-001"
 
     @pytest.mark.asyncio
     async def test_calculates_network_density(
@@ -286,10 +286,10 @@ class TestAnalyzeSocialNetwork:
 
         result = await service.analyze_social_network()
 
-        assert result.total_characters == 2
+        assert result.unwrap().total_characters == 2
         # Density for 2 chars, 1 relationship = 1 / (2*1/2) = 1.0
         # But capped at 1.0
-        assert result.network_density <= 1.0
+        assert result.unwrap().network_density <= 1.0
 
     @pytest.mark.asyncio
     async def test_ignores_non_character_relationships(
@@ -304,7 +304,7 @@ class TestAnalyzeSocialNetwork:
         result = await service.analyze_social_network()
 
         # Should only count character-to-character relationship
-        assert result.total_relationships == 1
+        assert result.unwrap().total_relationships == 1
 
     @pytest.mark.asyncio
     async def test_calculates_average_trust(
@@ -320,7 +320,7 @@ class TestAnalyzeSocialNetwork:
         result = await service.analyze_social_network()
 
         # char-001 average trust = (60 + 80) / 2 = 70
-        centrality = result.character_centralities["char-001"]
+        centrality = result.unwrap().character_centralities["char-001"]
         assert centrality.average_trust == 70.0
 
     @pytest.mark.asyncio
@@ -336,7 +336,7 @@ class TestAnalyzeSocialNetwork:
 
         result = await service.analyze_social_network()
 
-        centrality = result.character_centralities["char-001"]
+        centrality = result.unwrap().character_centralities["char-001"]
         assert centrality.average_romance == 45.0  # (80 + 10) / 2
 
 
@@ -357,7 +357,7 @@ class TestGetCharacterCentrality:
 
         result = await service.get_character_centrality("char-001")
 
-        assert result is None
+        assert result.unwrap() is None
 
     @pytest.mark.asyncio
     async def test_character_with_relationships(
@@ -372,12 +372,12 @@ class TestGetCharacterCentrality:
 
         result = await service.get_character_centrality("char-001")
 
-        assert result is not None
-        assert result.character_id == "char-001"
-        assert result.relationship_count == 2
-        assert result.positive_count == 1
-        assert result.negative_count == 1
-        assert result.average_trust == 50.0
+        assert result.unwrap() is not None
+        assert result.unwrap().character_id == "char-001"
+        assert result.unwrap().relationship_count == 2
+        assert result.unwrap().positive_count == 1
+        assert result.unwrap().negative_count == 1
+        assert result.unwrap().average_trust == 50.0
 
     @pytest.mark.asyncio
     async def test_filters_to_character_relationships(
@@ -398,8 +398,8 @@ class TestGetCharacterCentrality:
 
         result = await service.get_character_centrality("char-001")
 
-        assert result is not None
-        assert result.relationship_count == 1  # Only character-to-character
+        assert result.unwrap() is not None
+        assert result.unwrap().relationship_count == 1  # Only character-to-character
 
     @pytest.mark.asyncio
     async def test_calculates_centrality_score_as_count(
@@ -415,9 +415,9 @@ class TestGetCharacterCentrality:
 
         result = await service.get_character_centrality("char-001")
 
-        assert result is not None
+        assert result.unwrap() is not None
         # For single character, centrality_score equals relationship count
-        assert result.centrality_score == 3.0
+        assert result.unwrap().centrality_score == 3.0
 
 
 # ============================================================================
@@ -602,10 +602,10 @@ class TestSocialGraphServiceIntegration:
         result = await service.analyze_social_network()
 
         # Verify analysis results
-        assert result.total_characters > 0
-        assert result.total_relationships == len(relationships)
-        assert result.most_connected is not None
-        assert result.network_density > 0
+        assert result.unwrap().total_characters > 0
+        assert result.unwrap().total_relationships == len(relationships)
+        assert result.unwrap().most_connected is not None
+        assert result.unwrap().network_density > 0
 
     @pytest.mark.asyncio
     async def test_service_is_stateless(self) -> None:
@@ -625,5 +625,5 @@ class TestSocialGraphServiceIntegration:
         result2 = await service2.analyze_social_network()
 
         # Both should return independent results
-        assert result1.total_characters == 0
-        assert result2.total_characters == 0
+        assert result1.unwrap().total_characters == 0
+        assert result2.unwrap().total_characters == 0

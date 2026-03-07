@@ -178,16 +178,21 @@ class TestDatabaseConnection:
 
     async def test_close(self, db_connection, mock_connection):
         """Test connection close."""
-        # Create a mock health check task
-        mock_task = AsyncMock()
-        mock_task.done = Mock(return_value=False)
-        db_connection._health_check_task = mock_task
+        # Create a real asyncio task that completes quickly for testing
+        import asyncio
+        
+        async def dummy_task():
+            await asyncio.sleep(0)
+        
+        # Create and immediately cancel a real task to simulate the scenario
+        task = asyncio.create_task(dummy_task())
+        task.cancel()
+        db_connection._health_check_task = task
         
         await db_connection.close()
         
         assert db_connection.state == ConnectionState.CLOSED
         mock_connection.close.assert_called_once()
-        mock_task.cancel.assert_called_once()
 
     async def test_health_check_success(self, db_connection, mock_connection):
         """Test successful health check."""

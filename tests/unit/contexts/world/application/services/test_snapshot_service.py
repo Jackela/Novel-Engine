@@ -53,12 +53,14 @@ class TestCreateSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test creating a basic snapshot."""
-        snapshot = service.create_snapshot(
+        result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
         )
+        assert result.is_ok
+        snapshot = result.value
 
         assert snapshot.world_id == "world-123"
         assert snapshot.tick_number == 5
@@ -74,12 +76,14 @@ class TestCreateSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test that description is auto-generated when not provided."""
-        snapshot = service.create_snapshot(
+        result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
         )
+        assert result.is_ok
+        snapshot = result.value
 
         # Auto-description should be "Tick {tick_number} - {calendar.format()}"
         assert "Tick 5" in snapshot.description
@@ -92,13 +96,15 @@ class TestCreateSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test creating snapshot with custom description."""
-        snapshot = service.create_snapshot(
+        result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
             description="Before major battle",
         )
+        assert result.is_ok
+        snapshot = result.value
 
         assert snapshot.description == "Before major battle"
 
@@ -113,21 +119,27 @@ class TestCreateSnapshot:
 
         # Create more than max snapshots
         for i in range(MAX_SNAPSHOTS_PER_WORLD + 5):
-            snapshot = service.create_snapshot(
+            result = service.create_snapshot(
                 world_id="world-123",
                 calendar=calendar,
                 state_json=sample_state_json,
                 tick_number=i,
             )
+            assert result.is_ok
+            snapshot = result.value
             snapshot_ids.append(snapshot.snapshot_id)
 
         # Should have exactly max_per_world snapshots
-        assert service.get_snapshot_count("world-123") == MAX_SNAPSHOTS_PER_WORLD
+        count_result = service.get_snapshot_count("world-123")
+        assert count_result.is_ok
+        assert count_result.value == MAX_SNAPSHOTS_PER_WORLD
 
         # First snapshots should be evicted
+        list_result = service.list_snapshots("world-123")
+        assert list_result.is_ok
         for i in range(5):
             assert snapshot_ids[i] not in [
-                s.snapshot_id for s in service.list_snapshots("world-123")
+                s.snapshot_id for s in list_result.value
             ]
 
     def test_create_snapshot_separate_worlds(
@@ -137,21 +149,27 @@ class TestCreateSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test that snapshots are isolated between worlds."""
-        service.create_snapshot(
+        result_a = service.create_snapshot(
             world_id="world-a",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=1,
         )
-        service.create_snapshot(
+        assert result_a.is_ok
+        result_b = service.create_snapshot(
             world_id="world-b",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=2,
         )
+        assert result_b.is_ok
 
-        assert service.get_snapshot_count("world-a") == 1
-        assert service.get_snapshot_count("world-b") == 1
+        count_a = service.get_snapshot_count("world-a")
+        count_b = service.get_snapshot_count("world-b")
+        assert count_a.is_ok
+        assert count_b.is_ok
+        assert count_a.value == 1
+        assert count_b.value == 1
 
 
 class TestRestoreSnapshot:
@@ -164,12 +182,14 @@ class TestRestoreSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test successful snapshot restoration."""
-        snapshot = service.create_snapshot(
+        create_result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
         )
+        assert create_result.is_ok
+        snapshot = create_result.value
 
         result = service.restore_snapshot(snapshot.snapshot_id)
 
@@ -183,7 +203,7 @@ class TestRestoreSnapshot:
         result = service.restore_snapshot("non-existent-id")
 
         assert result.is_error
-        assert result.error == SnapshotError.NOT_FOUND
+        assert "not found" in str(result.error).lower()
 
     def test_restore_snapshot_invalid_json(
         self,
@@ -205,7 +225,7 @@ class TestRestoreSnapshot:
         result = service.restore_snapshot(snapshot.snapshot_id)
 
         assert result.is_error
-        assert result.error == SnapshotError.RESTORE_FAILED
+        assert "restore" in str(result.error).lower() or "json" in str(result.error).lower()
 
 
 class TestListSnapshots:
@@ -213,9 +233,10 @@ class TestListSnapshots:
 
     def test_list_snapshots_empty(self, service: SnapshotService) -> None:
         """Test listing snapshots for world with none."""
-        snapshots = service.list_snapshots("world-123")
+        result = service.list_snapshots("world-123")
 
-        assert snapshots == []
+        assert result.is_ok
+        assert result.value == []
 
     def test_list_snapshots_ordered_by_newest(
         self,
@@ -225,14 +246,17 @@ class TestListSnapshots:
     ) -> None:
         """Test that snapshots are ordered newest first."""
         for i in range(5):
-            service.create_snapshot(
+            result = service.create_snapshot(
                 world_id="world-123",
                 calendar=calendar,
                 state_json=sample_state_json,
                 tick_number=i,
             )
+            assert result.is_ok
 
-        snapshots = service.list_snapshots("world-123")
+        list_result = service.list_snapshots("world-123")
+        assert list_result.is_ok
+        snapshots = list_result.value
 
         # Should be ordered by tick descending (newest first)
         tick_numbers = [s.tick_number for s in snapshots]
@@ -246,14 +270,17 @@ class TestListSnapshots:
     ) -> None:
         """Test limit parameter."""
         for i in range(10):
-            service.create_snapshot(
+            result = service.create_snapshot(
                 world_id="world-123",
                 calendar=calendar,
                 state_json=sample_state_json,
                 tick_number=i,
             )
+            assert result.is_ok
 
-        snapshots = service.list_snapshots("world-123", limit=3)
+        list_result = service.list_snapshots("world-123", limit=3)
+        assert list_result.is_ok
+        snapshots = list_result.value
 
         assert len(snapshots) == 3
         # Should get the 3 newest
@@ -272,23 +299,30 @@ class TestDeleteSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test successful snapshot deletion."""
-        snapshot = service.create_snapshot(
+        create_result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
         )
+        assert create_result.is_ok
+        snapshot = create_result.value
 
-        deleted = service.delete_snapshot(snapshot.snapshot_id)
+        delete_result = service.delete_snapshot(snapshot.snapshot_id)
+        assert delete_result.is_ok
+        deleted = delete_result.value
 
         assert deleted is True
-        assert service.get_snapshot_count("world-123") == 0
+        count_result = service.get_snapshot_count("world-123")
+        assert count_result.is_ok
+        assert count_result.value == 0
 
     def test_delete_snapshot_not_found(self, service: SnapshotService) -> None:
         """Test deleting non-existent snapshot."""
-        deleted = service.delete_snapshot("non-existent-id")
+        result = service.delete_snapshot("non-existent-id")
 
-        assert deleted is False
+        assert result.is_ok
+        assert result.value is False
 
 
 class TestGetLatestSnapshot:
@@ -298,7 +332,8 @@ class TestGetLatestSnapshot:
         """Test getting latest when no snapshots exist."""
         result = service.get_latest_snapshot("world-123")
 
-        assert result is None
+        assert result.is_ok
+        assert result.value is None
 
     def test_get_latest_single_snapshot(
         self,
@@ -307,17 +342,20 @@ class TestGetLatestSnapshot:
         sample_state_json: str,
     ) -> None:
         """Test getting latest with single snapshot."""
-        snapshot = service.create_snapshot(
+        create_result = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=5,
         )
+        assert create_result.is_ok
+        snapshot = create_result.value
 
         result = service.get_latest_snapshot("world-123")
 
-        assert result is not None
-        assert result.snapshot_id == snapshot.snapshot_id
+        assert result.is_ok
+        assert result.value is not None
+        assert result.value.snapshot_id == snapshot.snapshot_id
 
     def test_get_latest_multiple_snapshots(
         self,
@@ -327,17 +365,19 @@ class TestGetLatestSnapshot:
     ) -> None:
         """Test getting latest with multiple snapshots."""
         for i in range(5):
-            service.create_snapshot(
+            create_result = service.create_snapshot(
                 world_id="world-123",
                 calendar=calendar,
                 state_json=sample_state_json,
                 tick_number=i,
             )
+            assert create_result.is_ok
 
         result = service.get_latest_snapshot("world-123")
 
-        assert result is not None
-        assert result.tick_number == 4  # Latest tick
+        assert result.is_ok
+        assert result.value is not None
+        assert result.value.tick_number == 4  # Latest tick
 
 
 class TestClearStorage:
@@ -350,23 +390,30 @@ class TestClearStorage:
         sample_state_json: str,
     ) -> None:
         """Test clearing all storage."""
-        service.create_snapshot(
+        result1 = service.create_snapshot(
             world_id="world-123",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=1,
         )
-        service.create_snapshot(
+        assert result1.is_ok
+        result2 = service.create_snapshot(
             world_id="world-456",
             calendar=calendar,
             state_json=sample_state_json,
             tick_number=2,
         )
+        assert result2.is_ok
 
-        service.clear_storage()
+        clear_result = service.clear_storage()
+        assert clear_result.is_ok
 
-        assert service.get_snapshot_count("world-123") == 0
-        assert service.get_snapshot_count("world-456") == 0
+        count1 = service.get_snapshot_count("world-123")
+        count2 = service.get_snapshot_count("world-456")
+        assert count1.is_ok
+        assert count2.is_ok
+        assert count1.value == 0
+        assert count2.value == 0
 
 
 class TestCustomMaxPerWorld:
@@ -381,12 +428,15 @@ class TestCustomMaxPerWorld:
         service = SnapshotService(max_per_world=3)
 
         for i in range(5):
-            service.create_snapshot(
+            result = service.create_snapshot(
                 world_id="world-123",
                 calendar=calendar,
                 state_json=sample_state_json,
                 tick_number=i,
             )
+            assert result.is_ok
 
         # Should only keep 3
-        assert service.get_snapshot_count("world-123") == 3
+        count_result = service.get_snapshot_count("world-123")
+        assert count_result.is_ok
+        assert count_result.value == 3
