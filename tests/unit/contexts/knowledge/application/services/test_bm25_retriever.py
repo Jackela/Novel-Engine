@@ -347,12 +347,16 @@ class TestBM25RetrieverSearch:
 
     def test_search_returns_results(self, indexed_retriever):
         """Test that search returns results."""
-        results = indexed_retriever.search("brave knight")
+        result = indexed_retriever.search("brave knight")
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
 
     def test_search_keyword_match_ranks_higher(self, indexed_retriever):
         """Test that exact keyword matches rank higher."""
-        results = indexed_retriever.search("brave knight")
+        result = indexed_retriever.search("brave knight")
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
         # First result should be chunk_1 with "brave knight"
         assert results[0].doc_id == "chunk_1"
@@ -360,30 +364,34 @@ class TestBM25RetrieverSearch:
 
     def test_search_with_k_parameter(self, indexed_retriever):
         """Test that k parameter limits results."""
-        results = indexed_retriever.search("knight", k=2)
+        result = indexed_retriever.search("knight", k=2)
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) <= 2
 
-    def test_search_empty_query_raises_error(self, indexed_retriever):
-        """Test that empty query raises ValueError."""
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            indexed_retriever.search("")
+    def test_search_empty_query_returns_error(self, indexed_retriever):
+        """Test that empty query returns Err result."""
+        result = indexed_retriever.search("")
+        assert result.is_error
 
-    def test_search_nonexistent_collection_returns_empty(self):
-        """Test searching a non-existent collection returns empty list."""
+    def test_search_nonexistent_collection_returns_error(self):
+        """Test searching a non-existent collection returns Err result."""
         retriever = BM25Retriever()
-        results = retriever.search("test", collection="nonexistent")
-        assert results == []
+        result = retriever.search("test", collection="nonexistent")
+        assert result.is_error
 
     def test_search_with_source_type_filter(self, indexed_retriever):
         """Test searching with source_type filter."""
-        results = indexed_retriever.search(
+        result = indexed_retriever.search(
             "knight",
             filters={"source_type": "CHARACTER"},
         )
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
         # All results should be CHARACTER type
-        for result in results:
-            assert result.source_type == "CHARACTER"
+        for r in results:
+            assert r.source_type == "CHARACTER"
 
     def test_search_with_tags_filter(self, indexed_retriever):
         """Test searching with tags filter."""
@@ -398,23 +406,30 @@ class TestBM25RetrieverSearch:
         )
         indexed_retriever.index_documents([doc])
 
-        results = indexed_retriever.search(
+        result = indexed_retriever.search(
             "queen",
             filters={"tags": ["royalty"]},
         )
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
 
     def test_search_case_insensitive(self, indexed_retriever):
         """Test that search is case insensitive."""
-        results_lower = indexed_retriever.search("knight")
-        results_upper = indexed_retriever.search("KNIGHT")
-        results_mixed = indexed_retriever.search("KnIgHt")
+        result_lower = indexed_retriever.search("knight")
+        result_upper = indexed_retriever.search("KNIGHT")
+        result_mixed = indexed_retriever.search("KnIgHt")
         # All should return the same results
-        assert len(results_lower) == len(results_upper) == len(results_mixed)
+        assert result_lower.is_ok
+        assert result_upper.is_ok
+        assert result_mixed.is_ok
+        assert len(result_lower.unwrap()) == len(result_upper.unwrap()) == len(result_mixed.unwrap())
 
     def test_search_partial_match(self, indexed_retriever):
         """Test searching for partial word matches."""
-        results = indexed_retriever.search("sword")
+        result = indexed_retriever.search("sword")
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
         # Should match documents containing "sword"
         doc_ids = [r.doc_id for r in results]
@@ -422,22 +437,26 @@ class TestBM25RetrieverSearch:
 
     def test_search_no_results(self, indexed_retriever):
         """Test search with no matching terms."""
-        results = indexed_retriever.search("xyznonexistentword")
+        result = indexed_retriever.search("xyznonexistentword")
+        assert result.is_ok
+        results = result.unwrap()
         # BM25 returns zero score for non-matches, which are filtered out
         assert len(results) == 0
 
     def test_search_result_properties(self, indexed_retriever):
         """Test that search results have correct properties."""
-        results = indexed_retriever.search("brave")
+        result = indexed_retriever.search("brave")
+        assert result.is_ok
+        results = result.unwrap()
         assert len(results) > 0
-        result = results[0]
-        assert hasattr(result, "doc_id")
-        assert hasattr(result, "source_id")
-        assert hasattr(result, "source_type")
-        assert hasattr(result, "content")
-        assert hasattr(result, "score")
-        assert hasattr(result, "metadata")
-        assert isinstance(result.score, float)
+        first_result = results[0]
+        assert hasattr(first_result, "doc_id")
+        assert hasattr(first_result, "source_id")
+        assert hasattr(first_result, "source_type")
+        assert hasattr(first_result, "content")
+        assert hasattr(first_result, "score")
+        assert hasattr(first_result, "metadata")
+        assert isinstance(first_result.score, float)
 
 
 @pytest.mark.integration
@@ -548,8 +567,8 @@ class TestBM25RetrieverGetStats:
     def test_get_stats_for_nonexistent_collection(self):
         """Test getting stats for non-existent collection."""
         retriever = BM25Retriever()
-        stats = retriever.get_stats(collection="nonexistent")
-        assert stats is None
+        result = retriever.get_stats(collection="nonexistent")
+        assert result.is_error
 
     def test_get_stats_with_empty_corpus(self):
         """Test stats with empty corpus after clear."""
@@ -565,7 +584,9 @@ class TestBM25RetrieverGetStats:
         assert result.is_ok
         retriever.clear_collection()
 
-        stats = retriever.get_stats()
+        result = retriever.get_stats()
+        assert result.is_ok
+        stats = result.unwrap()
         assert stats.total_documents == 0
         assert stats.total_tokens == 0
         assert stats.avg_doc_length == 0.0

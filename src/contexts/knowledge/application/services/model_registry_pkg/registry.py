@@ -12,15 +12,13 @@ import structlog
 
 from src.core.result import Err, Error, NotFoundError, Ok, Result, ValidationError
 
-from src.contexts.knowledge.domain.models.model_registry import LLMProvider
-
-if TYPE_CHECKING:
-    from ....domain.models.model_registry import (
-        ModelAlias,
-        ModelDefinition,
-        TaskModelConfig,
-        TaskType,
-    )
+from src.contexts.knowledge.domain.models.model_registry import (
+    LLMProvider,
+    ModelAlias,
+    ModelDefinition,
+    TaskModelConfig,
+    TaskType,
+)
 
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
     DEFAULT_ALIASES,

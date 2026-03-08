@@ -37,6 +37,7 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalResult,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+from src.core.result import Ok
 
 # ============================================================================
 # Score Normalization Tests
@@ -344,12 +345,18 @@ class TestHybridRetriever:
     def mock_retrieval_service(self):
         """Mock RetrievalService."""
         service = AsyncMock()
+        # Default: return empty Ok result
+        service.retrieve_relevant = AsyncMock(
+            return_value=Ok(RetrievalResult(chunks=[], query="", total_retrieved=0))
+        )
         return service
 
     @pytest.fixture
     def mock_bm25_retriever(self):
         """Mock BM25Retriever."""
         retriever = Mock()
+        # Default: return empty Ok result
+        retriever.search = Mock(return_value=Ok([]))
         return retriever
 
     @pytest.fixture
@@ -424,10 +431,10 @@ class TestHybridRetriever:
         assert retriever._default_collection == "custom"
 
     @pytest.mark.asyncio
-    async def test_search_empty_query_raises(self, retriever):
-        """Empty query raises ValueError."""
-        with pytest.raises(ValueError, match="query cannot be empty"):
-            await retriever.search("")
+    async def test_search_empty_query_returns_error(self, retriever):
+        """Empty query returns Err result."""
+        result = await retriever.search("")
+        assert result.is_error
 
     @pytest.mark.asyncio
     async def test_search_basic(
@@ -439,25 +446,27 @@ class TestHybridRetriever:
         sample_bm25_results,
     ):
         """Basic search combines results from both sources."""
-        # Setup mocks
+        # Setup mocks - wrap results in Ok
         mock_vector_result = RetrievalResult(
             chunks=sample_vector_chunks,
             query="brave knight",
             total_retrieved=2,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(sample_bm25_results))
 
         # Execute search
         result = await retriever.search("brave knight", k=5)
 
         # Verify structure
-        assert isinstance(result, HybridResult)
-        assert len(result.chunks) > 0
+        assert result.is_ok
+        hybrid_result = result.unwrap()
+        assert isinstance(hybrid_result, HybridResult)
+        assert len(hybrid_result.chunks) > 0
         # Default config has rrf_alpha=0.5, so fusion_method is "hybrid"
-        assert result.fusion_method == "hybrid"
+        assert hybrid_result.fusion_method == "hybrid"
 
         # Verify both sources were called
         mock_retrieval_service.retrieve_relevant.assert_called_once()
@@ -479,14 +488,15 @@ class TestHybridRetriever:
             total_retrieved=2,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=[])
+        mock_bm25_retriever.search = Mock(return_value=Ok([]))
 
         result = await retriever.search("brave knight", k=5)
 
         # Should return vector results
-        assert len(result.chunks) == 2
+        assert result.is_ok
+        assert len(result.unwrap().chunks) == 2
 
     @pytest.mark.asyncio
     async def test_search_bm25_only(
@@ -504,14 +514,15 @@ class TestHybridRetriever:
             total_retrieved=0,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(sample_bm25_results))
 
         result = await retriever.search("brave knight", k=5)
 
         # Should return BM25 results
-        assert len(result.chunks) == 2
+        assert result.is_ok
+        assert len(result.unwrap().chunks) == 2
 
     @pytest.mark.asyncio
     async def test_search_with_filters(
@@ -531,9 +542,9 @@ class TestHybridRetriever:
             total_retrieved=2,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(sample_bm25_results))
 
         await retriever.search("brave knight", filters=filters)
 
@@ -561,9 +572,9 @@ class TestHybridRetriever:
             total_retrieved=2,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(sample_bm25_results))
 
         custom_config = HybridConfig(
             vector_weight=0.5,
@@ -578,7 +589,8 @@ class TestHybridRetriever:
         )
 
         # Fusion method should be "linear" (not "rrf")
-        assert result.fusion_method == "linear"
+        assert result.is_ok
+        assert result.unwrap().fusion_method == "linear"
 
     @pytest.mark.asyncio
     async def test_search_handles_vector_failure(
@@ -593,12 +605,13 @@ class TestHybridRetriever:
         mock_retrieval_service.retrieve_relevant = AsyncMock(
             side_effect=Exception("Vector search failed")
         )
-        mock_bm25_retriever.search = Mock(return_value=sample_bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(sample_bm25_results))
 
         # Should not raise, but return BM25 results
         result = await retriever.search("brave knight", k=5)
 
-        assert len(result.chunks) > 0
+        assert result.is_ok
+        assert len(result.unwrap().chunks) > 0
 
     @pytest.mark.asyncio
     async def test_search_handles_bm25_failure(
@@ -615,14 +628,15 @@ class TestHybridRetriever:
             total_retrieved=2,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
         mock_bm25_retriever.search = Mock(side_effect=Exception("BM25 failed"))
 
         # Should not raise, but return vector results
         result = await retriever.search("brave knight", k=5)
 
-        assert len(result.chunks) > 0
+        assert result.is_ok
+        assert len(result.unwrap().chunks) > 0
 
     @pytest.mark.asyncio
     async def test_fuse_results_deduplicates(
@@ -648,7 +662,7 @@ class TestHybridRetriever:
             total_retrieved=1,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
 
         bm25_result = BM25Result(
@@ -659,12 +673,13 @@ class TestHybridRetriever:
             score=10.0,
             metadata={"chunk_index": 0},
         )
-        mock_bm25_retriever.search = Mock(return_value=[bm25_result])
+        mock_bm25_retriever.search = Mock(return_value=Ok([bm25_result]))
 
         result = await retriever.search("brave knight", k=5)
 
         # Should only have one instance of the duplicate
-        doc1_count = sum(1 for c in result.chunks if c.chunk_id == "doc1")
+        assert result.is_ok
+        doc1_count = sum(1 for c in result.unwrap().chunks if c.chunk_id == "doc1")
         assert doc1_count == 1
 
     @pytest.mark.asyncio
@@ -706,14 +721,15 @@ class TestHybridRetriever:
             total_retrieved=10,
         )
         mock_retrieval_service.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever.search = Mock(return_value=bm25_results)
+        mock_bm25_retriever.search = Mock(return_value=Ok(bm25_results))
 
         result = await retriever.search("character", k=5)
 
         # Should return at most k results
-        assert len(result.chunks) <= 5
+        assert result.is_ok
+        assert len(result.unwrap().chunks) <= 5
 
     def test_convert_filters_none(self, retriever):
         """None filters return None."""
@@ -780,12 +796,16 @@ class TestHybridRetrieverIntegration:
     def mock_retrieval_service_int(self):
         """Mock RetrievalService for integration tests."""
         service = AsyncMock()
+        service.retrieve_relevant = AsyncMock(
+            return_value=Ok(RetrievalResult(chunks=[], query="", total_retrieved=0))
+        )
         return service
 
     @pytest.fixture
     def mock_bm25_retriever_int(self):
         """Mock BM25Retriever for integration tests."""
         retriever = Mock()
+        retriever.search = Mock(return_value=Ok([]))
         return retriever
 
     @pytest.mark.asyncio
@@ -840,9 +860,9 @@ class TestHybridRetrieverIntegration:
             total_retrieved=2,
         )
         mock_retrieval_service_int.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever_int.search = Mock(return_value=bm25_results)
+        mock_bm25_retriever_int.search = Mock(return_value=Ok(bm25_results))
 
         # Test with equal weights
         retriever = HybridRetriever(
@@ -853,17 +873,20 @@ class TestHybridRetrieverIntegration:
 
         result = await retriever.search("brave courageous", k=2)
 
+        assert result.is_ok
+        hybrid_result = result.unwrap()
+
         # Both documents should appear
-        assert len(result.chunks) == 2
+        assert len(hybrid_result.chunks) == 2
 
         # With equal weights and RRF, results depend on combined scores
         # Just verify both documents are present and have scores
-        chunk_ids = {c.chunk_id for c in result.chunks}
+        chunk_ids = {c.chunk_id for c in hybrid_result.chunks}
         assert "doc1" in chunk_ids
         assert "doc2" in chunk_ids
 
         # Verify chunks have valid scores
-        for chunk in result.chunks:
+        for chunk in hybrid_result.chunks:
             assert 0.0 <= chunk.score <= 1.0
 
     @pytest.mark.asyncio
@@ -901,9 +924,9 @@ class TestHybridRetrieverIntegration:
             total_retrieved=1,
         )
         mock_retrieval_service_int.retrieve_relevant = AsyncMock(
-            return_value=mock_vector_result
+            return_value=Ok(mock_vector_result)
         )
-        mock_bm25_retriever_int.search = Mock(return_value=bm25_results)
+        mock_bm25_retriever_int.search = Mock(return_value=Ok(bm25_results))
 
         # Pure RRF fusion (rrf_alpha=1.0)
         rrf_retriever = HybridRetriever(
@@ -923,10 +946,17 @@ class TestHybridRetrieverIntegration:
 
         linear_result = await linear_retriever.search("brave", k=1)
 
+        # Both should return Ok results
+        assert rrf_result.is_ok
+        assert linear_result.is_ok
+
+        rrf_value = rrf_result.unwrap()
+        linear_value = linear_result.unwrap()
+
         # Both should return results
-        assert len(rrf_result.chunks) > 0
-        assert len(linear_result.chunks) > 0
+        assert len(rrf_value.chunks) > 0
+        assert len(linear_value.chunks) > 0
 
         # Fusion methods should be different
-        assert rrf_result.fusion_method == "rrf"
-        assert linear_result.fusion_method == "linear"
+        assert rrf_value.fusion_method == "rrf"
+        assert linear_value.fusion_method == "linear"

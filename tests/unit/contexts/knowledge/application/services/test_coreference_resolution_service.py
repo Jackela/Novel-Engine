@@ -696,8 +696,8 @@ class TestEntityExtractionServiceLargeText:
             overlap=200,
         )
 
-        assert isinstance(result, result.__class__)
-        assert result.source_length == len(large_text)
+        assert result.is_ok
+        assert result.unwrap().source_length == len(large_text)
 
     @pytest.mark.asyncio
     async def test_extract_large_text_small_skips_chunking(self, mock_llm_client):
@@ -712,7 +712,8 @@ class TestEntityExtractionServiceLargeText:
 
         result = await service.extract_large_text(small_text)
 
-        assert result.source_length == len(small_text)
+        assert result.is_ok
+        assert result.unwrap().source_length == len(small_text)
 
     @pytest.mark.asyncio
     async def test_merge_extraction_results_deduplicates(self):
