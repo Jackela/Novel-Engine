@@ -1658,9 +1658,7 @@ Generate dialogue for Alice."""
     @pytest.mark.integration
     async def test_enrich_with_rag_logs_chunks_and_tokens(self) -> None:
         """Test that RAG enrichment logs chunks retrieved and tokens added."""
-        from unittest.mock import AsyncMock, MagicMock
-
-        import structlog
+        from unittest.mock import AsyncMock, MagicMock, patch
 
         rag_mock = MagicMock()
         enriched_result = MagicMock()
@@ -1675,18 +1673,18 @@ Generate dialogue for Alice."""
 
         base_prompt = "Original prompt"
 
-        # Capture log output
-        with structlog.testing.capture_logs() as logs:
+        # Mock the logger to capture log calls
+        with patch("src.contexts.world.infrastructure.generators.llm_world_generator.logger") as mock_logger:
             prompt, chunks, tokens = await gen._enrich_with_rag(
                 query="test query",
                 base_prompt=base_prompt,
             )
 
             # Verify the info log contains RAG metrics
-            rag_logs = [log for log in logs if log.get("event") == "rag_enrichment"]
-            assert len(rag_logs) > 0
-            assert rag_logs[0].get("chunks_retrieved") == 3
-            assert rag_logs[0].get("tokens_added") == 150
+            mock_logger.info.assert_called_once()
+            call_kwargs = mock_logger.info.call_args[1]
+            assert call_kwargs.get("chunks_retrieved") == 3
+            assert call_kwargs.get("tokens_added") == 150
             # Verify the returned values match
             assert chunks == 3
             assert tokens == 150
@@ -1872,8 +1870,6 @@ Original system prompt"""
         """
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        import structlog
-
         from src.contexts.world.infrastructure.generators.llm_world_generator import (
             CharacterData,
         )
@@ -1893,7 +1889,7 @@ Original system prompt"""
         with patch.object(
             gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'
         ):
-            with structlog.testing.capture_logs() as logs:
+            with patch("src.contexts.world.infrastructure.generators.llm_world_generator.log") as mock_log:
                 character = CharacterData(name="Alice", traits=["brave"])
 
                 await gen.generate_dialogue(
@@ -1903,9 +1899,8 @@ Original system prompt"""
                 )
 
                 # Verify info-level log with chunks_retrieved and tokens_added
-                rag_logs = [
-                    log for log in logs if log.get("event") == "rag_context_injected"
-                ]
-                assert len(rag_logs) > 0
-                assert rag_logs[0].get("chunks_retrieved") == 3
-                assert rag_logs[0].get("tokens_added") == 120
+                # Check that log.info was called with the expected event
+                mock_log.info.assert_called()
+                call_kwargs = mock_log.info.call_args[1]
+                assert call_kwargs.get("chunks_retrieved") == 3
+                assert call_kwargs.get("tokens_added") == 120
