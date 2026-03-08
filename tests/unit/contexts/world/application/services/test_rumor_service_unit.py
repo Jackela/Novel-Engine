@@ -44,7 +44,7 @@ class TestRumorServiceLocationRumors:
             world_id="test-world",
         )
 
-        assert result == []
+        assert result.unwrap() == []
 
     async def test_get_location_rumors_with_data(self, service, rumor_repo):
         """Getting rumors returns only rumors at that location."""
@@ -76,8 +76,8 @@ class TestRumorServiceLocationRumors:
             world_id="test-world",
         )
 
-        assert len(result) == 1
-        assert result[0].rumor_id == "rumor-1"
+        assert len(result.unwrap()) == 1
+        assert result.unwrap()[0].rumor_id == "rumor-1"
 
     async def test_get_location_rumors_sorted_by_recent(self, service, rumor_repo):
         """Rumors are sorted by date when sort_by=RECENT."""
@@ -111,9 +111,9 @@ class TestRumorServiceLocationRumors:
             sort_by=SortByEnum.RECENT,
         )
 
-        assert len(result) == 2
-        assert result[0].rumor_id == "rumor-new"  # Newer first
-        assert result[1].rumor_id == "rumor-old"
+        assert len(result.unwrap()) == 2
+        assert result.unwrap()[0].rumor_id == "rumor-new"  # Newer first
+        assert result.unwrap()[1].rumor_id == "rumor-old"
 
 
 @pytest.mark.unit
@@ -124,7 +124,7 @@ class TestRumorServiceWorldRumors:
         """Getting rumors for empty world returns empty list."""
         result = await service.get_world_rumors(world_id="empty-world")
 
-        assert result == []
+        assert result.unwrap() == []
 
     async def test_get_world_rumors_all(self, service, rumor_repo):
         """Getting all rumors for a world."""
@@ -141,8 +141,8 @@ class TestRumorServiceWorldRumors:
 
         result = await service.get_world_rumors(world_id="test-world")
 
-        assert len(result) == 1
-        assert result[0].rumor_id == "rumor-1"
+        assert len(result.unwrap()) == 1
+        assert result.unwrap()[0].rumor_id == "rumor-1"
 
     async def test_get_world_rumors_sorted_by_reliable(self, service, rumor_repo):
         """Rumors sorted by truth_value when sort_by=RELIABLE."""
@@ -172,9 +172,9 @@ class TestRumorServiceWorldRumors:
             sort_by=SortByEnum.RELIABLE,
         )
 
-        assert len(result) == 2
-        assert result[0].rumor_id == "rumor-high"  # Higher truth first
-        assert result[1].rumor_id == "rumor-low"
+        assert len(result.unwrap()) == 2
+        assert result.unwrap()[0].rumor_id == "rumor-high"  # Higher truth first
+        assert result.unwrap()[1].rumor_id == "rumor-low"
 
     async def test_get_world_rumors_sorted_by_spread(self, service, rumor_repo):
         """Rumors sorted by spread_count when sort_by=SPREAD."""
@@ -206,9 +206,9 @@ class TestRumorServiceWorldRumors:
             sort_by=SortByEnum.SPREAD,
         )
 
-        assert len(result) == 2
-        assert result[0].rumor_id == "rumor-high"  # Higher spread first
-        assert result[1].rumor_id == "rumor-low"
+        assert len(result.unwrap()) == 2
+        assert result.unwrap()[0].rumor_id == "rumor-high"  # Higher spread first
+        assert result.unwrap()[1].rumor_id == "rumor-low"
 
     async def test_get_world_rumors_with_limit(self, service, rumor_repo):
         """Limit parameter restricts number of results."""
@@ -230,7 +230,7 @@ class TestRumorServiceWorldRumors:
             limit=3,
         )
 
-        assert len(result) == 3
+        assert len(result.unwrap()) == 3
 
 
 @pytest.mark.unit
@@ -254,9 +254,9 @@ class TestRumorServiceGet:
             world_id="test-world",
         )
 
-        assert result is not None
-        assert result.rumor_id == "rumor-123"
-        assert result.content == "Found rumor"
+        assert result.unwrap() is not None
+        assert result.unwrap().rumor_id == "rumor-123"
+        assert result.unwrap().content == "Found rumor"
 
     async def test_get_rumor_not_found(self, service):
         """Getting a non-existent rumor returns None."""
@@ -265,7 +265,7 @@ class TestRumorServiceGet:
             world_id="test-world",
         )
 
-        assert result is None
+        assert result.unwrap() is None
 
 
 @pytest.mark.unit

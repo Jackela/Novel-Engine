@@ -602,7 +602,7 @@ class TestSelectIntentMethod:
         result = service.select_intent("nonexistent-id", "test-faction")
 
         assert result.is_error
-        assert "not found" in result.error.lower()
+        assert "not found" in str(result.error).lower()
 
     @pytest.mark.unit
     def test_select_intent_faction_mismatch(self, service, mock_repository):
@@ -620,7 +620,7 @@ class TestSelectIntentMethod:
         result = service.select_intent(intent.id, "test-faction")
 
         assert result.is_error
-        assert "does not belong" in result.error.lower()
+        assert "does not belong" in str(result.error).lower()
 
     @pytest.mark.unit
     def test_select_intent_mark_failed(self, service, mock_repository):
@@ -639,5 +639,5 @@ class TestSelectIntentMethod:
         result = service.select_intent(intent.id, "test-faction")
 
         assert result.is_error
-        assert "failed" in result.error.lower()
+        assert "failed" in str(result.error).lower()
 

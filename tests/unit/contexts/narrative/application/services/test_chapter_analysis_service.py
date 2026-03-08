@@ -179,7 +179,8 @@ class TestChapterAnalysisService:
     def test_analyze_empty_chapter(self, service):
         """Test analysis of chapter with no scenes."""
         chapter_id = uuid4()
-        report = service.analyze_chapter_structure(chapter_id, [])
+        result = service.analyze_chapter_structure(chapter_id, [])
+        report = result.unwrap()
 
         assert report.chapter_id == chapter_id
         assert report.total_scenes == 0
@@ -201,7 +202,8 @@ class TestChapterAnalysisService:
             sample_scene("Falling", 5, StoryPhase.RESOLUTION, tension=5, energy=4),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert report.total_scenes == 6
         assert report.total_beats == 30  # 6 scenes * 5 beats
@@ -224,7 +226,8 @@ class TestChapterAnalysisService:
             sample_scene("Res", 7, StoryPhase.RESOLUTION),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert report.phase_distribution.setup == 2
         assert report.phase_distribution.inciting_incident == 1
@@ -241,7 +244,8 @@ class TestChapterAnalysisService:
             sample_scene("S2", 1, StoryPhase.RISING_ACTION, beat_count=6),  # 6 beats
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # 10 beats * 250 words/beat = 2500 estimated words
         assert report.word_count.total_words == 2500
@@ -261,7 +265,8 @@ class TestChapterAnalysisService:
             sample_scene("Falling", 4, StoryPhase.RESOLUTION, tension=4),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert report.tension_arc.shape_type == "mountain"
         assert report.tension_arc.starts_at == 3
@@ -280,7 +285,8 @@ class TestChapterAnalysisService:
             sample_scene("S3", 2, StoryPhase.RISING_ACTION, tension=5),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert report.tension_arc.shape_type == "flat"
         assert report.tension_arc.is_monotonic is True
@@ -297,7 +303,8 @@ class TestChapterAnalysisService:
             sample_scene("S3", 2, StoryPhase.RESOLUTION),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         climax_warnings = [w for w in report.warnings if w.title == "Missing Climax"]
         assert len(climax_warnings) == 1
@@ -313,7 +320,8 @@ class TestChapterAnalysisService:
             sample_scene("S2", 1, StoryPhase.CLIMAX),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         resolution_warnings = [
             w for w in report.warnings if w.title == "Missing Resolution"
@@ -336,7 +344,8 @@ class TestChapterAnalysisService:
             sample_scene("R7", 7, StoryPhase.RISING_ACTION),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         rising_warnings = [
             w for w in report.warnings if w.title == "Overlong Rising Action"
@@ -355,7 +364,8 @@ class TestChapterAnalysisService:
             sample_scene("S4", 3, StoryPhase.CLIMAX, tension=5),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         flat_warnings = [w for w in report.warnings if w.title == "Flat Tension Arc"]
         assert len(flat_warnings) == 1
@@ -373,7 +383,8 @@ class TestChapterAnalysisService:
             sample_scene("S3", 2, StoryPhase.CLIMAX, beat_count=1),  # Underdeveloped
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         underdev_warnings = [
             w for w in report.warnings if w.title == "Underdeveloped Scenes"
@@ -393,7 +404,8 @@ class TestChapterAnalysisService:
             sample_scene("S3", 2, StoryPhase.RISING_ACTION, tension=5),
         ]  # No climax, no resolution = 2 high-severity warnings
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # Missing climax (high) + no resolution (medium) = at least POOR
         assert report.health_score in [HealthScore.CRITICAL, HealthScore.POOR]
@@ -411,7 +423,8 @@ class TestChapterAnalysisService:
             sample_scene("S6", 5, StoryPhase.RESOLUTION, tension=4),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # Well-structured chapter should have good/excellent score
         assert report.health_score in [HealthScore.GOOD, HealthScore.EXCELLENT]
@@ -427,7 +440,8 @@ class TestChapterAnalysisService:
             sample_scene("S2", 1, StoryPhase.RISING_ACTION, tension=5),
         ]  # Missing climax and resolution
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert len(report.recommendations) > 0
         # Check that recommendations reference the issues
@@ -446,7 +460,8 @@ class TestChapterAnalysisService:
             sample_scene("S5", 4, StoryPhase.RESOLUTION, tension=4),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # Should have positive recommendation even if no warnings
         assert len(report.recommendations) >= 1
@@ -463,7 +478,8 @@ class TestChapterAnalysisService:
             sample_scene("Middle", 1, StoryPhase.CLIMAX, tension=9),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # Tension arc should reflect sorted order: 4 -> 9 -> 3
         assert report.tension_arc.starts_at == 4
@@ -489,7 +505,8 @@ class TestChapterAnalysisService:
             story_phase=StoryPhase.RISING_ACTION,
         )
 
-        report = service.analyze_chapter_structure(uuid4(), [scene1, scene2])
+        result = service.analyze_chapter_structure(uuid4(), [scene1, scene2])
+        report = result.unwrap()
 
         assert report.word_count.total_words == 0
         assert report.word_count.per_scene_average == 0.0
@@ -506,7 +523,8 @@ class TestChapterAnalysisService:
             sample_scene("Resolve", 4, StoryPhase.RESOLUTION),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # All phases should be counted
         assert report.phase_distribution.setup == 1
@@ -529,7 +547,8 @@ class TestChapterAnalysisService:
             ),  # Peak at 80% (5/5 scenes, position 4 >= 3)
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         assert report.tension_arc.has_clear_climax is True
 
@@ -545,7 +564,8 @@ class TestChapterAnalysisService:
             sample_scene("S5", 4, StoryPhase.CLIMAX, tension=7),
         ]
 
-        report = service.analyze_chapter_structure(uuid4(), scenes)
+        result = service.analyze_chapter_structure(uuid4(), scenes)
+        report = result.unwrap()
 
         # Peak (9) is at position 0, which is not in final 60% (positions 3+ for 5 scenes)
         assert report.tension_arc.has_clear_climax is False

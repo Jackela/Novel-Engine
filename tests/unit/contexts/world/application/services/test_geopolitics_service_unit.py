@@ -367,9 +367,9 @@ class TestGetDiplomacySummary:
 
         summary = service.get_diplomacy_summary(diplomacy_matrix, "faction-a")
 
-        assert summary["faction_id"] == "faction-a"
-        assert "faction-b" in summary["allies"]
-        assert "faction-c" in summary["enemies"]
+        assert summary.unwrap()["faction_id"] == "faction-a"
+        assert "faction-b" in summary.unwrap()["allies"]
+        assert "faction-c" in summary.unwrap()["enemies"]
 
     def test_get_diplomacy_summary_no_relations(
         self,
@@ -379,10 +379,10 @@ class TestGetDiplomacySummary:
         """Should return empty lists when no relations exist."""
         summary = service.get_diplomacy_summary(diplomacy_matrix, "faction-a")
 
-        assert summary["faction_id"] == "faction-a"
-        assert summary["allies"] == []
-        assert summary["enemies"] == []
-        assert summary["neutral"] == []
+        assert summary.unwrap()["faction_id"] == "faction-a"
+        assert summary.unwrap()["allies"] == []
+        assert summary.unwrap()["enemies"] == []
+        assert summary.unwrap()["neutral"] == []
 
     def test_get_diplomacy_summary_neutral_factions(
         self,
@@ -394,7 +394,7 @@ class TestGetDiplomacySummary:
 
         summary = service.get_diplomacy_summary(diplomacy_matrix, "faction-a")
 
-        assert "faction-b" in summary["neutral"]
+        assert "faction-b" in summary.unwrap()["neutral"]
 
 
 # ============================================================================

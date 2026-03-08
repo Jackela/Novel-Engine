@@ -446,6 +446,7 @@ class TestCreateRumorFromEvent:
             description="A prince is born.",
             event_type=EventType.BIRTH,
             date_description="Year 1042",
+            location_ids=["loc-palace"],
             key_figures=["Prince Edric"],
             impact_scope=ImpactScope.REGIONAL,
         )
@@ -469,6 +470,7 @@ class TestCreateRumorFromEvent:
             description="A royal marriage.",
             event_type=EventType.MARRIAGE,
             date_description="Year 1042",
+            location_ids=["loc-cathedral"],
             key_figures=["Prince Edric", "Princess Arya"],
             impact_scope=ImpactScope.GLOBAL,
         )
@@ -493,6 +495,7 @@ class TestCreateRumorFromEvent:
             description="Kingdoms unite.",
             event_type=EventType.ALLIANCE,
             date_description="Year 1042",
+            location_ids=["loc-capitol"],
             faction_ids=["faction-a", "faction-b"],
             impact_scope=ImpactScope.REGIONAL,
         )
@@ -626,6 +629,7 @@ class TestCreateRumorFromEvent:
             description="A new king crowned.",
             event_type=EventType.CORONATION,
             date_description="Year 1042",
+            location_ids=["loc-castle"],
             key_figures=["King Edric II"],
             impact_scope=ImpactScope.GLOBAL,
         )
@@ -704,18 +708,19 @@ class TestCreateRumorFromEvent:
         rumor = result.unwrap()
         assert rumor.origin_location_id == "loc-where"
 
-    def test_create_fallback_to_unknown_location(
+    def test_create_uses_provided_location(
         self,
         service: RumorPropagationService,
         world_state: WorldState,
     ) -> None:
-        """Should use 'unknown' if no locations."""
+        """Should use location_ids when provided."""
         event = HistoryEvent(
             id="event-test",
             name="Test Event",
             description="Test.",
             event_type=EventType.WAR,
             date_description="Year 1042",
+            location_ids=["loc-test"],
             impact_scope=ImpactScope.LOCAL,
         )
 
@@ -723,7 +728,7 @@ class TestCreateRumorFromEvent:
 
         assert result.is_ok
         rumor = result.unwrap()
-        assert rumor.origin_location_id == "unknown"
+        assert rumor.origin_location_id == "loc-test"
 
     def test_create_with_no_impact_scope(
         self,

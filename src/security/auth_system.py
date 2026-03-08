@@ -765,14 +765,18 @@ class SecurityService:
                 )
                 return None
 
+            now = datetime.now(timezone.utc)
             await conn.execute(
                 """
                 UPDATE users SET failed_login_attempts = 0, locked_until = NULL, last_login = ?
                 WHERE id = ?
             """,
-                (datetime.now(timezone.utc), user.id),
+                (now, user.id),
             )
             await conn.commit()
+
+            # Update the user object to reflect the new last_login time
+            user.last_login = now
 
             await self._log_security_event(
                 "login_success",

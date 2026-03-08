@@ -269,8 +269,8 @@ async def get_model_pricing(
     try:
         from src.contexts.knowledge.application.services.model_registry import (
             DEFAULT_MODELS,
-            LLMProvider,
         )
+        from src.contexts.knowledge.domain.models.model_registry import LLMProvider
 
         models: list[ModelPricingResponse] = []
 

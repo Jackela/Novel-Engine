@@ -141,7 +141,18 @@ async def get_world_time(
         }
     """
     logger.debug("get_world_time_request", world_id=DEFAULT_WORLD_ID)
-    calendar = service.get_time(DEFAULT_WORLD_ID)
+    result = service.get_time(DEFAULT_WORLD_ID)
+
+    if result.is_error:
+        raise HTTPException(
+            status_code=404,
+            detail=ErrorDetail(
+                code="WORLD_NOT_FOUND",
+                message=f"World time not found for '{DEFAULT_WORLD_ID}'",
+            ).model_dump(),
+        )
+
+    calendar = result.unwrap()
     response = _calendar_to_response(calendar)
     logger.debug(
         "get_world_time_response",

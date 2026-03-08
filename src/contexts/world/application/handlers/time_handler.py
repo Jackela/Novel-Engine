@@ -73,16 +73,26 @@ class TimeAdvancedHandler(EventHandler):
                 days_advanced=event.days_advanced,
             )
 
-            logger.info(
-                "time_advanced_event_processed",
-                event_id=event.event_id,
-                world_id=world_id,
-                success=result.success,
-                resources_updated=result.resources_updated,
-                diplomatic_changes=result.diplomatic_changes,
-            )
-
-            return result.success
+            if result.is_ok:
+                tick_result = result.unwrap()
+                logger.info(
+                    "time_advanced_event_processed",
+                    event_id=event.event_id,
+                    world_id=world_id,
+                    success=tick_result.success,
+                    resources_updated=tick_result.resources_updated,
+                    diplomatic_changes=tick_result.diplomatic_changes,
+                )
+                return tick_result.success
+            else:
+                error = result.unwrap_err()
+                logger.error(
+                    "time_advanced_event_failed",
+                    event_id=event.event_id,
+                    world_id=world_id,
+                    error=error.message,
+                )
+                return False
 
         except Exception as e:
             logger.error(

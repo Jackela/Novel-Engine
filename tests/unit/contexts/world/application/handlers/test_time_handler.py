@@ -3,6 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from src.core.result import Ok
 
 
 pytestmark = pytest.mark.unit
@@ -69,12 +70,14 @@ class TestTimeAdvancedHandler:
         )
 
         mock_service = MagicMock(spec=FactionTickService)
-        mock_service.process_tick.return_value = TickResult(
-            world_id="custom-world",
-            days_advanced=10,
-            success=True,
-            resources_updated=5,
-            diplomatic_changes=2,
+        mock_service.process_tick.return_value = Ok(
+            TickResult(
+                world_id="custom-world",
+                days_advanced=10,
+                success=True,
+                resources_updated=5,
+                diplomatic_changes=2,
+            )
         )
 
         handler = TimeAdvancedHandler(tick_service=mock_service)

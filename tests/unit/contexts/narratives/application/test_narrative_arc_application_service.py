@@ -123,7 +123,7 @@ class TestNarrativeArcApplicationServiceInitialization:
         NarrativeArcApplicationService(repository=mock_repository)
 
         mock_logger.info.assert_called_once_with(
-            "Narrative Arc Application Service initialized"
+            "narrative_arc_application_service_initialized"
         )
 
 
