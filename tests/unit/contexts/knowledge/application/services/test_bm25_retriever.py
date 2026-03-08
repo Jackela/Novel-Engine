@@ -476,15 +476,17 @@ class TestBM25RetrieverRemoveDocument:
         retriever.index_documents([doc])
         assert "chunk_1" in retriever._documents
 
-        removed = retriever.remove_document("chunk_1")
-        assert removed is True
+        remove_result = retriever.remove_document("chunk_1")
+        assert remove_result.is_ok
+        assert remove_result.unwrap() is True
         assert "chunk_1" not in retriever._documents
 
     def test_remove_nonexistent_document(self):
         """Test removing a non-existent document."""
         retriever = BM25Retriever()
-        removed = retriever.remove_document("nonexistent")
-        assert removed is False
+        remove_result = retriever.remove_document("nonexistent")
+        assert remove_result.is_ok
+        assert remove_result.unwrap() is False
 
     def test_remove_from_specific_collection(self):
         """Test removing from a specific collection."""
@@ -497,8 +499,9 @@ class TestBM25RetrieverRemoveDocument:
             tokens=["brave", "knight"],
         )
         retriever.index_documents([doc], collection="custom")
-        removed = retriever.remove_document("chunk_1", collection="custom")
-        assert removed is True
+        remove_result = retriever.remove_document("chunk_1", collection="custom")
+        assert remove_result.is_ok
+        assert remove_result.unwrap() is True
 
 
 @pytest.mark.integration
@@ -520,15 +523,17 @@ class TestBM25RetrieverClearCollection:
         ]
         result = retriever.index_documents(docs)
         assert result.is_ok
-        count = retriever.clear_collection()
-        assert count == 3
+        clear_result = retriever.clear_collection()
+        assert clear_result.is_ok
+        assert clear_result.unwrap() == 3
         assert len(retriever._indices["knowledge"]["documents"]) == 0
 
     def test_clear_nonexistent_collection(self):
         """Test clearing a non-existent collection."""
         retriever = BM25Retriever()
-        count = retriever.clear_collection(collection="nonexistent")
-        assert count == 0
+        clear_result = retriever.clear_collection(collection="nonexistent")
+        assert clear_result.is_ok
+        assert clear_result.unwrap() == 0
 
 
 @pytest.mark.integration
@@ -557,7 +562,9 @@ class TestBM25RetrieverGetStats:
         result = retriever.index_documents(docs)
         assert result.is_ok
 
-        stats = retriever.get_stats()
+        stats_result = retriever.get_stats()
+        assert stats_result.is_ok
+        stats = stats_result.unwrap()
         assert stats is not None
         assert stats.total_documents == 2
         assert stats.total_tokens > 0
@@ -616,17 +623,22 @@ class TestBM25RetrieverIntegration:
         assert result.unwrap() == 5
 
         # Search
-        results = retriever.search("character", k=3)
+        search_result = retriever.search("character", k=3)
+        assert search_result.is_ok
+        results = search_result.unwrap()
         assert len(results) == 3
 
         # Remove one
-        removed = retriever.remove_document("chunk_0")
-        assert removed is True
+        remove_result = retriever.remove_document("chunk_0")
+        assert remove_result.is_ok
+        assert remove_result.unwrap() is True
 
         # Search again
-        results = retriever.search("character", k=5)
+        search_result2 = retriever.search("character", k=5)
+        assert search_result2.is_ok
+        results2 = search_result2.unwrap()
         # Should now have at most 4 results
-        assert len(results) <= 4
+        assert len(results2) <= 4
 
     def test_multiple_collections(self):
         """Test working with multiple collections."""
@@ -655,12 +667,16 @@ class TestBM25RetrieverIntegration:
         assert result2.is_ok
 
         # Search collection1
-        results1 = retriever.search("knight", collection="collection1")
+        search_result1 = retriever.search("knight", collection="collection1")
+        assert search_result1.is_ok
+        results1 = search_result1.unwrap()
         assert len(results1) == 1
         assert results1[0].doc_id == "chunk_1"
 
         # Search collection2
-        results2 = retriever.search("wizard", collection="collection2")
+        search_result2 = retriever.search("wizard", collection="collection2")
+        assert search_result2.is_ok
+        results2 = search_result2.unwrap()
         assert len(results2) == 1
         assert results2[0].doc_id == "chunk_2"
 
@@ -680,8 +696,12 @@ class TestBM25RetrieverIntegration:
         result = retriever.index_documents(docs)
         assert result.is_ok
 
-        results1 = retriever.search("brave knight")
-        results2 = retriever.search("brave knight")
+        search_result1 = retriever.search("brave knight")
+        search_result2 = retriever.search("brave knight")
+        assert search_result1.is_ok
+        assert search_result2.is_ok
+        results1 = search_result1.unwrap()
+        results2 = search_result2.unwrap()
 
         # Results should be consistent
         assert len(results1) == len(results2)

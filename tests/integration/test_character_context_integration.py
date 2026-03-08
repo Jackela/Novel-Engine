@@ -358,23 +358,27 @@ class TestCharacterContextIntegration:
             return_value=mock_characters
         )
 
-        # Test query operations
-        name_results = await character_application_service.find_characters_by_name(
+        # Test query operations - service now returns Result objects
+        name_result = await character_application_service.find_characters_by_name(
             "Test"
         )
-        class_results = await character_application_service.find_characters_by_class(
+        class_result = await character_application_service.find_characters_by_class(
             "warrior"
         )
-        race_results = await character_application_service.find_characters_by_race(
+        race_result = await character_application_service.find_characters_by_race(
             "human"
         )
-        alive_results = await character_application_service.find_alive_characters()
+        alive_result = await character_application_service.find_alive_characters()
 
-        # Verify results
-        assert name_results == mock_characters
-        assert class_results == mock_characters
-        assert race_results == mock_characters
-        assert alive_results == mock_characters
+        # Verify results - unwrap the Result objects
+        assert name_result.is_ok
+        assert name_result.unwrap() == mock_characters
+        assert class_result.is_ok
+        assert class_result.unwrap() == mock_characters
+        assert race_result.is_ok
+        assert race_result.unwrap() == mock_characters
+        assert alive_result.is_ok
+        assert alive_result.unwrap() == mock_characters
 
         # Verify repository calls
         character_application_service.repository.find_by_name.assert_called_once_with(

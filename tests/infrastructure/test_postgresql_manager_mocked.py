@@ -218,9 +218,14 @@ class TestFactoryFunctions:
         """Test creating and initializing PostgreSQL manager."""
         config = PostgreSQLConfig()
         
-        manager = await create_postgresql_manager(config)
-        assert isinstance(manager, PostgreSQLManager)
-        assert manager.config == config
+        # Properly mock asyncpg.create_pool to avoid actual DB connection
+        with patch('asyncpg.create_pool', new_callable=AsyncMock) as mock_create_pool:
+            mock_pool = AsyncMock()
+            mock_create_pool.return_value = mock_pool
+            
+            manager = await create_postgresql_manager(config)
+            assert isinstance(manager, PostgreSQLManager)
+            assert manager.config == config
 
 
 # ============================================================================

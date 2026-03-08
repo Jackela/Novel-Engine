@@ -70,8 +70,12 @@ async def test_bridge_initialization():
             max_cost_per_turn=0.05, enable_smart_batching=True
         )
 
+        # Use structlog logger instead of standard logging.Logger
+        import structlog
+        struct_logger = structlog.get_logger(__name__)
+
         bridge = EnhancedMultiAgentBridge(
-            event_bus=event_bus, coordination_config=config, logger=logger
+            event_bus=event_bus, coordination_config=config, logger=struct_logger
         )
 
         # Verify components are initialized
