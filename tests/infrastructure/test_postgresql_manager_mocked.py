@@ -216,12 +216,20 @@ class TestFactoryFunctions:
     @pytest.mark.asyncio
     async def test_create_postgresql_manager(self):
         """Test creating and initializing PostgreSQL manager."""
+        import sys
+        from unittest.mock import AsyncMock, MagicMock, patch
+        
         config = PostgreSQLConfig()
+        
+        # Create proper mock pool that supports async context manager
+        _mock_conn = AsyncMock()
+        _mock_pool = MagicMock()
+        _mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=_mock_conn)
+        _mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
         
         # Properly mock asyncpg.create_pool to avoid actual DB connection
         with patch('asyncpg.create_pool', new_callable=AsyncMock) as mock_create_pool:
-            mock_pool = AsyncMock()
-            mock_create_pool.return_value = mock_pool
+            mock_create_pool.return_value = _mock_pool
             
             manager = await create_postgresql_manager(config)
             assert isinstance(manager, PostgreSQLManager)

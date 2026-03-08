@@ -321,24 +321,41 @@ class KnowledgeSyncEventHandler:
                 extra_metadata=task.extra_metadata,
             )
 
-            if ingest_result.is_ok:
-                result = ingest_result.value
-                if result is not None and result.success:
+            # Handle both Result types (with is_ok) and direct IngestionResult
+            if hasattr(ingest_result, "is_ok"):
+                # It's a Result type
+                if ingest_result.is_ok:
+                    result = ingest_result.value
+                    if result is not None and result.success:
+                        self._metrics["tasks_completed"] += 1
+                        logger.info(
+                            "knowledge_sync_ingestion_success",
+                            source_id=task.source_id,
+                            source_type=task.source_type.value,
+                            chunk_count=result.chunk_count,
+                        )
+                    else:
+                        # Ingestion returned None or failed
+                        await self._handle_failure(task, "Ingestion returned invalid result")
+                else:
+                    # Ingestion failed - retry or dead letter
+                    err = ingest_result.error
+                    error_msg = err.message if err is not None else "Unknown error"
+                    await self._handle_failure(task, error_msg)
+            else:
+                # It's a direct IngestionResult (not wrapped in Result)
+                if ingest_result.success:
                     self._metrics["tasks_completed"] += 1
                     logger.info(
                         "knowledge_sync_ingestion_success",
                         source_id=task.source_id,
                         source_type=task.source_type.value,
-                        chunk_count=result.chunk_count,
+                        chunk_count=ingest_result.chunk_count,
                     )
                 else:
-                    # Ingestion returned None or failed
-                    await self._handle_failure(task, "Ingestion returned invalid result")
-            else:
-                # Ingestion failed - retry or dead letter
-                err = ingest_result.error
-                error_msg = err.message if err is not None else "Unknown error"
-                await self._handle_failure(task, error_msg)
+                    # Ingestion failed - retry or dead letter
+                    error_msg = ingest_result.error or "Ingestion failed"
+                    await self._handle_failure(task, error_msg)
 
         except Exception as e:
             # Exception during ingestion - retry or dead letter
