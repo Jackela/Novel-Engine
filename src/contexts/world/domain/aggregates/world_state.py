@@ -172,8 +172,7 @@ class WorldState(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate world-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("World name cannot be empty")
 
@@ -430,7 +429,7 @@ class WorldState(Entity):
         self.touch()
 
         # Determine what changed
-        changed_fields = set()
+        changed_fields: set[Any] = set()
         if properties:
             changed_fields.add("properties")
         if metadata:
@@ -482,8 +481,7 @@ class WorldState(Entity):
         Returns:
             List of entities within the area
         """
-        matching_entities = []
-
+        matching_entities: list[Any] = []
         # Get candidate entities from spatial index
         candidate_entity_ids = self._get_entities_from_spatial_index(center, radius)
 
@@ -515,7 +513,9 @@ class WorldState(Entity):
         """
         return self.get_entities_in_area(coordinates, tolerance)
 
-    def advance_time(self, days: int, reason: Optional[str] = None) -> Result["WorldState", ValueError]:
+    def advance_time(
+        self, days: int, reason: Optional[str] = None
+    ) -> Result["WorldState", ValueError]:
         """
         Advance the world calendar by a specified number of days.
 
@@ -671,7 +671,7 @@ class WorldState(Entity):
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get world state statistics."""
-        entity_type_counts = {}
+        entity_type_counts: dict[Any, Any] = {}
         for entity in self.entities.values():
             entity_type = entity.entity_type.value
             entity_type_counts[entity_type] = entity_type_counts.get(entity_type, 0) + 1
@@ -726,23 +726,29 @@ class WorldState(Entity):
             return Ok(None)
 
         except (TypeError, ValueError) as e:
-            return Err(SaveError(
-                message=f"Failed to serialize world state: {e}",
-                entity_type="WorldState",
-                details={"error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Failed to serialize world state: {e}",
+                    entity_type="WorldState",
+                    details={"error_type": type(e).__name__},
+                )
+            )
         except OSError as e:
-            return Err(SaveError(
-                message=f"Failed to write world state file: {e}",
-                entity_type="WorldState",
-                details={"file_path": file_path, "error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Failed to write world state file: {e}",
+                    entity_type="WorldState",
+                    details={"file_path": file_path, "error_type": type(e).__name__},
+                )
+            )
         except Exception as e:
-            return Err(SaveError(
-                message=f"Unexpected error saving world state: {e}",
-                entity_type="WorldState",
-                details={"error_type": type(e).__name__},
-            ))
+            return Err(
+                SaveError(
+                    message=f"Unexpected error saving world state: {e}",
+                    entity_type="WorldState",
+                    details={"error_type": type(e).__name__},
+                )
+            )
 
     # Spatial Index Management
 
@@ -776,8 +782,7 @@ class WorldState(Entity):
         self, center: Coordinates, radius: float
     ) -> Set[str]:
         """Get candidate entity IDs from spatial index within radius."""
-        candidate_ids = set()
-
+        candidate_ids: set[Any] = set()
         # Calculate grid cells to check
         min_x = int((center.x - radius) // self.spatial_grid_size)
         max_x = int((center.x + radius) // self.spatial_grid_size)

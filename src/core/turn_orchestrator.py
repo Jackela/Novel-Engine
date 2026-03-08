@@ -14,7 +14,7 @@ clear separation from world state management and agent lifecycle concerns.
 """
 
 import asyncio
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -25,7 +25,7 @@ from src.core.event_bus import EventBus
 from src.core.types.shared_types import CharacterAction
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -53,7 +53,7 @@ class TurnOrchestrator:
     - World state preparation for turns
     """
 
-    def __init__(self, event_bus: EventBus, max_turn_history: int = 100):
+    def __init__(self, event_bus: EventBus, max_turn_history: int = 100) -> None:
         """
         Initialize the TurnOrchestrator.
 
@@ -243,7 +243,7 @@ class TurnOrchestrator:
         start_time = datetime.now()
 
         # Create concurrent context refresh tasks
-        refresh_tasks = []
+        refresh_tasks: list[Any] = []
         for agent in agents:
             if hasattr(agent, "refresh_context"):
                 task = asyncio.create_task(agent.refresh_context())
@@ -457,7 +457,7 @@ class TurnOrchestrator:
             List of turn summary dictionaries
         """
         try:
-            history_data = []
+            history_data: list[Any] = []
             recent_turns = self.turn_history[-limit:] if limit else self.turn_history
 
             for turn_state in reversed(recent_turns):  # Most recent first

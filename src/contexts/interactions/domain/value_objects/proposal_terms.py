@@ -68,7 +68,7 @@ class TermCondition:
     constraints: Optional[Dict[str, Any]] = None
     dependencies: Optional[List[str]] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate term condition data."""
         if not self.term_id.strip():
             raise ValueError("term_id cannot be empty")
@@ -197,7 +197,7 @@ class ProposalTerms:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate proposal terms data."""
         if not self.title.strip():
             raise ValueError("title cannot be empty")
@@ -231,7 +231,7 @@ class ProposalTerms:
         # Check for circular dependencies
         self._validate_no_circular_dependencies()
 
-    def _validate_no_circular_dependencies(self):
+    def _validate_no_circular_dependencies(self) -> None:
         """Validate that there are no circular dependencies between terms."""
 
         def has_circular_dependency(term_id: str, visited: set, path: set) -> bool:
@@ -252,7 +252,7 @@ class ProposalTerms:
             path.remove(term_id)
             return False
 
-        visited = set()
+        visited: set[Any] = set()
         for term in self.terms:
             if term.term_id not in visited:
                 if has_circular_dependency(term.term_id, visited, set()):

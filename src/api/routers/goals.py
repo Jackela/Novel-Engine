@@ -8,9 +8,9 @@ motivation and narrative arcs.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -23,7 +23,7 @@ from src.api.schemas import (
     CharacterGoalUpdateRequest,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["goals"])
 
@@ -182,8 +182,7 @@ async def create_character_goal(
     structured_data = record.get("structured_data", {}) or {}
     goals_list = structured_data.get("goals", [])
     if not isinstance(goals_list, list):
-        goals_list = []
-
+        goals_list: list[Any] = []
     # Append new goal
     goals_list.append(goal_data)
     structured_data["goals"] = goals_list
@@ -199,14 +198,10 @@ async def create_character_goal(
     # Parse UUID to ensure safe logging
     char_uuid = _parse_uuid_safe(character_id)
     logger.info(
-        "Created goal for character",
-        extra={
-            "character_id": _sanitize_for_log(
-                str(char_uuid) if char_uuid else "invalid"
-            ),
-            "goal_id": _sanitize_for_log(goal_id),
-            "urgency": _sanitize_for_log(goal_data["urgency"]),
-        },
+        "character_goal_created",
+        character_id=_sanitize_for_log(str(char_uuid) if char_uuid else "invalid"),
+        goal_id=_sanitize_for_log(goal_id),
+        urgency=_sanitize_for_log(goal_data["urgency"]),
     )
 
     return _goal_to_schema(goal_data)
@@ -346,15 +341,11 @@ async def update_character_goal(
     char_uuid = _parse_uuid_safe(character_id)
     goal_uuid = _parse_uuid_safe(goal_id)
     logger.info(
-        "Updated goal for character",
-        extra={
-            "goal_id": _sanitize_for_log(str(goal_uuid) if goal_uuid else "invalid"),
-            "character_id": _sanitize_for_log(
-                str(char_uuid) if char_uuid else "invalid"
-            ),
-            "status": _sanitize_for_log(goal.get("status")),
-            "urgency": _sanitize_for_log(goal.get("urgency")),
-        },
+        "character_goal_updated",
+        goal_id=_sanitize_for_log(str(goal_uuid) if goal_uuid else "invalid"),
+        character_id=_sanitize_for_log(str(char_uuid) if char_uuid else "invalid"),
+        status=_sanitize_for_log(goal.get("status")),
+        urgency=_sanitize_for_log(goal.get("urgency")),
     )
 
     return _goal_to_schema(goal)
@@ -418,9 +409,7 @@ async def delete_character_goal(
     char_uuid = _parse_uuid_safe(character_id)
     goal_uuid = _parse_uuid_safe(goal_id)
     logger.info(
-        "Deleted goal from character",
-        extra={
-            "goal_id": str(goal_uuid) if goal_uuid else "invalid",
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-        },
+        "character_goal_deleted",
+        goal_id=str(goal_uuid) if goal_uuid else "invalid",
+        character_id=str(char_uuid) if char_uuid else "invalid",
     )

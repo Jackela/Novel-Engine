@@ -10,7 +10,7 @@ Hexagonal Architecture:
 - Maps between database rows and Rumor domain entities
 """
 
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 from uuid import UUID
 
 import asyncpg
@@ -25,22 +25,22 @@ logger = structlog.get_logger()
 
 class PostgreSQLRumorRepository(RumorRepository):
     """PostgreSQL implementation of RumorRepository.
-    
+
     Stores and retrieves Rumor entities from PostgreSQL database.
     Uses asyncpg for async database operations with connection pooling.
-    
+
     Attributes:
         _pool: asyncpg connection pool for database access
-    
+
     Example:
         >>> pool = await asyncpg.create_pool(dsn="postgresql://...")
         >>> repo = PostgreSQLRumorRepository(pool)
         >>> rumors = await repo.get_active_rumors("world-uuid")
     """
 
-    def __init__(self, connection_pool: asyncpg.Pool):
+    def __init__(self, connection_pool: asyncpg.Pool) -> None:
         """Initialize the repository with a connection pool.
-        
+
         Args:
             connection_pool: asyncpg.Pool for database connections
         """
@@ -49,71 +49,70 @@ class PostgreSQLRumorRepository(RumorRepository):
 
     async def get_by_id(self, rumor_id: str) -> Optional[Rumor]:
         """Retrieve a specific rumor by its ID.
-        
+
         Args:
             rumor_id: Unique identifier for the rumor
-            
+
         Returns:
             Rumor if found, None otherwise
         """
         async with self._pool.acquire() as conn:
             row = await conn.fetchrow(
-                "SELECT * FROM rumors WHERE id = $1",
-                UUID(rumor_id)
+                "SELECT * FROM rumors WHERE id = $1", UUID(rumor_id)
             )
             return self._row_to_entity(row) if row else None
 
     async def get_active_rumors(self, world_id: str) -> List[Rumor]:
         """Retrieve all active rumors for a world (truth_value > 0).
-        
+
         Since Rumor doesn't have a direct world_id field, we use
         origin_location_id as a proxy for world identification.
-        
+
         Args:
             world_id: ID of the world (used as location_id proxy)
-            
+
         Returns:
             List of active Rumor objects (truth_value > 0)
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT * FROM rumors 
+                SELECT * FROM rumors
                 WHERE origin_location_id = $1 AND truth_value > 0
                 ORDER BY truth_value DESC, spread_count DESC
                 """,
-                UUID(world_id)
+                UUID(world_id),
             )
             return [self._row_to_entity(row) for row in rows]
 
     async def get_by_world_id(self, world_id: str) -> List[Rumor]:
         """Retrieve all rumors for a specific world (including dead ones).
-        
+
         Args:
             world_id: ID of the world (used as location_id proxy)
-            
+
         Returns:
             List of all Rumor objects in the world
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT * FROM rumors 
+                SELECT * FROM rumors
                 WHERE origin_location_id = $1
                 ORDER BY truth_value DESC
                 """,
-                UUID(world_id)
+                UUID(world_id),
             )
             return [self._row_to_entity(row) for row in rows]
 
     async def save(self, rumor: Rumor) -> Rumor:
         """Persist a rumor.
-        
+
         Uses UPSERT (INSERT ... ON CONFLICT) to handle both create and update.
-        
+
         Args:
             rumor: The Rumor to persist
-            
+
         Returns:
             The saved Rumor
         """
@@ -145,11 +144,15 @@ class PostgreSQLRumorRepository(RumorRepository):
                 rumor.origin_type.value,
                 UUID(rumor.source_event_id) if rumor.source_event_id else None,
                 UUID(rumor.origin_location_id),
-                [UUID(lid) for lid in rumor.current_locations] if rumor.current_locations else [],
+                (
+                    [UUID(lid) for lid in rumor.current_locations]
+                    if rumor.current_locations
+                    else []
+                ),
                 created_date_dict,
                 rumor.spread_count,
             )
-            
+
             logger.debug(
                 "rumor_saved",
                 rumor_id=rumor.rumor_id,
@@ -160,23 +163,23 @@ class PostgreSQLRumorRepository(RumorRepository):
 
     async def save_all(self, rumors: List[Rumor]) -> List[Rumor]:
         """Persist multiple rumors in a single transaction.
-        
+
         This is more efficient than calling save() multiple times,
         especially for database implementations that can batch inserts.
-        
+
         Args:
             rumors: List of Rumor objects to persist
-            
+
         Returns:
             List of saved Rumor objects
         """
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                saved_rumors = []
+                saved_rumors: list[Any] = []
                 for rumor in rumors:
                     await self.save(rumor)
                     saved_rumors.append(rumor)
-                
+
                 logger.info(
                     "rumors_batch_saved",
                     count=len(saved_rumors),
@@ -185,67 +188,66 @@ class PostgreSQLRumorRepository(RumorRepository):
 
     async def delete(self, rumor_id: str) -> bool:
         """Remove a rumor from the repository.
-        
+
         Args:
             rumor_id: Unique identifier for the rumor
-            
+
         Returns:
             True if rumor was deleted, False if it didn't exist
         """
         async with self._pool.acquire() as conn:
             result = await conn.execute(
-                "DELETE FROM rumors WHERE id = $1",
-                UUID(rumor_id)
+                "DELETE FROM rumors WHERE id = $1", UUID(rumor_id)
             )
             deleted = result != "DELETE 0"
-            
+
             if deleted:
                 logger.debug("rumor_deleted", rumor_id=rumor_id)
             return deleted
 
     async def get_by_location_id(self, location_id: str) -> List[Rumor]:
         """Retrieve all rumors currently at a specific location.
-        
+
         Args:
             location_id: ID of the location
-            
+
         Returns:
             List of Rumor objects that have spread to this location
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT * FROM rumors 
+                SELECT * FROM rumors
                 WHERE $1 = ANY(current_locations)
                 ORDER BY truth_value DESC
                 """,
-                UUID(location_id)
+                UUID(location_id),
             )
             return [self._row_to_entity(row) for row in rows]
 
     async def get_by_event_id(self, event_id: str) -> List[Rumor]:
         """Retrieve all rumors originating from a specific event.
-        
+
         Args:
             event_id: ID of the source event
-            
+
         Returns:
             List of Rumor objects that originated from this event
         """
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 """
-                SELECT * FROM rumors 
+                SELECT * FROM rumors
                 WHERE source_event_id = $1
                 ORDER BY truth_value DESC
                 """,
-                UUID(event_id)
+                UUID(event_id),
             )
             return [self._row_to_entity(row) for row in rows]
 
     async def clear(self) -> None:
         """Clear all rumors from the repository.
-        
+
         This is a utility method primarily used for testing.
         """
         async with self._pool.acquire() as conn:
@@ -254,10 +256,10 @@ class PostgreSQLRumorRepository(RumorRepository):
 
     def _row_to_entity(self, row: asyncpg.Record) -> Rumor:
         """Convert a database row to a Rumor entity.
-        
+
         Args:
             row: asyncpg Record from database query
-            
+
         Returns:
             Rumor domain entity
         """
@@ -276,7 +278,9 @@ class PostgreSQLRumorRepository(RumorRepository):
             content=row["content"],
             truth_value=row["truth_value"],
             origin_type=RumorOrigin(row["origin_type"]),
-            source_event_id=str(row["source_event_id"]) if row["source_event_id"] else None,
+            source_event_id=(
+                str(row["source_event_id"]) if row["source_event_id"] else None
+            ),
             origin_location_id=str(row["origin_location_id"]),
             current_locations=current_locations,
             created_date=created_date,

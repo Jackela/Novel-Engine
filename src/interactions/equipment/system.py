@@ -4,7 +4,7 @@ Dynamic Equipment System - Main orchestrator.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -27,7 +27,7 @@ from .models import (
 )
 from .validators import EquipmentValidator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DynamicEquipmentSystem:
@@ -109,18 +109,18 @@ class DynamicEquipmentSystem:
         if not self._equipment_templates:
             self._equipment_templates = {}
 
-    async def _process_weapon_usage(self, equipment, usage_context, expected_duration):
+    async def _process_weapon_usage(self, equipment, usage_context, expected_duration) -> None:
         """Placeholder processor for weapon interactions."""
         return StandardResponse(
             success=True, data={"effects": ["weapon_usage"], "warnings": []}
         )
 
-    async def _process_armor_usage(self, equipment, usage_context, expected_duration):
+    async def _process_armor_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["armor_absorption"], "warnings": []}
         )
 
-    async def _process_tool_usage(self, equipment, usage_context, expected_duration):
+    async def _process_tool_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["tool_operation"], "warnings": []}
         )
@@ -139,7 +139,7 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["augmetic_interface"], "warnings": []}
         )
 
-    async def _process_relic_usage(self, equipment, usage_context, expected_duration):
+    async def _process_relic_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["relic_activation"], "warnings": []}
         )
@@ -158,12 +158,12 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["communication_link"], "warnings": []}
         )
 
-    async def _process_medical_usage(self, equipment, usage_context, expected_duration):
+    async def _process_medical_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["medical_aid"], "warnings": []}
         )
 
-    async def _process_sensor_usage(self, equipment, usage_context, expected_duration):
+    async def _process_sensor_usage(self, equipment, usage_context, expected_duration) -> None:
         return StandardResponse(
             success=True, data={"effects": ["sensor_scan"], "warnings": []}
         )
@@ -757,9 +757,8 @@ class DynamicEquipmentSystem:
                     metadata={"blessing": "empty_inventory_retrieved"},
                 )
 
-            equipment_list = []
-            category_counts = {}
-
+            equipment_list: list[Any] = []
+            category_counts: dict[Any, Any] = {}
             for equipment_id in agent_equipment_ids:
                 equipment = self._equipment_registry.get(equipment_id)
                 if equipment:

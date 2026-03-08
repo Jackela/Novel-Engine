@@ -6,10 +6,10 @@ This module provides the SQLAlchemy implementation of the narrative arc
 repository interface defined in the application layer.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy import (
@@ -47,7 +47,7 @@ from ...domain.value_objects.story_pacing import (
     StoryPacing,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Base class for all SQLAlchemy models
@@ -103,8 +103,8 @@ class NarrativeArcEntity(Base):
     # Arc metrics and properties
     target_length = Column(Integer, nullable=True)
     current_length = Column(Integer, default=0)
-    completion_percentage = Column(DECIMAL(4, 3), default=0.0)
-    complexity_score = Column(DECIMAL(3, 1), default=5.0)
+    completion_percentage: Column[Any] = Column(DECIMAL(4, 3), default=0.0)
+    complexity_score: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Arc status and lifecycle
     status = Column(String(50), default="planning", index=True)
@@ -112,9 +112,9 @@ class NarrativeArcEntity(Base):
     end_sequence = Column(Integer, nullable=True)
 
     # Quality metrics
-    narrative_coherence = Column(DECIMAL(3, 1), default=5.0)
-    thematic_consistency = Column(DECIMAL(3, 1), default=5.0)
-    pacing_effectiveness = Column(DECIMAL(3, 1), default=5.0)
+    narrative_coherence: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    thematic_consistency: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    pacing_effectiveness: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Relationships
     parent_arc_id = Column(PG_UUID(as_uuid=True), nullable=True)
@@ -187,9 +187,9 @@ class PlotPointEntity(Base):
     sequence_order = Column(Integer, nullable=False, index=True)
 
     # Intensity metrics
-    emotional_intensity = Column(DECIMAL(3, 1), default=5.0)
-    dramatic_tension = Column(DECIMAL(3, 1), default=5.0)
-    story_significance = Column(DECIMAL(3, 1), default=5.0)
+    emotional_intensity: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    dramatic_tension: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    story_significance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Character and event relationships
     involved_characters = Column(JSON, default=list)
@@ -230,11 +230,11 @@ class NarrativeThemeEntity(Base):
     description = Column(Text, nullable=False)
 
     # Theme metrics
-    moral_complexity = Column(DECIMAL(3, 1), default=5.0)
-    emotional_resonance = Column(DECIMAL(3, 1), default=5.0)
-    universal_appeal = Column(DECIMAL(3, 1), default=5.0)
-    cultural_significance = Column(DECIMAL(3, 1), default=5.0)
-    development_potential = Column(DECIMAL(3, 1), default=5.0)
+    moral_complexity: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    emotional_resonance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    universal_appeal: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    cultural_significance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    development_potential: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Theme development
     symbolic_elements = Column(JSON, default=list)
@@ -265,12 +265,12 @@ class StoryPacingEntity(Base):
     end_sequence = Column(Integer, nullable=False)
 
     # Pacing metrics
-    event_density = Column(DECIMAL(3, 1), default=5.0)
-    tension_curve = Column(JSON, default=list)
-    dialogue_ratio = Column(DECIMAL(3, 2), default=0.4)
-    action_ratio = Column(DECIMAL(3, 2), default=0.3)
-    reflection_ratio = Column(DECIMAL(3, 2), default=0.3)
-    description_density = Column(DECIMAL(3, 1), default=5.0)
+    event_density: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
+    tension_curve: Column[Any] = Column(JSON, default=list)
+    dialogue_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.4)
+    action_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.3)
+    reflection_ratio: Column[Any] = Column(DECIMAL(3, 2), default=0.3)
+    description_density: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
 
     # Focus and techniques
     character_focus = Column(JSON, default=list)
@@ -298,7 +298,7 @@ class NarrativeContextEntity(Base):
     context_type = Column(String(100), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
-    importance = Column(DECIMAL(3, 1), default=5.0)
+    importance: Column[Any] = Column(DECIMAL(3, 1), default=5.0)
     is_persistent = Column(Boolean, default=False)
 
     # Sequence range
@@ -343,7 +343,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
     Handles persistence operations for narrative arcs using SQLAlchemy ORM.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, session: Session) -> None:
         """
         Initialize repository with database session.
 
@@ -375,12 +375,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
             # Clear uncommitted events after successful save
             narrative_arc.clear_uncommitted_events()
 
-            logger.debug(f"Saved narrative arc: {narrative_arc.arc_id}")
+            logger.debug("narrative_arc_saved", arc_id=str(narrative_arc.arc_id))
 
         except Exception as e:
             self.session.rollback()
             logger.error(
-                f"Failed to save narrative arc {narrative_arc.arc_id}: {str(e)}"
+                "narrative_arc_save_failed", arc_id=str(narrative_arc.arc_id), error=str(e)
             )
             raise
 
@@ -399,7 +399,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return self._entity_to_aggregate(arc_entity)
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arc {arc_id}: {str(e)}")
+            logger.error("narrative_arc_retrieval_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def get_by_type(
@@ -427,7 +427,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return [self._entity_to_aggregate(entity) for entity in arc_entities]
 
         except Exception as e:
-            logger.error(f"Failed to get narrative arcs by type {arc_type}: {str(e)}")
+            logger.error("narrative_arcs_by_type_retrieval_failed", arc_type=arc_type, error=str(e))
             raise
 
     def search(
@@ -524,7 +524,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return arcs, total_count
 
         except Exception as e:
-            logger.error(f"Failed to search narrative arcs: {str(e)}")
+            logger.error("narrative_arc_search_failed", error=str(e))
             raise
 
     def delete(self, arc_id: NarrativeId) -> bool:
@@ -542,12 +542,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
             self.session.delete(arc_entity)
             self.session.commit()
 
-            logger.debug(f"Deleted narrative arc: {arc_id}")
+            logger.debug("narrative_arc_deleted", arc_id=str(arc_id))
             return True
 
         except Exception as e:
             self.session.rollback()
-            logger.error(f"Failed to delete narrative arc {arc_id}: {str(e)}")
+            logger.error("narrative_arc_deletion_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def exists(self, arc_id: NarrativeId) -> bool:
@@ -560,7 +560,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 > 0
             )
         except Exception as e:
-            logger.error(f"Failed to check if narrative arc exists {arc_id}: {str(e)}")
+            logger.error("narrative_arc_existence_check_failed", arc_id=str(arc_id), error=str(e))
             raise
 
     def _create_arc_entity(self, narrative_arc: NarrativeArc) -> NarrativeArcEntity:
@@ -797,7 +797,7 @@ class NarrativeArcRepository(INarrativeArcRepository):
     def _entity_to_aggregate(self, arc_entity: NarrativeArcEntity) -> NarrativeArc:
         """Convert SQLAlchemy entity to domain aggregate."""
         # Convert plot points
-        plot_points = {}
+        plot_points: dict[Any, Any] = {}
         for plot_entity in arc_entity.plot_points:
             plot_point = PlotPoint(
                 plot_point_id=plot_entity.id,
@@ -809,27 +809,16 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 emotional_intensity=plot_entity.emotional_intensity,
                 dramatic_tension=plot_entity.dramatic_tension,
                 story_significance=plot_entity.story_significance,
-                involved_characters=set(
-                    UUID(cid) for cid in plot_entity.involved_characters
+                involved_characters=frozenset(
+                    UUID(cid) for cid in (plot_entity.involved_characters or [])
                 ),
-                prerequisite_events=set(plot_entity.prerequisite_events),
-                consequence_events=set(plot_entity.consequence_events),
-                location=plot_entity.location,
-                time_context=plot_entity.time_context,
-                pov_character=plot_entity.pov_character,
-                outcome=plot_entity.outcome,
-                conflict_type=plot_entity.conflict_type,
-                thematic_relevance={
-                    k: Decimal(str(v))
-                    for k, v in plot_entity.thematic_relevance.items()
-                },
-                tags=set(plot_entity.tags),
-                notes=plot_entity.notes,
+                prerequisite_events=list(plot_entity.prerequisite_events or []),
+                tags=frozenset(plot_entity.tags or []),
             )
             plot_points[plot_point.plot_point_id] = plot_point
 
         # Convert themes
-        themes = {}
+        themes: dict[Any, Any] = {}
         for theme_entity in arc_entity.themes:
             theme = NarrativeTheme(
                 theme_id=theme_entity.id,
@@ -840,19 +829,17 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 moral_complexity=theme_entity.moral_complexity,
                 emotional_resonance=theme_entity.emotional_resonance,
                 universal_appeal=theme_entity.universal_appeal,
-                cultural_significance=theme_entity.cultural_significance,
-                development_potential=theme_entity.development_potential,
-                symbolic_elements=set(theme_entity.symbolic_elements),
+                symbolic_elements=frozenset(theme_entity.symbolic_elements or []),
                 introduction_sequence=theme_entity.introduction_sequence,
                 resolution_sequence=theme_entity.resolution_sequence,
-                tags=set(theme_entity.tags),
-                notes=theme_entity.notes,
+                tags=frozenset(theme_entity.tags or []),
             )
             themes[theme.theme_id] = theme
 
         # Convert pacing segments
-        pacing_segments = {}
+        pacing_segments: dict[Any, Any] = {}
         for pacing_entity in arc_entity.pacing_segments:
+            tension_curve_tuple = tuple(Decimal(str(t)) for t in (pacing_entity.tension_curve or []))
             pacing = StoryPacing(
                 pacing_id=pacing_entity.id,
                 pacing_type=PacingType(pacing_entity.pacing_type),
@@ -860,43 +847,29 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 start_sequence=pacing_entity.start_sequence,
                 end_sequence=pacing_entity.end_sequence,
                 event_density=pacing_entity.event_density,
-                tension_curve=[Decimal(str(t)) for t in pacing_entity.tension_curve],
+                tension_curve=tension_curve_tuple,
                 dialogue_ratio=pacing_entity.dialogue_ratio,
                 action_ratio=pacing_entity.action_ratio,
                 reflection_ratio=pacing_entity.reflection_ratio,
-                description_density=pacing_entity.description_density,
-                character_focus=set(UUID(cid) for cid in pacing_entity.character_focus),
-                narrative_techniques=set(pacing_entity.narrative_techniques),
-                reader_engagement_target=pacing_entity.reader_engagement_target,
-                tags=set(pacing_entity.tags),
-                notes=pacing_entity.notes,
             )
             pacing_segments[pacing.pacing_id] = pacing
 
         # Convert narrative contexts
-        narrative_contexts = {}
+        narrative_contexts: dict[Any, Any] = {}
         for context_entity in arc_entity.narrative_contexts:
             context = NarrativeContext(
                 context_id=context_entity.id,
                 context_type=context_entity.context_type,
+                scope=context_entity.scope,
                 name=context_entity.name,
                 description=context_entity.description,
-                importance=context_entity.importance,
+                applies_from_sequence=context_entity.applies_from_sequence,
+                applies_to_sequence=context_entity.applies_to_sequence,
                 is_persistent=context_entity.is_persistent,
-                start_sequence=context_entity.start_sequence,
-                end_sequence=context_entity.end_sequence,
-                location=context_entity.location,
-                time_period=context_entity.time_period,
-                mood=context_entity.mood,
-                atmosphere=context_entity.atmosphere,
-                social_context=context_entity.social_context,
-                cultural_context=context_entity.cultural_context,
-                affected_characters=set(
-                    UUID(cid) for cid in context_entity.affected_characters
+                affected_characters=frozenset(
+                    UUID(cid) for cid in (context_entity.affected_characters or [])
                 ),
-                related_themes=set(context_entity.related_themes),
-                tags=set(context_entity.tags),
-                notes=context_entity.notes,
+                tags=frozenset(context_entity.tags or []),
             )
             narrative_contexts[context.context_id] = context
 

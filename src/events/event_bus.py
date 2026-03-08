@@ -13,7 +13,7 @@ This module provides a production-ready event bus implementation with:
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -31,7 +31,7 @@ except ImportError:
     AIOREDIS_AVAILABLE = False
     aioredis = None
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EventPriority(Enum):
@@ -80,7 +80,7 @@ class Event:
     timeout_seconds: int = 30
     tags: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate event structure."""
         if not self.event_type:
             raise ValueError("Event type is required")
@@ -158,7 +158,7 @@ class HandlerRegistry:
 
     def register(
         self, handler: EventHandler, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """Register an event handler."""
         handler_id = handler.handler_id
 
@@ -175,7 +175,7 @@ class HandlerRegistry:
             f"Registered handler {handler_id} for events: {handler.handled_event_types}"
         )
 
-    def unregister(self, handler: EventHandler):
+    def unregister(self, handler: EventHandler) -> None:
         """Unregister an event handler."""
         handler_id = handler.handler_id
 
@@ -198,7 +198,7 @@ class HandlerRegistry:
 class EventBusConfig:
     """Configuration for the event bus."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.max_concurrent_events = 100
         self.default_timeout = 30
         self.max_retries = 3
@@ -218,14 +218,14 @@ class EventBusConfig:
 class CircuitBreaker:
     """Circuit breaker for event processing resilience."""
 
-    def __init__(self, failure_threshold: int = 5, timeout: int = 60):
+    def __init__(self, failure_threshold: int = 5, timeout: int = 60) -> None:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "closed"  # closed, open, half_open
 
-    async def call(self, func: Callable, *args, **kwargs):
+    async def call(self, func: Callable, *args, **kwargs) -> None:
         """Execute function with circuit breaker protection."""
         if self.state == "open":
             if (
@@ -260,7 +260,7 @@ class CircuitBreaker:
 class EventMetrics:
     """Event processing metrics collection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.events_published = 0
         self.events_processed = 0
         self.events_failed = 0
@@ -269,11 +269,11 @@ class EventMetrics:
         self.handler_metrics = {}
         self.start_time = time.time()
 
-    def record_event_published(self):
+    def record_event_published(self) -> None:
         """Record an event publication."""
         self.events_published += 1
 
-    def record_event_processed(self, processing_time: float):
+    def record_event_processed(self, processing_time: float) -> None:
         """Record successful event processing."""
         self.events_processed += 1
         self.processing_times.append(processing_time)
@@ -282,11 +282,11 @@ class EventMetrics:
         if len(self.processing_times) > 1000:
             self.processing_times = self.processing_times[-1000:]
 
-    def record_event_failed(self):
+    def record_event_failed(self) -> None:
         """Record failed event processing."""
         self.events_failed += 1
 
-    def record_dead_letter(self):
+    def record_dead_letter(self) -> None:
         """Record event moved to dead letter queue."""
         self.events_dead_letter += 1
 
@@ -326,7 +326,7 @@ class EventBus:
     - Event sourcing support
     """
 
-    def __init__(self, config: Optional[EventBusConfig] = None):
+    def __init__(self, config: Optional[EventBusConfig] = None) -> None:
         self.config = config or EventBusConfig()
         self.handler_registry = HandlerRegistry()
         self.circuit_breaker = (
@@ -348,7 +348,7 @@ class EventBus:
 
         logger.info("EventBus initialized with enterprise configuration")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the event bus and its dependencies."""
         try:
             # Initialize Redis connection if enabled
@@ -368,7 +368,7 @@ class EventBus:
             logger.error(f"Failed to initialize EventBus: {e}")
             raise
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Gracefully shutdown the event bus."""
         logger.info("Shutting down EventBus...")
         self._shutdown_event.set()
@@ -379,7 +379,7 @@ class EventBus:
             try:
                 await task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         if self.redis:
             await self.redis.close()
 
@@ -387,11 +387,11 @@ class EventBus:
 
     def register_handler(
         self, handler: EventHandler, metadata: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """Register an event handler."""
         self.handler_registry.register(handler, metadata)
 
-    def unregister_handler(self, handler: EventHandler):
+    def unregister_handler(self, handler: EventHandler) -> None:
         """Unregister an event handler."""
         self.handler_registry.unregister(handler)
 
@@ -432,13 +432,13 @@ class EventBus:
 
     async def publish_batch(self, events: List[Event]) -> List[str]:
         """Publish multiple events as a batch."""
-        event_ids = []
+        event_ids: list[Any] = []
         for event in events:
             event_id = await self.publish(event)
             event_ids.append(event_id)
         return event_ids
 
-    async def _process_event(self, event: Event):
+    async def _process_event(self, event: Event) -> None:
         """Process a single event through all registered handlers."""
         async with self.processing_semaphore:
             start_time = time.time()
@@ -499,7 +499,7 @@ class EventBus:
                 if self.metrics:
                     self.metrics.record_event_failed()
 
-    async def _handle_retry_or_dead_letter(self, event: Event):
+    async def _handle_retry_or_dead_letter(self, event: Event) -> None:
         """Handle event retry logic or move to dead letter queue."""
         event.retry_count += 1
 
@@ -523,12 +523,12 @@ class EventBus:
                     f"Event {event.event_id} moved to dead letter queue after {event.retry_count} attempts"
                 )
 
-    async def _retry_event_after_delay(self, event: Event, delay: int):
+    async def _retry_event_after_delay(self, event: Event, delay: int) -> None:
         """Retry an event after a delay."""
         await asyncio.sleep(delay)
         await self._process_event(event)
 
-    async def _store_event(self, event: Event):
+    async def _store_event(self, event: Event) -> None:
         """Store event for persistence."""
         if self.redis:
             key = f"{self.config.redis_key_prefix}:events:{event.event_id}"
@@ -536,13 +536,13 @@ class EventBus:
         else:
             self.event_store.append(event)
 
-    async def _publish_to_redis(self, event: Event):
+    async def _publish_to_redis(self, event: Event) -> None:
         """Publish event to Redis pub/sub for distributed processing."""
         if self.redis:
             channel = f"{self.config.redis_key_prefix}:channel:{event.event_type}"
             await self.redis.publish(channel, json.dumps(event.to_dict()))
 
-    async def _batch_processing_loop(self):
+    async def _batch_processing_loop(self) -> None:
         """Background task for batch processing optimization."""
         while not self._shutdown_event.is_set():
             try:
@@ -605,7 +605,7 @@ class EventBus:
         """Get events in the dead letter queue."""
         return self.dead_letter_queue.copy()
 
-    async def clear_dead_letter_queue(self):
+    async def clear_dead_letter_queue(self) -> None:
         """Clear the dead letter queue."""
         cleared_count = len(self.dead_letter_queue)
         self.dead_letter_queue.clear()
@@ -685,7 +685,7 @@ class EventBus:
         )
         return event_id
 
-    def get_simulation_outbox(self):
+    def get_simulation_outbox(self) -> None:
         """Get the simulation outbox for batch processing."""
         if not hasattr(self, "_simulation_outbox"):
             from .outbox import Outbox

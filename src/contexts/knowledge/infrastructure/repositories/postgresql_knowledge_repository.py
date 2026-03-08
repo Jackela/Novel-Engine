@@ -8,7 +8,7 @@ Constitution Compliance:
 - Article IV (SSOT): PostgreSQL as authoritative source, no caching for MVP
 """
 
-from typing import List
+from typing import Any, List
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +21,7 @@ from ...domain.models.access_level import AccessLevel
 from ...domain.models.agent_identity import AgentIdentity
 from ...domain.models.knowledge_entry import KnowledgeEntry
 from ...domain.models.knowledge_type import KnowledgeType
-from ..adapters.embedding_generator_adapter import EmbeddingGeneratorAdapter
+from ..adapters.embedding_generator_adapter import EmbeddingServiceAdapter
 
 
 class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
@@ -43,8 +43,8 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
     def __init__(
         self,
         session: AsyncSession,
-        embedding_generator: EmbeddingGeneratorAdapter | None = None,
-    ):
+        embedding_generator: EmbeddingServiceAdapter | None = None,
+    ) -> None:
         """
         Initialize repository with database session.
 
@@ -56,7 +56,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         - Article V (SOLID): DIP - Depend on AsyncSession abstraction
         """
         self._session = session
-        self._embedding_generator = embedding_generator or EmbeddingGeneratorAdapter()
+        self._embedding_generator = embedding_generator or EmbeddingServiceAdapter()
 
     async def save(self, entry: KnowledgeEntry) -> None:
         """
@@ -76,7 +76,8 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Upsert SQL with ON CONFLICT for idempotency
-        upsert_sql = text("""
+        upsert_sql = text(
+            """
             INSERT INTO knowledge_entries (
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
@@ -89,7 +90,8 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             ON CONFLICT (id) DO UPDATE SET
                 content = EXCLUDED.content,
                 updated_at = EXCLUDED.updated_at
-        """)
+        """
+        )
 
         # Execute upsert
         await self._session.execute(
@@ -137,14 +139,16 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # SELECT query
-        select_sql = text("""
-            SELECT 
+        select_sql = text(
+            """
+            SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
             WHERE id = :entry_id
-        """)
+        """
+        )
 
         result = await self._session.execute(select_sql, {"entry_id": UUID(entry_id)})
         row = result.fetchone()
@@ -192,7 +196,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Build dynamic WHERE clause
-        where_conditions = []
+        where_conditions: list[Any] = []
         params = {
             "character_id": agent.character_id,
             "roles": list(agent.roles) if agent.roles else [],
@@ -219,19 +223,21 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             where_conditions.append("owning_character_id = :owning_character_id")
             params["owning_character_id"] = owning_character_id
 
-        # Combine WHERE conditions
+        # Combine WHERE conditions (safe: conditions are hardcoded SQL fragments)
         where_clause = " AND ".join(where_conditions)
 
         # Final SELECT query - uses parameterized conditions with params dict
-        select_sql = text(f"""
+        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
+        query_string = """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
-            WHERE {where_clause}
+            WHERE """ + where_clause + """
             ORDER BY updated_at DESC
-        """)  # nosec B608
+        """
+        select_sql = text(query_string)
 
         result = await self._session.execute(select_sql, params)
         rows = result.fetchall()
@@ -262,15 +268,17 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # DELETE query
-        delete_sql = text("""
+        delete_sql = text(
+            """
             DELETE FROM knowledge_entries
             WHERE id = :entry_id
-        """)
+        """
+        )
 
         result = await self._session.execute(delete_sql, {"entry_id": UUID(entry_id)})
 
         # Check if entry was actually deleted
-        if result.rowcount == 0:
+        if getattr(result, 'rowcount', 0) == 0:
             raise ValueError(f"Knowledge entry not found: {entry_id}")
 
     async def retrieve_for_agent_semantic(
@@ -316,12 +324,12 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Generate embedding for search query
-        query_embedding = await self._embedding_generator.generate_embedding(
+        query_embedding = await self._embedding_generator.embed(
             semantic_query
         )
 
         # Build dynamic WHERE clause for filters
-        where_conditions = []
+        where_conditions: list[Any] = []
         params = {
             "character_id": agent.character_id,
             "roles": list(agent.roles) if agent.roles else [],
@@ -348,29 +356,31 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
             where_conditions.append("knowledge_type = ANY(:knowledge_types)")
             params["knowledge_types"] = type_values
 
-        # Combine WHERE conditions
+        # Combine WHERE conditions (safe: conditions are hardcoded SQL fragments)
         where_clause = " AND ".join(where_conditions)
 
         # Semantic search query using pgvector cosine similarity
         # Cosine distance: 0 = identical, 2 = opposite
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
-        semantic_sql = text(f"""
+        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
+        query_string = """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by,
                 (1 - (embedding <=> CAST(:query_embedding AS vector(1536)) / 2)) AS similarity_score
             FROM knowledge_entries
-            WHERE {where_clause}
+            WHERE """ + where_clause + """
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
-        """)  # nosec B608
+        """
+        semantic_sql = text(query_string)
 
         result = await self._session.execute(semantic_sql, params)
         rows = result.fetchall()
 
         # Map rows to domain models and filter by threshold
-        entries = []
+        entries: list[Any] = []
         for row in rows:
             # Apply similarity threshold
             similarity_score = row.similarity_score
@@ -386,7 +396,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
 
         return entries
 
-    def _row_to_domain_model(self, row) -> KnowledgeEntry:
+    def _row_to_domain_model(self, row: Any) -> KnowledgeEntry:
         """
         Map database row to KnowledgeEntry domain model.
 

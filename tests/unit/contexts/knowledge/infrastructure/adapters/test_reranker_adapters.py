@@ -22,6 +22,8 @@ from src.contexts.knowledge.infrastructure.adapters.reranker_adapters import (
     CohereReranker,
     LocalReranker,
     NoOpReranker,
+    RerankerType,
+    create_reranker,
 )
 
 # Check if sentence-transformers is available for conditional test skipping
@@ -86,15 +88,15 @@ class TestNoOpReranker:
     @pytest.mark.asyncio
     async def test_rerank_with_latency(self):
         """Test that NoOpReranker simulates latency."""
-        import asyncio
+        import time
 
         reranker = NoOpReranker(latency_ms=100.0)
 
         documents = [RerankDocument(index=0, content="test", score=0.5)]
 
-        start = asyncio.get_event_loop().time()
+        start = time.monotonic()
         output = await reranker.rerank("test query", documents)
-        elapsed = asyncio.get_event_loop().time() - start
+        elapsed = time.monotonic() - start
 
         assert output.latency_ms == 100.0
         assert elapsed >= 0.05  # At least 50ms actual delay
@@ -422,44 +424,24 @@ class TestCreateReranker:
 
     def test_create_local_reranker(self):
         """Test creating a local reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-            create_reranker,
-        )
-
         reranker = create_reranker(RerankerType.LOCAL)
         assert reranker is not None
         assert reranker.__class__.__name__ == "LocalReranker"
 
     def test_create_noop_reranker(self):
         """Test creating a no-op reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-            create_reranker,
-        )
-
         reranker = create_reranker(RerankerType.NOOP)
         assert reranker is not None
         assert reranker.__class__.__name__ == "NoOpReranker"
 
     def test_create_mock_reranker(self):
         """Test creating a mock reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-            create_reranker,
-        )
-
         reranker = create_reranker(RerankerType.MOCK, latency_ms=100.0)
         assert reranker is not None
         assert reranker.__class__.__name__ == "MockReranker"
 
     def test_create_cohere_reranker(self):
         """Test creating a Cohere reranker via factory."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-            create_reranker,
-        )
-
         with patch.dict("os.environ", {"COHERE_API_KEY": "test-key"}):
             reranker = create_reranker(RerankerType.COHERE)
             assert reranker is not None
@@ -467,19 +449,11 @@ class TestCreateReranker:
 
     def test_create_invalid_type(self):
         """Test that factory raises ValueError for invalid type."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            create_reranker,
-        )
-
         with pytest.raises(ValueError, match="Invalid reranker type"):
             create_reranker("invalid_type")
 
     def test_reranker_type_all_types(self):
         """Test that all_types returns expected types."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-        )
-
         types = RerankerType.all_types()
         assert RerankerType.COHERE in types
         assert RerankerType.LOCAL in types
@@ -488,10 +462,6 @@ class TestCreateReranker:
 
     def test_reranker_type_is_valid(self):
         """Test that is_valid correctly identifies valid types."""
-        from src.contexts.knowledge.application.services.rerank_service import (
-            RerankerType,
-        )
-
         assert RerankerType.is_valid(RerankerType.COHERE) is True
         assert RerankerType.is_valid(RerankerType.LOCAL) is True
         assert RerankerType.is_valid("invalid") is False

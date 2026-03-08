@@ -29,6 +29,7 @@ from src.core.data_models import CharacterState, MemoryItem, MemoryType
 from src.core.system_orchestrator import (
     OrchestratorConfig,
     OrchestratorMode,
+    SystemHealth,
     SystemOrchestrator,
 )
 from src.interactions.engine import InteractionType

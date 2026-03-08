@@ -115,7 +115,7 @@ class NarrativeArc:
     )
     _version: int = field(default=1, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize aggregate and raise creation event."""
         if not self._uncommitted_events:  # Only on initial creation
             event = NarrativeArcCreated(
@@ -183,7 +183,7 @@ class NarrativeArc:
             plot_point_type=plot_point.plot_point_type.value,
             sequence_order=plot_point.sequence_order,
             importance_level=plot_point.importance.value,
-            character_ids=list(plot_point.involved_characters),
+            character_ids=list(plot_point.involved_characters or frozenset()),
         )
         self._add_event(event)
 
@@ -247,7 +247,7 @@ class NarrativeArc:
             theme_name=theme.name,
             intensity_level=theme.intensity.value,
             introduction_sequence=theme.introduction_sequence or 0,
-            symbolic_elements=list(theme.symbolic_elements),
+            symbolic_elements=list(theme.symbolic_elements or frozenset()),
         )
         self._add_event(event)
 
@@ -263,7 +263,7 @@ class NarrativeArc:
 
     def get_themes_at_sequence(self, sequence: int) -> List[NarrativeTheme]:
         """Get all themes active at a specific sequence."""
-        active_themes = []
+        active_themes: list[Any] = []
         for theme_id, theme in self.themes.items():
             development_sequences = self.theme_development.get(theme_id, [])
 
@@ -462,7 +462,8 @@ class NarrativeArc:
         # Check for prerequisite fulfillment
         coherence_penalties = Decimal("0")
         for plot_point in self.plot_points.values():
-            for prereq in plot_point.prerequisite_events:
+            prereqs = plot_point.prerequisite_events or []
+            for prereq in prereqs:
                 if prereq not in self.plot_points:
                     coherence_penalties += Decimal("0.5")
 

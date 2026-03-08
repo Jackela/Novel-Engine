@@ -8,6 +8,7 @@ including the main POST /v1/turns:run endpoint and monitoring capabilities.
 
 import json
 import logging
+import structlog
 import os
 import tempfile
 import threading
@@ -42,7 +43,7 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
     class PrometheusMetricsCollector:  # type: ignore[override]
         """Minimal collector that satisfies EnhancedPerformanceTracker expectations."""
 
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
         def get_metrics_data(self) -> str:
@@ -54,20 +55,20 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
     class PrometheusMiddleware:  # type: ignore[override]
         """No-op ASGI middleware when prometheus_client is unavailable."""
 
-        def __init__(self, app, *_, **__):
+        def __init__(self, app, *_, **__) -> None:
             self.app = app
 
         async def __call__(self, scope, receive, send):
             await self.app(scope, receive, send)
 
-    def initialize_tracing(*_, **__):
+    def initialize_tracing(*_, **__) -> None:
         return None
 
     def setup_fastapi_tracing(app: FastAPI, *_args, **_kwargs) -> FastAPI:
         return app
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -93,7 +94,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v):
+    def validate_participants(cls, v) -> None:
         if not v or len(v) == 0:
             raise ValueError("At least one participant is required")
         if not all(isinstance(p, str) and p.strip() for p in v):
@@ -104,7 +105,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("turn_id")
     @classmethod
-    def validate_turn_id(cls, v):
+    def validate_turn_id(cls, v) -> None:
         if v is not None:
             try:
                 UUID(v)
@@ -257,12 +258,12 @@ def _patch_e2e_database_fixture() -> None:
     original_setup = DatabaseFixtures.setup_test_database
     original_cleanup = DatabaseFixtures.cleanup_test_database
 
-    async def _setup_wrapper(self):
+    async def _setup_wrapper(self) -> None:
         _reset_e2e_state()
         if original_setup:
             await original_setup(self)
 
-    async def _cleanup_wrapper(self):
+    async def _cleanup_wrapper(self) -> None:
         if original_cleanup:
             await original_cleanup(self)
         _reset_e2e_state()
@@ -275,7 +276,7 @@ def _patch_e2e_database_fixture() -> None:
     @asynccontextmanager
     async def _patched_get_async_session(self):  # type: ignore[override]
         class PatchedSession:
-            def add(self, obj):
+            def add(self, obj) -> None:
                 data = _serialize_value(obj)
                 class_name = obj.__class__.__name__.lower()
                 if "world" in class_name:
@@ -285,10 +286,10 @@ def _patch_e2e_database_fixture() -> None:
                 elif "narrative" in class_name:
                     _append_e2e_state("narrative_arcs", data)
 
-            async def commit(self):
+            async def commit(self) -> None:
                 return
 
-            async def execute(self, query):
+            async def execute(self, query) -> None:
                 text_query = str(query).lower()
                 state = _load_e2e_state()
                 if "character_events" in text_query:
@@ -300,13 +301,12 @@ def _patch_e2e_database_fixture() -> None:
                 elif "character" in text_query:
                     rows = state["characters"]
                 else:
-                    rows = []
-
+                    rows: list[Any] = []
                 class MockResult:
-                    def __init__(self, data_rows):
+                    def __init__(self, data_rows) -> None:
                         self._rows = data_rows
 
-                    def fetchall(self):
+                    def fetchall(self) -> None:
                         return self._rows
 
                 return MockResult(rows)
@@ -812,7 +812,7 @@ def _convert_to_response(result) -> TurnExecutionResponse:
         phases_completed = default_phases.copy()
 
     # Convert compensation actions
-    compensation_actions = []
+    compensation_actions: list[Any] = []
     for action in result.compensation_actions:
         compensation_actions.append(
             {

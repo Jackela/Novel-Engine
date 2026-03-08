@@ -23,6 +23,9 @@ from typing import TYPE_CHECKING, Any, Optional
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...domain.models.model_registry import (
     LLMProvider,
     TaskType,
@@ -258,10 +261,11 @@ class CircuitBreaker:
                     time_open_seconds=time_since_failure.total_seconds(),
                 )
 
-        return self._state.state != CircuitState.OPEN or (
-            self._state.state == CircuitState.HALF_OPEN
-            and self._state.half_open_calls < self._config.half_open_max_calls
-        )
+        if self._state.state == CircuitState.OPEN:
+            return False
+        if self._state.state == CircuitState.HALF_OPEN:
+            return self._state.half_open_calls < self._config.half_open_max_calls
+        return True
 
     async def record_success(self) -> None:
         """
@@ -383,7 +387,7 @@ class ModelRouter:
 
     def __init__(
         self,
-        model_registry,
+        model_registry: Any,
         circuit_breaker_config: Optional[CircuitBreakerConfig] = None,
     ) -> None:
         """
@@ -455,13 +459,21 @@ class ModelRouter:
         log = logger.bind(task_type=task_type.value)
 
         # Get task configuration
-        task_config = self._registry.get_model_for_task(task_type)
+        task_config_result = self._registry.get_model_for_task(task_type)
+        if task_config_result.is_error:
+            # Fallback to CHEAP task type
+            task_config_result = self._registry.get_model_for_task(TaskType.CHEAP)
+            if task_config_result.is_error:
+                raise ValueError(f"No model configuration available for task type: {task_type.value}")
+        task_config = task_config_result.unwrap()
+        if task_config is None:
+            raise ValueError(f"No model configuration available for task type: {task_type.value}")
 
         # Build candidate list with primary and fallbacks
         candidates = [(task_config.provider, task_config.model_name)]
 
         # Add fallback providers
-        for fallback_provider in task_config.fallback_providers:
+        for fallback_provider in task_config.fallback_providers or ():
             # For fallback, use same model name if available, or pick one from provider
             fallback_model = self._find_model_for_provider(
                 fallback_provider,
@@ -506,19 +518,17 @@ class ModelRouter:
 
             # Check cost constraint
             if config.max_cost_per_1m_tokens is not None:
-                model_def = self._registry.get_model(provider, model_name)
-                if (
-                    model_def
-                    and model_def.cost_per_1m_output_tokens
-                    > config.max_cost_per_1m_tokens
-                ):
-                    log.debug(
-                        "model_too_expensive",
-                        model=model_key,
-                        cost=model_def.cost_per_1m_output_tokens,
-                        max_cost=config.max_cost_per_1m_tokens,
-                    )
-                    continue
+                model_result = self._registry.get_model(provider, model_name)
+                if model_result.is_ok:
+                    model_def = model_result.unwrap()
+                    if model_def is not None and model_def.cost_per_1m_output_tokens > config.max_cost_per_1m_tokens:
+                        log.debug(
+                            "model_too_expensive",
+                            model=model_key,
+                            cost=model_def.cost_per_1m_output_tokens,
+                            max_cost=config.max_cost_per_1m_tokens,
+                        )
+                        continue
 
             # Apply preferred provider ordering
             if config.preferred_providers:
@@ -545,6 +555,10 @@ class ModelRouter:
             selected_model = "mock-model"
             reason = RoutingReason.UNAVAILABLE
             fallback_used = True
+
+        # Ensure selected_model is not None
+        if selected_model is None:
+            selected_model = "unknown"
 
         # Calculate execution time
         execution_time = self._get_elapsed_ms(start_time)
@@ -602,7 +616,20 @@ class ModelRouter:
 
         try:
             # Resolve the model reference
-            lookup_result = self._registry.resolve_model(model_ref)
+            resolve_result = self._registry.resolve_model(model_ref)
+            if resolve_result.is_error:
+                log.warning("model_resolution_failed", error=str(resolve_result.error))
+                if task_type:
+                    return self.select_model(task_type, config)
+                else:
+                    return self.select_model(TaskType.CHEAP, config)
+            lookup_result = resolve_result.unwrap()
+            if lookup_result is None:
+                log.warning("model_resolution_returned_none")
+                if task_type:
+                    return self.select_model(task_type, config)
+                else:
+                    return self.select_model(TaskType.CHEAP, config)
             provider = lookup_result.provider
             model_name = lookup_result.model_name
 
@@ -635,11 +662,11 @@ class ModelRouter:
             decision = RoutingDecision(
                 task_type=task_type,
                 selected_provider=provider,
-                selected_model=model_name,
+                selected_model=model_name or "unknown",
                 reason=RoutingReason.MANUAL_OVERRIDE,
                 fallback_used=False,
                 execution_time_ms=execution_time,
-                metadata={"alias_used": lookup_result.alias_used},
+                metadata={"alias_used": getattr(lookup_result, 'alias_used', None)},
             )
 
             self._record_decision(decision)
@@ -677,10 +704,15 @@ class ModelRouter:
             Model name if found, None otherwise
         """
         # Get models for this provider
-        models = self._registry.list_models(
+        models_result = self._registry.list_models(
             provider=provider,
             include_deprecated=False,
         )
+        if models_result.is_error:
+            return None
+        models = models_result.unwrap()
+        if models is None:
+            return None
 
         # Filter by cost constraint
         if config.max_cost_per_1m_tokens is not None:
@@ -699,7 +731,7 @@ class ModelRouter:
             key=lambda m: (m.cost_factor, -m.max_context_tokens),
         )
 
-        return best_model.model_name
+        return best_model.model_name or None
 
     def _get_circuit_breaker(self, model_key: str) -> CircuitBreaker:
         """Get or create circuit breaker for a model."""
@@ -811,6 +843,66 @@ class ModelRouter:
             "total_circuits": len(self._circuit_breakers),
         }
 
+    def get_routing_stats_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get routing statistics (Result pattern).
+
+        Returns:
+            Result containing routing analytics dictionary on success.
+            - Ok: Dictionary with routing statistics
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            if not self._routing_history:
+                return Ok({"total_decisions": 0})
+
+            # Count by reason
+            reason_counts: dict[str, int] = {}
+            fallback_count = 0
+
+            for decision in self._routing_history:
+                reason = decision.reason.value
+                reason_counts[reason] = reason_counts.get(reason, 0) + 1
+                if decision.fallback_used:
+                    fallback_count += 1
+
+            # Count by provider
+            provider_counts: dict[str, int] = {}
+            for decision in self._routing_history:
+                provider = decision.selected_provider.value
+                provider_counts[provider] = provider_counts.get(provider, 0) + 1
+
+            # Calculate avg execution time
+            avg_time = sum(d.execution_time_ms for d in self._routing_history) / len(
+                self._routing_history
+            )
+
+            # Circuit breaker stats
+            open_circuits = [
+                (k, v.get_state_info())
+                for k, v in self._circuit_breakers.items()
+                if v.is_open()
+            ]
+
+            return Ok({
+                "total_decisions": len(self._routing_history),
+                "fallback_count": fallback_count,
+                "fallback_rate": fallback_count / len(self._routing_history),
+                "reason_counts": reason_counts,
+                "provider_counts": provider_counts,
+                "avg_routing_time_ms": avg_time,
+                "open_circuits": open_circuits,
+                "total_circuits": len(self._circuit_breakers),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get routing stats: {e}",
+                    service_name="ModelRouter",
+                    operation="get_routing_stats",
+                )
+            )
+
     def get_circuit_breaker_state(self, model_key: str) -> Optional[dict[str, Any]]:
         """
         Get circuit breaker state for a specific model.
@@ -860,7 +952,7 @@ class ModelRouter:
 
 
 def create_model_router(
-    model_registry,
+    model_registry: Any,
     circuit_breaker_config: Optional[CircuitBreakerConfig] = None,
 ) -> ModelRouter:
     """

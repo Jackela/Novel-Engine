@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 from uuid import uuid4
 
 import structlog
@@ -68,13 +68,17 @@ def get_repository(request: Request) -> FactionIntentRepository:
             from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
                 InMemoryFactionIntentRepository,
             )
+
             repo = InMemoryFactionIntentRepository()
             logger.warning("using_fallback_repository_test_mode")
         else:
-            raise RuntimeError("FactionIntentRepository not configured. Check startup initialization.")
+            raise RuntimeError(
+                "FactionIntentRepository not configured. Check startup initialization."
+            )
     return repo
 
-def _get_event_bus(request: Request):
+
+def _get_event_bus(request: Request) -> None:
     """Get the EventBus from app.state.
 
     Reads the EventBus from request.app.state.event_bus which is
@@ -159,14 +163,24 @@ def _generate_mock_intents(faction_id: str) -> list[FactionIntent]:
     Returns:
         List of generated FactionIntent objects
     """
-    intents = []
+    intents: list[Any] = []
     now = datetime.now()
 
     # Generate 2-3 varied intents for demonstration
     intent_configs = [
         (ActionType.STABILIZE, None, "Consolidate resources and strengthen borders", 1),
-        (ActionType.EXPAND, "unclaimed-territory-1", "Expand influence into neighboring regions", 2),
-        (ActionType.TRADE, "neutral-faction-1", "Establish trade routes for economic growth", 3),
+        (
+            ActionType.EXPAND,
+            "unclaimed-territory-1",
+            "Expand influence into neighboring regions",
+            2,
+        ),
+        (
+            ActionType.TRADE,
+            "neutral-faction-1",
+            "Establish trade routes for economic growth",
+            3,
+        ),
     ]
 
     for action_type, target_id, rationale, priority in intent_configs:

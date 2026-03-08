@@ -6,7 +6,7 @@ This module implements query handlers for narrative arc read operations.
 Handlers coordinate between the application layer and domain/infrastructure layers.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
@@ -29,7 +29,7 @@ from ..queries.narrative_arc_queries import (
     SearchNarrativeArcsQuery,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeArcQueryHandler:
@@ -44,7 +44,7 @@ class NarrativeArcQueryHandler:
         repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
-    ):
+    ) -> None:
         """
         Initialize query handler.
 
@@ -62,7 +62,11 @@ class NarrativeArcQueryHandler:
     ) -> Optional[Dict[str, Any]]:
         """Handle get narrative arc query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
 
@@ -135,7 +139,7 @@ class NarrativeArcQueryHandler:
                 offset=query.offset,
             )
 
-            result = []
+            result: list[Any] = []
             for arc in arcs:
                 result.append(
                     {
@@ -182,7 +186,7 @@ class NarrativeArcQueryHandler:
                 sort_order=query.sort_order,
             )
 
-            results = []
+            results: list[Any] = []
             for arc in arcs:
                 results.append(
                     {
@@ -228,7 +232,11 @@ class NarrativeArcQueryHandler:
     ) -> Optional[Dict[str, Any]]:
         """Handle get plot point query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
 
@@ -247,22 +255,10 @@ class NarrativeArcQueryHandler:
                 "dramatic_tension": float(plot_point.dramatic_tension),
                 "story_significance": float(plot_point.story_significance),
                 "involved_characters": [
-                    str(cid) for cid in plot_point.involved_characters
+                    str(cid) for cid in (plot_point.involved_characters or frozenset())
                 ],
-                "prerequisite_events": list(plot_point.prerequisite_events),
-                "consequence_events": list(plot_point.consequence_events),
-                "location": plot_point.location,
-                "time_context": plot_point.time_context,
-                "pov_character": (
-                    str(plot_point.pov_character) if plot_point.pov_character else None
-                ),
-                "outcome": plot_point.outcome,
-                "conflict_type": plot_point.conflict_type,
-                "thematic_relevance": {
-                    k: float(v) for k, v in plot_point.thematic_relevance.items()
-                },
-                "tags": list(plot_point.tags),
-                "notes": plot_point.notes,
+                "prerequisite_events": list(plot_point.prerequisite_events or []),
+                "tags": list(plot_point.tags or frozenset()),
                 "overall_impact_score": float(plot_point.overall_impact_score),
             }
 
@@ -275,7 +271,11 @@ class NarrativeArcQueryHandler:
     ) -> List[Dict[str, Any]]:
         """Handle get plot points in sequence query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
 
@@ -283,7 +283,7 @@ class NarrativeArcQueryHandler:
 
             # Filter by sequence range if specified
             if query.start_sequence is not None or query.end_sequence is not None:
-                filtered_points = []
+                filtered_points: list[Any] = []
                 for pp in plot_points:
                     if (
                         query.start_sequence is not None
@@ -298,7 +298,7 @@ class NarrativeArcQueryHandler:
                     filtered_points.append(pp)
                 plot_points = filtered_points
 
-            results = []
+            results: list[Any] = []
             for plot_point in plot_points:
                 results.append(
                     {
@@ -311,9 +311,8 @@ class NarrativeArcQueryHandler:
                         "dramatic_tension": float(plot_point.dramatic_tension),
                         "story_significance": float(plot_point.story_significance),
                         "involved_characters": [
-                            str(cid) for cid in plot_point.involved_characters
+                            str(cid) for cid in (plot_point.involved_characters or frozenset())
                         ],
-                        "outcome": plot_point.outcome,
                     }
                 )
 
@@ -328,11 +327,15 @@ class NarrativeArcQueryHandler:
     ) -> List[Dict[str, Any]]:
         """Handle get plot points by type query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
 
-            results = []
+            results: list[Any] = []
             for plot_point in arc.plot_points.values():
                 if plot_point.plot_point_type.value in query.plot_point_types:
                     plot_data = {
@@ -355,12 +358,8 @@ class NarrativeArcQueryHandler:
                                     plot_point.story_significance
                                 ),
                                 "involved_characters": [
-                                    str(cid) for cid in plot_point.involved_characters
+                                    str(cid) for cid in (plot_point.involved_characters or frozenset())
                                 ],
-                                "outcome": plot_point.outcome,
-                                "conflict_type": plot_point.conflict_type,
-                                "location": plot_point.location,
-                                "time_context": plot_point.time_context,
                             }
                         )
 
@@ -377,7 +376,11 @@ class NarrativeArcQueryHandler:
     def handle_get_theme(self, query: GetThemeQuery) -> Optional[Dict[str, Any]]:
         """Handle get theme query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
 
@@ -394,14 +397,10 @@ class NarrativeArcQueryHandler:
                 "moral_complexity": float(theme.moral_complexity),
                 "emotional_resonance": float(theme.emotional_resonance),
                 "universal_appeal": float(theme.universal_appeal),
-                "cultural_significance": float(theme.cultural_significance),
-                "development_potential": float(theme.development_potential),
-                "symbolic_elements": list(theme.symbolic_elements),
+                "symbolic_elements": list(theme.symbolic_elements or frozenset()),
                 "introduction_sequence": theme.introduction_sequence,
                 "resolution_sequence": theme.resolution_sequence,
-                "tags": list(theme.tags),
-                "notes": theme.notes,
-                "overall_significance_score": float(theme.overall_significance_score),
+                "tags": list(theme.tags or frozenset()),
                 "development_sequences": arc.theme_development.get(query.theme_id, []),
             }
 
@@ -414,13 +413,17 @@ class NarrativeArcQueryHandler:
     ) -> List[Dict[str, Any]]:
         """Handle get themes at sequence query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
 
             active_themes = arc.get_themes_at_sequence(query.sequence)
 
-            results = []
+            results: list[Any] = []
             for theme in active_themes:
                 results.append(
                     {
@@ -443,7 +446,11 @@ class NarrativeArcQueryHandler:
     def handle_get_arc_metrics(self, query: GetArcMetricsQuery) -> Dict[str, Any]:
         """Handle get arc metrics query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
 
@@ -508,7 +515,11 @@ class NarrativeArcQueryHandler:
     def handle_get_arc_summary(self, query: GetArcSummaryQuery) -> Dict[str, Any]:
         """Handle get arc summary query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
 
@@ -516,14 +527,14 @@ class NarrativeArcQueryHandler:
 
             if query.include_statistics:
                 # Add statistical information
-                plot_types_distribution = {}
+                plot_types_distribution: dict[Any, Any] = {}
                 for plot_point in arc.plot_points.values():
                     plot_type = plot_point.plot_point_type.value
                     plot_types_distribution[plot_type] = (
                         plot_types_distribution.get(plot_type, 0) + 1
                     )
 
-                theme_types_distribution = {}
+                theme_types_distribution: dict[Any, Any] = {}
                 for theme in arc.themes.values():
                     theme_type = theme.theme_type.value
                     theme_types_distribution[theme_type] = (
@@ -550,7 +561,7 @@ class NarrativeArcQueryHandler:
             if query.include_progression:
                 # Add progression information
                 plot_points = arc.get_plot_points_in_sequence()
-                progression = []
+                progression: list[Any] = []
                 for pp in plot_points:
                     progression.append(
                         {
@@ -576,7 +587,11 @@ class NarrativeArcQueryHandler:
     ) -> Dict[str, Any]:
         """Handle narrative flow analysis query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
 
@@ -610,7 +625,11 @@ class NarrativeArcQueryHandler:
     ) -> Dict[str, Any]:
         """Handle causal analysis query."""
         try:
-            arc = self.repository.get_by_id(NarrativeId(query.arc_id))
+            from uuid import UUID
+            arc_id = query.arc_id
+            if isinstance(arc_id, str):
+                arc_id = UUID(arc_id)
+            arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
 
@@ -643,7 +662,7 @@ class NarrativeArcQueryHandler:
                 result["feedback_loops"] = analysis.feedback_loops
 
             if query.include_paths:
-                longest_chains = []
+                longest_chains: list[Any] = []
                 for chain in analysis.longest_chains:
                     longest_chains.append(
                         {

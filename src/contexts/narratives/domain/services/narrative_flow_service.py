@@ -6,16 +6,16 @@ This module implements the NarrativeFlowService, which manages story flow,
 sequence optimization, and narrative progression within story structures.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from ..aggregates.narrative_arc import NarrativeArc
 from ..value_objects.plot_point import PlotPoint, PlotPointType
 from ..value_objects.story_pacing import StoryPacing
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -50,7 +50,7 @@ class NarrativeFlowService:
     and overall narrative momentum.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the narrative flow service."""
         self._flow_cache: Dict[str, FlowAnalysis] = {}
         self._optimization_cache: Dict[str, SequenceOptimization] = {}
@@ -97,7 +97,7 @@ class NarrativeFlowService:
         if not arc.pacing_segments:
             return Decimal("5.0")  # Neutral score for no pacing data
 
-        pacing_scores = []
+        pacing_scores: list[Any] = []
         total_coverage = 0
 
         for pacing in arc.pacing_segments.values():
@@ -195,8 +195,7 @@ class NarrativeFlowService:
             return [Decimal("5.0")]  # Neutral tension
 
         plot_points = arc.get_plot_points_in_sequence()
-        tension_levels = []
-
+        tension_levels: list[Any] = []
         for plot_point in plot_points:
             # Base tension from plot point dramatic tension
             base_tension = plot_point.dramatic_tension
@@ -236,7 +235,7 @@ class NarrativeFlowService:
         }
         return tension_modifiers.get(plot_type, Decimal("1.0"))
 
-    def _get_importance_modifier(self, importance) -> Decimal:
+    def _get_importance_modifier(self, importance: Any) -> Decimal:
         """Get modifier based on plot point importance."""
         importance_modifiers = {
             "critical": Decimal("1.3"),
@@ -255,7 +254,7 @@ class NarrativeFlowService:
         plot_points = arc.get_plot_points_in_sequence()
         total_points = len(plot_points)
 
-        climax_positions = []
+        climax_positions: list[Any] = []
         for i, plot_point in enumerate(plot_points):
             if plot_point.plot_point_type == PlotPointType.CLIMAX:
                 position_ratio = i / (total_points - 1) if total_points > 1 else 0.5
@@ -264,7 +263,7 @@ class NarrativeFlowService:
         if not climax_positions:
             return Decimal("7.0")  # No explicit climax, but not necessarily bad
 
-        positioning_scores = []
+        positioning_scores: list[Any] = []
         for pos in climax_positions:
             # Ideal climax position is around 70-80% through the story
             ideal_range_start = 0.65
@@ -286,7 +285,10 @@ class NarrativeFlowService:
 
             positioning_scores.append(max(Decimal("1.0"), score))
 
-        return sum(positioning_scores) / Decimal(str(len(positioning_scores)))
+        if not positioning_scores:
+            return Decimal("5.0")
+        result = sum(positioning_scores) / Decimal(str(len(positioning_scores)))
+        return Decimal(result)
 
     def _assess_resolution_quality(self, arc: NarrativeArc) -> Decimal:
         """Assess the quality of story resolution."""
@@ -353,7 +355,8 @@ class NarrativeFlowService:
             curr_point = plot_points[i]
 
             # Check for consequence relationships
-            if any(prev_point.plot_point_id in curr_point.prerequisite_events):
+            prereqs = curr_point.prerequisite_events or []
+            if prev_point.plot_point_id in prereqs:
                 momentum_score += Decimal("0.5")
 
             # Check for escalating tension/stakes
@@ -440,11 +443,12 @@ class NarrativeFlowService:
         if not arc.primary_characters:
             return Decimal("5.0")
 
-        character_appearances = {char_id: [] for char_id in arc.primary_characters}
+        character_appearances: Dict[Any, List[int]] = {char_id: [] for char_id in arc.primary_characters}
 
         # Track character appearances in plot points
         for plot_point in plot_points:
-            for char_id in plot_point.involved_characters:
+            involved_chars = plot_point.involved_characters or frozenset()
+            for char_id in involved_chars:
                 if char_id in character_appearances:
                     character_appearances[char_id].append(plot_point.sequence_order)
 
@@ -503,10 +507,11 @@ class NarrativeFlowService:
         # Check for prerequisite satisfaction
         for plot_point in plot_points:
             satisfied_prereqs = 0
-            total_prereqs = len(plot_point.prerequisite_events)
+            prereqs = plot_point.prerequisite_events or []
+            total_prereqs = len(prereqs)
 
             if total_prereqs > 0:
-                for prereq in plot_point.prerequisite_events:
+                for prereq in prereqs:
                     # Check if prerequisite appears before this plot point
                     for earlier_point in plot_points:
                         if (
@@ -583,7 +588,7 @@ class NarrativeFlowService:
 
         for char_id in arc.primary_characters:
             appearances = sum(
-                1 for pp in plot_points if char_id in pp.involved_characters
+                1 for pp in plot_points if char_id in (pp.involved_characters or frozenset())
             )
 
             if len(plot_points) > 0:
@@ -595,8 +600,7 @@ class NarrativeFlowService:
 
     def _generate_flow_recommendations(self, arc: NarrativeArc) -> List[Dict[str, Any]]:
         """Generate recommendations for improving narrative flow."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         # Analyze tension progression
         tension_levels = self._calculate_tension_progression(arc)
         if tension_levels:
@@ -685,8 +689,7 @@ class NarrativeFlowService:
         plot_points.sort(key=lambda pp: pp.sequence_order)
 
         # Apply optimization rules
-        optimized = []
-
+        optimized: list[Any] = []
         # Group by importance and type
         critical_points = [
             pp for pp in plot_points if pp.importance.value == "critical"
@@ -740,8 +743,7 @@ class NarrativeFlowService:
         self, original: List[str], optimized: List[str]
     ) -> List[Dict[str, Any]]:
         """Identify what changes were made in sequence optimization."""
-        changes = []
-
+        changes: list[Any] = []
         for i, plot_id in enumerate(optimized):
             original_index = original.index(plot_id) if plot_id in original else -1
             if original_index != i:
@@ -770,15 +772,15 @@ class NarrativeFlowService:
         improvement = Decimal("0")
 
         # Check if story structure rules are better satisfied
-        if self._has_better_story_structure(arc, optimized):
+        if optimized and self._has_better_story_structure(arc, optimized):
             improvement += Decimal("3.0")
 
         # Check if prerequisite relationships are better satisfied
-        if self._has_better_prerequisite_satisfaction(arc, optimized):
+        if optimized and self._has_better_prerequisite_satisfaction(arc, optimized):
             improvement += Decimal("2.0")
 
         # Check if tension progression is improved
-        if self._has_better_tension_progression(arc, optimized):
+        if optimized and self._has_better_tension_progression(arc, optimized):
             improvement += Decimal("2.0")
 
         return improvement
@@ -822,7 +824,8 @@ class NarrativeFlowService:
         for i, plot_id in enumerate(sequence):
             plot_point = arc.plot_points[plot_id]
 
-            for prereq in plot_point.prerequisite_events:
+            prereqs = plot_point.prerequisite_events or []
+            for prereq in prereqs:
                 # Check if prerequisite appears earlier in sequence
                 try:
                     prereq_index = sequence.index(prereq)
@@ -832,6 +835,7 @@ class NarrativeFlowService:
                     continue
 
         # Compare with some baseline - for simplicity, assume improvement if any satisfied
+        # Compare with some baseline - for simplicity, assume improvement if any satisfied
         return satisfied_count > 0
 
     def _has_better_tension_progression(
@@ -839,17 +843,16 @@ class NarrativeFlowService:
     ) -> bool:
         """Check if tension progression is improved."""
         # Simple heuristic: check if high-tension plot points are better distributed
-        high_tension_positions = []
-
+        high_tension_positions: list[Any] = []
         for i, plot_id in enumerate(sequence):
             plot_point = arc.plot_points[plot_id]
             if plot_point.dramatic_tension >= Decimal("7.0"):
-                high_tension_positions.append(i / len(sequence))
+                high_tension_positions.append(Decimal(i) / Decimal(len(sequence)))
 
         # Good distribution has tension points spread throughout
         if len(high_tension_positions) >= 2:
             spread = max(high_tension_positions) - min(high_tension_positions)
-            return spread >= 0.5  # Spread across at least half the story
+            return bool(spread >= Decimal("0.5"))  # Spread across at least half the story
 
         return False
 
@@ -860,8 +863,7 @@ class NarrativeFlowService:
         if not changes:
             return "No changes needed - sequence is already optimal"
 
-        rationale_parts = []
-
+        rationale_parts: list[Any] = []
         if improvement_score > Decimal("5.0"):
             rationale_parts.append(
                 "Significant improvements to story structure and flow."

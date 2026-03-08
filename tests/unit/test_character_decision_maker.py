@@ -2,7 +2,7 @@ import pytest
 
 from src.core.character_decision_maker import DecisionMaker, ThreatLevel
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

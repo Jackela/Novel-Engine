@@ -8,7 +8,7 @@ traits, and speaking style.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Request
@@ -23,7 +23,7 @@ from src.contexts.world.infrastructure.generators.llm_world_generator import (
     LLMWorldGenerator,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["dialogue"])
 
@@ -125,7 +125,7 @@ async def generate_dialogue(
             or payload.speaking_style_override
         ),
     )
-    log.info("Generating character dialogue")
+    log.info("generating_character_dialogue")
 
     generator = _get_generator(request)
     character_data = _fetch_character_data(
@@ -139,7 +139,7 @@ async def generate_dialogue(
     )
 
     if result.is_error():
-        log.warning("Dialogue generation returned error", error=result.error)
+        log.warning("dialogue_generation_error", error=result.error)
 
     return DialogueGenerationResponse(
         dialogue=result.dialogue,

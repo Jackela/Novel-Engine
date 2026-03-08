@@ -651,7 +651,7 @@ class GraphStoreError(Exception):
         message: str,
         code: str = "GRAPH_STORE_ERROR",
         details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.details = details or {}

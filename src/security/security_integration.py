@@ -19,6 +19,7 @@ System coordinates all security operations 🛡️
 
 import asyncio
 import logging
+import structlog
 import os
 import secrets
 from datetime import datetime, timezone
@@ -57,7 +58,7 @@ from .security_middleware import (
 
 # Enhanced logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnterpriseSecuritySuite:
@@ -69,11 +70,11 @@ class EnterpriseSecuritySuite:
         secret_key: Optional[str] = None,
         redis_url: str = "redis://localhost:6379",
         geoip_database_path: Optional[str] = None,
-        compliance_frameworks: List[ComplianceFramework] = None,
+        compliance_frameworks: Optional[List[ComplianceFramework]] = None,
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
         security_config: SecurityConfig = None,
-    ):
+    ) -> None:
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
         self.redis_url = redis_url
@@ -161,7 +162,7 @@ class EnterpriseSecuritySuite:
             self.is_initialized = False
             return False
 
-    async def _ensure_admin_user(self):
+    async def _ensure_admin_user(self) -> None:
         """Ensure default admin user exists"""
         try:
             # Check if any admin users exist
@@ -175,8 +176,12 @@ class EnterpriseSecuritySuite:
                 # Create default admin user - password MUST be set via environment variable
                 admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD")
                 if not admin_password:
-                    logger.error("DEFAULT_ADMIN_PASSWORD environment variable not set. Cannot create admin user.")
-                    logger.error("Set DEFAULT_ADMIN_PASSWORD to create the default admin user on first run.")
+                    logger.error(
+                        "DEFAULT_ADMIN_PASSWORD environment variable not set. Cannot create admin user."
+                    )
+                    logger.error(
+                        "Set DEFAULT_ADMIN_PASSWORD to create the default admin user on first run."
+                    )
                     return
 
                 default_admin = UserRegistration(
@@ -199,7 +204,7 @@ class EnterpriseSecuritySuite:
         except Exception as e:
             logger.error(f"Error ensuring admin user: {e}")
 
-    async def _start_security_automation(self):
+    async def _start_security_automation(self) -> None:
         """Start automated security tasks"""
         try:
             # Start security cleanup task
@@ -213,7 +218,7 @@ class EnterpriseSecuritySuite:
         except Exception as e:
             logger.error(f"Error starting security automation: {e}")
 
-    async def _security_cleanup_task(self):
+    async def _security_cleanup_task(self) -> None:
         """Periodic security cleanup and maintenance"""
         while True:
             try:
@@ -230,7 +235,7 @@ class EnterpriseSecuritySuite:
                 logger.error(f"Security cleanup task error: {e}")
                 await asyncio.sleep(3600)
 
-    async def _threat_intelligence_updater(self):
+    async def _threat_intelligence_updater(self) -> None:
         """Update threat intelligence data periodically"""
         while True:
             try:
@@ -343,7 +348,7 @@ class EnterpriseSecuritySuite:
         logger.info("✅ FastAPI configured with Enterprise Security")
         return app
 
-    def _add_security_api_endpoints(self, app: FastAPI):
+    def _add_security_api_endpoints(self, app: FastAPI) -> None:
         """Add security-related API endpoints"""
 
         # Authentication endpoints
@@ -435,7 +440,7 @@ class EnterpriseSecuritySuite:
         ):
             return await self.security_dashboard.get_compliance_summary()
 
-    def _add_dashboard_endpoints(self, app: FastAPI):
+    def _add_dashboard_endpoints(self, app: FastAPI) -> None:
         """Add security dashboard endpoints"""
 
         @app.get("/api/dashboard/overview")
@@ -491,7 +496,7 @@ class EnterpriseSecuritySuite:
                 "components_status": "degraded",
             }
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup security suite resources"""
         try:
             if self.security_manager:
@@ -530,7 +535,7 @@ async def initialize_security_suite(**kwargs) -> EnterpriseSecuritySuite:
 def create_secure_app(
     title: str = "Novel Engine API",
     version: str = "1.0.0",
-    security_config: Dict[str, Any] = None,
+    security_config: Optional[Dict[str, Any]] = None,
 ) -> FastAPI:
     """Create a FastAPI app with enterprise security pre-configured"""
 

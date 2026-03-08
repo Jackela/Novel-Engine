@@ -82,10 +82,9 @@ class CreateCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data after initialization."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_name or not self.character_name.strip():
             errors.append("Character name is required")
@@ -187,10 +186,9 @@ class UpdateCharacterStatsCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -271,10 +269,9 @@ class UpdateCharacterSkillCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -350,10 +347,9 @@ class LevelUpCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -419,10 +415,9 @@ class DeleteCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -470,10 +465,9 @@ class HealCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")
@@ -533,10 +527,9 @@ class DamageCharacterCommand:
     timestamp: datetime = field(default_factory=datetime.now)
     correlation_id: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate command data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.character_id:
             errors.append("Character ID is required")

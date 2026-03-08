@@ -8,6 +8,7 @@ for production API operations with detailed analytics and alerting.
 
 import json
 import logging
+import structlog
 import threading
 import time
 import uuid
@@ -20,7 +21,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(str, Enum):
@@ -95,7 +96,7 @@ class AlertRule:
 class MetricsCollector:
     """Thread-safe metrics collection system."""
 
-    def __init__(self, max_metrics_history: int = 10000):
+    def __init__(self, max_metrics_history: int = 10000) -> None:
         self.metrics: deque = deque(maxlen=max_metrics_history)
         self.counters: Dict[str, float] = defaultdict(float)
         self.gauges: Dict[str, float] = {}
@@ -129,7 +130,7 @@ class MetricsCollector:
         value: float,
         metric_type: MetricType,
         labels: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         """Record a metric with thread safety."""
         labels = labels or {}
         metric = Metric(
@@ -162,34 +163,34 @@ class MetricsCollector:
 
     def increment_counter(
         self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None
-    ):
+    ) -> None:
         """Increment a counter metric."""
         self.record_metric(name, value, MetricType.COUNTER, labels)
 
     def set_gauge(
         self, name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ):
+    ) -> None:
         """Set a gauge metric."""
         self.record_metric(name, value, MetricType.GAUGE, labels)
 
     def record_histogram(
         self, name: str, value: float, labels: Optional[Dict[str, str]] = None
-    ):
+    ) -> None:
         """Record a histogram value."""
         self.record_metric(name, value, MetricType.HISTOGRAM, labels)
 
     def record_timer(
         self, name: str, duration_ms: float, labels: Optional[Dict[str, str]] = None
-    ):
+    ) -> None:
         """Record a timer value."""
         self.record_metric(name, duration_ms, MetricType.TIMER, labels)
 
-    def start_request_timer(self, request_id: str):
+    def start_request_timer(self, request_id: str) -> None:
         """Start timing a request."""
         with self._lock:
             self.active_requests[request_id] = time.time()
 
-    def end_request_timer(self, request_id: str, request_metrics: RequestMetrics):
+    def end_request_timer(self, request_id: str, request_metrics: RequestMetrics) -> None:
         """End timing a request and record metrics."""
         with self._lock:
             if request_id in self.active_requests:
@@ -304,14 +305,14 @@ class MetricsCollector:
 class AlertManager:
     """Alert management system."""
 
-    def __init__(self, metrics_collector: MetricsCollector):
+    def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics_collector = metrics_collector
         self.alert_rules: List[AlertRule] = []
         self.active_alerts: Dict[str, datetime] = {}
         self.alert_history: deque = deque(maxlen=1000)
         self._setup_default_alerts()
 
-    def _setup_default_alerts(self):
+    def _setup_default_alerts(self) -> None:
         """Setup default alert rules."""
         default_rules = [
             AlertRule(
@@ -350,14 +351,14 @@ class AlertManager:
 
         self.alert_rules.extend(default_rules)
 
-    def add_alert_rule(self, rule: AlertRule):
+    def add_alert_rule(self, rule: AlertRule) -> None:
         """Add a new alert rule."""
         self.alert_rules.append(rule)
-        logger.info(f"Added alert rule: {rule.name}")
+        logger.info("Added alert rule: %s", rule.name)
 
     def check_alerts(self) -> List[Dict[str, Any]]:
         """Check all alert rules and return triggered alerts."""
-        triggered_alerts = []
+        triggered_alerts: list[Any] = []
         current_time = datetime.now()
 
         # Get recent metrics for analysis
@@ -464,11 +465,11 @@ class AlertManager:
 class MonitoringMiddleware(BaseHTTPMiddleware):
     """Middleware for request monitoring and metrics collection."""
 
-    def __init__(self, app, metrics_collector: MetricsCollector):
+    def __init__(self, app, metrics_collector: MetricsCollector) -> None:
         super().__init__(app)
         self.metrics_collector = metrics_collector
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Process request with monitoring."""
         # Generate request ID
         request_id = str(uuid.uuid4())
@@ -529,7 +530,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             raise
 
 
-def setup_monitoring(app, enable_alerts: bool = True):
+def setup_monitoring(app, enable_alerts: bool = True) -> None:
     """Setup monitoring middleware and endpoints."""
 
     # Create metrics collector and alert manager

@@ -11,7 +11,7 @@ Wave 5.2 - Smart Caching Infrastructure
 import asyncio
 import hashlib
 import json
-import logging
+import structlog
 import pickle
 import threading
 import time
@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import aiofiles
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(Enum):
@@ -64,7 +64,7 @@ class CacheEntry:
             return False
         return (datetime.now() - self.created_at).total_seconds() > self.ttl_seconds
 
-    def touch(self):
+    def touch(self) -> None:
         """Update access metadata."""
         self.last_accessed = datetime.now()
         self.access_count += 1
@@ -81,7 +81,7 @@ class CacheStats:
     entry_count: int = 0
     hit_rate: float = 0.0
 
-    def calculate_hit_rate(self):
+    def calculate_hit_rate(self) -> None:
         """Calculate hit rate percentage."""
         total = self.hits + self.misses
         self.hit_rate = (self.hits / total * 100) if total > 0 else 0.0
@@ -107,7 +107,7 @@ class IntelligentCache:
         l3_max_size: int = 50000,
         default_ttl: int = 3600,
         strategy: CacheStrategy = CacheStrategy.ADAPTIVE,
-    ):
+    ) -> None:
         self.l1_max_size = l1_max_size
         self.l2_max_size = l2_max_size
         self.l3_max_size = l3_max_size
@@ -227,7 +227,7 @@ class IntelligentCache:
             logger.error(f"Cache put failed for key {key}: {e}")
             return False
 
-    def _evict_from_l1(self):
+    def _evict_from_l1(self) -> None:
         """Evict items from L1 cache using configured strategy."""
         if not self.l1_cache:
             return
@@ -260,8 +260,7 @@ class IntelligentCache:
     def _adaptive_eviction(self) -> Tuple[str, CacheEntry]:
         """AI-driven adaptive eviction strategy."""
         # Score each entry based on multiple factors
-        scored_entries = []
-
+        scored_entries: list[Any] = []
         for key, entry in self.l1_cache.items():
             # Calculate composite score
             recency_score = (datetime.now() - entry.last_accessed).total_seconds()
@@ -314,7 +313,7 @@ class IntelligentCache:
         else:
             return 0.0
 
-    def _demote_to_l2(self, key: str, entry: CacheEntry):
+    def _demote_to_l2(self, key: str, entry: CacheEntry) -> None:
         """Demote entry from L1 to L2 with compression."""
         if len(self.l2_cache) >= self.l2_max_size:
             self._evict_from_l2()
@@ -328,7 +327,7 @@ class IntelligentCache:
         self.l2_stats.entry_count = len(self.l2_cache)
         logger.debug(f"Demoted to L2: {key}")
 
-    def _evict_from_l2(self):
+    def _evict_from_l2(self) -> None:
         """Evict items from L2 cache."""
         if not self.l2_cache:
             return
@@ -343,7 +342,7 @@ class IntelligentCache:
         self.l2_stats.evictions += 1
         logger.debug(f"Evicted from L2: {key}")
 
-    async def _demote_to_l3(self, key: str, entry: CacheEntry):
+    async def _demote_to_l3(self, key: str, entry: CacheEntry) -> None:
         """Demote entry from L2 to L3 with disk persistence."""
         if len(self.l3_cache) >= self.l3_max_size:
             self._evict_from_l3()
@@ -357,7 +356,7 @@ class IntelligentCache:
         self.l3_stats.entry_count = len(self.l3_cache)
         logger.debug(f"Demoted to L3: {key}")
 
-    def _evict_from_l3(self):
+    def _evict_from_l3(self) -> None:
         """Evict items from L3 cache."""
         if not self.l3_cache:
             return
@@ -371,7 +370,7 @@ class IntelligentCache:
         self.l3_stats.evictions += 1
         logger.debug(f"Evicted from L3: {key}")
 
-    def _promote_to_l1(self, key: str, value: Any):
+    def _promote_to_l1(self, key: str, value: Any) -> None:
         """Promote frequently accessed item to L1."""
         if len(self.l1_cache) >= self.l1_max_size:
             self._evict_from_l1()
@@ -390,7 +389,7 @@ class IntelligentCache:
         self.l1_stats.entry_count = len(self.l1_cache)
         logger.debug(f"Promoted to L1: {key}")
 
-    def _record_access_pattern(self, key: str):
+    def _record_access_pattern(self, key: str) -> None:
         """Record access pattern for predictive caching."""
         current_time = time.time()
         self.access_patterns[key].append(current_time)
@@ -399,7 +398,7 @@ class IntelligentCache:
         if len(self.access_patterns[key]) > 100:
             self.access_patterns[key] = self.access_patterns[key][-100:]
 
-    async def _trigger_prefetch(self, key: str):
+    async def _trigger_prefetch(self, key: str) -> None:
         """Trigger prefetching for related items."""
         try:
             # Add to prefetch queue for background processing
@@ -433,7 +432,7 @@ class IntelligentCache:
                 compressed_data
             )  # nosec B301 - trusted internal cache data
 
-    async def _save_to_disk(self, key: str, value: Any):
+    async def _save_to_disk(self, key: str, value: Any) -> None:
         """Save value to disk for L3 storage."""
         try:
             cache_dir = Path("cache_l3")
@@ -471,7 +470,7 @@ class IntelligentCache:
             logger.error(f"Failed to load from disk: {key} - {e}")
             return None
 
-    async def _remove_from_disk(self, key: str):
+    async def _remove_from_disk(self, key: str) -> None:
         """Remove value from disk storage."""
         try:
             cache_dir = Path("cache_l3")
@@ -493,7 +492,7 @@ class IntelligentCache:
         except Exception:
             return 1024  # Default size estimate
 
-    def _maintenance_loop(self):
+    def _maintenance_loop(self) -> None:
         """Background maintenance for cache cleanup and optimization."""
         while self._maintenance_active:
             try:
@@ -514,7 +513,7 @@ class IntelligentCache:
                 logger.error(f"Cache maintenance error: {e}")
                 time.sleep(60)  # Shorter sleep on error
 
-    def _clean_expired_entries(self):
+    def _clean_expired_entries(self) -> None:
         """Remove expired entries from all cache levels."""
         datetime.now()
 
@@ -541,7 +540,7 @@ class IntelligentCache:
                 f"L2={len(expired_l2)}, L3={len(expired_l3)}"
             )
 
-    def _update_statistics(self):
+    def _update_statistics(self) -> None:
         """Update cache statistics."""
         self.l1_stats.entry_count = len(self.l1_cache)
         self.l1_stats.calculate_hit_rate()
@@ -552,7 +551,7 @@ class IntelligentCache:
         self.l3_stats.entry_count = len(self.l3_cache)
         self.l3_stats.calculate_hit_rate()
 
-    def _optimize_cache_levels(self):
+    def _optimize_cache_levels(self) -> None:
         """Optimize cache level distributions based on access patterns."""
         # This could include dynamic resizing of cache levels
         # based on hit rates and access patterns
@@ -595,7 +594,7 @@ class IntelligentCache:
             },
         }
 
-    async def clear_cache(self, level: Optional[CacheLevel] = None):
+    async def clear_cache(self, level: Optional[CacheLevel] = None) -> None:
         """Clear cache at specified level or all levels."""
         with self._lock:
             if level is None or level == CacheLevel.L1_MEMORY:
@@ -621,7 +620,7 @@ class IntelligentCache:
                                 f"Failed to remove cache file {cache_file}: {e}"
                             )
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop cache maintenance and cleanup."""
         self._maintenance_active = False
         if self._maintenance_thread.is_alive():
@@ -640,7 +639,7 @@ class LLMResponseCache(IntelligentCache):
     Optimized for PersonaAgent LLM calls with context-aware caching.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             l1_max_size=500,  # Keep 500 recent LLM responses in memory
             l2_max_size=2000,  # 2000 compressed responses
@@ -730,8 +729,7 @@ class LLMResponseCache(IntelligentCache):
 
     def _find_similar_keys(self, target_key: str, threshold: float) -> List[str]:
         """Find similar cache keys using simple string similarity."""
-        similar_keys = []
-
+        similar_keys: list[Any] = []
         # Check L1 cache for similar keys
         for cached_key in self.l1_cache.keys():
             if self._calculate_similarity(target_key, cached_key) >= threshold:
@@ -757,7 +755,7 @@ class WorldStatePrefetcher:
     Predicts and preloads world state information based on agent behavior patterns.
     """
 
-    def __init__(self, cache: IntelligentCache):
+    def __init__(self, cache: IntelligentCache) -> None:
         self.cache = cache
         self.agent_behavior_patterns = defaultdict(dict)
         self.prefetch_enabled = True
@@ -807,8 +805,7 @@ class WorldStatePrefetcher:
     def _create_query_signature(self, request: Dict[str, Any]) -> str:
         """Create signature for world state query pattern."""
         # Extract key components of the request
-        components = []
-
+        components: list[Any] = []
         if "turn_range" in request:
             components.append(f"turns:{request['turn_range']}")
 
@@ -867,8 +864,7 @@ class WorldStatePrefetcher:
     ) -> List[str]:
         """Predict which other agents this agent commonly interacts with."""
         # This is a simplified prediction - in production you'd use more sophisticated ML
-        related_agents = []
-
+        related_agents: list[Any] = []
         # Analyze request history for agent interaction patterns
         for request_data in pattern_data["request_history"]:
             request = request_data["request"]

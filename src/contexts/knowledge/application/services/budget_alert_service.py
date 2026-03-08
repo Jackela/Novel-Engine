@@ -15,7 +15,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import structlog
 
@@ -469,8 +469,8 @@ class BudgetAlertService:
             case AlertFrequency.WEEKLY:
                 # Check if at least a week has passed
                 return (now - alert_state.last_triggered) >= timedelta(weeks=1)
-
-        return True
+            case _:
+                return True  # type: ignore[unreachable]
 
     async def _evaluate_single_alert(
         self,
@@ -544,7 +544,7 @@ class BudgetAlertService:
             case AlertThresholdType.API_CALLS:
                 return 1.0  # Each usage event is one API call
             case _:
-                return 0.0
+                return 0.0  # type: ignore[unreachable]
 
     def _get_value_from_stats(
         self,
@@ -571,7 +571,7 @@ class BudgetAlertService:
             case AlertThresholdType.API_CALLS:
                 return float(stats.total_requests)
             case _:
-                return 0.0
+                return 0.0  # type: ignore[unreachable]
 
     def _check_threshold(
         self,
@@ -599,8 +599,8 @@ class BudgetAlertService:
                 return current_value < threshold_value
             case AlertComparisonOperator.LESS_THAN_OR_EQUAL:
                 return current_value <= threshold_value
-
-        return False
+            case _:
+                return False  # type: ignore[unreachable]
 
     def _format_alert_message(
         self,
@@ -622,7 +622,7 @@ class BudgetAlertService:
         threshold_type_name = config.threshold_type.value.replace("_", " ").title()
 
         # Build scope description
-        scope_parts = []
+        scope_parts: list[Any] = []
         if config.workspace_id:
             scope_parts.append(f"workspace {config.workspace_id}")
         if config.user_id:

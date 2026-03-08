@@ -4,7 +4,7 @@ Character Template Manager - Core orchestration.
 """
 
 import json
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -26,7 +26,7 @@ from .persona_models import (
     CharacterTemplate,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterTemplateManager:
@@ -46,7 +46,7 @@ class CharacterTemplateManager:
         memory_system: Optional[LayeredMemorySystem] = None,
         personas_directory: str = "personas",
         enable_learning: bool = True,
-    ):
+    ) -> None:
         """
         STANDARD CHARACTER TEMPLATE MANAGER INITIALIZATION ENHANCED BY ORGANIZATION
 
@@ -92,7 +92,7 @@ class CharacterTemplateManager:
             f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded"
         )
 
-    def _initialize_archetype_templates(self):
+    def _initialize_archetype_templates(self) -> None:
         """Delegate archetype template bootstrap to the configuration helper."""
         config = ArchetypeConfiguration()
         return config._initialize_archetype_templates()
@@ -123,7 +123,7 @@ class CharacterTemplateManager:
         total = sum(base.values()) or 1.0
         return {k: v / total for k, v in base.items()}
 
-    def _discover_personas(self):
+    def _discover_personas(self) -> None:
         """Load persona definitions from disk without failing startup."""
         if not self.personas_directory.exists():
             return
@@ -513,9 +513,8 @@ class CharacterTemplateManager:
                     ),
                 )
 
-            migrated_personas = []
-            migrated_templates = []
-
+            migrated_personas: list[Any] = []
+            migrated_templates: list[Any] = []
             # Discover enhanced legacy template files
             for template_file in legacy_path.glob("*.j2"):
                 template_name = template_file.stem
@@ -600,8 +599,7 @@ class CharacterTemplateManager:
             archetype_templates = self._archetype_base_templates.get(
                 persona.archetype, {}
             )
-            generated_templates = []
-
+            generated_templates: list[Any] = []
             for template_type, template_content in archetype_templates.items():
                 result = await self.generate_character_template(
                     persona.persona_id, template_type, template_content
@@ -623,8 +621,7 @@ class CharacterTemplateManager:
 
     def get_persona_list(self) -> List[Dict[str, Any]]:
         """Get enhanced list of all personas"""
-        persona_list = []
-
+        persona_list: list[Any] = []
         for persona_id, persona in self._personas.items():
             persona_info = {
                 "persona_id": persona_id,
@@ -645,7 +642,7 @@ class CharacterTemplateManager:
             len(templates) for templates in self._character_templates.values()
         )
 
-        archetype_distribution = {}
+        archetype_distribution: dict[Any, Any] = {}
         for persona in self._personas.values():
             archetype = persona.archetype.value
             archetype_distribution[archetype] = (

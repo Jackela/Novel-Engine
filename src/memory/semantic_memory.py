@@ -10,7 +10,7 @@ fact is stored with associated metadata like confidence and source.
 
 import asyncio
 import hashlib
-import logging
+import structlog
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -21,7 +21,7 @@ from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResp
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -41,7 +41,7 @@ class KnowledgeFact:
     last_confirmed: datetime = field(default_factory=datetime.now)
     confirmation_count: int = 1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validates data and generates a fact ID if not provided."""
         self.confidence = max(0.0, min(1.0, self.confidence))
         if not self.fact_id:
@@ -51,7 +51,7 @@ class KnowledgeFact:
             ).hexdigest()[:8]
             self.fact_id = f"fact_{fact_hash}"
 
-    def confirm_fact(self, source_memory_id: str = ""):
+    def confirm_fact(self, source_memory_id: str = "") -> None:
         """Increases confirmation count and confidence in the fact."""
         self.confirmation_count += 1
         self.last_confirmed = datetime.now()
@@ -92,7 +92,7 @@ class SemanticMemory:
         database: ContextDatabase,
         max_facts: int = 5000,
         confidence_threshold: float = 0.3,
-    ):
+    ) -> None:
         """
         Initializes the SemanticMemory system.
 
@@ -122,7 +122,7 @@ class SemanticMemory:
             (r"(\w+(?:\s+\w+)*) can (.+)", "can"),
         ]
 
-        logger.info(f"SemanticMemory initialized for {agent_id}")
+        logger.info("semantic_memory_initialized", agent_id=agent_id, max_facts=max_facts)
 
     async def extract_and_store_knowledge(self, memory: MemoryItem) -> StandardResponse:
         """
@@ -151,7 +151,10 @@ class SemanticMemory:
                 await self._prune_knowledge()
 
             logger.info(
-                f"Extracted {stored_count} facts from memory {memory.memory_id}"
+                "knowledge_extracted",
+                facts_extracted=stored_count,
+                memory_id=memory.memory_id,
+                entities_found=len(entities)
             )
 
             return StandardResponse(
@@ -160,7 +163,7 @@ class SemanticMemory:
             )
 
         except Exception as e:
-            logger.error(f"Knowledge extraction failed: {e}", exc_info=True)
+            logger.error("knowledge_extraction_failed", error=str(e), error_type=type(e).__name__, exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="KNOWLEDGE_EXTRACTION_FAILED", message=str(e)),
@@ -170,7 +173,7 @@ class SemanticMemory:
         self, content: str, memory_id: str, relevance: float
     ) -> List[KnowledgeFact]:
         """Extracts facts from a string of text using regex patterns."""
-        facts = []
+        facts: list[Any] = []
         for pattern, predicate in self._fact_patterns:
             for match in re.findall(pattern, content, re.IGNORECASE):
                 subject, object_value = match
@@ -207,14 +210,14 @@ class SemanticMemory:
 
             fact_statements = [fact.to_natural_language() for fact in matching_facts]
 
-            logger.info(f"Retrieved {len(matching_facts)} facts about '{subject}'")
+            logger.info("facts_retrieved_by_subject", subject=subject, fact_count=len(matching_facts))
 
             return StandardResponse(
                 success=True, data={"subject": subject, "facts": fact_statements}
             )
 
         except Exception as e:
-            logger.error(f"Fact retrieval by subject failed: {e}", exc_info=True)
+            logger.error("fact_retrieval_by_subject_failed", subject=subject, error=str(e), error_type=type(e).__name__, exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="SUBJECT_FACT_RETRIEVAL_FAILED", message=str(e)),
@@ -240,16 +243,14 @@ class SemanticMemory:
             limited_facts = matching_facts[:limit]
             fact_statements = [fact.to_natural_language() for fact in limited_facts]
 
-            logger.info(
-                f"Retrieved {len(limited_facts)} facts with predicate '{predicate}'"
-            )
+            logger.info("facts_retrieved_by_predicate", predicate=predicate, fact_count=len(limited_facts))
 
             return StandardResponse(
                 success=True, data={"predicate": predicate, "facts": fact_statements}
             )
 
         except Exception as e:
-            logger.error(f"Fact retrieval by predicate failed: {e}", exc_info=True)
+            logger.error("fact_retrieval_by_predicate_failed", predicate=predicate, error=str(e), error_type=type(e).__name__, exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="PREDICATE_FACT_RETRIEVAL_FAILED", message=str(e)),
@@ -287,12 +288,12 @@ class SemanticMemory:
                 "child_concepts": list(concept.child_concepts),
             }
 
-            logger.info(f"Retrieved knowledge for concept '{concept_name}'")
+            logger.info("concept_knowledge_retrieved", concept_name=concept_name)
 
             return StandardResponse(success=True, data=knowledge)
 
         except Exception as e:
-            logger.error(f"Concept knowledge retrieval failed: {e}", exc_info=True)
+            logger.error("concept_knowledge_retrieval_failed", concept_name=concept_name, error=str(e), error_type=type(e).__name__, exc_info=True)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -321,7 +322,7 @@ class SemanticMemory:
             self.total_concepts_formed += 1
         return self._concepts[entity_lower]
 
-    async def _associate_fact_with_concepts(self, fact: KnowledgeFact):
+    async def _associate_fact_with_concepts(self, fact: KnowledgeFact) -> None:
         """Links a fact to its subject and object concepts."""
         subject_concept = await self._ensure_concept_exists(fact.subject)
         subject_concept.associated_facts.add(fact.fact_id)
@@ -341,7 +342,7 @@ class SemanticMemory:
         """Determines if a string is likely to be a named entity."""
         return len(text) > 0 and text[0].isupper()
 
-    async def _prune_knowledge(self):
+    async def _prune_knowledge(self) -> None:
         """Removes low-confidence facts to manage memory size."""
         if len(self._facts) <= self.max_facts:
             return
@@ -355,7 +356,7 @@ class SemanticMemory:
             del self._facts[fact.fact_id]
             # This is simplified; a real implementation would clean indices too.
 
-        logger.info(f"Pruned {num_to_prune} low-confidence facts.")
+        logger.info("low_confidence_facts_pruned", pruned_count=num_to_prune)
 
     def get_memory_statistics(self) -> Dict[str, Any]:
         """Returns statistics about the semantic memory."""
@@ -375,7 +376,7 @@ class SemanticMemory:
 
 async def test_semantic_memory():
     """Tests the SemanticMemory system."""
-    logger.info("Testing Semantic Memory...")
+    logger.info("semantic_memory_test_started")
 
     db = ContextDatabase(":memory:")
     await db.initialize()
@@ -391,24 +392,28 @@ async def test_semantic_memory():
 
     result = await semantic_memory.extract_and_store_knowledge(test_memory)
     logger.info(
-        f"Knowledge extraction successful: {result.success}, Facts extracted: {result.data.get('facts_extracted')}"
+        "knowledge_extraction_test_result",
+        success=result.success,
+        facts_extracted=result.data.get('facts_extracted')
     )
 
     facts_result = await semantic_memory.query_facts_by_subject("sky")
     logger.info(
-        f"Query for 'sky' facts successful: {facts_result.success}, Facts: {facts_result.data.get('facts')}"
+        "subject_query_test_result",
+        success=facts_result.success,
+        facts=facts_result.data.get('facts')
     )
     assert "sky is blue" in facts_result.data.get("facts", [])
 
     concept_result = await semantic_memory.get_concept_knowledge("sky")
-    logger.info(f"Query for 'sky' concept successful: {concept_result.success}")
+    logger.info("concept_query_test_result", success=concept_result.success)
     assert "sky is blue" in concept_result.data.get("associated_facts", [])
 
     stats = semantic_memory.get_memory_statistics()
-    logger.info(f"Semantic Memory Stats: {stats}")
+    logger.info("semantic_memory_statistics", stats=stats)
 
     await db.close()
-    logger.info("Semantic Memory testing complete.")
+    logger.info("semantic_memory_test_completed")
 
 
 if __name__ == "__main__":

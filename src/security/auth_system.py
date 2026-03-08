@@ -16,6 +16,7 @@ System保佑此认证系统 (May the System bless this authentication system)
 
 import hashlib
 import logging
+import structlog
 import os
 import secrets
 import tempfile
@@ -34,7 +35,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # STANDARD SECURITY CONSTANTS
 JWT_ALGORITHM = "HS256"
@@ -210,13 +211,13 @@ class User:
     role: UserRole
     is_active: bool = True
     is_verified: bool = False
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
     failed_login_attempts: int = 0
     locked_until: Optional[datetime] = None
     api_key: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.now(timezone.utc)
 
@@ -295,7 +296,7 @@ class SecurityService:
         database_path: str,
         secret_key: Optional[str] = None,
         jwt_secret: Optional[str] = None,
-    ):
+    ) -> None:
         if database_path == ":memory:":
             temp_db = tempfile.NamedTemporaryFile(
                 prefix="novel_engine_security_", suffix=".db", delete=False
@@ -313,14 +314,14 @@ class SecurityService:
         self.security_bearer = HTTPBearer()
 
     @asynccontextmanager
-    async def _connection(self):
+    async def _connection(self) -> None:
         conn = await aiosqlite.connect(self.database_path, **self._connect_kwargs)
         try:
             yield conn
         finally:
             await conn.close()
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with self._connection() as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -328,7 +329,8 @@ class SecurityService:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Users table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS users (
                     id TEXT PRIMARY KEY,
                     username TEXT UNIQUE NOT NULL,
@@ -343,10 +345,12 @@ class SecurityService:
                     locked_until TIMESTAMP NULL,
                     api_key TEXT UNIQUE NULL
                 )
-            """)
+            """
+            )
 
             # Refresh tokens table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS refresh_tokens (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -356,10 +360,12 @@ class SecurityService:
                     revoked BOOLEAN DEFAULT FALSE,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             # Security events table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -370,10 +376,12 @@ class SecurityService:
                     details TEXT NOT NULL,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL
                 )
-            """)
+            """
+            )
 
             # Sessions table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS user_sessions (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -385,16 +393,17 @@ class SecurityService:
                     expires_at TIMESTAMP NOT NULL,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             await conn.commit()
         logger.info("SECURITY DATABASE INITIALIZED SUCCESSFULLY")
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Compatibility wrapper to align with legacy AuthenticationManager API."""
         await self.initialize_database()
 
-    async def close(self):
+    async def close(self) -> None:
         """Compatibility wrapper to release persistent resources."""
         if self._temp_db_path and os.path.exists(self._temp_db_path):
             try:
@@ -424,18 +433,22 @@ class SecurityService:
         if not username and not email:
             return False
 
-        clauses = []
+        # Build query safely without f-string SQL interpolation
+        conditions: list[Any] = []
         params: List[Any] = []
         if username:
-            clauses.append("username = ?")
+            conditions.append("username = ?")
             params.append(username)
         if email:
-            clauses.append("email = ?")
+            conditions.append("email = ?")
             params.append(email)
 
-        query = (
-            f"SELECT 1 FROM users WHERE {' OR '.join(clauses)} LIMIT 1"  # nosec B608
-        )
+        if not conditions:
+            return False
+
+        # Use string concatenation for SQL structure (safe: conditions are hardcoded literals)
+        where_clause = " OR ".join(conditions)
+        query = f"SELECT 1 FROM users WHERE {where_clause} LIMIT 1"
         async with self._connection() as conn:
             cursor = await conn.execute(query, tuple(params))
             row = await cursor.fetchone()
@@ -567,7 +580,7 @@ class SecurityService:
                     },
                 )
 
-                logger.info(f"USER REGISTERED: {user.username} ({user.role.value})")
+                logger.info("USER REGISTERED: %s (%s)", user.username, user.role.value)
                 return user
 
         except aiosqlite.IntegrityError as e:
@@ -647,10 +660,10 @@ class SecurityService:
             )
 
         except AuthenticationError as e:
-            logger.warning(f"PASSWORD REJECTION: {e}")
+            logger.warning("PASSWORD REJECTION: %s", e)
             raise
         except Exception as e:
-            logger.error(f"USER CREATION FAILED: {e}")
+            logger.error("USER CREATION FAILED: %s", e)
             return OperationResult(
                 success=False,
                 error=OperationError(
@@ -894,7 +907,7 @@ class SecurityService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    def require_permission(self, permission: Permission):
+    def require_permission(self, permission: Permission) -> None:
         """STANDARD PERMISSION REQUIREMENT DECORATOR"""
 
         def permission_checker(
@@ -943,7 +956,7 @@ class SecurityService:
                 return set()
         return set(ROLE_PERMISSIONS.get(role, set()))
 
-    def require_role(self, required_role: UserRole):
+    def require_role(self, required_role: UserRole) -> None:
         """STANDARD ROLE REQUIREMENT DECORATOR"""
 
         def role_checker(current_user: User = Depends(self.get_current_user)) -> User:
@@ -999,7 +1012,7 @@ class SecurityService:
         async with self._connection() as conn:
             cursor = await conn.execute(
                 """
-                SELECT id, username, email, role, is_active 
+                SELECT id, username, email, role, is_active
                 FROM users WHERE api_key = ?
             """,
                 (api_key,),
@@ -1031,7 +1044,7 @@ def get_security_service() -> SecurityService:
     return security_service
 
 
-def initialize_security_service(database_path: str, secret_key: str):
+def initialize_security_service(database_path: str, secret_key: str) -> None:
     """STANDARD SECURITY SERVICE INITIALIZATION"""
     global security_service
     security_service = SecurityService(database_path, secret_key)
@@ -1047,13 +1060,13 @@ async def get_current_user(
     return await service.get_current_user(credentials)
 
 
-def require_permission(permission: Permission):
+def require_permission(permission: Permission) -> None:
     """Standalone wrapper for requiring permission"""
     service = get_security_service()
     return service.require_permission(permission)
 
 
-def require_role(required_role: UserRole):
+def require_role(required_role: UserRole) -> None:
     """Standalone wrapper for requiring a minimum role level."""
 
     async def role_checker(

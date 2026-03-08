@@ -30,7 +30,7 @@ class TokenBucket:
 
     def __init__(
         self, capacity: int, refill_rate: float, initial_tokens: Optional[int] = None
-    ):
+    ) -> None:
         """
         Initialize token bucket.
 
@@ -107,7 +107,7 @@ class SlidingWindowCounter:
     a deque-based approach for memory efficiency.
     """
 
-    def __init__(self, window_seconds: int = 60):
+    def __init__(self, window_seconds: int = 60) -> None:
         """
         Initialize sliding window counter.
 
@@ -184,7 +184,7 @@ class TokenBucketRateLimiter(IRateLimiter):
     sliding window counters for precise limit enforcement.
     """
 
-    def __init__(self, default_config: Optional[RateLimitConfig] = None):
+    def __init__(self, default_config: Optional[RateLimitConfig] = None) -> None:
         """
         Initialize token bucket rate limiter.
 

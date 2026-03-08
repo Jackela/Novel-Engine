@@ -10,14 +10,15 @@ The TimeService follows the Command Query Separation principle:
 - advance_time() is a command (modifies state)
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 
 import structlog
 
+from src.contexts.world.domain.errors import TimeError, TimeValidationError
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-from src.core.result import Err, Ok, Result
+from src.core.result import Err, Error, Ok, Result
 
 logger = structlog.get_logger()
 
@@ -48,7 +49,7 @@ class TimeService:
         self._events: list[TimeAdvancedEvent] = []
         logger.debug("time_service_initialized")
 
-    def get_time(self, world_id: str) -> WorldCalendar:
+    def get_time(self, world_id: str) -> Result[WorldCalendar, Error]:
         """Get the current time for a world.
 
         If no calendar exists for the world, a default calendar is created
@@ -58,41 +59,57 @@ class TimeService:
             world_id: Unique identifier for the world
 
         Returns:
-            The current WorldCalendar for the world
+            Result containing:
+            - Ok: The current WorldCalendar for the world
+            - Err: Error if operation fails
 
         Example:
             >>> service = TimeService(repository)
-            >>> calendar = service.get_time("world-123")
-            >>> print(calendar.format())
+            >>> result = service.get_time("world-123")
+            >>> if result.is_ok:
+            ...     print(result.value.format())
         """
-        # Check if calendar exists before get_or_create to detect missing world state
-        existed = self._repository.exists(world_id)
-        calendar = self._repository.get_or_create(world_id)
+        try:
+            # Check if calendar exists before get_or_create to detect missing world state
+            existed = self._repository.exists(world_id)
+            calendar = self._repository.get_or_create(world_id)
 
-        if not existed:
-            # WARNING: Creating default calendar - may indicate missing world initialization
-            logger.warning(
-                "default_calendar_created",
+            if not existed:
+                # WARNING: Creating default calendar - may indicate missing world initialization
+                logger.warning(
+                    "default_calendar_created",
+                    world_id=world_id,
+                    year=calendar.year,
+                    month=calendar.month,
+                    day=calendar.day,
+                    era_name=calendar.era_name,
+                    details="No calendar found for world; created default. This may indicate missing world state initialization.",
+                )
+            else:
+                logger.debug(
+                    "time_retrieved",
+                    world_id=world_id,
+                    year=calendar.year,
+                    month=calendar.month,
+                    day=calendar.day,
+                )
+            return Ok(calendar)
+        except Exception as e:
+            logger.error(
+                "get_time_failed",
                 world_id=world_id,
-                year=calendar.year,
-                month=calendar.month,
-                day=calendar.day,
-                era_name=calendar.era_name,
-                details="No calendar found for world; created default. This may indicate missing world state initialization.",
+                error=str(e),
             )
-        else:
-            logger.debug(
-                "time_retrieved",
-                world_id=world_id,
-                year=calendar.year,
-                month=calendar.month,
-                day=calendar.day,
+            return Err(
+                TimeError(
+                    f"Failed to get time: {e}",
+                    details={"world_id": world_id},
+                )
             )
-        return calendar
 
     def advance_time(
         self, world_id: str, days: int
-    ) -> Result[Tuple[WorldCalendar, TimeAdvancedEvent], str]:
+    ) -> Result[Tuple[WorldCalendar, TimeAdvancedEvent], Error]:
         """Advance time for a world by a specified number of days.
 
         This command modifies the world's calendar state and emits a
@@ -117,7 +134,7 @@ class TimeService:
         if days < 1:
             error_msg = f"Days to advance must be >= 1, got {days}"
             logger.warning("advance_time_validation_failed", error=error_msg)
-            return Err(error_msg)
+            return Err(TimeValidationError(error_msg, details={"days": days}))
 
         # Get current calendar
         current = self._repository.get_or_create(world_id)
@@ -127,7 +144,12 @@ class TimeService:
         if advance_result.is_error:
             error_msg = f"Failed to advance calendar: {advance_result.error}"
             logger.error("advance_time_failed", error=error_msg)
-            return Err(error_msg)
+            return Err(
+                TimeError(
+                    error_msg,
+                    details={"world_id": world_id, "days": days},
+                )
+            )
 
         updated = advance_result.value
 
@@ -170,22 +192,50 @@ class TimeService:
 
         return Ok((updated, event))
 
-    def get_pending_events(self) -> list[TimeAdvancedEvent]:
+    def get_pending_events(self) -> Result[list[TimeAdvancedEvent], Error]:
         """Get all pending events that haven't been cleared.
 
         Returns:
-            List of TimeAdvancedEvent instances
+            Result containing:
+            - Ok: List of TimeAdvancedEvent instances
+            - Err: Error if operation fails
         """
-        return list(self._events)
+        try:
+            return Ok(list(self._events))
+        except Exception as e:
+            return Err(
+                TimeError(
+                    f"Failed to get pending events: {e}",
+                )
+            )
 
-    def clear_pending_events(self) -> None:
-        """Clear all pending events after they've been processed."""
-        self._events.clear()
-        logger.debug("pending_events_cleared")
+    def clear_pending_events(self) -> Result[None, Error]:
+        """Clear all pending events after they've been processed.
+
+        Returns:
+            Result containing:
+            - Ok: None on success
+            - Err: Error if operation fails
+        """
+        try:
+            self._events.clear()
+            logger.debug("pending_events_cleared")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                TimeError(
+                    f"Failed to clear pending events: {e}",
+                )
+            )
 
     def set_time(
-        self, world_id: str, year: int, month: int, day: int, era_name: str = "First Age"
-    ) -> Result[WorldCalendar, str]:
+        self,
+        world_id: str,
+        year: int,
+        month: int,
+        day: int,
+        era_name: str = "First Age",
+    ) -> Result[WorldCalendar, Error]:
         """Set the time for a world to a specific date.
 
         This is primarily useful for testing or world initialization.
@@ -202,7 +252,11 @@ class TimeService:
             Result containing the new WorldCalendar or error message
         """
         # Type validation before attempting to create WorldCalendar
-        if not isinstance(year, int) or not isinstance(month, int) or not isinstance(day, int):
+        if (
+            not isinstance(year, int)
+            or not isinstance(month, int)
+            or not isinstance(day, int)
+        ):
             error_msg = f"Invalid date types: year={type(year).__name__}, month={type(month).__name__}, day={type(day).__name__}. All must be integers."
             logger.error(
                 "set_time_type_validation_failed",
@@ -211,21 +265,36 @@ class TimeService:
                 month_type=type(month).__name__,
                 day_type=type(day).__name__,
             )
-            return Err(error_msg)
+            return Err(
+                TimeValidationError(
+                    error_msg,
+                    details={
+                        "world_id": world_id,
+                        "year": year,
+                        "month": month,
+                        "day": day,
+                    },
+                )
+            )
 
         if not isinstance(era_name, str):
-            error_msg = f"Invalid era_name type: {type(era_name).__name__}. Must be string."
+            error_msg = (
+                f"Invalid era_name type: {type(era_name).__name__}. Must be string."
+            )
             logger.error(
                 "set_time_era_name_validation_failed",
                 world_id=world_id,
                 era_name_type=type(era_name).__name__,
             )
-            return Err(error_msg)
+            return Err(
+                TimeValidationError(
+                    error_msg,
+                    details={"world_id": world_id, "era_name": era_name},
+                )
+            )
 
         try:
-            calendar = WorldCalendar(
-                year=year, month=month, day=day, era_name=era_name
-            )
+            calendar = WorldCalendar(year=year, month=month, day=day, era_name=era_name)
             self._repository.save(world_id, calendar)
             logger.info(
                 "time_set",
@@ -239,4 +308,14 @@ class TimeService:
         except ValueError as e:
             error_msg = f"Invalid date: {e}"
             logger.error("set_time_failed", error=error_msg, world_id=world_id)
-            return Err(error_msg)
+            return Err(
+                TimeValidationError(
+                    error_msg,
+                    details={
+                        "world_id": world_id,
+                        "year": year,
+                        "month": month,
+                        "day": day,
+                    },
+                )
+            )

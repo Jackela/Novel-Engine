@@ -16,6 +16,7 @@ Key Features:
 import asyncio
 import json
 import logging
+import structlog
 import os
 import statistics
 import time
@@ -26,9 +27,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
-# Comprehensive logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(str, Enum):
@@ -98,7 +97,7 @@ class MonitoringConfig:
     export_metrics: bool = False
     export_path: str = "data/metrics"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.alert_thresholds:
             self.alert_thresholds = self._get_default_thresholds()
 
@@ -119,7 +118,7 @@ class MonitoringConfig:
 class SystemResourceMonitor:
     """System resource monitoring for CPU, memory, disk, and network metrics."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.process = psutil.Process()
 
     def get_cpu_metrics(self) -> Dict[str, float]:
@@ -197,7 +196,7 @@ class SystemResourceMonitor:
 class PerformanceMonitor:
     """Main performance monitoring system with metrics collection and alerting."""
 
-    def __init__(self, config: MonitoringConfig):
+    def __init__(self, config: MonitoringConfig) -> None:
         self.config = config
         self.metrics: Dict[str, deque] = defaultdict(
             lambda: deque(maxlen=config.max_metrics_per_type)
@@ -231,7 +230,7 @@ class PerformanceMonitor:
 
         self._start_monitoring()
 
-    def _start_monitoring(self):
+    def _start_monitoring(self) -> None:
         """Initialize monitoring background tasks."""
         try:
             loop = asyncio.get_running_loop()
@@ -241,7 +240,7 @@ class PerformanceMonitor:
             # No event loop running yet
             pass
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop for continuous metric collection."""
         while True:
             try:
@@ -258,9 +257,9 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error("monitoring_loop_error", error=str(e), error_type=type(e).__name__)
 
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Background cleanup loop for old metrics and alerts."""
         while True:
             try:
@@ -270,9 +269,9 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.error("cleanup_loop_error", error=str(e), error_type=type(e).__name__)
 
-    async def _collect_system_metrics(self):
+    async def _collect_system_metrics(self) -> None:
         """Collect comprehensive system performance metrics."""
         try:
             current_time = time.time()
@@ -298,7 +297,7 @@ class PerformanceMonitor:
                 self.record_metric(name, value, MetricType.COUNTER, current_time)
 
         except Exception as e:
-            logger.error(f"Error collecting system metrics: {e}")
+            logger.error("system_metrics_collection_error", error=str(e), error_type=type(e).__name__)
 
     def record_metric(
         self,
@@ -307,14 +306,13 @@ class PerformanceMonitor:
         metric_type: MetricType,
         timestamp: Optional[float] = None,
         tags: Optional[Dict[str, str]] = None,
-    ):
+    ) -> None:
         """Record a performance metric with timestamp and optional tags."""
         if timestamp is None:
             timestamp = time.time()
 
         if tags is None:
-            tags = {}
-
+            tags: dict[Any, Any] = {}
         metric = PerformanceMetric(
             name=name,
             value=value,
@@ -331,7 +329,7 @@ class PerformanceMonitor:
         duration_ms: float,
         status_code: int = 200,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """Record HTTP request duration and performance metrics."""
         current_time = time.time()
 
@@ -373,7 +371,7 @@ class PerformanceMonitor:
         duration_ms: float,
         table: Optional[str] = None,
         error: Optional[str] = None,
-    ):
+    ) -> None:
         """Record database query performance metrics."""
         current_time = time.time()
         tags = {"query_type": query_type}
@@ -390,7 +388,7 @@ class PerformanceMonitor:
                 "database_error_count", 1, MetricType.COUNTER, current_time, tags
             )
 
-    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float):
+    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float) -> None:
         """Record cache operation performance and hit rate metrics."""
         current_time = time.time()
         tags = {"operation": operation}
@@ -429,11 +427,11 @@ class PerformanceMonitor:
             "cache_hit_rate_percent", hit_rate, MetricType.GAUGE, current_time
         )
 
-    def record_concurrent_users(self, count: int):
+    def record_concurrent_users(self, count: int) -> None:
         """Record current number of concurrent users."""
         self.record_metric("concurrent_users", count, MetricType.GAUGE)
 
-    async def _check_alerts(self):
+    async def _check_alerts(self) -> None:
         """Check metrics against alert thresholds and trigger alerts."""
         if not self.config.enable_alerts:
             return
@@ -481,6 +479,15 @@ class PerformanceMonitor:
                         self.alert_history.append(alert)
 
                         await self._handle_alert(alert)
+            else:
+                # Resolve alert if it was active
+                if alert_key in self.active_alerts:
+                    alert = self.active_alerts[alert_key]
+                    alert.resolved = True
+                    alert.resolution_timestamp = current_time
+                    del self.active_alerts[alert_key]
+
+                    await self._handle_alert_resolution(alert)
                 else:
                     # Resolve alert if it was active
                     if alert_key in self.active_alerts:
@@ -491,7 +498,7 @@ class PerformanceMonitor:
 
                         await self._handle_alert_resolution(alert)
 
-    async def _handle_alert(self, alert: PerformanceAlert):
+    async def _handle_alert(self, alert: PerformanceAlert) -> None:
         """Handle triggered performance alert."""
         log_level = (
             logging.CRITICAL
@@ -501,10 +508,12 @@ class PerformanceMonitor:
 
         logger.log(
             log_level,
-            f"Performance Alert: {alert.severity.value.upper()} | "
-            f"{alert.metric_name} = {alert.actual_value:.2f} "
-            f"(threshold: {alert.threshold_value:.2f}) | "
-            f"{alert.message}",
+            "performance_alert",
+            severity=alert.severity.value,
+            metric_name=alert.metric_name,
+            actual_value=round(alert.actual_value, 2),
+            threshold_value=round(alert.threshold_value, 2),
+            message=alert.message
         )
 
         # In a production system, you might:
@@ -512,14 +521,15 @@ class PerformanceMonitor:
         # - Auto-scale resources
         # - Take remedial actions
 
-    async def _handle_alert_resolution(self, alert: PerformanceAlert):
+    async def _handle_alert_resolution(self, alert: PerformanceAlert) -> None:
         """Handle resolution of performance alert."""
         logger.info(
-            f"Alert Resolved: {alert.metric_name} | "
-            f"Alert duration: {alert.resolution_timestamp - alert.timestamp:.1f}s"
+            "performance_alert_resolved",
+            metric_name=alert.metric_name,
+            duration_seconds=round(alert.resolution_timestamp - alert.timestamp, 1)
         )
 
-    def _cleanup_old_metrics(self):
+    def _cleanup_old_metrics(self) -> None:
         """Remove old metrics beyond retention period."""
         cutoff_time = time.time() - self.config.retention_period
 
@@ -528,7 +538,7 @@ class PerformanceMonitor:
             while metric_list and metric_list[0].timestamp < cutoff_time:
                 metric_list.popleft()
 
-    def _cleanup_old_alerts(self):
+    def _cleanup_old_alerts(self) -> None:
         """Remove old alerts from history."""
         cutoff_time = time.time() - 86400  # Keep alerts for 24 hours
 
@@ -536,7 +546,7 @@ class PerformanceMonitor:
         while self.alert_history and self.alert_history[0].timestamp < cutoff_time:
             self.alert_history.popleft()
 
-    async def _export_metrics(self):
+    async def _export_metrics(self) -> None:
         """Export metrics to JSON files for external analysis."""
         try:
             current_time = time.time()
@@ -578,7 +588,7 @@ class PerformanceMonitor:
                     os.remove(os.path.join(self.config.export_path, old_file))
 
         except Exception as e:
-            logger.error(f"Error exporting metrics: {e}")
+            logger.error("metrics_export_error", error=str(e), error_type=type(e).__name__)
 
     def get_metric_stats(
         self, metric_name: str, time_range_seconds: int = 300
@@ -618,8 +628,7 @@ class PerformanceMonitor:
 
     def get_endpoint_stats(self) -> Dict[str, Dict[str, Any]]:
         """Get performance statistics for all monitored endpoints."""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         for endpoint, metrics in self.endpoint_metrics.items():
             if metrics["count"] > 0:
                 stats[endpoint] = {
@@ -677,8 +686,7 @@ class PerformanceMonitor:
 
     def get_alerts(self, include_resolved: bool = False) -> List[Dict[str, Any]]:
         """Get list of active and optionally resolved alerts."""
-        alerts = []
-
+        alerts: list[Any] = []
         # Active alerts
         for alert in self.active_alerts.values():
             alerts.append(alert.__dict__)
@@ -691,7 +699,7 @@ class PerformanceMonitor:
 
         return sorted(alerts, key=lambda x: x["timestamp"], reverse=True)
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown monitoring system and cleanup resources."""
         try:
             # Cancel background tasks
@@ -700,29 +708,25 @@ class PerformanceMonitor:
                 try:
                     await self._monitoring_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("monitoring_task_cancelled")
 
             if self._cleanup_task:
                 self._cleanup_task.cancel()
                 try:
                     await self._cleanup_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("cleanup_task_cancelled")
             if self.config.export_metrics:
                 await self._export_metrics()
 
-            logger.info("Performance monitor shutdown complete")
+            logger.info("performance_monitor_shutdown_complete")
 
         except Exception as e:
-            logger.error(f"Error during monitor shutdown: {e}")
+            logger.error("monitor_shutdown_error", error=str(e), error_type=type(e).__name__)
 
 
 # Performance measurement decorator
-def measure_performance(metric_name: str = None):
+def measure_performance(metric_name: str = None) -> None:
     """Decorator to measure and record function performance metrics."""
 
     def decorator(func: Callable) -> Callable:
@@ -773,7 +777,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return performance_monitor
 
 
-def initialize_performance_monitor(config: Optional[MonitoringConfig] = None):
+def initialize_performance_monitor(config: Optional[MonitoringConfig] = None) -> None:
     """Initialize the global performance monitor with configuration."""
     global performance_monitor
     if config is None:

@@ -6,15 +6,16 @@ Application service for managing geopolitical actions including
 diplomatic relations, territory control, and resource tracking.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 import structlog
 
-from src.core.result import Err, Ok, Result
-from src.events.event_bus import EventBus
-
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.entities.location import Location
+from src.contexts.world.domain.errors import (
+    DiplomacyError,
+    GeopoliticsError,
+)
 from src.contexts.world.domain.events.geopolitics_events import (
     AllianceFormedEvent,
     PactType,
@@ -22,6 +23,8 @@ from src.contexts.world.domain.events.geopolitics_events import (
     WarDeclaredEvent,
 )
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
+from src.core.result import Err, Error, Ok, Result
+from src.events.event_bus import EventBus
 
 logger = structlog.get_logger()
 
@@ -38,7 +41,7 @@ class GeopoliticsService:
     All operations emit appropriate domain events.
     """
 
-    def __init__(self, event_bus: Optional[EventBus] = None):
+    def __init__(self, event_bus: Optional[EventBus] = None) -> None:
         """Initialize the geopolitics service."""
         self._event_bus = event_bus or EventBus()
 
@@ -58,7 +61,7 @@ class GeopoliticsService:
         defender_id: str,
         reason: str,
         world_id: Optional[str] = None,
-    ) -> Result[None, ValueError]:
+    ) -> Result[None, Error]:
         """
         Declare war between two factions.
 
@@ -70,7 +73,9 @@ class GeopoliticsService:
             world_id: Optional world ID for event context
 
         Returns:
-            Ok(None) on success, Err(ValueError) on failure
+            Result containing:
+            - Ok: None on success
+            - Err: DiplomacyError on failure
         """
         # Set diplomatic status to AT_WAR
         result = matrix.set_status(aggressor_id, defender_id, DiplomaticStatus.AT_WAR)
@@ -102,7 +107,7 @@ class GeopoliticsService:
         faction_b_id: str,
         pact_type: PactType = PactType.DEFENSIVE_ALLIANCE,
         world_id: Optional[str] = None,
-    ) -> Result[None, ValueError]:
+    ) -> Result[None, Error]:
         """
         Form an alliance between two factions.
 
@@ -114,14 +119,20 @@ class GeopoliticsService:
             world_id: Optional world ID for event context
 
         Returns:
-            Ok(None) on success, Err(ValueError) on failure
+            Result containing:
+            - Ok: None on success
+            - Err: DiplomacyError on failure
         """
         # Check if factions are at war
         current_status = matrix.get_status(faction_a_id, faction_b_id)
         if current_status == DiplomaticStatus.AT_WAR:
             return Err(
-                ValueError(
-                    f"Cannot form alliance: factions {faction_a_id} and {faction_b_id} are at war"
+                DiplomacyError(
+                    f"Cannot form alliance: factions {faction_a_id} and {faction_b_id} are at war",
+                    details={
+                        "faction_a_id": faction_a_id,
+                        "faction_b_id": faction_b_id,
+                    },
                 )
             )
 
@@ -154,7 +165,7 @@ class GeopoliticsService:
         new_controller_id: Optional[str],
         reason: str = "",
         world_id: Optional[str] = None,
-    ) -> Result[None, ValueError]:
+    ) -> Result[None, Error]:
         """
         Transfer territory control to a new faction.
 
@@ -165,12 +176,14 @@ class GeopoliticsService:
             world_id: Optional world ID for event context
 
         Returns:
-            Ok(None) on success, Err(ValueError) on failure
+            Result containing:
+            - Ok: None on success
+            - Err: GeopoliticsError on failure
         """
         previous_controller_id = location.controlling_faction_id
 
         # Use the location's transfer_control method if available
-        if hasattr(location, 'transfer_control'):
+        if hasattr(location, "transfer_control"):
             location.transfer_control(new_controller_id)
         else:
             location.controlling_faction_id = new_controller_id
@@ -200,7 +213,7 @@ class GeopoliticsService:
         self,
         matrix: DiplomacyMatrix,
         faction_id: str,
-    ) -> dict:
+    ) -> Result[dict, Error]:
         """
         Get a summary of diplomatic relations for a faction.
 
@@ -209,11 +222,21 @@ class GeopoliticsService:
             faction_id: ID of the faction to summarize
 
         Returns:
-            Dictionary with allies, enemies, and neutral factions
+            Result containing:
+            - Ok: Dictionary with allies, enemies, and neutral factions
+            - Err: GeopoliticsError on failure
         """
-        return {
-            "faction_id": faction_id,
-            "allies": matrix.get_allies(faction_id),
-            "enemies": matrix.get_enemies(faction_id),
-            "neutral": matrix.get_neutral(faction_id),
-        }
+        try:
+            return Ok({
+                "faction_id": faction_id,
+                "allies": matrix.get_allies(faction_id),
+                "enemies": matrix.get_enemies(faction_id),
+                "neutral": matrix.get_neutral(faction_id),
+            })
+        except Exception as e:
+            return Err(
+                GeopoliticsError(
+                    f"Failed to get diplomacy summary: {e}",
+                    details={"faction_id": faction_id},
+                )
+            )

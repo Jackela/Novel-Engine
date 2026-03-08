@@ -9,6 +9,7 @@ security measures for production deployment.
 
 import asyncio
 import logging
+import structlog
 import os
 import secrets
 import ssl
@@ -41,7 +42,7 @@ from src.core.config.config_loader import get_config
 from src.core.event_bus import EventBus
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Security Configuration
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
@@ -59,7 +60,7 @@ limiter = Limiter(key_func=get_remote_address)
 class SecurityHeaders(BaseHTTPMiddleware):
     """Security headers middleware."""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         response = await call_next(request)
 
         # Security headers
@@ -103,8 +104,7 @@ class InputValidator:
     @staticmethod
     def validate_character_names(names: List[str]) -> List[str]:
         """Validate character names with strict rules."""
-        validated_names = []
-
+        validated_names: list[Any] = []
         for name in names:
             # Sanitize
             name = InputValidator.sanitize_string(name, 50)
@@ -125,7 +125,7 @@ class AuthenticationManager:
     """JWT-based authentication manager."""
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> None:
         """Create JWT access token."""
         to_encode = data.copy()
 
@@ -161,7 +161,7 @@ class SimulationRequest(BaseModel):
 
     @field_validator("character_names")
     @classmethod
-    def validate_names(cls, v):
+    def validate_names(cls, v) -> None:
         return InputValidator.validate_character_names(v)
 
 
@@ -485,7 +485,7 @@ async def run_simulation(
         )
 
 
-def run_production_server(host: str = "127.0.0.1", port: int = 8000):
+def run_production_server(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Run the production-hardened FastAPI server."""
     # Production configuration
     ssl_context = None

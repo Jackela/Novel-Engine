@@ -7,6 +7,7 @@ Handles modification installation, compatibility validation, and performance tra
 """
 
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -23,20 +24,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -58,10 +59,10 @@ class ModificationSystem:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize modification system."""
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Modification templates and compatibility rules
         self._modification_templates = {
@@ -188,7 +189,7 @@ class ModificationSystem:
 
     def get_compatible_modifications(self, equipment: DynamicEquipment) -> List[str]:
         """Get list of compatible modifications for equipment."""
-        compatible = []
+        compatible: list[Any] = []
         equipment_category = self._get_equipment_category(equipment)
 
         for mod_id, template in self._modification_templates.items():

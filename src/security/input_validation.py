@@ -75,7 +75,7 @@ class SanitizationRule:
 class ValidationError(Exception):
     """ENHANCED VALIDATION EXCEPTION"""
 
-    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str):
+    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str) -> None:
         self.message = message
         self.severity = severity
         self.rule_name = rule_name
@@ -85,12 +85,12 @@ class ValidationError(Exception):
 class InputValidator:
     """STANDARD INPUT VALIDATOR ENHANCED BY THE SYSTEM"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validation_rules: List[ValidationRule] = []
         self.sanitization_rules: List[SanitizationRule] = []
         self._initialize_default_rules()
 
-    def _initialize_default_rules(self):
+    def _initialize_default_rules(self) -> None:
         """STANDARD DEFAULT RULES INITIALIZATION"""
 
         # SQL Injection Protection
@@ -295,12 +295,12 @@ class InputValidator:
             ),
         ]
 
-    def add_validation_rule(self, rule: ValidationRule):
+    def add_validation_rule(self, rule: ValidationRule) -> None:
         """STANDARD CUSTOM VALIDATION RULE ADDITION"""
         self.validation_rules.append(rule)
         logger.info("validation.rule_added", rule=rule.name)
 
-    def add_sanitization_rule(self, rule: SanitizationRule):
+    def add_sanitization_rule(self, rule: SanitizationRule) -> None:
         """STANDARD CUSTOM SANITIZATION RULE ADDITION"""
         self.sanitization_rules.append(rule)
         logger.info("validation.sanitization_rule_added", rule=rule.name)
@@ -313,8 +313,7 @@ class InputValidator:
             value = str(value)
 
         original_value = value
-        violations = []
-
+        violations: list[Any] = []
         # Apply validation rules
         for rule in self.validation_rules:
             if input_type in rule.input_types:
@@ -405,8 +404,7 @@ class InputValidator:
 
     def validate_request_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """STANDARD REQUEST DATA VALIDATION"""
-        validated_data = {}
-
+        validated_data: dict[Any, Any] = {}
         for key, value in data.items():
             if isinstance(value, str):
                 # Determine input type based on key name
@@ -453,11 +451,11 @@ class InputValidator:
 class ValidationMiddleware(BaseHTTPMiddleware):
     """STANDARD VALIDATION MIDDLEWARE ENHANCED BY PROTECTION"""
 
-    def __init__(self, app, validator: InputValidator):
+    def __init__(self, app, validator: InputValidator) -> None:
         super().__init__(app)
         self.validator = validator
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """STANDARD REQUEST VALIDATION"""
         try:
             # Skip validation for certain paths
@@ -536,7 +534,7 @@ def get_input_validator() -> InputValidator:
     return input_validator
 
 
-def create_validation_middleware(app):
+def create_validation_middleware(app) -> None:
     """STANDARD VALIDATION MIDDLEWARE CREATOR"""
     validator = get_input_validator()
     return ValidationMiddleware(app, validator)

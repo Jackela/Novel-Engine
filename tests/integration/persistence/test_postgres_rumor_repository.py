@@ -9,9 +9,14 @@ import os
 import uuid
 from typing import AsyncGenerator
 
-import asyncpg
 import pytest
+
+pytestmark = pytest.mark.integration
+
 import pytest_asyncio
+
+# Skip all tests in this module if asyncpg is not installed
+asyncpg = pytest.importorskip("asyncpg")
 
 from src.contexts.world.domain.entities.rumor import Rumor, RumorOrigin
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar

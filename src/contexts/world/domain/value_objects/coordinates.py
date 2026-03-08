@@ -9,7 +9,7 @@ this value object is immutable and encapsulates coordinate-related logic.
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Dict, Tuple, Union, overload
 
 
 @dataclass(frozen=True)
@@ -53,8 +53,7 @@ class Coordinates:
         Raises:
             ValueError: If coordinates are invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Check for valid numeric values first
         coords_are_numeric = True
         for coord_name, coord_value in [("x", self.x), ("y", self.y), ("z", self.z)]:
@@ -362,9 +361,13 @@ class Coordinates:
             precision=min(self.precision, other.precision),
         )
 
-    def __mul__(
-        self, scalar: Union[int, float]
-    ) -> "Coordinates | type[NotImplemented]":
+    @overload
+    def __mul__(self, scalar: Union[int, float]) -> "Coordinates": ...
+
+    @overload
+    def __mul__(self, scalar: Any) -> "Coordinates": ...
+
+    def __mul__(self, scalar: Union[int, float]) -> "Coordinates":
         """
         Multiply coordinates by a scalar value.
 

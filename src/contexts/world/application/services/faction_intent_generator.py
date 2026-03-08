@@ -12,10 +12,15 @@ Typical usage example:
     >>> from src.contexts.world.application.services import FactionIntentGenerator
     >>> from src.contexts.world.domain.entities import Faction
     >>> generator = FactionIntentGenerator()
-    >>> intents = generator.generate_intents(faction, world, diplomacy)
+    >>> result = generator.generate_intents(faction, world, diplomacy)
+    >>> if result.is_ok:
+    ...     intents = result.value
+
+Result Pattern:
+    All public methods return Result[T, Error] for explicit error handling.
 """
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
@@ -24,6 +29,8 @@ from src.contexts.world.domain.entities.faction_intent import (
     ActionType,
     FactionIntent,
 )
+from src.contexts.world.domain.errors import IntentGenerationError
+from src.core.result import Err, Error, Ok, Result
 
 
 class FactionIntentGenerator:
@@ -53,7 +60,7 @@ class FactionIntentGenerator:
         faction: Faction,
         world: WorldState,
         diplomacy: DiplomacyMatrix,
-    ) -> List[FactionIntent]:
+    ) -> Result[List[FactionIntent], Error]:
         """Generate intents for a faction based on world state.
 
         Analyzes faction resources, diplomatic relations, and world context
@@ -67,65 +74,77 @@ class FactionIntentGenerator:
             diplomacy: Diplomatic relations matrix for checking allies/enemies.
 
         Returns:
-            List of FactionIntent objects, sorted by priority ascending.
-            Returns empty list if faction is collapsed or no valid intents.
+            Result containing:
+            - Ok: List of FactionIntent objects, sorted by priority ascending.
+                  Returns empty list if faction is collapsed or no valid intents.
+            - Err: Error if generation fails
 
         Example:
-            >>> intents = generator.generate_intents(faction, world, diplomacy)
-            >>> for intent in intents:
-            ...     print(f"{intent.action_type.value}: {intent.rationale}")
+            >>> result = generator.generate_intents(faction, world, diplomacy)
+            >>> if result.is_ok:
+            ...     intents = result.value
+            ...     for intent in intents:
+            ...         print(f"{intent.action_type.value}: {intent.rationale}")
         """
-        # Edge case: Collapsed factions have no intents
-        if faction.status == FactionStatus.DISBANDED:
-            return []
+        try:
+            # Edge case: Collapsed factions have no intents
+            if faction.status == FactionStatus.DISBANDED:
+                return Ok([])
 
-        intents: List[FactionIntent] = []
+            intents: List[FactionIntent] = []
 
-        # Rule 1: Critical resources - STABILIZE
-        if faction.economic_power < 20:
-            intents.append(
-                FactionIntent(
-                    faction_id=faction.id,
-                    action_type=ActionType.STABILIZE,
-                    priority=1,
-                    rationale="Recover economic stability",
+            # Rule 1: Critical resources - STABILIZE
+            if faction.economic_power < 20:
+                intents.append(
+                    FactionIntent(
+                        faction_id=faction.id,
+                        action_type=ActionType.STABILIZE,
+                        priority=1,
+                        rationale="Recover economic stability",
+                    )
+                )
+
+            # Rule 2: Attack weakest enemy if significantly stronger
+            attack_intent = self._try_generate_attack_intent(faction, diplomacy)
+            if attack_intent:
+                intents.append(attack_intent)
+
+            # Rule 3: Seek trade opportunities
+            trade_intent = self._try_generate_trade_intent(faction, diplomacy)
+            if trade_intent:
+                intents.append(trade_intent)
+
+            # Rule 4: Expand if few territories and wealthy
+            expand_intent = self._try_generate_expand_intent(faction, world)
+            if expand_intent:
+                intents.append(expand_intent)
+
+            # Rule 5: Sabotage enemies if military is strong
+            sabotage_intent = self._try_generate_sabotage_intent(faction, diplomacy)
+            if sabotage_intent:
+                intents.append(sabotage_intent)
+
+            # Rule 6: Default - STABILIZE (only if no other intents)
+            if not intents:
+                intents.append(
+                    FactionIntent(
+                        faction_id=faction.id,
+                        action_type=ActionType.STABILIZE,
+                        priority=3,
+                        rationale="Focus on internal affairs",
+                    )
+                )
+
+            # Sort by priority ascending (1 = highest) and limit to MAX_INTENTS
+            intents.sort(key=lambda i: i.priority)
+            return Ok(intents[: self.MAX_INTENTS])
+        except Exception as e:
+            return Err(
+                IntentGenerationError(
+                    f"Failed to generate intents for faction {faction.id}: {e}",
+                    details={"faction_id": faction.id, "faction_name": faction.name},
                 )
             )
-
-        # Rule 2: Attack weakest enemy if significantly stronger
-        attack_intent = self._try_generate_attack_intent(faction, diplomacy)
-        if attack_intent:
-            intents.append(attack_intent)
-
-        # Rule 3: Seek trade opportunities
-        trade_intent = self._try_generate_trade_intent(faction, diplomacy)
-        if trade_intent:
-            intents.append(trade_intent)
-
-        # Rule 4: Expand if few territories and wealthy
-        expand_intent = self._try_generate_expand_intent(faction, world)
-        if expand_intent:
-            intents.append(expand_intent)
-
-        # Rule 5: Sabotage enemies if military is strong
-        sabotage_intent = self._try_generate_sabotage_intent(faction, diplomacy)
-        if sabotage_intent:
-            intents.append(sabotage_intent)
-
-        # Rule 6: Default - STABILIZE (only if no other intents)
-        if not intents:
-            intents.append(
-                FactionIntent(
-                    faction_id=faction.id,
-                    action_type=ActionType.STABILIZE,
-                    priority=3,
-                    rationale="Focus on internal affairs",
-                )
-            )
-
-        # Sort by priority ascending (1 = highest) and limit to MAX_INTENTS
-        intents.sort(key=lambda i: i.priority)
-        return intents[: self.MAX_INTENTS]
 
     def _try_generate_attack_intent(
         self,
@@ -254,7 +273,7 @@ class FactionIntentGenerator:
         if not enemies:
             return None
 
-        target_id = faction.territories[0] if faction.territories else None
+        faction.territories[0] if faction.territories else None
 
         return FactionIntent(
             faction_id=faction.id,

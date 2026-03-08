@@ -65,7 +65,7 @@ class NegotiationStatus:
     actual_completion_at: Optional[datetime] = None
     termination_reason: Optional[TerminationReason] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate the negotiation status data."""
         # Ensure timestamps are timezone-aware
         for field_name in [

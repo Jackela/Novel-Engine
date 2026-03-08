@@ -36,11 +36,10 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-import requests
+import httpx
 import structlog
 import yaml
 
@@ -70,7 +69,19 @@ if TYPE_CHECKING:
         RAGIntegrationService,
     )
 
+from src.contexts.world.infrastructure.generators.llm_generator.models import (
+    BeatSuggestion,
+    BeatSuggestionResult,
+    CharacterData,
+    CritiqueCategoryScore,
+    CritiqueResult,
+    DialogueResult,
+    RelationshipHistoryResult,
+)
+
 logger = structlog.get_logger(__name__)
+
+__all__ = ["LLMWorldGenerator"]
 
 
 class LLMWorldGenerator(WorldGeneratorPort):
@@ -144,6 +155,8 @@ class LLMWorldGenerator(WorldGeneratorPort):
         Returns:
             WorldGenerationResult containing all generated entities
         """
+        import asyncio
+
         log = logger.bind(
             genre=request.genre.value,
             era=request.era.value,
@@ -155,7 +168,9 @@ class LLMWorldGenerator(WorldGeneratorPort):
         user_prompt = self._build_user_prompt(request)
 
         try:
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            response_text = asyncio.run(
+                self._call_gemini(system_prompt, user_prompt)
+            )
             result = self._parse_and_build(response_text, request)
             log.info(
                 "World generation completed",
@@ -222,11 +237,13 @@ ADDITIONAL CONSTRAINTS:
 Return valid JSON only with the exact structure specified in the system prompt.
 Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references."""
 
-    def _call_gemini(self, system_prompt: str, user_prompt: str) -> str:
-        """Call Gemini API to generate world content.
+    async def _call_gemini(self, system_prompt: str, user_prompt: str) -> str:
+        """Call Gemini API to generate world content (async).
 
         Sends the combined system and user prompts to the Gemini API
         and returns the raw text response.
+
+        Why: Non-blocking I/O for better performance under concurrent load.
 
         Args:
             system_prompt: Instructions for the LLM on output format.
@@ -257,30 +274,30 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             },
         }
 
-        response = requests.post(
-            self._base_url,
-            headers=headers,
-            json=request_body,
-            timeout=120,
-        )
-
-        if response.status_code == 401:
-            raise RuntimeError(
-                "Gemini API authentication failed - check GEMINI_API_KEY"
-            )
-        elif response.status_code == 429:
-            raise RuntimeError("Gemini API rate limit exceeded")
-        elif response.status_code != 200:
-            raise RuntimeError(
-                f"Gemini API error {response.status_code}: {response.text}"
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(
+                self._base_url,
+                headers=headers,
+                json=request_body,
             )
 
-        try:
-            response_json = response.json()
-            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
-            return content
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse Gemini response: {e}")
+            if response.status_code == 401:
+                raise RuntimeError(
+                    "Gemini API authentication failed - check GEMINI_API_KEY"
+                )
+            elif response.status_code == 429:
+                raise RuntimeError("Gemini API rate limit exceeded")
+            elif response.status_code != 200:
+                raise RuntimeError(
+                    f"Gemini API error {response.status_code}: {response.text}"
+                )
+
+            try:
+                response_json = response.json()
+                content = response_json["candidates"][0]["content"]["parts"][0]["text"]
+                return content
+            except (KeyError, IndexError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
     def _parse_and_build(
         self, content: str, request: WorldGenerationInput
@@ -497,7 +514,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             headquarters_id = location_id_map.get(hq_temp_id) if hq_temp_id else None
 
             # Resolve territories
-            territories = []
+            territories: list[Any] = []
             for terr_temp_id in item.get("territories", []) or []:
                 if terr_temp_id in location_id_map:
                     territories.append(location_id_map[terr_temp_id])
@@ -561,13 +578,13 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             temp_id = item.get("temp_id", f"temp_event_{len(events)}")
 
             # Resolve location IDs
-            location_ids = []
+            location_ids: list[Any] = []
             for loc_temp_id in item.get("location_ids", []) or []:
                 if loc_temp_id in location_id_map:
                     location_ids.append(location_id_map[loc_temp_id])
 
             # Resolve faction IDs
-            faction_ids = []
+            faction_ids: list[Any] = []
             for fac_temp_id in item.get("faction_ids", []) or []:
                 if fac_temp_id in faction_id_map:
                     faction_ids.append(faction_id_map[fac_temp_id])
@@ -760,8 +777,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
         Returns:
             Search query string for RAG retrieval
         """
-        parts = []
-
+        parts: list[Any] = []
         # Add scene context keywords
         context_words = scene_context.split()[:8]
         parts.extend(context_words)
@@ -858,7 +874,7 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
             else:
                 system_prompt = base_system_prompt
 
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            response_text = await self._call_gemini(system_prompt, user_prompt)
             result = self._parse_dialogue_response(response_text)
 
             log.info("Dialogue generation completed", tone=result.tone)
@@ -1026,7 +1042,11 @@ Return valid JSON only with the exact structure specified in the system prompt."
                 character_a, character_b, trust, romance
             )
 
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            import asyncio
+
+            response_text = asyncio.run(
+                self._call_gemini(system_prompt, user_prompt)
+            )
             result = self._parse_relationship_history_response(response_text)
 
             log.info("Relationship history generation completed")
@@ -1227,7 +1247,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
             else:
                 system_prompt = base_system_prompt
 
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            response_text = await self._call_gemini(system_prompt, user_prompt)
             result = self._parse_beat_suggestion_response(response_text)
 
             log.info(
@@ -1368,8 +1388,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
         payload = self._extract_json(content)
 
         suggestions_data = payload.get("suggestions", [])
-        suggestions = []
-
+        suggestions: list[Any] = []
         for item in suggestions_data[:3]:  # Limit to 3 suggestions
             suggestion = BeatSuggestion(
                 beat_type=str(item.get("beat_type", "action")).lower(),
@@ -1434,7 +1453,11 @@ Return valid JSON only with the exact structure specified in the system prompt."
             system_prompt = self._load_critique_prompt()
             user_prompt = self._build_critique_user_prompt(scene_text, scene_goals)
 
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            import asyncio
+
+            response_text = asyncio.run(
+                self._call_gemini(system_prompt, user_prompt)
+            )
             result = self._parse_critique_response(response_text)
 
             log.info(
@@ -1536,8 +1559,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
         # Parse category scores
         category_scores_data = payload.get("category_scores", [])
-        category_scores = []
-
+        category_scores: list[Any] = []
         valid_categories = {"pacing", "voice", "showing", "dialogue"}
 
         for cat_data in category_scores_data:
@@ -1554,10 +1576,9 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
             # Ensure lists
             if not isinstance(issues, list):
-                issues = []
+                issues: list[Any] = []
             if not isinstance(suggestions, list):
-                suggestions = []
-
+                suggestions: list[Any] = []
             category_scores.append(
                 CritiqueCategoryScore(
                     category=category,
@@ -1570,7 +1591,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
         # Parse highlights
         highlights_data = payload.get("highlights", []) or []
         if not isinstance(highlights_data, list):
-            highlights_data = []
+            highlights_data: list[Any] = []
         highlights = [str(h) for h in highlights_data]
 
         # Parse summary
@@ -1583,278 +1604,3 @@ Return valid JSON only with the exact structure specified in the system prompt."
             summary=summary,
         )
 
-
-@dataclass
-class BeatSuggestion:
-    """A single beat suggestion from the AI.
-
-    Represents one suggested narrative beat with its type, content, emotional
-    impact, and the AI's reasoning for the suggestion.
-
-    Attributes:
-        beat_type: Classification of the beat (action, reaction, dialogue, etc.)
-        content: The suggested narrative text (1-3 sentences).
-        mood_shift: Emotional impact (-5 to +5).
-        rationale: AI's explanation of why this beat fits.
-    """
-
-    beat_type: str
-    content: str
-    mood_shift: int = 0
-    rationale: Optional[str] = None
-
-
-@dataclass
-class BeatSuggestionResult:
-    """Result of beat suggestion generation.
-
-    Contains 3 AI-generated beat suggestions that could follow the current
-    sequence, along with optional error information.
-
-    Why 3 suggestions:
-        Offering multiple options gives writers creative choice while
-        preventing paralysis from too many options. The suggestions represent
-        different approaches: expected continuation, dramatic turn, and
-        character-focused moment.
-
-    Attributes:
-        suggestions: List of 3 BeatSuggestion objects.
-        error: Error message if generation failed.
-    """
-
-    suggestions: List[BeatSuggestion] = field(default_factory=list)
-    error: Optional[str] = None
-
-    def is_error(self) -> bool:
-        """Check if this result represents an error."""
-        return self.error is not None
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format for API responses."""
-        result: Dict[str, Any] = {
-            "suggestions": [
-                {
-                    "beat_type": s.beat_type,
-                    "content": s.content,
-                    "mood_shift": s.mood_shift,
-                    "rationale": s.rationale,
-                }
-                for s in self.suggestions
-            ]
-        }
-        if self.error:
-            result["error"] = self.error
-        return result
-
-
-@dataclass
-class CharacterData:
-    """Data structure for character information needed by dialogue generation.
-
-    This is a simple data transfer object that can be constructed from
-    a Character aggregate or from API request data. It contains only the
-    fields needed for dialogue generation.
-
-    Why a separate class: The Character aggregate in the character context
-    has complex validation and domain logic. For dialogue generation, we
-    only need a subset of that data in a simple format.
-    """
-
-    name: str
-    psychology: Optional[Dict[str, int]] = None
-    traits: Optional[List[str]] = None
-    speaking_style: Optional[str] = None
-
-    @classmethod
-    def from_character_aggregate(cls, character: Any) -> "CharacterData":
-        """Create CharacterData from a Character aggregate.
-
-        Args:
-            character: A Character aggregate from the character context.
-
-        Returns:
-            CharacterData with extracted fields.
-        """
-        psychology_dict = None
-        if hasattr(character, "psychology") and character.psychology:
-            psychology_dict = character.psychology.to_dict()
-
-        traits_list = None
-        if hasattr(character, "profile") and character.profile:
-            if hasattr(character.profile, "traits") and character.profile.traits:
-                traits_list = list(character.profile.traits)
-            elif hasattr(character.profile, "personality_traits"):
-                # Fallback to personality_traits if traits not set
-                pt = character.profile.personality_traits
-                if hasattr(pt, "quirks") and pt.quirks:
-                    traits_list = list(pt.quirks)
-
-        return cls(
-            name=(
-                character.profile.name
-                if hasattr(character, "profile")
-                else str(character)
-            ),
-            psychology=psychology_dict,
-            traits=traits_list,
-            speaking_style=None,  # Can be extended in future
-        )
-
-
-@dataclass
-class DialogueResult:
-    """Result of dialogue generation.
-
-    Contains the generated dialogue along with optional metadata about
-    the character's internal state and physical expression.
-
-    Attributes:
-        dialogue: The character's spoken words (1-3 sentences).
-        internal_thought: What the character thinks but doesn't say.
-        tone: Emotional tone of the response (e.g., 'defensive', 'excited').
-        body_language: Physical description (e.g., 'crosses arms').
-        error: Error message if generation failed.
-    """
-
-    dialogue: str
-    tone: str = "neutral"
-    internal_thought: Optional[str] = None
-    body_language: Optional[str] = None
-    error: Optional[str] = None
-
-    def is_error(self) -> bool:
-        """Check if this result represents an error."""
-        return self.error is not None
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format for API responses."""
-        result: Dict[str, Any] = {
-            "dialogue": self.dialogue,
-            "tone": self.tone,
-        }
-        if self.internal_thought:
-            result["internal_thought"] = self.internal_thought
-        if self.body_language:
-            result["body_language"] = self.body_language
-        if self.error:
-            result["error"] = self.error
-        return result
-
-
-@dataclass
-class RelationshipHistoryResult:
-    """Result of relationship history generation.
-
-    Contains the generated backstory along with structured elements that
-    explain how two characters developed their current relationship dynamics.
-
-    Why generate backstory: Relationships in narratives need depth. Rather than
-    having writers manually create history for every character pair, the AI can
-    infer plausible backstories from the current trust/romance metrics. This
-    creates consistent, believable relationship histories on demand.
-
-    Attributes:
-        backstory: A 2-4 paragraph narrative explaining the relationship history.
-        first_meeting: How the characters first encountered each other.
-        defining_moment: The pivotal event that shaped their current dynamic.
-        current_status: A summary of where they currently stand.
-        error: Error message if generation failed.
-    """
-
-    backstory: str
-    first_meeting: Optional[str] = None
-    defining_moment: Optional[str] = None
-    current_status: Optional[str] = None
-    error: Optional[str] = None
-
-    def is_error(self) -> bool:
-        """Check if this result represents an error."""
-        return self.error is not None
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format for API responses."""
-        result: Dict[str, Any] = {
-            "backstory": self.backstory,
-        }
-        if self.first_meeting:
-            result["first_meeting"] = self.first_meeting
-        if self.defining_moment:
-            result["defining_moment"] = self.defining_moment
-        if self.current_status:
-            result["current_status"] = self.current_status
-        if self.error:
-            result["error"] = self.error
-        return result
-
-
-@dataclass
-class CritiqueCategoryScore:
-    """A category-specific critique score.
-
-    Represents evaluation of a single quality dimension (pacing, voice, showing,
-    dialogue) with specific issues and suggestions.
-
-    Attributes:
-        category: The quality dimension being evaluated.
-        score: Score from 1-10 for this category.
-        issues: List of specific problems identified in this category.
-        suggestions: List of actionable improvements for this category.
-    """
-
-    category: str
-    score: int
-    issues: List[str] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
-
-
-@dataclass
-class CritiqueResult:
-    """Result of scene critique analysis.
-
-    Contains AI-generated feedback on scene quality across multiple dimensions.
-    Provides category-specific scores, overall assessment, highlights of what
-    works, and actionable suggestions for improvement.
-
-    Why scene critique:
-        Writers need objective feedback on their work beyond subjective
-        impressions. The AI critique analyzes specific craft elements like
-        pacing, voice, showing vs. telling, and dialogue quality, providing
-        actionable suggestions to elevate prose to professional standards.
-
-    Attributes:
-        overall_score: Overall quality score from 1-10.
-        category_scores: List of category-specific evaluations.
-        highlights: What works well in the scene.
-        summary: Brief 2-3 sentence assessment.
-        error: Error message if critique failed.
-    """
-
-    overall_score: int
-    category_scores: List[CritiqueCategoryScore] = field(default_factory=list)
-    highlights: List[str] = field(default_factory=list)
-    summary: str = ""
-    error: Optional[str] = None
-
-    def is_error(self) -> bool:
-        """Check if this result represents an error."""
-        return self.error is not None
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary format for API responses."""
-        result: Dict[str, Any] = {
-            "overall_score": self.overall_score,
-            "category_scores": [
-                {
-                    "category": cat.category,
-                    "score": cat.score,
-                    "issues": cat.issues,
-                    "suggestions": cat.suggestions,
-                }
-                for cat in self.category_scores
-            ],
-            "highlights": self.highlights,
-            "summary": self.summary,
-        }
-        if self.error:
-            result["error"] = self.error
-        return result

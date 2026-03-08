@@ -7,7 +7,7 @@ using SQLAlchemy ORM for data persistence. It handles the mapping between
 domain objects and database entities.
 """
 
-import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -43,7 +43,7 @@ from ..persistence.subjective_models import (
     TurnBriefORM,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
@@ -54,7 +54,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
     aggregates using SQLAlchemy ORM and relational database storage.
     """
 
-    def __init__(self, session_factory: sessionmaker):
+    def __init__(self, session_factory: sessionmaker) -> None:
         """
         Initialize the repository with a SQLAlchemy session factory.
 
@@ -62,7 +62,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             session_factory: Factory for creating database sessions
         """
         self.session_factory = session_factory
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def get_by_id(self, turn_brief_id: SubjectiveId) -> Optional[TurnBrief]:
         """
@@ -353,7 +353,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 )
 
                 # Filter by certainty level (simplified - in production, this would be more sophisticated)
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for result in results:
                     entity_id = result[0]
                     # Get the best certainty level for this entity about the subject
@@ -412,7 +412,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 # complex spatial queries and perception capability analysis
                 orm_entities = session.query(TurnBriefORM).all()
 
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for orm_entity in orm_entities:
                     # Check if entity's visible subjects include the location
                     visible_subjects = orm_entity.visible_subjects or {}
@@ -448,7 +448,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
             with self.session_factory() as session:
                 orm_entities = session.query(TurnBriefORM).all()
 
-                entity_ids = []
+                entity_ids: list[Any] = []
                 for orm_entity in orm_entities:
                     perception_capabilities = orm_entity.perception_capabilities or {}
                     if perception_type.value in perception_capabilities.get(
@@ -793,7 +793,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         if not data:
             return {}
 
-        result = {}
+        result: dict[Any, Any] = {}
         for key, value in data.items():
             try:
                 modifier = AwarenessModifier(key)
@@ -866,7 +866,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
 
         from ...domain.value_objects.perception_range import VisibilityLevel
 
-        result = {}
+        result: dict[Any, Any] = {}
         for subject, level_str in data.items():
             try:
                 level = VisibilityLevel(level_str)

@@ -11,7 +11,7 @@ import pytest
 
 # Import modules under test
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 try:
     from src.config.character_factory import CharacterFactory

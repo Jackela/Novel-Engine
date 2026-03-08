@@ -81,7 +81,7 @@ class PhysicalTraits:
     distinguishing_marks: Optional[List[str]] = None
     physical_description: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate physical traits."""
         if self.height_cm is not None and (self.height_cm < 30 or self.height_cm > 300):
             raise ValueError("Height must be between 30-300 cm")
@@ -103,7 +103,7 @@ class PersonalityTraits:
     bonds: Optional[List[str]] = None
     flaws: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate personality traits."""
         if not self.traits:
             raise ValueError("Personality traits cannot be empty")
@@ -177,7 +177,81 @@ class CharacterProfile:
     traits: Optional[List[str]] = None
     appearance: Optional[str] = None
 
-    def __post_init__(self):
+    @classmethod
+    def create_default(
+        cls,
+        name: str,
+        gender: Gender,
+        race: CharacterRace,
+        character_class: CharacterClass,
+        age: int,
+        level: int = 1,
+        physical_traits: Optional[PhysicalTraits] = None,
+        personality_traits: Optional[PersonalityTraits] = None,
+        background: Optional[Background] = None,
+        title: Optional[str] = None,
+        affiliation: Optional[str] = None,
+        languages: Optional[List[str]] = None,
+    ) -> "CharacterProfile":
+        """Create a default character profile with sensible defaults.
+
+        Args:
+            name: Character name
+            gender: Character gender
+            race: Character race/species
+            character_class: Character class/profession
+            age: Character age in years
+            level: Character level (default: 1)
+            physical_traits: Optional physical traits (default: minimal defaults)
+            personality_traits: Optional personality traits (default: balanced)
+            background: Optional background (default: empty)
+            title: Optional title
+            affiliation: Optional faction/organization affiliation
+            languages: Optional list of languages spoken
+
+        Returns:
+            A new CharacterProfile with default values for unspecified fields.
+        """
+        if physical_traits is None:
+            physical_traits = PhysicalTraits()
+
+        if personality_traits is None:
+            personality_traits = PersonalityTraits(
+                traits={"neutral": 0.5},
+            )
+
+        if background is None:
+            background = Background()
+
+        return cls(
+            name=name,
+            gender=gender,
+            race=race,
+            character_class=character_class,
+            age=age,
+            level=level,
+            physical_traits=physical_traits,
+            personality_traits=personality_traits,
+            background=background,
+            title=title,
+            affiliation=affiliation,
+            languages=languages,
+        )
+
+    def with_level(self, new_level: int) -> "CharacterProfile":
+        """Create a new profile with updated level (immutable update).
+
+        Args:
+            new_level: The new level value
+
+        Returns:
+            A new CharacterProfile with the updated level.
+        """
+        from dataclasses import replace
+
+        return replace(self, level=new_level)
+
+    def __post_init__(self) -> None:
         """Validate character profile data."""
         # Validate required fields
         if not self.name or not self.name.strip():

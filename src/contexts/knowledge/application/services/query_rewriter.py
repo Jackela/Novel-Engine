@@ -21,6 +21,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
 
 if TYPE_CHECKING:
@@ -164,7 +167,7 @@ class QueryRewriter:
         llm_client: ILLMClient,
         default_config: RewriteConfig | None = None,
         cache_enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the query rewriter.
 
@@ -328,6 +331,28 @@ class QueryRewriter:
         self._cache.clear()
         logger.debug("query_rewrite_cache_cleared")
 
+    def clear_cache_result(self) -> Result[None, ServiceError]:
+        """
+        Clear the rewrite cache (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If cache clear fails
+        """
+        try:
+            self._cache.clear()
+            logger.debug("query_rewrite_cache_cleared")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to clear cache: {e}",
+                    service_name="QueryRewriter",
+                    operation="clear_cache",
+                )
+            )
+
     def get_cache_stats(self) -> dict[str, Any]:
         """
         Get cache statistics including token tracking.
@@ -340,6 +365,30 @@ class QueryRewriter:
             "cache_enabled": self._cache_enabled,
             "total_tokens_saved": self._total_tokens_saved,
         }
+
+    def get_cache_stats_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get cache statistics including token tracking (Result pattern).
+
+        Returns:
+            Result containing cache stats dictionary on success.
+            - Ok: Dict with cache size, tokens saved, and related stats
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            return Ok({
+                "cache_size": len(self._cache),
+                "cache_enabled": self._cache_enabled,
+                "total_tokens_saved": self._total_tokens_saved,
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get cache stats: {e}",
+                    service_name="QueryRewriter",
+                    operation="get_cache_stats",
+                )
+            )
 
     async def _generate_variants(
         self,
@@ -372,13 +421,13 @@ class QueryRewriter:
 
         # Parse based on strategy
         if config.strategy == RewriteStrategy.CLARIFICATION:
-            clarifications = self._parse_clarifications(response.text)
+            parsed_clarifications = self._parse_clarifications(response.text)
             # For clarification, also generate search queries
             variants = [query]  # Include original as search query
+            clarifications: list[Any] = parsed_clarifications
         else:
             variants = self._parse_response(response.text, config.max_variants)
             clarifications = []
-
         return {
             "variants": variants,
             "clarifications": clarifications,
@@ -493,7 +542,7 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: split by newlines and commas
-        result = []
+        parsed_result: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Remove common prefixes
@@ -502,9 +551,9 @@ Return ONLY a valid JSON array of strings, like this:
                     line = line[len(prefix) :].strip('"').strip()
                     break
             if line and len(line) > 2:
-                result.append(line)
+                parsed_result.append(line)
 
-        return result[:max_variants]
+        return parsed_result[:max_variants]
 
     def _generate_simple_variants(
         self,
@@ -521,8 +570,7 @@ Return ONLY a valid JSON array of strings, like this:
         Returns:
             List of basic query variants
         """
-        variants = []
-
+        variants: list[Any] = []
         if config.include_original:
             variants.append(query)
 
@@ -561,8 +609,7 @@ Return ONLY a valid JSON array of strings, like this:
         Returns:
             Final list of variants
         """
-        variants = []
-
+        variants: list[Any] = []
         if config.include_original:
             variants.append(original)
 
@@ -652,8 +699,8 @@ Return ONLY a valid JSON array of strings, like this:
 
             if isinstance(questions, list):
                 # Ensure all items are strings
-                result = [str(q).strip() for q in questions if q]
-                return result[:4]  # Max 4 clarifying questions
+                parsed_questions = [str(q).strip() for q in questions if q]
+                return parsed_questions[:4]  # Max 4 clarifying questions
 
         except (json.JSONDecodeError, ValueError, TypeError):
             logger.warning(
@@ -662,14 +709,14 @@ Return ONLY a valid JSON array of strings, like this:
             )
 
         # Fallback: extract questions from text
-        result = []
+        extracted_questions: list[Any] = []
         for line in text.split("\n"):
             line = line.strip()
             # Lines ending with '?' are likely questions
             if line.endswith("?") and len(line) > 5:
-                result.append(line)
+                extracted_questions.append(line)
 
-        return result[:4]
+        return extracted_questions[:4]
 
     def _estimate_tokens(self, text: str) -> int:
         """

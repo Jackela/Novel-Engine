@@ -22,7 +22,6 @@ Usage:
 from __future__ import annotations
 
 import heapq
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -109,7 +108,9 @@ class OutboxEvent:
             "event_type": self.event_type,
             "payload": self.payload,
             "created_at": self.created_at.isoformat(),
-            "processed_at": self.processed_at.isoformat() if self.processed_at else None,
+            "processed_at": (
+                self.processed_at.isoformat() if self.processed_at else None
+            ),
             "priority": self.priority.value,
             "status": self.status.value,
             "retry_count": self.retry_count,
@@ -168,7 +169,7 @@ class Outbox:
         >>> outbox.mark_processed(event.event_id)
     """
 
-    def __init__(self, max_size: int = 10000):
+    def __init__(self, max_size: int = 10000) -> None:
         """Initialize the outbox.
 
         Args:

@@ -190,11 +190,7 @@ class InMemoryFactionIntentRepository(FactionIntentRepository):
         """
         with self._lock:
             intent_ids = self._faction_intents.get(faction_id, set())
-            intents = [
-                self._intents[iid]
-                for iid in intent_ids
-                if iid in self._intents
-            ]
+            intents = [self._intents[iid] for iid in intent_ids if iid in self._intents]
 
             # Filter by status if provided
             if status:
@@ -226,7 +222,7 @@ class InMemoryFactionIntentRepository(FactionIntentRepository):
 
             # Sort by priority (ascending, 1 = highest), then creation time (descending)
             intents.sort(key=lambda i: (i.priority, -i.created_at.timestamp()))
-            return intents[:self.MAX_ACTIVE_INTENTS]
+            return intents[: self.MAX_ACTIVE_INTENTS]
 
     def delete(self, intent_id: str) -> bool:
         """Remove an intent from the repository.

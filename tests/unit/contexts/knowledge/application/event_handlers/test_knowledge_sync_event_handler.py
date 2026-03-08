@@ -27,7 +27,7 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

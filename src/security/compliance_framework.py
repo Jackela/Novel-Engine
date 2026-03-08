@@ -18,6 +18,7 @@ Features:
 import asyncio
 import json
 import logging
+import structlog
 import re
 import time
 from dataclasses import dataclass, field
@@ -29,7 +30,7 @@ import aiosqlite
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ComplianceStandard(str, Enum):
@@ -182,15 +183,16 @@ class ComplianceReport:
 class SecurityEventMonitor:
     """Real-time security event monitoring and analysis"""
 
-    def __init__(self, db_path: str = "security_events.db"):
+    def __init__(self, db_path: str = "security_events.db") -> None:
         self.db_path = db_path
         self.event_handlers: Dict[str, List[Callable]] = {}
         self.threat_patterns = self._load_threat_patterns()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the security event database"""
         async with aiosqlite.connect(self.db_path) as db:
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -202,24 +204,29 @@ class SecurityEventMonitor:
                     timestamp TEXT NOT NULL,
                     metadata TEXT
                 )
-            """)
-            await db.execute("""
-                CREATE INDEX IF NOT EXISTS idx_events_timestamp 
+            """
+            )
+            await db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_events_timestamp
                 ON security_events(timestamp)
-            """)
-            await db.execute("""
-                CREATE INDEX IF NOT EXISTS idx_events_severity 
+            """
+            )
+            await db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_events_severity
                 ON security_events(severity)
-            """)
+            """
+            )
             await db.commit()
 
-    async def log_event(self, event: SecurityEvent):
+    async def log_event(self, event: SecurityEvent) -> None:
         """Log a security event"""
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
-                INSERT INTO security_events 
-                (event_id, event_type, severity, source_ip, user_id, endpoint, 
+                INSERT INTO security_events
+                (event_id, event_type, severity, source_ip, user_id, endpoint,
                  description, timestamp, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -243,7 +250,7 @@ class SecurityEventMonitor:
         # Check for threat patterns
         await self._analyze_threat_patterns(event)
 
-    async def _trigger_handlers(self, event: SecurityEvent):
+    async def _trigger_handlers(self, event: SecurityEvent) -> None:
         """Trigger registered event handlers"""
         handlers = self.event_handlers.get(event.event_type, [])
         handlers.extend(self.event_handlers.get("*", []))  # Wildcard handlers
@@ -255,9 +262,9 @@ class SecurityEventMonitor:
                 else:
                     handler(event)
             except Exception as e:
-                logger.error(f"Event handler error: {e}")
+                logger.error("Event handler error: %s", e)
 
-    async def _analyze_threat_patterns(self, event: SecurityEvent):
+    async def _analyze_threat_patterns(self, event: SecurityEvent) -> None:
         """Analyze event for threat patterns"""
         for pattern_name, pattern in self.threat_patterns.items():
             if await self._matches_pattern(event, pattern):
@@ -311,7 +318,7 @@ class SecurityEventMonitor:
             },
         }
 
-    def register_handler(self, event_type: str, handler: Callable):
+    def register_handler(self, event_type: str, handler: Callable) -> None:
         """Register event handler"""
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
@@ -326,8 +333,7 @@ class SecurityEventMonitor:
     ) -> List[SecurityEvent]:
         """Get security events with filtering"""
         query = "SELECT * FROM security_events WHERE 1=1"
-        params = []
-
+        params: list[Any] = []
         if start_time:
             query += " AND timestamp >= ?"
             params.append(start_time.isoformat())
@@ -343,7 +349,7 @@ class SecurityEventMonitor:
         query += " ORDER BY timestamp DESC LIMIT ?"
         params.append(limit)
 
-        events = []
+        events: list[Any] = []
         async with aiosqlite.connect(self.db_path) as db:
             async with db.execute(query, params) as cursor:
                 async for row in cursor:
@@ -366,16 +372,16 @@ class SecurityEventMonitor:
 class ComplianceEngine:
     """Main compliance monitoring and assessment engine"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: Dict[ComplianceStandard, List[ComplianceRule]] = {}
         self.event_monitor = SecurityEventMonitor()
         self._initialize_rules()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the compliance engine"""
         await self.event_monitor.initialize()
 
-    def _initialize_rules(self):
+    def _initialize_rules(self) -> None:
         """Initialize compliance rules for different standards"""
 
         # OWASP Top 10 Rules
@@ -477,14 +483,13 @@ class ComplianceEngine:
         """Perform comprehensive compliance assessment"""
         context = context or {}
         assessment_id = f"assessment_{int(time.time())}"
-        all_results = []
-
-        logger.info(f"Starting compliance assessment: {assessment_id}")
+        all_results: list[Any] = []
+        logger.info("Starting compliance assessment: %s", assessment_id)
 
         # Evaluate rules for each standard
         for standard in standards:
             if standard in self.rules:
-                logger.info(f"Evaluating {standard.value} compliance rules")
+                logger.info("Evaluating %s compliance rules", standard.value)
 
                 for rule in self.rules[standard]:
                     result = await rule.evaluate(context)
@@ -538,7 +543,7 @@ class ComplianceEngine:
             results=all_results,
         )
 
-        logger.info(f"Compliance assessment complete: {overall_score:.1f}% compliant")
+        logger.info("Compliance assessment complete: %.1f%% compliant", overall_score)
 
         return report
 
@@ -656,7 +661,7 @@ class ComplianceEngine:
 
     def _generate_console_compliance_report(self, report: ComplianceReport) -> str:
         """Generate console compliance report"""
-        output = []
+        output: list[Any] = []
         output.append("=" * 60)
         output.append("COMPLIANCE ASSESSMENT REPORT")
         output.append("=" * 60)
@@ -799,7 +804,7 @@ async def main():
 
     # Get recent events
     recent_events = await event_monitor.get_events(limit=10)
-    logger.info(f"Logged {len(recent_events)} security events")
+    logger.info("Logged %d security events", len(recent_events))
 
     logger.info("Compliance framework demonstration complete")
 

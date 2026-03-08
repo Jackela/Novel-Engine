@@ -6,7 +6,7 @@ This module implements the main application service for narrative arc operations
 providing a high-level interface that orchestrates between commands, queries, and domain services.
 """
 
-import logging
+import structlog
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -47,7 +47,7 @@ from ..queries.narrative_arc_queries import (
 )
 from ..query_handlers.narrative_arc_query_handlers import NarrativeArcQueryHandler
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeArcApplicationService:
@@ -63,7 +63,7 @@ class NarrativeArcApplicationService:
         repository: INarrativeArcRepository,
         flow_service: Optional[NarrativeFlowService] = None,
         causal_service: Optional[CausalGraphService] = None,
-    ):
+    ) -> None:
         """
         Initialize application service.
 
@@ -89,7 +89,7 @@ class NarrativeArcApplicationService:
             causal_service=self.causal_service,
         )
 
-        logger.info("Narrative Arc Application Service initialized")
+        logger.info("narrative_arc_application_service_initialized")
 
     # Arc Lifecycle Management
 

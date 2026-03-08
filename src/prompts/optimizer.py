@@ -8,13 +8,13 @@ using LLM-based meta-prompting techniques.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .base import Language, StoryGenre
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -196,7 +196,7 @@ Return ONLY the optimized prompt, no explanations."""
 
 仅返回优化后的提示，不要解释。"""
 
-    def __init__(self, llm_service: Optional[Any] = None):
+    def __init__(self, llm_service: Optional[Any] = None) -> None:
         """
         Initialize the optimizer.
 

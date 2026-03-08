@@ -15,14 +15,14 @@ Features:
 - PersonalizedNarrative 个性化叙事：基于主观现实的故事生成
 """
 
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InformationSource(Enum):
@@ -99,7 +99,7 @@ class BeliefModel:
     active_hypotheses: Dict[str, float] = field(default_factory=dict)  # 假设->可信度
     cognitive_filters: Dict[KnowledgeCategory, float] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化认知过滤器"""
         if not self.cognitive_filters:
             # 默认认知偏好权重
@@ -131,7 +131,7 @@ class BeliefModel:
         self, new_fragment: InformationFragment
     ) -> List[InformationFragment]:
         """检测信息冲突"""
-        conflicts = []
+        conflicts: list[Any] = []
         for existing in self.information_fragments:
             if (
                 existing.category == new_fragment.category
@@ -151,7 +151,7 @@ class BeliefModel:
 
     def _resolve_conflicts(
         self, new_fragment: InformationFragment, conflicts: List[InformationFragment]
-    ):
+    ) -> None:
         """解决信息冲突"""
         new_reliability = new_fragment.get_current_reliability()
 
@@ -167,7 +167,7 @@ class BeliefModel:
                 self.information_fragments.remove(conflict)
                 logger.debug(f"Replaced conflicting information for {self.agent_id}")
 
-    def _update_hypotheses(self, fragment: InformationFragment):
+    def _update_hypotheses(self, fragment: InformationFragment) -> None:
         """根据新信息更新假设"""
         # 简化的假设更新逻辑
         category_weight = self.cognitive_filters.get(fragment.category, 1.0)
@@ -198,7 +198,7 @@ class FogOfWarState:
     last_update: datetime = field(default_factory=datetime.now)
 
     def can_access_information(
-        self, category: KnowledgeCategory, location: str = None
+        self, category: KnowledgeCategory, location: Optional[str] = None
     ) -> float:
         """判断能否访问某类信息，返回访问程度(0-1)"""
         base_access = self.information_access_level.get(category, 0.3)
@@ -219,13 +219,15 @@ class FogOfWarState:
 class FogOfWarService:
     """迷雾战争服务 - 管理信息访问权限"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fog_states: Dict[str, FogOfWarState] = {}
         self.global_visibility_map: Dict[str, Set[str]] = defaultdict(
             set
         )  # location -> visible_agents
 
-    def initialize_agent_fog(self, agent_id: str, initial_location: str = None):
+    def initialize_agent_fog(
+        self, agent_id: str, initial_location: Optional[str] = None
+    ) -> None:
         """初始化Agent的迷雾战争状态"""
         fog_state = FogOfWarState(
             agent_id=agent_id,
@@ -247,8 +249,11 @@ class FogOfWarService:
         self.fog_states[agent_id] = fog_state
 
     def update_visibility(
-        self, agent_id: str, new_locations: List[str], lost_locations: List[str] = None
-    ):
+        self,
+        agent_id: str,
+        new_locations: List[str],
+        lost_locations: Optional[List[str]] = None,
+    ) -> None:
         """更新Agent的可见区域"""
         if agent_id not in self.fog_states:
             self.initialize_agent_fog(agent_id)
@@ -274,8 +279,7 @@ class FogOfWarService:
             return []
 
         fog_state = self.fog_states[agent_id]
-        visible_agents = set()
-
+        visible_agents: set[Any] = set()
         # 在可见位置查找其他Agent
         for location in fog_state.visible_locations:
             visible_agents.update(self.global_visibility_map[location])
@@ -295,7 +299,7 @@ class FogOfWarService:
             }
 
         fog_state = self.fog_states[agent_id]
-        filtered_state = {
+        filtered_state: dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "visible_locations": list(fog_state.visible_locations),
             "known_agents": [],
@@ -379,7 +383,7 @@ class PersonalizedTurnBrief:
 class TurnBriefFactory:
     """回合简报工厂 - 生成个性化的Turn Brief"""
 
-    def __init__(self, fog_service: FogOfWarService):
+    def __init__(self, fog_service: FogOfWarService) -> None:
         self.fog_service = fog_service
         self.belief_models: Dict[str, BeliefModel] = {}
         self.narrative_templates = self._load_narrative_templates()
@@ -395,12 +399,11 @@ class TurnBriefFactory:
         }
 
     def initialize_belief_model(
-        self, agent_id: str, personality_traits: Dict[str, float] = None
-    ):
+        self, agent_id: str, personality_traits: Optional[Dict[str, float]] = None
+    ) -> BeliefModel:
         """初始化Agent的信念模型"""
         if personality_traits is None:
             personality_traits = {}
-
         belief_model = BeliefModel(
             agent_id=agent_id, personality_bias=personality_traits
         )
@@ -413,7 +416,7 @@ class TurnBriefFactory:
         agent_id: str,
         turn_number: int,
         global_world_state: Dict,
-        recent_events: List[Dict] = None,
+        recent_events: Optional[List[Dict]] = None,
     ) -> PersonalizedTurnBrief:
         """创建个性化回合简报"""
 
@@ -464,7 +467,7 @@ class TurnBriefFactory:
 
     async def _process_recent_events(
         self, belief_model: BeliefModel, events: List[Dict]
-    ):
+    ) -> None:
         """处理最近发生的事件"""
         for event in events:
             # 将事件转换为信息片段
@@ -505,8 +508,7 @@ class TurnBriefFactory:
         self, belief_model: BeliefModel, world_state: Dict
     ) -> List[InformationFragment]:
         """提取可用的信息片段"""
-        available_info = []
-
+        available_info: list[Any] = []
         # 从信念模型中提取可靠的信息
         for fragment in belief_model.information_fragments:
             if fragment.get_current_reliability() > 0.3:
@@ -620,7 +622,7 @@ class TurnBriefFactory:
         """确定当前情境类型"""
 
         # 统计信息类型
-        info_categories = defaultdict(int)
+        info_categories: dict[KnowledgeCategory, int] = defaultdict(int)
         for info in available_info:
             info_categories[info.category] += 1
 
@@ -646,8 +648,7 @@ class TurnBriefFactory:
         for info in available_info[:5]:  # 只取前5个最重要的信息
             categorized_info[info.category].append(info)
 
-        summary_parts = []
-
+        summary_parts: list[Any] = []
         # 生成每个类别的摘要
         for category, infos in categorized_info.items():
             if category == KnowledgeCategory.SPATIAL:
@@ -670,8 +671,7 @@ class TurnBriefFactory:
         self, belief_model: BeliefModel, available_info: List[InformationFragment]
     ) -> Dict[str, float]:
         """计算各类信息的可信度"""
-        confidence = {}
-
+        confidence: dict[Any, Any] = {}
         # 计算各知识类别的平均可信度
         for category in KnowledgeCategory:
             relevant_info = [
@@ -700,7 +700,7 @@ class TurnBriefFactory:
 class SubjectiveRealityEngine:
     """主观现实引擎主类"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fog_service = FogOfWarService()
         self.turn_brief_factory = TurnBriefFactory(self.fog_service)
         self.active_agents: Set[str] = set()
@@ -714,8 +714,8 @@ class SubjectiveRealityEngine:
     async def initialize_agent(
         self,
         agent_id: str,
-        personality_traits: Dict[str, float] = None,
-        initial_location: str = None,
+        personality_traits: Optional[Dict[str, float]] = None,
+        initial_location: Optional[str] = None,
     ) -> BeliefModel:
         """初始化Agent的主观现实系统"""
 
@@ -737,7 +737,7 @@ class SubjectiveRealityEngine:
         agent_id: str,
         turn_number: int,
         global_world_state: Dict,
-        recent_events: List[Dict] = None,
+        recent_events: Optional[List[Dict]] = None,
     ) -> PersonalizedTurnBrief:
         """生成Agent的个性化回合简报"""
 
@@ -756,7 +756,7 @@ class SubjectiveRealityEngine:
         )
         return brief
 
-    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]):
+    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]) -> None:
         """更新Agent的知识状态"""
 
         if agent_id not in self.active_agents:
@@ -815,7 +815,7 @@ def create_subjective_reality_engine() -> SubjectiveRealityEngine:
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage():
+    async def example_usage() -> None:
         engine = create_subjective_reality_engine()
 
         # 初始化一个Agent

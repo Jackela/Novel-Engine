@@ -98,7 +98,7 @@ class OllamaLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 120,  # Longer timeout for local inference
-    ):
+    ) -> None:
         """
         Initialize the Ollama LLM client.
 
@@ -297,7 +297,7 @@ class OllamaLLMClient:
         try:
             headers: dict[str, str] = {"Content-Type": "application/json"}
             if self._api_key:
-                headers["Authorization"] = f"Bearer {self._api_key}"  # type: ignore[dict-item]
+                headers["Authorization"] = f"Bearer {self._api_key}"
 
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.get(

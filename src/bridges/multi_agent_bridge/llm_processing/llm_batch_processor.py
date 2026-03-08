@@ -8,6 +8,7 @@ Intelligent batching and processing of LLM requests for optimal performance and 
 import asyncio
 import heapq
 import logging
+import structlog
 import threading
 import time
 from collections import defaultdict
@@ -22,7 +23,7 @@ try:
     from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 except ImportError:
     # Fallback for testing
-    def get_llm_service():
+    def get_llm_service() -> None:
         return None
 
     class LLMRequest:
@@ -54,12 +55,12 @@ class LLMBatchProcessor:
         max_batch_size: int = 5,
         batch_timeout_ms: int = 150,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.cost_tracker = cost_tracker
         self.performance_budget = performance_budget
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Request queuing
         self._request_queue: List[LLMBatchRequest] = []
@@ -293,7 +294,7 @@ class LLMBatchProcessor:
                 return
 
             # Extract requests for batching
-            batch_requests = []
+            batch_requests: list[Any] = []
             with self._queue_lock:
                 while self._request_queue and len(batch_requests) < self.max_batch_size:
                     batch_requests.append(heapq.heappop(self._request_queue))
@@ -465,8 +466,7 @@ class LLMBatchProcessor:
     ) -> List[Dict[str, Any]]:
         """Parse batch response into individual results."""
         try:
-            results = []
-
+            results: list[Any] = []
             # Split response by response markers
             import re
 
@@ -567,7 +567,7 @@ class LLMBatchProcessor:
                 try:
                     await self._batch_processor_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             if self._request_queue:

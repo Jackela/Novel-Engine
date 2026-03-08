@@ -41,10 +41,10 @@ except ImportError:
 
     # Stub implementation when geoip2 is not available and mocks are allowed
     class MockGeoIP2Database:
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs) -> None:
             pass
 
-        def city(self, ip):
+        def city(self, ip) -> None:
             class MockCity:
                 country = type("", (), {"iso_code": "US"})()
                 city = type("", (), {"name": "Unknown"})()
@@ -55,6 +55,7 @@ except ImportError:
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
     )()
 import logging
+import structlog
 import re
 import secrets
 from collections import defaultdict, deque
@@ -74,15 +75,15 @@ except ImportError:
 
     # Stub implementation when user_agents is not available and mocks are allowed
     class MockUserAgent:
-        def __init__(self):
+        def __init__(self) -> None:
             self.browser = type("", (), {"family": "Unknown"})()
             self.os = type("", (), {"family": "Unknown"})()
 
-    user_agents = type("", (), {"parse": lambda ua: MockUserAgent()})()
+    user_agents = type("", (), {"parse": lambda _ua: MockUserAgent()})()
 
 # Enhanced logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Enterprise Security Constants
 MAX_REQUESTS_PER_MINUTE = 60
@@ -188,7 +189,7 @@ class SecurityEvent:
 class SecurityMetrics:
     """Real-time Security Metrics"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.requests_per_minute = defaultdict(int)
         self.blocked_ips = set()
         self.threat_events = deque(maxlen=1000)
@@ -207,8 +208,8 @@ class EnterpriseSecurityManager:
         geoip_database_path: Optional[str] = None,
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
-        compliance_frameworks: List[ComplianceFramework] = None,
-    ):
+        compliance_frameworks: Optional[List[ComplianceFramework]] = None,
+    ) -> None:
         self.database_path = database_path
         self.redis_url = redis_url
         self.geoip_database_path = geoip_database_path
@@ -230,7 +231,7 @@ class EnterpriseSecurityManager:
         # Security rules engine
         self.security_rules = self._initialize_security_rules()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize Enterprise Security Components"""
         try:
             # Initialize Redis connection
@@ -253,17 +254,18 @@ class EnterpriseSecurityManager:
             logger.info("🛡️ ENTERPRISE SECURITY MANAGER INITIALIZED")
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Enterprise Security Manager: {e}")
+            logger.error("❌ Failed to initialize Enterprise Security Manager: %s", e)
             raise
 
-    async def _initialize_security_database(self):
+    async def _initialize_security_database(self) -> None:
         """Initialize enhanced security database schema"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
             await conn.execute("PRAGMA journal_mode = WAL")
 
             # Enhanced threat intelligence table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
                     ip_address TEXT PRIMARY KEY,
                     reputation_score REAL NOT NULL,
@@ -278,10 +280,12 @@ class EnterpriseSecurityManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Behavioral analytics table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS behavioral_profiles (
                     user_id TEXT PRIMARY KEY,
                     typical_access_hours TEXT, -- JSON array
@@ -293,10 +297,12 @@ class EnterpriseSecurityManager:
                     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
                 )
-            """)
+            """
+            )
 
             # Enhanced security events table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS enhanced_security_events (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -314,10 +320,12 @@ class EnterpriseSecurityManager:
                     resolved_at TIMESTAMP,
                     false_positive BOOLEAN DEFAULT FALSE
                 )
-            """)
+            """
+            )
 
             # IP reputation blacklist/whitelist
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS ip_reputation (
                     ip_address TEXT PRIMARY KEY,
                     list_type TEXT NOT NULL, -- 'blacklist', 'whitelist'
@@ -328,10 +336,12 @@ class EnterpriseSecurityManager:
                     expires_at TIMESTAMP,
                     is_active BOOLEAN DEFAULT TRUE
                 )
-            """)
+            """
+            )
 
             # Compliance audit trails
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS compliance_audit_trail (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -344,7 +354,8 @@ class EnterpriseSecurityManager:
                     evidence TEXT, -- JSON object
                     compliance_officer TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("🛡️ Enhanced security database schema initialized")
@@ -389,8 +400,8 @@ class EnterpriseSecurityManager:
         user_agent = request.headers.get("user-agent", "unknown")
         request_path = str(request.url.path)
 
-        threat_indicators = []
-        security_actions = []
+        threat_indicators: list[Any] = []
+        security_actions: list[Any] = []
         max_threat_level = ThreatLevel.LOW
 
         try:
@@ -477,7 +488,7 @@ class EnterpriseSecurityManager:
             return is_allowed, security_actions, max_threat_level
 
         except Exception as e:
-            logger.error(f"❌ Security evaluation failed: {e}")
+            logger.error("❌ Security evaluation failed: %s", e)
             # Fail secure - block on errors
             return False, [SecurityAction.BLOCK_TEMPORARY], ThreatLevel.HIGH
 
@@ -514,7 +525,7 @@ class EnterpriseSecurityManager:
         day_count = results[4]
 
         # Check if any limit exceeded
-        exceeded = []
+        exceeded: list[Any] = []
         if minute_count > MAX_REQUESTS_PER_MINUTE:
             exceeded.append("minute")
         if hour_count > MAX_REQUESTS_PER_HOUR:
@@ -569,8 +580,7 @@ class EnterpriseSecurityManager:
         """Analyze IP reputation using multiple threat intelligence sources"""
         threat_level = ThreatLevel.LOW
         reputation_score = 0.0
-        threat_categories = []
-
+        threat_categories: list[Any] = []
         try:
             # Check database for known threats
             async with aiosqlite.connect(self.database_path) as conn:
@@ -598,7 +608,7 @@ class EnterpriseSecurityManager:
                 # Check IP blacklist/whitelist
                 cursor = await conn.execute(
                     """
-                    SELECT list_type, severity FROM ip_reputation 
+                    SELECT list_type, severity FROM ip_reputation
                     WHERE ip_address = ? AND is_active = TRUE
                     AND (expires_at IS NULL OR expires_at > ?)
                 """,
@@ -616,7 +626,7 @@ class EnterpriseSecurityManager:
                         reputation_score = 0.0
 
         except Exception as e:
-            logger.error(f"Error analyzing IP reputation for {ip_address}: {e}")
+            logger.error("Error analyzing IP reputation for %s: %s", ip_address, e)
 
         return {
             "threat_level": threat_level,
@@ -650,7 +660,7 @@ class EnterpriseSecurityManager:
             }
 
         except Exception as e:
-            logger.warning(f"GeoIP analysis failed for {ip_address}: {e}")
+            logger.warning("GeoIP analysis failed for %s: %s", ip_address, e)
             return {"is_high_risk": False, "country_code": None}
 
     def _analyze_user_agent(self, user_agent: str) -> Dict[str, Any]:
@@ -666,8 +676,7 @@ class EnterpriseSecurityManager:
             re.match(pattern, user_agent) for pattern in ALLOWED_USER_AGENTS_PATTERNS
         )
 
-        suspicious_indicators = []
-
+        suspicious_indicators: list[Any] = []
         if not is_valid_pattern:
             suspicious_indicators.append("unknown_pattern")
 
@@ -705,8 +714,7 @@ class EnterpriseSecurityManager:
             return {"anomaly_score": 0.0, "is_first_time": True}
 
         anomaly_score = 0.0
-        anomalies = []
-
+        anomalies: list[Any] = []
         # Check time-based patterns
         if current_hour not in profile.typical_access_hours:
             anomaly_score += 0.2
@@ -754,8 +762,7 @@ class EnterpriseSecurityManager:
         self, ip_address: str, request_path: str, user_agent: str
     ) -> Dict[str, Any]:
         """Analyze for attack patterns and suspicious behavior"""
-        attack_indicators = []
-
+        attack_indicators: list[Any] = []
         # SQL injection patterns
         sql_patterns = [
             r"union.*select",
@@ -847,7 +854,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT typical_access_hours, typical_countries, typical_user_agents,
-                           typical_request_patterns, average_session_duration, 
+                           typical_request_patterns, average_session_duration,
                            anomaly_score, last_updated
                     FROM behavioral_profiles WHERE user_id = ?
                 """,
@@ -871,7 +878,7 @@ class EnterpriseSecurityManager:
                         ),
                     )
         except Exception as e:
-            logger.error(f"Error retrieving behavioral profile for {user_id}: {e}")
+            logger.error("Error retrieving behavioral profile for %s: %s", user_id, e)
 
         return None
 
@@ -927,7 +934,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT OR REPLACE INTO behavioral_profiles 
+                    INSERT OR REPLACE INTO behavioral_profiles
                     (user_id, typical_access_hours, typical_countries, typical_user_agents,
                      typical_request_patterns, average_session_duration, anomaly_score, last_updated)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -946,15 +953,15 @@ class EnterpriseSecurityManager:
                 await conn.commit()
 
         except Exception as e:
-            logger.error(f"Error updating behavioral profile for {user_id}: {e}")
+            logger.error("Error updating behavioral profile for %s: %s", user_id, e)
 
-    async def _load_behavioral_profiles(self):
+    async def _load_behavioral_profiles(self) -> None:
         """Load behavioral profiles into memory"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
                 cursor = await conn.execute(
                     """
-                    SELECT user_id, typical_access_hours, typical_countries, 
+                    SELECT user_id, typical_access_hours, typical_countries,
                            typical_user_agents, typical_request_patterns,
                            average_session_duration, anomaly_score, last_updated
                     FROM behavioral_profiles
@@ -982,11 +989,12 @@ class EnterpriseSecurityManager:
                     self.behavioral_profiles[row[0]] = profile
 
                 logger.info(
-                    f"📊 Loaded {len(self.behavioral_profiles)} behavioral profiles"
+                    "📊 Loaded %d behavioral profiles",
+                    len(self.behavioral_profiles)
                 )
 
         except Exception as e:
-            logger.error(f"Error loading behavioral profiles: {e}")
+            logger.error("Error loading behavioral profiles: %s", e)
 
     async def _log_security_event(
         self,
@@ -1021,7 +1029,7 @@ class EnterpriseSecurityManager:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO enhanced_security_events 
+                    INSERT INTO enhanced_security_events
                     (id, timestamp, event_type, severity, source_ip, user_id, user_agent,
                      request_path, threat_indicators, automated_response, evidence, compliance_tags)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -1051,9 +1059,9 @@ class EnterpriseSecurityManager:
                 await self._send_security_alert(event)
 
         except Exception as e:
-            logger.error(f"Failed to log security event: {e}")
+            logger.error("Failed to log security event: %s", e)
 
-    async def _send_security_alert(self, event: SecurityEvent):
+    async def _send_security_alert(self, event: SecurityEvent) -> None:
         """Send real-time security alerts to administrators"""
         alert_data = {
             "event_id": event.id,
@@ -1070,7 +1078,8 @@ class EnterpriseSecurityManager:
         )
 
         logger.warning(
-            f"🚨 SECURITY ALERT: {event.severity.value.upper()} - {event.event_type} from {event.source_ip}"
+            "🚨 SECURITY ALERT: %s - %s from %s",
+            event.severity.value.upper(), event.event_type, event.source_ip
         )
 
     async def get_security_metrics(self) -> Dict[str, Any]:
@@ -1084,7 +1093,7 @@ class EnterpriseSecurityManager:
                 cursor = await conn.execute(
                     """
                     SELECT severity, COUNT(*) as count
-                    FROM enhanced_security_events 
+                    FROM enhanced_security_events
                     WHERE timestamp > ?
                     GROUP BY severity
                 """,
@@ -1093,10 +1102,12 @@ class EnterpriseSecurityManager:
                 threat_counts = dict(await cursor.fetchall())
 
                 # Get blocked IPs
-                cursor = await conn.execute("""
-                    SELECT COUNT(*) FROM ip_reputation 
+                cursor = await conn.execute(
+                    """
+                    SELECT COUNT(*) FROM ip_reputation
                     WHERE list_type = 'blacklist' AND is_active = TRUE
-                """)
+                """
+                )
                 blocked_ips_count = (await cursor.fetchone())[0]
 
                 # Get top threat indicators
@@ -1114,11 +1125,10 @@ class EnterpriseSecurityManager:
                 threat_indicators = await cursor.fetchall()
 
         except Exception as e:
-            logger.error(f"Error retrieving security metrics: {e}")
-            threat_counts = {}
+            logger.error("Error retrieving security metrics: %s", e)
+            threat_counts: dict[Any, Any] = {}
             blocked_ips_count = 0
-            threat_indicators = []
-
+            threat_indicators: list[Any] = []
         return {
             "threat_events_24h": threat_counts,
             "blocked_ips": blocked_ips_count,
@@ -1145,7 +1155,7 @@ class EnterpriseSecurityManager:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO ip_reputation 
+                INSERT OR REPLACE INTO ip_reputation
                 (ip_address, list_type, reason, severity, created_by, expires_at)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
@@ -1154,10 +1164,11 @@ class EnterpriseSecurityManager:
             await conn.commit()
 
         logger.info(
-            f"🛡️ Added IP {ip_address} to {list_type} (severity: {severity.value})"
+            "🛡️ Added IP %s to %s (severity: %s)",
+            ip_address, list_type, severity.value
         )
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Cleanup resources"""
         if self.redis_client:
             await self.redis_client.close()

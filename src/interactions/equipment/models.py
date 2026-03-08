@@ -109,7 +109,7 @@ class DynamicEquipment:
     standard_rites_performed: int = 0
     blessing_level: float = 1.0  # Effectiveness multiplier from blessings
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.usage_statistics:
             self.usage_statistics = {
                 "total_uses": 0,

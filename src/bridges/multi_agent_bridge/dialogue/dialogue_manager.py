@@ -6,6 +6,7 @@ Manages agent-to-agent dialogues and conversation coordination.
 """
 
 import logging
+import structlog
 import uuid
 from dataclasses import asdict
 from datetime import datetime
@@ -37,9 +38,9 @@ class DialogueManager:
 
     def __init__(
         self, llm_processor: LLMBatchProcessor, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         self.llm_processor = llm_processor
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Active dialogues
         self._active_dialogues: Dict[str, AgentDialogue] = {}
@@ -353,7 +354,7 @@ class DialogueManager:
             content = llm_result.get("content", "")
 
             # Extract dialogue components
-            dialogue_lines = []
+            dialogue_lines: list[Any] = []
             outcome = "No outcome determined"
             relationship_impact = "No relationship impact assessed"
 

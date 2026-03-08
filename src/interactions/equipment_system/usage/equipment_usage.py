@@ -8,6 +8,7 @@ Handles category-specific usage patterns and system core interactions.
 
 import asyncio
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -24,20 +25,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -60,7 +61,7 @@ class EquipmentUsageProcessor:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """
         Initialize equipment usage processor.
 
@@ -69,7 +70,7 @@ class EquipmentUsageProcessor:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Usage processing state
         self._processing_lock = asyncio.Lock()
@@ -219,8 +220,7 @@ class EquipmentUsageProcessor:
             "intensity", "normal"
         )  # low, normal, high, extreme
 
-        effects = []
-
+        effects: list[Any] = []
         # Calculate weapon wear based on usage intensity
         intensity_multipliers = {"low": 0.5, "normal": 1.0, "high": 1.5, "extreme": 2.0}
         intensity_factor = intensity_multipliers.get(combat_intensity, 1.0)
@@ -269,8 +269,7 @@ class EquipmentUsageProcessor:
             "environment", "normal"
         )  # normal, harsh, extreme
 
-        effects = []
-
+        effects: list[Any] = []
         # Track damage absorption
         if "damage_stats" not in equipment.usage_statistics:
             equipment.usage_statistics["damage_stats"] = {
@@ -320,8 +319,7 @@ class EquipmentUsageProcessor:
         )  # simple, normal, complex, expert
         success_rate = usage_context.get("success", True)
 
-        effects = []
-
+        effects: list[Any] = []
         # Track tool performance
         if "task_stats" not in equipment.usage_statistics:
             equipment.usage_statistics["task_stats"] = {
@@ -373,8 +371,7 @@ class EquipmentUsageProcessor:
         quantity_used = usage_context.get("quantity", 1)
         effectiveness = usage_context.get("effectiveness", 1.0)
 
-        effects = []
-
+        effects: list[Any] = []
         # Consumables have quantity-based usage
         current_quantity = equipment.usage_statistics.get(
             "remaining_quantity", 100
@@ -630,7 +627,7 @@ class EquipmentUsageProcessor:
             try:
                 return EquipmentCategory(equipment.base_equipment.category)
             except (ValueError, AttributeError):
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment.base_equipment, "name", "").lower()
 
         # Basic category inference

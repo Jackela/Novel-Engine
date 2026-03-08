@@ -25,6 +25,7 @@ Features:
 import asyncio
 import json
 import logging
+import structlog
 import os
 import threading
 import time
@@ -72,7 +73,7 @@ try:
 except ImportError:
     FASTAPI_AVAILABLE = False
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -136,7 +137,7 @@ class LogRecord:
 class MetricsCollector:
     """Prometheus-compatible metrics collector"""
 
-    def __init__(self, namespace: str = "novel_engine"):
+    def __init__(self, namespace: str = "novel_engine") -> None:
         self.namespace = namespace
         self.registry = CollectorRegistry() if PROMETHEUS_AVAILABLE else None
         self.metrics: Dict[str, Any] = {}
@@ -145,9 +146,9 @@ class MetricsCollector:
         if PROMETHEUS_AVAILABLE:
             self._initialize_prometheus_metrics()
 
-        logger.info(f"Metrics collector initialized with namespace: {namespace}")
+        logger.info("Metrics collector initialized with namespace: %s", namespace)
 
-    def _initialize_prometheus_metrics(self):
+    def _initialize_prometheus_metrics(self) -> None:
         """Initialize common Prometheus metrics"""
         if not PROMETHEUS_AVAILABLE:
             return
@@ -226,8 +227,8 @@ class MetricsCollector:
         )
 
     def increment_counter(
-        self, name: str, labels: Dict[str, str] = None, value: float = 1.0
-    ):
+        self, name: str, labels: Optional[Dict[str, str]] = None, value: float = 1.0
+    ) -> None:
         """Increment a counter metric"""
         labels = labels or {}
 
@@ -246,7 +247,7 @@ class MetricsCollector:
                     name=name, metric_type="counter", value=value, labels=labels
                 )
 
-    def set_gauge(self, name: str, value: float, labels: Dict[str, str] = None):
+    def set_gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         """Set a gauge metric"""
         labels = labels or {}
 
@@ -262,7 +263,9 @@ class MetricsCollector:
                 name=name, metric_type="gauge", value=value, labels=labels
             )
 
-    def observe_histogram(self, name: str, value: float, labels: Dict[str, str] = None):
+    def observe_histogram(
+        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+    ) -> None:
         """Observe a histogram metric"""
         labels = labels or {}
 
@@ -280,7 +283,7 @@ class MetricsCollector:
 
     def record_http_request(
         self, method: str, endpoint: str, status: int, duration: float
-    ):
+    ) -> None:
         """Record HTTP request metrics"""
         self.increment_counter(
             "http_requests_total",
@@ -291,7 +294,7 @@ class MetricsCollector:
             "http_request_duration", duration, {"method": method, "endpoint": endpoint}
         )
 
-    def update_system_metrics(self):
+    def update_system_metrics(self) -> None:
         """Update system resource metrics"""
         try:
             # Memory usage
@@ -306,7 +309,7 @@ class MetricsCollector:
             self.set_gauge("cpu_usage_percent", cpu_percent)
 
         except Exception as e:
-            logger.warning(f"Failed to update system metrics: {e}")
+            logger.warning("Failed to update system metrics: %s", e)
 
     def get_prometheus_metrics(self) -> str:
         """Get metrics in Prometheus format"""
@@ -314,7 +317,7 @@ class MetricsCollector:
             return generate_latest(self.registry).decode("utf-8")
         else:
             # Generate simple text format for fallback metrics
-            lines = []
+            lines: list[Any] = []
             for key, record in self.fallback_metrics.items():
                 labels_str = ""
                 if record.labels:
@@ -357,13 +360,13 @@ class MetricsCollector:
 class StructuredLogger:
     """Structured JSON logger with correlation support"""
 
-    def __init__(self, name: str, level: str = "INFO"):
+    def __init__(self, name: str, level: str = "INFO") -> None:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(getattr(logging, level.upper()))
         self._setup_handler()
         self._context_vars = threading.local()
 
-    def _setup_handler(self):
+    def _setup_handler(self) -> None:
         """Setup JSON formatter"""
         handler = logging.StreamHandler()
         formatter = StructuredFormatter()
@@ -374,14 +377,14 @@ class StructuredLogger:
         self.logger.addHandler(handler)
         self.logger.propagate = False
 
-    def set_context(self, **kwargs):
+    def set_context(self, **kwargs: Any) -> None:
         """Set context variables for this thread"""
         if not hasattr(self._context_vars, "context"):
             self._context_vars.context = {}
 
         self._context_vars.context.update(kwargs)
 
-    def clear_context(self):
+    def clear_context(self) -> None:
         """Clear context variables"""
         if hasattr(self._context_vars, "context"):
             self._context_vars.context.clear()
@@ -392,7 +395,7 @@ class StructuredLogger:
             return self._context_vars.context.copy()
         return {}
 
-    def _log(self, level: str, message: str, **kwargs):
+    def _log(self, level: str, message: str, **kwargs: Any) -> None:
         """Internal logging method"""
         context = self._get_context()
         context.update(kwargs)
@@ -410,23 +413,23 @@ class StructuredLogger:
             getattr(logging, level.upper()), json.dumps(record.to_dict(), default=str)
         )
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message"""
         self._log("DEBUG", message, **kwargs)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info message"""
         self._log("INFO", message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message"""
         self._log("WARNING", message, **kwargs)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs: Any) -> None:
         """Log error message"""
         self._log("ERROR", message, **kwargs)
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, **kwargs: Any) -> None:
         """Log critical message"""
         self._log("CRITICAL", message, **kwargs)
 
@@ -434,7 +437,7 @@ class StructuredLogger:
 class StructuredFormatter(logging.Formatter):
     """Custom formatter for structured logging"""
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         # If the message is already JSON, return as-is
         if record.getMessage().startswith("{"):
             return record.getMessage()
@@ -460,7 +463,7 @@ class StructuredFormatter(logging.Formatter):
 class TracingManager:
     """Distributed tracing manager"""
 
-    def __init__(self, service_name: str = "novel-engine", jaeger_endpoint: str = None):
+    def __init__(self, service_name: str = "novel-engine", jaeger_endpoint: str = None) -> None:
         self.service_name = service_name
         self.active_spans: Dict[str, TraceSpan] = {}
         self.span_history = deque(maxlen=1000)  # Keep recent spans
@@ -468,9 +471,9 @@ class TracingManager:
         if OTEL_AVAILABLE and jaeger_endpoint:
             self._setup_jaeger(jaeger_endpoint)
 
-        logger.info(f"Tracing manager initialized for service: {service_name}")
+        logger.info("Tracing manager initialized for service: %s", service_name)
 
-    def _setup_jaeger(self, endpoint: str):
+    def _setup_jaeger(self, endpoint: str) -> None:
         """Setup Jaeger tracing"""
         try:
             jaeger_exporter = JaegerExporter(
@@ -488,11 +491,11 @@ class TracingManager:
             logger.info("Jaeger tracing configured")
 
         except Exception as e:
-            logger.warning(f"Failed to setup Jaeger tracing: {e}")
+            logger.warning("Failed to setup Jaeger tracing: %s", e)
             self.tracer = None
 
     def start_span(
-        self, operation_name: str, parent_span_id: str = None, **labels
+        self, operation_name: str, parent_span_id: str = None, **labels: Any
     ) -> str:
         """Start a new trace span"""
         span_id = str(uuid.uuid4())
@@ -516,10 +519,10 @@ class TracingManager:
 
         return span_id
 
-    def finish_span(self, span_id: str, status: str = "OK", error: str = None):
+    def finish_span(self, span_id: str, status: str = "OK", error: str = None) -> None:
         """Finish a trace span"""
         if span_id not in self.active_spans:
-            logger.warning(f"Attempted to finish unknown span: {span_id}")
+            logger.warning("Attempted to finish unknown span: %s", span_id)
             return
 
         span = self.active_spans[span_id]
@@ -532,10 +535,10 @@ class TracingManager:
         self.span_history.append(span)
         del self.active_spans[span_id]
 
-        logger.debug(f"Finished span {span.operation_name}: {span.duration_ms:.2f}ms")
+        logger.debug("Finished span %s: %.2fms", span.operation_name, span.duration_ms)
 
     @contextmanager
-    def trace_operation(self, operation_name: str, **labels):
+    def trace_operation(self, operation_name: str, **labels: Any) -> Any:
         """Context manager for tracing operations"""
         span_id = self.start_span(operation_name, **labels)
         try:
@@ -547,8 +550,7 @@ class TracingManager:
 
     def get_trace_summary(self, trace_id: str) -> List[Dict[str, Any]]:
         """Get trace summary for a trace ID"""
-        spans = []
-
+        spans: list[Any] = []
         # Check active spans
         for span in self.active_spans.values():
             if span.trace_id == trace_id:
@@ -565,23 +567,23 @@ class TracingManager:
 class PerformanceProfiler:
     """Real-time performance profiling and analytics"""
 
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size: int = 100) -> None:
         self.window_size = window_size
         self.operation_times = defaultdict(lambda: deque(maxlen=window_size))
         self.operation_counts = defaultdict(int)
         self.error_counts = defaultdict(int)
         self.start_times: Dict[str, datetime] = {}
 
-    def start_operation(self, operation_id: str):
+    def start_operation(self, operation_id: str) -> None:
         """Start timing an operation"""
         self.start_times[operation_id] = datetime.now()
 
     def finish_operation(
         self, operation_id: str, operation_name: str, success: bool = True
-    ):
+    ) -> float:
         """Finish timing an operation"""
         if operation_id not in self.start_times:
-            logger.warning(f"Attempted to finish unknown operation: {operation_id}")
+            logger.warning("Attempted to finish unknown operation: %s", operation_id)
             return 0.0
 
         duration = (datetime.now() - self.start_times[operation_id]).total_seconds()
@@ -597,7 +599,7 @@ class PerformanceProfiler:
         return duration
 
     @contextmanager
-    def profile_operation(self, operation_name: str):
+    def profile_operation(self, operation_name: str) -> Any:
         """Context manager for profiling operations"""
         operation_id = str(uuid.uuid4())
         self.start_operation(operation_id)
@@ -611,8 +613,7 @@ class PerformanceProfiler:
 
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics"""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         for operation_name, times in self.operation_times.items():
             if times:
                 times_list = list(times)
@@ -642,7 +643,7 @@ class PerformanceProfiler:
 class SecurityAuditor:
     """Security event auditing and logging"""
 
-    def __init__(self, logger: StructuredLogger):
+    def __init__(self, logger: StructuredLogger) -> None:
         self.logger = logger
         self.security_events = deque(maxlen=1000)
         self.threat_counts = defaultdict(int)
@@ -652,8 +653,8 @@ class SecurityAuditor:
         user_id: str,
         event_type: str,
         success: bool,
-        details: Dict[str, Any] = None,
-    ):
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Log authentication event"""
         event_data = {
             "event_category": "authentication",
@@ -668,9 +669,9 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if success:
-            self.logger.info(f"Authentication {event_type} successful", **event_data)
+            self.logger.info("Authentication %s successful", event_type, **event_data)
         else:
-            self.logger.warning(f"Authentication {event_type} failed", **event_data)
+            self.logger.warning("Authentication %s failed", event_type, **event_data)
             self.threat_counts[f"auth_failure_{event_type}"] += 1
 
     def log_authorization_event(
@@ -679,8 +680,8 @@ class SecurityAuditor:
         resource: str,
         action: str,
         granted: bool,
-        details: Dict[str, Any] = None,
-    ):
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Log authorization event"""
         event_data = {
             "event_category": "authorization",
@@ -695,14 +696,14 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if granted:
-            self.logger.debug(f"Access granted to {resource}", **event_data)
+            self.logger.debug("Access granted to %s", resource, **event_data)
         else:
-            self.logger.warning(f"Access denied to {resource}", **event_data)
+            self.logger.warning("Access denied to %s", resource, **event_data)
             self.threat_counts[f"access_denied_{action}"] += 1
 
     def log_security_threat(
         self, threat_type: str, severity: str, details: Dict[str, Any]
-    ):
+    ) -> None:
         """Log security threat"""
         event_data = {
             "event_category": "security_threat",
@@ -739,20 +740,20 @@ class SecurityAuditor:
 class HealthMonitor:
     """System health monitoring"""
 
-    def __init__(self, metrics_collector: MetricsCollector):
+    def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics = metrics_collector
         self.health_checks: Dict[str, Callable] = {}
         self.last_check_results: Dict[str, Dict[str, Any]] = {}
         self.health_history = deque(maxlen=100)
 
-    def register_health_check(self, name: str, check_func: Callable):
+    def register_health_check(self, name: str, check_func: Callable) -> None:
         """Register a health check function"""
         self.health_checks[name] = check_func
-        logger.info(f"Registered health check: {name}")
+        logger.info("Registered health check: %s", name)
 
     async def run_health_checks(self) -> Dict[str, Any]:
         """Run all health checks"""
-        results = {}
+        results: dict[Any, Any] = {}
         overall_healthy = True
 
         for name, check_func in self.health_checks.items():
@@ -838,8 +839,8 @@ class ObservabilityManager:
     """Main observability manager orchestrating all components"""
 
     def __init__(
-        self, service_name: str = "novel-engine", config: Dict[str, Any] = None
-    ):
+        self, service_name: str = "novel-engine", config: Optional[Dict[str, Any]] = None
+    ) -> None:
         self.service_name = service_name
         self.config = config or {}
 
@@ -861,10 +862,10 @@ class ObservabilityManager:
 
         self.logger.info("Observability manager initialized", service=service_name)
 
-    def _register_default_health_checks(self):
+    def _register_default_health_checks(self) -> None:
         """Register default health checks"""
 
-        def memory_check():
+        def memory_check() -> Dict[str, Any]:
             memory = psutil.virtual_memory()
             return {
                 "healthy": memory.percent < 90,
@@ -875,7 +876,7 @@ class ObservabilityManager:
                 },
             }
 
-        def cpu_check():
+        def cpu_check() -> Dict[str, Any]:
             cpu_percent = psutil.cpu_percent(interval=1)
             return {
                 "healthy": cpu_percent < 80,
@@ -883,7 +884,7 @@ class ObservabilityManager:
                 "details": {"usage_percent": cpu_percent},
             }
 
-        def disk_check():
+        def disk_check() -> Dict[str, Any]:
             disk = psutil.disk_usage("/")
             return {
                 "healthy": disk.percent < 85,
@@ -898,10 +899,10 @@ class ObservabilityManager:
         self.health_monitor.register_health_check("cpu", cpu_check)
         self.health_monitor.register_health_check("disk", disk_check)
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """Start background monitoring tasks"""
 
-        def update_metrics():
+        def update_metrics() -> None:
             while True:
                 try:
                     self.metrics.update_system_metrics()
@@ -914,12 +915,12 @@ class ObservabilityManager:
         metrics_thread = threading.Thread(target=update_metrics, daemon=True)
         metrics_thread.start()
 
-    def create_request_middleware(self):
+    def create_request_middleware(self) -> Any:
         """Create FastAPI middleware for request tracking"""
         if not FASTAPI_AVAILABLE:
             return None
 
-        async def observability_middleware(request: Request, call_next):
+        async def observability_middleware(request: Request, call_next: Any) -> Any:
             # Generate request ID
             request_id = str(uuid.uuid4())
             request.state.request_id = request_id
@@ -992,7 +993,7 @@ class ObservabilityManager:
 
         return observability_middleware
 
-    def create_monitoring_routes(self):
+    def create_monitoring_routes(self) -> Any:
         """Create monitoring endpoints for FastAPI"""
         if not FASTAPI_AVAILABLE:
             return None
@@ -1000,7 +1001,7 @@ class ObservabilityManager:
         router = FastAPI()
 
         @router.get("/metrics")
-        async def get_metrics():
+        async def get_metrics() -> PlainTextResponse:
             """Prometheus metrics endpoint"""
             content = self.metrics.get_prometheus_metrics()
             return PlainTextResponse(
@@ -1011,19 +1012,19 @@ class ObservabilityManager:
             )
 
         @router.get("/metrics/json")
-        async def get_metrics_json():
+        async def get_metrics_json() -> JSONResponse:
             """JSON metrics endpoint"""
             return JSONResponse(content=self.metrics.get_metrics_summary())
 
         @router.get("/health")
-        async def health_check():
+        async def health_check() -> JSONResponse:
             """Health check endpoint"""
             health = await self.health_monitor.run_health_checks()
             status_code = 200 if health["overall_healthy"] else 503
             return JSONResponse(content=health, status_code=status_code)
 
         @router.get("/ready")
-        async def readiness_check():
+        async def readiness_check() -> JSONResponse:
             """Readiness check (lighter than health)"""
             return JSONResponse(
                 content={
@@ -1033,17 +1034,17 @@ class ObservabilityManager:
             )
 
         @router.get("/performance")
-        async def get_performance_stats():
+        async def get_performance_stats() -> JSONResponse:
             """Performance statistics endpoint"""
             return JSONResponse(content=self.profiler.get_performance_stats())
 
         @router.get("/security/summary")
-        async def get_security_summary():
+        async def get_security_summary() -> JSONResponse:
             """Security audit summary"""
             return JSONResponse(content=self.auditor.get_security_summary())
 
         @router.get("/traces/{trace_id}")
-        async def get_trace(trace_id: str):
+        async def get_trace(trace_id: str) -> JSONResponse:
             """Get trace information"""
             trace_data = self.tracer.get_trace_summary(trace_id)
             if not trace_data:
@@ -1052,14 +1053,14 @@ class ObservabilityManager:
 
         return router
 
-    def instrument_function(self, operation_name: str = None):
+    def instrument_function(self, operation_name: str = None) -> Any:
         """Decorator to instrument functions with observability"""
 
-        def decorator(func):
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             func_name = operation_name or f"{func.__module__}.{func.__name__}"
 
             @wraps(func)
-            async def async_wrapper(*args, **kwargs):
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.tracer.trace_operation(func_name):
                     with self.profiler.profile_operation(func_name):
                         try:
@@ -1075,7 +1076,7 @@ class ObservabilityManager:
                             raise
 
             @wraps(func)
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.tracer.trace_operation(func_name):
                     with self.profiler.profile_operation(func_name):
                         try:
@@ -1118,7 +1119,7 @@ class ObservabilityManager:
 
 # Factory function
 def create_observability_manager(
-    service_name: str = "novel-engine", config: Dict[str, Any] = None
+    service_name: str = "novel-engine", config: Optional[Dict[str, Any]] = None
 ) -> ObservabilityManager:
     """Create observability manager instance"""
     return ObservabilityManager(service_name, config)
@@ -1127,19 +1128,19 @@ def create_observability_manager(
 # Example usage
 if __name__ == "__main__":
 
-    async def example_usage():
+    async def example_usage() -> None:
         # Create observability manager
         obs_manager = create_observability_manager("novel-engine-example")
 
         # Example function instrumentation
         @obs_manager.instrument_function("example_operation")
-        async def example_operation(name: str):
+        async def example_operation(name: str) -> str:
             obs_manager.logger.info(f"Processing {name}")
             await asyncio.sleep(0.1)  # Simulate work
             return f"Processed {name}"
 
         # Run some operations
-        results = []
+        results: list[Any] = []
         for i in range(5):
             result = await example_operation(f"item_{i}")
             results.append(result)

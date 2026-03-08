@@ -107,7 +107,7 @@ class Character:
     # Domain events (not persisted)
     _events: List[CharacterEvent] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize aggregate and validate invariants."""
         self._validate_character_consistency()
 
@@ -125,8 +125,7 @@ class Character:
 
     def _validate_character_consistency(self) -> None:
         """Validate business rules across all character data."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate level consistency
         if self.profile.level < 1:
             errors.append("Character level must be at least 1")
@@ -1358,8 +1357,8 @@ class Character:
         Returns:
             List of unique location IDs in order of first visit.
         """
-        seen = set()
-        locations = []
+        seen: set[Any] = set()
+        locations: list[Any] = []
         for record in self.travel_history:
             if record.location_id not in seen:
                 seen.add(record.location_id)

@@ -21,7 +21,7 @@ from src.contexts.ai.domain.value_objects.common import (
     TokenBudget,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 class TestProviderTypeEnum:

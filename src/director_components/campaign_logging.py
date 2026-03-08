@@ -11,6 +11,7 @@ import gzip
 import hashlib
 import json
 import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -72,8 +73,8 @@ class CampaignLoggingService:
         log_dir: str = "logs",
         session_id: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
-    ):
-        self.logger = logger or logging.getLogger(__name__)
+    ) -> None:
+        self.logger = logger or structlog.get_logger(__name__)
         self.log_dir = Path(log_dir)
         self.session_id = (
             session_id or f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -286,8 +287,7 @@ class CampaignLoggingService:
     ) -> List[Dict[str, Any]]:
         """Search logs with various filters."""
         try:
-            matching_entries = []
-
+            matching_entries: list[Any] = []
             for entry in self._log_entries:
                 # Apply filters
                 if level and entry.level.value != level:
@@ -509,7 +509,7 @@ class CampaignLoggingService:
 
         try:
             # Group entries by date
-            entries_by_date = {}
+            entries_by_date: dict[Any, Any] = {}
             for entry in entries:
                 date_key = entry.timestamp.strftime("%Y%m%d")
                 if date_key not in entries_by_date:
@@ -622,8 +622,7 @@ class CampaignLoggingService:
 
     def _get_performance_summary(self) -> Dict[str, Any]:
         """Get performance metrics summary."""
-        summary = {}
-
+        summary: dict[Any, Any] = {}
         for metric_name, measurements in self._performance_metrics.items():
             if measurements:
                 values = [m["value"] for m in measurements]
@@ -646,8 +645,7 @@ class CampaignLoggingService:
     ) -> bool:
         """Export logs to file."""
         try:
-            entries_to_export = []
-
+            entries_to_export: list[Any] = []
             for entry in self._log_entries:
                 if start_time and entry.timestamp < start_time:
                     continue
@@ -717,7 +715,7 @@ class CampaignLoggingService:
                 try:
                     file_handle.close()
                 except Exception:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             self._log_entries.clear()

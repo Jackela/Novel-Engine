@@ -9,7 +9,7 @@ dashboard capabilities, alerting system, and performance regression detection.
 import asyncio
 import gc
 import json
-import logging
+import structlog
 import os
 import sqlite3
 import statistics
@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 import aiosqlite
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MetricType(Enum):
@@ -87,27 +87,31 @@ class PerformanceAlert:
 class MetricsCollector:
     """Collects and aggregates performance metrics."""
 
-    def __init__(self, max_points: int = 10000):
+    def __init__(self, max_points: int = 10000) -> None:
         self.max_points = max_points
-        self.metrics = defaultdict(lambda: deque(maxlen=max_points))
-        self.counters = defaultdict(float)
-        self.histograms = defaultdict(list)
+        self.metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=max_points))
+        self.counters: Dict[str, float] = defaultdict(float)
+        self.histograms: Dict[str, List[float]] = defaultdict(list)
         self.lock = threading.RLock()
 
     def record_counter(
-        self, name: str, value: float = 1.0, tags: Dict[str, str] = None
-    ):
+        self, name: str, value: float = 1.0, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a counter metric."""
         with self.lock:
             self.counters[name] += value
             self._add_metric_point(name, self.counters[name], MetricType.COUNTER, tags)
 
-    def record_gauge(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_gauge(
+        self, name: str, value: float, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a gauge metric."""
         with self.lock:
             self._add_metric_point(name, value, MetricType.GAUGE, tags)
 
-    def record_histogram(self, name: str, value: float, tags: Dict[str, str] = None):
+    def record_histogram(
+        self, name: str, value: float, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a histogram metric."""
         with self.lock:
             self.histograms[name].append(value)
@@ -117,14 +121,14 @@ class MetricsCollector:
 
             self._add_metric_point(name, value, MetricType.HISTOGRAM, tags)
 
-    def record_timer(self, name: str, duration: float, tags: Dict[str, str] = None):
+    def record_timer(self, name: str, duration: float, tags: Optional[Dict[str, str]] = None) -> None:
         """Record a timer metric."""
         with self.lock:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
 
     def _add_metric_point(
         self, name: str, value: float, metric_type: MetricType, tags: Dict[str, str]
-    ):
+    ) -> None:
         """Add a metric point to the collection."""
         point = MetricPoint(
             name=name,
@@ -184,7 +188,7 @@ class MetricsCollector:
     def get_all_metrics(self) -> Dict[str, Any]:
         """Get all current metrics."""
         with self.lock:
-            result = {}
+            result: dict[Any, Any] = {}
             for name in self.metrics.keys():
                 current_value = self.get_current_value(name)
                 if current_value is not None:
@@ -200,13 +204,13 @@ class MetricsCollector:
 class SystemMetricsCollector:
     """Collects system-level performance metrics."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.process = psutil.Process()
         self.last_cpu_times = None
         self.last_io_counters = None
 
-    def collect_system_metrics(self):
+    def collect_system_metrics(self) -> None:
         """Collect comprehensive system metrics."""
         try:
             # CPU metrics
@@ -281,17 +285,17 @@ class SystemMetricsCollector:
 class ApplicationMetricsCollector:
     """Collects application-specific performance metrics."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.request_start_times = {}
 
-    def start_request(self, request_id: str):
+    def start_request(self, request_id: str) -> None:
         """Start tracking a request."""
         self.request_start_times[request_id] = time.time()
 
     def end_request(
         self, request_id: str, status_code: int = 200, endpoint: str = "unknown"
-    ):
+    ) -> None:
         """End tracking a request."""
         start_time = self.request_start_times.pop(request_id, None)
         if start_time:
@@ -309,7 +313,7 @@ class ApplicationMetricsCollector:
 
     def record_database_query(
         self, query_type: str, duration: float, success: bool = True
-    ):
+    ) -> None:
         """Record database query metrics."""
         self.collector.record_timer(
             "database.query.duration",
@@ -322,7 +326,7 @@ class ApplicationMetricsCollector:
             {"query_type": query_type, "success": str(success)},
         )
 
-    def record_cache_operation(self, operation: str, hit: bool = True):
+    def record_cache_operation(self, operation: str, hit: bool = True) -> None:
         """Record cache operation metrics."""
         self.collector.record_counter(
             "cache.operations.total",
@@ -332,7 +336,7 @@ class ApplicationMetricsCollector:
 
     def record_task_execution(
         self, task_type: str, duration: float, success: bool = True
-    ):
+    ) -> None:
         """Record task execution metrics."""
         self.collector.record_timer(
             "task.execution.duration",
@@ -349,30 +353,30 @@ class ApplicationMetricsCollector:
 class AlertManager:
     """Manages performance alerts and notifications."""
 
-    def __init__(self, collector: MetricsCollector):
+    def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.thresholds = {}
         self.alerts = {}
         self.violation_counts = defaultdict(int)
         self.alert_callbacks = []
 
-    def add_threshold(self, threshold: PerformanceThreshold):
+    def add_threshold(self, threshold: PerformanceThreshold) -> None:
         """Add a performance threshold."""
         self.thresholds[threshold.metric_name] = threshold
         logger.info(
             f"Added performance threshold: {threshold.metric_name} {threshold.operator} {threshold.threshold_value}"
         )
 
-    def remove_threshold(self, metric_name: str):
+    def remove_threshold(self, metric_name: str) -> None:
         """Remove a performance threshold."""
         self.thresholds.pop(metric_name, None)
         self.violation_counts.pop(metric_name, 0)
 
-    def add_alert_callback(self, callback: Callable[[PerformanceAlert], None]):
+    def add_alert_callback(self, callback: Callable[[PerformanceAlert], None]) -> None:
         """Add a callback for alert notifications."""
         self.alert_callbacks.append(callback)
 
-    def check_thresholds(self):
+    def check_thresholds(self) -> None:
         """Check all thresholds and generate alerts."""
         for metric_name, threshold in self.thresholds.items():
             if not threshold.enabled:
@@ -417,7 +421,7 @@ class AlertManager:
 
     def _generate_alert(
         self, metric_name: str, current_value: float, threshold: PerformanceThreshold
-    ):
+    ) -> None:
         """Generate a performance alert."""
         alert_id = f"{metric_name}_{int(time.time())}"
 
@@ -442,7 +446,7 @@ class AlertManager:
 
         logger.warning(f"Performance alert: {alert.message}")
 
-    def acknowledge_alert(self, alert_id: str):
+    def acknowledge_alert(self, alert_id: str) -> None:
         """Acknowledge an alert."""
         if alert_id in self.alerts:
             self.alerts[alert_id].acknowledged = True
@@ -462,12 +466,12 @@ class AlertManager:
 class PerformanceRegression:
     """Detects performance regressions using statistical analysis."""
 
-    def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0):
+    def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0) -> None:
         self.collector = collector
         self.sensitivity = sensitivity  # Standard deviations for regression detection
         self.baselines = {}
 
-    def establish_baseline(self, metric_name: str, duration_hours: int = 24):
+    def establish_baseline(self, metric_name: str, duration_hours: int = 24) -> None:
         """Establish a performance baseline for a metric."""
         history = self.collector.get_metric_history(metric_name, duration_hours * 3600)
         if len(history) < 10:
@@ -542,7 +546,7 @@ class PerformanceRegression:
 class PerformanceMonitor:
     """Main performance monitoring system."""
 
-    def __init__(self, db_path: str = "data/performance_metrics.db"):
+    def __init__(self, db_path: str = "data/performance_metrics.db") -> None:
         self.db_path = db_path
         self.collector = MetricsCollector()
         self.system_collector = SystemMetricsCollector(self.collector)
@@ -557,12 +561,13 @@ class PerformanceMonitor:
         self._init_database()
         self._setup_default_thresholds()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """Initialize metrics database."""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
 
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
@@ -571,12 +576,14 @@ class PerformanceMonitor:
                     tags TEXT,
                     metric_type TEXT
                 )
-            """)
+            """
+            )
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_name_timestamp ON metrics(name, timestamp)"
             )
 
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS alerts (
                     id TEXT PRIMARY KEY,
                     metric_name TEXT NOT NULL,
@@ -588,9 +595,10 @@ class PerformanceMonitor:
                     timestamp REAL NOT NULL,
                     acknowledged BOOLEAN DEFAULT FALSE
                 )
-            """)
+            """
+            )
 
-    def _setup_default_thresholds(self):
+    def _setup_default_thresholds(self) -> None:
         """Setup default performance thresholds."""
         default_thresholds = [
             PerformanceThreshold(
@@ -627,7 +635,7 @@ class PerformanceMonitor:
         for threshold in default_thresholds:
             self.alert_manager.add_threshold(threshold)
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start performance monitoring."""
         if self.monitoring_active:
             return
@@ -649,7 +657,7 @@ class PerformanceMonitor:
 
         logger.info("Performance monitoring started")
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         self.monitoring_active = False
         if self.monitoring_task:
@@ -657,11 +665,11 @@ class PerformanceMonitor:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
         logger.info("Performance monitoring stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self.monitoring_active:
             try:
@@ -683,14 +691,14 @@ class PerformanceMonitor:
                 logger.error(f"Monitoring loop error: {e}")
                 await asyncio.sleep(self.collection_interval)
 
-    def _check_regressions(self):
+    def _check_regressions(self) -> None:
         """Check for performance regressions."""
         for metric_name in self.regression_detector.baselines.keys():
             regression_info = self.regression_detector.check_regression(metric_name)
             if regression_info and regression_info["is_regression"]:
                 logger.warning(f"Performance regression detected: {regression_info}")
 
-    async def _persist_metrics(self):
+    async def _persist_metrics(self) -> None:
         """Persist current metrics to database."""
         try:
             async with aiosqlite.connect(self.db_path) as conn:
@@ -726,7 +734,7 @@ class PerformanceMonitor:
         active_alerts = self.alert_manager.get_active_alerts()
 
         # Get recent performance trends
-        trends = {}
+        trends: dict[Any, Any] = {}
         key_metrics = [
             "process.memory.rss_mb",
             "system.cpu.usage_percent",
@@ -797,12 +805,12 @@ performance_monitor = PerformanceMonitor()
 class TimerContext:
     """Context manager for timing operations."""
 
-    def __init__(self, metric_name: str, tags: Dict[str, str] = None):
+    def __init__(self, metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
         self.metric_name = metric_name
         self.tags = tags or {}
         self.start_time = None
 
-    def __enter__(self):
+    def __enter__(self) -> None:
         self.start_time = time.time()
         return self
 
@@ -814,17 +822,17 @@ class TimerContext:
             )
 
 
-def monitor_performance(metric_name: str, tags: Dict[str, str] = None):
+def monitor_performance(metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
     """Decorator for monitoring function performance."""
 
-    def decorator(func):
+    def decorator(func) -> None:
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             with TimerContext(metric_name, tags):
                 return await func(*args, **kwargs)
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> None:
             with TimerContext(metric_name, tags):
                 return func(*args, **kwargs)
 

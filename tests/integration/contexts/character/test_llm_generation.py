@@ -17,7 +17,7 @@ def test_llm_character_generator_parses_response() -> None:
     generator = LLMCharacterGenerator(model="test-model", temperature=0.1)
     captured = {}
 
-    def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+    async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
         captured["system_prompt"] = system_prompt
         captured["user_prompt"] = user_prompt
         return json.dumps(
@@ -51,7 +51,7 @@ def test_llm_character_generator_parses_response() -> None:
 def test_llm_character_generator_falls_back_on_invalid_json() -> None:
     generator = LLMCharacterGenerator(model="test-model", temperature=0.1)
 
-    def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+    async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
         return "not-json"
 
     with patch.object(LLMCharacterGenerator, "_call_gemini", new=fake_call):

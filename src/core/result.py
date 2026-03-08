@@ -91,7 +91,7 @@ class _Ok(Generic[T]):
 
     __match_args__ = ("value",)
 
-    def __init__(self, value: T):
+    def __init__(self, value: T) -> None:
         self._value = value
 
     @property
@@ -160,7 +160,7 @@ class _Error(Generic[E]):
 
     __match_args__ = ("error",)
 
-    def __init__(self, error: E):
+    def __init__(self, error: E) -> None:
         self._error = error
 
     @property
@@ -257,7 +257,7 @@ Unwrap = Err
 class NotFoundError(Error):
     """Error raised when a requested entity is not found."""
 
-    def __init__(self, message: str, details: dict[str, Any] | None = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(
             code="NOT_FOUND",
             message=message,
@@ -274,7 +274,7 @@ class ValidationError(Error):
         message: str,
         field: str | None = None,
         details: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         full_details = details or {}
         if field:
             full_details["field"] = field
@@ -289,7 +289,7 @@ class ValidationError(Error):
 class ConflictError(Error):
     """Error raised when an operation conflicts with existing state."""
 
-    def __init__(self, message: str, details: dict[str, Any] | None = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(
             code="CONFLICT",
             message=message,
@@ -301,7 +301,7 @@ class ConflictError(Error):
 class PermissionError(Error):
     """Error raised when a user lacks permission for an operation."""
 
-    def __init__(self, message: str, details: dict[str, Any] | None = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(
             code="PERMISSION_DENIED",
             message=message,
@@ -313,7 +313,12 @@ class PermissionError(Error):
 class SaveError(Error):
     """Error raised when saving an entity fails."""
 
-    def __init__(self, message: str, entity_type: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self,
+        message: str,
+        entity_type: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         full_details = details or {}
         if entity_type:
             full_details["entity_type"] = entity_type

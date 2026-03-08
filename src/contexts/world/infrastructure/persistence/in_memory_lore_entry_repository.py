@@ -214,7 +214,7 @@ class InMemoryLoreEntryRepository(ILoreEntryRepository):
                     matching_ids &= tag_entries
         else:
             # Union: entry can have ANY tag
-            matching_ids = set()
+            matching_ids: set[Any] = set()
             for tag in tags_lower:
                 matching_ids |= self._tag_index.get(tag, set())
 

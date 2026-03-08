@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field, JsonValue
 # Import for forward reference in SceneGenerationRequest
 from src.api.schemas.character_schemas import CharacterGenerationResponse
 
-
 # === Narrative Data Schemas ===
 
 

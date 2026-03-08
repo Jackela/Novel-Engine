@@ -3,7 +3,7 @@
 Interaction persistence and metrics tracking.
 """
 
-import logging
+import structlog
 
 from src.core.data_models import CharacterInteraction
 from src.database.context_db import ContextDatabase
@@ -12,16 +12,16 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionPersistence:
     """Handles interaction storage and metrics."""
 
-    def __init__(self, db: ContextDatabase):
+    def __init__(self, db: ContextDatabase) -> None:
         self.db = db
 
-    async def _store_interaction_outcome(self, outcome: InteractionOutcome):
+    async def _store_interaction_outcome(self, outcome: InteractionOutcome) -> None:
         """Store enhanced interaction outcome in database"""
         try:
             # Create CharacterInteraction for database storage
@@ -57,7 +57,7 @@ class InteractionPersistence:
         context: InteractionContext,
         outcome: InteractionOutcome,
         duration_ms: float,
-    ):
+    ) -> None:
         """Update enhanced performance metrics"""
         self.performance_metrics["total_interactions_processed"] += 1
 

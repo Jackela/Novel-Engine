@@ -15,6 +15,9 @@ from pathlib import Path
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 try:
     import chromadb  # noqa: F401 - imported for availability check
     CHROMADB_AVAILABLE = True

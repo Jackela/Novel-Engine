@@ -119,8 +119,6 @@ class CalendarRepository(ABC):
         """
         calendar = self.get(world_id)
         if calendar is None:
-            calendar = WorldCalendar(
-                year=1, month=1, day=1, era_name="First Age"
-            )
+            calendar = WorldCalendar(year=1, month=1, day=1, era_name="First Age")
             self.save(world_id, calendar)
         return calendar

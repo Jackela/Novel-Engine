@@ -7,14 +7,14 @@ Handles parsing and validation of character sheet data for PersonaAgent.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import logging
+import structlog
 import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterSheetParser:
@@ -25,7 +25,7 @@ class CharacterSheetParser:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, character_directory_path: str):
+    def __init__(self, character_directory_path: str) -> None:
         """
         Initialize the character sheet parser.
 
@@ -110,8 +110,7 @@ class CharacterSheetParser:
 
     def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
         """Parse character sheet content into structured data."""
-        character_data = {}
-
+        character_data: dict[Any, Any] = {}
         # Parse different sections
         sections = {
             "identity": self._parse_identity_section,
@@ -137,8 +136,7 @@ class CharacterSheetParser:
 
     def _parse_identity_section(self, section_content: str) -> Dict[str, Any]:
         """Parse the identity section of character sheet."""
-        identity_data = {}
-
+        identity_data: dict[Any, Any] = {}
         # Extract basic identity fields
         fields = ["name", "rank_role", "faction", "homeworld", "age"]
         for field in fields:
@@ -177,7 +175,7 @@ class CharacterSheetParser:
 
     def _extract_bullet_points(self, content: str) -> Dict[str, str]:
         """Extract bullet points from content."""
-        bullet_points = {}
+        bullet_points: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:
@@ -197,7 +195,7 @@ class CharacterSheetParser:
 
     def _extract_weighted_items(self, content: str) -> Dict[str, float]:
         """Extract weighted items from content."""
-        weighted_items = {}
+        weighted_items: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:
@@ -214,7 +212,7 @@ class CharacterSheetParser:
 
     def _parse_simple_field_format(self, content: str) -> Dict[str, Any]:
         """Parse simple field: value format."""
-        parsed_data = {}
+        parsed_data: dict[Any, Any] = {}
         lines = content.split("\n")
 
         for line in lines:

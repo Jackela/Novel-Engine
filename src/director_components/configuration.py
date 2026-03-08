@@ -9,6 +9,7 @@ Handles loading, validation, hot-reloading, and environment-specific configs.
 import asyncio
 import json
 import logging
+import structlog
 import os
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -49,11 +50,11 @@ if WATCHDOG_AVAILABLE:
     class ConfigFileHandler(FileSystemEventHandler):
         """File system event handler for config file changes."""
 
-        def __init__(self, config_service):
+        def __init__(self, config_service) -> None:
             self.config_service = config_service
-            self.logger = logging.getLogger(__name__)
+            self.logger = structlog.get_logger(__name__)
 
-        def on_modified(self, event):
+        def on_modified(self, event) -> None:
             if (
                 not event.is_directory
                 and event.src_path in self.config_service._watched_files
@@ -69,7 +70,7 @@ else:
     class ConfigFileHandler:
         """Dummy handler when watchdog is not available."""
 
-        def __init__(self, config_service):
+        def __init__(self, config_service) -> None:
             pass
 
 
@@ -91,8 +92,8 @@ class ConfigurationService:
         config_dir: str = "config",
         environment: str = "development",
         logger: Optional[logging.Logger] = None,
-    ):
-        self.logger = logger or logging.getLogger(__name__)
+    ) -> None:
+        self.logger = logger or structlog.get_logger(__name__)
         self.config_dir = Path(config_dir)
         self.environment = environment
 
@@ -594,7 +595,7 @@ class ConfigurationService:
             self._file_observer = Observer()
 
             # Watch each directory containing config files
-            watched_dirs = set()
+            watched_dirs: set[Any] = set()
             for file_path in self._watched_files:
                 dir_path = str(Path(file_path).parent)
                 if dir_path not in watched_dirs:

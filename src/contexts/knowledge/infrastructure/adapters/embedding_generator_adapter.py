@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING, Any, List, Union
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
     EmbeddingError,
@@ -73,7 +73,7 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         model: str = "text-embedding-3-small",
         use_mock: bool = False,
         enable_internal_cache: bool = True,
-    ):
+    ) -> None:
         """
         Initialize embedding service with API configuration.
 
@@ -191,14 +191,13 @@ class EmbeddingServiceAdapter(IEmbeddingService):
         if not texts:
             return []
 
-        embeddings = []
-
+        embeddings: list[Any] = []
         # Process in batches
         for i in range(0, len(texts), batch_size):
             batch = texts[i : i + batch_size]
 
             if self._use_mock:
-                batch_embeddings = []
+                batch_embeddings: list[Any] = []
                 for t in batch:
                     # Check cache first for each text (if enabled)
                     if self._cache_enabled:

@@ -8,7 +8,7 @@ abilities, expertise levels, and skill-based modifiers for character actions.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class SkillCategory(Enum):
@@ -48,7 +48,7 @@ class Skill:
     modifier: int  # Additional modifier from equipment, training, etc.
     description: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate skill data."""
         if not self.name or not self.name.strip():
             raise ValueError("Skill name cannot be empty")
@@ -102,7 +102,7 @@ class SkillGroup:
     base_modifier: int
     skills: Dict[str, Skill]
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate skill group."""
         if not self.name or not self.name.strip():
             raise ValueError("Skill group name cannot be empty")
@@ -158,7 +158,7 @@ class Skills:
     languages: Set[str]
     specializations: Dict[str, int]  # Special skill bonuses
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate skills data."""
         if not self.skill_groups:
             raise ValueError("Character must have at least one skill group")
@@ -232,7 +232,7 @@ class Skills:
 
     def get_expert_skills(self) -> List[Skill]:
         """Get all expert-level or higher skills."""
-        expert_skills = []
+        expert_skills: list[Any] = []
         for group in self.skill_groups.values():
             expert_skills.extend(group.get_expert_skills())
         return expert_skills
@@ -243,7 +243,7 @@ class Skills:
 
     def get_all_skills(self) -> List[Skill]:
         """Get all skills across all categories."""
-        all_skills = []
+        all_skills: list[Any] = []
         for group in self.skill_groups.values():
             all_skills.extend(group.skills.values())
         return all_skills
@@ -276,7 +276,7 @@ class Skills:
         expert_count = sum(1 for skill in expert_skills if skill.is_expert_level())
         return expert_count >= min_expert_skills
 
-    def get_skill_summary(self) -> Dict[str, any]:
+    def get_skill_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of character skills."""
         all_skills = self.get_all_skills()
         expert_skills = self.get_expert_skills()

@@ -12,7 +12,6 @@ import structlog
 
 from src.contexts.world.application.services.faction_tick_service import (
     FactionTickService,
-    TickResult,
 )
 from src.events.event_bus import Event, EventHandler
 

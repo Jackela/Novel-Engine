@@ -6,10 +6,10 @@ Multi-agent negotiation engine.
 """
 
 import json
-import logging
+import structlog
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 
@@ -20,13 +20,13 @@ from .types import (
     NegotiationStatus,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AgentNegotiationEngine:
     """多Agent协商引擎"""
 
-    def __init__(self, llm_service=None):
+    def __init__(self, llm_service=None) -> None:
         self.llm_service = llm_service or get_llm_service()
         self.active_sessions: Dict[str, NegotiationSession] = {}
         self.negotiation_history: List[NegotiationSession] = []
@@ -35,9 +35,9 @@ class AgentNegotiationEngine:
     def initialize_agent_profile(
         self,
         agent_id: str,
-        negotiation_style: Dict[str, float] = None,
-        priorities: List[str] = None,
-    ):
+        negotiation_style: Optional[Dict[str, float]] = None,
+        priorities: Optional[List[str]] = None,
+    ) -> None:
         """初始化Agent协商档案"""
         if negotiation_style is None:
             negotiation_style = {
@@ -107,7 +107,7 @@ class AgentNegotiationEngine:
         proposal_id: str,
         responder_id: str,
         response_type: str,
-        response_content: Dict[str, Any] = None,
+        response_content: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """回应协商提议"""
 
@@ -199,7 +199,7 @@ class AgentNegotiationEngine:
         except Exception as e:
             logger.error(f"Failed to generate counter-proposal: {e}")
 
-    async def _evaluate_negotiation_status(self, session: NegotiationSession):
+    async def _evaluate_negotiation_status(self, session: NegotiationSession) -> None:
         """评估协商状态"""
         # 检查超时
         if datetime.now() > session.created_at + timedelta(
@@ -222,7 +222,7 @@ class AgentNegotiationEngine:
             # 所有目标Agent都已回应
             await self._attempt_resolution(session)
 
-    async def _attempt_resolution(self, session: NegotiationSession):
+    async def _attempt_resolution(self, session: NegotiationSession) -> None:
         """尝试解决协商"""
         latest_proposal = session.proposals[-1]
         responses = [
@@ -386,7 +386,7 @@ class AgentNegotiationEngine:
             logger.error(f"Mediation failed: {e}")
             session.status = NegotiationStatus.DEADLOCK
 
-    def _update_agent_reputations(self, session: NegotiationSession, success: bool):
+    def _update_agent_reputations(self, session: NegotiationSession, success: bool) -> None:
         """更新Agent声誉"""
         for agent_id in session.participants:
             if agent_id in self.agent_negotiation_profiles:
@@ -398,7 +398,7 @@ class AgentNegotiationEngine:
                     profile["failed_negotiations"] += 1
                     profile["reputation"] = max(0.0, profile["reputation"] - 0.05)
 
-    def _finalize_session(self, session: NegotiationSession):
+    def _finalize_session(self, session: NegotiationSession) -> None:
         """结束协商会话"""
         if session.session_id in self.active_sessions:
             del self.active_sessions[session.session_id]

@@ -33,12 +33,13 @@ class TestTimeServiceGetTime:
 
     def test_get_time_creates_default_calendar(self, service):
         """Getting time for non-existent world creates default calendar."""
-        calendar = service.get_time("new-world")
+        result = service.get_time("new-world")
 
-        assert calendar.year == 1
-        assert calendar.month == 1
-        assert calendar.day == 1
-        assert calendar.era_name == "First Age"
+        assert result.is_ok
+        assert result.value.year == 1
+        assert result.value.month == 1
+        assert result.value.day == 1
+        assert result.value.era_name == "First Age"
 
     def test_get_time_returns_existing_calendar(self, service, repository):
         """Getting time for existing world returns stored calendar."""
@@ -47,17 +48,20 @@ class TestTimeServiceGetTime:
         assert result.is_ok
 
         # Get should return the same calendar
-        calendar = service.get_time("existing-world")
-        assert calendar.year == 1042
-        assert calendar.month == 5
-        assert calendar.day == 14
+        result = service.get_time("existing-world")
+        assert result.is_ok
+        assert result.value.year == 1042
+        assert result.value.month == 5
+        assert result.value.day == 14
 
     def test_get_time_is_idempotent(self, service):
         """Multiple get_time calls return same calendar."""
-        calendar1 = service.get_time("test-world")
-        calendar2 = service.get_time("test-world")
+        result1 = service.get_time("test-world")
+        result2 = service.get_time("test-world")
 
-        assert calendar1 == calendar2
+        assert result1.is_ok
+        assert result2.is_ok
+        assert result1.value == result2.value
 
 
 class TestTimeServiceAdvanceTime:
@@ -68,14 +72,14 @@ class TestTimeServiceAdvanceTime:
         result = service.advance_time("test-world", 0)
 
         assert result.is_error
-        assert "must be >= 1" in result.error
+        assert "must be >= 1" in str(result.error)
 
     def test_advance_time_returns_error_for_negative_days(self, service):
         """Advancing by negative days returns error."""
         result = service.advance_time("test-world", -5)
 
         assert result.is_error
-        assert "must be >= 1" in result.error
+        assert "must be >= 1" in str(result.error)
 
     def test_advance_time_success(self, service):
         """Advancing time returns updated calendar and event."""
@@ -91,7 +95,9 @@ class TestTimeServiceAdvanceTime:
         """Advancing time creates a TimeAdvancedEvent."""
         service.advance_time("test-world", 10)
 
-        events = service.get_pending_events()
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        events = events_result.value
         assert len(events) == 1
         assert isinstance(events[0], TimeAdvancedEvent)
         assert events[0].days_advanced == 10
@@ -150,7 +156,9 @@ class TestTimeServiceAdvanceTime:
         service.advance_time("test-world", 10)
         service.advance_time("test-world", 3)
 
-        events = service.get_pending_events()
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        events = events_result.value
         assert len(events) == 3
 
         days_list = [e.days_advanced for e in events]
@@ -177,7 +185,7 @@ class TestTimeServiceSetTime:
         result = service.set_time("test-world", year=0, month=1, day=1)
 
         assert result.is_error
-        assert "Invalid date" in result.error
+        assert "Invalid date" in str(result.error)
 
     def test_set_time_persists(self, service, repository):
         """Setting time persists the calendar."""
@@ -196,17 +204,23 @@ class TestTimeServiceEvents:
         service.advance_time("test-world", 5)
         service.advance_time("test-world", 10)
 
-        assert len(service.get_pending_events()) == 2
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        assert len(events_result.value) == 2
 
         service.clear_pending_events()
 
-        assert len(service.get_pending_events()) == 0
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        assert len(events_result.value) == 0
 
     def test_event_includes_world_id(self, service):
         """Events include world_id in their payload."""
         service.advance_time("my-world-123", 5)
 
-        events = service.get_pending_events()
+        events_result = service.get_pending_events()
+        assert events_result.is_ok
+        events = events_result.value
         assert events[0].payload.get("world_id") == "my-world-123"
 
 
@@ -241,7 +255,7 @@ class TestTimeServiceRepositoryFailures:
         result = service.set_time("test-world", year=0, month=1, day=1)
 
         assert result.is_error
-        assert "Invalid date" in result.error
+        assert "Invalid date" in str(result.error)
 
     def test_advance_time_handles_repository_save_failure(self, repository, monkeypatch):
         """TimeService advance_time propagates repository save failures."""
@@ -264,7 +278,7 @@ class TestTimeServiceRepositoryFailures:
         assert "Storage unavailable" in str(exc_info.value)
 
     def test_get_time_handles_repository_failure(self, repository, monkeypatch):
-        """TimeService get_time propagates repository failures."""
+        """TimeService get_time returns error on repository failures."""
         def failing_get(world_id: str):
             raise RuntimeError("Storage system error")
 
@@ -274,11 +288,10 @@ class TestTimeServiceRepositoryFailures:
         # Patch get to fail (affects get_or_create)
         monkeypatch.setattr(repository, "get", failing_get)
 
-        # get_time should propagate the failure
-        with pytest.raises(RuntimeError) as exc_info:
-            service.get_time("test-world")
-
-        assert "Storage system error" in str(exc_info.value)
+        # get_time should return an error result
+        result = service.get_time("test-world")
+        assert result.is_error
+        assert "Storage system error" in str(result.error)
 
     def test_set_time_success_after_failure(self, repository):
         """TimeService can successfully set time after initial failure."""

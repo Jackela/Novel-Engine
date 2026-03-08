@@ -7,6 +7,7 @@ Tracks equipment health, predicts failures, and provides optimization recommenda
 """
 
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -28,10 +29,10 @@ class PerformanceMonitor:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize performance monitor."""
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         self.logger.info("Performance monitor initialized")
 
@@ -189,8 +190,7 @@ class PerformanceMonitor:
         self, equipment: DynamicEquipment
     ) -> List[Dict[str, Any]]:
         """Generate optimization recommendations for equipment."""
-        recommendations = []
-
+        recommendations: list[Any] = []
         try:
             # High wear recommendation
             if equipment.wear_accumulation > 0.7:

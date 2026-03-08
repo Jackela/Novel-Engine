@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any
 
 import structlog
 
@@ -27,6 +26,7 @@ from ...application.ports.i_reranker import (
 )
 from ...application.ports.i_reranker import RerankResult as PortRerankResult
 from ..services.knowledge_ingestion_service import RetrievedChunk
+from typing import Any
 
 logger = structlog.get_logger()
 
@@ -114,7 +114,7 @@ class RerankService:
         self,
         reranker: IReranker | None = None,
         default_config: RerankConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the rerank service.
 
@@ -362,7 +362,7 @@ class MockReranker:
     Returns results based on simple keyword matching in content.
     """
 
-    def __init__(self, latency_ms: float = 50.0):
+    def __init__(self, latency_ms: float = 50.0) -> None:
         """
         Initialize mock reranker.
 
@@ -405,7 +405,7 @@ class MockReranker:
         query_lower = query.lower()
         query_words = set(query_lower.split())
 
-        scored_results = []
+        scored_results: list[Any] = []
         for doc in documents:
             content_lower = doc.content.lower()
             # Count how many query words appear in content
@@ -454,7 +454,7 @@ class FailingReranker:
     Useful for testing fallback behavior.
     """
 
-    def __init__(self, error_message: str = "Reranking failed"):
+    def __init__(self, error_message: str = "Reranking failed") -> None:
         """
         Initialize failing reranker.
 
@@ -480,88 +480,4 @@ __all__ = [
     "MockReranker",
     "FailingReranker",
     "DEFAULT_TOP_K",
-    "RerankerType",
-    "create_reranker",
 ]
-
-
-# Reranker type enumeration
-class RerankerType:
-    """
-    Enumeration of available reranker types.
-
-    Attributes:
-        COHERE: Cohere API-based reranker (requires API key)
-        LOCAL: Local sentence-transformers reranker
-        MOCK: Mock reranker for testing
-        NOOP: No-op reranker that preserves original order
-    """
-
-    COHERE = "cohere"
-    LOCAL = "local"
-    MOCK = "mock"
-    NOOP = "noop"
-
-    @classmethod
-    def all_types(cls) -> list[str]:
-        """Get all available reranker types."""
-        return [cls.COHERE, cls.LOCAL, cls.MOCK, cls.NOOP]
-
-    @classmethod
-    def is_valid(cls, reranker_type: str) -> bool:
-        """Check if a reranker type is valid."""
-        return reranker_type in cls.all_types()
-
-
-def create_reranker(
-    reranker_type: str = RerankerType.LOCAL,
-    **kwargs: Any,
-) -> IReranker | None:
-    """
-    Factory function to create a reranker instance.
-
-    Args:
-        reranker_type: Type of reranker to create (default: local)
-        **kwargs: Additional arguments passed to reranker constructor
-            - For COHERE: api_key, model, base_url
-            - For LOCAL: model, device, cache_dir
-            - For MOCK: latency_ms
-            - For NOOP: latency_ms
-
-    Returns:
-        IReranker instance or None if type is invalid
-
-    Raises:
-        ValueError: If reranker_type is not valid
-
-    Example:
-        >>> # Create local reranker
-        >>> reranker = create_reranker("local", model="ms-marco-MiniLM-L-6-v2")
-        >>> # Create Cohere reranker
-        >>> reranker = create_reranker("cohere", api_key="...")
-        >>> # Create mock reranker for testing
-        >>> reranker = create_reranker("mock")
-    """
-    if not RerankerType.is_valid(reranker_type):
-        raise ValueError(
-            f"Invalid reranker type: {reranker_type}. "
-            f"Must be one of: {RerankerType.all_types()}"
-        )
-
-    # Lazy import to avoid circular dependencies
-    from ...infrastructure.adapters.reranker_adapters import (
-        CohereReranker,
-        LocalReranker,
-        NoOpReranker,
-    )
-
-    if reranker_type == RerankerType.COHERE:
-        return CohereReranker(**kwargs)
-    elif reranker_type == RerankerType.LOCAL:
-        return LocalReranker(**kwargs)
-    elif reranker_type == RerankerType.MOCK:
-        return MockReranker(**kwargs)
-    elif reranker_type == RerankerType.NOOP:
-        return NoOpReranker(**kwargs)
-
-    return None

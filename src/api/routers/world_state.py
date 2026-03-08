@@ -19,17 +19,18 @@ Endpoints:
 from __future__ import annotations
 
 import warnings
+
 warnings.warn(
     "world_state router is deprecated. Use geopolitics router instead.",
     DeprecationWarning,
     stacklevel=2,
 )
 
-import logging
+import structlog
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from src.api.schemas.world_schemas import (
     DiplomacyMatrixDetailResponse,
@@ -40,7 +41,7 @@ from src.api.schemas.world_schemas import (
     WorldResourcesResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/world", tags=["world-state"])
 
@@ -49,7 +50,7 @@ def _get_world_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store from app state."""
     store = getattr(request.app.state, "world_store", None)
     if store is None:
-        store = {}
+        store: dict[Any, Any] = {}
         request.app.state.world_store = store
     return store
 
@@ -86,7 +87,7 @@ async def get_territories(
 
     # Extract locations from world data
     locations = world_data.get("locations", [])
-    territories = []
+    territories: list[Any] = []
     controlled_count = 0
     contested_count = 0
 
@@ -160,8 +161,7 @@ async def get_diplomacy(
 
     # Get active pacts
     pacts_data = diplomacy_data.get("active_pacts", [])
-    active_pacts = []
-
+    active_pacts: list[Any] = []
     for pact in pacts_data:
         if not isinstance(pact, dict):
             continue
@@ -214,7 +214,7 @@ async def get_resources(
     locations = world_data.get("locations", [])
 
     # Build faction resource summaries
-    faction_summaries = []
+    faction_summaries: list[Any] = []
     total_resources: Dict[str, int] = {}
 
     for faction in factions_data:
@@ -228,8 +228,7 @@ async def get_resources(
         controlled_locations = [
             loc
             for loc in locations
-            if isinstance(loc, dict)
-            and loc.get("controlling_faction_id") == faction_id
+            if isinstance(loc, dict) and loc.get("controlling_faction_id") == faction_id
         ]
 
         # Calculate resources from controlled territories
@@ -245,7 +244,9 @@ async def get_resources(
                     resource_type = ry.get("resource_type", "")
                     if resource_type:
                         amount = ry.get("current_stock", 0)
-                        resources[resource_type] = resources.get(resource_type, 0) + amount
+                        resources[resource_type] = (
+                            resources.get(resource_type, 0) + amount
+                        )
 
         # Add faction's own resources
         faction_resources = faction.get("resources", {})

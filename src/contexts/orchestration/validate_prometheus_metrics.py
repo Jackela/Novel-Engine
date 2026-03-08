@@ -7,6 +7,7 @@ Can be run independently to verify Wave 2 functionality.
 """
 
 import logging
+import structlog
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -17,15 +18,16 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from domain.services import EnhancedPerformanceTracker
 from infrastructure.monitoring import PrometheusMetricsCollector
+from typing import Any
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
-def test_prometheus_metrics_collector():
+def test_prometheus_metrics_collector() -> None:
     """Test basic Prometheus metrics collector functionality."""
     print("\n🔍 Testing PrometheusMetricsCollector...")
 
@@ -166,7 +168,7 @@ def test_prometheus_metrics_collector():
         return False
 
 
-def test_enhanced_performance_tracker():
+def test_enhanced_performance_tracker() -> None:
     """Test enhanced performance tracker integration."""
     print("\n🔍 Testing EnhancedPerformanceTracker...")
 
@@ -236,7 +238,7 @@ def test_enhanced_performance_tracker():
         return False
 
 
-def test_fastapi_integration():
+def test_fastapi_integration() -> None:
     """Test FastAPI integration (basic import test)."""
     print("\n🔍 Testing FastAPI Integration...")
 
@@ -281,14 +283,13 @@ def test_fastapi_integration():
         return False
 
 
-def main():
+def main() -> None:
     """Run all validation tests."""
     print("=" * 80)
     print("M10 PROMETHEUS METRICS VALIDATION")
     print("=" * 80)
 
-    test_results = []
-
+    test_results: list[Any] = []
     # Run all tests
     test_results.append(
         ("PrometheusMetricsCollector", test_prometheus_metrics_collector())

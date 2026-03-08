@@ -7,7 +7,7 @@ Provides SSE (Server-Sent Events) streaming for real-time narrative generation.
 from __future__ import annotations
 
 import json
-import logging
+import structlog
 import time
 from typing import AsyncIterator
 
@@ -22,7 +22,7 @@ from src.contexts.narratives.application.services.narrative_stream_service impor
     generate_narrative_stream,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Narratives"])
 
@@ -85,17 +85,15 @@ async def _sse_generator(request: NarrativeStreamRequest) -> AsyncIterator[str]:
         yield f"data: {json.dumps(completion_data)}\n\n"
 
         logger.info(
-            "Narrative stream completed",
-            extra={
-                "chunk_count": chunk_count,
-                "total_chars": total_chars,
-                "generation_time_ms": generation_time_ms,
-            },
+            "narrative_stream_completed",
+            chunk_count=chunk_count,
+            total_chars=total_chars,
+            generation_time_ms=generation_time_ms,
         )
 
     except Exception:
         # Log full exception internally, send generic message to client
-        logger.exception("Error during narrative streaming")
+        logger.error("narrative_stream_error", error="exception_occurred", error_type="exception")
         error_data = {
             "type": "error",
             "content": "An error occurred during narrative generation. Please try again.",
@@ -136,13 +134,11 @@ async def stream_narrative(request: NarrativeStreamRequest) -> StreamingResponse
         else None
     )
     logger.info(
-        "Starting narrative stream",
-        extra={
-            "prompt_length": len(request.prompt),
-            "has_chapter_title": request.chapter_title is not None,
-            "tone": safe_tone,
-            "character_count": len(request.world_context.characters),
-        },
+        "narrative_stream_started",
+        prompt_length=len(request.prompt),
+        has_chapter_title=request.chapter_title is not None,
+        tone=safe_tone,
+        character_count=len(request.world_context.characters),
     )
 
     return StreamingResponse(

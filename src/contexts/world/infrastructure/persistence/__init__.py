@@ -38,7 +38,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name: str):
+def __getattr__(name: str) -> None:
     """Lazy load modules on first access to avoid import-time issues."""
     if name == "WorldStateModel":
         from .models import WorldStateModel

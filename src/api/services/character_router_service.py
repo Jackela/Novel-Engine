@@ -21,7 +21,7 @@ Gotchas:
 
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 import re
 from datetime import datetime, timezone
@@ -33,8 +33,26 @@ from fastapi import HTTPException
 
 from src.api.schemas import CharacterSummary
 from src.api.services.paths import get_characters_directory_path
+from src.core.result import Err, Error, Ok, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
+
+class CharacterServiceError(Error):
+    """Error raised when character service operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        details: Dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code="CHARACTER_SERVICE_ERROR",
+            message=message,
+            recoverable=True,
+            details={"operation": operation, **(details or {})},
+        )
 
 _CHARACTER_ID_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
@@ -202,7 +220,7 @@ class CharacterRouterService:
     and data transformation for the characters API endpoints.
     """
 
-    def __init__(self, characters_path: Optional[str] = None):
+    def __init__(self, characters_path: Optional[str] = None) -> None:
         """
         Initialize the service.
 
@@ -211,7 +229,7 @@ class CharacterRouterService:
                 If not provided, uses the default from get_characters_directory_path().
         """
         self._characters_path = characters_path
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     @property
     def characters_path(self) -> str:
@@ -224,7 +242,7 @@ class CharacterRouterService:
         self, character_id: str
     ) -> Tuple[str, str, str, datetime]:
         """
-        Gather character information from the filesystem.
+        Gather character information from the filesystem. (Legacy - use gather_filesystem_character_info_result)
 
         Why: Extracts file reading/parsing logic from the router.
 
@@ -237,7 +255,34 @@ class CharacterRouterService:
         Raises:
             HTTPException: If character not found
         """
-        safe_character_id = _require_public_character_id(character_id)
+        result = self.gather_filesystem_character_info_result(character_id)
+        if result.is_ok:
+            return result.value
+        raise HTTPException(status_code=404, detail=result.error.message)
+
+    def gather_filesystem_character_info_result(
+        self, character_id: str
+    ) -> Result[Tuple[str, str, str, datetime], Error]:
+        """
+        Gather character information from the filesystem using Result pattern.
+
+        Args:
+            character_id: Character ID to look up
+
+        Returns:
+            Result containing tuple of (display_name, status, type, updated_datetime) or error
+        """
+        try:
+            safe_character_id = _require_public_character_id(character_id)
+        except HTTPException as e:
+            return Err(
+                CharacterServiceError(
+                    message=str(e.detail),
+                    operation="gather_filesystem_character_info",
+                    details={"character_id": character_id},
+                )
+            )
+
         base_dir = Path(self.characters_path).resolve()
         character_dir = next(
             (
@@ -248,7 +293,13 @@ class CharacterRouterService:
             None,
         )
         if character_dir is None:
-            raise HTTPException(status_code=404, detail="Character not found")
+            return Err(
+                CharacterServiceError(
+                    message="Character not found",
+                    operation="gather_filesystem_character_info",
+                    details={"character_id": character_id},
+                )
+            )
 
         character_file = character_dir / f"character_{character_dir.name}.md"
         stats_file = character_dir / "stats.yaml"
@@ -269,11 +320,9 @@ class CharacterRouterService:
                         trimmed = line.strip()
                         if trimmed.startswith("# "):
                             display_name = trimmed[2:].strip() or display_name
-                            if updated_ts is None:
-                                updated_ts = character_file.stat().st_mtime
                             break
             except Exception:
-                self.logger.debug("Failed to parse character markdown.", exc_info=True)
+                self.logger.debug("failed_to_parse_character_markdown", exc_info=True)
 
         if stats_file.exists():
             updated_ts = max(updated_ts or 0.0, stats_file.stat().st_mtime)
@@ -312,12 +361,40 @@ class CharacterRouterService:
                             ):
                                 type_value = type_candidate.strip().lower()
             except Exception:
-                self.logger.debug("Failed to parse stats.", exc_info=True)
+                self.logger.debug("failed_to_parse_stats", exc_info=True)
 
         updated_dt = datetime.fromtimestamp(
             updated_ts or datetime.now(timezone.utc).timestamp(), tz=timezone.utc
         )
-        return display_name, status.lower(), type_value, updated_dt
+        return Ok((display_name, status.lower(), type_value, updated_dt))
+
+    def summarize_public_character_result(
+        self, character_id: str
+    ) -> Result[Tuple[CharacterSummary, datetime], Error]:
+        """
+        Create a character summary from filesystem data using Result pattern.
+
+        Args:
+            character_id: Character ID to summarize
+
+        Returns:
+            Result containing tuple of (CharacterSummary, updated_datetime) or error
+        """
+        info_result = self.gather_filesystem_character_info_result(character_id)
+        if info_result.is_error:
+            return info_result
+
+        name, status, category, updated_dt = info_result.value
+        summary = CharacterSummary(
+            id=character_id,
+            agent_id=character_id,
+            name=name,
+            status=status,
+            type=category,
+            updated_at=updated_dt.isoformat(),
+            workspace_id=None,
+        )
+        return Ok((summary, updated_dt))
 
     def summarize_public_character(
         self, character_id: str
@@ -351,7 +428,7 @@ class CharacterRouterService:
         self, record: Dict[str, Any], workspace_id: str
     ) -> Tuple[CharacterSummary, datetime]:
         """
-        Create a character summary from workspace record data.
+        Create a character summary from workspace record data. (Legacy - use summarize_workspace_character_result)
 
         Why: Workspace records have a different structure than filesystem records.
 
@@ -365,44 +442,75 @@ class CharacterRouterService:
         Raises:
             ValueError: If record is missing required identifiers
         """
-        char_id = str(
-            record.get("id")
-            or record.get("character_id")
-            or record.get("character_name")
-            or ""
-        ).strip()
-        if not char_id:
-            raise ValueError("Workspace record missing character identifier")
+        result = self.summarize_workspace_character_result(record, workspace_id)
+        if result.is_ok:
+            return result.value
+        raise ValueError(result.error.message)
 
-        name = str(
-            record.get("name")
-            or record.get("character_name")
-            or _display_name_from_id(char_id)
-        )
-        status = str(
-            record.get("current_status") or record.get("status") or "active"
-        ).lower()
-        type_value = _infer_character_type_from_record(record)
+    def summarize_workspace_character_result(
+        self, record: Dict[str, Any], workspace_id: str
+    ) -> Result[Tuple[CharacterSummary, datetime], Error]:
+        """
+        Create a character summary from workspace record data using Result pattern.
 
-        updated_iso = str(record.get("updatedAt") or record.get("createdAt") or "")
-        updated_dt = _parse_iso_datetime(updated_iso) or datetime.now(timezone.utc)
+        Args:
+            record: Workspace character record
+            workspace_id: Workspace identifier
 
-        summary = CharacterSummary(
-            id=char_id,
-            agent_id=char_id,
-            name=name,
-            status=status,
-            type=type_value,
-            updated_at=updated_dt.isoformat(),
-            workspace_id=workspace_id,
-        )
-        return summary, updated_dt
+        Returns:
+            Result containing tuple of (CharacterSummary, updated_datetime) or error
+        """
+        try:
+            char_id = str(
+                record.get("id")
+                or record.get("character_id")
+                or record.get("character_name")
+                or ""
+            ).strip()
+            if not char_id:
+                return Err(
+                    CharacterServiceError(
+                        message="Workspace record missing character identifier",
+                        operation="summarize_workspace_character",
+                    )
+                )
+
+            name = str(
+                record.get("name")
+                or record.get("character_name")
+                or _display_name_from_id(char_id)
+            )
+            status = str(
+                record.get("current_status") or record.get("status") or "active"
+            ).lower()
+            type_value = _infer_character_type_from_record(record)
+
+            updated_iso = str(record.get("updatedAt") or record.get("createdAt") or "")
+            updated_dt = _parse_iso_datetime(updated_iso) or datetime.now(timezone.utc)
+
+            summary = CharacterSummary(
+                id=char_id,
+                agent_id=char_id,
+                name=name,
+                status=status,
+                type=type_value,
+                updated_at=updated_dt.isoformat(),
+                workspace_id=workspace_id,
+            )
+            return Ok((summary, updated_dt))
+        except Exception as e:
+            return Err(
+                CharacterServiceError(
+                    message=f"Failed to summarize workspace character: {e}",
+                    operation="summarize_workspace_character",
+                )
+            )
 
     async def get_public_character_entries(
         self,
     ) -> List[Tuple[datetime, CharacterSummary]]:
         """
-        Scan the characters directory and return all public character summaries.
+        Scan the characters directory and return all public character summaries. (Legacy - use get_public_character_entries_result)
 
         Why: Bulk loading for the character list endpoint.
 
@@ -411,6 +519,20 @@ class CharacterRouterService:
 
         Raises:
             HTTPException: If directory is missing or inaccessible
+        """
+        result = await self.get_public_character_entries_result()
+        if result.is_ok:
+            return result.value
+        raise HTTPException(status_code=500, detail=result.error.message)
+
+    async def get_public_character_entries_result(
+        self,
+    ) -> Result[List[Tuple[datetime, CharacterSummary]], Error]:
+        """
+        Scan the characters directory and return all public character summaries using Result pattern.
+
+        Returns:
+            Result containing list of tuples (updated_datetime, CharacterSummary) or error
         """
         try:
             os.makedirs(self.characters_path, exist_ok=True)
@@ -422,26 +544,37 @@ class CharacterRouterService:
                     continue
                 if not _CHARACTER_DIRNAME_RE.fullmatch(item):
                     continue
-                summary, timestamp = self.summarize_public_character(item)
-                entries.append((timestamp, summary))
-            return entries
+                summary_result = self.summarize_public_character_result(item)
+                if summary_result.is_ok:
+                    summary, timestamp = summary_result.value
+                    entries.append((timestamp, summary))
+            return Ok(entries)
         except FileNotFoundError as exc:
-            self.logger.error("Characters directory missing: %s", exc)
-            raise HTTPException(
-                status_code=404, detail="Characters directory not found."
+            self.logger.error("characters_directory_missing", error=str(exc), error_type=type(exc).__name__)
+            return Err(
+                CharacterServiceError(
+                    message="Characters directory not found",
+                    operation="get_public_character_entries",
+                )
             )
         except PermissionError as exc:
-            self.logger.error("Permission denied reading characters: %s", exc)
-            raise HTTPException(
-                status_code=500,
-                detail="Permission denied accessing characters directory.",
+            self.logger.error("permission_denied_reading_characters", error=str(exc), error_type=type(exc).__name__)
+            return Err(
+                CharacterServiceError(
+                    message="Permission denied accessing characters directory",
+                    operation="get_public_character_entries",
+                )
             )
         except Exception as exc:
             self.logger.error(
-                "Unexpected error loading characters: %s", exc, exc_info=True
+                "unexpected_error_loading_characters", error=str(exc), error_type=type(exc).__name__, exc_info=True
             )
-            raise HTTPException(
-                status_code=500, detail=f"Failed to retrieve characters: {exc}"
+            return Err(
+                CharacterServiceError(
+                    message=f"Failed to retrieve characters: {exc}",
+                    operation="get_public_character_entries",
+                    details={"error_type": type(exc).__name__},
+                )
             )
 
     def normalize_character_id(self, value: str) -> str:

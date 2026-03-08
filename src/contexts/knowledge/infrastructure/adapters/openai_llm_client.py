@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 import httpx
 import structlog
@@ -89,7 +89,7 @@ class OpenAILLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the OpenAI LLM client.
 
@@ -231,7 +231,7 @@ class OpenAILLMClient:
 
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._api_key}",  # type: ignore[dict-item]
+            "Authorization": f"Bearer {self._api_key}",
         }
 
         try:
@@ -296,8 +296,7 @@ class OpenAILLMClient:
         Returns:
             Request body dict for OpenAI API
         """
-        messages = []
-
+        messages: list[Any] = []
         # Add system message if provided
         if request.system_prompt:
             messages.append({"role": "system", "content": request.system_prompt})
@@ -329,7 +328,7 @@ class OpenAILLMClient:
         """
         headers: dict[str, str] = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._api_key}",  # type: ignore[dict-item]
+            "Authorization": f"Bearer {self._api_key}",
         }
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:

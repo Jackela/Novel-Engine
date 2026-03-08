@@ -8,7 +8,7 @@ These models map domain aggregates to database tables.
 
 import uuid
 from datetime import datetime
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from sqlalchemy import (
     JSON,
@@ -67,7 +67,7 @@ class WorldStateModel(FullAuditModel):
         Index("idx_world_states_is_deleted", "is_deleted"),
     )
 
-    def to_domain_aggregate(self):
+    def to_domain_aggregate(self) -> None:
         """
         Convert database model to domain aggregate.
 
@@ -83,7 +83,7 @@ class WorldStateModel(FullAuditModel):
         from ...domain.value_objects.coordinates import Coordinates
 
         # Parse entities from JSON storage
-        domain_entities = {}
+        domain_entities: dict[Any, Any] = {}
         if self.entities:
             for entity_id, entity_data in self.entities.items():
                 if entity_data:  # Skip None/empty entities
@@ -131,7 +131,7 @@ class WorldStateModel(FullAuditModel):
         return world_state
 
     @classmethod
-    def from_domain_aggregate(cls, world_state):
+    def from_domain_aggregate(cls, world_state) -> None:
         """
         Create database model from domain aggregate.
 
@@ -142,7 +142,7 @@ class WorldStateModel(FullAuditModel):
             WorldStateModel instance
         """
         # Serialize entities to JSON
-        serialized_entities = {}
+        serialized_entities: dict[Any, Any] = {}
         for entity_id, entity in world_state.entities.items():
             serialized_entities[entity_id] = entity.to_dict()
 
@@ -167,7 +167,7 @@ class WorldStateModel(FullAuditModel):
             updated_at=world_state.updated_at,
         )
 
-    def update_from_domain_aggregate(self, world_state):
+    def update_from_domain_aggregate(self, world_state) -> None:
         """
         Update database model from domain aggregate.
 
@@ -175,7 +175,7 @@ class WorldStateModel(FullAuditModel):
             world_state: WorldState domain aggregate
         """
         # Serialize entities to JSON
-        serialized_entities = {}
+        serialized_entities: dict[Any, Any] = {}
         for entity_id, entity in world_state.entities.items():
             serialized_entities[entity_id] = entity.to_dict()
 
@@ -229,7 +229,7 @@ class WorldStateModel(FullAuditModel):
 
     def get_entity_types_summary(self) -> Dict[str, int]:
         """Get summary of entity types and counts."""
-        summary = {}
+        summary: dict[Any, Any] = {}
         if self.entities:
             for entity_data in self.entities.values():
                 if entity_data and "entity_type" in entity_data:

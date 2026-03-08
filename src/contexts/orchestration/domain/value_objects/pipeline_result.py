@@ -56,7 +56,7 @@ class PhaseResult:
     cross_context_calls: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate phase result structure and business rules."""
         # Validate phase status consistency
         if self.phase_type != self.phase_status.phase_type:
@@ -81,12 +81,12 @@ class PhaseResult:
         cls,
         phase_type: PhaseType,
         phase_status: PhaseStatus,
-        events_generated: List[UUID] = None,
-        events_consumed: List[UUID] = None,
-        artifacts_created: List[str] = None,
-        performance_metrics: Dict[str, float] = None,
+        events_generated: Optional[List[UUID]] = None,
+        events_consumed: Optional[List[UUID]] = None,
+        artifacts_created: Optional[List[str]] = None,
+        performance_metrics: Optional[Dict[str, float]] = None,
         ai_usage: Optional[Dict[str, Any]] = None,
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PhaseResult":
         """
         Create successful phase result.
@@ -121,10 +121,10 @@ class PhaseResult:
         phase_type: PhaseType,
         phase_status: PhaseStatus,
         error_details: Dict[str, Any],
-        events_consumed: List[UUID] = None,
-        performance_metrics: Dict[str, float] = None,
-        compensation_applied: List[str] = None,
-        metadata: Dict[str, Any] = None,
+        events_consumed: Optional[List[UUID]] = None,
+        performance_metrics: Optional[Dict[str, float]] = None,
+        compensation_applied: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PhaseResult":
         """
         Create failed phase result.
@@ -250,7 +250,7 @@ class PipelineResult:
     error_summary: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate pipeline result structure and business rules."""
         # Must have phase results
         if not self.phase_results:
@@ -269,7 +269,7 @@ class PipelineResult:
             raise ValueError("Total AI cost cannot be negative")
 
         # Validate phase result consistency
-        phase_types_seen = set()
+        phase_types_seen: set[Any] = set()
         for result in self.phase_results:
             if result.phase_type in phase_types_seen:
                 raise ValueError(f"Duplicate phase result for {result.phase_type}")
@@ -281,7 +281,7 @@ class PipelineResult:
         turn_id: UUID,
         phase_results: List[PhaseResult],
         total_execution_time: timedelta,
-        metadata: Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PipelineResult":
         """
         Create successful pipeline result.
@@ -297,7 +297,7 @@ class PipelineResult:
         """
         # Calculate aggregated metrics
         total_events = sum(len(r.events_consumed) for r in phase_results)
-        total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
+        total_ai_cost = sum((r.get_ai_cost() for r in phase_results), Decimal("0"))
 
         # Build performance summary
         performance_summary = {
@@ -333,8 +333,8 @@ class PipelineResult:
         phase_results: List[PhaseResult],
         total_execution_time: timedelta,
         error_summary: Dict[str, Any],
-        saga_actions_taken: List[str] = None,
-        metadata: Dict[str, Any] = None,
+        saga_actions_taken: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> "PipelineResult":
         """
         Create failed pipeline result.
@@ -363,7 +363,7 @@ class PipelineResult:
 
         # Calculate metrics for completed phases
         total_events = sum(len(r.events_consumed) for r in phase_results)
-        total_ai_cost = sum(r.get_ai_cost() for r in phase_results)
+        total_ai_cost = sum((r.get_ai_cost() for r in phase_results), Decimal("0"))
 
         return cls(
             turn_id=turn_id,

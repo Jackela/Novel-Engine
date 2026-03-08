@@ -3,8 +3,8 @@
 Context enhancement for persona-specific rendering.
 """
 
-import logging
-from typing import Optional
+import structlog
+from typing import Any, Optional
 
 from src.memory.layered_memory import LayeredMemorySystem
 from src.templates.context_renderer import RenderFormat
@@ -17,13 +17,13 @@ from .persona_models import (
     CharacterTemplate,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContextEnhancer:
     """Enhances rendering context with persona-specific adaptations."""
 
-    def __init__(self, memory_system: Optional[LayeredMemorySystem] = None):
+    def __init__(self, memory_system: Optional[LayeredMemorySystem] = None) -> None:
         self.memory_system = memory_system
 
     async def _enhance_context_for_persona(
@@ -48,7 +48,7 @@ class ContextEnhancer:
 
         # Apply enhanced memory priorities
         if self.memory_system and enhanced_context.memory_context:
-            prioritized_memories = []
+            prioritized_memories: list[Any] = []
             for memory in enhanced_context.memory_context:
                 priority_boost = 0.0
 

@@ -6,7 +6,7 @@ Automatic HTTP request instrumentation and trace context management for FastAPI 
 Integrates with Novel Engine distributed tracing system.
 """
 
-import logging
+import structlog
 import time
 from typing import Any, Callable, Optional
 from uuid import uuid4
@@ -21,7 +21,7 @@ from starlette.types import ASGIApp
 
 from .tracing import NovelEngineTracer, get_tracer
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class OpenTelemetryMiddleware(BaseHTTPMiddleware):
@@ -42,7 +42,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
         excluded_urls: Optional[list] = None,
         trace_request_payload: bool = False,
         trace_response_payload: bool = False,
-    ):
+    ) -> None:
         """
         Initialize OpenTelemetry middleware.
 
@@ -127,7 +127,7 @@ class OpenTelemetryMiddleware(BaseHTTPMiddleware):
                     span.set_status(Status(StatusCode.OK))
 
                 # Inject trace context into response headers for downstream services
-                response_carrier = {}
+                response_carrier: dict[Any, Any] = {}
                 propagate.inject(response_carrier)
 
                 for key, value in response_carrier.items():

@@ -9,7 +9,7 @@ lifecycle management, and configuration integration.
 
 import asyncio
 import inspect
-import logging
+import structlog
 import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -29,8 +29,9 @@ from typing import (
 
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
+from .result import Error, Err, Ok, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -92,6 +93,28 @@ class DependencyResolutionError(Exception):
     """Raised when dependency resolution fails."""
 
 
+class ServiceNotFoundError(Exception):
+    """Raised when a service is not found."""
+
+
+class ServiceContainerError(Error):
+    """Error raised when service container operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        service_name: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(
+            code="SERVICE_CONTAINER_ERROR",
+            message=message,
+            recoverable=True,
+            details={"operation": operation, "service_name": service_name, **(details or {})},
+        )
+
+
 class ServiceContainer:
     """
     Enterprise dependency injection container with service discovery.
@@ -109,7 +132,7 @@ class ServiceContainer:
         self,
         config_manager: Optional[ConfigurationManager] = None,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize service container."""
         self.config_manager = config_manager
         self.error_handler = error_handler
@@ -150,8 +173,34 @@ class ServiceContainer:
         tags: Optional[Set[str]] = None,
         priority: int = 0,
     ) -> "ServiceContainer":
+        """Register a service with the container. (Legacy - use register_service_result)"""
+        result = self.register_service_result(
+            interface,
+            implementation,
+            scope=scope,
+            factory=factory,
+            configuration_section=configuration_section,
+            dependencies=dependencies,
+            tags=tags,
+            priority=priority,
+        )
+        if result.is_ok:
+            return result.value
+        raise DependencyResolutionError(result.error.message)
+
+    def register_service_result(
+        self,
+        interface: Type[T],
+        implementation: Type[T],
+        scope: ServiceScope = ServiceScope.SINGLETON,
+        factory: Optional[Callable[[], T]] = None,
+        configuration_section: Optional[str] = None,
+        dependencies: Optional[List[Type]] = None,
+        tags: Optional[Set[str]] = None,
+        priority: int = 0,
+    ) -> Result["ServiceContainer", ServiceContainerError]:
         """
-        Register a service with the container.
+        Register a service with the container using Result pattern.
 
         Args:
             interface: Service interface/protocol
@@ -164,84 +213,130 @@ class ServiceContainer:
             priority: Initialization priority (higher first)
 
         Returns:
-            Self for method chaining
+            Result containing self on success or error
         """
-        with self._lock:
-            # Auto-detect dependencies if not provided
-            if dependencies is None:
-                dependencies = self._analyze_dependencies(implementation)
+        try:
+            with self._lock:
+                # Auto-detect dependencies if not provided
+                if dependencies is None:
+                    dependencies = self._analyze_dependencies(implementation)
 
-            descriptor = ServiceDescriptor(
-                interface=interface,
-                implementation=implementation,
-                scope=scope,
-                dependencies=dependencies,
-                factory=factory,
-                configuration_section=configuration_section,
-                tags=tags or set(),
-                priority=priority,
+                descriptor = ServiceDescriptor(
+                    interface=interface,
+                    implementation=implementation,
+                    scope=scope,
+                    dependencies=dependencies,
+                    factory=factory,
+                    configuration_section=configuration_section,
+                    tags=tags or set(),
+                    priority=priority,
+                )
+
+                self._services[interface] = descriptor
+
+                # Update tag mappings
+                for tag in descriptor.tags:
+                    if tag not in self._tags:
+                        self._tags[tag] = set()
+                    self._tags[tag].add(interface)
+
+                # Update initialization order
+                self._update_initialization_order()
+
+                logger.debug(
+                    f"Registered service: {interface.__name__} -> {implementation.__name__}"
+                )
+
+            return Ok(self)
+        except Exception as e:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to register service: {e}",
+                    operation="register_service",
+                    service_name=interface.__name__,
+                )
             )
-
-            self._services[interface] = descriptor
-
-            # Update tag mappings
-            for tag in descriptor.tags:
-                if tag not in self._tags:
-                    self._tags[tag] = set()
-                self._tags[tag].add(interface)
-
-            # Update initialization order
-            self._update_initialization_order()
-
-            logger.debug(
-                f"Registered service: {interface.__name__} -> {implementation.__name__}"
-            )
-
-        return self
 
     def register_singleton(self, interface: Type[T], instance: T) -> "ServiceContainer":
-        """Register a singleton instance directly."""
-        with self._lock:
-            service_instance = ServiceInstance(
-                descriptor=ServiceDescriptor(
-                    interface=interface,
-                    implementation=type(instance),
-                    scope=ServiceScope.SINGLETON,
-                ),
-                instance=instance,
-                state=ServiceState.RUNNING,
+        """Register a singleton instance directly. (Legacy - use register_singleton_result)"""
+        result = self.register_singleton_result(interface, instance)
+        if result.is_ok:
+            return result.value
+        raise DependencyResolutionError(result.error.message)
+
+    def register_singleton_result(
+        self, interface: Type[T], instance: T
+    ) -> Result["ServiceContainer", ServiceContainerError]:
+        """
+        Register a singleton instance directly using Result pattern.
+
+        Args:
+            interface: Service interface/protocol
+            instance: Singleton instance to register
+
+        Returns:
+            Result containing self on success or error
+        """
+        try:
+            with self._lock:
+                service_instance = ServiceInstance(
+                    descriptor=ServiceDescriptor(
+                        interface=interface,
+                        implementation=type(instance),
+                        scope=ServiceScope.SINGLETON,
+                    ),
+                    instance=instance,
+                    state=ServiceState.RUNNING,
+                )
+
+                self._singletons[interface] = service_instance
+
+                logger.debug(f"Registered singleton: {interface.__name__}")
+
+            return Ok(self)
+        except Exception as e:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to register singleton: {e}",
+                    operation="register_singleton",
+                    service_name=interface.__name__,
+                )
             )
 
-            self._singletons[interface] = service_instance
-
-            logger.debug(f"Registered singleton: {interface.__name__}")
-
-        return self
-
     def get_service(self, service_type: Type[T], context: Optional[str] = None) -> T:
+        """Resolve and return service instance. (Legacy - use get_service_result)"""
+        result = self.get_service_result(service_type, context)
+        if result.is_ok:
+            return result.value
+        raise DependencyResolutionError(result.error.message)
+
+    def get_service_result(
+        self, service_type: Type[T], context: Optional[str] = None
+    ) -> Result[T, ServiceContainerError]:
         """
-        Resolve and return service instance.
+        Resolve and return service instance using Result pattern.
 
         Args:
             service_type: Service interface type
             context: Optional context for scoped services
 
         Returns:
-            Service instance
-
-        Raises:
-            DependencyResolutionError: If service cannot be resolved
+            Result containing service instance or error
         """
         try:
             with self._lock:
                 # Check if already resolved as singleton
                 if service_type in self._singletons:
-                    return self._singletons[service_type].instance
+                    return Ok(self._singletons[service_type].instance)
 
                 # Check if service is registered
                 if service_type not in self._services:
-                    raise DependencyResolutionError(
-                        f"Service not registered: {service_type.__name__}"
+                    return Err(
+                        ServiceContainerError(
+                            message=f"Service not registered: {service_type.__name__}",
+                            operation="get_service",
+                            service_name=service_type.__name__,
+                        )
                     )
 
                 descriptor = self._services[service_type]
@@ -252,48 +347,103 @@ class ServiceContainer:
                     if scope_key in self._instances[service_type]:
                         existing_instance = self._instances[service_type][scope_key]
                         if existing_instance.state == ServiceState.RUNNING:
-                            return existing_instance.instance
+                            return Ok(existing_instance.instance)
 
                 # Create new instance
-                return self._create_instance(service_type, descriptor, scope_key)
+                instance = self._create_instance(service_type, descriptor, scope_key)
+                return Ok(instance)
 
         except Exception as e:
+            error_msg = f"Failed to resolve service {service_type.__name__}: {e}"
             if self.error_handler:
                 error_context = ErrorContext(
                     component="ServiceContainer",
                     operation="get_service",
-                    metadata={"service_type": service_type.__name__},
+                    metadata={"service_type": service_type.__name__, "error": str(e)},
                 )
                 asyncio.create_task(self.error_handler.handle_error(e, error_context))
 
-            raise DependencyResolutionError(
-                f"Failed to resolve service {service_type.__name__}: {e}"
+            return Err(
+                ServiceContainerError(
+                    message=error_msg,
+                    operation="get_service",
+                    service_name=service_type.__name__,
+                )
             )
 
     def get_services_by_tag(self, tag: str) -> List[Any]:
-        """Get all services with specified tag."""
-        with self._lock:
-            if tag not in self._tags:
-                return []
+        """Get all services with specified tag. (Legacy - use get_services_by_tag_result)"""
+        result = self.get_services_by_tag_result(tag)
+        if result.is_ok:
+            return result.value
+        return []
 
-            services = []
-            for service_type in self._tags[tag]:
-                try:
-                    services.append(self.get_service(service_type))
-                except DependencyResolutionError:
-                    logger.warning(
-                        f"Failed to resolve tagged service: {service_type.__name__}"
+    def get_services_by_tag_result(
+        self, tag: str
+    ) -> Result[List[Any], ServiceContainerError]:
+        """
+        Get all services with specified tag using Result pattern.
+
+        Args:
+            tag: Service tag to filter by
+
+        Returns:
+            Result containing list of service instances or error
+        """
+        try:
+            with self._lock:
+                if tag not in self._tags:
+                    return Ok([])
+
+                services: list[Any] = []
+                errors: list[str] = []
+                for service_type in self._tags[tag]:
+                    service_result = self.get_service_result(service_type)
+                    if service_result.is_ok:
+                        services.append(service_result.value)
+                    else:
+                        error_msg = f"Failed to resolve {service_type.__name__}: {service_result.error.message}"
+                        errors.append(error_msg)
+                        logger.warning(error_msg)
+
+                if errors and not services:
+                    return Err(
+                        ServiceContainerError(
+                            message=f"Failed to resolve any services with tag '{tag}': {'; '.join(errors)}",
+                            operation="get_services_by_tag",
+                            details={"tag": tag, "errors": errors},
+                        )
                     )
 
-            return services
+                return Ok(services)
+        except Exception as e:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to get services by tag: {e}",
+                    operation="get_services_by_tag",
+                    details={"tag": tag},
+                )
+            )
 
     async def initialize_all_services(self) -> None:
-        """Initialize all registered services in dependency order."""
+        """Initialize all registered services in dependency order. (Legacy - use initialize_all_services_result)"""
+        result = await self.initialize_all_services_result()
+        if result.is_error:
+            raise RuntimeError(result.error.message)
+
+    async def initialize_all_services_result(
+        self,
+    ) -> Result[bool, ServiceContainerError]:
+        """
+        Initialize all registered services in dependency order using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
         logger.info("Initializing all services...")
 
         initialized_count = 0
-        failed_services = []
-
+        failed_services: list[Any] = []
         for service_type in self._initialization_order:
             try:
                 await self._initialize_service(service_type)
@@ -310,17 +460,36 @@ class ServiceContainer:
             failure_details = "; ".join(
                 [f"{svc.__name__}: {err}" for svc, err in failed_services]
             )
-            raise RuntimeError(
-                f"Service initialization failed for {len(failed_services)} services: {failure_details}"
+            return Err(
+                ServiceContainerError(
+                    message=f"Service initialization failed for {len(failed_services)} services: {failure_details}",
+                    operation="initialize_all_services",
+                    details={"failed_count": len(failed_services)},
+                )
             )
 
         logger.info(f"Successfully initialized {initialized_count} services")
+        return Ok(True)
 
     async def startup_all_services(self) -> None:
-        """Start all initialized services."""
+        """Start all initialized services. (Legacy - use startup_all_services_result)"""
+        result = await self.startup_all_services_result()
+        if result.is_error:
+            logger.error(f"Failed to start services: {result.error.message}")
+
+    async def startup_all_services_result(
+        self,
+    ) -> Result[bool, ServiceContainerError]:
+        """
+        Start all initialized services using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
         logger.info("Starting all services...")
 
         started_count = 0
+        failed_services: list[tuple[Any, str]] = []
         for service_type in self._startup_order:
             try:
                 await self._startup_service(service_type)
@@ -328,14 +497,42 @@ class ServiceContainer:
 
             except Exception as e:
                 logger.error(f"Failed to start service {service_type.__name__}: {e}")
+                failed_services.append((service_type, str(e)))
+
+        if failed_services:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to start {len(failed_services)} services",
+                    operation="startup_all_services",
+                    details={
+                        "failed_count": len(failed_services),
+                        "started_count": started_count,
+                    },
+                )
+            )
 
         logger.info(f"Started {started_count} services")
+        return Ok(True)
 
     async def shutdown_all_services(self) -> None:
-        """Shutdown all services in reverse order."""
+        """Shutdown all services in reverse order. (Legacy - use shutdown_all_services_result)"""
+        result = await self.shutdown_all_services_result()
+        if result.is_error:
+            logger.warning(f"Some services failed to shutdown: {result.error.message}")
+
+    async def shutdown_all_services_result(
+        self,
+    ) -> Result[bool, ServiceContainerError]:
+        """
+        Shutdown all services in reverse order using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
         logger.info("Shutting down all services...")
 
         shutdown_count = 0
+        failed_services: list[tuple[Any, str]] = []
         # Shutdown in reverse order
         for service_type in reversed(self._shutdown_order):
             try:
@@ -344,16 +541,28 @@ class ServiceContainer:
 
             except Exception as e:
                 logger.error(f"Failed to shutdown service {service_type.__name__}: {e}")
+                failed_services.append((service_type, str(e)))
+
+        if failed_services:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to shutdown {len(failed_services)} services cleanly",
+                    operation="shutdown_all_services",
+                    details={
+                        "failed_count": len(failed_services),
+                        "shutdown_count": shutdown_count,
+                    },
+                )
+            )
 
         logger.info(f"Shut down {shutdown_count} services")
+        return Ok(True)
 
     async def perform_health_checks(self) -> Dict[str, Dict[str, Any]]:
         """Perform health checks on all services."""
-        health_results = {}
-
+        health_results: dict[Any, Any] = {}
         with self._lock:
-            all_instances = []
-
+            all_instances: list[Any] = []
             # Collect all instances
             all_instances.extend(self._singletons.values())
             for instances_dict in self._instances.values():
@@ -384,41 +593,61 @@ class ServiceContainer:
         return health_results
 
     def get_service_registry(self) -> Dict[str, Dict[str, Any]]:
-        """Get complete service registry information."""
-        with self._lock:
-            registry = {}
+        """Get complete service registry information. (Legacy - use get_service_registry_result)"""
+        result = self.get_service_registry_result()
+        if result.is_ok:
+            return result.value
+        return {}
 
-            for service_type, descriptor in self._services.items():
-                service_name = service_type.__name__
+    def get_service_registry_result(
+        self,
+    ) -> Result[Dict[str, Dict[str, Any]], ServiceContainerError]:
+        """
+        Get complete service registry information using Result pattern.
 
-                # Get instance information
-                instance_info = None
-                if service_type in self._singletons:
-                    instance = self._singletons[service_type]
-                    instance_info = {
-                        "state": instance.state.value,
-                        "created_at": instance.created_at.isoformat(),
-                        "health_status": instance.health_status,
-                        "error_count": instance.error_count,
+        Returns:
+            Result containing registry dictionary or error
+        """
+        try:
+            with self._lock:
+                registry: dict[Any, Any] = {}
+                for service_type, descriptor in self._services.items():
+                    service_name = service_type.__name__
+
+                    # Get instance information
+                    instance_info = None
+                    if service_type in self._singletons:
+                        instance = self._singletons[service_type]
+                        instance_info = {
+                            "state": instance.state.value,
+                            "created_at": instance.created_at.isoformat(),
+                            "health_status": instance.health_status,
+                            "error_count": instance.error_count,
+                        }
+
+                    registry[service_name] = {
+                        "interface": service_type.__name__,
+                        "implementation": descriptor.implementation.__name__,
+                        "scope": descriptor.scope.value,
+                        "dependencies": [dep.__name__ for dep in descriptor.dependencies],
+                        "tags": list(descriptor.tags),
+                        "priority": descriptor.priority,
+                        "configuration_section": descriptor.configuration_section,
+                        "instance": instance_info,
                     }
 
-                registry[service_name] = {
-                    "interface": service_type.__name__,
-                    "implementation": descriptor.implementation.__name__,
-                    "scope": descriptor.scope.value,
-                    "dependencies": [dep.__name__ for dep in descriptor.dependencies],
-                    "tags": list(descriptor.tags),
-                    "priority": descriptor.priority,
-                    "configuration_section": descriptor.configuration_section,
-                    "instance": instance_info,
-                }
-
-            return registry
+                return Ok(registry)
+        except Exception as e:
+            return Err(
+                ServiceContainerError(
+                    message=f"Failed to get service registry: {e}",
+                    operation="get_service_registry",
+                )
+            )
 
     def _analyze_dependencies(self, implementation: Type) -> List[Type]:
         """Analyze constructor dependencies using type hints."""
-        dependencies = []
-
+        dependencies: list[Any] = []
         try:
             # Get constructor signature
             init_signature = inspect.signature(implementation.__init__)
@@ -485,7 +714,7 @@ class ServiceContainer:
 
         try:
             # Resolve dependencies
-            dependencies = {}
+            dependencies: dict[Any, Any] = {}
             for dep_type in descriptor.dependencies:
                 dependencies[dep_type] = self.get_service(dep_type)
 
@@ -530,7 +759,7 @@ class ServiceContainer:
             type_hints = get_type_hints(implementation.__init__)
 
             # Build constructor arguments
-            constructor_args = {}
+            constructor_args: dict[Any, Any] = {}
             for param_name, param in init_signature.parameters.items():
                 if param_name == "self":
                     continue
@@ -576,11 +805,10 @@ class ServiceContainer:
     def _update_initialization_order(self) -> None:
         """Update service initialization order based on dependencies."""
         # Topological sort of services based on dependencies
-        visited = set()
-        temp_visited = set()
-        order = []
-
-        def visit(service_type: Type):
+        visited: set[Any] = set()
+        temp_visited: set[Any] = set()
+        order: list[Any] = []
+        def visit(service_type: Type) -> None:
             if service_type in temp_visited:
                 raise DependencyResolutionError(
                     f"Circular dependency involving {service_type.__name__}"

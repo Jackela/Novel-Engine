@@ -3,7 +3,7 @@
 Equipment analytics and performance calculations.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict
 
@@ -11,7 +11,7 @@ from src.core.data_models import EquipmentCondition
 
 from .models import DynamicEquipment
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EquipmentAnalyzer:
@@ -55,7 +55,7 @@ class EquipmentAnalyzer:
 
         return min(0.1, base_wear)  # Cap at 10% per use
 
-    def update_performance_from_wear(self, equipment: DynamicEquipment):
+    def update_performance_from_wear(self, equipment: DynamicEquipment) -> None:
         """Update enhanced performance metrics based on wear accumulation"""
         wear_impact = equipment.wear_accumulation
 

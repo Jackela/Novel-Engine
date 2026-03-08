@@ -16,7 +16,6 @@ Why this matters:
     character.
 """
 
-from datetime import datetime
 from typing import TYPE_CHECKING, List, Optional, Protocol
 
 from src.contexts.character.domain.aggregates.character import Character
@@ -25,7 +24,11 @@ from src.contexts.character.domain.value_objects.character_reaction import (
     CharacterReaction,
     ReactionType,
 )
-from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent, ImpactScope
+from src.contexts.world.domain.entities.history_event import (
+    EventType,
+    HistoryEvent,
+    ImpactScope,
+)
 
 if TYPE_CHECKING:
     from src.contexts.world.domain.aggregates.world_state import WorldState
@@ -90,7 +93,7 @@ class CharacterReactor:
         "Sir Aldric protests vehemently upon hearing The Great War"
     """
 
-    def __init__(self, memory_service: Optional[CharacterMemoryService] = None):
+    def __init__(self, memory_service: Optional[CharacterMemoryService] = None) -> None:
         """Initialize the reactor.
 
         Args:
@@ -251,7 +254,9 @@ class CharacterReactor:
         # Check personality traits in profile
         if hasattr(character.profile, "personality_traits"):
             try:
-                trait_score = character.profile.personality_traits.get_trait_score(trait_lower)
+                trait_score = character.profile.personality_traits.get_trait_score(
+                    trait_lower
+                )
                 if trait_score >= 0.7:
                     return True
             except (AttributeError, KeyError):
@@ -408,6 +413,5 @@ class CharacterReactor:
             List of CharacterReaction objects (one per character)
         """
         return [
-            self.react_to_event(character, event, world)
-            for character in characters
+            self.react_to_event(character, event, world) for character in characters
         ]

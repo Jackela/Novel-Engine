@@ -5,13 +5,13 @@ Analyzes turn results to detect narrative moments that warrant user intervention
 Uses configurable thresholds based on PlotPoint model attributes.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
 
 from .models import DecisionOption, DecisionPoint, DecisionPointType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Decision point type mappings from PlotPointType
@@ -43,7 +43,7 @@ class DecisionPointDetector:
         intensity_threshold: float = 7.0,
         check_interval: int = 3,  # Check every N turns for demo
         always_detect_interval: Optional[int] = None,  # Force detect every N turns
-    ):
+    ) -> None:
         """
         Initialize the detector.
 
@@ -454,7 +454,7 @@ class DecisionPointDetector:
             for i, opt in enumerate(base_options)
         ]
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset the detector state."""
         self._turns_since_last_decision = 0
         self._decision_count = 0

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 from src.contexts.world.application.ports.world_generator_port import (
     WorldGenerationInput,
@@ -485,25 +485,16 @@ class TestLLMWorldGeneratorIntegration:
     """Integration-style tests with mocked API."""
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         sample_llm_response: Dict[str, Any],
     ) -> None:
         """Test successful generation with mocked API."""
-        # Setup mock response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_llm_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        # Setup mock to return the JSON response directly
+        mock_call.return_value = json.dumps(sample_llm_response)
 
         # Set API key for test
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
@@ -516,19 +507,14 @@ class TestLLMWorldGeneratorIntegration:
         assert len(result.events) == 2
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_api_error_returns_error_result(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
     ) -> None:
         """Test that API errors return error result."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             request = WorldGenerationInput()
@@ -872,29 +858,16 @@ class TestBeatSuggestionIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     async def test_suggest_next_beats_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         sample_beat_suggestion_response: Dict[str, Any],
         current_beats_fixture: list,
     ) -> None:
         """Test successful beat suggestion with mocked API."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [{"text": json.dumps(sample_beat_suggestion_response)}]
-                    }
-                }
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(sample_beat_suggestion_response)
 
         result = await generator.suggest_next_beats(
             current_beats=current_beats_fixture,
@@ -910,19 +883,14 @@ class TestBeatSuggestionIntegration:
 
     @pytest.mark.integration
     @pytest.mark.asyncio
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     async def test_suggest_next_beats_api_error(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
     ) -> None:
         """Test beat suggestion handles API errors gracefully."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         result = await generator.suggest_next_beats(
             current_beats=[],
@@ -1370,29 +1338,16 @@ class TestCritiqueIntegration:
     """Integration-style tests for scene critique with mocked API."""
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_critique_scene_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         sample_scene_critique_response: Dict[str, Any],
         scene_text_fixture: str,
     ) -> None:
         """Test successful scene critique with mocked API."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [{"text": json.dumps(sample_scene_critique_response)}]
-                    }
-                }
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(sample_scene_critique_response)
 
         result = generator.critique_scene(
             scene_text=scene_text_fixture,
@@ -1405,19 +1360,14 @@ class TestCritiqueIntegration:
         assert len(result.highlights) == 3
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_critique_scene_api_error(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
     ) -> None:
         """Test scene critique handles API errors gracefully."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         result = generator.critique_scene(scene_text="Test scene.")
 

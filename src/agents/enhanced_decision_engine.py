@@ -16,15 +16,21 @@ Features:
 - Memory-based decision influences
 """
 
-import logging
+import structlog
 from typing import Any, Dict
 
 # Import base decision engine
-from src.agents.decision_engine import DecisionEngine
-from src.agents.persona_agent.core import PersonaAgentCore
+from typing import TYPE_CHECKING, cast
 
-# Configure logging
-logger = logging.getLogger(__name__)
+from src.agents.decision_engine import DecisionEngine, SituationAssessment
+
+if TYPE_CHECKING:
+    from src.agents.persona_agent.core import PersonaAgentCore
+else:
+    # Runtime import with cast to avoid type errors
+    from src.agents.persona_agent.core import PersonaAgentCore
+
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedDecisionEngine(DecisionEngine):
@@ -36,7 +42,7 @@ class EnhancedDecisionEngine(DecisionEngine):
     full backward compatibility with existing agent behavior.
     """
 
-    def __init__(self, agent_core: PersonaAgentCore):
+    def __init__(self, agent_core: "PersonaAgentCore") -> None:
         """Initialize the enhanced decision engine."""
         super().__init__(agent_core)
         self.context_modifier_enabled = True
@@ -47,9 +53,9 @@ class EnhancedDecisionEngine(DecisionEngine):
             "emotional_drive": 0.15,
             "memory_influence": 0.1,
         }
-        logger.debug("Enhanced DecisionEngine initialized")
+        logger.debug("enhanced_decision_engine_initialized")
 
-    def _evaluate_action_option(
+    def _evaluate_action_option(  # type: ignore[override]
         self, action: Dict[str, Any], situation: Dict[str, Any]
     ) -> float:
         """Enhanced action evaluation with context modifiers."""
@@ -64,7 +70,10 @@ class EnhancedDecisionEngine(DecisionEngine):
         ):
             context_score = self._apply_context_modifiers(base_score, action, situation)
             logger.debug(
-                f"Action {action.get('action_type', 'unknown')} enhanced: {base_score:.2f} → {context_score:.2f}"
+                "action_enhanced",
+                action_type=action.get("action_type", "unknown"),
+                base_score=base_score,
+                context_score=context_score
             )
             return context_score
 
@@ -144,7 +153,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.1, min(3.0, score))  # Clamp to reasonable range
 
         except Exception as e:
-            logger.warning(f"Error applying context modifiers: {e}")
+            logger.warning("error_applying_context_modifiers", error=str(e))
             return base_score
 
     def _get_objective_alignment_modifier(
@@ -176,7 +185,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return min(1.6, alignment_score)  # Cap at 60% bonus
 
         except Exception as e:
-            logger.warning(f"Error calculating objective alignment: {e}")
+            logger.warning("error_calculating_objective_alignment", error=str(e))
             return 1.0
 
     def _get_behavioral_trigger_modifier(
@@ -218,7 +227,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.7, min(1.5, modifier))  # 30% penalty to 50% bonus
 
         except Exception as e:
-            logger.warning(f"Error calculating behavioral trigger modifier: {e}")
+            logger.warning("error_calculating_behavioral_trigger_modifier", error=str(e))
             return 1.0
 
     def _get_relationship_modifier(self, action: Dict, relationships: Dict) -> float:
@@ -259,7 +268,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return 1.0
 
         except Exception as e:
-            logger.warning(f"Error calculating relationship modifier: {e}")
+            logger.warning("error_calculating_relationship_modifier", error=str(e))
             return 1.0
 
     def _get_emotional_drive_modifier(self, action: Dict, drives: Dict) -> float:
@@ -305,7 +314,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.8, min(1.4, modifier))  # 20% penalty to 40% bonus
 
         except Exception as e:
-            logger.warning(f"Error calculating emotional drive modifier: {e}")
+            logger.warning("error_calculating_emotional_drive_modifier", error=str(e))
             return 1.0
 
     def _get_memory_influence_modifier(
@@ -356,7 +365,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.8, min(1.3, modifier))  # 20% penalty to 30% bonus
 
         except Exception as e:
-            logger.warning(f"Error calculating memory influence modifier: {e}")
+            logger.warning("error_calculating_memory_influence_modifier", error=str(e))
             return 1.0
 
     def _condition_matches_situation(self, condition: str, situation: Dict) -> bool:
@@ -375,7 +384,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             )
 
         except Exception as e:
-            logger.warning(f"Error matching condition to situation: {e}")
+            logger.warning("error_matching_condition_to_situation", error=str(e))
             return False
 
     def _phrase_matches_context(
@@ -404,7 +413,7 @@ class EnhancedDecisionEngine(DecisionEngine):
             )
 
         except Exception as e:
-            logger.warning(f"Error matching phrase to context: {e}")
+            logger.warning("error_matching_phrase_to_context", error=str(e))
             return False
 
     def get_context_decision_summary(
@@ -412,13 +421,15 @@ class EnhancedDecisionEngine(DecisionEngine):
     ) -> Dict[str, Any]:
         """Get summary of context-driven decision factors."""
         try:
+            agent_core = getattr(self, 'core', None)
             if (
-                not hasattr(self.agent_core, "character_data")
-                or "enhanced_context" not in self.agent_core.character_data
+                not agent_core
+                or not hasattr(agent_core, "character_data")
+                or "enhanced_context" not in agent_core.character_data
             ):
                 return {"context_available": False}
 
-            character_data = self.agent_core.character_data
+            character_data = agent_core.character_data
 
             summary = {
                 "context_available": True,
@@ -442,11 +453,10 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             # Calculate individual modifiers for transparency
             if "active_objectives" in character_data:
-                summary["modifiers_applied"]["objective_alignment"] = (
-                    self._get_objective_alignment_modifier(
-                        action, character_data["active_objectives"]
-                    )
-                )
+                objective_modifier = self._get_objective_alignment_modifier(
+                action, character_data["active_objectives"]
+            )
+            summary["modifiers_applied"]["objective_alignment"] = objective_modifier
 
             if "behavioral_triggers" in character_data:
                 summary["modifiers_applied"]["behavioral_trigger"] = (
@@ -482,5 +492,5 @@ class EnhancedDecisionEngine(DecisionEngine):
             return summary
 
         except Exception as e:
-            logger.error(f"Error generating context decision summary: {e}")
+            logger.error("error_generating_context_decision_summary", error=str(e))
             return {"context_available": False, "error": str(e)}

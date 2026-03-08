@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
@@ -316,7 +316,7 @@ class CoreferenceResolutionService:
             return candidates
 
         # Filter candidates by gender
-        filtered = []
+        filtered: list[Any] = []
         for entity, distance in candidates:
             entity_gender = self._get_gender_from_name(entity.name)
             if (

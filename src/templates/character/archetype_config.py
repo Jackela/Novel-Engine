@@ -3,14 +3,14 @@
 Character archetype configurations and preferences.
 """
 
-import logging
+import structlog
 from typing import Dict
 
 from src.templates.dynamic_template_engine import TemplateType
 
 from .persona_models import CharacterArchetype
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ArchetypeConfiguration:
@@ -58,7 +58,7 @@ Location: {{current_location}}
 {% if equipment_states %}
 Equipment Status:
 {% for item, status in equipment_states.items() %}
-- {{item}}: {{status.condition if status.condition else status}} 
+- {{item}}: {{status.condition if status.condition else status}}
 {% endfor %}
 {% endif %}
 

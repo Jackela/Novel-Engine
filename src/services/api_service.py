@@ -1,5 +1,11 @@
+"""API orchestration service for managing simulation lifecycles.
+
+Bridges the REST API (Imperative Shell) and the System Orchestrator
+(Functional Core), handling background task execution and SSE events.
+"""
+
 import asyncio
-import logging
+import structlog
 import time
 import uuid
 from datetime import UTC, datetime
@@ -14,13 +20,19 @@ from src.config.character_factory import CharacterFactory
 from src.core.event_bus import EventBus
 from src.core.system_orchestrator import SystemOrchestrator
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ApiOrchestrationService:
-    """
-    Service layer bridging the REST API (Imperative Shell) and the System Orchestrator (Functional Core).
-    Manages the lifecycle of orchestration sessions requested via API.
+    """Service layer bridging REST API and System Orchestrator.
+    
+    Manages the lifecycle of orchestration sessions requested via API,
+    including background task execution, state tracking, and SSE broadcasting.
+    
+    Attributes:
+        core: The system orchestrator instance
+        event_bus: Event bus for broadcasting updates
+        character_factory: Factory for creating character agents
     """
 
     def __init__(
@@ -28,11 +40,17 @@ class ApiOrchestrationService:
         orchestrator: SystemOrchestrator,
         event_bus: EventBus,
         character_factory: Optional[CharacterFactory] = None,
-    ):
+    ) -> None:
+        """Initialize the orchestration service.
+        
+        Args:
+            orchestrator: System orchestrator instance
+            event_bus: Event bus for SSE broadcasting
+            character_factory: Optional character factory override
+        """
         self.core = orchestrator
         self.event_bus = event_bus
         self.character_factory = character_factory or CharacterFactory(event_bus)
-        self._orchestration_active = False
         self._orchestration_active = False
         self._stop_flag = False
         self._current_task: Optional[asyncio.Task] = None
@@ -56,7 +74,17 @@ class ApiOrchestrationService:
         }
 
     async def start_simulation(self, request: SimulationRequest) -> Dict[str, Any]:
-        """Start a new simulation in the background."""
+        """Start a new simulation in the background.
+        
+        Args:
+            request: Simulation configuration request
+            
+        Returns:
+            Dictionary with success status and task ID
+            
+        Raises:
+            ValueError: If simulation is already running
+        """
         if self._orchestration_active:
             raise ValueError("Simulation already running")
 
@@ -73,7 +101,11 @@ class ApiOrchestrationService:
         return {"success": True, "status": "started", "task_id": str(uuid.uuid4())}
 
     async def stop_simulation(self) -> Dict[str, Any]:
-        """Stop the current simulation."""
+        """Stop the current simulation.
+        
+        Returns:
+            Dictionary with success status
+        """
         if not self._orchestration_active:
             return {"success": False, "message": "No simulation running"}
 
@@ -83,7 +115,11 @@ class ApiOrchestrationService:
         return {"success": True, "status": "stopping"}
 
     async def pause_simulation(self) -> Dict[str, Any]:
-        """Pause the current simulation."""
+        """Pause the current simulation.
+        
+        Returns:
+            Dictionary with success status and message
+        """
         if not self._orchestration_active:
             return {"success": False, "message": "No simulation running"}
 
@@ -99,27 +135,38 @@ class ApiOrchestrationService:
         }
 
     async def get_status(self) -> Dict[str, Any]:
-        """Get current orchestration status."""
+        """Get current orchestration status.
+        
+        Returns:
+            Dictionary with current state information
+        """
         return self._state
 
     async def get_narrative(self) -> Dict[str, Any]:
-        """Get generated narrative."""
+        """Get generated narrative.
+        
+        Returns:
+            Dictionary with narrative data and metadata
+        """
         return self._narrative
 
     async def _run_orchestration_loop(
         self, character_names: List[str], total_turns: int
     ):
+        """Main orchestration loop.
+        
+        Runs the simulation turn-by-turn with pause/stop support.
+        
+        Args:
+            character_names: List of character names to simulate
+            total_turns: Number of turns to run
         """
-        Main orchestration loop.
-        Refactored from api_server.py to use async/await and proper service isolation.
-        """
-        logger.info(f"Starting orchestration service loop: {character_names}")
+        logger.info("Starting orchestration service loop: %s", character_names)
 
         try:
             # 1. Initialize Components
             # Use injected factory (allows mocking)
-            agents = []
-
+            agents: list[Any] = []
             # 2. Create Agents
             for name in character_names:
                 try:
@@ -133,7 +180,7 @@ class ApiOrchestrationService:
                     )
                 except FileNotFoundError:
                     logger.error(
-                        f"Character '{name}' not found in characters directory"
+                        "Character '%s' not found in characters directory", name
                     )
                     await self._broadcast_sse(
                         "system",
@@ -143,7 +190,7 @@ class ApiOrchestrationService:
                     )
                     continue
                 except Exception as e:
-                    logger.error(f"Failed to create agent '{name}': {e}", exc_info=True)
+                    logger.error("Failed to create agent '%s': %s", name, e, exc_info=True)
                     await self._broadcast_sse(
                         "system", f"Agent Creation Failed: {name}", str(e), "high"
                     )
@@ -181,7 +228,7 @@ class ApiOrchestrationService:
             )
 
             # 4. Turn Loop
-            turn_times = []
+            turn_times: list[Any] = []
             for turn_num in range(1, total_turns + 1):
                 # Check for stop flag
                 if self._stop_flag:
@@ -252,7 +299,7 @@ class ApiOrchestrationService:
             )
 
         except Exception as e:
-            logger.error(f"Orchestration loop error: {e}", exc_info=True)
+            logger.error("Orchestration loop error: %s", e, exc_info=True)
             self._state["status"] = "error"
             await self._broadcast_sse("system", "Orchestration Error", str(e), "high")
         finally:
@@ -261,7 +308,14 @@ class ApiOrchestrationService:
     async def _broadcast_sse(
         self, event_type: str, title: str, description: str, severity: str
     ):
-        """Helper to emit SSE events via EventBus."""
+        """Emit SSE events via EventBus.
+        
+        Args:
+            event_type: Type of event (system, story, character)
+            title: Event title
+            description: Event description
+            severity: Event severity (low, medium, high)
+        """
         if self.event_bus:
             # Publish to the topic that api_server.py's bridge subscribes to
             await self.event_bus.publish(
@@ -272,4 +326,4 @@ class ApiOrchestrationService:
                 severity=severity,
             )
         else:
-            logger.warning(f"No EventBus available to broadcast: {title}")
+            logger.warning("No EventBus available to broadcast: %s", title)

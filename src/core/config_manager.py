@@ -4,10 +4,16 @@ Unified Configuration Management System
 
 Consolidates all configuration loading patterns found across the codebase
 into a single, consistent, and maintainable configuration manager.
+
+Result Pattern Migration:
+    - get() -> Result[Any, ConfigError]
+    - get_section() -> Result[Dict[str, Any], ConfigError]
+    - reload() -> Result[bool, ConfigError]
+    - save_to_file() -> Result[bool, ConfigError]
 """
 
 import json
-import logging
+import structlog
 import os
 from dataclasses import dataclass, field
 from enum import Enum
@@ -16,7 +22,31 @@ from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
-logger = logging.getLogger(__name__)
+from .result import Error, Err, Ok, Result
+
+logger = structlog.get_logger(__name__)
+
+
+class ConfigError(Error):
+    """Error raised when configuration operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        key_path: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if key_path:
+            full_details["key_path"] = key_path
+        super().__init__(
+            code="CONFIG_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class ConfigFormat(Enum):
@@ -131,7 +161,7 @@ class ConfigurationManager:
     - Configuration merging and inheritance
     """
 
-    def __init__(self, base_path: Optional[str] = None):
+    def __init__(self, base_path: Optional[str] = None) -> None:
         """
         Initialize configuration manager.
 
@@ -271,8 +301,7 @@ class ConfigurationManager:
 
     def _validate_configuration(self) -> None:
         """Validate the final configuration."""
-        errors = []
-
+        errors: list[Any] = []
         # Validate required sections
         required_sections = ["server", "database", "security"]
         for section in required_sections:
@@ -291,15 +320,21 @@ class ConfigurationManager:
             raise ValueError(error_msg)
 
     def get(self, key_path: str, default: Any = None) -> Any:
+        """Get configuration value by dot-separated key path. (Legacy - use get_result)"""
+        result = self.get_result(key_path)
+        if result.is_ok:
+            return result.value
+        return default
+
+    def get_result(self, key_path: str) -> Result[Any, ConfigError]:
         """
-        Get configuration value by dot-separated key path.
+        Get configuration value by dot-separated key path using Result pattern.
 
         Args:
             key_path: Dot-separated path (e.g., "server.host")
-            default: Default value if key not found
 
         Returns:
-            Configuration value or default
+            Result containing configuration value or error
         """
         keys = key_path.split(".")
         current = self.config_data
@@ -308,36 +343,124 @@ class ConfigurationManager:
             if isinstance(current, dict) and key in current:
                 current = current[key]
             else:
-                return default
+                return Err(
+                    ConfigError(
+                        message=f"Configuration key not found: {key_path}",
+                        operation="get",
+                        key_path=key_path,
+                    )
+                )
 
-        return current
+        return Ok(current)
 
     def set(self, key_path: str, value: Any) -> None:
         """
-        Set configuration value by dot-separated key path.
+        Set configuration value by dot-separated key path. (Legacy - use set_result)
 
         Args:
             key_path: Dot-separated path (e.g., "server.host")
             value: Value to set
         """
-        keys = key_path.split(".")
-        current = self.config_data
+        result = self.set_result(key_path, value)
+        if result.is_error:
+            logger.warning("configuration_set_failed", error=result.error.message)
 
-        for key in keys[:-1]:
-            if key not in current:
-                current[key] = {}
-            current = current[key]
+    def set_result(self, key_path: str, value: Any) -> Result[bool, ConfigError]:
+        """
+        Set configuration value by dot-separated key path using Result pattern.
 
-        current[keys[-1]] = value
+        Args:
+            key_path: Dot-separated path (e.g., "server.host")
+            value: Value to set
+
+        Returns:
+            Result containing True on success or error
+        """
+        try:
+            if not key_path:
+                return Err(
+                    ConfigError(
+                        message="Configuration key path cannot be empty",
+                        operation="set",
+                        key_path=key_path,
+                    )
+                )
+
+            keys = key_path.split(".")
+            current = self.config_data
+
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+            current[keys[-1]] = value
+            logger.debug("configuration_set", key_path=key_path)
+            return Ok(True)
+        except Exception as e:
+            return Err(
+                ConfigError(
+                    message=f"Failed to set configuration: {e}",
+                    operation="set",
+                    key_path=key_path,
+                    details={"value_type": type(value).__name__},
+                )
+            )
 
     def get_section(self, section: str) -> Dict[str, Any]:
-        """Get entire configuration section."""
-        return self.config_data.get(section, {})
+        """Get entire configuration section. (Legacy - use get_section_result)"""
+        result = self.get_section_result(section)
+        if result.is_ok:
+            return result.value or {}
+        return {}
+
+    def get_section_result(self, section: str) -> Result[Dict[str, Any], ConfigError]:
+        """
+        Get entire configuration section using Result pattern.
+
+        Args:
+            section: Name of the configuration section
+
+        Returns:
+            Result containing configuration section or error
+        """
+        if section in self.config_data:
+            return Ok(self.config_data[section])
+        return Err(
+            ConfigError(
+                message=f"Configuration section not found: {section}",
+                operation="get_section",
+                key_path=section,
+            )
+        )
 
     def reload(self) -> None:
-        """Reload configuration from files."""
-        logger.info("Reloading configuration")
-        self._load_configurations()
+        """Reload configuration from files. (Legacy - use reload_result)"""
+        result = self.reload_result()
+        if result.is_error and result.error:
+            logger.error(
+                "configuration_reload_failed", error=result.error.message
+            )
+
+    def reload_result(self) -> Result[bool, ConfigError]:
+        """
+        Reload configuration from files using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
+        try:
+            logger.info("Reloading configuration")
+            self._load_configurations()
+            return Ok(True)
+        except Exception as e:
+            return Err(
+                ConfigError(
+                    message=f"Failed to reload configuration: {e}",
+                    operation="reload",
+                    key_path=None,
+                )
+            )
 
     def to_dict(self) -> Dict[str, Any]:
         """Get full configuration as dictionary."""
@@ -346,12 +469,23 @@ class ConfigurationManager:
     def save_to_file(
         self, file_path: Union[str, Path], format: ConfigFormat = ConfigFormat.YAML
     ) -> None:
+        """Save current configuration to file. (Legacy - use save_to_file_result)"""
+        result = self.save_to_file_result(file_path, format)
+        if result.is_error:
+            raise ValueError(f"Failed to save configuration: {result.error.message}")
+
+    def save_to_file_result(
+        self, file_path: Union[str, Path], format: ConfigFormat = ConfigFormat.YAML
+    ) -> Result[bool, ConfigError]:
         """
-        Save current configuration to file.
+        Save current configuration to file using Result pattern.
 
         Args:
             file_path: Path to save configuration
             format: File format to use
+
+        Returns:
+            Result containing True on success or error
         """
         file_path = Path(file_path)
 
@@ -362,13 +496,25 @@ class ConfigurationManager:
                 elif format == ConfigFormat.JSON:
                     json.dump(self.config_data, f, indent=2)
                 else:
-                    raise ValueError(f"Unsupported format: {format}")
+                    return Err(
+                        ConfigError(
+                            message=f"Unsupported format: {format}",
+                            operation="save_to_file",
+                            details={"file_path": str(file_path), "format": format.value},
+                        )
+                    )
 
             logger.info(f"Configuration saved to {file_path}")
+            return Ok(True)
 
         except Exception as e:
-            logger.error(f"Failed to save configuration to {file_path}: {e}")
-            raise
+            return Err(
+                ConfigError(
+                    message=f"Failed to save configuration: {e}",
+                    operation="save_to_file",
+                    details={"file_path": str(file_path)},
+                )
+            )
 
 
 # Global configuration manager instance
@@ -385,7 +531,7 @@ def get_config_manager(base_path: Optional[str] = None) -> ConfigurationManager:
     return _config_manager
 
 
-def get_config(key_path: str = None, default: Any = None) -> Any:
+def get_config(key_path: Optional[str] = None, default: Any = None) -> Any:
     """
     Get configuration value using global manager.
 
@@ -413,7 +559,8 @@ def reload_config() -> None:
 # Backwards compatibility functions for existing code
 def get_campaign_log_filename() -> str:
     """Get campaign log filename from configuration."""
-    return get_config("logging.campaign_log_path", "campaign_log.md")
+    result: str = get_config("logging.campaign_log_path", "campaign_log.md")
+    return result
 
 
 __all__ = [

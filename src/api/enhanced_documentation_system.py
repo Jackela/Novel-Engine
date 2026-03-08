@@ -7,7 +7,7 @@ Comprehensive documentation system that leverages Context7 for interactive examp
 framework patterns, and best practices integration.
 """
 
-import logging
+import structlog
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -15,13 +15,13 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedDocumentationSystem:
     """Enhanced documentation system with Context7 integration."""
 
-    def __init__(self, app: FastAPI, context7_api=None):
+    def __init__(self, app: FastAPI, context7_api=None) -> None:
         self.app = app
         self.context7_api = context7_api
         self.template_env = self._setup_templates()
@@ -40,7 +40,7 @@ class EnhancedDocumentationSystem:
 
         return Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True)
 
-    def _create_default_template(self, template_path: Path):
+    def _create_default_template(self, template_path: Path) -> None:
         """Create default documentation template."""
         template_content = """<!DOCTYPE html>
 <html lang="en">
@@ -161,14 +161,14 @@ response = httpx.get("http://localhost:8000/api/endpoint", headers=headers)</cod
                         <div class="tab-container">
                             <div class="tab-headers">
                                 {% for example in endpoint.examples %}
-                                <div class="tab-header{% if loop.first %} active{% endif %}" 
+                                <div class="tab-header{% if loop.first %} active{% endif %}"
                                      onclick="showTab(this, '{{ endpoint.path|replace('/', '_') }}_{{ example.format }}')">
                                      {{ example.format|title }}
                                 </div>
                                 {% endfor %}
                             </div>
                             {% for example in endpoint.examples %}
-                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}" 
+                            <div id="{{ endpoint.path|replace('/', '_') }}_{{ example.format }}"
                                  class="tab-content{% if loop.first %} active{% endif %}">
                                 <pre><code class="language-{{ example.language }}">{{ example.code }}</code></pre>
                                 {% if example.explanation %}
@@ -226,11 +226,11 @@ import httpx
 from typing import Dict, Optional
 
 class NovelEngineClient:
-    def __init__(self, base_url: str = "http://localhost:8000"):
+    def __init__(self, base_url: str = "http://localhost:8000") -> None:
         self.base_url = base_url
         self.token: Optional[str] = None
 
-    async def login(self, username: str, password: str):
+    async def login(self, username: str, password: str) -> None:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/api/auth/login",
@@ -321,7 +321,7 @@ print("Progress:", progress_response.json())</code></pre>
     response.raise_for_status()
     return response.json()
 except httpx.HTTPError as e:
-    logger.error(f"API call failed: {e}")
+    logger.error("API call failed: %s", e)
     return None</code></pre>
                 </div>
 
@@ -331,7 +331,7 @@ except httpx.HTTPError as e:
                     <pre><code class="language-python">import asyncio
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-@retry(stop=stop_after_attempt(3), 
+@retry(stop=stop_after_attempt(3),
        wait=wait_exponential(multiplier=1, min=4, max=10))
 async def api_call_with_retry():
     return await client.get("/api/endpoint")</code></pre>
@@ -504,8 +504,7 @@ novel-engine stories generate --title "My Story"</code></pre>
 
         try:
             formats = ["python", "curl", "javascript"]
-            examples = []
-
+            examples: list[Any] = []
             for format_type in formats:
                 context7_response = await self.context7_api._call_context7(
                     "generate_code_example",
@@ -610,7 +609,7 @@ console.log(data);"""
         """Generate enhanced HTML documentation."""
         try:
             # Enhance endpoints with Context7 examples
-            enhanced_endpoints = []
+            enhanced_endpoints: list[Any] = []
             for endpoint in self._api_inventory["endpoints"]:
                 examples = await self.generate_code_examples_for_endpoint(
                     endpoint["path"]
@@ -629,7 +628,7 @@ console.log(data);"""
             )
 
         except Exception as e:
-            logger.error(f"Failed to generate enhanced documentation: {e}")
+            logger.error("Failed to generate enhanced documentation: %s", e)
             return self._generate_fallback_documentation()
 
     def _generate_fallback_documentation(self) -> str:
@@ -658,7 +657,7 @@ console.log(data);"""
         </html>
         """
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup enhanced documentation routes."""
 
         @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)

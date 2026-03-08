@@ -55,8 +55,7 @@ class Entity(ABC):
         Returns:
             List of validation error messages. Empty list means valid.
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.id:
             errors.append("Entity ID cannot be empty")
 

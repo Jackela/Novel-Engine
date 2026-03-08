@@ -3,14 +3,14 @@
 Speech and format adaptation for personas.
 """
 
-import logging
+import structlog
 from typing import Any
 
 from src.templates.dynamic_template_engine import TemplateContext
 
 from .persona_models import CharacterArchetype, CharacterPersona
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SpeechAdapter:
@@ -88,7 +88,7 @@ class SpeechAdapter:
             if structure_config == "short":
                 # Split long sentences (very basic)
                 sentences = content.split(". ")
-                short_sentences = []
+                short_sentences: list[Any] = []
                 for sentence in sentences:
                     if len(sentence) > 100:  # Arbitrary threshold
                         # Try to split on conjunctions

@@ -93,9 +93,9 @@ class ProviderId:
     provider_key: Union[UUID, str] = None
     api_version: str = "1.0.0"
     region: Optional[str] = None
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ProviderId business rules and constraints."""
         # Auto-generate provider key if not provided
         if self.provider_key is None:
@@ -233,13 +233,13 @@ class ModelId:
     capabilities: Set[ModelCapability] = None
     max_context_tokens: int = 4096
     max_output_tokens: int = 1024
-    cost_per_input_token: Decimal = None
-    cost_per_output_token: Decimal = None
+    cost_per_input_token: Optional[Decimal] = None
+    cost_per_output_token: Optional[Decimal] = None
     model_version: str = "1.0"
     deprecated: bool = False
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ModelId business rules and constraints."""
         # Initialize collections if None
         if self.capabilities is None:
@@ -422,15 +422,15 @@ class TokenBudget:
     allocated_tokens: int
     consumed_tokens: int = 0
     reserved_tokens: int = 0
-    cost_limit: Decimal = None
-    accumulated_cost: Decimal = None
+    cost_limit: Optional[Decimal] = None
+    accumulated_cost: Optional[Decimal] = None
     period_start: Optional[Any] = None  # datetime, but avoiding import
     period_end: Optional[Any] = None  # datetime, but avoiding import
     rollover_enabled: bool = True
     priority: int = 5  # 1-10 scale, 10 = highest priority
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate TokenBudget business rules and constraints."""
         # Initialize optional fields
         if self.cost_limit is None:
@@ -481,7 +481,7 @@ class TokenBudget:
 
     @classmethod
     def create_daily_budget(
-        cls, budget_id: str, daily_tokens: int, cost_limit: Decimal = None
+        cls, budget_id: str, daily_tokens: int, cost_limit: Optional[Decimal] = None
     ) -> "TokenBudget":
         """Factory method for daily token budget."""
         return cls(
@@ -634,7 +634,7 @@ class TokenBudget:
     def __str__(self) -> str:
         return f"Budget[{self.budget_id}:{self.get_available_tokens()}/{self.allocated_tokens} tokens available]"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         """Compare TokenBudget instances for equality."""
         if not isinstance(other, TokenBudget):
             return False

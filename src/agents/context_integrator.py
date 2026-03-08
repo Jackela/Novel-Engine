@@ -13,11 +13,13 @@ Provides a hybrid approach where:
 - Graceful fallback ensures system continues without context loading
 """
 
-import logging
+import structlog
 from typing import Any, Dict
 
 # Import context models - use try/except for compatibility when contexts module isn't in path
-try:
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
     from src.contexts.character.domain.value_objects.context_models import (
         CharacterContext,
         MemoryContext,
@@ -25,19 +27,27 @@ try:
         ProfileContext,
         StatsContext,
     )
+else:
+    try:
+        from src.contexts.character.domain.value_objects.context_models import (
+            CharacterContext,
+            MemoryContext,
+            ObjectivesContext,
+            ProfileContext,
+            StatsContext,
+        )
 
-    CONTEXT_MODELS_AVAILABLE = True
-except ImportError:
-    # Fallback when contexts module not available
-    CONTEXT_MODELS_AVAILABLE = False
-    CharacterContext = dict
-    MemoryContext = dict
-    ObjectivesContext = dict
-    ProfileContext = dict
-    StatsContext = dict
+        CONTEXT_MODELS_AVAILABLE = True
+    except ImportError:
+        # Fallback when contexts module not available
+        CONTEXT_MODELS_AVAILABLE = False
+        CharacterContext = Any  # type: ignore[misc]
+        MemoryContext = Any  # type: ignore[misc]
+        ObjectivesContext = Any  # type: ignore[misc]
+        ProfileContext = Any  # type: ignore[misc]
+        StatsContext = Any  # type: ignore[misc]
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContextIntegrator:
@@ -92,17 +102,18 @@ class ContextIntegrator:
                 self._integrate_stats_data(merged_data, new_context.stats_context)
 
             logger.info(
-                f"Context integration completed for {new_context.character_name}"
+                "context_integration_completed",
+                character_name=new_context.character_name
             )
             return merged_data
 
         except Exception as e:
-            logger.error(f"Error during context integration: {e}")
+            logger.error("error_during_context_integration", error=str(e))
             # Return original data on integration failure
             return existing_data
 
     def _integrate_memory_data(
-        self, merged_data: Dict, memory_context: MemoryContext
+        self, merged_data: Dict[str, Any], memory_context: Any
     ) -> None:
         """Integrate memory context into decision-making data structures."""
         try:
@@ -148,10 +159,10 @@ class ContextIntegrator:
                 }
 
         except Exception as e:
-            logger.warning(f"Error integrating memory data: {e}")
+            logger.warning("error_integrating_memory_data", error=str(e))
 
     def _integrate_objectives_data(
-        self, merged_data: Dict, objectives_context: ObjectivesContext
+        self, merged_data: Dict[str, Any], objectives_context: Any
     ) -> None:
         """Integrate objectives context for decision prioritization."""
         try:
@@ -208,10 +219,10 @@ class ContextIntegrator:
                 merged_data["current_focus"] = objectives_context.current_focus
 
         except Exception as e:
-            logger.warning(f"Error integrating objectives data: {e}")
+            logger.warning("error_integrating_objectives_data", error=str(e))
 
     def _integrate_profile_data(
-        self, merged_data: Dict, profile_context: ProfileContext
+        self, merged_data: Dict[str, Any], profile_context: Any
     ) -> None:
         """Integrate profile context for personality-driven decisions."""
         try:
@@ -265,10 +276,10 @@ class ContextIntegrator:
             )
 
         except Exception as e:
-            logger.warning(f"Error integrating profile data: {e}")
+            logger.warning("error_integrating_profile_data", error=str(e))
 
     def _integrate_stats_data(
-        self, merged_data: Dict, stats_context: StatsContext
+        self, merged_data: Dict[str, Any], stats_context: Any
     ) -> None:
         """Integrate stats context for quantitative decision support."""
         try:
@@ -315,7 +326,7 @@ class ContextIntegrator:
                 merged_data["yaml_objectives"].update(stats_context.objectives)
 
         except Exception as e:
-            logger.warning(f"Error integrating stats data: {e}")
+            logger.warning("error_integrating_stats_data", error=str(e))
 
     def get_integration_summary(self, merged_data: Dict[str, Any]) -> Dict[str, Any]:
         """Get summary of context integration results."""
@@ -324,7 +335,7 @@ class ContextIntegrator:
             if not enhanced_context:
                 return {"integration_status": "no_context", "components": []}
 
-            components_integrated = []
+            components_integrated: list[Any] = []
             if "memory_context" in merged_data:
                 components_integrated.append("memory")
             if "objectives_context" in merged_data:
@@ -360,5 +371,5 @@ class ContextIntegrator:
             }
 
         except Exception as e:
-            logger.error(f"Error generating integration summary: {e}")
+            logger.error("error_generating_integration_summary", error=str(e))
             return {"integration_status": "error", "error": str(e)}

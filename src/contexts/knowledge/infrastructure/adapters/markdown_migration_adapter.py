@@ -47,7 +47,7 @@ class MarkdownMigrationAdapter:
         - FR-019: Verification mode
     """
 
-    def __init__(self, repository: IKnowledgeRepository):
+    def __init__(self, repository: IKnowledgeRepository) -> None:
         """
         Initialize migration adapter with repository.
 
@@ -104,7 +104,7 @@ class MarkdownMigrationAdapter:
         markdown_files = list(markdown_path.rglob("*.md"))
 
         total_entries = 0
-        migrated_entry_ids = []
+        migrated_entry_ids: list[Any] = []
         errors = 0
 
         # Process each Markdown file
@@ -258,9 +258,8 @@ class MarkdownMigrationAdapter:
 
         files_checked = 0
         entries_matched = 0
-        mismatches = []
-        missing_files = []
-
+        mismatches: list[Any] = []
+        missing_files: list[Any] = []
         # Check each Markdown file
         for md_file in markdown_files:
             files_checked += 1

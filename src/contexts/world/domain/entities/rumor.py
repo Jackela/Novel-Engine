@@ -22,13 +22,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Optional, Set
-from uuid import uuid4
-
-from src.core.result import Err, Ok, Result
 
 # Use TYPE_CHECKING to avoid circular import
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional, Set
+from uuid import uuid4
 
 if TYPE_CHECKING:
     from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
@@ -106,8 +103,7 @@ class Rumor:
         Raises:
             ValueError: If any validation rule is violated.
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.rumor_id:
             errors.append("Rumor ID cannot be empty")
 
@@ -221,7 +217,7 @@ class Rumor:
         Returns:
             Dictionary representation of the rumor.
         """
-        created_date_dict = None
+        created_date_dict: dict[str, Any] | str | None = None
         if self.created_date is not None:
             if hasattr(self.created_date, "to_dict"):
                 created_date_dict = self.created_date.to_dict()
@@ -263,12 +259,13 @@ class Rumor:
             origin_type = RumorOrigin.UNKNOWN
 
         # Handle current_locations parsing
-        current_locations = data.get("current_locations", [])
-        if isinstance(current_locations, list):
-            current_locations = set(current_locations)
-        elif not isinstance(current_locations, set):
+        current_locations_data = data.get("current_locations", [])
+        if isinstance(current_locations_data, list):
+            current_locations: set[Any] = set(current_locations_data)
+        elif isinstance(current_locations_data, set):
+            current_locations = current_locations_data
+        else:
             current_locations = set()
-
         # Handle created_date - keep as-is for now (could be dict or WorldCalendar)
         created_date = data.get("created_date")
 

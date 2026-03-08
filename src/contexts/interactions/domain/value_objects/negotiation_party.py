@@ -73,7 +73,7 @@ class NegotiationCapability:
     applicable_domains: Set[str]
     prerequisites: Optional[Set[str]] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate negotiation capability data."""
         if not self.capability_name.strip():
             raise ValueError("capability_name cannot be empty")
@@ -137,7 +137,7 @@ class PartyPreferences:
     preferred_meeting_times: Optional[Dict[str, Any]] = None
     language_preferences: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate party preferences data."""
         if not (0 <= self.risk_tolerance <= 100):
             raise ValueError("risk_tolerance must be between 0 and 100")
@@ -194,11 +194,13 @@ class PartyPreferences:
 
         # Style compatibility (simplified)
         incompatible_styles = {
-            (NegotiationStyle.AGGRESSIVE, NegotiationStyle.AVOIDING),
+            (NegotiationStyle.COMPETITIVE, NegotiationStyle.AVOIDING),
             (NegotiationStyle.COMPETITIVE, NegotiationStyle.ACCOMMODATING),
         }
 
-        style_pair = tuple(sorted([self.negotiation_style, other.negotiation_style]))
+        styles = [self.negotiation_style, other.negotiation_style]
+        # Sort by value for consistent comparison
+        style_pair = tuple(sorted(styles, key=lambda x: x.value))
         return style_pair not in incompatible_styles
 
     def __eq__(self, other: Any) -> bool:
@@ -239,7 +241,7 @@ class NegotiationParty:
     reputation_modifiers: Dict[str, Decimal] = field(default_factory=dict)
     active_mandates: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate negotiation party data."""
         if not self.party_name.strip():
             raise ValueError("party_name cannot be empty")
@@ -347,13 +349,14 @@ class NegotiationParty:
             return Decimal("0")
 
         # Weight by authority level
-        authority_multiplier = {
+        authority_multiplier_map = {
             AuthorityLevel.FULL_AUTHORITY: Decimal("1.0"),
             AuthorityLevel.LIMITED_AUTHORITY: Decimal("0.8"),
             AuthorityLevel.CONDITIONAL_AUTHORITY: Decimal("0.7"),
             AuthorityLevel.ADVISORY_ONLY: Decimal("0.3"),
             AuthorityLevel.OBSERVER_ONLY: Decimal("0.1"),
-        }[self.authority_level]
+        }
+        authority_multiplier = authority_multiplier_map[self.authority_level]
 
         # Calculate weighted average proficiency
         total_proficiency = sum(
@@ -361,10 +364,10 @@ class NegotiationParty:
             for cap in relevant_capabilities
         )
 
-        avg_proficiency = total_proficiency / len(relevant_capabilities)
+        avg_proficiency = Decimal(total_proficiency / len(relevant_capabilities))
 
-        # Apply authority multiplier
-        negotiation_power = avg_proficiency * authority_multiplier
+        # Apply authority multiplier - cast to Decimal
+        negotiation_power = avg_proficiency * Decimal(authority_multiplier)
 
         # Apply role modifier
         role_modifier = {
@@ -470,7 +473,10 @@ class NegotiationParty:
         if not self.capabilities:
             return Decimal("0")
 
-        total = sum(cap.get_effective_proficiency() for cap in self.capabilities)
+        total = Decimal("0")
+        for cap in self.capabilities:
+            effective = cap.get_effective_proficiency()
+            total += Decimal(str(effective))
         return total / len(self.capabilities)
 
     def __eq__(self, other: Any) -> bool:

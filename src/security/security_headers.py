@@ -15,16 +15,17 @@ System保佑此安全头系统 (May the System bless this security headers syste
 """
 
 import logging
+import structlog
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import Request
 from starlette.responses import Response
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CSPDirective(str, Enum):
@@ -73,7 +74,7 @@ class SecurityHeadersConfig:
 
     # Permissions Policy (Feature Policy)
     enable_permissions_policy: bool = True
-    permissions_policy: Dict[str, str] = None
+    permissions_policy: Optional[Dict[str, str]] = None
 
     # HSTS (HTTP Strict Transport Security)
     enable_hsts: bool = True
@@ -84,7 +85,7 @@ class SecurityHeadersConfig:
     # HTTPS/TLS related
     force_https: bool = True
     enable_hpkp: bool = False  # HTTP Public Key Pinning (deprecated but available)
-    hpkp_pins: List[str] = None
+    hpkp_pins: Optional[List[str]] = None
 
     # Additional Security Headers
     enable_expect_ct: bool = True
@@ -94,12 +95,12 @@ class SecurityHeadersConfig:
 
     # CORS Security
     enable_cors_security: bool = True
-    allowed_origins: List[str] = None
+    allowed_origins: Optional[List[str]] = None
 
     # Custom Headers
-    custom_headers: Dict[str, str] = None
+    custom_headers: Optional[Dict[str, str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """STANDARD CONFIGURATION INITIALIZATION"""
         if self.csp_directives is None:
             self.csp_directives = self._get_default_csp_directives()
@@ -167,13 +168,12 @@ class SecurityHeadersConfig:
 class SecurityHeaders:
     """STANDARD SECURITY HEADERS MANAGER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, config: SecurityHeadersConfig):
+    def __init__(self, config: SecurityHeadersConfig) -> None:
         self.config = config
 
     def _build_csp_header(self) -> str:
         """STANDARD CSP HEADER CONSTRUCTION"""
-        csp_parts = []
-
+        csp_parts: list[Any] = []
         for directive, values in self.config.csp_directives.items():
             if values:  # Only add directive if it has values
                 directive_str = f"{directive.value} {' '.join(values)}"
@@ -188,8 +188,7 @@ class SecurityHeaders:
 
     def _build_permissions_policy_header(self) -> str:
         """STANDARD PERMISSIONS POLICY HEADER CONSTRUCTION"""
-        policy_parts = []
-
+        policy_parts: list[Any] = []
         for feature, allowlist in self.config.permissions_policy.items():
             if allowlist == "none":
                 policy_parts.append(f"{feature}=()")
@@ -434,7 +433,7 @@ class SecurityHeaders:
 class SecurityHeadersMiddleware:
     """STANDARD SECURITY HEADERS MIDDLEWARE (ASGI)"""
 
-    def __init__(self, app, security_headers: SecurityHeaders):
+    def __init__(self, app, security_headers: SecurityHeaders) -> None:
         self.app = app
         self.security_headers = security_headers
 
@@ -517,7 +516,7 @@ class SecurityHeadersMiddleware:
 
 def create_security_headers_middleware(
     app, config: Optional[SecurityHeadersConfig] = None
-):
+) -> None:
     """STANDARD SECURITY HEADERS MIDDLEWARE CREATOR"""
     if config is None:
         config = SecurityHeadersConfig()

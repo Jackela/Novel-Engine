@@ -7,7 +7,7 @@ Implements the core KPIs requested in M10: llm_cost_per_req and turn_duration_se
 along with extended metrics for complete observability.
 """
 
-import logging
+import structlog
 from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
@@ -25,54 +25,54 @@ try:
 except (
     ImportError
 ) as prometheus_error:  # pragma: no cover - exercised in dependency-light env
-    logging.getLogger(__name__).warning(
+    structlog.get_logger(__name__).warning(
         "prometheus_client unavailable (%s); using no-op collectors.", prometheus_error
     )
 
     class _NoOpMetric:
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
-        def labels(self, *_, **__):
+        def labels(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def inc(self, *_, **__):
+        def inc(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def dec(self, *_, **__):
+        def dec(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def observe(self, *_, **__):
+        def observe(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def set(self, *_, **__):
+        def set(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def info(self, *_, **__):
+        def info(self, *_: Any, **__: Any) -> "_NoOpMetric":
             return self
 
-        def time(self):
+        def time(self) -> None:
             class _Timer:
-                def __enter__(self):
+                def __enter__(self) -> "_Timer":
                     return self
 
-                def __exit__(self, exc_type, exc, tb):
+                def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
                     return False
 
             return _Timer()
 
     class CollectorRegistry:  # type: ignore[override]
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
     Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
     CONTENT_TYPE_LATEST = "text/plain"
 
-    def generate_latest(_registry) -> bytes:
+    def generate_latest(_registry: Any) -> bytes:
         return b""
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PrometheusMetricsCollector:
@@ -91,7 +91,7 @@ class PrometheusMetricsCollector:
     - Error tracking and alerting
     """
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: Optional[CollectorRegistry] = None) -> None:
         """
         Initialize Prometheus metrics collector.
 

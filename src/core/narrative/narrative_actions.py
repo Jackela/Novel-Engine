@@ -7,15 +7,16 @@ to enable rich narrative interactions in the multi-agent simulator.
 """
 
 import logging
+import structlog
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from ..types.shared_types import CharacterAction
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NarrativeActionType(Enum):
@@ -58,7 +59,7 @@ class NarrativeActionResolver:
     relationships, and current narrative state to create meaningful story progression.
     """
 
-    def __init__(self, campaign_brief=None):
+    def __init__(self, campaign_brief=None) -> None:
         """Initializes the NarrativeActionResolver."""
         self.campaign_brief = campaign_brief
         self.logger = logging.getLogger(f"{__name__}.NarrativeActionResolver")
@@ -221,7 +222,7 @@ class NarrativeActionResolver:
 
     def _check_story_advancement(self, action_type: str) -> List[str]:
         """Checks if this action triggers story progression markers."""
-        advancement = []
+        advancement: list[Any] = []
         if self.campaign_brief:
             if action_type == "investigation" and self.investigation_counter >= 3:
                 advancement.append("Investigation milestone reached")

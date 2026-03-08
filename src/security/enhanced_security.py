@@ -8,7 +8,7 @@ Provides additional security layers beyond basic headers.
 """
 
 import json
-import logging
+import structlog
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
@@ -17,7 +17,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -36,13 +36,13 @@ class SecurityEvent:
 class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
     """Enhanced security middleware with threat detection"""
 
-    def __init__(self, app, config: Optional[Dict] = None):
+    def __init__(self, app, config: Optional[Dict] = None) -> None:
         super().__init__(app)
         self.config = config or {}
         self.security_events = []
         self.rate_limits = {}
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Process request with enhanced security checks"""
         start_time = time.time()
 
@@ -104,8 +104,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self, request: Request, client_ip: str, user_agent: str, endpoint: str
     ) -> Dict[str, Any]:
         """Perform comprehensive security checks"""
-        checks = []
-
+        checks: list[Any] = []
         # Rate limiting check
         rate_check = self._check_rate_limit(client_ip, endpoint)
         checks.append(rate_check)
@@ -236,7 +235,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             "details": {"sql_detected": sql_detected, "query": query_string[:100]},
         }
 
-    def _add_security_headers(self, response: Response):
+    def _add_security_headers(self, response: Response) -> None:
         """Add comprehensive security headers"""
         security_headers = {
             "X-Content-Type-Options": "nosniff",
@@ -274,7 +273,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self.security_events.append(event)
 
         # Log to system logger
-        logger.warning(f"Security event: {event_type} from {source_ip} at {endpoint}")
+        logger.warning("Security event: %s from %s at %s", event_type, source_ip, endpoint)
 
         # Keep only recent events (last 1000)
         if len(self.security_events) > 1000:
@@ -289,9 +288,8 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             if current_time - event.timestamp < 3600  # Last hour
         ]
 
-        event_types = {}
-        severity_counts = {}
-
+        event_types: dict[Any, Any] = {}
+        severity_counts: dict[Any, Any] = {}
         for event in recent_events:
             event_types[event.event_type] = event_types.get(event.event_type, 0) + 1
             severity_counts[event.severity] = severity_counts.get(event.severity, 0) + 1
@@ -305,6 +303,6 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
 
 
 # Factory function for easy integration
-def create_enhanced_security_middleware(config: Optional[Dict] = None):
+def create_enhanced_security_middleware(config: Optional[Dict] = None) -> None:
     """Create enhanced security middleware with configuration"""
     return EnhancedSecurityMiddleware, config or {}

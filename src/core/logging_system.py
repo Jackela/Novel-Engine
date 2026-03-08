@@ -8,7 +8,7 @@ Enterprise-grade structured logging with performance monitoring and audit trails
 
 import asyncio
 import json
-import logging
+import structlog
 import logging.handlers
 import sys
 import threading
@@ -20,7 +20,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
 
 
 class LogLevel(Enum):
@@ -94,10 +97,14 @@ class LogEntry:
         }
 
 
+# Type variable for generic function types
+F = TypeVar("F", bound=Callable[..., Any])
+
+
 class PerformanceTracker:
     """Tracks performance metrics for operations."""
 
-    def __init__(self, operation: str, context: Optional[LogContext] = None):
+    def __init__(self, operation: str, context: Optional[LogContext] = None) -> None:
         """Initialize performance tracker."""
         self.operation = operation
         self.context = context or LogContext()
@@ -125,7 +132,7 @@ class PerformanceTracker:
         """Context manager entry."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Context manager exit."""
         # Get logger from thread local or create new one
         logger_ref = getattr(threading.current_thread(), "_structured_logger", None)
@@ -149,7 +156,7 @@ class _ClosingRotatingFileHandler(logging.handlers.RotatingFileHandler):
             try:
                 self.stream.close()
             finally:
-                self.stream = None
+                self.stream = None  # type: ignore[assignment]
 
 
 class StructuredLogger:
@@ -165,7 +172,7 @@ class StructuredLogger:
     - Log aggregation and analytics
     """
 
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None) -> None:
         """Initialize structured logger."""
         self.name = name
         self.config = config or {}
@@ -180,7 +187,7 @@ class StructuredLogger:
 
         # Performance tracking
         self.performance_metrics: deque = deque(maxlen=10000)
-        self.operation_stats = defaultdict(list)
+        self.operation_stats: dict[str, list[Any]] = defaultdict(list)
 
         # Audit trail
         self.audit_trail: deque = deque(maxlen=50000)
@@ -189,7 +196,7 @@ class StructuredLogger:
         self._setup_handlers()
 
         # Thread local logger reference (weak to avoid leaking file handles in tests)
-        threading.current_thread()._structured_logger = weakref.ref(self)
+        setattr(threading.current_thread(), "_structured_logger", weakref.ref(self))
 
     def close(self) -> None:
         """Close and remove all handlers for this logger instance."""
@@ -299,6 +306,10 @@ class StructuredLogger:
         # Log using standard logger
         log_level = self._map_to_standard_level(level)
         extra = {"structured_data": entry.to_dict()}
+        # Protect against LogRecord KeyError when 'message' key exists in extra
+        # This prevents conflicts between structlog and standard library logging
+        if isinstance(extra, dict) and "message" in extra:
+            extra = {k: v for k, v in extra.items() if k != "message"}
         self._logger.log(log_level, message, extra=extra)
 
     def _map_to_standard_level(self, level: LogLevel) -> int:
@@ -319,27 +330,27 @@ class StructuredLogger:
 
     # Convenience methods for different log levels
 
-    def trace(self, message: str, **kwargs) -> None:
+    def trace(self, message: str, **kwargs: Any) -> None:
         """Log trace level message."""
         self._log(LogLevel.TRACE, message, **kwargs)
 
-    def debug(self, message: str, **kwargs) -> None:
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug level message."""
         self._log(LogLevel.DEBUG, message, **kwargs)
 
-    def info(self, message: str, **kwargs) -> None:
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info level message."""
         self._log(LogLevel.INFO, message, **kwargs)
 
-    def success(self, message: str, **kwargs) -> None:
+    def success(self, message: str, **kwargs: Any) -> None:
         """Log success message."""
         self._log(LogLevel.SUCCESS, message, **kwargs)
 
-    def warning(self, message: str, **kwargs) -> None:
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
         self._log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, error: Optional[Exception] = None, **kwargs) -> None:
+    def error(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
         """Log error message with optional exception details."""
         error_details = None
         if error:
@@ -352,7 +363,7 @@ class StructuredLogger:
         self._log(LogLevel.ERROR, message, error_details=error_details, **kwargs)
 
     def critical(
-        self, message: str, error: Optional[Exception] = None, **kwargs
+        self, message: str, error: Optional[Exception] = None, **kwargs: Any
     ) -> None:
         """Log critical message with optional exception details."""
         error_details = None
@@ -365,17 +376,17 @@ class StructuredLogger:
 
         self._log(LogLevel.CRITICAL, message, error_details=error_details, **kwargs)
 
-    def audit(self, message: str, **kwargs) -> None:
+    def audit(self, message: str, **kwargs: Any) -> None:
         """Log audit trail message."""
         kwargs["category"] = LogCategory.AUDIT
         self._log(LogLevel.AUDIT, message, **kwargs)
 
-    def performance(self, message: str, **kwargs) -> None:
+    def performance(self, message: str, **kwargs: Any) -> None:
         """Log performance metric."""
         kwargs["category"] = LogCategory.PERFORMANCE
         self._log(LogLevel.PERFORMANCE, message, **kwargs)
 
-    def security(self, message: str, **kwargs) -> None:
+    def security(self, message: str, **kwargs: Any) -> None:
         """Log security event."""
         kwargs["category"] = LogCategory.SECURITY
         self._log(LogLevel.SECURITY, message, **kwargs)
@@ -388,19 +399,22 @@ class StructuredLogger:
         """Create performance tracker for operation."""
         return PerformanceTracker(operation, context or self.get_current_context())
 
-    def time_operation(self, operation: str, context: Optional[LogContext] = None):
+    def time_operation(
+        self, operation: str, context: Optional[LogContext] = None
+    ) -> Callable[[F], F]:
         """Decorator/context manager for timing operations."""
 
-        def decorator(func):
-            async def async_wrapper(*args, **kwargs):
+        def decorator(func: F) -> F:
+            async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.track_performance(operation, context):
                     return await func(*args, **kwargs)
 
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            wrapper = async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            return cast(F, wrapper)
 
         return decorator
 
@@ -410,8 +424,7 @@ class StructuredLogger:
         self, operation_filter: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get performance metrics summary."""
-        relevant_metrics = []
-
+        relevant_metrics: list[Any] = []
         for entry in self.performance_metrics:
             if operation_filter is None or operation_filter in entry.get(
                 "context", {}
@@ -432,9 +445,76 @@ class StructuredLogger:
             "total_duration_ms": sum(durations),
         }
 
+    def get_performance_summary_result(
+        self, operation_filter: Optional[str] = None
+    ) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get performance metrics summary (Result pattern).
+
+        Args:
+            operation_filter: Optional filter for specific operations
+
+        Returns:
+            Result containing performance summary on success.
+            - Ok: Dict with performance metrics
+            - Err(ServiceError): If summary generation fails
+        """
+        try:
+            relevant_metrics: list[Any] = []
+            for entry in self.performance_metrics:
+                if operation_filter is None or operation_filter in entry.get(
+                    "context", {}
+                ).get("operation", ""):
+                    relevant_metrics.append(entry)
+
+            if not relevant_metrics:
+                return Ok({"message": "No performance data available"})
+
+            durations = [m.get("duration_ms", 0) for m in relevant_metrics]
+
+            return Ok({
+                "operation_filter": operation_filter,
+                "total_operations": len(relevant_metrics),
+                "avg_duration_ms": sum(durations) / len(durations),
+                "min_duration_ms": min(durations),
+                "max_duration_ms": max(durations),
+                "total_duration_ms": sum(durations),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get performance summary: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_performance_summary",
+                )
+            )
+
     def get_audit_trail(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent audit trail entries."""
         return list(self.audit_trail)[-limit:]
+
+    def get_audit_trail_result(self, limit: int = 100) -> Result[List[Dict[str, Any]], ServiceError]:
+        """
+        Get recent audit trail entries (Result pattern).
+
+        Args:
+            limit: Maximum number of entries to return
+
+        Returns:
+            Result containing list of audit entries on success.
+            - Ok: List of audit trail entries
+            - Err(ServiceError): If retrieval fails
+        """
+        try:
+            return Ok(list(self.audit_trail)[-limit:])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get audit trail: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_audit_trail",
+                )
+            )
 
     def get_log_statistics(self) -> Dict[str, Any]:
         """Get logging system statistics."""
@@ -446,11 +526,37 @@ class StructuredLogger:
             "current_log_level": self._logger.level,
         }
 
+    def get_log_statistics_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get logging system statistics (Result pattern).
+
+        Returns:
+            Result containing logging statistics on success.
+            - Ok: Dict with logging system statistics
+            - Err(ServiceError): If statistics retrieval fails
+        """
+        try:
+            return Ok({
+                "performance_entries": len(self.performance_metrics),
+                "audit_entries": len(self.audit_trail),
+                "context_stack_depth": len(self._context_stack),
+                "handlers_configured": len(self._logger.handlers),
+                "current_log_level": self._logger.level,
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get log statistics: {e}",
+                    service_name="StructuredLogger",
+                    operation="get_log_statistics",
+                )
+            )
+
 
 class StructuredFormatter(logging.Formatter):
     """Custom formatter for structured logs."""
 
-    def __init__(self, format_type: str = "json"):
+    def __init__(self, format_type: str = "json") -> None:
         """Initialize formatter."""
         super().__init__()
         self.format_type = format_type
@@ -489,7 +595,7 @@ class AuditFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter audit records."""
         if hasattr(record, "structured_data"):
-            data = record.structured_data
+            data: dict[str, Any] = getattr(record, "structured_data", {})
             return data.get("level") == "AUDIT" or data.get("category") == "audit"
         return False
 
@@ -536,7 +642,7 @@ class LoggerFactory:
 class LoggingContext:
     """Context manager for structured logging context."""
 
-    def __init__(self, logger: StructuredLogger, context: LogContext):
+    def __init__(self, logger: StructuredLogger, context: LogContext) -> None:
         """Initialize logging context."""
         self.logger = logger
         self.context = context
@@ -546,7 +652,7 @@ class LoggingContext:
         self.logger.push_context(self.context)
         return self.context
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Exit context."""
         self.logger.pop_context()
 
@@ -557,7 +663,7 @@ def get_logger(name: str, config: Optional[Dict[str, Any]] = None) -> Structured
     return LoggerFactory.get_logger(name, config)
 
 
-def with_context(logger: StructuredLogger, **context_data) -> LoggingContext:
+def with_context(logger: StructuredLogger, **context_data: Any) -> LoggingContext:
     """Create logging context with given data."""
     context = LogContext()
     for key, value in context_data.items():

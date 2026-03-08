@@ -8,6 +8,7 @@ Handles queuing, prioritization, and scheduling of interaction requests.
 
 import asyncio
 import logging
+import structlog
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -29,20 +30,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -81,13 +82,13 @@ class QueuedInteraction:
     error_callback: Optional[Callable] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __lt__(self, other):
+    def __lt__(self, other: Any) -> bool:
         """Priority comparison for queue ordering (higher priority first)."""
         if not isinstance(other, QueuedInteraction):
             return NotImplemented
         return self.priority_score > other.priority_score
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, QueuedInteraction):
             return NotImplemented
         return self.priority_score == other.priority_score
@@ -107,7 +108,7 @@ class QueueManager:
 
     def __init__(
         self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """
         Initialize queue manager.
 
@@ -116,7 +117,7 @@ class QueueManager:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Queue management
         self.interaction_queue: PriorityQueue = PriorityQueue(
@@ -299,7 +300,7 @@ class QueueManager:
                 try:
                     await self.queue_processor_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
                 self.queue_processor_task = None
@@ -471,7 +472,7 @@ class QueueManager:
 
     # Private processing methods
 
-    async def _queue_processing_loop(self):
+    async def _queue_processing_loop(self) -> None:
         """
         Main queue processing loop.
         """
@@ -510,7 +511,7 @@ class QueueManager:
         except Exception as e:
             self.logger.error(f"Queue processing loop failed: {e}")
 
-    async def _process_queued_interaction(self, queued_interaction: QueuedInteraction):
+    async def _process_queued_interaction(self, queued_interaction: QueuedInteraction) -> None:
         """
         Process a single queued interaction.
         """
@@ -601,7 +602,7 @@ class QueueManager:
                     queued_interaction.context.interaction_id, None
                 )
 
-    async def _cleanup_completed_interactions(self):
+    async def _cleanup_completed_interactions(self) -> None:
         """
         Clean up old completed and failed interactions.
         """
@@ -674,7 +675,7 @@ class QueueManager:
 
         return (estimated_position / processing_capacity) * average_processing_time
 
-    def _update_queue_time_stats(self, queue_time: float):
+    def _update_queue_time_stats(self, queue_time: float) -> None:
         """
         Update queue time statistics.
         """
@@ -685,7 +686,7 @@ class QueueManager:
                 (current_avg * (total_processed - 1)) + queue_time
             ) / total_processed
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Cleanup resources on destruction.
         """

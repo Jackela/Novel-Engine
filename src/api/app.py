@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Optional
@@ -17,7 +17,7 @@ from src.api.startup import (
     shutdown_app_state,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def create_app(
@@ -80,7 +80,9 @@ def create_app(
     from src.api.routers.characters import router as characters_router
     from src.api.routers.diplomacy import router as diplomacy_router
     from src.api.routers.events import router as events_router
+    from src.api.routers.faction_intel import router as faction_intel_router
     from src.api.routers.generation import router as generation_router
+    from src.api.routers.geopolitics import router as geopolitics_router
     from src.api.routers.goals import router as goals_router
     from src.api.routers.guest import router as guest_router
     from src.api.routers.health import router as health_router
@@ -102,12 +104,10 @@ def create_app(
     from src.api.routers.snapshots import router as snapshots_router
     from src.api.routers.structure import router as structure_router
     from src.api.routers.world import router as world_gen_router
-    from src.api.routers.world_rules import router as world_rules_router
-    from src.api.routers.world_time import router as world_time_router
-    from src.api.routers.geopolitics import router as geopolitics_router
-    from src.api.routers.faction_intel import router as faction_intel_router
     from src.api.routers.world_events import router as world_events_router
+    from src.api.routers.world_rules import router as world_rules_router
     from src.api.routers.world_rumors import router as world_rumors_router
+    from src.api.routers.world_time import router as world_time_router
 
     # Register all routers with /api prefix only (no duplicate unprefixed routes)
     app.include_router(health_router, prefix="/api")

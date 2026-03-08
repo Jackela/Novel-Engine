@@ -17,16 +17,16 @@ Usage:
     ork_agent = factory.create_character('ork')
 """
 
-import logging
+import structlog
 import os
 import re
-from typing import Optional
+from typing import Any, Optional
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
@@ -45,7 +45,7 @@ class CharacterFactory:
     character data.
     """
 
-    def __init__(self, event_bus: EventBus, base_character_path: str = "characters"):
+    def __init__(self, event_bus: EventBus, base_character_path: str = "characters") -> None:
         """
         Initialize the CharacterFactory.
 
@@ -187,7 +187,7 @@ class CharacterFactory:
                 f"Character base directory not found: {self.base_character_path}"
             )
 
-        characters = []
+        characters: list[Any] = []
         for item in os.listdir(self.base_character_path):
             item_path = os.path.join(self.base_character_path, item)
             if os.path.isdir(item_path):

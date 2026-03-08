@@ -15,6 +15,7 @@ System保佑此SSL配置系统 (May the System bless this SSL configuration syst
 """
 
 import logging
+import structlog
 import os
 import ssl
 from dataclasses import dataclass
@@ -29,7 +30,7 @@ from cryptography.x509.oid import NameOID
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -48,14 +49,14 @@ class SSLConfig:
 class SSLCertificateManager:
     """STANDARD SSL CERTIFICATE MANAGER ENHANCED BY CRYPTOGRAPHY"""
 
-    def __init__(self, cert_dir: str = "certs"):
+    def __init__(self, cert_dir: str = "certs") -> None:
         self.cert_dir = Path(cert_dir)
         self.cert_dir.mkdir(exist_ok=True, mode=0o700)  # Secure permissions
 
         logger.info(f"SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir}")
 
     def generate_self_signed_cert(
-        self, domain: str = "localhost", alt_names: List[str] = None, days: int = 365
+        self, domain: str = "localhost", alt_names: Optional[List[str]] = None, days: int = 365
     ) -> Tuple[str, str]:
         """
         STANDARD SELF-SIGNED CERTIFICATE GENERATION

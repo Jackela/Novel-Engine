@@ -15,8 +15,9 @@ The integrated PersonaAgent coordinates:
 """
 
 import asyncio
-import logging
 import os
+
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -25,27 +26,21 @@ from src.core.event_bus import EventBus
 
 # Import shared types
 try:
-    from src.core.types.shared_types import ActionPriority, CharacterAction
+    from src.core.types.shared_types import CharacterAction
 except ImportError:
-    CharacterAction = dict
-
-    class ActionPriority:
-        LOW = "low"
-        MEDIUM = "medium"
-        HIGH = "high"
-        CRITICAL = "critical"
+    CharacterAction = Dict[str, Any]  # type: ignore[misc,assignment]
 
 
 from src.agents.character_interpreter import CharacterInterpreter
 
 # Import extracted components
 from src.agents.context_integrator import ContextIntegrator
-from src.agents.decision_engine import DecisionEngine
+from src.agents.decision_engine import DecisionEngine, SituationAssessment
 from src.agents.memory_interface import MemoryInterface
 from src.agents.persona_agent.core import PersonaAgentCore
+from src.core.types.shared_types import ActionPriority
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 try:
     from src.agents.enhanced_decision_engine import EnhancedDecisionEngine
@@ -55,9 +50,7 @@ try:
 
     CONTEXT_LOADER_AVAILABLE = True
 except ImportError:
-    logger.warning(
-        "ContextLoaderService not available - context loading will be disabled"
-    )
+    logger.warning("context_loader_service_not_available")
     CONTEXT_LOADER_AVAILABLE = False
 
 
@@ -80,7 +73,7 @@ class PersonaAgent:
         character_directory_path: str,
         event_bus: EventBus,
         agent_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initialize the PersonaAgent with modular component coordination.
 
@@ -89,7 +82,7 @@ class PersonaAgent:
             event_bus: EventBus instance for decoupled communication
             agent_id: Optional unique identifier for this agent
         """
-        logger.info("Initializing integrated PersonaAgent with modular components")
+        logger.info("initializing_integrated_persona_agent")
 
         # Initialize core component first
         self.core = PersonaAgentCore(
@@ -115,18 +108,18 @@ class PersonaAgent:
                 )
                 # Attempt initial context loading
                 self._schedule_context_load()
-                logger.info("Context loading initialized")
+                logger.info("context_loading_initialized")
             except Exception as e:
-                logger.warning(f"Failed to initialize context loading: {e}")
+                logger.warning("failed_to_initialize_context_loading", error=str(e))
                 self.context_loader = None
 
         # Initialize decision engine with loaded character data (enhanced if context available)
         if CONTEXT_LOADER_AVAILABLE and self.context_loader:
             self.decision_engine = EnhancedDecisionEngine(self.core)
-            logger.info("Enhanced DecisionEngine initialized")
+            logger.info("enhanced_decision_engine_initialized")
         else:
             self.decision_engine = DecisionEngine(self.core)
-            logger.info("Standard DecisionEngine initialized")
+            logger.info("standard_decision_engine_initialized")
 
         # Initialize memory interface
         self.memory_interface = MemoryInterface(self.core, character_directory_path)
@@ -139,10 +132,11 @@ class PersonaAgent:
         try:
             event_bus.subscribe("TURN_START", self.handle_turn_start)
         except Exception as e:
-            logger.error(f"Failed to subscribe PersonaAgent to TURN_START: {e}")
+            logger.error("failed_to_subscribe_to_turn_start", error=str(e))
 
         logger.info(
-            f"PersonaAgent integrated architecture initialized for '{self.character_name}'"
+            "persona_agent_architecture_initialized",
+            character_name=self.character_name
         )
 
     def _load_character_data(self) -> None:
@@ -157,11 +151,12 @@ class PersonaAgent:
             self._apply_character_settings(character_data)
 
             logger.info(
-                f"Character data loaded for {character_data.get('name', 'Unknown')}"
+                "character_data_loaded",
+                character_name=character_data.get("name", "Unknown")
             )
 
         except Exception as e:
-            logger.error(f"Error loading character data: {e}")
+            logger.error("error_loading_character_data", error=str(e))
             # Continue with default settings
 
     def _apply_character_settings(self, character_data: Dict[str, Any]) -> None:
@@ -189,7 +184,7 @@ class PersonaAgent:
                         self.core.behavioral_modifiers[trait] = value
 
         except Exception as e:
-            logger.error(f"Error applying character settings: {e}")
+            logger.error("error_applying_character_settings", error=str(e))
 
     def _setup_component_coordination(self) -> None:
         """Set up coordination between components."""
@@ -198,10 +193,10 @@ class PersonaAgent:
             self.decision_engine.core = self.core
             self.memory_interface.agent_core = self.core
 
-            logger.debug("Component coordination established")
+            logger.debug("component_coordination_established")
 
         except Exception as e:
-            logger.error(f"Error setting up component coordination: {e}")
+            logger.error("error_setting_up_component_coordination", error=str(e))
 
     def _integrate_decision_engine(self) -> None:
         """Integrate decision engine with core turn handling."""
@@ -241,7 +236,7 @@ class PersonaAgent:
             self.core.handle_turn_start = integrated_turn_handler
 
         except Exception as e:
-            logger.error(f"Error integrating decision engine: {e}")
+            logger.error("error_integrating_decision_engine", error=str(e))
 
     async def _load_enhanced_context(self) -> bool:
         """Load structured context and integrate with existing character data."""
@@ -257,12 +252,13 @@ class PersonaAgent:
                 existing_data=self.core.character_data, new_context=context
             )
 
-            logger.info(f"Enhanced context loaded for {context.character_name}")
+            logger.info("enhanced_context_loaded", character_name=context.character_name)
             return True
 
         except Exception as e:
             logger.warning(
-                f"Enhanced context loading failed, using traditional data: {e}"
+                "enhanced_context_loading_failed",
+                error=str(e)
             )
             return False
 
@@ -278,9 +274,7 @@ class PersonaAgent:
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
-            logger.debug(
-                "No running loop available for context preload; skipping task."
-            )
+            logger.debug("no_running_loop_for_context_preload")
             return
 
         if loop.is_running():
@@ -302,9 +296,9 @@ class PersonaAgent:
         # This is handled during initialization, but maintain method for compatibility
         try:
             self._load_character_data()
-            logger.info(f"Character context reloaded for {self.character_name}")
+            logger.info("character_context_reloaded", character_name=self.character_name)
         except Exception as e:
-            logger.error(f"Error reloading character context: {e}")
+            logger.error("error_reloading_character_context", error=str(e))
 
     def update_internal_memory(self, new_log: Dict[str, Any]) -> None:
         """
@@ -437,12 +431,12 @@ class PersonaAgent:
         self.core.communication_style = style
 
     @property
-    def character(self):
+    def character(self) -> Any:
         """Get character object for backward compatibility with api_server.py expectations."""
 
         # Create a character object that provides the expected interface
         class CharacterCompatibilityWrapper:
-            def __init__(self, persona_agent):
+            def __init__(self, persona_agent: "PersonaAgent") -> None:
                 self._agent = persona_agent
 
             @property
@@ -494,6 +488,7 @@ class PersonaAgent:
             def structured_data(self) -> Dict[str, Any]:
                 """Expose structured stats for API compatibility."""
                 yaml_stats = self._agent.character_data.get("yaml_stats")
+                stats: Dict[str, Any]
                 if isinstance(yaml_stats, dict):
                     stats = yaml_stats
                 else:
@@ -522,7 +517,7 @@ class PersonaAgent:
                         }
                 return {"stats": stats}
 
-        return CharacterCompatibilityWrapper(self)
+        return CharacterCompatibilityWrapper(self)  # type: ignore[return-value]
 
     @property
     def event_bus(self) -> EventBus:
@@ -580,8 +575,8 @@ class PersonaAgent:
                     "core_metrics": self.core.get_core_metrics(),
                 },
                 "decision_engine": {
-                    "llm_available": self.decision_engine.llm_available,
-                    "decision_metrics": self.decision_engine.get_decision_metrics(),
+                    "llm_available": getattr(self.decision_engine, 'llm_available', False),
+                    "decision_metrics": getattr(self.decision_engine, 'get_decision_metrics', lambda: {})(),
                 },
                 "character_interpreter": {
                     "character_summary": self.character_interpreter.get_character_summary()
@@ -593,7 +588,7 @@ class PersonaAgent:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error getting component status: {e}")
+            logger.error("error_getting_component_status", error=str(e))
             return {"error": str(e)}
 
     def consolidate_memories(self) -> int:
@@ -633,12 +628,6 @@ class PersonaAgent:
         """Core decision-making logic (delegated to decision engine)."""
         return self.decision_engine.make_decision(world_state_update)
 
-    def _assess_current_situation(
-        self, world_state_update: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Assess the current situation (delegated to decision engine)."""
-        return self.decision_engine._assess_current_situation(world_state_update or {})
-
     def _generate_personal_interpretation(self, experience: Dict[str, Any]) -> str:
         """Generate personal interpretation of an experience."""
         return self.memory_interface._generate_personal_interpretation(experience)
@@ -665,10 +654,8 @@ class PersonaAgent:
 
                     if isinstance(self.decision_engine, EnhancedDecisionEngine):
                         decision_engine_type = "enhanced"
-                except ImportError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                except ImportError:  # pragma: no cover
+                    pass
 
             status = {
                 "context_loader_available": CONTEXT_LOADER_AVAILABLE,
@@ -703,5 +690,7 @@ class PersonaAgent:
             return status
 
         except Exception as e:
-            logger.error(f"Error getting context integration status: {e}")
+            logger.error("error_getting_context_integration_status", error=str(e))
             return {"error": str(e)}
+
+

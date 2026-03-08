@@ -24,11 +24,11 @@ from src.api.schemas import (
     DiplomacyChangeResponse,
     ErrorDetail,
     ResourceChangesResponse,
+    SimulateRequest,
     SimulationHistoryResponse,
     SimulationStatusResponse,
     SimulationTickResponse,
     SimulationTickSummary,
-    SimulateRequest,
 )
 from src.contexts.world.domain.value_objects.simulation_tick import (
     DiplomacyChange,
@@ -76,8 +76,6 @@ def reset_simulation_storage() -> None:
     _simulation_history = {}
     _commit_timestamps = {}
     _active_simulations = {}
-
-
 def _get_or_create_calendar(world_id: str) -> WorldCalendar:
     """Get existing calendar for world or create a default one."""
     if world_id not in _world_calendars:
@@ -145,7 +143,9 @@ def _get_tick_by_id(world_id: str, tick_id: str) -> Optional[SimulationTick]:
 # === Helper Functions ===
 
 
-def _calendar_to_response(calendar: Optional[WorldCalendar]) -> Optional[CalendarResponse]:
+def _calendar_to_response(
+    calendar: Optional[WorldCalendar],
+) -> Optional[CalendarResponse]:
     """Convert WorldCalendar to response model."""
     if calendar is None:
         return None

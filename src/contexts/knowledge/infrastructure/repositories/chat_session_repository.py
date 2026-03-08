@@ -5,7 +5,7 @@ Repository for persisting and retrieving chat sessions and messages.
 Provides an abstraction layer over the SQLAlchemy models.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
@@ -19,7 +19,7 @@ from ..models.chat_session import (
     get_db_session,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -66,7 +66,7 @@ class ChatSessionRepository:
     Uses SQLite for persistence via SQLAlchemy.
     """
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(self, session: Optional[Session] = None) -> None:
         """
         Initialize the repository.
 
@@ -75,7 +75,7 @@ class ChatSessionRepository:
                     will be created for each operation.
         """
         self._session = session
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(repository=self.__class__.__name__)
 
     def _get_session(self) -> Session:
         """Get a database session."""
@@ -103,9 +103,9 @@ class ChatSessionRepository:
                 )
                 return [
                     ChatMessage(
-                        role=msg.role,
-                        content=msg.content,
-                        created_at=msg.created_at,
+                        role=msg.role,  # type: ignore[arg-type]
+                        content=msg.content,  # type: ignore[arg-type]
+                        created_at=msg.created_at,  # type: ignore[arg-type]
                     )
                     for msg in messages
                 ]
@@ -135,18 +135,18 @@ class ChatSessionRepository:
 
                 messages = [
                     ChatMessage(
-                        role=msg.role,
-                        content=msg.content,
+                        role=str(msg.role),
+                        content=str(msg.content),
                         created_at=msg.created_at,
                     )
                     for msg in session_orm.messages
                 ]
 
                 return ChatSession(
-                    session_id=session_orm.session_id,
+                    session_id=str(session_orm.session_id),
                     messages=messages,
-                    created_at=session_orm.created_at,
-                    updated_at=session_orm.updated_at,
+                    created_at=session_orm.created_at,  # type: ignore[arg-type]
+                    updated_at=session_orm.updated_at,  # type: ignore[arg-type]
                 )
         except SQLAlchemyError as e:
             self.logger.error(f"Error getting session detail {session_id}: {e}")
@@ -234,10 +234,10 @@ class ChatSessionRepository:
 
                 return [
                     ChatSession(
-                        session_id=s.session_id,
+                        session_id=s.session_id,  # type: ignore[arg-type]
                         messages=[],  # Don't load messages for list view
-                        created_at=s.created_at,
-                        updated_at=s.updated_at,
+                        created_at=s.created_at,  # type: ignore[arg-type]
+                        updated_at=s.updated_at,  # type: ignore[arg-type]
                     )
                     for s in sessions
                 ]
@@ -272,9 +272,9 @@ class ChatSessionRepository:
 
                 return [
                     ChatMessage(
-                        role=msg.role,
-                        content=msg.content,
-                        created_at=msg.created_at,
+                        role=msg.role,  # type: ignore[arg-type]
+                        content=msg.content,  # type: ignore[arg-type]
+                        created_at=msg.created_at,  # type: ignore[arg-type]
                     )
                     for msg in messages
                 ]

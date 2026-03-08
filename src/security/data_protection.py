@@ -18,6 +18,7 @@ import base64
 import hashlib
 import json
 import logging
+import structlog
 import os
 import secrets
 from dataclasses import dataclass
@@ -33,7 +34,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DataClassification(str, Enum):
@@ -113,7 +114,7 @@ class ConsentRecord:
     withdrawn_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
     consent_text: str = ""
-    processing_activities: List[str] = None
+    processing_activities: Optional[List[str]] = None
 
 
 @dataclass
@@ -136,7 +137,7 @@ class DataProcessingRecord:
 class EncryptionService:
     """STANDARD ENCRYPTION SERVICE ENHANCED BY CRYPTOGRAPHY"""
 
-    def __init__(self, master_key: Optional[str] = None):
+    def __init__(self, master_key: Optional[str] = None) -> None:
         if master_key:
             self.master_key = master_key.encode()
         else:
@@ -167,7 +168,7 @@ class EncryptionService:
             encrypted_data = self.fernet.encrypt(data.encode())
             return base64.urlsafe_b64encode(encrypted_data).decode()
         except Exception as e:
-            logger.error(f"ENCRYPTION FAILED: {e}")
+            logger.error("ENCRYPTION FAILED: %s", e)
             raise
 
     def decrypt(self, encrypted_data: str) -> str:
@@ -180,7 +181,7 @@ class EncryptionService:
             decrypted_data = self.fernet.decrypt(decoded_data)
             return decrypted_data.decode()
         except Exception as e:
-            logger.error(f"DECRYPTION FAILED: {e}")
+            logger.error("DECRYPTION FAILED: %s", e)
             raise
 
     def encrypt_dict(
@@ -215,7 +216,7 @@ class EncryptionService:
 class PseudonymizationService:
     """STANDARD PSEUDONYMIZATION SERVICE"""
 
-    def __init__(self, secret_key: str):
+    def __init__(self, secret_key: str) -> None:
         self.secret_key = secret_key.encode()
 
     def pseudonymize(self, identifier: str, purpose: str = "default") -> str:
@@ -235,7 +236,7 @@ class PseudonymizationService:
 class DataProtectionService:
     """STANDARD DATA PROTECTION SERVICE ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, master_key: Optional[str] = None):
+    def __init__(self, database_path: str, master_key: Optional[str] = None) -> None:
         self.database_path = database_path
         self.encryption_service = EncryptionService(master_key)
         self.pseudonymization_service = PseudonymizationService(
@@ -292,7 +293,7 @@ class DataProtectionService:
             ),
         }
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -300,7 +301,8 @@ class DataProtectionService:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Consent management table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS consent_records (
                     consent_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -314,10 +316,12 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Data processing records
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS data_processing_records (
                     record_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -331,10 +335,12 @@ class DataProtectionService:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Data retention schedule
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS data_retention_schedule (
                     id TEXT PRIMARY KEY,
                     data_type TEXT NOT NULL,
@@ -345,10 +351,12 @@ class DataProtectionService:
                     deleted BOOLEAN DEFAULT FALSE,
                     deletion_reason TEXT NULL
                 )
-            """)
+            """
+            )
 
             # Pseudonym mappings (encrypted)
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS pseudonym_mappings (
                     id TEXT PRIMARY KEY,
                     purpose TEXT NOT NULL,
@@ -356,7 +364,8 @@ class DataProtectionService:
                     pseudonym TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("DATA PROTECTION DATABASE INITIALIZED")
@@ -389,7 +398,7 @@ class DataProtectionService:
             await conn.execute(
                 """
                 INSERT INTO consent_records (
-                    consent_id, user_id, purpose, status, granted_at, 
+                    consent_id, user_id, purpose, status, granted_at,
                     expires_at, consent_text, processing_activities
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
@@ -406,7 +415,7 @@ class DataProtectionService:
             )
             await conn.commit()
 
-        logger.info(f"CONSENT RECORDED: {user_id} | Purpose: {purpose}")
+        logger.info("CONSENT RECORDED: %s | Purpose: %s", user_id, purpose)
         return consent_record
 
     async def withdraw_consent(self, user_id: str, purpose: str) -> bool:
@@ -414,7 +423,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                UPDATE consent_records 
+                UPDATE consent_records
                 SET status = ?, withdrawn_at = ?, updated_at = ?
                 WHERE user_id = ? AND purpose = ? AND status = ?
             """,
@@ -432,7 +441,7 @@ class DataProtectionService:
             await conn.commit()
 
         if rows_affected > 0:
-            logger.info(f"CONSENT WITHDRAWN: {user_id} | Purpose: {purpose}")
+            logger.info("CONSENT WITHDRAWN: %s | Purpose: %s", user_id, purpose)
             # Trigger data deletion for withdrawn consent
             await self._handle_consent_withdrawal(user_id, purpose)
             return True
@@ -467,7 +476,7 @@ class DataProtectionService:
                     # Mark as expired
                     await conn.execute(
                         """
-                        UPDATE consent_records 
+                        UPDATE consent_records
                         SET status = ?, updated_at = ?
                         WHERE user_id = ? AND purpose = ? AND status = ?
                     """,
@@ -610,10 +619,11 @@ class DataProtectionService:
             await conn.commit()
 
         logger.info(
-            f"DATA DELETION SCHEDULED: {data_type} | User: {user_id} | Delete after: {delete_after}"
+            "DATA DELETION SCHEDULED: %s | User: %s | Delete after: %s",
+            data_type, user_id, delete_after
         )
 
-    async def process_data_deletions(self):
+    async def process_data_deletions(self) -> None:
         """STANDARD DATA DELETION PROCESSING"""
         now = datetime.now(timezone.utc)
 
@@ -636,27 +646,28 @@ class DataProtectionService:
                     # Mark as deleted
                     await conn.execute(
                         """
-                        UPDATE data_retention_schedule 
+                        UPDATE data_retention_schedule
                         SET deleted = TRUE, deletion_reason = 'Retention period expired'
                         WHERE id = ?
                     """,
                         (deletion_id,),
                     )
 
-                    logger.info(f"DATA DELETED: {data_type} | User: {user_id}")
+                    logger.info("DATA DELETED: %s | User: %s", data_type, user_id)
 
                 except Exception as e:
                     logger.error(
-                        f"DATA DELETION FAILED: {data_type} | User: {user_id} | Error: {e}"
+                        "DATA DELETION FAILED: %s | User: %s | Error: %s",
+                        data_type, user_id, e
                     )
 
             await conn.commit()
 
-    async def _delete_user_data(self, data_type: str, user_id: str):
+    async def _delete_user_data(self, data_type: str, user_id: str) -> None:
         """STANDARD USER DATA DELETION"""
         # This would implement actual data deletion based on data type
         # For now, this is a placeholder that logs the deletion
-        logger.info(f"DELETING USER DATA: {data_type} | User: {user_id}")
+        logger.info("DELETING USER DATA: %s | User: %s", data_type, user_id)
 
         # In a real implementation, this would:
         # 1. Delete from main application database
@@ -665,7 +676,7 @@ class DataProtectionService:
         # 4. Notify external processors
         # 5. Generate deletion certificate
 
-    async def _handle_consent_withdrawal(self, user_id: str, purpose: str):
+    async def _handle_consent_withdrawal(self, user_id: str, purpose: str) -> None:
         """STANDARD CONSENT WITHDRAWAL HANDLING"""
         # Schedule immediate deletion of data processed for this purpose
         await self.schedule_data_deletion(
@@ -686,7 +697,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT purpose, status, granted_at, consent_text 
+                SELECT purpose, status, granted_at, consent_text
                 FROM consent_records WHERE user_id = ?
             """,
                 (user_id,),
@@ -706,7 +717,7 @@ class DataProtectionService:
         # Export other user data (implement based on your data model)
         # This would include decrypted personal data that the user has rights to
 
-        logger.info(f"USER DATA EXPORTED: {user_id}")
+        logger.info("USER DATA EXPORTED: %s", user_id)
         return exported_data
 
     async def get_processing_activities(self, user_id: str) -> List[Dict[str, Any]]:
@@ -714,7 +725,7 @@ class DataProtectionService:
         async with aiosqlite.connect(self.database_path) as conn:
             cursor = await conn.execute(
                 """
-                SELECT processing_purpose, lawful_basis, data_categories, 
+                SELECT processing_purpose, lawful_basis, data_categories,
                        recipients, security_measures, created_at
                 FROM data_processing_records WHERE user_id = ?
             """,
@@ -749,7 +760,7 @@ def get_data_protection_service() -> DataProtectionService:
 
 def initialize_data_protection_service(
     database_path: str, master_key: Optional[str] = None
-):
+) -> None:
     """STANDARD DATA PROTECTION SERVICE INITIALIZATION"""
     global data_protection_service
     data_protection_service = DataProtectionService(database_path, master_key)

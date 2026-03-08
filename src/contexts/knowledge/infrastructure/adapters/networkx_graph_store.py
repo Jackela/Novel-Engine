@@ -14,10 +14,10 @@ Warzone 4: AI Brain - BRAIN-031A
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import TYPE_CHECKING, Any
 
-import networkx as nx
+import networkx as nx  # type: ignore[import-untyped]
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
     CentralityResult,
@@ -37,7 +37,7 @@ from src.contexts.knowledge.domain.models.entity import EntityType, Relationship
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NetworkXGraphStore(IGraphStore):
@@ -512,7 +512,7 @@ class NetworkXGraphStore(IGraphStore):
                 )
 
             # Convert normalized names back to display names
-            display_names = []
+            display_names: list[Any] = []
             for node in path_nodes:
                 node_data = self._graph.nodes[node]
                 display_names.append(node_data.get("name", node))
@@ -790,7 +790,7 @@ class NetworkXGraphStore(IGraphStore):
         try:
             # NetworkX in-memory graph is always "healthy"
             # Just verify the graph object exists
-            return self._graph is not None  # type: ignore[no-any-return]
+            return bool(self._graph is not None)
         except Exception:
             return False
 
@@ -897,7 +897,7 @@ class NetworkXGraphStore(IGraphStore):
         # Convert normalized names back to display names and sort by size
         cliques_with_display_names: list[tuple[str, ...]] = []
         for clique in sorted(filtered_cliques, key=len, reverse=True):
-            display_names = []
+            display_names: list[Any] = []
             for node in clique:
                 node_data = self._graph.nodes[node]
                 display_names.append(node_data.get("name", node))
@@ -1062,7 +1062,7 @@ class NetworkXGraphStore(IGraphStore):
                         )
 
                     # Convert normalized names to display names
-                    display_names = []
+                    display_names: list[Any] = []
                     for node in path_nodes:
                         node_data = self._graph.nodes[node]
                         display_names.append(node_data.get("name", node))

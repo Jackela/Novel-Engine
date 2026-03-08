@@ -3,14 +3,14 @@
 Content analysis and archetype detection.
 """
 
-import logging
-from typing import List, Optional
+import structlog
+from typing import Any, List, Optional
 
 from src.templates.dynamic_template_engine import TemplateType
 
 from .persona_models import CharacterArchetype
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContentAnalyzer:
@@ -89,7 +89,7 @@ class ContentAnalyzer:
             ],
         }
 
-        archetype_scores = {}
+        archetype_scores: dict[Any, Any] = {}
         for archetype, keywords in archetype_keywords.items():
             score = sum(1 for keyword in keywords if keyword in content_lower)
             if score > 0:

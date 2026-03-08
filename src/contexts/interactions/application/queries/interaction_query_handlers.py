@@ -8,7 +8,7 @@ data for various query scenarios.
 """
 
 from datetime import timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from ...domain.repositories.negotiation_session_repository import (
     NegotiationSessionRepository,
@@ -40,7 +40,7 @@ class InteractionQueryHandler:
         self,
         session_repository: NegotiationSessionRepository,
         negotiation_service: Optional[NegotiationService] = None,
-    ):
+    ) -> None:
         """Initialize query handler with required dependencies."""
         self.session_repository = session_repository
         self.negotiation_service = negotiation_service or NegotiationService()
@@ -62,7 +62,7 @@ class InteractionQueryHandler:
                 "error": "Session not found",
             }
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(session.session_id),
             "session_name": session.session_name,
@@ -94,7 +94,7 @@ class InteractionQueryHandler:
         if query.include_parties:
             result["parties"] = []
             for party_id, party in session.parties.items():
-                party_data = {
+                party_data: Dict[str, Any] = {
                     "party_id": str(party_id),
                     "entity_id": str(party.entity_id),
                     "party_name": party.party_name,
@@ -166,8 +166,7 @@ class InteractionQueryHandler:
     ) -> Dict[str, Any]:
         """Handle listing of negotiation sessions with filters."""
         # Build filter criteria
-        filters = {}
-
+        filters: dict[Any, Any] = {}
         if query.created_by:
             filters["created_by"] = query.created_by
 
@@ -196,7 +195,7 @@ class InteractionQueryHandler:
         )
 
         # Format results
-        session_list = []
+        session_list: list[Any] = []
         for session in sessions:
             # Apply status filter if specified
             if query.status_filter:
@@ -268,7 +267,7 @@ class InteractionQueryHandler:
                 parties = list(session.parties.values())
 
                 # Calculate compatibility matrix
-                compatibility_scores = {}
+                compatibility_scores: dict[Any, Any] = {}
                 party_list = list(parties)
                 for i, party1 in enumerate(party_list):
                     for j, party2 in enumerate(party_list[i + 1 :], i + 1):
@@ -290,7 +289,7 @@ class InteractionQueryHandler:
 
                 # Add momentum analysis if there are responses
                 if session.total_responses > 0:
-                    all_responses = []
+                    all_responses: list[Any] = []
                     for party_responses in session.responses.values():
                         all_responses.extend(party_responses)
 
@@ -343,8 +342,7 @@ class InteractionQueryHandler:
 
             # Add timeline if requested
             if query.include_timeline:
-                timeline_events = []
-
+                timeline_events: list[Any] = []
                 # Session creation
                 timeline_events.append(
                     {
@@ -401,8 +399,7 @@ class InteractionQueryHandler:
             }
 
         # Build timeline from available data (would be more comprehensive with event sourcing)
-        timeline_events = []
-
+        timeline_events: list[Any] = []
         # Session events
         timeline_events.append(
             {
@@ -451,9 +448,8 @@ class InteractionQueryHandler:
 
         # Response events (approximated)
         for party_id, responses in session.responses.items():
-            party_name = session.parties.get(
-                party_id, type("Party", (), {"party_name": "Unknown"})
-            ).party_name
+            party_obj = session.parties.get(party_id)
+            party_name = party_obj.party_name if party_obj else "Unknown"
             for response in responses:
                 timeline_events.append(
                     {
@@ -491,7 +487,7 @@ class InteractionQueryHandler:
 
         # Group by phase if requested
         if query.group_by_phase:
-            grouped_events = {}
+            grouped_events: dict[Any, Any] = {}
             for event in timeline_events:
                 phase = event["phase"]
                 if phase not in grouped_events:
@@ -530,8 +526,7 @@ class InteractionQueryHandler:
                 "error": "Session not found",
             }
 
-        parties_data = []
-
+        parties_data: list[Any] = []
         for party in session.parties.values():
             # Apply role filter
             if query.role_filter and party.role.value != query.role_filter:
@@ -544,7 +539,7 @@ class InteractionQueryHandler:
             ):
                 continue
 
-            party_data = {
+            party_data: Dict[str, Any] = {
                 "party_id": str(party.party_id),
                 "entity_id": str(party.entity_id),
                 "party_name": party.party_name,
@@ -642,9 +637,8 @@ class InteractionQueryHandler:
             }
 
         # Calculate compatibility matrix
-        compatibility_matrix = []
-        compatibility_scores = []
-
+        compatibility_matrix: list[Any] = []
+        compatibility_scores: list[Any] = []
         for i, party1 in enumerate(parties):
             for j, party2 in enumerate(parties[i + 1 :], i + 1):
                 compatibility_score = (
@@ -671,7 +665,7 @@ class InteractionQueryHandler:
             else 0
         )
 
-        result = {
+        result: Dict[str, Any] = {
             "found": True,
             "session_id": str(query.session_id),
             "analyzed_parties": [str(p.party_id) for p in parties],
@@ -702,8 +696,7 @@ class InteractionQueryHandler:
                     }
 
         if query.include_recommendations:
-            recommendations = []
-
+            recommendations: list[Any] = []
             # Low compatibility warnings
             low_compatibility_pairs = [
                 cm for cm in compatibility_matrix if cm["compatibility_score"] < 30
@@ -750,11 +743,9 @@ class InteractionQueryHandler:
                 "error": "Session not found",
             }
 
-        proposals_data = []
-
+        proposals_data: list[Any] = []
         # Determine which proposals to include
-        proposals_to_include = []
-
+        proposals_to_include: list[Any] = []
         if query.proposal_status in ["active", "all"]:
             proposals_to_include.extend(session.active_proposals.values())
 
@@ -804,7 +795,7 @@ class InteractionQueryHandler:
 
             if query.include_responses:
                 # Get responses for this proposal
-                proposal_responses = []
+                proposal_responses: list[Any] = []
                 for party_responses in session.responses.values():
                     for response in party_responses:
                         if response.proposal_id == proposal.proposal_id:
@@ -945,7 +936,7 @@ class InteractionQueryHandler:
 
         if query.include_response_summary:
             # Collect all responses to this proposal
-            responses = []
+            responses: list[Any] = []
             for party_responses in session.responses.values():
                 for response in party_responses:
                     if response.proposal_id == query.proposal_id:
@@ -955,7 +946,7 @@ class InteractionQueryHandler:
                 total_acceptance = sum(r.get_acceptance_percentage() for r in responses)
                 avg_acceptance = total_acceptance / len(responses)
 
-                response_types = {}
+                response_types: dict[Any, Any] = {}
                 for response in responses:
                     resp_type = response.overall_response.value
                     response_types[resp_type] = response_types.get(resp_type, 0) + 1
@@ -1029,8 +1020,7 @@ class InteractionQueryHandler:
 
         # Get recent responses within analysis window
         cutoff_time = query.timestamp - timedelta(hours=query.analysis_window_hours)
-        recent_responses = []
-
+        recent_responses: list[Any] = []
         for party_responses in session.responses.values():
             for response in party_responses:
                 if response.response_timestamp >= cutoff_time:

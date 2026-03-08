@@ -21,6 +21,10 @@ from typing import Any
 
 import structlog
 
+from src.core.result import Err, Ok, Result
+
+from ...domain.errors import BM25Error, NotFoundError, ValidationError
+
 logger = structlog.get_logger()
 
 
@@ -144,16 +148,20 @@ class BM25Retriever:
         >>> retriever.index_documents([
         ...     IndexedDocument("1", "char1", "CHARACTER", "brave knight", ...),
         ... ])
-        >>> results = retriever.search("brave warrior", k=5)
-        >>> for r in results:
-        ...     print(f"{r.doc_id}: {r.score:.2f}")
+        >>> result = retriever.search("brave warrior", k=5)
+        >>> match result:
+        ...     case Ok(results):
+        ...         for r in results:
+        ...             print(f"{r.doc_id}: {r.score:.2f}")
+        ...     case Err(error):
+        ...         print(f"Search failed: {error.message}")
     """
 
     def __init__(
         self,
         k1: float = DEFAULT_K1,
         b: float = DEFAULT_B,
-    ):
+    ) -> None:
         """
         Initialize the BM25 retriever.
 
@@ -185,7 +193,7 @@ class BM25Retriever:
         self,
         documents: list[IndexedDocument],
         collection: str | None = None,
-    ) -> int:
+    ) -> Result[int, ValidationError | BM25Error]:
         """
         Index documents for BM25 retrieval.
 
@@ -197,77 +205,102 @@ class BM25Retriever:
             collection: Collection name (uses default if None)
 
         Returns:
-            Number of documents indexed
+            Result containing number of documents indexed on success.
+            - Ok: Number of documents indexed
+            - Err(ValidationError): If documents list is invalid
+            - Err(BM25Error): If indexing fails
 
         Example:
             >>> docs = [
             ...     IndexedDocument("1", "char1", "CHARACTER", "brave knight", ...),
             ...     IndexedDocument("2", "char2", "CHARACTER", "wise wizard", ...),
             ... ]
-            >>> count = retriever.index_documents(docs)
-            >>> print(f"Indexed {count} documents")
+            >>> result = retriever.index_documents(docs)
+            >>> match result:
+            ...     case Ok(count):
+            ...         print(f"Indexed {count} documents")
+            ...     case Err(error):
+            ...         print(f"Indexing failed: {error.message}")
         """
+        if not isinstance(documents, list):
+            return Err(ValidationError(  # type: ignore[unreachable]
+                message="documents must be a list",
+                field="documents",
+            ))
+
         if not documents:
-            return 0
+            return Ok(0)
 
         target_collection = collection or self._default_collection
 
         # Import rank_bm25 lazily
         # Use BM25Plus for better performance with small corpora and rare terms
         try:
-            from rank_bm25 import BM25Plus as RankBM25  # type: ignore[import-untyped]
+            from rank_bm25 import BM25Plus as RankBM25  # type: ignore[import-not-found]
         except ImportError:
             logger.error(
                 "bm25_library_not_found",
                 message="rank-bm25 library not installed. Install with: pip install rank-bm25",
             )
-            raise ImportError(
-                "rank-bm25 library not found. " "Install with: pip install rank-bm25"
+            return Err(BM25Error(
+                message="rank-bm25 library not found. Install with: pip install rank-bm25",
+                operation="index",
+            ))
+
+        try:
+            # Get or create index for collection
+            if target_collection not in self._indices:
+                self._indices[target_collection] = {
+                    "documents": [],
+                    "bm25": None,
+                    "corpus": [],
+                }
+
+            index_data = self._indices[target_collection]
+
+            # Add/update documents in lookup
+            for doc in documents:
+                self._documents[doc.doc_id] = doc
+
+                # Check if document already exists in corpus
+                existing_idx = next(
+                    (i for i, d in enumerate(index_data["documents"]) if d == doc.doc_id),
+                    None,
+                )
+
+                if existing_idx is not None:
+                    # Replace existing document
+                    index_data["documents"][existing_idx] = doc.doc_id
+                    index_data["corpus"][existing_idx] = doc.tokens
+                else:
+                    # Add new document
+                    index_data["documents"].append(doc.doc_id)
+                    index_data["corpus"].append(doc.tokens)
+
+            # Rebuild BM25 index
+            index_data["bm25"] = RankBM25(
+                index_data["corpus"],
+                k1=self._k1,
+                b=self._b,
             )
 
-        # Get or create index for collection
-        if target_collection not in self._indices:
-            self._indices[target_collection] = {
-                "documents": [],
-                "bm25": None,
-                "corpus": [],
-            }
-
-        index_data = self._indices[target_collection]
-
-        # Add/update documents in lookup
-        for doc in documents:
-            self._documents[doc.doc_id] = doc
-
-            # Check if document already exists in corpus
-            existing_idx = next(
-                (i for i, d in enumerate(index_data["documents"]) if d == doc.doc_id),
-                None,
+            logger.info(
+                "bm25_index_built",
+                collection=target_collection,
+                document_count=len(index_data["documents"]),
             )
 
-            if existing_idx is not None:
-                # Replace existing document
-                index_data["documents"][existing_idx] = doc.doc_id
-                index_data["corpus"][existing_idx] = doc.tokens
-            else:
-                # Add new document
-                index_data["documents"].append(doc.doc_id)
-                index_data["corpus"].append(doc.tokens)
-
-        # Rebuild BM25 index
-        index_data["bm25"] = RankBM25(
-            index_data["corpus"],
-            k1=self._k1,
-            b=self._b,
-        )
-
-        logger.info(
-            "bm25_index_built",
-            collection=target_collection,
-            document_count=len(index_data["documents"]),
-        )
-
-        return len(documents)
+            return Ok(len(documents))
+        except Exception as e:
+            logger.error(
+                "bm25_indexing_failed",
+                collection=target_collection,
+                error=str(e),
+            )
+            return Err(BM25Error(
+                message=f"Failed to index documents: {e}",
+                operation="index",
+            ))
 
     def search(
         self,
@@ -275,7 +308,7 @@ class BM25Retriever:
         k: int = 5,
         collection: str | None = None,
         filters: dict[str, Any] | None = None,
-    ) -> list[BM25Result]:
+    ) -> Result[list[BM25Result], ValidationError | BM25Error]:
         """
         Search for documents using BM25 keyword matching.
 
@@ -286,19 +319,31 @@ class BM25Retriever:
             filters: Optional metadata filters (source_type, tags, etc.)
 
         Returns:
-            List of BM25Result sorted by relevance score
-
-        Raises:
-            ValueError: If query is empty
-            KeyError: If collection doesn't exist
+            Result containing list of BM25Result on success.
+            - Ok: List of BM25Result sorted by relevance score
+            - Err(ValidationError): If query is empty or k is invalid
+            - Err(BM25Error): If collection doesn't exist or search fails
 
         Example:
-            >>> results = retriever.search("brave knight", k=5)
-            >>> for r in results:
-            ...     print(f"{r.doc_id}: {r.score:.2f} - {r.content[:50]}...")
+            >>> result = retriever.search("brave knight", k=5)
+            >>> match result:
+            ...     case Ok(results):
+            ...         for r in results:
+            ...             print(f"{r.doc_id}: {r.score:.2f} - {r.content[:50]}...")
+            ...     case Err(error):
+            ...         print(f"Search failed: {error.message}")
         """
         if not query or not query.strip():
-            raise ValueError("query cannot be empty")
+            return Err(ValidationError(
+                message="query cannot be empty",
+                field="query",
+            ))
+
+        if k < 1:
+            return Err(ValidationError(
+                message="k must be at least 1",
+                field="k",
+            ))
 
         target_collection = collection or self._default_collection
 
@@ -307,7 +352,10 @@ class BM25Retriever:
                 "bm25_collection_not_found",
                 collection=target_collection,
             )
-            return []
+            return Err(BM25Error(
+                message=f"Collection not found: {target_collection}",
+                operation="search",
+            ))
 
         index_data = self._indices[target_collection]
         bm25_index = index_data["bm25"]
@@ -317,79 +365,94 @@ class BM25Retriever:
                 "bm25_index_not_built",
                 collection=target_collection,
             )
-            return []
+            return Err(BM25Error(
+                message=f"Index not built for collection: {target_collection}",
+                operation="search",
+            ))
 
-        # Tokenize query
-        query_tokens = tokenize(query)
+        try:
+            # Tokenize query
+            query_tokens = tokenize(query)
 
-        if not query_tokens:
-            return []
+            if not query_tokens:
+                return Ok([])
 
-        logger.debug(
-            "bm25_search_start",
-            collection=target_collection,
-            query=query,
-            query_tokens=query_tokens,
-            k=k,
-        )
+            logger.debug(
+                "bm25_search_start",
+                collection=target_collection,
+                query=query,
+                query_tokens=query_tokens,
+                k=k,
+            )
 
-        # Get BM25 scores for all documents
-        scores = bm25_index.get_scores(query_tokens)
+            # Get BM25 scores for all documents
+            scores = bm25_index.get_scores(query_tokens)
 
-        # Get top k indices
-        # argsort gives indices in ascending order, so we reverse
-        top_indices = scores.argsort()[-k:][::-1]
+            # Get top k indices
+            # argsort gives indices in ascending order, so we reverse
+            top_indices = scores.argsort()[-k:][::-1]
 
-        # Build results
-        results: list[BM25Result] = []
+            # Build results
+            results: list[BM25Result] = []
 
-        for idx in top_indices:
-            score = float(scores[idx])
+            for idx in top_indices:
+                score = float(scores[idx])
 
-            # Filter out zero scores (no matching terms)
-            # BM25 scores can be negative for short documents, which is valid
-            if score == 0:
-                continue
-
-            doc_id = index_data["documents"][idx]
-            doc = self._documents.get(doc_id)
-
-            if doc is None:
-                logger.warning(
-                    "bm25_document_not_found",
-                    doc_id=doc_id,
-                )
-                continue
-
-            # Apply filters if provided
-            if filters:
-                if not self._matches_filters(doc, filters):
+                # Filter out zero scores (no matching terms)
+                # BM25 scores can be negative for short documents, which is valid
+                if score == 0:
                     continue
 
-            result = BM25Result(
-                doc_id=doc.doc_id,
-                source_id=doc.source_id,
-                source_type=doc.source_type,
-                content=doc.content,
-                score=score,
-                metadata=doc.metadata,
+                doc_id = index_data["documents"][idx]
+                doc = self._documents.get(doc_id)
+
+                if doc is None:
+                    logger.warning(
+                        "bm25_document_not_found",
+                        doc_id=doc_id,
+                    )
+                    continue
+
+                # Apply filters if provided
+                if filters:
+                    if not self._matches_filters(doc, filters):
+                        continue
+
+                result = BM25Result(
+                    doc_id=doc.doc_id,
+                    source_id=doc.source_id,
+                    source_type=doc.source_type,
+                    content=doc.content,
+                    score=score,
+                    metadata=doc.metadata,
+                )
+                results.append(result)
+
+            logger.info(
+                "bm25_search_complete",
+                collection=target_collection,
+                query=query,
+                results_count=len(results),
             )
-            results.append(result)
 
-        logger.info(
-            "bm25_search_complete",
-            collection=target_collection,
-            query=query,
-            results_count=len(results),
-        )
-
-        return results
+            return Ok(results)
+        except Exception as e:
+            logger.error(
+                "bm25_search_failed",
+                collection=target_collection,
+                query=query,
+                error=str(e),
+            )
+            return Err(BM25Error(
+                message=f"Search failed: {e}",
+                operation="search",
+            ))
 
     def remove_document(
         self,
         doc_id: str,
         collection: str | None = None,
-    ) -> bool:
+    ) -> Result[bool, ValidationError | BM25Error]:
         """
         Remove a document from the index.
 
@@ -398,53 +461,74 @@ class BM25Retriever:
             collection: Collection name (uses default if None)
 
         Returns:
-            True if document was removed, False if not found
+            Result containing True if document was removed, False if not found.
+            - Ok: True if removed, False if not found
+            - Err(ValidationError): If doc_id is empty
+            - Err(BM25Error): If removal fails
         """
+        if not doc_id or not doc_id.strip():
+            return Err(ValidationError(
+                message="doc_id cannot be empty",
+                field="doc_id",
+            ))
+
         target_collection = collection or self._default_collection
 
         if target_collection not in self._indices:
-            return False
+            return Ok(False)
 
         index_data = self._indices[target_collection]
 
-        # Find document in corpus
         try:
-            idx = index_data["documents"].index(doc_id)
-        except ValueError:
-            return False
+            # Find document in corpus
+            try:
+                idx = index_data["documents"].index(doc_id)
+            except ValueError:
+                return Ok(False)
 
-        # Remove from corpus and documents list
-        index_data["corpus"].pop(idx)
-        index_data["documents"].pop(idx)
+            # Remove from corpus and documents list
+            index_data["corpus"].pop(idx)
+            index_data["documents"].pop(idx)
 
-        # Remove from lookup
-        if doc_id in self._documents:
-            del self._documents[doc_id]
+            # Remove from lookup
+            if doc_id in self._documents:
+                del self._documents[doc_id]
 
-        # Rebuild BM25 index
-        if index_data["corpus"]:
-            from rank_bm25 import BM25Plus as RankBM25  # type: ignore[import-untyped]
+            # Rebuild BM25 index
+            if index_data["corpus"]:
+                from rank_bm25 import BM25Plus as RankBM25
 
-            index_data["bm25"] = RankBM25(
-                index_data["corpus"],
-                k1=self._k1,
-                b=self._b,
+                index_data["bm25"] = RankBM25(
+                    index_data["corpus"],
+                    k1=self._k1,
+                    b=self._b,
+                )
+            else:
+                index_data["bm25"] = None
+
+            logger.debug(
+                "bm25_document_removed",
+                collection=target_collection,
+                doc_id=doc_id,
             )
-        else:
-            index_data["bm25"] = None
 
-        logger.debug(
-            "bm25_document_removed",
-            collection=target_collection,
-            doc_id=doc_id,
-        )
-
-        return True
+            return Ok(True)
+        except Exception as e:
+            logger.error(
+                "bm25_remove_failed",
+                collection=target_collection,
+                doc_id=doc_id,
+                error=str(e),
+            )
+            return Err(BM25Error(
+                message=f"Failed to remove document: {e}",
+                operation="remove",
+            ))
 
     def clear_collection(
         self,
         collection: str | None = None,
-    ) -> int:
+    ) -> Result[int, BM25Error]:
         """
         Clear all documents from a collection.
 
@@ -452,36 +536,49 @@ class BM25Retriever:
             collection: Collection name (uses default if None)
 
         Returns:
-            Number of documents removed
+            Result containing number of documents removed.
+            - Ok: Number of documents removed
+            - Err(BM25Error): If clear fails
         """
         target_collection = collection or self._default_collection
 
         if target_collection not in self._indices:
-            return 0
+            return Ok(0)
 
-        index_data = self._indices[target_collection]
-        count = len(index_data["documents"])
+        try:
+            index_data = self._indices[target_collection]
+            count = len(index_data["documents"])
 
-        # Clear index data
-        index_data["documents"] = []
-        index_data["corpus"] = []
-        index_data["bm25"] = None
+            # Clear index data
+            index_data["documents"] = []
+            index_data["corpus"] = []
+            index_data["bm25"] = None
 
-        # Remove documents from lookup
-        self._documents.clear()
+            # Remove documents from lookup
+            self._documents.clear()
 
-        logger.info(
-            "bm25_collection_cleared",
-            collection=target_collection,
-            documents_removed=count,
-        )
+            logger.info(
+                "bm25_collection_cleared",
+                collection=target_collection,
+                documents_removed=count,
+            )
 
-        return count
+            return Ok(count)
+        except Exception as e:
+            logger.error(
+                "bm25_clear_failed",
+                collection=target_collection,
+                error=str(e),
+            )
+            return Err(BM25Error(
+                message=f"Failed to clear collection: {e}",
+                operation="clear",
+            ))
 
     def get_stats(
         self,
         collection: str | None = None,
-    ) -> BM25IndexStats | None:
+    ) -> Result[BM25IndexStats, BM25Error]:
         """
         Get statistics about the BM25 index.
 
@@ -489,32 +586,48 @@ class BM25Retriever:
             collection: Collection name (uses default if None)
 
         Returns:
-            BM25IndexStats if collection exists, None otherwise
+            Result containing BM25IndexStats on success.
+            - Ok: BM25IndexStats with index statistics
+            - Err(BM25Error): If stats retrieval fails
         """
         target_collection = collection or self._default_collection
 
         if target_collection not in self._indices:
-            return None
+            return Err(BM25Error(
+                message=f"Collection not found: {target_collection}",
+                operation="stats",
+            ))
 
-        index_data = self._indices[target_collection]
+        try:
+            index_data = self._indices[target_collection]
 
-        # Calculate statistics
-        doc_count = len(index_data["documents"])
-        corpus = index_data["corpus"]
+            # Calculate statistics
+            doc_count = len(index_data["documents"])
+            corpus = index_data["corpus"]
 
-        if corpus:
-            total_tokens = len(set(token for doc in corpus for token in doc))
-            avg_doc_length = sum(len(doc) for doc in corpus) / len(corpus)
-        else:
-            total_tokens = 0
-            avg_doc_length = 0.0
+            if corpus:
+                total_tokens = len(set(token for doc in corpus for token in doc))
+                avg_doc_length = sum(len(doc) for doc in corpus) / len(corpus)
+            else:
+                total_tokens = 0
+                avg_doc_length = 0.0
 
-        return BM25IndexStats(
-            total_documents=doc_count,
-            total_tokens=total_tokens,
-            avg_doc_length=avg_doc_length,
-            last_updated=datetime.utcnow().isoformat(),
-        )
+            return Ok(BM25IndexStats(
+                total_documents=doc_count,
+                total_tokens=total_tokens,
+                avg_doc_length=avg_doc_length,
+                last_updated=datetime.utcnow().isoformat(),
+            ))
+        except Exception as e:
+            logger.error(
+                "bm25_stats_failed",
+                collection=target_collection,
+                error=str(e),
+            )
+            return Err(BM25Error(
+                message=f"Failed to get stats: {e}",
+                operation="stats",
+            ))
 
     def _matches_filters(
         self,

@@ -28,6 +28,7 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
     RetrievedChunk,
     SourceType,
 )
+from src.core.result import Ok
 from src.contexts.knowledge.application.services.token_counter import (
     LLMProvider,
     TokenCounter,
@@ -42,14 +43,16 @@ def mock_token_counter():
     """Mock token counter for testing."""
     counter = MagicMock(spec=TokenCounter)
 
-    def mock_count(text: str, **kwargs) -> TokenCountResult:
+    def mock_count(text: str, **kwargs):
         # Simple estimation: 1 token per 4 characters
         token_count = max(1, len(text) // 4)
-        return TokenCountResult(
-            token_count=token_count,
-            method="estimation",
-            provider=LLMProvider.OPENAI,
-            model_family=MagicMock(),
+        return Ok(
+            TokenCountResult(
+                token_count=token_count,
+                method="estimation",
+                provider=LLMProvider.OPENAI,
+                model_family=MagicMock(),
+            )
         )
 
     counter.count = MagicMock(side_effect=mock_count)

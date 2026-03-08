@@ -7,11 +7,11 @@ experiences and emotional states with valence and arousal tracking.
 """
 
 import asyncio
-import logging
+import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from src.core.data_models import (
     MemoryItem,
@@ -21,7 +21,7 @@ from src.core.data_models import (
 from src.core.types import AgentID
 from src.database.context_db import ContextDatabase
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EmotionalIntensity(Enum):
@@ -54,7 +54,7 @@ class EmotionalMemoryItem:
     dominance: float = 0.0
     emotional_tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validates emotional memory data after initialization."""
         self.valence = max(-1.0, min(1.0, self.valence))
         self.arousal = max(0.0, min(1.0, self.arousal))
@@ -64,7 +64,7 @@ class EmotionalMemoryItem:
 
     def _derive_emotional_tags(self) -> List[str]:
         """Derives emotional tags from valence and arousal values."""
-        tags = []
+        tags: list[Any] = []
         if self.valence <= -0.6:
             tags.append("very_negative")
         elif self.valence <= -0.2:
@@ -92,7 +92,7 @@ class EmotionalMemory:
         database: ContextDatabase,
         max_memories: int = 500,
         threshold: float = 0.3,
-    ):
+    ) -> None:
         """Initializes the emotional memory system."""
         self.agent_id = agent_id
         self.database = database
@@ -121,7 +121,7 @@ class EmotionalMemory:
 
         return StandardResponse(success=True, data={"stored": True})
 
-    def _update_emotional_indices(self, emotional_memory: EmotionalMemoryItem):
+    def _update_emotional_indices(self, emotional_memory: EmotionalMemoryItem) -> None:
         """Updates internal indices for efficient querying."""
         # This is a simplified placeholder for a more complex indexing system.
         category = emotional_memory._derive_emotional_tags()[0]

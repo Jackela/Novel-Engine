@@ -10,7 +10,7 @@ Addresses the critical performance gaps identified in production readiness asses
 
 import asyncio
 import gc
-import logging
+import structlog
 import time
 import weakref
 from contextlib import asynccontextmanager
@@ -19,20 +19,20 @@ from typing import Any, Dict, List, Optional
 
 import aiosqlite
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AsyncDatabasePool:
     """High-performance async database connection pool."""
 
-    def __init__(self, database_path: str, max_connections: int = 10):
+    def __init__(self, database_path: str, max_connections: int = 10) -> None:
         self.database_path = database_path
         self.max_connections = max_connections
         self._pool: List[aiosqlite.Connection] = []
         self._busy_connections: weakref.WeakSet = weakref.WeakSet()
         self._lock = asyncio.Lock()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the connection pool."""
         async with self._lock:
             for _ in range(self.max_connections):
@@ -49,7 +49,7 @@ class AsyncDatabasePool:
         )
 
     @asynccontextmanager
-    async def get_connection(self):
+    async def get_connection(self) -> None:
         """Get a connection from the pool."""
         async with self._lock:
             if not self._pool:
@@ -78,7 +78,7 @@ class AsyncDatabasePool:
 class AdvancedCache:
     """High-performance caching system with intelligent eviction."""
 
-    def __init__(self, max_size: int = 1000, ttl: int = 300):
+    def __init__(self, max_size: int = 1000, ttl: int = 300) -> None:
         self.max_size = max_size
         self.ttl = ttl
         self._cache: Dict[str, Dict[str, Any]] = {}
@@ -112,7 +112,7 @@ class AdvancedCache:
             self._cache[key] = {"value": value, "timestamp": current_time}
             self._access_times[key] = current_time
 
-    async def _evict_lru(self):
+    async def _evict_lru(self) -> None:
         """Evict least recently used entries."""
         if not self._access_times:
             return
@@ -129,26 +129,26 @@ class AdvancedCache:
 class AsyncEventBus:
     """High-performance async event bus."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: Dict[str, List[callable]] = {}
         self._lock = asyncio.Lock()
 
-    async def subscribe(self, event_type: str, callback: callable):
+    async def subscribe(self, event_type: str, callback: callable) -> None:
         """Subscribe to an event type."""
         async with self._lock:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
             self._subscribers[event_type].append(callback)
 
-    async def emit(self, event_type: str, data: Any):
+    async def emit(self, event_type: str, data: Any) -> None:
         """Emit an event to all subscribers."""
-        subscribers = []
+        subscribers: list[Any] = []
         async with self._lock:
             subscribers = self._subscribers.get(event_type, []).copy()
 
         if subscribers:
             # Process events concurrently
-            tasks = []
+            tasks: list[Any] = []
             for callback in subscribers:
                 if asyncio.iscoroutinefunction(callback):
                     tasks.append(callback(data))
@@ -165,20 +165,20 @@ class AsyncEventBus:
 class PerformanceOptimizer:
     """Central performance optimization coordinator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.db_pool: Optional[AsyncDatabasePool] = None
         self.cache = AdvancedCache(max_size=2000, ttl=600)
         self.event_bus = AsyncEventBus()
         self._metrics: Dict[str, List[float]] = {}
 
-    async def initialize(self, database_path: str = "data/novel_engine.db"):
+    async def initialize(self, database_path: str = "data/novel_engine.db") -> None:
         """Initialize performance optimization systems."""
         self.db_pool = AsyncDatabasePool(database_path, max_connections=20)
         await self.db_pool.initialize()
         logger.info("Performance optimization systems initialized")
 
     @asynccontextmanager
-    async def get_db_connection(self):
+    async def get_db_connection(self) -> None:
         """Get optimized database connection."""
         if not self.db_pool:
             raise RuntimeError("Database pool not initialized")
@@ -227,7 +227,7 @@ class PerformanceOptimizer:
 
     def get_performance_stats(self) -> Dict[str, Dict[str, float]]:
         """Get performance statistics."""
-        stats = {}
+        stats: dict[Any, Any] = {}
         for operation, times in self._metrics.items():
             if times:
                 stats[operation] = {
@@ -294,7 +294,7 @@ async def optimize_simulation_execution(director, turns: int):
 
 
 @lru_cache(maxsize=128)
-def cached_config_loader():
+def cached_config_loader() -> None:
     """Cached configuration loading."""
     from src.core.config.config_loader import get_config
 
@@ -304,7 +304,7 @@ def cached_config_loader():
 class AsyncSimulationManager:
     """High-performance simulation manager."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_simulations: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
 
@@ -391,11 +391,11 @@ class AsyncSimulationManager:
         async with self._lock:
             return self.active_simulations.get(simulation_id)
 
-    async def cleanup_completed_simulations(self):
+    async def cleanup_completed_simulations(self) -> None:
         """Clean up old completed simulations."""
         current_time = time.time()
         async with self._lock:
-            to_remove = []
+            to_remove: list[Any] = []
             for sim_id, sim_data in self.active_simulations.items():
                 if (
                     sim_data["status"] in ["completed", "failed"]
@@ -412,7 +412,7 @@ simulation_manager = AsyncSimulationManager()
 
 
 # Memory optimization utilities
-def optimize_memory():
+def optimize_memory() -> None:
     """Optimize memory usage."""
     # Force garbage collection
     gc.collect()

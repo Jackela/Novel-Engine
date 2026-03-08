@@ -6,7 +6,7 @@ Provides comprehensive API versioning, backward compatibility handling,
 and smooth migration paths for API consumers.
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional
 from fastapi import Request, Response, status
 from fastapi.routing import APIRoute
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class APIVersion(str, Enum):
@@ -45,10 +45,10 @@ class VersionInfo:
     deprecation_date: Optional[datetime] = None
     sunset_date: Optional[datetime] = None
     description: str = ""
-    breaking_changes: List[str] = None
+    breaking_changes: Optional[List[str]] = None
     migration_guide_url: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.breaking_changes is None:
             self.breaking_changes = []
 
@@ -56,11 +56,11 @@ class VersionInfo:
 class APIVersionRegistry:
     """Registry for managing API versions and their metadata."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.versions: Dict[APIVersion, VersionInfo] = {}
         self._initialize_versions()
 
-    def _initialize_versions(self):
+    def _initialize_versions(self) -> None:
         """Initialize default version information."""
 
         # Version 1.0 - Initial API version
@@ -132,7 +132,7 @@ class APIVersionRegistry:
 
     def mark_deprecated(
         self, version: APIVersion, sunset_date: Optional[datetime] = None
-    ):
+    ) -> None:
         """Mark a version as deprecated."""
         if version in self.versions:
             self.versions[version].status = VersionStatus.DEPRECATED
@@ -144,7 +144,7 @@ class APIVersionRegistry:
 class VersionExtractor:
     """Extract API version from requests."""
 
-    def __init__(self, default_version: APIVersion = APIVersion.V1_0):
+    def __init__(self, default_version: APIVersion = APIVersion.V1_0) -> None:
         self.default_version = default_version
 
     def extract_from_request(self, request: Request) -> APIVersion:
@@ -195,7 +195,7 @@ class VersionExtractor:
 class CompatibilityLayer:
     """Handle backward compatibility transformations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.transformers: Dict[APIVersion, List[Callable]] = {
             APIVersion.V1_0: [self._transform_to_v1_0],
             APIVersion.V1_1: [self._transform_to_v1_1],
@@ -248,7 +248,7 @@ class CompatibilityLayer:
 class VersionMiddleware:
     """Middleware to handle API versioning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.registry = APIVersionRegistry()
         self.extractor = VersionExtractor()
         self.compatibility = CompatibilityLayer()
@@ -305,7 +305,7 @@ class VersionedRoute(APIRoute):
         *args,
         version_handlers: Optional[Dict[APIVersion, Callable]] = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.version_handlers = version_handlers or {}
 
@@ -323,14 +323,14 @@ class VersionedRoute(APIRoute):
         return await super().handle_request(request)
 
 
-def create_version_info_endpoint():
+def create_version_info_endpoint() -> None:
     """Create endpoint that returns API version information."""
 
-    def get_api_versions():
+    def get_api_versions() -> None:
         """Get information about all API versions."""
         registry = APIVersionRegistry()
 
-        versions_info = {}
+        versions_info: dict[Any, Any] = {}
         for version, info in registry.versions.items():
             versions_info[version.value] = {
                 "status": info.status.value,
@@ -355,7 +355,7 @@ def create_version_info_endpoint():
     return get_api_versions
 
 
-def setup_versioning(app):
+def setup_versioning(app) -> None:
     """Setup API versioning middleware and endpoints."""
 
     # Add versioning middleware

@@ -9,8 +9,9 @@ Handles action selection, evaluation, and reasoning.
 Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
-import logging
 import random
+
+import structlog
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
     from src.agents.context_manager import CharacterContextManager
     from src.agents.persona_core import PersonaCore
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ThreatLevel(Enum):
@@ -74,7 +75,7 @@ class DecisionEngine:
         self,
         core: "PersonaCore",
         context_manager: Optional["CharacterContextManager"] = None,
-    ):
+    ) -> None:
         """
         Initialize decision engine.
 
@@ -84,11 +85,11 @@ class DecisionEngine:
         """
         self.core = core
         self.context_manager = context_manager
-        self.logger = logging.getLogger(f"{__name__}.{core.agent_id}")
+        self.logger = structlog.get_logger(__name__, agent_id=core.agent_id)
 
         # Decision-making configuration
         self.action_threshold = 0.3  # Minimum score for action consideration
-        self.decision_weights = {}  # Will be loaded from character data
+        self.decision_weights: Dict[str, float] = {}  # Will be loaded from character data
 
     def make_decision(
         self, world_state_update: Dict[str, Any]
@@ -103,7 +104,7 @@ class DecisionEngine:
             Optional[CharacterAction]: Selected action or None if no suitable action
         """
         try:
-            self.logger.debug(f"Making decision for agent {self.core.agent_id}")
+            self.logger.debug("making_decision", agent_id=self.core.agent_id)
 
             # Update decision weights from character data
             self._update_decision_weights()
@@ -115,18 +116,18 @@ class DecisionEngine:
             available_actions = self._identify_available_actions(situation)
 
             if not available_actions:
-                self.logger.debug("No available actions found")
+                self.logger.debug("no_available_actions_found")
                 return None
 
             # Evaluate each action
-            action_evaluations = []
+            action_evaluations: list[Any] = []
             for action in available_actions:
                 evaluation = self._evaluate_action(action, situation)
                 if evaluation.modified_score >= self.action_threshold:
                     action_evaluations.append(evaluation)
 
             if not action_evaluations:
-                self.logger.debug("No actions meet minimum threshold")
+                self.logger.debug("no_actions_meet_minimum_threshold")
                 return None
 
             # Select best action
@@ -138,7 +139,7 @@ class DecisionEngine:
             return None
 
         except Exception as e:
-            self.logger.error(f"Decision making failed: {e}")
+            self.logger.error("decision_making_failed", error=str(e))
             return None
 
     def _assess_current_situation(
@@ -202,8 +203,7 @@ class DecisionEngine:
         if not isinstance(situation, SituationAssessment):
             situation = self._coerce_situation_assessment(situation or {})
 
-        available_actions = []
-
+        available_actions: list[Any] = []
         # Basic actions always available
         basic_actions = [
             {
@@ -240,7 +240,7 @@ class DecisionEngine:
         available_actions.extend(social_actions)
 
         # Remove duplicates based on action type
-        unique_actions = {}
+        unique_actions: dict[Any, Any] = {}
         for action in available_actions:
             action_key = action.get("type", "unknown")
             if action_key not in unique_actions:
@@ -522,12 +522,16 @@ class DecisionEngine:
         self, world_state: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Assess available resources."""
-        return {
+        equipment = world_state.get("available_equipment", [])
+        if not isinstance(equipment, list):
+            equipment = []
+        result: Dict[str, Any] = {
             "combat_capability": 0.7,  # Would be calculated from character stats
             "social_influence": 0.5,
             "knowledge_base": 0.6,
-            "equipment": world_state.get("available_equipment", []),
+            "equipment": equipment,
         }
+        return result
 
     def _get_current_goals(self) -> List[Dict[str, Any]]:
         """Get character's current goals."""

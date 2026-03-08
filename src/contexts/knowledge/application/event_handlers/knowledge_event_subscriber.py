@@ -62,7 +62,7 @@ class KnowledgeEventSubscriber:
         event_bus: EventBus,
         sync_handler: KnowledgeSyncEventHandler,
         tagging_handler: Any | None = None,  # SmartTaggingEventHandler
-    ):
+    ) -> None:
         """
         Initialize the subscriber.
 
@@ -287,7 +287,7 @@ class KnowledgeEventSubscriber:
         )
 
         # Build metadata with smart tags if tagging handler is available
-        extra_metadata = {}
+        extra_metadata: dict[Any, Any] = {}
         if self._tagging_handler:
             # Queue async smart tagging
             asyncio.create_task(
@@ -397,7 +397,7 @@ class KnowledgeEventSubscriber:
         )
 
         # Build metadata with smart tags if tagging handler is available
-        extra_metadata = {}
+        extra_metadata: dict[Any, Any] = {}
         if self._tagging_handler:
             # Queue async smart tagging
             asyncio.create_task(
@@ -450,7 +450,7 @@ class KnowledgeEventSubscriber:
             return
 
         # Extract beat content if available
-        beat_contents = []
+        beat_contents: list[Any] = []
         beats = kwargs.get("beats", [])
         for beat in beats:
             if isinstance(beat, dict):
@@ -459,7 +459,7 @@ class KnowledgeEventSubscriber:
                 beat_contents.append(str(beat))
 
         # Build metadata
-        extra_metadata = {}
+        extra_metadata: dict[Any, Any] = {}
         if chapter_id := kwargs.get("chapter_id"):
             extra_metadata["chapter_id"] = str(chapter_id)
 
@@ -571,7 +571,7 @@ class KnowledgeEventSubscriber:
             return
 
         # Extract beat content if available
-        beat_contents = []
+        beat_contents: list[Any] = []
         beats = kwargs.get("beats", [])
         for beat in beats:
             if isinstance(beat, dict):
@@ -580,7 +580,7 @@ class KnowledgeEventSubscriber:
                 beat_contents.append(str(beat))
 
         # Build metadata
-        extra_metadata = {}
+        extra_metadata: dict[Any, Any] = {}
         if chapter_id := kwargs.get("chapter_id"):
             extra_metadata["chapter_id"] = str(chapter_id)
 

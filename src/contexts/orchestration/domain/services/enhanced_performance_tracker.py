@@ -7,7 +7,7 @@ with the existing performance tracking capabilities. Provides backward compatibi
 while adding enterprise-grade observability features.
 """
 
-import logging
+import structlog
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
@@ -22,7 +22,7 @@ from ..value_objects import (
 )
 from .performance_tracker import PerformanceTracker
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EnhancedPerformanceTracker(PerformanceTracker):
@@ -39,7 +39,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
     while adding comprehensive observability capabilities.
     """
 
-    def __init__(self, metrics_collector: Optional[PrometheusMetricsCollector] = None):
+    def __init__(self, metrics_collector: Optional[PrometheusMetricsCollector] = None) -> None:
         """
         Initialize enhanced performance tracker.
 
@@ -145,7 +145,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
         )
 
         # Collect phase results for detailed metrics
-        phase_results = {}
+        phase_results: dict[Any, Any] = {}
         if hasattr(pipeline_result, "phase_results"):
             for phase_result in pipeline_result.phase_results:
                 phase_name = (

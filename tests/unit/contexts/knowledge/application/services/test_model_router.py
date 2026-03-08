@@ -259,10 +259,10 @@ class TestModelRouter:
 
         assert decision.task_type == TaskType.CHEAP
         # CHEAP task should use lowest cost option
-        model = model_router._registry.get_model(
+        model_result = model_router._registry.get_model(
             decision.selected_provider, decision.selected_model
         )
-        if model:
+        if model_result.is_ok:
             # Gemini Flash is cheap, or Ollama which is free
             assert decision.selected_provider in [
                 LLMProvider.GEMINI,
@@ -275,10 +275,11 @@ class TestModelRouter:
         decision = model_router.select_model(TaskType.LOGICAL, config)
 
         # Should select a model within cost limit
-        model = model_router._registry.get_model(
+        model_result = model_router._registry.get_model(
             decision.selected_provider, decision.selected_model
         )
-        if model:
+        if model_result.is_ok:
+            model = model_result.unwrap()
             assert model.cost_per_1m_output_tokens <= 1.0
 
     def test_select_model_with_blocked_provider(
@@ -473,7 +474,9 @@ class TestModelRouterFallbackChain:
     ) -> None:
         """Test that fallback chain activates when primary circuit is open."""
         # Open circuit on primary model for CREATIVE task
-        task_config = model_router._registry.get_model_for_task(TaskType.CREATIVE)
+        task_config_result = model_router._registry.get_model_for_task(TaskType.CREATIVE)
+        assert task_config_result.is_ok
+        task_config = task_config_result.unwrap()
         primary_key = f"{task_config.provider.value}:{task_config.model_name}"
         breaker = model_router._get_circuit_breaker(primary_key)
 

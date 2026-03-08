@@ -150,7 +150,8 @@ class TestPropagateRumors:
 
         result = await service.propagate_rumors(world_state)
 
-        assert result == []
+        assert result.is_ok
+        assert result.unwrap() == []
         mock_rumor_repo.get_active_rumors.assert_called_once_with(world_state.id)
 
     @pytest.mark.asyncio
@@ -170,8 +171,10 @@ class TestPropagateRumors:
         result = await service.propagate_rumors(world_state)
 
         # Should have spread to town
-        assert len(result) == 1
-        updated = result[0]
+        assert result.is_ok
+        rumors = result.unwrap()
+        assert len(rumors) == 1
+        updated = rumors[0]
         assert "loc-town" in updated.current_locations
         assert "loc-capital" in updated.current_locations
         assert updated.spread_count == 1
@@ -192,8 +195,10 @@ class TestPropagateRumors:
 
         result = await service.propagate_rumors(world_state)
 
-        assert len(result) == 1
-        updated = result[0]
+        assert result.is_ok
+        rumors = result.unwrap()
+        assert len(rumors) == 1
+        updated = rumors[0]
         # Should have spread to all three (each counts as one spread)
         assert len(updated.current_locations) == 4  # origin + 3 new
         assert updated.spread_count == 3
@@ -228,7 +233,9 @@ class TestPropagateRumors:
 
         result = await service.propagate_rumors(world_state)
 
-        updated = result[0]
+        assert result.is_ok
+        rumors = result.unwrap()
+        updated = rumors[0]
         # Should only spread to village (town already reached)
         assert len(updated.current_locations) == 3
         assert "loc-village" in updated.current_locations
@@ -261,7 +268,9 @@ class TestPropagateRumors:
 
         result = await service.propagate_rumors(world_state)
 
-        assert len(result) == 2
+        assert result.is_ok
+        rumors = result.unwrap()
+        assert len(rumors) == 2
         # Both rumors should be updated
         mock_rumor_repo.save_all.assert_called_once()
         saved = mock_rumor_repo.save_all.call_args[0][0]
@@ -295,7 +304,9 @@ class TestPropagateRumors:
         result = await service.propagate_rumors(world_state)
 
         # Rumor should be deleted (not in result)
-        assert len(result) == 0
+        assert result.is_ok
+        rumors = result.unwrap()
+        assert len(rumors) == 0
         mock_rumor_repo.delete.assert_called_once_with("rumor-dying")
 
     @pytest.mark.asyncio
@@ -330,7 +341,9 @@ class TestPropagateRumors:
         result = await service.propagate_rumors(world_state)
 
         # Should still propagate from successful location
-        assert len(result) == 1
+        assert result.is_ok
+        rumors = result.unwrap()
+        assert len(rumors) == 1
 
     @pytest.mark.asyncio
     async def test_propagate_handles_repo_error(
@@ -339,12 +352,12 @@ class TestPropagateRumors:
         world_state: WorldState,
         mock_rumor_repo: MagicMock,
     ) -> None:
-        """Should return empty list on repository error."""
+        """Should return error on repository error."""
         mock_rumor_repo.get_active_rumors.side_effect = Exception("DB error")
 
         result = await service.propagate_rumors(world_state)
 
-        assert result == []
+        assert result.is_error
 
 
 # ============================================================================
@@ -364,12 +377,14 @@ class TestCreateRumorFromEvent:
         """Should create rumor with war template."""
         result = service.create_rumor_from_event(history_event, world_state)
 
-        assert result.origin_type == RumorOrigin.EVENT
-        assert result.source_event_id == history_event.id
-        assert "conflict" in result.content.lower()
-        assert result.truth_value == 90  # GLOBAL impact
-        assert result.origin_location_id == "loc-capital"
-        assert "loc-capital" in result.current_locations
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.origin_type == RumorOrigin.EVENT
+        assert rumor.source_event_id == history_event.id
+        assert "conflict" in rumor.content.lower()
+        assert rumor.truth_value == 90  # GLOBAL impact
+        assert rumor.origin_location_id == "loc-capital"
+        assert "loc-capital" in rumor.current_locations
 
     def test_create_from_trade_event(
         self,
@@ -389,9 +404,11 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "merchants" in result.content.lower()
-        assert "trade" in result.content.lower()
-        assert result.truth_value == 70  # REGIONAL impact
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "merchants" in rumor.content.lower()
+        assert "trade" in rumor.content.lower()
+        assert rumor.truth_value == 70  # REGIONAL impact
 
     def test_create_from_death_event(
         self,
@@ -412,8 +429,10 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "king aldric" in result.content.lower()
-        assert "passing" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "king aldric" in rumor.content.lower()
+        assert "passing" in rumor.content.lower()
 
     def test_create_from_birth_event(
         self,
@@ -433,8 +452,10 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "birth" in result.content.lower()
-        assert "prince edric" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "birth" in rumor.content.lower()
+        assert "prince edric" in rumor.content.lower()
 
     def test_create_from_marriage_event(
         self,
@@ -454,9 +475,11 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "union" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "union" in rumor.content.lower()
         # Both names should appear
-        assert "prince edric" in result.content.lower()
+        assert "prince edric" in rumor.content.lower()
 
     def test_create_from_alliance_event(
         self,
@@ -476,7 +499,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "alliance" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "alliance" in rumor.content.lower()
 
     def test_create_from_disaster_event(
         self,
@@ -496,7 +521,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "disaster" in result.content.lower() or "terrifying" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "disaster" in rumor.content.lower() or "terrifying" in rumor.content.lower()
 
     def test_create_from_discovery_event(
         self,
@@ -516,8 +543,10 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "discovery" in result.content.lower() or "whispers" in result.content.lower()
-        assert result.truth_value == 50  # LOCAL impact
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "discovery" in rumor.content.lower() or "whispers" in rumor.content.lower()
+        assert rumor.truth_value == 50  # LOCAL impact
 
     def test_create_from_revolution_event(
         self,
@@ -537,7 +566,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "uprising" in result.content.lower() or "revolution" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "uprising" in rumor.content.lower() or "revolution" in rumor.content.lower()
 
     def test_create_from_miracle_event(
         self,
@@ -557,7 +588,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "miracle" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "miracle" in rumor.content.lower()
 
     def test_create_from_magical_event(
         self,
@@ -577,7 +610,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "magical" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "magical" in rumor.content.lower()
 
     def test_create_from_coronation_event(
         self,
@@ -597,7 +632,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert "coronation" in result.content.lower()
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert "coronation" in rumor.content.lower()
 
     def test_create_from_unknown_event_type(
         self,
@@ -617,8 +654,10 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.content  # Should have some content
-        assert result.truth_value == 50
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.content  # Should have some content
+        assert rumor.truth_value == 50
 
     def test_create_uses_affected_location_ids(
         self,
@@ -639,7 +678,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.origin_location_id == "loc-affected"
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.origin_location_id == "loc-affected"
 
     def test_create_fallback_to_location_ids(
         self,
@@ -659,7 +700,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.origin_location_id == "loc-where"
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.origin_location_id == "loc-where"
 
     def test_create_fallback_to_unknown_location(
         self,
@@ -678,7 +721,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.origin_location_id == "unknown"
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.origin_location_id == "unknown"
 
     def test_create_with_no_impact_scope(
         self,
@@ -698,7 +743,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.truth_value == 50  # Default LOCAL
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.truth_value == 50  # Default LOCAL
 
     def test_create_sets_created_date_from_world(
         self,
@@ -717,7 +764,9 @@ class TestCreateRumorFromEvent:
 
         result = service.create_rumor_from_event(event, world_state)
 
-        assert result.created_date == world_state.calendar
+        assert result.is_ok
+        rumor = result.unwrap()
+        assert rumor.created_date == world_state.calendar
 
 
 # ============================================================================
@@ -732,11 +781,13 @@ class TestGetStatistics:
         """Should return zero statistics for empty list."""
         result = service.get_statistics([])
 
-        assert result.total_rumors == 0
-        assert result.active_rumors == 0
-        assert result.avg_truth == 0.0
-        assert result.most_spread is None
-        assert result.dead_rumors == 0
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.total_rumors == 0
+        assert stats.active_rumors == 0
+        assert stats.avg_truth == 0.0
+        assert stats.most_spread is None
+        assert stats.dead_rumors == 0
 
     def test_single_active_rumor(
         self,
@@ -746,11 +797,13 @@ class TestGetStatistics:
         """Should calculate stats for single rumor."""
         result = service.get_statistics([base_rumor])
 
-        assert result.total_rumors == 1
-        assert result.active_rumors == 1
-        assert result.avg_truth == 80.0
-        assert result.most_spread == base_rumor
-        assert result.dead_rumors == 0
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.total_rumors == 1
+        assert stats.active_rumors == 1
+        assert stats.avg_truth == 80.0
+        assert stats.most_spread == base_rumor
+        assert stats.dead_rumors == 0
 
     def test_multiple_active_rumors(
         self,
@@ -773,10 +826,12 @@ class TestGetStatistics:
 
         result = service.get_statistics([base_rumor, rumor2])
 
-        assert result.total_rumors == 2
-        assert result.active_rumors == 2
-        assert result.avg_truth == 70.0  # (80 + 60) / 2
-        assert result.most_spread == rumor2  # Higher spread_count
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.total_rumors == 2
+        assert stats.active_rumors == 2
+        assert stats.avg_truth == 70.0  # (80 + 60) / 2
+        assert stats.most_spread == rumor2  # Higher spread_count
 
     def test_dead_rumors_excluded_from_avg(
         self,
@@ -799,12 +854,14 @@ class TestGetStatistics:
 
         result = service.get_statistics([base_rumor, dead_rumor])
 
-        assert result.total_rumors == 2
-        assert result.active_rumors == 1
-        assert result.avg_truth == 80.0  # Only base_rumor
-        assert result.dead_rumors == 1
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.total_rumors == 2
+        assert stats.active_rumors == 1
+        assert stats.avg_truth == 80.0  # Only base_rumor
+        assert stats.dead_rumors == 1
         # Dead rumor has higher spread but should still be most_spread
-        assert result.most_spread == dead_rumor
+        assert stats.most_spread == dead_rumor
 
     def test_all_dead_rumors(
         self,
@@ -835,9 +892,11 @@ class TestGetStatistics:
 
         result = service.get_statistics([dead1, dead2])
 
-        assert result.active_rumors == 0
-        assert result.avg_truth == 0.0
-        assert result.dead_rumors == 2
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.active_rumors == 0
+        assert stats.avg_truth == 0.0
+        assert stats.dead_rumors == 2
 
     def test_rounded_average(
         self,
@@ -862,7 +921,9 @@ class TestGetStatistics:
         result = service.get_statistics(rumors)
 
         # (33 + 34 + 35) / 3 = 34.0
-        assert result.avg_truth == 34.0
+        assert result.is_ok
+        stats = result.unwrap()
+        assert stats.avg_truth == 34.0
 
 
 # ============================================================================

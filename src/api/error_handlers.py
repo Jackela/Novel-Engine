@@ -7,10 +7,10 @@ across all API endpoints with proper HTTP status codes and error classification.
 """
 
 import logging
+import structlog
 import time
-import traceback
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -25,7 +25,7 @@ from .response_envelopes import (
     ValidationError,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NovelEngineException(Exception):
@@ -38,7 +38,7 @@ class NovelEngineException(Exception):
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail: Optional[str] = None,
         code: Optional[str] = None,
-    ):
+    ) -> None:
         self.message = message
         self.error_type = error_type
         self.status_code = status_code
@@ -52,7 +52,7 @@ class ValidationException(NovelEngineException):
 
     def __init__(
         self, message: str, field: Optional[str] = None, detail: Optional[str] = None
-    ):
+    ) -> None:
         super().__init__(
             message=message,
             error_type=APIErrorType.VALIDATION_ERROR,
@@ -65,7 +65,7 @@ class ValidationException(NovelEngineException):
 class ResourceNotFoundException(NovelEngineException):
     """Resource not found exception."""
 
-    def __init__(self, resource_type: str, resource_id: str):
+    def __init__(self, resource_type: str, resource_id: str) -> None:
         super().__init__(
             message=f"{resource_type} '{resource_id}' not found",
             error_type=APIErrorType.NOT_FOUND,
@@ -77,7 +77,7 @@ class ResourceNotFoundException(NovelEngineException):
 class ServiceUnavailableException(NovelEngineException):
     """Service unavailable exception."""
 
-    def __init__(self, service_name: str, detail: Optional[str] = None):
+    def __init__(self, service_name: str, detail: Optional[str] = None) -> None:
         super().__init__(
             message=f"{service_name} service is currently unavailable",
             error_type=APIErrorType.SERVICE_UNAVAILABLE,
@@ -89,7 +89,7 @@ class ServiceUnavailableException(NovelEngineException):
 class ConflictException(NovelEngineException):
     """Resource conflict exception."""
 
-    def __init__(self, message: str, detail: Optional[str] = None):
+    def __init__(self, message: str, detail: Optional[str] = None) -> None:
         super().__init__(
             message=message,
             error_type=APIErrorType.CONFLICT,
@@ -101,7 +101,7 @@ class ConflictException(NovelEngineException):
 class RateLimitException(NovelEngineException):
     """Rate limit exceeded exception."""
 
-    def __init__(self, retry_after: Optional[int] = None):
+    def __init__(self, retry_after: Optional[int] = None) -> None:
         super().__init__(
             message="Rate limit exceeded",
             error_type=APIErrorType.RATE_LIMITED,
@@ -117,7 +117,7 @@ class RateLimitException(NovelEngineException):
 class ErrorHandler:
     """Centralized error handling system."""
 
-    def __init__(self, debug: bool = False):
+    def __init__(self, debug: bool = False) -> None:
         self.debug = debug
         self.error_count = 0
         self.start_time = time.time()
@@ -152,12 +152,14 @@ class ErrorHandler:
             status_code = error.status_code
         else:
             # Generic exception
+            # SECURITY: Never expose stack traces in API responses (CWE-209)
+            # Stack traces are logged internally but never sent to clients
             api_error = APIError(
                 type=APIErrorType.INTERNAL_ERROR,
                 message=(
                     "An unexpected error occurred" if not self.debug else str(error)
                 ),
-                detail=traceback.format_exc() if self.debug else None,
+                detail=None,  # Stack traces never exposed in API responses
             )
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
@@ -227,7 +229,7 @@ class ErrorHandler:
         request: Optional[Request],
         api_error: APIError,
         status_code: int,
-    ):
+    ) -> None:
         """Log error with appropriate level and context."""
 
         # Determine log level
@@ -267,7 +269,7 @@ class ErrorHandler:
         )
 
 
-def setup_error_handlers(app, debug: bool = False):
+def setup_error_handlers(app, debug: bool = False) -> None:
     """Setup error handlers for FastAPI application."""
 
     error_handler = ErrorHandler(debug=debug)
@@ -319,7 +321,7 @@ def setup_error_handlers(app, debug: bool = False):
         request_id = getattr(request.state, "request_id", None)
 
         # Convert Pydantic errors to our validation error format
-        validation_errors = []
+        validation_errors: list[Any] = []
         for error in exc.errors():
             field_path = ".".join(str(loc) for loc in error["loc"])
             # Safely serialize the input value to avoid JSON serialization errors

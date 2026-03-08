@@ -34,7 +34,7 @@ class SagaCoordinator:
     - Coordinate cross-context compensation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize saga coordinator."""
         self.active_compensations: Dict[UUID, List[CompensationAction]] = {}
         self.compensation_strategies: Dict[str, Dict[str, Any]] = {}
@@ -73,8 +73,7 @@ class SagaCoordinator:
         if not committed_phases:
             return []  # No compensation needed
 
-        compensation_actions = []
-
+        compensation_actions: list[Any] = []
         # Plan compensation in reverse order (LIFO)
         for phase_type in reversed(committed_phases):
             phase_compensations = self._plan_phase_compensation(
@@ -198,13 +197,11 @@ class SagaCoordinator:
 
         # Group actions by compatibility for parallel execution
         parallel_groups = self._group_actions_for_parallel_execution(actions)
-        completed_actions = []
-
+        completed_actions: list[Any] = []
         for group in parallel_groups:
             # Execute group in parallel (simulated - actual implementation
             # would use async/await or thread pools)
-            group_results = []
-
+            group_results: list[Any] = []
             for action in group[:max_parallel]:  # Limit parallel execution
                 try:
                     completed_action = self.execute_compensation_action(turn, action)
@@ -318,8 +315,7 @@ class SagaCoordinator:
         self, turn: Turn, failed_phase: PhaseType
     ) -> List[PhaseType]:
         """Get list of phases that were committed and need compensation."""
-        committed_phases = []
-
+        committed_phases: list[Any] = []
         for phase_type in PhaseType.get_all_phases_ordered():
             # Only compensate phases that completed before the failure
             if phase_type.get_phase_order() < failed_phase.get_phase_order():
@@ -340,8 +336,7 @@ class SagaCoordinator:
     ) -> List[CompensationAction]:
         """Plan compensation actions for specific phase."""
         compensation_types = CompensationType.get_phase_compensations(phase_type.value)
-        actions = []
-
+        actions: list[Any] = []
         for compensation_type in compensation_types:
             # Skip compensations that don't apply to this scenario
             if not self._should_apply_compensation(
@@ -371,8 +366,7 @@ class SagaCoordinator:
         self, turn: Turn, failed_phase: PhaseType, error_context: Dict[str, Any]
     ) -> List[CompensationAction]:
         """Plan global compensation actions (logging, notifications, etc.)."""
-        global_actions = []
-
+        global_actions: list[Any] = []
         # Always log the failure
         log_action = CompensationAction.create_for_phase_failure(
             action_id=uuid4(),
@@ -624,9 +618,8 @@ class SagaCoordinator:
     ) -> List[List[CompensationAction]]:
         """Group compensation actions for parallel execution."""
         # Simple grouping - more sophisticated dependency analysis could be added
-        parallel_groups = []
-        current_group = []
-
+        parallel_groups: list[Any] = []
+        current_group: list[Any] = []
         for action in actions:
             # Actions that can run in parallel with others
             if action.compensation_type in {
@@ -639,7 +632,7 @@ class SagaCoordinator:
                 # Finish current group and start new one
                 if current_group:
                     parallel_groups.append(current_group)
-                    current_group = []
+                    current_group: list[Any] = []
                 parallel_groups.append([action])  # Execute alone
 
         if current_group:
@@ -668,8 +661,7 @@ class SagaCoordinator:
         self, turn: Turn, completed_actions: List[CompensationAction]
     ) -> List[str]:
         """Check for data integrity violations after compensation."""
-        violations = []
-
+        violations: list[Any] = []
         # Check for failed destructive operations
         for action in completed_actions:
             if action.status == "failed" and action.compensation_type.is_destructive():

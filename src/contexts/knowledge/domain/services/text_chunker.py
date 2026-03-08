@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Final, List, Tuple
+from typing import Any, Final, List, Tuple
 
 from ..models.chunking_strategy import (
     ChunkingStrategy,
@@ -124,7 +124,7 @@ class TextChunker:
     def _chunk_fixed(text: str, strategy: ChunkingStrategy) -> list[TextChunk]:
         """Chunk by fixed word count with overlap."""
         words = TextChunker._WORD_PATTERN.findall(text)
-        chunks = []
+        chunks: list[Any] = []
         chunk_index = 0
 
         if not words:

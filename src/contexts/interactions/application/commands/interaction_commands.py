@@ -35,7 +35,7 @@ class InteractionCommand:
     timestamp: datetime
     initiated_by: UUID
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate base command data."""
         if self.timestamp.tzinfo is None:
             raise ValueError("timestamp must be timezone-aware")
@@ -60,7 +60,7 @@ class CreateNegotiationSessionCommand(InteractionCommand):
     priority_level: str = "medium"
     confidentiality_level: str = "standard"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.session_name.strip():
             raise ValueError("session_name cannot be empty")
@@ -94,7 +94,7 @@ class TerminateNegotiationSessionCommand(InteractionCommand):
     termination_reason: TerminationReason
     completion_notes: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.outcome, NegotiationOutcome):
             raise ValueError("outcome must be a NegotiationOutcome")
@@ -111,7 +111,7 @@ class AdvanceNegotiationPhaseCommand(InteractionCommand):
     force_advancement: bool = False
     advancement_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.target_phase, NegotiationPhase):
             raise ValueError("target_phase must be a NegotiationPhase")
@@ -130,7 +130,7 @@ class UpdateSessionConfigurationCommand(InteractionCommand):
     priority_level: Optional[str] = None
     confidentiality_level: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.max_parties is not None and self.max_parties < 2:
             raise ValueError("max_parties must be at least 2")
@@ -163,7 +163,7 @@ class CheckSessionTimeoutCommand(InteractionCommand):
     warning_hours: int = 24
     auto_terminate_on_timeout: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.warning_hours <= 0:
             raise ValueError("warning_hours must be positive")
@@ -180,7 +180,7 @@ class AddPartyToSessionCommand(InteractionCommand):
     party: NegotiationParty
     validate_compatibility: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.party, NegotiationParty):
             raise ValueError("party must be a NegotiationParty instance")
@@ -195,7 +195,7 @@ class RemovePartyFromSessionCommand(InteractionCommand):
     removal_reason: Optional[str] = None
     transfer_authority_to: Optional[UUID] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         # No additional validation needed beyond base class
 
@@ -209,7 +209,7 @@ class UpdatePartyCapabilitiesCommand(InteractionCommand):
     updated_capabilities: List[NegotiationCapability]
     update_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.updated_capabilities:
             raise ValueError("updated_capabilities cannot be empty")
@@ -230,7 +230,7 @@ class UpdatePartyAuthorityCommand(InteractionCommand):
     authority_constraints: Optional[Dict[str, Any]] = None
     update_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.new_authority_level, AuthorityLevel):
             raise ValueError("new_authority_level must be an AuthorityLevel")
@@ -248,7 +248,7 @@ class SubmitProposalCommand(InteractionCommand):
     submission_notes: Optional[str] = None
     auto_advance_phase: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.proposal, ProposalTerms):
             raise ValueError("proposal must be a ProposalTerms instance")
@@ -265,7 +265,7 @@ class WithdrawProposalCommand(InteractionCommand):
     withdrawal_reason: Optional[str] = None
     replacement_proposal: Optional[ProposalTerms] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.replacement_proposal and self.replacement_proposal.is_expired:
             raise ValueError("Cannot submit expired replacement proposal")
@@ -281,7 +281,7 @@ class UpdateProposalCommand(InteractionCommand):
     update_reason: Optional[str] = None
     notify_parties: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.updated_terms:
             raise ValueError("updated_terms cannot be empty")
@@ -298,7 +298,7 @@ class OptimizeProposalCommand(InteractionCommand):
     preserve_critical_terms: bool = True
     max_modifications: int = 5
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.optimization_target not in [
             "maximize_acceptance",
@@ -325,7 +325,7 @@ class SubmitProposalResponseCommand(InteractionCommand):
     auto_advance_on_completion: bool = True
     notification_preferences: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not isinstance(self.response, ProposalResponse):
             raise ValueError("response must be a ProposalResponse instance")
@@ -344,7 +344,7 @@ class UpdateResponseCommand(InteractionCommand):
     updated_conditions: Optional[List[str]] = None
     update_reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if (
             not self.updated_term_responses
@@ -367,7 +367,7 @@ class AnalyzeProposalViabilityCommand(InteractionCommand):
     analysis_depth: str = "standard"
     focus_areas: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_depth not in ["basic", "standard", "comprehensive"]:
             raise ValueError(
@@ -384,7 +384,7 @@ class AssessPartyCompatibilityCommand(InteractionCommand):
     compatibility_factors: Optional[List[str]] = None
     include_recommendations: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.party_ids is not None and len(self.party_ids) < 2:
             raise ValueError("party_ids must contain at least 2 parties")
@@ -400,7 +400,7 @@ class RecommendNegotiationStrategyCommand(InteractionCommand):
     timeline_constraints: Optional[Dict[str, Any]] = None
     include_tactics: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.strategy_focus not in [
             "aggressive",
@@ -422,7 +422,7 @@ class DetectNegotiationConflictsCommand(InteractionCommand):
     include_resolution_suggestions: bool = True
     severity_threshold: str = "medium"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.severity_threshold not in ["low", "medium", "high", "critical"]:
             raise ValueError(
@@ -439,7 +439,7 @@ class CalculateNegotiationMomentumCommand(InteractionCommand):
     include_predictions: bool = True
     momentum_factors: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_window_hours <= 0:
             raise ValueError("analysis_window_hours must be positive")
@@ -457,7 +457,7 @@ class BatchUpdatePartiesCommand(InteractionCommand):
     validate_each_update: bool = True
     stop_on_first_error: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.party_updates:
             raise ValueError("party_updates cannot be empty")
@@ -477,7 +477,7 @@ class BatchSubmitResponsesCommand(InteractionCommand):
     validate_each_response: bool = True
     auto_advance_on_batch_completion: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.responses:
             raise ValueError("responses cannot be empty")
@@ -502,7 +502,7 @@ class SynchronizeExternalDataCommand(InteractionCommand):
     sync_type: str = "incremental"
     conflict_resolution_strategy: str = "merge"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if not self.data_sources:
             raise ValueError("data_sources cannot be empty")
@@ -526,7 +526,7 @@ class ExportNegotiationDataCommand(InteractionCommand):
     export_scope: str = "session"
     anonymize_parties: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.export_format not in ["json", "xml", "csv", "pdf"]:
             raise ValueError("export_format must be one of: json, xml, csv, pdf")
@@ -549,7 +549,7 @@ class GenerateSessionReportCommand(InteractionCommand):
     include_recommendations: bool = True
     target_audience: str = "technical"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.report_type not in [
             "summary",
@@ -577,13 +577,13 @@ class SchedulePeriodicAnalysisCommand(InteractionCommand):
 
     session_id: UUID
     analysis_frequency_hours: int = 6
-    analysis_types: List[str] = None
+    analysis_types: Optional[List[str]] = None
     alert_thresholds: Optional[Dict[str, Any]] = None
     auto_recommendations: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         super().__post_init__()
         if self.analysis_frequency_hours <= 0:
             raise ValueError("analysis_frequency_hours must be positive")
         if self.analysis_types is None:
-            self.analysis_types = ["momentum", "conflicts", "viability"]
+            object.__setattr__(self, "analysis_types", ["momentum", "conflicts", "viability"])

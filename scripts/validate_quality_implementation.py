@@ -144,7 +144,8 @@ class QualityValidator:
         self.log("🚀 Validating CI/CD Pipeline")
 
         pipeline_files = [
-            (".github/workflows/quality_assurance.yml", "Quality assurance workflow"),
+            (".github/workflows/ci.yml", "Main CI pipeline"),
+            (".github/workflows/tests.yml", "Test workflow"),
         ]
 
         results = {}
@@ -242,9 +243,9 @@ class QualityValidator:
             recommendations.append("Implement comprehensive quality gates script")
 
         if not all_validations.get("ci_cd_pipeline", {}).get(
-            ".github/workflows/quality_assurance.yml", False
+            ".github/workflows/ci.yml", False
         ):
-            recommendations.append("Set up GitHub Actions quality assurance workflow")
+            recommendations.append("Set up GitHub Actions CI workflow")
 
         # Check dependency availability
         dependencies = all_validations.get("dependencies", {})

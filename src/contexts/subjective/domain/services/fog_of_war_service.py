@@ -7,7 +7,7 @@ visibility calculations, information filtering, and knowledge propagation
 mechanics in the subjective context.
 """
 
-import logging
+import structlog
 import math
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
@@ -28,7 +28,7 @@ from ..value_objects.perception_range import (
     VisibilityLevel,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class IVisibilityCalculator(ABC):
@@ -84,8 +84,7 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
         dz = target_position[2] - observer_position[2]
         distance = math.sqrt(dx * dx + dy * dy + dz * dz)
 
-        visibility_results = {}
-
+        visibility_results: dict[Any, Any] = {}
         # Get awareness bonus
         awareness_bonus = awareness_state.get_perception_bonus()
 
@@ -106,12 +105,14 @@ class BasicVisibilityCalculator(IVisibilityCalculator):
             # Create temporary modified perception range
             from ..value_objects.perception_range import PerceptionRange
 
+            # Clamp accuracy modifier to valid range [0.0, 1.0]
+            modified_accuracy = min(1.0, perception_range.accuracy_modifier
+                * (1.0 + awareness_bonus * 0.5))
             modified_range = PerceptionRange(
                 perception_type=perception_type,
                 base_range=perception_range.base_range,
                 effective_range=effective_range,
-                accuracy_modifier=perception_range.accuracy_modifier
-                * (1.0 + awareness_bonus * 0.5),
+                accuracy_modifier=modified_accuracy,
                 environmental_modifiers=perception_range.environmental_modifiers,
             )
 
@@ -206,7 +207,7 @@ class FogOfWarService:
     degrades over time.
     """
 
-    def __init__(self, visibility_calculator: Optional[IVisibilityCalculator] = None):
+    def __init__(self, visibility_calculator: Optional[IVisibilityCalculator] = None) -> None:
         """
         Initialize the FogOfWarService.
 
@@ -216,7 +217,7 @@ class FogOfWarService:
         self.visibility_calculator = (
             visibility_calculator or BasicVisibilityCalculator()
         )
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def calculate_visibility_between_positions(
         self,
@@ -272,9 +273,8 @@ class FogOfWarService:
 
         observer_position = world_positions[turn_brief.entity_id]
         old_visible = set(turn_brief.visible_subjects.keys())
-        new_visible = set()
-        visibility_changes = {}
-
+        new_visible: set[Any] = set()
+        visibility_changes: dict[Any, Any] = {}
         # Calculate visibility for all subjects
         for subject_id, position in world_positions.items():
             if subject_id == turn_brief.entity_id:
@@ -334,11 +334,9 @@ class FogOfWarService:
             Filtered knowledge base
         """
         check_time = current_time or datetime.now()
-        filtered_items = {}
-
+        filtered_items: dict[Any, Any] = {}
         for subject, items in knowledge_base.knowledge_items.items():
-            reliable_items = []
-
+            reliable_items: list[Any] = []
             for item in items:
                 if (
                     item.is_current(check_time)
@@ -356,8 +354,8 @@ class FogOfWarService:
         source_turn_brief: TurnBrief,
         target_turn_brief: TurnBrief,
         knowledge_types: Optional[List[KnowledgeType]] = None,
-        max_propagation_distance: float = 10.0,
-        source_reliability_modifier: float = 0.9,
+        _max_propagation_distance: float = 10.0,
+        _source_reliability_modifier: float = 0.9,
     ) -> List[KnowledgeItem]:
         """
         Propagate knowledge from one entity to another.
@@ -381,7 +379,7 @@ class FogOfWarService:
         ):
             return []
 
-        propagatable_knowledge = []
+        propagatable_knowledge: list[Any] = []
         filter_types = set(knowledge_types) if knowledge_types else None
 
         for subject, items in source_turn_brief.knowledge_base.knowledge_items.items():
@@ -477,8 +475,7 @@ class FogOfWarService:
         current_time = datetime.now()
         cutoff_time = current_time - staleness_threshold
 
-        stale_subjects = []
-
+        stale_subjects: list[Any] = []
         for subject, items in turn_brief.knowledge_base.knowledge_items.items():
             # Check if all knowledge about this subject is stale
             has_current_knowledge = any(

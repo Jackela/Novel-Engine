@@ -16,7 +16,7 @@ Typical usage example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Mapping
+from typing import Any, Dict, Mapping
 
 from .resource_type import ResourceType
 
@@ -213,7 +213,7 @@ class FactionResources:
         Returns:
             A new FactionResources instance.
         """
-        resources = {}
+        resources: dict[Any, Any] = {}
         for key, value in data.items():
             try:
                 resource_type = ResourceType(key)

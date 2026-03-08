@@ -13,8 +13,9 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import logging
 import os
+
+import structlog
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -39,8 +40,7 @@ from src.prompts import (
     StoryGenre,
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 STYLE_TEMPLATE_LIBRARY: Dict[str, Dict[str, str]] = {
     "sci_fi_dramatic": {
@@ -172,21 +172,29 @@ def _make_gemini_api_request(prompt: str) -> Any:
 
     nest_asyncio.apply()
 
+    # Use nest_asyncio-compatible approach without deprecated get_event_loop()
+    # First try to get the running loop (works with nest_asyncio)
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        response = loop.run_until_complete(llm_service.generate(request))
     except RuntimeError:
+        # No running loop - create a new one and run
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-
-    response = loop.run_until_complete(llm_service.generate(request))
+        try:
+            response = loop.run_until_complete(llm_service.generate(request))
+        finally:
+            loop.close()
 
     # Check for errors
     if "[LLM Error:" in response.content:
-        logger.error(f"LLM generation failed: {response.content}")
+        logger.error("llm_generation_failed", response=response.content)
         raise RuntimeError(f"Gemini API call failed: {response.content}")
 
     logger.info(
-        f"Gemini API call successful: {response.tokens_used} tokens, ${response.cost_estimate:.4f}"
+        "gemini_api_call_successful",
+        tokens_used=response.tokens_used,
+        cost_estimate=response.cost_estimate
     )
     return response.content
 
@@ -249,7 +257,7 @@ class ChroniclerAgent:
         genre: Optional[StoryGenre] = None,
         language: Language = Language.ENGLISH,
         custom_prompt: Optional[str] = None,
-    ):
+    ) -> None:
         """
         Initializes the ChroniclerAgent.
 
@@ -264,7 +272,7 @@ class ChroniclerAgent:
             language: Language for prompts (default: English).
             custom_prompt: Optional custom prompt to use instead of templates.
         """
-        logger.info("Initializing ChroniclerAgent...")
+        logger.info("initializing_chronicler_agent")
 
         if event_bus is _UNSET:
             event_bus = EventBus()
@@ -281,10 +289,10 @@ class ChroniclerAgent:
 
         try:
             config = get_config()
-            self._config = config
+            self._config = config  # type: ignore[assignment]
         except Exception as e:
-            logger.warning(f"Failed to load configuration, using defaults: {e}")
-            self._config = None
+            logger.warning("failed_to_load_configuration", error=str(e))
+            self._config = None  # type: ignore[assignment]
 
         self.output_directory = output_directory or (
             self._config.chronicler.output_directory if self._config else None
@@ -319,14 +327,16 @@ class ChroniclerAgent:
         if template_id:
             self._active_template = PromptRegistry.get(template_id)
             if self._active_template:
-                logger.info(f"Using template: {template_id}")
+                logger.info("using_template", template_id=template_id)
         elif genre:
             self._active_template = PromptRegistry.get_by_genre_and_language(
                 genre, language
             )
             if self._active_template:
                 logger.info(
-                    f"Using template for genre={genre.value}, language={language.value}"
+                    "using_template_for_genre_language",
+                    genre=genre.value,
+                    language=language.value
                 )
 
         try:
@@ -336,19 +346,15 @@ class ChroniclerAgent:
                 self.set_narrative_style("sci_fi_dramatic")
             self.event_bus.subscribe("AGENT_ACTION_COMPLETE", self.handle_agent_action)
             self.event_bus.subscribe("SIMULATION_END", self.handle_simulation_end)
-            logger.info(
-                "ChroniclerAgent initialized successfully and subscribed to events."
-            )
+            logger.info("chronicler_agent_initialized")
         except Exception as e:
-            logger.error(f"Failed to initialize ChroniclerAgent: {e}")
+            logger.error("failed_to_initialize_chronicler_agent", error=str(e))
             raise ValueError(f"ChroniclerAgent initialization failed: {e}")
 
     def _initialize_output_directory(self) -> None:
         """Initializes and validates the output directory."""
         if not self.output_directory:
-            logger.info(
-                "No output directory specified; narratives will be returned as strings."
-            )
+            logger.info("no_output_directory_specified")
             return
 
         try:
@@ -364,9 +370,9 @@ class ChroniclerAgent:
             tmp_file.touch()
             try:
                 tmp_file.unlink()
-            except FileNotFoundError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
-            logger.info(f"Output directory validated: {self.output_directory}")
+            except FileNotFoundError:  # type: ignore[unreachable]
+                pass
+            logger.info("output_directory_validated", output_directory=self.output_directory)
         except Exception as e:
             raise OSError(f"Output directory initialization failed: {e}")
 
@@ -376,15 +382,15 @@ class ChroniclerAgent:
         self.narrative_style_options = tuple(self.narrative_templates.keys())
         self.faction_descriptions = GENERIC_FACTIONS.copy()
         logger.info(
-            "Narrative templates initialized: %s",
-            ", ".join(self.narrative_style_options),
+            "narrative_templates_initialized",
+            styles=self.narrative_style_options
         )
 
     def set_narrative_style(self, style: str) -> bool:
         """Update the active narrative style if it is supported."""
         normalized = (style or "").strip().lower()
         if normalized not in self.narrative_templates:
-            logger.warning("Unsupported narrative style requested: %s", style)
+            logger.warning("unsupported_narrative_style_requested", style=style)
             return False
         self.narrative_style = normalized
         return True
@@ -491,24 +497,22 @@ just the pure narrative prose that could be published in an anthology.
         """Call the (mockable) Gemini request hook."""
         if os.getenv("PYTEST_CURRENT_TEST"):
             if not hasattr(_make_gemini_api_request, "assert_called"):
-                logger.info("Skipping LLM call in pytest environment.")
+                logger.info("skipping_llm_call_in_pytest_environment")
                 return None
 
         try:
             asyncio.get_running_loop()
         except RuntimeError:
-            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+            logger.debug("suppressed_exception")
         else:
-            logger.warning(
-                "Skipping LLM call because an event loop is already running."
-            )
+            logger.warning("skipping_llm_call_event_loop_running")
             return None
 
         try:
             response = _make_gemini_api_request(prompt)
         except RuntimeError as exc:
             if "not configured" in str(exc).lower():
-                logger.warning("Gemini API not configured; returning fallback story.")
+                logger.warning("gemini_api_not_configured")
                 return None
             raise
         except Exception:
@@ -527,7 +531,7 @@ just the pure narrative prose that could be published in an anthology.
 
     def handle_agent_action(
         self, agent: PersonaAgent, action: Optional[CharacterAction]
-    ):
+    ) -> None:
         """Handles the AGENT_ACTION_COMPLETE event."""
         if not action:
             return
@@ -555,9 +559,9 @@ just the pure narrative prose that could be published in an anthology.
                 )
             )
 
-    def handle_simulation_end(self):
+    def handle_simulation_end(self) -> None:
         """Handles the SIMULATION_END event, finalizing the narrative."""
-        logger.info("Simulation ended, generating final narrative.")
+        logger.info("simulation_ended_generating_final_narrative")
         complete_story = self._combine_narrative_segments(self.narrative_segments)
         if self.output_directory:
             self._save_narrative_to_file(complete_story, "simulation_narrative")
@@ -584,13 +588,13 @@ just the pure narrative prose that could be published in an anthology.
             Environment.TESTING,
         ]
 
-        logger.debug(f"ChroniclerAgent calling LLM with prompt length: {len(prompt)}")
+        logger.debug("calling_llm", prompt_length=len(prompt))
 
         try:
             response = _make_gemini_api_request(prompt)
             self.llm_calls_made += 1
 
-            if not response and is_development:
+            if response is None and is_development:
                 # 开发环境: LLM 调用返回 None 是异常情况
                 raise RuntimeError(
                     "CRITICAL: LLM invocation returned None in development mode.\n"
@@ -605,7 +609,7 @@ just the pure narrative prose that could be published in an anthology.
                 return response
 
             # 生产环境: 允许 fallback
-            logger.warning("LLM returned None, using fallback narrative")
+            logger.warning("llm_returned_none_using_fallback")
             return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
 
         except Exception as e:
@@ -618,7 +622,7 @@ just the pure narrative prose that could be published in an anthology.
                 ) from e
             else:
                 # 生产环境: 记录错误并使用 fallback
-                logger.error(f"LLM call failed in production: {e}", exc_info=True)
+                logger.error("llm_call_failed_in_production", error=str(e))
                 self.llm_calls_made += 1
                 return f"A noteworthy event occurred: {prompt.split(':')[-1].strip()}"
 
@@ -719,7 +723,7 @@ just the pure narrative prose that could be published in an anthology.
         filename = (
             f"{base_filename}_narrative_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         )
-        output_path = Path(self.output_directory) / filename
+        output_path = Path(self.output_directory or ".") / filename
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(f"# Narrative for {base_filename}\n\n{narrative}")
@@ -877,7 +881,7 @@ just the pure narrative prose that could be published in an anthology.
 
     def _extract_participants(self, line: str) -> List[str]:
         """Extract known character names from a log line."""
-        participants = []
+        participants: list[Any] = []
         lower_line = line.lower()
         for char_name in self.character_names:
             if char_name.lower() in lower_line:
@@ -906,7 +910,7 @@ just the pure narrative prose that could be published in an anthology.
         return segments
 
 
-def example_usage():
+def example_usage() -> None:
     """Example usage of the ChroniclerAgent class."""
     print("ChroniclerAgent class is ready for use.")
 

@@ -62,36 +62,52 @@ class NarrativeContext:
     is_persistent: bool = True
 
     # Spatial information
-    locations: FrozenSet[str] = None
-    affected_regions: FrozenSet[str] = None
+    locations: Optional[FrozenSet[str]] = None
+    affected_regions: Optional[FrozenSet[str]] = None
     geographical_scope: Optional[str] = None
 
     # Character context
-    affected_characters: FrozenSet[UUID] = None
-    character_knowledge_required: FrozenSet[UUID] = (
+    affected_characters: Optional[FrozenSet[UUID]] = None
+    character_knowledge_required: Optional[FrozenSet[UUID]] = (
         None  # Characters who must know this context
     )
-    character_reactions: Dict[UUID, str] = None  # Expected character reactions
+    character_reactions: Optional[Dict[UUID, str]] = (
+        None  # Expected character reactions
+    )
 
     # Contextual details
-    key_facts: List[str] = None
-    implicit_knowledge: List[str] = None  # Things everyone in context knows
-    hidden_information: List[str] = None  # Information not generally known
+    key_facts: Optional[List[str]] = None
+    implicit_knowledge: Optional[List[str]] = None  # Things everyone in context knows
+    hidden_information: Optional[List[str]] = None  # Information not generally known
 
     # Influence and constraints
-    narrative_constraints: List[str] = None  # What this context prevents/requires
-    behavioral_influences: List[str] = None  # How this affects character behavior
-    plot_implications: List[str] = None  # Plot consequences of this context
+    narrative_constraints: Optional[List[str]] = (
+        None  # What this context prevents/requires
+    )
+    behavioral_influences: Optional[List[str]] = (
+        None  # How this affects character behavior
+    )
+    plot_implications: Optional[List[str]] = None  # Plot consequences of this context
 
     # Atmospheric elements
-    mood_influences: Dict[str, Decimal] = None  # Mood effects (emotion -> strength)
-    tension_modifiers: Dict[str, Decimal] = None  # Tension effects (type -> modifier)
-    pacing_effects: Dict[str, Decimal] = None  # Pacing influences (aspect -> effect)
+    mood_influences: Optional[Dict[str, Decimal]] = (
+        None  # Mood effects (emotion -> strength)
+    )
+    tension_modifiers: Optional[Dict[str, Decimal]] = (
+        None  # Tension effects (type -> modifier)
+    )
+    pacing_effects: Optional[Dict[str, Decimal]] = (
+        None  # Pacing influences (aspect -> effect)
+    )
 
     # Relationship to other contexts
-    prerequisite_contexts: FrozenSet[str] = None  # Required preceding contexts
-    conflicting_contexts: FrozenSet[str] = None  # Mutually exclusive contexts
-    reinforcing_contexts: FrozenSet[str] = None  # Contexts that strengthen this one
+    prerequisite_contexts: Optional[FrozenSet[str]] = (
+        None  # Required preceding contexts
+    )
+    conflicting_contexts: Optional[FrozenSet[str]] = None  # Mutually exclusive contexts
+    reinforcing_contexts: Optional[FrozenSet[str]] = (
+        None  # Contexts that strengthen this one
+    )
 
     # Importance and priority
     narrative_importance: Decimal = Decimal("5.0")  # 1-10, how critical this context is
@@ -103,44 +119,28 @@ class NarrativeContext:
     stability: Decimal = Decimal("1.0")  # How stable context is (0-1)
 
     # Metadata
-    tags: FrozenSet[str] = None
+    tags: Optional[FrozenSet[str]] = None
     source_material: Optional[str] = None
     research_notes: str = ""
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.locations is None:
             object.__setattr__(self, "locations", frozenset())
-        elif isinstance(self.locations, set):
-            object.__setattr__(self, "locations", frozenset(self.locations))
 
         if self.affected_regions is None:
             object.__setattr__(self, "affected_regions", frozenset())
-        elif isinstance(self.affected_regions, set):
-            object.__setattr__(
-                self, "affected_regions", frozenset(self.affected_regions)
-            )
 
         if self.affected_characters is None:
             object.__setattr__(self, "affected_characters", frozenset())
-        elif isinstance(self.affected_characters, set):
-            object.__setattr__(
-                self, "affected_characters", frozenset(self.affected_characters)
-            )
 
         if self.character_knowledge_required is None:
             object.__setattr__(self, "character_knowledge_required", frozenset())
-        elif isinstance(self.character_knowledge_required, set):
-            object.__setattr__(
-                self,
-                "character_knowledge_required",
-                frozenset(self.character_knowledge_required),
-            )
 
         if self.character_reactions is None:
             object.__setattr__(self, "character_reactions", {})
@@ -174,29 +174,15 @@ class NarrativeContext:
 
         if self.prerequisite_contexts is None:
             object.__setattr__(self, "prerequisite_contexts", frozenset())
-        elif isinstance(self.prerequisite_contexts, set):
-            object.__setattr__(
-                self, "prerequisite_contexts", frozenset(self.prerequisite_contexts)
-            )
 
         if self.conflicting_contexts is None:
             object.__setattr__(self, "conflicting_contexts", frozenset())
-        elif isinstance(self.conflicting_contexts, set):
-            object.__setattr__(
-                self, "conflicting_contexts", frozenset(self.conflicting_contexts)
-            )
 
         if self.reinforcing_contexts is None:
             object.__setattr__(self, "reinforcing_contexts", frozenset())
-        elif isinstance(self.reinforcing_contexts, set):
-            object.__setattr__(
-                self, "reinforcing_contexts", frozenset(self.reinforcing_contexts)
-            )
 
         if self.tags is None:
             object.__setattr__(self, "tags", frozenset())
-        elif isinstance(self.tags, set):
-            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -204,7 +190,7 @@ class NarrativeContext:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.context_id or not self.context_id.strip():
             raise ValueError("Context ID cannot be empty")
@@ -245,11 +231,12 @@ class NarrativeContext:
             self.tension_modifiers,
             self.pacing_effects,
         ]:
-            for key, value in influence_dict.items():
-                if not (-Decimal("10") <= value <= Decimal("10")):
-                    raise ValueError(
-                        f"Influence values must be between -10 and 10, got {value} for {key}"
-                    )
+            if influence_dict:
+                for key, value in influence_dict.items():
+                    if not (-Decimal("10") <= value <= Decimal("10")):
+                        raise ValueError(
+                            f"Influence values must be between -10 and 10, got {value} for {key}"
+                        )
 
         # String length constraints
         if len(self.context_id) > 100:
@@ -261,11 +248,11 @@ class NarrativeContext:
         if len(self.description) > 2000:
             raise ValueError("Context description too long (max 2000 characters)")
 
-    def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values):
+    def _hash_components(self) -> tuple[Any, ...]:
+        def _dict_to_hashable(values: Optional[Dict[Any, Any]]) -> frozenset[tuple[Any, Any]]:
             if not values:
                 return frozenset()
-            items = []
+            items: list[tuple[Any, Any]] = []
             for key, value in sorted(
                 values.items(), key=lambda item: (str(item[0]), str(item[1]))
             ):
@@ -317,7 +304,7 @@ class NarrativeContext:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NarrativeContext):
             return NotImplemented
         return self._hash_components() == other._hash_components()
@@ -387,11 +374,11 @@ class NarrativeContext:
 
         # Add strength from various influences
         influence_count = (
-            len(self.mood_influences)
-            + len(self.tension_modifiers)
-            + len(self.pacing_effects)
-            + len(self.behavioral_influences)
-            + len(self.narrative_constraints)
+            len(self.mood_influences or {})
+            + len(self.tension_modifiers or {})
+            + len(self.pacing_effects or {})
+            + len(self.behavioral_influences or [])
+            + len(self.narrative_constraints or [])
         )
 
         influence_bonus = min(Decimal("3"), Decimal(str(influence_count * 0.2)))
@@ -407,16 +394,16 @@ class NarrativeContext:
 
         # Add complexity from relationships
         relationship_complexity = (
-            len(self.prerequisite_contexts)
-            + len(self.conflicting_contexts)
-            + len(self.reinforcing_contexts)
+            len(self.prerequisite_contexts or frozenset())
+            + len(self.conflicting_contexts or frozenset())
+            + len(self.reinforcing_contexts or frozenset())
         ) * Decimal("0.3")
 
         # Add complexity from information layers
         information_complexity = (
-            len(self.key_facts)
-            + len(self.implicit_knowledge)
-            + len(self.hidden_information)
+            len(self.key_facts or [])
+            + len(self.implicit_knowledge or [])
+            + len(self.hidden_information or [])
         ) * Decimal("0.1")
 
         return min(
@@ -445,39 +432,48 @@ class NarrativeContext:
 
     def affects_character(self, character_id: UUID) -> bool:
         """Check if context affects a specific character."""
-        return character_id in self.affected_characters
+        affected_chars = self.affected_characters or frozenset()
+        return character_id in affected_chars
 
     def character_knows_context(self, character_id: UUID) -> bool:
         """Check if a character is required to know this context."""
-        return character_id in self.character_knowledge_required
+        knowledge_required = self.character_knowledge_required or frozenset()
+        return character_id in knowledge_required
 
     def get_character_reaction(self, character_id: UUID) -> Optional[str]:
         """Get expected character reaction to this context."""
-        return self.character_reactions.get(character_id)
+        reactions = self.character_reactions or {}
+        return reactions.get(character_id)
 
     def conflicts_with_context(self, context_id: str) -> bool:
         """Check if this context conflicts with another context."""
-        return context_id in self.conflicting_contexts
+        conflicts = self.conflicting_contexts or frozenset()
+        return context_id in conflicts
 
     def reinforces_context(self, context_id: str) -> bool:
         """Check if this context reinforces another context."""
-        return context_id in self.reinforcing_contexts
+        reinforces = self.reinforcing_contexts or frozenset()
+        return context_id in reinforces
 
     def requires_context(self, context_id: str) -> bool:
         """Check if this context requires another context as prerequisite."""
-        return context_id in self.prerequisite_contexts
+        prereqs = self.prerequisite_contexts or frozenset()
+        return context_id in prereqs
 
     def get_mood_influence(self, mood_type: str) -> Decimal:
         """Get mood influence strength for a specific mood type."""
-        return self.mood_influences.get(mood_type, Decimal("0"))
+        mood_influences = self.mood_influences or {}
+        return mood_influences.get(mood_type, Decimal("0"))
 
     def get_tension_modifier(self, tension_type: str) -> Decimal:
         """Get tension modifier for a specific tension type."""
-        return self.tension_modifiers.get(tension_type, Decimal("0"))
+        tension_modifiers = self.tension_modifiers or {}
+        return tension_modifiers.get(tension_type, Decimal("0"))
 
     def get_pacing_effect(self, pacing_aspect: str) -> Decimal:
         """Get pacing effect for a specific pacing aspect."""
-        return self.pacing_effects.get(pacing_aspect, Decimal("0"))
+        pacing_effects = self.pacing_effects or {}
+        return pacing_effects.get(pacing_aspect, Decimal("0"))
 
     def get_contextual_summary(self) -> Dict[str, Any]:
         """
@@ -499,8 +495,8 @@ class NarrativeContext:
                 else None
             ),
             "affects_characters": self.affects_characters,
-            "character_count": len(self.affected_characters),
-            "location_count": len(self.locations),
+            "character_count": len(self.affected_characters or frozenset()),
+            "location_count": len(self.locations or frozenset()),
             "influence_strength": float(self.overall_influence_strength),
             "complexity_score": float(self.contextual_complexity_score),
             "has_hidden_information": self.has_hidden_information,
@@ -508,14 +504,14 @@ class NarrativeContext:
             "influences_mood": self.influences_mood,
             "influences_pacing": self.influences_pacing,
             "relationship_counts": {
-                "prerequisites": len(self.prerequisite_contexts),
-                "conflicts": len(self.conflicting_contexts),
-                "reinforces": len(self.reinforcing_contexts),
+                "prerequisites": len(self.prerequisite_contexts or frozenset()),
+                "conflicts": len(self.conflicting_contexts or frozenset()),
+                "reinforces": len(self.reinforcing_contexts or frozenset()),
             },
             "information_layers": {
-                "key_facts": len(self.key_facts),
-                "implicit_knowledge": len(self.implicit_knowledge),
-                "hidden_information": len(self.hidden_information),
+                "key_facts": len(self.key_facts or []),
+                "implicit_knowledge": len(self.implicit_knowledge or []),
+                "hidden_information": len(self.hidden_information or []),
             },
         }
 

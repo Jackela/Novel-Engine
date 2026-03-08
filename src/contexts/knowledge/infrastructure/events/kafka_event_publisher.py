@@ -10,7 +10,7 @@ Constitution Compliance:
 - Article VII (Observability): Structured logging and error handling
 """
 
-import logging
+import structlog
 from typing import Any, Dict
 
 from core_platform.messaging.kafka_client import KafkaClient, get_kafka_client
@@ -20,7 +20,7 @@ from ...application.ports.i_event_publisher import (
     IEventPublisher,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class KafkaEventPublisher(IEventPublisher):
@@ -49,7 +49,7 @@ class KafkaEventPublisher(IEventPublisher):
         )
     """
 
-    def __init__(self, kafka_client: KafkaClient | None = None):
+    def __init__(self, kafka_client: KafkaClient | None = None) -> None:
         """
         Initialize Kafka event publisher.
 
@@ -156,7 +156,7 @@ class KafkaEventPublisher(IEventPublisher):
             if headers is None:
                 headers = [None] * batch_size
 
-            processed_headers = []
+            processed_headers: list[Any] = []
             for i, event_headers in enumerate(headers):
                 event_headers = event_headers or {}
                 event_headers.setdefault("event_type", topic)
@@ -164,10 +164,14 @@ class KafkaEventPublisher(IEventPublisher):
                 processed_headers.append(event_headers)
 
             # Publish batch to Kafka
+            # Filter out None keys and use empty string as default
+            processed_keys: list[str] | None = None
+            if keys is not None:
+                processed_keys = [k or "" for k in keys]
             await self._kafka_client.publish_batch(
                 topic=topic,
                 messages=events,
-                keys=keys,
+                keys=processed_keys,
                 headers=processed_headers,
             )
 

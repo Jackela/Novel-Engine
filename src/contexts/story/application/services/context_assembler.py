@@ -263,8 +263,7 @@ class ContextAssembler:
             # Return character IDs as fallback if networkx unavailable
             return set(character_ids)
 
-        relevant = set()
-
+        relevant: set[Any] = set()
         for char_id in character_ids:
             if char_id not in graph:
                 continue
@@ -295,7 +294,7 @@ class ContextAssembler:
         Returns:
             List of WorldNode objects.
         """
-        nodes = []
+        nodes: list[Any] = []
         for node_id in node_ids:
             if node_id not in graph:
                 continue
@@ -378,8 +377,8 @@ class ContextAssembler:
         Returns:
             Tuple of (context_text, included_node_ids, was_truncated).
         """
-        sections = []
-        included_ids = []
+        sections: list[Any] = []
+        included_ids: list[Any] = []
         current_tokens = 0
         truncated = False
 

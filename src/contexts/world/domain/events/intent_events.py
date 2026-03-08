@@ -9,7 +9,7 @@ for AI-driven faction decision-making.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 from uuid import uuid4
 
 import structlog
@@ -62,31 +62,35 @@ class IntentGeneratedEvent(Event):
         """Initialize event with intent-specific metadata and validation."""
         # Set timestamp if not provided
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
 
         # Generate event ID if not provided
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
         # Add intent-specific tags
-        self.tags.update({
-            "context:world",
-            "event:intent_generated",
-            f"faction:{self.faction_id}",
-            f"method:{self.generation_method}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:intent_generated",
+                f"faction:{self.faction_id}",
+                f"method:{self.generation_method}",
+            }
+        )
         if self.fallback:
             self.tags.add("fallback:True")
 
         # Set event payload with intent data
-        self.payload.update({
-            "faction_id": self.faction_id,
-            "intent_ids": self.intent_ids,
-            "fallback": self.fallback,
-            "context_summary": self.context_summary,
-            "generation_method": self.generation_method,
-            "rag_enriched": self.rag_enriched,
-        })
+        self.payload.update(
+            {
+                "faction_id": self.faction_id,
+                "intent_ids": self.intent_ids,
+                "fallback": self.fallback,
+                "context_summary": self.context_summary,
+                "generation_method": self.generation_method,
+                "rag_enriched": self.rag_enriched,
+            }
+        )
 
         # Call parent post_init
         super().__post_init__()
@@ -101,8 +105,7 @@ class IntentGeneratedEvent(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate faction_id
         if not self.faction_id:
             errors.append("faction_id is required")
@@ -228,27 +231,31 @@ class IntentSelectedEvent(Event):
         """Initialize event with selection-specific metadata and validation."""
         # Set timestamp if not provided
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
 
         # Generate event ID if not provided
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
         # Add selection-specific tags
-        self.tags.update({
-            "context:world",
-            "event:intent_selected",
-            f"faction:{self.faction_id}",
-            f"action:{self.action_type}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:intent_selected",
+                f"faction:{self.faction_id}",
+                f"action:{self.action_type}",
+            }
+        )
 
         # Set event payload
-        self.payload.update({
-            "faction_id": self.faction_id,
-            "intent_id": self.intent_id,
-            "action_type": self.action_type,
-            "target_id": self.target_id,
-        })
+        self.payload.update(
+            {
+                "faction_id": self.faction_id,
+                "intent_id": self.intent_id,
+                "action_type": self.action_type,
+                "target_id": self.target_id,
+            }
+        )
 
         # Call parent post_init
         super().__post_init__()
@@ -258,8 +265,7 @@ class IntentSelectedEvent(Event):
 
     def _validate_selection_event(self) -> None:
         """Validate selection event data."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_id:
             errors.append("faction_id is required")
         if not self.intent_id:

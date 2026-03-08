@@ -14,16 +14,19 @@ Author: Novel Engine Development Team
 """
 
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import uuid4
 
+from src.contexts.shared.domain.errors import ServiceError, StateError
+from src.core.result import Err, Ok, Result
+
 T = TypeVar("T")
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryType(Enum):
@@ -98,7 +101,7 @@ class MemoryItem:
     decay_factor: float = 1.0  # Memory strength decay over time
     tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate memory item data integrity."""
         if not self.agent_id:
             raise ValueError("Sacred memory must be blessed with agent_id")
@@ -130,7 +133,7 @@ class CharacterIdentity:
     fears: List[str] = field(default_factory=list)
     motivations: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """STANDARD IDENTITY VALIDATION"""
         if not self.name:
             raise ValueError("Sacred identity requires blessed name")
@@ -177,7 +180,7 @@ class EquipmentItem:
         """Legacy alias for blessed_modifications"""
         return self.blessed_modifications
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """EQUIPMENT SANCTIFICATION RITUAL"""
         if not self.name:
             raise ValueError("Sacred equipment must be blessed with a name")
@@ -239,7 +242,7 @@ class RelationshipState:
     shared_experiences: List[str] = field(default_factory=list)
     relationship_notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """RELATIONSHIP SANCTIFICATION RITUAL"""
         if not self.target_agent_id:
             raise ValueError("Sacred relationship requires blessed target_agent_id")
@@ -250,7 +253,7 @@ class RelationshipState:
 
     def update_from_interaction(
         self, interaction_outcome: str, emotional_impact: float
-    ):
+    ) -> None:
         """Update relationship enhanced by recent interaction"""
         self.last_interaction = datetime.now()
         self.interaction_count += 1
@@ -298,7 +301,36 @@ class CharacterState:
 
         return health_factor * equipment_factor * mood_factor * stress_factor
 
-    def update_from_interaction(self, interaction_data: Dict[str, Any]):
+    def get_combat_readiness_result(self) -> Result[float, StateError]:
+        """
+        Calculate enhanced combat readiness validated by all factors (Result pattern).
+
+        Returns:
+            Result containing combat readiness score on success.
+            - Ok: Combat readiness score (0.0 - 1.0)
+            - Err(StateError): If calculation fails
+        """
+        try:
+            health_factor = self.physical_condition.health_percentage
+            equipment_factor = self.equipment_state.calculate_combat_effectiveness()
+            mood_factor = (
+                1.2
+                if self.current_mood
+                in [EmotionalState.AGGRESSIVE, EmotionalState.CONFIDENT]
+                else 1.0
+            )
+            stress_factor = max(0.3, 1.0 - (self.physical_condition.stress_level / 100.0))
+
+            return Ok(health_factor * equipment_factor * mood_factor * stress_factor)
+        except Exception as e:
+            return Err(
+                StateError(
+                    message=f"Failed to calculate combat readiness: {e}",
+                    entity_id=self.base_identity.agent_id,
+                )
+            )
+
+    def update_from_interaction(self, interaction_data: Dict[str, Any]) -> None:
         """Update character state enhanced by interaction outcomes"""
         self.last_updated = datetime.now()
 
@@ -310,7 +342,7 @@ class CharacterState:
 
     def _update_relationship(
         self, participant_id: str, interaction_data: Dict[str, Any]
-    ):
+    ) -> None:
         """Sacred relationship update ritual"""
         if participant_id not in self.active_relationships:
             self.active_relationships[participant_id] = RelationshipState(
@@ -348,6 +380,32 @@ class EnvironmentalState:
             "resource_abundance": sum(self.resources_available.values()),
         }
 
+    def get_tactical_assessment_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Generate enhanced tactical situation report (Result pattern).
+
+        Returns:
+            Result containing tactical assessment on success.
+            - Ok: Dict with tactical situation data
+            - Err(ServiceError): If assessment generation fails
+        """
+        try:
+            return Ok({
+                "overall_danger": self.threat_level,
+                "visibility": "good" if self.lighting in ["normal", "bright"] else "poor",
+                "concealment_options": len(self.available_cover),
+                "social_complexity": len(self.nearby_agents),
+                "resource_abundance": sum(self.resources_available.values()),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get tactical assessment: {e}",
+                    service_name="EnvironmentalState",
+                    operation="get_tactical_assessment",
+                )
+            )
+
 
 @dataclass
 class DynamicContext:
@@ -369,7 +427,7 @@ class DynamicContext:
     available_actions: List[str] = field(default_factory=list)
     context_metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """DYNAMIC CONTEXT SANCTIFICATION RITUAL"""
         if not self.agent_id:
             raise ValueError("Sacred context requires blessed agent_id")
@@ -381,7 +439,7 @@ class DynamicContext:
         if not self.character_state:
             return {}
 
-        relevant_relationships = {}
+        relevant_relationships: dict[Any, Any] = {}
         for agent_id in target_agents:
             if agent_id in self.character_state.active_relationships:
                 relevant_relationships[agent_id] = (
@@ -389,6 +447,40 @@ class DynamicContext:
                 )
 
         return relevant_relationships
+
+    def get_relationship_context_result(
+        self, target_agents: List[str]
+    ) -> Result[Dict[str, RelationshipState], StateError]:
+        """
+        Extract enhanced relationship context for specific agents (Result pattern).
+
+        Args:
+            target_agents: List of agent IDs to get relationships for
+
+        Returns:
+            Result containing relationship context on success.
+            - Ok: Dict mapping agent_id to RelationshipState
+            - Err(StateError): If character state is invalid
+        """
+        try:
+            if not self.character_state:
+                return Ok({})
+
+            relevant_relationships: dict[Any, Any] = {}
+            for agent_id in target_agents:
+                if agent_id in self.character_state.active_relationships:
+                    relevant_relationships[agent_id] = (
+                        self.character_state.active_relationships[agent_id]
+                    )
+
+            return Ok(relevant_relationships)
+        except Exception as e:
+            return Err(
+                StateError(
+                    message=f"Failed to get relationship context: {e}",
+                    entity_id=self.agent_id,
+                )
+            )
 
     def get_relevant_memories(
         self, max_memories: int = 10, memory_types: Optional[List[MemoryType]] = None
@@ -409,10 +501,50 @@ class DynamicContext:
 
         return relevant_memories[:max_memories]
 
+    def get_relevant_memories_result(
+        self, max_memories: int = 10, memory_types: Optional[List[MemoryType]] = None
+    ) -> Result[List[MemoryItem], ServiceError]:
+        """
+        Retrieve enhanced memories filtered by standard criteria (Result pattern).
+
+        Args:
+            max_memories: Maximum number of memories to return
+            memory_types: Optional list of memory types to filter by
+
+        Returns:
+            Result containing filtered memories on success.
+            - Ok: List of MemoryItem objects
+            - Err(ServiceError): If memory retrieval fails
+        """
+        try:
+            relevant_memories = self.memory_context
+
+            if memory_types:
+                relevant_memories = [
+                    mem for mem in relevant_memories if mem.memory_type in memory_types
+                ]
+
+            # Sort by standard relevance and recency
+            relevant_memories.sort(
+                key=lambda m: (m.relevance_score * m.decay_factor, m.timestamp),
+                reverse=True,
+            )
+
+            return Ok(relevant_memories[:max_memories])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get relevant memories: {e}",
+                    service_name="DynamicContext",
+                    operation="get_relevant_memories",
+                    details={"agent_id": self.agent_id},
+                )
+            )
+
     def to_json(self) -> str:
         """Serialize enhanced context for standard persistence"""
 
-        def default_serializer(obj):
+        def default_serializer(obj: Any) -> Any:
             """
             Custom JSON serializer for complex objects.
 
@@ -469,7 +601,7 @@ class CampaignState:
     campaign_metadata: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """CAMPAIGN STATE SANCTIFICATION RITUAL"""
         if not self.campaign_id:
             raise ValueError("Sacred campaign requires blessed campaign_id")
@@ -492,7 +624,7 @@ class CharacterInteraction:
     emotional_impact: Dict[str, float] = field(default_factory=dict)  # per participant
     world_state_changes: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """INTERACTION SANCTIFICATION RITUAL"""
         if len(self.participants) < 1:
             raise ValueError("Sacred interaction requires blessed participants")
@@ -546,8 +678,13 @@ def validate_enhanced_data_model(model_instance: Any) -> StandardResponse:
 
 # Legacy compatibility aliases and wrappers
 def Character(
-    name=None, background=None, personality=None, skills=None, equipment=None, **kwargs
-):
+    name: Optional[str] = None,
+    background: Optional[str] = None,
+    personality: Optional[str] = None,
+    skills: Optional[List[str]] = None,
+    equipment: Optional[List[str]] = None,
+    **kwargs: Any
+) -> Any:
     """
     Legacy Character constructor that wraps CharacterState with simplified interface.
     Converts old-style parameters to new CharacterState structure.
@@ -576,7 +713,7 @@ def Character(
     )
 
     # Create equipment items from simple strings
-    equipment_items = []
+    equipment_items: list[Any] = []
     if equipment:
         for item_name in equipment:
             equipment_items.append(EquipmentItem(name=item_name))
@@ -595,11 +732,11 @@ def Character(
     )
 
     # Add legacy attributes for test compatibility
-    character_state.name = name
-    character_state.background = background
-    character_state.personality = personality
-    character_state.skills = skills or []
-    character_state.equipment = equipment or []
+    character_state.name = name  # type: ignore[attr-defined]
+    character_state.background = background  # type: ignore[attr-defined]
+    character_state.personality = personality  # type: ignore[attr-defined]
+    character_state.skills = skills or []  # type: ignore[attr-defined]
+    character_state.equipment = equipment or []  # type: ignore[attr-defined]
 
     return character_state
 
@@ -609,8 +746,12 @@ validate_blessed_data_model = validate_enhanced_data_model  # Legacy function na
 
 # Legacy ActionResult wrapper for test compatibility
 def ActionResult(
-    success=True, description="", consequences=None, world_state_changes=None, **kwargs
-):
+    success: bool = True,
+    description: str = "",
+    consequences: Optional[List[Any]] = None,
+    world_state_changes: Optional[Dict[str, Any]] = None,
+    **kwargs: Any
+) -> Any:
     """
     Legacy ActionResult constructor that wraps InteractionResult.
     Converts old-style parameters to new InteractionResult structure.
@@ -634,9 +775,9 @@ def ActionResult(
     )
 
     # Add legacy attributes for test compatibility
-    result.description = description
-    result.consequences = consequences or []
-    result.world_state_changes = world_state_changes or {}
+    result.description = description  # type: ignore[attr-defined]
+    result.consequences = consequences or []  # type: ignore[attr-defined]
+    result.world_state_changes = world_state_changes or {}  # type: ignore[attr-defined]
 
     return result
 
@@ -650,13 +791,13 @@ class LegacyWorldState:
 
     def __init__(
         self,
-        current_location=None,
-        time_period=None,
-        weather=None,
-        active_events=None,
-        environmental_factors=None,
-        **kwargs,
-    ):
+        current_location: Optional[str] = None,
+        time_period: Optional[str] = None,
+        weather: Optional[str] = None,
+        active_events: Optional[List[Any]] = None,
+        environmental_factors: Optional[Dict[str, Any]] = None,
+        **kwargs: Any,
+    ) -> None:
         self.current_location = current_location
         self.time_period = time_period
         self.weather = weather

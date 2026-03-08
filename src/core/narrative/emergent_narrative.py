@@ -7,7 +7,7 @@ Main emergent narrative engine orchestrating all subsystems.
 """
 
 import json
-import logging
+import structlog
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -27,7 +27,7 @@ from .types import CausalEdge, CausalNode, CausalRelationType
 # Type alias for compatibility
 LLMService = UnifiedLLMService
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EmergentNarrativeEngine:
@@ -160,8 +160,7 @@ class EmergentNarrativeEngine:
         """分析并添加因果关系"""
 
         # 查找可能的因果前因
-        potential_causes = []
-
+        potential_causes: list[Any] = []
         # 时间窗口内的相关事件
         time_window = timedelta(hours=1)
         cutoff_time = event_node.timestamp - time_window
@@ -325,8 +324,7 @@ class EmergentNarrativeEngine:
         self, event_node: CausalNode
     ) -> Dict[str, Any]:
         """检查并处理冲突"""
-        conflicts = []
-
+        conflicts: list[Any] = []
         # 检查是否与其他Agent的行动冲突
         for existing_event in self.causal_graph.nodes.values():
             if (
@@ -351,8 +349,7 @@ class EmergentNarrativeEngine:
                         }
                     )
 
-        negotiation_results = []
-
+        negotiation_results: list[Any] = []
         # 如果存在冲突，启动协商
         if conflicts:
             high_severity_conflicts = [c for c in conflicts if c["severity"] > 0.7]
@@ -521,8 +518,7 @@ class EmergentNarrativeEngine:
         self, event_node: CausalNode
     ) -> List[Dict[str, Any]]:
         """识别涌现机会"""
-        opportunities = []
-
+        opportunities: list[Any] = []
         # 基于叙事模式识别机会
         narrative_patterns = self.causal_graph.detect_narrative_patterns()
 
@@ -578,7 +574,7 @@ class EmergentNarrativeEngine:
         """使用LLM识别涌现机会"""
 
         # 获取相关上下文
-        context_events = []
+        context_events: list[Any] = []
         for node in self.causal_graph.nodes.values():
             if (
                 abs((node.timestamp - event_node.timestamp).total_seconds()) < 3600

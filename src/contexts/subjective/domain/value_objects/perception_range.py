@@ -48,7 +48,7 @@ class PerceptionRange:
     accuracy_modifier: float  # Perception accuracy (0.0-1.0)
     environmental_modifiers: Dict[str, float]  # Environmental effects on perception
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate perception range parameters."""
         if self.base_range < 0:
             raise ValueError("Base range cannot be negative")
@@ -132,7 +132,7 @@ class PerceptionCapabilities:
     passive_awareness_bonus: float = 0.0  # General awareness bonus
     focused_perception_multiplier: float = 1.5  # When actively focusing
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate perception capabilities."""
         if not self.perception_ranges:
             raise ValueError("Entity must have at least one perception range")

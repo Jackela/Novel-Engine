@@ -7,11 +7,14 @@ Handles memory management and updates for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import logging
+import structlog
 import time
 from typing import Any, Dict, List
 
-logger = logging.getLogger(__name__)
+from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.core.result import Err, Ok, Result
+
+logger = structlog.get_logger(__name__)
 
 
 class MemoryManager:
@@ -22,7 +25,7 @@ class MemoryManager:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, agent_id: str, max_memory_items: int = 1000):
+    def __init__(self, agent_id: str, max_memory_items: int = 1000) -> None:
         """
         Initialize the memory manager.
 
@@ -110,8 +113,7 @@ class MemoryManager:
         Returns:
             List of relevant memory entries
         """
-        relevant_memories = []
-
+        relevant_memories: list[Any] = []
         # Search by entity
         entities = context.get("entities", [])
         for entity in entities:
@@ -138,6 +140,58 @@ class MemoryManager:
 
         return list(sorted_memories)[:limit]
 
+    def get_relevant_memories_result(
+        self, context: Dict[str, Any], limit: int = 10
+    ) -> Result[List[Dict[str, Any]], ServiceError]:
+        """
+        Retrieve relevant memories based on context (Result pattern).
+
+        Args:
+            context: Context for memory retrieval
+            limit: Maximum number of memories to return
+
+        Returns:
+            Result containing list of relevant memory entries on success.
+            - Ok: List of relevant memory entries
+            - Err(ServiceError): If memory retrieval fails
+        """
+        try:
+            relevant_memories: list[Any] = []
+            # Search by entity
+            entities = context.get("entities", [])
+            for entity in entities:
+                if entity in self.memory_by_entity:
+                    relevant_memories.extend(self.memory_by_entity[entity])
+
+            # Search by location
+            location = context.get("location")
+            if location and location in self.memory_by_location:
+                relevant_memories.extend(self.memory_by_location[location])
+
+            # Search by event type
+            event_type = context.get("event_type")
+            if event_type and event_type in self.memory_by_event_type:
+                relevant_memories.extend(self.memory_by_event_type[event_type])
+
+            # Remove duplicates and sort by importance and recency
+            unique_memories = {id(mem): mem for mem in relevant_memories}.values()
+            sorted_memories = sorted(
+                unique_memories,
+                key=lambda m: (m.get("importance_score", 0), m.get("timestamp", 0)),
+                reverse=True,
+            )
+
+            return Ok(list(sorted_memories)[:limit])
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get relevant memories: {e}",
+                    service_name="MemoryManager",
+                    operation="get_relevant_memories",
+                    details={"agent_id": self.agent_id},
+                )
+            )
+
     def get_memory_summary(self) -> Dict[str, Any]:
         """Get summary of current memory state."""
         return {
@@ -148,6 +202,34 @@ class MemoryManager:
             "locations_known": len(self.memory_by_location),
             "event_types_seen": len(self.memory_by_event_type),
         }
+
+    def get_memory_summary_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get summary of current memory state (Result pattern).
+
+        Returns:
+            Result containing memory state summary on success.
+            - Ok: Dict with memory state information
+            - Err(ServiceError): If summary generation fails
+        """
+        try:
+            return Ok({
+                "short_term_count": len(self.short_term_memory),
+                "long_term_count": len(self.long_term_memory),
+                "working_memory_items": len(self.working_memory),
+                "entities_tracked": len(self.memory_by_entity),
+                "locations_known": len(self.memory_by_location),
+                "event_types_seen": len(self.memory_by_event_type),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get memory summary: {e}",
+                    service_name="MemoryManager",
+                    operation="get_memory_summary",
+                    details={"agent_id": self.agent_id},
+                )
+            )
 
     def _generate_personal_interpretation(self, log_entry: Dict[str, Any]) -> str:
         """Generate personal interpretation of log entry."""
@@ -166,8 +248,7 @@ class MemoryManager:
 
     def _extract_entities(self, log_entry: Dict[str, Any]) -> List[str]:
         """Extract entity names from log entry."""
-        entities = []
-
+        entities: list[Any] = []
         # Extract from explicit entity fields
         if "entities" in log_entry:
             entities.extend(log_entry["entities"])
@@ -248,10 +329,11 @@ class MemoryManager:
         emotional_impact = memory_entry.get("emotional_impact", 0.5)
 
         # Store if high importance or strong emotional impact
-        return (
+        result = (
             importance > importance_threshold
             or abs(emotional_impact - 0.5) > emotional_threshold - 0.5
         )
+        return bool(result)
 
     def _update_memory_indices(self, memory_entry: Dict[str, Any]) -> None:
         """Update memory indices for quick lookup."""
@@ -313,7 +395,7 @@ class MemoryManager:
                         if not self.memory_by_entity[entity]:
                             del self.memory_by_entity[entity]
                     except ValueError:
-                        logging.getLogger(__name__).debug(
+                        structlog.get_logger(__name__).debug(
                             "Suppressed exception", exc_info=True
                         )
 
@@ -325,7 +407,7 @@ class MemoryManager:
                     if not self.memory_by_location[location]:
                         del self.memory_by_location[location]
                 except ValueError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             event_type = memory.get("event_type")
@@ -335,6 +417,6 @@ class MemoryManager:
                     if not self.memory_by_event_type[event_type]:
                         del self.memory_by_event_type[event_type]
                 except ValueError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )

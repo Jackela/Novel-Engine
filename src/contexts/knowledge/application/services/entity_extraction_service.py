@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from ...application.ports.i_llm_client import ILLMClient, LLMError, LLMRequest
+from src.core.result import Err, Ok, Result
+
+from ...application.ports.i_llm_client import ILLMClient, LLMRequest
+from ...domain.errors import ExtractionError, ProcessingError, ValidationError
 from ...domain.models.entity import (
     DEFAULT_EXTRACTION_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_ENTITIES,
@@ -40,6 +43,12 @@ if TYPE_CHECKING:
 
 
 logger = structlog.get_logger()
+
+
+# Custom exception for entity extraction errors (for backward compatibility)
+class EntityExtractionError(Exception):
+    """Raised when entity extraction fails."""
+    pass
 
 
 # Configuration constants
@@ -95,10 +104,6 @@ class ExtractionConfig:
             raise ValueError("temperature must be between 0.0 and 2.0")
 
 
-class EntityExtractionError(Exception):
-    """Base exception for entity extraction errors."""
-
-
 class EntityExtractionService:
     """
     Service for extracting entities from narrative text using LLM.
@@ -112,8 +117,12 @@ class EntityExtractionService:
         ...     text="Alice entered the tavern. The barkeep smiled.",
         ...     config=ExtractionConfig()
         ... )
-        >>> for entity in result.entities:
-        ...     print(f"{entity.name}: {entity.entity_type}")
+        >>> match result:
+        ...     case Ok(extraction_result):
+        ...         for entity in extraction_result.entities:
+        ...             print(f"{entity.name}: {entity.entity_type}")
+        ...     case Err(error):
+        ...         print(f"Extraction failed: {error.message}")
     """
 
     def __init__(
@@ -191,7 +200,7 @@ Respond with ONLY valid JSON matching the schema above."""
 
         return system_prompt, user_prompt
 
-    def _parse_llm_response(self, response_text: str) -> dict[str, object]:
+    def _parse_llm_response(self, response_text: str) -> Result[dict[str, object], ProcessingError]:
         """
         Parse the LLM response into structured data.
 
@@ -199,10 +208,9 @@ Respond with ONLY valid JSON matching the schema above."""
             response_text: Raw text response from LLM
 
         Returns:
-            Parsed JSON dictionary
-
-        Raises:
-            EntityExtractionError: If parsing fails
+            Result containing parsed JSON dictionary on success.
+            - Ok: Parsed JSON dictionary
+            - Err(ProcessingError): If parsing fails
         """
         # Try to extract JSON from response
         cleaned = response_text.strip()
@@ -221,14 +229,16 @@ Respond with ONLY valid JSON matching the schema above."""
 
         try:
             result: dict[str, object] = json.loads(cleaned)
-            return result
+            return Ok(result)
         except json.JSONDecodeError as e:
             self._logger.warning(
                 "failed_to_parse_llm_response",
                 error=str(e),
                 response_length=len(response_text),
             )
-            raise EntityExtractionError(f"Failed to parse LLM response as JSON: {e}")
+            return Err(ProcessingError(
+                message=f"Failed to parse LLM response as JSON: {e}",
+            ))
 
     def _build_entities(
         self, entities_data: list[dict], source_length: int
@@ -337,7 +347,7 @@ Respond with ONLY valid JSON matching the schema above."""
         self,
         text: str,
         config: ExtractionConfig | None = None,
-    ) -> ExtractionResult:
+    ) -> Result[ExtractionResult, ValidationError | ExtractionError]:
         """
         Extract entities from narrative text.
 
@@ -346,11 +356,35 @@ Respond with ONLY valid JSON matching the schema above."""
             config: Optional override configuration
 
         Returns:
-            ExtractionResult containing entities and mentions
+            Result containing ExtractionResult on success.
+            - Ok: ExtractionResult containing entities and mentions
+            - Err(ValidationError): If text is empty or invalid
+            - Err(ExtractionError): If extraction fails
 
-        Raises:
-            EntityExtractionError: If extraction fails
+        Example:
+            >>> result = await service.extract(
+            ...     text="Alice entered the tavern. The barkeep smiled.",
+            ...     config=ExtractionConfig()
+            ... )
+            >>> match result:
+            ...     case Ok(extraction_result):
+            ...         for entity in extraction_result.entities:
+            ...             print(f"{entity.name}: {entity.entity_type}")
+            ...     case Err(error):
+            ...         print(f"Extraction failed: {error.message}")
         """
+        if not isinstance(text, str):
+            return Err(ValidationError(  # type: ignore[unreachable]
+                message=f"text must be a string, got {type(text).__name__}",
+                field="text",
+            ))
+
+        if not text or not text.strip():
+            return Err(ValidationError(
+                message="text cannot be empty",
+                field="text",
+            ))
+
         effective_config = config or self._config
         source_length = len(text)
 
@@ -377,22 +411,34 @@ Respond with ONLY valid JSON matching the schema above."""
             response = await self._llm_client.generate(request)
             model_used = response.model
             tokens_used = response.tokens_used
-        except LLMError as e:
+        except Exception as e:
             self._logger.error("llm_generation_failed", error=str(e))
-            raise EntityExtractionError(f"LLM generation failed: {e}")
+            return Err(ExtractionError(
+                message=f"LLM generation failed: {e}",
+                text_length=source_length,
+            ))
 
         # Parse response
-        try:
-            parsed = self._parse_llm_response(response.text)
-        except EntityExtractionError:
+        parse_result = self._parse_llm_response(response.text)
+        if parse_result.is_error:
             # Return empty result on parse failure
-            return ExtractionResult(
+            return Ok(ExtractionResult(
                 entities=(),
                 mentions=(),
                 source_length=source_length,
                 model_used=model_used,
                 tokens_used=tokens_used,
-            )
+            ))
+
+        parsed = parse_result.value
+        if parsed is None:
+            return Ok(ExtractionResult(
+                entities=(),
+                mentions=(),
+                source_length=source_length,
+                model_used=model_used,
+                tokens_used=tokens_used,
+            ))
 
         # Build entities and mentions
         entities_data_raw = parsed.get("entities", [])
@@ -428,13 +474,13 @@ Respond with ONLY valid JSON matching the schema above."""
             tokens_used=tokens_used,
         )
 
-        return result
+        return Ok(result)
 
     async def extract_batch(
         self,
         texts: Sequence[str],
         config: ExtractionConfig | None = None,
-    ) -> list[ExtractionResult]:
+    ) -> Result[list[ExtractionResult], ValidationError]:
         """
         Extract entities from multiple texts.
 
@@ -443,8 +489,20 @@ Respond with ONLY valid JSON matching the schema above."""
             config: Optional override configuration
 
         Returns:
-            List of ExtractionResults, one per input text
+            Result containing list of ExtractionResults on success.
+            - Ok: List of ExtractionResults, one per input text
+            - Err(ValidationError): If texts is not a valid sequence
+
+        Note:
+            Individual text extraction failures return empty ExtractionResult
+            rather than failing the entire batch.
         """
+        if not isinstance(texts, (list, tuple)):
+            return Err(ValidationError(
+                message="texts must be a list or tuple",
+                field="texts",
+            ))
+
         results: list[ExtractionResult] = []
 
         for i, text in enumerate(texts):
@@ -453,10 +511,27 @@ Respond with ONLY valid JSON matching the schema above."""
                 index=i,
                 total=len(texts),
             )
-            result = await self.extract(text, config)
-            results.append(result)
+            extract_result = await self.extract(text, config)
+            if extract_result.is_ok:
+                extraction = extract_result.value
+                if extraction is not None:
+                    results.append(extraction)
+                else:
+                    # Return empty result on None extraction
+                    results.append(ExtractionResult(
+                        entities=(),
+                        mentions=(),
+                        source_length=len(text) if isinstance(text, str) else 0,
+                    ))
+            else:
+                # Return empty result on individual failure
+                results.append(ExtractionResult(
+                    entities=(),
+                    mentions=(),
+                    source_length=len(text) if isinstance(text, str) else 0,
+                ))
 
-        return results
+        return Ok(results)
 
     async def extract_large_text(
         self,
@@ -464,7 +539,7 @@ Respond with ONLY valid JSON matching the schema above."""
         config: ExtractionConfig | None = None,
         chunk_size: int = 8000,
         overlap: int = 500,
-    ) -> ExtractionResult:
+    ) -> Result[ExtractionResult, ValidationError | ExtractionError]:
         """
         Extract entities from a large text by chunking it.
 
@@ -479,8 +554,29 @@ Respond with ONLY valid JSON matching the schema above."""
             overlap: Character overlap between chunks for context continuity
 
         Returns:
-            Merged ExtractionResult with deduplicated entities and mentions
+            Result containing merged ExtractionResult on success.
+            - Ok: Merged ExtractionResult with deduplicated entities and mentions
+            - Err(ValidationError): If parameters are invalid
+            - Err(ExtractionError): If extraction fails
         """
+        if not isinstance(text, str):
+            return Err(ValidationError(  # type: ignore[unreachable]
+                message=f"text must be a string, got {type(text).__name__}",
+                field="text",
+            ))
+
+        if chunk_size < 100:
+            return Err(ValidationError(
+                message="chunk_size must be at least 100",
+                field="chunk_size",
+            ))
+
+        if overlap < 0 or overlap >= chunk_size:
+            return Err(ValidationError(
+                message="overlap must be between 0 and chunk_size",
+                field="overlap",
+            ))
+
         effective_config = config or self._config
         source_length = len(text)
 
@@ -520,7 +616,15 @@ Respond with ONLY valid JSON matching the schema above."""
                 total_chunks=len(chunks),
             )
 
-            result = await self.extract(chunk, effective_config)
+            extract_result = await self.extract(chunk, effective_config)
+            if extract_result.is_error:
+                return extract_result  # Propagate error
+
+            chunk_result = extract_result.value
+            if chunk_result is None:
+                # Skip None results - use empty extraction
+                offset += len(chunk) - overlap if i < len(chunks) - 1 else len(chunk)
+                continue
 
             # Adjust entity and mention positions for original text
             adjusted_entities = [
@@ -533,7 +637,7 @@ Respond with ONLY valid JSON matching the schema above."""
                     confidence=e.confidence,
                     metadata=e.metadata,
                 )
-                for e in result.entities
+                for e in chunk_result.entities
             ]
 
             adjusted_mentions = [
@@ -544,7 +648,7 @@ Respond with ONLY valid JSON matching the schema above."""
                     end_pos=m.end_pos + offset,
                     is_pronoun=m.is_pronoun,
                 )
-                for m in result.mentions
+                for m in chunk_result.mentions
             ]
 
             # Create adjusted result
@@ -553,9 +657,9 @@ Respond with ONLY valid JSON matching the schema above."""
                     entities=tuple(adjusted_entities),
                     mentions=tuple(adjusted_mentions),
                     source_length=len(chunk),
-                    timestamp=result.timestamp,
-                    model_used=result.model_used,
-                    tokens_used=result.tokens_used,
+                    timestamp=chunk_result.timestamp,
+                    model_used=chunk_result.model_used,
+                    tokens_used=chunk_result.tokens_used,
                 )
             )
 
@@ -570,7 +674,7 @@ Respond with ONLY valid JSON matching the schema above."""
             total_mentions=merged.mention_count,
         )
 
-        return merged
+        return Ok(merged)
 
     def _merge_extraction_results(
         self,
@@ -780,7 +884,7 @@ Respond with ONLY valid JSON matching the schema above."""
         self,
         text: str,
         config: ExtractionConfig | None = None,
-    ) -> ExtractionResultWithRelationships:
+    ) -> Result[ExtractionResultWithRelationships, ValidationError | ExtractionError]:
         """
         Extract entities and relationships from narrative text.
 
@@ -792,10 +896,10 @@ Respond with ONLY valid JSON matching the schema above."""
             config: Optional override configuration (must have extract_relationships=True)
 
         Returns:
-            ExtractionResultWithRelationships containing entities and relationships
-
-        Raises:
-            EntityExtractionError: If extraction fails
+            Result containing ExtractionResultWithRelationships on success.
+            - Ok: ExtractionResultWithRelationships containing entities and relationships
+            - Err(ValidationError): If text is empty or invalid
+            - Err(ExtractionError): If extraction fails
         """
         effective_config = config or self._config
 
@@ -809,16 +913,39 @@ Respond with ONLY valid JSON matching the schema above."""
 
         # First extract entities
         entity_result = await self.extract(text, extraction_config)
+        if entity_result.is_error:
+            # Propagate error - convert to ExtractionError if needed
+            err = entity_result.error
+            if err is None:
+                return Err(ExtractionError(
+                    message="Unknown extraction error",
+                    text_length=len(text),
+                ))
+            if isinstance(err, ExtractionError):
+                return Err(err)
+            if isinstance(err, ValidationError):
+                return Err(err)
+            return Err(ExtractionError(  # type: ignore[unreachable]
+                message=str(err),
+                text_length=len(text),
+            ))
+
+        entity_data = entity_result.value
+        if entity_data is None:
+            return Err(ExtractionError(
+                message="Entity extraction returned None",
+                text_length=len(text),
+            ))
 
         self._logger.info(
             "starting_relationship_extraction",
-            entity_count=entity_result.entity_count,
+            entity_count=entity_data.entity_count,
             max_relationships=extraction_config.max_relationships,
         )
 
         # Build relationship extraction prompts
         system_prompt, user_prompt = self._build_relationship_extraction_prompt(
-            text, entity_result.entities
+            text, entity_data.entities
         )
 
         # Create LLM request for relationships
@@ -832,33 +959,45 @@ Respond with ONLY valid JSON matching the schema above."""
         # Call LLM for relationships
         try:
             response = await self._llm_client.generate(request)
-        except LLMError as e:
+        except Exception as e:
             self._logger.error("relationship_llm_generation_failed", error=str(e))
             # Return entities only on failure
-            return ExtractionResultWithRelationships(
-                entities=entity_result.entities,
-                mentions=entity_result.mentions,
-                source_length=entity_result.source_length,
+            return Ok(ExtractionResultWithRelationships(
+                entities=entity_data.entities,
+                mentions=entity_data.mentions,
+                source_length=entity_data.source_length,
                 relationships=(),
-                timestamp=entity_result.timestamp,
-                model_used=entity_result.model_used,
-                tokens_used=entity_result.tokens_used,
-            )
+                timestamp=entity_data.timestamp,
+                model_used=entity_data.model_used,
+                tokens_used=entity_data.tokens_used,
+            ))
 
         # Parse relationship response
-        try:
-            parsed = self._parse_llm_response(response.text)
-        except EntityExtractionError:
+        parse_result = self._parse_llm_response(response.text)
+        if parse_result.is_error:
             # Return entities only on parse failure
-            return ExtractionResultWithRelationships(
-                entities=entity_result.entities,
-                mentions=entity_result.mentions,
-                source_length=entity_result.source_length,
+            return Ok(ExtractionResultWithRelationships(
+                entities=entity_data.entities,
+                mentions=entity_data.mentions,
+                source_length=entity_data.source_length,
                 relationships=(),
-                timestamp=entity_result.timestamp,
-                model_used=entity_result.model_used,
-                tokens_used=entity_result.tokens_used,
-            )
+                timestamp=entity_data.timestamp,
+                model_used=entity_data.model_used,
+                tokens_used=entity_data.tokens_used,
+            ))
+
+        parsed = parse_result.value
+        if parsed is None:
+            # Return entities only when parsed is None
+            return Ok(ExtractionResultWithRelationships(
+                entities=entity_data.entities,
+                mentions=entity_data.mentions,
+                source_length=entity_data.source_length,
+                relationships=(),
+                timestamp=entity_data.timestamp,
+                model_used=entity_data.model_used,
+                tokens_used=entity_data.tokens_used,
+            ))
 
         # Build relationships
         relationships_data_raw = parsed.get("relationships", [])
@@ -867,7 +1006,7 @@ Respond with ONLY valid JSON matching the schema above."""
         )
 
         relationships = self._build_relationships(
-            relationships_data, entity_result.entities
+            relationships_data, entity_data.entities
         )
 
         self._logger.info(
@@ -875,12 +1014,20 @@ Respond with ONLY valid JSON matching the schema above."""
             relationship_count=len(relationships),
         )
 
-        return ExtractionResultWithRelationships(
-            entities=entity_result.entities,
-            mentions=entity_result.mentions,
-            source_length=entity_result.source_length,
+        return Ok(ExtractionResultWithRelationships(
+            entities=entity_data.entities,
+            mentions=entity_data.mentions,
+            source_length=entity_data.source_length,
             relationships=tuple(relationships),
-            timestamp=entity_result.timestamp,
-            model_used=entity_result.model_used,
-            tokens_used=entity_result.tokens_used,
-        )
+            timestamp=entity_data.timestamp,
+            model_used=entity_data.model_used,
+            tokens_used=entity_data.tokens_used,
+        ))
+
+
+__all__ = [
+    "EntityExtractionService",
+    "ExtractionConfig",
+    "DEFAULT_TEMPERATURE",
+    "DEFAULT_MAX_TOKENS",
+]

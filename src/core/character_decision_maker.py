@@ -7,7 +7,7 @@ Handles decision-making logic for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import logging
+import structlog
 import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -26,7 +26,7 @@ class ThreatLevel(Enum):
     CRITICAL = "critical"
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class DecisionMaker:
@@ -37,7 +37,7 @@ class DecisionMaker:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         """
         Initialize the decision maker.
 
@@ -83,7 +83,7 @@ class DecisionMaker:
             return None
 
         # Evaluate each action
-        action_evaluations = []
+        action_evaluations: list[Any] = []
         for action in available_actions:
             score = self._evaluate_action_option(
                 action,
@@ -133,8 +133,7 @@ class DecisionMaker:
         subjective_worldview: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Identify actions available to the character in current situation."""
-        available_actions = []
-
+        available_actions: list[Any] = []
         # Basic actions always available
         basic_actions = [
             {
@@ -288,8 +287,7 @@ class DecisionMaker:
         self, character_data: Dict[str, Any], subjective_worldview: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Get current character goals."""
-        goals = []
-
+        goals: list[Any] = []
         # Primary mission goals
         mission_data = subjective_worldview.get("current_mission", {})
         if mission_data:
@@ -345,7 +343,7 @@ class DecisionMaker:
         self, subjective_worldview: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """Assess social obligations and relationships."""
-        obligations = []
+        obligations: list[Any] = []
         relationships = subjective_worldview.get("relationships", {})
 
         for entity, relationship_data in relationships.items():
@@ -392,8 +390,7 @@ class DecisionMaker:
     ) -> List[Dict[str, Any]]:
         """Get actions specific to character's profession."""
         profession = character_data.get("rank_role", "").lower()
-        profession_actions = []
-
+        profession_actions: list[Any] = []
         if "tech" in profession or "engineer" in profession:
             profession_actions.extend(
                 [

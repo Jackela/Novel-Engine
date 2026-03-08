@@ -10,17 +10,23 @@ on:
 
 jobs:
   analyze:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
       actions: read
       contents: read
       security-events: write
+      # Required for private repositories to report findings  
+      statuses: write
 
     strategy:
       fail-fast: false
       matrix:
-        language: ['python', 'javascript']
+        include:
+          - language: python
+            build-mode: none
+          - language: javascript
+            build-mode: none
 
     steps:
       - name: Checkout repository
@@ -31,9 +37,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql-config.yml
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

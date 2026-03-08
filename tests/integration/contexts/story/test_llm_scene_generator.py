@@ -127,7 +127,7 @@ class TestLLMSceneGeneratorParsing:
         """Generator should parse valid JSON into SceneGenerationResult."""
         generator = LLMSceneGenerator(model="test-model")
 
-        def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+        async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
             return valid_llm_response
 
         with patch.object(LLMSceneGenerator, "_call_gemini", new=fake_call):
@@ -155,7 +155,7 @@ class TestLLMSceneGeneratorParsing:
 ```
 """
 
-        def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+        async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
             return markdown_response
 
         with patch.object(LLMSceneGenerator, "_call_gemini", new=fake_call):
@@ -169,7 +169,7 @@ class TestLLMSceneGeneratorParsing:
         """Generator should return error result on invalid JSON."""
         generator = LLMSceneGenerator(model="test-model")
 
-        def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+        async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
             return "not-valid-json-at-all"
 
         with patch.object(LLMSceneGenerator, "_call_gemini", new=fake_call):
@@ -192,7 +192,7 @@ class TestLLMSceneGeneratorEndToEnd:
         generator = LLMSceneGenerator(model="test-model", temperature=0.5)
         captured = {}
 
-        def fake_call(self, system_prompt: str, user_prompt: str) -> str:
+        async def fake_call(self, system_prompt: str, user_prompt: str) -> str:
             captured["system_prompt"] = system_prompt
             captured["user_prompt"] = user_prompt
             return valid_llm_response

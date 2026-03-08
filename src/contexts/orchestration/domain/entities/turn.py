@@ -10,7 +10,7 @@ from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 from ..value_objects import (
@@ -494,7 +494,7 @@ class Turn:
                         turn_id=self.turn_id.turn_uuid,
                         failed_phase=phase_name,
                         compensation_type=compensation_type,
-                        rollback_data=self.rollback_snapshots.get(phase_name, {}),
+                        rollback_data=cast(Dict[str, Any], self.rollback_snapshots.get(phase_name, {})),
                         affected_entities=self.configuration.participants,
                         metadata={
                             "original_failure": failed_phase.value,
@@ -582,8 +582,8 @@ class Turn:
                 "compensation_type": completed_action.compensation_type.value,
                 "target_phase": completed_action.target_phase,
                 "execution_time_ms": (
-                    completed_action.get_execution_time().total_seconds() * 1000
-                    if completed_action.get_execution_time()
+                    (execution_time.total_seconds() * 1000)
+                    if (execution_time := completed_action.get_execution_time())
                     else None
                 ),
                 "results_summary": results,
@@ -649,7 +649,7 @@ class Turn:
         self.completed_at = completed_at
 
         # Create successful pipeline result
-        phase_results = []
+        phase_results: list[Any] = []
         for phase_type in PhaseType.get_all_phases_ordered():
             phase_status = self.phase_statuses[phase_type]
             phase_result = PhaseResult.create_successful(
@@ -711,7 +711,7 @@ class Turn:
         self.completed_at = completed_at
 
         # Create failed pipeline result
-        phase_results = []
+        phase_results: list[Any] = []
         for phase_type in PhaseType.get_all_phases_ordered():
             phase_status = self.phase_statuses[phase_type]
             if phase_status.status == PhaseStatusEnum.COMPLETED:
@@ -848,7 +848,7 @@ class Turn:
     def _create_compensated_pipeline_result(self) -> None:
         """Create pipeline result for compensated turn."""
         # Get results for completed phases
-        phase_results = []
+        phase_results: list[Any] = []
         for phase_type in PhaseType.get_all_phases_ordered():
             phase_status = self.phase_statuses[phase_type]
             if phase_status.status.is_successful():

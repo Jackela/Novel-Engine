@@ -9,7 +9,7 @@ ability scores, health/mana, derived stats, and combat modifiers.
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict
+from typing import Any, Dict
 
 
 class AbilityScore(Enum):
@@ -34,7 +34,7 @@ class CoreAbilities:
     wisdom: int
     charisma: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate ability scores."""
         abilities = [
             self.strength,
@@ -107,7 +107,7 @@ class VitalStats:
     armor_class: int
     speed: int  # Movement speed in feet/meters
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate vital statistics."""
         if self.max_health <= 0:
             raise ValueError("Max health must be positive")
@@ -198,7 +198,7 @@ class CombatStats:
     critical_hit_chance: float  # 0.0 to 1.0
     critical_damage_multiplier: float
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate combat statistics."""
         if not -10 <= self.base_attack_bonus <= 30:
             raise ValueError("Base attack bonus must be between -10 and 30")
@@ -275,7 +275,7 @@ class CharacterStats:
     experience_points: int
     skill_points: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character statistics."""
         if self.experience_points < 0:
             raise ValueError("Experience points cannot be negative")
@@ -342,7 +342,7 @@ class CharacterStats:
             or self.vital_stats.stamina_percentage() < 0.2
         )
 
-    def get_stats_summary(self) -> Dict[str, any]:
+    def get_stats_summary(self) -> Dict[str, Any]:
         """Get a comprehensive summary of character statistics."""
         return {
             "power_level": self.get_overall_power_level(),

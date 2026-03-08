@@ -10,9 +10,14 @@ import uuid
 from datetime import datetime
 from typing import AsyncGenerator
 
-import asyncpg
 import pytest
+
+pytestmark = pytest.mark.integration
+
 import pytest_asyncio
+
+# Skip all tests in this module if asyncpg is not installed
+asyncpg = pytest.importorskip("asyncpg")
 
 from src.contexts.world.domain.entities.history_event import (
     EventOutcome,

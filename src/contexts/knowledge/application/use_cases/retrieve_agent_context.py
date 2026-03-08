@@ -58,7 +58,7 @@ class RetrieveAgentContextUseCase:
         knowledge_retriever: IKnowledgeRetriever,
         context_assembler: IContextAssembler,
         record_knowledge_retrieval: KnowledgeRetrievalRecorder = _noop_record_knowledge_retrieval,
-    ):
+    ) -> None:
         """
         Initialize use case with dependencies.
 
@@ -179,10 +179,10 @@ class RetrieveAgentContextUseCase:
             # Step 3: Record metrics (Article VII - Observability)
             duration_seconds = time.time() - start_time
             self._record_knowledge_retrieval(
-                agent_character_id=agent.character_id,
-                turn_number=turn_number if turn_number is not None else 0,
-                entry_count=len(entries),
-                duration_seconds=duration_seconds,
+                agent.character_id,
+                turn_number if turn_number is not None else 0,
+                len(entries),
+                duration_seconds,
             )
 
             return context
@@ -191,10 +191,10 @@ class RetrieveAgentContextUseCase:
             # Record metrics even on failure for observability
             duration_seconds = time.time() - start_time
             self._record_knowledge_retrieval(
-                agent_character_id=agent.character_id,
-                turn_number=turn_number if turn_number is not None else 0,
-                entry_count=0,
-                duration_seconds=duration_seconds,
+                agent.character_id,
+                turn_number if turn_number is not None else 0,
+                0,
+                duration_seconds,
             )
             logger.exception(
                 "knowledge_context_retrieval_failed",

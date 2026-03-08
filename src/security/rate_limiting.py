@@ -17,6 +17,7 @@ System保佑此限流系统 (May the System bless this rate limiting system)
 import asyncio
 import hashlib
 import logging
+import structlog
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -27,13 +28,13 @@ from fastapi import Request
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class _RateLimitStrategyMeta(EnumMeta):
     """Enum meta class that provides a sensible default when instantiated without a value."""
 
-    def __call__(self, value=None, *args, **kwargs):
+    def __call__(self, value=None, *args, **kwargs) -> None:
         if isinstance(value, self):
             return value
         if value is None:
@@ -121,7 +122,7 @@ class TokenBucket:
             return True
         return False
 
-    def _refill(self):
+    def _refill(self) -> None:
         """STANDARD TOKEN REFILL"""
         now = time.time()
         tokens_to_add = (now - self.last_refill) * self.refill_rate
@@ -206,7 +207,7 @@ class ClientState:
 class RateLimitExceeded(Exception):
     """ENHANCED RATE LIMIT EXCEPTION"""
 
-    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel):
+    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel) -> None:
         self.message = message
         self.retry_after = retry_after
         self.threat_level = threat_level
@@ -220,7 +221,7 @@ class RateLimiter:
         self,
         config: RateLimitConfig,
         backend: Optional["InMemoryRateLimitBackend"] = None,
-    ):
+    ) -> None:
         self.config = config
         self.clients: Dict[str, ClientState] = {}
         self.backend = backend or InMemoryRateLimitBackend()
@@ -235,7 +236,7 @@ class RateLimiter:
         self.whitelist = IPWhitelist(config.whitelist_ips)
         self._start_cleanup_task()
 
-    def _start_cleanup_task(self):
+    def _start_cleanup_task(self) -> None:
         """STANDARD CLEANUP TASK INITIALIZATION"""
 
         async def cleanup_loop():
@@ -253,11 +254,10 @@ class RateLimiter:
             # No event loop running yet
             pass
 
-    async def _cleanup_old_clients(self):
+    async def _cleanup_old_clients(self) -> None:
         """STANDARD CLIENT STATE CLEANUP"""
         now = time.time()
-        old_clients = []
-
+        old_clients: list[Any] = []
         for client_id, client in self.clients.items():
             # Remove clients inactive for more than 1 hour
             if now - client.last_request > 3600:
@@ -267,7 +267,7 @@ class RateLimiter:
             del self.clients[client_id]
 
         if old_clients:
-            logger.info(f"CLEANED UP {len(old_clients)} INACTIVE CLIENTS")
+            logger.info("CLEANED UP %d INACTIVE CLIENTS", len(old_clients))
 
     def _get_client_identifier(self, request: Request) -> str:
         """STANDARD CLIENT IDENTIFICATION"""
@@ -312,7 +312,7 @@ class RateLimiter:
 
         return self.clients[client_id]
 
-    def _initialize_client_buckets(self, client: ClientState):
+    def _initialize_client_buckets(self, client: ClientState) -> None:
         """STANDARD CLIENT BUCKET INITIALIZATION"""
         role_multiplier = self.config.role_multipliers.get(
             client.user_role or "guest", 1.0
@@ -389,7 +389,7 @@ class RateLimiter:
 
         return threat_level
 
-    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel):
+    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel) -> None:
         """STANDARD ADAPTIVE LIMIT APPLICATION"""
         if not self.config.enable_adaptive:
             return
@@ -539,7 +539,7 @@ class RateLimiter:
 class InMemoryRateLimitBackend:
     """STANDARD IN-MEMORY RATE LIMIT BACKEND"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.clients: Dict[str, ClientState] = {}
         self.global_stats = {
             "total_requests": 0,
@@ -552,11 +552,11 @@ class InMemoryRateLimitBackend:
         """Retrieve client state from memory backend"""
         return self.clients.get(client_id)
 
-    def set_client_state(self, client_id: str, client_state: ClientState):
+    def set_client_state(self, client_id: str, client_state: ClientState) -> None:
         """Store client state in memory backend"""
         self.clients[client_id] = client_state
 
-    def update_stats(self, stat_name: str, increment: int = 1):
+    def update_stats(self, stat_name: str, increment: int = 1) -> None:
         """Update global statistics"""
         if stat_name in self.global_stats:
             self.global_stats[stat_name] += increment
@@ -644,11 +644,10 @@ class InMemoryRateLimitBackend:
                 retry_after=retry_after,
             )
 
-    def cleanup_old_clients(self, max_age: float = 3600.0):
+    def cleanup_old_clients(self, max_age: float = 3600.0) -> None:
         """Remove clients inactive for more than max_age seconds"""
         now = time.time()
-        old_clients = []
-
+        old_clients: list[Any] = []
         for client_id, client in self.clients.items():
             if now - client.last_request > max_age:
                 old_clients.append(client_id)
@@ -662,7 +661,7 @@ class InMemoryRateLimitBackend:
 class DDoSDetector:
     """Lightweight async DDoS detector used in middleware tests."""
 
-    def __init__(self, threshold: int = 500, interval_seconds: int = 60):
+    def __init__(self, threshold: int = 500, interval_seconds: int = 60) -> None:
         self.threshold = threshold
         self.interval_seconds = interval_seconds
         self._request_windows: Dict[str, deque] = {}
@@ -686,7 +685,7 @@ class DDoSDetector:
 class IPWhitelist:
     """Simple IP whitelist with sensible defaults for local development."""
 
-    def __init__(self, additional_ips: Optional[List[str]] = None):
+    def __init__(self, additional_ips: Optional[List[str]] = None) -> None:
         defaults: Set[str] = {
             "127.0.0.1",
             "::1",
@@ -716,7 +715,7 @@ class RateLimitMiddleware:
         strategy: Optional[RateLimitStrategy] = None,
         config: Optional[RateLimitConfig] = None,
         rate_limiter: Optional[RateLimiter] = None,
-    ):
+    ) -> None:
         self.app = app
         self.strategy = strategy or RateLimitStrategy.TOKEN_BUCKET
         self.config = config or RateLimitConfig(strategy=self.strategy)
@@ -857,7 +856,7 @@ def get_rate_limiter() -> RateLimiter:
     return rate_limiter
 
 
-def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None):
+def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None) -> None:
     """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:

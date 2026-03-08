@@ -17,12 +17,12 @@ This class follows the Single Responsibility Principle by focusing solely on
 event coordination, separate from integration orchestration.
 """
 
-import logging
+import structlog
 from typing import Any, Callable, Dict, Optional
 
 from src.core.event_bus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class EventCoordinator:
@@ -34,7 +34,7 @@ class EventCoordinator:
     cross-system communication.
     """
 
-    def __init__(self, event_bus: Optional[EventBus] = None):
+    def __init__(self, event_bus: Optional[EventBus] = None) -> None:
         """
         Initialize the event coordinator.
 
@@ -104,7 +104,7 @@ class EventCoordinator:
     # Event Emission
     # ===================================================================
 
-    async def emit_integration_event(self, event_type: str, data: Dict[str, Any]):
+    async def emit_integration_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """
         Emit integration event for monitoring and coordination.
 
@@ -119,7 +119,7 @@ class EventCoordinator:
     # Default Event Handlers
     # ===================================================================
 
-    async def handle_character_state_change(self, event_data: Dict[str, Any]):
+    async def handle_character_state_change(self, event_data: Dict[str, Any]) -> None:
         """
         Handle character state change events.
 
@@ -135,7 +135,7 @@ class EventCoordinator:
         # Default implementation is a no-op
         # Subclasses or configuration can provide custom handlers
 
-    async def handle_story_generation(self, event_data: Dict[str, Any]):
+    async def handle_story_generation(self, event_data: Dict[str, Any]) -> None:
         """
         Handle story generation events.
 
@@ -149,7 +149,7 @@ class EventCoordinator:
         # Default implementation is a no-op
         # Subclasses or configuration can provide custom handlers
 
-    async def handle_user_interaction(self, event_data: Dict[str, Any]):
+    async def handle_user_interaction(self, event_data: Dict[str, Any]) -> None:
         """
         Handle user interaction events.
 

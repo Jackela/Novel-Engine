@@ -111,19 +111,19 @@ class LLMRequest:
     model_id: ModelId
     prompt: str
     system_prompt: Optional[str] = None
-    parameters: Dict[str, Any] = None
+    parameters: Optional[Dict[str, Any]] = None
     max_tokens: Optional[int] = None
     temperature: float = 0.7
     top_p: float = 1.0
     presence_penalty: float = 0.0
     frequency_penalty: float = 0.0
-    stop_sequences: List[str] = None
+    stop_sequences: Optional[List[str]] = None
     functions: Optional[List[Dict[str, Any]]] = None
     timeout_seconds: int = 30
     stream: bool = False
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate LLM request parameters and constraints."""
         # Initialize collections if None
         if self.parameters is None:
@@ -314,13 +314,13 @@ class LLMResponse:
     content: Optional[str] = None
     finish_reason: Optional[str] = None
     model_id: Optional[ModelId] = None
-    usage_stats: Dict[str, int] = None
-    cost_estimate: Decimal = None
-    metadata: Dict[str, Any] = None
+    usage_stats: Optional[Dict[str, int]] = None
+    cost_estimate: Optional[Decimal] = None
+    metadata: Optional[Dict[str, Any]] = None
     error_details: Optional[str] = None
-    provider_response: Dict[str, Any] = None
+    provider_response: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate LLM response structure and constraints."""
         # Initialize collections if None
         if self.usage_stats is None:
@@ -442,7 +442,7 @@ class LLMProviderError(Exception):
         provider_id: Optional[ProviderId] = None,
         error_code: Optional[str] = None,
         retry_after: Optional[int] = None,
-    ):
+    ) -> None:
         super().__init__(message)
         self.provider_id = provider_id
         self.error_code = error_code

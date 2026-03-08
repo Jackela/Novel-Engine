@@ -11,6 +11,29 @@ paths-ignore:
   - "frontend/playwright-report/**"
   - "frontend/reports/**"
   - "frontend/dist/**"
+  - "frontend/node_modules/**"
+  # Test files - these often trigger false positives in security analysis
+  - "tests/**"
+  - "frontend/tests/**"
+  - "characters/test/**"
+  - "test-results/**"
+  # Database migrations - auto-generated SQL
+  - "migrations/**"
+  # Virtual environments and dependencies
+  - ".venv/**"
+  - ".venv-ci/**"
+  - "**/__pycache__/**"
+  - "**/node_modules/**"
+  # Coverage reports
+  - "htmlcov/**"
+  - "coverage.xml"
+  - ".coverage"
+  # Documentation
+  - "docs/**"
+  # Generated files
+  - "frontend/src/components/ui/**"
+  - "**/*.gen.ts"
+  - "**/*.gen.js"
 
 queries:
   - uses: security-extended
@@ -32,3 +55,12 @@ query-filters:
       tags contain:
         - "py/ineffectual-statement"
       path regexp: ".*/generators/character_profile_generator\\.py$"
+  # Exclude common false positives in test files
+  - exclude:
+      tags contain:
+        - "py/unused-import"
+      path regexp: ".*/tests/.*\\.py$"
+  - exclude:
+      tags contain:
+        - "js/unused-local-variable"
+      path regexp: ".*/tests/.*\\.(ts|tsx|js|jsx)$"

@@ -196,7 +196,7 @@ class CompensationAction:
         "trigger_manual_review": 1000,  # 1 second
     }
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate compensation action structure and business rules."""
         # Validate status
         if self.status not in self.VALID_STATUSES:

@@ -9,6 +9,7 @@ Provides error classification, recovery strategies, and system resilience.
 import asyncio
 import hashlib
 import logging
+import structlog
 import traceback
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -92,8 +93,8 @@ class SystemErrorHandler:
     - Escalation procedures
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        self.logger = logger or logging.getLogger(__name__)
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Error storage and tracking
         self._error_records: Dict[str, ErrorRecord] = {}
@@ -780,7 +781,7 @@ class SystemErrorHandler:
                 try:
                     await self._health_check_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
+                    structlog.get_logger(__name__).debug(
                         "Suppressed exception", exc_info=True
                     )
             self._error_records.clear()

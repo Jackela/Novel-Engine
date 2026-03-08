@@ -18,7 +18,7 @@ from src.contexts.knowledge.application.event_handlers.knowledge_event_subscribe
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

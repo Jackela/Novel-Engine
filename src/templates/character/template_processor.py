@@ -3,14 +3,14 @@
 Template generation and processing.
 """
 
-import logging
+import structlog
 from typing import List
 
 from src.templates.dynamic_template_engine import TemplateType
 
 from .persona_models import CharacterArchetype, CharacterPersona
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TemplateProcessor:

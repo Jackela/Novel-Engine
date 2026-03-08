@@ -7,7 +7,7 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 """
 
 import functools
-import logging
+import structlog
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 from uuid import UUID
@@ -27,7 +27,7 @@ from opentelemetry.sdk.trace.sampling import (
 )
 from opentelemetry.util.types import Attributes
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class NovelEngineTracingConfig:
@@ -42,7 +42,7 @@ class NovelEngineTracingConfig:
         otlp_endpoint: Optional[str] = None,
         sampling_rate: float = 0.1,
         enable_console_exporter: bool = False,
-    ):
+    ) -> None:
         """
         Initialize tracing configuration.
 
@@ -75,7 +75,7 @@ class IntelligentSampler:
     - Performance characteristics (sample slow operations)
     """
 
-    def __init__(self, default_rate: float = 0.1):
+    def __init__(self, default_rate: float = 0.1) -> None:
         """
         Initialize intelligent sampler.
 
@@ -114,8 +114,7 @@ class IntelligentSampler:
             Sampling decision
         """
         if not attributes:
-            attributes = {}
-
+            attributes: dict[Any, Any] = {}
         # Always sample errors
         if any(key.startswith("error") for key in attributes.keys()):
             return self.error_sampler.should_sample(
@@ -153,7 +152,7 @@ class NovelEngineTracer:
     - Performance correlation with metrics
     """
 
-    def __init__(self, config: NovelEngineTracingConfig):
+    def __init__(self, config: NovelEngineTracingConfig) -> None:
         """
         Initialize Novel Engine tracer.
 
@@ -432,7 +431,7 @@ class NovelEngineTracer:
         Returns:
             Trace context headers for HTTP propagation
         """
-        carrier = {}
+        carrier: dict[Any, Any] = {}
         propagate.inject(carrier)
         return carrier
 
@@ -446,7 +445,7 @@ class NovelEngineTracer:
         propagate.extract(carrier)
 
 
-def trace_async_operation(operation_name: str, **span_attributes):
+def trace_async_operation(operation_name: str, **span_attributes: Any) -> Callable[[Callable], Callable]:
     """
     Decorator for tracing async operations.
 
@@ -460,7 +459,7 @@ def trace_async_operation(operation_name: str, **span_attributes):
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             tracer = trace.get_tracer(__name__)
 
             with tracer.start_as_current_span(
@@ -482,7 +481,7 @@ def trace_async_operation(operation_name: str, **span_attributes):
 
 @asynccontextmanager
 async def trace_context(
-    operation_name: str, **attributes
+    operation_name: str, **attributes: Any
 ) -> AsyncGenerator[Span, None]:
     """
     Async context manager for tracing operations.

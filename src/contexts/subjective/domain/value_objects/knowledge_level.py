@@ -9,7 +9,7 @@ information certainty levels, and knowledge propagation in the subjective contex
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 
 class KnowledgeType(Enum):
@@ -67,9 +67,9 @@ class KnowledgeItem:
     source: KnowledgeSource
     acquired_at: datetime
     expires_at: Optional[datetime] = None  # When this knowledge becomes stale
-    tags: Set[str] = None  # Additional categorization tags
+    tags: Optional[Set[str]] = None  # Additional categorization tags
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate knowledge item parameters."""
         if not self.subject or not self.subject.strip():
             raise ValueError("Knowledge subject cannot be empty")
@@ -158,7 +158,7 @@ class KnowledgeBase:
 
     knowledge_items: Dict[str, List[KnowledgeItem]]  # subject -> knowledge items
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate and organize knowledge base."""
         if not isinstance(self.knowledge_items, dict):
             raise ValueError("Knowledge items must be a dictionary")
@@ -189,8 +189,7 @@ class KnowledgeBase:
             return []
 
         items = self.knowledge_items[subject]
-        filtered_items = []
-
+        filtered_items: list[Any] = []
         for item in items:
             if (
                 item.is_current(current_time)
@@ -235,7 +234,7 @@ class KnowledgeBase:
 
     def get_subjects_by_type(self, knowledge_type: KnowledgeType) -> List[str]:
         """Get all subjects that have knowledge of a specific type."""
-        subjects = []
+        subjects: list[Any] = []
         for subject, items in self.knowledge_items.items():
             if any(item.knowledge_type == knowledge_type for item in items):
                 subjects.append(subject)
@@ -243,7 +242,7 @@ class KnowledgeBase:
 
     def get_subjects_by_tag(self, tag: str) -> List[str]:
         """Get all subjects that have knowledge with a specific tag."""
-        subjects = []
+        subjects: list[Any] = []
         for subject, items in self.knowledge_items.items():
             if any(item.has_tag(tag) for item in items):
                 subjects.append(subject)
@@ -254,8 +253,7 @@ class KnowledgeBase:
     ) -> Dict[str, List[KnowledgeItem]]:
         """Get all knowledge that has become stale/expired."""
         check_time = current_time or datetime.now()
-        stale_knowledge = {}
-
+        stale_knowledge: dict[Any, Any] = {}
         for subject, items in self.knowledge_items.items():
             stale_items = [item for item in items if not item.is_current(check_time)]
             if stale_items:
@@ -267,8 +265,7 @@ class KnowledgeBase:
         self, source: KnowledgeSource
     ) -> Dict[str, List[KnowledgeItem]]:
         """Get all knowledge from a specific source."""
-        filtered_knowledge = {}
-
+        filtered_knowledge: dict[Any, Any] = {}
         for subject, items in self.knowledge_items.items():
             source_items = [item for item in items if item.source == source]
             if source_items:

@@ -16,7 +16,7 @@ Typical usage example:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from .resource_type import ResourceType
 

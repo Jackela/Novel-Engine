@@ -109,15 +109,21 @@ def clean_db():
     # Note: Caller must await db.initialize() for async operations
     yield db
 
-    # Cleanup: close the database connection
+    # Cleanup: close the database connection safely
+    # Use asyncio.run() for safe cleanup without deprecated get_event_loop()
     try:
-        # Try async close if available
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Schedule cleanup task
-            asyncio.create_task(db.close())
-        else:
-            loop.run_until_complete(db.close())
+        # Check if we're in an async context
+        try:
+            asyncio.get_running_loop()
+            # We're in an async context, schedule cleanup
+            # Note: This won't fully complete if the loop closes immediately
+            pass  # Let the loop handle cleanup
+        except RuntimeError:
+            # No running loop - safe to use asyncio.run()
+            try:
+                asyncio.run(db.close())
+            except Exception:
+                pass  # Ignore cleanup errors
     except Exception:
         pass  # Ignore cleanup errors
 
@@ -360,6 +366,40 @@ def ensure_required_services(request):
         request.getfixturevalue("postgres_service")
 
 
+@pytest.fixture(autouse=True, scope="session")
+def configure_test_logging():
+    """Configure logging for tests to prevent structlog/standard logging conflicts.
+    
+    This prevents KeyError: "Attempt to overwrite 'message' in LogRecord" errors
+    that can occur when structlog and standard library logging interact.
+    """
+    # Import and configure structlog for test environment
+    try:
+        import structlog
+        # Use a simple console renderer for tests to avoid conflicts
+        structlog.configure(
+            processors=[
+                structlog.stdlib.filter_by_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.dev.ConsoleRenderer(colors=False),  # Disable colors for tests
+            ],
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+    except Exception:
+        # If structlog configuration fails, continue with default logging
+        pass
+    yield
+    # No cleanup needed - logging configuration persists for test session
+
+
 @pytest.fixture
 def characters_directory(temp_dir):
     """创建临时的角色目录结构"""
@@ -443,20 +483,6 @@ def pytest_sessionfinish(session, exitstatus):
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
     except Exception:
         logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
-    try:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop and loop.is_running():
-            pending = [t for t in asyncio.all_tasks(loop) if not t.done()]
-            for task in pending:
-                task.cancel()
-            if pending:
-                loop.run_until_complete(
-                    asyncio.gather(*pending, return_exceptions=True)
-                )
-    except Exception:
-        # If loop is closed or unavailable, ignore
-        pass
+    # Note: We don't try to access the event loop here since it may already be closed
+    # pytest-asyncio manages its own event loop lifecycle
+    # Any remaining cleanup is handled by Python's garbage collector at exit

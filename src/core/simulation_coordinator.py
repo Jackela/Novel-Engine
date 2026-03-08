@@ -8,14 +8,14 @@ Extracted from DirectorAgent for better modularity and maintainability.
 """
 
 import json
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.agents.persona_agent.agent import PersonaAgent
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SimulationCoordinator:
@@ -31,7 +31,7 @@ class SimulationCoordinator:
 
     def __init__(
         self, world_state_file_path: Optional[str] = None, max_turn_history: int = 100
-    ):
+    ) -> None:
         """
         Initialize the Simulation Coordinator.
 
@@ -186,7 +186,7 @@ class SimulationCoordinator:
         ).total_seconds()
 
         # Calculate agent statistics
-        agent_stats = {}
+        agent_stats: dict[Any, Any] = {}
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
             faction = agent.subjective_worldview.get("primary_faction", "Unknown")
@@ -229,7 +229,7 @@ class SimulationCoordinator:
         Returns:
             List of dictionaries containing agent information
         """
-        agent_list = []
+        agent_list: list[Any] = []
         for agent in self.registered_agents:
             character_name = agent.character_data.get("name", "Unknown")
             faction = agent.subjective_worldview.get("primary_faction", "Unknown")

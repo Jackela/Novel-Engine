@@ -6,12 +6,12 @@ Centralized error handling patterns for consistent error responses.
 """
 
 import functools
-import logging
-from typing import Callable, Optional
+import structlog
+from typing import Any, Callable, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def handle_standard_errors(
@@ -34,7 +34,7 @@ def handle_standard_errors(
 
     Example:
         @handle_standard_errors("equipment_registration", "REGISTRATION_FAILED")
-        async def register_equipment(self, equipment_item):
+        async def register_equipment(self, equipment_item) -> None:
             # ... implementation
             return StandardResponse(success=True, data={...})
     """
@@ -43,7 +43,7 @@ def handle_standard_errors(
 
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await func(*args, **kwargs)
             except Exception as e:
@@ -59,7 +59,7 @@ def handle_standard_errors(
                 )
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return func(*args, **kwargs)
             except Exception as e:

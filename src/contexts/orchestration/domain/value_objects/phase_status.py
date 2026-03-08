@@ -176,10 +176,10 @@ class PhaseStatus:
     progress_percentage: int = 0
     events_processed: int = 0
     error_message: Optional[str] = None
-    compensation_actions: List[str] = None
-    metadata: Dict[str, Any] = None
+    compensation_actions: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate phase status structure and business rules."""
         # Initialize mutable defaults
         if self.compensation_actions is None:
@@ -310,7 +310,7 @@ class PhaseStatus:
             metadata=metadata or {},
         )
 
-    def transition_to(self, new_status: PhaseStatusEnum, **updates) -> "PhaseStatus":
+    def transition_to(self, new_status: PhaseStatusEnum, **updates: Any) -> "PhaseStatus":
         """
         Create new phase status with status transition.
 
@@ -358,7 +358,7 @@ class PhaseStatus:
             compensation_actions=updates.get(
                 "compensation_actions", self.compensation_actions
             ),
-            metadata={**self.metadata, **updates.get("metadata", {})},
+            metadata={**self.metadata, **(updates.get("metadata") or {})},
         )
 
     def update_progress(
@@ -396,7 +396,7 @@ class PhaseStatus:
             events_processed=events_processed or self.events_processed,
             error_message=self.error_message,
             compensation_actions=self.compensation_actions,
-            metadata={**self.metadata, **updates["metadata"]},
+            metadata={**self.metadata, **(updates.get("metadata") or {})},
         )
 
     def get_execution_time(self) -> Optional[timedelta]:

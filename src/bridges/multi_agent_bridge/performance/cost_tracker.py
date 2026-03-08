@@ -6,6 +6,7 @@ Tracks and manages LLM usage costs and budgets for multi-agent coordination.
 """
 
 import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -35,7 +36,7 @@ class CostTracker:
     cost_history: List[Dict[str, Any]] = field(default_factory=list)
     logger: Optional[logging.Logger] = field(default=None, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def update_cost(self, request_type: str, cost: float, tokens: int) -> bool:
@@ -153,8 +154,7 @@ class CostTracker:
     def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
         """Get cost optimization recommendations."""
         try:
-            recommendations = []
-
+            recommendations: list[Any] = []
             # Check high-cost request types
             total_requests = sum(self.request_counts.values())
             if total_requests > 0:

@@ -12,7 +12,7 @@ from src.core.types.shared_types import (
     ValidationResult,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

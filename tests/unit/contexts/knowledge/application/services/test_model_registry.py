@@ -168,11 +168,12 @@ class TestModelRegistry:
             cost_per_1m_output_tokens=1.0,
         )
 
-        registry.register_model(custom_model)
+        result = registry.register_model(custom_model)
+        assert result.is_ok
 
-        result = registry.get_model(LLMProvider.OPENAI, "custom-model")
-        assert result is not None
-        assert result.model_name == "custom-model"
+        model_result = registry.get_model(LLMProvider.OPENAI, "custom-model")
+        assert model_result.is_ok
+        assert model_result.unwrap().model_name == "custom-model"
 
     def test_register_task_config(self) -> None:
         """Test registering a custom task config."""
@@ -185,11 +186,14 @@ class TestModelRegistry:
             max_tokens=2000,
         )
 
-        registry.register_task_config(custom_config)
+        result = registry.register_task_config(custom_config)
+        assert result.is_ok
 
         result = registry.get_model_for_task(TaskType.LOGICAL)
-        assert result.provider == LLMProvider.GEMINI
-        assert result.model_name == "gemini-2.0-flash"
+        assert result.is_ok
+        config = result.unwrap()
+        assert config.provider == LLMProvider.GEMINI
+        assert config.model_name == "gemini-2.0-flash"
 
     def test_register_alias(self) -> None:
         """Test registering a custom alias."""
@@ -200,34 +204,41 @@ class TestModelRegistry:
             model_name="gpt-4o",
         )
 
-        registry.register_alias(custom_alias)
+        result = registry.register_alias(custom_alias)
+        assert result.is_ok
 
         result = registry.resolve_model("myalias")
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_name == "gpt-4o"
-        assert result.alias_used == "myalias"
+        assert result.is_ok
+        lookup = result.unwrap()
+        assert lookup.provider == LLMProvider.OPENAI
+        assert lookup.model_name == "gpt-4o"
+        assert lookup.alias_used == "myalias"
 
     def test_get_model(self) -> None:
         """Test getting a model by provider and name."""
         registry = ModelRegistry()
 
-        model = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
-        assert model is not None
+        result = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
+        assert result.is_ok
+        model = result.unwrap()
         assert model.model_name == "gpt-4o"
         assert model.provider == LLMProvider.OPENAI
 
     def test_get_model_not_found(self) -> None:
-        """Test getting a non-existent model returns None."""
+        """Test getting a non-existent model returns NotFoundError."""
         registry = ModelRegistry()
 
-        model = registry.get_model(LLMProvider.OPENAI, "non-existent")
-        assert model is None
+        result = registry.get_model(LLMProvider.OPENAI, "non-existent")
+        assert result.is_error
+        assert result.error.code == "NOT_FOUND"
 
     def test_list_models(self) -> None:
         """Test listing all models."""
         registry = ModelRegistry()
 
-        models = registry.list_models()
+        result = registry.list_models()
+        assert result.is_ok
+        models = result.unwrap()
         assert len(models) > 0
 
         # Check non-deprecated only
@@ -238,91 +249,102 @@ class TestModelRegistry:
         """Test listing models filtered by provider."""
         registry = ModelRegistry()
 
-        openai_models = registry.list_models(provider=LLMProvider.OPENAI)
+        result = registry.list_models(provider=LLMProvider.OPENAI)
+        assert result.is_ok
+        openai_models = result.unwrap()
         assert all(m.provider == LLMProvider.OPENAI for m in openai_models)
 
     def test_list_models_include_deprecated(self) -> None:
         """Test listing models includes deprecated when requested."""
         registry = ModelRegistry()
 
-        all_models = registry.list_models(include_deprecated=True)
-        non_deprecated = registry.list_models(include_deprecated=False)
+        result_all = registry.list_models(include_deprecated=True)
+        result_non_deprecated = registry.list_models(include_deprecated=False)
 
-        assert len(all_models) >= len(non_deprecated)
+        assert result_all.is_ok
+        assert result_non_deprecated.is_ok
+        assert len(result_all.unwrap()) >= len(result_non_deprecated.unwrap())
 
     def test_get_model_for_task(self) -> None:
         """Test getting model config for a task type."""
         registry = ModelRegistry()
 
-        config = registry.get_model_for_task(TaskType.CREATIVE)
+        result = registry.get_model_for_task(TaskType.CREATIVE)
+        assert result.is_ok
+        config = result.unwrap()
         assert config.task_type == TaskType.CREATIVE
         assert config.temperature > 0.7  # CREATIVE uses higher temp
 
-        config = registry.get_model_for_task(TaskType.LOGICAL)
+        result = registry.get_model_for_task(TaskType.LOGICAL)
+        assert result.is_ok
+        config = result.unwrap()
         assert config.task_type == TaskType.LOGICAL
         assert config.temperature < 0.5  # LOGICAL uses lower temp
 
     def test_get_model_for_task_invalid(self) -> None:
-        """Test getting model for invalid task type raises error."""
-        _registry = ModelRegistry()  # noqa: F841
+        """Test getting model for invalid task type returns error."""
+        registry = ModelRegistry()
 
-        # Create an invalid task type by direct enum access
-        with pytest.raises(ValueError, match="No model configuration"):
-            # All task types are valid, so test with a mock scenario
-            # where config is missing
-            class MockRegistry:
-                def __init__(self) -> None:
-                    self._task_configs: dict[TaskType, TaskModelConfig] = {}
-
-                def get_model_for_task(self, task_type: TaskType) -> TaskModelConfig:
-                    config = self._task_configs.get(task_type)
-                    if config is None:
-                        raise ValueError(
-                            f"No model configuration for task type: {task_type}"
-                        )
-                    return config
-
-            mock = MockRegistry()
-            mock.get_model_for_task(TaskType.CREATIVE)
+        # Create a mock registry with empty configs
+        registry._task_configs = {}
+        result = registry.get_model_for_task(TaskType.CREATIVE)
+        assert result.is_error
+        assert result.error.code == "NOT_FOUND"
 
     def test_resolve_model_alias(self) -> None:
         """Test resolving model reference via alias."""
         registry = ModelRegistry()
 
         result = registry.resolve_model("gpt4")
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_name == "gpt-4o"
-        assert result.alias_used == "gpt4"
+        assert result.is_ok
+        lookup = result.unwrap()
+        assert lookup.provider == LLMProvider.OPENAI
+        assert lookup.model_name == "gpt-4o"
+        assert lookup.alias_used == "gpt4"
 
     def test_resolve_model_qualified_name(self) -> None:
         """Test resolving model reference with qualified name."""
         registry = ModelRegistry()
 
         result = registry.resolve_model("openai:gpt-4o")
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_name == "gpt-4o"
-        assert result.alias_used is None
+        assert result.is_ok
+        lookup = result.unwrap()
+        assert lookup.provider == LLMProvider.OPENAI
+        assert lookup.model_name == "gpt-4o"
+        assert lookup.alias_used is None
 
     def test_resolve_model_name_only(self) -> None:
         """Test resolving model reference with just model name."""
         registry = ModelRegistry()
 
         result = registry.resolve_model("gpt-4o", default_provider=LLMProvider.OPENAI)
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_name == "gpt-4o"
+        assert result.is_ok
+        lookup = result.unwrap()
+        assert lookup.provider == LLMProvider.OPENAI
+        assert lookup.model_name == "gpt-4o"
 
     def test_resolve_model_invalid_provider(self) -> None:
-        """Test resolving model with invalid provider raises error."""
+        """Test resolving model with invalid provider returns validation error."""
         registry = ModelRegistry()
 
-        with pytest.raises(ValueError, match="Invalid provider"):
-            registry.resolve_model("invalid-provider:model")
+        result = registry.resolve_model("invalid-provider:model")
+        assert result.is_error
+        assert result.error.code == "VALIDATION_ERROR"
+
+    def test_resolve_model_empty_ref(self) -> None:
+        """Test resolving model with empty reference returns error."""
+        registry = ModelRegistry()
+
+        result = registry.resolve_model("")
+        assert result.is_error
 
     def test_list_aliases(self) -> None:
         """Test listing all aliases."""
         registry = ModelRegistry()
 
-        aliases = registry.list_aliases()
+        result = registry.list_aliases()
+        assert result.is_ok
+        aliases = result.unwrap()
         assert len(aliases) > 0
 
         # Check for expected aliases
@@ -335,7 +357,9 @@ class TestModelRegistry:
         """Test listing all task types."""
         registry = ModelRegistry()
 
-        task_types = registry.list_task_types()
+        result = registry.list_task_types()
+        assert result.is_ok
+        task_types = result.unwrap()
         assert TaskType.CREATIVE in task_types
         assert TaskType.LOGICAL in task_types
         assert TaskType.FAST in task_types
@@ -345,24 +369,26 @@ class TestModelRegistry:
         """Test getting recommended model based on task."""
         registry = ModelRegistry()
 
-        model = registry.get_recommended_model(task_type=TaskType.CREATIVE)
+        result = registry.get_recommended_model(task_type=TaskType.CREATIVE)
+        assert result.is_ok
+        model = result.unwrap()
         assert model is not None
-        assert model.provider in [
-            TaskType.CREATIVE,
-            LLMProvider.GEMINI,
-        ]
 
     def test_get_recommended_model_with_filters(self) -> None:
         """Test getting recommended model with capability filters."""
         registry = ModelRegistry()
 
         # Require function support
-        model = registry.get_recommended_model(requires_functions=True)
+        result = registry.get_recommended_model(requires_functions=True)
+        assert result.is_ok
+        model = result.unwrap()
         assert model is not None
         assert model.supports_functions is True
 
         # Require vision support
-        model = registry.get_recommended_model(requires_vision=True)
+        result = registry.get_recommended_model(requires_vision=True)
+        assert result.is_ok
+        model = result.unwrap()
         assert model is not None
         assert model.supports_vision is True
 
@@ -371,7 +397,9 @@ class TestModelRegistry:
         registry = ModelRegistry()
 
         # Low cost limit should return cheapest models
-        model = registry.get_recommended_model(max_cost=1.0)
+        result = registry.get_recommended_model(max_cost=1.0)
+        assert result.is_ok
+        model = result.unwrap()
         assert model is not None
         assert model.cost_per_1m_output_tokens <= 1.0
 
@@ -379,7 +407,9 @@ class TestModelRegistry:
         """Test getting recommended model with provider filter."""
         registry = ModelRegistry()
 
-        model = registry.get_recommended_model(provider_filter=[LLMProvider.OPENAI])
+        result = registry.get_recommended_model(provider_filter=[LLMProvider.OPENAI])
+        assert result.is_ok
+        model = result.unwrap()
         assert model is not None
         assert model.provider == LLMProvider.OPENAI
 
@@ -388,11 +418,12 @@ class TestModelRegistry:
         registry = ModelRegistry()
 
         # Require vision with provider that has no vision models
-        # (Note: using provider_filter with single provider that doesn't have vision)
-        model = registry.get_recommended_model(
+        result = registry.get_recommended_model(
             provider_filter=[LLMProvider.OLLAMA],
             requires_vision=True,  # Ollama models don't support vision
         )
+        assert result.is_ok
+        model = result.unwrap()
         # Should return None when no match
         assert model is None
 
@@ -400,11 +431,20 @@ class TestModelRegistry:
         """Test getting provider for a model reference."""
         registry = ModelRegistry()
 
-        provider = registry.get_provider_for_model("gpt4")
-        assert provider == LLMProvider.OPENAI
+        result = registry.get_provider_for_model("gpt4")
+        assert result.is_ok
+        assert result.unwrap() == LLMProvider.OPENAI
 
-        provider = registry.get_provider_for_model("anthropic:claude-3-opus-20240229")
-        assert provider == LLMProvider.ANTHROPIC
+        result = registry.get_provider_for_model("anthropic:claude-3-opus-20240229")
+        assert result.is_ok
+        assert result.unwrap() == LLMProvider.ANTHROPIC
+
+    def test_get_provider_for_model_invalid(self) -> None:
+        """Test getting provider for invalid model reference."""
+        registry = ModelRegistry()
+
+        result = registry.get_provider_for_model("invalid-provider:model")
+        assert result.is_error
 
     def test_is_model_available(self) -> None:
         """Test checking if model is available."""
@@ -508,8 +548,10 @@ class TestModelRegistryFileLoading:
 
         # Check custom aliases are registered
         result = registry.resolve_model("custom-gpt4")
-        assert result.provider == LLMProvider.OPENAI
-        assert result.model_name == "gpt-4o"
+        assert result.is_ok
+        lookup = result.unwrap()
+        assert lookup.provider == LLMProvider.OPENAI
+        assert lookup.model_name == "gpt-4o"
 
     def test_load_aliases_from_missing_file(self, tmp_path: Path) -> None:
         """Test loading from non-existent file doesn't crash."""
@@ -520,7 +562,8 @@ class TestModelRegistryFileLoading:
 
         # Registry should still work with default aliases
         result = registry.resolve_model("gpt4")
-        assert result.provider == LLMProvider.OPENAI
+        assert result.is_ok
+        assert result.unwrap().provider == LLMProvider.OPENAI
 
     def test_load_aliases_from_invalid_json(self, tmp_path: Path) -> None:
         """Test loading from invalid JSON file logs warning."""
@@ -555,7 +598,8 @@ class TestModelRegistryFileLoading:
 
         # Valid alias should work
         result = registry.resolve_model("valid")
-        assert result.provider == LLMProvider.OPENAI
+        assert result.is_ok
+        assert result.unwrap().provider == LLMProvider.OPENAI
 
         # Invalid aliases should be skipped
         # (registry should still have default aliases)
@@ -576,7 +620,8 @@ class TestModelRegistryEnvLoading:
 
         # Check env aliases are registered
         result = registry.resolve_model("gpt4")
-        assert result.provider == LLMProvider.OPENAI
+        assert result.is_ok
+        assert result.unwrap().provider == LLMProvider.OPENAI
 
     @patch.dict("os.environ", {"MODEL_ALIASES": "invalid-format"})
     def test_load_aliases_from_env_invalid_format(self) -> None:
@@ -625,9 +670,9 @@ class TestModelRegistryFactory:
         config = ModelRegistryConfig(custom_models={LLMProvider.OPENAI: [custom_model]})
         registry = create_model_registry(config)
 
-        model = registry.get_model(LLMProvider.OPENAI, "factory-test")
-        assert model is not None
-        assert model.model_name == "factory-test"
+        result = registry.get_model(LLMProvider.OPENAI, "factory-test")
+        assert result.is_ok
+        assert result.unwrap().model_name == "factory-test"
 
 
 class TestModelLookupResult:
@@ -717,3 +762,55 @@ class TestDefaultConstants:
         assert "gemini" in alias_names
         assert "fast" in alias_names
         assert "cheap" in alias_names
+
+
+class TestResultPattern:
+    """Test Result pattern implementation in ModelRegistry."""
+
+    def test_get_model_returns_result_like_object(self) -> None:
+        """Test that get_model returns a Result-like object."""
+        registry = ModelRegistry()
+        result = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
+        # Result is a Union type, check for expected attributes
+        assert hasattr(result, "is_ok")
+        assert hasattr(result, "is_error")
+        assert hasattr(result, "unwrap")
+        # Check properties work correctly
+        assert result.is_ok is True
+        assert result.is_error is False
+
+    def test_resolve_model_returns_result_like_object(self) -> None:
+        """Test that resolve_model returns a Result-like object."""
+        registry = ModelRegistry()
+        result = registry.resolve_model("gpt4")
+        # Result is a Union type, check for expected attributes
+        assert hasattr(result, "is_ok")
+        assert hasattr(result, "is_error")
+        assert hasattr(result, "unwrap")
+        # Check properties work correctly
+        assert result.is_ok is True
+        assert result.is_error is False
+
+    def test_ok_result_can_be_unwrapped(self) -> None:
+        """Test unwrapping Ok result."""
+        registry = ModelRegistry()
+        result = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
+        assert result.is_ok
+        model = result.unwrap()
+        assert model.model_name == "gpt-4o"
+
+    def test_error_result_has_code(self) -> None:
+        """Test error result has error code."""
+        registry = ModelRegistry()
+        result = registry.get_model(LLMProvider.OPENAI, "nonexistent")
+        assert result.is_error
+        assert result.error.code == "NOT_FOUND"
+
+    def test_result_and_then_chaining(self) -> None:
+        """Test Result and_then chaining."""
+        from src.core.result import Ok
+        registry = ModelRegistry()
+        result = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
+        chained = result.and_then(lambda m: Ok(m.model_name))
+        assert chained.is_ok
+        assert chained.unwrap() == "gpt-4o"

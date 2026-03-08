@@ -18,6 +18,9 @@ from dataclasses import dataclass
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.core.result import Err, Ok, Result
+
 from ...domain.models.source_type import SourceType
 from ..services.knowledge_ingestion_service import RetrievedChunk
 
@@ -130,7 +133,7 @@ class CitationFormatter:
         SourceType.LOCATION: "Loc",
     }
 
-    def __init__(self, config: CitationFormatterConfig | None = None):
+    def __init__(self, config: CitationFormatterConfig | None = None) -> None:
         """
         Initialize the citation formatter.
 
@@ -219,6 +222,56 @@ class CitationFormatter:
             key=lambda r: r.relevance_score,
             reverse=True,
         )
+
+    def get_sources_result(
+        self,
+        chunks: list[RetrievedChunk],
+        source_names: dict[str, str] | None = None,
+    ) -> Result[list[SourceReference], ServiceError]:
+        """
+        Extract unique source references from chunks (Result pattern).
+
+        Args:
+            chunks: List of retrieved chunks
+            source_names: Optional mapping of source_id to display names
+
+        Returns:
+            Result containing list of SourceReference on success.
+            - Ok: List of unique SourceReference objects, sorted by relevance
+            - Err(ServiceError): If source extraction fails
+
+        Example:
+            >>> result = formatter.get_sources_result(chunks)
+            >>> if result.is_ok:
+            ...     for source in result.value:
+            ...         print(f"{source.source_type}:{source.source_id}")
+        """
+        try:
+            if not chunks:
+                return Ok([])
+
+            # Group by source
+            source_groups = self._group_by_source(chunks)
+
+            # Generate references without formatting
+            references = self._generate_references(source_groups, source_names)
+
+            # Return as list, sorted by relevance score
+            return Ok(
+                sorted(
+                    list(references.values()),
+                    key=lambda r: r.relevance_score,
+                    reverse=True,
+                )
+            )
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get sources: {e}",
+                    service_name="CitationFormatter",
+                    operation="get_sources",
+                )
+            )
 
     def format_citation_marker(
         self,

@@ -20,7 +20,7 @@ from src.contexts.narrative.application.services.chapter_analysis_service import
 from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from src.contexts.narrative.domain.entities.scene import Scene, SceneStatus, StoryPhase
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 class TestPhaseDistribution:

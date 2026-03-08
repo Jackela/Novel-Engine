@@ -6,14 +6,16 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles agent registration, lifecycle management, and coordination.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.agents.persona_agent.agent import PersonaAgent
+from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.core.result import Err, Ok, Result
 from src.core.types.shared_types import CharacterAction
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AgentCoordinator:
@@ -27,7 +29,7 @@ class AgentCoordinator:
     - Agent communication and isolation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the agent coordinator."""
         self.registered_agents: List[PersonaAgent] = []
         self.total_actions_processed = 0
@@ -101,7 +103,7 @@ class AgentCoordinator:
         Returns:
             List of dicts containing agent information
         """
-        agent_list = []
+        agent_list: list[Any] = []
         for agent in self.registered_agents:
             agent_info = {
                 "agent_id": agent.agent_id,
@@ -111,6 +113,35 @@ class AgentCoordinator:
             agent_list.append(agent_info)
 
         return agent_list
+
+    def get_agent_list_result(self) -> Result[List[Dict[str, str]], ServiceError]:
+        """
+        Get list of registered agents with basic info (Result pattern).
+
+        Returns:
+            Result containing list of agent information dicts on success.
+            - Ok: List of dicts containing agent information
+            - Err(ServiceError): If agent list retrieval fails
+        """
+        try:
+            agent_list: list[Any] = []
+            for agent in self.registered_agents:
+                agent_info = {
+                    "agent_id": agent.agent_id,
+                    "character_name": agent.character_data.get("name", "Unknown"),
+                    "status": "active",
+                }
+                agent_list.append(agent_info)
+
+            return Ok(agent_list)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get agent list: {e}",
+                    service_name="AgentCoordinator",
+                    operation="get_agent_list",
+                )
+            )
 
     def execute_turn(
         self, world_state_callback=None, action_handler=None
@@ -145,7 +176,7 @@ class AgentCoordinator:
         for agent in self.registered_agents:
             try:
                 # Get world state for this agent
-                world_state = {}
+                world_state: dict[Any, Any] = {}
                 if world_state_callback:
                     world_state = world_state_callback(agent)
 
@@ -239,8 +270,7 @@ class AgentCoordinator:
         Returns:
             List of validation issue descriptions
         """
-        issues = []
-
+        issues: list[Any] = []
         for agent in self.registered_agents:
             # Check required attributes
             if not hasattr(agent, "agent_id") or not agent.agent_id:

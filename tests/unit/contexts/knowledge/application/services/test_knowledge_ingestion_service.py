@@ -9,6 +9,11 @@ Tests ingestion, batch processing, deletion, and update operations.
 Constitution Compliance:
 - Article III (TDD): Tests written to validate ingestion behavior
 - Article II (Hexagonal): Tests use mock ports for isolation
+
+Note: These tests use the Result pattern API:
+- result.is_ok indicates success
+- result.value contains the success value (use result.unwrap())
+- result.error contains the error if failed
 """
 
 from typing import Any
@@ -17,7 +22,6 @@ from unittest.mock import AsyncMock
 import pytest
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
-    EmbeddingError,
     IEmbeddingService,
 )
 from src.contexts.knowledge.application.ports.i_vector_store import (
@@ -25,7 +29,6 @@ from src.contexts.knowledge.application.ports.i_vector_store import (
     QueryResult,
     UpsertResult,
     VectorDocument,
-    VectorStoreError,
 )
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
     IngestionProgress,
@@ -37,7 +40,7 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -246,12 +249,14 @@ class TestKnowledgeIngestionService:
             source_id="char_aldric",
         )
 
-        # Verify result
-        assert result.success is True
-        assert result.source_id == "char_aldric"
-        assert result.chunk_count > 0
-        assert result.entries_created == result.chunk_count
-        assert result.entries_updated == 0
+        # Verify result - using Result pattern API
+        assert result.is_ok, f"Expected success but got error: {result.error if hasattr(result, 'error') else 'unknown'}"
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
+        assert ingestion_result.source_id == "char_aldric"
+        assert ingestion_result.chunk_count > 0
+        assert ingestion_result.entries_created == ingestion_result.chunk_count
+        assert ingestion_result.entries_updated == 0
 
         # Verify vector store was called
         assert mock_vector_store.upsert.call_count == 1
@@ -261,7 +266,7 @@ class TestKnowledgeIngestionService:
         documents = call_args[1]["documents"]
 
         # Verify documents were created
-        assert len(documents) == result.chunk_count
+        assert len(documents) == ingestion_result.chunk_count
 
         # Verify each document has required fields
         for doc in documents:
@@ -291,15 +296,17 @@ class TestKnowledgeIngestionService:
             chunking_strategy=chunking_strategy,
         )
 
-        assert result.success is True
-        assert result.chunk_count > 0
+        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
+        assert ingestion_result.chunk_count > 0
 
         # Get upserted documents
         call_args = mock_vector_store.upsert.call_args
         documents = call_args[1]["documents"]
 
         # Verify chunks were created with the strategy
-        assert len(documents) == result.chunk_count
+        assert len(documents) == ingestion_result.chunk_count
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -320,7 +327,9 @@ class TestKnowledgeIngestionService:
             extra_metadata={"rarity": "legendary", "damage": 100},
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
 
         # Verify metadata
         call_args = mock_vector_store.upsert.call_args
@@ -337,36 +346,38 @@ class TestKnowledgeIngestionService:
     @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
-    async def test_ingest_empty_content_raises_error(
+    async def test_ingest_empty_content_returns_error(
         self,
         ingestion_service: KnowledgeIngestionService,
     ):
-        """Test that ingesting empty content raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
-            await ingestion_service.ingest(
-                content="",
-                source_type=SourceType.CHARACTER,
-                source_id="char_1",
-            )
+        """Test that ingesting empty content returns an error Result."""
+        result = await ingestion_service.ingest(
+            content="",
+            source_type=SourceType.CHARACTER,
+            source_id="char_1",
+        )
 
-        assert "content" in str(exc_info.value).lower()
+        # With Result pattern, error is returned as Err, not raised
+        assert result.is_error, "Expected error for empty content"
+        assert "content" in str(result.error.message).lower() or "empty" in str(result.error.message).lower()
 
     @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
-    async def test_ingest_empty_source_id_raises_error(
+    async def test_ingest_empty_source_id_returns_error(
         self,
         ingestion_service: KnowledgeIngestionService,
     ):
-        """Test that empty source_id raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
-            await ingestion_service.ingest(
-                content="Some content",
-                source_type=SourceType.CHARACTER,
-                source_id="",
-            )
+        """Test that empty source_id returns an error Result."""
+        result = await ingestion_service.ingest(
+            content="Some content",
+            source_type=SourceType.CHARACTER,
+            source_id="",
+        )
 
-        assert "source_id" in str(exc_info.value).lower()
+        # With Result pattern, error is returned as Err, not raised
+        assert result.is_error, "Expected error for empty source_id"
+        assert "source_id" in str(result.error.message).lower()
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -397,10 +408,12 @@ class TestKnowledgeIngestionService:
 
         result = await ingestion_service.batch_ingest(entries)
 
-        assert result.success is True
-        assert result.total_entries == 3
-        assert result.successful == 3
-        assert result.failed == 0
+        assert result.is_ok, f"Batch ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        batch_result = result.unwrap()
+        assert batch_result.success is True
+        assert batch_result.total_entries == 3
+        assert batch_result.successful == 3
+        assert batch_result.failed == 0
 
         # Verify upsert was called once for the batch
         assert mock_vector_store.upsert.call_count == 3  # One per entry
@@ -431,7 +444,9 @@ class TestKnowledgeIngestionService:
             entries, on_progress=track_progress
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Batch ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        batch_result = result.unwrap()
+        assert batch_result.success is True
         assert len(progress_updates) == 5
 
         # Verify progress updates
@@ -455,6 +470,7 @@ class TestKnowledgeIngestionService:
         async def conditional_embed_batch(texts: list[str]):
             # Check if any text contains "fail"
             if any("fail" in t.lower() for t in texts):
+                from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
                 raise EmbeddingError("Simulated failure")
             return await original_embed_batch(texts)
 
@@ -480,12 +496,15 @@ class TestKnowledgeIngestionService:
 
         result = await ingestion_service.batch_ingest(entries)
 
+        # The batch process should complete and report the failure
+        assert result.is_ok, f"Batch ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        batch_result = result.unwrap()
         # The batch process should fail overall because one entry failed
-        assert result.success is False
-        assert result.total_entries == 3
+        assert batch_result.success is False
+        assert batch_result.total_entries == 3
         # First entry succeeds, second fails, third is never processed due to batch order
-        assert result.failed >= 1
-        assert "char_fail" in result.errors
+        assert batch_result.failed >= 1
+        assert "char_fail" in batch_result.errors
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -497,18 +516,19 @@ class TestKnowledgeIngestionService:
     ):
         """Test deleting all chunks for a source."""
         # First ingest something
-        result = await ingestion_service.ingest(
+        ingest_result = await ingestion_service.ingest(
             content="Content to delete",
             source_type=SourceType.CHARACTER,
             source_id="char_to_delete",
         )
-
-        _chunk_count = result.chunk_count  # noqa: F841
+        assert ingest_result.is_ok, "Setup failed: could not ingest content"
 
         # Now delete
-        deleted_count = await ingestion_service.delete("char_to_delete")
+        result = await ingestion_service.delete("char_to_delete")
 
         # The mock's delete implementation tracks deletions
+        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        deleted_count = result.unwrap()
         assert deleted_count >= 0
 
         # Verify delete was called
@@ -528,17 +548,20 @@ class TestKnowledgeIngestionService:
         mock_vector_store: IVectorStore,
     ):
         """Test deleting chunks with source type filter."""
-        await ingestion_service.ingest(
+        ingest_result = await ingestion_service.ingest(
             content="Character content",
             source_type=SourceType.CHARACTER,
             source_id="shared_id",
         )
+        assert ingest_result.is_ok, "Setup failed: could not ingest content"
 
-        deleted_count = await ingestion_service.delete(
+        result = await ingestion_service.delete(
             source_id="shared_id",
             source_type=SourceType.CHARACTER,
         )
 
+        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        deleted_count = result.unwrap()
         assert deleted_count >= 0
 
         # Verify delete was called with where filter
@@ -553,8 +576,10 @@ class TestKnowledgeIngestionService:
         ingestion_service: KnowledgeIngestionService,
     ):
         """Test deleting a non-existent source returns 0."""
-        deleted_count = await ingestion_service.delete("nonexistent_char")
+        result = await ingestion_service.delete("nonexistent_char")
 
+        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        deleted_count = result.unwrap()
         assert deleted_count == 0
 
     @pytest.mark.integration
@@ -567,11 +592,12 @@ class TestKnowledgeIngestionService:
     ):
         """Test updating a source replaces old chunks with new."""
         # Initial ingest
-        await ingestion_service.ingest(
+        initial_result = await ingestion_service.ingest(
             content="Original content that will be replaced",
             source_type=SourceType.CHARACTER,
             source_id="char_to_update",
         )
+        assert initial_result.is_ok, "Setup failed: could not ingest initial content"
 
         first_upsert_count = mock_vector_store.upsert.call_count
 
@@ -582,10 +608,12 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.CHARACTER,
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        update_result = result.unwrap()
+        assert update_result.success is True
         # entries_deleted will be 0 in mock because mock delete doesn't track state
         # but entries_created should reflect new chunks
-        assert result.entries_created > 0
+        assert update_result.entries_created > 0
 
         # Verify delete was called (update calls delete first)
         assert mock_vector_store.delete.call_count >= 1
@@ -602,11 +630,12 @@ class TestKnowledgeIngestionService:
         mock_vector_store: IVectorStore,
     ):
         """Test updating with new tags."""
-        await ingestion_service.ingest(
+        initial_result = await ingestion_service.ingest(
             content="Original content",
             source_type=SourceType.CHARACTER,
             source_id="char_tags",
         )
+        assert initial_result.is_ok, "Setup failed: could not ingest initial content"
 
         result = await ingestion_service.update(
             source_id="char_tags",
@@ -616,7 +645,9 @@ class TestKnowledgeIngestionService:
             extra_metadata={"version": 2},
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        update_result = result.unwrap()
+        assert update_result.success is True
 
         # Verify new metadata is stored
         call_args = mock_vector_store.upsert.call_args
@@ -640,26 +671,29 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.CHARACTER,
         )
 
-        assert result.success is True
-        assert result.entries_created > 0
-        assert result.entries_deleted == 0  # Nothing to delete
+        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        update_result = result.unwrap()
+        assert update_result.success is True
+        assert update_result.entries_created > 0
+        assert update_result.entries_deleted == 0  # Nothing to delete
 
     @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
-    async def test_update_empty_content_raises_error(
+    async def test_update_empty_content_returns_error(
         self,
         ingestion_service: KnowledgeIngestionService,
     ):
-        """Test that updating with empty content raises ValueError."""
-        with pytest.raises(ValueError) as exc_info:
-            await ingestion_service.update(
-                source_id="char_1",
-                new_content="",
-                source_type=SourceType.CHARACTER,
-            )
+        """Test that updating with empty content returns an error Result."""
+        result = await ingestion_service.update(
+            source_id="char_1",
+            new_content="",
+            source_type=SourceType.CHARACTER,
+        )
 
-        assert "content" in str(exc_info.value).lower()
+        # With Result pattern, error is returned as Err, not raised
+        assert result.is_error, "Expected error for empty content"
+        assert "content" in str(result.error.message).lower()
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -671,15 +705,18 @@ class TestKnowledgeIngestionService:
     ):
         """Test querying by source_id returns ingested chunks."""
         # Ingest content
-        await ingestion_service.ingest(
+        ingest_result = await ingestion_service.ingest(
             content=sample_character_content,
             source_type=SourceType.CHARACTER,
             source_id="char_query",
         )
+        assert ingest_result.is_ok, "Setup failed: could not ingest content"
 
         # Query by source_id
-        results = await ingestion_service.query_by_source("char_query")
+        result = await ingestion_service.query_by_source("char_query")
 
+        assert result.is_ok, f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        results = result.unwrap()
         assert len(results) > 0
         assert all(r.source_id == "char_query" for r in results)
 
@@ -691,8 +728,10 @@ class TestKnowledgeIngestionService:
         ingestion_service: KnowledgeIngestionService,
     ):
         """Test querying non-existent source returns empty list."""
-        results = await ingestion_service.query_by_source("nonexistent")
+        result = await ingestion_service.query_by_source("nonexistent")
 
+        assert result.is_ok, f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        results = result.unwrap()
         assert results == []
 
     @pytest.mark.integration
@@ -711,7 +750,9 @@ class TestKnowledgeIngestionService:
             collection="custom_collection",
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
 
         # Verify upsert was called with custom collection
         call_args = mock_vector_store.upsert.call_args
@@ -720,39 +761,47 @@ class TestKnowledgeIngestionService:
     @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
-    async def test_embedding_service_error_propagates(
+    async def test_embedding_service_error_returns_error_result(
         self,
         ingestion_service: KnowledgeIngestionService,
         mock_embedding_service: IEmbeddingService,
     ):
-        """Test that embedding service errors are handled properly."""
+        """Test that embedding service errors return an error Result."""
         # The service uses embed_batch, so we need to mock that
+        from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
         mock_embedding_service.embed_batch.side_effect = EmbeddingError("API error")
 
-        with pytest.raises(EmbeddingError):
-            await ingestion_service.ingest(
-                content="Test content",
-                source_type=SourceType.CHARACTER,
-                source_id="char_1",
-            )
+        result = await ingestion_service.ingest(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char_1",
+        )
+
+        # With Result pattern, error is returned as Err, not raised
+        assert result.is_error, "Expected error Result for embedding failure"
+        assert "embedding" in str(result.error.message).lower() or "embed" in str(result.error.message).lower()
 
     @pytest.mark.integration
     @pytest.mark.fast
     @pytest.mark.asyncio
-    async def test_vector_store_error_propagates(
+    async def test_vector_store_error_returns_error_result(
         self,
         ingestion_service: KnowledgeIngestionService,
         mock_vector_store: IVectorStore,
     ):
-        """Test that vector store errors are handled properly."""
+        """Test that vector store errors return an error Result."""
+        from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError
         mock_vector_store.upsert.side_effect = VectorStoreError("Storage error")
 
-        with pytest.raises(VectorStoreError):
-            await ingestion_service.ingest(
-                content="Test content",
-                source_type=SourceType.CHARACTER,
-                source_id="char_1",
-            )
+        result = await ingestion_service.ingest(
+            content="Test content",
+            source_type=SourceType.CHARACTER,
+            source_id="char_1",
+        )
+
+        # With Result pattern, error is returned as Err, not raised
+        assert result.is_error, "Expected error Result for vector store failure"
+        assert "store" in str(result.error.message).lower() or "storage" in str(result.error.message).lower()
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -769,7 +818,9 @@ class TestKnowledgeIngestionService:
             source_id="char_embed",
         )
 
-        assert result.success is True
+        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        ingestion_result = result.unwrap()
+        assert ingestion_result.success is True
 
         # Verify embed_batch was called (service uses batch for efficiency)
         embed_batch_calls = mock_embedding_service.embed_batch.call_count
@@ -778,7 +829,7 @@ class TestKnowledgeIngestionService:
         # Verify embeddings were created
         call_args = mock_embedding_service.embed_batch.call_args
         embeddings = call_args[0][0]  # First positional arg is texts list
-        assert len(embeddings) == result.chunk_count
+        assert len(embeddings) == ingestion_result.chunk_count
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -789,8 +840,10 @@ class TestKnowledgeIngestionService:
         mock_vector_store: IVectorStore,
     ):
         """Test that health check delegates to vector store."""
-        is_healthy = await ingestion_service.health_check()
+        result = await ingestion_service.health_check()
 
+        assert result.is_ok, f"Health check failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        is_healthy = result.unwrap()
         assert is_healthy is True
         assert mock_vector_store.health_check.call_count == 1
 
@@ -803,7 +856,9 @@ class TestKnowledgeIngestionService:
         mock_vector_store: IVectorStore,
     ):
         """Test that get_count delegates to vector store."""
-        count = await ingestion_service.get_count()
+        result = await ingestion_service.get_count()
 
+        assert result.is_ok, f"Get count failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        count = result.unwrap()
         assert count >= 0
         assert mock_vector_store.count.call_count == 1

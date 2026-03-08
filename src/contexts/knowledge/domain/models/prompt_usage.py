@@ -127,9 +127,13 @@ class PromptUsage:
 
         # Normalize timestamp to UTC
         if self.timestamp.tzinfo is None:
-            object.__setattr__(self, "timestamp", self.timestamp.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "timestamp", self.timestamp.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "timestamp", self.timestamp.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "timestamp", self.timestamp.astimezone(timezone.utc)
+            )
 
     @property
     def model_identifier(self) -> str:
@@ -183,7 +187,11 @@ class PromptUsage:
             prompt_id=data["prompt_id"],
             prompt_name=data["prompt_name"],
             prompt_version=data["prompt_version"],
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else _utcnow(),
+            timestamp=(
+                datetime.fromisoformat(data["timestamp"])
+                if "timestamp" in data
+                else _utcnow()
+            ),
             input_tokens=data.get("input_tokens", 0),
             output_tokens=data.get("output_tokens", 0),
             total_tokens=data.get("total_tokens", 0),
@@ -454,7 +462,9 @@ class PromptUsageStats:
         total_input_tokens = sum(u.input_tokens for u in usages)
         total_output_tokens = sum(u.output_tokens for u in usages)
         total_latency_ms = sum(u.latency_ms for u in usages)
-        rating_sum = sum(u.user_rating or 0 for u in usages if u.user_rating is not None)
+        rating_sum = sum(
+            u.user_rating or 0 for u in usages if u.user_rating is not None
+        )
         rating_count = sum(1 for u in usages if u.user_rating is not None)
 
         # Find time range

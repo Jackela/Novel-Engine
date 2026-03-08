@@ -18,7 +18,7 @@ from src.core.types.shared_types import (
     ValidationResult,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 def _build_character_data(

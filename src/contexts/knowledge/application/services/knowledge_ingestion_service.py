@@ -18,10 +18,18 @@ from typing import Any, Callable
 
 import structlog
 
-from ...application.ports.i_embedding_service import EmbeddingError, IEmbeddingService
+from src.core.result import Err, Ok, Result
+
+from ...application.ports.i_embedding_service import IEmbeddingService
 from ...application.ports.i_vector_store import (
     IVectorStore,
     VectorDocument,
+)
+from ...domain.errors import (
+    EmbeddingError,
+    IngestionError,
+    NotFoundError,
+    ValidationError,
     VectorStoreError,
 )
 from ...domain.models.chunking_strategy import ChunkingStrategy
@@ -180,7 +188,10 @@ class KnowledgeIngestionService:
         ...     source_type=SourceType.CHARACTER,
         ...     source_id="char_alice",
         ... )
-        >>> print(f"Created {result.chunk_count} chunks")
+        >>> if result.is_ok:
+        ...     print(f"Created {result.value.chunk_count} chunks")
+        ... else:
+        ...     print(f"Error: {result.error.message}")
     """
 
     def __init__(
@@ -190,7 +201,7 @@ class KnowledgeIngestionService:
         processor_factory: IngestionProcessorFactory | None = None,
         default_chunking_strategy: ChunkingStrategy | None = None,
         default_collection: str = DEFAULT_COLLECTION,
-    ):
+    ) -> None:
         """
         Initialize the ingestion service.
 
@@ -222,7 +233,7 @@ class KnowledgeIngestionService:
         tags: list[str] | None = None,
         extra_metadata: dict[str, Any] | None = None,
         collection: str | None = None,
-    ) -> IngestionResult:
+    ) -> Result[IngestionResult, ValidationError | EmbeddingError | VectorStoreError]:
         """
         Ingest a single knowledge entry into the RAG system.
 
@@ -239,12 +250,11 @@ class KnowledgeIngestionService:
             collection: Optional collection name (uses default if None)
 
         Returns:
-            IngestionResult with operation details
-
-        Raises:
-            ValueError: If content or source_id is empty
-            EmbeddingError: If embedding generation fails
-            VectorStoreError: If vector storage fails
+            Result containing IngestionResult on success, or error on failure.
+            - Ok: IngestionResult with operation details
+            - Err(ValidationError): If content or source_id is empty
+            - Err(EmbeddingError): If embedding generation fails
+            - Err(VectorStoreError): If vector storage fails
 
         Example:
             >>> result = await service.ingest(
@@ -253,18 +263,34 @@ class KnowledgeIngestionService:
             ...     source_id="char_aldric",
             ...     tags=["protagonist", "knight"],
             ... )
-            >>> print(f"Created {result.chunk_count} chunks")
+            >>> match result:
+            ...     case Ok(ingestion_result):
+            ...         print(f"Created {ingestion_result.chunk_count} chunks")
+            ...     case Err(error):
+            ...         logger.error("ingestion_failed", error=error.message)
         """
         # Validate input
         if not content or not content.strip():
-            raise ValueError("content cannot be empty")
+            return Err(ValidationError(
+                message="content cannot be empty",
+                field="content",
+            ))
 
         if not source_id or not source_id.strip():
-            raise ValueError("source_id cannot be empty")
+            return Err(ValidationError(
+                message="source_id cannot be empty",
+                field="source_id",
+            ))
 
         # Normalize source_type
         if isinstance(source_type, str):
-            source_type = SourceType.from_string(source_type)
+            try:
+                source_type = SourceType.from_string(source_type)
+            except ValueError as e:
+                return Err(ValidationError(
+                    message=f"Invalid source_type: {e}",
+                    field="source_type",
+                ))
 
         target_collection = collection or self._default_collection
 
@@ -315,19 +341,22 @@ class KnowledgeIngestionService:
 
         try:
             embeddings = await self._embedding_service.embed_batch(chunk_texts)
-        except EmbeddingError as e:
+        except Exception as e:
             logger.error(
                 "ingestion_embedding_failed",
                 source_id=source_id,
                 error=str(e),
             )
-            raise
+            return Err(EmbeddingError(
+                message=f"Failed to generate embeddings: {e}",
+                source_id=source_id,
+            ))
 
         if len(embeddings) != len(chunked_doc.chunks):
-            raise EmbeddingError(
-                f"Embedding count mismatch: expected {len(chunked_doc.chunks)}, "
-                f"got {len(embeddings)}"
-            )
+            return Err(EmbeddingError(
+                message=f"Embedding count mismatch: expected {len(chunked_doc.chunks)}, got {len(embeddings)}",
+                source_id=source_id,
+            ))
 
         logger.debug(
             "ingestion_embedding_complete",
@@ -336,9 +365,8 @@ class KnowledgeIngestionService:
         )
 
         # Step 3: Create VectorDocuments and store
-        vector_documents = []
-        entries = []
-
+        vector_documents: list[Any] = []
+        entries: list[Any] = []
         for i, (chunk, embedding) in enumerate(zip(chunked_doc.chunks, embeddings)):
             # Create SourceKnowledgeEntry with enriched metadata
             entry = SourceKnowledgeEntry.create(
@@ -385,19 +413,22 @@ class KnowledgeIngestionService:
                 collection=target_collection,
                 documents=vector_documents,
             )
-        except VectorStoreError as e:
+        except Exception as e:
             logger.error(
                 "ingestion_storage_failed",
                 source_id=source_id,
                 error=str(e),
             )
-            raise
+            return Err(VectorStoreError(
+                message=f"Failed to store documents: {e}",
+                operation="upsert",
+            ))
 
         if not upsert_result.success:
-            raise VectorStoreError(
-                f"Failed to upsert documents for source {source_id}",
-                code="UPSERT_FAILED",
-            )
+            return Err(VectorStoreError(
+                message=f"Failed to upsert documents for source {source_id}",
+                operation="upsert",
+            ))
 
         logger.info(
             "ingestion_complete",
@@ -407,18 +438,18 @@ class KnowledgeIngestionService:
             collection=target_collection,
         )
 
-        return IngestionResult(
+        return Ok(IngestionResult(
             success=True,
             source_id=source_id,
             chunk_count=chunked_doc.total_chunks,
             entries_created=len(entries),
-        )
+        ))
 
     async def batch_ingest(
         self,
         entries: list[dict[str, Any]],
         on_progress: Callable[[IngestionProgress], None] | None = None,
-    ) -> BatchIngestionResult:
+    ) -> Result[BatchIngestionResult, ValidationError]:
         """
         Ingest multiple knowledge entries in batch.
 
@@ -434,7 +465,8 @@ class KnowledgeIngestionService:
             on_progress: Optional callback for progress updates
 
         Returns:
-            BatchIngestionResult with aggregate statistics
+            Result containing BatchIngestionResult on success.
+            Individual entry failures are tracked in the result, not raised.
 
         Example:
             >>> entries = [
@@ -442,8 +474,18 @@ class KnowledgeIngestionService:
             ...     {"content": "...", "source_type": SourceType.LORE, "source_id": "lore_1"},
             ... ]
             >>> result = await service.batch_ingest(entries)
-            >>> print(f"Processed {result.successful} of {result.total_entries}")
+            >>> match result:
+            ...     case Ok(batch_result):
+            ...         print(f"Processed {batch_result.successful} of {batch_result.total_entries}")
+            ...     case Err(error):
+            ...         print(f"Batch error: {error.message}")
         """
+        if not isinstance(entries, list):
+            return Err(ValidationError(  # type: ignore[unreachable]
+                message="entries must be a list",
+                field="entries",
+            ))
+
         total = len(entries)
         successful = 0
         failed = 0
@@ -453,7 +495,7 @@ class KnowledgeIngestionService:
             source_id = entry_spec.get("source_id", f"unknown_{i}")
 
             try:
-                await self.ingest(
+                result = await self.ingest(
                     content=entry_spec["content"],
                     source_type=entry_spec["source_type"],
                     source_id=source_id,
@@ -463,7 +505,21 @@ class KnowledgeIngestionService:
                     collection=entry_spec.get("collection"),
                 )
 
-                successful += 1
+                if result.is_ok:
+                    successful += 1
+                else:
+                    failed += 1
+                    if result.error is not None:
+                        error_msg = f"{result.error.code}: {result.error.message}"
+                    else:
+                        error_msg = "Unknown error"
+                    errors[source_id] = error_msg
+
+                    logger.warning(
+                        "batch_ingest_entry_failed",
+                        source_id=source_id,
+                        error=error_msg,
+                    )
 
                 # Report progress
                 if on_progress:
@@ -473,7 +529,8 @@ class KnowledgeIngestionService:
                             current=i + 1,
                             total=total,
                             source_id=source_id,
-                            success=True,
+                            success=result.is_ok,
+                            error=errors.get(source_id),
                         ),
                     )
 
@@ -510,20 +567,20 @@ class KnowledgeIngestionService:
             failed=failed,
         )
 
-        return BatchIngestionResult(
+        return Ok(BatchIngestionResult(
             success=overall_success,
             total_entries=total,
             successful=successful,
             failed=failed,
             errors=errors,
-        )
+        ))
 
     async def delete(
         self,
         source_id: str,
         source_type: SourceType | str | None = None,
         collection: str | None = None,
-    ) -> int:
+    ) -> Result[int, ValidationError | VectorStoreError]:
         """
         Delete all chunks for a given source.
 
@@ -533,12 +590,25 @@ class KnowledgeIngestionService:
             collection: Optional collection name (uses default if None)
 
         Returns:
-            Number of chunks deleted
+            Result containing number of chunks deleted on success.
+            - Ok: Number of chunks deleted
+            - Err(ValidationError): If source_id is empty
+            - Err(VectorStoreError): If deletion fails
 
         Example:
-            >>> deleted = await service.delete("char_aldric")
-            >>> print(f"Deleted {deleted} chunks")
+            >>> result = await service.delete("char_aldric")
+            >>> match result:
+            ...     case Ok(deleted_count):
+            ...         print(f"Deleted {deleted_count} chunks")
+            ...     case Err(error):
+            ...         print(f"Delete failed: {error.message}")
         """
+        if not source_id or not source_id.strip():
+            return Err(ValidationError(
+                message="source_id cannot be empty",
+                field="source_id",
+            ))
+
         target_collection = collection or self._default_collection
 
         # Build filter
@@ -546,7 +616,13 @@ class KnowledgeIngestionService:
 
         if source_type:
             if isinstance(source_type, str):
-                source_type = SourceType.from_string(source_type)
+                try:
+                    source_type = SourceType.from_string(source_type)
+                except ValueError as e:
+                    return Err(ValidationError(
+                        message=f"Invalid source_type: {e}",
+                        field="source_type",
+                    ))
             where_filter["source_type"] = source_type.value
 
         logger.debug(
@@ -556,10 +632,21 @@ class KnowledgeIngestionService:
             filter=where_filter,
         )
 
-        deleted_count = await self._vector_store.delete(
-            collection=target_collection,
-            where=where_filter,
-        )
+        try:
+            deleted_count = await self._vector_store.delete(
+                collection=target_collection,
+                where=where_filter,
+            )
+        except Exception as e:
+            logger.error(
+                "ingestion_delete_failed",
+                source_id=source_id,
+                error=str(e),
+            )
+            return Err(VectorStoreError(
+                message=f"Failed to delete documents: {e}",
+                operation="delete",
+            ))
 
         logger.info(
             "ingestion_delete_complete",
@@ -567,7 +654,7 @@ class KnowledgeIngestionService:
             deleted_count=deleted_count,
         )
 
-        return deleted_count
+        return Ok(deleted_count)
 
     async def update(
         self,
@@ -578,7 +665,7 @@ class KnowledgeIngestionService:
         tags: list[str] | None = None,
         extra_metadata: dict[str, Any] | None = None,
         collection: str | None = None,
-    ) -> IngestionResult:
+    ) -> Result[IngestionResult, ValidationError | EmbeddingError | VectorStoreError]:
         """
         Update knowledge for a source (replace old chunks with new).
 
@@ -592,7 +679,11 @@ class KnowledgeIngestionService:
             collection: Optional collection name
 
         Returns:
-            IngestionResult with operation details
+            Result containing IngestionResult on success.
+            - Ok: IngestionResult with operation details
+            - Err(ValidationError): If source_id or new_content is empty
+            - Err(EmbeddingError): If embedding generation fails
+            - Err(VectorStoreError): If vector operations fail
 
         Example:
             >>> result = await service.update(
@@ -600,22 +691,49 @@ class KnowledgeIngestionService:
             ...     new_content="Updated character profile...",
             ...     source_type=SourceType.CHARACTER,
             ... )
+            >>> match result:
+            ...     case Ok(update_result):
+            ...         print(f"Updated: {update_result.entries_created} created, {update_result.entries_deleted} deleted")
+            ...     case Err(error):
+            ...         print(f"Update failed: {error.message}")
         """
         if not new_content or not new_content.strip():
-            raise ValueError("new_content cannot be empty")
+            return Err(ValidationError(
+                message="new_content cannot be empty",
+                field="new_content",
+            ))
 
         # Normalize source_type
         if isinstance(source_type, str):
-            source_type = SourceType.from_string(source_type)
+            try:
+                source_type = SourceType.from_string(source_type)
+            except ValueError as e:
+                return Err(ValidationError(
+                    message=f"Invalid source_type: {e}",
+                    field="source_type",
+                ))
 
         target_collection = collection or self._default_collection
 
         # Delete existing chunks
-        deleted_count = await self.delete(
+        delete_result = await self.delete(
             source_id=source_id,
             source_type=source_type,
             collection=target_collection,
         )
+
+        if delete_result.is_error:
+            err = delete_result.error
+            if err is None:
+                err = VectorStoreError(
+                    message=f"Delete operation failed with unknown error in collection {target_collection}",
+                    operation="delete",
+                )
+            return Err(err)
+
+        deleted_count = delete_result.unwrap()
+        if deleted_count is None:
+            deleted_count = 0
 
         logger.debug(
             "ingestion_update_deleted_old",
@@ -624,7 +742,7 @@ class KnowledgeIngestionService:
         )
 
         # Ingest new content
-        result = await self.ingest(
+        ingest_result = await self.ingest(
             content=new_content,
             source_type=source_type,
             source_id=source_id,
@@ -635,20 +753,29 @@ class KnowledgeIngestionService:
         )
 
         # Return combined result
-        return IngestionResult(
-            success=result.success,
+        if ingest_result.is_error:
+            return ingest_result
+
+        original_result = ingest_result.value
+        if original_result is None:
+            return Err(ValidationError(
+                message="Ingest operation returned None",
+                field="ingest_result",
+            ))
+        return Ok(IngestionResult(
+            success=original_result.success,
             source_id=source_id,
-            chunk_count=result.chunk_count,
-            entries_created=result.entries_created,
+            chunk_count=original_result.chunk_count,
+            entries_created=original_result.entries_created,
             entries_deleted=deleted_count,
-        )
+        ))
 
     async def query_by_source(
         self,
         source_id: str,
         source_type: SourceType | str | None = None,
         collection: str | None = None,
-    ) -> list[RetrievedChunk]:
+    ) -> Result[list[RetrievedChunk], ValidationError | VectorStoreError]:
         """
         Query all chunks for a given source.
 
@@ -658,13 +785,26 @@ class KnowledgeIngestionService:
             collection: Optional collection name
 
         Returns:
-            List of RetrievedChunk objects
+            Result containing list of RetrievedChunk on success.
+            - Ok: List of RetrievedChunk objects
+            - Err(ValidationError): If source_id is empty
+            - Err(VectorStoreError): If query fails
 
         Example:
-            >>> chunks = await service.query_by_source("char_aldric")
-            >>> for chunk in chunks:
-            ...     print(f"{chunk.chunk_id}: {chunk.content[:50]}...")
+            >>> result = await service.query_by_source("char_aldric")
+            >>> match result:
+            ...     case Ok(chunks):
+            ...         for chunk in chunks:
+            ...             print(f"{chunk.chunk_id}: {chunk.content[:50]}...")
+            ...     case Err(error):
+            ...         print(f"Query failed: {error.message}")
         """
+        if not source_id or not source_id.strip():
+            return Err(ValidationError(
+                message="source_id cannot be empty",
+                field="source_id",
+            ))
+
         target_collection = collection or self._default_collection
 
         # Build filter
@@ -672,7 +812,13 @@ class KnowledgeIngestionService:
 
         if source_type:
             if isinstance(source_type, str):
-                source_type = SourceType.from_string(source_type)
+                try:
+                    source_type = SourceType.from_string(source_type)
+                except ValueError as e:
+                    return Err(ValidationError(
+                        message=f"Invalid source_type: {e}",
+                        field="source_type",
+                    ))
             where_filter["source_type"] = source_type.value
 
         logger.debug(
@@ -698,12 +844,19 @@ class KnowledgeIngestionService:
                 n_results=1000,  # Large number to get all chunks
                 where=where_filter,
             )
-        except VectorStoreError:
-            # If query fails, return empty list
-            return []
+        except Exception as e:
+            logger.error(
+                "ingestion_query_failed",
+                source_id=source_id,
+                error=str(e),
+            )
+            return Err(VectorStoreError(
+                message=f"Failed to query documents: {e}",
+                operation="query",
+            ))
 
         # Convert to RetrievedChunk
-        retrieved = []
+        retrieved: list[RetrievedChunk] = []
         for qr in query_results:
             retrieved.append(
                 RetrievedChunk(
@@ -724,21 +877,32 @@ class KnowledgeIngestionService:
                 )
             )
 
-        return retrieved
+        return Ok(retrieved)
 
-    async def health_check(self) -> bool:
+    async def health_check(self) -> Result[bool, VectorStoreError]:
         """
         Verify the ingestion pipeline is healthy.
 
         Returns:
-            True if vector store is healthy, False otherwise
+            Result containing True if healthy, error if check fails.
         """
-        return await self._vector_store.health_check()
+        try:
+            is_healthy = await self._vector_store.health_check()
+            return Ok(is_healthy)
+        except Exception as e:
+            logger.error(
+                "health_check_failed",
+                error=str(e),
+            )
+            return Err(VectorStoreError(
+                message=f"Health check failed: {e}",
+                operation="health_check",
+            ))
 
     async def get_count(
         self,
         collection: str | None = None,
-    ) -> int:
+    ) -> Result[int, VectorStoreError]:
         """
         Get the total number of chunks in storage.
 
@@ -746,10 +910,22 @@ class KnowledgeIngestionService:
             collection: Optional collection name (uses default if None)
 
         Returns:
-            Number of chunks stored
+            Result containing number of chunks, or error if count fails.
         """
         target_collection = collection or self._default_collection
-        return await self._vector_store.count(target_collection)
+        try:
+            count = await self._vector_store.count(target_collection)
+            return Ok(count)
+        except Exception as e:
+            logger.error(
+                "get_count_failed",
+                collection=target_collection,
+                error=str(e),
+            )
+            return Err(VectorStoreError(
+                message=f"Failed to get count: {e}",
+                operation="count",
+            ))
 
     async def _call_progress_callback(
         self,
@@ -764,7 +940,7 @@ class KnowledgeIngestionService:
             progress: Progress data to report
         """
         try:
-            if callback:
+            if callback is not None:
                 # Check if callback is async
                 import inspect
 

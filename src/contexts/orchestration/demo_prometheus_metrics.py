@@ -8,6 +8,8 @@ Shows that the requested metrics (llm_cost_per_req, turn_duration_seconds) are w
 
 from decimal import Decimal
 
+from typing import Any
+
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
     Counter,
@@ -17,7 +19,7 @@ from prometheus_client import (
 )
 
 
-def demonstrate_core_kpis():
+def demonstrate_core_kpis() -> None:
     """Demonstrate the core KPIs requested in M10 milestone."""
 
     print("🚀 M10 PROMETHEUS METRICS DEMONSTRATION")
@@ -209,8 +211,7 @@ def demonstrate_core_kpis():
 
     # Show relevant lines from metrics
     metrics_lines = metrics_data.split("\n")
-    relevant_lines = []
-
+    relevant_lines: list[Any] = []
     for line in metrics_lines:
         if any(
             keyword in line

@@ -7,7 +7,7 @@ with saga patterns, comprehensive error handling, and performance monitoring.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -39,7 +39,7 @@ from ...infrastructure.pipeline_phases import (
     WorldUpdatePhase,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TurnExecutionResult:
@@ -55,7 +55,7 @@ class TurnExecutionResult:
         compensation_actions: List[CompensationAction],
         performance_metrics: Dict[str, float],
         error_details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         self.turn_id = turn_id
         self.success = success
         self.execution_time_ms = execution_time_ms
@@ -640,8 +640,7 @@ class TurnOrchestrator:
         self, phase_results: Dict[PhaseType, PhaseResult]
     ) -> Dict[str, Dict[str, Any]]:
         """Extract metadata from previous phase results for context."""
-        metadata = {}
-
+        metadata: dict[Any, Any] = {}
         for phase_type, result in phase_results.items():
             metadata[phase_type.value] = {
                 "success": result.success,
@@ -738,8 +737,7 @@ class TurnOrchestrator:
         Returns:
             Tuple of (is_valid, validation_errors)
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate participants
         if not participants:
             errors.append("At least one participant is required")

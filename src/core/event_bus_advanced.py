@@ -7,7 +7,7 @@ Comprehensive event bus with pub/sub patterns, event sourcing, and distributed e
 """
 
 import asyncio
-import logging
+import structlog
 import threading
 import uuid
 from collections import defaultdict, deque
@@ -28,7 +28,7 @@ from typing import (
 
 from .error_handler import CentralizedErrorHandler, ErrorContext
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -77,7 +77,7 @@ class Event(Generic[T]):
     payload: T
     metadata: EventMetadata = field(default_factory=EventMetadata)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Set event type in metadata for consistency."""
         if not hasattr(self.metadata, "event_type"):
             self.metadata.event_type = self.event_type
@@ -137,7 +137,7 @@ class EventProcessingResult:
 class EventStore:
     """Simple in-memory event store for event sourcing."""
 
-    def __init__(self, max_events: int = 100000):
+    def __init__(self, max_events: int = 100000) -> None:
         """Initialize event store."""
         self.max_events = max_events
         self._events: deque = deque(maxlen=max_events)
@@ -175,7 +175,7 @@ class EventStore:
     def get_events_by_type(self, event_type: str, limit: int = 100) -> List[Event]:
         """Get recent events by type."""
         with self._lock:
-            matching_events = []
+            matching_events: list[Any] = []
             for event in reversed(self._events):
                 if event.event_type == event_type:
                     matching_events.append(event)
@@ -207,7 +207,7 @@ class EventBus:
         self,
         error_handler: Optional[CentralizedErrorHandler] = None,
         enable_event_store: bool = True,
-    ):
+    ) -> None:
         """Initialize event bus."""
         self.error_handler = error_handler
 
@@ -462,7 +462,7 @@ class EventBus:
                 return
 
             # Execute handlers concurrently
-            handler_tasks = []
+            handler_tasks: list[Any] = []
             for registration in handlers:
                 task = asyncio.create_task(self._execute_handler(event, registration))
                 handler_tasks.append(task)
@@ -548,8 +548,7 @@ class EventBus:
 
     def _get_applicable_handlers(self, event: Event) -> List[HandlerRegistration]:
         """Get all handlers that should process this event."""
-        applicable_handlers = []
-
+        applicable_handlers: list[Any] = []
         # Add specific event type handlers
         if event.event_type in self._handlers:
             applicable_handlers.extend(self._handlers[event.event_type])
@@ -558,7 +557,7 @@ class EventBus:
         applicable_handlers.extend(self._global_handlers)
 
         # Filter by additional criteria
-        filtered_handlers = []
+        filtered_handlers: list[Any] = []
         for registration in applicable_handlers:
             if self._handler_matches_filters(event, registration):
                 filtered_handlers.append(registration)
@@ -726,8 +725,7 @@ class EventBus:
             return 0
 
         # Get events to replay
-        events_to_replay = []
-
+        events_to_replay: list[Any] = []
         if correlation_id:
             events_to_replay = self.event_store.get_events_by_correlation(
                 correlation_id
@@ -741,7 +739,7 @@ class EventBus:
 
         # Apply timestamp filters
         if from_timestamp or to_timestamp:
-            filtered_events = []
+            filtered_events: list[Any] = []
             for event in events_to_replay:
                 event_time = event.metadata.timestamp
 
@@ -797,10 +795,10 @@ async def publish_event(
     return await get_event_bus().publish(event)
 
 
-def subscribe_to_event(event_type: str, priority: int = 0):
+def subscribe_to_event(event_type: str, priority: int = 0) -> None:
     """Decorator for subscribing to events."""
 
-    def decorator(handler_class):
+    def decorator(handler_class) -> None:
         # Register the handler
         handler = handler_class()
         get_event_bus().subscribe(event_type, handler, priority)

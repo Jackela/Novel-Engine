@@ -11,10 +11,17 @@ within the simulation. It supports:
 - Priority-based event processing
 - Retry mechanism with exponential backoff
 - Async and sync handler support
+- Result pattern for operation outcomes
+
+Result Pattern Migration:
+    - emit() -> Result[str, EventBusError]
+    - publish() -> Result[str, EventBusError]
+    - subscribe() -> Result[bool, EventBusError]
+    - retry_dead_letters() -> Result[int, EventBusError]
 """
 
 import asyncio
-import logging
+import structlog
 import time
 import uuid
 from collections import defaultdict
@@ -24,7 +31,31 @@ from enum import IntEnum
 from functools import total_ordering
 from typing import Any, Callable, Dict, List, Optional, Set
 
-logger = logging.getLogger(__name__)
+from .result import Error, Err, Ok, Result
+
+logger = structlog.get_logger(__name__)
+
+
+class EventBusError(Error):
+    """Error raised when event bus operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        event_type: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if event_type:
+            full_details["event_type"] = event_type
+        super().__init__(
+            code="EVENT_BUS_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class EventPriority(IntEnum):
@@ -54,14 +85,14 @@ class Event:
     def __lt__(self, other: "Event") -> bool:
         """Compare events by priority (higher first) then timestamp (older first)."""
         if not isinstance(other, Event):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         if self.priority != other.priority:
             return self.priority > other.priority  # Higher priority first
         return self.timestamp < other.timestamp  # Older events first
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Event):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         return self.event_id == other.event_id
 
 
@@ -94,7 +125,7 @@ class EventBus:
         max_dead_letters: int = 100,
         enable_history: bool = True,
         default_max_retries: int = 3,
-    ):
+    ) -> None:
         """
         Initialize the EventBus.
 
@@ -121,7 +152,7 @@ class EventBus:
         self._default_max_retries = default_max_retries
 
         # Metrics
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "events_emitted": 0,
             "events_processed": 0,
             "events_failed": 0,
@@ -131,19 +162,48 @@ class EventBus:
         # Paused event types (for circuit breaker pattern)
         self._paused_types: Set[str] = set()
 
-        logger.info("Enhanced EventBus initialized.")
+        logger.info("event_bus_initialized")
 
     def subscribe(self, event_type: str, callback: Callable) -> None:
         """
-        Subscribe a callback function to a specific event type.
+        Subscribe a callback function to a specific event type. (Legacy - use subscribe_result)
+        """
+        result = self.subscribe_result(event_type, callback)
+        if result.is_error and result.error:
+            logger.warning(
+                "subscribe_failed",
+                event_type=event_type,
+                error=result.error.message,
+            )
+
+    def subscribe_result(
+        self, event_type: str, callback: Callable
+    ) -> Result[bool, EventBusError]:
+        """
+        Subscribe a callback function to a specific event type using Result pattern.
 
         Args:
             event_type: The name of the event to subscribe to.
             callback: The function to call when the event is emitted.
+
+        Returns:
+            Result containing True on success or error
         """
-        self._subscribers[event_type].append(callback)
-        callback_name = getattr(callback, "__name__", "mock_callback")
-        logger.debug(f"Subscribed {callback_name} to event '{event_type}'")
+        try:
+            self._subscribers[event_type].append(callback)
+            callback_name = getattr(callback, "__name__", "mock_callback")
+            logger.debug(
+                "event_subscription_added", callback=callback_name, event_type=event_type
+            )
+            return Ok(True)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to subscribe to event: {e}",
+                    operation="subscribe",
+                    event_type=event_type,
+                )
+            )
 
     def unsubscribe(self, event_type: str, callback: Callable) -> None:
         """
@@ -157,15 +217,13 @@ class EventBus:
             try:
                 self._subscribers[event_type].remove(callback)
                 callback_name = getattr(callback, "__name__", "unknown_callback")
-                logger.debug(f"Unsubscribed {callback_name} from event '{event_type}'")
+                logger.debug("event_subscription_removed", callback=callback_name, event_type=event_type)
 
                 # Clean up empty subscriber lists
                 if not self._subscribers[event_type]:
                     del self._subscribers[event_type]
             except ValueError:
-                logger.warning(
-                    f"Callback not found in subscribers for event '{event_type}'"
-                )
+                logger.warning("callback_not_found_in_subscribers", event_type=event_type)
 
     def emit(
         self,
@@ -176,8 +234,30 @@ class EventBus:
         correlation_id: Optional[str] = None,
         **kwargs: Any,
     ) -> Optional[str]:
+        """Emit an event. (Legacy - use emit_result)"""
+        result = self.emit_result(
+            event_type,
+            *args,
+            priority=priority,
+            source=source,
+            correlation_id=correlation_id,
+            **kwargs,
+        )
+        if result.is_ok:
+            return result.value
+        return None
+
+    def emit_result(
+        self,
+        event_type: str,
+        *args: Any,
+        priority: EventPriority = EventPriority.NORMAL,
+        source: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Result[str, EventBusError]:
         """
-        Emit an event, calling all subscribed callbacks.
+        Emit an event using Result pattern.
 
         Args:
             event_type: The name of the event to emit.
@@ -188,37 +268,53 @@ class EventBus:
             **kwargs: Keyword arguments to pass to callbacks.
 
         Returns:
-            Event ID if successful, None if event type is paused.
+            Result containing event ID on success or error
         """
         if event_type in self._paused_types:
-            logger.warning(f"Event '{event_type}' is paused (circuit breaker active)")
-            return None
-
-        # Create event object
-        event = Event(
-            event_type=event_type,
-            data={"args": args, "kwargs": kwargs},
-            priority=priority,
-            source=source,
-            correlation_id=correlation_id,
-            max_retries=self._default_max_retries,
-        )
-
-        # Record in history
-        self._record_event(event)
-        self._metrics["events_emitted"] += 1
-
-        if event_type in self._subscribers:
-            logger.info(
-                f"Emitting event '{event_type}' (id={event.event_id[:8]}) "
-                f"to {len(self._subscribers[event_type])} subscribers."
+            return Err(
+                EventBusError(
+                    message=f"Event type {event_type} is paused (circuit breaker active)",
+                    operation="emit",
+                    event_type=event_type,
+                )
             )
-            for callback in self._subscribers[event_type]:
-                self._execute_callback(event, callback, args, kwargs)
-        else:
-            logger.debug(f"Event '{event_type}' emitted, but has no subscribers.")
 
-        return event.event_id
+        try:
+            # Create event object
+            event = Event(
+                event_type=event_type,
+                data={"args": args, "kwargs": kwargs},
+                priority=priority,
+                source=source,
+                correlation_id=correlation_id,
+                max_retries=self._default_max_retries,
+            )
+
+            # Record in history
+            self._record_event(event)
+            self._metrics["events_emitted"] += 1
+
+            if event_type in self._subscribers:
+                logger.info(
+                    "event_emitting",
+                    event_type=event_type,
+                    event_id=event.event_id[:8],
+                    subscriber_count=len(self._subscribers[event_type]),
+                )
+                for callback in self._subscribers[event_type]:
+                    self._execute_callback(event, callback, args, kwargs)
+            else:
+                logger.debug("event_emitted_no_subscribers", event_type=event_type)
+
+            return Ok(event.event_id)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to emit event: {e}",
+                    operation="emit",
+                    event_type=event_type,
+                )
+            )
 
     def _execute_callback(
         self,
@@ -236,8 +332,12 @@ class EventBus:
             return True
         except Exception as e:
             logger.error(
-                f"Error in callback '{callback_name}' for event '{event.event_type}': {e}",
-                exc_info=True,
+                "event_callback_error",
+                callback=callback_name,
+                event_type=event.event_type,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
             )
             self._metrics["events_failed"] += 1
 
@@ -253,8 +353,24 @@ class EventBus:
         source: Optional[str] = None,
         correlation_id: Optional[str] = None,
     ) -> Optional[str]:
+        """Publish an event asynchronously. (Legacy - use publish_result)"""
+        result = await self.publish_result(
+            event_type, data, priority=priority, source=source, correlation_id=correlation_id
+        )
+        if result.is_ok:
+            return result.value
+        return None
+
+    async def publish_result(
+        self,
+        event_type: str,
+        data: Any,
+        priority: EventPriority = EventPriority.NORMAL,
+        source: Optional[str] = None,
+        correlation_id: Optional[str] = None,
+    ) -> Result[str, EventBusError]:
         """
-        Publish an event asynchronously.
+        Publish an event asynchronously using Result pattern.
 
         Args:
             event_type: The name of the event to publish.
@@ -264,37 +380,53 @@ class EventBus:
             correlation_id: Correlation ID for tracing.
 
         Returns:
-            Event ID if successful, None if event type is paused.
+            Result containing event ID on success or error
         """
         if event_type in self._paused_types:
-            logger.warning(f"Event '{event_type}' is paused (circuit breaker active)")
-            return None
-
-        # Create event object
-        event = Event(
-            event_type=event_type,
-            data=data,
-            priority=priority,
-            source=source,
-            correlation_id=correlation_id,
-            max_retries=self._default_max_retries,
-        )
-
-        # Record in history
-        self._record_event(event)
-        self._metrics["events_emitted"] += 1
-
-        if event_type in self._subscribers:
-            logger.info(
-                f"Publishing event '{event_type}' (id={event.event_id[:8]}) "
-                f"to {len(self._subscribers[event_type])} subscribers."
+            return Err(
+                EventBusError(
+                    message=f"Event type {event_type} is paused (circuit breaker active)",
+                    operation="publish",
+                    event_type=event_type,
+                )
             )
-            for callback in self._subscribers[event_type]:
-                await self._execute_async_callback(event, callback, data)
-        else:
-            logger.debug(f"Event '{event_type}' published, but has no subscribers.")
 
-        return event.event_id
+        try:
+            # Create event object
+            event = Event(
+                event_type=event_type,
+                data=data,
+                priority=priority,
+                source=source,
+                correlation_id=correlation_id,
+                max_retries=self._default_max_retries,
+            )
+
+            # Record in history
+            self._record_event(event)
+            self._metrics["events_emitted"] += 1
+
+            if event_type in self._subscribers:
+                logger.info(
+                    "event_publishing",
+                    event_type=event_type,
+                    event_id=event.event_id[:8],
+                    subscriber_count=len(self._subscribers[event_type]),
+                )
+                for callback in self._subscribers[event_type]:
+                    await self._execute_async_callback(event, callback, data)
+            else:
+                logger.debug("event_published_no_subscribers", event_type=event_type)
+
+            return Ok(event.event_id)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to publish event: {e}",
+                    operation="publish",
+                    event_type=event_type,
+                )
+            )
 
     async def _execute_async_callback(
         self,
@@ -314,8 +446,12 @@ class EventBus:
             return True
         except Exception as e:
             logger.error(
-                f"Error in callback '{callback_name}' for event '{event.event_type}': {e}",
-                exc_info=True,
+                "async_event_callback_error",
+                callback=callback_name,
+                event_type=event.event_type,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True
             )
             self._metrics["events_failed"] += 1
 
@@ -354,20 +490,22 @@ class EventBus:
             self._dead_letters = self._dead_letters[-self._max_dead_letters :]
 
         logger.warning(
-            f"Event '{event.event_type}' (id={event.event_id[:8]}) "
-            f"added to dead-letter queue. Handler: {handler_name}"
+            "event_added_to_dead_letter",
+            event_type=event.event_type,
+            event_id=event.event_id[:8],
+            handler=handler_name
         )
 
     # Circuit breaker methods
     def pause_event_type(self, event_type: str) -> None:
         """Pause processing for a specific event type (circuit breaker)."""
         self._paused_types.add(event_type)
-        logger.warning(f"Circuit breaker: Paused event type '{event_type}'")
+        logger.warning("circuit_breaker_activated", event_type=event_type, action="paused")
 
     def resume_event_type(self, event_type: str) -> None:
         """Resume processing for a specific event type."""
         self._paused_types.discard(event_type)
-        logger.info(f"Circuit breaker: Resumed event type '{event_type}'")
+        logger.info("circuit_breaker_deactivated", event_type=event_type, action="resumed")
 
     def is_paused(self, event_type: str) -> bool:
         """Check if an event type is paused."""
@@ -440,48 +578,72 @@ class EventBus:
         event_type: Optional[str] = None,
         max_items: int = 10,
     ) -> int:
+        """Retry failed events from the dead-letter queue. (Legacy - use retry_dead_letters_result)"""
+        result = await self.retry_dead_letters_result(event_type, max_items)
+        if result.is_ok:
+            return result.value or 0
+        return 0
+
+    async def retry_dead_letters_result(
+        self,
+        event_type: Optional[str] = None,
+        max_items: int = 10,
+    ) -> Result[int, EventBusError]:
         """
-        Retry failed events from the dead-letter queue.
+        Retry failed events from the dead-letter queue using Result pattern.
 
         Args:
             event_type: Retry only specific event type (None for all)
             max_items: Maximum number of items to retry
 
         Returns:
-            Number of successfully retried events
+            Result containing number of successfully retried events or error
         """
-        entries = self.get_dead_letters(event_type, limit=max_items)
-        success_count = 0
+        try:
+            entries = self.get_dead_letters(event_type, limit=max_items)
+            success_count = 0
 
-        for entry in entries:
-            event = entry.event
-            if event.retry_count >= event.max_retries:
-                logger.warning(
-                    f"Event '{event.event_type}' (id={event.event_id[:8]}) "
-                    f"exceeded max retries ({event.max_retries})"
+            for entry in entries:
+                event = entry.event
+                if event.retry_count >= event.max_retries:
+                    logger.warning(
+                        "event_max_retries_exceeded",
+                        event_type=event.event_type,
+                        event_id=event.event_id[:8],
+                        max_retries=event.max_retries,
+                    )
+                    continue
+
+                event.retry_count += 1
+                self._metrics["retries_attempted"] += 1
+
+                # Re-publish the event
+                result = await self.publish_result(
+                    event.event_type,
+                    event.data,
+                    priority=event.priority,
+                    source=event.source,
+                    correlation_id=event.correlation_id,
                 )
-                continue
 
-            event.retry_count += 1
-            self._metrics["retries_attempted"] += 1
+                if result.is_ok:
+                    success_count += 1
+                    # Remove from dead-letter queue
+                    self._dead_letters = [
+                        e
+                        for e in self._dead_letters
+                        if e.event.event_id != event.event_id
+                    ]
 
-            # Re-publish the event
-            result = await self.publish(
-                event.event_type,
-                event.data,
-                priority=event.priority,
-                source=event.source,
-                correlation_id=event.correlation_id,
+            return Ok(success_count)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to retry dead letters: {e}",
+                    operation="retry_dead_letters",
+                    event_type=event_type,
+                )
             )
-
-            if result:
-                success_count += 1
-                # Remove from dead-letter queue
-                self._dead_letters = [
-                    e for e in self._dead_letters if e.event.event_id != event.event_id
-                ]
-
-        return success_count
 
     # Metrics
     def get_metrics(self) -> Dict[str, Any]:
@@ -494,6 +656,31 @@ class EventBus:
             "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
         }
 
+    def get_metrics_result(self) -> Result[Dict[str, Any], EventBusError]:
+        """
+        Get event bus metrics (Result pattern).
+
+        Returns:
+            Result containing event bus metrics on success.
+            - Ok: Dict with event bus metrics
+            - Err(EventBusError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                **self._metrics,
+                "history_size": len(self._history),
+                "dead_letter_size": len(self._dead_letters),
+                "paused_event_types": list(self._paused_types),
+                "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
+            })
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to get metrics: {e}",
+                    operation="get_metrics",
+                )
+            )
+
     def reset_metrics(self) -> None:
         """Reset event bus metrics."""
         self._metrics = {
@@ -503,14 +690,39 @@ class EventBus:
             "retries_attempted": 0,
         }
 
+    def reset_metrics_result(self) -> Result[None, EventBusError]:
+        """
+        Reset event bus metrics (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(EventBusError): If reset fails
+        """
+        try:
+            self._metrics = {
+                "events_emitted": 0,
+                "events_processed": 0,
+                "events_failed": 0,
+                "retries_attempted": 0,
+            }
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                EventBusError(
+                    message=f"Failed to reset metrics: {e}",
+                    operation="reset_metrics",
+                )
+            )
+
     # Lifecycle methods
     async def start(self) -> None:
         """Start the event bus."""
-        logger.info("Enhanced EventBus started.")
+        logger.info("event_bus_started")
 
     async def stop(self) -> None:
         """Stop the event bus."""
-        logger.info("Enhanced EventBus stopped.")
+        logger.info("event_bus_stopped")
 
     def clear(self) -> None:
         """Clear all subscribers and history."""
@@ -519,7 +731,7 @@ class EventBus:
         self._dead_letters.clear()
         self._paused_types.clear()
         self.reset_metrics()
-        logger.info("EventBus cleared.")
+        logger.info("event_bus_cleared")
 
 
 class InMemoryEventBus:

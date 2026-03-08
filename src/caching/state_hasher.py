@@ -15,6 +15,7 @@ import hashlib
 import importlib.util
 import json
 import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -29,7 +30,7 @@ if not SHARED_TYPES_AVAILABLE:
     logging.warning("Shared types not available, using fallback hashing.")
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -96,7 +97,7 @@ class HashingConfig:
 class StateHasher:
     """Core state hashing engine."""
 
-    def __init__(self, config: Optional[HashingConfig] = None):
+    def __init__(self, config: Optional[HashingConfig] = None) -> None:
         """Initializes the state hasher."""
 
         self.config = config or HashingConfig()
@@ -166,7 +167,7 @@ class StateHasher:
 
         return state_hash
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clears the hash cache."""
 
         self.hash_cache.clear()

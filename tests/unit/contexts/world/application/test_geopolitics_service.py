@@ -1,6 +1,9 @@
 """Unit tests for GeopoliticsService."""
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from unittest.mock import MagicMock, patch
 
 from src.contexts.world.application.services.geopolitics_service import GeopoliticsService

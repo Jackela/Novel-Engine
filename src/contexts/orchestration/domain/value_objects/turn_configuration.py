@@ -417,8 +417,7 @@ class TurnConfiguration:
         Returns:
             List of validation errors (empty if valid)
         """
-        errors = []
-
+        errors: list[Any] = []
         # Check if total phase timeouts exceed max execution time
         total_phase_time = self.get_total_phase_timeout()
         if total_phase_time > self.max_execution_time_ms:

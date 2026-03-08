@@ -71,10 +71,10 @@ from .embedding_cache_service import (
 from .entity_extraction_service import DEFAULT_MAX_TOKENS as DEFAULT_ENTITY_MAX_TOKENS
 from .entity_extraction_service import DEFAULT_TEMPERATURE as DEFAULT_ENTITY_TEMPERATURE
 from .entity_extraction_service import (
-    EntityExtractionError,
     EntityExtractionService,
     ExtractionConfig,
 )
+from ...domain.errors import ExtractionError as EntityExtractionError
 from .graph_retrieval_service import (
     GraphEnhancedChunk,
     GraphEntityContext,

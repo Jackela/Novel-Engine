@@ -16,6 +16,8 @@ Endpoints:
 
 from __future__ import annotations
 
+import base64
+import time
 from typing import Any, Dict, Optional
 
 import structlog
@@ -23,14 +25,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from src.api.schemas.system_schemas import ErrorDetail
 from src.api.schemas.world_schemas import (
+    BulkImportFormat,
+    BulkImportRequest,
+    BulkImportResponse,
     CreateEventRequest,
     EventListResponse,
     HistoryEventResponse,
+    ImportError,
+    ImportOptions,
 )
 from src.contexts.world.application.services.event_service import EventService
 from src.contexts.world.domain.entities import HistoryEvent
 from src.contexts.world.domain.ports.event_repository import EventRepository
 from src.contexts.world.domain.ports.rumor_repository import RumorRepository
+from src.contexts.world.infrastructure.parsers import CSVEventParser, JSONEventParser
 
 logger = structlog.get_logger()
 
@@ -397,3 +405,223 @@ async def get_event(
     )
 
     return _event_to_response(event)
+
+
+@router.post("/world/{world_id}/events/bulk-import", response_model=BulkImportResponse)
+async def bulk_import_events(
+    world_id: str,
+    request: BulkImportRequest,
+    service: EventService = Depends(get_event_service),
+) -> BulkImportResponse:
+    """Bulk import historical events from CSV or JSON.
+
+    Imports multiple events from a file, with optional rumor generation.
+    Returns detailed import statistics and any errors encountered.
+
+    Args:
+        world_id: World ID to import events into
+        request: BulkImportRequest with format, data, and options
+        service: Injected EventService
+
+    Returns:
+        BulkImportResponse with import statistics
+
+    Raises:
+        400: If import fails validation
+
+    Example:
+        POST /api/world/default/events/bulk-import
+        {
+            "format": "csv",
+            "data": "base64_encoded_csv_content",
+            "options": {
+                "atomic": true,
+                "generate_rumors": false
+            }
+        }
+    """
+    start_time = time.time()
+
+    logger.info(
+        "bulk_import_events_request",
+        world_id=world_id,
+        format=request.format,
+        data_length=len(request.data),
+    )
+
+    # Decode base64 data
+    try:
+        decoded_bytes = base64.b64decode(request.data)
+        decoded_content = decoded_bytes.decode("utf-8")
+    except Exception as e:
+        logger.error("bulk_import_decode_error", error=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="IMPORT_DECODE_ERROR",
+                message=f"Failed to decode import data: {e}",
+            ).model_dump(),
+        )
+
+    # Parse based on format
+    if request.format == BulkImportFormat.CSV:
+        parser = CSVEventParser()
+        parse_result = parser.parse(decoded_content)
+        events_data = parse_result.events
+        parse_errors = parse_result.errors
+    elif request.format == BulkImportFormat.JSON:
+        parser = JSONEventParser()
+        parse_result = parser.parse(decoded_content)
+        events_data = parse_result.events
+        parse_errors = parse_result.errors
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="INVALID_FORMAT",
+                message=f"Unsupported format: {request.format}",
+            ).model_dump(),
+        )
+
+    # If there are parse errors and we're not skipping validation, return them
+    if parse_errors and not (request.options and request.options.skip_validation):
+        logger.warning(
+            "bulk_import_parse_errors",
+            world_id=world_id,
+            error_count=len(parse_errors),
+        )
+        return BulkImportResponse(
+            success=False,
+            total=(
+                parse_result.total_rows
+                if hasattr(parse_result, "total_rows")
+                else len(events_data) + len(parse_errors)
+            ),
+            imported=0,
+            failed=len(parse_errors),
+            imported_ids=[],
+            errors=[ImportError(**e) for e in parse_errors[:100]],  # Limit errors
+            generated_rumors=0,
+            processing_time_ms=int((time.time() - start_time) * 1000),
+        )
+
+    # Import events
+    options = request.options or ImportOptions()
+    result = await service.bulk_import_events(
+        world_id=world_id,
+        events_data=events_data,
+        generate_rumors=options.generate_rumors,
+        atomic=options.atomic,
+    )
+
+    processing_time_ms = int((time.time() - start_time) * 1000)
+
+    if result.is_error:
+        logger.error(
+            "bulk_import_failed",
+            world_id=world_id,
+            error=result.error,
+        )
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="BULK_IMPORT_FAILED",
+                message=result.error,
+            ).model_dump(),
+        )
+
+    import_result = result.value
+
+    logger.info(
+        "bulk_import_completed",
+        world_id=world_id,
+        total=import_result["imported_count"] + import_result["failed_count"],
+        imported=import_result["imported_count"],
+        failed=import_result["failed_count"],
+        processing_time_ms=processing_time_ms,
+    )
+
+    return BulkImportResponse(
+        success=import_result["failed_count"] == 0,
+        total=import_result["imported_count"] + import_result["failed_count"],
+        imported=import_result["imported_count"],
+        failed=import_result["failed_count"],
+        imported_ids=import_result["imported_ids"],
+        errors=[ImportError(**e) for e in import_result["errors"][:100]],
+        generated_rumors=import_result["generated_rumors"],
+        processing_time_ms=processing_time_ms,
+    )
+
+
+@router.get("/world/{world_id}/events/export")
+async def export_events(
+    world_id: str,
+    format: str = Query(default="json", description="Export format: json"),
+    from_date: Optional[str] = Query(None, description="Filter from date"),
+    to_date: Optional[str] = Query(None, description="Filter to date"),
+    event_types: Optional[str] = Query(None, description="Comma-separated event types"),
+    service: EventService = Depends(get_event_service),
+):
+    """Export events as a timeline.
+
+    Exports events in various formats (JSON, PDF, PNG) for external analysis.
+
+    Args:
+        world_id: World ID to export events from
+        format: Export format (currently supports: json)
+        from_date: Optional filter for events from this date
+        to_date: Optional filter for events to this date
+        event_types: Optional comma-separated list of event types
+        service: Injected EventService
+
+    Returns:
+        EventTimelineExport for JSON format, or binary data for PDF/PNG
+
+    Example:
+        GET /api/world/default/events/export?format=json&event_types=war,battle
+    """
+    logger.info(
+        "export_events_request",
+        world_id=world_id,
+        format=format,
+        from_date=from_date,
+        to_date=to_date,
+        event_types=event_types,
+    )
+
+    # Parse event types
+    type_list = None
+    if event_types:
+        type_list = [t.strip() for t in event_types.split(",") if t.strip()]
+
+    # Export timeline
+    timeline_data = await service.export_timeline(
+        world_id=world_id,
+        from_date=from_date,
+        to_date=to_date,
+        event_types=type_list,
+    )
+
+    # Format-specific handling
+    if format.lower() == "json":
+        from datetime import datetime
+
+        timeline_data["metadata"]["generated_at"] = datetime.utcnow().isoformat()
+        return timeline_data
+    elif format.lower() in ("pdf", "png"):
+        # TODO: Implement PDF/PNG export
+        raise HTTPException(
+            status_code=501,
+            detail=ErrorDetail(
+                code="NOT_IMPLEMENTED",
+                message=f"Export format '{format}' is not yet implemented",
+            ).model_dump(),
+        )
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="INVALID_FORMAT",
+                message=f"Unsupported export format: {format}",
+            ).model_dump(),
+        )

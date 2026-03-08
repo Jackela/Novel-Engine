@@ -9,7 +9,7 @@ user-defined prompts.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
@@ -29,7 +29,7 @@ from src.prompts import (
 # Initialize templates on import
 from src.prompts.templates import register_all_templates
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Create the router
 router = APIRouter(prefix="/prompts", tags=["Prompts"])

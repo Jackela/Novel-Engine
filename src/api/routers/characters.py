@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 from datetime import datetime
 from pathlib import Path
@@ -28,7 +28,7 @@ from src.api.services.paths import get_characters_directory_path
 from src.config.character_factory import CharacterFactory
 from src.core.event_bus import EventBus
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["characters"])
 
@@ -111,7 +111,7 @@ async def get_character_detail(
                     elif "background" in line.lower() or "summary" in line.lower():
                         character_data["background_summary"] = line.strip()
         except Exception:
-            logger.warning("Could not parse character markdown file", exc_info=True)
+            logger.warning("character_markdown_parse_error", exc_info=True)
 
     if os.path.exists(stats_file):
         try:
@@ -132,7 +132,7 @@ async def get_character_detail(
                     )
                     character_data["structured_data"]["stats"] = stats
         except Exception:
-            logger.warning("Could not parse character stats file", exc_info=True)
+            logger.warning("character_stats_parse_error", exc_info=True)
 
     try:
         bus = event_bus or EventBus()
@@ -249,9 +249,9 @@ async def get_characters_api(
                         )
                         workspace_entries.append((timestamp, summary))
                     except ValueError:
-                        logger.warning("Skipping malformed workspace character record.")
+                        logger.warning("malformed_workspace_character_record")
         except Exception:
-            logger.warning("Failed to load workspace characters.", exc_info=True)
+            logger.warning("workspace_characters_load_failed", exc_info=True)
 
     merged: Dict[str, Tuple[datetime, CharacterSummary]] = {}
     for entry in public_entries:
@@ -305,7 +305,7 @@ async def get_character_detail_api(
                 cache_service.set_cache_headers(response, etag, timestamp)
             except ValueError:
                 logger.warning(
-                    "Malformed workspace character record, skipping cache headers"
+                    "malformed_workspace_character_record_skip_cache"
                 )
             return _workspace_record_to_character_detail(record)
 
@@ -374,8 +374,8 @@ async def create_workspace_character(
             orchestrator.active_agents[character_id] = datetime.now()
         except Exception:
             logger.debug(
-                "Failed to register character with orchestrator.",
-                exc_info=True,
+                "orchestrator_register_character_failed",
+                exc_info=True
             )
 
     return _workspace_record_to_character_detail(record)
@@ -442,8 +442,8 @@ async def delete_workspace_character(
             orchestrator.active_agents.pop(character_id, None)
         except Exception:
             logger.debug(
-                "Failed to unregister character from orchestrator.",
-                exc_info=True,
+                "orchestrator_unregister_character_failed",
+                exc_info=True
             )
 
     return Response(status_code=204)

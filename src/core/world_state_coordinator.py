@@ -14,13 +14,13 @@ separation from turn orchestration and agent lifecycle concerns.
 """
 
 import json
-import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class WorldStateCoordinator:
@@ -35,7 +35,7 @@ class WorldStateCoordinator:
     - Environmental change tracking and notification
     """
 
-    def __init__(self, world_state_file_path: Optional[str] = None):
+    def __init__(self, world_state_file_path: Optional[str] = None) -> None:
         """
         Initialize the WorldStateCoordinator.
 
@@ -48,7 +48,7 @@ class WorldStateCoordinator:
         self.world_state_data: Dict[str, Any] = {}
 
         # Dynamic world state tracker
-        self.world_state_tracker = {
+        self.world_state_tracker: dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes
             "agent_discoveries": {},  # turn_number -> {agent_id: discoveries}
@@ -221,7 +221,7 @@ class WorldStateCoordinator:
 
     def _get_faction_updates(self) -> Dict[str, Any]:
         """Get current faction status information."""
-        faction_status = self.world_state_data.get("faction_status", {})
+        faction_status: dict[str, Any] = self.world_state_data.get("faction_status", {})
 
         if not faction_status:
             return {
@@ -230,16 +230,16 @@ class WorldStateCoordinator:
                 "freewind_collective": {"activity": "moderate", "influence": 0.2},
             }
 
-        return faction_status.copy()
+        return dict(faction_status)
 
     def _get_environmental_updates(self) -> Dict[str, Any]:
         """Get environmental status updates."""
-        environmental_state = self.world_state_data.get("environmental_state", {})
+        environmental_state: dict[str, Any] = self.world_state_data.get("environmental_state", {})
 
         if not environmental_state:
             return {"weather": "stable", "visibility": "normal", "hazards": []}
 
-        return environmental_state.copy()
+        return dict(environmental_state)
 
     def generate_world_state_feedback(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -254,7 +254,7 @@ class WorldStateCoordinator:
         Returns:
             Dictionary containing world state feedback or None if no feedback available
         """
-        feedback = {}
+        feedback: dict[Any, Any] = {}
         has_feedback = False
 
         try:
@@ -309,7 +309,7 @@ class WorldStateCoordinator:
         if not discovered_clues:
             return []
 
-        feedback = []
+        feedback: list[Any] = []
         for clue in discovered_clues[-3:]:  # Most recent 3 discoveries
             feedback.append(f"You recall discovering: {clue}")
 
@@ -329,7 +329,7 @@ class WorldStateCoordinator:
             "environmental_changes", {}
         )
 
-        feedback = []
+        feedback: list[Any] = []
         for location, changes in environmental_changes.items():
             for change in changes[-2:]:  # Most recent 2 changes per location
                 feedback.append(f"Environmental change in {location}: {change}")

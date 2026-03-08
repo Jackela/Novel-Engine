@@ -3,7 +3,7 @@
 Type-specific interaction processors.
 """
 
-import logging
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
@@ -11,8 +11,9 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
+from typing import Any
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TypeProcessors:
@@ -24,8 +25,7 @@ class TypeProcessors:
         """Process enhanced dialogue interaction"""
         try:
             # Generate dialogue content for each participant
-            dialogue_content = []
-
+            dialogue_content: list[Any] = []
             for participant in context.participants:
                 # Generate character-specific dialogue
                 template_context = TemplateContext(
@@ -161,30 +161,30 @@ class TypeProcessors:
             )
 
     # Placeholder implementations for other interaction types
-    async def _process_negotiation_interaction(self, context, outcome):
+    async def _process_negotiation_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "negotiation_processed"}
         )
 
-    async def _process_instruction_interaction(self, context, outcome):
+    async def _process_instruction_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "instruction_processed"}
         )
 
-    async def _process_ritual_interaction(self, context, outcome):
+    async def _process_ritual_interaction(self, context, outcome) -> None:
         return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
 
-    async def _process_exploration_interaction(self, context, outcome):
+    async def _process_exploration_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "exploration_processed"}
         )
 
-    async def _process_maintenance_interaction(self, context, outcome):
+    async def _process_maintenance_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "maintenance_processed"}
         )
 
-    async def _process_emergency_interaction(self, context, outcome):
+    async def _process_emergency_interaction(self, context, outcome) -> None:
         return StandardResponse(
             success=True, metadata={"blessing": "emergency_processed"}
         )

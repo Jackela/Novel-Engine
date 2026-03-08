@@ -5,24 +5,54 @@ Database Connection Pool Manager
 
 Enterprise-grade database connection management with connection pooling,
 health monitoring, and automatic failover.
+
+Result Pattern Migration:
+    - initialize() -> Result[bool, DatabaseError]
+    - add_pool() -> Result[bool, DatabaseError]
+    - execute_query() -> Result[aiosqlite.Cursor, DatabaseError]
+    - execute_transaction() -> Result[bool, DatabaseError]
+    - health_check() -> Result[Dict[str, Any], DatabaseError]
 """
 
 import asyncio
-import logging
+import structlog
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncContextManager, Dict, List, Optional
+from typing import Any, AsyncContextManager, AsyncGenerator, Dict, List, Optional
 
 import aiosqlite
 
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
+from .result import Error, Err, Ok, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
+
+class DatabaseError(Error):
+    """Error raised when database operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        pool_name: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if pool_name:
+            full_details["pool_name"] = pool_name
+        super().__init__(
+            code="DATABASE_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class DatabaseType(Enum):
@@ -83,7 +113,7 @@ class ConnectionMetrics:
 class DatabaseConnection:
     """Managed database connection wrapper."""
 
-    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig):
+    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig) -> None:
         """Initialize database connection wrapper."""
         self.connection = connection
         self.config = config
@@ -102,10 +132,10 @@ class DatabaseConnection:
             # Start health check task
             self._health_check_task = asyncio.create_task(self._health_check_loop())
 
-            logger.debug("Database connection initialized")
+            logger.debug("database_connection_initialized")
 
         except Exception as e:
-            logger.error(f"Failed to initialize database connection: {e}")
+            logger.error("database_connection_initialization_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def _initialize_sqlite(self) -> None:
@@ -124,13 +154,15 @@ class DatabaseConnection:
         for setting in settings:
             try:
                 await self.connection.execute(setting)
-                logger.debug(f"Applied SQLite setting: {setting}")
+                logger.debug("sqlite_setting_applied", setting=setting)
             except Exception as e:
-                logger.warning(f"Failed to apply SQLite setting {setting}: {e}")
+                logger.warning("sqlite_setting_application_failed", setting=setting, error=str(e))
 
         await self.connection.commit()
 
-    async def execute(self, query: str, parameters: tuple = None) -> aiosqlite.Cursor:
+    async def execute(
+        self, query: str, parameters: Optional[tuple] = None
+    ) -> aiosqlite.Cursor:
         """Execute query with metrics tracking."""
         async with self._lock:
             self.state = ConnectionState.ACTIVE
@@ -166,9 +198,7 @@ class DatabaseConnection:
                 self.metrics.failed_queries += 1
                 self.metrics.last_error = str(e)
 
-                logger.error(
-                    "Query execution failed after %.4fs: %s", execution_time, e
-                )
+                logger.error("query_execution_failed", execution_time_ms=round(execution_time * 1000, 2), error=str(e))
                 raise
 
             finally:
@@ -216,7 +246,7 @@ class DatabaseConnection:
                 self.metrics.failed_queries += batch_size
                 self.metrics.last_error = str(e)
 
-                logger.error(f"Batch query execution failed: {e}")
+                logger.error("batch_query_execution_failed", error=str(e))
                 raise
 
             finally:
@@ -243,9 +273,7 @@ class DatabaseConnection:
                 try:
                     await self._health_check_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("health_check_task_cancelled")
             await self.connection.close()
             logger.debug("Database connection closed")
 
@@ -263,7 +291,7 @@ class DatabaseConnection:
                 return True
 
         except Exception as e:
-            logger.warning(f"Connection health check failed: {e}")
+            logger.warning("connection_health_check_failed", error=str(e))
             self.metrics.health_status = False
             self.metrics.last_error = str(e)
             self.state = ConnectionState.UNHEALTHY
@@ -330,6 +358,45 @@ class DatabaseConnection:
             "last_error": self.metrics.last_error,
         }
 
+    def get_metrics_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get connection metrics (Result pattern).
+
+        Returns:
+            Result containing connection metrics dictionary on success.
+            - Ok: Dictionary with connection metrics
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "state": self.state.value,
+                "created_at": self.metrics.created_at.isoformat(),
+                "last_used": self.metrics.last_used.isoformat(),
+                "total_queries": self.metrics.total_queries,
+                "successful_queries": self.metrics.successful_queries,
+                "failed_queries": self.metrics.failed_queries,
+                "success_rate": (
+                    self.metrics.successful_queries / self.metrics.total_queries
+                    if self.metrics.total_queries > 0
+                    else 0.0
+                ),
+                "average_query_time": self.metrics.average_query_time,
+                "health_status": self.metrics.health_status,
+                "last_health_check": (
+                    self.metrics.last_health_check.isoformat()
+                    if self.metrics.last_health_check
+                    else None
+                ),
+                "last_error": self.metrics.last_error,
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get connection metrics: {e}",
+                    operation="get_metrics",
+                )
+            )
+
 
 class DatabaseConnectionPool:
     """
@@ -347,7 +414,7 @@ class DatabaseConnectionPool:
         self,
         config: DatabaseConfig,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize connection pool."""
         self.config = config
         self.error_handler = error_handler
@@ -367,7 +434,7 @@ class DatabaseConnectionPool:
         self._maintenance_task: Optional[asyncio.Task] = None
 
         # Metrics
-        self._pool_metrics = {
+        self._pool_metrics: Dict[str, Any] = {
             "total_connections_created": 0,
             "total_connections_closed": 0,
             "peak_active_connections": 0,
@@ -394,7 +461,7 @@ class DatabaseConnectionPool:
                     self._pool_metrics["total_connections_created"] += 1
 
                 except Exception as e:
-                    logger.error(f"Failed to create initial connection: {e}")
+                    logger.error("initial_connection_creation_failed", error=str(e), error_type=type(e).__name__)
                     if self.error_handler:
                         error_context = ErrorContext(
                             component="DatabaseConnectionPool",
@@ -408,16 +475,14 @@ class DatabaseConnectionPool:
             self._maintenance_task = asyncio.create_task(self._maintenance_loop())
 
             self._initialized = True
-            logger.info(
-                f"Connection pool initialized with {len(self._available_connections)} connections"
-            )
+            logger.info("connection_pool_initialized", connection_count=len(self._available_connections))
 
     async def get_connection(self) -> AsyncContextManager[DatabaseConnection]:
         """Get connection from pool with context manager."""
         return self._connection_context()
 
     @asynccontextmanager
-    async def _connection_context(self) -> DatabaseConnection:
+    async def _connection_context(self) -> AsyncGenerator[DatabaseConnection, None]:
         """Connection context manager."""
         connection = await self._acquire_connection()
         try:
@@ -483,13 +548,11 @@ class DatabaseConnectionPool:
                     return connection
 
                 except Exception as e:
-                    logger.error(f"Failed to create new connection: {e}")
+                    logger.error("new_connection_creation_failed", error=str(e), error_type=type(e).__name__)
                     raise
 
             # Pool exhausted, wait for connection to become available
-            logger.warning(
-                "Connection pool exhausted, waiting for available connection"
-            )
+            logger.warning("connection_pool_exhausted")
 
             # Wait with timeout
             timeout = self.config.connection_timeout
@@ -548,7 +611,7 @@ class DatabaseConnectionPool:
             self._pool_metrics["total_connections_closed"] += 1
 
         except Exception as e:
-            logger.warning(f"Error closing connection: {e}")
+            logger.warning("connection_close_error", error=str(e))
 
     async def close_pool(self) -> None:
         """Close all connections and shutdown pool."""
@@ -561,9 +624,7 @@ class DatabaseConnectionPool:
                 try:
                     await self._maintenance_task
                 except asyncio.CancelledError:
-                    logging.getLogger(__name__).debug(
-                        "Suppressed exception", exc_info=True
-                    )
+                    logger.debug("maintenance_task_cancelled")
             for connection in self._available_connections:
                 await self._close_connection(connection)
 
@@ -575,7 +636,7 @@ class DatabaseConnectionPool:
 
             self._active_connections.clear()
 
-            logger.info("Database connection pool closed")
+            logger.info("database_pool_closed")
 
     async def _maintenance_loop(self) -> None:
         """Background maintenance for connection pool."""
@@ -597,8 +658,7 @@ class DatabaseConnectionPool:
         """Perform connection pool maintenance."""
         async with self._pool_lock:
             # Remove unhealthy connections from available pool
-            healthy_connections = []
-
+            healthy_connections: list[Any] = []
             for connection in self._available_connections:
                 if connection.is_healthy:
                     healthy_connections.append(connection)
@@ -622,7 +682,7 @@ class DatabaseConnectionPool:
                         self._pool_metrics["total_connections_created"] += 1
 
                     except Exception as e:
-                        logger.error(f"Failed to create maintenance connection: {e}")
+                        logger.error("maintenance_connection_creation_failed", error=str(e), error_type=type(e).__name__)
                         break
 
             # Update pool utilization metrics
@@ -655,6 +715,43 @@ class DatabaseConnectionPool:
             "closed": self._closed,
         }
 
+    def get_pool_status_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get current pool status (Result pattern).
+
+        Returns:
+            Result containing pool status dictionary on success.
+            - Ok: Dictionary with pool status metrics
+            - Err(DatabaseError): If status retrieval fails
+        """
+        try:
+            total_connections = len(self._available_connections) + len(
+                self._active_connections
+            )
+
+            return Ok({
+                "total_connections": total_connections,
+                "available_connections": len(self._available_connections),
+                "active_connections": len(self._active_connections),
+                "min_pool_size": self.config.min_pool_size,
+                "max_pool_size": self.config.max_pool_size,
+                "pool_utilization": (
+                    len(self._active_connections) / total_connections
+                    if total_connections > 0
+                    else 0.0
+                ),
+                "initialized": self._initialized,
+                "closed": self._closed,
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get pool status: {e}",
+                    operation="get_pool_status",
+                    pool_name=self.config.database_type.value,
+                )
+            )
+
     def get_pool_metrics(self) -> Dict[str, Any]:
         """Get pool performance metrics."""
         wait_times = self._pool_metrics["connection_wait_times"]
@@ -673,12 +770,69 @@ class DatabaseConnectionPool:
             "total_wait_samples": len(wait_times),
         }
 
+    def get_pool_metrics_result(self) -> Result[Dict[str, Any], DatabaseError]:
+        """
+        Get pool performance metrics (Result pattern).
+
+        Returns:
+            Result containing pool metrics dictionary on success.
+            - Ok: Dictionary with pool performance metrics
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            wait_times = self._pool_metrics["connection_wait_times"]
+
+            return Ok({
+                "total_connections_created": self._pool_metrics[
+                    "total_connections_created"
+                ],
+                "total_connections_closed": self._pool_metrics["total_connections_closed"],
+                "peak_active_connections": self._pool_metrics["peak_active_connections"],
+                "average_pool_utilization": self._pool_metrics["average_pool_utilization"],
+                "average_wait_time": (
+                    sum(wait_times) / len(wait_times) if wait_times else 0.0
+                ),
+                "max_wait_time": max(wait_times) if wait_times else 0.0,
+                "total_wait_samples": len(wait_times),
+            })
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get pool metrics: {e}",
+                    operation="get_pool_metrics",
+                    pool_name=self.config.database_type.value,
+                )
+            )
+
     def get_connection_metrics(self) -> List[Dict[str, Any]]:
         """Get metrics for all connections."""
         all_connections = list(self._available_connections) + list(
             self._active_connections.values()
         )
         return [conn.get_metrics() for conn in all_connections]
+
+    def get_connection_metrics_result(self) -> Result[List[Dict[str, Any]], DatabaseError]:
+        """
+        Get metrics for all connections (Result pattern).
+
+        Returns:
+            Result containing list of connection metrics on success.
+            - Ok: List of connection metrics dictionaries
+            - Err(DatabaseError): If metrics retrieval fails
+        """
+        try:
+            all_connections = list(self._available_connections) + list(
+                self._active_connections.values()
+            )
+            return Ok([conn.get_metrics() for conn in all_connections])
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Failed to get connection metrics: {e}",
+                    operation="get_connection_metrics",
+                    pool_name=self.config.database_type.value,
+                )
+            )
 
 
 class DatabaseManager:
@@ -697,7 +851,7 @@ class DatabaseManager:
         self,
         config_manager: Optional[ConfigurationManager] = None,
         error_handler: Optional[CentralizedErrorHandler] = None,
-    ):
+    ) -> None:
         """Initialize database manager."""
         self.config_manager = config_manager
         self.error_handler = error_handler
@@ -710,19 +864,39 @@ class DatabaseManager:
         self._initialized = False
         self._lock = asyncio.Lock()
 
-        logger.info("Database manager initialized")
+        logger.info("database_manager_initialized")
 
     async def initialize(self) -> None:
-        """Initialize database manager."""
+        """Initialize database manager. (Legacy - use initialize_result)"""
+        result = await self.initialize_result()
+        if result.is_error:
+            raise RuntimeError(result.error.message)
+
+    async def initialize_result(self) -> Result[bool, DatabaseError]:
+        """
+        Initialize database manager using Result pattern.
+
+        Returns:
+            Result containing True on success or error
+        """
         async with self._lock:
             if self._initialized:
-                return
+                return Ok(True)
 
-            # Create default pool from configuration
-            await self._create_default_pool()
+            try:
+                # Create default pool from configuration
+                await self._create_default_pool()
 
-            self._initialized = True
-            logger.info("Database manager initialization complete")
+                self._initialized = True
+                logger.info("database_manager_initialization_complete")
+                return Ok(True)
+            except Exception as e:
+                return Err(
+                    DatabaseError(
+                        message=f"Failed to initialize database manager: {e}",
+                        operation="initialize",
+                    )
+                )
 
     async def _create_default_pool(self) -> None:
         """Create default database pool from configuration."""
@@ -730,8 +904,7 @@ class DatabaseManager:
         if self.config_manager:
             database_config_dict = self.config_manager.get_section("database")
         else:
-            database_config_dict = {}
-
+            database_config_dict: dict[Any, Any] = {}
         # Create database config
         config = DatabaseConfig(
             database_type=DatabaseType.SQLITE,
@@ -749,16 +922,49 @@ class DatabaseManager:
         logger.info(f"Default database pool created: {config.connection_string}")
 
     async def add_pool(self, name: str, config: DatabaseConfig) -> None:
-        """Add named database pool."""
+        """Add named database pool. (Legacy - use add_pool_result)"""
+        result = await self.add_pool_result(name, config)
+        if result.is_error:
+            raise ValueError(result.error.message)
+
+    async def add_pool_result(
+        self, name: str, config: DatabaseConfig
+    ) -> Result[bool, DatabaseError]:
+        """
+        Add named database pool using Result pattern.
+
+        Args:
+            name: Name of the pool
+            config: Database configuration
+
+        Returns:
+            Result containing True on success or error
+        """
         async with self._lock:
             if name in self._pools:
-                raise ValueError(f"Pool {name} already exists")
+                return Err(
+                    DatabaseError(
+                        message=f"Pool {name} already exists",
+                        operation="add_pool",
+                        pool_name=name,
+                    )
+                )
 
-            pool = DatabaseConnectionPool(config, self.error_handler)
-            await pool.initialize()
+            try:
+                pool = DatabaseConnectionPool(config, self.error_handler)
+                await pool.initialize()
 
-            self._pools[name] = pool
-            logger.info(f"Database pool '{name}' added")
+                self._pools[name] = pool
+                logger.info("database_pool_added", pool_name=name)
+                return Ok(True)
+            except Exception as e:
+                return Err(
+                    DatabaseError(
+                        message=f"Failed to add pool {name}: {e}",
+                        operation="add_pool",
+                        pool_name=name,
+                    )
+                )
 
     async def get_connection(
         self, pool_name: Optional[str] = None
@@ -778,28 +984,90 @@ class DatabaseManager:
     async def execute_query(
         self, query: str, parameters: tuple = None, pool_name: Optional[str] = None
     ) -> aiosqlite.Cursor:
-        """Execute query on specified or default pool."""
-        async with await self.get_connection(pool_name) as conn:
-            return await conn.execute(query, parameters)
+        """Execute query on specified or default pool. (Legacy - use execute_query_result)"""
+        result = await self.execute_query_result(query, parameters, pool_name)
+        if result.is_ok:
+            return result.value
+        raise RuntimeError(result.error.message)
+
+    async def execute_query_result(
+        self,
+        query: str,
+        parameters: tuple = None,
+        pool_name: Optional[str] = None,
+    ) -> Result[aiosqlite.Cursor, DatabaseError]:
+        """
+        Execute query on specified or default pool using Result pattern.
+
+        Args:
+            query: SQL query to execute
+            parameters: Query parameters
+            pool_name: Name of the pool to use
+
+        Returns:
+            Result containing cursor or error
+        """
+        try:
+            async with await self.get_connection(pool_name) as conn:
+                cursor = await conn.execute(query, parameters)
+                return Ok(cursor)
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Query execution failed: {e}",
+                    operation="execute_query",
+                    pool_name=pool_name,
+                    details={"query": query[:100]},
+                )
+            )
 
     async def execute_transaction(
         self,
         queries: List[tuple],  # List of (query, parameters) tuples
         pool_name: Optional[str] = None,
     ) -> bool:
-        """Execute multiple queries in a transaction."""
+        """Execute multiple queries in a transaction. (Legacy - use execute_transaction_result)"""
+        result = await self.execute_transaction_result(queries, pool_name)
+        if result.is_ok:
+            return result.value
+        raise RuntimeError(result.error.message)
+
+    async def execute_transaction_result(
+        self,
+        queries: List[tuple],
+        pool_name: Optional[str] = None,
+    ) -> Result[bool, DatabaseError]:
+        """
+        Execute multiple queries in a transaction using Result pattern.
+
+        Args:
+            queries: List of (query, parameters) tuples
+            pool_name: Name of the pool to use
+
+        Returns:
+            Result containing True on success or error
+        """
         async with await self.get_connection(pool_name) as conn:
             try:
                 for query, parameters in queries:
                     await conn.execute(query, parameters)
 
                 await conn.commit()
-                return True
+                return Ok(True)
 
             except Exception as e:
                 await conn.rollback()
-                logger.error(f"Transaction failed: {e}")
-                raise
+                logger.error(
+                    "transaction_failed", error=str(e), error_type=type(e).__name__
+                )
+                return Err(
+                    DatabaseError(
+                        message=f"Transaction failed: {e}",
+                        operation="execute_transaction",
+                        pool_name=pool_name,
+                        details={"query_count": len(queries)},
+                    )
+                )
 
     async def close_all_pools(self) -> None:
         """Close all database pools."""
@@ -807,9 +1075,9 @@ class DatabaseManager:
             for name, pool in self._pools.items():
                 try:
                     await pool.close_pool()
-                    logger.info(f"Closed database pool: {name}")
+                    logger.info("database_pool_closed", pool_name=name)
                 except Exception as e:
-                    logger.error(f"Error closing pool {name}: {e}")
+                    logger.error("database_pool_close_error", pool_name=name, error=str(e))
 
             self._pools.clear()
             self._initialized = False
@@ -835,29 +1103,50 @@ class DatabaseManager:
         return {name: pool.get_pool_metrics() for name, pool in self._pools.items()}
 
     async def health_check(self) -> Dict[str, Dict[str, Any]]:
-        """Perform health check on all pools."""
-        health_results = {}
+        """Perform health check on all pools. (Legacy - use health_check_result)"""
+        result = await self.health_check_result()
+        if result.is_ok:
+            return result.value
+        return {"error": {"healthy": False, "message": result.error.message}}
 
-        for name, pool in self._pools.items():
-            try:
-                # Test connection from pool
-                async with await pool.get_connection() as conn:
-                    await conn.health_check()
+    async def health_check_result(
+        self,
+    ) -> Result[Dict[str, Dict[str, Any]], DatabaseError]:
+        """
+        Perform health check on all pools using Result pattern.
 
-                health_results[name] = {
-                    "healthy": True,
-                    "status": pool.get_pool_status(),
-                    "metrics": pool.get_pool_metrics(),
-                }
+        Returns:
+            Result containing health check results or error
+        """
+        try:
+            health_results: dict[str, dict[str, Any]] = {}
+            for name, pool in self._pools.items():
+                try:
+                    # Test connection from pool
+                    async with await pool.get_connection() as conn:
+                        await conn.health_check()
 
-            except Exception as e:
-                health_results[name] = {
-                    "healthy": False,
-                    "error": str(e),
-                    "status": pool.get_pool_status(),
-                }
+                    health_results[name] = {
+                        "healthy": True,
+                        "status": pool.get_pool_status(),
+                        "metrics": pool.get_pool_metrics(),
+                    }
 
-        return health_results
+                except Exception as e:
+                    health_results[name] = {
+                        "healthy": False,
+                        "error": str(e),
+                        "status": pool.get_pool_status(),
+                    }
+
+            return Ok(health_results)
+        except Exception as e:
+            return Err(
+                DatabaseError(
+                    message=f"Health check failed: {e}",
+                    operation="health_check",
+                )
+            )
 
 
 # Global database manager instance

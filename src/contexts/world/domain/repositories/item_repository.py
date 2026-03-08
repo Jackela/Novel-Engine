@@ -184,7 +184,7 @@ class ItemRepositoryException(Exception):
 class ItemNotFoundException(ItemRepositoryException):
     """Raised when a requested item is not found."""
 
-    def __init__(self, item_id: str):
+    def __init__(self, item_id: str) -> None:
         super().__init__(f"Item not found: {item_id}")
         self.item_id = item_id
 
@@ -192,7 +192,7 @@ class ItemNotFoundException(ItemRepositoryException):
 class DuplicateItemException(ItemRepositoryException):
     """Raised when attempting to create a duplicate item."""
 
-    def __init__(self, item_id: str, name: str):
+    def __init__(self, item_id: str, name: str) -> None:
         super().__init__(f"Item already exists: {item_id} ({name})")
         self.item_id = item_id
         self.name = name

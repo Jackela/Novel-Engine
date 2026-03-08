@@ -7,7 +7,7 @@ from src.core.event_bus import EventBus
 from src.core.turn_orchestrator import TurnOrchestrator
 from src.core.types.shared_types import CharacterAction
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 class DummyAgent:

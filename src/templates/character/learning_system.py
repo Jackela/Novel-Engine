@@ -3,20 +3,20 @@
 Usage learning and optimization system.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any
 
 from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class LearningSystem:
     """Learns from usage patterns and optimizes template selection."""
 
-    async def _learn_from_context(self, persona_id: str, context: TemplateContext):
+    async def _learn_from_context(self, persona_id: str, context: TemplateContext) -> None:
         """Learn enhanced patterns from context usage"""
         if not self.enable_learning:
             return

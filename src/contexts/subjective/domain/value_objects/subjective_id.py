@@ -23,7 +23,7 @@ class SubjectiveId:
 
     value: UUID
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate the UUID value."""
         if not isinstance(self.value, UUID):
             raise ValueError(f"SubjectiveId must be a UUID, got {type(self.value)}")

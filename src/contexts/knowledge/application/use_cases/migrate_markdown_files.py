@@ -9,7 +9,7 @@ Constitution Compliance:
 - Article V (SOLID): Single Responsibility - migration orchestration
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Protocol
 
 
 class MigrateMarkdownFilesUseCase:
@@ -31,7 +31,7 @@ class MigrateMarkdownFilesUseCase:
         - FR-019: Verification mode
     """
 
-    def __init__(self, migration_adapter):
+    def __init__(self, migration_adapter: "MigrationAdapter") -> None:
         """
         Initialize use case with migration adapter.
 
@@ -82,59 +82,14 @@ class MigrateMarkdownFilesUseCase:
 
         return report
 
-    async def rollback(
-        self,
-        backup_path: str,
-    ) -> Dict[str, Any]:
-        """
-        Rollback migration by restoring from backup.
 
-        Workflow:
-        1. Delete migrated knowledge entries from PostgreSQL
-        2. Restore original Markdown files from backup
-        3. Return rollback report
+class MigrationAdapter(Protocol):
+    """Protocol for migration adapters."""
 
-        Args:
-            backup_path: Path to backup directory
+    async def migrate_all_agents(
+        self, markdown_directory: str, create_backup: bool = True
+    ) -> Dict[str, Any]: ...
 
-        Returns:
-            Rollback report with statistics
+    async def verify_migration(self, markdown_directory: str) -> Dict[str, Any]: ...
 
-        Constitution Compliance:
-            - FR-018: Rollback capability
-        """
-        # Delegate to migration adapter
-        report = await self._migration_adapter.rollback_migration(
-            backup_path=backup_path,
-        )
-
-        return report
-
-    async def verify(
-        self,
-        markdown_directory: str,
-    ) -> Dict[str, Any]:
-        """
-        Verify migration by comparing Markdown vs knowledge base.
-
-        Workflow:
-        1. Read Markdown files
-        2. Query knowledge entries from PostgreSQL
-        3. Compare content for mismatches
-        4. Return verification report
-
-        Args:
-            markdown_directory: Root directory containing agent .md files
-
-        Returns:
-            Verification report with comparison results
-
-        Constitution Compliance:
-            - FR-019: Verification mode
-        """
-        # Delegate to migration adapter
-        report = await self._migration_adapter.verify_migration(
-            markdown_directory=markdown_directory,
-        )
-
-        return report
+    async def rollback_migration(self, backup_path: str) -> Dict[str, Any]: ...

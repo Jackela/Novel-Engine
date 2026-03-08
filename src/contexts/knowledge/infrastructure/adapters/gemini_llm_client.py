@@ -14,7 +14,7 @@ Warzone 4: AI Brain - BRAIN-009A, BRAIN-025A
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import httpx
 import structlog
@@ -56,7 +56,7 @@ class ChatMessage:
         content: Text content of the message
     """
 
-    def __init__(self, role: str, content: str):
+    def __init__(self, role: str, content: str) -> None:
         """
         Initialize a chat message.
 
@@ -129,7 +129,7 @@ class GeminiLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the Gemini LLM client.
 
@@ -297,8 +297,7 @@ class GeminiLLMClient:
         Returns:
             Contents array for Gemini API
         """
-        contents = []
-
+        contents: list[Any] = []
         # Add chat history if provided
         if chat_history:
             for msg in chat_history:
@@ -437,7 +436,7 @@ class MockLLMClient:
         >>> assert response.text == "mock response"
     """
 
-    def __init__(self, responses: dict[str, str] | None = None):
+    def __init__(self, responses: dict[str, str] | None = None) -> None:
         """
         Initialize the mock client.
 

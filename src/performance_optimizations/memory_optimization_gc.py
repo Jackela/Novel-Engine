@@ -10,7 +10,7 @@ Wave 5.4 - Memory Management & Garbage Collection Enhancement
 
 import asyncio
 import gc
-import logging
+import structlog
 import threading
 import weakref
 from collections import defaultdict, deque
@@ -22,7 +22,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryPressureLevel(Enum):
@@ -71,7 +71,7 @@ class ObjectPool:
     constantly creating and destroying them.
     """
 
-    def __init__(self, factory: Callable[[], Any], max_size: int = 100):
+    def __init__(self, factory: Callable[[], Any], max_size: int = 100) -> None:
         self.factory = factory
         self.max_size = max_size
         self.pool = deque(maxlen=max_size)
@@ -122,12 +122,12 @@ class WeakReferenceManager:
     Manages weak references to break circular references and prevent memory leaks.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.weak_refs: Dict[str, weakref.ref] = {}
         self.cleanup_callbacks: Dict[str, Callable] = {}
         self._lock = threading.Lock()
 
-    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None):
+    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None) -> None:
         """Register object with weak reference."""
         with self._lock:
             if cleanup_callback:
@@ -152,7 +152,7 @@ class WeakReferenceManager:
                 return obj
             return None
 
-    def _cleanup_callback(self, key: str):
+    def _cleanup_callback(self, key: str) -> None:
         """Handle object cleanup when it's garbage collected."""
         if key in self.cleanup_callbacks:
             try:
@@ -166,7 +166,7 @@ class WeakReferenceManager:
 
     def cleanup_dead_references(self) -> int:
         """Remove dead weak references."""
-        dead_refs = []
+        dead_refs: list[Any] = []
         with self._lock:
             for key, weak_ref in list(self.weak_refs.items()):
                 if weak_ref() is None:
@@ -208,7 +208,7 @@ class MemoryOptimizer:
         target_memory_percent: float = 70.0,
         gc_threshold_multiplier: float = 1.5,
         monitoring_interval: float = 30.0,
-    ):
+    ) -> None:
         self.target_memory_percent = target_memory_percent
         self.gc_threshold_multiplier = gc_threshold_multiplier
         self.monitoring_interval = monitoring_interval
@@ -239,13 +239,13 @@ class MemoryOptimizer:
 
         logger.info(f"MemoryOptimizer initialized: target={target_memory_percent}%")
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start memory monitoring and optimization."""
         if self.monitoring_task is None:
             self.monitoring_task = asyncio.create_task(self._monitoring_loop())
             logger.info("Memory optimization monitoring started")
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop memory monitoring."""
         self.monitoring_active = False
         if self.monitoring_task:
@@ -253,14 +253,14 @@ class MemoryOptimizer:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
             self.monitoring_task = None
 
         # Restore original GC thresholds
         gc.set_threshold(*self.original_gc_thresholds)
         logger.info("Memory optimization monitoring stopped")
 
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self.monitoring_active:
             try:
@@ -316,7 +316,7 @@ class MemoryOptimizer:
             memory_pressure=pressure,
         )
 
-    async def _optimize_based_on_pressure(self, metrics: MemoryMetrics):
+    async def _optimize_based_on_pressure(self, metrics: MemoryMetrics) -> None:
         """Optimize memory based on current pressure level."""
         if metrics.memory_pressure == MemoryPressureLevel.CRITICAL:
             # Aggressive optimization
@@ -335,7 +335,7 @@ class MemoryOptimizer:
         # Always perform weak reference cleanup
         self.weak_ref_manager.cleanup_dead_references()
 
-    async def _aggressive_memory_cleanup(self):
+    async def _aggressive_memory_cleanup(self) -> None:
         """Aggressive memory cleanup for critical pressure."""
         logger.warning("Critical memory pressure - performing aggressive cleanup")
 
@@ -366,7 +366,7 @@ class MemoryOptimizer:
             }
         )
 
-    async def _moderate_memory_cleanup(self):
+    async def _moderate_memory_cleanup(self) -> None:
         """Moderate memory cleanup for high pressure."""
         logger.info("High memory pressure - performing moderate cleanup")
 
@@ -385,13 +385,13 @@ class MemoryOptimizer:
 
         self.optimization_stats["memory_cleanups"] += 1
 
-    def _light_memory_cleanup(self):
+    def _light_memory_cleanup(self) -> None:
         """Light memory cleanup for moderate pressure."""
         # Just collect generation 0 garbage
         collected = gc.collect(0)
         self.gc_stats["light_collection"] += collected
 
-    def _tune_gc_for_pressure(self, aggressive: bool = False):
+    def _tune_gc_for_pressure(self, aggressive: bool = False) -> None:
         """Tune garbage collection thresholds based on memory pressure."""
         if aggressive:
             # More aggressive GC - lower thresholds
@@ -413,7 +413,7 @@ class MemoryOptimizer:
             f"GC thresholds adjusted: {self.original_gc_thresholds} -> {new_thresholds}"
         )
 
-    async def _periodic_maintenance(self):
+    async def _periodic_maintenance(self) -> None:
         """Perform periodic maintenance tasks."""
         # Trim memory alerts list
         if len(self.memory_alerts) > 50:
@@ -438,7 +438,7 @@ class MemoryOptimizer:
 
     def register_weak_reference(
         self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None
-    ):
+    ) -> None:
         """Register object with weak reference management."""
         self.weak_ref_manager.register(key, obj, cleanup_callback)
 
@@ -459,7 +459,7 @@ class MemoryOptimizer:
             memory_trend = 0.0
 
         # Object pool statistics
-        pool_stats = {}
+        pool_stats: dict[Any, Any] = {}
         for name, pool in self.object_pools.items():
             pool_stats[name] = pool.get_stats()
 
@@ -529,7 +529,7 @@ class PersonaAgentMemoryOptimizer:
     Focuses on optimizing decision history, context caching, and LLM response storage.
     """
 
-    def __init__(self, memory_optimizer: MemoryOptimizer):
+    def __init__(self, memory_optimizer: MemoryOptimizer) -> None:
         self.memory_optimizer = memory_optimizer
 
         # Create specialized object pools
@@ -619,7 +619,7 @@ class DirectorAgentMemoryOptimizer:
     Focuses on world state caching, agent coordination data, and turn management.
     """
 
-    def __init__(self, memory_optimizer: MemoryOptimizer):
+    def __init__(self, memory_optimizer: MemoryOptimizer) -> None:
         self.memory_optimizer = memory_optimizer
 
         # Create specialized object pools

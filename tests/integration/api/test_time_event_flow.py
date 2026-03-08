@@ -1,6 +1,9 @@
 """Integration tests for time event flow from API to handler."""
 
 import pytest
+
+pytestmark = pytest.mark.integration
+
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app

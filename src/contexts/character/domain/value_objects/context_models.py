@@ -22,7 +22,7 @@ class TrustLevel(BaseModel):
 
     @field_validator("category", mode="before")
     @classmethod
-    def categorize_trust(cls, v, info):
+    def categorize_trust(cls, v, info) -> None:
         # Access other fields through info.data in Pydantic V2
         data = info.data if hasattr(info, "data") else {}
         score = data.get("score", 0)
@@ -127,7 +127,7 @@ class MemoryContext(BaseModel):
 
     @field_validator("formative_events")
     @classmethod
-    def validate_age_progression(cls, events):
+    def validate_age_progression(cls, events) -> None:
         """Ensure events are chronologically reasonable."""
         if len(events) > 1:
             sorted_events = sorted(events, key=lambda x: x.age)
@@ -193,7 +193,7 @@ class ResourceAllocation(BaseModel):
 
     @field_validator("time_energy_percentages")
     @classmethod
-    def validate_percentages(cls, v):
+    def validate_percentages(cls, v) -> None:
         """Ensure percentages add up to 100."""
         if v and sum(v.values()) != 100:
             raise ValueError("Time/energy percentages must sum to 100")
@@ -323,7 +323,7 @@ class CombatStats(BaseModel):
 
     @field_validator("primary_stats")
     @classmethod
-    def validate_stat_ranges(cls, v):
+    def validate_stat_ranges(cls, v) -> None:
         """Ensure stats are in reasonable ranges."""
         for stat_name, value in v.items():
             if not (0 <= value <= 10):
@@ -340,7 +340,7 @@ class PsychologicalProfile(BaseModel):
 
     @field_validator("traits")
     @classmethod
-    def validate_trait_ranges(cls, v):
+    def validate_trait_ranges(cls, v) -> None:
         """Ensure trait scores are in valid ranges."""
         for trait_name, score in v.items():
             if not (0 <= score <= 10):
@@ -462,13 +462,12 @@ class CharacterContext(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_character_consistency(cls, values):
+    def validate_character_consistency(cls, values) -> None:
         """Ensure character data is consistent across contexts."""
         warnings = values.get("validation_warnings", [])
 
         # Extract character names from different contexts
-        names_found = []
-
+        names_found: list[Any] = []
         profile_ctx = values.get("profile_context")
         if profile_ctx:
             profile_name = (

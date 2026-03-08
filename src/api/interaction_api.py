@@ -7,7 +7,7 @@ and dynamic relationship evolution.
 """
 
 import asyncio
-import logging
+import structlog
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -22,7 +22,7 @@ from src.interactions.engine import (
     InteractionType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionRequest(BaseModel):
@@ -35,7 +35,7 @@ class InteractionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v):
+    def validate_participants(cls, v) -> None:
         """
         Validate that all participants are unique.
 
@@ -64,10 +64,10 @@ class InteractionResponse(BaseModel):
 class WebSocketConnectionManager:
     """Manages WebSocket connections."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: Dict[str, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket, interaction_id: str):
+    async def connect(self, websocket: WebSocket, interaction_id: str) -> None:
         """
         Connect a WebSocket to an interaction.
 
@@ -80,7 +80,7 @@ class WebSocketConnectionManager:
             self.active_connections[interaction_id] = []
         self.active_connections[interaction_id].append(websocket)
 
-    def disconnect(self, websocket: WebSocket, interaction_id: str):
+    def disconnect(self, websocket: WebSocket, interaction_id: str) -> None:
         """
         Disconnect a WebSocket from an interaction.
 
@@ -97,19 +97,19 @@ class WebSocketConnectionManager:
 class InteractionAPI:
     """API for real-time character interactions and conversation management."""
 
-    def __init__(self, orchestrator: Optional[SystemOrchestrator]):
+    def __init__(self, orchestrator: Optional[SystemOrchestrator]) -> None:
         """Initializes the interaction API."""
         self.orchestrator = orchestrator
         self.websocket_manager = WebSocketConnectionManager()
         self.active_interactions: Dict[str, Any] = {}
         logger.info("Interaction API initialized.")
 
-    def set_orchestrator(self, orchestrator: SystemOrchestrator):
+    def set_orchestrator(self, orchestrator: SystemOrchestrator) -> None:
         """Set the orchestrator after initialization."""
         self.orchestrator = orchestrator
         logger.info("Interaction API orchestrator set.")
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Sets up API routes for interaction management."""
 
         @app.post("/api/interactions", response_model=InteractionResponse)
@@ -158,7 +158,7 @@ class InteractionAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error creating interaction: {e}")
+                logger.error("Error creating interaction: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions", response_model=dict)
@@ -170,7 +170,7 @@ class InteractionAPI:
                 )
 
             try:
-                interactions = []
+                interactions: list[Any] = []
                 for interaction_id, data in self.active_interactions.items():
                     interactions.append(
                         {
@@ -186,7 +186,7 @@ class InteractionAPI:
 
                 return {"interactions": interactions, "total": len(interactions)}
             except Exception as e:
-                logger.error(f"Error listing interactions: {e}")
+                logger.error("Error listing interactions: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions/{interaction_id}", response_model=dict)
@@ -219,7 +219,7 @@ class InteractionAPI:
                 logger.exception("Error getting interaction.")
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
-    async def _process_interaction_async(self, interaction_id: str):
+    async def _process_interaction_async(self, interaction_id: str) -> None:
         """Processes an interaction asynchronously."""
         try:
             if not self.orchestrator:

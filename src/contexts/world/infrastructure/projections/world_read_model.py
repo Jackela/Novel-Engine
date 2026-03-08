@@ -65,7 +65,7 @@ class EntitySummary:
         coords = world_entity["coordinates"]
 
         # Extract key properties for summary (first 3 properties to avoid bloat)
-        props_summary = {}
+        props_summary: dict[Any, Any] = {}
         if world_entity.get("properties"):
             sorted_props = sorted(world_entity["properties"].items())
             props_summary = dict(sorted_props[:3])
@@ -193,8 +193,7 @@ class WorldSliceReadModel(BaseModel):
         Returns:
             List of entities within the specified area
         """
-        matching_entities = []
-
+        matching_entities: list[Any] = []
         if not self.all_entities:
             return matching_entities
 
@@ -283,8 +282,7 @@ class WorldSliceReadModel(BaseModel):
         Returns:
             List of entities within bounds
         """
-        matching_entities = []
-
+        matching_entities: list[Any] = []
         if not self.all_entities:
             return matching_entities
 
@@ -366,7 +364,7 @@ class WorldSliceReadModel(BaseModel):
         # Calculate spatial bounds
         min_x = max_x = min_y = max_y = min_z = max_z = None
         if entities:
-            coordinates = []
+            coordinates: list[Any] = []
             for entity_data in entities.values():
                 if "coordinates" in entity_data:
                     coords = entity_data["coordinates"]
@@ -381,10 +379,9 @@ class WorldSliceReadModel(BaseModel):
                 max_z = max(c[2] for c in coordinates)
 
         # Group entities by type for optimized queries
-        entities_by_type = {}
-        entity_type_counts = {}
-        active_entity_ids = []
-
+        entities_by_type: dict[Any, Any] = {}
+        entity_type_counts: dict[Any, Any] = {}
+        active_entity_ids: list[Any] = []
         for entity_id, entity_data in entities.items():
             entity_type = entity_data.get("entity_type", "unknown")
 
@@ -397,7 +394,7 @@ class WorldSliceReadModel(BaseModel):
             active_entity_ids.append(entity_id)
 
         # Create spatial grid index (simplified version)
-        entities_by_location = {}
+        entities_by_location: dict[Any, Any] = {}
         grid_size = world_state_data.get("spatial_grid_size", 100.0)
 
         for entity_id, entity_data in entities.items():
@@ -550,7 +547,7 @@ class WorldSliceReadModel(BaseModel):
             change_type in ["entity_added", "entity_removed", "entity_moved"]
             and self.all_entities
         ):
-            coordinates = []
+            coordinates: list[Any] = []
             for entity_data in self.all_entities.values():
                 if "coordinates" in entity_data:
                     coords = entity_data["coordinates"]
@@ -574,8 +571,7 @@ class WorldSliceReadModel(BaseModel):
 
     def validate(self) -> List[str]:
         """Validate the read model data."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.world_state_id:
             errors.append("World state ID is required")
 

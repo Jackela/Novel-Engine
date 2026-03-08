@@ -17,7 +17,7 @@ System保佑动态模板 (May the System bless dynamic templates)
 
 import asyncio
 import json
-import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -28,7 +28,8 @@ from typing import Any, Callable, Dict, List, Optional
 # Import enhanced Jinja2 for template processing
 try:
     import jinja2
-    from jinja2 import Environment, FileSystemLoader, meta, select_autoescape
+    from jinja2 import FileSystemLoader, meta, select_autoescape
+    from jinja2.sandbox import SandboxedEnvironment
     from jinja2.exceptions import TemplateError, UndefinedError
 except ImportError:
     raise ImportError(
@@ -48,7 +49,7 @@ from src.memory.layered_memory import LayeredMemorySystem
 from src.memory.memory_query_engine import MemoryQueryEngine, QueryContext
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TemplateType(Enum):
@@ -149,7 +150,7 @@ class DynamicTemplateEngine:
         query_engine: Optional[MemoryQueryEngine] = None,
         enable_auto_reload: bool = True,
         cache_templates: bool = True,
-    ):
+    ) -> None:
         """
         STANDARD TEMPLATE ENGINE INITIALIZATION ENHANCED BY CONFIGURATION
 
@@ -166,8 +167,10 @@ class DynamicTemplateEngine:
         self.enable_auto_reload = enable_auto_reload
         self.cache_templates = cache_templates
 
-        # Initialize enhanced Jinja2 environment
-        self.jinja_env = Environment(
+        # Initialize enhanced Jinja2 environment with sandboxing
+        # SECURITY: SandboxedEnvironment restricts template execution
+        # to prevent code injection via user-controlled templates
+        self.jinja_env = SandboxedEnvironment(
             loader=FileSystemLoader(str(self.template_directory)),
             autoescape=select_autoescape(["html", "xml"]),
             auto_reload=enable_auto_reload,
@@ -233,7 +236,7 @@ class DynamicTemplateEngine:
             if self.cache_templates and cache_key in self._template_cache:
                 cached_result = self._template_cache[cache_key]
                 self.render_statistics["cache_hits"] += 1
-                logger.info(f"TEMPLATE CACHE HIT: {template_id}")
+                logger.info("TEMPLATE CACHE HIT: %s", template_id)
                 return StandardResponse(
                     success=True, data={"render_result": cached_result}
                 )
@@ -304,7 +307,7 @@ class DynamicTemplateEngine:
                 self._template_cache[cache_key] = render_result
                 self._cleanup_template_cache()
 
-            logger.info(f"TEMPLATE RENDERED: {template_id} ({render_duration:.2f}ms)")
+            logger.info("TEMPLATE RENDERED: %s (%.2fms)", template_id, render_duration)
 
             return StandardResponse(
                 success=True,
@@ -313,7 +316,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"TEMPLATE RENDERING FAILED: {e}")
+            logger.error("TEMPLATE RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -390,7 +393,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"INLINE TEMPLATE RENDERING FAILED: {e}")
+            logger.error("INLINE TEMPLATE RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="INLINE_TEMPLATE_FAILED", message=str(e)),
@@ -440,7 +443,7 @@ class DynamicTemplateEngine:
             # Register enhanced template
             self._templates[template_id] = metadata
 
-            logger.info(f"TEMPLATE CREATED: {template_id} ({template_type.value})")
+            logger.info("TEMPLATE CREATED: %s (%s)", template_id, template_type.value)
 
             return StandardResponse(
                 success=True,
@@ -449,7 +452,7 @@ class DynamicTemplateEngine:
             )
 
         except Exception as e:
-            logger.error(f"TEMPLATE CREATION FAILED: {e}")
+            logger.error("TEMPLATE CREATION FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="TEMPLATE_CREATION_FAILED", message=str(e)),
@@ -484,7 +487,7 @@ class DynamicTemplateEngine:
                 result_data = query_result.data["query_result"]
 
                 # Format enhanced memories for template context
-                formatted_memories = []
+                formatted_memories: list[Any] = []
                 for memory in result_data.memories:
                     formatted_memories.append(
                         {
@@ -513,7 +516,7 @@ class DynamicTemplateEngine:
                 }
 
         except Exception as e:
-            logger.error(f"MEMORY CONTEXT QUERY FAILED: {e}")
+            logger.error("MEMORY CONTEXT QUERY FAILED: %s", e)
             return {"memories": [], "context_available": False, "error": str(e)}
 
     async def resolve_cross_references(
@@ -525,8 +528,7 @@ class DynamicTemplateEngine:
         Resolve enhanced cross-document references in templates with
         intelligent content loading and recursive reference handling.
         """
-        cross_references = {}
-
+        cross_references: dict[Any, Any] = {}
         # Find enhanced cross-reference patterns
         reference_pattern = r'\{\{\s*ref\(([\'"])([^\'\"]+)\1\)\s*\}\}'
         references = re.findall(reference_pattern, template_content)
@@ -575,10 +577,10 @@ class DynamicTemplateEngine:
                         cross_references[ref_path] = memory_text
                         context.cross_references.append(ref_path)
 
-                logger.info(f"CROSS-REFERENCE RESOLVED: {ref_path}")
+                logger.info("CROSS-REFERENCE RESOLVED: %s", ref_path)
 
             except Exception as e:
-                logger.error(f"CROSS-REFERENCE RESOLUTION FAILED FOR {ref_path}: {e}")
+                logger.error("CROSS-REFERENCE RESOLUTION FAILED FOR %s: %s", ref_path, e)
                 cross_references[ref_path] = f"[Reference Error: {ref_path}]"
 
         return cross_references
@@ -648,8 +650,7 @@ class DynamicTemplateEngine:
                 query_result = await self.query_engine.execute_query(query_text)
                 if query_result.success:
                     result_data = query_result.data["query_result"]
-                    formatted_memories = []
-
+                    formatted_memories: list[Any] = []
                     for memory in result_data.memories[:limit]:
                         formatted_memories.append(
                             {
@@ -664,7 +665,7 @@ class DynamicTemplateEngine:
 
                     return formatted_memories
             except Exception as e:
-                logger.error(f"TEMPLATE MEMORY QUERY FAILED: {e}")
+                logger.error("TEMPLATE MEMORY QUERY FAILED: %s", e)
 
             return []
 
@@ -704,7 +705,7 @@ class DynamicTemplateEngine:
 
         return ref
 
-    def _register_custom_functions(self):
+    def _register_custom_functions(self) -> None:
         """Register enhanced custom Jinja2 functions and filters"""
 
         # Sacred timestamp formatting filter
@@ -808,7 +809,7 @@ class DynamicTemplateEngine:
         self.jinja_env.globals["zip"] = zip
         self.jinja_env.globals["sorted"] = sorted
 
-    def _discover_templates(self):
+    def _discover_templates(self) -> None:
         """Discover enhanced templates in template directory"""
         if not self.template_directory.exists():
             self.template_directory.mkdir(parents=True, exist_ok=True)
@@ -837,7 +838,7 @@ class DynamicTemplateEngine:
                         tags=metadata_dict.get("tags", []),
                     )
                 except Exception as e:
-                    logger.warning(f"FAILED TO LOAD METADATA FOR {template_id}: {e}")
+                    logger.warning("FAILED TO LOAD METADATA FOR %s: %s", template_id, e)
                     metadata = TemplateMetadata(
                         template_id=template_id,
                         template_type=TemplateType.CHARACTER_PROMPT,
@@ -851,7 +852,7 @@ class DynamicTemplateEngine:
                 )
 
             self._templates[template_id] = metadata
-            logger.info(f"DISCOVERED TEMPLATE: {template_id}")
+            logger.info("DISCOVERED TEMPLATE: %s", template_id)
 
     def _analyze_template_variables(
         self, template, context: Dict[str, Any]
@@ -871,7 +872,7 @@ class DynamicTemplateEngine:
 
     def _update_performance_metrics(
         self, metadata: TemplateMetadata, render_time: float
-    ):
+    ) -> None:
         """Update enhanced performance metrics for template"""
         metadata.usage_count += 1
 
@@ -904,7 +905,7 @@ class DynamicTemplateEngine:
 
         return f"template_cache_{hash('_'.join(key_elements))}"
 
-    def _cleanup_template_cache(self):
+    def _cleanup_template_cache(self) -> None:
         """Clean up enhanced template cache to prevent memory bloat"""
         if len(self._template_cache) > 100:  # Max enhanced cache size
             # Remove oldest enhanced entries (simple FIFO)
@@ -914,8 +915,7 @@ class DynamicTemplateEngine:
 
     def get_template_list(self) -> List[Dict[str, Any]]:
         """Get enhanced list of all registered templates"""
-        template_list = []
-
+        template_list: list[Any] = []
         for template_id, metadata in self._templates.items():
             template_list.append(
                 {
@@ -1023,11 +1023,11 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         logger.info(
             f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)"
         )
-        logger.info(f"Variables used: {result_data.context_variables_used}")
+        logger.info("Variables used: %s", result_data.context_variables_used)
         logger.info("Rendered content preview:")
         logger.info(result_data.rendered_content[:200] + "...")
     else:
-        logger.error(f"TEMPLATE RENDERING FAILED: {render_result.error.message}")
+        logger.error("TEMPLATE RENDERING FAILED: %s", render_result.error.message)
 
     # Test enhanced inline template rendering
     inline_template = (
@@ -1048,7 +1048,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     creation_result = await template_engine.create_template(
         "equipment_status", new_template_content, TemplateType.EQUIPMENT_STATUS
     )
-    logger.info(f"TEMPLATE CREATION: {creation_result.success}")
+    logger.info("TEMPLATE CREATION: %s", creation_result.success)
 
     # Display enhanced statistics
     stats = template_engine.get_engine_statistics()
@@ -1058,7 +1058,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
     # Get enhanced template list
     template_list = template_engine.get_template_list()
-    logger.info(f"DISCOVERED TEMPLATES: {[t['template_id'] for t in template_list]}")
+    logger.info("DISCOVERED TEMPLATES: %s", [t['template_id'] for t in template_list])
 
     # Cleanup enhanced test files
     import shutil

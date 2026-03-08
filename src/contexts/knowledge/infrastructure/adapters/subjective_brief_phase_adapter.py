@@ -12,7 +12,7 @@ Constitution Compliance:
 from datetime import datetime, timezone
 from typing import List
 
-from opentelemetry import trace
+from opentelemetry import trace  # type: ignore[import-not-found]
 
 from src.core.types.shared_types import CharacterId
 
@@ -43,7 +43,7 @@ class SubjectiveBriefPhaseAdapter(IContextAssembler):
         - Article VII (Observability): Metrics and tracing integration points
     """
 
-    def __init__(self, retrieve_context_use_case: RetrieveAgentContextUseCase):
+    def __init__(self, retrieve_context_use_case: RetrieveAgentContextUseCase) -> None:
         """
         Initialize adapter with use case dependency.
 
@@ -80,9 +80,9 @@ class SubjectiveBriefPhaseAdapter(IContextAssembler):
         """
         return AgentContext(
             agent=agent,
-            knowledge_entries=entries,
+            knowledge_entries=tuple(entries),
             retrieved_at=datetime.now(timezone.utc),
-            turn_number=turn_number,
+            turn_number=turn_number or 0,
         )
 
     async def get_agent_knowledge_context(

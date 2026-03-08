@@ -17,7 +17,7 @@ import pytest
 
 # Import the modules under test
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 try:
     from src.agents.director_agent_integrated import DirectorAgent

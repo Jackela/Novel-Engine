@@ -11,7 +11,7 @@ Following DDD principles and backend reliability patterns for production use.
 
 import asyncio
 import hashlib
-import logging
+import structlog
 import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -41,7 +41,7 @@ from ...domain.value_objects.context_models import (
     TrustLevel,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContextLoaderError(Exception):
@@ -87,7 +87,7 @@ class ContextLoaderService:
         enable_caching: bool = True,
         cache_ttl_minutes: int = 30,
         max_concurrent_loads: int = 5,
-    ):
+    ) -> None:
         """
         Initialize the context loader service.
 
@@ -100,7 +100,7 @@ class ContextLoaderService:
         """
         self.base_path = Path(base_characters_path)
         self.max_file_size = max_file_size
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
         # Security and reliability configuration
         self.max_concurrent_loads = max_concurrent_loads
@@ -145,9 +145,11 @@ class ContextLoaderService:
         }
 
         self.logger.info(
-            f"ContextLoaderService initialized: base_path={self.base_path}, "
-            f"max_file_size={max_file_size/1024/1024:.1f}MB, "
-            f"caching={enable_caching}, concurrent_limit={max_concurrent_loads}"
+            "context_loader_service_initialized",
+            base_path=str(self.base_path),
+            max_file_size_mb=max_file_size/1024/1024,
+            caching_enabled=enable_caching,
+            concurrent_limit=max_concurrent_loads
         )
 
     async def load_character_context(
@@ -179,7 +181,7 @@ class ContextLoaderService:
         # Check circuit breaker
         await self._check_circuit_breaker()
 
-        self.logger.info(f"Loading character context for: {character_identifier}")
+        self.logger.info("loading_character_context", character_identifier=character_identifier)
 
         # Acquire load semaphore to control concurrency
         async with self._load_semaphore:
@@ -199,7 +201,7 @@ class ContextLoaderService:
                         cached_result = await self._get_from_cache(sanitized_id)
                         if cached_result:
                             self._load_stats["cache_hits"] += 1
-                            self.logger.debug(f"Cache hit for {character_identifier}")
+                            self.logger.debug("cache_hit", character_identifier=character_identifier)
                             return cached_result
                         else:
                             self._load_stats["cache_misses"] += 1
@@ -241,9 +243,11 @@ class ContextLoaderService:
 
                     load_duration = (datetime.now(UTC) - start_time).total_seconds()
                     self.logger.info(
-                        f"Context loading completed for {character_identifier} "
-                        f"in {load_duration:.2f}s - Success: {character_context.load_success}, "
-                        f"Partial: {character_context.partial_load}"
+                        "context_loading_completed",
+                        character_identifier=character_identifier,
+                        duration_seconds=load_duration,
+                        success=character_context.load_success,
+                        partial=character_context.partial_load
                     )
 
                     return character_context
@@ -253,20 +257,22 @@ class ContextLoaderService:
 
             except asyncio.TimeoutError:
                 await self._record_failure()
-                self.logger.error(f"Context loading timeout for {character_identifier}")
+                self.logger.error("context_loading_timeout", character_identifier=character_identifier)
                 raise ContextLoaderError(
                     "Context loading timeout - operation took too long"
                 )
 
             except SecurityError as e:
                 self._load_stats["security_violations"] += 1
-                self.logger.error(f"Security violation for {character_identifier}: {e}")
+                self.logger.error("security_violation", character_identifier=character_identifier, error=str(e))
                 raise
 
             except Exception as e:
                 await self._record_failure()
                 self.logger.error(
-                    f"Failed to load context for {character_identifier}: {e}"
+                    "context_loading_failed",
+                    character_identifier=character_identifier,
+                    error=str(e)
                 )
                 raise ContextLoaderError(f"Context loading failed: {str(e)}") from e
 
@@ -301,7 +307,7 @@ class ContextLoaderService:
                 f"Character identifier too long (max 100 chars): {identifier}"
             )
 
-        self.logger.debug(f"Sanitized identifier: {identifier} -> {sanitized}")
+        self.logger.debug("identifier_sanitized", original=identifier, sanitized=sanitized)
         return sanitized
 
     async def _find_character_directory(self, character_id: str) -> Path:
@@ -320,7 +326,7 @@ class ContextLoaderService:
         character_dir = self.base_path / character_id
 
         if not character_dir.exists():
-            self.logger.warning(f"Character directory not found: {character_dir}")
+            self.logger.warning("character_directory_not_found", directory=str(character_dir))
             raise ContextLoaderError(
                 f"Character directory not found for: {character_id}"
             )
@@ -330,7 +336,7 @@ class ContextLoaderService:
                 f"Character path is not a directory: {character_dir}"
             )
 
-        self.logger.debug(f"Found character directory: {character_dir}")
+        self.logger.debug("character_directory_found", directory=str(character_dir))
         return character_dir
 
     async def _load_all_context_files(
@@ -354,7 +360,7 @@ class ContextLoaderService:
                 file_path = character_dir / f"{character_id}{file_suffix}"
 
                 if file_path.exists():
-                    self.logger.debug(f"Loading {context_type} file: {file_path}")
+                    self.logger.debug("loading_context_file", context_type=context_type, file_path=str(file_path))
 
                     # Load and parse file based on type
                     if context_type == "stats":
@@ -368,7 +374,7 @@ class ContextLoaderService:
                     context_data["loaded_files"].append(file_info)
 
                 else:
-                    self.logger.info(f"Optional file not found: {file_path}")
+                    self.logger.info("optional_file_not_found", file_path=str(file_path))
                     # Create file info for missing file
                     context_data["loaded_files"].append(
                         LoadedFileInfo(
@@ -380,7 +386,7 @@ class ContextLoaderService:
                     )
 
             except Exception as e:
-                self.logger.error(f"Error loading {context_type} file: {e}")
+                self.logger.error("context_file_load_error", context_type=context_type, error=str(e))
                 context_data["loaded_files"].append(
                     LoadedFileInfo(
                         file_name=f"{character_id}{file_suffix}",
@@ -436,14 +442,14 @@ class ContextLoaderService:
             stats_context = await self._parse_stats_data(yaml_data)
 
             file_info.loaded_successfully = True
-            self.logger.debug(f"Successfully loaded YAML file: {file_path}")
+            self.logger.debug("yaml_file_loaded", file_path=str(file_path))
 
             return stats_context, file_info
 
         except Exception as e:
             error_msg = f"YAML parsing error: {str(e)}"
             file_info.error_message = error_msg
-            self.logger.error(f"Failed to load YAML file {file_path}: {error_msg}")
+            self.logger.error("yaml_file_load_failed", file_path=str(file_path), error=error_msg)
             return None, file_info
 
     async def _load_markdown_file(
@@ -493,7 +499,7 @@ class ContextLoaderService:
                 raise FileParsingError(f"Unknown context type: {context_type}")
 
             file_info.loaded_successfully = True
-            self.logger.debug(f"Successfully loaded {context_type} file: {file_path}")
+            self.logger.debug("markdown_file_loaded", context_type=context_type, file_path=str(file_path))
 
             return parsed_context, file_info
 
@@ -501,7 +507,7 @@ class ContextLoaderService:
             error_msg = f"Markdown parsing error: {str(e)}"
             file_info.error_message = error_msg
             self.logger.error(
-                f"Failed to load {context_type} file {file_path}: {error_msg}"
+                "markdown_file_load_failed", context_type=context_type, file_path=str(file_path), error=error_msg
             )
             return None, file_info
 
@@ -528,7 +534,7 @@ class ContextLoaderService:
             psychological_profile = PsychologicalProfile(traits=psych_data)
 
             # Extract relationships
-            relationships = {}
+            relationships: dict[Any, Any] = {}
             relationship_data = yaml_data.get("relationships", {})
             for rel_type, rel_list in relationship_data.items():
                 if isinstance(rel_list, list):
@@ -602,10 +608,9 @@ class ContextLoaderService:
         """
         try:
             # Simplified parsing - extract character mentions and relationships
-            formative_events = []
-            relationships = []
-            behavioral_triggers = []
-
+            formative_events: list[Any] = []
+            relationships: list[Any] = []
+            behavioral_triggers: list[Any] = []
             # Extract character names mentioned in relationships
             relationship_pattern = (
                 r"\*\*([^*]+)\*\*[^*]*trust.*?(\d+).*?relationship.*?[:\-]?\s*([^*\n]+)"
@@ -674,10 +679,9 @@ class ContextLoaderService:
             ObjectivesContext: Parsed objectives context
         """
         try:
-            core_objectives = []
-            strategic_objectives = []
-            tactical_objectives = []
-
+            core_objectives: list[Any] = []
+            strategic_objectives: list[Any] = []
+            tactical_objectives: list[Any] = []
             # Extract objectives by tier (simplified pattern matching)
             tier_patterns = {
                 "Core Life": (ObjectiveTier.CORE_LIFE, core_objectives),
@@ -755,7 +759,7 @@ class ContextLoaderService:
             )
 
             # Extract emotional drives (simplified)
-            emotional_drives = []
+            emotional_drives: list[Any] = []
             drive_pattern = r"\*\*(\d+\..*?)\*\*[^*]*?([^*]+)"
             for match in re.finditer(drive_pattern, content):
                 drive_name = match.group(1).strip()
@@ -841,10 +845,12 @@ class ContextLoaderService:
             )
 
             self.logger.info(
-                f"Created character context for {character_name}: "
-                f"Success={character_context.load_success}, "
-                f"Partial={character_context.partial_load}, "
-                f"Files loaded: {len([f for f in loaded_files if f.loaded_successfully])}/{len(loaded_files)}"
+                "character_context_created",
+                character_name=character_name,
+                success=character_context.load_success,
+                partial=character_context.partial_load,
+                files_loaded=len([f for f in loaded_files if f.loaded_successfully]),
+                total_files=len(loaded_files)
             )
 
             return character_context
@@ -854,7 +860,7 @@ class ContextLoaderService:
 
     # ==================== Enhanced Error Handling & Security ====================
 
-    async def _check_circuit_breaker(self):
+    async def _check_circuit_breaker(self) -> None:
         """Check circuit breaker state and potentially raise ServiceUnavailableError."""
         now = datetime.now(UTC)
 
@@ -863,7 +869,7 @@ class ContextLoaderService:
 
             if time_since_failure > self._circuit_breaker["recovery_timeout"]:
                 self._circuit_breaker["state"] = "HALF_OPEN"
-                self.logger.info("Circuit breaker moved to HALF_OPEN state")
+                self.logger.info("circuit_breaker_half_open")
             else:
                 remaining_time = (
                     self._circuit_breaker["recovery_timeout"] - time_since_failure
@@ -872,14 +878,14 @@ class ContextLoaderService:
                     f"Service temporarily unavailable. Recovery in {remaining_time.total_seconds():.0f}s"
                 )
 
-    async def _record_success(self):
+    async def _record_success(self) -> None:
         """Record successful operation for circuit breaker."""
         if self._circuit_breaker["state"] == "HALF_OPEN":
             self._circuit_breaker["state"] = "CLOSED"
             self._circuit_breaker["failure_count"] = 0
-            self.logger.info("Circuit breaker closed after successful recovery")
+            self.logger.info("circuit_breaker_closed")
 
-    async def _record_failure(self):
+    async def _record_failure(self) -> None:
         """Record failed operation for circuit breaker."""
         self._circuit_breaker["failure_count"] += 1
         self._circuit_breaker["last_failure_time"] = datetime.now(UTC)
@@ -890,16 +896,17 @@ class ContextLoaderService:
         ):
             self._circuit_breaker["state"] = "OPEN"
             self.logger.warning(
-                f"Circuit breaker opened after {self._circuit_breaker['failure_count']} failures"
+                "circuit_breaker_opened",
+                failure_count=self._circuit_breaker["failure_count"]
             )
 
-    async def _record_partial_failure(self):
+    async def _record_partial_failure(self) -> None:
         """Record partial failure (less severe than full failure)."""
         # Only count as half a failure for circuit breaker
         self._circuit_breaker["failure_count"] += 0.5
         self._circuit_breaker["last_failure_time"] = datetime.now(UTC)
 
-    async def _security_check(self, character_id: str):
+    async def _security_check(self, character_id: str) -> None:
         """
         Perform security checks on character identifier and path.
 
@@ -935,7 +942,7 @@ class ContextLoaderService:
         except Exception as e:
             raise SecurityError(f"Path validation error: {str(e)}")
 
-    async def _validate_context_integrity(self, character_context: CharacterContext):
+    async def _validate_context_integrity(self, character_context: CharacterContext) -> None:
         """
         Perform comprehensive data integrity validation.
 
@@ -945,10 +952,9 @@ class ContextLoaderService:
         Raises:
             ValidationError: If critical integrity issues found
         """
-        warnings = []
-
+        warnings: list[Any] = []
         # Name consistency validation
-        names = []
+        names: list[Any] = []
         if character_context.profile_context:
             names.append(character_context.profile_context.name)
         if character_context.stats_context:
@@ -959,7 +965,7 @@ class ContextLoaderService:
             warnings.append(f"Name inconsistency: {unique_names}")
 
         # Age consistency validation
-        ages = []
+        ages: list[Any] = []
         if character_context.profile_context:
             ages.append(character_context.profile_context.age)
         if character_context.stats_context:
@@ -1017,17 +1023,17 @@ class ContextLoaderService:
             self._cache.pop(oldest_id, None)
             self._cache_timestamps.pop(oldest_id, None)
 
-    async def clear_cache(self):
+    async def clear_cache(self) -> None:
         """Clear all cached data."""
         self._cache.clear()
         self._cache_timestamps.clear()
-        self.logger.info("Context cache cleared")
+        self.logger.info("context_cache_cleared")
 
     async def _generate_cache_key(
         self, character_id: str, files_info: List[LoadedFileInfo]
     ) -> str:
         """Generate cache key based on character ID and file modification times."""
-        file_hashes = []
+        file_hashes: list[Any] = []
         for file_info in files_info:
             if file_info.loaded_successfully:
                 # Use file path and timestamp for cache key

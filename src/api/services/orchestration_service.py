@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Set
 
@@ -19,13 +19,13 @@ if TYPE_CHECKING:
     from src.core.result import _Error as ResultError
     from src.core.result import _Ok as ResultOk
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class OrchestrationService:
     """Service layer for orchestration operations."""
 
-    def __init__(self, api_service: Any = None):
+    def __init__(self, api_service: Any = None) -> None:
         self.api_service = api_service
 
     async def get_status(
@@ -86,7 +86,7 @@ class OrchestrationService:
                 }
             )
         except ValueError as exc:
-            logger.warning("Invalid orchestration request: %s", exc)
+            logger.warning("invalid_orchestration_request", error=str(exc), error_type=type(exc).__name__)
             return Err(
                 Error(
                     code="INVALID_REQUEST",
@@ -180,5 +180,5 @@ class OrchestrationService:
                         available.add(item.name)
             return sorted(list(available))[:3] or ["pilot", "scientist", "engineer"]
         except Exception as exc:
-            logger.warning("Failed to fetch characters: %s", exc)
+            logger.warning("failed_to_fetch_characters", error=str(exc), error_type=type(exc).__name__)
             return ["pilot", "scientist", "engineer"]

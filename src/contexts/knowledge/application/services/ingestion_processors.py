@@ -16,6 +16,9 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_ingestion_processor import IIngestionProcessor
 from ...domain.models.chunking_strategy import (
     ChunkingStrategy,
@@ -46,6 +49,32 @@ class GenericProcessor(IIngestionProcessor):
     ) -> ChunkingStrategy:
         """Get default chunking strategy."""
         return custom_strategy or ChunkingStrategy.default()
+
+    def get_chunking_strategy_result(
+        self,
+        custom_strategy: ChunkingStrategy | None = None,
+    ) -> Result[ChunkingStrategy, ServiceError]:
+        """
+        Get default chunking strategy (Result pattern).
+
+        Args:
+            custom_strategy: Optional custom strategy to use
+
+        Returns:
+            Result containing ChunkingStrategy on success.
+            - Ok: ChunkingStrategy instance
+            - Err(ServiceError): If strategy retrieval fails
+        """
+        try:
+            return Ok(custom_strategy or ChunkingStrategy.default())
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get chunking strategy: {e}",
+                    service_name="GenericProcessor",
+                    operation="get_chunking_strategy",
+                )
+            )
 
     def enrich_metadata(
         self,

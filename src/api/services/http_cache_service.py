@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
+import structlog
 from datetime import datetime
 from email.utils import format_datetime
 from typing import List, Optional
@@ -30,7 +30,7 @@ from fastapi import Request, Response
 
 from src.api.schemas import CharacterSummary
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class HttpCacheService:
@@ -43,7 +43,7 @@ class HttpCacheService:
 
     def __init__(self) -> None:
         """Initialize the cache service."""
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def build_etag(self, identifier: str, updated: datetime) -> str:
         """

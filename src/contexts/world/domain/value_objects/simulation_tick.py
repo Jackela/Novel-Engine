@@ -35,8 +35,7 @@ class ResourceChanges:
 
     def __post_init__(self) -> None:
         """Validate resource change values."""
-        errors = []
-
+        errors: list[Any] = []
         if not -100 <= self.wealth_delta <= 100:
             errors.append(f"Wealth delta must be -100 to 100, got {self.wealth_delta}")
 
@@ -130,8 +129,7 @@ class DiplomacyChange:
 
     def __post_init__(self) -> None:
         """Validate diplomacy change values."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_a or not self.faction_a.strip():
             errors.append("Faction A ID cannot be empty")
 
@@ -164,7 +162,9 @@ class DiplomacyChange:
         after_negative = self.status_after in negative
 
         # Significant if crossing from positive to negative or vice versa
-        return (before_positive and after_negative) or (before_negative and after_positive)
+        return (before_positive and after_negative) or (
+            before_negative and after_positive
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation.
@@ -237,8 +237,7 @@ class SimulationTick:
 
     def __post_init__(self) -> None:
         """Validate simulation tick values."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.tick_id:
             errors.append("Tick ID cannot be empty")
 
@@ -300,8 +299,12 @@ class SimulationTick:
         return {
             "tick_id": self.tick_id,
             "world_id": self.world_id,
-            "calendar_before": self.calendar_before.to_dict() if self.calendar_before else None,
-            "calendar_after": self.calendar_after.to_dict() if self.calendar_after else None,
+            "calendar_before": (
+                self.calendar_before.to_dict() if self.calendar_before else None
+            ),
+            "calendar_after": (
+                self.calendar_after.to_dict() if self.calendar_after else None
+            ),
             "days_advanced": self.days_advanced,
             "events_generated": self.events_generated,
             "resource_changes": {
@@ -340,8 +343,7 @@ class SimulationTick:
 
         # Parse diplomacy changes
         diplomacy_changes = [
-            DiplomacyChange.from_dict(dc)
-            for dc in data.get("diplomacy_changes", [])
+            DiplomacyChange.from_dict(dc) for dc in data.get("diplomacy_changes", [])
         ]
 
         # Parse created_at

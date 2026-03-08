@@ -8,7 +8,7 @@ Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
 import asyncio
-import logging
+import structlog
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -29,7 +29,7 @@ def _get_llm_service() -> Any:
     return _llm_service_instance
 
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class LLMIntegration:
@@ -40,7 +40,7 @@ class LLMIntegration:
     part of the PersonaAgent class, improving maintainability and testability.
     """
 
-    def __init__(self, agent_id: str):
+    def __init__(self, agent_id: str) -> None:
         """
         Initialize the LLM integration.
 
@@ -392,13 +392,18 @@ Agent State: Active and operational with current morale {morale_level:.2f}
                     requester=f"character_llm_{self.agent_id}",
                 )
 
+                # Use safe async execution without deprecated get_event_loop()
                 try:
-                    loop = asyncio.get_event_loop()
+                    loop = asyncio.get_running_loop()
+                    llm_response = loop.run_until_complete(llm_service.generate(request))
                 except RuntimeError:
+                    # No running loop - create a new one and run
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-
-                llm_response = loop.run_until_complete(llm_service.generate(request))
+                    try:
+                        llm_response = loop.run_until_complete(llm_service.generate(request))
+                    finally:
+                        loop.close()
 
                 if "[LLM Error:" in llm_response.content:
                     logger.warning(f"Agent {self.agent_id}: LLM error, using fallback")

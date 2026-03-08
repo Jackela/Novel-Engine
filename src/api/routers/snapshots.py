@@ -125,27 +125,29 @@ async def create_snapshot(
 
     Raises:
         400: Invalid request (e.g., invalid state_json)
+        500: Internal server error
     """
     service = get_snapshot_service()
     calendar = _get_or_create_calendar(world_id)
 
-    try:
-        snapshot = service.create_snapshot(
-            world_id=world_id,
-            calendar=calendar,
-            state_json=request.state_json,
-            tick_number=request.tick_number,
-            description=request.description or "",
-        )
-        return _snapshot_to_response(snapshot)
-    except ValueError as e:
+    result = service.create_snapshot(
+        world_id=world_id,
+        calendar=calendar,
+        state_json=request.state_json,
+        tick_number=request.tick_number,
+        description=request.description or "",
+    )
+
+    if result.is_error:
         raise HTTPException(
             status_code=400,
             detail=ErrorDetail(
                 code="INVALID_REQUEST",
-                message=str(e),
+                message=str(result.error),
             ).model_dump(),
         )
+
+    return _snapshot_to_response(result.value)
 
 
 @router.get(
@@ -166,10 +168,23 @@ async def list_snapshots(
 
     Returns:
         SnapshotListResponse with list of snapshot summaries
+
+    Raises:
+        500: Internal server error
     """
     service = get_snapshot_service()
-    snapshots = service.list_snapshots(world_id, limit)
+    result = service.list_snapshots(world_id, limit)
 
+    if result.is_error:
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorDetail(
+                code="LIST_FAILED",
+                message=str(result.error),
+            ).model_dump(),
+        )
+
+    snapshots = result.value
     return SnapshotListResponse(
         snapshots=[_snapshot_to_summary(s) for s in snapshots],
         total=len(snapshots),
@@ -197,11 +212,22 @@ async def get_snapshot(
 
     Raises:
         404: Snapshot not found
+        500: Internal server error
     """
     service = get_snapshot_service()
 
     # Get latest to check if service has any snapshots for this world
-    latest = service.get_latest_snapshot(world_id)
+    latest_result = service.get_latest_snapshot(world_id)
+    if latest_result.is_error:
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorDetail(
+                code="GET_FAILED",
+                message=str(latest_result.error),
+            ).model_dump(),
+        )
+
+    latest = latest_result.value
     if latest is None:
         # Check if snapshot exists in any world (cross-world access)
         result = service.restore_snapshot(snapshot_id)
@@ -216,7 +242,17 @@ async def get_snapshot(
         snapshot = result.value
     else:
         # Find the specific snapshot
-        snapshots = service.list_snapshots(world_id, limit=100)
+        list_result = service.list_snapshots(world_id, limit=100)
+        if list_result.is_error:
+            raise HTTPException(
+                status_code=500,
+                detail=ErrorDetail(
+                    code="LIST_FAILED",
+                    message=str(list_result.error),
+                ).model_dump(),
+            )
+
+        snapshots = list_result.value
         snapshot = next((s for s in snapshots if s.snapshot_id == snapshot_id), None)
 
         if snapshot is None:
@@ -259,7 +295,7 @@ async def restore_snapshot(
 
     if result.is_error:
         error = result.error
-        if error.value == "not_found":
+        if error.code == "SNAPSHOT_NOT_FOUND":
             raise HTTPException(
                 status_code=404,
                 detail=ErrorDetail(
@@ -272,7 +308,7 @@ async def restore_snapshot(
                 status_code=500,
                 detail=ErrorDetail(
                     code="RESTORE_FAILED",
-                    message=f"Failed to restore snapshot: {error.value}",
+                    message=f"Failed to restore snapshot: {error}",
                 ).model_dump(),
             )
 
@@ -305,10 +341,21 @@ async def delete_snapshot(
 
     Raises:
         404: Snapshot not found
+        500: Internal server error
     """
     service = get_snapshot_service()
-    deleted = service.delete_snapshot(snapshot_id)
+    result = service.delete_snapshot(snapshot_id)
 
+    if result.is_error:
+        raise HTTPException(
+            status_code=500,
+            detail=ErrorDetail(
+                code="DELETE_FAILED",
+                message=str(result.error),
+            ).model_dump(),
+        )
+
+    deleted = result.value
     if not deleted:
         raise HTTPException(
             status_code=404,

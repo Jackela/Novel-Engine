@@ -52,7 +52,7 @@ class SmartTaggingEventHandler:
         self,
         tagging_service: SmartTaggingService,
         enabled: bool = True,
-    ):
+    ) -> None:
         """
         Initialize the smart tagging event handler.
 

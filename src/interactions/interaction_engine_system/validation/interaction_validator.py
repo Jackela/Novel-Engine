@@ -7,6 +7,7 @@ Ensures interaction integrity and validates all requirements before processing.
 """
 
 import logging
+import structlog
 from typing import Any, Dict, List, Optional
 
 from ..core.types import (
@@ -22,17 +23,17 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -55,7 +56,7 @@ class InteractionValidator:
 
     def __init__(
         self, config: InteractionEngineConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """
         Initialize interaction validator.
 
@@ -64,7 +65,7 @@ class InteractionValidator:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Validation rules and constraints
         self._validation_rules = {
@@ -107,8 +108,7 @@ class InteractionValidator:
             StandardResponse with validation results
         """
         try:
-            validation_results = []
-
+            validation_results: list[Any] = []
             # Basic context validation
             basic_validation = self._validate_basic_context(context)
             if not basic_validation["valid"]:
@@ -225,9 +225,8 @@ class InteractionValidator:
                     metadata={"blessing": "no_prerequisites"},
                 )
 
-            satisfied_prerequisites = []
-            failed_prerequisites = []
-
+            satisfied_prerequisites: list[Any] = []
+            failed_prerequisites: list[Any] = []
             for prerequisite in context.prerequisites:
                 if await self._check_single_prerequisite(context, prerequisite):
                     satisfied_prerequisites.append(prerequisite)
@@ -452,8 +451,7 @@ class InteractionValidator:
         self, context: InteractionContext, risk_score: float
     ) -> List[str]:
         """Generate risk mitigation suggestions."""
-        mitigations = []
-
+        mitigations: list[Any] = []
         if risk_score > 0.6:
             mitigations.append("Consider reducing participant count")
             mitigations.append("Add additional safety constraints")

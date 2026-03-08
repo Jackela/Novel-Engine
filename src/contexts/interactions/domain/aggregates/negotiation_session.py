@@ -79,7 +79,7 @@ class NegotiationSession:
     _domain_events: List[Any] = field(default_factory=list, init=False)
     _version: int = field(default=0, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize and validate negotiation session."""
         if not self.session_name.strip():
             raise ValueError("session_name cannot be empty")
@@ -403,7 +403,7 @@ class NegotiationSession:
 
     def get_proposal_responses(self, proposal_id: UUID) -> List[ProposalResponse]:
         """Get all responses for a specific proposal."""
-        responses = []
+        responses: list[Any] = []
         for party_responses in self.responses.values():
             for response in party_responses:
                 if response.proposal_id == proposal_id:

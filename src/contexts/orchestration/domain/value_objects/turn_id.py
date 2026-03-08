@@ -39,13 +39,13 @@ class TurnId:
     sequence_number: Optional[int] = None
     campaign_id: Optional[UUID] = None
     custom_name: Optional[str] = None
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
 
     # Class-level validation patterns
     _CUSTOM_NAME_PATTERN: ClassVar[str] = r"^[a-zA-Z0-9_-]{1,50}$"
     _RESERVED_NAMES: ClassVar[set] = {"test", "debug", "system", "admin", "root", "api"}
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate turn ID structure and business rules."""
         # Set created_at if not provided
         if self.created_at is None:

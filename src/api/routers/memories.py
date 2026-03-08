@@ -8,9 +8,9 @@ representing experiences that shape character behavior and dialogue.
 
 from __future__ import annotations
 
-import logging
+import structlog
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -22,7 +22,7 @@ from src.api.schemas import (
     CharacterMemorySchema,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["memories"])
 
@@ -180,8 +180,7 @@ async def create_character_memory(
     structured_data = record.get("structured_data", {}) or {}
     memories_list = structured_data.get("memories", [])
     if not isinstance(memories_list, list):
-        memories_list = []
-
+        memories_list: list[Any] = []
     # Append new memory
     memories_list.append(memory_data)
     structured_data["memories"] = memories_list
@@ -197,12 +196,10 @@ async def create_character_memory(
     # Parse UUID to ensure safe logging
     char_uuid = _parse_uuid_safe(character_id)
     logger.info(
-        "Created memory for character",
-        extra={
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-            "memory_id": memory_id,
-            "importance": int(payload.importance),
-        },
+        "character_memory_created",
+        character_id=str(char_uuid) if char_uuid else "invalid",
+        memory_id=memory_id,
+        importance=int(payload.importance),
     )
 
     return _memory_to_schema(memory_data)
@@ -314,9 +311,7 @@ async def delete_character_memory(
     char_uuid = _parse_uuid_safe(character_id)
     mem_uuid = _parse_uuid_safe(memory_id)
     logger.info(
-        "Deleted memory from character",
-        extra={
-            "memory_id": str(mem_uuid) if mem_uuid else "invalid",
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-        },
+        "character_memory_deleted",
+        memory_id=str(mem_uuid) if mem_uuid else "invalid",
+        character_id=str(char_uuid) if char_uuid else "invalid",
     )

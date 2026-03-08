@@ -54,10 +54,13 @@ def get_repository(request: Request) -> CalendarRepository:
             from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
                 InMemoryCalendarRepository,
             )
+
             repo = InMemoryCalendarRepository()
             logger.warning("using_fallback_repository_test_mode")
         else:
-            raise RuntimeError("CalendarRepository not configured. Check startup initialization.")
+            raise RuntimeError(
+                "CalendarRepository not configured. Check startup initialization."
+            )
     return repo
 
 
@@ -77,7 +80,7 @@ def get_time_service(request: Request) -> TimeService:
     return TimeService(repo)
 
 
-def _get_event_bus(request: Request):
+def _get_event_bus(request: Request) -> None:
     """Get the EventBus from app.state.
 
     Reads the EventBus from request.app.state.event_bus which is

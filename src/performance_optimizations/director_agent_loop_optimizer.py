@@ -20,7 +20,7 @@ Expected Performance Improvements:
 """
 
 import asyncio
-import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 import aiofiles
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -53,7 +53,7 @@ class OptimizedAgentRegistry:
     Replaces linear O(n) agent searches with hash-based O(1) operations.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._agents: List[Any] = []
         self._agent_lookup: Dict[str, Any] = {}
         self._agent_indices: Dict[str, int] = {}
@@ -130,7 +130,7 @@ class OptimizedWorldStateTracker:
     Eliminates O(n³) nested loops and implements efficient data structures.
     """
 
-    def __init__(self, max_history_turns: int = 50, cache_size: int = 1000):
+    def __init__(self, max_history_turns: int = 50, cache_size: int = 1000) -> None:
         self.max_history_turns = max_history_turns
 
         # Optimized data structures
@@ -183,7 +183,7 @@ class OptimizedWorldStateTracker:
         self.cache_misses += 1
 
         # Efficient single-loop implementation
-        discoveries = []
+        discoveries: list[Any] = []
         current_turn = (
             max(self.agent_discoveries.keys()) if self.agent_discoveries else 0
         )
@@ -306,7 +306,7 @@ class AsyncCampaignLogger:
 
     def __init__(
         self, log_path: str, batch_size: int = 10, flush_interval: float = 5.0
-    ):
+    ) -> None:
         self.log_path = log_path
         self.batch_size = batch_size
         self.flush_interval = flush_interval
@@ -353,8 +353,7 @@ class AsyncCampaignLogger:
         """Background worker that batches and writes logs."""
         while self.is_running:
             try:
-                events = []
-
+                events: list[Any] = []
                 # Collect batch of events
                 batch_timeout = self.flush_interval
                 start_time = time.time()
@@ -399,8 +398,7 @@ class AsyncCampaignLogger:
 
     async def _flush_remaining_logs(self) -> None:
         """Flush any remaining logs in the queue."""
-        remaining_events = []
-
+        remaining_events: list[Any] = []
         while not self.log_queue.empty():
             try:
                 event = self.log_queue.get_nowait()
@@ -487,7 +485,7 @@ class DirectorAgentPerformanceOptimizer:
                 # Replace synchronous log_event with async version
                 original_log_event = getattr(director_instance, "log_event", None)
 
-                def optimized_log_event(event_description: str):
+                def optimized_log_event(event_description: str) -> None:
                     """Optimized non-blocking log event."""
                     try:
                         loop = asyncio.get_running_loop()
@@ -565,8 +563,7 @@ class DirectorAgentPerformanceOptimizer:
         before_metrics: Dict, after_metrics: Dict
     ) -> Dict[str, str]:
         """Calculate performance improvements."""
-        improvements = {}
-
+        improvements: dict[Any, Any] = {}
         try:
             both_metrics = before_metrics.keys() & after_metrics.keys()
             if "memory_usage_mb" in both_metrics:
@@ -620,7 +617,7 @@ class DirectorAgentPerformanceOptimizer:
 class PerformanceMonitor:
     """Real-time performance monitoring for optimized DirectorAgent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics_history = deque(maxlen=1000)
         self.operation_times = defaultdict(list)
         self.start_time = time.time()
@@ -654,7 +651,7 @@ class PerformanceMonitor:
         total_operations = len(self.metrics_history)
         uptime = time.time() - self.start_time
 
-        operation_stats = {}
+        operation_stats: dict[Any, Any] = {}
         for operation, times in self.operation_times.items():
             if times:
                 operation_stats[operation] = {

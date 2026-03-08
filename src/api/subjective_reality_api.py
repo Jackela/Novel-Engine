@@ -7,7 +7,7 @@ FastAPI endpoints for SubjectiveRealityEngine functionality including
 personalized turn briefs, belief models, and fog-of-war management.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from src.core.data_models import StandardResponse
 from src.security.auth_system import Permission, get_current_user, require_permission
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -179,12 +179,12 @@ class BeliefUpdateRequest(BaseModel):
 class SubjectiveRealityAPI:
     """API endpoints for SubjectiveRealityEngine functionality."""
 
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator=None) -> None:
         self.orchestrator = orchestrator
         self.subjective_reality_engine = None
         self.turn_brief_factory = None
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup all subjective reality API routes."""
 
         @app.get(
@@ -245,7 +245,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting turn brief.")
+                logger.error("error_getting_turn_brief", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -282,7 +282,7 @@ class SubjectiveRealityAPI:
                     raise HTTPException(status_code=500, detail=error_msg)
 
                 # Transform results
-                agent_briefs = {}
+                agent_briefs: dict[Any, Any] = {}
                 for agent_id, brief_data in result.get("agent_briefs", {}).items():
                     agent_briefs[agent_id] = TurnBriefData(
                         agent_id=agent_id,
@@ -314,7 +314,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting all turn briefs.")
+                logger.error("error_getting_all_turn_briefs", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -368,7 +368,7 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.exception("Error getting belief model.")
+                logger.error("error_getting_belief_model", error="exception_occurred", error_type="exception")
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 

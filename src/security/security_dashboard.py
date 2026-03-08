@@ -20,6 +20,7 @@ System monitors all security events 📊🛡️
 import asyncio
 import json
 import logging
+import structlog
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
@@ -46,7 +47,7 @@ from .enterprise_security_manager import (
 
 # Enhanced logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class AlertSeverity(str, Enum):
@@ -137,7 +138,7 @@ class SecurityMetrics(BaseModel):
 class SecurityDashboard:
     """Enterprise Security Monitoring Dashboard"""
 
-    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379") -> None:
         self.database_path = database_path
         self.redis_url = redis_url
 
@@ -164,7 +165,7 @@ class SecurityDashboard:
             compliance_score=0.0,
         )
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize security dashboard"""
         try:
             # Connect to Redis
@@ -186,14 +187,15 @@ class SecurityDashboard:
             logger.info("🚀 SECURITY DASHBOARD INITIALIZED")
 
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Security Dashboard: {e}")
+            logger.error("❌ Failed to initialize Security Dashboard: %s", e)
             raise
 
-    async def _initialize_dashboard_database(self):
+    async def _initialize_dashboard_database(self) -> None:
         """Initialize dashboard-specific database tables"""
         async with aiosqlite.connect(self.database_path) as conn:
             # Security incidents table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_incidents (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL,
@@ -208,10 +210,12 @@ class SecurityDashboard:
                     resolution_notes TEXT,
                     resolved_at TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Security metrics snapshots
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_metrics_snapshots (
                     id TEXT PRIMARY KEY,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -219,10 +223,12 @@ class SecurityDashboard:
                     report_type TEXT NOT NULL, -- 'hourly', 'daily', 'weekly'
                     compliance_data TEXT -- JSON object
                 )
-            """)
+            """
+            )
 
             # Compliance reports
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS compliance_reports (
                     id TEXT PRIMARY KEY,
                     framework TEXT NOT NULL,
@@ -234,12 +240,13 @@ class SecurityDashboard:
                     recommendations TEXT NOT NULL, -- JSON array
                     generated_by TEXT NOT NULL
                 )
-            """)
+            """
+            )
 
             await conn.commit()
             logger.info("📊 Security Dashboard database schema initialized")
 
-    async def _security_alert_listener(self):
+    async def _security_alert_listener(self) -> None:
         """Listen for real-time security alerts from Redis"""
         pubsub = self.redis_client.pubsub()
         await pubsub.subscribe("security_alerts")
@@ -253,13 +260,13 @@ class SecurityDashboard:
                         alert_data = json.loads(message["data"])
                         await self._process_security_alert(alert_data)
                     except Exception as e:
-                        logger.error(f"Error processing security alert: {e}")
+                        logger.error("Error processing security alert: %s", e)
         except Exception as e:
-            logger.error(f"Security alert listener error: {e}")
+            logger.error("Security alert listener error: %s", e)
         finally:
             await pubsub.unsubscribe("security_alerts")
 
-    async def _process_security_alert(self, alert_data: Dict[str, Any]):
+    async def _process_security_alert(self, alert_data: Dict[str, Any]) -> None:
         """Process incoming security alert"""
         try:
             severity = AlertSeverity(alert_data.get("severity", "medium"))
@@ -296,12 +303,12 @@ class SecurityDashboard:
             # Broadcast to connected WebSocket clients
             await self._broadcast_alert(alert)
 
-            logger.info(f"🚨 Processed {severity.upper()} alert: {alert.title}")
+            logger.info("🚨 Processed %s alert: %s", severity.upper(), alert.title)
 
         except Exception as e:
-            logger.error(f"Error processing security alert: {e}")
+            logger.error("Error processing security alert: %s", e)
 
-    async def _create_incident_from_alert(self, alert: SecurityAlert):
+    async def _create_incident_from_alert(self, alert: SecurityAlert) -> None:
         """Create security incident from high-severity alert"""
         try:
             incident_id = f"INC_{int(datetime.now().timestamp())}"
@@ -343,17 +350,17 @@ class SecurityDashboard:
                 ]
             )
 
-            logger.info(f"📋 Created incident {incident_id} from alert {alert.id}")
+            logger.info("📋 Created incident %s from alert %s", incident_id, alert.id)
 
         except Exception as e:
-            logger.error(f"Error creating incident from alert: {e}")
+            logger.error("Error creating incident from alert: %s", e)
 
-    async def _save_incident(self, incident: SecurityIncident):
+    async def _save_incident(self, incident: SecurityIncident) -> None:
         """Save incident to database"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute(
                 """
-                INSERT OR REPLACE INTO security_incidents 
+                INSERT OR REPLACE INTO security_incidents
                 (id, title, description, severity, status, created_at, created_by,
                  assigned_to, related_alerts, timeline, resolution_notes, resolved_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -375,7 +382,7 @@ class SecurityDashboard:
             )
             await conn.commit()
 
-    async def _load_incidents(self):
+    async def _load_incidents(self) -> None:
         """Load existing incidents from database"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -410,12 +417,12 @@ class SecurityDashboard:
                     )
                     self.incidents[incident.id] = incident
 
-                logger.info(f"📊 Loaded {len(self.incidents)} security incidents")
+                logger.info("📊 Loaded %d security incidents", len(self.incidents))
 
         except Exception as e:
-            logger.error(f"Error loading incidents: {e}")
+            logger.error("Error loading incidents: %s", e)
 
-    async def _metrics_collector(self):
+    async def _metrics_collector(self) -> None:
         """Collect security metrics periodically"""
         while True:
             try:
@@ -438,10 +445,10 @@ class SecurityDashboard:
                 await self._broadcast_metrics()
 
             except Exception as e:
-                logger.error(f"Error collecting metrics: {e}")
+                logger.error("Error collecting metrics: %s", e)
                 await asyncio.sleep(60)
 
-    async def _compliance_monitor(self):
+    async def _compliance_monitor(self) -> None:
         """Monitor compliance frameworks periodically"""
         while True:
             try:
@@ -454,7 +461,7 @@ class SecurityDashboard:
                         await self._save_compliance_report(report)
 
             except Exception as e:
-                logger.error(f"Error in compliance monitoring: {e}")
+                logger.error("Error in compliance monitoring: %s", e)
                 await asyncio.sleep(3600)
 
     async def _generate_compliance_report(
@@ -465,8 +472,8 @@ class SecurityDashboard:
             # This would integrate with actual compliance checking logic
             # For now, we'll simulate basic compliance checking
 
-            findings = []
-            recommendations = []
+            findings: list[Any] = []
+            recommendations: list[Any] = []
             passed_controls = 0
             failed_controls = 0
 
@@ -545,16 +552,16 @@ class SecurityDashboard:
             )
 
         except Exception as e:
-            logger.error(f"Error generating compliance report for {framework}: {e}")
+            logger.error("Error generating compliance report for %s: %s", framework, e)
             return None
 
-    async def _save_compliance_report(self, report: ComplianceReport):
+    async def _save_compliance_report(self, report: ComplianceReport) -> None:
         """Save compliance report to database"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
                 await conn.execute(
                     """
-                    INSERT INTO compliance_reports 
+                    INSERT INTO compliance_reports
                     (id, framework, report_date, compliance_score, passed_controls,
                      failed_controls, findings, recommendations, generated_by)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -577,9 +584,9 @@ class SecurityDashboard:
             self.current_metrics.compliance_score = report.compliance_score
 
         except Exception as e:
-            logger.error(f"Error saving compliance report: {e}")
+            logger.error("Error saving compliance report: %s", e)
 
-    async def _broadcast_alert(self, alert: SecurityAlert):
+    async def _broadcast_alert(self, alert: SecurityAlert) -> None:
         """Broadcast alert to all connected WebSocket clients"""
         if not self.connected_clients:
             return
@@ -599,7 +606,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients = []
+        disconnected_clients: list[Any] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -610,7 +617,7 @@ class SecurityDashboard:
         for client in disconnected_clients:
             self.connected_clients.remove(client)
 
-    async def _broadcast_metrics(self):
+    async def _broadcast_metrics(self) -> None:
         """Broadcast metrics to all connected WebSocket clients"""
         if not self.connected_clients:
             return
@@ -632,7 +639,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients = []
+        disconnected_clients: list[Any] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -644,7 +651,7 @@ class SecurityDashboard:
             self.connected_clients.remove(client)
 
     # WebSocket endpoints
-    async def websocket_endpoint(self, websocket: WebSocket):
+    async def websocket_endpoint(self, websocket: WebSocket) -> None:
         """WebSocket endpoint for real-time dashboard updates"""
         await websocket.accept()
         self.connected_clients.append(websocket)
@@ -660,12 +667,12 @@ class SecurityDashboard:
         except WebSocketDisconnect:
             logger.info("Dashboard WebSocket client disconnected")
         except Exception as e:
-            logger.error(f"Dashboard WebSocket error: {e}")
+            logger.error("Dashboard WebSocket error: %s", e)
         finally:
             if websocket in self.connected_clients:
                 self.connected_clients.remove(websocket)
 
-    async def _send_initial_dashboard_data(self, websocket: WebSocket):
+    async def _send_initial_dashboard_data(self, websocket: WebSocket) -> None:
         """Send initial dashboard data to newly connected client"""
         # Send current metrics
         await websocket.send_text(
@@ -755,12 +762,12 @@ class SecurityDashboard:
         """Get compliance summary"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
-                reports = {}
+                reports: dict[Any, Any] = {}
                 for framework in ComplianceFramework.__members__.values():
                     cursor = await conn.execute(
                         """
                         SELECT compliance_score, passed_controls, failed_controls, report_date
-                        FROM compliance_reports 
+                        FROM compliance_reports
                         WHERE framework = ?
                         ORDER BY report_date DESC
                         LIMIT 1

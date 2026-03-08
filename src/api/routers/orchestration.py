@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -17,7 +17,7 @@ from src.api.schemas import (
 from src.api.services.orchestration_service import OrchestrationService
 from src.core.result import Error, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Orchestration"])
 

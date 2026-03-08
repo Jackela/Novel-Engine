@@ -10,7 +10,7 @@ Wave 5.1.3 - Memory Management and Leak Prevention
 
 import gc
 import json
-import logging
+import structlog
 import sys
 import threading
 import time
@@ -22,7 +22,7 @@ from typing import Any, Callable, Deque, Dict, List, Optional
 
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -70,7 +70,7 @@ class SlidingWindowMemoryManager:
         archive_threshold: float = 0.8,
         enable_persistence: bool = True,
         archive_path: str = "memory_archive",
-    ):
+    ) -> None:
         self.max_size = max_size
         self.archive_threshold = int(max_size * archive_threshold)
         self.enable_persistence = enable_persistence
@@ -120,8 +120,7 @@ class SlidingWindowMemoryManager:
             return 0
 
         items_to_remove = len(data_deque) - self.archive_threshold
-        archived_items = []
-
+        archived_items: list[Any] = []
         # Archive oldest items
         for _ in range(items_to_remove):
             if data_deque:
@@ -146,7 +145,7 @@ class SlidingWindowMemoryManager:
             filename = f"{self.archive_path}_{name}_{timestamp}.json"
 
             # Convert items to JSON-serializable format
-            serializable_items = []
+            serializable_items: list[Any] = []
             for item in items:
                 try:
                     if hasattr(item, "__dict__"):
@@ -187,7 +186,7 @@ class PersonaAgentMemoryFixer:
     """
 
     @staticmethod
-    def fix_persona_agent_memory_leaks(persona_agent_instance) -> Dict[str, Any]:
+    def fix_persona_agent_memory_leaks(persona_agent_instance: Any) -> Dict[str, Any]:
         """
         Apply comprehensive memory leak fixes to PersonaAgent instance.
 
@@ -315,7 +314,7 @@ class PersonaAgentMemoryFixer:
 class PersonaAgentMemoryMonitor:
     """Real-time memory monitoring for PersonaAgent instances."""
 
-    def __init__(self, persona_agent_instance):
+    def __init__(self, persona_agent_instance: Any) -> None:
         self.agent_instance = weakref.ref(
             persona_agent_instance
         )  # Weak reference to prevent circular refs
@@ -332,7 +331,7 @@ class PersonaAgentMemoryMonitor:
 
         logger.debug(f"Memory monitor started for PersonaAgent {self.agent_id}")
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Background memory monitoring loop."""
         while self._monitoring_active:
             try:
@@ -369,7 +368,7 @@ class PersonaAgentMemoryMonitor:
                 logger.error(f"Memory monitor error for {self.agent_id}: {e}")
                 time.sleep(60)  # Wait longer on error
 
-    def _check_cleanup_needs(self, agent):
+    def _check_cleanup_needs(self, agent: Any) -> None:
         """Check if agent needs memory cleanup."""
         try:
             cleanup_needed = False
@@ -404,7 +403,7 @@ class PersonaAgentMemoryMonitor:
         except Exception as e:
             logger.error(f"Cleanup check failed for {self.agent_id}: {e}")
 
-    def _check_memory_alerts(self, stats: MemoryStats, agent):
+    def _check_memory_alerts(self, stats: MemoryStats, agent: Any) -> None:
         """Check for memory usage alerts."""
         # Alert if memory usage is high
         if stats.rss_mb > self.memory_threshold_mb:
@@ -446,7 +445,7 @@ class PersonaAgentMemoryMonitor:
         growth_trend = self._calculate_memory_growth_trend()
 
         agent = self.agent_instance()
-        agent_info = {}
+        agent_info: dict[Any, Any] = {}
         if agent:
             agent_info = {
                 "decision_history_size": len(getattr(agent, "decision_history", [])),
@@ -465,7 +464,7 @@ class PersonaAgentMemoryMonitor:
             "monitoring_active": self._monitoring_active,
         }
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop memory monitoring."""
         self._monitoring_active = False
         if self._monitor_thread.is_alive():
@@ -480,7 +479,7 @@ class SystemWideMemoryManager:
     Monitors overall application memory usage and triggers cleanup when needed.
     """
 
-    def __init__(self, memory_limit_mb: int = 1024, check_interval: int = 60):
+    def __init__(self, memory_limit_mb: int = 1024, check_interval: int = 60) -> None:
         self.memory_limit_mb = memory_limit_mb
         self.check_interval = check_interval
         self.monitoring_active = False
@@ -498,7 +497,7 @@ class SystemWideMemoryManager:
             f"check_interval={check_interval}s"
         )
 
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Start system-wide memory monitoring."""
         if not self.monitoring_active:
             self.monitoring_active = True
@@ -508,7 +507,7 @@ class SystemWideMemoryManager:
             self.monitor_thread.start()
             logger.info("System-wide memory monitoring started")
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop system-wide memory monitoring."""
         self.monitoring_active = False
         if self.monitor_thread and self.monitor_thread.is_alive():
@@ -517,12 +516,12 @@ class SystemWideMemoryManager:
 
     def register_cleanup_callback(
         self, callback: Callable[[], None], component_name: str
-    ):
+    ) -> None:
         """Register a cleanup function for a specific component."""
         self.cleanup_callbacks.append((callback, component_name))
         logger.debug(f"Cleanup callback registered for component: {component_name}")
 
-    def _monitoring_loop(self):
+    def _monitoring_loop(self) -> None:
         """Main monitoring loop."""
         while self.monitoring_active:
             try:
@@ -561,7 +560,7 @@ class SystemWideMemoryManager:
                 logger.error(f"System memory monitoring error: {e}")
                 time.sleep(self.check_interval * 2)
 
-    def _handle_memory_limit_exceeded(self, stats: MemoryStats):
+    def _handle_memory_limit_exceeded(self, stats: MemoryStats) -> None:
         """Handle memory limit exceeded situation."""
         logger.warning(
             f"Memory limit exceeded: {stats.rss_mb:.1f}MB > {self.memory_limit_mb}MB"
@@ -584,7 +583,7 @@ class SystemWideMemoryManager:
         )
         self.leak_alerts.append(alert)
 
-    def _trigger_emergency_cleanup(self):
+    def _trigger_emergency_cleanup(self) -> None:
         """Trigger all registered cleanup callbacks."""
         logger.warning("Triggering emergency cleanup procedures")
 
@@ -595,7 +594,7 @@ class SystemWideMemoryManager:
             except Exception as e:
                 logger.error(f"Emergency cleanup failed for {component_name}: {e}")
 
-    def _check_for_memory_leaks(self):
+    def _check_for_memory_leaks(self) -> None:
         """Check for potential memory leaks."""
         if len(self.memory_history) < 10:
             return
@@ -673,7 +672,7 @@ def get_global_memory_manager() -> SystemWideMemoryManager:
     return _global_memory_manager
 
 
-def apply_memory_fixes_to_persona_agent(persona_agent_instance) -> bool:
+def apply_memory_fixes_to_persona_agent(persona_agent_instance: Any) -> bool:
     """
     Quick utility function to apply all memory fixes to a PersonaAgent.
 
@@ -693,7 +692,7 @@ def apply_memory_fixes_to_persona_agent(persona_agent_instance) -> bool:
         return False
 
 
-def monitor_persona_agent_memory(persona_agent_instance):
+def monitor_persona_agent_memory(persona_agent_instance: Any) -> None:
     """
     Add memory monitoring to a PersonaAgent instance.
 
@@ -735,7 +734,7 @@ def get_comprehensive_memory_report() -> Dict[str, Any]:
 # Cleanup utilities
 
 
-def emergency_memory_cleanup():
+def emergency_memory_cleanup() -> None:
     """Emergency memory cleanup function."""
     logger.warning("Executing emergency memory cleanup")
 
@@ -750,12 +749,12 @@ def emergency_memory_cleanup():
 
         functools._CacheInfo.cache_clear()  # This won't work, but shows intent
     except Exception:
-        logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+        structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
     logger.info("Emergency memory cleanup completed")
 
 
-def setup_automatic_memory_management():
+def setup_automatic_memory_management() -> None:
     """Setup automatic memory management for the entire application."""
     manager = get_global_memory_manager()
 

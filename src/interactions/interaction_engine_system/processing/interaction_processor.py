@@ -8,6 +8,7 @@ Coordinates interaction execution through structured phases with validation and 
 
 import asyncio
 import logging
+import structlog
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -26,20 +27,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -66,7 +67,7 @@ class InteractionProcessor:
         memory_manager: Optional[Any] = None,
         character_manager: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """
         Initialize interaction processor.
 
@@ -79,7 +80,7 @@ class InteractionProcessor:
         self.config = config
         self.memory_manager = memory_manager
         self.character_manager = character_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Processing state
         self.active_interactions = {}
@@ -352,7 +353,7 @@ class InteractionProcessor:
         self, context: InteractionContext
     ) -> List[InteractionPhase]:
         """Generate standard processing phases for interaction context."""
-        phases = []
+        phases: list[Any] = []
         sequence_order = 0
 
         for phase_name, phase_info in self._standard_phases.items():
@@ -541,8 +542,7 @@ class InteractionProcessor:
 
     def _generate_execution_objectives(self, context: InteractionContext) -> List[str]:
         """Generate context-specific execution objectives."""
-        objectives = []
-
+        objectives: list[Any] = []
         if context.interaction_type == InteractionType.DIALOGUE:
             objectives = ["Generate dialogue content", "Process conversational flow"]
         elif context.interaction_type == InteractionType.COMBAT:
@@ -556,7 +556,7 @@ class InteractionProcessor:
 
         return objectives
 
-    def _update_processing_stats(self, outcome: InteractionOutcome):
+    def _update_processing_stats(self, outcome: InteractionOutcome) -> None:
         """Update processing performance statistics."""
         self.processing_stats["total_processed"] += 1
 
@@ -709,7 +709,7 @@ class InteractionProcessor:
                 ),
             )
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup resources on destruction."""
         if self.executor:
             self.executor.shutdown(wait=True)

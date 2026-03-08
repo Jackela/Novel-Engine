@@ -5,6 +5,9 @@ Tests cover ResourceType, ResourceYield, FactionResources, and Resource entity.
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 from src.contexts.world.domain.entities import Resource
 from src.contexts.world.domain.value_objects import (
     FactionResources,

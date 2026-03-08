@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 from datetime import UTC, datetime
 from typing import Any
@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from src.api.schemas import HealthCheckResponse, HealthResponse
 from src.core.config.config_loader import get_config
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Health"])
 
@@ -56,7 +56,7 @@ async def check_chroma() -> tuple[bool, str]:
         # Treat "not installed" errors as not configured rather than unhealthy
         if "not installed" in error_msg.lower() or "not found" in error_msg.lower():
             return (True, "not_configured")
-        logger.warning("ChromaDB health check failed: %s", exc)
+        logger.warning("chromadb_health_check_failed", error=str(exc), error_type=type(exc).__name__)
         return (False, error_msg)
 
 
@@ -100,7 +100,7 @@ async def check_postgres() -> tuple[bool, str]:
     except ImportError:
         return (True, "not_installed")
     except Exception as exc:
-        logger.warning("PostgreSQL health check failed: %s", exc)
+        logger.warning("postgresql_health_check_failed", error=str(exc), error_type=type(exc).__name__)
         return (False, str(exc))
 
 
@@ -142,7 +142,7 @@ async def check_redis() -> tuple[bool, str]:
     except ImportError:
         return (True, "not_installed")
     except Exception as exc:
-        logger.warning("Redis health check failed: %s", exc)
+        logger.warning("redis_health_check_failed", error=str(exc), error_type=type(exc).__name__)
         return (False, str(exc))
 
 
@@ -163,8 +163,7 @@ async def check_llm() -> tuple[bool, str]:
         openai_key = os.getenv("OPENAI_API_KEY", "")
         anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
 
-        configured_providers = []
-
+        configured_providers: list[Any] = []
         if gemini_key:
             configured_providers.append("gemini")
         if openai_key:
@@ -180,7 +179,7 @@ async def check_llm() -> tuple[bool, str]:
         return (True, f"ok (providers: {providers_str})")
 
     except Exception as exc:
-        logger.warning("LLM health check failed: %s", exc)
+        logger.warning("llm_health_check_failed", error=str(exc), error_type=type(exc).__name__)
         return (False, str(exc))
 
 
@@ -258,7 +257,10 @@ async def ready() -> ReadinessResponseV2:
             status_code=503,
             detail={
                 "status": "unhealthy",
-                "checks": {k: {"status": v.status, "message": v.message} for k, v in checks.items()},
+                "checks": {
+                    k: {"status": v.status, "message": v.message}
+                    for k, v in checks.items()
+                },
             },
         )
 
@@ -271,7 +273,7 @@ async def ready() -> ReadinessResponseV2:
 @router.get("/", response_model=HealthResponse)
 async def root() -> HealthResponse:
     """Root endpoint for basic health check."""
-    logger.info("Root endpoint accessed for health check")
+    logger.info("health_check_root_accessed")
     return HealthResponse(
         message="StoryForge AI Interactive Story Engine is running!",
         status="ok",
@@ -286,9 +288,9 @@ async def health_check(request: Request) -> HealthCheckResponse:
         get_config()
         config_status = "loaded"
         status = "healthy"
-        logger.info("Health check endpoint accessed")
+        logger.info("health_check_endpoint_accessed")
     except Exception as exc:
-        logger.error("Health check configuration error: %s", exc)
+        logger.error("health_check_config_error", error=str(exc), error_type=type(exc).__name__)
         if "Severe system error" in str(exc):
             raise HTTPException(status_code=500, detail=str(exc))
         config_status = "error"
@@ -352,7 +354,7 @@ async def chromadb_health_check() -> dict[str, Any]:
             "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception:
-        logger.exception("ChromaDB health check error")
+        logger.error("chromadb_health_check_error", error="exception_occurred", error_type="exception")
         return {
             "status": "error",
             "message": "ChromaDB health check failed",

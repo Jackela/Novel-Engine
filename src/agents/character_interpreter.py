@@ -13,8 +13,9 @@ This component manages the transformation of character files into runtime
 agent behavior and characteristics.
 """
 
-import logging
 import os
+
+import structlog
 import re
 from datetime import datetime
 from functools import lru_cache
@@ -22,8 +23,7 @@ from typing import Any, Dict, List, Tuple
 
 import yaml
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterInterpreter:
@@ -38,7 +38,7 @@ class CharacterInterpreter:
     - Validating character data integrity
     """
 
-    def __init__(self, character_directory_path: str):
+    def __init__(self, character_directory_path: str) -> None:
         """
         Initialize the CharacterInterpreter.
 
@@ -50,7 +50,7 @@ class CharacterInterpreter:
         self.file_cache: Dict[str, str] = {}
         self.yaml_cache: Dict[str, Dict[str, Any]] = {}
 
-        logger.info("CharacterInterpreter initialized")
+        logger.info("character_interpreter_initialized")
 
     def load_character_context(self) -> Dict[str, Any]:
         """
@@ -70,7 +70,8 @@ class CharacterInterpreter:
         """
         try:
             logger.info(
-                f"Loading character context from directory: {self.character_directory_path}"
+                "loading_character_context",
+                directory=self.character_directory_path
             )
 
             # Validate directory exists
@@ -111,10 +112,9 @@ class CharacterInterpreter:
                 hybrid_context["yaml_data"] = self._process_yaml_files(yaml_files)
 
             # Parse character data from markdown content for backward compatibility
-            if hybrid_context["markdown_content"]:
-                self.character_data = self._parse_character_sheet_content(
-                    hybrid_context["markdown_content"]
-                )
+            md_content = hybrid_context.get("markdown_content")
+            if md_content and isinstance(md_content, str):
+                self.character_data = self._parse_character_sheet_content(md_content)
             else:
                 self.character_data = {}
 
@@ -122,7 +122,9 @@ class CharacterInterpreter:
             self.character_data["hybrid_context"] = hybrid_context
 
             # Merge YAML data into character_data for easier access
-            self._merge_yaml_data_into_character_data(hybrid_context["yaml_data"])
+            yaml_data = hybrid_context.get("yaml_data")
+            if yaml_data and isinstance(yaml_data, dict):
+                self._merge_yaml_data_into_character_data(yaml_data)
 
             # Extract and interpret character characteristics
             self._extract_character_characteristics()
@@ -130,13 +132,15 @@ class CharacterInterpreter:
             total_files = len(md_files) + len(yaml_files)
             character_name = self.character_data.get("name", "Unknown")
             logger.info(
-                f"Character context loaded for {character_name} from {total_files} files"
+                "character_context_loaded",
+                character_name=character_name,
+                file_count=total_files
             )
 
             return self.character_data
 
         except Exception as e:
-            logger.error(f"Failed to load character context: {str(e)}")
+            logger.error("failed_to_load_character_context", error=str(e))
             raise
 
     def _discover_character_files(self) -> Tuple[List[str], List[str]]:
@@ -146,9 +150,8 @@ class CharacterInterpreter:
         Returns:
             Tuple of (markdown_files, yaml_files) lists with full paths
         """
-        md_files = []
-        yaml_files = []
-
+        md_files: list[Any] = []
+        yaml_files: list[Any] = []
         try:
             for filename in os.listdir(self.character_directory_path):
                 file_lower = filename.lower()
@@ -160,11 +163,13 @@ class CharacterInterpreter:
                     yaml_files.append(full_path)
 
             logger.debug(
-                f"Discovered {len(md_files)} MD files and {len(yaml_files)} YAML files"
+                "discovered_character_files",
+                md_files=len(md_files),
+                yaml_files=len(yaml_files)
             )
 
         except Exception as e:
-            logger.error(f"Error discovering character files: {str(e)}")
+            logger.error("error_discovering_character_files", error=str(e))
 
         return md_files, yaml_files
 
@@ -179,11 +184,10 @@ class CharacterInterpreter:
             Combined markdown content string
         """
         try:
-            logger.info(f"Processing {len(md_files)} markdown files")
-            markdown_parts = []
-
+            logger.info("processing_markdown_files", file_count=len(md_files))
+            markdown_parts: list[Any] = []
             for file_path in sorted(md_files):  # Sort for consistent ordering
-                logger.debug(f"Reading markdown file: {file_path}")
+                logger.debug("reading_markdown_file", file_path=file_path)
 
                 file_content = self._read_cached_file(file_path)
 
@@ -193,13 +197,14 @@ class CharacterInterpreter:
 
             combined_content = "\n\n".join(markdown_parts)
             logger.debug(
-                f"Combined markdown content: {len(combined_content)} characters"
+                "combined_markdown_content",
+                character_count=len(combined_content)
             )
 
             return combined_content
 
         except Exception as e:
-            logger.error(f"Error processing markdown files: {str(e)}")
+            logger.error("error_processing_markdown_files", error=str(e))
             return ""
 
     def _process_yaml_files(self, yaml_files: List[str]) -> Dict[str, Any]:
@@ -213,11 +218,10 @@ class CharacterInterpreter:
             Dictionary containing parsed YAML data indexed by filename
         """
         try:
-            logger.info(f"Processing {len(yaml_files)} YAML files")
-            yaml_data = {}
-
+            logger.info("processing_yaml_files", file_count=len(yaml_files))
+            yaml_data: dict[Any, Any] = {}
             for file_path in sorted(yaml_files):  # Sort for consistent ordering
-                logger.debug(f"Reading YAML file: {file_path}")
+                logger.debug("reading_yaml_file", file_path=file_path)
 
                 try:
                     parsed_yaml = self._parse_cached_yaml(file_path)
@@ -225,7 +229,7 @@ class CharacterInterpreter:
                     yaml_data[filename_key] = parsed_yaml
 
                 except yaml.YAMLError as e:
-                    logger.warning(f"Failed to parse YAML file {file_path}: {e}")
+                    logger.warning("failed_to_parse_yaml_file", file_path=file_path, error=str(e))
                     # Store as raw text if YAML parsing fails
                     filename_key = os.path.splitext(os.path.basename(file_path))[0]
                     raw_content = self._read_cached_file(file_path)
@@ -234,11 +238,11 @@ class CharacterInterpreter:
                         "_parse_error": str(e),
                     }
 
-            logger.debug(f"Processed YAML data from {len(yaml_data)} files")
+            logger.debug("processed_yaml_data", file_count=len(yaml_data))
             return yaml_data
 
         except Exception as e:
-            logger.error(f"Error processing YAML files: {str(e)}")
+            logger.error("error_processing_yaml_files", error=str(e))
             return {}
 
     @lru_cache(maxsize=50)
@@ -255,10 +259,10 @@ class CharacterInterpreter:
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 content = file.read()
-            logger.debug(f"Read {len(content)} characters from {file_path}")
+            logger.debug("read_file", character_count=len(content), file_path=file_path)
             return content
         except Exception as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+            logger.error("error_reading_file", file_path=file_path, error=str(e))
             return ""
 
     @lru_cache(maxsize=20)
@@ -278,15 +282,16 @@ class CharacterInterpreter:
 
             if not isinstance(yaml_content, dict):
                 logger.warning(
-                    f"YAML file {file_path} did not parse to dictionary, wrapping"
+                    "yaml_file_not_dictionary",
+                    file_path=file_path
                 )
                 yaml_content = {"content": yaml_content}
 
-            logger.debug(f"Parsed YAML from {file_path}: {len(yaml_content)} keys")
+            logger.debug("parsed_yaml", file_path=file_path, key_count=len(yaml_content))
             return yaml_content
 
         except Exception as e:
-            logger.error(f"Error parsing YAML file {file_path}: {e}")
+            logger.error("error_parsing_yaml_file", file_path=file_path, error=str(e))
             raise
 
     def _merge_yaml_data_into_character_data(self, yaml_data: Dict[str, Any]) -> None:
@@ -317,7 +322,7 @@ class CharacterInterpreter:
                         self.character_data[field] = value
 
         except Exception as e:
-            logger.error(f"Error merging YAML data: {str(e)}")
+            logger.error("error_merging_yaml_data", error=str(e))
 
     def _parse_character_sheet_content(self, markdown_content: str) -> Dict[str, Any]:
         """
@@ -333,8 +338,7 @@ class CharacterInterpreter:
             Dictionary containing extracted character information
         """
         try:
-            character_data = {}
-
+            character_data: dict[Any, Any] = {}
             # Extract basic character information
             character_data.update(self._extract_basic_info(markdown_content))
 
@@ -353,40 +357,40 @@ class CharacterInterpreter:
             # Extract skills and capabilities
             character_data.update(self._extract_skills_info(markdown_content))
 
-            logger.debug(f"Parsed character sheet data: {len(character_data)} fields")
+            logger.debug("parsed_character_sheet_data", field_count=len(character_data))
             return character_data
 
         except Exception as e:
-            logger.error(f"Error parsing character sheet content: {str(e)}")
+            logger.error("error_parsing_character_sheet_content", error=str(e))
             return {}
 
     def _extract_basic_info(self, content: str) -> Dict[str, Any]:
         """Extract basic character information (name, faction, etc.)."""
-        basic_info = {}
-
+        basic_info: dict[Any, Any] = {}
         try:
-            # Extract name (skip file separator headers marked with ===)
-            name_patterns = [
-                r"(?:name|character):\s*([^\n]+)",
-                r"character name:\s*([^\n]+)",
-            ]
+            # First, try to extract name from header (excluding separators)
+            # Header-based names are often more reliable than field-based names
+            for match in re.finditer(r"#\s*([^\n]+)", content):
+                name_candidate = match.group(1).strip()
+                if "===" not in name_candidate:
+                    basic_info["name"] = name_candidate
+                    break
 
-            for pattern in name_patterns:
-                match = re.search(pattern, content, re.IGNORECASE)
-                if match:
-                    name_candidate = match.group(1).strip()
-                    # Skip if it's a file separator
-                    if "===" not in name_candidate:
-                        basic_info["name"] = name_candidate
-                        break
-
-            # If no name found, try first header (excluding separators)
+            # If no header name found, fall back to name field patterns
             if "name" not in basic_info:
-                for match in re.finditer(r"#\s*([^\n]+)", content):
-                    name_candidate = match.group(1).strip()
-                    if "===" not in name_candidate:
-                        basic_info["name"] = name_candidate
-                        break
+                name_patterns = [
+                    r"(?:name|character):\s*([^\n]+)",
+                    r"character name:\s*([^\n]+)",
+                ]
+
+                for pattern in name_patterns:
+                    match = re.search(pattern, content, re.IGNORECASE)
+                    if match:
+                        name_candidate = match.group(1).strip()
+                        # Skip if it's a file separator
+                        if "===" not in name_candidate:
+                            basic_info["name"] = name_candidate
+                            break
 
             # Extract faction
             faction_patterns = [
@@ -415,14 +419,13 @@ class CharacterInterpreter:
                     break
 
         except Exception as e:
-            logger.error(f"Error extracting basic info: {str(e)}")
+            logger.error("error_extracting_basic_info", error=str(e))
 
         return basic_info
 
     def _extract_character_stats(self, content: str) -> Dict[str, Any]:
         """Extract character statistics and attributes."""
-        stats = {}
-
+        stats: dict[Any, Any] = {}
         try:
             # Look for stat blocks in various formats
             stat_patterns = [
@@ -444,14 +447,13 @@ class CharacterInterpreter:
                     stats[stat_name] = stat_value
 
         except Exception as e:
-            logger.error(f"Error extracting character stats: {str(e)}")
+            logger.error("error_extracting_character_stats", error=str(e))
 
         return {"stats": stats} if stats else {}
 
     def _extract_background_info(self, content: str) -> Dict[str, Any]:
         """Extract background and narrative information."""
-        background_info = {}
-
+        background_info: dict[Any, Any] = {}
         try:
             # Extract background sections
             section_patterns = {
@@ -466,14 +468,13 @@ class CharacterInterpreter:
                     background_info[key] = match.group(1).strip()
 
         except Exception as e:
-            logger.error(f"Error extracting background info: {str(e)}")
+            logger.error("error_extracting_background_info", error=str(e))
 
         return background_info
 
     def _extract_personality_info(self, content: str) -> Dict[str, Any]:
         """Extract personality traits and behavioral patterns."""
-        personality_info = {}
-
+        personality_info: dict[Any, Any] = {}
         try:
             # Extract personality traits
             traits_pattern = (
@@ -502,14 +503,13 @@ class CharacterInterpreter:
                 personality_info["motivations"] = motivation_text
 
         except Exception as e:
-            logger.error(f"Error extracting personality info: {str(e)}")
+            logger.error("error_extracting_personality_info", error=str(e))
 
         return personality_info
 
     def _extract_relationship_info(self, content: str) -> Dict[str, Any]:
         """Extract relationship and social connection information."""
-        relationship_info = {}
-
+        relationship_info: dict[Any, Any] = {}
         try:
             # Extract relationships section
             relationships_pattern = r"relationships?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
@@ -520,8 +520,7 @@ class CharacterInterpreter:
             if match:
                 relationships_text = match.group(1).strip()
                 # Parse relationships into structured format
-                relationships = {}
-
+                relationships: dict[Any, Any] = {}
                 for line in relationships_text.split("\n"):
                     line = line.strip()
                     if ":" in line:
@@ -532,14 +531,13 @@ class CharacterInterpreter:
                     relationship_info["relationships"] = relationships
 
         except Exception as e:
-            logger.error(f"Error extracting relationship info: {str(e)}")
+            logger.error("error_extracting_relationship_info", error=str(e))
 
         return relationship_info
 
     def _extract_skills_info(self, content: str) -> Dict[str, Any]:
         """Extract skills and capabilities information."""
-        skills_info = {}
-
+        skills_info: dict[Any, Any] = {}
         try:
             # Extract skills section
             skills_pattern = r"skills?:\s*([^\n]+(?:\n(?!\w+:)[^\n]+)*)"
@@ -555,7 +553,7 @@ class CharacterInterpreter:
                 skills_info["skills"] = skills
 
         except Exception as e:
-            logger.error(f"Error extracting skills info: {str(e)}")
+            logger.error("error_extracting_skills_info", error=str(e))
 
         return skills_info
 
@@ -578,11 +576,12 @@ class CharacterInterpreter:
             self._extract_knowledge_domains()
 
             logger.debug(
-                f"Extracted character characteristics for {self.character_data.get('name', 'Unknown')}"
+                "extracted_character_characteristics",
+                character_name=self.character_data.get("name", "Unknown")
             )
 
         except Exception as e:
-            logger.error(f"Error extracting character characteristics: {str(e)}")
+            logger.error("error_extracting_character_characteristics", error=str(e))
 
     def _extract_core_identity(self) -> None:
         """Extract core identity elements from character data."""
@@ -606,13 +605,12 @@ class CharacterInterpreter:
                 )
 
         except Exception as e:
-            logger.error(f"Error extracting core identity: {str(e)}")
+            logger.error("error_extracting_core_identity", error=str(e))
 
     def _extract_personality_traits(self) -> None:
         """Extract and quantify personality traits for behavioral modeling."""
         try:
-            traits_dict = {}
-
+            traits_dict: dict[Any, Any] = {}
             # Extract from parsed personality traits
             personality_traits = self.character_data.get("personality_traits", [])
 
@@ -651,7 +649,7 @@ class CharacterInterpreter:
                 self.character_data["personality_scores"] = traits_dict
 
         except Exception as e:
-            logger.error(f"Error extracting personality traits: {str(e)}")
+            logger.error("error_extracting_personality_traits", error=str(e))
 
     def _extract_decision_weights(self) -> None:
         """Extract decision-making weights based on character priorities."""
@@ -698,13 +696,12 @@ class CharacterInterpreter:
             self.character_data["decision_weights"] = decision_weights
 
         except Exception as e:
-            logger.error(f"Error extracting decision weights: {str(e)}")
+            logger.error("error_extracting_decision_weights", error=str(e))
 
     def _extract_relationships(self) -> None:
         """Extract and quantify relationships with other entities."""
         try:
-            relationships_dict = {}
-
+            relationships_dict: dict[Any, Any] = {}
             # Process relationships from character data
             relationships = self.character_data.get("relationships", {})
 
@@ -740,13 +737,12 @@ class CharacterInterpreter:
                 self.character_data["relationship_scores"] = relationships_dict
 
         except Exception as e:
-            logger.error(f"Error extracting relationships: {str(e)}")
+            logger.error("error_extracting_relationships", error=str(e))
 
     def _extract_knowledge_domains(self) -> None:
         """Extract knowledge domains and areas of expertise."""
         try:
-            knowledge_domains = []
-
+            knowledge_domains: list[Any] = []
             # Extract from skills
             skills = self.character_data.get("skills", [])
             if isinstance(skills, list):
@@ -777,7 +773,7 @@ class CharacterInterpreter:
                 self.character_data["knowledge_domains"] = list(set(knowledge_domains))
 
         except Exception as e:
-            logger.error(f"Error extracting knowledge domains: {str(e)}")
+            logger.error("error_extracting_knowledge_domains", error=str(e))
 
     def get_character_summary(self) -> Dict[str, Any]:
         """
@@ -804,7 +800,7 @@ class CharacterInterpreter:
                 "interpretation_timestamp": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error generating character summary: {str(e)}")
+            logger.error("error_generating_character_summary", error=str(e))
             return {"error": str(e)}
 
     def validate_character_data(self) -> Tuple[bool, List[str]]:
@@ -814,8 +810,7 @@ class CharacterInterpreter:
         Returns:
             Tuple of (is_valid, list_of_issues)
         """
-        issues = []
-
+        issues: list[Any] = []
         try:
             # Check essential fields
             if not self.character_data.get("name"):

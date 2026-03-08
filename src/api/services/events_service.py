@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
+import structlog
 import time
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, AsyncGenerator, Dict, Optional
 
@@ -15,14 +16,32 @@ from src.api.schemas import (
     SSEEventData,
     SSEStatsResponse,
 )
+from src.core.result import Err, Error, Ok, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
+
+class EventsServiceError(Error):
+    """Error raised when events service operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        details: Dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code="EVENTS_SERVICE_ERROR",
+            message=message,
+            recoverable=True,
+            details={"operation": operation, **(details or {})},
+        )
 
 
 class EventsService:
     """Service layer for SSE events and analytics operations."""
 
-    def __init__(self, app: Any):
+    def __init__(self, app: Any) -> None:
         self.app = app
         self._ensure_state()
 
@@ -43,38 +62,116 @@ class EventsService:
         severity: str = "low",
         character_name: Optional[str] = None,
     ) -> SSEEventData:
-        """Create a new SSE event."""
-        self._ensure_state()
-        self.app.state.sse_event_id_counter += 1
-        event_id = self.app.state.sse_event_id_counter
-
-        return SSEEventData(
-            id=f"evt-{event_id}",
-            type=event_type,
-            title=title,
-            description=description,
-            timestamp=int(time.time() * 1000),
-            severity=severity,
-            characterName=character_name,
+        """Create a new SSE event. (Legacy - use create_event_result)"""
+        result = self.create_event_result(
+            event_type, title, description, severity, character_name
         )
+        if result.is_ok:
+            return result.value
+        raise RuntimeError(result.error.message)
+
+    def create_event_result(
+        self,
+        event_type: str,
+        title: str,
+        description: str,
+        severity: str = "low",
+        character_name: Optional[str] = None,
+    ) -> Result[SSEEventData, Error]:
+        """
+        Create a new SSE event using Result pattern.
+
+        Args:
+            event_type: Type of the event
+            title: Event title
+            description: Event description
+            severity: Event severity level
+            character_name: Optional character name
+
+        Returns:
+            Result containing SSEEventData on success or error
+        """
+        try:
+            self._ensure_state()
+            self.app.state.sse_event_id_counter += 1
+            event_id = self.app.state.sse_event_id_counter
+
+            event = SSEEventData(
+                id=f"evt-{event_id}",
+                type=event_type,
+                title=title,
+                description=description,
+                timestamp=int(time.time() * 1000),
+                severity=severity,
+                characterName=character_name,
+            )
+            return Ok(event)
+        except Exception as e:
+            return Err(
+                EventsServiceError(
+                    message=f"Failed to create event: {e}",
+                    operation="create_event",
+                )
+            )
 
     def broadcast_event(self, event_data: SSEEventData) -> None:
-        """Broadcast event to all connected clients."""
-        self._ensure_state()
-        queues: dict[str, asyncio.Queue] = self.app.state.sse_event_queues
-        logger.info("Broadcasting SSE event to %d clients", len(queues))
+        """Broadcast event to all connected clients. (Legacy - use broadcast_event_result)"""
+        result = self.broadcast_event_result(event_data)
+        if result.is_error:
+            logger.warning("broadcast_event_failed", error=result.error.message)
 
-        loop = getattr(self.app.state, "main_loop", None)
-        if loop is None:
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                logger.warning("No event loop available for SSE broadcast")
-                return
+    def broadcast_event_result(self, event_data: SSEEventData) -> Result[bool, Error]:
+        """
+        Broadcast event to all connected clients using Result pattern.
 
-        event_dict = event_data.model_dump()
-        for client_id, queue in list(queues.items()):
-            self._safe_put(queue, event_dict, client_id, loop)
+        Args:
+            event_data: Event data to broadcast
+
+        Returns:
+            Result containing True on success or error
+        """
+        try:
+            self._ensure_state()
+            queues: dict[str, asyncio.Queue] = self.app.state.sse_event_queues
+            logger.info("broadcasting_sse_event", client_count=len(queues))
+
+            loop = getattr(self.app.state, "main_loop", None)
+            if loop is None:
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    return Err(
+                        EventsServiceError(
+                            message="No event loop available for SSE broadcast",
+                            operation="broadcast_event",
+                        )
+                    )
+
+            event_dict = event_data.model_dump()
+            failed_clients: list[str] = []
+            for client_id, queue in list(queues.items()):
+                try:
+                    self._safe_put(queue, event_dict, client_id, loop)
+                except Exception:
+                    failed_clients.append(client_id)
+
+            if failed_clients:
+                return Err(
+                    EventsServiceError(
+                        message=f"Failed to broadcast to clients: {failed_clients}",
+                        operation="broadcast_event",
+                        details={"failed_clients": failed_clients},
+                    )
+                )
+
+            return Ok(True)
+        except Exception as e:
+            return Err(
+                EventsServiceError(
+                    message=f"Failed to broadcast event: {e}",
+                    operation="broadcast_event",
+                )
+            )
 
     def _safe_put(
         self,
@@ -85,11 +182,11 @@ class EventsService:
     ) -> None:
         """Safely put data into queue."""
 
-        def _put_nowait():
+        def _put_nowait() -> None:
             try:
                 queue.put_nowait(data)
             except asyncio.QueueFull:
-                logger.warning("SSE queue full for client %s", client_id)
+                logger.warning("sse_queue_full", client_id=client_id)
 
         if loop and hasattr(loop, "is_running") and loop.is_running():
             loop.call_soon_threadsafe(_put_nowait)
@@ -97,13 +194,38 @@ class EventsService:
             _put_nowait()
 
     def get_stats(self) -> SSEStatsResponse:
-        """Get SSE connection statistics."""
-        self._ensure_state()
+        """Get SSE connection statistics. (Legacy - use get_stats_result)"""
+        result = self.get_stats_result()
+        if result.is_ok:
+            return result.value
         return SSEStatsResponse(
-            connected_clients=self.app.state.active_sse_connections,
-            total_events_sent=self.app.state.sse_event_id_counter,
-            active_queues=len(self.app.state.sse_event_queues),
+            connected_clients=0,
+            total_events_sent=0,
+            active_queues=0,
         )
+
+    def get_stats_result(self) -> Result[SSEStatsResponse, Error]:
+        """
+        Get SSE connection statistics using Result pattern.
+
+        Returns:
+            Result containing SSEStatsResponse on success or error
+        """
+        try:
+            self._ensure_state()
+            stats = SSEStatsResponse(
+                connected_clients=self.app.state.active_sse_connections,
+                total_events_sent=self.app.state.sse_event_id_counter,
+                active_queues=len(self.app.state.sse_event_queues),
+            )
+            return Ok(stats)
+        except Exception as e:
+            return Err(
+                EventsServiceError(
+                    message=f"Failed to get stats: {e}",
+                    operation="get_stats",
+                )
+            )
 
     async def get_analytics_metrics(
         self, api_service: Any = None
@@ -120,7 +242,8 @@ class EventsService:
         if not api_service:
             return {}
         try:
-            return await api_service.get_status()
+            result: Dict[str, Any] = await api_service.get_status()
+            return result
         except Exception:
             return {}
 
@@ -131,7 +254,8 @@ class EventsService:
 
             if chunk_cache:
                 if hasattr(chunk_cache, "get_metrics"):
-                    return chunk_cache.get_metrics()
+                    result: Dict[str, Any] = chunk_cache.get_metrics()
+                    return result
                 elif hasattr(chunk_cache, "_cache"):
                     return {
                         "cache_size": (
@@ -207,7 +331,7 @@ class EventsService:
         try:
             yield "retry: 3000\n\n"
 
-            logger.info("SSE client connected: %s", client_id)
+            logger.info("sse_client_connected", client_id=client_id)
             self.app.state.active_sse_connections += 1
 
             # Send connect event
@@ -246,10 +370,10 @@ class EventsService:
                         break
 
                 except asyncio.CancelledError:
-                    logger.info("SSE client disconnected: %s", client_id)
+                    logger.info("sse_client_disconnected", client_id=client_id)
                     break
                 except Exception:
-                    logger.exception("SSE event generation error.")
+                    logger.error("sse_event_generation_error", error="exception_occurred", error_type="exception")
                     error_event = self.create_event(
                         event_type="system",
                         title="Stream Error",
@@ -266,7 +390,7 @@ class EventsService:
                 0, self.app.state.active_sse_connections - 1
             )
             queues.pop(client_id, None)
-            logger.info("SSE client %s cleaned up", client_id)
+            logger.info("sse_client_cleaned_up", client_id=client_id)
 
     async def _wait_or_generate_event(
         self,

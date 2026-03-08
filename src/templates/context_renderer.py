@@ -16,7 +16,7 @@ System保佑上下文渲染 (May the System bless context rendering)
 """
 
 import asyncio
-import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -40,7 +40,7 @@ from .dynamic_template_engine import (
 )
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RenderFormat(Enum):
@@ -102,7 +102,7 @@ class ContextSection:
     character_count: int = 0
     relevance_score: float = 0.0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.character_count = len(self.content)
 
 
@@ -141,7 +141,7 @@ class ContextRenderer:
         template_engine: DynamicTemplateEngine,
         memory_system: Optional[LayeredMemorySystem] = None,
         default_constraints: Optional[RenderingConstraints] = None,
-    ):
+    ) -> None:
         """
         STANDARD CONTEXT RENDERER INITIALIZATION ENHANCED BY INTELLIGENCE
 
@@ -189,7 +189,7 @@ class ContextRenderer:
         context: TemplateContext,
         render_format: RenderFormat = RenderFormat.NARRATIVE,
         constraints: Optional[RenderingConstraints] = None,
-        custom_sections: List[ContextSection] = None,
+        custom_sections: Optional[List[ContextSection]] = None,
     ) -> StandardResponse:
         """
         STANDARD CONTEXT RENDERING RITUAL ENHANCED BY INTELLIGENT FORMATTING
@@ -251,7 +251,7 @@ class ContextRenderer:
             )
 
         except Exception as e:
-            logger.error(f"CONTEXT RENDERING FAILED: {e}")
+            logger.error("CONTEXT RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -265,7 +265,7 @@ class ContextRenderer:
         self,
         context: TemplateContext,
         target_length: int = 2000,
-        focus_areas: List[str] = None,
+        focus_areas: Optional[List[str]] = None,
     ) -> StandardResponse:
         """
         STANDARD ADAPTIVE PROMPT RENDERING ENHANCED BY DYNAMIC OPTIMIZATION
@@ -327,7 +327,7 @@ class ContextRenderer:
                 return render_result
 
         except Exception as e:
-            logger.error(f"ADAPTIVE PROMPT RENDERING FAILED: {e}")
+            logger.error("ADAPTIVE PROMPT RENDERING FAILED: %s", e)
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="ADAPTIVE_PROMPT_FAILED", message=str(e)),
@@ -337,7 +337,7 @@ class ContextRenderer:
         self,
         context: TemplateContext,
         constraints: RenderingConstraints,
-        custom_sections: List[ContextSection] = None,
+        custom_sections: Optional[List[ContextSection]] = None,
     ) -> List[ContextSection]:
         """STANDARD CONTEXT SECTION GENERATION ENHANCED BY COMPREHENSIVE ANALYSIS"""
         sections = custom_sections.copy() if custom_sections else []
@@ -421,11 +421,10 @@ class ContextRenderer:
         self, sections: List[ContextSection], constraints: RenderingConstraints
     ) -> Dict[str, Any]:
         """STANDARD CONSTRAINT APPLICATION ENHANCED BY OPTIMIZATION"""
-        included_sections = []
-        excluded_sections = []
+        included_sections: list[Any] = []
+        excluded_sections: list[Any] = []
         total_characters = 0
-        decisions = []
-
+        decisions: list[Any] = []
         for section in sections:
             # Check enhanced length constraints
             if constraints.max_length:
@@ -583,10 +582,9 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> List[ContextSection]:
         """Process enhanced memories into context sections"""
-        sections = []
-
+        sections: list[Any] = []
         # Filter enhanced memories by constraints
-        filtered_memories = []
+        filtered_memories: list[Any] = []
         for memory in memories:
             # Apply enhanced time window
             if constraints.time_window_hours:
@@ -615,7 +613,7 @@ class ContextRenderer:
         limited_memories = sorted_memories[: constraints.max_memories]
 
         # Group enhanced memories by type
-        memory_groups = {}
+        memory_groups: dict[Any, Any] = {}
         for memory in limited_memories:
             mem_type = memory.memory_type.value
             if mem_type not in memory_groups:
@@ -624,7 +622,7 @@ class ContextRenderer:
 
         # Create enhanced sections for each memory type
         for mem_type, mem_list in memory_groups.items():
-            content_parts = []
+            content_parts: list[Any] = []
             for memory in mem_list:
                 timestamp_str = memory.timestamp.strftime("%H:%M")
                 emotion_str = self._format_emotion(memory.emotional_weight)
@@ -661,8 +659,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced environmental context into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for key, value in env_context.items():
             if isinstance(value, (str, int, float, bool)):
                 content_parts.append(f"{key.replace('_', ' ').title()}: {value}")
@@ -721,8 +718,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced relationship context into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for agent_id, relationship_data in rel_context.items():
             if isinstance(relationship_data, dict):
                 trust = relationship_data.get("trust_level", 0)
@@ -752,8 +748,7 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced equipment states into section"""
-        content_parts = []
-
+        content_parts: list[Any] = []
         for equipment_name, equipment_data in equipment_states.items():
             if isinstance(equipment_data, dict):
                 condition = equipment_data.get("condition", "Unknown")
@@ -824,7 +819,7 @@ class ContextRenderer:
         if not truncated_content:
             # Blessed word-based truncation as fallback
             words = content.split()
-            truncated_words = []
+            truncated_words: list[Any] = []
             char_count = 0
 
             for word in words:
@@ -885,8 +880,7 @@ class ContextRenderer:
 
         # Try enhanced progressive section removal
         included_sections = render_result.sections_included.copy()
-        removed_sections = []
-
+        removed_sections: list[Any] = []
         # Remove enhanced optional and low priority sections first
         priority_order = [
             ContextPriority.OPTIONAL,
@@ -1036,7 +1030,7 @@ Content: {{section.content}}
 
     def _update_rendering_statistics(
         self, render_format: RenderFormat, render_time: float, result: RenderResult
-    ):
+    ) -> None:
         """Update enhanced rendering statistics"""
         self.rendering_stats["total_renders"] += 1
         self.rendering_stats["format_usage"][render_format.value] += 1
@@ -1162,7 +1156,7 @@ async def test_standard_context_renderer():
         logger.info(
             f"Sections included: {[s.section_id for s in result_data.sections_included]}"
         )
-        logger.info(f"Adaptive decisions: {len(result_data.adaptive_decisions)}")
+        logger.info("Adaptive decisions: %d", len(result_data.adaptive_decisions))
 
     # Test enhanced custom constraints
     custom_constraints = RenderingConstraints(
@@ -1180,7 +1174,7 @@ async def test_standard_context_renderer():
         logger.info(
             f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"
         )
-        logger.info(f"Excluded sections: {len(result_data.sections_excluded)}")
+        logger.info("Excluded sections: %d", len(result_data.sections_excluded))
 
     # Display enhanced statistics
     stats = context_renderer.get_rendering_statistics()

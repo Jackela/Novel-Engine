@@ -14,7 +14,7 @@ Design Principles:
 - Comprehensive validation and error handling
 """
 
-import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
@@ -27,7 +27,7 @@ from core_platform.persistence.database import get_db_session
 
 from ..projections.world_read_model import WorldSliceReadModel
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class QueryException(Exception):
@@ -87,7 +87,7 @@ class GetWorldSlice:
     include_world_summary: bool = True
     include_spatial_index: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query parameters."""
         if not self.world_id:
             raise QueryValidationException("world_id is required")
@@ -165,7 +165,7 @@ class GetWorldSummary:
     include_entity_details: bool = False
     include_spatial_bounds: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query parameters."""
         if not self.world_id:
             raise QueryValidationException("world_id is required")
@@ -184,7 +184,7 @@ class GetEntitiesInArea:
     offset: int = 0
     include_distance: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query parameters."""
         if not self.world_id:
             raise QueryValidationException("world_id is required")
@@ -206,7 +206,7 @@ class GetEntitiesByType:
     offset: int = 0
     include_coordinates: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query parameters."""
         if not self.world_id:
             raise QueryValidationException("world_id is required")
@@ -228,7 +228,7 @@ class SearchWorlds:
     include_entity_counts: bool = True
     status_filter: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate query parameters."""
         if not self.search_term or not self.search_term.strip():
             raise QueryValidationException("search_term is required")
@@ -255,8 +255,8 @@ class GetWorldSliceQueryHandler:
     - Minimal data transfer through selective field inclusion
     """
 
-    def __init__(self):
-        self.logger = logger.getChild(self.__class__.__name__)
+    def __init__(self) -> None:
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetWorldSlice) -> Dict[str, Any]:
         """
@@ -428,8 +428,8 @@ class GetWorldSliceQueryHandler:
 class GetWorldSummaryQueryHandler:
     """Handler for GetWorldSummary queries."""
 
-    def __init__(self):
-        self.logger = logger.getChild(self.__class__.__name__)
+    def __init__(self) -> None:
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetWorldSummary) -> Dict[str, Any]:
         """Execute the GetWorldSummary query."""
@@ -467,8 +467,8 @@ class GetWorldSummaryQueryHandler:
 class GetEntitiesInAreaQueryHandler:
     """Handler for GetEntitiesInArea queries."""
 
-    def __init__(self):
-        self.logger = logger.getChild(self.__class__.__name__)
+    def __init__(self) -> None:
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetEntitiesInArea) -> Dict[str, Any]:
         """Execute the GetEntitiesInArea query."""
@@ -522,8 +522,8 @@ class GetEntitiesInAreaQueryHandler:
 class GetEntitiesByTypeQueryHandler:
     """Handler for GetEntitiesByType queries."""
 
-    def __init__(self):
-        self.logger = logger.getChild(self.__class__.__name__)
+    def __init__(self) -> None:
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: GetEntitiesByType) -> Dict[str, Any]:
         """Execute the GetEntitiesByType query."""
@@ -573,8 +573,8 @@ class GetEntitiesByTypeQueryHandler:
 class SearchWorldsQueryHandler:
     """Handler for SearchWorlds queries."""
 
-    def __init__(self):
-        self.logger = logger.getChild(self.__class__.__name__)
+    def __init__(self) -> None:
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     async def handle(self, query: SearchWorlds) -> Dict[str, Any]:
         """Execute the SearchWorlds query."""
@@ -603,7 +603,7 @@ class SearchWorldsQueryHandler:
                 worlds = worlds_query.all()
 
                 # Format results
-                results = []
+                results: list[Any] = []
                 for world in worlds:
                     result = {
                         "world_id": str(world.world_state_id),
@@ -640,7 +640,7 @@ class SearchWorldsQueryHandler:
 class QueryHandlerRegistry:
     """Registry for query handlers implementing the handler pattern."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._handlers = {
             GetWorldSlice: GetWorldSliceQueryHandler(),
             GetWorldSummary: GetWorldSummaryQueryHandler(),

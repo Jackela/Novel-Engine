@@ -69,7 +69,7 @@ class WorldStateChanged(Event):
     affected_area: Optional[Dict[str, Any]] = None  # Spatial bounds of change
     cascade_effects: Set[str] = field(default_factory=set)  # IDs of affected entities
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize world state changed event with proper validation."""
         # Set world time if not provided
         if self.world_time is None:
@@ -126,8 +126,7 @@ class WorldStateChanged(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         if not isinstance(self.change_type, WorldChangeType):
             errors.append("change_type must be a WorldChangeType enum value")
 
@@ -414,7 +413,11 @@ class WorldStateChanged(Event):
             WorldStateChanged event
         """
         # Handle both datetime objects and strings (for WorldCalendar.format())
-        prev_str = previous_time.isoformat() if isinstance(previous_time, datetime) else previous_time
+        prev_str = (
+            previous_time.isoformat()
+            if isinstance(previous_time, datetime)
+            else previous_time
+        )
         new_str = new_time.isoformat() if isinstance(new_time, datetime) else new_time
 
         return cls(

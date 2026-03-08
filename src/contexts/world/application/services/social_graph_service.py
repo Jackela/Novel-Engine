@@ -15,20 +15,27 @@ Typical usage example:
     >>>
     >>> repo = InMemoryRelationshipRepository()
     >>> service = SocialGraphService(repo)
-    >>> analysis = await service.analyze_social_network()
-    >>> print(analysis.most_connected)  # Character with highest centrality
+    >>> result = await service.analyze_social_network()
+    >>> if result.is_ok:
+    ...     analysis = result.value
+    ...     print(analysis.most_connected)  # Character with highest centrality
+
+Result Pattern:
+    All public methods return Result[T, Error] for explicit error handling.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.contexts.world.domain.entities.relationship import (
     EntityType,
     Relationship,
 )
+from src.contexts.world.domain.errors import SocialGraphError
 from src.contexts.world.domain.repositories.relationship_repository import (
     IRelationshipRepository,
 )
+from src.core.result import Err, Error, Ok, Result
 
 
 @dataclass
@@ -100,7 +107,7 @@ class SocialGraphService:
         """
         self._repo = relationship_repository
 
-    async def analyze_social_network(self) -> SocialAnalysisResult:
+    async def analyze_social_network(self) -> Result[SocialAnalysisResult, Error]:
         """Perform complete social network analysis.
 
         Analyzes all character-to-character relationships to compute centrality
@@ -111,140 +118,165 @@ class SocialGraphService:
         network analysis is most meaningful for interpersonal dynamics.
 
         Returns:
-            SocialAnalysisResult containing all computed metrics.
+            Result containing:
+            - Ok: SocialAnalysisResult with all computed metrics
+            - Err: Error if analysis fails
         """
-        # Get all character-to-character relationships
-        relationships = await self._repo.find_by_entity_types(
-            source_type=EntityType.CHARACTER,
-            target_type=EntityType.CHARACTER,
-        )
+        try:
+            # Get all character-to-character relationships
+            relationships = await self._repo.find_by_entity_types(
+                source_type=EntityType.CHARACTER,
+                target_type=EntityType.CHARACTER,
+            )
 
-        if not relationships:
-            return SocialAnalysisResult()
+            if not relationships:
+                return Ok(SocialAnalysisResult())
 
         # Build character metrics
-        character_metrics: Dict[str, CharacterCentrality] = {}
-        character_trusts: Dict[str, List[int]] = {}
-        character_romances: Dict[str, List[int]] = {}
+            character_metrics: Dict[str, CharacterCentrality] = {}
+            character_trusts: Dict[str, List[int]] = {}
+            character_romances: Dict[str, List[int]] = {}
 
-        for rel in relationships:
+            for rel in relationships:
             # Process source character
-            self._update_character_metrics(
-                character_metrics,
-                character_trusts,
-                character_romances,
-                rel.source_id,
-                rel,
-            )
+                self._update_character_metrics(
+                    character_metrics,
+                    character_trusts,
+                    character_romances,
+                    rel.source_id,
+                    rel,
+                )
             # Process target character (relationships are counted for both parties)
-            self._update_character_metrics(
-                character_metrics,
-                character_trusts,
-                character_romances,
-                rel.target_id,
-                rel,
-            )
+                self._update_character_metrics(
+                    character_metrics,
+                    character_trusts,
+                    character_romances,
+                    rel.target_id,
+                    rel,
+                )
 
         # Calculate averages and normalized scores
-        max_relationships = max(
-            (c.relationship_count for c in character_metrics.values()),
-            default=0,
-        )
+            max_relationships = max(
+                (c.relationship_count for c in character_metrics.values()),
+                default=0,
+            )
 
-        for char_id, metrics in character_metrics.items():
+            for char_id, metrics in character_metrics.items():
             # Calculate average trust
-            trusts = character_trusts.get(char_id, [])
-            if trusts:
-                metrics.average_trust = sum(trusts) / len(trusts)
+                trusts = character_trusts.get(char_id, [])
+                if trusts:
+                    metrics.average_trust = sum(trusts) / len(trusts)
 
             # Calculate average romance
-            romances = character_romances.get(char_id, [])
-            if romances:
-                metrics.average_romance = sum(romances) / len(romances)
+                romances = character_romances.get(char_id, [])
+                if romances:
+                    metrics.average_romance = sum(romances) / len(romances)
 
             # Normalize centrality score (0-100 scale)
-            if max_relationships > 0:
-                metrics.centrality_score = (
-                    metrics.relationship_count / max_relationships
-                ) * 100
+                if max_relationships > 0:
+                    metrics.centrality_score = (
+                        metrics.relationship_count / max_relationships
+                    ) * 100
 
         # Find extremes
-        most_connected = self._find_most_connected(character_metrics)
-        most_hated = self._find_most_hated(character_metrics)
-        most_loved = self._find_most_loved(character_metrics)
+            most_connected = self._find_most_connected(character_metrics)
+            most_hated = self._find_most_hated(character_metrics)
+            most_loved = self._find_most_loved(character_metrics)
 
         # Calculate network density
-        num_characters = len(character_metrics)
-        total_relationships = len(relationships)
+            num_characters = len(character_metrics)
+            total_relationships = len(relationships)
         # Maximum possible edges in undirected graph: n*(n-1)/2
-        max_possible = (
-            (num_characters * (num_characters - 1)) / 2 if num_characters > 1 else 0
-        )
-        density = total_relationships / max_possible if max_possible > 0 else 0.0
+            max_possible = (
+                (num_characters * (num_characters - 1)) / 2 if num_characters > 1 else 0
+            )
+            density = total_relationships / max_possible if max_possible > 0 else 0.0
 
-        return SocialAnalysisResult(
-            character_centralities=character_metrics,
-            most_connected=most_connected,
-            most_hated=most_hated,
-            most_loved=most_loved,
-            total_relationships=total_relationships,
-            total_characters=num_characters,
-            network_density=min(
-                density, 1.0
-            ),  # Cap at 1.0 for directed edge overcounting
-        )
+            return Ok(
+                SocialAnalysisResult(
+                    character_centralities=character_metrics,
+                    most_connected=most_connected,
+                    most_hated=most_hated,
+                    most_loved=most_loved,
+                    total_relationships=total_relationships,
+                    total_characters=num_characters,
+                    network_density=min(
+                        density, 1.0
+                    ),  # Cap at 1.0 for directed edge overcounting
+                )
+            )
+        except Exception as e:
+            return Err(
+                Error(
+                    code="SOCIAL_ANALYSIS_ERROR",
+                    message=f"Failed to analyze social network: {e}",
+                    recoverable=True,
+                )
+            )
 
     async def get_character_centrality(
         self, character_id: str
-    ) -> Optional[CharacterCentrality]:
+    ) -> Result[Optional[CharacterCentrality], Error]:
         """Get centrality metrics for a specific character.
 
         Args:
             character_id: ID of the character to analyze.
 
         Returns:
-            CharacterCentrality metrics, or None if character has no relationships.
+            Result containing:
+            - Ok: CharacterCentrality metrics, or None if character has no relationships
+            - Err: Error if analysis fails
         """
-        relationships = await self._repo.find_by_entity(
-            entity_id=character_id,
-            entity_type=EntityType.CHARACTER,
-        )
+        try:
+            relationships = await self._repo.find_by_entity(
+                entity_id=character_id,
+                entity_type=EntityType.CHARACTER,
+            )
 
-        # Filter to only character-to-character relationships
-        char_relationships = [
-            r
-            for r in relationships
-            if r.source_type == EntityType.CHARACTER
-            and r.target_type == EntityType.CHARACTER
-        ]
+            # Filter to only character-to-character relationships
+            char_relationships = [
+                r
+                for r in relationships
+                if r.source_type == EntityType.CHARACTER
+                and r.target_type == EntityType.CHARACTER
+            ]
 
-        if not char_relationships:
-            return None
+            if not char_relationships:
+                return Ok(None)
 
-        metrics = CharacterCentrality(character_id=character_id)
-        trusts: List[int] = []
-        romances: List[int] = []
+            metrics = CharacterCentrality(character_id=character_id)
+            trusts: List[int] = []
+            romances: List[int] = []
 
-        for rel in char_relationships:
-            metrics.relationship_count += 1
-            trusts.append(rel.trust)
-            romances.append(rel.romance)
+            for rel in char_relationships:
+                metrics.relationship_count += 1
+                trusts.append(rel.trust)
+                romances.append(rel.romance)
 
-            if rel.is_positive():
-                metrics.positive_count += 1
-            elif rel.is_negative():
-                metrics.negative_count += 1
+                if rel.is_positive():
+                    metrics.positive_count += 1
+                elif rel.is_negative():
+                    metrics.negative_count += 1
 
-        if trusts:
-            metrics.average_trust = sum(trusts) / len(trusts)
-        if romances:
-            metrics.average_romance = sum(romances) / len(romances)
+            if trusts:
+                metrics.average_trust = sum(trusts) / len(trusts)
+            if romances:
+                metrics.average_romance = sum(romances) / len(romances)
 
-        # For single character, centrality_score is relative to their own count
-        # Full network context needed for normalized score
-        metrics.centrality_score = float(metrics.relationship_count)
+            # For single character, centrality_score is relative to their own count
+            # Full network context needed for normalized score
+            metrics.centrality_score = float(metrics.relationship_count)
 
-        return metrics
+            return Ok(metrics)
+        except Exception as e:
+            return Err(
+                Error(
+                    code="CHARACTER_CENTRALITY_ERROR",
+                    message=f"Failed to get centrality for {character_id}: {e}",
+                    recoverable=True,
+                    details={"character_id": character_id},
+                )
+            )
 
     def _update_character_metrics(
         self,

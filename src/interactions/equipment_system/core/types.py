@@ -19,9 +19,11 @@ try:
     )
 except ImportError:
     # Fallback for testing
-    EquipmentItem = dict
+    from enum import Enum as _Enum
 
-    class EquipmentCondition(Enum):
+    EquipmentItem = dict  # type: ignore[misc,assignment]
+
+    class EquipmentCondition(_Enum):
         EXCELLENT = "excellent"
         GOOD = "good"
         FAIR = "fair"
@@ -159,7 +161,7 @@ class DynamicEquipment:
     compatible_modifications: Set[str] = field(default_factory=set)
     incompatible_with: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize enhanced equipment performance metrics"""
         # Initialize performance metrics based on equipment type
         if not self.performance_metrics:

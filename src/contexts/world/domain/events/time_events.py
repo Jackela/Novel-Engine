@@ -59,25 +59,29 @@ class TimeAdvancedEvent(Event):
         """Initialize event with time-specific metadata and validation."""
         # Set timestamp if not provided
         if self.timestamp is None:
-            object.__setattr__(self, 'timestamp', datetime.now())
+            object.__setattr__(self, "timestamp", datetime.now())
 
         # Generate event ID if not provided
         if not self.event_id:
-            object.__setattr__(self, 'event_id', str(uuid4()))
+            object.__setattr__(self, "event_id", str(uuid4()))
 
         # Add time-specific tags
-        self.tags.update({
-            "context:world",
-            "event:time_advanced",
-            f"days_advanced:{self.days_advanced}",
-        })
+        self.tags.update(
+            {
+                "context:world",
+                "event:time_advanced",
+                f"days_advanced:{self.days_advanced}",
+            }
+        )
 
         # Set event payload with time data
-        self.payload.update({
-            "previous_date": self.previous_date,
-            "new_date": self.new_date,
-            "days_advanced": self.days_advanced,
-        })
+        self.payload.update(
+            {
+                "previous_date": self.previous_date,
+                "new_date": self.new_date,
+                "days_advanced": self.days_advanced,
+            }
+        )
 
         # Call parent post_init
         super().__post_init__()
@@ -92,8 +96,7 @@ class TimeAdvancedEvent(Event):
         Raises:
             ValueError: If event data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate days_advanced
         if self.days_advanced < 0:
             errors.append(f"days_advanced must be >= 0, got {self.days_advanced}")
@@ -121,7 +124,9 @@ class TimeAdvancedEvent(Event):
                 previous_date=self.previous_date,
                 new_date=self.new_date,
             )
-            raise ValueError(f"TimeAdvancedEvent validation failed: {'; '.join(errors)}")
+            raise ValueError(
+                f"TimeAdvancedEvent validation failed: {'; '.join(errors)}"
+            )
 
     @classmethod
     def create(

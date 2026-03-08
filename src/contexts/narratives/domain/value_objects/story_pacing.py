@@ -70,9 +70,11 @@ class StoryPacing:
     average_scene_length: Optional[int] = None  # Average scene duration
 
     # Tension management
-    tension_curve: Tuple[Decimal, ...] = None  # Tension levels throughout segment
-    emotional_peaks: Tuple[int, ...] = None  # Sequence positions of peaks
-    rest_periods: Tuple[int, ...] = None  # Positions of low-intensity moments
+    tension_curve: Optional[Tuple[Decimal, ...]] = (
+        None  # Tension levels throughout segment
+    )
+    emotional_peaks: Optional[Tuple[int, ...]] = None  # Sequence positions of peaks
+    rest_periods: Optional[Tuple[int, ...]] = None  # Positions of low-intensity moments
 
     # Reader engagement
     revelation_frequency: Decimal = Decimal("0.1")  # Major reveals per sequence
@@ -91,25 +93,19 @@ class StoryPacing:
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.tension_curve is None:
             object.__setattr__(self, "tension_curve", ())
-        elif isinstance(self.tension_curve, list):
-            object.__setattr__(self, "tension_curve", tuple(self.tension_curve))
 
         if self.emotional_peaks is None:
             object.__setattr__(self, "emotional_peaks", ())
-        elif isinstance(self.emotional_peaks, list):
-            object.__setattr__(self, "emotional_peaks", tuple(self.emotional_peaks))
 
         if self.rest_periods is None:
             object.__setattr__(self, "rest_periods", ())
-        elif isinstance(self.rest_periods, list):
-            object.__setattr__(self, "rest_periods", tuple(self.rest_periods))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -117,7 +113,7 @@ class StoryPacing:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.pacing_id or not self.pacing_id.strip():
             raise ValueError("Pacing ID cannot be empty")
@@ -173,19 +169,22 @@ class StoryPacing:
             )
 
         # Validate tension curve
-        for tension_value in self.tension_curve:
+        tension_curve = self.tension_curve or ()
+        for tension_value in tension_curve:
             if not (Decimal("0") <= tension_value <= Decimal("10")):
                 raise ValueError("Tension curve values must be between 0 and 10")
 
         # Validate peak and rest positions
         sequence_range = range(self.start_sequence, self.end_sequence + 1)
-        for peak_pos in self.emotional_peaks:
+        emotional_peaks = self.emotional_peaks or ()
+        for peak_pos in emotional_peaks:
             if peak_pos not in sequence_range:
                 raise ValueError(
                     f"Emotional peak position {peak_pos} outside segment range"
                 )
 
-        for rest_pos in self.rest_periods:
+        rest_periods = self.rest_periods or ()
+        for rest_pos in rest_periods:
             if rest_pos not in sequence_range:
                 raise ValueError(
                     f"Rest period position {rest_pos} outside segment range"
@@ -198,11 +197,11 @@ class StoryPacing:
         if len(self.segment_name) > 200:
             raise ValueError("Segment name too long (max 200 characters)")
 
-    def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values):
+    def _hash_components(self) -> tuple[Any, ...]:
+        def _dict_to_hashable(values: Any) -> frozenset[Any]:
             if not values:
                 return frozenset()
-            items = []
+            items: list[tuple[str, Any]] = []
             for key, value in sorted(values.items()):
                 if isinstance(value, dict):
                     value = _dict_to_hashable(value)
@@ -243,7 +242,7 @@ class StoryPacing:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, StoryPacing):
             return NotImplemented
         return self._hash_components() == other._hash_components()
@@ -322,8 +321,10 @@ class StoryPacing:
         # Add complexity for structural elements
         base_complexity += Decimal(str(self.scene_transitions * 0.5))
         base_complexity += Decimal(str(self.time_jumps * 1.0))
-        base_complexity += Decimal(str(len(self.emotional_peaks) * 0.8))
-        base_complexity += Decimal(str(len(self.rest_periods) * 0.3))
+        emotional_peaks = self.emotional_peaks or ()
+        rest_periods = self.rest_periods or ()
+        base_complexity += Decimal(str(len(emotional_peaks) * 0.8))
+        base_complexity += Decimal(str(len(rest_periods) * 0.3))
 
         # Add complexity for stylistic variation
         style_variance = (
@@ -402,11 +403,13 @@ class StoryPacing:
 
     def is_emotional_peak(self, sequence_number: int) -> bool:
         """Check if a sequence is marked as an emotional peak."""
-        return sequence_number in self.emotional_peaks
+        emotional_peaks = self.emotional_peaks or ()
+        return sequence_number in emotional_peaks
 
     def is_rest_period(self, sequence_number: int) -> bool:
         """Check if a sequence is marked as a rest period."""
-        return sequence_number in self.rest_periods
+        rest_periods = self.rest_periods or ()
+        return sequence_number in rest_periods
 
     def get_pacing_context(self) -> Dict[str, Any]:
         """
@@ -440,8 +443,8 @@ class StoryPacing:
             "structural_elements": {
                 "scene_transitions": self.scene_transitions,
                 "time_jumps": self.time_jumps,
-                "emotional_peaks": len(self.emotional_peaks),
-                "rest_periods": len(self.rest_periods),
+                "emotional_peaks": len(self.emotional_peaks or ()),
+                "rest_periods": len(self.rest_periods or ()),
                 "curiosity_hooks": self.curiosity_hooks,
             },
         }

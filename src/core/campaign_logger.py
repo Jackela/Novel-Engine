@@ -6,14 +6,16 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles campaign log initialization, event logging, and narrative tracking.
 """
 
-import logging
+import structlog
 import os
 from datetime import datetime
 from typing import Optional
 
+from src.contexts.shared.domain.errors import ServiceError
 from src.core.config.config_loader import get_campaign_log_filename
+from src.core.result import Err, Ok, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CampaignLogger:
@@ -27,7 +29,7 @@ class CampaignLogger:
     - Narrative context preservation
     """
 
-    def __init__(self, campaign_log_path: Optional[str] = None):
+    def __init__(self, campaign_log_path: Optional[str] = None) -> None:
         """
         Initialize the campaign logger.
 
@@ -203,6 +205,35 @@ class CampaignLogger:
             "log_size_bytes": log_size,
             "log_exists": os.path.exists(self.campaign_log_path),
         }
+
+    def get_log_stats_result(self) -> Result[dict, ServiceError]:
+        """
+        Get logging statistics (Result pattern).
+
+        Returns:
+            Result containing logging statistics on success.
+            - Ok: Dict with log statistics
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            log_size = 0
+            if os.path.exists(self.campaign_log_path):
+                log_size = os.path.getsize(self.campaign_log_path)
+
+            return Ok({
+                "log_path": self.campaign_log_path,
+                "events_logged": self.events_logged,
+                "log_size_bytes": log_size,
+                "log_exists": os.path.exists(self.campaign_log_path),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get log stats: {e}",
+                    service_name="CampaignLogger",
+                    operation="get_log_stats",
+                )
+            )
 
     def rotate_log(self, max_size_mb: float = 10.0) -> bool:
         """

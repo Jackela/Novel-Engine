@@ -8,6 +8,7 @@ SubjectiveRealityEngine and EmergentNarrativeEngine.
 """
 
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -31,11 +32,11 @@ class TurnExecutionEngine:
 
     def __init__(
         self, agent_manager, state_manager=None, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """Initialize turn execution engine with core engines."""
         self.agent_manager = agent_manager
         self.state_manager = state_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.turn_metrics = {}
         self._initialized = False
 
@@ -471,9 +472,8 @@ class TurnExecutionEngine:
             target_turn = turn_number or self.current_turn_number
             target_world_state = world_state or {}
 
-            briefs = {}
-            errors = {}
-
+            briefs: dict[Any, Any] = {}
+            errors: dict[Any, Any] = {}
             # Generate briefs for all agents
             for agent_id, agent in self.agent_manager.agents.items():
                 try:

@@ -23,7 +23,7 @@ import asyncio
 import atexit
 import hashlib
 import json
-import logging
+import structlog
 import os
 import threading
 import time
@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -75,7 +75,7 @@ class AsyncLLMClient:
         batch_timeout_ms: int = 100,
         max_concurrent_requests: int = 10,
         request_timeout_seconds: int = 10,
-    ):
+    ) -> None:
         """
         Initialize async LLM client with performance optimizations.
 
@@ -116,7 +116,7 @@ class AsyncLLMClient:
             f"AsyncLLMClient initialized with {max_concurrent_requests} max concurrent requests"
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         """Async context manager entry."""
         await self.initialize()
         return self
@@ -163,7 +163,7 @@ class AsyncLLMClient:
             try:
                 await self._batch_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
         if self._session:
             await self._session.close()
@@ -440,7 +440,7 @@ class AsyncLLMClient:
         self._batch_queue = self._batch_queue[self.max_batch_size :]
 
         # Process batch concurrently
-        tasks = []
+        tasks: list[Any] = []
         for agent_id, prompt, context, future in current_batch:
             if not future.cancelled():
                 task = asyncio.create_task(self._make_async_api_call(agent_id, prompt))

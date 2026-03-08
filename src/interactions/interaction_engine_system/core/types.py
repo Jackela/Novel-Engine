@@ -16,7 +16,7 @@ try:
     from src.core.data_models import MemoryItem
 except ImportError:
     # Fallback for testing
-    MemoryItem = dict
+    MemoryItem = dict  # type: ignore[misc,assignment]
 
 
 __all__ = [

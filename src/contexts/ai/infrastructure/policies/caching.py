@@ -109,7 +109,7 @@ class InMemoryCacheService(ICacheService):
     Suitable for single-process applications and testing.
     """
 
-    def __init__(self, max_entries: int = 1000):
+    def __init__(self, max_entries: int = 1000) -> None:
         """
         Initialize in-memory cache.
 

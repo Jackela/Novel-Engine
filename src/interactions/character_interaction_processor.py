@@ -16,7 +16,7 @@ System保佑角色互动 (May the System bless character interactions)
 """
 
 import json
-import logging
+import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -54,7 +54,7 @@ from .engine import (
 from .equipment import DynamicEquipmentSystem
 
 # Comprehensive logging enhanced by diagnostic clarity
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RelationshipType(Enum):
@@ -275,7 +275,7 @@ class CharacterInteractionProcessor:
             )
 
             # Process each phase of the interaction
-            outcomes = []
+            outcomes: list[Any] = []
             for phase in interaction_phases:
                 phase_outcome = await self._process_interaction_phase(
                     phase, character_states, current_relationships, social_environment
@@ -554,8 +554,7 @@ class CharacterInteractionProcessor:
         self, characters: List[str]
     ) -> Dict[str, CharacterState]:
         """Load current character states from the database."""
-        character_states = {}
-
+        character_states: dict[Any, Any] = {}
         for character in characters:
             try:
                 # Query latest character state from database
@@ -618,8 +617,7 @@ class CharacterInteractionProcessor:
         self, characters: List[str]
     ) -> Dict[Tuple[str, str], RelationshipData]:
         """Load current relationships between characters."""
-        relationships = {}
-
+        relationships: dict[Any, Any] = {}
         # Load all relationship pairs
         for i, char_a in enumerate(characters):
             for char_b in characters[i + 1 :]:
@@ -649,8 +647,7 @@ class CharacterInteractionProcessor:
         relationships: Dict[Tuple[str, str], RelationshipData],
     ) -> List[Dict[str, Any]]:
         """Plan interaction phases based on context and social dynamics."""
-        phases = []
-
+        phases: list[Any] = []
         # Determine number of phases based on interaction type and complexity
         base_phases = {
             InteractionType.DIALOGUE: 3,
@@ -825,12 +822,12 @@ class CharacterInteractionProcessor:
         ) / len(phase_outcomes)
 
         # Consolidate relationship changes
-        consolidated_relationships = {}
+        consolidated_relationships: dict[Any, Any] = {}
         for outcome in phase_outcomes:
             consolidated_relationships.update(outcome.relationship_changes)
 
         # Create narrative summary
-        narrative_parts = []
+        narrative_parts: list[Any] = []
         for i, outcome in enumerate(phase_outcomes):
             if outcome.narrative_summary:
                 narrative_parts.append(
@@ -862,8 +859,8 @@ class CharacterInteractionProcessor:
         try:
             async with self.database.get_connection() as conn:
                 await conn.execute(
-                    """INSERT INTO character_interactions 
-                       (interaction_id, participants, outcome_data, timestamp) 
+                    """INSERT INTO character_interactions
+                       (interaction_id, participants, outcome_data, timestamp)
                        VALUES (?, ?, ?, ?)""",
                     (
                         outcome.interaction_id,

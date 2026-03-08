@@ -396,7 +396,7 @@ class CompensationActionFailed:
         if compensation_type.is_destructive():
             return "high"
 
-        return error_details.get("severity", "medium")
+        return str(error_details.get("severity", "medium"))
 
     @staticmethod
     def _affects_other_compensations(

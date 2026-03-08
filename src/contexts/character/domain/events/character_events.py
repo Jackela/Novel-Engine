@@ -71,7 +71,9 @@ class TravelRecord:
         result = {
             "location_id": self.location_id,
             "arrived_date": self.arrived_date.to_dict() if self.arrived_date else None,
-            "departed_date": self.departed_date.to_dict() if self.departed_date else None,
+            "departed_date": (
+                self.departed_date.to_dict() if self.departed_date else None
+            ),
             "is_current": self.is_current(),
         }
         return result
@@ -108,7 +110,7 @@ class CharacterEvent(ABC):
     character_id: CharacterID
     occurred_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate event data."""
         if not self.event_id:
             raise ValueError("Event ID cannot be empty")
@@ -139,7 +141,7 @@ class CharacterCreated(CharacterEvent):
     level: int
     created_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character creation event."""
         super().__post_init__()
 
@@ -204,7 +206,7 @@ class CharacterUpdated(CharacterEvent):
     new_version: int
     updated_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character update event."""
         super().__post_init__()
 
@@ -270,7 +272,7 @@ class CharacterStatsChanged(CharacterEvent):
     new_mana: int
     changed_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character stats change event."""
         super().__post_init__()
 
@@ -365,7 +367,7 @@ class CharacterLeveledUp(CharacterEvent):
     skill_points_gained: int
     leveled_up_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character level up event."""
         super().__post_init__()
 
@@ -440,7 +442,7 @@ class CharacterDeleted(CharacterEvent):
     deleted_at: datetime
     reason: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character deletion event."""
         super().__post_init__()
 
@@ -509,7 +511,7 @@ class CharacterLocationChanged(CharacterEvent):
     location_id_after: str
     moved_at: datetime
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate character location change event."""
         super().__post_init__()
 

@@ -7,7 +7,7 @@ Characters can join factions, leave factions, and factions can designate leaders
 
 from __future__ import annotations
 
-import logging
+import structlog
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -25,7 +25,7 @@ from src.api.schemas import (
     FactionSetLeaderResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["factions"])
 
@@ -46,7 +46,7 @@ def _get_faction_store(request: Request) -> Dict[str, Dict[str, Any]]:
     """Get the world store which contains factions."""
     store = getattr(request.app.state, "world_store", None)
     if store is None:
-        store = {}
+        store: dict[Any, Any] = {}
         request.app.state.world_store = store
     return store
 
@@ -106,7 +106,7 @@ def _get_characters_in_faction(
     if not store or not workspace_id:
         return []
 
-    members = []
+    members: list[Any] = []
     try:
         char_ids = store.list_ids(workspace_id)
         for char_id in char_ids:
@@ -152,7 +152,7 @@ async def get_faction_detail(
         )
 
     # Get members from character store
-    members_data = []
+    members_data: list[Any] = []
     leader_id = faction.get("leader_id")
 
     if workspace_id:
@@ -251,11 +251,9 @@ async def join_faction(
     char_uuid = _parse_uuid_safe(payload.character_id)
     faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
-        "Character joined faction",
-        extra={
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
-        },
+        "character_joined_faction",
+        character_id=str(char_uuid) if char_uuid else "invalid",
+        faction_id=str(faction_uuid) if faction_uuid else "invalid",
     )
 
     return FactionJoinResponse(
@@ -330,22 +328,18 @@ async def leave_faction(
         char_uuid = _parse_uuid_safe(payload.character_id)
         faction_uuid = _parse_uuid_safe(faction_id)
         logger.info(
-            "Removed leader from faction",
-            extra={
-                "character_id": str(char_uuid) if char_uuid else "invalid",
-                "faction_id": str(faction_uuid) if faction_uuid else "invalid",
-            },
+            "faction_leader_removed",
+            character_id=str(char_uuid) if char_uuid else "invalid",
+            faction_id=str(faction_uuid) if faction_uuid else "invalid",
         )
 
     # Parse UUIDs to ensure safe logging
     char_uuid = _parse_uuid_safe(payload.character_id)
     faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
-        "Character left faction",
-        extra={
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
-        },
+        "character_left_faction",
+        character_id=str(char_uuid) if char_uuid else "invalid",
+        faction_id=str(faction_uuid) if faction_uuid else "invalid",
     )
 
     return FactionLeaveResponse(
@@ -424,11 +418,9 @@ async def set_faction_leader(
     char_uuid = _parse_uuid_safe(payload.character_id)
     faction_uuid = _parse_uuid_safe(faction_id)
     logger.info(
-        "Set leader of faction",
-        extra={
-            "faction_id": str(faction_uuid) if faction_uuid else "invalid",
-            "character_id": str(char_uuid) if char_uuid else "invalid",
-        },
+        "faction_leader_set",
+        faction_id=str(faction_uuid) if faction_uuid else "invalid",
+        character_id=str(char_uuid) if char_uuid else "invalid",
     )
 
     return FactionSetLeaderResponse(

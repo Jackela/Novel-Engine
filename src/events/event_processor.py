@@ -8,13 +8,13 @@ This is a minimal implementation to resolve import dependencies.
 """
 
 import asyncio
-import logging
+import structlog
 from enum import Enum
 from typing import Dict, List
 
 from .event_bus import Event, EventHandler
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ProcessingStrategy(Enum):
@@ -28,7 +28,7 @@ class ProcessingStrategy(Enum):
 class EventProcessor:
     """Processes events using configurable strategies."""
 
-    def __init__(self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL):
+    def __init__(self, strategy: ProcessingStrategy = ProcessingStrategy.SEQUENTIAL) -> None:
         """Initialize the event processor."""
         self.strategy = strategy
         self.handlers: Dict[str, List[EventHandler]] = {}

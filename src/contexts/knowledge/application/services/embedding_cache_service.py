@@ -14,11 +14,13 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List
 
 from structlog import get_logger
 
 from src.caching.lru_cache import LRUCache
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
 
 logger = get_logger()
 
@@ -95,7 +97,7 @@ class EmbeddingCacheService:
         self,
         max_size: int = DEFAULT_MAX_SIZE,
         default_ttl_seconds: int | None = DEFAULT_TTL_SECONDS,
-    ):
+    ) -> None:
         """
         Initialize embedding cache.
 
@@ -181,12 +183,46 @@ class EmbeddingCacheService:
         Returns:
             Dict mapping text to cached embedding (only hits included)
         """
-        results = {}
+        results: dict[Any, Any] = {}
         for text in texts:
             embedding = self.get(text, model)
             if embedding is not None:
                 results[text] = embedding
         return results
+
+    def get_batch_result(
+        self,
+        texts: List[str],
+        model: str = "text-embedding-ada-002",
+    ) -> Result[dict[str, List[float]], ServiceError]:
+        """
+        Retrieve multiple cached embeddings (Result pattern).
+
+        Args:
+            texts: List of text contents to look up
+            model: Model identifier for cache keys
+
+        Returns:
+            Result containing dict mapping text to cached embedding on success.
+            - Ok: Dict with cached embeddings (only hits)
+            - Err(ServiceError): If batch retrieval fails
+        """
+        try:
+            results: dict[Any, Any] = {}
+            for text in texts:
+                embedding = self.get(text, model)
+                if embedding is not None:
+                    results[text] = embedding
+            return Ok(results)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get batch embeddings: {e}",
+                    service_name="EmbeddingCacheService",
+                    operation="get_batch",
+                    details={"text_count": len(texts), "model": model},
+                )
+            )
 
     def invalidate(self, model: str | None = None) -> int:
         """
@@ -205,7 +241,6 @@ class EmbeddingCacheService:
         # Note: This is less efficient with cachetools as we can't iterate
         # directly. We track keys by model prefix.
         count = 0
-        keys_to_remove = []
         # cachetools doesn't expose key iteration directly in a thread-safe way
         # For now, clear all on model invalidation (simple but broader)
         # A more sophisticated implementation would track keys separately
@@ -231,6 +266,34 @@ class EmbeddingCacheService:
             evictions=stats.evictions,
             size=stats.size,
         )
+
+    def get_stats_result(self) -> Result[CacheStats, ServiceError]:
+        """
+        Get cache performance statistics (Result pattern).
+
+        Returns:
+            Result containing CacheStats on success.
+            - Ok: CacheStats with current metrics
+            - Err(ServiceError): If stats retrieval fails
+        """
+        try:
+            stats = self._cache.stats()
+            return Ok(
+                CacheStats(
+                    hits=stats.hits,
+                    misses=stats.misses,
+                    evictions=stats.evictions,
+                    size=stats.size,
+                )
+            )
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get cache stats: {e}",
+                    service_name="EmbeddingCacheService",
+                    operation="get_stats",
+                )
+            )
 
     def clear(self) -> None:
         """Clear all cache entries and reset stats."""

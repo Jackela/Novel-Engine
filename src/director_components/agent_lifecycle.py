@@ -8,6 +8,7 @@ Handles registration, validation, health monitoring, and cleanup.
 
 import asyncio
 import logging
+import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -37,8 +38,8 @@ class AgentLifecycleManager:
     - Performance metrics tracking
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        self.logger = logger or logging.getLogger(__name__)
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
+        self.logger = logger or structlog.get_logger(__name__)
         self._agents: Dict[str, Any] = {}
         self._agent_metrics: Dict[str, AgentMetrics] = {}
         self._agent_lock = asyncio.Lock()
@@ -234,7 +235,7 @@ class AgentLifecycleManager:
             for agent_id, metrics in self._agent_metrics.items()
         }
 
-    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0):
+    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0) -> None:
         """Update agent activity metrics."""
         metrics = self._agent_metrics.get(agent_id)
         if metrics:

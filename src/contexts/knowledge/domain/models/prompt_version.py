@@ -136,7 +136,9 @@ class PromptVersion:
 
         # First version should not have a parent
         if self.version_number == 1 and self.parent_version_id is not None:
-            raise ValueError("PromptVersion.version_number=1 cannot have a parent_version_id")
+            raise ValueError(
+                "PromptVersion.version_number=1 cannot have a parent_version_id"
+            )
 
         # Later versions should have a parent
         if self.version_number > 1 and self.parent_version_id is None:
@@ -145,9 +147,13 @@ class PromptVersion:
 
         # Normalize timestamp to UTC
         if self.created_at.tzinfo is None:
-            object.__setattr__(self, "created_at", self.created_at.replace(tzinfo=timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.replace(tzinfo=timezone.utc)
+            )
         else:
-            object.__setattr__(self, "created_at", self.created_at.astimezone(timezone.utc))
+            object.__setattr__(
+                self, "created_at", self.created_at.astimezone(timezone.utc)
+            )
 
     def is_first_version(self) -> bool:
         """Check if this is the first version."""
@@ -166,7 +172,11 @@ class PromptVersion:
         """
         if self.is_first_version():
             return f"v{self.version_number} (initial)"
-        parent_v = "unknown" if self.parent_version_id is None else f"v{self.version_number - 1}"
+        parent_v = (
+            "unknown"
+            if self.parent_version_id is None
+            else f"v{self.version_number - 1}"
+        )
         return f"v{self.version_number} (from {parent_v})"
 
     def add_tag(self, tag: str) -> PromptVersion:
@@ -199,13 +209,25 @@ class PromptVersion:
             "template_snapshot_id": self.template_snapshot_id,
             "parent_version_id": self.parent_version_id,
             "change_description": self.change_description,
-            "diff": {
-                "content_changed": self.diff.content_changed if self.diff else False,
-                "variables_changed": self.diff.variables_changed if self.diff else False,
-                "model_config_changed": self.diff.model_config_changed if self.diff else False,
-                "metadata_changed": self.diff.metadata_changed if self.diff else False,
-                "description": self.diff.description if self.diff else "",
-            } if self.diff else None,
+            "diff": (
+                {
+                    "content_changed": (
+                        self.diff.content_changed if self.diff else False
+                    ),
+                    "variables_changed": (
+                        self.diff.variables_changed if self.diff else False
+                    ),
+                    "model_config_changed": (
+                        self.diff.model_config_changed if self.diff else False
+                    ),
+                    "metadata_changed": (
+                        self.diff.metadata_changed if self.diff else False
+                    ),
+                    "description": self.diff.description if self.diff else "",
+                }
+                if self.diff
+                else None
+            ),
             "created_at": self.created_at.isoformat(),
             "created_by": self.created_by,
             "tags": list(self.tags),

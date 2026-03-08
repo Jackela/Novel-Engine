@@ -5,13 +5,13 @@ Provides persistence for chat sessions and messages using SQLite.
 This allows chat history to persist across server restarts.
 """
 
-from datetime import datetime
-from typing import Optional
 import uuid
+from datetime import datetime
+from typing import Any, Optional
 
-from sqlalchemy import create_engine, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text, create_engine
 from sqlalchemy.dialects.sqlite import JSON
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker, relationship
+from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
 
 class Base(DeclarativeBase):
@@ -55,7 +55,9 @@ class ChatMessageORM(Base):
     __tablename__ = "chat_messages"
 
     message_id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    session_id = Column(String(36), ForeignKey("chat_sessions.session_id"), nullable=False)
+    session_id = Column(
+        String(36), ForeignKey("chat_sessions.session_id"), nullable=False
+    )
     role = Column(String(20), nullable=False)  # 'user' or 'assistant'
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
@@ -82,7 +84,7 @@ _engine = None
 _session_factory: Optional[sessionmaker] = None
 
 
-def get_engine():
+def get_engine() -> Any:
     """Get or create the database engine."""
     global _engine
     if _engine is None:
@@ -102,4 +104,5 @@ def get_session_factory() -> sessionmaker:
 
 def get_db_session() -> Session:
     """Get a database session."""
-    return get_session_factory()()
+    session: Session = get_session_factory()()
+    return session

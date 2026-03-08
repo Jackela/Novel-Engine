@@ -20,6 +20,15 @@ Features:
 - Fallback mechanisms and error handling
 - Performance monitoring and metrics
 - Multiple response format support
+- Result pattern for operation outcomes
+
+Result Pattern Migration:
+    - generate() -> Result[LLMResponse, LLMError]
+    - generate_action() -> Result[LLMResponse, LLMError]
+    - generate_narrative() -> Result[LLMResponse, LLMError]
+    - generate_clue() -> Result[LLMResponse, LLMError]
+    - generate_dialogue() -> Result[LLMResponse, LLMError]
+    - generate_event() -> Result[LLMResponse, LLMError]
 
 Deprecated:
 This module powers legacy LLM flows and will be replaced by M2 contract-first
@@ -29,7 +38,7 @@ character generation services. Keep until migration completes.
 import asyncio
 import hashlib
 import json
-import logging
+import structlog
 import os
 import re
 import time
@@ -38,11 +47,37 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+from src.contexts.shared.domain.errors import ServiceError
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-logger = logging.getLogger(__name__)
+from .result import Error, Err, Ok, Result
+
+logger = structlog.get_logger(__name__)
+
+
+class LLMError(Error):
+    """Error raised when LLM operations fail."""
+
+    def __init__(
+        self,
+        message: str,
+        operation: str,
+        provider: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        full_details = details or {}
+        full_details["operation"] = operation
+        if provider:
+            full_details["provider"] = provider
+        super().__init__(
+            code="LLM_ERROR",
+            message=message,
+            recoverable=True,
+            details=full_details,
+        )
 
 
 class LLMProvider(Enum):
@@ -127,7 +162,7 @@ class UnifiedLLMService:
     with advanced caching, cost controls, and performance optimization.
     """
 
-    def __init__(self, cost_control: Optional[CostControl] = None):
+    def __init__(self, cost_control: Optional[CostControl] = None) -> None:
         """
         Initialize the unified LLM service.
 
@@ -149,14 +184,11 @@ class UnifiedLLMService:
         # HTTP session for connection pooling (from PersonaAgent)
         self._http_session = self._create_http_session()
 
-        logger.info(
-            "Unified LLM Service initialized with Gemini 2.0 Flash primary provider"
-        )
+        logger.info("llm_service_initialized", primary_provider="gemini_2.0_flash")
 
     def _initialize_providers(self) -> Dict[LLMProvider, Dict[str, Any]]:
         """Initialize provider configurations."""
-        providers = {}
-
+        providers: dict[Any, Any] = {}
         # Gemini configuration (extracted from PersonaAgent)
         gemini_key = os.getenv("GEMINI_API_KEY")
         if gemini_key and gemini_key.strip():
@@ -168,9 +200,9 @@ class UnifiedLLMService:
                 "max_tokens": 8192,
                 "timeout": 30,
             }
-            logger.info("Gemini provider configured successfully")
+            logger.info("gemini_provider_configured")
         else:
-            logger.warning("GEMINI_API_KEY not found - Gemini provider unavailable")
+            logger.warning("gemini_provider_unavailable", reason="GEMINI_API_KEY_not_found")
 
         # Future providers (OpenAI, Anthropic) can be added here
         if os.getenv("OPENAI_API_KEY"):
@@ -203,46 +235,93 @@ class UnifiedLLMService:
 
     async def generate(self, request: LLMRequest) -> LLMResponse:
         """
-        Generate response using specified LLM provider with full cost and performance control.
+        Generate response using specified LLM provider. (Legacy - use generate_result)
+        """
+        result = await self.generate_result(request)
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+            # Fall through to error case if value is None
+
+        # Create error response
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=request.provider,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_result(self, request: LLMRequest) -> Result[LLMResponse, LLMError]:
+        """
+        Generate response using specified LLM provider with Result pattern.
 
         Args:
             request: Structured LLM request
 
         Returns:
-            LLMResponse with generated content and metadata
+            Result containing LLMResponse on success or error
         """
         request_id = self._generate_request_id(request)
         start_time = time.time()
 
+        # Pre-flight checks
+        if not self._check_rate_limits():
+            return Err(
+                LLMError(
+                    message="Rate limit exceeded - try again later",
+                    operation="generate",
+                    provider=request.provider.value,
+                )
+            )
+
+        if not self._check_budget_limits():
+            return Err(
+                LLMError(
+                    message="Daily budget exceeded - service throttled",
+                    operation="generate",
+                    provider=request.provider.value,
+                )
+            )
+
+        # Check cache first
+        if request.cache_enabled:
+            cached_response = self._get_cached_response(request)
+            if cached_response:
+                self.metrics.cache_hits += 1
+                logger.debug("cache_hit", request_id=request_id)
+                return Ok(cached_response)
+            else:
+                self.metrics.cache_misses += 1
+
+        # Generate response via provider
+        provider_config = self.providers.get(request.provider)
+        if not provider_config or not provider_config["available"]:
+            return Err(
+                LLMError(
+                    message=f"Provider {request.provider.value} not available",
+                    operation="generate",
+                    provider=request.provider.value,
+                )
+            )
+
         try:
-            # Pre-flight checks
-            if not self._check_rate_limits():
-                raise Exception("Rate limit exceeded - try again later")
-
-            if not self._check_budget_limits():
-                raise Exception("Daily budget exceeded - service throttled")
-
-            # Check cache first
-            if request.cache_enabled:
-                cached_response = self._get_cached_response(request)
-                if cached_response:
-                    self.metrics.cache_hits += 1
-                    logger.debug(f"Cache hit for request {request_id}")
-                    return cached_response
-                else:
-                    self.metrics.cache_misses += 1
-
-            # Generate response via provider
-            provider_config = self.providers.get(request.provider)
-            if not provider_config or not provider_config["available"]:
-                raise Exception(f"Provider {request.provider.value} not available")
-
             # Call provider
             if request.provider == LLMProvider.GEMINI:
                 content = await self._call_gemini(request, provider_config)
             else:
-                raise Exception(
-                    f"Provider {request.provider.value} not implemented yet"
+                return Err(
+                    LLMError(
+                        message=f"Provider {request.provider.value} not implemented yet",
+                        operation="generate",
+                        provider=request.provider.value,
+                    )
                 )
 
             # Validate response format
@@ -276,44 +355,31 @@ class UnifiedLLMService:
             self._update_metrics(response, success=True)
 
             logger.info(
-                f"LLM request {request_id} completed: {response_time_ms}ms, ${cost_estimate:.4f}"
+                "llm_request_completed",
+                request_id=request_id,
+                response_time_ms=response_time_ms,
+                cost_estimate=round(cost_estimate, 4),
             )
-            return response
+            return Ok(response)
 
         except Exception as e:
-            from src.core.config import Environment, get_environment_config_loader
-
-            env_loader = get_environment_config_loader()
-            is_development = env_loader.environment in [
-                Environment.DEVELOPMENT,
-                Environment.TESTING,
-            ]
-
             self.metrics.failed_requests += 1
-            logger.error(f"LLM request {request_id} failed: {str(e)}", exc_info=True)
+            logger.error(
+                "llm_request_failed",
+                request_id=request_id,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True,
+            )
 
-            if is_development:
-                # 开发环境: 抛出异常而不是返回错误响应
-                raise RuntimeError(
-                    f"CRITICAL: LLM request failed in development mode.\n"
-                    f"Error: {type(e).__name__}: {str(e)}\n"
-                    f"Request ID: {request_id}\n"
-                    f"Provider: {request.provider.value if request.provider else 'default'}\n"
-                    f"\nIn development, LLM errors are fatal to catch configuration issues early."
-                ) from e
-            else:
-                # 生产环境: 返回错误响应对象 (允许上层处理)
-                return LLMResponse(
-                    content=f"[LLM Error: {str(e)}]",
-                    provider=request.provider,
-                    format_validated=False,
-                    cached=False,
-                    tokens_used=0,
-                    response_time_ms=int((time.time() - start_time) * 1000),
-                    cost_estimate=0.0,
-                    timestamp=datetime.now(),
-                    request_id=request_id,
+            return Err(
+                LLMError(
+                    message=f"LLM request failed: {e}",
+                    operation="generate",
+                    provider=request.provider.value,
+                    details={"request_id": request_id},
                 )
+            )
 
     async def _call_gemini(
         self, request: LLMRequest, provider_config: Dict[str, Any]
@@ -412,7 +478,7 @@ class UnifiedLLMService:
             return True  # Default validation
 
         except Exception as e:
-            logger.error(f"Format validation error: {e}")
+            logger.error("format_validation_error", error=str(e), error_type=type(e).__name__)
             return False
 
     def _generate_request_id(self, request: LLMRequest) -> str:
@@ -533,7 +599,39 @@ class UnifiedLLMService:
     async def generate_action(
         self, prompt: str, requester: str = "agent"
     ) -> LLMResponse:
-        """Generate action response in ACTION/TARGET/REASONING format."""
+        """Generate action response. (Legacy - use generate_action_result)"""
+        result = await self.generate_action_result(prompt, requester)
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+        # Return error response
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=LLMProvider.GEMINI,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_action_result(
+        self, prompt: str, requester: str = "agent"
+    ) -> Result[LLMResponse, LLMError]:
+        """
+        Generate action response using Result pattern.
+
+        Args:
+            prompt: The prompt for action generation
+            requester: ID of the requesting agent
+
+        Returns:
+            Result containing LLMResponse on success or error
+        """
         request = LLMRequest(
             prompt=prompt,
             response_format=ResponseFormat.ACTION_FORMAT,
@@ -541,12 +639,44 @@ class UnifiedLLMService:
             requester=requester,
             priority=1,
         )
-        return await self.generate(request)
+        return await self.generate_result(request)
 
     async def generate_narrative(
         self, prompt: str, style: str = "dramatic", requester: str = "chronicler"
     ) -> LLMResponse:
-        """Generate narrative text."""
+        """Generate narrative text. (Legacy - use generate_narrative_result)"""
+        result = await self.generate_narrative_result(prompt, style, requester)
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=LLMProvider.GEMINI,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_narrative_result(
+        self, prompt: str, style: str = "dramatic", requester: str = "chronicler"
+    ) -> Result[LLMResponse, LLMError]:
+        """
+        Generate narrative text using Result pattern.
+
+        Args:
+            prompt: The narrative prompt
+            style: Narrative style
+            requester: ID of the requesting agent
+
+        Returns:
+            Result containing LLMResponse on success or error
+        """
         enhanced_prompt = f"Write {style} narrative: {prompt}"
         request = LLMRequest(
             prompt=enhanced_prompt,
@@ -555,12 +685,44 @@ class UnifiedLLMService:
             requester=requester,
             priority=2,
         )
-        return await self.generate(request)
+        return await self.generate_result(request)
 
     async def generate_clue(
         self, target: str, action_type: str, requester: str = "director"
     ) -> LLMResponse:
-        """Generate investigation clue."""
+        """Generate investigation clue. (Legacy - use generate_clue_result)"""
+        result = await self.generate_clue_result(target, action_type, requester)
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=LLMProvider.GEMINI,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_clue_result(
+        self, target: str, action_type: str, requester: str = "director"
+    ) -> Result[LLMResponse, LLMError]:
+        """
+        Generate investigation clue using Result pattern.
+
+        Args:
+            target: Investigation target
+            action_type: Type of action
+            requester: ID of the requesting agent
+
+        Returns:
+            Result containing LLMResponse on success or error
+        """
         prompt = f"Generate a mysterious clue discovered when {action_type} {target}. Be specific and intriguing."
         request = LLMRequest(
             prompt=prompt,
@@ -569,7 +731,7 @@ class UnifiedLLMService:
             requester=requester,
             priority=2,
         )
-        return await self.generate(request)
+        return await self.generate_result(request)
 
     async def generate_dialogue(
         self,
@@ -579,7 +741,48 @@ class UnifiedLLMService:
         context: Dict[str, Any],
         requester: str = "character",
     ) -> LLMResponse:
-        """Generate character dialogue (compatible with ai_testing approach)."""
+        """Generate character dialogue. (Legacy - use generate_dialogue_result)"""
+        result = await self.generate_dialogue_result(
+            character_name, personality, emotion, context, requester
+        )
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=LLMProvider.GEMINI,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_dialogue_result(
+        self,
+        character_name: str,
+        personality: Dict[str, float],
+        emotion: str,
+        context: Dict[str, Any],
+        requester: str = "character",
+    ) -> Result[LLMResponse, LLMError]:
+        """
+        Generate character dialogue using Result pattern.
+
+        Args:
+            character_name: Name of the character
+            personality: Character personality traits
+            emotion: Current emotion
+            context: Dialogue context
+            requester: ID of the requesting agent
+
+        Returns:
+            Result containing LLMResponse on success or error
+        """
         prompt = f"""Generate a single line of dialogue for {character_name}.
 
 Personality: {json.dumps(personality, ensure_ascii=False)}
@@ -602,7 +805,7 @@ Output only the dialogue line:"""
             requester=requester,
             priority=1,
         )
-        return await self.generate(request)
+        return await self.generate_result(request)
 
     async def generate_event(
         self,
@@ -612,7 +815,48 @@ Output only the dialogue line:"""
         plot_stage: str,
         requester: str = "orchestrator",
     ) -> LLMResponse:
-        """Generate story event in JSON format (ai_testing compatible)."""
+        """Generate story event in JSON format. (Legacy - use generate_event_result)"""
+        result = await self.generate_event_result(
+            event_type, characters, story_context, plot_stage, requester
+        )
+        if result.is_ok:
+            value = result.value
+            if value is not None:
+                return value
+        error_msg = result.error.message if result.error else "Unknown error"
+        return LLMResponse(
+            content=f"[LLM Error: {error_msg}]",
+            provider=LLMProvider.GEMINI,
+            format_validated=False,
+            cached=False,
+            tokens_used=0,
+            response_time_ms=0,
+            cost_estimate=0.0,
+            timestamp=datetime.now(),
+            request_id="error",
+        )
+
+    async def generate_event_result(
+        self,
+        event_type: str,
+        characters: List[str],
+        story_context: Dict[str, Any],
+        plot_stage: str,
+        requester: str = "orchestrator",
+    ) -> Result[LLMResponse, LLMError]:
+        """
+        Generate story event in JSON format using Result pattern.
+
+        Args:
+            event_type: Type of event to generate
+            characters: List of character names
+            story_context: Story context
+            plot_stage: Current plot stage
+            requester: ID of the requesting agent
+
+        Returns:
+            Result containing LLMResponse on success or error
+        """
         prompt = f"""Generate a story event for a science fiction novel.
 
 Event Type: {event_type}
@@ -623,7 +867,7 @@ Context: {json.dumps(story_context, ensure_ascii=False)}
 Return in JSON format:
 {{
     "description": "Brief description of what happens",
-    "details": "Specific details of the event", 
+    "details": "Specific details of the event",
     "impact": "How this affects the story",
     "emotion": "Emotional tone"
 }}"""
@@ -635,7 +879,7 @@ Return in JSON format:
             requester=requester,
             priority=2,
         )
-        return await self.generate(request)
+        return await self.generate_result(request)
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics."""
@@ -673,6 +917,59 @@ Return in JSON format:
                 "primary": self.primary_provider.value,
             },
         }
+
+    def get_metrics_result(self) -> Result[Dict[str, Any], ServiceError]:
+        """
+        Get performance metrics (Result pattern).
+
+        Returns:
+            Result containing performance metrics on success.
+            - Ok: Dict with performance metrics
+            - Err(ServiceError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "requests": {
+                    "total": self.metrics.total_requests,
+                    "successful": self.metrics.successful_requests,
+                    "failed": self.metrics.failed_requests,
+                    "success_rate": self.metrics.successful_requests
+                    / max(1, self.metrics.total_requests),
+                },
+                "cache": {
+                    "hits": self.metrics.cache_hits,
+                    "misses": self.metrics.cache_misses,
+                    "hit_rate": self.metrics.cache_hits
+                    / max(1, self.metrics.cache_hits + self.metrics.cache_misses),
+                },
+                "performance": {
+                    "average_response_time_ms": self.metrics.average_response_time,
+                    "total_tokens_used": self.metrics.total_tokens_used,
+                },
+                "cost": {
+                    "total_cost": self.metrics.total_cost,
+                    "daily_spend": self.metrics.daily_spend,
+                    "budget_remaining": max(
+                        0, self.cost_control.daily_budget - self.metrics.daily_spend
+                    ),
+                },
+                "providers": {
+                    "available": [
+                        p.value
+                        for p, config in self.providers.items()
+                        if config["available"]
+                    ],
+                    "primary": self.primary_provider.value,
+                },
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get metrics: {e}",
+                    service_name="UnifiedLLMService",
+                    operation="get_metrics",
+                )
+            )
 
 
 # Global service instance
@@ -735,7 +1032,7 @@ def create_llm_service_for_testing(
         # Override the _call_gemini method for testing
         original_call = service._call_gemini
 
-        async def mock_call(request, provider_config):
+        async def mock_call(request: Any, provider_config: Any) -> Any:
             for pattern, response in mock_responses.items():
                 if pattern in request.prompt:
                     return response

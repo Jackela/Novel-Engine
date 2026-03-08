@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict
 
-import requests
+import httpx
 import yaml
 
 from src.contexts.story.application.ports.scene_generator_port import (
@@ -39,11 +39,19 @@ class LLMSceneGenerator(SceneGeneratorPort):
         )
 
     def generate(self, request: SceneGenerationInput) -> SceneGenerationResult:
-        """Generate a scene using the Gemini API."""
+        """Generate a scene using the Gemini API.
+
+        Why: Runs async API call via asyncio.run() to maintain sync protocol
+        while using non-blocking httpx internally.
+        """
+        import asyncio
+
         system_prompt = self._load_system_prompt()
         user_prompt = self._build_user_prompt(request)
         try:
-            response_text = self._call_gemini(system_prompt, user_prompt)
+            response_text = asyncio.run(
+                self._call_gemini(system_prompt, user_prompt)
+            )
             response = self._parse_response(response_text)
         except Exception as exc:  # pragma: no cover - defensive fallback
             return self._error_result(request, str(exc))
@@ -88,8 +96,21 @@ class LLMSceneGenerator(SceneGeneratorPort):
             f"Return valid JSON only with keys: title, content, summary, visual_prompt"
         )
 
-    def _call_gemini(self, system_prompt: str, user_prompt: str) -> str:
-        """Call Gemini API to generate scene."""
+    async def _call_gemini(self, system_prompt: str, user_prompt: str) -> str:
+        """Call Gemini API to generate scene (async).
+
+        Why: Non-blocking I/O for better performance under concurrent load.
+
+        Args:
+            system_prompt: Instructions for the LLM on output format.
+            user_prompt: Scene generation parameters.
+
+        Returns:
+            Raw text response from the Gemini API.
+
+        Raises:
+            RuntimeError: If API key is missing or API call fails.
+        """
         if not self._api_key:
             raise RuntimeError("GEMINI_API_KEY environment variable is not set")
 
@@ -109,30 +130,30 @@ class LLMSceneGenerator(SceneGeneratorPort):
             },
         }
 
-        response = requests.post(
-            self._base_url,
-            headers=headers,
-            json=request_body,
-            timeout=60,
-        )
-
-        if response.status_code == 401:
-            raise RuntimeError(
-                "Gemini API authentication failed - check GEMINI_API_KEY"
-            )
-        elif response.status_code == 429:
-            raise RuntimeError("Gemini API rate limit exceeded")
-        elif response.status_code != 200:
-            raise RuntimeError(
-                f"Gemini API error {response.status_code}: {response.text}"
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(
+                self._base_url,
+                headers=headers,
+                json=request_body,
             )
 
-        try:
-            response_json = response.json()
-            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
-            return content
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse Gemini response: {e}")
+            if response.status_code == 401:
+                raise RuntimeError(
+                    "Gemini API authentication failed - check GEMINI_API_KEY"
+                )
+            elif response.status_code == 429:
+                raise RuntimeError("Gemini API rate limit exceeded")
+            elif response.status_code != 200:
+                raise RuntimeError(
+                    f"Gemini API error {response.status_code}: {response.text}"
+                )
+
+            try:
+                response_json = response.json()
+                content = response_json["candidates"][0]["content"]["parts"][0]["text"]
+                return content
+            except (KeyError, IndexError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
     def _parse_response(self, content: str) -> SceneGenerationResult:
         """Parse the LLM response into a SceneGenerationResult."""

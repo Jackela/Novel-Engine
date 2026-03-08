@@ -58,7 +58,7 @@ class NarrativeThread(StoryElement):
     current_sequence_position: int = 0
     pacing_notes: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize thread-specific defaults."""
         if not hasattr(self, "element_type") or not self.element_type:
             self.element_type = "narrative_thread"
@@ -87,7 +87,7 @@ class NarrativeThread(StoryElement):
         sequence: int,
         description: str,
         significance: str = "moderate",
-        **metadata,
+        **metadata: Any,
     ) -> None:
         """Add a key moment to this thread."""
         moment = {
@@ -106,8 +106,8 @@ class NarrativeThread(StoryElement):
         sequence: int,
         description: str,
         impact_level: str = "moderate",
-        affected_elements: List[str] = None,
-        **metadata,
+        affected_elements: Optional[List[str]] = None,
+        **metadata: Any,
     ) -> None:
         """Add a turning point to this thread."""
         turning_point = {

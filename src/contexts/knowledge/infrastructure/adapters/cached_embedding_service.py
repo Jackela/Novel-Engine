@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from structlog import get_logger
 
@@ -46,7 +46,7 @@ class CachedEmbeddingService(IEmbeddingService):
         delegate: IEmbeddingService,
         cache_service: Optional[EmbeddingCacheService] = None,
         model: str = "text-embedding-ada-002",
-    ):
+    ) -> None:
         """
         Initialize cached embedding service.
 
@@ -124,10 +124,9 @@ class CachedEmbeddingService(IEmbeddingService):
         cached_results = self._cache.get_batch(texts, self._model)
 
         # Separate cache hits from misses
-        hit_indices = []
-        miss_indices = []
-        miss_texts = []
-
+        hit_indices: list[Any] = []
+        miss_indices: list[Any] = []
+        miss_texts: list[Any] = []
         for i, text in enumerate(texts):
             if text in cached_results:
                 hit_indices.append(i)

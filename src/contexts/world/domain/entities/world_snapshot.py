@@ -68,8 +68,7 @@ class WorldSnapshot:
         Raises:
             ValueError: If any validation rule is violated.
         """
-        errors = []
-
+        errors: list[Any] = []
         if not self.snapshot_id:
             errors.append("Snapshot ID cannot be empty")
 

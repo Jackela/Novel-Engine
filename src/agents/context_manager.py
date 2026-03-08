@@ -9,15 +9,16 @@ Extracted from PersonaAgent for better separation of concerns.
 Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
-import logging
 import re
+
+import structlog
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from src.agents.persona_core import PersonaCore
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterContextManager:
@@ -31,7 +32,7 @@ class CharacterContextManager:
     - Personality trait extraction and quantification
     """
 
-    def __init__(self, core: "PersonaCore"):
+    def __init__(self, core: "PersonaCore") -> None:
         """
         Initialize context manager.
 
@@ -39,7 +40,7 @@ class CharacterContextManager:
             core: PersonaCore instance for file operations
         """
         self.core = core
-        self.logger = logging.getLogger(f"{__name__}.{core.agent_id}")
+        self.logger = structlog.get_logger(__name__, agent_id=core.agent_id)
 
     def load_character_context(self) -> None:
         """
@@ -52,14 +53,15 @@ class CharacterContextManager:
             character_sheet_path = self.core.identity.character_sheet_path
 
             if not Path(character_sheet_path).exists():
-                self.logger.error(f"Character sheet not found: {character_sheet_path}")
+                self.logger.error("character_sheet_not_found", character_sheet_path=character_sheet_path)
                 return
 
             # Read character sheet content
             content = self.core._read_cached_file(character_sheet_path)
             if not content:
                 self.logger.error(
-                    f"Failed to read character sheet: {character_sheet_path}"
+                    "failed_to_read_character_sheet",
+                    character_sheet_path=character_sheet_path
                 )
                 return
 
@@ -73,11 +75,12 @@ class CharacterContextManager:
             self._extract_core_identity()
 
             self.logger.info(
-                f"Character context loaded successfully for {self.core.identity.character_name}"
+                "character_context_loaded",
+                character_name=self.core.identity.character_name
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to load character context: {e}")
+            self.logger.error("failed_to_load_character_context", error=str(e))
 
     def _parse_character_sheet_content(self, content: str) -> Dict[str, Any]:
         """
@@ -89,8 +92,7 @@ class CharacterContextManager:
         Returns:
             Dict: Structured character data
         """
-        parsed_data = {}
-
+        parsed_data: dict[Any, Any] = {}
         # Extract major sections
         sections = {
             "identity": self._extract_section(content, "identity"),
@@ -110,7 +112,9 @@ class CharacterContextManager:
                         parsed_data[section_name] = parser_method(section_content)
                     except Exception as e:
                         self.logger.warning(
-                            f"Failed to parse {section_name} section: {e}"
+                            "failed_to_parse_section",
+                            section_name=section_name,
+                            error=str(e)
                         )
                         parsed_data[section_name] = {}
                 else:
@@ -148,20 +152,20 @@ class CharacterContextManager:
 
     def _parse_identity_section(self, section_content: str) -> Dict[str, Any]:
         """Parse identity section from character sheet."""
-        identity_data = {}
-
+        identity_data: dict[Any, Any] = {}
         # Extract basic identity fields
         fields = ["name", "faction", "rank", "age", "gender", "homeworld", "profession"]
 
         for field in fields:
-            pattern = rf"(?:^|\n)\s*\*?\s*{field}:?\s*(.+?)(?=\n|$)"
+            # Match field with optional bullet points (-, *, or none)
+            pattern = rf"(?:^|\n)\s*[-*]?\s*{field}:?\s*(.+?)(?=\n|$)"
             match = re.search(pattern, section_content, re.IGNORECASE | re.MULTILINE)
             if match:
                 identity_data[field] = match.group(1).strip()
 
         # Extract backstory if present
         backstory_pattern = (
-            r"(?:^|\n)\s*(?:backstory|background):\s*(.*?)(?=\n\s*\*|\Z)"
+            r"(?:^|\n)\s*[-*]?\s*(?:backstory|background):\s*(.*?)(?=\n\s*[-*]|\Z)"
         )
         backstory_match = re.search(
             backstory_pattern, section_content, re.IGNORECASE | re.DOTALL
@@ -173,8 +177,7 @@ class CharacterContextManager:
 
     def _parse_psychological_section(self, section_content: str) -> Dict[str, Any]:
         """Parse psychological profile section."""
-        psychological_data = {}
-
+        psychological_data: dict[Any, Any] = {}
         # Extract personality traits with weights
         traits = self._extract_weighted_items(section_content)
         psychological_data["personality_traits"] = traits
@@ -187,8 +190,7 @@ class CharacterContextManager:
 
     def _parse_behavioral_section(self, section_content: str) -> Dict[str, Any]:
         """Parse behavioral patterns section."""
-        behavioral_data = {}
-
+        behavioral_data: dict[Any, Any] = {}
         # Extract decision weights
         weights = self._extract_weighted_items(section_content)
         behavioral_data["decision_weights"] = weights
@@ -201,8 +203,7 @@ class CharacterContextManager:
 
     def _extract_bullet_points(self, content: str) -> Dict[str, str]:
         """Extract bullet points from content."""
-        bullet_points = {}
-
+        bullet_points: dict[Any, Any] = {}
         # Find all bullet point patterns
         lines = content.split("\n")
         current_category = None
@@ -210,20 +211,23 @@ class CharacterContextManager:
         for line in lines:
             line = line.strip()
 
-            # Check for category headers
-            if (
-                line
-                and line.endswith(":")
-                and not line.startswith("*")
-                and not line.startswith("-")
-            ):
-                current_category = line[:-1].lower().replace(" ", "_")
+            # Check for category headers (with or without bullet prefix)
+            # Examples: "motivations:", "- motivations:", "* motivations:"
+            if line and line.endswith(":"):
+                # Remove bullet prefix if present
+                header_line = line
+                if line.startswith("- ") or line.startswith("* "):
+                    header_line = line[2:]
+                current_category = header_line[:-1].lower().replace(" ", "_")
                 bullet_points[current_category] = []
                 continue
 
-            # Check for bullet points
+            # Check for bullet points (skip nested weighted items like "- brave: 0.8")
             if line.startswith("* ") or line.startswith("- "):
                 bullet_text = line[2:].strip()
+                # Skip lines that look like weighted items (already handled by _extract_weighted_items)
+                if ": " in bullet_text and any(c.isdigit() for c in bullet_text):
+                    continue
                 if current_category and isinstance(
                     bullet_points.get(current_category), list
                 ):
@@ -238,18 +242,21 @@ class CharacterContextManager:
 
     def _extract_weighted_items(self, content: str) -> Dict[str, float]:
         """Extract weighted items (traits with numerical values)."""
-        weighted_items = {}
-
+        weighted_items: dict[Any, Any] = {}
         # Pattern for "Item: value" or "Item (value)" formats
+        # Handles both "- brave: 0.8" and "brave: 0.8" formats
         patterns = [
-            r"(?:^|\n)\s*\*?\s*([^:\n]+?):\s*(\d*\.?\d+)",  # "Trait: 0.8"
-            r"(?:^|\n)\s*\*?\s*([^(\n]+?)\s*\((\d*\.?\d+)\)",  # "Trait (0.8)"
+            r"(?:^|\n)\s*[-*]?\s*([^:\n]+?):\s*(\d*\.?\d+)",  # "- Trait: 0.8" or "Trait: 0.8"
+            r"(?:^|\n)\s*[-*]?\s*([^(\n]+?)\s*\((\d*\.?\d+)\)",  # "- Trait (0.8)" or "Trait (0.8)"
         ]
 
         for pattern in patterns:
             matches = re.findall(pattern, content, re.MULTILINE | re.IGNORECASE)
             for trait, value_str in matches:
                 trait_clean = trait.strip().lower().replace(" ", "_")
+                # Skip if trait_clean looks like a category header (ends with colon content)
+                if trait_clean in ("personality_traits", "decision_weights", "traits"):
+                    continue
                 try:
                     value = float(value_str)
                     weighted_items[trait_clean] = value
@@ -260,10 +267,10 @@ class CharacterContextManager:
 
     def _parse_simple_field_format(self, content: str) -> Dict[str, Any]:
         """Parse simple field: value format content."""
-        parsed_data = {}
-
+        parsed_data: dict[Any, Any] = {}
         # Extract field: value pairs
-        field_pattern = r"(?:^|\n)\s*\*?\s*([^:\n]+):\s*([^\n]+)"
+        # Match fields with optional bullet points (-, *, or none)
+        field_pattern = r"(?:^|\n)\s*[-*]?\s*([^:\n]+):\s*([^\n]+)"
         matches = re.findall(field_pattern, content, re.MULTILINE)
 
         for field, value in matches:
@@ -297,11 +304,13 @@ class CharacterContextManager:
                 self.core.identity.backstory = identity_data["backstory"]
 
             self.logger.debug(
-                f"Core identity extracted: {self.core.identity.character_name} ({self.core.identity.primary_faction})"
+                "core_identity_extracted",
+                character_name=self.core.identity.character_name,
+                faction=self.core.identity.primary_faction
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to extract core identity: {e}")
+            self.logger.error("failed_to_extract_core_identity", error=str(e))
 
     def get_character_summary(self) -> Dict[str, Any]:
         """Get summary of loaded character data."""

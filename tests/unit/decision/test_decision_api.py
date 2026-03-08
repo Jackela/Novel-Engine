@@ -18,6 +18,9 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+pytestmark = pytest.mark.unit
+
 from fastapi import HTTPException
 
 # Import decision module components

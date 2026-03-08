@@ -14,7 +14,7 @@ from __future__ import annotations
 import asyncio
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from ...application.ports.i_prompt_usage_repository import (
     IPromptUsageRepository,
@@ -109,7 +109,7 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
         """
         async with self._lock:
             try:
-                ids = []
+                ids: list[Any] = []
                 for usage in usages:
                     # Check if we need to evict (LRU)
                     if len(self._usages) >= self._max_entries:
@@ -384,8 +384,7 @@ class InMemoryPromptUsageRepository(IPromptUsageRepository):
         """
         async with self._lock:
             try:
-                to_delete = []
-
+                to_delete: list[Any] = []
                 for usage_id, usage in self._usages.items():
                     if usage.timestamp < cutoff_date:
                         if workspace_id is None or usage.workspace_id == workspace_id:

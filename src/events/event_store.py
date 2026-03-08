@@ -6,14 +6,14 @@ Simple event store implementation for persisting and retrieving events.
 This is a minimal implementation to resolve import dependencies.
 """
 
-import logging
+import structlog
 import os
 from dataclasses import dataclass
 from typing import List, Optional
 
 from .event_bus import Event
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -28,7 +28,7 @@ class EventStoreConfig:
 class EventStore:
     """Simple file-based event store for persisting events."""
 
-    def __init__(self, config: Optional[EventStoreConfig] = None):
+    def __init__(self, config: Optional[EventStoreConfig] = None) -> None:
         """Initialize the event store."""
         self.config = config or EventStoreConfig()
         self._ensure_storage_directory()
@@ -40,7 +40,7 @@ class EventStore:
     def store_event(self, event: Event) -> None:
         """Store an event."""
         # Minimal implementation - just log for now
-        logger.info(f"EventStore: Storing event {event}")
+        logger.info("event_storing", event_id=getattr(event, 'event_id', 'unknown'), event_type=getattr(event, 'event_type', 'unknown'))
 
     def get_events(self, event_type: Optional[str] = None) -> List[Event]:
         """Retrieve events from store."""

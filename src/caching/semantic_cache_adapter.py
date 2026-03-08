@@ -1,4 +1,8 @@
-"""Bucketed semantic cache adapter used by PersonaAgent."""
+"""Bucketed semantic cache adapter used by PersonaAgent.
+
+Organizes cache entries into buckets with configurable similarity
+thresholds and keyword-based guard conditions.
+"""
 
 from __future__ import annotations
 
@@ -6,11 +10,19 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
-from typing import DefaultDict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, DefaultDict, Iterable, List, Optional, Sequence, Tuple
 
 
 @dataclass
 class _BucketEntry:
+    """Entry within a semantic cache bucket.
+    
+    Attributes:
+        prompt: Original prompt text
+        value: Cached response
+        tags: Metadata tags for invalidation
+        created_ts: Creation timestamp
+    """
     prompt: str
     value: str
     tags: List[str] = field(default_factory=list)
@@ -18,7 +30,18 @@ class _BucketEntry:
 
 
 class SemanticCacheBucketed:
-    def __init__(self, ttl_seconds: int = 60 * 60):
+    """Bucketed semantic cache with similarity thresholds.
+    
+    Groups entries into named buckets (e.g., by configuration hash)
+    and performs similarity matching within buckets.
+    """
+    
+    def __init__(self, ttl_seconds: int = 60 * 60) -> None:
+        """Initialize the bucketed cache.
+        
+        Args:
+            ttl_seconds: Entry time-to-live in seconds
+        """
         self.ttl_seconds = ttl_seconds
         self._buckets: DefaultDict[str, List[_BucketEntry]] = defaultdict(list)
 
@@ -29,6 +52,14 @@ class SemanticCacheBucketed:
         response: str,
         tags: Optional[Iterable[str]] = None,
     ) -> None:
+        """Store a response in a bucket.
+        
+        Args:
+            bucket: Bucket identifier (e.g., config hash)
+            prompt: Original prompt
+            response: Response to cache
+            tags: Metadata tags for invalidation
+        """
         entry = _BucketEntry(prompt=prompt, value=response, tags=list(tags or []))
         bucket_entries = self._buckets[bucket]
         bucket_entries.append(entry)
@@ -45,6 +76,19 @@ class SemanticCacheBucketed:
         keyword_overlap_min: float,
         length_delta_pct: float,
     ) -> Tuple[Optional[str], float]:
+        """Query for a semantically similar cached response.
+        
+        Args:
+            bucket: Bucket to search
+            prompt: Query prompt
+            high_threshold: Similarity threshold for immediate return
+            low_threshold: Minimum similarity to consider
+            keyword_overlap_min: Minimum keyword overlap ratio
+            length_delta_pct: Maximum length difference percentage
+            
+        Returns:
+            Tuple of (cached_response or None, similarity_score)
+        """
         now = time.time()
         entries = self._buckets.get(bucket) or []
         best: Tuple[float, Optional[_BucketEntry]] = (0.0, None)
@@ -68,12 +112,20 @@ class SemanticCacheBucketed:
         return entry.value, best[0]
 
     def invalidate(self, tags: Sequence[str]) -> int:
+        """Invalidate entries matching all tags.
+        
+        Args:
+            tags: Tags to match (all must match)
+            
+        Returns:
+            Number of entries removed
+        """
         if not tags:
             return 0
         tags_set = {t for t in tags if t}
         removed = 0
         for bucket, entries in list(self._buckets.items()):
-            kept = []
+            kept: list[Any] = []
             for entry in entries:
                 if tags_set.issubset(set(entry.tags)):
                     removed += 1
@@ -89,6 +141,17 @@ class SemanticCacheBucketed:
 def _guards_pass(
     prompt_a: str, prompt_b: str, keyword_overlap_min: float, length_delta_pct: float
 ) -> bool:
+    """Check if two prompts pass keyword overlap and length guards.
+    
+    Args:
+        prompt_a: First prompt
+        prompt_b: Second prompt
+        keyword_overlap_min: Minimum Jaccard overlap for keywords >3 chars
+        length_delta_pct: Maximum relative length difference
+        
+    Returns:
+        True if prompts pass guard conditions
+    """
     if not prompt_a or not prompt_b:
         return False
     words_a = [w for w in prompt_a.lower().split() if len(w) > 3]

@@ -8,6 +8,7 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 
 import asyncio
 import logging
+import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -35,20 +36,20 @@ except ImportError:
     EquipmentItem = dict
 
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -81,7 +82,7 @@ class DynamicEquipmentSystem:
         context_db: Optional[ContextDatabase] = None,
         equipment_template_path: Optional[str] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """
         Initialize modular dynamic equipment system.
 
@@ -93,7 +94,7 @@ class DynamicEquipmentSystem:
             equipment_template_path: Path to equipment templates
             logger: Optional logger instance
         """
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Create system configuration
         self.config = EquipmentSystemConfig(
@@ -106,19 +107,19 @@ class DynamicEquipmentSystem:
 
         # Initialize components
         self.registry = EquipmentRegistry(
-            self.config, context_db, self.logger.getChild("registry")
+            self.config, context_db, self.logger.bind(component="registry")
         )
         self.usage_processor = EquipmentUsageProcessor(
-            self.config, self.logger.getChild("usage")
+            self.config, self.logger.bind(component="usage")
         )
         self.maintenance_system = MaintenanceSystem(
-            self.config, self.logger.getChild("maintenance")
+            self.config, self.logger.bind(component="maintenance")
         )
         self.modification_system = ModificationSystem(
-            self.config, self.logger.getChild("modifications")
+            self.config, self.logger.bind(component="modifications")
         )
         self.performance_monitor = PerformanceMonitor(
-            self.config, self.logger.getChild("monitor")
+            self.config, self.logger.bind(component="monitor")
         )
 
         # System state
@@ -513,7 +514,7 @@ class DynamicEquipmentSystem:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> None:
         """Provide backward compatibility for legacy method calls."""
         legacy_mappings = {
             "get_equipment": "registry.get_equipment",

@@ -9,7 +9,7 @@ setup. The repository interface ensures we can swap to PostgreSQL later
 without changing domain or application code.
 """
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.contexts.world.domain.entities.relationship import (
     EntityType,
@@ -134,8 +134,7 @@ class InMemoryRelationshipRepository(IRelationshipRepository):
             List of matching Relationships.
         """
         relationship_ids = self._entity_index.get(entity_id, set())
-        results = []
-
+        results: list[Any] = []
         for rel_id in relationship_ids:
             rel = self._relationships.get(rel_id)
             if not rel:
@@ -170,7 +169,7 @@ class InMemoryRelationshipRepository(IRelationshipRepository):
         Returns:
             List of matching Relationships.
         """
-        results = []
+        results: list[Any] = []
         for rel in self._relationships.values():
             if rel.source_id != source_id:
                 continue
@@ -194,7 +193,7 @@ class InMemoryRelationshipRepository(IRelationshipRepository):
         Returns:
             List of matching Relationships.
         """
-        results = []
+        results: list[Any] = []
         for rel in self._relationships.values():
             if rel.target_id != target_id:
                 continue
@@ -218,7 +217,7 @@ class InMemoryRelationshipRepository(IRelationshipRepository):
         Returns:
             List of Relationships connecting the entities.
         """
-        results = []
+        results: list[Any] = []
         for rel in self._relationships.values():
             if (rel.source_id == entity_a_id and rel.target_id == entity_b_id) or (
                 rel.source_id == entity_b_id and rel.target_id == entity_a_id
@@ -266,7 +265,7 @@ class InMemoryRelationshipRepository(IRelationshipRepository):
         Returns:
             List of matching Relationships.
         """
-        results = []
+        results: list[Any] = []
         for rel in self._relationships.values():
             if rel.source_type != source_type or rel.target_type != target_type:
                 continue

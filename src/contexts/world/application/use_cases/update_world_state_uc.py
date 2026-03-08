@@ -6,7 +6,7 @@ This module contains the use case for applying delta changes to world state.
 It orchestrates domain operations while maintaining Clean Architecture principles.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -26,7 +26,7 @@ from ..commands.world_commands import (
     WorldOperationType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class UpdateWorldStateResult:
@@ -44,10 +44,10 @@ class UpdateWorldStateResult:
         world_state: Optional[WorldState] = None,
         error_message: Optional[str] = None,
         operations_applied: int = 0,
-        events_generated: List[str] = None,
+        events_generated: Optional[List[str]] = None,
         execution_time_ms: float = 0.0,
-        warnings: List[str] = None,
-    ):
+        warnings: Optional[List[str]] = None,
+    ) -> None:
         self.success = success
         self.world_state = world_state
         self.error_message = error_message
@@ -91,7 +91,7 @@ class UpdateWorldStateUC:
     - Provide comprehensive error handling and logging
     """
 
-    def __init__(self, world_repository: IWorldStateRepository):
+    def __init__(self, world_repository: IWorldStateRepository) -> None:
         """
         Initialize the use case with required dependencies.
 
@@ -121,8 +121,7 @@ class UpdateWorldStateUC:
         """
         start_time = datetime.now()
         operations_applied = 0
-        warnings = []
-
+        warnings: list[Any] = []
         try:
             logger.info(
                 f"Starting world delta application for command {command.command_id}"
@@ -265,9 +264,8 @@ class UpdateWorldStateUC:
             )
 
         # Validate entity operations don't conflict
-        entity_ids_being_added = set()
-        entity_ids_being_modified = set()
-
+        entity_ids_being_added: set[Any] = set()
+        entity_ids_being_modified: set[Any] = set()
         for op in command.entity_operations:
             if op.operation_type == WorldOperationType.ADD_ENTITY:
                 if op.entity_id in entity_ids_being_added:

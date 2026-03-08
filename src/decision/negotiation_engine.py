@@ -6,7 +6,7 @@ adjusted actions or alternatives when needed.
 """
 
 import json
-import logging
+import structlog
 import re
 from typing import Any, Dict, List, Optional
 
@@ -18,7 +18,7 @@ from .models import (
     UserDecision,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Prompt template for feasibility evaluation
@@ -70,7 +70,7 @@ class NegotiationEngine:
     3. Propose alternatives if action cannot be executed
     """
 
-    def __init__(self, llm_client: Optional[Any] = None):
+    def __init__(self, llm_client: Optional[Any] = None) -> None:
         """
         Initialize the negotiation engine.
 
@@ -204,7 +204,7 @@ class NegotiationEngine:
             )
 
             # Parse alternatives
-            alternatives = []
+            alternatives: list[Any] = []
             for i, alt in enumerate(data.get("alternatives", [])[:4]):
                 alternatives.append(
                     DecisionOption(
@@ -310,6 +310,6 @@ class NegotiationEngine:
             ),
         ]
 
-    def set_llm_client(self, llm_client: Any):
+    def set_llm_client(self, llm_client: Any) -> None:
         """Set or update the LLM client."""
         self._llm_client = llm_client

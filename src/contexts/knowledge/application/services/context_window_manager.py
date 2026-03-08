@@ -15,12 +15,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 
 from ..services.knowledge_ingestion_service import RetrievedChunk
 from .context_optimizer import ContextOptimizer, PackingStrategy
+from src.core.result import Error
+
 from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:
@@ -174,7 +176,7 @@ class ContextWindowManager:
         token_counter: TokenCounter | None = None,
         context_optimizer: ContextOptimizer | None = None,
         config: ContextWindowConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the context window manager.
 
@@ -230,7 +232,21 @@ class ContextWindowManager:
         )
 
         # Count system prompt tokens
-        system_tokens = self._token_counter.count(system_prompt).token_count
+        system_count_result = self._token_counter.count(system_prompt)
+        if system_count_result.is_error:
+            # Fallback to rough estimation
+            system_tokens = len(system_prompt) // 4
+            logger.warning(
+                "system_prompt_count_failed",
+                error=str(system_count_result.error),
+                using_fallback=True,
+            )
+        else:
+            count_res = system_count_result.unwrap()
+            if count_res is None:
+                system_tokens = len(system_prompt) // 4
+            else:
+                system_tokens = count_res.token_count
 
         if system_tokens > cfg.model_context_window:
             raise ValueError(
@@ -310,9 +326,15 @@ class ContextWindowManager:
         if not config.enable_rag_optimization:
             # Simple truncation without optimization
             total = 0
-            kept = []
+            kept: list[Any] = []
             for chunk in chunks:
-                chunk_tokens = self._token_counter.count(chunk.content).token_count
+                count_result = self._token_counter.count(chunk.content)
+                if count_result.is_error:
+                    continue
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    continue
+                chunk_tokens = count_res.token_count
                 if total + chunk_tokens > available_tokens:
                     break
                 kept.append(chunk)
@@ -350,7 +372,15 @@ class ContextWindowManager:
         """
         if not history:
             # Just include the query
-            query_tokens = self._token_counter.count(query).token_count
+            query_count_result = self._token_counter.count(query)
+            if query_count_result.is_error:
+                query_tokens = len(query) // 4
+            else:
+                count_res = query_count_result.unwrap()
+                if count_res is None:
+                    query_tokens = len(query) // 4
+                else:
+                    query_tokens = count_res.token_count
             return (
                 [ChatMessage(role="user", content=query, tokens=query_tokens)],
                 query_tokens,
@@ -358,13 +388,29 @@ class ContextWindowManager:
             )
 
         # Count tokens for all history messages
-        history_with_tokens = []
+        history_with_tokens: list[Any] = []
         for msg in history:
-            tokens = self._token_counter.count(msg.content).token_count
+            count_result = self._token_counter.count(msg.content)
+            if count_result.is_error:
+                tokens = len(msg.content) // 4
+            else:
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    tokens = len(msg.content) // 4
+                else:
+                    tokens = count_res.token_count
             history_with_tokens.append(msg.with_tokens(tokens))
 
         # Calculate current query tokens
-        query_tokens = self._token_counter.count(query).token_count
+        query_count_result = self._token_counter.count(query)
+        if query_count_result.is_error:
+            query_tokens = len(query) // 4
+        else:
+            count_res = query_count_result.unwrap()
+            if count_res is None:
+                query_tokens = len(query) // 4
+            else:
+                query_tokens = count_res.token_count
 
         # Pruning strategy: OLDEST_FIRST (default)
         # Keep recent messages, remove oldest first
@@ -436,11 +482,18 @@ class ContextWindowManager:
             model_window = self._config.model_context_window
 
         # Count system prompt or use default
-        system_tokens = (
-            self._token_counter.count(system_prompt).token_count
-            if system_prompt
-            else self._config.system_prompt_tokens
-        )
+        if system_prompt:
+            count_result = self._token_counter.count(system_prompt)
+            if count_result.is_error:
+                system_tokens = len(system_prompt) // 4
+            else:
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    system_tokens = len(system_prompt) // 4
+                else:
+                    system_tokens = count_res.token_count
+        else:
+            system_tokens = self._config.system_prompt_tokens
 
         # Get reserve amount
         reserve = reserve_for_response or self._config.reserve_for_response

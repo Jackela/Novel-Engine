@@ -6,7 +6,7 @@ Uses asyncio.Event for non-blocking wait with timeout support.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime, timezone
 from typing import Callable, Optional
 
@@ -18,7 +18,7 @@ from .models import (
     UserDecision,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class InteractionPauseController:
@@ -39,7 +39,7 @@ class InteractionPauseController:
         default_timeout: int = 120,
         on_decision_point: Optional[Callable[[DecisionPoint], None]] = None,
         on_resolution: Optional[Callable[[PendingDecision], None]] = None,
-    ):
+    ) -> None:
         """
         Initialize the pause controller.
 
@@ -358,7 +358,7 @@ class InteractionPauseController:
             ),
         }
 
-    async def reset(self):
+    async def reset(self) -> None:
         """Reset the controller to initial state."""
         async with self._lock:
             if self._pending:

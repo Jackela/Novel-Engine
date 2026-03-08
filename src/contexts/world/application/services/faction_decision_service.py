@@ -16,13 +16,11 @@ Key Features:
     - Fallback behavior when LLM fails
 """
 
-import asyncio
 import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
-from uuid import uuid4
 
 import structlog
 
@@ -32,19 +30,20 @@ from src.contexts.world.domain.entities.faction_intent import (
     FactionIntent,
     IntentStatus,
 )
+from src.contexts.world.domain.errors import (
+    FactionError,
+    IntentGenerationError,
+)
 from src.contexts.world.domain.events.intent_events import IntentGeneratedEvent
 from src.contexts.world.domain.ports.faction_intent_repository import (
     FactionIntentRepository,
 )
-from src.core.result import Err, Ok, Result
+from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:
     from src.contexts.knowledge.application.services.retrieval_service import (
-        RetrievalFilter,
-        RetrievalResult,
         RetrievalService,
     )
-    from src.contexts.knowledge.domain.models.source_type import SourceType
 
 logger = structlog.get_logger()
 
@@ -83,10 +82,32 @@ class DecisionContext:
 
     def get_resource_summary(self) -> str:
         """Get a brief summary of resources for logging/events."""
-        parts = []
+        parts: list[Any] = []
         for key, value in sorted(self.resources.items()):
             parts.append(f"{key}={value}")
         return ", ".join(parts) if parts else "no resources"
+
+    def get_resource_summary_result(self) -> Result[str, FactionError]:
+        """
+        Get a brief summary of resources for logging/events (Result pattern).
+
+        Returns:
+            Result containing resource summary string on success.
+            - Ok: Summary string of resources (e.g., "gold=100, food=50")
+            - Err(FactionError): If summary generation fails
+        """
+        try:
+            parts: list[Any] = []
+            for key, value in sorted(self.resources.items()):
+                parts.append(f"{key}={value}")
+            return Ok(", ".join(parts) if parts else "no resources")
+        except Exception as e:
+            return Err(
+                FactionError(
+                    message=f"Failed to generate resource summary: {e}",
+                    details={"faction_id": self.faction_id},
+                )
+            )
 
 
 @dataclass
@@ -193,7 +214,7 @@ class FactionDecisionService:
         self,
         faction: Faction,
         context: DecisionContext,
-    ) -> Result[Tuple[List[FactionIntent], IntentGeneratedEvent], str]:
+    ) -> Result[Tuple[List[FactionIntent], IntentGeneratedEvent], Error]:
         """Generate intent options for a faction.
 
         This is the main entry point for decision generation. It:
@@ -234,7 +255,12 @@ class FactionDecisionService:
                 faction_id=faction.id,
                 active_count=active_count,
             )
-            return Err(error_msg)
+            return Err(
+                IntentGenerationError(
+                    error_msg,
+                    details={"faction_id": faction.id, "active_count": active_count},
+                )
+            )
 
         # Enrich context with RAG data (async) - Issue 7: track RAG success
         enriched_context, rag_success = await self._enrich_context_with_rag(context)
@@ -248,7 +274,7 @@ class FactionDecisionService:
         )
 
         # Limit to available slots and max per generation
-        intents = intents[:min(available_slots, MAX_INTENTS_PER_GENERATION)]
+        intents = intents[: min(available_slots, MAX_INTENTS_PER_GENERATION)]
 
         if not intents:
             error_msg = f"No valid intents generated for faction {faction.id}"
@@ -257,7 +283,12 @@ class FactionDecisionService:
                 faction_id=faction.id,
                 fallback_used=fallback_used,
             )
-            return Err(error_msg)
+            return Err(
+                IntentGenerationError(
+                    error_msg,
+                    details={"faction_id": faction.id, "fallback_used": fallback_used},
+                )
+            )
 
         # Persist intents in batch (fixes N+1 query pattern)
         self._repository.save_batch(intents)
@@ -316,14 +347,17 @@ class FactionDecisionService:
                 reason="RetrievalService not configured",
             )
             # Return a new context with same data (no mutation)
-            return DecisionContext(
-                faction_id=context.faction_id,
-                resources=dict(context.resources),
-                diplomacy=dict(context.diplomacy),
-                territories=list(context.territories),
-                recent_events=recent_events,
-                relevant_lore=relevant_lore,
-            ), False
+            return (
+                DecisionContext(
+                    faction_id=context.faction_id,
+                    resources=dict(context.resources),
+                    diplomacy=dict(context.diplomacy),
+                    territories=list(context.territories),
+                    recent_events=recent_events,
+                    relevant_lore=relevant_lore,
+                ),
+                False,
+            )
 
         try:
             # Import here to avoid circular imports
@@ -378,14 +412,17 @@ class FactionDecisionService:
             )
 
         # Return a NEW context with enriched data (never mutate input)
-        return DecisionContext(
-            faction_id=context.faction_id,
-            resources=dict(context.resources),
-            diplomacy=dict(context.diplomacy),
-            territories=list(context.territories),
-            recent_events=recent_events,
-            relevant_lore=relevant_lore,
-        ), rag_success
+        return (
+            DecisionContext(
+                faction_id=context.faction_id,
+                resources=dict(context.resources),
+                diplomacy=dict(context.diplomacy),
+                territories=list(context.territories),
+                recent_events=recent_events,
+                relevant_lore=relevant_lore,
+            ),
+            rag_success,
+        )
 
     def _get_available_actions(
         self, context: DecisionContext
@@ -408,8 +445,7 @@ class FactionDecisionService:
         military = resources.get("military", 0)
         gold = resources.get("gold", 0)
 
-        available = []
-
+        available: list[Any] = []
         for action in ACTION_DEFINITIONS:
             # Skip ATTACK if food or military is too low
             if action.action_type == ActionType.ATTACK:
@@ -440,8 +476,7 @@ class FactionDecisionService:
 
             # Check basic requirements
             can_afford = all(
-                resources.get(res, 0) >= req
-                for res, req in action.requirements.items()
+                resources.get(res, 0) >= req for res, req in action.requirements.items()
             )
 
             if can_afford:
@@ -449,9 +484,7 @@ class FactionDecisionService:
 
         # If gold is low, deprioritize EXPAND by moving it to end
         if gold < GOLD_THRESHOLD_PRIORITIZE_TRADE:
-            available.sort(
-                key=lambda a: 0 if a.action_type != ActionType.EXPAND else 1
-            )
+            available.sort(key=lambda a: 0 if a.action_type != ActionType.EXPAND else 1)
 
         return available
 
@@ -660,7 +693,7 @@ class FactionDecisionService:
                 # Truncate rationale to MAX_RATIONALE_LENGTH
                 rationale = raw.get("rationale", "")
                 if len(rationale) > MAX_RATIONALE_LENGTH:
-                    rationale = rationale[:MAX_RATIONALE_LENGTH - 3] + "..."
+                    rationale = rationale[: MAX_RATIONALE_LENGTH - 3] + "..."
 
                 if len(rationale) < 10:
                     rationale = f"Execute {action_type.value} strategy"
@@ -710,7 +743,7 @@ class FactionDecisionService:
             Formatted prompt string
         """
         # Build action definitions section
-        action_descs = []
+        action_descs: list[Any] = []
         for action in available_actions:
             reqs = (
                 ", ".join(f"{k}>={v}" for k, v in action.requirements.items())
@@ -737,7 +770,7 @@ class FactionDecisionService:
         lore_section = ""
         if context.relevant_lore:
             lore_section = "\nRelevant Lore:\n" + "\n".join(
-                f"- {l.get('summary', str(l))}" for l in context.relevant_lore[:3]
+                f"- {lore_item.get('summary', str(lore_item))}" for lore_item in context.relevant_lore[:3]
             )
 
         prompt = f"""You are an AI assistant generating strategic intents for a faction.
@@ -783,7 +816,7 @@ Respond with JSON in this format:
         """Format diplomacy dict for prompt."""
         if not diplomacy:
             return "No diplomatic relations"
-        lines = []
+        lines: list[Any] = []
         for faction_id, status in diplomacy.items():
             lines.append(f"- {faction_id}: {status}")
         return "\n".join(lines)
@@ -896,7 +929,9 @@ Respond with JSON in this format:
         if military >= MILITARY_THRESHOLD_NO_SABOTAGE:
             if can_use(ActionType.SABOTAGE):
                 enemies = [
-                    f for f, s in context.diplomacy.items() if s in ("enemy", "hostile", "rival")
+                    f
+                    for f, s in context.diplomacy.items()
+                    if s in ("enemy", "hostile", "rival")
                 ]
                 if enemies:
                     intents.append(
@@ -913,7 +948,9 @@ Respond with JSON in this format:
         if len(intents) < MAX_INTENTS_PER_GENERATION:
             if can_use(ActionType.STABILIZE):
                 # Only add if not already present
-                has_stabilize = any(i.action_type == ActionType.STABILIZE for i in intents)
+                has_stabilize = any(
+                    i.action_type == ActionType.STABILIZE for i in intents
+                )
                 if not has_stabilize:
                     intents.append(
                         FactionIntent(
@@ -928,18 +965,41 @@ Respond with JSON in this format:
         intents.sort(key=lambda i: i.priority)
         return intents[:MAX_INTENTS_PER_GENERATION]
 
-    def get_pending_events(self) -> List[IntentGeneratedEvent]:
-        """Get all pending events that haven't been cleared."""
-        return list(self._events)
+    def get_pending_events(self) -> Result[List[IntentGeneratedEvent], Error]:
+        """Get all pending events that haven't been cleared.
 
-    def clear_pending_events(self) -> None:
-        """Clear all pending events after they've been processed."""
-        self._events.clear()
-        logger.debug("pending_events_cleared")
+        Returns:
+            Result containing list of pending events or error
+        """
+        try:
+            return Ok(list(self._events))
+        except Exception as e:
+            return Err(
+                FactionError(
+                    f"Failed to get pending events: {e}",
+                )
+            )
+
+    def clear_pending_events(self) -> Result[None, Error]:
+        """Clear all pending events after they've been processed.
+
+        Returns:
+            Result containing None on success or error
+        """
+        try:
+            self._events.clear()
+            logger.debug("pending_events_cleared")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                FactionError(
+                    f"Failed to clear pending events: {e}",
+                )
+            )
 
     def select_intent(
         self, intent_id: str, faction_id: str
-    ) -> Result[FactionIntent, str]:
+    ) -> Result[FactionIntent, Error]:
         """Select an intent for execution.
 
         Marks the intent as SELECTED and clears other active intents
@@ -954,15 +1014,30 @@ Respond with JSON in this format:
         """
         intent = self._repository.find_by_id(intent_id)
         if intent is None:
-            return Err(f"Intent {intent_id} not found")
+            return Err(
+                FactionError(
+                    f"Intent {intent_id} not found",
+                    details={"intent_id": intent_id},
+                )
+            )
 
         if intent.faction_id != faction_id:
-            return Err(f"Intent {intent_id} does not belong to faction {faction_id}")
+            return Err(
+                FactionError(
+                    f"Intent {intent_id} does not belong to faction {faction_id}",
+                    details={"intent_id": intent_id, "faction_id": faction_id},
+                )
+            )
 
         # Mark as selected
         success = self._repository.mark_selected(intent_id)
         if not success:
-            return Err(f"Failed to select intent {intent_id}")
+            return Err(
+                FactionError(
+                    f"Failed to select intent {intent_id}",
+                    details={"intent_id": intent_id},
+                )
+            )
 
         logger.info(
             "intent_selected",

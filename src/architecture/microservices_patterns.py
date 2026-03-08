@@ -16,6 +16,7 @@ Architecture Patterns:
 
 import asyncio
 import logging
+import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -26,7 +27,7 @@ import aiohttp
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ServiceStatus(str, Enum):
@@ -97,7 +98,7 @@ class ServiceRegistry:
     Manages service instances and their health status
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._services: Dict[str, List[ServiceInstance]] = {}
         self._health_check_interval = 30  # seconds
         self._health_check_task: Optional[asyncio.Task] = None
@@ -192,7 +193,7 @@ class ServiceRegistry:
                 return instance
         return None
 
-    async def _health_check_loop(self):
+    async def _health_check_loop(self) -> None:
         """Continuous health checking for all registered services"""
         while True:
             try:
@@ -204,9 +205,9 @@ class ServiceRegistry:
                 logger.error(f"Health check error: {e}")
                 await asyncio.sleep(5)  # Short delay on error
 
-    async def _perform_health_checks(self):
+    async def _perform_health_checks(self) -> None:
         """Perform health checks on all registered services"""
-        tasks = []
+        tasks: list[Any] = []
         async with self._lock:
             for service_name, instances in self._services.items():
                 for instance in instances:
@@ -216,7 +217,7 @@ class ServiceRegistry:
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _check_instance_health(self, instance: ServiceInstance):
+    async def _check_instance_health(self, instance: ServiceInstance) -> None:
         """Check health of a single service instance"""
         try:
             async with aiohttp.ClientSession(
@@ -253,7 +254,7 @@ class CircuitBreaker:
         failure_threshold: int = 5,
         timeout: int = 60,
         expected_exception: type = Exception,
-    ):
+    ) -> None:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.expected_exception = expected_exception
@@ -264,7 +265,7 @@ class CircuitBreaker:
 
         self._lock = asyncio.Lock()
 
-    async def call(self, func: Callable, *args, **kwargs):
+    async def call(self, func: Callable, *args, **kwargs) -> None:
         """Execute a function call through the circuit breaker"""
         async with self._lock:
             if self.state == CircuitState.OPEN:
@@ -287,7 +288,7 @@ class CircuitBreaker:
             await self._on_failure()
             raise e
 
-    async def _on_success(self):
+    async def _on_success(self) -> None:
         """Handle successful call"""
         async with self._lock:
             self.failure_count = 0
@@ -295,7 +296,7 @@ class CircuitBreaker:
                 self.state = CircuitState.CLOSED
                 logger.info("Circuit breaker reset to CLOSED state")
 
-    async def _on_failure(self):
+    async def _on_failure(self) -> None:
         """Handle failed call"""
         async with self._lock:
             self.failure_count += 1
@@ -318,13 +319,13 @@ class EventBus:
     Implements publish-subscribe pattern for loose coupling
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._subscribers: Dict[str, List[Callable]] = {}
         self._event_history: List[Dict] = []
         self._max_history = 1000
         self._lock = asyncio.Lock()
 
-    async def subscribe(self, event_type: str, handler: Callable):
+    async def subscribe(self, event_type: str, handler: Callable) -> None:
         """Subscribe to an event type"""
         async with self._lock:
             if event_type not in self._subscribers:
@@ -333,7 +334,7 @@ class EventBus:
             self._subscribers[event_type].append(handler)
             logger.info(f"Subscribed to event type: {event_type}")
 
-    async def unsubscribe(self, event_type: str, handler: Callable):
+    async def unsubscribe(self, event_type: str, handler: Callable) -> None:
         """Unsubscribe from an event type"""
         async with self._lock:
             if event_type in self._subscribers:
@@ -366,7 +367,7 @@ class EventBus:
 
         # Notify subscribers
         if event_type in self._subscribers:
-            tasks = []
+            tasks: list[Any] = []
             for handler in self._subscribers[event_type]:
                 if asyncio.iscoroutinefunction(handler):
                     tasks.append(asyncio.create_task(handler(event)))
@@ -393,7 +394,7 @@ class APIGateway:
     Provides centralized request routing, authentication, and monitoring
     """
 
-    def __init__(self, service_registry: ServiceRegistry):
+    def __init__(self, service_registry: ServiceRegistry) -> None:
         self.service_registry = service_registry
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         self.request_count = 0
@@ -481,7 +482,7 @@ class APIGateway:
 class CharacterService:
     """Microservice for character management"""
 
-    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus):
+    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus) -> None:
         self.service_registry = service_registry
         self.event_bus = event_bus
         self.characters = {}
@@ -513,7 +514,7 @@ class CharacterService:
 class StoryService:
     """Microservice for story generation and management"""
 
-    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus):
+    def __init__(self, service_registry: ServiceRegistry, event_bus: EventBus) -> None:
         self.service_registry = service_registry
         self.event_bus = event_bus
         self.stories = {}

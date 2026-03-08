@@ -44,7 +44,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
     def __init__(
         self,
         knowledge_adapter: Optional[SubjectiveBriefPhaseAdapter] = None,
-    ):
+    ) -> None:
         """
         Initialize SubjectiveBriefPhase with optional knowledge adapter.
 
@@ -139,8 +139,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
             agent_configs = await self._get_agent_configurations(context)
 
             # Step 3: Generate subjective briefs for each participant
-            brief_results = {}
-
+            brief_results: dict[Any, Any] = {}
             for participant_id in context.participants:
                 try:
                     agent_config = agent_configs.get(participant_id, {})
@@ -278,7 +277,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         changes = world_response.get("changes", [])
 
         # Filter changes relevant to participants
-        relevant_changes = []
+        relevant_changes: list[Any] = []
         for change in changes:
             if self._is_change_relevant_to_participants(change, context.participants):
                 relevant_changes.append(change)
@@ -297,8 +296,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         Returns:
             Dictionary mapping agent IDs to their configurations
         """
-        agent_configs = {}
-
+        agent_configs: dict[Any, Any] = {}
         for participant_id in context.participants:
             try:
                 # Get agent configuration
@@ -591,8 +589,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         Returns:
             List of generated event IDs
         """
-        events_generated = []
-
+        events_generated: list[Any] = []
         # Generate brief generation summary event
         summary_event_id = self._record_event_generation(
             context,
@@ -715,7 +712,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         if not world_changes:
             return "The world remains largely unchanged."
 
-        summaries = []
+        summaries: list[Any] = []
         for change in world_changes[:5]:  # Limit to top 5 changes
             change_type = change.get("type", "unknown")
             description = change.get("description", "A change occurred")
@@ -728,7 +725,7 @@ class SubjectiveBriefPhase(BasePhaseImplementation):
         if not memories:
             return "No recent memories to consider."
 
-        memory_texts = []
+        memory_texts: list[Any] = []
         for memory in memories[:3]:  # Limit to most recent 3
             memory_text = memory.get("content", "")
             memory_emotion = memory.get("emotional_context", "")
@@ -805,7 +802,7 @@ You are {agent_name}, a complex character with these defining traits: {personali
 
 CURRENT SITUATION:
 - Location: {current_location}
-- Physical state: {current_health}  
+- Physical state: {current_health}
 - Emotional state: {current_mood}
 - Time elapsed since last conscious moment: {time_passed} seconds
 {knowledge_context}

@@ -11,13 +11,13 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 import os
 import re
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
-import requests
+import httpx
 
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,
@@ -34,7 +34,7 @@ from src.contexts.knowledge.domain.models.prompt_usage import PromptUsage
 if TYPE_CHECKING:
     pass
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _estimate_tokens(text: str) -> int:
@@ -256,7 +256,7 @@ class PromptRouterService:
         ]
 
         # Check for missing required variables
-        variables_missing = []
+        variables_missing: list[Any] = []
         if strict:
             for var in template.variables:
                 if var.required and var.name not in variables:
@@ -319,11 +319,11 @@ class PromptRouterService:
 
         new_version = current.create_new_version(
             content=target.content,
-            variables=target.variables,
+            variables=tuple(target.variables) if target.variables else None,
             model_config=target.model_config,
             name=target.name,
             description=target.description + f" (rolled back from v{current.version})",
-            tags=target.tags,
+            tags=tuple(target.tags) if target.tags else None,
         )
 
         # Save the new version
@@ -383,7 +383,7 @@ class PromptRouterService:
         removed_vars = set(variables_a.keys()) - set(variables_b.keys())
         common_vars = set(variables_a.keys()) & set(variables_b.keys())
 
-        changed_vars = []
+        changed_vars: list[Any] = []
         for var_name in common_vars:
             var_a = variables_a[var_name]
             var_b = variables_b[var_name]
@@ -412,7 +412,7 @@ class PromptRouterService:
         config_a = template_a.model_config
         config_b = template_b.model_config
 
-        config_changes = []
+        config_changes: list[dict[str, Any]] = []
         if config_a.provider != config_b.provider:
             config_changes.append(
                 {
@@ -447,7 +447,7 @@ class PromptRouterService:
             )
 
         # Check metadata changes
-        metadata_changes = {}
+        metadata_changes: dict[str, Any] = {}
         if template_a.name != template_b.name:
             metadata_changes["name"] = {"old": template_a.name, "new": template_b.name}
         if template_a.description != template_b.description:
@@ -509,12 +509,12 @@ class PromptRouterService:
 
         matcher = difflib.SequenceMatcher(None, lines_a, lines_b, autojunk=False)
 
-        diffs = []
+        diffs: list[Any] = []
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
             if tag == "equal":
                 continue
 
-            hunk = {
+            hunk: dict[str, Any] = {
                 "type": tag,
                 "old_start": i1,
                 "old_end": i2,
@@ -656,7 +656,7 @@ class PromptRouterService:
                     await self._usage_repository.record(usage)
                 except Exception as record_error:
                     # Don't fail the request if analytics recording fails
-                    logger.debug(f"Failed to record prompt usage: {record_error}")
+                    logger.debug("failed_to_record_prompt_usage", error=str(record_error), error_type=type(record_error).__name__)
 
         return {
             "rendered": rendered,
@@ -758,7 +758,11 @@ class PromptRouterService:
         }
 
         # Default to gemini-3-flash-preview if not specified or not in allowed list
-        if not model_name or model_name == "gpt-4" or model_name not in ALLOWED_GEMINI_MODELS:
+        if (
+            not model_name
+            or model_name == "gpt-4"
+            or model_name not in ALLOWED_GEMINI_MODELS
+        ):
             model_name = "gemini-3-flash-preview"
 
         base_url = f"https://generativelanguage.googleapis.com/v1/models/{model_name}:generateContent"
@@ -776,27 +780,28 @@ class PromptRouterService:
             },
         }
 
-        response = requests.post(
-            base_url, headers=headers, json=request_body, timeout=120
-        )
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(base_url, headers=headers, json=request_body)
 
-        if response.status_code == 401:
-            raise RuntimeError(
-                "Gemini API authentication failed - check GEMINI_API_KEY"
-            )
-        elif response.status_code == 429:
-            raise RuntimeError("Gemini API rate limit exceeded")
-        elif response.status_code != 200:
-            raise RuntimeError(
-                f"Gemini API error {response.status_code}: {response.text}"
-            )
+            if response.status_code == 401:
+                raise RuntimeError(
+                    "Gemini API authentication failed - check GEMINI_API_KEY"
+                )
+            elif response.status_code == 429:
+                raise RuntimeError("Gemini API rate limit exceeded")
+            elif response.status_code != 200:
+                raise RuntimeError(
+                    f"Gemini API error {response.status_code}: {response.text}"
+                )
 
-        try:
-            response_json = response.json()
-            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
-            return content
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse Gemini response: {e}")
+            try:
+                response_json: dict[str, Any] = response.json()
+                content = str(
+                    response_json["candidates"][0]["content"]["parts"][0]["text"]
+                )
+                return content
+            except (KeyError, IndexError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
     async def _call_openai(
         self,
@@ -845,27 +850,26 @@ class PromptRouterService:
             "top_p": top_p,
         }
 
-        response = requests.post(
-            base_url, headers=headers, json=request_body, timeout=120
-        )
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(base_url, headers=headers, json=request_body)
 
-        if response.status_code == 401:
-            raise RuntimeError(
-                "OpenAI API authentication failed - check OPENAI_API_KEY"
-            )
-        elif response.status_code == 429:
-            raise RuntimeError("OpenAI API rate limit exceeded")
-        elif response.status_code != 200:
-            raise RuntimeError(
-                f"OpenAI API error {response.status_code}: {response.text}"
-            )
+            if response.status_code == 401:
+                raise RuntimeError(
+                    "OpenAI API authentication failed - check OPENAI_API_KEY"
+                )
+            elif response.status_code == 429:
+                raise RuntimeError("OpenAI API rate limit exceeded")
+            elif response.status_code != 200:
+                raise RuntimeError(
+                    f"OpenAI API error {response.status_code}: {response.text}"
+                )
 
-        try:
-            response_json = response.json()
-            content = response_json["choices"][0]["message"]["content"]
-            return content
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse OpenAI response: {e}")
+            try:
+                response_json: dict[str, Any] = response.json()
+                content = str(response_json["choices"][0]["message"]["content"])
+                return content
+            except (KeyError, IndexError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse OpenAI response: {e}")
 
     async def _call_anthropic(
         self,
@@ -912,27 +916,26 @@ class PromptRouterService:
             "messages": [{"role": "user", "content": rendered}],
         }
 
-        response = requests.post(
-            base_url, headers=headers, json=request_body, timeout=120
-        )
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(base_url, headers=headers, json=request_body)
 
-        if response.status_code == 401:
-            raise RuntimeError(
-                "Anthropic API authentication failed - check ANTHROPIC_API_KEY"
-            )
-        elif response.status_code == 429:
-            raise RuntimeError("Anthropic API rate limit exceeded")
-        elif response.status_code != 200:
-            raise RuntimeError(
-                f"Anthropic API error {response.status_code}: {response.text}"
-            )
+            if response.status_code == 401:
+                raise RuntimeError(
+                    "Anthropic API authentication failed - check ANTHROPIC_API_KEY"
+                )
+            elif response.status_code == 429:
+                raise RuntimeError("Anthropic API rate limit exceeded")
+            elif response.status_code != 200:
+                raise RuntimeError(
+                    f"Anthropic API error {response.status_code}: {response.text}"
+                )
 
-        try:
-            response_json = response.json()
-            content = response_json["content"][0]["text"]
-            return content
-        except (KeyError, IndexError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse Anthropic response: {e}")
+            try:
+                response_json: dict[str, Any] = response.json()
+                content = str(response_json["content"][0]["text"])
+                return content
+            except (KeyError, IndexError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse Anthropic response: {e}")
 
     async def _call_ollama(
         self,
@@ -973,24 +976,25 @@ class PromptRouterService:
             },
         }
 
-        try:
-            response = requests.post(endpoint, json=request_body, timeout=120)
-        except requests.exceptions.ConnectionError:
-            raise RuntimeError(
-                f"Could not connect to Ollama at {base_url}. Make sure Ollama is running."
-            )
+        async with httpx.AsyncClient(timeout=120) as client:
+            try:
+                response = await client.post(endpoint, json=request_body)
+            except httpx.ConnectError:
+                raise RuntimeError(
+                    f"Could not connect to Ollama at {base_url}. Make sure Ollama is running."
+                )
 
-        if response.status_code != 200:
-            raise RuntimeError(
-                f"Ollama API error {response.status_code}: {response.text}"
-            )
+            if response.status_code != 200:
+                raise RuntimeError(
+                    f"Ollama API error {response.status_code}: {response.text}"
+                )
 
-        try:
-            response_json = response.json()
-            content = response_json.get("response", "")
-            return content
-        except (KeyError, TypeError) as e:
-            raise RuntimeError(f"Failed to parse Ollama response: {e}")
+            try:
+                response_json: dict[str, Any] = response.json()
+                content = str(response_json.get("response", ""))
+                return content
+            except (KeyError, TypeError) as e:
+                raise RuntimeError(f"Failed to parse Ollama response: {e}")
 
     def to_summary(self, template: PromptTemplate) -> dict[str, Any]:
         """
@@ -1255,7 +1259,7 @@ class PromptRouterService:
             grouped[key].append(usage)
 
         # Convert to data points
-        data_points = []
+        data_points: list[Any] = []
         for period_key in sorted(grouped.keys(), reverse=True)[:limit]:
             period_usages = grouped[period_key]
 
@@ -1285,7 +1289,7 @@ class PromptRouterService:
             )
 
         # Sort by period (most recent first)
-        return sorted(data_points, key=lambda x: x["period"], reverse=True)[:limit]
+        return sorted(data_points, key=lambda x: str(x["period"]), reverse=True)[:limit]
 
     async def export_analytics_csv(
         self,

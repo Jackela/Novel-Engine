@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-import logging
+import structlog
 import os
 import re
 import uuid
@@ -18,7 +18,7 @@ from src.api.schemas import (
     CampaignsListResponse,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["Campaigns"])
 
@@ -120,11 +120,11 @@ async def get_campaigns() -> CampaignsListResponse:
                             campaigns.append(campaign_name)
 
         campaigns = sorted(campaigns)
-        logger.info("Found %d campaigns: %s", len(campaigns), campaigns)
+        logger.info("campaigns_found", count=len(campaigns), campaigns=campaigns)
         return CampaignsListResponse(campaigns=campaigns)
 
     except Exception as exc:
-        logger.error("Error retrieving campaigns: %s", exc, exc_info=True)
+        logger.error("retrieve_campaigns_failed", error=str(exc), error_type=type(exc).__name__)
         return CampaignsListResponse(campaigns=[])
 
 
@@ -161,7 +161,7 @@ async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Error retrieving campaign: %s", exc, exc_info=True)
+        logger.error("retrieve_campaign_failed", error=str(exc), error_type=type(exc).__name__, campaign_id=campaign_id)
         raise HTTPException(
             status_code=500, detail="Failed to retrieve campaign"
         ) from exc
@@ -188,7 +188,7 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
         with open(campaign_file, "w") as handle:
             json.dump(campaign_data, handle, indent=2)
 
-        logger.info("Created campaign %s", campaign_id)
+        logger.info("campaign_created", campaign_id=campaign_id)
         return CampaignCreationResponse(
             campaign_id=campaign_id,
             name=request.name,
@@ -197,5 +197,5 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
         )
 
     except Exception as exc:
-        logger.error("Error creating campaign: %s", exc, exc_info=True)
+        logger.error("create_campaign_failed", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail=f"Failed to create campaign: {exc}")

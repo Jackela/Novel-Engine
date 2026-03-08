@@ -215,8 +215,7 @@ class HistoryEvent(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate HistoryEvent-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.name or not self.name.strip():
             errors.append("Event name cannot be empty")
 
@@ -239,8 +238,7 @@ class HistoryEvent(Entity):
 
     def _validate_event_relationships(self) -> List[str]:
         """Validate event relationship consistency."""
-        errors = []
-
+        errors: list[Any] = []
         # Can't be own predecessor/successor
         if self.id in self.preceding_event_ids:
             errors.append("Event cannot precede itself")
@@ -262,8 +260,7 @@ class HistoryEvent(Entity):
 
     def _validate_type_specific_rules(self) -> List[str]:
         """Validate rules specific to event type."""
-        errors = []
-
+        errors: list[Any] = []
         # Wars and battles should have factions
         conflict_types = {EventType.WAR, EventType.BATTLE, EventType.CONQUEST}
         if self.event_type in conflict_types and len(self.faction_ids) < 2:
@@ -529,7 +526,9 @@ class HistoryEvent(Entity):
             "impact_scope": self.impact_scope.value if self.impact_scope else None,
             "affected_faction_ids": self.affected_faction_ids,
             "affected_location_ids": self.affected_location_ids,
-            "structured_date": self.structured_date.to_dict() if self.structured_date else None,
+            "structured_date": (
+                self.structured_date.to_dict() if self.structured_date else None
+            ),
         }
 
     @classmethod

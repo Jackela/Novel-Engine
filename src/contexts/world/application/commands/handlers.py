@@ -1,11 +1,11 @@
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict
 
 from apps.api.infrastructure.command_bus import CommandHandler
 from src.contexts.world.application.commands.world_commands import ApplyWorldDelta
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ApplyWorldDeltaHandler(CommandHandler[ApplyWorldDelta, Dict[str, Any]]):
@@ -21,7 +21,7 @@ class ApplyWorldDeltaHandler(CommandHandler[ApplyWorldDelta, Dict[str, Any]]):
         3. Persist the changes via the Repository.
         4. Publish Domain Events.
         """
-        logger.info(f"Handling ApplyWorldDelta command: {command.command_id}")
+        logger.info("handling_apply_world_delta", command_id=str(command.command_id))
 
         # NOTE: Placeholder implementation - returns simulated success response.
         # Full implementation requires:

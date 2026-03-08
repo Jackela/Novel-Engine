@@ -8,6 +8,7 @@ for production API operations with security and performance monitoring.
 
 import json
 import logging
+import structlog
 import sys
 import threading
 import time
@@ -105,7 +106,7 @@ class StructuredLogEntry:
 class PerformanceTracker:
     """Track performance metrics for operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_operations: Dict[str, float] = {}
         self._lock = threading.Lock()
 
@@ -127,7 +128,7 @@ class PerformanceTracker:
 class SecurityLogger:
     """Specialized logging for security events."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
         self.security_events = deque(maxlen=1000)
         self._lock = threading.Lock()
@@ -139,7 +140,7 @@ class SecurityLogger:
         message: str,
         context: LogContext,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log a security event with proper context."""
 
         security_context = {
@@ -178,7 +179,7 @@ class SecurityLogger:
 class AuditLogger:
     """Specialized logging for audit trails."""
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
         self.audit_trail = deque(maxlen=1000)
         self._lock = threading.Lock()
@@ -190,7 +191,7 @@ class AuditLogger:
         context: LogContext,
         outcome: str = "success",
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log an audit event."""
 
         audit_context = {
@@ -230,7 +231,7 @@ class StructuredLogger:
         level: LogLevel = LogLevel.INFO,
         output_format: str = "json",
         log_file: Optional[str] = None,
-    ):
+    ) -> None:
         self.name = name
         self.level = level
         self.output_format = output_format
@@ -253,7 +254,7 @@ class StructuredLogger:
         # Thread-local storage for context
         self._context_storage = threading.local()
 
-    def _setup_handlers(self, log_file: Optional[str]):
+    def _setup_handlers(self, log_file: Optional[str]) -> None:
         """Setup log handlers with appropriate formatters."""
 
         if self.output_format == "json":
@@ -274,7 +275,7 @@ class StructuredLogger:
             file_handler.setFormatter(formatter)
             self.logger.addHandler(file_handler)
 
-    def set_context(self, context: LogContext):
+    def set_context(self, context: LogContext) -> None:
         """Set logging context for current thread."""
         self._context_storage.context = context
 
@@ -283,7 +284,7 @@ class StructuredLogger:
         return getattr(self._context_storage, "context", LogContext())
 
     @contextmanager
-    def context(self, **kwargs):
+    def context(self, **kwargs) -> None:
         """Context manager for temporary logging context."""
         old_context = self.get_context()
         new_context = LogContext(**{**asdict(old_context), **kwargs})
@@ -326,7 +327,7 @@ class StructuredLogger:
         message: str,
         category: LogCategory = LogCategory.SYSTEM,
         **kwargs,
-    ):
+    ) -> None:
         """Log a message with structured format."""
 
         log_entry = self._create_log_entry(level, category, message, **kwargs)
@@ -339,23 +340,23 @@ class StructuredLogger:
         python_level = getattr(logging, level.value)
         self.logger.log(python_level, log_message)
 
-    def trace(self, message: str, **kwargs):
+    def trace(self, message: str, **kwargs) -> None:
         """Log trace level message."""
         self.log(LogLevel.TRACE, message, **kwargs)
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs) -> None:
         """Log debug level message."""
         self.log(LogLevel.DEBUG, message, **kwargs)
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs) -> None:
         """Log info level message."""
         self.log(LogLevel.INFO, message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs) -> None:
         """Log warning level message."""
         self.log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, exc_info: Optional[Exception] = None, **kwargs):
+    def error(self, message: str, exc_info: Optional[Exception] = None, **kwargs) -> None:
         """Log error level message with optional exception info."""
 
         error_details = None
@@ -381,7 +382,7 @@ class StructuredLogger:
 
         self.logger.error(log_message, exc_info=exc_info if exc_info else False)
 
-    def critical(self, message: str, exc_info: Optional[Exception] = None, **kwargs):
+    def critical(self, message: str, exc_info: Optional[Exception] = None, **kwargs) -> None:
         """Log critical level message."""
         self.error(message, exc_info, **kwargs)
         self.log(LogLevel.CRITICAL, message, LogCategory.ERROR, **kwargs)
@@ -391,7 +392,7 @@ class StructuredLogger:
         operation: str,
         duration_ms: float,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log performance metrics."""
 
         performance_metrics = {
@@ -415,7 +416,7 @@ class StructuredLogger:
         self.logger.info(log_message)
 
     @contextmanager
-    def performance_context(self, operation: str):
+    def performance_context(self, operation: str) -> None:
         """Context manager for performance tracking."""
         operation_id = str(uuid.uuid4())
         self.performance_tracker.start_operation(operation_id)
@@ -433,7 +434,7 @@ class StructuredLogger:
         severity: LogLevel,
         message: str,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log a security event."""
         context = self.get_context()
         self.security_logger.log_security_event(
@@ -446,7 +447,7 @@ class StructuredLogger:
         resource: str,
         outcome: str = "success",
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log an audit event."""
         context = self.get_context()
         self.audit_logger.log_audit_event(action, resource, context, outcome, details)
@@ -455,11 +456,11 @@ class StructuredLogger:
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging."""
 
-    def __init__(self, app, logger: StructuredLogger):
+    def __init__(self, app, logger: StructuredLogger) -> None:
         super().__init__(app)
         self.logger = logger
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         """Log request and response with performance metrics."""
 
         # Generate request context

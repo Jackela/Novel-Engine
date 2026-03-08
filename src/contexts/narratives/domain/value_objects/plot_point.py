@@ -66,8 +66,8 @@ class PlotPoint:
     estimated_duration: Optional[int] = None  # In narrative time units
 
     # Story context
-    involved_characters: FrozenSet[UUID] = None
-    affected_themes: FrozenSet[str] = None
+    involved_characters: Optional[FrozenSet[UUID]] = None
+    affected_themes: Optional[FrozenSet[str]] = None
     location_context: Optional[str] = None
 
     # Emotional and dramatic context
@@ -76,8 +76,8 @@ class PlotPoint:
     story_significance: Decimal = Decimal("5.0")  # 0-10 scale
 
     # Cause and effect
-    prerequisite_events: List[str] = None
-    triggered_consequences: List[str] = None
+    prerequisite_events: Optional[List[str]] = None
+    triggered_consequences: Optional[List[str]] = None
 
     # Narrative mechanics
     reveals_information: bool = False
@@ -86,27 +86,21 @@ class PlotPoint:
     advances_subplot: bool = False
 
     # Metadata
-    tags: FrozenSet[str] = None
+    tags: Optional[FrozenSet[str]] = None
     narrative_notes: str = ""
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.involved_characters is None:
             object.__setattr__(self, "involved_characters", frozenset())
-        elif isinstance(self.involved_characters, set):
-            object.__setattr__(
-                self, "involved_characters", frozenset(self.involved_characters)
-            )
 
         if self.affected_themes is None:
             object.__setattr__(self, "affected_themes", frozenset())
-        elif isinstance(self.affected_themes, set):
-            object.__setattr__(self, "affected_themes", frozenset(self.affected_themes))
 
         if self.prerequisite_events is None:
             object.__setattr__(self, "prerequisite_events", [])
@@ -116,8 +110,6 @@ class PlotPoint:
 
         if self.tags is None:
             object.__setattr__(self, "tags", frozenset())
-        elif isinstance(self.tags, set):
-            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -125,7 +117,7 @@ class PlotPoint:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.title or not self.title.strip():
             raise ValueError("Plot point title cannot be empty")
@@ -157,11 +149,11 @@ class PlotPoint:
         if len(self.description) > 2000:
             raise ValueError("Plot point description too long (max 2000 characters)")
 
-    def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values):
+    def _hash_components(self) -> tuple[Any, ...]:
+        def _dict_to_hashable(values: Any) -> frozenset[Any]:
             if not values:
                 return frozenset()
-            items = []
+            items: list[tuple[str, Any]] = []
             for key, value in sorted(values.items()):
                 if isinstance(value, dict):
                     value = _dict_to_hashable(value)
@@ -197,7 +189,7 @@ class PlotPoint:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, PlotPoint):
             return NotImplemented
         return self._hash_components() == other._hash_components()
@@ -273,15 +265,18 @@ class PlotPoint:
 
     def involves_character(self, character_id: UUID) -> bool:
         """Check if this plot point involves a specific character."""
-        return character_id in self.involved_characters
+        involved = self.involved_characters or frozenset()
+        return character_id in involved
 
     def affects_theme(self, theme: str) -> bool:
         """Check if this plot point affects a specific theme."""
-        return theme in self.affected_themes
+        themes = self.affected_themes or frozenset()
+        return theme in themes
 
     def has_tag(self, tag: str) -> bool:
         """Check if this plot point has a specific tag."""
-        return tag in self.tags
+        tags = self.tags or frozenset()
+        return tag in tags
 
     def get_narrative_context(self) -> Dict[str, Any]:
         """
@@ -298,8 +293,8 @@ class PlotPoint:
             "is_major": self.is_major_plot_point,
             "is_turning_point": self.is_turning_point,
             "overall_impact": float(self.overall_impact_score),
-            "character_count": len(self.involved_characters),
-            "theme_count": len(self.affected_themes),
+            "character_count": len(self.involved_characters or frozenset()),
+            "theme_count": len(self.affected_themes or frozenset()),
             "has_prerequisites": self.has_prerequisites,
             "has_consequences": self.has_consequences,
             "reveals_information": self.reveals_information,
@@ -331,22 +326,22 @@ class PlotPoint:
             description=self.description,
             sequence_order=self.sequence_order,
             estimated_duration=self.estimated_duration,
-            involved_characters=self.involved_characters.copy(),
-            affected_themes=self.affected_themes.copy(),
+            involved_characters=(self.involved_characters or frozenset()).copy(),
+            affected_themes=(self.affected_themes or frozenset()).copy(),
             location_context=self.location_context,
             emotional_intensity=emotional_intensity or self.emotional_intensity,
             dramatic_tension=dramatic_tension or self.dramatic_tension,
             story_significance=story_significance or self.story_significance,
-            prerequisite_events=self.prerequisite_events.copy(),
-            triggered_consequences=self.triggered_consequences.copy(),
+            prerequisite_events=(self.prerequisite_events or []).copy(),
+            triggered_consequences=(self.triggered_consequences or []).copy(),
             reveals_information=self.reveals_information,
             changes_character_relationships=self.changes_character_relationships,
             advances_main_plot=self.advances_main_plot,
             advances_subplot=self.advances_subplot,
-            tags=self.tags.copy(),
+            tags=(self.tags or frozenset()).copy(),
             narrative_notes=self.narrative_notes,
             creation_timestamp=self.creation_timestamp,
-            metadata=self.metadata.copy(),
+            metadata=(self.metadata or {}).copy(),
         )
 
     def with_additional_characters(self, character_ids: Set[UUID]) -> "PlotPoint":
@@ -359,7 +354,8 @@ class PlotPoint:
         Returns:
             New PlotPoint instance with added characters
         """
-        updated_characters = self.involved_characters.union(character_ids)
+        involved = self.involved_characters or frozenset()
+        updated_characters = involved.union(character_ids)
 
         return PlotPoint(
             plot_point_id=self.plot_point_id,
@@ -375,8 +371,8 @@ class PlotPoint:
             emotional_intensity=self.emotional_intensity,
             dramatic_tension=self.dramatic_tension,
             story_significance=self.story_significance,
-            prerequisite_events=self.prerequisite_events.copy(),
-            triggered_consequences=self.triggered_consequences.copy(),
+            prerequisite_events=(self.prerequisite_events or []).copy(),
+            triggered_consequences=(self.triggered_consequences or []).copy(),
             reveals_information=self.reveals_information,
             changes_character_relationships=self.changes_character_relationships,
             advances_main_plot=self.advances_main_plot,
@@ -384,7 +380,7 @@ class PlotPoint:
             tags=self.tags,
             narrative_notes=self.narrative_notes,
             creation_timestamp=self.creation_timestamp,
-            metadata=self.metadata.copy(),
+            metadata=(self.metadata or {}).copy(),
         )
 
     def __str__(self) -> str:

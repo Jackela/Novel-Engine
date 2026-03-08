@@ -43,7 +43,7 @@ class DeleteKnowledgeEntryUseCase:
         self,
         repository: IKnowledgeRepository,
         event_publisher: IEventPublisher,
-    ):
+    ) -> None:
         """
         Initialize use case with required ports.
 

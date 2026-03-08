@@ -18,6 +18,7 @@ System保佑此数据库访问层 (May the System bless this database access lay
 import asyncio
 import json
 import logging
+import structlog
 import os
 import stat
 from contextlib import asynccontextmanager
@@ -45,7 +46,7 @@ from src.core.types import (
 
 # Comprehensive logging configuration enhanced by diagnostic clarity
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SacredDatabaseError(Exception):
@@ -66,7 +67,7 @@ class ContextDatabase:
         database_path: str = "context.db",
         connection_pool_size: int = SacredConstants.CONNECTION_POOL_SIZE,
         agent_id: Optional[str] = None,
-    ):
+    ) -> None:
         """
         STANDARD DATABASE INITIALIZATION ENHANCED BY CONFIGURATION
 
@@ -94,7 +95,7 @@ class ContextDatabase:
             f"STANDARD DATABASE INITIALIZED: {self.database_path} for agent {self.agent_id} with {self.connection_pool_size} connections"
         )
 
-    async def _secure_database_permissions(self):
+    async def _secure_database_permissions(self) -> None:
         """
         STANDARD DATABASE SECURITY ENHANCEMENT ENHANCED BY ACCESS CONTROL
 
@@ -119,7 +120,7 @@ class ContextDatabase:
             logger.warning(f"COULD NOT SECURE DATABASE PERMISSIONS: {e}")
             # Continue execution as this is not critical for functionality
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database (compatibility alias for initialize_standard_temple)."""
         response = await self.initialize_standard_temple()
         if not response.success:
@@ -130,7 +131,7 @@ class ContextDatabase:
         if self._connection_pool:
             self.connection = self._connection_pool[0]
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database connections."""
         logger.info("Closing database connections")
         # Close all connections in pool
@@ -139,7 +140,7 @@ class ContextDatabase:
         self._connection_pool.clear()
         self._initialized = False
 
-    async def store_context(self, session_id: str, character_id: str, context: str):
+    async def store_context(self, session_id: str, character_id: str, context: str) -> None:
         """Store context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -172,7 +173,7 @@ class ContextDatabase:
                 ),
             )
 
-    async def get_context(self, session_id: str, character_id: str):
+    async def get_context(self, session_id: str, character_id: str) -> None:
         """Get context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -284,7 +285,7 @@ class ContextDatabase:
                 ),
             )
 
-    async def _initialize_connection_pool(self):
+    async def _initialize_connection_pool(self) -> None:
         """STANDARD CONNECTION POOL INITIALIZATION ENHANCED BY EFFICIENCY"""
         async with self._pool_lock:
             for _ in range(self.connection_pool_size):
@@ -312,7 +313,7 @@ class ContextDatabase:
                 self._connection_pool.append(connection)
 
     @asynccontextmanager
-    async def get_enhanced_connection(self):
+    async def get_enhanced_connection(self) -> None:
         """
         STANDARD CONNECTION MANAGER ENHANCED BY RESOURCE SAFETY
 
@@ -352,7 +353,7 @@ class ContextDatabase:
                         await connection.close()
 
     @asynccontextmanager
-    async def get_enhanced_transaction(self):
+    async def get_enhanced_transaction(self) -> None:
         """
         STANDARD TRANSACTION MANAGER ENHANCED BY DATA INTEGRITY
 
@@ -447,13 +448,15 @@ class ContextDatabase:
         try:
             async with self.get_enhanced_connection() as connection:
                 # Construct enhanced query with standard parameters
-                query_parts = ["""
+                query_parts = [
+                    """
                     SELECT memory_id, agent_id, memory_type, content, emotional_weight,
                            relevance_score, participants, location, tags, decay_factor,
                            created_at, last_accessed, access_count
                     FROM memories
                     WHERE agent_id = ? AND relevance_score >= ?
-                """]
+                """
+                ]
 
                 params = [agent_id, relevance_threshold]
 
@@ -464,10 +467,12 @@ class ContextDatabase:
                     params.extend([mem_type.value for mem_type in memory_types])
 
                 # Sacred ordering enhanced by relevance and recency
-                query_parts.append("""
+                query_parts.append(
+                    """
                     ORDER BY relevance_score * decay_factor DESC, last_accessed DESC
                     LIMIT ?
-                """)
+                """
+                )
                 params.append(limit)
 
                 final_query = " ".join(query_parts)
@@ -477,7 +482,7 @@ class ContextDatabase:
                     rows = await cursor.fetchall()
 
                 # Transform enhanced rows to standard memory objects
-                memories = []
+                memories: list[Any] = []
                 for row in rows:
                     memory = MemoryItem(
                         memory_id=row["memory_id"],
@@ -523,7 +528,7 @@ class ContextDatabase:
             async with self.get_enhanced_connection() as connection:
                 await connection.execute(
                     """
-                    UPDATE memories 
+                    UPDATE memories
                     SET last_accessed = ?, access_count = access_count + 1
                     WHERE memory_id = ?
                 """,
@@ -618,7 +623,7 @@ class ContextDatabase:
                 async with connection.execute(
                     """
                     SELECT relationship_id, agent_id, target_agent_id, target_name,
-                           relationship_type, trust_level, emotional_bond, 
+                           relationship_type, trust_level, emotional_bond,
                            interaction_count, shared_experiences, relationship_notes,
                            last_interaction, last_updated
                     FROM relationships
@@ -630,7 +635,7 @@ class ContextDatabase:
                     rows = await cursor.fetchall()
 
                 # Transform enhanced rows to standard relationship objects
-                relationships = {}
+                relationships: dict[Any, Any] = {}
                 for row in rows:
                     relationship = RelationshipState(
                         target_agent_id=row["target_agent_id"],
@@ -734,9 +739,9 @@ class ContextDatabase:
         self,
         agent_id: AgentID,
         character_name: str,
-        faction_data: List[str] = None,
-        personality_traits: List[str] = None,
-        core_beliefs: List[str] = None,
+        faction_data: Optional[List[str]] = None,
+        personality_traits: Optional[List[str]] = None,
+        core_beliefs: Optional[List[str]] = None,
     ) -> StandardResponse:
         """
         STANDARD AGENT REGISTRATION RITUAL ENHANCED BY IDENTITY SANCTIFICATION
@@ -845,10 +850,10 @@ class ContextDatabase:
                 # Sacred cleanup of old memories beyond capacity
                 await connection.execute(
                     """
-                    DELETE FROM memories 
+                    DELETE FROM memories
                     WHERE memory_id NOT IN (
-                        SELECT memory_id FROM memories 
-                        ORDER BY relevance_score * decay_factor DESC 
+                        SELECT memory_id FROM memories
+                        ORDER BY relevance_score * decay_factor DESC
                         LIMIT ?
                     )
                 """,
@@ -858,7 +863,7 @@ class ContextDatabase:
                 # Update enhanced maintenance timestamp
                 await connection.execute(
                     """
-                    UPDATE system_config 
+                    UPDATE system_config
                     SET config_value = ?, last_updated = ?
                     WHERE config_key = 'last_maintenance'
                 """,
@@ -895,20 +900,19 @@ class ContextDatabase:
         """
         try:
             async with self.get_enhanced_connection() as connection:
-                statistics = {}
-
+                statistics: dict[Any, Any] = {}
                 # Blessed table row counts
-                for table in [
-                    "agents",
-                    "memories",
-                    "relationships",
-                    "equipment",
-                    "character_states",
-                    "interactions",
-                ]:
-                    async with connection.execute(
-                        f"SELECT COUNT(*) as count FROM {table}"  # nosec B608
-                    ) as cursor:
+                # Safe: table names are hardcoded literals, not user input
+                table_queries = {
+                    "agents": "SELECT COUNT(*) as count FROM agents",
+                    "memories": "SELECT COUNT(*) as count FROM memories",
+                    "relationships": "SELECT COUNT(*) as count FROM relationships",
+                    "equipment": "SELECT COUNT(*) as count FROM equipment",
+                    "character_states": "SELECT COUNT(*) as count FROM character_states",
+                    "interactions": "SELECT COUNT(*) as count FROM interactions",
+                }
+                for table, query in table_queries.items():
+                    async with connection.execute(query) as cursor:
                         row = await cursor.fetchone()
                         statistics[f"{table}_count"] = row["count"]
 
@@ -916,13 +920,15 @@ class ContextDatabase:
                 statistics["database_size_bytes"] = self.database_path.stat().st_size
 
                 # Blessed memory statistics
-                async with connection.execute("""
-                    SELECT 
+                async with connection.execute(
+                    """
+                    SELECT
                         AVG(emotional_weight) as avg_emotional_weight,
                         AVG(relevance_score) as avg_relevance_score,
                         MAX(access_count) as max_access_count
                     FROM memories
-                """) as cursor:
+                """
+                ) as cursor:
                     row = await cursor.fetchone()
                     statistics.update(
                         {
@@ -984,7 +990,7 @@ class ContextDatabase:
                 "agent_id": self.agent_id,
             }
 
-    async def close_standard_temple(self):
+    async def close_standard_temple(self) -> None:
         """STANDARD DATABASE CLOSURE RITUAL ENHANCED BY RESOURCE CLEANUP"""
         try:
             async with self._pool_lock:

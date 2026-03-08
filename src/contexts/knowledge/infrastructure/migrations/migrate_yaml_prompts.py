@@ -175,7 +175,6 @@ class YAMLPromptMigrator:
         """
         if visited is None:
             visited = set()
-
         result = content
 
         # Find all {{> prompt_name}} includes
@@ -184,7 +183,7 @@ class YAMLPromptMigrator:
             include_marker = match.group(0)
 
             # Check for circular references
-            if ref_name in visited:
+            if visited and ref_name in visited:
                 raise PromptMigrationError(
                     f"Circular reference detected: {' -> '.join(sorted(visited))} -> {ref_name}"
                 )
@@ -306,6 +305,7 @@ class YAMLPromptMigrator:
 
         model_config = ModelConfig(
             provider=provider,
+            model=model_name,
             model_name=model_name,
             temperature=temperature,
             max_tokens=max_tokens,

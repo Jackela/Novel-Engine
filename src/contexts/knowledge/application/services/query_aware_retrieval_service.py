@@ -19,6 +19,9 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from src.contexts.shared.domain.errors import ServiceError
+from src.core.result import Err, Ok, Result
+
 from ...application.ports.i_embedding_service import IEmbeddingService
 from ...application.ports.i_vector_store import IVectorStore
 from .knowledge_ingestion_service import RetrievedChunk
@@ -149,7 +152,7 @@ class QueryAwareRetrievalService:
         default_collection: str = DEFAULT_COLLECTION,
         query_rewriter: QueryRewriter | None = None,
         default_config: QueryAwareConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the query-aware retrieval service.
 
@@ -264,14 +267,21 @@ class QueryAwareRetrievalService:
 
         if len(queries_to_execute) == 1:
             # Single query - no need for concurrency control
-            result = await self._retrieval_service.retrieve_relevant(
+            retrieval_result = await self._retrieval_service.retrieve_relevant(
                 query=queries_to_execute[0],
                 k=k,
                 filters=filters,
                 options=retrieval_options,
                 collection=target_collection,
             )
-            chunks_by_query.append((queries_to_execute[0], result.chunks))
+            if retrieval_result.is_error:
+                chunks_by_query.append((queries_to_execute[0], []))
+            else:
+                result_data = retrieval_result.value
+                if result_data is None:
+                    chunks_by_query.append((queries_to_execute[0], []))
+                else:
+                    chunks_by_query.append((queries_to_execute[0], result_data.chunks))
         else:
             # Multiple queries - use semaphore for concurrency control
             semaphore = asyncio.Semaphore(config.max_concurrent)
@@ -280,14 +290,19 @@ class QueryAwareRetrievalService:
                 q: str,
             ) -> tuple[str, list[RetrievedChunk]]:
                 async with semaphore:
-                    result = await self._retrieval_service.retrieve_relevant(
+                    r_result = await self._retrieval_service.retrieve_relevant(
                         query=q,
                         k=k,
                         filters=filters,
                         options=retrieval_options,
                         collection=target_collection,
                     )
-                    return (q, result.chunks)
+                    if r_result.is_error:
+                        return (q, [])
+                    result_data = r_result.value
+                    if result_data is None:
+                        return (q, [])
+                    return (q, result_data.chunks)
 
             tasks = [retrieve_with_semaphore(q) for q in queries_to_execute]
             chunks_by_query = await asyncio.gather(*tasks)
@@ -395,10 +410,64 @@ class QueryAwareRetrievalService:
             ),
         }
 
+    def get_metrics_result(self) -> Result[dict[str, Any], ServiceError]:
+        """
+        Get service metrics (Result pattern).
+
+        Returns:
+            Result containing metrics dictionary on success.
+            - Ok: Dict with metrics including cache efficiency
+            - Err(ServiceError): If metrics retrieval fails
+        """
+        try:
+            return Ok({
+                "queries_total": self._metrics.queries_total,
+                "rewrites_total": self._metrics.rewrites_total,
+                "cache_hits_total": self._metrics.cache_hits_total,
+                "tokens_used_total": self._metrics.tokens_used_total,
+                "tokens_saved_total": self._metrics.tokens_saved_total,
+                "merged_results_total": self._metrics.merged_results_total,
+                "cache_hit_rate": (
+                    self._metrics.cache_hits_total / self._metrics.rewrites_total
+                    if self._metrics.rewrites_total > 0
+                    else 0.0
+                ),
+            })
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to get metrics: {e}",
+                    service_name="QueryAwareRetrievalService",
+                    operation="get_metrics",
+                )
+            )
+
     def reset_metrics(self) -> None:
         """Reset all metrics to zero."""
         self._metrics = QueryAwareMetrics()
         logger.debug("query_aware_metrics_reset")
+
+    def reset_metrics_result(self) -> Result[None, ServiceError]:
+        """
+        Reset all metrics to zero (Result pattern).
+
+        Returns:
+            Result indicating success or failure.
+            - Ok: None on success
+            - Err(ServiceError): If reset fails
+        """
+        try:
+            self._metrics = QueryAwareMetrics()
+            logger.debug("query_aware_metrics_reset")
+            return Ok(None)
+        except Exception as e:
+            return Err(
+                ServiceError(
+                    message=f"Failed to reset metrics: {e}",
+                    service_name="QueryAwareRetrievalService",
+                    operation="reset_metrics",
+                )
+            )
 
     def _merge_results(
         self,
@@ -467,7 +536,7 @@ class QueryAwareRetrievalService:
         )
 
         # Update chunk scores to RRF scores and return
-        result = []
+        result: list[Any] = []
         for chunk, rrf_score in sorted_chunks:
             # Create a new chunk with the RRF score
             updated_chunk = RetrievedChunk(

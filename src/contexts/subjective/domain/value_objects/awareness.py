@@ -62,13 +62,13 @@ class AwarenessState:
     current_alertness: AlertnessLevel
     attention_focus: AttentionFocus
     focus_target: Optional[str] = None  # What/who is being focused on
-    awareness_modifiers: Dict[AwarenessModifier, float] = (
+    awareness_modifiers: Optional[Dict[AwarenessModifier, float]] = (
         None  # Modifier -> effect strength
     )
     fatigue_level: float = 0.0  # 0.0 = fresh, 1.0 = exhausted
     stress_level: float = 0.0  # 0.0 = calm, 1.0 = maximum stress
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate awareness state parameters."""
         # Initialize empty dict for modifiers if None
         if self.awareness_modifiers is None:

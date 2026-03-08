@@ -8,8 +8,11 @@ for the complete run_turn orchestration flow as required by M10 milestone.
 
 import asyncio
 import logging
+import structlog
 from decimal import Decimal
 from uuid import UUID
+
+from typing import Any
 
 from infrastructure.monitoring.tracing import (
     NovelEngineTracingConfig,
@@ -23,7 +26,7 @@ from infrastructure.monitoring.tracing_middleware import (
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 async def demonstrate_turn_tracing():
@@ -87,8 +90,7 @@ async def demonstrate_turn_tracing():
     ]
 
     total_ai_cost = Decimal("0.0")
-    completed_phases = []
-
+    completed_phases: list[Any] = []
     for (
         phase_name,
         duration_sec,
@@ -182,8 +184,7 @@ async def demonstrate_turn_tracing():
     ]
 
     failed_total_cost = Decimal("0.0")
-    failed_completed_phases = []
-
+    failed_completed_phases: list[Any] = []
     for (
         phase_name,
         duration_sec,
@@ -312,7 +313,7 @@ async def demonstrate_turn_tracing():
     return True
 
 
-def demonstrate_tracing_middleware():
+def demonstrate_tracing_middleware() -> None:
     """Demonstrate FastAPI middleware integration."""
     print("\n🔌 FASTAPI MIDDLEWARE INTEGRATION DEMONSTRATION")
     print("=" * 70)
@@ -366,7 +367,7 @@ def demonstrate_tracing_middleware():
         return False
 
 
-def demonstrate_intelligent_sampling():
+def demonstrate_intelligent_sampling() -> None:
     """Demonstrate intelligent sampling strategies."""
     print("\n🎯 INTELLIGENT SAMPLING DEMONSTRATION")
     print("=" * 70)
@@ -437,8 +438,7 @@ async def main():
     print("Starting M10 OpenTelemetry distributed tracing demonstration...")
 
     # Track demonstration results
-    results = []
-
+    results: list[Any] = []
     # Test 1: Core tracing functionality
     try:
         success = await demonstrate_turn_tracing()

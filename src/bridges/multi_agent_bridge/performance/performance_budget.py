@@ -5,11 +5,12 @@ Performance Budget Manager
 Manages performance budgets and time constraints for multi-agent coordination.
 """
 
-import logging
+import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import logging
 
 __all__ = ["PerformanceBudget"]
 
@@ -35,7 +36,7 @@ class PerformanceBudget:
     performance_history: List[Dict[str, Any]] = field(default_factory=list)
     logger: Optional[logging.Logger] = field(default=None, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def start_turn(self) -> None:
@@ -203,7 +204,7 @@ class PerformanceBudget:
     def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
         """Get performance optimization recommendations."""
         try:
-            recommendations = []
+            recommendations: list[Any] = []
             stats = self.get_performance_stats()
 
             if not stats or stats["total_turns"] == 0:

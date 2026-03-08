@@ -1,4 +1,8 @@
-"""Lightweight semantic cache implementation used by integration tests."""
+"""Lightweight semantic cache implementation used by integration tests.
+
+Provides approximate semantic similarity caching without heavy ML dependencies.
+Uses word-frequency-based cosine similarity for matching.
+"""
 
 from __future__ import annotations
 
@@ -15,6 +19,14 @@ from .interfaces import CacheEntryMeta
 
 @dataclass
 class SemanticCacheConfig:
+    """Configuration for semantic cache.
+    
+    Attributes:
+        max_cache_size: Maximum entries to store
+        similarity_threshold: Minimum cosine similarity (0.0-1.0)
+        persistence_file: Path for cache persistence (None = no persistence)
+        ttl_seconds: Entry time-to-live in seconds
+    """
     max_cache_size: int = 256
     similarity_threshold: float = 0.85
     persistence_file: Path | None = None
@@ -23,6 +35,17 @@ class SemanticCacheConfig:
 
 @dataclass
 class _SemanticEntry:
+    """Internal cache entry for semantic storage.
+    
+    Attributes:
+        key: Lookup key
+        value: Cached response value
+        query_text: Original query for similarity comparison
+        content_type: Content type identifier
+        creation_cost: Cost to generate this entry
+        created_ts: Unix timestamp of creation
+        meta: Entry metadata (tags, TTL, etc.)
+    """
     key: str
     value: str
     query_text: str
@@ -32,6 +55,15 @@ class _SemanticEntry:
     meta: CacheEntryMeta = field(default_factory=CacheEntryMeta)
 
     def expired(self, now: float, ttl: int) -> bool:
+        """Check if entry has expired.
+        
+        Args:
+            now: Current Unix timestamp
+            ttl: TTL in seconds (0 = no expiry)
+            
+        Returns:
+            True if entry has expired
+        """
         return ttl > 0 and (now - self.created_ts) >= ttl
 
 
@@ -43,14 +75,13 @@ class SemanticCache:
     sufficient for contract and integration tests.
     """
 
-    def __init__(self, config: SemanticCacheConfig | None = None):
+    def __init__(self, config: SemanticCacheConfig | None = None) -> None:
         self.config = config or SemanticCacheConfig()
         self._store: "OrderedDict[str, _SemanticEntry]" = OrderedDict()
         self._hits = 0
         self._misses = 0
         self._load_cache()
 
-    # Public API -----------------------------------------------------------
     def put(
         self,
         key: str,
@@ -60,6 +91,19 @@ class SemanticCache:
         creation_cost: float = 0.0,
         tags: Optional[Iterable[str]] = None,
     ) -> bool:
+        """Store a value in the semantic cache.
+        
+        Args:
+            key: Primary lookup key
+            value: Value to cache
+            query_text: Original query text for similarity matching
+            content_type: Content type identifier
+            creation_cost: Cost to generate this value
+            tags: Optional metadata tags
+            
+        Returns:
+            True if stored successfully
+        """
         entry = _SemanticEntry(
             key=key,
             value=value,
@@ -75,6 +119,18 @@ class SemanticCache:
         return True
 
     def get(self, key: str, query_text: str | None = None) -> Optional[str]:
+        """Get a value from cache by key or semantic similarity.
+        
+        First attempts exact key match, then falls back to semantic
+        similarity matching if query_text is provided.
+        
+        Args:
+            key: Primary lookup key
+            query_text: Optional query for semantic matching
+            
+        Returns:
+            Cached value or None if not found
+        """
         now = time.time()
         entry = self._store.get(key)
         if entry and not entry.expired(now, self.config.ttl_seconds):
@@ -90,6 +146,11 @@ class SemanticCache:
         return None
 
     def get_stats(self) -> Dict[str, int | float]:
+        """Get cache statistics.
+        
+        Returns:
+            Dictionary with size, hits, and misses
+        """
         return {
             "cache_size": len(self._store),
             "hit_count": self._hits,
@@ -97,6 +158,7 @@ class SemanticCache:
         }
 
     def save_cache(self) -> None:
+        """Save cache to persistence file if configured."""
         if not self.config.persistence_file:
             return
         data = [
@@ -120,8 +182,15 @@ class SemanticCache:
             json.dumps(data, indent=2), encoding="utf-8"
         )
 
-    # Internal helpers ----------------------------------------------------
     def _find_semantic_match(self, query_text: str) -> Optional[_SemanticEntry]:
+        """Find a semantically similar entry.
+        
+        Args:
+            query_text: Query text to match
+            
+        Returns:
+            Best matching entry or None
+        """
         if not self._store:
             return None
         scored: List[Tuple[float, _SemanticEntry]] = []
@@ -135,10 +204,12 @@ class SemanticCache:
         return scored[0][1]
 
     def _evict_if_needed(self) -> None:
+        """Evict oldest entries if cache exceeds max size."""
         while len(self._store) > self.config.max_cache_size:
             self._store.popitem(last=False)
 
     def _load_cache(self) -> None:
+        """Load cache from persistence file if configured."""
         file_path = self.config.persistence_file
         if not file_path or not file_path.exists():
             return
@@ -162,6 +233,17 @@ class SemanticCache:
 
 
 def _cosine_similarity(a: str, b: str) -> float:
+    """Calculate cosine similarity between two strings.
+    
+    Uses word frequency vectors for approximation.
+    
+    Args:
+        a: First string
+        b: Second string
+        
+    Returns:
+        Similarity score between 0.0 and 1.0
+    """
     if not a or not b:
         return 0.0
     vec_a = _token_frequency(a)
@@ -178,6 +260,14 @@ def _cosine_similarity(a: str, b: str) -> float:
 
 
 def _token_frequency(text: str) -> Dict[str, int]:
+    """Calculate word frequency in text.
+    
+    Args:
+        text: Input text
+        
+    Returns:
+        Dictionary of lowercase word -> count
+    """
     freq: Dict[str, int] = {}
     for token in text.lower().split():
         freq[token] = freq.get(token, 0) + 1

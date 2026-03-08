@@ -18,6 +18,7 @@ Features:
 import asyncio
 import json
 import logging
+import structlog
 import statistics
 import time
 from dataclasses import dataclass, field
@@ -28,7 +29,7 @@ from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TestCategory(str, Enum):
@@ -131,7 +132,7 @@ class TestFramework:
     Advanced testing framework with multiple testing strategies
     """
 
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = Path(project_root)
         self.test_suites: Dict[str, TestSuite] = {}
         self.baseline_benchmarks: Dict[str, float] = {}
@@ -153,7 +154,7 @@ class TestFramework:
 
         # Run different test categories
         if parallel:
-            tasks = []
+            tasks: list[Any] = []
             for category in categories:
                 task = asyncio.create_task(self._run_category_tests(category))
                 tasks.append(task)
@@ -209,8 +210,7 @@ class TestFramework:
 
     async def _run_unit_tests(self) -> List[TestResult]:
         """Run unit tests using pytest"""
-        results = []
-
+        results: list[Any] = []
         try:
             # Run pytest with JSON output
             cmd = [
@@ -286,8 +286,7 @@ class TestFramework:
 
     async def _run_integration_tests(self) -> List[TestResult]:
         """Run integration tests"""
-        results = []
-
+        results: list[Any] = []
         # Example integration tests
         integration_tests = [
             ("api_server_startup", self._test_api_server_startup),
@@ -320,8 +319,7 @@ class TestFramework:
 
     async def _run_performance_tests(self) -> List[TestResult]:
         """Run performance tests with benchmarking"""
-        results = []
-
+        results: list[Any] = []
         # Performance test cases
         perf_tests = [
             ("character_creation_performance", self._test_character_creation_perf),
@@ -357,8 +355,7 @@ class TestFramework:
 
     async def _run_security_tests(self) -> List[TestResult]:
         """Run security vulnerability tests"""
-        results = []
-
+        results: list[Any] = []
         # Security test cases
         security_tests = [
             ("sql_injection_protection", self._test_sql_injection),
@@ -392,8 +389,7 @@ class TestFramework:
 
     async def _run_mutation_tests(self) -> List[TestResult]:
         """Run mutation testing to validate test quality"""
-        results = []
-
+        results: list[Any] = []
         try:
             # Use mutmut for mutation testing if available
             cmd = ["python", "-m", "mutmut", "run", "--paths-to-mutate", "src/"]
@@ -441,8 +437,7 @@ class TestFramework:
 
     async def _run_property_tests(self) -> List[TestResult]:
         """Run property-based tests using Hypothesis"""
-        results = []
-
+        results: list[Any] = []
         # Property-based test examples
         property_tests = [
             ("character_data_invariants", self._test_character_invariants),
@@ -509,8 +504,7 @@ class TestFramework:
 
     async def _run_performance_benchmarks(self) -> List[PerformanceBenchmark]:
         """Run performance benchmarks and compare with baseline"""
-        benchmarks = []
-
+        benchmarks: list[Any] = []
         # Define benchmark tests
         benchmark_tests = {
             "character_creation": self._benchmark_character_creation,
@@ -541,7 +535,7 @@ class TestFramework:
 
         return benchmarks
 
-    def _load_baseline_benchmarks(self):
+    def _load_baseline_benchmarks(self) -> None:
         """Load baseline performance benchmarks"""
         baseline_file = self.project_root / "baseline_benchmarks.json"
         if baseline_file.exists():
@@ -554,7 +548,7 @@ class TestFramework:
         else:
             self.baseline_benchmarks = {}
 
-    def _save_baseline_benchmarks(self):
+    def _save_baseline_benchmarks(self) -> None:
         """Save baseline performance benchmarks"""
         baseline_file = self.project_root / "baseline_benchmarks.json"
         try:
@@ -564,17 +558,17 @@ class TestFramework:
             logger.error(f"Failed to save baseline benchmarks: {e}")
 
     # Test implementation methods
-    async def _test_api_server_startup(self):
+    async def _test_api_server_startup(self) -> None:
         """Test API server startup"""
         # This would test actual API server startup
         await asyncio.sleep(0.1)  # Simulate test
 
-    async def _test_database_connectivity(self):
+    async def _test_database_connectivity(self) -> None:
         """Test database connectivity"""
         # This would test actual database connection
         await asyncio.sleep(0.1)  # Simulate test
 
-    async def _test_service_orchestration(self):
+    async def _test_service_orchestration(self) -> None:
         """Test service orchestration"""
         # This would test service integration
         await asyncio.sleep(0.1)  # Simulate test
@@ -607,31 +601,31 @@ class TestFramework:
         await asyncio.sleep(0.1)
         return time.time() - start_time
 
-    async def _test_sql_injection(self):
+    async def _test_sql_injection(self) -> None:
         """Test SQL injection protection"""
         # This would test actual SQL injection protection
 
-    async def _test_xss_protection(self):
+    async def _test_xss_protection(self) -> None:
         """Test XSS protection"""
         # This would test actual XSS protection
 
-    async def _test_auth_bypass(self):
+    async def _test_auth_bypass(self) -> None:
         """Test authentication bypass protection"""
         # This would test actual authentication bypass protection
 
-    async def _test_input_validation(self):
+    async def _test_input_validation(self) -> None:
         """Test input validation"""
         # This would test actual input validation
 
-    async def _test_character_invariants(self):
+    async def _test_character_invariants(self) -> None:
         """Test character data invariants using property-based testing"""
         # This would use Hypothesis for property-based testing
 
-    async def _test_api_response_properties(self):
+    async def _test_api_response_properties(self) -> None:
         """Test API response properties"""
         # This would test API response properties
 
-    async def _test_serialization_roundtrip(self):
+    async def _test_serialization_roundtrip(self) -> None:
         """Test serialization roundtrip properties"""
         # This would test serialization/deserialization invariants
 
@@ -639,8 +633,7 @@ class TestFramework:
     async def _benchmark_character_creation(self) -> float:
         """Benchmark character creation performance"""
         iterations = 100
-        times = []
-
+        times: list[Any] = []
         for _ in range(iterations):
             start_time = time.time()
             # Simulate character creation
@@ -652,8 +645,7 @@ class TestFramework:
     async def _benchmark_api_response(self) -> float:
         """Benchmark API response performance"""
         iterations = 50
-        times = []
-
+        times: list[Any] = []
         for _ in range(iterations):
             start_time = time.time()
             # Simulate API response
@@ -665,8 +657,7 @@ class TestFramework:
     async def _benchmark_database_query(self) -> float:
         """Benchmark database query performance"""
         iterations = 20
-        times = []
-
+        times: list[Any] = []
         for _ in range(iterations):
             start_time = time.time()
             # Simulate database query
@@ -678,8 +669,7 @@ class TestFramework:
     async def _benchmark_memory_allocation(self) -> float:
         """Benchmark memory allocation performance"""
         iterations = 200
-        times = []
-
+        times: list[Any] = []
         for _ in range(iterations):
             start_time = time.time()
             # Simulate memory allocation
@@ -694,7 +684,7 @@ class QualityGates:
     Quality gates for automated validation
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.gates = {
             "minimum_coverage": 80.0,
             "maximum_failure_rate": 5.0,
@@ -704,8 +694,7 @@ class QualityGates:
 
     async def validate(self, test_suite: TestSuite) -> Dict[str, bool]:
         """Validate test suite against quality gates"""
-        results = {}
-
+        results: dict[Any, Any] = {}
         # Coverage gate
         results["coverage_gate"] = (
             test_suite.coverage_percentage >= self.gates["minimum_coverage"]

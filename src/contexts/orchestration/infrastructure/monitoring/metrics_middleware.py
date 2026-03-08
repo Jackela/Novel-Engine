@@ -6,9 +6,9 @@ FastAPI middleware for automatic HTTP metrics collection and request monitoring.
 Integrates with the PrometheusMetricsCollector to provide comprehensive API observability.
 """
 
-import logging
+import structlog
 import time
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -17,37 +17,37 @@ from starlette.types import ASGIApp
 try:
     from prometheus_client import Counter, Gauge, Histogram, Info
 except ImportError as prometheus_error:  # pragma: no cover - dependency-light mode
-    logger = logging.getLogger(__name__)
+    logger = structlog.get_logger(__name__)
     logger.warning(
         "prometheus_client unavailable (%s); Prometheus middleware will operate in no-op mode.",
         prometheus_error,
     )
 
     class _NoOpMetric:
-        def __init__(self, *_, **__):
+        def __init__(self, *_, **__) -> None:
             pass
 
-        def labels(self, *_, **__):
+        def labels(self, *_, **__) -> None:
             return self
 
-        def inc(self, *_, **__):
+        def inc(self, *_, **__) -> None:
             return self
 
-        def dec(self, *_, **__):
+        def dec(self, *_, **__) -> None:
             return self
 
-        def observe(self, *_, **__):
+        def observe(self, *_, **__) -> None:
             return self
 
-        def set(self, *_, **__):
+        def set(self, *_, **__) -> None:
             return self
 
-        def info(self, *_, **__):
+        def info(self, *_, **__) -> None:
             return self
 
-        def time(self):
+        def time(self) -> None:
             class _Timer:
-                def __enter__(self):
+                def __enter__(self) -> None:
                     return self
 
                 def __exit__(self, exc_type, exc, tb):
@@ -59,7 +59,7 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
 
 from .prometheus_collector import PrometheusMetricsCollector
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -83,7 +83,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
         group_paths: bool = True,
         ignored_paths: Optional[list] = None,
         metrics_collector: Optional[PrometheusMetricsCollector] = None,
-    ):
+    ) -> None:
         """
         Initialize Prometheus middleware.
 
@@ -409,9 +409,8 @@ class MetricsRegistry:
     """
 
     _instance = None
-    _collectors = {}
-
-    def __new__(cls):
+    _collectors: dict[Any, Any] = {}
+    def __new__(cls) -> None:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -449,7 +448,7 @@ class MetricsRegistry:
         Returns:
             Combined metrics data
         """
-        all_data = []
+        all_data: list[Any] = []
         for name, collector in self._collectors.items():
             try:
                 data = collector.get_metrics_data()

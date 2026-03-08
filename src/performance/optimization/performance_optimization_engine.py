@@ -19,7 +19,7 @@ Key Optimizations:
 import asyncio
 import gc
 import json
-import logging
+import structlog
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -32,7 +32,7 @@ import aioredis
 import aiosqlite
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CacheLevel(Enum):
@@ -101,7 +101,7 @@ class OptimizationConfig:
 class PerformanceMonitor:
     """Real-time performance monitoring and metrics collection."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
         self.metrics: Dict[PerformanceMetric, deque] = {
             metric: deque(maxlen=1000) for metric in PerformanceMetric
@@ -109,20 +109,20 @@ class PerformanceMonitor:
         self.start_time = time.time()
         self._monitoring_task: Optional[asyncio.Task] = None
 
-    async def start_monitoring(self):
+    async def start_monitoring(self) -> None:
         """Start background performance monitoring."""
         self._monitoring_task = asyncio.create_task(self._monitor_loop())
 
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """Stop performance monitoring."""
         if self._monitoring_task:
             self._monitoring_task.cancel()
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
-    async def _monitor_loop(self):
+    async def _monitor_loop(self) -> None:
         """Background monitoring loop."""
         while True:
             try:
@@ -134,7 +134,7 @@ class PerformanceMonitor:
                 logger.error(f"Error in monitoring loop: {e}")
                 await asyncio.sleep(5.0)
 
-    async def _collect_metrics(self):
+    async def _collect_metrics(self) -> None:
         """Collect system performance metrics."""
         process = psutil.Process()
 
@@ -151,7 +151,7 @@ class PerformanceMonitor:
         if memory_mb > self.config.memory_threshold_mb:
             gc.collect()
 
-    def add_metric(self, metric: PerformanceMetric, value: float):
+    def add_metric(self, metric: PerformanceMetric, value: float) -> None:
         """Add a metric value with timestamp."""
         self.metrics[metric].append((time.time(), value))
 
@@ -181,7 +181,7 @@ class PerformanceMonitor:
 class MultiTierCache:
     """Multi-tier caching system with L1, L2, and L3 cache levels."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
 
         # L1 Cache: In-memory LRU cache
@@ -202,7 +202,7 @@ class MultiTierCache:
             "l3_misses": 0,
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize async cache components."""
         try:
             self.redis_client = aioredis.from_url(
@@ -240,7 +240,7 @@ class MultiTierCache:
 
         return None
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None):
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
         """Set value in all cache levels."""
         ttl = ttl or self.config.l1_cache_ttl
 
@@ -268,7 +268,7 @@ class MultiTierCache:
                         self.l1_access_order.remove(key)
         return None
 
-    async def _set_l1(self, key: str, value: Any, ttl: int):
+    async def _set_l1(self, key: str, value: Any, ttl: int) -> None:
         """Set in L1 memory cache with LRU eviction."""
         async with self.l1_lock:
             expire_time = time.time() + ttl
@@ -298,7 +298,7 @@ class MultiTierCache:
             logger.warning(f"L2 cache get error: {e}")
         return None
 
-    async def _set_l2(self, key: str, value: Any, ttl: int):
+    async def _set_l2(self, key: str, value: Any, ttl: int) -> None:
         """Set in L2 Redis cache."""
         try:
             if self.redis_client:
@@ -328,7 +328,7 @@ class MultiTierCache:
 class ConnectionPool:
     """High-performance database connection pool with intelligent scaling."""
 
-    def __init__(self, database_path: str, config: OptimizationConfig):
+    def __init__(self, database_path: str, config: OptimizationConfig) -> None:
         self.database_path = database_path
         self.config = config
         self.pool: List[aiosqlite.Connection] = []
@@ -342,7 +342,7 @@ class ConnectionPool:
             "peak_active": 0,
         }
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize connection pool with minimum connections."""
         for _ in range(self.config.min_db_connections):
             await self._create_connection()
@@ -394,13 +394,13 @@ class ConnectionPool:
             self.active_connections += 1
             return conn
 
-    async def return_connection(self, conn: aiosqlite.Connection):
+    async def return_connection(self, conn: aiosqlite.Connection) -> None:
         """Return a connection to the pool."""
         self.active_connections -= 1
         self.connection_stats["active"] = self.active_connections
         await self.available.put(conn)
 
-    async def close_all(self):
+    async def close_all(self) -> None:
         """Close all connections in the pool."""
         async with self.pool_lock:
             for conn in self.pool:
@@ -415,7 +415,7 @@ class ConnectionPool:
 class BatchProcessor:
     """Batch processing system for efficient async operations."""
 
-    def __init__(self, config: OptimizationConfig):
+    def __init__(self, config: OptimizationConfig) -> None:
         self.config = config
         self.pending_operations: Dict[str, List[Tuple[Any, asyncio.Future]]] = (
             defaultdict(list)
@@ -442,7 +442,7 @@ class BatchProcessor:
 
         return await future
 
-    async def _batch_timer(self, operation_type: str):
+    async def _batch_timer(self, operation_type: str) -> None:
         """Timer to trigger batch processing."""
         try:
             await asyncio.sleep(self.config.batch_timeout)
@@ -450,9 +450,9 @@ class BatchProcessor:
                 if operation_type in self.pending_operations:
                     await self._process_batch(operation_type)
         except asyncio.CancelledError:
-            logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+            structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
 
-    async def _process_batch(self, operation_type: str):
+    async def _process_batch(self, operation_type: str) -> None:
         """Process a batch of operations."""
         if operation_type not in self.pending_operations:
             return
@@ -505,7 +505,7 @@ class BatchProcessor:
 class PerformanceOptimizationEngine:
     """Main performance optimization engine."""
 
-    def __init__(self, config: Optional[OptimizationConfig] = None):
+    def __init__(self, config: Optional[OptimizationConfig] = None) -> None:
         self.config = config or OptimizationConfig()
         self.targets = PerformanceTarget()
 
@@ -524,7 +524,7 @@ class PerformanceOptimizationEngine:
         self._background_tasks: List[asyncio.Task] = []
         self._shutdown_event = asyncio.Event()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize the optimization engine."""
         logger.info("Initializing Performance Optimization Engine")
 
@@ -539,7 +539,7 @@ class PerformanceOptimizationEngine:
 
         logger.info("Performance Optimization Engine initialized")
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown the optimization engine."""
         logger.info("Shutting down Performance Optimization Engine")
 
@@ -562,10 +562,10 @@ class PerformanceOptimizationEngine:
 
         logger.info("Performance Optimization Engine shutdown complete")
 
-    def performance_track(self, operation_name: str):
+    def performance_track(self, operation_name: str) -> None:
         """Decorator to track operation performance."""
 
-        def decorator(func):
+        def decorator(func) -> None:
             @wraps(func)
             async def wrapper(*args, **kwargs):
                 start_time = time.time()
@@ -608,7 +608,7 @@ class PerformanceOptimizationEngine:
 
         return self.connection_pools[database_path]
 
-    async def _optimization_loop(self):
+    async def _optimization_loop(self) -> None:
         """Background optimization loop."""
         while not self._shutdown_event.is_set():
             try:
@@ -620,7 +620,7 @@ class PerformanceOptimizationEngine:
                 logger.error(f"Error in optimization loop: {e}")
                 await asyncio.sleep(10.0)
 
-    async def _run_optimizations(self):
+    async def _run_optimizations(self) -> None:
         """Run optimization routines."""
         # Garbage collection optimization
         if time.time() - self.last_gc_time > self.config.gc_interval:

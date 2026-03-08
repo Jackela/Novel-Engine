@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 import os
 from typing import List, Optional, Set
 
@@ -19,7 +19,7 @@ from src.workspaces import (
     GuestSessionManager,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Environment variables that are strictly required for the application to function.
 # These have no sensible defaults and must be explicitly set.
@@ -100,7 +100,7 @@ def validate_environment() -> None:
             if value is None:
                 # This is fine in development - APISettings provides a default
                 logger.debug(
-                    "Optional production variable %s not set (development mode)", var
+                    "optional_production_variable_not_set", variable=var, mode="development"
                 )
 
     # Check that optional API keys are non-empty when set
@@ -114,24 +114,24 @@ def validate_environment() -> None:
 
     # Log warnings
     for warning in warnings:
-        logger.warning("Environment validation warning: %s", warning)
+        logger.warning("environment_validation_warning", warning=warning)
 
     # Raise errors if any critical issues found
     if missing:
         error_msg = f"Missing required environment variables: {', '.join(missing)}"
-        logger.error(error_msg)
+        logger.error("missing_required_env_vars", variables=missing)
         raise EnvironmentValidationError(error_msg)
 
     if empty:
         error_msg = f"Empty required environment variables: {', '.join(empty)}"
-        logger.error(error_msg)
+        logger.error("empty_required_env_vars", variables=empty)
         raise EnvironmentValidationError(error_msg)
 
     # Log successful validation
     if is_production:
-        logger.info("Environment validation passed (production mode)")
+        logger.info("environment_validation_passed", mode="production")
     else:
-        logger.info("Environment validation passed (development mode)")
+        logger.info("environment_validation_passed", mode="development")
 
 
 def ensure_workspace_services(
@@ -157,16 +157,16 @@ def ensure_workspace_services(
             app.state.guest_session_manager = guest_session_manager
             if is_testing and not getattr(app.state, "default_workspace_id", None):
                 app.state.default_workspace_id = workspace_store.create().id
-            logger.info("Guest workspace store initialized")
+            logger.info("guest_workspace_store_initialized")
         except Exception as exc:
             logger.error(
-                "Failed to initialize guest workspace store: %s", exc, exc_info=True
+                "guest_workspace_store_init_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True
             )
             app.state.workspace_store = None
             app.state.workspace_character_store = None
             app.state.guest_session_manager = None
     else:
-        logger.info("Guest workspace store preconfigured; skipping initialization")
+        logger.info("guest_workspace_store_preconfigured")
 
 
 async def initialize_app_state(app: FastAPI) -> None:
@@ -174,7 +174,7 @@ async def initialize_app_state(app: FastAPI) -> None:
     # Validate environment variables first - fail fast if configuration is incomplete
     validate_environment()
 
-    logger.info("Starting StoryForge AI API server...")
+    logger.info("starting_api_server")
     settings: APISettings = getattr(app.state, "settings", APISettings.from_env())
     app.state.settings = settings
 
@@ -191,14 +191,14 @@ async def initialize_app_state(app: FastAPI) -> None:
         global_event_bus = EventBus()
         app.state.event_bus = global_event_bus
         container.register_singleton(EventBus, global_event_bus)
-        logger.info("Global EventBus (Enterprise) initialized and registered")
+        logger.info("global_eventbus_initialized")
     except Exception as exc:
-        logger.warning("Could not initialize EventBus: %s", exc)
+        logger.warning("could_not_initialize_eventbus", error=str(exc), error_type=type(exc).__name__)
         app.state.event_bus = None
 
     # EventBus is now accessed via request.app.state.event_bus in routers
     # No global set_event_bus() call needed - routers use DI pattern
-    logger.info("EventBus available at app.state.event_bus for routers")
+    logger.info("eventbus_available_at_app_state")
 
     # Register event handlers
     if global_event_bus is not None:
@@ -207,9 +207,9 @@ async def initialize_app_state(app: FastAPI) -> None:
 
             time_handler = TimeAdvancedHandler()
             global_event_bus.register_handler(time_handler)
-            logger.info("TimeAdvancedHandler registered with EventBus")
+            logger.info("time_advanced_handler_registered")
         except Exception as exc:
-            logger.warning("Could not register TimeAdvancedHandler: %s", exc)
+            logger.warning("could_not_register_time_advanced_handler", error=str(exc), error_type=type(exc).__name__)
 
         # Note: RumorPropagationHandler is registered after repositories below
 
@@ -226,10 +226,10 @@ async def initialize_app_state(app: FastAPI) -> None:
         container.register_singleton(FactionIntentRepository, intent_repository)
         app.state.faction_intent_repository = intent_repository
         app.state.faction_intent_repository_available = True
-        logger.info("FactionIntentRepository registered in DI container")
+        logger.info("faction_intent_repository_registered")
     except Exception as exc:
         app.state.faction_intent_repository_available = False
-        logger.warning("Could not register FactionIntentRepository: %s", exc)
+        logger.warning("could_not_register_faction_intent_repository", error=str(exc), error_type=type(exc).__name__)
 
     # Register CalendarRepository in DI container
     try:
@@ -243,10 +243,10 @@ async def initialize_app_state(app: FastAPI) -> None:
         calendar_repository = InMemoryCalendarRepository()
         container.register_singleton(CalendarRepository, calendar_repository)
         app.state.calendar_repository = calendar_repository
-        logger.info("CalendarRepository registered in DI container")
+        logger.info("calendar_repository_registered")
     except Exception as exc:
         app.state.calendar_repository = None
-        logger.warning("Could not register CalendarRepository: %s", exc)
+        logger.warning("could_not_register_calendar_repository", error=str(exc), error_type=type(exc).__name__)
 
     # Register EventRepository in DI container
     try:
@@ -259,11 +259,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         container.register_singleton(EventRepository, event_repository)
         app.state.event_repository = event_repository
         app.state.event_repository_available = True
-        logger.info("EventRepository registered in DI container")
+        logger.info("event_repository_registered")
     except Exception as exc:
         app.state.event_repository = None
         app.state.event_repository_available = False
-        logger.warning("Could not register EventRepository: %s", exc)
+        logger.warning("could_not_register_event_repository", error=str(exc), error_type=type(exc).__name__)
 
     # Register RumorRepository in DI container
     try:
@@ -276,11 +276,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         container.register_singleton(RumorRepository, rumor_repository)
         app.state.rumor_repository = rumor_repository
         app.state.rumor_repository_available = True
-        logger.info("RumorRepository registered in DI container")
+        logger.info("rumor_repository_registered")
     except Exception as exc:
         app.state.rumor_repository = None
         app.state.rumor_repository_available = False
-        logger.warning("Could not register RumorRepository: %s", exc)
+        logger.warning("could_not_register_rumor_repository", error=str(exc), error_type=type(exc).__name__)
 
     # Register LocationRepository in DI container
     try:
@@ -295,11 +295,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         container.register_singleton(LocationRepository, location_repository)
         app.state.location_repository = location_repository
         app.state.location_repository_available = True
-        logger.info("LocationRepository registered in DI container")
+        logger.info("location_repository_registered")
     except Exception as exc:
         app.state.location_repository = None
         app.state.location_repository_available = False
-        logger.warning("Could not register LocationRepository: %s", exc)
+        logger.warning("could_not_register_location_repository", error=str(exc), error_type=type(exc).__name__)
 
     # Register RumorPropagationHandler for rumor propagation on time advance
     # This must happen AFTER repositories are registered above
@@ -320,18 +320,16 @@ async def initialize_app_state(app: FastAPI) -> None:
                 )
                 global_event_bus.register_handler(rumor_handler)
                 logger.info(
-                    "RumorPropagationHandler registered with EventBus "
-                    "(with repositories)"
+                    "rumor_propagation_handler_registered"
                 )
             else:
                 logger.warning(
-                    "RumorPropagationHandler not registered: "
-                    "repositories not available (location_repo=%s, rumor_repo=%s)",
-                    location_repo is not None,
-                    rumor_repo is not None,
+                    "rumor_propagation_handler_not_registered",
+                    location_repo_available=location_repo is not None,
+                    rumor_repo_available=rumor_repo is not None,
                 )
         except Exception as exc:
-            logger.warning("Could not register RumorPropagationHandler: %s", exc)
+            logger.warning("could_not_register_rumor_propagation_handler", error=str(exc), error_type=type(exc).__name__)
 
     # Register RetrievalService reference for FactionDecisionService
     try:
@@ -342,19 +340,19 @@ async def initialize_app_state(app: FastAPI) -> None:
         retrieval_service = container.try_get(RetrievalService)
         if retrieval_service:
             app.state.retrieval_service = retrieval_service
-            logger.info("RetrievalService available for FactionDecisionService")
+            logger.info("retrieval_service_available")
         else:
             app.state.retrieval_service = None
             logger.warning(
-                "RetrievalService not available - RAG context enrichment disabled"
+                "retrieval_service_not_available"
             )
     except Exception as exc:
         app.state.retrieval_service = None
-        logger.warning("Could not retrieve RetrievalService: %s", exc)
+        logger.warning("could_not_retrieve_retrieval_service", error=str(exc), error_type=type(exc).__name__)
 
     # EventBus is now accessed via request.app.state.event_bus
     # No global set_event_bus() call needed - see Issue 6 fix
-    logger.info("EventBus available at app.state.event_bus for faction_intel router")
+    logger.info("eventbus_available_for_faction_intel_router")
 
     orchestrator: Optional[SystemOrchestrator] = None
     try:
@@ -365,9 +363,9 @@ async def initialize_app_state(app: FastAPI) -> None:
             )
             await orchestrator.startup()
             container.register_singleton(SystemOrchestrator, orchestrator)
-            logger.info("System Orchestrator initialized")
+            logger.info("system_orchestrator_initialized")
     except Exception as exc:
-        logger.error("Failed to initialize SystemOrchestrator: %s", exc, exc_info=True)
+        logger.error("failed_to_initialize_system_orchestrator", error=str(exc), error_type=type(exc).__name__, exc_info=True)
         orchestrator = None
 
     try:
@@ -380,13 +378,13 @@ async def initialize_app_state(app: FastAPI) -> None:
             )
             container.register_singleton(ApiOrchestrationService, api_service)
             app.state.api_service = api_service
-            logger.info("ApiOrchestrationService initialized")
+            logger.info("api_orchestration_service_initialized")
         else:
             app.state.api_service = None
-            logger.info("ApiOrchestrationService skipped due to missing dependencies")
+            logger.info("api_orchestration_service_skipped")
     except Exception as exc:
         logger.error(
-            "Failed to initialize ApiOrchestrationService: %s", exc, exc_info=True
+            "failed_to_initialize_api_orchestration_service", error=str(exc), error_type=type(exc).__name__, exc_info=True
         )
         app.state.api_service = None
 
@@ -401,7 +399,7 @@ async def initialize_app_state(app: FastAPI) -> None:
 
             ensure_templates_registered()
         except Exception as exc:
-            logger.warning("Prompt templates registration failed: %s", exc)
+            logger.warning("prompt_templates_registration_failed", error=str(exc), error_type=type(exc).__name__)
 
     if getattr(app.state, "decision_router_available", False):
         try:
@@ -427,16 +425,16 @@ async def initialize_app_state(app: FastAPI) -> None:
                 negotiation_engine=negotiation_engine,
                 broadcast_sse_event=lambda event: broadcast_sse_event(app, event),
             )
-            logger.info("Decision system initialized with SSE broadcast capability")
+            logger.info("decision_system_initialized")
         except Exception as exc:
-            logger.warning("Failed to initialize decision system: %s", exc)
+            logger.warning("failed_to_initialize_decision_system", error=str(exc), error_type=type(exc).__name__)
 
 
 async def shutdown_app_state(app: FastAPI) -> None:
-    logger.info("Shutting down StoryForge AI API server.")
+    logger.info("shutting_down_api_server")
     try:
         api_service = getattr(app.state, "api_service", None)
         if api_service:
             await api_service.stop_simulation()
     except Exception as exc:
-        logger.error("Error during shutdown: %s", exc, exc_info=True)
+        logger.error("shutdown_error", error=str(exc), error_type=type(exc).__name__, exc_info=True)

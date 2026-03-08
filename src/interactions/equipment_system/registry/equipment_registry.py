@@ -8,6 +8,7 @@ Handles equipment registration, agent assignment, and equipment discovery.
 
 import asyncio
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
@@ -26,20 +27,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -67,7 +68,7 @@ class EquipmentRegistry:
         config: EquipmentSystemConfig,
         context_db: Optional[ContextDatabase] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """
         Initialize equipment registry.
 
@@ -78,7 +79,7 @@ class EquipmentRegistry:
         """
         self.config = config
         self.context_db = context_db
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Equipment storage
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
@@ -213,8 +214,7 @@ class EquipmentRegistry:
         """
         try:
             agent_equipment_ids = self._agent_equipment.get(agent_id, set())
-            equipment_list = []
-
+            equipment_list: list[Any] = []
             for eq_id in agent_equipment_ids:
                 equipment = self._equipment_registry.get(eq_id)
                 if not equipment:
@@ -462,7 +462,7 @@ class EquipmentRegistry:
             try:
                 return EquipmentCategory(equipment_item.category)
             except ValueError:
-                logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
         name_lower = getattr(equipment_item, "name", "").lower()
 
         # Basic category inference

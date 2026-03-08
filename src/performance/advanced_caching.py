@@ -11,12 +11,23 @@ Key Features:
 - Sub-10ms cache hits with 99%+ hit rates
 - Adaptive eviction strategies and pattern recognition
 - Comprehensive performance analytics and optimization
+
+SECURITY NOTICE:
+================
+This module uses pickle for internal cache serialization. This is acceptable
+because:
+1. Cache keys and values are internally controlled (not user-accessible)
+2. Cache data is stored in directories with restricted permissions (0o700)
+3. All pickle operations are marked with nosec B301 for security audit tracking
+
+For user-provided data serialization, use JSON instead of pickle.
 """
 
 import asyncio
 import gzip
 import hashlib
 import logging
+import structlog
 import os
 import pickle
 import time
@@ -27,7 +38,56 @@ from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
+
+
+def _validate_and_fix_cache_dir_permissions(cache_dir: str) -> None:
+    """
+    Validate cache directory has secure permissions (owner-only access).
+    
+    SECURITY: Creates new directories with 0o700 permissions.
+    Warns and attempts to fix if existing directory is too permissive.
+    
+    Args:
+        cache_dir: Path to the cache directory to validate
+    """
+    import stat
+    
+    if not os.path.exists(cache_dir):
+        # Create with restricted permissions (owner only: rwx------)
+        os.makedirs(cache_dir, mode=0o700)
+        logger.info("Created cache directory with secure permissions", extra={
+            "path": cache_dir,
+            "mode": "0o700"
+        })
+        return
+    
+    # Check existing directory permissions
+    dir_stat = os.stat(cache_dir)
+    mode = stat.S_IMODE(dir_stat.st_mode)
+    
+    # Check if group or others have any permissions (read/write/execute)
+    if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
+        logger.warning(
+            "Cache directory has insecure permissions - group or others have access",
+            extra={
+                "path": cache_dir,
+                "current_mode": oct(mode),
+                "recommended_mode": "0o700"
+            }
+        )
+        # Attempt to fix permissions
+        try:
+            os.chmod(cache_dir, 0o700)
+            logger.info("Fixed cache directory permissions", extra={
+                "path": cache_dir,
+                "new_mode": "0o700"
+            })
+        except OSError as e:
+            logger.error(
+                "Failed to fix cache directory permissions",
+                extra={"path": cache_dir, "error": str(e)}
+            )
 
 T = TypeVar("T")
 
@@ -82,7 +142,7 @@ class CacheEntry(Generic[T]):
             return False
         return time.time() > (self.created_at + self.ttl)
 
-    def touch(self):
+    def touch(self) -> None:
         """Update access time and count for LRU/LFU tracking."""
         self.accessed_at = time.time()
         self.access_count += 1
@@ -101,7 +161,7 @@ class CacheStats:
     avg_access_time_ms: float = 0.0
     hit_rate: float = 0.0
 
-    def update_hit_rate(self):
+    def update_hit_rate(self) -> None:
         """Calculate and update cache hit rate percentage."""
         total_requests = self.hits + self.misses
         self.hit_rate = (
@@ -132,7 +192,7 @@ class CacheConfig:
 class IntelligentCacheManager:
     """Intelligent multi-layer cache manager with adaptive optimization."""
 
-    def __init__(self, config: CacheConfig):
+    def __init__(self, config: CacheConfig) -> None:
         self.config = config
         self.cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self.stats = CacheStats()
@@ -147,13 +207,13 @@ class IntelligentCacheManager:
         self._cleanup_task: Optional[asyncio.Task] = None
         self._metrics_task: Optional[asyncio.Task] = None
 
-        # Disk cache setup
+        # Disk cache setup with permission validation
         if self.config.persist_to_disk:
-            os.makedirs(self.config.disk_cache_path, exist_ok=True)
+            _validate_and_fix_cache_dir_permissions(self.config.disk_cache_path)
 
         self._start_background_tasks()
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """Initialize background cleanup and metrics tasks."""
         if self.config.background_cleanup:
             try:
@@ -166,7 +226,7 @@ class IntelligentCacheManager:
                 # No event loop running yet
                 pass
 
-    async def _background_cleanup(self):
+    async def _background_cleanup(self) -> None:
         """Background task for cache cleanup and optimization."""
         while True:
             try:
@@ -179,7 +239,7 @@ class IntelligentCacheManager:
             except Exception as e:
                 logger.error(f"Error in background cleanup: {e}")
 
-    async def _metrics_collection(self):
+    async def _metrics_collection(self) -> None:
         """Background task for performance metrics collection."""
         while True:
             try:
@@ -370,7 +430,7 @@ class IntelligentCacheManager:
             logger.error(f"Pattern invalidation error for {pattern}: {e}")
             return 0
 
-    async def warm_cache(self, keys_values: Dict[str, Any]):
+    async def warm_cache(self, keys_values: Dict[str, Any]) -> None:
         """Preload cache with key-value pairs for performance."""
         try:
             for key, value in keys_values.items():
@@ -381,11 +441,10 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Cache warming error: {e}")
 
-    def _cleanup_expired(self):
+    def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
         time.time()
-        expired_keys = []
-
+        expired_keys: list[Any] = []
         for key, entry in self.cache.items():
             if entry.is_expired():
                 expired_keys.append(key)
@@ -398,7 +457,7 @@ class IntelligentCacheManager:
         if expired_keys:
             logger.debug(f"Cleaned {len(expired_keys)} expired keys")
 
-    def _enforce_size_limits(self):
+    def _enforce_size_limits(self) -> None:
         """Enforce cache size and memory limits through eviction."""
         # Check memory limit
         max_memory_bytes = self.config.max_memory_mb * 1024 * 1024
@@ -452,7 +511,7 @@ class IntelligentCacheManager:
             return None
 
         # Score each key based on multiple factors
-        scores = {}
+        scores: dict[Any, Any] = {}
         current_time = time.time()
 
         for key, entry in self.cache.items():
@@ -502,7 +561,7 @@ class IntelligentCacheManager:
 
         return frequency * trend
 
-    def _record_access_pattern(self, key: str):
+    def _record_access_pattern(self, key: str) -> None:
         """Record access time for pattern analysis."""
         current_time = time.time()
         self.access_patterns[key].append(current_time)
@@ -513,7 +572,7 @@ class IntelligentCacheManager:
             t for t in self.access_patterns[key] if t > cutoff_time
         ]
 
-    def _record_access_time(self, key: str, access_time: float):
+    def _record_access_time(self, key: str, access_time: float) -> None:
         """Record access time for performance monitoring."""
         access_time_ms = access_time * 1000
         self.performance_metrics[key].append(access_time_ms)
@@ -526,7 +585,7 @@ class IntelligentCacheManager:
         if access_time_ms > 10:  # 10ms threshold
             self.slow_keys.add(key)
 
-    def _record_key_relationship(self, key: str):
+    def _record_key_relationship(self, key: str) -> None:
         """Record relationships between cache keys for prefetching."""
         # Simple relationship detection based on key patterns
         key_parts = key.split(":")
@@ -537,7 +596,7 @@ class IntelligentCacheManager:
                     self.key_relationships[key].add(other_key)
                     self.key_relationships[other_key].add(key)
 
-    async def _optimize_cache(self):
+    async def _optimize_cache(self) -> None:
         """Perform cache optimization and maintenance tasks."""
         try:
             # Prefetch related keys
@@ -553,12 +612,12 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Cache optimization error: {e}")
 
-    async def _prefetch_related_keys(self):
+    async def _prefetch_related_keys(self) -> None:
         """Prefetch related keys based on access patterns."""
         # This would implement intelligent prefetching based on access patterns
         # For now, it's a placeholder
 
-    async def _optimize_slow_keys(self):
+    async def _optimize_slow_keys(self) -> None:
         """Optimize cache keys with slow access times."""
         for key in list(self.slow_keys):
             if key in self.cache:
@@ -581,19 +640,19 @@ class IntelligentCacheManager:
                         )
         self.slow_keys.clear()
 
-    def _update_cache_statistics(self):
+    def _update_cache_statistics(self) -> None:
         """Update cache performance statistics."""
         self.stats.update_hit_rate()
 
         # Calculate average access time
-        all_times = []
+        all_times: list[Any] = []
         for times in self.performance_metrics.values():
             all_times.extend(times)
 
         if all_times:
             self.stats.avg_access_time_ms = sum(all_times) / len(all_times)
 
-    async def _analyze_performance(self):
+    async def _analyze_performance(self) -> None:
         """Analyze cache performance and log insights."""
         try:
             # Analyze cache performance and log insights
@@ -634,7 +693,7 @@ class IntelligentCacheManager:
             logger.error(f"Disk cache get error for key {key}: {e}")
             return None
 
-    async def _save_to_disk(self, key: str, value: Any):
+    async def _save_to_disk(self, key: str, value: Any) -> None:
         """Save value to disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
@@ -646,7 +705,7 @@ class IntelligentCacheManager:
         except Exception as e:
             logger.error(f"Disk cache save error for key {key}: {e}")
 
-    async def _delete_from_disk(self, key: str):
+    async def _delete_from_disk(self, key: str) -> None:
         """Delete value from disk cache."""
         try:
             key_hash = self._generate_key_hash(key)
@@ -673,7 +732,7 @@ class IntelligentCacheManager:
             "access_patterns_tracked": len(self.access_patterns),
         }
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown cache manager and cleanup resources."""
         try:
             # Cancel background tasks
@@ -703,7 +762,7 @@ class IntelligentCacheManager:
 
 
 # Cache decorator for functions
-def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
+def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> None:
     """Decorator to cache function results with optional TTL."""
 
     def decorator(func: Callable) -> Callable:
@@ -730,7 +789,7 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func"):
             await cache_manager.set(cache_key, result, ttl)
             return result
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs) -> None:
             # For synchronous functions, create async context
             async def async_func():
                 return await async_wrapper(*args, **kwargs)
@@ -763,7 +822,7 @@ def get_cache_manager() -> IntelligentCacheManager:
     return cache_manager
 
 
-def initialize_cache_manager(config: Optional[CacheConfig] = None):
+def initialize_cache_manager(config: Optional[CacheConfig] = None) -> None:
     """Initialize the global cache manager with configuration."""
     global cache_manager
     if config is None:

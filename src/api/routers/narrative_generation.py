@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
+import structlog
 import os
 import time
 from typing import AsyncIterator, Optional
@@ -23,7 +23,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def _parse_uuid_safe(value: str | None) -> UUID | None:
@@ -174,8 +174,9 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
         if is_mock_mode():
             # Mock mode: Stream hardcoded story content
             logger.info(
-                "Starting mock narrative stream",
-                extra={"mock_mode": True, "max_tokens": int(request.max_tokens)},
+                "mock_narrative_stream_started",
+                mock_mode=True,
+                max_tokens=int(request.max_tokens),
             )
 
             async for content, sequence in generate_mock_stream(request.max_tokens):
@@ -193,8 +194,9 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
             # Real LLM mode: Placeholder for actual implementation
             # In production, this would call the LLM service
             logger.warning(
-                "Real LLM generation not implemented, falling back to mock",
-                extra={"mock_mode": False},
+                "llm_generation_not_implemented",
+                mock_mode=False,
+                message="Real LLM generation not implemented, falling back to mock",
             )
 
             # Fall back to mock for now
@@ -227,18 +229,16 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
         yield f"data: {json.dumps(completion_data)}\n\n"
 
         logger.info(
-            "Narrative stream completed",
-            extra={
-                "chunk_count": chunk_count,
-                "total_chars": total_chars,
-                "generation_time_ms": generation_time_ms,
-                "mock_mode": is_mock_mode(),
-            },
+            "narrative_stream_completed",
+            chunk_count=chunk_count,
+            total_chars=total_chars,
+            generation_time_ms=generation_time_ms,
+            mock_mode=is_mock_mode(),
         )
 
     except Exception:
         # Log full exception internally, send generic message to client
-        logger.exception("Error during narrative streaming")
+        logger.error("narrative_stream_error", error="exception_occurred", error_type="exception")
         error_data = {
             "type": "error",
             "content": "An error occurred during narrative generation. Please try again.",
@@ -287,14 +287,12 @@ async def stream_narrative_generation(
     # Parse scene_id as UUID to ensure safe logging
     scene_uuid = _parse_uuid_safe(request.scene_id)
     logger.info(
-        "Starting narrative generation stream",
-        extra={
-            "scene_id": str(scene_uuid) if scene_uuid else None,
-            "has_prompt": request.prompt is not None,
-            "has_context": request.context is not None,
-            "max_tokens": int(request.max_tokens),
-            "mock_mode": is_mock_mode(),
-        },
+        "narrative_generation_stream_started",
+        scene_id=str(scene_uuid) if scene_uuid else None,
+        has_prompt=request.prompt is not None,
+        has_context=request.context is not None,
+        max_tokens=int(request.max_tokens),
+        mock_mode=is_mock_mode(),
     )
 
     return StreamingResponse(

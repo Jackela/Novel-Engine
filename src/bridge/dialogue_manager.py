@@ -7,6 +7,7 @@ Manages agent-to-agent dialogue sessions and communication coordination.
 """
 
 import logging
+import structlog
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -26,9 +27,9 @@ class DialogueManager:
     - Session state tracking and cleanup
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize dialogue manager."""
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
         self.active_dialogues: Dict[str, AgentDialogue] = {}
         self.agent_dialogues: Dict[str, Set[str]] = defaultdict(set)
         self.dialogue_history: List[Dict[str, Any]] = []
@@ -319,7 +320,7 @@ class DialogueManager:
             if now - self._last_cleanup < timedelta(seconds=self._cleanup_interval):
                 return 0
 
-            expired_dialogues = []
+            expired_dialogues: list[Any] = []
             cutoff_time = now - timedelta(hours=1)  # 1 hour timeout
 
             for dialogue_id, dialogue in self.active_dialogues.items():

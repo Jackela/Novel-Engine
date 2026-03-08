@@ -49,7 +49,7 @@ class EntityOperation:
     metadata: Optional[Dict[str, Any]] = None
     reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate entity operation data."""
         if self.operation_type == WorldOperationType.ADD_ENTITY:
             if not all(
@@ -89,7 +89,7 @@ class EnvironmentOperation:
     affected_area: Optional[Dict[str, Any]] = None
     reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate environment operation data."""
         if not self.environment_changes:
             raise ValueError("Environment operation requires environment_changes")
@@ -107,7 +107,7 @@ class TimeOperation:
     new_time: datetime
     reason: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate time operation data."""
         if self.new_time <= datetime.now():
             raise ValueError(
@@ -129,7 +129,7 @@ class SnapshotOperation:
     include_environment: bool = True
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate snapshot operation data."""
         if not self.reason or not self.reason.strip():
             raise ValueError("Snapshot operation requires a valid reason")
@@ -149,7 +149,7 @@ class ResetOperation:
     preserve_environment: bool = False
     create_backup: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate reset operation data."""
         if not self.reason or not self.reason.strip():
             raise ValueError("Reset operation requires a valid reason")
@@ -220,7 +220,7 @@ class ApplyWorldDelta:
     idempotency_key: Optional[str] = None
     expected_world_version: Optional[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate the command after initialization."""
         self._validate_command()
 
@@ -241,8 +241,7 @@ class ApplyWorldDelta:
         Raises:
             ValueError: If command data is invalid
         """
-        errors = []
-
+        errors: list[Any] = []
         # Validate required fields
         if not self.world_state_id:
             errors.append("world_state_id is required")
@@ -323,10 +322,9 @@ class ApplyWorldDelta:
 
     def get_operation_summary(self) -> str:
         """Get a human-readable summary of operations in this command."""
-        summary_parts = []
-
+        summary_parts: list[Any] = []
         if self.entity_operations:
-            entity_counts = {}
+            entity_counts: dict[Any, Any] = {}
             for op in self.entity_operations:
                 op_type = op.operation_type.value
                 entity_counts[op_type] = entity_counts.get(op_type, 0) + 1

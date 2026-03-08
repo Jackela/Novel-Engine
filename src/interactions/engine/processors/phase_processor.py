@@ -3,9 +3,9 @@
 Interaction phase processing and template initialization.
 """
 
-import logging
+import structlog
 from datetime import datetime
-from typing import Dict
+from typing import Any, Dict
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
@@ -15,7 +15,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionType,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PhaseProcessor:
@@ -33,8 +33,7 @@ class PhaseProcessor:
 
             # Check enhanced phase requirements
             requirements_met = True
-            requirement_errors = []
-
+            requirement_errors: list[Any] = []
             for participant, requirements in phase.participant_requirements.items():
                 if participant not in context.participants:
                     requirements_met = False
@@ -70,7 +69,7 @@ class PhaseProcessor:
                 pass
 
             # Generate enhanced phase outputs
-            phase_outputs = []
+            phase_outputs: list[Any] = []
             for output_spec in phase.outputs:
                 if output_spec.startswith("memory_update:"):
                     # Generate memory update
@@ -123,7 +122,7 @@ class PhaseProcessor:
                 error=ErrorInfo(code="PHASE_PROCESSING_FAILED", message=str(e)),
             )
 
-    def _initialize_interaction_templates(self):
+    def _initialize_interaction_templates(self) -> None:
         """Initialize enhanced interaction phase templates"""
         # This would load templates from files or define them programmatically
         # For now, we'll define basic templates for each interaction type

@@ -130,8 +130,7 @@ class DiplomaticPact(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate DiplomaticPact-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.faction_a_id or not self.faction_a_id.strip():
             errors.append("Faction A ID cannot be empty")
 
@@ -263,7 +262,9 @@ class DiplomaticPact(Entity):
             "faction_a_id": self.faction_a_id,
             "faction_b_id": self.faction_b_id,
             "signed_date": self.signed_date.isoformat(),
-            "expires_date": self.expires_date.isoformat() if self.expires_date else None,
+            "expires_date": (
+                self.expires_date.isoformat() if self.expires_date else None
+            ),
             "terms": self.terms,
             "is_broken": self.is_broken,
             "broken_date": self.broken_date.isoformat() if self.broken_date else None,
@@ -294,6 +295,7 @@ class DiplomaticPact(Entity):
         expires = None
         if duration_days:
             from datetime import timedelta
+
             expires = datetime.now() + timedelta(days=duration_days)
 
         return cls(
@@ -328,6 +330,7 @@ class DiplomaticPact(Entity):
         expires = None
         if duration_days:
             from datetime import timedelta
+
             expires = datetime.now() + timedelta(days=duration_days)
 
         return cls(
@@ -357,7 +360,7 @@ class DiplomaticPact(Entity):
         Returns:
             A new DiplomaticPact configured as a war declaration.
         """
-        terms = {}
+        terms: dict[Any, Any] = {}
         if casus_belli:
             terms["casus_belli"] = casus_belli
 

@@ -7,7 +7,7 @@ Command handlers contain the application logic for processing commands
 and coordinating between domain objects and infrastructure services.
 """
 
-import logging
+import structlog
 
 from ...domain.aggregates.turn_brief import TurnBrief
 from ...domain.repositories.turn_brief_repository import (
@@ -28,7 +28,7 @@ from .subjective_commands import (
     UpdatePerceptionCapabilitiesCommand,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SubjectiveCommandHandlerException(Exception):
@@ -46,9 +46,9 @@ class InvalidCommandException(SubjectiveCommandHandlerException):
 class CreateTurnBriefCommandHandler:
     """Handler for CreateTurnBriefCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: CreateTurnBriefCommand) -> SubjectiveId:
         """
@@ -102,9 +102,9 @@ class CreateTurnBriefCommandHandler:
 class UpdatePerceptionCapabilitiesCommandHandler:
     """Handler for UpdatePerceptionCapabilitiesCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: UpdatePerceptionCapabilitiesCommand) -> None:
         """
@@ -154,9 +154,9 @@ class UpdatePerceptionCapabilitiesCommandHandler:
 class UpdateAwarenessStateCommandHandler:
     """Handler for UpdateAwarenessStateCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: UpdateAwarenessStateCommand) -> None:
         """
@@ -232,10 +232,10 @@ class AddPerceptionCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: AddPerceptionCommand) -> None:
         """
@@ -308,9 +308,9 @@ class AddPerceptionCommandHandler:
 class RevealKnowledgeCommandHandler:
     """Handler for RevealKnowledgeCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: RevealKnowledgeCommand) -> None:
         """
@@ -354,9 +354,9 @@ class RevealKnowledgeCommandHandler:
 class DetectThreatCommandHandler:
     """Handler for DetectThreatCommand."""
 
-    def __init__(self, repository: ITurnBriefRepository):
+    def __init__(self, repository: ITurnBriefRepository) -> None:
         self.repository = repository
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: DetectThreatCommand) -> None:
         """
@@ -410,10 +410,10 @@ class UpdateFogOfWarCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: UpdateFogOfWarCommand) -> None:
         """
@@ -477,10 +477,10 @@ class ShareInformationCommandHandler:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle(self, command: ShareInformationCommand) -> int:
         """
@@ -571,7 +571,7 @@ class SubjectiveCommandHandlerRegistry:
 
     def __init__(
         self, repository: ITurnBriefRepository, fog_of_war_service: FogOfWarService
-    ):
+    ) -> None:
         self.repository = repository
         self.fog_of_war_service = fog_of_war_service
 
@@ -593,7 +593,7 @@ class SubjectiveCommandHandlerRegistry:
             repository, fog_of_war_service
         )
 
-        self.logger = logger.getChild(self.__class__.__name__)
+        self.logger = logger.bind(component=self.__class__.__name__)
 
     def handle_create_turn_brief(self, command: CreateTurnBriefCommand) -> SubjectiveId:
         """Handle CreateTurnBriefCommand."""

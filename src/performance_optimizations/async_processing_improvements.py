@@ -10,7 +10,7 @@ Wave 5.3 - Async Processing & Concurrency Enhancement
 
 import asyncio
 import json
-import logging
+import structlog
 import time
 from collections import deque
 from contextlib import asynccontextmanager
@@ -23,7 +23,7 @@ import aiofiles
 import aiohttp
 import psutil
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TaskPriority(Enum):
@@ -48,7 +48,7 @@ class AsyncTask:
     max_retries: int = 3
     tags: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timeout_seconds is None:
             # Set default timeout based on priority
             if self.priority == TaskPriority.CRITICAL:
@@ -95,7 +95,7 @@ class AsyncTaskScheduler:
         max_concurrent_tasks: int = 50,
         max_queue_size: int = 1000,
         enable_metrics: bool = True,
-    ):
+    ) -> None:
         self.max_concurrent_tasks = max_concurrent_tasks
         self.max_queue_size = max_queue_size
         self.enable_metrics = enable_metrics
@@ -130,7 +130,7 @@ class AsyncTaskScheduler:
             f"queue_size={max_queue_size}"
         )
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the async task scheduler."""
         if self.scheduler_active:
             logger.warning("Scheduler already running")
@@ -149,7 +149,7 @@ class AsyncTaskScheduler:
 
         logger.info("AsyncTaskScheduler started")
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the async task scheduler gracefully."""
         self.scheduler_active = False
         self.resource_monitor_active = False
@@ -217,7 +217,7 @@ class AsyncTaskScheduler:
 
         raise asyncio.TimeoutError(f"Task {task_id} result timeout after {timeout}s")
 
-    async def _process_priority_queue(self, priority: TaskPriority):
+    async def _process_priority_queue(self, priority: TaskPriority) -> None:
         """Process tasks from a specific priority queue."""
         queue = self.priority_queues[priority]
 
@@ -247,7 +247,7 @@ class AsyncTaskScheduler:
                 logger.error(f"Priority queue {priority.name} processing error: {e}")
                 await asyncio.sleep(1.0)  # Brief pause on error
 
-    async def _execute_task(self, task: AsyncTask):
+    async def _execute_task(self, task: AsyncTask) -> None:
         """Execute a single async task with timeout and retry logic."""
         start_time = time.time()
 
@@ -312,7 +312,7 @@ class AsyncTaskScheduler:
             if task.task_id in self.running_tasks:
                 del self.running_tasks[task.task_id]
 
-    async def _resource_monitor(self):
+    async def _resource_monitor(self) -> None:
         """Monitor system resources and adjust concurrency."""
         while self.resource_monitor_active:
             try:
@@ -379,7 +379,7 @@ class AsyncHttpClient:
         max_connections_per_host: int = 20,
         connection_timeout: float = 10.0,
         request_timeout: float = 30.0,
-    ):
+    ) -> None:
         self.max_connections = max_connections
         self.max_connections_per_host = max_connections_per_host
         self.connection_timeout = connection_timeout
@@ -405,7 +405,7 @@ class AsyncHttpClient:
             f"per_host={max_connections_per_host}"
         )
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> None:
         """Async context manager entry."""
         await self.start()
         return self
@@ -414,7 +414,7 @@ class AsyncHttpClient:
         """Async context manager exit."""
         await self.close()
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the HTTP client session."""
         if self.session is None:
             timeout = aiohttp.ClientTimeout(
@@ -428,7 +428,7 @@ class AsyncHttpClient:
             )
             logger.debug("AsyncHttpClient session started")
 
-    async def close(self):
+    async def close(self) -> None:
         """Close the HTTP client session."""
         if self.session:
             await self.session.close()
@@ -696,7 +696,7 @@ class ConcurrentAgentProcessor:
     Eliminates agent processing bottlenecks through optimized concurrency.
     """
 
-    def __init__(self, max_concurrent_agents: int = 20):
+    def __init__(self, max_concurrent_agents: int = 20) -> None:
         self.max_concurrent_agents = max_concurrent_agents
         self.semaphore = asyncio.Semaphore(max_concurrent_agents)
         self.http_client = AsyncHttpClient()
@@ -744,7 +744,7 @@ class ConcurrentAgentProcessor:
             results = await asyncio.gather(*processing_tasks, return_exceptions=True)
 
             # Process results
-            processed_results = []
+            processed_results: list[Any] = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     processed_results.append(

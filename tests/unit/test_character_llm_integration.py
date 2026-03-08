@@ -5,7 +5,7 @@ import pytest
 from src.core.character_llm_integration import LLMIntegration
 from src.core.types.shared_types import ActionPriority
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.mark.integration

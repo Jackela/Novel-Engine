@@ -22,7 +22,7 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 class ChunkingError(Exception):
     """Exception raised for chunking strategy errors."""
 
-    def __init__(self, message: str, code: str = "CHUNKING_ERROR"):
+    def __init__(self, message: str, code: str = "CHUNKING_ERROR") -> None:
         """
         Initialize chunking error.
 
@@ -53,7 +53,7 @@ class Chunk:
         text: str,
         index: int,
         metadata: Optional[dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Initialize a Chunk.
 

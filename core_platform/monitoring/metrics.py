@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional
 class BaseMetrics:
     """Base class for metrics collection."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize base metrics."""
         self._metrics: Dict[str, Any] = defaultdict(int)
         self._timing_metrics: Dict[str, list] = defaultdict(list)
@@ -77,7 +77,7 @@ class BaseMetrics:
 class OutboxMetrics(BaseMetrics):
     """Metrics for outbox pattern operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize outbox metrics."""
         super().__init__()
 
@@ -122,7 +122,7 @@ class OutboxMetrics(BaseMetrics):
 class EventBusMetrics(BaseMetrics):
     """Metrics for event bus operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize event bus metrics."""
         super().__init__()
         self._event_type_counters = Counter()
@@ -185,7 +185,7 @@ class EventBusMetrics(BaseMetrics):
 class KafkaMetrics(BaseMetrics):
     """Metrics for Kafka client operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Kafka metrics."""
         super().__init__()
 
@@ -223,7 +223,7 @@ class KafkaMetrics(BaseMetrics):
 class MessagingMetrics(BaseMetrics):
     """Metrics for messaging operations including Kafka and event bus."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize messaging metrics."""
         super().__init__()
 
@@ -246,7 +246,7 @@ class MessagingMetrics(BaseMetrics):
 class ProjectorMetrics(BaseMetrics):
     """Metrics for projection operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize projector metrics."""
         super().__init__()
 
@@ -269,7 +269,7 @@ class ProjectorMetrics(BaseMetrics):
 class DatabaseMetrics(BaseMetrics):
     """Metrics for database operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize database metrics."""
         super().__init__()
 

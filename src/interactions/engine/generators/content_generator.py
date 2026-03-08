@@ -3,8 +3,8 @@
 Content generation for interactions.
 """
 
-import logging
-from typing import Optional
+import structlog
+from typing import Any, Optional
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
@@ -16,13 +16,13 @@ from src.interactions.interaction_engine_system.core.types import (
 from src.templates.context_renderer import ContextRenderer, RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContentGenerator:
     """Generates interaction content and context."""
 
-    def __init__(self, context_renderer: Optional[ContextRenderer] = None):
+    def __init__(self, context_renderer: Optional[ContextRenderer] = None) -> None:
         self.context_renderer = context_renderer
 
     async def _generate_initial_context(
@@ -30,8 +30,7 @@ class ContentGenerator:
     ) -> StandardResponse:
         """Generate enhanced initial context for interaction participants"""
         try:
-            participant_contexts = {}
-
+            participant_contexts: dict[Any, Any] = {}
             for participant in context.participants:
                 # Create enhanced template context for participant
                 template_context = TemplateContext(
@@ -105,8 +104,7 @@ class ContentGenerator:
     ) -> StandardResponse:
         """Generate enhanced content outputs for interaction"""
         try:
-            generated_content = []
-
+            generated_content: list[Any] = []
             # Generate interaction summary
             summary_template_context = TemplateContext(
                 agent_id=context.initiator or "system",

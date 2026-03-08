@@ -7,6 +7,7 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -51,7 +52,7 @@ class EnhancedMultiAgentBridge:
         chronicler_agent: Optional[ChroniclerAgent] = None,
         coordination_config: Optional[LLMCoordinationConfig] = None,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         """
         Initialize modular enhanced multi-agent bridge.
 
@@ -66,7 +67,7 @@ class EnhancedMultiAgentBridge:
         self.director_agent = director_agent
         self.chronicler_agent = chronicler_agent
         self.config = coordination_config or LLMCoordinationConfig()
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Agent registry
         self._agents: Dict[str, PersonaAgent] = {}
@@ -108,13 +109,13 @@ class EnhancedMultiAgentBridge:
                 performance_budget=self.performance_budget,
                 max_batch_size=self.config.max_batch_size,
                 batch_timeout_ms=self.config.batch_timeout_ms,
-                logger=self.logger.getChild("llm_processor"),
+                logger=self.logger.bind(component="llm_processor"),
             )
 
             # Dialogue manager
             self.dialogue_manager = DialogueManager(
                 llm_processor=self.llm_processor,
-                logger=self.logger.getChild("dialogue"),
+                logger=self.logger.bind(component="dialogue"),
             )
 
             # Performance metrics
@@ -203,7 +204,7 @@ class EnhancedMultiAgentBridge:
             dialogue_opportunities = await self._identify_dialogue_opportunities()
 
             # Execute agent dialogues
-            dialogue_results = []
+            dialogue_results: list[Any] = []
             fast_mode = self._should_use_fast_mode()
 
             for opportunity in dialogue_opportunities:
@@ -226,7 +227,7 @@ class EnhancedMultiAgentBridge:
                 dialogue_results.append(dialogue_result)
 
             # Run base simulation turn if director agent is available
-            base_turn_result = {}
+            base_turn_result: dict[Any, Any] = {}
             if self.director_agent and hasattr(self.director_agent, "run_turn"):
                 try:
                     base_turn_result = await self.director_agent.run_turn(turn_data)
@@ -352,7 +353,7 @@ class EnhancedMultiAgentBridge:
                 return {"error": "agent_not_found", "agent_id": agent_id}
 
             # Get basic agent data
-            basic_status = {}
+            basic_status: dict[Any, Any] = {}
             if hasattr(agent, "get_current_state"):
                 basic_status = await agent.get_current_state()
 
@@ -434,7 +435,7 @@ class EnhancedMultiAgentBridge:
     async def _identify_dialogue_opportunities(self) -> List[Dict[str, Any]]:
         """Identify opportunities for agent dialogues."""
         try:
-            opportunities = []
+            opportunities: list[Any] = []
             agents = list(self._agents.keys())
 
             # Simple opportunity identification - could be enhanced with AI
@@ -568,7 +569,7 @@ class EnhancedMultiAgentBridge:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, name: str) -> None:
         """Provide backward compatibility for legacy method calls."""
         # Common legacy method mappings
         legacy_mappings = {

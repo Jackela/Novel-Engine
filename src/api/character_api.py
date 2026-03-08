@@ -6,6 +6,7 @@ API endpoints for character creation, customization, and management.
 """
 
 import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -16,7 +17,7 @@ from src.core.data_models import CharacterIdentity, CharacterState, EmotionalSta
 from src.core.system_orchestrator import SystemOrchestrator
 from src.templates.character.persona_models import CharacterArchetype
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CharacterCreationRequest(BaseModel):
@@ -39,7 +40,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("archetype", mode="before")
     @classmethod
-    def normalize_archetype(cls, value):
+    def normalize_archetype(cls, value) -> None:
         """
         Normalize archetype input for case-insensitive matching.
 
@@ -56,7 +57,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("agent_id")
     @classmethod
-    def validate_agent_id(cls, v):
+    def validate_agent_id(cls, v) -> None:
         """
         Validate agent ID format.
 
@@ -77,7 +78,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("skills")
     @classmethod
-    def validate_skills(cls, v):
+    def validate_skills(cls, v) -> None:
         """
         Validate skill values are within acceptable range.
 
@@ -124,17 +125,17 @@ class CharacterListResponse(BaseModel):
 class CharacterAPI:
     """API for character creation, customization, and management."""
 
-    def __init__(self, orchestrator: Optional[SystemOrchestrator]):
+    def __init__(self, orchestrator: Optional[SystemOrchestrator]) -> None:
         """Initializes the character API."""
         self.orchestrator = orchestrator
         logger.info("Character API initialized.")
 
-    def set_orchestrator(self, orchestrator: SystemOrchestrator):
+    def set_orchestrator(self, orchestrator: SystemOrchestrator) -> None:
         """Set the orchestrator after initialization."""
         self.orchestrator = orchestrator
         logger.info("Character API orchestrator set.")
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Sets up API routes."""
 
         @app.post("/api/characters", response_model=dict)
@@ -203,7 +204,7 @@ class CharacterAPI:
             except ValueError as e:
                 raise HTTPException(status_code=422, detail=str(e))
             except Exception as e:
-                logger.error(f"Error creating character: {e}")
+                logger.error("Error creating character: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/characters", response_model=CharacterListResponse)
@@ -217,8 +218,7 @@ class CharacterAPI:
             try:
                 # Get active agents from orchestrator
                 active_agents = getattr(self.orchestrator, "active_agents", {})
-                characters = []
-
+                characters: list[Any] = []
                 for agent_id, last_activity in active_agents.items():
                     characters.append(
                         CharacterResponse(
@@ -232,7 +232,7 @@ class CharacterAPI:
 
                 return CharacterListResponse(characters=characters)
             except Exception as e:
-                logger.error(f"Error listing characters: {e}")
+                logger.error("Error listing characters: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/characters/{character_id}", response_model=dict)
@@ -296,7 +296,7 @@ class CharacterAPI:
 
                 # For now, just acknowledge the update
                 # In the future, this would update the character state in the database
-                updates = {}
+                updates: dict[Any, Any] = {}
                 if request.name:
                     updates["name"] = request.name
                 if request.background_summary:

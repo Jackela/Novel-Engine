@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 from src.contexts.world.infrastructure.generators.llm_world_generator import (
     CharacterData,
@@ -367,26 +367,17 @@ class TestRelationshipHistoryGeneration:
     """Integration-style tests for relationship history generation with mocked API."""
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_history_success(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         character_a: CharacterData,
         character_b: CharacterData,
         sample_history_response: Dict[str, Any],
     ) -> None:
         """Test successful relationship history generation with mocked API."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(sample_history_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(sample_history_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = generator.generate_relationship_history(
@@ -403,21 +394,16 @@ class TestRelationshipHistoryGeneration:
         assert result.current_status is not None
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_history_api_error_returns_error_result(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         character_a: CharacterData,
         character_b: CharacterData,
     ) -> None:
         """Test that API errors return an error result."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.text = "Internal Server Error"
-        mock_post.return_value = mock_response
+        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = generator.generate_relationship_history(
@@ -451,12 +437,10 @@ class TestRelationshipHistoryGeneration:
         assert "GEMINI_API_KEY" in result.error
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_history_with_high_romance(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         character_a: CharacterData,
         character_b: CharacterData,
@@ -472,14 +456,7 @@ class TestRelationshipHistoryGeneration:
             "current_status": "Deeply in love, planning their future together",
         }
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(romantic_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(romantic_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = generator.generate_relationship_history(
@@ -493,12 +470,10 @@ class TestRelationshipHistoryGeneration:
         assert "ballroom" in result.backstory or "connection" in result.backstory
 
     @pytest.mark.integration
-    @patch(
-        "src.contexts.world.infrastructure.generators.llm_world_generator.requests.post"
-    )
+    @patch.object(LLMWorldGenerator, "_call_gemini")
     def test_generate_history_with_low_trust(
         self,
-        mock_post: MagicMock,
+        mock_call: MagicMock,
         generator: LLMWorldGenerator,
         character_a: CharacterData,
         character_b: CharacterData,
@@ -515,14 +490,7 @@ class TestRelationshipHistoryGeneration:
             "current_status": "Bitter enemies who avoid each other when possible",
         }
 
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [
-                {"content": {"parts": [{"text": json.dumps(hostile_response)}]}}
-            ]
-        }
-        mock_post.return_value = mock_response
+        mock_call.return_value = json.dumps(hostile_response)
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             result = generator.generate_relationship_history(

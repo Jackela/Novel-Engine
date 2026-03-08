@@ -13,13 +13,13 @@ This component manages how agents learn, adapt, and remember experiences
 while maintaining separation from decision-making and character interpretation.
 """
 
-import logging
 import os
+
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List
 
-# Configure logging
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class MemoryInterface:
@@ -35,7 +35,7 @@ class MemoryInterface:
     - Memory retrieval and analysis
     """
 
-    def __init__(self, agent_core: Any, character_directory_path: str):
+    def __init__(self, agent_core: Any, character_directory_path: str) -> None:
         """
         Initialize the MemoryInterface.
 
@@ -58,7 +58,7 @@ class MemoryInterface:
         self.experiences_processed = 0
         self.significant_experiences = 0
 
-        logger.info("MemoryInterface initialized")
+        logger.info("memory_interface_initialized")
 
     def update_internal_memory(self, new_log: Dict[str, Any]) -> None:
         """
@@ -89,13 +89,15 @@ class MemoryInterface:
         """
         try:
             logger.info(
-                f"Agent {self.agent_core.agent_id} updating internal memory with new experience"
+                "updating_internal_memory",
+                agent_id=self.agent_core.agent_id
             )
 
             # Validate input format
             if not isinstance(new_log, dict):
                 logger.warning(
-                    f"Invalid memory log format for agent {self.agent_core.agent_id}"
+                    "invalid_memory_log_format",
+                    agent_id=self.agent_core.agent_id
                 )
                 return
 
@@ -132,7 +134,8 @@ class MemoryInterface:
                 self.significant_experiences += 1
                 self._manage_long_term_memory_capacity()
                 logger.info(
-                    f"Storing significant event in long-term memory for {self.agent_core.agent_id}"
+                    "storing_significant_event_long_term",
+                    agent_id=self.agent_core.agent_id
                 )
 
             # Update relationships based on the experience
@@ -150,12 +153,17 @@ class MemoryInterface:
 
             # Log the memory update
             logger.info(
-                f"Memory updated for {self.agent_core.agent_id}: {event_type} - {description[:50]}..."
+                "memory_updated",
+                agent_id=self.agent_core.agent_id,
+                event_type=event_type,
+                description_preview=description[:50]
             )
 
         except Exception as e:
             logger.error(
-                f"Error updating internal memory for agent {self.agent_core.agent_id}: {str(e)}"
+                "error_updating_internal_memory",
+                agent_id=self.agent_core.agent_id,
+                error=str(e)
             )
 
     def update_memory(self, event_string: str) -> None:
@@ -173,19 +181,23 @@ class MemoryInterface:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             # Format the log entry
-            log_entry = f"[{timestamp}] {event_string}\\n"
+            log_entry = f"[{timestamp}] {event_string}\n"
 
             # Append to memory.log file
             with open(self.memory_log_path, "a", encoding="utf-8") as file:
                 file.write(log_entry)
 
             logger.debug(
-                f"Persistent memory updated for {self.agent_core.agent_id}: {event_string[:50]}..."
+                "persistent_memory_updated",
+                agent_id=self.agent_core.agent_id,
+                event_preview=event_string[:50]
             )
 
         except Exception as e:
             logger.error(
-                f"Error updating persistent memory for agent {self.agent_core.agent_id}: {str(e)}"
+                "error_updating_persistent_memory",
+                agent_id=self.agent_core.agent_id,
+                error=str(e)
             )
 
     def _generate_personal_interpretation(self, experience: Dict[str, Any]) -> str:
@@ -251,7 +263,7 @@ class MemoryInterface:
             return interpretation
 
         except Exception as e:
-            logger.error(f"Error generating personal interpretation: {str(e)}")
+            logger.error("error_generating_personal_interpretation", error=str(e))
             return f"Character processed an experience of type {experience.get('event_type', 'unknown')}"
 
     def _should_store_in_long_term_memory(self, memory_entry: Dict[str, Any]) -> bool:
@@ -292,7 +304,7 @@ class MemoryInterface:
             return False
 
         except Exception as e:
-            logger.error(f"Error determining long-term memory storage: {str(e)}")
+            logger.error("error_determining_long_term_memory_storage", error=str(e))
             return False
 
     def _manage_short_term_memory_capacity(self) -> None:
@@ -301,10 +313,11 @@ class MemoryInterface:
             while len(self.agent_core.short_term_memory) > self.short_term_memory_limit:
                 removed_entry = self.agent_core.short_term_memory.pop(0)
                 logger.debug(
-                    f"Removed old short-term memory entry: {removed_entry.get('event_type', 'unknown')}"
+                    "removed_old_short_term_memory_entry",
+                    event_type=removed_entry.get("event_type", "unknown")
                 )
         except Exception as e:
-            logger.error(f"Error managing short-term memory capacity: {str(e)}")
+            logger.error("error_managing_short_term_memory_capacity", error=str(e))
 
     def _manage_long_term_memory_capacity(self) -> None:
         """Manage long-term memory capacity by removing less significant entries."""
@@ -316,10 +329,11 @@ class MemoryInterface:
                 )
                 removed_entry = self.agent_core.long_term_memory.pop(-1)
                 logger.debug(
-                    f"Removed low-significance long-term memory entry: {removed_entry.get('event_type', 'unknown')}"
+                    "removed_low_significance_long_term_memory_entry",
+                    event_type=removed_entry.get("event_type", "unknown")
                 )
         except Exception as e:
-            logger.error(f"Error managing long-term memory capacity: {str(e)}")
+            logger.error("error_managing_long_term_memory_capacity", error=str(e))
 
     def _update_relationships_from_experience(self, experience: Dict[str, Any]) -> None:
         """
@@ -375,11 +389,14 @@ class MemoryInterface:
                     self.agent_core.add_relationship(participant, new_relationship)
 
                     logger.debug(
-                        f"Relationship with {participant} changed by {relationship_change} to {new_relationship}"
+                        "relationship_changed",
+                        participant=participant,
+                        change=relationship_change,
+                        new_value=new_relationship
                     )
 
         except Exception as e:
-            logger.error(f"Error updating relationships from experience: {str(e)}")
+            logger.error("error_updating_relationships_from_experience", error=str(e))
 
     def _update_worldview_from_experience(self, experience: Dict[str, Any]) -> None:
         """
@@ -444,7 +461,7 @@ class MemoryInterface:
                         )
 
         except Exception as e:
-            logger.error(f"Error updating worldview from experience: {str(e)}")
+            logger.error("error_updating_worldview_from_experience", error=str(e))
 
     def _assess_location_threat_from_experience(
         self, experience: Dict[str, Any]
@@ -533,7 +550,7 @@ class MemoryInterface:
                     )
 
         except Exception as e:
-            logger.error(f"Error updating personality from experience: {str(e)}")
+            logger.error("error_updating_personality_from_experience", error=str(e))
 
     def get_recent_memories(self, count: int = 5) -> List[Dict[str, Any]]:
         """
@@ -553,7 +570,7 @@ class MemoryInterface:
             )
             return list(reversed(recent_memories))  # Most recent first
         except Exception as e:
-            logger.error(f"Error getting recent memories: {str(e)}")
+            logger.error("error_getting_recent_memories", error=str(e))
             return []
 
     def get_significant_memories(self, count: int = 10) -> List[Dict[str, Any]]:
@@ -578,7 +595,7 @@ class MemoryInterface:
             )
             return sorted_memories[:count]
         except Exception as e:
-            logger.error(f"Error getting significant memories: {str(e)}")
+            logger.error("error_getting_significant_memories", error=str(e))
             return []
 
     def search_memories(
@@ -595,10 +612,10 @@ class MemoryInterface:
             List of matching memory entries
         """
         try:
-            matching_memories = []
+            matching_memories: list[Any] = []
             search_lower = search_term.lower()
 
-            memories_to_search = []
+            memories_to_search: list[Any] = []
             if memory_type in ["short_term", "all"]:
                 memories_to_search.extend(self.agent_core.short_term_memory)
             if memory_type in ["long_term", "all"]:
@@ -620,7 +637,7 @@ class MemoryInterface:
 
             return matching_memories
         except Exception as e:
-            logger.error(f"Error searching memories: {str(e)}")
+            logger.error("error_searching_memories", error=str(e))
             return []
 
     def get_memory_metrics(self) -> Dict[str, Any]:
@@ -643,7 +660,7 @@ class MemoryInterface:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error generating memory metrics: {str(e)}")
+            logger.error("error_generating_memory_metrics", error=str(e))
             return {"error": str(e)}
 
     def load_persistent_memories(self) -> List[str]:
@@ -663,12 +680,14 @@ class MemoryInterface:
             # Clean up memory lines
             memories = [line.strip() for line in memory_lines if line.strip()]
             logger.info(
-                f"Loaded {len(memories)} persistent memories for {self.agent_core.agent_id}"
+                "loaded_persistent_memories",
+                count=len(memories),
+                agent_id=self.agent_core.agent_id
             )
 
             return memories
         except Exception as e:
-            logger.error(f"Error loading persistent memories: {str(e)}")
+            logger.error("error_loading_persistent_memories", error=str(e))
             return []
 
     def clear_short_term_memory(self) -> None:
@@ -677,10 +696,12 @@ class MemoryInterface:
             count = len(self.agent_core.short_term_memory)
             self.agent_core.short_term_memory.clear()
             logger.info(
-                f"Cleared {count} short-term memory entries for {self.agent_core.agent_id}"
+                "cleared_short_term_memory",
+                count=count,
+                agent_id=self.agent_core.agent_id
             )
         except Exception as e:
-            logger.error(f"Error clearing short-term memory: {str(e)}")
+            logger.error("error_clearing_short_term_memory", error=str(e))
 
     def consolidate_memories(self) -> int:
         """
@@ -704,10 +725,12 @@ class MemoryInterface:
             self._manage_long_term_memory_capacity()
 
             logger.info(
-                f"Consolidated {consolidated_count} memories to long-term for {self.agent_core.agent_id}"
+                "consolidated_memories",
+                count=consolidated_count,
+                agent_id=self.agent_core.agent_id
             )
             return consolidated_count
 
         except Exception as e:
-            logger.error(f"Error consolidating memories: {str(e)}")
+            logger.error("error_consolidating_memories", error=str(e))
             return 0

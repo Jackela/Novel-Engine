@@ -11,7 +11,7 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import logging
+import structlog
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -44,7 +44,7 @@ from src.contexts.knowledge.infrastructure.adapters.in_memory_prompt_repository 
     InMemoryPromptRepository,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 router = APIRouter(tags=["experiments"])
 
@@ -65,7 +65,7 @@ def get_experiment_repository(request: Request) -> InMemoryExperimentRepository:
     if repository is None:
         repository = InMemoryExperimentRepository()
         request.app.state.experiment_repository = repository
-        logger.info("Initialized InMemoryExperimentRepository")
+        logger.info("initialized_in_memory_experiment_repository")
     return repository
 
 
@@ -83,7 +83,7 @@ def get_prompt_repository(request: Request) -> InMemoryPromptRepository:
     if repository is None:
         repository = InMemoryPromptRepository()
         request.app.state.prompt_repository = repository
-        logger.info("Initialized InMemoryPromptRepository")
+        logger.info("initialized_in_memory_prompt_repository")
     return repository
 
 
@@ -169,7 +169,7 @@ async def list_experiments(
         )
 
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to list experiments: {e}")
+        logger.error("failed_to_list_experiments", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -200,7 +200,7 @@ async def experiments_health(
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except ExperimentRepositoryError:
-        logger.exception("Experiment repository health check failed")
+        logger.error("experiment_repository_health_check_failed", error="exception_occurred", error_type="exception")
         return {
             "status": "unhealthy",
             "error": "repository_error",
@@ -274,7 +274,7 @@ async def get_experiment(
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to get experiment: {e}")
+        logger.error("failed_to_get_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -305,7 +305,7 @@ async def get_experiment_results(
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to get experiment results: {e}")
+        logger.error("failed_to_get_experiment_results", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -338,7 +338,7 @@ async def delete_experiment(
     except HTTPException:
         raise
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to delete experiment: {e}")
+        logger.error("failed_to_delete_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -373,7 +373,7 @@ async def start_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to start experiment: {e}")
+        logger.error("failed_to_start_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -405,7 +405,7 @@ async def pause_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to pause experiment: {e}")
+        logger.error("failed_to_pause_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -437,7 +437,7 @@ async def resume_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to resume experiment: {e}")
+        logger.error("failed_to_resume_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -482,7 +482,7 @@ async def complete_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to complete experiment: {e}")
+        logger.error("failed_to_complete_experiment", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -523,7 +523,7 @@ async def record_result(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error(f"Failed to record result: {e}")
+        logger.error("failed_to_record_experiment_result", error=str(e), error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

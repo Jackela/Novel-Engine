@@ -383,7 +383,7 @@ class RepositoryException(Exception):
 class ConcurrencyException(RepositoryException):
     """Exception raised when optimistic concurrency control fails."""
 
-    def __init__(self, message: str, expected_version: int, actual_version: int):
+    def __init__(self, message: str, expected_version: int, actual_version: int) -> None:
         super().__init__(message)
         self.expected_version = expected_version
         self.actual_version = actual_version

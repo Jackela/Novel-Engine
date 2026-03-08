@@ -6,10 +6,9 @@ including psychology, memory, goals, dialogue generation, and profile generation
 Extracted from schemas.py as part of PREP-001 (Operation Vanguard).
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field, JsonValue, field_validator
-
 
 # === Character Psychology Schemas ===
 

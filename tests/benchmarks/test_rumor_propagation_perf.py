@@ -153,7 +153,8 @@ async def test_propagate_100_rumors(benchmark_setup: BenchmarkWorldBuilder) -> N
 
     print(f"\n100 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert len(result) > 0, "Should have updated rumors"
+    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert len(result.value) > 0, "Should have updated rumors"
     assert elapsed_ms < 100, f"Expected < 100ms, got {elapsed_ms:.2f}ms"
 
 
@@ -179,7 +180,8 @@ async def test_propagate_1000_rumors(benchmark_setup: BenchmarkWorldBuilder) -> 
 
     print(f"\n1,000 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert len(result) > 0, "Should have updated rumors"
+    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert len(result.value) > 0, "Should have updated rumors"
     assert elapsed_ms < 100, f"Expected < 100ms, got {elapsed_ms:.2f}ms"
 
 
@@ -210,7 +212,8 @@ async def test_propagate_10000_rumors(benchmark_setup: BenchmarkWorldBuilder) ->
 
     print(f"\n10,000 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert len(result) > 0, "Should have updated rumors"
+    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert len(result.value) > 0, "Should have updated rumors"
     assert elapsed_ms < 500, f"Expected < 500ms, got {elapsed_ms:.2f}ms"
 
 
@@ -253,8 +256,9 @@ async def test_propagate_rumors_batch_processing(
         result = await service.propagate_rumors_batch(world, batch_size=batch_size)
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 
-        results.append((batch_size, elapsed_ms, len(result)))
-        print(f"\nBatch size {batch_size}: {elapsed_ms:.2f}ms, {len(result)} rumors")
+        assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+        results.append((batch_size, elapsed_ms, len(result.value)))
+        print(f"\nBatch size {batch_size}: {elapsed_ms:.2f}ms, {len(result.value)} rumors")
 
     # All batch sizes should complete successfully
     for batch_size, elapsed_ms, count in results:
@@ -289,6 +293,8 @@ async def test_adjacency_caching_performance(
 
     print(f"\nFirst run (cold cache): {first_run_ms:.2f}ms")
 
+    assert result1.is_ok, f"First run failed: {result1.error if result1.is_error else ''}"
+
     # Second run with same service and repos (cache should be warm)
     # Use same builder/repos but create new rumors in existing locations
     calendar = builder.calendar
@@ -315,9 +321,11 @@ async def test_adjacency_caching_performance(
 
     print(f"Second run (warm cache): {second_run_ms:.2f}ms")
 
+    assert result2.is_ok, f"Second run failed: {result2.error if result2.is_error else ''}"
+
     # Both runs should complete successfully
-    assert len(result1) > 0, "First run should produce results"
-    assert len(result2) > 0, "Second run should produce results"
+    assert len(result1.value) > 0, "First run should produce results"
+    assert len(result2.value) > 0, "Second run should produce results"
 
 
 @pytest.mark.benchmark
@@ -347,10 +355,13 @@ async def test_propagation_correctness_under_load(
     # Propagate
     result = await service.propagate_rumors(world)
 
+    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    rumors = result.value
+
     # Verify results
-    total_locations_after = sum(len(r.current_locations) for r in result)
-    total_truth = sum(r.truth_value for r in result)
-    avg_truth = total_truth / len(result) if result else 0
+    total_locations_after = sum(len(r.current_locations) for r in rumors)
+    total_truth = sum(r.truth_value for r in rumors)
+    avg_truth = total_truth / len(rumors) if rumors else 0
 
     print(f"\nCorrectness check:")
     print(f"  Initial locations: {initial_locations_count}")
@@ -364,7 +375,7 @@ async def test_propagation_correctness_under_load(
     assert avg_truth < 90, "Truth should decay during propagation"
 
     # No duplicate locations in any rumor
-    for rumor in result:
+    for rumor in rumors:
         assert len(rumor.current_locations) == len(set(rumor.current_locations)), \
             f"Rumor {rumor.rumor_id} has duplicate locations"
 
@@ -407,8 +418,10 @@ async def test_memory_efficiency_with_large_world(
     # Force garbage collection after
     gc.collect()
 
-    print(f"\nLarge world (2500 rumors) processed in: {elapsed_ms:.2f}ms")
-    print(f"  Result count: {len(result)}")
+    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
 
-    assert len(result) > 0, "Should produce results"
+    print(f"\nLarge world (2500 rumors) processed in: {elapsed_ms:.2f}ms")
+    print(f"  Result count: {len(result.value)}")
+
+    assert len(result.value) > 0, "Should produce results"
     assert elapsed_ms < 300, f"Should complete in reasonable time, got {elapsed_ms:.2f}ms"

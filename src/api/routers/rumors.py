@@ -35,9 +35,9 @@ def reset_rumors_storage() -> None:
     """Reset rumors storage (for testing)."""
     global _rumors_storage
     _rumors_storage = {}
-
-
-def _get_mock_rumors(world_id: str, location_id: Optional[str] = None) -> List[Dict[str, Any]]:
+def _get_mock_rumors(
+    world_id: str, location_id: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Get mock rumors for development.
 
     In production, this would fetch from a repository.
@@ -124,7 +124,11 @@ def _get_mock_rumors(world_id: str, location_id: Optional[str] = None) -> List[D
                 "origin_type": "player",
                 "source_event_id": None,
                 "origin_location_id": "loc-lighthouse",
-                "current_locations": ["loc-lighthouse", "loc-fishing-village", "loc-tavern"],
+                "current_locations": [
+                    "loc-lighthouse",
+                    "loc-fishing-village",
+                    "loc-tavern",
+                ],
                 "created_date": {
                     "year": 1042,
                     "month": 3,
@@ -148,7 +152,9 @@ def _get_mock_rumors(world_id: str, location_id: Optional[str] = None) -> List[D
 # === Helper Functions ===
 
 
-def _sort_rumors(rumors: List[Dict[str, Any]], sort_by: SortByEnum) -> List[Dict[str, Any]]:
+def _sort_rumors(
+    rumors: List[Dict[str, Any]], sort_by: SortByEnum
+) -> List[Dict[str, Any]]:
     """Sort rumors by the specified criteria."""
     if sort_by == SortByEnum.RECENT:
         # Sort by day descending (most recent first)

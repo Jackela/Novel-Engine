@@ -23,6 +23,8 @@ from typing import TYPE_CHECKING
 import structlog
 
 from ..services.knowledge_ingestion_service import RetrievedChunk
+from src.core.result import Error
+
 from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:
@@ -212,7 +214,14 @@ class RelevancePackingStrategy(IPackingStrategy):
 
     def _estimate_tokens(self, text: str, token_counter: TokenCounter) -> int:
         """Estimate tokens for content."""
-        return token_counter.count(text).token_count
+        result = token_counter.count(text)
+        if result.is_error:
+            # Fallback to rough estimation on error
+            return len(text) // 4
+        count_res = result.unwrap()
+        if count_res is None:
+            return len(text) // 4
+        return count_res.token_count
 
 
 class DiversityPackingStrategy(IPackingStrategy):
@@ -261,7 +270,13 @@ class DiversityPackingStrategy(IPackingStrategy):
                     continue
 
                 chunk = sources[source_key][idx]
-                chunk_tokens = token_counter.count(chunk.content).token_count
+                count_result = token_counter.count(chunk.content)
+                if count_result.is_error:
+                    continue
+                count_res = count_result.unwrap()
+                if count_res is None:
+                    continue
+                chunk_tokens = count_res.token_count
 
                 if total_tokens + chunk_tokens > available_tokens:
                     continue
@@ -335,7 +350,13 @@ class RemoveRedundancyPackingStrategy(IPackingStrategy):
         redundant_removed = len(sorted_chunks) - len(deduplicated)
 
         for chunk in deduplicated:
-            chunk_tokens = token_counter.count(chunk.content).token_count
+            count_result = token_counter.count(chunk.content)
+            if count_result.is_error:
+                continue
+            count_res = count_result.unwrap()
+            if count_res is None:
+                continue
+            chunk_tokens = count_res.token_count
             if total_tokens + chunk_tokens > available_tokens:
                 break
             packed.append(chunk)
@@ -398,7 +419,13 @@ class CompressSummariesPackingStrategy(IPackingStrategy):
         available_tokens = config.max_tokens - config.overhead_tokens
 
         for chunk in high_relevance:
-            chunk_tokens = token_counter.count(chunk.content).token_count
+            count_result = token_counter.count(chunk.content)
+            if count_result.is_error:
+                continue
+            count_res = count_result.unwrap()
+            if count_res is None:
+                continue
+            chunk_tokens = count_res.token_count
             if total_tokens + chunk_tokens > available_tokens:
                 break
             packed.append(chunk)
@@ -408,7 +435,13 @@ class CompressSummariesPackingStrategy(IPackingStrategy):
         compressed_count = 0
         for chunk in low_relevance:
             summary = self._create_summary(chunk)
-            summary_tokens = token_counter.count(summary).token_count
+            summary_count_result = token_counter.count(summary)
+            if summary_count_result.is_error:
+                continue
+            summary_count_res = summary_count_result.unwrap()
+            if summary_count_res is None:
+                continue
+            summary_tokens = summary_count_res.token_count
 
             if total_tokens + summary_tokens > available_tokens:
                 break
@@ -480,7 +513,7 @@ class ContextOptimizer:
         self,
         token_counter: TokenCounter | None = None,
         default_config: OptimizationConfig | None = None,
-    ):
+    ) -> None:
         """
         Initialize the context optimizer.
 
@@ -605,9 +638,18 @@ class ContextOptimizer:
         Returns:
             List of token counts in same order
         """
-        return [
-            self._token_counter.count(chunk.content).token_count for chunk in chunks
-        ]
+        token_counts = []
+        for chunk in chunks:
+            result = self._token_counter.count(chunk.content)
+            if result.is_error:
+                token_counts.append(len(chunk.content) // 4)  # Fallback estimation
+            else:
+                count_res = result.unwrap()
+                if count_res is None:
+                    token_counts.append(len(chunk.content) // 4)
+                else:
+                    token_counts.append(count_res.token_count)
+        return token_counts
 
     def _resolve_config(
         self,

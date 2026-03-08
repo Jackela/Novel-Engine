@@ -7,7 +7,7 @@ for production readiness and operational monitoring.
 """
 
 import asyncio
-import logging
+import structlog
 import sqlite3
 import time
 from dataclasses import dataclass, field
@@ -20,7 +20,7 @@ import psutil
 
 from .response_envelopes import HealthCheckData
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class HealthStatus(str, Enum):
@@ -85,7 +85,7 @@ class HealthChecker:
         check_func: Callable[[], Awaitable[Dict[str, Any]]],
         timeout_seconds: float = 5.0,
         critical: bool = True,
-    ):
+    ) -> None:
         self.name = name
         self.component_type = component_type
         self.check_func = check_func
@@ -142,7 +142,7 @@ class HealthChecker:
 class HealthMonitor:
     """Comprehensive health monitoring system."""
 
-    def __init__(self, app_start_time: Optional[datetime] = None):
+    def __init__(self, app_start_time: Optional[datetime] = None) -> None:
         self.app_start_time = app_start_time or datetime.now()
         self.health_checkers: List[HealthChecker] = []
         self.last_check_time: Optional[datetime] = None
@@ -150,12 +150,12 @@ class HealthMonitor:
         self.check_history: List[SystemHealth] = []
         self.max_history_size = 100
 
-    def register_checker(self, checker: HealthChecker):
+    def register_checker(self, checker: HealthChecker) -> None:
         """Register a health checker."""
         self.health_checkers.append(checker)
-        logger.info(f"Registered health checker: {checker.name}")
+        logger.info("Registered health checker: %s", checker.name)
 
-    def register_database_check(self, database_path: str):
+    def register_database_check(self, database_path: str) -> None:
         """Register database connectivity check."""
 
         async def check_database():
@@ -202,7 +202,7 @@ class HealthMonitor:
         )
         self.register_checker(checker)
 
-    def register_orchestrator_check(self, orchestrator):
+    def register_orchestrator_check(self, orchestrator) -> None:
         """Register system orchestrator check."""
 
         async def check_orchestrator():
@@ -245,7 +245,7 @@ class HealthMonitor:
         )
         self.register_checker(checker)
 
-    def register_system_resource_checks(self):
+    def register_system_resource_checks(self) -> None:
         """Register system resource health checks."""
 
         # Memory check
@@ -352,7 +352,7 @@ class HealthMonitor:
             )
         )
 
-    def register_chromadb_check(self, persist_dir: str = ".data/chroma"):
+    def register_chromadb_check(self, persist_dir: str = ".data/chroma") -> None:
         """
         Register ChromaDB vector store health check.
 

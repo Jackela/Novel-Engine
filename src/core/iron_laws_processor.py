@@ -8,6 +8,7 @@ capabilities for minor violations. Extracted from DirectorAgent for better modul
 """
 
 import logging
+import structlog
 import math
 import time
 from copy import deepcopy
@@ -42,13 +43,13 @@ except ImportError as e:  # pragma: no cover - fallback for tooling-only context
     IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore
     ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class _ReportWrapper(dict):
     """Dict-like view of an IronLawsReport that still exposes attributes."""
 
-    def __init__(self, report: IronLawsReport, **extra: Any):
+    def __init__(self, report: IronLawsReport, **extra: Any) -> None:
         data = report.model_dump()
         data.update(extra)
         super().__init__(data)
@@ -89,7 +90,7 @@ class IronLawsProcessor:
     - Law-specific validation logic
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the Iron Laws Processor."""
         self.validation_enabled = IRON_LAWS_AVAILABLE
         if not self.validation_enabled:
@@ -162,8 +163,7 @@ class IronLawsProcessor:
                 )
 
             # Initialize violation collection
-            all_violations = []
-
+            all_violations: list[Any] = []
             # Validate against each Iron Law
             all_violations.extend(
                 self._validate_causality_law(
@@ -192,7 +192,7 @@ class IronLawsProcessor:
 
             # Attempt repairs if there are violations
             repaired_action = None
-            repair_log = []
+            repair_log: list[Any] = []
             if all_violations and validation_result not in {
                 ValidationResult.INVALID,
                 ValidationResult.CATASTROPHIC_FAILURE,

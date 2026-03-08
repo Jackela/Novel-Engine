@@ -7,8 +7,9 @@ backward compatibility while providing enhanced enterprise-grade functionality.
 """
 
 import asyncio
-import logging
+import structlog
 from datetime import datetime
+from typing import Any, Optional
 
 # Import modular components
 from .core.types import (
@@ -27,20 +28,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -72,18 +73,18 @@ class InteractionEngine:
 
     def __init__(
         self,
-        config=None,
-        memory_manager=None,
-        character_manager=None,
-        equipment_manager=None,
-        logger=None,
-    ):
+        config: Any = None,
+        memory_manager: Any = None,
+        character_manager: Any = None,
+        equipment_manager: Any = None,
+        logger: Any = None,
+    ) -> None:
         """Initialize modular interaction engine."""
         self.config = config or InteractionEngineConfig()
         self.memory_manager = memory_manager
         self.character_manager = character_manager
         self.equipment_manager = equipment_manager
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Initialize modular components
         self.validator = InteractionValidator(self.config, self.logger)
@@ -115,7 +116,7 @@ class InteractionEngine:
 
         self.logger.info("Modular interaction engine initialized")
 
-    async def _initialize_engine(self):
+    async def _initialize_engine(self) -> None:
         """Initialize engine components."""
         try:
             # Start queue processing
@@ -129,7 +130,7 @@ class InteractionEngine:
         except Exception as e:
             self.logger.error(f"Engine initialization failed: {e}")
 
-    async def process_interaction(self, context, async_processing=False):
+    async def process_interaction(self, context: Any, async_processing: bool = False) -> Any:
         """Process a complete interaction through the modular engine."""
         try:
             if not self.is_initialized:
@@ -151,7 +152,7 @@ class InteractionEngine:
                 errors=[f"Processing failed: {str(e)}"],
             )
 
-    async def _process_interaction_sync(self, context):
+    async def _process_interaction_sync(self, context: Any) -> Any:
         """Process interaction synchronously through all phases."""
         processing_start = datetime.now()
 
@@ -230,7 +231,7 @@ class InteractionEngine:
                 errors=[f"Processing exception: {str(e)}"],
             )
 
-    async def _queue_interaction(self, context):
+    async def _queue_interaction(self, context: Any) -> Any:
         """Queue interaction for asynchronous processing."""
         try:
             return await self.queue_manager.queue_interaction(context)
@@ -245,7 +246,7 @@ class InteractionEngine:
                 ),
             )
 
-    def get_engine_status(self):
+    def get_engine_status(self) -> None:
         """Get comprehensive engine status."""
         current_time = datetime.now()
         uptime = (current_time - self.engine_stats["startup_time"]).total_seconds()
@@ -265,7 +266,7 @@ class InteractionEngine:
             ],
         }
 
-    async def shutdown_engine(self):
+    async def shutdown_engine(self) -> None:
         """Gracefully shutdown the engine."""
         try:
             self.logger.info("Shutting down interaction engine")
@@ -296,7 +297,7 @@ class InteractionEngine:
                 ),
             )
 
-    def validate_interaction_context(self, context):
+    def validate_interaction_context(self, context: Any) -> Any:
         """Validate interaction context without processing."""
         try:
             return asyncio.run(self.validator.validate_interaction_context(context))
@@ -310,14 +311,14 @@ class InteractionEngine:
                 ),
             )
 
-    def calculate_interaction_risk(self, context):
+    def calculate_interaction_risk(self, context: Any) -> Any:
         """Calculate risk assessment for interaction."""
         try:
             return self.validator.calculate_risk_assessment(context)
         except Exception as e:
             return {"risk_score": 0.5, "risk_level": "Unknown", "error": str(e)}
 
-    def _update_engine_stats(self, success, processing_time):
+    def _update_engine_stats(self, success: bool, processing_time: float) -> None:
         """Update engine processing statistics."""
         self.engine_stats["total_interactions_processed"] += 1
 
@@ -336,8 +337,8 @@ class InteractionEngine:
 
 
 def create_interaction_engine(
-    config=None, memory_manager=None, character_manager=None, equipment_manager=None
-):
+    config: Any = None, memory_manager: Any = None, character_manager: Any = None, equipment_manager: Any = None
+) -> Any:
     """Factory function to create interaction engine with optimal defaults."""
     if config is None:
         config = InteractionEngineConfig(
@@ -357,7 +358,7 @@ def create_interaction_engine(
     )
 
 
-def create_performance_optimized_config():
+def create_performance_optimized_config() -> None:
     """Create performance-optimized configuration."""
     return InteractionEngineConfig(
         max_concurrent_interactions=5,

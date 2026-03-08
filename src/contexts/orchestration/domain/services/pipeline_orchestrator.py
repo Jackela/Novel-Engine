@@ -29,7 +29,7 @@ class PipelineOrchestrator:
     - Track execution progress and metrics
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize pipeline orchestrator."""
         self.active_executions: Dict[UUID, Dict[str, Any]] = {}
         self.phase_handlers: Dict[PhaseType, Callable] = {}

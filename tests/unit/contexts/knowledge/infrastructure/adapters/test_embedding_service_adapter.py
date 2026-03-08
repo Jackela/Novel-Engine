@@ -23,7 +23,7 @@ from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter 
     EmbeddingServiceAdapter,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture

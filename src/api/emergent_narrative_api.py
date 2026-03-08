@@ -7,7 +7,7 @@ FastAPI endpoints for EmergentNarrativeEngine functionality including
 emergent narrative generation, causal graph access, and narrative coherence analysis.
 """
 
-import logging
+import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from src.core.data_models import StandardResponse
 from src.security.auth_system import Permission, get_current_user, require_permission
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -193,11 +193,11 @@ class NegotiationResponse(BaseModel):
 class EmergentNarrativeAPI:
     """API endpoints for EmergentNarrativeEngine functionality."""
 
-    def __init__(self, orchestrator=None):
+    def __init__(self, orchestrator=None) -> None:
         self.orchestrator = orchestrator
         self.emergent_narrative_engine = None
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup all emergent narrative API routes."""
 
         @app.post(
@@ -261,7 +261,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error generating emergent narrative: {e}")
+                logger.error("Error generating emergent narrative: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post(
@@ -325,7 +325,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error building narrative: {e}")
+                logger.error("Error building narrative: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -373,7 +373,7 @@ class EmergentNarrativeAPI:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting causal graph: {e}")
+                logger.error("Error getting causal graph: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(

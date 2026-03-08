@@ -16,7 +16,7 @@ Key Features:
 - Configuration caching for performance.
 """
 
-import logging
+import structlog
 import os
 import threading
 from dataclasses import dataclass, field
@@ -32,7 +32,7 @@ except ImportError:
     yaml = None
 
 # Configure logging for configuration operations
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 @dataclass
@@ -245,7 +245,7 @@ class ConfigLoader:
                     cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initialize the configuration loader if not already initialized.
 
@@ -595,7 +595,7 @@ class ConfigLoader:
         }
 
         # Apply environment overrides
-        applied_overrides = []
+        applied_overrides: list[Any] = []
         for env_var, setter in env_mappings.items():
             env_value = os.environ.get(env_var)
             if env_value is not None:
@@ -809,7 +809,7 @@ def get_campaign_log_filename() -> str:
 # Example usage and testing functions
 
 
-def example_usage():
+def example_usage() -> None:
     """
     Example usage of the configuration system.
 

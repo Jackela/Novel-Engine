@@ -3,7 +3,9 @@
 State and memory management for interactions.
 """
 
-import logging
+import structlog
+
+from typing import Any
 
 from src.core.data_models import (
     ErrorInfo,
@@ -16,7 +18,7 @@ from src.interactions.interaction_engine_system.core.types import (
     InteractionOutcome,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class StateManager:
@@ -71,8 +73,7 @@ class StateManager:
     ) -> StandardResponse:
         """Generate enhanced memory updates for interaction participants"""
         try:
-            memory_updates = []
-
+            memory_updates: list[Any] = []
             for participant in context.participants:
                 # Create interaction memory
                 interaction_memory = MemoryItem(

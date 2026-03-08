@@ -12,6 +12,9 @@ from unittest.mock import patch
 
 import pytest
 
+
+pytestmark = pytest.mark.unit
+
 try:
     from rank_bm25 import BM25Okapi  # noqa: F401 - imported for availability check
 
@@ -162,8 +165,9 @@ class TestBM25RetrieverIndexDocuments:
             content="Sir Aldric is a brave knight",
             tokens=["sir", "aldric", "is", "a", "brave", "knight"],
         )
-        count = retriever.index_documents([doc])
-        assert count == 1
+        result = retriever.index_documents([doc])
+        assert result.is_ok
+        assert result.unwrap() == 1
         assert "chunk_1" in retriever._documents
 
     def test_index_multiple_documents(self):
@@ -185,15 +189,17 @@ class TestBM25RetrieverIndexDocuments:
                 tokens=["wise", "wizard"],
             ),
         ]
-        count = retriever.index_documents(docs)
-        assert count == 2
+        result = retriever.index_documents(docs)
+        assert result.is_ok
+        assert result.unwrap() == 2
         assert len(retriever._documents) == 2
 
     def test_index_empty_list(self):
         """Test indexing an empty list of documents."""
         retriever = BM25Retriever()
-        count = retriever.index_documents([])
-        assert count == 0
+        result = retriever.index_documents([])
+        assert result.is_ok
+        assert result.unwrap() == 0
 
     def test_index_updates_existing_document(self):
         """Test that indexing same doc_id updates the document."""
@@ -212,10 +218,12 @@ class TestBM25RetrieverIndexDocuments:
             content="Very brave knight",  # Different content
             tokens=["very", "brave", "knight"],
         )
-        retriever.index_documents([doc1])
-        retriever.index_documents([doc2])
+        result1 = retriever.index_documents([doc1])
+        result2 = retriever.index_documents([doc2])
 
         # Should have only 1 document
+        assert result1.is_ok
+        assert result2.is_ok
         assert len(retriever._documents) == 1
         # Content should be updated
         assert retriever._documents["chunk_1"].content == "Very brave knight"
@@ -230,7 +238,8 @@ class TestBM25RetrieverIndexDocuments:
             content="Brave knight",
             tokens=["brave", "knight"],
         )
-        retriever.index_documents([doc], collection="custom_collection")
+        result = retriever.index_documents([doc], collection="custom_collection")
+        assert result.is_ok
         assert "custom_collection" in retriever._indices
         assert len(retriever._indices["custom_collection"]["documents"]) == 1
 
@@ -263,8 +272,9 @@ class TestBM25RetrieverIndexDocuments:
             tokens=["brave", "knight"],
         )
         # If rank-bm25 is installed, this should work
-        count = retriever.index_documents([doc])
-        assert count == 1
+        result = retriever.index_documents([doc])
+        assert result.is_ok
+        assert result.unwrap() == 1
 
 
 @pytest.mark.integration
@@ -489,7 +499,8 @@ class TestBM25RetrieverClearCollection:
             )
             for i in range(3)
         ]
-        retriever.index_documents(docs)
+        result = retriever.index_documents(docs)
+        assert result.is_ok
         count = retriever.clear_collection()
         assert count == 3
         assert len(retriever._indices["knowledge"]["documents"]) == 0
@@ -524,7 +535,8 @@ class TestBM25RetrieverGetStats:
                 tokens=["wise", "wizard"],
             ),
         ]
-        retriever.index_documents(docs)
+        result = retriever.index_documents(docs)
+        assert result.is_ok
 
         stats = retriever.get_stats()
         assert stats is not None
@@ -549,7 +561,8 @@ class TestBM25RetrieverGetStats:
             content="Brave knight",
             tokens=["brave", "knight"],
         )
-        retriever.index_documents([doc])
+        result = retriever.index_documents([doc])
+        assert result.is_ok
         retriever.clear_collection()
 
         stats = retriever.get_stats()
@@ -577,8 +590,9 @@ class TestBM25RetrieverIntegration:
             )
             for i in range(5)
         ]
-        count = retriever.index_documents(docs)
-        assert count == 5
+        result = retriever.index_documents(docs)
+        assert result.is_ok
+        assert result.unwrap() == 5
 
         # Search
         results = retriever.search("character", k=3)
@@ -605,7 +619,8 @@ class TestBM25RetrieverIntegration:
             content="Knight",
             tokens=["knight"],
         )
-        retriever.index_documents([doc1], collection="collection1")
+        result1 = retriever.index_documents([doc1], collection="collection1")
+        assert result1.is_ok
 
         # Index to collection2
         doc2 = IndexedDocument(
@@ -615,7 +630,8 @@ class TestBM25RetrieverIntegration:
             content="Wizard",
             tokens=["wizard"],
         )
-        retriever.index_documents([doc2], collection="collection2")
+        result2 = retriever.index_documents([doc2], collection="collection2")
+        assert result2.is_ok
 
         # Search collection1
         results1 = retriever.search("knight", collection="collection1")
@@ -640,7 +656,8 @@ class TestBM25RetrieverIntegration:
             )
             for i in range(3)
         ]
-        retriever.index_documents(docs)
+        result = retriever.index_documents(docs)
+        assert result.is_ok
 
         results1 = retriever.search("brave knight")
         results2 = retriever.search("brave knight")

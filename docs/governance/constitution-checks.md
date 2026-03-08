@@ -24,7 +24,7 @@
 - Failing Tests First: tests/unit/cache/test_cache_service.py (initially failing)
 - Test Suites: unit/integration/contract
 - Coverage Targets: >80% unit, >70% integration
-- Gating: docs/ci/examples/test-gates.yml
+- Gating: .github/workflows/ci.yml (Test Pyramid Quality Gate)
 - Status: Pending CI wiring
 
 ## Article IV — Single Source of Truth (SSOT)

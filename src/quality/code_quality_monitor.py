@@ -20,6 +20,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -29,7 +30,7 @@ from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class QualityMetric(str, Enum):
@@ -155,14 +156,14 @@ class ProjectQualityReport:
 class ComplexityAnalyzer(ast.NodeVisitor):
     """AST-based complexity analyzer"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.complexity = 0
         self.functions = []
         self.classes = []
         self.current_function = None
         self.current_class = None
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node) -> None:
         """Analyze function complexity"""
         self.current_function = {
             "name": node.name,
@@ -183,7 +184,7 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         self.complexity += self.current_function["complexity"]
         self.generic_visit(node)
 
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node) -> None:
         """Analyze class complexity"""
         self.current_class = {
             "name": node.name,
@@ -199,17 +200,17 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         self.classes.append(self.current_class)
         self.generic_visit(node)
 
-    def visit_If(self, node):
+    def visit_If(self, node) -> None:
         """Count conditional complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_While(self, node):
+    def visit_While(self, node) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_For(self, node):
+    def visit_For(self, node) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
@@ -218,7 +219,7 @@ class ComplexityAnalyzer(ast.NodeVisitor):
 class DuplicationDetector:
     """Code duplication detection"""
 
-    def __init__(self, min_lines: int = 6):
+    def __init__(self, min_lines: int = 6) -> None:
         self.min_lines = min_lines
         self.code_blocks = {}
         self.duplications = []
@@ -256,7 +257,7 @@ class DuplicationDetector:
 class TechnicalDebtCalculator:
     """Technical debt calculation and tracking"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.debt_rules = {
             "high_complexity": {"threshold": 10, "minutes_per_point": 15},
             "long_method": {"threshold": 50, "minutes": 30},
@@ -318,7 +319,7 @@ class QualityMonitor:
     Main code quality monitoring system
     """
 
-    def __init__(self, project_root: str = "."):
+    def __init__(self, project_root: str = ".") -> None:
         self.project_root = Path(project_root)
         self.complexity_analyzer = ComplexityAnalyzer()
         self.duplication_detector = DuplicationDetector()
@@ -334,7 +335,7 @@ class QualityMonitor:
         }
 
     async def analyze_project(
-        self, file_patterns: List[str] = None
+        self, file_patterns: Optional[List[str]] = None
     ) -> ProjectQualityReport:
         """Analyze entire project quality"""
         file_patterns = file_patterns or ["**/*.py"]
@@ -342,7 +343,7 @@ class QualityMonitor:
         logger.info("Starting comprehensive project quality analysis")
 
         # Find all Python files
-        python_files = []
+        python_files: list[Any] = []
         for pattern in file_patterns:
             python_files.extend(self.project_root.glob(pattern))
 
@@ -357,7 +358,7 @@ class QualityMonitor:
         ]
 
         # Analyze each file
-        file_reports = {}
+        file_reports: dict[Any, Any] = {}
         total_loc = 0
         total_complexity = 0
         total_debt_minutes = 0
@@ -513,7 +514,7 @@ class QualityMonitor:
         self, file_path: Path, content: str, complexity: float, duplication: float
     ) -> List[QualityIssue]:
         """Detect quality issues in file"""
-        issues = []
+        issues: list[Any] = []
         lines = content.split("\n")
 
         # High complexity issues
@@ -634,7 +635,7 @@ class QualityMonitor:
 
     def _generate_console_report(self, report: ProjectQualityReport) -> str:
         """Generate console-friendly report"""
-        output = []
+        output: list[Any] = []
         output.append("=" * 60)
         output.append(f"CODE QUALITY REPORT - {report.project_name}")
         output.append("=" * 60)
@@ -664,7 +665,7 @@ class QualityMonitor:
         output.append("")
 
         # Top issues
-        all_issues = []
+        all_issues: list[Any] = []
         for file_report in report.file_reports.values():
             all_issues.extend(file_report.issues)
 

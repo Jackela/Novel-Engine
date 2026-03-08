@@ -4,7 +4,7 @@ Persona persistence and file I/O.
 """
 
 import json
-import logging
+import structlog
 from pathlib import Path
 
 from src.templates.context_renderer import RenderFormat
@@ -15,16 +15,16 @@ from .persona_models import (
     CharacterPersona,
 )
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PersonaPersistence:
     """Handles persona file persistence and discovery."""
 
-    def __init__(self, personas_dir: Path):
+    def __init__(self, personas_dir: Path) -> None:
         self.personas_dir = personas_dir
 
-    def _discover_personas(self):
+    def _discover_personas(self) -> None:
         """Discover enhanced existing personas from files"""
         for persona_file in self.personas_directory.glob("*.json"):
             try:
@@ -69,7 +69,7 @@ class PersonaPersistence:
             except Exception as e:
                 logger.error(f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}")
 
-    async def _save_persona_to_file(self, persona: CharacterPersona):
+    async def _save_persona_to_file(self, persona: CharacterPersona) -> None:
         """Save enhanced persona to file"""
         persona_file = self.personas_directory / f"{persona.persona_id}.json"
 

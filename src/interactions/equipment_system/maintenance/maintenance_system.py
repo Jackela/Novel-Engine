@@ -9,6 +9,7 @@ Handles maintenance procedures, condition improvement, and preventive care.
 import asyncio
 import heapq
 import logging
+import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -25,20 +26,20 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None):
+        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None):
+        def get(self, key, default=None) -> None:
             return getattr(self, key, default)
 
-        def __getitem__(self, key):
+        def __getitem__(self, key) -> None:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True):
+        def __init__(self, code="", message="", recoverable=True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -69,7 +70,7 @@ class MaintenanceSystem:
 
     def __init__(
         self, config: EquipmentSystemConfig, logger: Optional[logging.Logger] = None
-    ):
+    ) -> None:
         """
         Initialize maintenance system.
 
@@ -78,7 +79,7 @@ class MaintenanceSystem:
             logger: Optional logger instance
         """
         self.config = config
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger or structlog.get_logger(__name__)
 
         # Maintenance scheduling
         self._maintenance_queue: List[Tuple[datetime, str]] = []  # (time, equipment_id)
@@ -459,8 +460,7 @@ class MaintenanceSystem:
         self, equipment_registry: Dict[str, DynamicEquipment]
     ) -> List[Dict[str, Any]]:
         """Get list of equipment with overdue maintenance."""
-        overdue_equipment = []
-
+        overdue_equipment: list[Any] = []
         for equipment_id, equipment in equipment_registry.items():
             maintenance_status = await self.get_maintenance_due(equipment)
 
@@ -496,9 +496,8 @@ class MaintenanceSystem:
                 maintenance_type, self._maintenance_litanies["routine"]
             )
 
-            completed_procedures = []
-            performed_litanies = []
-
+            completed_procedures: list[Any] = []
+            performed_litanies: list[Any] = []
             # Execute each procedure
             for procedure in procedures:
                 # Simulate procedure execution with success chance

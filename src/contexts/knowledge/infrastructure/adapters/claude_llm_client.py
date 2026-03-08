@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 import httpx
 import structlog
@@ -88,7 +88,7 @@ class ClaudeLLMClient:
         api_key: str | None = None,
         base_url: str | None = None,
         timeout: int = 60,
-    ):
+    ) -> None:
         """
         Initialize the Claude LLM client.
 
@@ -417,8 +417,7 @@ class ClaudeLLMClient:
         try:
             # Extract text from content blocks
             content_blocks = response_json["content"]
-            text_parts = []
-
+            text_parts: list[Any] = []
             for block in content_blocks:
                 if block.get("type") == "text":
                     text_parts.append(block.get("text", ""))

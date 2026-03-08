@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-import logging
+import structlog
 from typing import Any, AsyncIterator, Dict, Iterable
 
 from fastapi import HTTPException
@@ -10,14 +10,14 @@ from src.caching.global_chunk_cache import chunk_cache
 from src.caching.registry import invalidate_by_tags
 from src.metrics.global_metrics import metrics as global_metrics
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 def get_cache_metrics() -> Dict[str, Any]:
     try:
         return global_metrics.snapshot().to_dict()
     except Exception as exc:
-        logger.error("metrics snapshot error: %s", exc)
+        logger.error("metrics_snapshot_error", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="metrics error") from exc
 
 
@@ -26,7 +26,7 @@ def invalidate_cache(tags_all_of: Iterable[str]) -> Dict[str, Any]:
         removed = invalidate_by_tags(list(tags_all_of))
         return {"removed": int(removed)}
     except Exception as exc:
-        logger.error("invalidation error: %s", exc)
+        logger.error("cache_invalidation_error", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="invalidation error") from exc
 
 
@@ -35,7 +35,7 @@ def append_chunk(key: str, seq: int, data: str) -> Dict[str, Any]:
         chunk_cache.add_chunk(key, seq, data)
         return {"ok": True}
     except Exception as exc:
-        logger.error("chunk append error: %s", exc)
+        logger.error("chunk_append_error", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="chunk append error") from exc
 
 
@@ -44,7 +44,7 @@ def mark_chunk_complete(key: str) -> Dict[str, Any]:
         chunk_cache.mark_complete(key)
         return {"ok": True}
     except Exception as exc:
-        logger.error("chunk complete error: %s", exc)
+        logger.error("chunk_complete_error", error=str(exc), error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="chunk complete error") from exc
 
 

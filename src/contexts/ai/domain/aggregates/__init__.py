@@ -1,3 +1,4 @@
+from typing import Any
 #!/usr/bin/env python3
 """
 AI Gateway Domain Aggregates
@@ -8,4 +9,4 @@ Provider Configurations, and Model Catalogs.
 """
 
 # Future aggregates will be imported here
-__all__ = []
+__all__: list[Any] = []

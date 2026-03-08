@@ -17,9 +17,11 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
+
+from src.core.result import Err, Ok, Result, ValidationError
 
 from ...application.ports.i_llm_client import (
     ILLMClient,
@@ -103,6 +105,38 @@ class TaggingResult:
         """
         return [tag.value for tag in self.tags if tag.category == category]
 
+    def get_tags_by_category_result(
+        self, category: TagCategory
+    ) -> Result[list[str], ValidationError]:
+        """
+        Get all tag values for a specific category (Result pattern).
+
+        Args:
+            category: The tag category to filter by
+
+        Returns:
+            Result containing list of tag values on success.
+            - Ok: List of tag values for the category
+            - Err(ValidationError): If category is invalid
+        """
+        try:
+            if category is None:
+                return Err(  # type: ignore[unreachable]
+                    ValidationError(
+                        message="Category cannot be None",
+                        field="category",
+                    )
+                )
+            return Ok([tag.value for tag in self.tags if tag.category == category])
+        except Exception as e:
+            return Err(
+                ValidationError(
+                    message=f"Failed to get tags by category: {e}",
+                    field="category",
+                    details={"value": str(category)},
+                )
+            )
+
     def get_all_tags(self) -> list[str]:
         """
         Get all tag values as a flat list.
@@ -111,6 +145,25 @@ class TaggingResult:
             List of all tag values
         """
         return [tag.value for tag in self.tags]
+
+    def get_all_tags_result(self) -> Result[list[str], ValidationError]:
+        """
+        Get all tag values as a flat list (Result pattern).
+
+        Returns:
+            Result containing list of all tag values on success.
+            - Ok: List of all tag values
+            - Err(ValidationError): If retrieval fails
+        """
+        try:
+            return Ok([tag.value for tag in self.tags])
+        except Exception as e:
+            return Err(
+                ValidationError(
+                    message=f"Failed to get all tags: {e}",
+                    field="tags",
+                )
+            )
 
 
 @dataclass(frozen=True, slots=True)
@@ -283,7 +336,7 @@ Rules:
             data = json.loads(text)
 
             # Validate structure
-            result = {}
+            result: dict[Any, Any] = {}
             for category in self._config.categories:
                 cat_name = category.value
                 if cat_name in data:

@@ -10,6 +10,7 @@ and production-ready configuration for high-scale novel engine deployments.
 import asyncio
 import json
 import logging
+import structlog
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,7 +19,7 @@ from typing import Any, Dict, List, Optional
 
 import asyncpg
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PostgreSQLFeature(Enum):
@@ -88,12 +89,12 @@ class PostgreSQLConnectionPool:
     - Query performance monitoring
     """
 
-    def __init__(self, config: PostgreSQLConfig):
+    def __init__(self, config: PostgreSQLConfig) -> None:
         """Initialize PostgreSQL connection pool."""
         self.config = config
         self.pool: Optional[asyncpg.Pool] = None
         self._initialized = False
-        self._metrics = {
+        self._metrics: Dict[str, Any] = {
             "total_connections": 0,
             "active_connections": 0,
             "total_queries": 0,
@@ -130,11 +131,13 @@ class PostgreSQLConnectionPool:
 
             self._initialized = True
             logger.info(
-                f"PostgreSQL connection pool initialized: {self.config.host}:{self.config.port}"
+                "postgresql_pool_initialized",
+                host=self.config.host,
+                port=self.config.port
             )
 
         except Exception as e:
-            logger.error(f"Failed to initialize PostgreSQL pool: {e}")
+            logger.error("postgresql_pool_initialization_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def _initialize_extensions(self) -> None:
@@ -146,9 +149,9 @@ class PostgreSQLConnectionPool:
             for extension in self.config.enable_extensions:
                 try:
                     await conn.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}"')
-                    logger.debug(f"Enabled PostgreSQL extension: {extension}")
+                    logger.debug("postgresql_extension_enabled", extension=extension)
                 except Exception as e:
-                    logger.warning(f"Failed to enable extension {extension}: {e}")
+                    logger.warning("postgresql_extension_enable_failed", extension=extension, error=str(e))
 
     async def _initialize_schema(self) -> None:
         """Initialize database schema for Novel Engine."""
@@ -233,19 +236,19 @@ class PostgreSQLConnectionPool:
             for query in schema_queries:
                 try:
                     await conn.execute(query)
-                    logger.debug("Created database table")
+                    logger.debug("database_table_created")
                 except Exception as e:
-                    logger.warning(f"Schema creation warning: {e}")
+                    logger.warning("schema_creation_warning", error=str(e))
 
             # Create indexes
             for query in index_queries:
                 try:
                     await conn.execute(query)
-                    logger.debug("Created database index")
+                    logger.debug("database_index_created")
                 except Exception as e:
-                    logger.warning(f"Index creation warning: {e}")
+                    logger.warning("index_creation_warning", error=str(e))
 
-            logger.info("PostgreSQL schema initialization complete")
+            logger.info("postgresql_schema_initialization_complete")
 
     @asynccontextmanager
     async def get_connection(self) -> asyncpg.Connection:
@@ -261,7 +264,7 @@ class PostgreSQLConnectionPool:
                 self._metrics["active_connections"] -= 1
 
     async def execute_query(
-        self, query: str, *args, fetch_mode: str = "none"  # none, one, all
+        self, query: str, *args: Any, fetch_mode: str = "none"  # none, one, all
     ) -> Any:
         """Execute query with performance monitoring."""
         start_time = asyncio.get_running_loop().time()
@@ -285,7 +288,9 @@ class PostgreSQLConnectionPool:
                     self._metrics["slow_queries"] += 1
                     if self.config.enable_query_logging:
                         logger.warning(
-                            f"Slow query ({execution_time:.3f}s): {query[:100]}..."
+                            "slow_query_detected",
+                            execution_time_ms=round(execution_time * 1000, 2),
+                            query_preview=query[:100]
                         )
 
                 # Limit metrics history
@@ -296,7 +301,7 @@ class PostgreSQLConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error(f"PostgreSQL query failed: {e}")
+            logger.error("postgresql_query_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     async def execute_transaction(self, queries: List[tuple]) -> bool:
@@ -307,11 +312,11 @@ class PostgreSQLConnectionPool:
                     for query, args in queries:
                         await conn.execute(query, *args)
 
-                logger.debug(f"Transaction completed with {len(queries)} queries")
+                logger.debug("transaction_completed", query_count=len(queries))
                 return True
 
         except Exception as e:
-            logger.error(f"Transaction failed: {e}")
+            logger.error("transaction_failed", error=str(e), error_type=type(e).__name__)
             raise
 
     # Novel Engine specific operations
@@ -348,7 +353,7 @@ class PostgreSQLConnectionPool:
     ) -> List[Dict[str, Any]]:
         """Search characters using full-text search."""
         query = """
-        SELECT id, name, character_data, 
+        SELECT id, name, character_data,
                ts_rank(search_vector, plainto_tsquery('english', $1)) as rank
         FROM characters
         WHERE search_vector @@ plainto_tsquery('english', $1)
@@ -423,15 +428,23 @@ class PostgreSQLConnectionPool:
         else:
             limit_param = "$3"
 
-        query = f"""
+        # Build query safely (where_clauses are hardcoded SQL fragments, limit_param is controlled)
+        where_clause = " AND ".join(where_clauses)
+        query = (
+            """
         SELECT id, memory_type, content, importance_score,
                ts_rank(search_vector, plainto_tsquery('english', $2)) as rank,
                created_at, access_count
         FROM memory_items
-        WHERE {' AND '.join(where_clauses)}
+        WHERE """
+            + where_clause
+            + """
         ORDER BY rank DESC, importance_score DESC
-        LIMIT {limit_param}
-        """  # nosec B608 - uses parameterized positional placeholders
+        LIMIT """
+            + limit_param
+            + """
+        """
+        )
 
         params.append(limit)
         results = await self.execute_query(query, *params, fetch_mode="all")
@@ -527,7 +540,7 @@ class PostgreSQLConnectionPool:
         if self.pool:
             await self.pool.close()
             self._initialized = False
-            logger.info("PostgreSQL connection pool closed")
+            logger.info("postgresql_pool_closed")
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get connection pool metrics."""
@@ -559,7 +572,7 @@ class PostgreSQLManager:
     performance monitoring, and Novel Engine-specific functionality.
     """
 
-    def __init__(self, config: PostgreSQLConfig):
+    def __init__(self, config: PostgreSQLConfig) -> None:
         """Initialize PostgreSQL manager."""
         self.config = config
         self.connection_pool = PostgreSQLConnectionPool(config)
@@ -570,7 +583,7 @@ class PostgreSQLManager:
         if not self._initialized:
             await self.connection_pool.initialize()
             self._initialized = True
-            logger.info("PostgreSQL manager initialized")
+            logger.info("postgresql_manager_initialized")
 
     async def health_check(self) -> Dict[str, Any]:
         """Perform comprehensive health check."""
@@ -595,6 +608,7 @@ class PostgreSQLManager:
             }
 
         except Exception as e:
+            logger.error("health_check_failed", error=str(e), error_type=type(e).__name__)
             return {
                 "healthy": False,
                 "error": str(e),

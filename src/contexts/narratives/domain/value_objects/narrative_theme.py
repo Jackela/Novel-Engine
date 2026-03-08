@@ -56,9 +56,9 @@ class NarrativeTheme:
     description: str
 
     # Thematic details
-    symbolic_elements: FrozenSet[str] = None
-    related_motifs: FrozenSet[str] = None
-    character_archetypes: FrozenSet[str] = None
+    symbolic_elements: Optional[FrozenSet[str]] = None
+    related_motifs: Optional[FrozenSet[str]] = None
+    character_archetypes: Optional[FrozenSet[str]] = None
 
     # Narrative presence
     introduction_sequence: Optional[int] = None
@@ -67,8 +67,8 @@ class NarrativeTheme:
 
     # Thematic development
     development_trajectory: str = ""  # How theme evolves
-    conflicts_with_themes: FrozenSet[str] = None
-    reinforces_themes: FrozenSet[str] = None
+    conflicts_with_themes: Optional[FrozenSet[str]] = None
+    reinforces_themes: Optional[FrozenSet[str]] = None
 
     # Emotional and moral dimensions
     moral_complexity: Decimal = Decimal("5.0")  # 1-10, higher = more complex
@@ -85,56 +85,36 @@ class NarrativeTheme:
     # Metadata
     cultural_context: Optional[str] = None
     historical_context: Optional[str] = None
-    target_audience_relevance: Dict[str, Decimal] = None
-    tags: FrozenSet[str] = None
+    target_audience_relevance: Optional[Dict[str, Decimal]] = None
+    tags: Optional[FrozenSet[str]] = None
     creation_timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc), compare=False
     )
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Initialize default values and validate constraints."""
         # Convert mutable collections to immutable for hashability
         if self.symbolic_elements is None:
             object.__setattr__(self, "symbolic_elements", frozenset())
-        elif isinstance(self.symbolic_elements, set):
-            object.__setattr__(
-                self, "symbolic_elements", frozenset(self.symbolic_elements)
-            )
 
         if self.related_motifs is None:
             object.__setattr__(self, "related_motifs", frozenset())
-        elif isinstance(self.related_motifs, set):
-            object.__setattr__(self, "related_motifs", frozenset(self.related_motifs))
 
         if self.character_archetypes is None:
             object.__setattr__(self, "character_archetypes", frozenset())
-        elif isinstance(self.character_archetypes, set):
-            object.__setattr__(
-                self, "character_archetypes", frozenset(self.character_archetypes)
-            )
 
         if self.conflicts_with_themes is None:
             object.__setattr__(self, "conflicts_with_themes", frozenset())
-        elif isinstance(self.conflicts_with_themes, set):
-            object.__setattr__(
-                self, "conflicts_with_themes", frozenset(self.conflicts_with_themes)
-            )
 
         if self.reinforces_themes is None:
             object.__setattr__(self, "reinforces_themes", frozenset())
-        elif isinstance(self.reinforces_themes, set):
-            object.__setattr__(
-                self, "reinforces_themes", frozenset(self.reinforces_themes)
-            )
 
         if self.target_audience_relevance is None:
             object.__setattr__(self, "target_audience_relevance", {})
 
         if self.tags is None:
             object.__setattr__(self, "tags", frozenset())
-        elif isinstance(self.tags, set):
-            object.__setattr__(self, "tags", frozenset(self.tags))
 
         if self.metadata is None:
             object.__setattr__(self, "metadata", {})
@@ -142,7 +122,7 @@ class NarrativeTheme:
         # Validate constraints
         self._validate_constraints()
 
-    def _validate_constraints(self):
+    def _validate_constraints(self) -> None:
         """Validate business rules and constraints."""
         if not self.name or not self.name.strip():
             raise ValueError("Theme name cannot be empty")
@@ -169,7 +149,8 @@ class NarrativeTheme:
                 raise ValueError(f"{value_name} must be between 1 and 10")
 
         # Validate target audience relevance values
-        for audience, relevance in self.target_audience_relevance.items():
+        target_audience = self.target_audience_relevance or {}
+        for audience, relevance in target_audience.items():
             if not (Decimal("0") <= relevance <= Decimal("10")):
                 raise ValueError(
                     f"Audience relevance for '{audience}' must be between 0 and 10"
@@ -185,11 +166,11 @@ class NarrativeTheme:
         if len(self.description) > 1000:
             raise ValueError("Theme description too long (max 1000 characters)")
 
-    def _hash_components(self) -> tuple:
-        def _dict_to_hashable(values):
+    def _hash_components(self) -> tuple[Any, ...]:
+        def _dict_to_hashable(values: Any) -> frozenset[Any]:
             if not values:
                 return frozenset()
-            items = []
+            items: list[tuple[str, Any]] = []
             for key, value in sorted(values.items()):
                 if isinstance(value, dict):
                     value = _dict_to_hashable(value)
@@ -230,7 +211,7 @@ class NarrativeTheme:
             _dict_to_hashable(self.metadata),
         )
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, NarrativeTheme):
             return NotImplemented
         return self._hash_components() == other._hash_components()
@@ -294,8 +275,10 @@ class NarrativeTheme:
         expression_bonus = Decimal(str(expression_methods * 0.5))
 
         # Add complexity for thematic relationships
+        conflicts = self.conflicts_with_themes or frozenset()
+        reinforces = self.reinforces_themes or frozenset()
         relationship_bonus = Decimal(
-            str((len(self.conflicts_with_themes) + len(self.reinforces_themes)) * 0.3)
+            str((len(conflicts) + len(reinforces)) * 0.3)
         )
 
         # Cap at 10
@@ -328,27 +311,33 @@ class NarrativeTheme:
 
     def conflicts_with_theme(self, theme_id: str) -> bool:
         """Check if this theme conflicts with another theme."""
-        return theme_id in self.conflicts_with_themes
+        conflicts = self.conflicts_with_themes or frozenset()
+        return theme_id in conflicts
 
     def reinforces_theme(self, theme_id: str) -> bool:
         """Check if this theme reinforces another theme."""
-        return theme_id in self.reinforces_themes
+        reinforces = self.reinforces_themes or frozenset()
+        return theme_id in reinforces
 
     def has_symbolic_element(self, symbol: str) -> bool:
         """Check if theme includes a specific symbolic element."""
-        return symbol in self.symbolic_elements
+        symbols = self.symbolic_elements or frozenset()
+        return symbol in symbols
 
     def has_related_motif(self, motif: str) -> bool:
         """Check if theme is related to a specific motif."""
-        return motif in self.related_motifs
+        motifs = self.related_motifs or frozenset()
+        return motif in motifs
 
     def uses_archetype(self, archetype: str) -> bool:
         """Check if theme uses a specific character archetype."""
-        return archetype in self.character_archetypes
+        archetypes = self.character_archetypes or frozenset()
+        return archetype in archetypes
 
     def get_audience_relevance(self, audience: str) -> Decimal:
         """Get relevance score for a specific audience."""
-        return self.target_audience_relevance.get(audience, Decimal("5.0"))
+        target_audience = self.target_audience_relevance or {}
+        return target_audience.get(audience, Decimal("5.0"))
 
     def get_thematic_context(self) -> Dict[str, Any]:
         """
@@ -376,11 +365,11 @@ class NarrativeTheme:
                 "character_arc": self.expressed_through_character_arc,
             },
             "relationship_counts": {
-                "conflicts": len(self.conflicts_with_themes),
-                "reinforces": len(self.reinforces_themes),
-                "symbolic_elements": len(self.symbolic_elements),
-                "motifs": len(self.related_motifs),
-                "archetypes": len(self.character_archetypes),
+                "conflicts": len(self.conflicts_with_themes or frozenset()),
+                "reinforces": len(self.reinforces_themes or frozenset()),
+                "symbolic_elements": len(self.symbolic_elements or frozenset()),
+                "motifs": len(self.related_motifs or frozenset()),
+                "archetypes": len(self.character_archetypes or frozenset()),
             },
         }
 
@@ -419,10 +408,10 @@ class NarrativeTheme:
             expressed_through_character_arc=self.expressed_through_character_arc,
             cultural_context=self.cultural_context,
             historical_context=self.historical_context,
-            target_audience_relevance=self.target_audience_relevance.copy(),
+            target_audience_relevance=(self.target_audience_relevance or {}).copy(),
             tags=self.tags,
             creation_timestamp=self.creation_timestamp,
-            metadata=self.metadata.copy(),
+            metadata=(self.metadata or {}).copy(),
         )
 
     def __str__(self) -> str:

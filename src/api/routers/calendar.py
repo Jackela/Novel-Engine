@@ -29,8 +29,6 @@ def reset_calendar_storage() -> None:
     """Reset calendar storage (for testing)."""
     global _world_calendars
     _world_calendars = {}
-
-
 # === Helper Functions ===
 
 
@@ -104,7 +102,9 @@ async def get_calendar(world_id: str) -> CalendarResponse:
 
 
 @router.post("/calendar/{world_id}/advance", response_model=CalendarResponse)
-async def advance_calendar(world_id: str, request: AdvanceCalendarRequest) -> CalendarResponse:
+async def advance_calendar(
+    world_id: str, request: AdvanceCalendarRequest
+) -> CalendarResponse:
     """
     Advance the calendar for a world by a specified number of days.
 

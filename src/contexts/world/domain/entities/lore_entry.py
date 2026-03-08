@@ -85,8 +85,7 @@ class LoreEntry(Entity):
 
     def _validate_business_rules(self) -> List[str]:
         """Validate LoreEntry-specific business rules."""
-        errors = []
-
+        errors: list[Any] = []
         if not self.title or not self.title.strip():
             errors.append("Lore entry title cannot be empty")
 

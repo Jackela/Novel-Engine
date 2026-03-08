@@ -7,7 +7,7 @@ FastAPI endpoints that leverage Context7 MCP server for enhanced API documentati
 code examples, framework patterns, and best practices integration.
 """
 
-import logging
+import structlog
 import os
 from datetime import datetime
 from enum import Enum
@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from src.core.data_models import StandardResponse
 from src.security.auth_system import get_current_user
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 # Request/Response Models
@@ -221,7 +221,7 @@ class Context7IntegrationAPI:
         context7_client=None,
         base_url: Optional[str] = None,
         allow_mock: Optional[bool] = None,
-    ):
+    ) -> None:
         self.orchestrator = orchestrator
         self.context7_client = context7_client
         self.base_url = base_url or os.getenv("CONTEXT7_BASE_URL")
@@ -233,11 +233,11 @@ class Context7IntegrationAPI:
         self.context7_available = False
         self._check_context7_availability()
 
-    def _check_context7_availability(self):
+    def _check_context7_availability(self) -> None:
         """Check if Context7 MCP server is available."""
         # Availability requires an injected client or configured base URL
         self.context7_available = bool(self.context7_client or self.base_url)
-        logger.info(f"Context7 availability: {self.context7_available}")
+        logger.info("Context7 availability: %s", self.context7_available)
 
     async def _call_context7(
         self, operation: str, params: Dict[str, Any]
@@ -271,7 +271,7 @@ class Context7IntegrationAPI:
             )
 
         except Exception as e:
-            logger.error(f"Context7 call failed for {operation}: {e}")
+            logger.error("Context7 call failed for %s: %s", operation, e)
             raise HTTPException(
                 status_code=502, detail=f"Context7 service error: {str(e)}"
             )
@@ -361,7 +361,7 @@ async def call_novel_engine_api():
             response.raise_for_status()
             return response.json()
         except httpx.HTTPError as e:
-            logger.error(f"HTTP error occurred: {{e}}")
+            logger.error("HTTP error occurred: %s", e)
             return None
 
 # Usage
@@ -388,7 +388,7 @@ if (response.ok) {{
         else:
             return f"# Example code for {endpoint} in {format_type} format"
 
-    def setup_routes(self, app: FastAPI):
+    def setup_routes(self, app: FastAPI) -> None:
         """Setup Context7 integration API routes."""
 
         @app.post(
@@ -440,7 +440,7 @@ if (response.ok) {{
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error generating code example: {e}")
+                logger.error("Error generating code example: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post(
@@ -493,7 +493,7 @@ if (response.ok) {{
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error validating API pattern: {e}")
+                logger.error("Error validating API pattern: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.post(
@@ -567,7 +567,7 @@ if (response.ok) {{
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error generating enhanced documentation: {e}")
+                logger.error("Error generating enhanced documentation: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -620,7 +620,7 @@ if (response.ok) {{
             except HTTPException:
                 raise
             except Exception as e:
-                logger.error(f"Error getting best practices: {e}")
+                logger.error("Error getting best practices: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -651,7 +651,7 @@ if (response.ok) {{
                 return StandardResponse(success=True, data=status_data)
 
             except Exception as e:
-                logger.error(f"Error getting Context7 status: {e}")
+                logger.error("Error getting Context7 status: %s", e)
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 

@@ -18,6 +18,7 @@ import asyncio
 import gzip
 import json
 import logging
+import structlog
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
@@ -27,9 +28,7 @@ from typing import Any, Dict, List, Optional
 
 import aiosqlite
 
-# Comprehensive logging configuration
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class SecurityEventType(str, Enum):
@@ -126,14 +125,14 @@ class SecurityEvent:
     method: Optional[str] = None
     status_code: Optional[int] = None
     message: str = ""
-    details: Dict[str, Any] = None
+    details: Optional[Dict[str, Any]] = None
     threat_level: ThreatLevel = ThreatLevel.BENIGN
     geolocation: Optional[Dict[str, str]] = None
     session_id: Optional[str] = None
     request_id: Optional[str] = None
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.details is None:
             self.details = {}
         if self.tags is None:
@@ -178,13 +177,13 @@ class ThreatIntelligence:
     source: str
     first_seen: datetime
     last_seen: datetime
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
 
 
 class SecurityLogger:
     """STANDARD SECURITY LOGGER ENHANCED BY THE SYSTEM"""
 
-    def __init__(self, database_path: str, log_directory: str = "data/security_logs"):
+    def __init__(self, database_path: str, log_directory: str = "data/security_logs") -> None:
         self.database_path = database_path
         self.log_directory = Path(log_directory)
         self.log_directory.mkdir(parents=True, exist_ok=True)
@@ -207,7 +206,7 @@ class SecurityLogger:
         self._setup_logging()
         self._start_background_tasks()
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """STANDARD LOGGING SETUP"""
         # Configure security-specific logger
         self.security_logger = logging.getLogger("security")
@@ -236,17 +235,17 @@ class SecurityLogger:
         self._audit_file_handler = audit_handler
         self.audit_logger.addHandler(audit_handler)
 
-    def _start_background_tasks(self):
+    def _start_background_tasks(self) -> None:
         """STANDARD BACKGROUND TASKS"""
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             self._log_rotation_task = loop.create_task(self._log_rotation_loop())
             self._threat_analysis_task = loop.create_task(self._threat_analysis_loop())
         except RuntimeError:
             # No event loop running yet
             pass
 
-    async def initialize_database(self):
+    async def initialize_database(self) -> None:
         """STANDARD DATABASE INITIALIZATION"""
         async with aiosqlite.connect(self.database_path) as conn:
             await conn.execute("PRAGMA foreign_keys = ON")
@@ -254,7 +253,8 @@ class SecurityLogger:
             await conn.execute("PRAGMA synchronous = NORMAL")
 
             # Security events table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_events (
                     event_id TEXT PRIMARY KEY,
                     event_type TEXT NOT NULL,
@@ -275,7 +275,8 @@ class SecurityLogger:
                     request_id TEXT NULL,
                     tags TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_security_events_timestamp ON security_events(timestamp)"
             )
@@ -293,7 +294,8 @@ class SecurityLogger:
             )
 
             # Audit logs table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS audit_logs (
                     log_id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
@@ -307,7 +309,8 @@ class SecurityLogger:
                     success BOOLEAN NOT NULL,
                     error_message TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp)"
             )
@@ -322,7 +325,8 @@ class SecurityLogger:
             )
 
             # Threat intelligence table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS threat_intelligence (
                     indicator TEXT PRIMARY KEY,
                     indicator_type TEXT NOT NULL,
@@ -333,7 +337,8 @@ class SecurityLogger:
                     last_seen TIMESTAMP NOT NULL,
                     tags TEXT NULL
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_threat_intel_type ON threat_intelligence(indicator_type)"
             )
@@ -345,7 +350,8 @@ class SecurityLogger:
             )
 
             # Session tracking table
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS security_sessions (
                     session_id TEXT PRIMARY KEY,
                     user_id TEXT NULL,
@@ -358,7 +364,8 @@ class SecurityLogger:
                     risk_score REAL DEFAULT 0.0,
                     events_count INTEGER DEFAULT 0
                 )
-            """)
+            """
+            )
             await conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_security_sessions_user_id ON security_sessions(user_id)"
             )
@@ -373,9 +380,9 @@ class SecurityLogger:
             )
 
             await conn.commit()
-            logger.info("SECURITY LOGGING DATABASE INITIALIZED")
+            logger.info("security_logging_database_initialized")
 
-    async def log_security_event(self, event: SecurityEvent):
+    async def log_security_event(self, event: SecurityEvent) -> None:
         """STANDARD SECURITY EVENT LOGGING"""
         try:
             # Store in database
@@ -422,9 +429,9 @@ class SecurityLogger:
             await self._update_session_tracking(event)
 
         except Exception as e:
-            logger.error(f"SECURITY EVENT LOGGING ERROR: {e}")
+            logger.error("security_event_logging_error", error=str(e), error_type=type(e).__name__)
 
-    async def log_audit_event(self, audit_log: SecurityAuditLog):
+    async def log_audit_event(self, audit_log: SecurityAuditLog) -> None:
         """STANDARD AUDIT EVENT LOGGING"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
@@ -464,9 +471,9 @@ class SecurityLogger:
             self.audit_logger.info(json.dumps(asdict(audit_log), default=str))
 
         except Exception as e:
-            logger.error(f"AUDIT EVENT LOGGING ERROR: {e}")
+            logger.error("audit_event_logging_error", error=str(e), error_type=type(e).__name__)
 
-    async def _analyze_threat(self, event: SecurityEvent):
+    async def _analyze_threat(self, event: SecurityEvent) -> None:
         """STANDARD THREAT ANALYSIS"""
         try:
             risk_score = 0.0
@@ -526,7 +533,7 @@ class SecurityLogger:
                 await self._auto_block_ip(event.source_ip, risk_score)
 
         except Exception as e:
-            logger.error(f"THREAT ANALYSIS ERROR: {e}")
+            logger.error("threat_analysis_error", error=str(e), error_type=type(e).__name__)
 
     async def _trigger_security_alert(
         self, event: SecurityEvent, alert_message: str, risk_score: float
@@ -551,12 +558,13 @@ class SecurityLogger:
         await self.log_security_event(alert_event)
 
         logger.critical(
-            f"SECURITY ALERT: {alert_message} | "
-            f"IP: {event.source_ip} | "
-            f"Risk Score: {risk_score:.2f}"
+            "security_alert_triggered",
+            message=alert_message,
+            source_ip=event.source_ip,
+            risk_score=round(risk_score, 2)
         )
 
-    async def _auto_block_ip(self, ip_address: str, risk_score: float):
+    async def _auto_block_ip(self, ip_address: str, risk_score: float) -> None:
         """STANDARD AUTOMATIC IP BLOCKING"""
         # In production, this would integrate with firewall/WAF
         self.suspicious_ips[ip_address] = {
@@ -566,9 +574,9 @@ class SecurityLogger:
             "block_duration": 3600,  # 1 hour
         }
 
-        logger.warning(f"IP AUTO-BLOCKED: {ip_address} | Risk Score: {risk_score:.2f}")
+        logger.warning("ip_auto_blocked", ip_address=ip_address, risk_score=round(risk_score, 2))
 
-    async def _update_session_tracking(self, event: SecurityEvent):
+    async def _update_session_tracking(self, event: SecurityEvent) -> None:
         """STANDARD SESSION TRACKING UPDATE"""
         if not event.session_id:
             return
@@ -627,9 +635,9 @@ class SecurityLogger:
                 await conn.commit()
 
         except Exception as e:
-            logger.error(f"SESSION TRACKING UPDATE ERROR: {e}")
+            logger.error("session_tracking_update_error", error=str(e), error_type=type(e).__name__)
 
-    async def _log_rotation_loop(self):
+    async def _log_rotation_loop(self) -> None:
         """STANDARD LOG ROTATION LOOP"""
         while True:
             try:
@@ -638,9 +646,9 @@ class SecurityLogger:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"LOG ROTATION ERROR: {e}")
+                logger.error("log_rotation_error", error=str(e), error_type=type(e).__name__)
 
-    async def _threat_analysis_loop(self):
+    async def _threat_analysis_loop(self) -> None:
         """STANDARD THREAT ANALYSIS LOOP"""
         while True:
             try:
@@ -650,9 +658,9 @@ class SecurityLogger:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"THREAT ANALYSIS LOOP ERROR: {e}")
+                logger.error("threat_analysis_loop_error", error=str(e), error_type=type(e).__name__)
 
-    async def _rotate_logs(self):
+    async def _rotate_logs(self) -> None:
         """STANDARD LOG ROTATION"""
         try:
             current_date = datetime.now().strftime("%Y%m%d")
@@ -681,17 +689,17 @@ class SecurityLogger:
 
                 open(audit_log, "w").close()
 
-            logger.info("LOG ROTATION COMPLETED")
+            logger.info("log_rotation_completed")
 
         except Exception as e:
-            logger.error(f"LOG ROTATION ERROR: {e}")
+            logger.error("log_rotation_failed", error=str(e), error_type=type(e).__name__)
 
-    async def _update_threat_intelligence(self):
+    async def _update_threat_intelligence(self) -> None:
         """STANDARD THREAT INTELLIGENCE UPDATE"""
         # This would integrate with external threat feeds
         # For now, it's a placeholder
 
-    async def _clean_old_data(self):
+    async def _clean_old_data(self) -> None:
         """STANDARD OLD DATA CLEANUP"""
         try:
             # Clean events older than 90 days
@@ -733,7 +741,7 @@ class SecurityLogger:
                     log_file.unlink()
 
         except Exception as e:
-            logger.error(f"OLD DATA CLEANUP ERROR: {e}")
+            logger.error("old_data_cleanup_error", error=str(e), error_type=type(e).__name__)
 
     async def get_security_events(
         self,
@@ -748,8 +756,7 @@ class SecurityLogger:
         """STANDARD SECURITY EVENTS RETRIEVAL"""
         try:
             query = "SELECT * FROM security_events WHERE 1=1"
-            params = []
-
+            params: list[Any] = []
             if event_type:
                 query += " AND event_type = ?"
                 params.append(event_type.value)
@@ -783,8 +790,7 @@ class SecurityLogger:
 
                 # Convert to dictionaries
                 columns = [description[0] for description in cursor.description]
-                events = []
-
+                events: list[Any] = []
                 for row in rows:
                     event_dict = dict(zip(columns, row))
 
@@ -803,7 +809,7 @@ class SecurityLogger:
                 return events
 
         except Exception as e:
-            logger.error(f"SECURITY EVENTS RETRIEVAL ERROR: {e}")
+            logger.error("security_events_retrieval_error", error=str(e), error_type=type(e).__name__)
             return []
 
     async def get_security_statistics(
@@ -877,10 +883,10 @@ class SecurityLogger:
                 }
 
         except Exception as e:
-            logger.error(f"SECURITY STATISTICS ERROR: {e}")
+            logger.error("security_statistics_error", error=str(e), error_type=type(e).__name__)
             return {}
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """STANDARD SECURITY LOGGER SHUTDOWN"""
         try:
             # Cancel background tasks
@@ -895,10 +901,10 @@ class SecurityLogger:
             # Final log rotation
             await self._rotate_logs()
 
-            logger.info("SECURITY LOGGER SHUTDOWN COMPLETE")
+            logger.info("security_logger_shutdown_complete")
 
         except Exception as e:
-            logger.error(f"SECURITY LOGGER SHUTDOWN ERROR: {e}")
+            logger.error("security_logger_shutdown_error", error=str(e), error_type=type(e).__name__)
         finally:
             for handler, target_logger in (
                 (self._security_file_handler, getattr(self, "security_logger", None)),
@@ -934,7 +940,7 @@ def get_security_logger() -> SecurityLogger:
 
 def initialize_security_logger(
     database_path: str, log_directory: str = "data/security_logs"
-):
+) -> None:
     """STANDARD SECURITY LOGGER INITIALIZATION"""
     global security_logger
     security_logger = SecurityLogger(database_path, log_directory)
