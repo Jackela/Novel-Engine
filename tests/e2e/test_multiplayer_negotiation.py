@@ -473,7 +473,7 @@ class TestCharacterNegotiation:
                 "mood": "formal"
             }
 
-            response = client.post("/api/dialogue/generate", json=dialogue_request)
+            _ = client.post("/api/dialogue/generate", json=dialogue_request)
             # Each may succeed or fail independently
 
     def test_negotiation_with_relationships(self, client, data_factory):

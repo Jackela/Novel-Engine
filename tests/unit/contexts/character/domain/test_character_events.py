@@ -13,7 +13,7 @@ Comprehensive test suite for character domain events including:
 """
 
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import MagicMock, Mock
 
 import pytest

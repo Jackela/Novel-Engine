@@ -330,7 +330,7 @@ class TestEntityConversion:
         with patch('src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.NarrativeArcEntity') as mock_entity_class:
             mock_entity = MagicMock()
             mock_entity_class.return_value = mock_entity
-            entity = repo._create_arc_entity(arc)
+            _ = repo._create_arc_entity(arc)
             # 验证实体被创建
             mock_entity_class.assert_called_once()
             # 验证关键字段
@@ -385,7 +385,7 @@ class TestHelperMethods:
             mock_entity_class.return_value = mock_entity
             # 方法应该成功运行
             try:
-                entity = repo._create_plot_point_entity(plot, arc_id)
+                _ = repo._create_plot_point_entity(plot, arc_id)
                 mock_entity_class.assert_called_once()
             except AttributeError:
                 # 预期的字段不匹配问题，测试通过
@@ -411,7 +411,7 @@ class TestHelperMethods:
             mock_entity_class.return_value = mock_entity
             # 方法应该成功运行或优雅处理字段不匹配
             try:
-                entity = repo._create_pacing_entity(pacing, arc_id)
+                _ = repo._create_pacing_entity(pacing, arc_id)
                 mock_entity_class.assert_called_once()
             except AttributeError:
                 # 预期的字段不匹配问题，测试通过
@@ -553,7 +553,7 @@ class TestComplexQueries:
     def test_search_with_character_filter(self, mock_session):
         """测试带角色过滤器的搜索"""
         repo = NarrativeArcRepository(session=mock_session)
-        character_ids = [uuid4(), uuid4()]
+        _ = [uuid4(), uuid4()]
         # 注意：当前实现可能不完全支持character_ids过滤
         # 但应该能正常运行而不抛出异常
         result = repo.search()

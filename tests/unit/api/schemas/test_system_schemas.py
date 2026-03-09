@@ -19,7 +19,7 @@ class TestSystemSchemas:
     def test_import_system_schemas(self) -> None:
         """Test that system schemas can be imported."""
         try:
-            from src.api.schemas import system_schemas
+            from src.api.schemas import system_schemas  # noqa: F401
             assert True
         except ImportError:
             pytest.skip("system_schemas module not found")
@@ -131,6 +131,7 @@ class TestSchemaInheritance:
     def test_all_schemas_inherit_base_model(self) -> None:
         """Test that all schemas inherit from BaseModel."""
         from pydantic import BaseModel
+
         from src.api.schemas.character_schemas import (
             CharacterPsychologySchema,
             CharacterSummary,
@@ -164,6 +165,7 @@ class TestSchemaSerialization:
     def test_character_summary_json_serialization(self) -> None:
         """Test character summary JSON serialization."""
         import json
+
         from src.api.schemas.character_schemas import CharacterSummary
 
         summary = CharacterSummary(
@@ -209,6 +211,7 @@ class TestSchemaValidationErrors:
     def test_validation_error_message_format(self) -> None:
         """Test that validation errors have proper format."""
         from pydantic import ValidationError
+
         from src.api.schemas.character_schemas import CharacterPsychologySchema
 
         try:
@@ -228,6 +231,7 @@ class TestSchemaValidationErrors:
     def test_multiple_validation_errors(self) -> None:
         """Test multiple validation errors in one request."""
         from pydantic import ValidationError
+
         from src.api.schemas.character_schemas import CharacterPsychologySchema
 
         try:

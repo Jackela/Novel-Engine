@@ -19,9 +19,7 @@ import json
 import logging
 import tempfile
 import time
-from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -30,9 +28,9 @@ from src.core.logging_system import (
     LogCategory,
     LogContext,
     LogEntry,
-    LogLevel,
     LoggerFactory,
     LoggingContext,
+    LogLevel,
     PerformanceTracker,
     StructuredFormatter,
     StructuredLogger,

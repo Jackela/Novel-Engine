@@ -6,8 +6,7 @@ operations for the in-memory location repository.
 
 import pytest
 
-from src.contexts.world.domain.entities.location import Location
-from src.contexts.world.domain.entities.location import LocationType
+from src.contexts.world.domain.entities.location import Location, LocationType
 from src.contexts.world.infrastructure.persistence.in_memory_location_repository import (
     InMemoryLocationRepository,
 )

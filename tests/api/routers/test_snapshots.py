@@ -270,7 +270,7 @@ class TestWorldIsolation:
             "/api/world/world-b/snapshots",
             json={"tick_number": 2},
         )
-        snapshot_b_id = create_b.json()["snapshot_id"]
+        _ = create_b.json()["snapshot_id"]
 
         # Verify isolation
         list_a = client.get("/api/world/world-a/snapshots")

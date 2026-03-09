@@ -14,7 +14,7 @@ Comprehensive test suite for the Scene domain entity including:
 """
 
 import sys
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 import pytest

@@ -113,8 +113,8 @@ class TestDialogueGenerationRequest:
     def test_request_with_overrides(self) -> None:
         """Test request with psychology and traits overrides."""
         from src.api.schemas.character_schemas import (
-            DialogueGenerationRequest,
             CharacterPsychologySchema,
+            DialogueGenerationRequest,
         )
 
         request = DialogueGenerationRequest(

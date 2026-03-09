@@ -11,7 +11,7 @@ Comprehensive test suite for the CharacterID value object including:
 
 import sys
 import uuid
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 
 import pytest
 

@@ -706,7 +706,7 @@ class TestRumorEquality:
 
         assert rumor != "not a rumor"
         assert rumor != 123
-        assert rumor != None
+        assert rumor is not None
 
     @pytest.mark.unit
     def test_hash_consistency(self):

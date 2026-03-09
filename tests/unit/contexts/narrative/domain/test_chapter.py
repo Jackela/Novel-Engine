@@ -10,8 +10,8 @@ Comprehensive test suite for the Chapter domain entity including:
 """
 
 import sys
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, Mock
+from datetime import datetime
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -205,7 +205,7 @@ class TestChapter:
 
     def test_chapter_immutable_id(self, sample_chapter):
         """Test that chapter ID cannot be changed."""
-        original_id = sample_chapter.id
+        _ = sample_chapter.id
         new_id = uuid4()
 
         # Dataclass is not frozen, so this would work, but it's a bad practice

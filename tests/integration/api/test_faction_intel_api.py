@@ -172,7 +172,7 @@ class TestFactionIntelAPIValidation:
 
         # Workaround: Create a direct reference to the repository
         # by generating another request and inspecting the app
-        test_app = client.application if hasattr(client, 'application') else None
+        _ = client.application if hasattr(client, 'application') else None
 
         # Alternative: Get repo via the router's dependency
         # Since we're in the same process, we can access the module-level state
@@ -185,7 +185,7 @@ class TestFactionIntelAPIValidation:
             f"/api/world/factions/{faction_id_2}/decide",
             json={},
         )
-        intent_id_2 = gen_response_2.json()["intents"][0]["id"]
+        _ = gen_response_2.json()["intents"][0]["id"]
 
         # Since we can't easily access the same repo instance,
         # test the 409 for already selected intent instead

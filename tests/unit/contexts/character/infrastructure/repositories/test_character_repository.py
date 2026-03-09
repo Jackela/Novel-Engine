@@ -120,7 +120,12 @@ def sample_character(sample_character_id):
     )
 
     # Create a proper skill group for the sample character
-    from src.contexts.character.domain.value_objects.skills import Skill, SkillCategory, SkillGroup, ProficiencyLevel
+    from src.contexts.character.domain.value_objects.skills import (
+        ProficiencyLevel,
+        Skill,
+        SkillCategory,
+        SkillGroup,
+    )
     combat_skill = Skill(
         name="sword",
         category=SkillCategory.COMBAT,

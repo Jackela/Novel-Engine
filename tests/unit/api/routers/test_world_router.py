@@ -8,7 +8,6 @@ Tests cover:
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -16,10 +15,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.routers.world import (
-    router,
-    _safe_genre,
     _safe_era,
+    _safe_genre,
     _safe_tone,
+    router,
 )
 from src.contexts.world.domain.entities import Era, Genre, ToneType
 
@@ -352,9 +351,6 @@ class TestRequestResponseModels:
         from src.api.routers.world import (
             WorldGenerationResponse,
             WorldSettingResponse,
-            FactionResponse,
-            LocationResponse,
-            GeneratedEventResponse,
         )
 
         world_setting = WorldSettingResponse(

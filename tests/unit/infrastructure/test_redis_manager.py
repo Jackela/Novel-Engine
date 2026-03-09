@@ -4,7 +4,6 @@ Tests cover connection management, caching operations, session management,
 and error handling for the Redis manager.
 """
 
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -13,7 +12,6 @@ from src.infrastructure.redis_manager import (
     CacheKey,
     RedisConfig,
     RedisConnectionPool,
-    RedisDataType,
     RedisManager,
     RedisStorageStrategy,
     create_redis_config_from_env,

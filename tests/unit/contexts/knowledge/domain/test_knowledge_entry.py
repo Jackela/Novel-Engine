@@ -10,7 +10,7 @@ Comprehensive test suite for the KnowledgeEntry domain model including:
 
 import sys
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

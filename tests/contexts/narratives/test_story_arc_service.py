@@ -542,7 +542,7 @@ class TestEdgeCases:
             state_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
         )
         manager = StoryArcManager(ready_state)
-        old_timestamp = manager.current_state.state_timestamp
+        _ = manager.current_state.state_timestamp
         new_state = manager.advance_to_next_phase()
         # 新的时间戳应该与旧的不同（因为是新生成的）
         assert new_state.state_timestamp is not None

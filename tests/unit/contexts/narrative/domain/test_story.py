@@ -10,7 +10,7 @@ Comprehensive test suite for the Story domain entity including:
 """
 
 import sys
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
 import pytest
@@ -20,7 +20,7 @@ pytestmark = pytest.mark.unit
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
 
-from src.contexts.narrative.domain.entities.chapter import Chapter, ChapterStatus
+from src.contexts.narrative.domain.entities.chapter import Chapter
 from src.contexts.narrative.domain.entities.story import Story, StoryStatus
 
 

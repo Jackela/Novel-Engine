@@ -27,7 +27,6 @@ try:
         InteractionContext,
         InteractionEngineConfig,
         InteractionOutcome,
-        InteractionPriority,
         InteractionType,
     )
     REAL_IMPORTS_AVAILABLE = True

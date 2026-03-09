@@ -518,7 +518,7 @@ class TestNarrativeGeneration:
 
     def test_reaction_verb_variety(self, basic_character, basic_world_state):
         """Test that different reaction types have appropriate verbs."""
-        reactor = CharacterReactor()
+        _ = CharacterReactor()
 
         # Test each reaction type has a corresponding verb
         for reaction_type in ReactionType.__members__.values():

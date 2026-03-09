@@ -60,7 +60,7 @@ class TestNarrativeResponse:
 
     def test_valid_response(self) -> None:
         """Test valid narrative response."""
-        from src.api.schemas.narrative_schemas import NarrativeResponse, NarrativeData
+        from src.api.schemas.narrative_schemas import NarrativeData, NarrativeResponse
 
         data = NarrativeData(
             story="Test story",
@@ -80,8 +80,8 @@ class TestSceneGenerationRequest:
 
     def test_valid_request(self) -> None:
         """Test valid scene generation request."""
-        from src.api.schemas.narrative_schemas import SceneGenerationRequest
         from src.api.schemas.character_schemas import CharacterGenerationResponse
+        from src.api.schemas.narrative_schemas import SceneGenerationRequest
 
         char_context = CharacterGenerationResponse(
             name="Hero",
@@ -195,7 +195,10 @@ class TestNarrativeStreamRequest:
 
     def test_valid_request(self) -> None:
         """Test valid stream request."""
-        from src.api.schemas.narrative_schemas import NarrativeStreamRequest, WorldContext
+        from src.api.schemas.narrative_schemas import (
+            NarrativeStreamRequest,
+            WorldContext,
+        )
 
         request = NarrativeStreamRequest(
             prompt="Write an opening scene",
@@ -210,7 +213,10 @@ class TestNarrativeStreamRequest:
 
     def test_request_validation(self) -> None:
         """Test request validation."""
-        from src.api.schemas.narrative_schemas import NarrativeStreamRequest, WorldContext
+        from src.api.schemas.narrative_schemas import (
+            NarrativeStreamRequest,
+            WorldContext,
+        )
 
         # Too many tokens
         with pytest.raises(ValidationError) as exc_info:
@@ -636,8 +642,8 @@ class TestChapterHealthSchemas:
         from src.api.schemas.narrative_schemas import (
             ChapterHealthReportResponse,
             PhaseDistributionResponse,
-            WordCountEstimateResponse,
             TensionArcShapeResponse,
+            WordCountEstimateResponse,
         )
 
         report = ChapterHealthReportResponse(
@@ -698,8 +704,8 @@ class TestCritiqueSchemas:
     def test_critique_scene_response(self) -> None:
         """Test critique scene response."""
         from src.api.schemas.narrative_schemas import (
-            CritiqueSceneResponse,
             CritiqueCategoryScoreResponse,
+            CritiqueSceneResponse,
         )
 
         category = CritiqueCategoryScoreResponse(

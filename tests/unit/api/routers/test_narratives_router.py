@@ -9,14 +9,14 @@ Tests cover:
 from __future__ import annotations
 
 import json
-from typing import Any, AsyncIterator
+from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.routers.narratives import router, _sse_generator
+from src.api.routers.narratives import _sse_generator, router
 from src.api.schemas import NarrativeStreamRequest, WorldContext, WorldContextEntity
 
 pytestmark = pytest.mark.unit

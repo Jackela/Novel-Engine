@@ -174,7 +174,7 @@ class TestEventBus:
         event_bus.subscribe("test_event", error_handler)
         event_bus.subscribe("test_event", good_handler)
         
-        event_id = event_bus.emit("test_event", data="test")
+        _ = event_bus.emit("test_event", data="test")
         
         # Both handlers should be called
         error_handler.assert_called_once()

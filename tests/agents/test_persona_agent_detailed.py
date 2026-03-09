@@ -195,7 +195,7 @@ class TestPersonaAgentIntegratedDetailed:
                 # Test decision making if available
                 if hasattr(agent, "make_decision"):
                     try:
-                        decision = agent.make_decision({})
+                        _ = agent.make_decision({})
                     except Exception:
                         pass  # Method may fail without setup
         except ImportError:

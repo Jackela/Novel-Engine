@@ -390,7 +390,7 @@ class TestEdgeCases:
             value = "UNKNOWN"
         
         # 通过model_copy创建一个带有未知阶段的State
-        base_state = StoryArcState(
+        _ = StoryArcState(
             arc_id="test",
             current_phase=StoryArcPhase.EXPOSITION,
             turn_number=1,

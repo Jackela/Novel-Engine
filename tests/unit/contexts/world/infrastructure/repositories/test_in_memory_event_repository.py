@@ -6,8 +6,7 @@ management for the in-memory event repository.
 
 import pytest
 
-from src.contexts.world.domain.entities.history_event import HistoryEvent
-from src.contexts.world.domain.entities.history_event import EventType
+from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent
 from src.contexts.world.infrastructure.persistence.in_memory_event_repository import (
     InMemoryEventRepository,
 )

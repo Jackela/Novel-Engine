@@ -359,7 +359,7 @@ class TestDetectNegotiationConflicts:
         )
         
         # Should detect no decision makers
-        authority_conflicts = [
+        _ = [
             c for c in conflicts
             if "authority" in str(c.get("type", "")).lower()
         ]

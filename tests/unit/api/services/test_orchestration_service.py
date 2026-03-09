@@ -4,8 +4,7 @@ Tests cover orchestration operations, service availability checks,
 and default character discovery for the orchestration service.
 """
 
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

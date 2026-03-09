@@ -145,7 +145,7 @@ class TestUserAuth:
 
         data = login_response.json()
         refresh_token = data["refresh_token"]
-        old_access_token = data["access_token"]
+        _ = data["access_token"]
 
         # Step 2: Refresh the token
         refresh_response = client.post(

@@ -4,10 +4,8 @@ Tests cover filesystem operations, character summarization, and data
 transformation for the character router service.
 """
 
-import os
-from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, mock_open, patch
+from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 from fastapi import HTTPException

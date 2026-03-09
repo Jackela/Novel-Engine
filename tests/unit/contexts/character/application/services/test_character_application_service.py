@@ -10,7 +10,6 @@ Comprehensive test suite covering:
 - Result pattern assertions
 """
 
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
@@ -682,8 +681,10 @@ class TestBulkOperations:
         """Test creating multiple characters."""
         # Setup - patch create_character to bypass validation
         with patch.object(service, 'create_character', new_callable=AsyncMock) as mock_create:
+            from src.contexts.character.domain.value_objects.character_id import (
+                CharacterID,
+            )
             from src.core.result import Ok
-            from src.contexts.character.domain.value_objects.character_id import CharacterID
             mock_create.side_effect = [
                 Ok(CharacterID.generate()),
                 Ok(CharacterID.generate()),

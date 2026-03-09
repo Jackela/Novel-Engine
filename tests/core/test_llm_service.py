@@ -527,7 +527,7 @@ class TestGenerateMethods:
             
             service.generate_result = mock_generate_result
             
-            response = await service.generate_action("Test prompt", "test_agent")
+            _ = await service.generate_action("Test prompt", "test_agent")
             
             # Check that generate_result was called with correct request
             assert captured_request is not None
@@ -560,7 +560,7 @@ class TestGenerateMethods:
             
             service.generate_result = mock_generate_result
             
-            response = await service.generate_narrative("Test prompt", "dramatic")
+            _ = await service.generate_narrative("Test prompt", "dramatic")
             
             assert captured_request is not None
             assert "dramatic narrative" in captured_request.prompt.lower()
@@ -591,7 +591,7 @@ class TestGenerateMethods:
             
             service.generate_result = mock_generate_result
             
-            response = await service.generate_clue("treasure", "searching")
+            _ = await service.generate_clue("treasure", "searching")
             
             assert captured_request is not None
             assert "treasure" in captured_request.prompt.lower()
@@ -625,7 +625,7 @@ class TestGenerateMethods:
             personality = {"bravery": 0.8, "intelligence": 0.6}
             context = {"location": "castle", "situation": "battle"}
             
-            response = await service.generate_dialogue(
+            _ = await service.generate_dialogue(
                 "Arthur", personality, "angry", context
             )
             
@@ -658,7 +658,7 @@ class TestGenerateMethods:
             
             service.generate_result = mock_generate_result
             
-            response = await service.generate_event(
+            _ = await service.generate_event(
                 event_type="battle",
                 characters=["Arthur", "Mordred"],
                 story_context={"setting": "Camelot"},
