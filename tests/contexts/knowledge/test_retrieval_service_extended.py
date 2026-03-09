@@ -5,25 +5,29 @@ Additional tests to achieve comprehensive coverage.
 Tests query processing, relevance scoring, context assembly, and edge cases.
 """
 
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, MagicMock
 
+from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+from src.contexts.knowledge.application.ports.i_vector_store import (
+    QueryResult as QueryResult,
+)
+from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
+)
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
+    FormattedContext,
     RetrievalFilter,
     RetrievalOptions,
     RetrievalResult,
-    FormattedContext,
-    DEFAULT_RELEVANCE_THRESHOLD,
-    DEFAULT_DEDUPLICATION_SIMILARITY,
+    RetrievalService,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
 from src.contexts.knowledge.domain.models.source_type import SourceType
-from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError, QueryResult as QueryResult
-from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
-from src.core.result import Ok, Err
+
 pytestmark = pytest.mark.unit
 
 

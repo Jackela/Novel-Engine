@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import structlog
 import time
 from typing import Any, List
 
+import structlog
 from fastapi import APIRouter, HTTPException
 
 from src.agents.chronicler_agent import ChroniclerAgent

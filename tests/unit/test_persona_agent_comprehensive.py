@@ -13,7 +13,6 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-
 pytestmark = pytest.mark.unit
 
 # Import the modules under test

@@ -3,8 +3,8 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from src.core.result import Ok
 
+from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 

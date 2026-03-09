@@ -3,8 +3,9 @@
 Speech and format adaptation for personas.
 """
 
-import structlog
 from typing import Any
+
+import structlog
 
 from src.templates.dynamic_template_engine import TemplateContext
 

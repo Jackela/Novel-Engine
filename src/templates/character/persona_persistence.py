@@ -4,8 +4,9 @@ Persona persistence and file I/O.
 """
 
 import json
-import structlog
 from pathlib import Path
+
+import structlog
 
 from src.templates.context_renderer import RenderFormat
 

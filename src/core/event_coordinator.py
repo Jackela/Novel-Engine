@@ -17,8 +17,9 @@ This class follows the Single Responsibility Principle by focusing solely on
 event coordination, separate from integration orchestration.
 """
 
-import structlog
 from typing import Any, Callable, Dict, Optional
+
+import structlog
 
 from src.core.event_bus import EventBus
 

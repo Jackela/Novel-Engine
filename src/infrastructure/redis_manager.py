@@ -9,13 +9,13 @@ and real-time data management in the Novel Engine framework.
 
 import asyncio
 import json
-import structlog
 import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 
+import structlog
 from redis import asyncio as aioredis
 
 logger = structlog.get_logger(__name__)

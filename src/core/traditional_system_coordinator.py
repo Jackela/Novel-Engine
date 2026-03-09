@@ -16,8 +16,9 @@ This class follows the Single Responsibility Principle by focusing solely on
 traditional system coordination, separate from integration orchestration.
 """
 
-import structlog
 from typing import Optional
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.core.system_orchestrator import OrchestratorConfig, SystemOrchestrator

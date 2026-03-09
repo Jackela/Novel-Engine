@@ -25,7 +25,6 @@ from src.contexts.world.domain.errors import (
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 from src.core.result import Err, Error, Ok, Result
 
-
 # Maximum snapshots per world before FIFO eviction
 MAX_SNAPSHOTS_PER_WORLD = 10
 

@@ -13,9 +13,10 @@ This module provides the fundamental infrastructure that other director componen
 build upon while maintaining clean separation of concerns.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
@@ -206,7 +207,7 @@ class DirectorAgentBase:
 
     def _initialize_world_state_tracker(self) -> None:
         """Initialize dynamic world state tracking system."""
-        from typing import Dict, List, Any
+        from typing import Any, Dict
         self.world_state_tracker: Dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes

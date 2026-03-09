@@ -1,4 +1,5 @@
 from typing import Any
+
 #!/usr/bin/env python3
 """
 AI Gateway Domain Events

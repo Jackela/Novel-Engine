@@ -9,10 +9,10 @@ PREP-013: Persistent chat session repository
 from __future__ import annotations
 
 import asyncio
-import structlog
 from typing import Any, AsyncIterator
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+import structlog
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 

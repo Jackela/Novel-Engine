@@ -10,11 +10,11 @@ This service ensures eventual consistency between the write model (domain aggreg
 and the read model (denormalized views) through reliable event processing.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional, Set
 from uuid import UUID
 
+import structlog
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 

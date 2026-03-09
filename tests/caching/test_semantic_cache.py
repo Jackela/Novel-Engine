@@ -11,23 +11,21 @@ Tests cover:
 
 from __future__ import annotations
 
-import json
 import time
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
 pytestmark = pytest.mark.unit
 
+from src.caching.interfaces import CacheEntryMeta
 from src.caching.semantic_cache import (
     SemanticCache,
     SemanticCacheConfig,
-    _SemanticEntry,
     _cosine_similarity,
+    _SemanticEntry,
     _token_frequency,
 )
-from src.caching.interfaces import CacheEntryMeta
 
 
 @pytest.fixture

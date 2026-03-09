@@ -9,7 +9,6 @@ including CRUD operations and optimization history tracking.
 from __future__ import annotations
 
 import json
-import structlog
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -17,6 +16,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiosqlite
+import structlog
 
 from .base import Language, StoryGenre
 

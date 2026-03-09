@@ -16,7 +16,6 @@ Architecture Patterns:
 
 import asyncio
 import logging
-import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -24,6 +23,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import aiohttp
+import structlog
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

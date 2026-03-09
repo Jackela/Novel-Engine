@@ -8,7 +8,6 @@ Tests cover:
 - Metrics collection
 """
 
-import time
 
 import pytest
 

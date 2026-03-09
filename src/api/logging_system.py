@@ -8,7 +8,6 @@ for production API operations with security and performance monitoring.
 
 import json
 import logging
-import structlog
 import sys
 import threading
 import time

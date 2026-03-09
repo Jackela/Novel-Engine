@@ -10,7 +10,6 @@ Wave 5.1.3 - Memory Management and Leak Prevention
 
 import gc
 import json
-import structlog
 import sys
 import threading
 import time
@@ -21,6 +20,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Deque, Dict, List, Optional
 
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

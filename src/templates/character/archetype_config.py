@@ -3,8 +3,9 @@
 Character archetype configurations and preferences.
 """
 
-import structlog
 from typing import Dict
+
+import structlog
 
 from src.templates.dynamic_template_engine import TemplateType
 

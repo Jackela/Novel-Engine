@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 import structlog
 
-from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result
 
 from ...domain.models.source_type import SourceType

@@ -8,10 +8,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from src.contexts.knowledge.domain.models.prompt_template_pkg.variable import (
-    VariableType,
-)
-
 
 @dataclass(frozen=True, slots=True)
 class ModelConfig:

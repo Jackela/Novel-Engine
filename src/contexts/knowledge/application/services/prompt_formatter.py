@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.contexts.shared.domain.errors import ValidationError
 from src.core.result import Err, Ok, Result
 
 from ...domain.models.model_registry import (

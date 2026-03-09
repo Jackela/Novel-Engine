@@ -6,7 +6,7 @@ Tests Iron Laws validation, action adjudication, and lifecycle management.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from unittest.mock import Mock, patch
 
 import pytest

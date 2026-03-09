@@ -7,10 +7,10 @@ Stores usage events for cost tracking and visualization.
 
 from __future__ import annotations
 
-import structlog
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-from typing import Any
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

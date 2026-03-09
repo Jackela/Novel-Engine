@@ -6,12 +6,13 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles agent registration, lifecycle management, and coordination.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import structlog
+
 from src.agents.persona_agent.agent import PersonaAgent
-from src.contexts.shared.domain.errors import ServiceError, ValidationError
+from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result
 from src.core.types.shared_types import CharacterAction
 

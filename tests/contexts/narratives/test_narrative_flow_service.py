@@ -7,7 +7,6 @@ Narrative Flow Service Tests
 """
 
 from decimal import Decimal
-from uuid import uuid4
 
 import pytest
 
@@ -28,6 +27,7 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
     PacingType,
     StoryPacing,
 )
+
 pytestmark = pytest.mark.unit
 
 

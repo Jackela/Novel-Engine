@@ -470,7 +470,9 @@ class TestKnowledgeIngestionService:
         async def conditional_embed_batch(texts: list[str]):
             # Check if any text contains "fail"
             if any("fail" in t.lower() for t in texts):
-                from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+                from src.contexts.knowledge.application.ports.i_embedding_service import (
+                    EmbeddingError,
+                )
                 raise EmbeddingError("Simulated failure")
             return await original_embed_batch(texts)
 
@@ -768,7 +770,9 @@ class TestKnowledgeIngestionService:
     ):
         """Test that embedding service errors return an error Result."""
         # The service uses embed_batch, so we need to mock that
-        from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+        from src.contexts.knowledge.application.ports.i_embedding_service import (
+            EmbeddingError,
+        )
         mock_embedding_service.embed_batch.side_effect = EmbeddingError("API error")
 
         result = await ingestion_service.ingest(
@@ -790,7 +794,9 @@ class TestKnowledgeIngestionService:
         mock_vector_store: IVectorStore,
     ):
         """Test that vector store errors return an error Result."""
-        from src.contexts.knowledge.application.ports.i_vector_store import VectorStoreError
+        from src.contexts.knowledge.application.ports.i_vector_store import (
+            VectorStoreError,
+        )
         mock_vector_store.upsert.side_effect = VectorStoreError("Storage error")
 
         result = await ingestion_service.ingest(

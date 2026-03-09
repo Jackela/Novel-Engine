@@ -8,11 +8,12 @@ for complete state externalization in the Novel Engine framework.
 """
 
 import asyncio
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from .postgresql_manager import (
     PostgreSQLConfig,

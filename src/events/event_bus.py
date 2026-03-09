@@ -13,7 +13,6 @@ This module provides a production-ready event bus implementation with:
 
 import asyncio
 import json
-import structlog
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -21,6 +20,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
+
+import structlog
 
 try:
     # Use redis[asyncio] instead of deprecated aioredis (Python 3.11+ compatible)

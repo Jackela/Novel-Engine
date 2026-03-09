@@ -8,11 +8,11 @@ representing experiences that shape character behavior and dialogue.
 
 from __future__ import annotations
 
-import structlog
 from datetime import datetime
 from typing import Any, List, Optional
 from uuid import UUID, uuid4
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.deps import get_optional_workspace_id, require_workspace_id

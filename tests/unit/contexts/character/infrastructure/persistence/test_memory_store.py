@@ -8,7 +8,6 @@ Tests cover the three main operations:
 
 import pytest
 
-
 pytestmark = pytest.mark.unit
 
 from src.contexts.character.infrastructure.persistence.memory_store import (

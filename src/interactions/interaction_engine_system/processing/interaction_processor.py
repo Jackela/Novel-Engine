@@ -8,10 +8,11 @@ Coordinates interaction execution through structured phases with validation and 
 
 import asyncio
 import logging
-import structlog
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import (
     InteractionContext,

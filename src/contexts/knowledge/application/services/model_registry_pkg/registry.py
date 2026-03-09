@@ -3,22 +3,11 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import structlog
-
-from src.core.result import Err, Error, NotFoundError, Ok, Result, ValidationError
-
-from src.contexts.knowledge.domain.models.model_registry import (
-    LLMProvider,
-    ModelAlias,
-    ModelDefinition,
-    TaskModelConfig,
-    TaskType,
-)
 
 from src.contexts.knowledge.application.services.model_registry_pkg.config import (
     DEFAULT_ALIASES,
@@ -28,6 +17,14 @@ from src.contexts.knowledge.application.services.model_registry_pkg.config impor
     ModelRegistryConfig,
     ModelRegistryConfigFile,
 )
+from src.contexts.knowledge.domain.models.model_registry import (
+    LLMProvider,
+    ModelAlias,
+    ModelDefinition,
+    TaskModelConfig,
+    TaskType,
+)
+from src.core.result import Err, Error, NotFoundError, Ok, Result, ValidationError
 
 logger = structlog.get_logger(__name__)
 

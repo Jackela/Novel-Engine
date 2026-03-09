@@ -6,8 +6,9 @@ This module implements command handlers for narrative arc operations.
 Handlers coordinate between the application layer and domain layer.
 """
 
-import structlog
 from typing import Any, Dict, Optional
+
+import structlog
 
 from ...domain.aggregates.narrative_arc import NarrativeArc
 from ...domain.services.causal_graph_service import CausalGraphService
@@ -403,7 +404,10 @@ class NarrativeArcCommandHandler:
             if not arc:
                 raise ValueError(f"Narrative arc {command.arc_id} not found")
 
-            from ...domain.value_objects.narrative_context import ContextType, ContextScope
+            from ...domain.value_objects.narrative_context import (
+                ContextScope,
+                ContextType,
+            )
             ctx_type = command.context_type
             if isinstance(ctx_type, str):
                 ctx_type = ContextType(ctx_type)

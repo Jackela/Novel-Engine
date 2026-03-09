@@ -6,11 +6,11 @@ Automatic HTTP request instrumentation and trace context management for FastAPI 
 Integrates with Novel Engine distributed tracing system.
 """
 
-import structlog
 import time
 from typing import Any, Callable, Optional
 from uuid import uuid4
 
+import structlog
 from fastapi import Request, Response
 from opentelemetry import propagate, trace
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor

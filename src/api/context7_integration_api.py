@@ -7,13 +7,13 @@ FastAPI endpoints that leverage Context7 MCP server for enhanced API documentati
 code examples, framework patterns, and best practices integration.
 """
 
-import structlog
 import os
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import httpx
+import structlog
 from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 

@@ -7,9 +7,10 @@ Manages agent registration, deregistration, and lifecycle events.
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
+
+import structlog
 
 
 class AgentLifecycleManager:

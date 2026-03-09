@@ -7,7 +7,6 @@ Comprehensive event bus with pub/sub patterns, event sourcing, and distributed e
 """
 
 import asyncio
-import structlog
 import threading
 import uuid
 from collections import defaultdict, deque
@@ -25,6 +24,8 @@ from typing import (
     Set,
     TypeVar,
 )
+
+import structlog
 
 from .error_handler import CentralizedErrorHandler, ErrorContext
 

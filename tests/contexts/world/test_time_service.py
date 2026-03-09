@@ -10,18 +10,16 @@ This module provides test coverage for the TimeService including:
 Total: 30 tests
 """
 
+
 import pytest
-from datetime import datetime
-from typing import Optional
 
 from src.contexts.world.application.services.time_service import TimeService
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
-from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository import (
     InMemoryCalendarRepository,
 )
-from src.core.result import Ok, Err
+
 pytestmark = pytest.mark.unit
 
 

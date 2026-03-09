@@ -7,7 +7,6 @@ Tests PersonaAgent implementation details.
 
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 

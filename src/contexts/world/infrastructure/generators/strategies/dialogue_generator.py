@@ -1,6 +1,6 @@
 """Dialogue generation strategy for character-authentic speech."""
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 import structlog
 

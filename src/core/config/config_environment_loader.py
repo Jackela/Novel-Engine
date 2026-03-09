@@ -14,12 +14,12 @@ Features:
 - Thread-safe operation
 """
 
-import structlog
 import os
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
+import structlog
 import yaml
 
 logger = structlog.get_logger(__name__)

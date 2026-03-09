@@ -23,8 +23,6 @@ from typing import TYPE_CHECKING
 import structlog
 
 from ..services.knowledge_ingestion_service import RetrievedChunk
-from src.core.result import Error
-
 from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:

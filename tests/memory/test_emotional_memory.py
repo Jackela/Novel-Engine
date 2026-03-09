@@ -10,13 +10,13 @@ pytestmark = pytest.mark.unit
 
 from unittest.mock import Mock
 
+from src.core.data_models import MemoryItem, MemoryType
 from src.memory.emotional_memory import (
     EmotionalIntensity,
-    EmotionalValence,
-    EmotionalMemoryItem,
     EmotionalMemory,
+    EmotionalMemoryItem,
+    EmotionalValence,
 )
-from src.core.data_models import MemoryItem, MemoryType
 
 
 class TestEmotionalIntensity:

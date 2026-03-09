@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
 from typing import TYPE_CHECKING
 
+import structlog
 from fastapi import APIRouter, HTTPException, Request
 
 from src.api.schemas import (

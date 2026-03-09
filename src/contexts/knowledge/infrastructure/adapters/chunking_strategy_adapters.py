@@ -42,6 +42,7 @@ import warnings
 from typing import TYPE_CHECKING, Any
 
 from ..chunking import (
+    DEFAULT_COHERENCE_THRESHOLD,
     MAX_COHERENCE_THRESHOLD,
     MIN_COHERENCE_THRESHOLD,
     AutoSelectStrategy,
@@ -49,7 +50,6 @@ from ..chunking import (
     ChunkingStrategyFactory,
     CoherenceScore,
     ContentType,
-    DEFAULT_COHERENCE_THRESHOLD,
     FixedSizeStrategy,
     NarrativeStructureStrategy,
     ParagraphBoundaryStrategy,
@@ -59,7 +59,6 @@ from ..chunking import (
 from ..chunking.base import BaseChunkingStrategy
 
 if TYPE_CHECKING:
-    from ...application.ports.i_chunking_strategy import Chunk
     from ...domain.models.chunking_strategy import ChunkingStrategy
 
 # Emit deprecation warning

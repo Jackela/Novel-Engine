@@ -8,10 +8,11 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 
 import asyncio
 import logging
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import modular components
 from .core import (

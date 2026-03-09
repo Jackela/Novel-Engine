@@ -8,7 +8,6 @@ Enterprise-grade structured logging with performance monitoring and audit trails
 
 import asyncio
 import json
-import structlog
 import logging.handlers
 import sys
 import threading

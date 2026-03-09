@@ -14,15 +14,16 @@ import re
 import pytest
 
 from src.contexts.knowledge.infrastructure.chunking.base import (
-    CoherenceScore,
-    BaseChunkingStrategy,
-    get_word_pattern,
-    get_sentence_end_pattern,
-    get_paragraph_delim_pattern,
-    MIN_COHERENCE_THRESHOLD,
-    MAX_COHERENCE_THRESHOLD,
     DEFAULT_COHERENCE_THRESHOLD,
+    MAX_COHERENCE_THRESHOLD,
+    MIN_COHERENCE_THRESHOLD,
+    BaseChunkingStrategy,
+    CoherenceScore,
+    get_paragraph_delim_pattern,
+    get_sentence_end_pattern,
+    get_word_pattern,
 )
+
 pytestmark = pytest.mark.unit
 
 

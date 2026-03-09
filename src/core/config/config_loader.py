@@ -16,11 +16,12 @@ Key Features:
 - Configuration caching for performance.
 """
 
-import structlog
 import os
 import threading
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Try to import yaml, handle gracefully if not available
 try:

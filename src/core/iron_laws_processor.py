@@ -8,12 +8,13 @@ capabilities for minor violations. Extracted from DirectorAgent for better modul
 """
 
 import logging
-import structlog
 import math
 import time
 from copy import deepcopy
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.agents.persona_agent.agent import PersonaAgent
 

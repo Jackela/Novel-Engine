@@ -6,10 +6,11 @@ Extracted from DirectorAgent for better separation of concerns.
 Handles campaign log initialization, event logging, and narrative tracking.
 """
 
-import structlog
 import os
 from datetime import datetime
 from typing import Optional
+
+import structlog
 
 from src.contexts.shared.domain.errors import ServiceError
 from src.core.config.config_loader import get_campaign_log_filename

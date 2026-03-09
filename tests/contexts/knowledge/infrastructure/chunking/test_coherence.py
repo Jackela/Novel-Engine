@@ -18,10 +18,7 @@ from src.contexts.knowledge.infrastructure.chunking.coherence import (
     ChunkCoherenceAnalyzer,
     CoherenceScore,
 )
-from src.contexts.knowledge.infrastructure.chunking.base import (
-    MIN_COHERENCE_THRESHOLD,
-    MAX_COHERENCE_THRESHOLD,
-)
+
 pytestmark = pytest.mark.unit
 
 

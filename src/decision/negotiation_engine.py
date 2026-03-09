@@ -6,9 +6,10 @@ adjusted actions or alternatives when needed.
 """
 
 import json
-import structlog
 import re
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from .models import (
     DecisionOption,

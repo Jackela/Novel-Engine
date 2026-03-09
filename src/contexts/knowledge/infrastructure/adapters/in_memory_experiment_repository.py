@@ -11,8 +11,9 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import structlog
 from typing import Optional
+
+import structlog
 
 from src.contexts.knowledge.application.ports.i_experiment_repository import (
     ExperimentRepositoryError,

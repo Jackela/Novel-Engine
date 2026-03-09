@@ -22,7 +22,6 @@ from src.contexts.knowledge.application.ports.i_llm_client import (
 from src.contexts.knowledge.application.services.entity_extraction_service import (
     DEFAULT_MAX_TOKENS,
     DEFAULT_TEMPERATURE,
-    EntityExtractionError,
     EntityExtractionService,
     ExtractionConfig,
 )

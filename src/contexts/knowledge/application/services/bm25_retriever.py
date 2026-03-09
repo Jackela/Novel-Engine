@@ -23,7 +23,7 @@ import structlog
 
 from src.core.result import Err, Ok, Result
 
-from ...domain.errors import BM25Error, NotFoundError, ValidationError
+from ...domain.errors import BM25Error, ValidationError
 
 logger = structlog.get_logger()
 

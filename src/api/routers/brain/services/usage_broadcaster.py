@@ -8,10 +8,10 @@ BRAIN-035B-04: Real-time Usage Counter
 from __future__ import annotations
 
 import asyncio
-import json
-import structlog
 from datetime import UTC, datetime
 from typing import AsyncIterator
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

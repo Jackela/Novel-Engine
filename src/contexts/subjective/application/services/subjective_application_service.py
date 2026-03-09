@@ -7,9 +7,10 @@ bounded context. It serves as the primary interface for external systems
 to interact with subjective perception and knowledge operations.
 """
 
-import structlog
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from ...domain.aggregates.turn_brief import TurnBrief
 from ...domain.repositories.turn_brief_repository import ITurnBriefRepository

@@ -8,9 +8,10 @@ SubjectiveRealityEngine and EmergentNarrativeEngine.
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
+
+import structlog
 
 from src.core.narrative import EmergentNarrativeEngine
 

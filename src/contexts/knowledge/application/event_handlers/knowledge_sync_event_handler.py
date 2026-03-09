@@ -22,7 +22,6 @@ from typing import Any
 import structlog
 
 from ...application.services.knowledge_ingestion_service import (
-    IngestionResult,
     KnowledgeIngestionService,
 )
 from ...domain.models.source_type import SourceType

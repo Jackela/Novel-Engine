@@ -6,7 +6,6 @@ Tests for AwarenessState, AlertnessLevel, AttentionFocus, and AwarenessModifier.
 Covers unit tests, integration tests, and boundary tests.
 """
 
-from typing import Dict
 
 import pytest
 
@@ -16,6 +15,7 @@ from src.contexts.subjective.domain.value_objects.awareness import (
     AwarenessModifier,
     AwarenessState,
 )
+
 pytestmark = pytest.mark.unit
 
 

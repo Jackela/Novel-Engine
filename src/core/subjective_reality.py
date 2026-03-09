@@ -15,12 +15,13 @@ Features:
 - PersonalizedNarrative 个性化叙事：基于主观现实的故事生成
 """
 
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

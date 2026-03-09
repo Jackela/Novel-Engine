@@ -25,7 +25,6 @@ Features:
 import asyncio
 import json
 import logging
-import structlog
 import os
 import threading
 import time
@@ -38,6 +37,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import psutil
+import structlog
 
 # External dependencies - graceful degradation if not available
 try:

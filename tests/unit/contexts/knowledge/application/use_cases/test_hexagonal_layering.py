@@ -4,11 +4,10 @@ These tests prevent regressions where application use cases import infrastructur
 modules directly, which violates the dependency direction.
 """
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 import pytest
-
 
 pytestmark = pytest.mark.unit
 

@@ -6,9 +6,10 @@ Uses asyncio.Event for non-blocking wait with timeout support.
 """
 
 import asyncio
-import structlog
 from datetime import datetime, timezone
 from typing import Callable, Optional
+
+import structlog
 
 from .models import (
     DecisionPoint,

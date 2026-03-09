@@ -13,12 +13,13 @@ Result Pattern Migration:
 """
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .result import Error, Err, Ok, Result
+import structlog
+
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

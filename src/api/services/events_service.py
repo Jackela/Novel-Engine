@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import structlog
 import time
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, AsyncGenerator, Dict, Optional
+
+import structlog
 
 from src.api.schemas import (
     AnalyticsMetricsData,

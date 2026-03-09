@@ -7,11 +7,11 @@ and dynamic relationship evolution.
 """
 
 import asyncio
-import structlog
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import structlog
 from fastapi import FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel, Field, field_validator
 

@@ -7,8 +7,9 @@ Ensures interaction integrity and validates all requirements before processing.
 """
 
 import logging
-import structlog
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import (
     InteractionContext,

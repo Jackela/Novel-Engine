@@ -14,6 +14,7 @@ Tests:
 """
 
 import os
+
 # Set testing mode BEFORE importing app
 os.environ["ORCHESTRATOR_MODE"] = "testing"
 

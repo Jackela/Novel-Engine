@@ -15,11 +15,12 @@ import hashlib
 import importlib.util
 import json
 import logging
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 SHARED_TYPES_AVAILABLE = (
     importlib.util.find_spec("src.core.types.shared_types") is not None

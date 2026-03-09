@@ -8,10 +8,11 @@ Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
 import asyncio
-import structlog
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.core.types.shared_types import ActionPriority, CharacterAction
 

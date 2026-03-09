@@ -16,12 +16,13 @@ System保佑上下文渲染 (May the System bless context rendering)
 """
 
 import asyncio
-import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import enhanced data models
 from src.core.data_models import (

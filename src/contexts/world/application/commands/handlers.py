@@ -1,6 +1,7 @@
-import structlog
 from datetime import datetime
 from typing import Any, Dict
+
+import structlog
 
 from apps.api.infrastructure.command_bus import CommandHandler
 from src.contexts.world.application.commands.world_commands import ApplyWorldDelta

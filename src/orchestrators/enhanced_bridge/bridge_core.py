@@ -8,12 +8,13 @@ Core EnhancedMultiAgentBridge class implementation.
 
 import asyncio
 import heapq
-import structlog
 import threading
 import time
 from collections import defaultdict, deque
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+
+import structlog
 
 from src.agents.director_agent_integrated import DirectorAgent
 from src.core.event_bus import EventBus
@@ -23,11 +24,6 @@ from src.core.llm_service import (
     get_llm_service,
 )
 
-from .types import (
-    CommunicationType,
-    DialogueState,
-    RequestPriority,
-)
 from .models import (
     AgentDialogue,
     BridgeConfiguration,
@@ -36,6 +32,11 @@ from .models import (
     LLMBatchRequest,
     LLMCoordinationConfig,
     PerformanceBudget,
+)
+from .types import (
+    CommunicationType,
+    DialogueState,
+    RequestPriority,
 )
 
 __all__ = ["EnhancedMultiAgentBridge"]

@@ -7,7 +7,6 @@ Requires PostgreSQL to be running for integration tests.
 
 import os
 import uuid
-from datetime import datetime
 from typing import AsyncGenerator
 
 import pytest

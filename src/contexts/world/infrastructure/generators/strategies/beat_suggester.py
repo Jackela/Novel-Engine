@@ -7,7 +7,7 @@ import structlog
 from .base_strategy import WorldGenerationStrategy
 
 if TYPE_CHECKING:
-    from ..llm_world_generator import BeatSuggestion, BeatSuggestionResult
+    from ..llm_world_generator import BeatSuggestionResult
 
 logger = structlog.get_logger(__name__)
 

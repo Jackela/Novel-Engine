@@ -4,7 +4,7 @@ This module tests the snapshots API endpoints for creating, listing,
 restoring, and deleting world state snapshots.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,6 +14,7 @@ pytestmark = pytest.mark.integration
 
 # Mock aioredis before importing any app modules
 import sys
+
 sys.modules["aioredis"] = MagicMock()
 
 from src.api.app import create_app

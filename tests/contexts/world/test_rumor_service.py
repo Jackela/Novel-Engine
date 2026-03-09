@@ -12,21 +12,19 @@ This module provides test coverage for the RumorService including:
 Total: 35 tests
 """
 
+
 import pytest
-from typing import List, Optional
 
 from src.api.schemas.world_schemas import SortByEnum
 from src.contexts.world.application.services.rumor_service import (
     RumorService,
-    RumorNotFoundError,
-    RumorValidationError,
 )
 from src.contexts.world.domain.entities.rumor import Rumor, RumorOrigin
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository import (
     InMemoryRumorRepository,
 )
-from src.core.result import Ok, Err
+
 pytestmark = pytest.mark.unit
 
 

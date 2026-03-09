@@ -8,11 +8,11 @@ Handles local API communication and response mapping for Ollama's REST API.
 
 import asyncio
 import json
-import structlog
 from decimal import Decimal
 from typing import Any, AsyncIterator, Dict, List, Optional
 
 import aiohttp
+import structlog
 
 from ...domain.services.llm_provider import (
     ILLMProvider,

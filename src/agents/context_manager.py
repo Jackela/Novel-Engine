@@ -10,10 +10,10 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
 import re
-
-import structlog
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
+
+import structlog
 
 if TYPE_CHECKING:
     from src.agents.persona_core import PersonaCore

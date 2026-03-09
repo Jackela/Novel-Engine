@@ -10,7 +10,6 @@ Wave 5.3 - Async Processing & Concurrency Enhancement
 
 import asyncio
 import json
-import structlog
 import time
 from collections import deque
 from contextlib import asynccontextmanager
@@ -22,6 +21,7 @@ from typing import Any, Awaitable, Dict, List, Optional, Tuple
 import aiofiles
 import aiohttp
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

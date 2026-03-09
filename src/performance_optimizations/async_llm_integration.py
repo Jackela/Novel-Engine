@@ -23,7 +23,6 @@ import asyncio
 import atexit
 import hashlib
 import json
-import structlog
 import os
 import threading
 import time
@@ -33,6 +32,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
+import structlog
 
 logger = structlog.get_logger(__name__)
 

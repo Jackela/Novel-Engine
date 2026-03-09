@@ -6,6 +6,7 @@ Data classes for LLM world generation results.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+
 @dataclass
 class BeatSuggestion:
     """A single beat suggestion from the AI.

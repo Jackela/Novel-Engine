@@ -7,12 +7,12 @@ Story Arc Service Tests
 """
 
 from decimal import Decimal
-from typing import Any, Dict
 
 import pytest
 
 from src.contexts.narratives.domain.services.story_arc_manager import StoryArcManager
 from src.contexts.narratives.domain.value_objects import StoryArcPhase, StoryArcState
+
 pytestmark = pytest.mark.unit
 
 

@@ -4,18 +4,27 @@ Edge Cases Tests for Narratives Context
 Tests boundary conditions, edge cases, and unusual scenarios.
 """
 
+from uuid import UUID
+
 import pytest
-from datetime import datetime, timezone
-from uuid import uuid4, UUID
 
 from src.contexts.narratives.domain.aggregates.narrative_arc import NarrativeArc
-from src.contexts.narratives.domain.entities.narrative_thread import NarrativeThread
-from src.contexts.narratives.domain.entities.story_element import StoryElement
-from src.contexts.narratives.domain.value_objects.narrative_id import NarrativeId
-from src.contexts.narratives.domain.value_objects.plot_point import PlotPoint, PlotPointType, PlotPointImportance
-from src.contexts.narratives.domain.value_objects.narrative_theme import NarrativeTheme, ThemeType, ThemeIntensity
-from src.contexts.narratives.domain.value_objects.story_pacing import StoryPacing, PacingType
 from src.contexts.narratives.domain.value_objects.causal_node import CausalNode
+from src.contexts.narratives.domain.value_objects.narrative_id import NarrativeId
+from src.contexts.narratives.domain.value_objects.narrative_theme import (
+    NarrativeTheme,
+    ThemeIntensity,
+    ThemeType,
+)
+from src.contexts.narratives.domain.value_objects.plot_point import (
+    PlotPointImportance,
+    PlotPointType,
+)
+from src.contexts.narratives.domain.value_objects.story_pacing import (
+    PacingType,
+    StoryPacing,
+)
+
 pytestmark = pytest.mark.unit
 
 
@@ -226,7 +235,10 @@ class TestStoryPacingEdgeCases:
     def test_pacing_creation(self):
         """Test pacing creation."""
         from decimal import Decimal
-        from src.contexts.narratives.domain.value_objects.story_pacing import PacingIntensity
+
+        from src.contexts.narratives.domain.value_objects.story_pacing import (
+            PacingIntensity,
+        )
         pacing = StoryPacing(
             pacing_id="pacing_001",
             pacing_type=PacingType.STEADY,
@@ -377,7 +389,9 @@ class TestPacingIntensity:
     
     def test_pacing_intensity_values(self):
         """Test pacing intensity string values."""
-        from src.contexts.narratives.domain.value_objects.story_pacing import PacingIntensity
+        from src.contexts.narratives.domain.value_objects.story_pacing import (
+            PacingIntensity,
+        )
         assert PacingIntensity.GLACIAL.value == "glacial"
         assert PacingIntensity.SLOW.value == "slow"
         assert PacingIntensity.MODERATE.value == "moderate"

@@ -8,17 +8,15 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from unittest.mock import Mock
-from collections import deque
 
 from src.performance.monitoring import (
-    MetricType,
     AlertSeverity,
-    PerformanceMetric,
-    PerformanceAlert,
+    MetricType,
     MonitoringConfig,
-    SystemResourceMonitor,
+    PerformanceAlert,
+    PerformanceMetric,
     PerformanceMonitor,
+    SystemResourceMonitor,
 )
 
 

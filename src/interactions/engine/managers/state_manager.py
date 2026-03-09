@@ -3,9 +3,9 @@
 State and memory management for interactions.
 """
 
-import structlog
-
 from typing import Any
+
+import structlog
 
 from src.core.data_models import (
     ErrorInfo,

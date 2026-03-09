@@ -7,7 +7,6 @@ for production readiness and operational monitoring.
 """
 
 import asyncio
-import structlog
 import sqlite3
 import time
 from dataclasses import dataclass, field
@@ -17,6 +16,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 import psutil
+import structlog
 
 from .response_envelopes import HealthCheckData
 

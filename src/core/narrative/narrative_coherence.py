@@ -6,9 +6,10 @@ Narrative coherence engine for story consistency.
 """
 
 import json
-import structlog
 from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
+
+import structlog
 
 from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 

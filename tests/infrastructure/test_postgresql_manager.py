@@ -6,12 +6,8 @@ Tests for PostgreSQL connection pool, manager, and related functionality.
 Covers unit tests, integration tests, and boundary tests.
 """
 
-import asyncio
-import json
 import os
-from datetime import datetime
-from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

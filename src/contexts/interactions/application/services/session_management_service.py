@@ -5,7 +5,7 @@ Session Management Application Service
 Application service for negotiation session lifecycle operations using Result pattern.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 

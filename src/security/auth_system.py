@@ -16,7 +16,6 @@ System保佑此认证系统 (May the System bless this authentication system)
 
 import hashlib
 import logging
-import structlog
 import os
 import secrets
 import tempfile
@@ -29,6 +28,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import aiosqlite
 import bcrypt
 import jwt
+import structlog
 from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field

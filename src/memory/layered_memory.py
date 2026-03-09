@@ -9,12 +9,13 @@ working, episodic, semantic, and emotional memories.
 """
 
 import asyncio
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.core.data_models import (
     ErrorInfo,

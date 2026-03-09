@@ -10,7 +10,6 @@ pytestmark = pytest.mark.integration
 from fastapi.testclient import TestClient
 
 from src.api.app import create_app
-from src.api.routers.rumors import reset_rumors_storage
 
 
 @pytest.fixture

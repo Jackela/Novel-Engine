@@ -6,9 +6,10 @@ This module contains the use case for applying delta changes to world state.
 It orchestrates domain operations while maintaining Clean Architecture principles.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ...domain.aggregates.world_state import WorldState
 from ...domain.repositories.world_state_repo import (

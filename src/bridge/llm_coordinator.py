@@ -9,11 +9,12 @@ Manages LLM request batching, caching, and optimization for enhanced performance
 import asyncio
 import hashlib
 import logging
-import structlog
 import time
 from collections import deque
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from .types import (
     BatchedRequest,

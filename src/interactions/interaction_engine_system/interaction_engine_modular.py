@@ -7,9 +7,10 @@ backward compatibility while providing enhanced enterprise-grade functionality.
 """
 
 import asyncio
-import structlog
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
+
+import structlog
 
 # Import modular components
 from .core.types import (

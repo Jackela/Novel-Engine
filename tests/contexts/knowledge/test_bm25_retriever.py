@@ -4,18 +4,19 @@ Test suite for BM25 Retriever module.
 Tests BM25 scoring, ranking, and retrieval functionality.
 """
 
+
 import pytest
-from unittest.mock import Mock, patch
 
 from src.contexts.knowledge.application.services.bm25_retriever import (
-    BM25Retriever,
-    BM25Result,
+    DEFAULT_B,
+    DEFAULT_K1,
     BM25IndexStats,
+    BM25Result,
+    BM25Retriever,
     IndexedDocument,
     tokenize,
-    DEFAULT_K1,
-    DEFAULT_B,
 )
+
 pytestmark = pytest.mark.unit
 
 

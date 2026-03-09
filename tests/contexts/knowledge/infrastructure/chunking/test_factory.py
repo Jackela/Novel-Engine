@@ -14,10 +14,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.contexts.knowledge.infrastructure.chunking.factory import ChunkingStrategyFactory
-from src.contexts.knowledge.infrastructure.chunking.base import BaseChunkingStrategy
-from src.contexts.knowledge.domain.models.chunking_strategy import ChunkStrategyType
 from src.contexts.knowledge.application.ports.i_chunking_strategy import ChunkingError
+from src.contexts.knowledge.domain.models.chunking_strategy import ChunkStrategyType
+from src.contexts.knowledge.infrastructure.chunking.base import BaseChunkingStrategy
+from src.contexts.knowledge.infrastructure.chunking.factory import (
+    ChunkingStrategyFactory,
+)
+
 pytestmark = pytest.mark.unit
 
 
@@ -173,7 +176,9 @@ class TestCreateForContent:
 
     def test_create_for_document_content(self) -> None:
         """Test creating strategy for document content."""
-        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import ContentType
+        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import (
+            ContentType,
+        )
         factory = ChunkingStrategyFactory()
         
         strategy = factory.create_for_content(ContentType.DOCUMENT)
@@ -182,7 +187,9 @@ class TestCreateForContent:
 
     def test_create_for_scene_content(self) -> None:
         """Test creating strategy for scene content."""
-        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import ContentType
+        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import (
+            ContentType,
+        )
         # Scene content may need embedding service, so we use a factory with it
         mock_service = MagicMock()
         factory = ChunkingStrategyFactory(embedding_service=mock_service)
@@ -193,7 +200,9 @@ class TestCreateForContent:
 
     def test_create_for_dialogue_content(self) -> None:
         """Test creating strategy for dialogue content."""
-        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import ContentType
+        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import (
+            ContentType,
+        )
         factory = ChunkingStrategyFactory()
         
         strategy = factory.create_for_content(ContentType.DIALOGUE)
@@ -202,7 +211,9 @@ class TestCreateForContent:
 
     def test_create_for_unknown_content_uses_auto(self) -> None:
         """Test that unknown content type falls back to auto strategy."""
-        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import ContentType
+        from src.contexts.knowledge.infrastructure.chunking.strategies.auto import (
+            ContentType,
+        )
         factory = ChunkingStrategyFactory()
         
         # Using UNKNOWN content type falls back to auto strategy

@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import structlog
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, List, Optional, Set
+
+import structlog
 
 from src.api.schemas import (
     NarrativeData,

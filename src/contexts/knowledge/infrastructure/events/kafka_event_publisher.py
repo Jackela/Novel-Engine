@@ -10,8 +10,9 @@ Constitution Compliance:
 - Article VII (Observability): Structured logging and error handling
 """
 
-import structlog
 from typing import Any, Dict
+
+import structlog
 
 from core_platform.messaging.kafka_client import KafkaClient, get_kafka_client
 

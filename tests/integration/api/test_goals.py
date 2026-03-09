@@ -6,9 +6,10 @@ Tests the Goal API endpoints with full request/response validation.
 Goals are character objectives that drive narrative arcs.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock
 
 pytestmark = pytest.mark.integration
 
@@ -16,8 +17,8 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def client():
     """Create a test client for the API with mock character store."""
-    from src.api.app import create_app
     from src.api import deps
+    from src.api.app import create_app
 
     app = create_app(debug=True)
 

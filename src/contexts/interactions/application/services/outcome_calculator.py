@@ -7,7 +7,6 @@ using Result pattern.
 """
 
 from datetime import datetime, timezone
-from decimal import Decimal
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -16,7 +15,6 @@ from ....interactions.domain.value_objects.negotiation_party import NegotiationP
 from ....interactions.domain.value_objects.negotiation_status import NegotiationOutcome
 from ....interactions.domain.value_objects.proposal_response import ProposalResponse
 from .shared.errors import (
-    NotFoundError,
     OutcomeError,
     ValidationError,
 )
@@ -382,7 +380,6 @@ class OutcomeCalculator:
                     1 for r in current_responses 
                     if r.overall_response.value == "rejected"
                 )
-                pending = total_expected_responses - current_count
 
                 # Current rates
                 current_accept_rate = acceptances / current_count

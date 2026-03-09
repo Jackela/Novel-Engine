@@ -8,7 +8,6 @@ Handles queuing, prioritization, and scheduling of interaction requests.
 
 import asyncio
 import logging
-import structlog
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -16,6 +15,8 @@ from enum import Enum
 from functools import total_ordering
 from queue import PriorityQueue
 from typing import Any, Callable, Dict, Optional
+
+import structlog
 
 from ..core.types import (
     InteractionContext,

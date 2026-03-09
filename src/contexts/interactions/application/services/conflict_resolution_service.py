@@ -6,7 +6,6 @@ Application service for conflict detection and resolution using Result pattern.
 """
 
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.services.negotiation_service import NegotiationService
@@ -14,7 +13,6 @@ from ....interactions.domain.value_objects.negotiation_party import NegotiationP
 from ....interactions.domain.value_objects.proposal_response import ProposalResponse
 from .shared.errors import (
     ConflictError,
-    InteractionError,
     ValidationError,
 )
 

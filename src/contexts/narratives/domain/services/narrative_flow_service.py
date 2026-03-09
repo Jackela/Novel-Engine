@@ -6,10 +6,11 @@ This module implements the NarrativeFlowService, which manages story flow,
 sequence optimization, and narrative progression within story structures.
 """
 
-import structlog
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List
+
+import structlog
 
 from ..aggregates.narrative_arc import NarrativeArc
 from ..value_objects.plot_point import PlotPoint, PlotPointType

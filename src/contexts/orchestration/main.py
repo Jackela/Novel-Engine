@@ -14,10 +14,11 @@ Provides the complete M9 Orchestration milestone implementation with:
 """
 
 import logging
-import structlog
 import os
 import sys
 from pathlib import Path
+
+import structlog
 
 # Add the src/contexts/orchestration directory to Python path
 current_dir = Path(__file__).parent

@@ -6,12 +6,12 @@ Provides comprehensive API versioning, backward compatibility handling,
 and smooth migration paths for API consumers.
 """
 
-import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+import structlog
 from fastapi import Request, Response, status
 from fastapi.routing import APIRoute
 

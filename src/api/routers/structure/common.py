@@ -7,10 +7,10 @@ in-memory storage for MVP.
 
 from __future__ import annotations
 
-import structlog
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import HTTPException
 
 if TYPE_CHECKING:

@@ -6,13 +6,14 @@ Enhanced Bridge Factory
 Factory functions for creating and configuring the Enhanced Multi-Agent Bridge.
 """
 
-import structlog
 from typing import Any, Optional
+
+import structlog
 
 from src.core.event_bus import EventBus
 
-from .models import LLMCoordinationConfig, BridgeConfiguration
 from .bridge_core import EnhancedMultiAgentBridge
+from .models import BridgeConfiguration, LLMCoordinationConfig
 
 __all__ = [
     "create_enhanced_bridge",

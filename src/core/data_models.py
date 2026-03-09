@@ -14,12 +14,13 @@ Author: Novel Engine Development Team
 """
 
 import json
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 from uuid import uuid4
+
+import structlog
 
 from src.contexts.shared.domain.errors import ServiceError, StateError
 from src.core.result import Err, Ok, Result

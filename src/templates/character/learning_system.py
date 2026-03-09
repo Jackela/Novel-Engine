@@ -3,9 +3,10 @@
 Usage learning and optimization system.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any
+
+import structlog
 
 from src.templates.context_renderer import RenderFormat
 from src.templates.dynamic_template_engine import TemplateContext

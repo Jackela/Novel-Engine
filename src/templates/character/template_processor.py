@@ -3,8 +3,9 @@
 Template generation and processing.
 """
 
-import structlog
 from typing import List
+
+import structlog
 
 from src.templates.dynamic_template_engine import TemplateType
 

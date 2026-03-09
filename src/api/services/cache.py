@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import structlog
 from typing import Any, AsyncIterator, Dict, Iterable
 
+import structlog
 from fastapi import HTTPException
 
 from src.caching.global_chunk_cache import chunk_cache

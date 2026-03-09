@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import asyncio
 import os
-
-import structlog
 import re
 import sys
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import structlog
 
 from src.agents.decision_engine import SituationAssessment
 from src.agents.persona_agent.integrated import PersonaAgent as _PersonaAgentImpl

@@ -6,12 +6,11 @@ FastAPI dependency injection functions.
 
 from __future__ import annotations
 
-import structlog
 from typing import TYPE_CHECKING
 
+import structlog
 from fastapi import Request
 
-from src.api.routers.brain.core import get_fernet
 from src.api.routers.brain.repositories.brain_settings import (
     BrainSettingsRepository,
     InMemoryBrainSettingsRepository,
@@ -27,7 +26,6 @@ from src.api.routers.brain.services.usage_broadcaster import (
 )
 
 if TYPE_CHECKING:
-    from cryptography.fernet import Fernet
 
     from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
         KnowledgeIngestionService,

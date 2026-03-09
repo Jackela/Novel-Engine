@@ -8,14 +8,8 @@ Coverage targets:
 - Password verification
 """
 
-import asyncio
-import os
-import tempfile
-from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, Mock, patch
+from datetime import datetime, timedelta
 
-import bcrypt
-import jwt
 import pytest
 import pytest_asyncio
 
@@ -23,14 +17,12 @@ pytestmark = pytest.mark.unit
 
 from src.security.auth_system import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    JWT_ALGORITHM,
+    ROLE_PERMISSIONS,
     AuthenticationError,
     AuthorizationError,
     OperationError,
     OperationResult,
     Permission,
-    REFRESH_TOKEN_EXPIRE_DAYS,
-    ROLE_PERMISSIONS,
     SecurityService,
     TokenPair,
     User,

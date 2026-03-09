@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import structlog
-
 from fastapi import APIRouter, HTTPException
 
 from src.api.schemas import (

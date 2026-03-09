@@ -8,22 +8,21 @@ Coverage targets:
 - Error handling for malformed documents
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
-    BatchIngestionResult,
     DEFAULT_COLLECTION,
+    BatchIngestionResult,
     IngestionProgress,
     IngestionResult,
     KnowledgeIngestionService,
     RetrievedChunk,
-    SourceChunk,
 )
-from src.contexts.knowledge.domain.models.chunking_strategy import ChunkingStrategy
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
 pytestmark = pytest.mark.unit
 
 
@@ -268,7 +267,9 @@ class TestKnowledgeIngestionService:
 
     async def test_ingest_embedding_error(self, ingestion_service, mock_embedding_service):
         """Test ingestion with embedding error returns error result."""
-        from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+        from src.contexts.knowledge.application.ports.i_embedding_service import (
+            EmbeddingError,
+        )
         
         mock_embedding_service.embed_batch = AsyncMock(
             side_effect=EmbeddingError("Embedding failed")

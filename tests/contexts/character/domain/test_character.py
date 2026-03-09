@@ -8,16 +8,13 @@ Coverage targets:
 - State transitions
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock
+
+import pytest
 
 from src.contexts.character.domain.aggregates.character import Character
 from src.contexts.character.domain.events.character_events import (
     CharacterCreated,
-    CharacterLocationChanged,
-    CharacterStatsChanged,
-    CharacterUpdated,
 )
 from src.contexts.character.domain.value_objects.character_goal import (
     CharacterGoal,
@@ -26,6 +23,7 @@ from src.contexts.character.domain.value_objects.character_goal import (
 )
 from src.contexts.character.domain.value_objects.character_id import CharacterID
 from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
+
 # Note: Using MemoryType from context_models instead of core.data_models
 from src.contexts.character.domain.value_objects.character_profile import (
     CharacterClass,
@@ -33,20 +31,16 @@ from src.contexts.character.domain.value_objects.character_profile import (
     CharacterRace,
     Gender,
 )
-from src.contexts.character.domain.value_objects.character_psychology import (
-    CharacterPsychology,
-)
 from src.contexts.character.domain.value_objects.character_stats import (
-    AbilityScore,
     CharacterStats,
     CombatStats,
     CoreAbilities,
     VitalStats,
 )
 from src.contexts.character.domain.value_objects.skills import (
-    SkillCategory,
     Skills,
 )
+
 pytestmark = pytest.mark.unit
 
 
@@ -152,7 +146,9 @@ class TestCharacterCreation:
         """Test CharacterProfile validation for level < 1."""
         # CharacterProfile validates level in __post_init__
         from src.contexts.character.domain.value_objects.character_profile import (
-            PhysicalTraits, PersonalityTraits, Background
+            Background,
+            PersonalityTraits,
+            PhysicalTraits,
         )
         
         # Cannot create a CharacterProfile with level 0
@@ -246,7 +242,8 @@ class TestCharacterStatsOperations:
         """Test healing character."""
         # First damage the character by creating damaged stats
         from src.contexts.character.domain.value_objects.character_stats import (
-            CharacterStats, VitalStats
+            CharacterStats,
+            VitalStats,
         )
         
         damaged_vital = VitalStats(

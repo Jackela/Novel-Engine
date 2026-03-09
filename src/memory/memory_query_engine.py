@@ -9,12 +9,13 @@ and various query types to retrieve relevant information efficiently.
 """
 
 import asyncio
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.database.context_db import ContextDatabase

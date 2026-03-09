@@ -30,8 +30,6 @@ from src.contexts.world.domain.entities import (
 )
 from src.contexts.world.domain.errors import (
     EventError,
-    EventNotFoundError,
-    EventValidationError,
 )
 from src.contexts.world.domain.ports.event_repository import EventRepository
 from src.contexts.world.domain.ports.rumor_repository import RumorRepository

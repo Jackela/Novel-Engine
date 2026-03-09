@@ -28,12 +28,12 @@ from src.contexts.knowledge.application.services.knowledge_ingestion_service imp
     RetrievedChunk,
     SourceType,
 )
-from src.core.result import Ok
 from src.contexts.knowledge.application.services.token_counter import (
     LLMProvider,
     TokenCounter,
     TokenCountResult,
 )
+from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 

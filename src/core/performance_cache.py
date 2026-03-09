@@ -16,7 +16,6 @@ Result Pattern Migration:
 
 import asyncio
 import json
-import structlog
 import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
@@ -24,7 +23,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from .result import Error, Err, Ok, Result
+import structlog
+
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

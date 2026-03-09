@@ -11,12 +11,13 @@ import gzip
 import hashlib
 import json
 import logging
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, TextIO
+
+import structlog
 
 
 class LogLevel(Enum):

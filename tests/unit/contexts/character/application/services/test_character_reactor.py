@@ -5,19 +5,18 @@ This module tests the CharacterReactor service which generates character
 reactions to world events based on rules and character properties.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from datetime import datetime
-from typing import List, Optional
-from unittest.mock import MagicMock, patch
 
 from src.contexts.character.application.services.character_reactor import (
-    CharacterReactor,
-    CharacterMemoryService,
     REACTION_VERBS,
-    BASE_INTENSITY_BY_SCOPE,
+    CharacterMemoryService,
+    CharacterReactor,
 )
 from src.contexts.character.domain.aggregates.character import Character
 from src.contexts.character.domain.value_objects.character_id import CharacterID
+from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
 from src.contexts.character.domain.value_objects.character_profile import (
     Background,
     CharacterClass,
@@ -33,20 +32,19 @@ from src.contexts.character.domain.value_objects.character_reaction import (
 )
 from src.contexts.character.domain.value_objects.character_stats import (
     CharacterStats,
+    CombatStats,
     CoreAbilities,
     VitalStats,
-    CombatStats,
 )
-from src.contexts.character.domain.value_objects.character_memory import CharacterMemory
 from src.contexts.character.domain.value_objects.skills import Skills
+from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.history_event import (
-    EventType,
-    EventSignificance,
     EventOutcome,
+    EventSignificance,
+    EventType,
     HistoryEvent,
     ImpactScope,
 )
-from src.contexts.world.domain.aggregates.world_state import WorldState
 
 pytestmark = pytest.mark.unit
 

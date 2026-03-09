@@ -5,7 +5,7 @@ Tracks performance metrics, costs, and bridge health.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict
 
 if TYPE_CHECKING:
     from .types import CostTracker, PerformanceBudget

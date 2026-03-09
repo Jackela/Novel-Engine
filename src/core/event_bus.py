@@ -21,7 +21,6 @@ Result Pattern Migration:
 """
 
 import asyncio
-import structlog
 import time
 import uuid
 from collections import defaultdict
@@ -31,7 +30,9 @@ from enum import IntEnum
 from functools import total_ordering
 from typing import Any, Callable, Dict, List, Optional, Set
 
-from .result import Error, Err, Ok, Result
+import structlog
+
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

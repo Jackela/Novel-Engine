@@ -8,11 +8,12 @@ consciousness, adhering to the 7±2 capacity limit from cognitive psychology.
 It manages a small set of recently attended memory items.
 """
 
-import structlog
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Deque, Dict, List, Optional
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, StandardResponse
 from src.core.types import AgentID

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import structlog
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Optional
 
 import jwt
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 

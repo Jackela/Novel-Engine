@@ -9,7 +9,6 @@ security measures for production deployment.
 
 import asyncio
 import logging
-import structlog
 import os
 import secrets
 import ssl
@@ -19,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 import jwt
+import structlog
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware

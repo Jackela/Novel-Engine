@@ -7,7 +7,6 @@ Shows that the requested metrics (llm_cost_per_req, turn_duration_seconds) are w
 """
 
 from decimal import Decimal
-
 from typing import Any
 
 from prometheus_client import (

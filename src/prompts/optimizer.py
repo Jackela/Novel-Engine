@@ -8,9 +8,10 @@ using LLM-based meta-prompting techniques.
 
 from __future__ import annotations
 
-import structlog
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from .base import Language, StoryGenre
 

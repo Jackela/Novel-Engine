@@ -10,7 +10,7 @@ The TimeService follows the Command Query Separation principle:
 - advance_time() is a command (modifies state)
 """
 
-from typing import Optional, Tuple
+from typing import Tuple
 
 import structlog
 

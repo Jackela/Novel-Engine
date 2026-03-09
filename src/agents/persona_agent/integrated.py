@@ -16,10 +16,10 @@ The integrated PersonaAgent coordinates:
 
 import asyncio
 import os
-
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import event bus for communication
 from src.core.event_bus import EventBus
@@ -35,7 +35,7 @@ from src.agents.character_interpreter import CharacterInterpreter
 
 # Import extracted components
 from src.agents.context_integrator import ContextIntegrator
-from src.agents.decision_engine import DecisionEngine, SituationAssessment
+from src.agents.decision_engine import DecisionEngine
 from src.agents.memory_interface import MemoryInterface
 from src.agents.persona_agent.core import PersonaAgentCore
 from src.core.types.shared_types import ActionPriority

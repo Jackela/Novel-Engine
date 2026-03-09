@@ -5,32 +5,26 @@ Tests the application-layer service for AI-driven faction decision-making,
 including context assembly, resource constraints, and fallback behavior.
 """
 
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 pytestmark = pytest.mark.unit
 
 from src.contexts.world.application.services.faction_decision_service import (
-    ActionDefinition,
-    DecisionContext,
-    FactionDecisionService,
     ACTION_DEFINITIONS,
     FOOD_THRESHOLD_NO_ATTACK,
     GOLD_THRESHOLD_PRIORITIZE_TRADE,
     MAX_INTENTS_PER_GENERATION,
     MILITARY_THRESHOLD_NO_SABOTAGE,
+    DecisionContext,
+    FactionDecisionService,
 )
 from src.contexts.world.domain.entities.faction_intent import (
     ActionType,
     FactionIntent,
     IntentStatus,
 )
-from src.core.result import Ok, Err
 
 
 class TestDecisionContext:
@@ -578,7 +572,6 @@ class TestSelectIntentMethod:
     @pytest.mark.unit
     def test_select_intent_success(self, service, mock_repository):
         """Test successfully selecting an intent."""
-        from src.contexts.world.domain.entities.faction_intent import FactionIntent
 
         intent = FactionIntent(
             faction_id="test-faction",
@@ -607,7 +600,6 @@ class TestSelectIntentMethod:
     @pytest.mark.unit
     def test_select_intent_faction_mismatch(self, service, mock_repository):
         """Test selecting an intent from a different faction."""
-        from src.contexts.world.domain.entities.faction_intent import FactionIntent
 
         intent = FactionIntent(
             faction_id="other-faction",
@@ -625,7 +617,6 @@ class TestSelectIntentMethod:
     @pytest.mark.unit
     def test_select_intent_mark_failed(self, service, mock_repository):
         """Test when repository fails to mark intent as selected."""
-        from src.contexts.world.domain.entities.faction_intent import FactionIntent
 
         intent = FactionIntent(
             faction_id="test-faction",

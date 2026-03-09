@@ -7,10 +7,10 @@ Comprehensive documentation system that leverages Context7 for interactive examp
 framework patterns, and best practices integration.
 """
 
-import structlog
 from pathlib import Path
 from typing import Any, Dict, List
 
+import structlog
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader

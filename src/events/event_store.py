@@ -6,10 +6,11 @@ Simple event store implementation for persisting and retrieving events.
 This is a minimal implementation to resolve import dependencies.
 """
 
-import structlog
 import os
 from dataclasses import dataclass
 from typing import List, Optional
+
+import structlog
 
 from .event_bus import Event
 

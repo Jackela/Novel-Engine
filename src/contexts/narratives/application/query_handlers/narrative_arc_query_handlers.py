@@ -6,9 +6,10 @@ This module implements query handlers for narrative arc read operations.
 Handlers coordinate between the application layer and domain/infrastructure layers.
 """
 
-import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ...domain.services.causal_graph_service import CausalGraphService
 from ...domain.services.narrative_flow_service import NarrativeFlowService

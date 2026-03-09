@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import io
 import json
-import structlog
 import os
 import re
 import shutil
@@ -13,6 +12,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, cast
+
+import structlog
 
 from .interfaces import CharacterStore, Workspace, WorkspaceStore
 

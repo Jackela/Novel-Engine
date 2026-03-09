@@ -8,11 +8,11 @@ from src.contexts.knowledge.application.services.model_registry_pkg.config impor
     ModelRegistryConfig,
     ModelRegistryConfigFile,
 )
-from src.contexts.knowledge.application.services.model_registry_pkg.registry import (
-    ModelRegistry,
-)
 from src.contexts.knowledge.application.services.model_registry_pkg.factory import (
     create_model_registry,
+)
+from src.contexts.knowledge.application.services.model_registry_pkg.registry import (
+    ModelRegistry,
 )
 
 __all__ = [

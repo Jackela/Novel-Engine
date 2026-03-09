@@ -8,7 +8,6 @@ and large object storage in the Novel Engine framework.
 """
 
 import hashlib
-import structlog
 import mimetypes
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +17,7 @@ from typing import Any, Dict, Optional, Union
 
 import aioboto3
 import aiofiles
+import structlog
 
 logger = structlog.get_logger(__name__)
 

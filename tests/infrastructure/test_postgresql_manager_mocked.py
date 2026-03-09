@@ -6,12 +6,8 @@ Tests for PostgreSQL manager using mocks (no asyncpg dependency).
 Covers unit tests, integration tests, and boundary tests.
 """
 
-import asyncio
-import json
 import os
-from datetime import datetime
-from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -216,7 +212,6 @@ class TestFactoryFunctions:
     @pytest.mark.asyncio
     async def test_create_postgresql_manager(self):
         """Test creating and initializing PostgreSQL manager."""
-        import sys
         from unittest.mock import AsyncMock, MagicMock, patch
         
         config = PostgreSQLConfig()

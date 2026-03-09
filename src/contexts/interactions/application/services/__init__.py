@@ -9,6 +9,19 @@ Services use the Result[T,E] pattern for explicit error handling.
 # Core Result imports
 from .....core.result import Err, Ok, Result
 
+# Application services (12 services total)
+from .analytics_service import AnalyticsService
+from .batch_operation_service import BatchOperationService
+from .compatibility_service import CompatibilityService
+from .conflict_resolution_service import ConflictResolutionService
+from .health_monitoring_service import HealthMonitoringService
+from .interaction_application_service import InteractionApplicationService
+from .negotiation_application_service import NegotiationApplicationService
+from .outcome_calculator import OutcomeCalculator
+from .proposal_service import ProposalService
+from .response_analysis_service import ResponseAnalysisService
+from .session_management_service import SessionManagementService
+
 # Shared error types and Result wrapper
 from .shared.errors import (
     AuthorizationError,
@@ -23,19 +36,6 @@ from .shared.errors import (
     ValidationError,
 )
 from .shared.results import InteractionResult, interaction_err, interaction_ok
-
-# Application services (12 services total)
-from .analytics_service import AnalyticsService
-from .batch_operation_service import BatchOperationService
-from .compatibility_service import CompatibilityService
-from .conflict_resolution_service import ConflictResolutionService
-from .health_monitoring_service import HealthMonitoringService
-from .interaction_application_service import InteractionApplicationService
-from .negotiation_application_service import NegotiationApplicationService
-from .outcome_calculator import OutcomeCalculator
-from .proposal_service import ProposalService
-from .response_analysis_service import ResponseAnalysisService
-from .session_management_service import SessionManagementService
 from .strategy_service import StrategyService
 
 __all__ = [

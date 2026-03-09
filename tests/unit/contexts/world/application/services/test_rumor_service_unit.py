@@ -9,7 +9,6 @@ Tests the RumorService application layer, verifying:
 
 import pytest
 
-
 pytestmark = pytest.mark.unit
 
 from src.api.schemas.world_schemas import SortByEnum

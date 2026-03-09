@@ -19,7 +19,6 @@ Key Optimizations:
 import asyncio
 import gc
 import json
-import structlog
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -31,6 +30,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import aioredis
 import aiosqlite
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

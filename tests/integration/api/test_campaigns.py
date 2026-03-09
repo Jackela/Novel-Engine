@@ -36,8 +36,6 @@ def temp_campaign_dir():
     will be skipped because the router doesn't support dependency injection
     for the campaigns directory path.
     """
-    import tempfile
-    from pathlib import Path
 
     # Create temp directory
     with tempfile.TemporaryDirectory() as tmpdir:

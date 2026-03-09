@@ -7,11 +7,12 @@ visibility calculations, information filtering, and knowledge propagation
 mechanics in the subjective context.
 """
 
-import structlog
 import math
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from ..aggregates.turn_brief import TurnBrief
 from ..value_objects.awareness import AlertnessLevel, AwarenessState

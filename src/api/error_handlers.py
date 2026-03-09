@@ -7,11 +7,11 @@ across all API endpoints with proper HTTP status codes and error classification.
 """
 
 import logging
-import structlog
 import time
 from datetime import datetime
 from typing import Any, List, Optional, Union
 
+import structlog
 from fastapi import HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse

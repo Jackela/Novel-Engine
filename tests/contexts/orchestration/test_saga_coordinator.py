@@ -6,14 +6,15 @@ This module contains comprehensive tests for the saga pattern coordination
 including compensation planning, execution, and validation.
 """
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 from unittest.mock import MagicMock
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from src.contexts.orchestration.domain.services.saga_coordinator import SagaCoordinator
+import pytest
+
 from src.contexts.orchestration.domain.entities.turn import Turn
+from src.contexts.orchestration.domain.services.saga_coordinator import SagaCoordinator
 from src.contexts.orchestration.domain.value_objects import (
     CompensationAction,
     CompensationType,
@@ -21,6 +22,7 @@ from src.contexts.orchestration.domain.value_objects import (
     TurnConfiguration,
     TurnId,
 )
+
 pytestmark = pytest.mark.unit
 
 

@@ -8,10 +8,11 @@ pipeline will migrate interaction logic into contract-first services.
 """
 
 import asyncio
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.core.llm_service import generate_narrative_content

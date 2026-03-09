@@ -29,7 +29,6 @@ from .rumor_propagation_service import (
     RumorStatistics,
 )
 from .rumor_service import RumorService
-from .simulation.exceptions import InvalidDaysError, SnapshotFailedError
 from .simulation.models import ResolutionResult
 from .simulation.protocols import (
     IFactionRepository,

@@ -14,12 +14,12 @@ Design Principles:
 - Comprehensive validation and error handling
 """
 
-import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
+import structlog
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 

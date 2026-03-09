@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import asyncio
-import structlog
 import os
 from typing import List, Optional, Set
 
+import structlog
 from fastapi import FastAPI
 
 from src.api.services.paths import find_project_root

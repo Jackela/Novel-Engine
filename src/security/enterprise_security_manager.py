@@ -55,7 +55,6 @@ except ImportError:
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
     )()
 import logging
-import structlog
 import re
 import secrets
 from collections import defaultdict, deque
@@ -65,6 +64,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+import structlog
 from fastapi import Request
 
 try:

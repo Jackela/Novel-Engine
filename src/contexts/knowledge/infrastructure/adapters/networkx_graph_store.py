@@ -14,10 +14,10 @@ Warzone 4: AI Brain - BRAIN-031A
 
 from __future__ import annotations
 
-import structlog
 from typing import TYPE_CHECKING, Any
 
 import networkx as nx  # type: ignore[import-untyped]
+import structlog
 
 from src.contexts.knowledge.application.ports.i_graph_store import (
     CentralityResult,

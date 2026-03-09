@@ -2,7 +2,6 @@
 
 import pytest
 
-
 pytestmark = pytest.mark.unit
 
 from src.contexts.world.application.services.faction_tick_service import (

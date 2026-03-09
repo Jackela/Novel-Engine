@@ -14,10 +14,10 @@ while maintaining separation from decision-making and character interpretation.
 """
 
 import os
-
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

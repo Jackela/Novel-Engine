@@ -6,16 +6,15 @@ Application service for proposal operations using Result pattern.
 Handles proposal lifecycle, analysis, and optimization.
 """
 
-from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.services.negotiation_service import NegotiationService
 from ....interactions.domain.value_objects.negotiation_party import NegotiationParty
-from ....interactions.domain.value_objects.proposal_terms import ProposalTerms, TermCondition
+from ....interactions.domain.value_objects.proposal_terms import (
+    ProposalTerms,
+)
 from .shared.errors import (
-    NotFoundError,
     ProposalError,
     ValidationError,
 )

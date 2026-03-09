@@ -6,10 +6,11 @@ This module implements the CausalGraphService, a key domain service for
 managing cause-and-effect relationships within narrative structures.
 """
 
-import structlog
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+import structlog
 
 from ..value_objects.causal_node import CausalNode, CausalRelationType, CausalStrength
 

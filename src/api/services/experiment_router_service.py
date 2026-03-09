@@ -11,9 +11,10 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import structlog
 import math
 from typing import Any, Optional
+
+import structlog
 
 from src.contexts.knowledge.application.ports.i_experiment_repository import (
     ExperimentNotFoundError,

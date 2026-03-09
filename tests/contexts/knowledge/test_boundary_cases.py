@@ -4,18 +4,19 @@ Boundary Cases Tests for Knowledge Context
 Tests edge cases, boundary conditions, and limit cases for knowledge context modules.
 """
 
-import pytest
 from datetime import datetime, timezone
-from decimal import Decimal
 from uuid import uuid4
 
-from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+import pytest
+
 from src.contexts.knowledge.domain.models.access_control_rule import AccessControlRule
 from src.contexts.knowledge.domain.models.access_level import AccessLevel
 from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
-from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUsageStats
+from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
 from src.contexts.knowledge.domain.models.source_type import SourceType
+from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUsageStats
+
 pytestmark = pytest.mark.unit
 
 

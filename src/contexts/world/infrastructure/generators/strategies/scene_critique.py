@@ -1,13 +1,13 @@
 """Scene critique strategy for analyzing scene quality."""
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import structlog
 
 from .base_strategy import WorldGenerationStrategy
 
 if TYPE_CHECKING:
-    from ..llm_world_generator import CritiqueCategoryScore, CritiqueResult
+    from ..llm_world_generator import CritiqueResult
 
 logger = structlog.get_logger(__name__)
 

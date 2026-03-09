@@ -14,12 +14,13 @@ Author: Novel Engine Development Team
 
 import asyncio
 import json
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
+
+import structlog
 
 # Import data models
 from src.core.data_models import (
@@ -40,7 +41,7 @@ from src.core.subjective_reality import SubjectiveRealityEngine
 # Import database access - TYPE_CHECKING only to avoid circular dependencies
 # At runtime, database is injected via dependency injection
 if TYPE_CHECKING:
-    from src.database.context_db import ContextDatabase
+    pass
 
 from src.interactions.character_interaction_processor import (
     CharacterInteractionProcessor,

@@ -9,11 +9,12 @@ event, enriched with temporal context and experiential significance.
 """
 
 import asyncio
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.core.types import AgentID

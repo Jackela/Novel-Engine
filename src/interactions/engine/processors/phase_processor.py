@@ -3,9 +3,10 @@
 Interaction phase processing and template initialization.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (

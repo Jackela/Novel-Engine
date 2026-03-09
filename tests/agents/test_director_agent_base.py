@@ -7,7 +7,6 @@ Tests agent registration, simulation status, and event logging.
 
 import os
 import tempfile
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest

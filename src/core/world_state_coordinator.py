@@ -14,10 +14,11 @@ separation from turn orchestration and agent lifecycle concerns.
 """
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Configure logging
 logger = structlog.get_logger(__name__)

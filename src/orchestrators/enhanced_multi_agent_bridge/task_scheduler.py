@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import asyncio
 import heapq
-import structlog
 import time
-from collections import defaultdict, deque
+from collections import deque
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+
+import structlog
 
 if TYPE_CHECKING:
     from .types import LLMBatchRequest, LLMCoordinationConfig, PerformanceBudget

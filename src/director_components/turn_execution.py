@@ -8,12 +8,13 @@ Handles turn preparation, agent coordination, and result processing.
 
 import asyncio
 import logging
-import structlog
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from .protocols import AgentManagerProtocol
 

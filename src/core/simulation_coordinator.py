@@ -8,10 +8,11 @@ Extracted from DirectorAgent for better modularity and maintainability.
 """
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.agents.persona_agent.agent import PersonaAgent
 

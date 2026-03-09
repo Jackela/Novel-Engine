@@ -22,11 +22,11 @@ Example:
 
 # Base classes and types
 from .base import (
+    DEFAULT_COHERENCE_THRESHOLD,
     MAX_COHERENCE_THRESHOLD,
     MIN_COHERENCE_THRESHOLD,
     BaseChunkingStrategy,
     CoherenceScore,
-    DEFAULT_COHERENCE_THRESHOLD,
 )
 
 # Coherence analyzer

@@ -7,8 +7,6 @@ Tests integrated director functionality and simulation management.
 
 import os
 import tempfile
-from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 

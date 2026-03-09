@@ -26,10 +26,10 @@ warnings.warn(
     stacklevel=2,
 )
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException, Request
 
 from src.api.schemas.world_schemas import (

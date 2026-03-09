@@ -6,10 +6,11 @@ Multi-agent negotiation engine.
 """
 
 import json
-import structlog
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
 

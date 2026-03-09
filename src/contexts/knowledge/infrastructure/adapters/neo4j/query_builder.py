@@ -5,7 +5,7 @@ Builds Cypher queries with proper parameter binding.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from src.contexts.knowledge.domain.models.entity import EntityType, RelationshipType
 

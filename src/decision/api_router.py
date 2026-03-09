@@ -5,9 +5,9 @@ FastAPI router for decision-related endpoints.
 To be imported and included in the main api_server.py.
 """
 
-import structlog
 from typing import Any, Dict, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 

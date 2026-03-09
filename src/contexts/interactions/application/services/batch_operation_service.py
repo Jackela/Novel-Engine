@@ -5,8 +5,7 @@ Batch Operation Application Service
 Application service for batch operations using Result pattern.
 """
 
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Any, Dict, List
 
 from .....core.result import Err, Ok, Result
 from .shared.errors import (

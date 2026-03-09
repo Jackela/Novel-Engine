@@ -5,11 +5,11 @@ Main orchestration class that coordinates all components of the enhanced multi-a
 
 from __future__ import annotations
 
-import asyncio
-import structlog
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
+
+import structlog
 
 from src.agents.director_agent_integrated import DirectorAgent
 from src.core.event_bus import EventBus
@@ -22,7 +22,6 @@ from .types import (
     BridgeConfiguration,
     CommunicationType,
     CostTracker,
-    EnhancedWorldState,
     LLMBatchRequest,
     LLMCoordinationConfig,
     PerformanceBudget,
@@ -324,8 +323,8 @@ class EnhancedMultiAgentBridge:
                 self.agent_relationships
             )
 
-            # Prepare world state
-            enhanced_world_state = self.state_manager.prepare_enhanced_world_state(
+            # Prepare world state (side effect: updates internal state)
+            self.state_manager.prepare_enhanced_world_state(
                 turn_number, self.agent_relationships, list(self.active_dialogues.values())
             )
 

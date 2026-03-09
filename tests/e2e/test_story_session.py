@@ -14,10 +14,12 @@ Tests:
 """
 
 import os
+
 # Set testing mode BEFORE importing app
 os.environ["ORCHESTRATOR_MODE"] = "testing"
 
 import time
+
 import pytest
 from fastapi.testclient import TestClient
 

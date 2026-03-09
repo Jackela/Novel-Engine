@@ -4,10 +4,11 @@ Dynamic Equipment System - Main orchestrator.
 """
 
 import asyncio
-import structlog
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+import structlog
 
 from src.core.data_models import (
     EquipmentCondition,

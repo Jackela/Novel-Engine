@@ -6,14 +6,16 @@ This module contains comprehensive tests for phase status management
 including state transitions, validation, and utility methods.
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 from src.contexts.orchestration.domain.value_objects.phase_status import (
     PhaseStatus,
     PhaseStatusEnum,
     PhaseType,
 )
+
 pytestmark = pytest.mark.unit
 
 

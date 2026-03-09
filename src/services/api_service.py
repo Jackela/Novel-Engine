@@ -5,11 +5,12 @@ Bridges the REST API (Imperative Shell) and the System Orchestrator
 """
 
 import asyncio
-import structlog
 import time
 import uuid
 from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.agents.chronicler_agent import ChroniclerAgent
 from src.agents.director_agent_integrated import DirectorAgent

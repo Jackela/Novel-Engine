@@ -8,9 +8,10 @@ This is a minimal implementation to resolve import dependencies.
 """
 
 import asyncio
-import structlog
 from enum import Enum
 from typing import Dict, List
+
+import structlog
 
 from .event_bus import Event, EventHandler
 

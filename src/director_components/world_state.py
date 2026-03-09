@@ -11,12 +11,13 @@ import copy
 import hashlib
 import json
 import logging
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 
 class StateChangeType(Enum):

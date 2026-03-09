@@ -24,7 +24,7 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_repository():
     """Reset the item repository before each test."""
-    from src.api.routers.items import get_repository, _character_inventories
+    from src.api.routers.items import _character_inventories, get_repository
 
     repo = get_repository()
     # Clear the repository
@@ -321,7 +321,7 @@ class TestCharacterInventoryEndpoints:
 
         # Give it to a character
         response = client.post(
-            f"/api/characters/hero-001/give-item",
+            "/api/characters/hero-001/give-item",
             json={"item_id": item_id},
         )
 
@@ -353,13 +353,13 @@ class TestCharacterInventoryEndpoints:
 
         # Give it once
         client.post(
-            f"/api/characters/hero-001/give-item",
+            "/api/characters/hero-001/give-item",
             json={"item_id": item_id},
         )
 
         # Try to give again
         response = client.post(
-            f"/api/characters/hero-001/give-item",
+            "/api/characters/hero-001/give-item",
             json={"item_id": item_id},
         )
 
@@ -383,11 +383,11 @@ class TestCharacterInventoryEndpoints:
 
         # Give items to character
         client.post(
-            f"/api/characters/inventory-hero/give-item",
+            "/api/characters/inventory-hero/give-item",
             json={"item_id": item1_id},
         )
         client.post(
-            f"/api/characters/inventory-hero/give-item",
+            "/api/characters/inventory-hero/give-item",
             json={"item_id": item2_id},
         )
 
@@ -424,7 +424,7 @@ class TestCharacterInventoryEndpoints:
         item_id = create_response.json()["id"]
 
         client.post(
-            f"/api/characters/remove-hero/give-item",
+            "/api/characters/remove-hero/give-item",
             json={"item_id": item_id},
         )
 

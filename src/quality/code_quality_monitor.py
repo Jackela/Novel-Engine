@@ -20,13 +20,14 @@ import asyncio
 import hashlib
 import json
 import logging
-import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

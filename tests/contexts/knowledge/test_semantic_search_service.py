@@ -4,32 +4,31 @@ Test suite for Semantic Search Service (QueryAwareRetrievalService).
 Tests query-aware retrieval with multi-query expansion and result merging.
 """
 
+from unittest.mock import AsyncMock
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, Mock, patch
 
-from src.contexts.knowledge.application.services.query_aware_retrieval_service import (
-    QueryAwareRetrievalService,
-    QueryAwareConfig,
-    QueryAwareRetrievalResult,
-    QueryAwareMetrics,
-    DEFAULT_MAX_CONCURRENT,
+from src.contexts.knowledge.application.ports.i_vector_store import QueryResult
+from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+    RetrievedChunk,
 )
-from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
-    RetrievalFilter,
-    RetrievalOptions,
-    RetrievalResult,
+from src.contexts.knowledge.application.services.query_aware_retrieval_service import (
+    DEFAULT_MAX_CONCURRENT,
+    QueryAwareConfig,
+    QueryAwareMetrics,
+    QueryAwareRetrievalResult,
+    QueryAwareRetrievalService,
 )
 from src.contexts.knowledge.application.services.query_rewriter import (
-    QueryRewriter,
-    RewriteConfig,
     RewriteResult,
     RewriteStrategy,
 )
-from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+from src.contexts.knowledge.application.services.retrieval_service import (
+    RetrievalFilter,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
-from src.contexts.knowledge.application.ports.i_vector_store import QueryResult
+
 pytestmark = pytest.mark.unit
 
 

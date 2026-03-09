@@ -5,14 +5,13 @@ Performance Metrics Collector
 Collects and analyzes comprehensive performance metrics for the multi-agent bridge.
 """
 
-import structlog
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from .cost_tracker import CostTracker
 from .performance_budget import PerformanceBudget
-import logging
 
 __all__ = ["PerformanceMetrics"]
 

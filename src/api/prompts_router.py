@@ -9,10 +9,10 @@ user-defined prompts.
 
 from __future__ import annotations
 
-import structlog
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 

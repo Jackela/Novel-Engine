@@ -8,7 +8,7 @@ Covers unit tests, integration tests, and boundary tests.
 
 import json
 import pickle
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 

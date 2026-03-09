@@ -10,11 +10,11 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
 import random
-
-import structlog
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import structlog
 
 # Import shared types
 from src.core.types.shared_types import ActionPriority, CharacterAction

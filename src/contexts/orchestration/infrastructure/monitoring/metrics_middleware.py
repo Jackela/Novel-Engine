@@ -6,10 +6,10 @@ FastAPI middleware for automatic HTTP metrics collection and request monitoring.
 Integrates with the PrometheusMetricsCollector to provide comprehensive API observability.
 """
 
-import structlog
 import time
 from typing import Any, Callable, Optional
 
+import structlog
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp

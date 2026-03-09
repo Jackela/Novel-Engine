@@ -10,7 +10,6 @@ for production readiness assessment.
 import asyncio
 import gc
 import json
-import structlog
 import statistics
 import time
 from dataclasses import dataclass
@@ -18,6 +17,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

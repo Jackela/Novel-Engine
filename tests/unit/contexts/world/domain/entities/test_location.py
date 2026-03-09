@@ -6,13 +6,10 @@ Tests cover the new territory control fields and methods added for PREP-006.
 import pytest
 
 from src.contexts.world.domain.entities import (
-    ClimateType,
     Location,
-    LocationStatus,
     LocationType,
 )
 from src.contexts.world.domain.value_objects import ResourceType, ResourceYield
-
 
 pytestmark = pytest.mark.unit
 

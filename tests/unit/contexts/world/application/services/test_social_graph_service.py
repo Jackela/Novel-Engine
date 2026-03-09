@@ -9,7 +9,6 @@ Unit tests covering:
 - Graph traversal
 """
 
-from typing import List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest

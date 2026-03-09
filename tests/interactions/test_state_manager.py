@@ -8,19 +8,18 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from unittest.mock import Mock
 from datetime import datetime
 
-from src.interactions.interaction_engine_system.state_management.state_manager import (
-    StateManager,
-    StateUpdate,
-    MemoryUpdate,
-)
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,
-    InteractionType,
-    InteractionPriority,
     InteractionEngineConfig,
+    InteractionPriority,
+    InteractionType,
+)
+from src.interactions.interaction_engine_system.state_management.state_manager import (
+    MemoryUpdate,
+    StateManager,
+    StateUpdate,
 )
 
 

@@ -14,7 +14,6 @@ from src.contexts.world.domain.entities import (
 )
 from src.contexts.world.domain.value_objects import DiplomaticStatus
 
-
 pytestmark = pytest.mark.unit
 
 

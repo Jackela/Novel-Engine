@@ -22,10 +22,11 @@ warnings.warn(
 )
 
 # Re-export all symbols from the new package
-from src.orchestrators.enhanced_bridge.types import (
-    CommunicationType,
-    DialogueState,
-    RequestPriority,
+from src.orchestrators.enhanced_bridge.bridge_core import EnhancedMultiAgentBridge
+from src.orchestrators.enhanced_bridge.factory import (
+    create_enhanced_bridge,
+    create_enhanced_multi_agent_bridge,
+    create_performance_optimized_config,
 )
 from src.orchestrators.enhanced_bridge.models import (
     AgentDialogue,
@@ -36,11 +37,10 @@ from src.orchestrators.enhanced_bridge.models import (
     LLMCoordinationConfig,
     PerformanceBudget,
 )
-from src.orchestrators.enhanced_bridge.bridge_core import EnhancedMultiAgentBridge
-from src.orchestrators.enhanced_bridge.factory import (
-    create_enhanced_bridge,
-    create_enhanced_multi_agent_bridge,
-    create_performance_optimized_config,
+from src.orchestrators.enhanced_bridge.types import (
+    CommunicationType,
+    DialogueState,
+    RequestPriority,
 )
 
 __all__ = [

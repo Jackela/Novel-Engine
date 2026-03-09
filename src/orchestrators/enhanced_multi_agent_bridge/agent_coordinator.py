@@ -5,11 +5,12 @@ Manages agent-to-agent interactions, relationship tracking, and dialogue coordin
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, Dict, List
+
 import structlog
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
-    from .types import AgentDialogue, CommunicationType
+    from .types import AgentDialogue
 
 logger = structlog.get_logger(__name__)
 

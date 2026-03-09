@@ -21,8 +21,6 @@ import structlog
 
 from ..services.knowledge_ingestion_service import RetrievedChunk
 from .context_optimizer import ContextOptimizer, PackingStrategy
-from src.core.result import Error
-
 from .token_counter import LLMProvider, TokenCounter
 
 if TYPE_CHECKING:

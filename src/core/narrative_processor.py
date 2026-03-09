@@ -7,11 +7,11 @@ narrative context generation, story state management, and narrative action proce
 Extracted from DirectorAgent for better modularity and maintainability.
 """
 
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import structlog
 from campaign_brief import CampaignBrief, CampaignBriefLoader
 from narrative_actions import NarrativeActionResolver, NarrativeOutcome
 

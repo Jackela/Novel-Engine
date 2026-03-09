@@ -12,7 +12,7 @@ from datetime import datetime
 from functools import total_ordering
 from typing import Any, Dict, List, Optional
 
-from .types import DialogueState, RequestPriority, CommunicationType
+from .types import CommunicationType, DialogueState, RequestPriority
 
 __all__ = [
     "AgentDialogue",

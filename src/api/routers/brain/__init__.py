@@ -11,7 +11,13 @@ Aggregates all brain-related endpoints:
 
 from fastapi import APIRouter
 
-from src.api.routers.brain.endpoints import chat, ingestion, rag_context, settings, usage
+from src.api.routers.brain.endpoints import (
+    chat,
+    ingestion,
+    rag_context,
+    settings,
+    usage,
+)
 
 router = APIRouter(tags=["brain-settings"])
 

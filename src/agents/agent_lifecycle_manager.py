@@ -13,10 +13,11 @@ This component ensures all agent actions comply with simulation rules while
 providing repair mechanisms for common violations.
 """
 
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 # Try to import Iron Laws types
 try:

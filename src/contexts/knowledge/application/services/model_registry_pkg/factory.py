@@ -9,6 +9,7 @@ from src.contexts.knowledge.application.services.model_registry_pkg.registry imp
     ModelRegistry,
 )
 
+
 def create_model_registry(
     config: Optional[ModelRegistryConfig] = None,
 ) -> ModelRegistry:

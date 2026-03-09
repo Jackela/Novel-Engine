@@ -16,7 +16,6 @@ Key Features:
 import asyncio
 import json
 import logging
-import structlog
 import os
 import statistics
 import time
@@ -26,6 +25,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

@@ -4,11 +4,9 @@
 Tests event publishing, handling, and validation for faction intent events.
 """
 
-import os
-import pytest
 import asyncio
-from unittest.mock import MagicMock, patch
-from dataclasses import dataclass
+
+import pytest
 
 pytestmark = pytest.mark.integration
 
@@ -39,8 +37,8 @@ class TestIntentGeneratedEventPublishing:
     @pytest.mark.integration
     def test_handler_receives_intent_generated_event(self):
         """Test that a registered handler receives IntentGeneratedEvent."""
-        from src.events.event_bus import EventBus, Event, EventPriority, EventHandler
         from src.contexts.world.domain.events.intent_events import IntentGeneratedEvent
+        from src.events.event_bus import Event, EventBus, EventHandler
 
         event_bus = EventBus()
         received_events = []
@@ -87,8 +85,8 @@ class TestIntentGeneratedEventPublishing:
     @pytest.mark.integration
     def test_event_bus_health_check_with_intent_events(self):
         """Test EventBus health check works with intent event types."""
-        from src.events.event_bus import EventBus
         from src.contexts.world.domain.events.intent_events import IntentGeneratedEvent
+        from src.events.event_bus import EventBus
 
         event_bus = EventBus()
 

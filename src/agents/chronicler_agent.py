@@ -14,14 +14,14 @@ from __future__ import annotations
 import asyncio
 import copy
 import os
-
-import structlog
 import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.config.config_loader import get_config

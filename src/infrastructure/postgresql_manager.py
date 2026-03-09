@@ -10,7 +10,6 @@ and production-ready configuration for high-scale novel engine deployments.
 import asyncio
 import json
 import logging
-import structlog
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +17,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 import asyncpg
+import structlog
 
 logger = structlog.get_logger(__name__)
 

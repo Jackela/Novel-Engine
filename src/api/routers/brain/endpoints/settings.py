@@ -6,16 +6,14 @@ Settings CRUD endpoints for API keys, RAG configuration, and knowledge base stat
 
 from __future__ import annotations
 
-import structlog
+from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.routers.brain.core import get_fernet, mask_api_key, require_encryption
 from src.api.routers.brain.dependencies import get_brain_settings_repository
 from src.api.routers.brain.repositories.brain_settings import BrainSettingsRepository
-
-
-from typing import Any
 from src.api.schemas import (
     APIKeysRequest,
     APIKeysResponse,

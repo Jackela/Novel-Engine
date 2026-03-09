@@ -6,9 +6,10 @@ This module implements the main application service for narrative arc operations
 providing a high-level interface that orchestrates between commands, queries, and domain services.
 """
 
-import structlog
 from typing import Any, Dict, List, Optional
 from uuid import UUID
+
+import structlog
 
 from ...domain.services.causal_graph_service import CausalGraphService
 from ...domain.services.narrative_flow_service import NarrativeFlowService

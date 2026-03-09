@@ -8,7 +8,6 @@ including the main POST /v1/turns:run endpoint and monitoring capabilities.
 
 import json
 import logging
-import structlog
 import os
 import tempfile
 import threading
@@ -18,6 +17,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import structlog
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse, Response

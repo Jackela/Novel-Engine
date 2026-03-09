@@ -4,6 +4,7 @@ Application Services Module
 Services in the knowledge context that orchestrate business logic.
 """
 
+from ...domain.errors import ExtractionError as EntityExtractionError
 from .bm25_retriever import (
     DEFAULT_B,
     DEFAULT_K1,
@@ -74,7 +75,6 @@ from .entity_extraction_service import (
     EntityExtractionService,
     ExtractionConfig,
 )
-from ...domain.errors import ExtractionError as EntityExtractionError
 from .graph_retrieval_service import (
     GraphEnhancedChunk,
     GraphEntityContext,

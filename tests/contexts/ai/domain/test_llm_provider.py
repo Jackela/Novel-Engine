@@ -7,16 +7,11 @@ and the ILLMProvider abstract interface.
 Covers unit tests, integration tests, and boundary tests.
 """
 
-import asyncio
-from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
 from src.contexts.ai.domain.services.llm_provider import (
-    ILLMProvider,
     LLMProviderError,
     LLMRequest,
     LLMRequestType,
@@ -29,9 +24,9 @@ from src.contexts.ai.domain.value_objects.common import (
     ModelCapability,
     ModelId,
     ProviderId,
-    ProviderType,
     TokenBudget,
 )
+
 pytestmark = pytest.mark.unit
 
 

@@ -8,11 +8,12 @@ Intelligent batching and processing of LLM requests for optimal performance and 
 import asyncio
 import heapq
 import logging
-import structlog
 import threading
 import time
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import LLMBatchRequest, RequestPriority
 from ..performance.cost_tracker import CostTracker

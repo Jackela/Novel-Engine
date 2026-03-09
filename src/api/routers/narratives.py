@@ -7,10 +7,10 @@ Provides SSE (Server-Sent Events) streaming for real-time narrative generation.
 from __future__ import annotations
 
 import json
-import structlog
 import time
 from typing import AsyncIterator
 
+import structlog
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 

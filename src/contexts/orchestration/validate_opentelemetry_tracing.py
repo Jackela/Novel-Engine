@@ -7,11 +7,12 @@ Can be run independently to verify Wave 3 functionality.
 """
 
 import logging
-import structlog
 import sys
 from pathlib import Path
-from uuid import uuid4
 from typing import Any
+from uuid import uuid4
+
+import structlog
 
 # Add current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))

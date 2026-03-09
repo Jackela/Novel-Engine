@@ -6,12 +6,12 @@ This module provides the SQLAlchemy implementation of the narrative arc
 repository interface defined in the application layer.
 """
 
-import structlog
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, List, Optional, Tuple
 from uuid import UUID
 
+import structlog
 from sqlalchemy import (
     DECIMAL,
     JSON,

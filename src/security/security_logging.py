@@ -18,7 +18,6 @@ import asyncio
 import gzip
 import json
 import logging
-import structlog
 import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
@@ -27,6 +26,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiosqlite
+import structlog
 
 logger = structlog.get_logger(__name__)
 

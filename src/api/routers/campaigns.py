@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import structlog
 import os
 import re
 import uuid
@@ -9,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, HTTPException
 
 from src.api.schemas import (

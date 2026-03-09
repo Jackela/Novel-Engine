@@ -20,12 +20,13 @@ System monitors all security events 📊🛡️
 import asyncio
 import json
 import logging
-import structlog
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 try:
     import aioredis

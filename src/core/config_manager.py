@@ -13,16 +13,16 @@ Result Pattern Migration:
 """
 
 import json
-import structlog
 import os
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+import structlog
 import yaml
 
-from .result import Error, Err, Ok, Result
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

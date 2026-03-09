@@ -13,7 +13,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.contexts.world.application.services.geopolitics_service import GeopoliticsService
+from src.contexts.world.application.services.geopolitics_service import (
+    GeopoliticsService,
+)
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.entities.location import Location, LocationType
 from src.contexts.world.domain.events.geopolitics_events import (
@@ -23,8 +25,6 @@ from src.contexts.world.domain.events.geopolitics_events import (
     WarDeclaredEvent,
 )
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
-
-from src.core.result import Err, Ok
 
 pytestmark = pytest.mark.unit
 

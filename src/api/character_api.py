@@ -6,10 +6,10 @@ API endpoints for character creation, customization, and management.
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import structlog
 from fastapi import FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field, field_validator
 

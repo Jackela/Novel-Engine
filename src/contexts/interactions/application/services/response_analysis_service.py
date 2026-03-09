@@ -5,17 +5,17 @@ Response Analysis Application Service
 Application service for analyzing proposal responses using Result pattern.
 """
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from uuid import UUID
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.value_objects.negotiation_party import NegotiationParty
-from ....interactions.domain.value_objects.proposal_response import ProposalResponse, ResponseType
+from ....interactions.domain.value_objects.proposal_response import (
+    ProposalResponse,
+)
 from .shared.errors import (
     NotFoundError,
     ProposalError,
-    ValidationError,
 )
 
 

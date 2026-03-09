@@ -7,10 +7,11 @@ Handles all state changes resulting from interaction processing.
 """
 
 import logging
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from ..core.types import (
     InteractionContext,

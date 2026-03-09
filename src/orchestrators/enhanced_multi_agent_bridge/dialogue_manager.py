@@ -5,16 +5,16 @@ Manages agent dialogues, execution, and quality tracking.
 
 from __future__ import annotations
 
-import structlog
 import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+import structlog
 
 if TYPE_CHECKING:
     from .types import (
         AgentDialogue,
         CommunicationType,
-        DialogueState,
         LLMCoordinationConfig,
         PerformanceBudget,
         RequestPriority,
@@ -86,7 +86,7 @@ class DialogueManager:
         Returns:
             Dialogue result
         """
-        from .types import DialogueState, RequestPriority
+        from .types import DialogueState
 
         try:
             dialogue.state = DialogueState.ACTIVE

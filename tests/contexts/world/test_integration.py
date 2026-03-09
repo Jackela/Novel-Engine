@@ -4,23 +4,18 @@ Integration Tests for World Context
 Tests module interactions and data flow between world context components.
 """
 
-import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, MagicMock
-from uuid import uuid4
+
+import pytest
 
 from src.contexts.world.domain.entities.faction import Faction, FactionType
 from src.contexts.world.domain.entities.location import Location
-from src.contexts.world.domain.entities.item import Item
-from src.contexts.world.domain.entities.resource import Resource
-from src.contexts.world.domain.entities.relationship import Relationship
-from src.contexts.world.domain.entities.rumor import Rumor
-from src.contexts.world.domain.entities.world_rule import WorldRule
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
-from src.contexts.world.domain.value_objects.resource_type import ResourceType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
-from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+from src.contexts.world.domain.value_objects.resource_type import ResourceType
 from src.contexts.world.domain.value_objects.simulation_tick import SimulationTick
+from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
 pytestmark = pytest.mark.unit
 
 
@@ -190,7 +185,6 @@ class TestSimulationTickIntegration:
         
     def test_simulation_tick_can_be_created(self):
         """Test that SimulationTick can be instantiated."""
-        from datetime import datetime, timezone
         # Try different possible constructor signatures
         try:
             tick = SimulationTick(

@@ -7,10 +7,11 @@ Implements the core KPIs requested in M10: llm_cost_per_req and turn_duration_se
 along with extended metrics for complete observability.
 """
 
-import structlog
 from decimal import Decimal
 from typing import Any, Dict, Optional
 from uuid import UUID
+
+import structlog
 
 try:
     from prometheus_client import (

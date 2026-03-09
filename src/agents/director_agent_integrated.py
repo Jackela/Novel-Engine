@@ -16,13 +16,13 @@ The integrated DirectorAgent coordinates:
 
 import asyncio
 import os
-
-import structlog
 from datetime import datetime
 from textwrap import dedent
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
+
+import structlog
 
 from src.agents.agent_lifecycle_manager import AgentLifecycleManager
 
@@ -74,7 +74,10 @@ except ImportError:
 
 # Import configuration and narrative components
 try:
-    from campaign_brief import CampaignBrief, CampaignBriefLoader  # type: ignore[import-not-found]
+    from campaign_brief import (  # type: ignore[import-not-found]
+        CampaignBrief,
+        CampaignBriefLoader,
+    )
 
     from src.core.config.config_loader import get_config
     from src.core.narrative.narrative_actions import NarrativeActionResolver

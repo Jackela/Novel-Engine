@@ -8,7 +8,10 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.infrastructure.state_store.base import StateStore
-from src.infrastructure.state_store.config import StateKey, StateStoreConfig, StateStoreType
+from src.infrastructure.state_store.config import (
+    StateKey,
+    StateStoreConfig,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -29,8 +32,8 @@ class UnifiedStateManager:
         self.config = config
 
         # Lazy imports to avoid circular dependencies
-        from src.infrastructure.state_store.redis import RedisStateStore
         from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+        from src.infrastructure.state_store.redis import RedisStateStore
         from src.infrastructure.state_store.s3 import S3StateStore
 
         self.redis_store = RedisStateStore(config)

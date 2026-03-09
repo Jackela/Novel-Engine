@@ -3,9 +3,10 @@
 Equipment template management.
 """
 
-import structlog
 from datetime import datetime
 from typing import Dict, Optional
+
+import structlog
 
 from src.core.data_models import EquipmentItem, ErrorInfo, StandardResponse
 

@@ -7,10 +7,11 @@ with the existing performance tracking capabilities. Provides backward compatibi
 while adding enterprise-grade observability features.
 """
 
-import structlog
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ...infrastructure.monitoring import PrometheusMetricsCollector
 from ..entities import Turn

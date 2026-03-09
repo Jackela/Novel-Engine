@@ -6,14 +6,11 @@ used by the enhanced multi-agent bridge system.
 
 from __future__ import annotations
 
-import heapq
-import threading
-from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from functools import total_ordering
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional
 
 
 class RequestPriority(Enum):

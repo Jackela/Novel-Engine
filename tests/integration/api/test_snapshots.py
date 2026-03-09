@@ -26,7 +26,7 @@ def client():
 @pytest.fixture(autouse=True)
 def reset_snapshot_service():
     """Reset the snapshot service before each test."""
-    from src.api.routers.snapshots import reset_snapshot_service, _world_calendars
+    from src.api.routers.snapshots import _world_calendars, reset_snapshot_service
 
     reset_snapshot_service()
     _world_calendars.clear()

@@ -10,12 +10,13 @@ fact is stored with associated metadata like confidence and source.
 
 import asyncio
 import hashlib
-import structlog
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.core.types import AgentID

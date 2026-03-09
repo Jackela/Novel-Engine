@@ -7,9 +7,8 @@ Narrative Arc Repository Tests
 """
 
 from decimal import Decimal
-from typing import List, Optional, Tuple
-from unittest.mock import MagicMock, Mock, patch
-from uuid import UUID, uuid4
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import pytest
 
@@ -28,6 +27,7 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
 from src.contexts.narratives.infrastructure.repositories.narrative_arc_repository import (
     NarrativeArcRepository,
 )
+
 pytestmark = pytest.mark.unit
 
 

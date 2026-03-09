@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import structlog
 
@@ -26,7 +27,6 @@ from ...application.ports.i_reranker import (
 )
 from ...application.ports.i_reranker import RerankResult as PortRerankResult
 from ..services.knowledge_ingestion_service import RetrievedChunk
-from typing import Any
 
 logger = structlog.get_logger()
 

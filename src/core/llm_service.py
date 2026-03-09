@@ -38,7 +38,6 @@ character generation services. Keep until migration completes.
 import asyncio
 import hashlib
 import json
-import structlog
 import os
 import re
 import time
@@ -47,13 +46,14 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from src.contexts.shared.domain.errors import ServiceError
-
 import requests
+import structlog
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from .result import Error, Err, Ok, Result
+from src.contexts.shared.domain.errors import ServiceError
+
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

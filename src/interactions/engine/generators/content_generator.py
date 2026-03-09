@@ -3,8 +3,9 @@
 Content generation for interactions.
 """
 
-import structlog
 from typing import Any, Optional
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (

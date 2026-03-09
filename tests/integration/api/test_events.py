@@ -3,7 +3,6 @@
 Tests SSE streaming, analytics, and historical events endpoints.
 """
 
-import json
 import os
 
 import pytest

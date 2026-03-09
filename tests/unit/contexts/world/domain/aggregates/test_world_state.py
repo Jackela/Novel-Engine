@@ -6,10 +6,11 @@ Tests the integration of WorldCalendar value object into the WorldState aggregat
 including the advance_time method, serialization, and backward compatibility.
 """
 
-import pytest
+import sys
 from datetime import datetime
 from unittest.mock import MagicMock
-import sys
+
+import pytest
 
 # Mock aioredis before any imports that might use it
 sys.modules["aioredis"] = MagicMock()
@@ -17,11 +18,8 @@ sys.modules["aioredis"] = MagicMock()
 from src.contexts.world.domain.aggregates.world_state import (
     WorldState,
     WorldStatus,
-    WorldEntity,
-    EntityType,
 )
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 pytestmark = pytest.mark.unit
 

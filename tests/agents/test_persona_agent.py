@@ -7,8 +7,7 @@ Tests persona agent core, protocols, and agent implementations.
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 

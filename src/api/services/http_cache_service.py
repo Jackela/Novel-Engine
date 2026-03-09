@@ -21,11 +21,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import structlog
 from datetime import datetime
 from email.utils import format_datetime
 from typing import List, Optional
 
+import structlog
 from fastapi import Request, Response
 
 from src.api.schemas import CharacterSummary

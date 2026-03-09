@@ -6,11 +6,12 @@ This module contains comprehensive tests for the interaction application service
 including session management, proposal handling, and negotiation operations.
 """
 
-import pytest
 from datetime import datetime, timezone
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest
 
 from src.contexts.interactions.application.services.interaction_application_service import (
     InteractionApplicationService,
@@ -27,12 +28,10 @@ from src.contexts.interactions.domain.services.negotiation_service import (
 from src.contexts.interactions.domain.value_objects import (
     AuthorityLevel,
     CommunicationPreference,
-    InteractionId,
     NegotiationCapability,
     NegotiationOutcome,
     NegotiationParty,
     NegotiationPhase,
-    NegotiationStatus,
     NegotiationStyle,
     PartyPreferences,
     PartyRole,
@@ -42,10 +41,11 @@ from src.contexts.interactions.domain.value_objects import (
     ProposalType,
     ResponseType,
     TermCondition,
+    TerminationReason,
     TermResponse,
     TermType,
-    TerminationReason,
 )
+
 pytestmark = pytest.mark.unit
 
 

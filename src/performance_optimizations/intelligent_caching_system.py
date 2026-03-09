@@ -11,7 +11,6 @@ Wave 5.2 - Smart Caching Infrastructure
 import asyncio
 import hashlib
 import json
-import structlog
 import pickle
 import threading
 import time
@@ -24,6 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiofiles
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

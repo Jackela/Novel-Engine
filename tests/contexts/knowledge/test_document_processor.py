@@ -4,20 +4,24 @@ Test suite for Document Processors (Ingestion Processors).
 Tests all processor implementations for different source types.
 """
 
+
 import pytest
-from typing import Any
 
 from src.contexts.knowledge.application.services.ingestion_processors import (
-    GenericProcessor,
-    LoreProcessor,
     CharacterProcessor,
-    SceneProcessor,
-    PlotlineProcessor,
+    GenericProcessor,
     ItemProcessor,
     LocationProcessor,
+    LoreProcessor,
+    PlotlineProcessor,
+    SceneProcessor,
 )
-from src.contexts.knowledge.domain.models.chunking_strategy import ChunkingStrategy, ChunkStrategyType
+from src.contexts.knowledge.domain.models.chunking_strategy import (
+    ChunkingStrategy,
+    ChunkStrategyType,
+)
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
 pytestmark = pytest.mark.unit
 
 

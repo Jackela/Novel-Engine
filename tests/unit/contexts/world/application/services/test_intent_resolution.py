@@ -16,7 +16,7 @@ from src.contexts.world.application.services.world_simulation_service import (
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction
-from src.contexts.world.domain.entities.faction_intent import FactionIntent, ActionType
+from src.contexts.world.domain.entities.faction_intent import ActionType, FactionIntent
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 

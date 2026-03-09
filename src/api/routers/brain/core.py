@@ -7,10 +7,10 @@ OPT-014: Security hardening for API key management.
 
 from __future__ import annotations
 
-import structlog
 import os
 from typing import TYPE_CHECKING
 
+import structlog
 from cryptography.fernet import Fernet
 
 if TYPE_CHECKING:

@@ -27,17 +27,19 @@ from __future__ import annotations
 import asyncio
 import functools
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Optional, TypeVar, cast
+from typing import Any, Optional, TypeVar
 
 import structlog
 
-from ...application.ports.i_token_usage_repository import ITokenUsageRepository
+from ...application.ports.i_token_usage_repository import (
+    ITokenUsageRepository,
+    TokenUsageSummary,
+)
 from ...domain.models.model_registry import LLMProvider
-from ...application.ports.i_token_usage_repository import TokenUsageSummary
 from ...domain.models.token_usage import TokenUsage, TokenUsageStats
 
 # Need LLMResponse at runtime for decorator isinstance checks

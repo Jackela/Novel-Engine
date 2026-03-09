@@ -13,11 +13,10 @@ Provides a hybrid approach where:
 - Graceful fallback ensures system continues without context loading
 """
 
-import structlog
-from typing import Any, Dict
-
 # Import context models - use try/except for compatibility when contexts module isn't in path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Dict
+
+import structlog
 
 if TYPE_CHECKING:
     from src.contexts.character.domain.value_objects.context_models import (

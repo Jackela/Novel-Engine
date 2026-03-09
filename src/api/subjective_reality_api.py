@@ -7,10 +7,10 @@ FastAPI endpoints for SubjectiveRealityEngine functionality including
 personalized turn briefs, belief models, and fog-of-war management.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+import structlog
 from fastapi import Depends, FastAPI, HTTPException, Path
 from pydantic import BaseModel, Field
 

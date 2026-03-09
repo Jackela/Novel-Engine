@@ -9,11 +9,12 @@ core functionality without complex imports.
 import asyncio
 import json
 import logging
-import structlog
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+
+import structlog
 
 # Configure logging
 logging.basicConfig(

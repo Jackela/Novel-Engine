@@ -20,7 +20,6 @@ from src.core.result import (
     NotFoundError,
     Ok,
     PermissionError,
-    Result,
     SaveError,
     Unwrap,
     ValidationError,

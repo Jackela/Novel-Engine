@@ -20,9 +20,10 @@ Author: Engineer Alpha-Engineering
 System保佑此类型系统 (May the System bless this type system)
 """
 
-import structlog
 from enum import Enum, IntEnum
 from typing import Any, Literal, Protocol, TypeVar, Union, runtime_checkable
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

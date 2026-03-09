@@ -17,13 +17,13 @@ System保佑此限流系统 (May the System bless this rate limiting system)
 import asyncio
 import hashlib
 import logging
-import structlog
 import time
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum, EnumMeta
 from typing import Any, Dict, List, Optional, Set
 
+import structlog
 from fastapi import Request
 
 # Comprehensive logging configuration

@@ -6,20 +6,19 @@ Comprehensive test suite for the Rumor entity covering
 validation, spread mechanics, veracity labels, and serialization.
 """
 
-from uuid import uuid4
 
 import pytest
 
 pytestmark = pytest.mark.unit
 
 from src.contexts.world.domain.entities.rumor import (
-    Rumor,
-    RumorOrigin,
     TRUTH_DECAY_PER_HOP,
     VERACITY_CONFIRMED,
+    VERACITY_LIKELY_FALSE,
     VERACITY_LIKELY_TRUE,
     VERACITY_UNCERTAIN,
-    VERACITY_LIKELY_FALSE,
+    Rumor,
+    RumorOrigin,
 )
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 

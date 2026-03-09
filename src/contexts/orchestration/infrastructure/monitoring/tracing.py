@@ -7,11 +7,11 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 """
 
 import functools
-import structlog
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 from uuid import UUID
 
+import structlog
 from opentelemetry import baggage, propagate, trace
 from opentelemetry.exporter.jaeger.thrift import JaegerExporter
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter

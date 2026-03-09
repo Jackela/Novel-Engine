@@ -4,10 +4,11 @@ Character Template Manager - Core orchestration.
 """
 
 import json
-import structlog
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.memory.layered_memory import LayeredMemorySystem

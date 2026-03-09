@@ -7,9 +7,10 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import existing Novel Engine components (no legacy fallbacks)
 from src.agents.chronicler_agent import ChroniclerAgent

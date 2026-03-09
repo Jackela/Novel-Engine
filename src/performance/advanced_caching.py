@@ -27,7 +27,6 @@ import asyncio
 import gzip
 import hashlib
 import logging
-import structlog
 import os
 import pickle
 import time
@@ -35,6 +34,8 @@ from collections import OrderedDict, defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
+
+import structlog
 
 # Comprehensive logging configuration
 logging.basicConfig(level=logging.INFO)

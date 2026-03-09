@@ -10,15 +10,17 @@ This module provides test coverage for the GeopoliticsService including:
 Total: 25 tests
 """
 
-import pytest
-from typing import Optional
 
-from src.contexts.world.application.services.geopolitics_service import GeopoliticsService
+import pytest
+
+from src.contexts.world.application.services.geopolitics_service import (
+    GeopoliticsService,
+)
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
-from src.contexts.world.domain.entities.diplomatic_pact import DiplomaticPact, PactType
 from src.contexts.world.domain.entities.location import Location, LocationType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.events.event_bus import EventBus
+
 pytestmark = pytest.mark.unit
 
 

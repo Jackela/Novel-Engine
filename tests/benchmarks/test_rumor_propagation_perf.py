@@ -363,7 +363,7 @@ async def test_propagation_correctness_under_load(
     total_truth = sum(r.truth_value for r in rumors)
     avg_truth = total_truth / len(rumors) if rumors else 0
 
-    print(f"\nCorrectness check:")
+    print("\nCorrectness check:")
     print(f"  Initial locations: {initial_locations_count}")
     print(f"  Final locations: {total_locations_after}")
     print(f"  Average truth: {avg_truth:.1f}")
@@ -401,7 +401,6 @@ async def test_memory_efficiency_with_large_world(
     )
 
     import gc
-    import sys
 
     # Force garbage collection before test
     gc.collect()

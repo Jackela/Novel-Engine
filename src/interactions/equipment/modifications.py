@@ -3,8 +3,9 @@
 Equipment modification system.
 """
 
-import structlog
 from typing import Any, Dict
+
+import structlog
 
 from src.core.data_models import EquipmentCondition
 

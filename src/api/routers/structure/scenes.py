@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
+from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from src.api.schemas import (
@@ -23,8 +24,6 @@ from src.contexts.narrative.application.ports.narrative_repository_port import (
     INarrativeRepository,
 )
 from src.contexts.narrative.domain.entities.scene import Scene, StoryPhase
-
-from typing import Any
 
 from .common import (
     _delete_scene,

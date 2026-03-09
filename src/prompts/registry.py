@@ -8,8 +8,9 @@ both pre-defined and user-created.
 
 from __future__ import annotations
 
-import structlog
 from typing import Dict, List, Optional
+
+import structlog
 
 from .base import Language, PromptTemplate, StoryGenre
 

@@ -8,7 +8,6 @@ Validates that the performance optimizations are working correctly and meeting t
 import asyncio
 import json
 import logging
-import structlog
 import os
 import sys
 import time
@@ -16,6 +15,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 import aiohttp
+import structlog
 
 # Add the current directory to Python path to import local modules
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

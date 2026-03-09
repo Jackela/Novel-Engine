@@ -27,8 +27,6 @@ from ...application.ports.i_vector_store import (
 )
 from ...domain.errors import (
     EmbeddingError,
-    IngestionError,
-    NotFoundError,
     ValidationError,
     VectorStoreError,
 )

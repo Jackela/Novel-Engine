@@ -21,8 +21,6 @@ import structlog
 from src.api.schemas.world_schemas import SortByEnum
 from src.contexts.world.domain.entities import Rumor
 from src.contexts.world.domain.errors import (
-    RumorError,
-    RumorNotFoundError,
     RumorValidationError,
 )
 from src.contexts.world.domain.ports.rumor_repository import RumorRepository

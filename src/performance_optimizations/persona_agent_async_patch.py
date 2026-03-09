@@ -16,8 +16,9 @@ Wave 5.1.1 CRITICAL Performance Improvements:
 """
 
 import asyncio
-import structlog
 from typing import Any, Dict
+
+import structlog
 
 from .async_llm_integration import call_llm_async_wrapper
 

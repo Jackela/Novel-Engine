@@ -14,9 +14,9 @@ Tests:
 - API endpoint availability and response structure
 """
 
-import pytest
 from typing import Any, Dict, List, Optional
 
+import pytest
 from fastapi.testclient import TestClient
 
 # Mark all tests in this module as e2e tests

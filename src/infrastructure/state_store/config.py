@@ -3,7 +3,7 @@
 Configuration classes and key management for state stores.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 

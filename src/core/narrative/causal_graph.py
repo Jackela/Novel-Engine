@@ -5,12 +5,12 @@ Causal graph for tracking event relationships.
 因果关系图 - 追踪行动-结果的链式关系
 """
 
-import structlog
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Tuple
 
 import networkx as nx
+import structlog
 
 from .types import CausalEdge, CausalNode, CausalRelationType
 

@@ -7,10 +7,11 @@ Main emergent narrative engine orchestrating all subsystems.
 """
 
 import json
-import structlog
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+import structlog
 
 from src.core.llm_service import (
     LLMRequest,

@@ -7,11 +7,12 @@ Manages agent-to-agent dialogue sessions and communication coordination.
 """
 
 import logging
-import structlog
 import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set
+
+import structlog
 
 from .types import AgentDialogue, CommunicationType, DialogueState
 

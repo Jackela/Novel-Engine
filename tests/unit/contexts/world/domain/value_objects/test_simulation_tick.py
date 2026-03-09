@@ -7,7 +7,6 @@ value objects covering validation, properties, and serialization.
 """
 
 from datetime import datetime
-from uuid import uuid4
 
 import pytest
 

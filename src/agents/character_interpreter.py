@@ -14,13 +14,12 @@ agent behavior and characteristics.
 """
 
 import os
-
-import structlog
 import re
 from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
+import structlog
 import yaml
 
 logger = structlog.get_logger(__name__)

@@ -24,7 +24,7 @@ Typical usage example:
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
+from typing import Dict, List, Optional, Protocol, Set, Tuple, runtime_checkable
 
 import structlog
 

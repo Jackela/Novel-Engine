@@ -8,22 +8,20 @@ Coverage targets:
 - Cache eviction
 """
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 pytestmark = pytest.mark.unit
 
+from src.core.data_models import MemoryItem, MemoryType
 from src.memory.semantic_memory import (
     ConceptNode,
     KnowledgeFact,
     SemanticMemory,
     test_semantic_memory,
 )
-from src.core.data_models import MemoryItem, MemoryType
-from src.core.types import AgentID
-from src.database.context_db import ContextDatabase
 
 
 class TestKnowledgeFact:

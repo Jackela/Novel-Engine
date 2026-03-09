@@ -13,12 +13,12 @@ from __future__ import annotations
 
 import asyncio
 import json
-import structlog
 import os
 import time
 from typing import AsyncIterator, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field

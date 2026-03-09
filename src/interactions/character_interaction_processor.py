@@ -16,11 +16,12 @@ System保佑角色互动 (May the System bless character interactions)
 """
 
 import json
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+import structlog
 
 # Import enhanced data models
 from src.core.data_models import (

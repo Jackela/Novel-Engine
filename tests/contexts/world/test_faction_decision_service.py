@@ -11,28 +11,30 @@ This module provides test coverage for the FactionDecisionService including:
 Total: 40 tests
 """
 
+
 import pytest
-from datetime import datetime
-from typing import Any, Dict, List
 
 from src.contexts.world.application.services.faction_decision_service import (
-    FactionDecisionService,
-    DecisionContext,
-    ActionDefinition,
     ACTION_DEFINITIONS,
     MAX_INTENTS_PER_GENERATION,
-    MAX_ACTIVE_INTENTS_PER_FACTION,
+    ActionDefinition,
+    DecisionContext,
+    FactionDecisionService,
 )
-from src.contexts.world.domain.entities.faction import Faction, FactionType, FactionAlignment
+from src.contexts.world.domain.entities.faction import (
+    Faction,
+    FactionAlignment,
+    FactionType,
+)
 from src.contexts.world.domain.entities.faction_intent import (
-    FactionIntent,
     ActionType,
+    FactionIntent,
     IntentStatus,
 )
 from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
     InMemoryFactionIntentRepository,
 )
-from src.core.result import Ok, Err
+
 pytestmark = pytest.mark.unit
 
 

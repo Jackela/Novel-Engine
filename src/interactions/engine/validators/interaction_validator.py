@@ -3,9 +3,9 @@
 Interaction context validation and prerequisite checking.
 """
 
-import structlog
-
 from typing import Any
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (

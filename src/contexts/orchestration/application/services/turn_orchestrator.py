@@ -7,10 +7,11 @@ with saga patterns, comprehensive error handling, and performance monitoring.
 """
 
 import asyncio
-import structlog
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple, cast
+
+import structlog
 
 from ...domain.entities import Turn
 from ...domain.services import (

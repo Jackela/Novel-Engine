@@ -7,10 +7,10 @@ using SQLAlchemy ORM for data persistence. It handles the mapping between
 domain objects and database entities.
 """
 
-import structlog
 from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
+import structlog
 from sqlalchemy import and_, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker

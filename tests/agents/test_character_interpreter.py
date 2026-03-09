@@ -5,10 +5,8 @@ Test suite for CharacterInterpreter module.
 Tests character data loading, parsing, and interpretation.
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 

@@ -7,11 +7,12 @@ Handles memory management and updates for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import structlog
 import time
 from typing import Any, Dict, List
 
-from src.contexts.shared.domain.errors import ServiceError, ValidationError
+import structlog
+
+from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result
 
 logger = structlog.get_logger(__name__)

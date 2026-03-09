@@ -15,7 +15,6 @@ Professional test suite for enterprise security validation.
 """
 
 import asyncio
-import logging
 import os
 import tempfile
 import time

@@ -45,7 +45,6 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
-from src.core.result import Ok
 
 pytestmark = pytest.mark.unit
 

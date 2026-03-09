@@ -7,10 +7,11 @@ Handles decision-making logic for PersonaAgent characters.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import structlog
 import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+
+import structlog
 
 from src.core.types.shared_types import ActionPriority, CharacterAction
 

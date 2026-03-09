@@ -11,9 +11,9 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import structlog
 from typing import Any, Optional
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from src.api.schemas import (

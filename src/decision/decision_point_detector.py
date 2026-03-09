@@ -5,9 +5,10 @@ Analyzes turn results to detect narrative moments that warrant user intervention
 Uses configurable thresholds based on PlotPoint model attributes.
 """
 
-import structlog
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Set
+
+import structlog
 
 from .models import DecisionOption, DecisionPoint, DecisionPointType
 

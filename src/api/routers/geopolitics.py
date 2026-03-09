@@ -7,10 +7,10 @@ diplomacy, territory control, and resources.
 
 from __future__ import annotations
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 

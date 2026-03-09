@@ -6,11 +6,11 @@ This module provides the concrete implementation of the NegotiationSessionReposi
 interface using SQLAlchemy ORM for persistence operations.
 """
 
-import structlog
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+import structlog
 from sqlalchemy import and_, asc, desc, func, or_, select, text, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,7 +24,9 @@ from ...domain.repositories.negotiation_session_repository import (
 from ...domain.value_objects.interaction_id import InteractionId
 
 # Import infrastructure models
-from ..persistence.models.negotiation_session_model import NegotiationSessionModel  # type: ignore[import-not-found]
+from ..persistence.models.negotiation_session_model import (
+    NegotiationSessionModel,  # type: ignore[import-not-found]
+)
 
 logger = structlog.get_logger(__name__)
 

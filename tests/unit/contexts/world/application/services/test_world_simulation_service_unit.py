@@ -63,29 +63,19 @@ from src.contexts.world.application.services.faction_intent_generator import (
     FactionIntentGenerator,
 )
 from src.contexts.world.application.services.world_simulation_service import (
-    IFactionRepository,
     InvalidDaysError,
-    ISnapshotService,
-    IWorldStateRepository,
-)
-from src.contexts.world.domain.errors import (
-    RepositoryError,
-    RollbackError,
-    SaveFailedError,
-    SnapshotFailedError,
-    WorldNotFoundError,
-)
-from src.contexts.world.application.services.world_simulation_service import (
     WorldSimulationService,
 )
-from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import (
     Faction,
     FactionRelation,
     FactionStatus,
 )
-from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
+from src.contexts.world.domain.errors import (
+    RepositoryError,
+    WorldNotFoundError,
+)
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
 # Restore original module to avoid polluting other tests

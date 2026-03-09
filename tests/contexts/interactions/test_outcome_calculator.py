@@ -6,9 +6,10 @@ This module contains comprehensive tests for outcome calculation and status
 management in negotiation sessions.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+
+import pytest
 
 from src.contexts.interactions.domain.value_objects.negotiation_status import (
     NegotiationOutcome,
@@ -23,6 +24,7 @@ from src.contexts.interactions.domain.value_objects.proposal_response import (
     ResponseType,
     TermResponse,
 )
+
 pytestmark = pytest.mark.unit
 
 

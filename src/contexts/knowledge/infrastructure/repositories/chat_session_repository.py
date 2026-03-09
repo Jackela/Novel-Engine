@@ -5,11 +5,11 @@ Repository for persisting and retrieving chat sessions and messages.
 Provides an abstraction layer over the SQLAlchemy models.
 """
 
-import structlog
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
 
+import structlog
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 

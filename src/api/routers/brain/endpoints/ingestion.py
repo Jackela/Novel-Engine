@@ -6,9 +6,9 @@ OPT-005: Async Ingestion Job API
 
 from __future__ import annotations
 
-import structlog
 from typing import List
 
+import structlog
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 
 from src.api.routers.brain.dependencies import (
@@ -19,7 +19,6 @@ from src.api.routers.brain.repositories.ingestion import IngestionJobStore
 from src.api.routers.brain.services.ingestion_worker import run_ingestion_job
 from src.api.schemas import (
     IngestionJobResponse,
-    IngestionJobStatus,
     StartIngestionJobRequest,
     StartIngestionJobResponse,
 )

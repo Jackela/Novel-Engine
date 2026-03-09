@@ -17,10 +17,11 @@ This class follows the Single Responsibility Principle by focusing solely on
 metrics management, separate from integration orchestration.
 """
 
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List
+
+import structlog
 
 from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result

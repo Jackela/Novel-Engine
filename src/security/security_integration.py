@@ -19,12 +19,12 @@ System coordinates all security operations 🛡️
 
 import asyncio
 import logging
-import structlog
 import os
 import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+import structlog
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

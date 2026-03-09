@@ -13,7 +13,6 @@ import tempfile
 import threading
 from multiprocessing import active_children
 from pathlib import Path
-from typing import AsyncGenerator, Generator
 from unittest.mock import Mock, patch
 
 import pytest

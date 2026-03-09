@@ -7,9 +7,10 @@ Handles modification installation, compatibility validation, and performance tra
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import (
     DynamicEquipment,

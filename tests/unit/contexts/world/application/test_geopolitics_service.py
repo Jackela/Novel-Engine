@@ -4,9 +4,11 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-from src.contexts.world.application.services.geopolitics_service import GeopoliticsService
+from src.contexts.world.application.services.geopolitics_service import (
+    GeopoliticsService,
+)
 from src.contexts.world.domain.aggregates.diplomacy_matrix import DiplomacyMatrix
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 

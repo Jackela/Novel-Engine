@@ -3,8 +3,9 @@
 Equipment category processors for usage tracking.
 """
 
-import structlog
 from typing import Any, Dict
+
+import structlog
 
 from src.core.data_models import StandardResponse
 

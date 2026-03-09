@@ -7,10 +7,10 @@ Characters can join factions, leave factions, and factions can designate leaders
 
 from __future__ import annotations
 
-import structlog
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.deps import get_optional_workspace_id, require_workspace_id

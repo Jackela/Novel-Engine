@@ -6,7 +6,7 @@ Abstract base class for all state store implementations.
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
-from src.infrastructure.state_store.config import StateKey, StateStoreConfig
+from src.infrastructure.state_store.config import StateKey
 
 
 class StateStore(ABC):

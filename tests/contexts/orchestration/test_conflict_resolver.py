@@ -7,23 +7,22 @@ including state transition conflicts, compensation conflicts, and turn
 lifecycle conflict detection.
 """
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+import pytest
+
 from src.contexts.orchestration.domain.entities.turn import Turn, TurnState
 from src.contexts.orchestration.domain.value_objects import (
-    CompensationAction,
     CompensationType,
-    PhaseResult,
     PhaseStatus,
-    PhaseStatusEnum,
     PhaseType,
     TurnConfiguration,
     TurnId,
 )
+
 pytestmark = pytest.mark.unit
 
 

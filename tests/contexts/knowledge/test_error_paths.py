@@ -4,19 +4,19 @@ Error Path Tests for Knowledge Context
 Tests error handling, exception cases, and failure scenarios.
 """
 
-import pytest
 from datetime import datetime, timezone
-from decimal import Decimal
-from unittest.mock import Mock, patch, MagicMock
 from uuid import uuid4
 
-from src.core.result import Ok, Err, Error, NotFoundError, ValidationError
-from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
-from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+import pytest
+
 from src.contexts.knowledge.domain.models.access_control_rule import AccessControlRule
 from src.contexts.knowledge.domain.models.access_level import AccessLevel
 from src.contexts.knowledge.domain.models.agent_identity import AgentIdentity
-from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUsageStats
+from src.contexts.knowledge.domain.models.knowledge_entry import KnowledgeEntry
+from src.contexts.knowledge.domain.models.knowledge_type import KnowledgeType
+from src.contexts.knowledge.domain.models.token_usage import TokenUsage
+from src.core.result import Err, Error, NotFoundError, Ok, ValidationError
+
 pytestmark = pytest.mark.unit
 
 

@@ -17,10 +17,11 @@ Usage:
     ork_agent = factory.create_character('ork')
 """
 
-import structlog
 import os
 import re
 from typing import Any, Optional
+
+import structlog
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus

@@ -7,10 +7,20 @@ bounded context. It serves as the primary interface for external systems
 to interact with character operations.
 """
 
-import structlog
 from typing import Any, Dict, List, Optional
 
-from .....core.result import ConflictError, Err, Error, NotFoundError, Ok, Result, SaveError, ValidationError
+import structlog
+
+from .....core.result import (
+    ConflictError,
+    Err,
+    Error,
+    NotFoundError,
+    Ok,
+    Result,
+    SaveError,
+    ValidationError,
+)
 from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import ICharacterRepository
 from ...domain.value_objects.character_id import CharacterID

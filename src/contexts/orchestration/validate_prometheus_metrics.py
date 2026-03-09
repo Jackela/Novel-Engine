@@ -7,18 +7,20 @@ Can be run independently to verify Wave 2 functionality.
 """
 
 import logging
-import structlog
 import sys
 from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
+import structlog
+
 # Add current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from typing import Any
+
 from domain.services import EnhancedPerformanceTracker
 from infrastructure.monitoring import PrometheusMetricsCollector
-from typing import Any
 
 # Configure logging
 logging.basicConfig(

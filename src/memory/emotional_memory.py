@@ -7,11 +7,12 @@ experiences and emotional states with valence and arousal tracking.
 """
 
 import asyncio
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List
+
+import structlog
 
 from src.core.data_models import (
     MemoryItem,

@@ -21,7 +21,6 @@ Gotchas:
 
 from __future__ import annotations
 
-import structlog
 import os
 import re
 from datetime import datetime, timezone
@@ -29,6 +28,7 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import structlog
 from fastapi import HTTPException
 
 from src.api.schemas import CharacterSummary

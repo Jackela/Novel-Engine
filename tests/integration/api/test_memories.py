@@ -6,11 +6,11 @@ Tests the Memory API endpoints with full request/response validation.
 Memories are immutable event logs representing character experiences.
 """
 
-import pytest
-from fastapi.testclient import TestClient
+from datetime import datetime
 from unittest.mock import MagicMock
 
-from datetime import datetime
+import pytest
+from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.integration
 
@@ -21,8 +21,8 @@ memory_now = datetime.now().isoformat()
 @pytest.fixture
 def client():
     """Create a test client for the API with mock character store."""
-    from src.api.app import create_app
     from src.api import deps
+    from src.api.app import create_app
 
     app = create_app(debug=True)
 

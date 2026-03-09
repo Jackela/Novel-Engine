@@ -4,19 +4,19 @@ Test suite for Retrieval Service module.
 Tests query processing, relevance scoring, and context assembly.
 """
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievalService,
+    DEFAULT_RELEVANCE_THRESHOLD,
+    FormattedContext,
     RetrievalFilter,
     RetrievalOptions,
-    RetrievalResult,
-    FormattedContext,
-    DEFAULT_RELEVANCE_THRESHOLD,
-    DEFAULT_DEDUPLICATION_SIMILARITY,
+    RetrievalService,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
+
 pytestmark = pytest.mark.unit
 
 
@@ -174,7 +174,9 @@ class TestRetrievalServiceDeduplication:
 
     def test_deduplicate_single_chunk(self, retrieval_service):
         """Test deduplication with single chunk."""
-        from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+        from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+            RetrievedChunk,
+        )
         
         chunks = [
             RetrievedChunk(
@@ -192,7 +194,9 @@ class TestRetrievalServiceDeduplication:
 
     def test_deduplicate_unique_chunks(self, retrieval_service):
         """Test deduplication with unique chunks."""
-        from src.contexts.knowledge.application.services.knowledge_ingestion_service import RetrievedChunk
+        from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
+            RetrievedChunk,
+        )
         
         chunks = [
             RetrievedChunk(

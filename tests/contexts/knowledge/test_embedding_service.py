@@ -4,14 +4,22 @@ Test suite for Embedding Services.
 Tests CachedEmbeddingService and EmbeddingServiceAdapter.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 
-from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service import CachedEmbeddingService
-from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter import EmbeddingServiceAdapter
-from src.contexts.knowledge.application.services.embedding_cache_service import CacheStats
 from src.contexts.knowledge.application.ports.i_embedding_service import EmbeddingError
+from src.contexts.knowledge.application.services.embedding_cache_service import (
+    CacheStats,
+)
+from src.contexts.knowledge.infrastructure.adapters.cached_embedding_service import (
+    CachedEmbeddingService,
+)
+from src.contexts.knowledge.infrastructure.adapters.embedding_generator_adapter import (
+    EmbeddingServiceAdapter,
+)
+
 pytestmark = pytest.mark.unit
 
 
@@ -369,14 +377,18 @@ class TestEmbeddingCacheService:
 
     def test_cache_initialization(self):
         """Test cache initialization with default parameters."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         
         assert cache._max_size == EmbeddingCacheService.DEFAULT_MAX_SIZE
 
     def test_cache_initialization_custom_params(self):
         """Test cache initialization with custom parameters."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService(max_size=500, default_ttl_seconds=1800)
         
         assert cache._max_size == 500
@@ -384,7 +396,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_get_miss(self):
         """Test cache get with miss."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         
         result = cache.get("nonexistent text", "model")
@@ -393,7 +407,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_put_and_get(self):
         """Test cache put and get."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         embedding = [0.1, 0.2, 0.3]
         
@@ -404,7 +420,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_put_batch(self):
         """Test cache put batch."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         items = [
             ("text1", [0.1, 0.2]),
@@ -418,7 +436,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_get_batch(self):
         """Test cache get batch."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         cache.put("text1", [0.1, 0.2], "model")
         cache.put("text2", [0.3, 0.4], "model")
@@ -431,7 +451,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_stats(self):
         """Test cache statistics."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         
         # Initial stats
@@ -450,7 +472,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_stats_hit_rate(self):
         """Test cache hit rate calculation."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheStats
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheStats,
+        )
         
         stats = CacheStats(hits=8, misses=2)
         assert stats.hit_rate == 0.8
@@ -460,7 +484,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_clear(self):
         """Test cache clear."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         cache.put("text1", [0.1], "model")
         
@@ -470,7 +496,9 @@ class TestEmbeddingCacheService:
 
     def test_cache_invalidate(self):
         """Test cache invalidation."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import EmbeddingCacheService
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            EmbeddingCacheService,
+        )
         cache = EmbeddingCacheService()
         cache.put("text1", [0.1], "model1")
         cache.put("text2", [0.2], "model2")
@@ -486,7 +514,9 @@ class TestCacheKey:
 
     def test_cache_key_creation(self):
         """Test cache key creation."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheKey
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheKey,
+        )
         key = CacheKey(content_hash="abc123", model="text-embedding-ada-002")
         
         assert key.content_hash == "abc123"
@@ -494,7 +524,9 @@ class TestCacheKey:
 
     def test_cache_key_from_text(self):
         """Test cache key generation from text."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheKey
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheKey,
+        )
         key = CacheKey.from_text("test text", "model-name")
         
         assert key.model == "model-name"
@@ -502,7 +534,9 @@ class TestCacheKey:
 
     def test_cache_key_deterministic(self):
         """Test that cache keys are deterministic."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheKey
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheKey,
+        )
         key1 = CacheKey.from_text("same text", "same-model")
         key2 = CacheKey.from_text("same text", "same-model")
         
@@ -510,7 +544,9 @@ class TestCacheKey:
 
     def test_cache_key_unique_per_model(self):
         """Test that cache keys are unique per model."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheKey
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheKey,
+        )
         key1 = CacheKey.from_text("same text", "model1")
         key2 = CacheKey.from_text("same text", "model2")
         
@@ -518,7 +554,9 @@ class TestCacheKey:
 
     def test_cache_key_string_representation(self):
         """Test cache key string representation."""
-        from src.contexts.knowledge.application.services.embedding_cache_service import CacheKey
+        from src.contexts.knowledge.application.services.embedding_cache_service import (
+            CacheKey,
+        )
         key = CacheKey(content_hash="abcdef1234567890", model="test-model")
         
         str_repr = str(key)

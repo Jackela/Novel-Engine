@@ -7,11 +7,11 @@ Handles parsing and validation of character sheet data for PersonaAgent.
 Separated from the main PersonaAgent to follow Single Responsibility Principle.
 """
 
-import structlog
 import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import structlog
 import yaml
 
 logger = structlog.get_logger(__name__)

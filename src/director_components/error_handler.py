@@ -9,12 +9,13 @@ Provides error classification, recovery strategies, and system resilience.
 import asyncio
 import hashlib
 import logging
-import structlog
 import traceback
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Type
+
+import structlog
 
 
 class ErrorSeverity(Enum):

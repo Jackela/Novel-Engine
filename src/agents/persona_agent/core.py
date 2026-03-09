@@ -14,11 +14,11 @@ while maintaining clean separation from decision-making and memory systems.
 """
 
 import os
-
-import structlog
 from datetime import datetime
 from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 # Import event bus for communication
 try:

@@ -11,13 +11,13 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import structlog
 import os
 import re
 import time
 from typing import TYPE_CHECKING, Any, Optional
 
 import httpx
+import structlog
 
 from src.contexts.knowledge.application.ports.i_prompt_repository import (
     IPromptRepository,

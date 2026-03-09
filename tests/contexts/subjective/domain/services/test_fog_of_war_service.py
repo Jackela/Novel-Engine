@@ -8,15 +8,12 @@ Covers unit tests, integration tests, and boundary tests.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Tuple
-from unittest.mock import Mock
 
 import pytest
 
 from src.contexts.subjective.domain.services.fog_of_war_service import (
     BasicVisibilityCalculator,
     FogOfWarService,
-    IVisibilityCalculator,
 )
 from src.contexts.subjective.domain.value_objects.awareness import (
     AlertnessLevel,
@@ -37,6 +34,7 @@ from src.contexts.subjective.domain.value_objects.perception_range import (
     PerceptionType,
     VisibilityLevel,
 )
+
 pytestmark = pytest.mark.unit
 
 
@@ -80,7 +78,6 @@ def create_test_awareness_state(
 def create_test_turn_brief(entity_id: str = "entity_1"):
     """Create test TurnBrief."""
     from src.contexts.subjective.domain.aggregates.turn_brief import TurnBrief
-    from src.contexts.subjective.domain.value_objects.subjective_id import SubjectiveId
     
     return TurnBrief.create_for_entity(
         entity_id=entity_id,

@@ -4,27 +4,29 @@ Test suite for Entity Extraction Service.
 Tests entity extraction from narrative text and relationship extraction.
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
 import pytest_asyncio
-from unittest.mock import AsyncMock, Mock, patch
 
+from src.contexts.knowledge.application.ports.i_llm_client import (
+    ILLMClient,
+    LLMResponse,
+)
 from src.contexts.knowledge.application.services.entity_extraction_service import (
+    DEFAULT_MAX_TOKENS,
+    DEFAULT_TEMPERATURE,
     EntityExtractionService,
     ExtractionConfig,
-    DEFAULT_TEMPERATURE,
-    DEFAULT_MAX_TOKENS,
 )
+from src.contexts.knowledge.domain.errors import ExtractionError, ValidationError
 from src.contexts.knowledge.domain.models.entity import (
     EntityType,
-    RelationshipType,
     ExtractedEntity,
-    EntityMention,
-    ExtractionResult,
     ExtractionResultWithRelationships,
-    Relationship,
+    RelationshipType,
 )
-from src.contexts.knowledge.domain.errors import ValidationError, ExtractionError
-from src.contexts.knowledge.application.ports.i_llm_client import ILLMClient, LLMRequest, LLMResponse
+
 pytestmark = pytest.mark.unit
 
 

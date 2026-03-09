@@ -6,9 +6,9 @@ This module tests the CharacterReaction value object which represents
 a character's emotional or behavioral response to a world event.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import patch
+
+import pytest
 
 from src.contexts.character.domain.value_objects.character_reaction import (
     CharacterReaction,

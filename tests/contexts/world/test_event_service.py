@@ -11,12 +11,14 @@ This module provides test coverage for the EventService including:
 Total: 50 tests
 """
 
+
 import pytest
-from datetime import datetime
-from typing import List
 
 from src.api.schemas.world_schemas import CreateEventRequest
-from src.contexts.world.application.services.event_service import EventService, EventListResult
+from src.contexts.world.application.services.event_service import (
+    EventListResult,
+    EventService,
+)
 from src.contexts.world.domain.entities import (
     EventOutcome,
     EventSignificance,
@@ -33,7 +35,7 @@ from src.contexts.world.infrastructure.persistence.in_memory_event_repository im
 from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository import (
     InMemoryRumorRepository,
 )
-from src.core.result import Ok, Err
+
 pytestmark = pytest.mark.unit
 
 

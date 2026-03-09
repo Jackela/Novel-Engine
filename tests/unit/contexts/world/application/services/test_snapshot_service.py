@@ -5,13 +5,11 @@ This module tests the SnapshotService class for managing world state snapshots.
 """
 
 import json
-from unittest.mock import MagicMock
 
 import pytest
 
 from src.contexts.world.application.services.snapshot_service import (
     MAX_SNAPSHOTS_PER_WORLD,
-    SnapshotError,
     SnapshotService,
 )
 

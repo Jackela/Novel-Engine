@@ -5,16 +5,13 @@ Health Monitoring Application Service
 Application service for monitoring negotiation session health using Result pattern.
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from datetime import datetime, timezone
+from typing import Any, Dict, List
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.aggregates.negotiation_session import NegotiationSession
 from .shared.errors import (
-    NotFoundError,
     SessionError,
-    ValidationError,
 )
 
 

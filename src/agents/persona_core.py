@@ -10,12 +10,12 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
 import os
-
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
+
+import structlog
 
 # Core systems integration
 from src.core.error_handler import (

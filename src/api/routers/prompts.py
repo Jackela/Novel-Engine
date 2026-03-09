@@ -11,11 +11,11 @@ Constitution Compliance:
 
 from __future__ import annotations
 
-import structlog
 from datetime import datetime, timezone
 from typing import Any, Optional
 from uuid import uuid4
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 

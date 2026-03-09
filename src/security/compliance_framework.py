@@ -18,7 +18,6 @@ Features:
 import asyncio
 import json
 import logging
-import structlog
 import re
 import time
 from dataclasses import dataclass, field
@@ -27,6 +26,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import aiosqlite
+import structlog
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

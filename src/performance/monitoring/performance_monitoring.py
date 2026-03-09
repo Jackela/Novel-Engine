@@ -9,7 +9,6 @@ dashboard capabilities, alerting system, and performance regression detection.
 import asyncio
 import gc
 import json
-import structlog
 import os
 import sqlite3
 import statistics
@@ -24,6 +23,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 import aiosqlite
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

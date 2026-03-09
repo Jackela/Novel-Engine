@@ -16,13 +16,12 @@ Features:
 - Memory-based decision influences
 """
 
-import structlog
-from typing import Any, Dict
-
 # Import base decision engine
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Dict
 
-from src.agents.decision_engine import DecisionEngine, SituationAssessment
+import structlog
+
+from src.agents.decision_engine import DecisionEngine
 
 if TYPE_CHECKING:
     from src.agents.persona_agent.core import PersonaAgentCore

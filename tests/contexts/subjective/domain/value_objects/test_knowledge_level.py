@@ -7,7 +7,6 @@ Covers unit tests, integration tests, and boundary tests.
 """
 
 from datetime import datetime, timedelta
-from typing import List, Set
 
 import pytest
 
@@ -18,6 +17,7 @@ from src.contexts.subjective.domain.value_objects.knowledge_level import (
     KnowledgeSource,
     KnowledgeType,
 )
+
 pytestmark = pytest.mark.unit
 
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
 from uuid import UUID
 
+import structlog
 from fastapi import APIRouter, HTTPException
 
 from src.api.schemas import (

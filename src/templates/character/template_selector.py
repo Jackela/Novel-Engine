@@ -3,8 +3,9 @@
 Template selection logic.
 """
 
-import structlog
 from typing import Optional
+
+import structlog
 
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 

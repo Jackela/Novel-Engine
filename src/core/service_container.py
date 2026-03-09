@@ -9,7 +9,6 @@ lifecycle management, and configuration integration.
 
 import asyncio
 import inspect
-import structlog
 import threading
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
@@ -27,9 +26,11 @@ from typing import (
     get_type_hints,
 )
 
+import structlog
+
 from .config_manager import ConfigurationManager
 from .error_handler import CentralizedErrorHandler, ErrorContext
-from .result import Error, Err, Ok, Result
+from .result import Err, Error, Ok, Result
 
 logger = structlog.get_logger(__name__)
 

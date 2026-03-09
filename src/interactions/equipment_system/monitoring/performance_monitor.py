@@ -7,9 +7,10 @@ Tracks equipment health, predicts failures, and provides optimization recommenda
 """
 
 import logging
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import DynamicEquipment, EquipmentSystemConfig
 

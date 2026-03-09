@@ -11,10 +11,10 @@ import asyncio
 import csv
 import io
 import json
-import structlog
 from datetime import UTC, datetime, timedelta
 from typing import AsyncIterator
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel

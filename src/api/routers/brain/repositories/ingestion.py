@@ -8,10 +8,11 @@ OPT-005: Async Ingestion Job API
 from __future__ import annotations
 
 import asyncio
-import structlog
 import uuid
 from datetime import UTC, datetime
 from typing import Any
+
+import structlog
 
 from src.api.schemas import IngestionJobResponse, IngestionJobStatus
 

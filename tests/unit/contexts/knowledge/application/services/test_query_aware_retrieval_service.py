@@ -30,9 +30,9 @@ from src.contexts.knowledge.application.services.query_rewriter import (
     RewriteStrategy,
 )
 from src.contexts.knowledge.application.services.retrieval_service import (
-    RetrievedChunk,
     RetrievalResult,
     RetrievalService,
+    RetrievedChunk,
 )
 from src.contexts.knowledge.domain.models.source_type import SourceType
 from src.contexts.knowledge.infrastructure.adapters.gemini_llm_client import (
@@ -307,7 +307,9 @@ class TestQueryAwareRetrievalService:
         )
 
         # Mock the internal retrieval service's format_context to return a proper FormattedContext
-        from src.contexts.knowledge.application.services.retrieval_service import FormattedContext
+        from src.contexts.knowledge.application.services.retrieval_service import (
+            FormattedContext,
+        )
         query_aware_service._retrieval_service.format_context = MagicMock(
             return_value=FormattedContext(
                 text="[1] CHARACTER:char1 (part ?/?)\nA brave warrior",

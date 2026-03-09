@@ -6,10 +6,11 @@ This module contains comprehensive tests for the negotiation domain service
 including compatibility assessment, viability analysis, and strategic recommendations.
 """
 
-import pytest
 from decimal import Decimal
 from unittest.mock import MagicMock
 from uuid import uuid4
+
+import pytest
 
 from src.contexts.interactions.domain.services.negotiation_service import (
     NegotiationService,
@@ -32,6 +33,7 @@ from src.contexts.interactions.domain.value_objects import (
     TermResponse,
     TermType,
 )
+
 pytestmark = pytest.mark.unit
 
 

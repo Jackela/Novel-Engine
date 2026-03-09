@@ -10,10 +10,7 @@ Coverage targets:
 """
 
 import asyncio
-import os
-import tempfile
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import pytest_asyncio
@@ -27,7 +24,6 @@ from src.core.database_manager import (
     DatabaseConnectionPool,
     DatabaseManager,
     DatabaseType,
-    get_database_connection,
     get_database_manager,
 )
 
@@ -179,7 +175,6 @@ class TestDatabaseConnection:
     async def test_close(self, db_connection, mock_connection):
         """Test connection close."""
         # Create a real asyncio task that completes quickly for testing
-        import asyncio
         
         async def dummy_task():
             await asyncio.sleep(0)

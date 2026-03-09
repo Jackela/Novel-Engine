@@ -7,8 +7,9 @@ Command handlers execute the business logic for commands by coordinating
 between the domain layer and infrastructure services.
 """
 
-import structlog
 from typing import Any
+
+import structlog
 
 from ...domain.aggregates.character import Character
 from ...domain.repositories.character_repository import ICharacterRepository

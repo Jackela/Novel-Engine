@@ -8,11 +8,11 @@ spatial queries, versioning, snapshots, and reliable event publishing.
 """
 
 import json
-import structlog
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+import structlog
 from sqlalchemy import and_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session

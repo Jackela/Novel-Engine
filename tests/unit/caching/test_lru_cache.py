@@ -14,7 +14,7 @@ import time
 
 import pytest
 
-from src.caching.lru_cache import CacheStats, LRUCache, create_embedding_cache
+from src.caching.lru_cache import LRUCache, create_embedding_cache
 
 pytestmark = pytest.mark.unit
 

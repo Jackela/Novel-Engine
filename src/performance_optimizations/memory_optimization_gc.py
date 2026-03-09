@@ -10,7 +10,6 @@ Wave 5.4 - Memory Management & Garbage Collection Enhancement
 
 import asyncio
 import gc
-import structlog
 import threading
 import weakref
 from collections import defaultdict, deque
@@ -21,6 +20,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 import psutil
+import structlog
 
 logger = structlog.get_logger(__name__)
 

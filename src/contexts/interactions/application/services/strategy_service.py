@@ -7,13 +7,11 @@ Application service for negotiation strategy operations using Result pattern.
 
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.services.negotiation_service import NegotiationService
 from ....interactions.domain.value_objects.negotiation_party import NegotiationParty
 from .shared.errors import (
-    NotFoundError,
     NegotiationError,
     ValidationError,
 )

@@ -7,10 +7,10 @@ FastAPI endpoints for EmergentNarrativeEngine functionality including
 emergent narrative generation, causal graph access, and narrative coherence analysis.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+import structlog
 from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 

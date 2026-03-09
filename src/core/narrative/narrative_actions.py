@@ -7,11 +7,12 @@ to enable rich narrative interactions in the multi-agent simulator.
 """
 
 import logging
-import structlog
 import random
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List
+
+import structlog
 
 from ..types.shared_types import CharacterAction
 

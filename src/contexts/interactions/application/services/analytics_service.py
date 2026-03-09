@@ -6,8 +6,7 @@ Application service for interaction analytics using Result pattern.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Any, Dict, List
 
 from .....core.result import Err, Ok, Result
 from ....interactions.domain.aggregates.negotiation_session import NegotiationSession

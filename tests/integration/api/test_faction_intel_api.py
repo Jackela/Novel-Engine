@@ -6,10 +6,9 @@ including rate limiting, pagination, and status transitions.
 """
 
 import os
-import time
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 pytestmark = pytest.mark.integration
 
@@ -143,9 +142,6 @@ class TestFactionIntelAPIValidation:
     @pytest.mark.integration
     def test_select_terminal_state_intent_returns_409(self, client, monkeypatch):
         """Test that selecting an EXECUTED or REJECTED intent returns 409."""
-        from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repository import (
-            InMemoryFactionIntentRepository,
-        )
 
         faction_id = "test-faction-terminal-select"
 
@@ -176,12 +172,10 @@ class TestFactionIntelAPIValidation:
 
         # Workaround: Create a direct reference to the repository
         # by generating another request and inspecting the app
-        from fastapi.testclient import TestClient
         test_app = client.application if hasattr(client, 'application') else None
 
         # Alternative: Get repo via the router's dependency
         # Since we're in the same process, we can access the module-level state
-        from src.api.routers.faction_intel import _rate_limit_store
 
         # For this test, we'll directly test the endpoint logic by simulating
         # a rejected intent through a different flow

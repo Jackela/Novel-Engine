@@ -23,7 +23,6 @@ Performance Targets:
 import asyncio
 import json
 import logging
-import structlog
 import statistics
 import threading
 import time
@@ -34,6 +33,7 @@ from typing import Any, Dict, List, Tuple
 
 import aiohttp
 import psutil
+import structlog
 
 # Configure logging
 logging.basicConfig(

@@ -5,7 +5,7 @@ Main service implementation for world simulation.
 
 from collections import OrderedDict
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 from uuid import uuid4
 
 import structlog
@@ -23,14 +23,13 @@ from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
 from src.contexts.world.domain.errors import (
     IntentGenerationError,
     RepositoryError,
-    RollbackError,
     SaveFailedError,
     SimulationError,
     WorldNotFoundError,
 )
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.simulation_tick import SimulationTick
-from src.core.result import Err, Error, Ok, Result
+from src.core.result import Err, Ok, Result
 
 from ..faction_intent_generator import FactionIntentGenerator
 from .exceptions import InvalidDaysError, SnapshotFailedError

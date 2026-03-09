@@ -16,7 +16,6 @@ Features:
 
 import asyncio
 import json
-import structlog
 import os
 import time
 from abc import ABC, abstractmethod
@@ -25,6 +24,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

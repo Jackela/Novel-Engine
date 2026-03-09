@@ -23,7 +23,6 @@ load_dotenv(dotenv_path=env_path, override=False)
 import asyncio
 import json
 import logging
-import structlog
 import os
 import re
 import secrets
@@ -32,6 +31,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import structlog
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware

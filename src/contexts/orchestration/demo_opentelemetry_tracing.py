@@ -8,12 +8,11 @@ for the complete run_turn orchestration flow as required by M10 milestone.
 
 import asyncio
 import logging
-import structlog
 from decimal import Decimal
+from typing import Any
 from uuid import UUID
 
-from typing import Any
-
+import structlog
 from infrastructure.monitoring.tracing import (
     NovelEngineTracingConfig,
     initialize_tracing,

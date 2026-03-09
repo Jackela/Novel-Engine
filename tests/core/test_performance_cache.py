@@ -4,12 +4,10 @@ Test suite for Performance Cache module.
 Tests cache strategies, eviction policies, and memory management.
 """
 
-import asyncio
 import pytest
 
 pytestmark = pytest.mark.unit
 
-from unittest.mock import Mock, patch, AsyncMock
 
 from src.core.performance_cache import (
     CacheBackend,
@@ -17,8 +15,8 @@ from src.core.performance_cache import (
     CacheLevel,
     MemoryCache,
     PerformanceCache,
-    get_global_cache,
     close_global_cache,
+    get_global_cache,
 )
 
 

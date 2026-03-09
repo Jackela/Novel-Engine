@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import structlog
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from typing import Optional
 
+import structlog
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware

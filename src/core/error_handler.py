@@ -13,7 +13,6 @@ Result Pattern Migration:
 import asyncio
 import json
 import logging  # noqa: F401 - for type annotations
-import structlog
 import threading
 import traceback
 import uuid
@@ -23,7 +22,9 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-from .result import Error, Err, Ok, Result
+import structlog
+
+from .result import Err, Error, Ok, Result
 
 
 class ErrorSeverity(Enum):

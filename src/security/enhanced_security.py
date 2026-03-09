@@ -8,11 +8,11 @@ Provides additional security layers beyond basic headers.
 """
 
 import json
-import structlog
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
 
+import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response

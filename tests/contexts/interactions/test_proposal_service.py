@@ -6,10 +6,10 @@ This module contains comprehensive tests for proposal management
 including term validation, proposal lifecycle, and operations.
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import uuid4
+
+import pytest
 
 from src.contexts.interactions.domain.value_objects.proposal_terms import (
     ProposalPriority,
@@ -18,6 +18,7 @@ from src.contexts.interactions.domain.value_objects.proposal_terms import (
     TermCondition,
     TermType,
 )
+
 pytestmark = pytest.mark.unit
 
 

@@ -8,9 +8,9 @@ traits, and speaking style.
 
 from __future__ import annotations
 
-import structlog
 from typing import Optional
 
+import structlog
 from fastapi import APIRouter, Depends, Request
 
 from src.api.deps import get_optional_workspace_id

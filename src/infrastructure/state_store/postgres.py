@@ -4,7 +4,6 @@ PostgreSQL-based implementation of the StateStore interface.
 """
 
 import json
-import pickle
 from typing import Any, List, Optional
 
 import structlog

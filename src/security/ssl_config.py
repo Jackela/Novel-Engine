@@ -15,7 +15,6 @@ System保佑此SSL配置系统 (May the System bless this SSL configuration syst
 """
 
 import logging
-import structlog
 import os
 import ssl
 from dataclasses import dataclass
@@ -23,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+import structlog
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa

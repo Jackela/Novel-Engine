@@ -7,9 +7,10 @@ world state preparation, agent action handling, and turn history management.
 Extracted from DirectorAgent for better modularity and maintainability.
 """
 
-import structlog
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus

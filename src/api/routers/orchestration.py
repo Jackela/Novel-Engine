@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import structlog
 from typing import Optional
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from src.api.schemas import (

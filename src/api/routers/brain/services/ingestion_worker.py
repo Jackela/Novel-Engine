@@ -7,8 +7,9 @@ OPT-005: Async Ingestion Job API
 
 from __future__ import annotations
 
-import structlog
 from typing import TYPE_CHECKING
+
+import structlog
 
 if TYPE_CHECKING:
     from src.api.routers.brain.repositories.ingestion import IngestionJobStore

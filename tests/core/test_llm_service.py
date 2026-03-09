@@ -8,11 +8,9 @@ Coverage targets:
 - Fallback mechanisms
 """
 
-import asyncio
-import hashlib
 import os
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 import pytest_asyncio
@@ -28,9 +26,6 @@ from src.core.llm_service import (
     ResponseFormat,
     UnifiedLLMService,
     create_llm_service_for_testing,
-    generate_character_action,
-    generate_investigation_clue,
-    generate_narrative_content,
     get_llm_service,
 )
 

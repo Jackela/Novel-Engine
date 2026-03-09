@@ -9,11 +9,12 @@ and enterprise-grade resource management.
 
 import asyncio
 import logging
-import structlog
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Type
+
+import structlog
 
 from src.interactions.interaction_engine import InteractionEngine
 

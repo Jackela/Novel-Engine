@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import Any, Callable, TypeVar, cast
 
 from .data_models import ErrorInfo, StandardResponse
-from .result import Error, Err, Ok, Result
+from .result import Err, Error, Ok, Result
 
 T = TypeVar("T")
 

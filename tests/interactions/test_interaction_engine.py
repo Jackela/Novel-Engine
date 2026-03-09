@@ -9,13 +9,10 @@ Coverage targets:
 """
 
 import asyncio
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
 import pytest_asyncio
-from datetime import datetime
-from enum import Enum
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 pytestmark = pytest.mark.unit
 
@@ -27,11 +24,11 @@ try:
         create_performance_optimized_config,
     )
     from src.interactions.interaction_engine_system.core.types import (
+        InteractionContext,
         InteractionEngineConfig,
         InteractionOutcome,
-        InteractionContext,
-        InteractionType,
         InteractionPriority,
+        InteractionType,
     )
     REAL_IMPORTS_AVAILABLE = True
 except ImportError as e:

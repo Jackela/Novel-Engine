@@ -5,7 +5,6 @@ Shared types for emergent narrative system.
 Contains enums and dataclasses used across narrative modules.
 """
 
-import structlog
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -13,6 +12,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx  # type: ignore[import-untyped]
+import structlog
 
 logger = structlog.get_logger(__name__)
 

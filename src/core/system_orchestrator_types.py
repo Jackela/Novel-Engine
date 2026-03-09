@@ -12,54 +12,27 @@ Development Phase: System Integration (S001)
 Author: Novel Engine Development Team
 """
 
-import asyncio
-import json
-import structlog
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
+
+import structlog
 
 # Import data models
 from src.core.data_models import (
-    CharacterIdentity,
-    CharacterState,
-    DynamicContext,
-    EmotionalState,
-    ErrorInfo,
-    MemoryItem,
-    MemoryType,
     StandardResponse,
 )
-from src.core.narrative import EmergentNarrativeEngine
 
 # Import core narrative engines
-from src.core.subjective_reality import SubjectiveRealityEngine
 
 # Import database access - TYPE_CHECKING only to avoid circular dependencies
 # At runtime, database is injected via dependency injection
 if TYPE_CHECKING:
-    from src.database.context_db import ContextDatabase
+    pass
 
-from src.interactions.character_interaction_processor import (
-    CharacterInteractionProcessor,
-)
-from src.interactions.engine import (
-    InteractionContext,
-    InteractionEngine,
-    InteractionType,
-)
-from src.interactions.equipment import DynamicEquipmentSystem
 
 # Import all subsystems
-from src.memory.layered_memory import LayeredMemorySystem
-from src.memory.memory_query_engine import MemoryQueryEngine
-from src.templates.character import CharacterTemplateManager
-from src.templates.dynamic_template_engine import (
-    DynamicTemplateEngine,
-    TemplateContext,
-)
 
 
 # Define Protocol for database interface to enable dependency injection

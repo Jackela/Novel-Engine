@@ -10,7 +10,6 @@ Unit tests covering:
 - Error handling
 """
 
-from typing import Tuple
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,7 +18,6 @@ from src.contexts.world.application.services.time_service import TimeService
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-from src.core.result import Err, Ok
 
 pytestmark = pytest.mark.unit
 

@@ -36,10 +36,10 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def mock_registry():
     """Create a mock model registry."""
-    from src.core.result import Ok
     from src.contexts.knowledge.application.services.model_registry import (
         ModelLookupResult,
     )
+    from src.core.result import Ok
 
     registry = MagicMock(spec=ModelRegistry)
 
@@ -137,11 +137,11 @@ class TestTrackingContext:
 
     def test_elapsed_ms(self):
         """Test elapsed time calculation."""
+        import time
+
         from src.contexts.knowledge.application.services.token_tracker import (
             TrackingContext,
         )
-
-        import time
 
         ctx = TrackingContext(
             provider=LLMProvider.OPENAI,
@@ -515,6 +515,7 @@ class TestTokenUsageStats:
     def test_stats_creation(self):
         """Test creating usage stats."""
         from datetime import datetime, timezone
+
         from src.contexts.knowledge.domain.models.token_usage import TokenUsageStats
 
         now = datetime.now(timezone.utc)

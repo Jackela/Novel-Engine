@@ -2,7 +2,6 @@
 
 import pytest
 
-
 pytestmark = pytest.mark.unit
 
 from src.contexts.world.domain.events.geopolitics_events import (

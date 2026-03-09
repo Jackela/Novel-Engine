@@ -13,8 +13,6 @@ from typing import TYPE_CHECKING, Any
 import structlog
 
 from .base import (
-    MAX_COHERENCE_THRESHOLD,
-    MIN_COHERENCE_THRESHOLD,
     _PARAGRAPH_DELIM,
     _SENTENCE_END,
     _WORD_PATTERN,
@@ -22,8 +20,7 @@ from .base import (
 )
 
 if TYPE_CHECKING:
-    from ...application.ports.i_chunking_strategy import Chunk
-    from ...domain.models.chunking_strategy import ChunkingStrategy
+    pass
 
 logger = structlog.get_logger()
 

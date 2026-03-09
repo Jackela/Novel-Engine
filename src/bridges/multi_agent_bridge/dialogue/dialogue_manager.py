@@ -6,11 +6,12 @@ Manages agent-to-agent dialogues and conversation coordination.
 """
 
 import logging
-import structlog
 import uuid
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
+import structlog
 
 from ..core.types import (
     AgentDialogue,

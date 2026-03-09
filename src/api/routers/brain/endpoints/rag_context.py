@@ -8,8 +8,7 @@ BRAIN-036-03: Highlight used chunks based on relevance threshold
 from __future__ import annotations
 
 import structlog
-
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query, Request
 
 from src.api.routers.brain.dependencies import get_brain_settings_repository
 from src.api.routers.brain.repositories.brain_settings import BrainSettingsRepository

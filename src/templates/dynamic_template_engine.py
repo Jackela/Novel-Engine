@@ -17,7 +17,6 @@ System保佑动态模板 (May the System bless dynamic templates)
 
 import asyncio
 import json
-import structlog
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -25,12 +24,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+import structlog
+
 # Import enhanced Jinja2 for template processing
 try:
     import jinja2
     from jinja2 import FileSystemLoader, meta, select_autoescape
-    from jinja2.sandbox import SandboxedEnvironment
     from jinja2.exceptions import TemplateError, UndefinedError
+    from jinja2.sandbox import SandboxedEnvironment
 except ImportError:
     raise ImportError(
         "Jinja2 is required for template processing. Install with: pip install Jinja2"

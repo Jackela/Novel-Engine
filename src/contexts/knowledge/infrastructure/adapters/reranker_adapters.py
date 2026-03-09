@@ -563,7 +563,9 @@ class LocalReranker:
         self._load_attempted = True
 
         try:
-            from sentence_transformers import CrossEncoder  # type: ignore[import-not-found]
+            from sentence_transformers import (
+                CrossEncoder,  # type: ignore[import-not-found]
+            )
 
             logger.info(
                 "local_rerank_loading_model",

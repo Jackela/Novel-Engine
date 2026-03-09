@@ -13,10 +13,11 @@ This package provides:
 - Performance optimization and quality monitoring
 """
 
-from .types import (
-    CommunicationType,
-    DialogueState,
-    RequestPriority,
+from .bridge_core import EnhancedMultiAgentBridge
+from .factory import (
+    create_enhanced_bridge,
+    create_enhanced_multi_agent_bridge,
+    create_performance_optimized_config,
 )
 from .models import (
     AgentDialogue,
@@ -27,11 +28,10 @@ from .models import (
     LLMCoordinationConfig,
     PerformanceBudget,
 )
-from .bridge_core import EnhancedMultiAgentBridge
-from .factory import (
-    create_enhanced_bridge,
-    create_enhanced_multi_agent_bridge,
-    create_performance_optimized_config,
+from .types import (
+    CommunicationType,
+    DialogueState,
+    RequestPriority,
 )
 
 __all__ = [

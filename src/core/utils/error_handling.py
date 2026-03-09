@@ -6,8 +6,9 @@ Centralized error handling patterns for consistent error responses.
 """
 
 import functools
-import structlog
 from typing import Any, Callable, Optional
+
+import structlog
 
 from src.core.data_models import ErrorInfo, StandardResponse
 

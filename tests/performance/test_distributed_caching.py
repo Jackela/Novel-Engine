@@ -11,13 +11,13 @@ pytestmark = pytest.mark.unit
 from unittest.mock import Mock
 
 from src.performance.distributed_caching import (
-    CacheLevel,
-    CacheStrategy,
-    CacheMetrics,
     CacheEntry,
+    CacheLevel,
+    CacheMetrics,
+    CacheStrategy,
+    DistributedCache,
     MemoryCache,
     MockRedis,
-    DistributedCache,
 )
 
 

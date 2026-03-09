@@ -9,7 +9,6 @@ Wave 6.1 - Code Quality Analysis & Technical Debt Assessment
 """
 
 import ast
-import structlog
 import os
 import re
 from dataclasses import dataclass, field
@@ -20,6 +19,7 @@ from typing import Any, Dict, List, Optional
 
 import radon.complexity as radon_cc
 import radon.metrics as radon_metrics
+import structlog
 
 logger = structlog.get_logger(__name__)
 

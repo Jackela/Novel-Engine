@@ -11,14 +11,18 @@ Tests cover:
 - Edge cases
 """
 
-import json
 import tempfile
 import time
 from pathlib import Path
 
 import pytest
 
-from src.caching.semantic_cache import SemanticCache, SemanticCacheConfig, _cosine_similarity, _token_frequency
+from src.caching.semantic_cache import (
+    SemanticCache,
+    SemanticCacheConfig,
+    _cosine_similarity,
+    _token_frequency,
+)
 
 pytestmark = pytest.mark.unit
 
