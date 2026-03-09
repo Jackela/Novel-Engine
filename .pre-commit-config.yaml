@@ -1,10 +1,35 @@
 # Pre-commit hooks for Novel Engine
 # See https://pre-commit.com for more information
+#
+# INSTALLATION:
+#   pip install pre-commit
+#   pre-commit install
+#
+# USAGE:
+#   pre-commit run --all-files    # Run all hooks on all files
+#   pre-commit run ruff           # Run specific hook
+#   SKIP=pytest-smoke git commit  # Skip specific hook
+#
+# TROUBLESHOOTING:
+#   pre-commit clean              # Clean cached environments
+#   pre-commit uninstall          # Remove hooks
 
 repos:
-  # Test marker validation
+  # === 本地关键检查 (Local Critical Checks) ===
   - repo: local
     hooks:
+      # 1. 依赖一致性检查 - 确保pyproject.toml和requirements.txt同步
+      - id: check-requirements
+        name: Check requirements consistency
+        entry: python scripts/ci-check-requirements.py
+        language: system
+        pass_filenames: false
+        files: ^(requirements.*\.txt|pyproject\.toml|uv\.lock)$
+        description: |
+          Verifies that pyproject.toml and requirements.txt are consistent.
+          Run `make sync-requirements` to fix inconsistencies.
+
+      # 2. 测试标记验证 - 确保所有测试有正确的金字塔标记
       - id: validate-test-markers
         name: Validate test pyramid markers
         entry: python scripts/testing/validate-test-markers.py
@@ -15,10 +40,22 @@ repos:
         description: |
           Ensures all test functions have proper pyramid markers
           (@pytest.mark.unit, @pytest.mark.integration, or @pytest.mark.e2e).
-
           To bypass temporarily, include [skip-marker-check] in commit message.
 
-  # Frontend quality gates
+      # 3. pytest smoke测试 - 快速验证核心功能
+      - id: pytest-smoke
+        name: Pytest smoke tests
+        entry: python -m pytest tests/test_character_system_comprehensive.py tests/smoke/ -x -q --tb=line --maxfail=3
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+        description: |
+          Runs smoke tests to catch critical failures early.
+          These are quick tests (~30s) that validate core functionality.
+          Full test suite runs in CI.
+
+  # === 前端检查 (Frontend Quality Gates) ===
   - repo: local
     hooks:
       - id: frontend-lint
@@ -28,6 +65,7 @@ repos:
         files: ^frontend/src/.*\.(ts|tsx|js|jsx)$
         pass_filenames: false
         dir: frontend
+        description: ESLint check for frontend code
 
       - id: frontend-type-check
         name: Frontend Type Check
@@ -36,61 +74,112 @@ repos:
         files: ^frontend/src/.*\.(ts|tsx)$
         pass_filenames: false
         dir: frontend
+        description: TypeScript type checking
 
-  # Standard Python hooks
+  # === Python代码质量 - 与CI一致使用Ruff (Python Code Quality) ===
+  # 替代了原来的 black + isort + flake8
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        name: Ruff linter (replaces flake8)
+        args: [--fix, --exit-non-zero-on-fix, --output-format=github]
+        files: ^(src|tests)/.*\.py$
+        description: |
+          Fast Python linter (replaces flake8).
+          Configuration in pyproject.toml [tool.ruff].
+
+      - id: ruff-format
+        name: Ruff formatter (replaces black)
+        files: ^(src|tests)/.*\.py$
+        description: |
+          Fast Python formatter (replaces black).
+          Configuration in pyproject.toml [tool.ruff].
+
+  # === 类型检查 - 与CI一致使用mypy (Type Checking) ===
+  - repo: local
+    hooks:
+      - id: mypy
+        name: MyPy type checker
+        entry: mypy src/ --no-error-summary --show-column-numbers
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+        description: |
+          Static type checking for Python.
+          Configuration in pyproject.toml [tool.mypy].
+          Note: May be slow on first run.
+
+  # === 安全扫描 (Security Scanning) ===
+  - repo: local
+    hooks:
+      - id: bandit
+        name: Bandit security scan
+        entry: bandit -r src/ -ll -ii -q
+        language: system
+        pass_filenames: false
+        files: ^src/.*\.py$
+        description: |
+          Security-focused static analysis.
+          Catches common security issues.
+
+  # === 基础文件检查 (Basic File Checks) ===
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        description: Remove trailing whitespace
+
       - id: end-of-file-fixer
+        description: Ensure files end with a newline
+
       - id: check-yaml
-        args: [--unsafe]  # Allow custom YAML tags
+        args: [--unsafe]
+        description: Validate YAML syntax
+
       - id: check-json
+        description: Validate JSON syntax
+
       - id: check-added-large-files
         args: [--maxkb=1000]
+        description: Prevent committing large files (>1MB)
+
       - id: check-merge-conflict
+        description: Check for merge conflict markers
+
       - id: check-case-conflict
+        description: Check for case conflicts (macOS/Windows)
+
       - id: mixed-line-ending
         args: [--fix=lf]
+        description: Normalize line endings to LF
 
-  # Python code formatting
-  - repo: https://github.com/psf/black
-    rev: 24.1.1
-    hooks:
-      - id: black
-        language_version: python3.11
-        args: [--line-length=88]
+      - id: check-symlinks
+        description: Check for broken symlinks
 
-  # Import sorting
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-        args: [--profile=black, --line-length=88]
+      - id: destroyed-symlinks
+        description: Prevent destroying symlinks
 
-  # Linting
-  - repo: https://github.com/pycqa/flake8
-    rev: 7.0.0
-    hooks:
-      - id: flake8
-        args:
-          - --max-line-length=88
-          - --extend-ignore=E203,W503
-          - --exclude=.git,__pycache__,.venv,build,dist
+      - id: detect-private-key
+        description: Detect private keys in committed files
 
-  # Type checking
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        additional_dependencies: [types-all]
-        files: ^src/
-
-# Configuration
+# === 配置 (Configuration) ===
 default_language_version:
   python: python3.11
 
-# Skip specific hooks when needed
-# To skip marker validation: SKIP=validate-test-markers git commit -m "message"
-# Or include [skip-marker-check] in commit message
+default_stages: [pre-commit, pre-push]
+
+# === 跳过选项 (Skip Options) ===
+# 环境变量方式跳过: SKIP=pytest-smoke,ruff git commit -m "message"
+# 提交消息中跳过: [skip-marker-check] in commit message
+
+# === CI性能优化 (CI Performance) ===
+ci:
+  # 在CI中跳过的hooks (因为它们在独立的job中运行)
+  skip:
+    - pytest-smoke      # CI有完整的测试套件
+    - mypy              # CI有独立的type check job
+    - bandit            # CI有独立的安全扫描job
+    - frontend-lint     # CI有frontend-ci.yml
+    - frontend-type-check # CI有frontend-ci.yml

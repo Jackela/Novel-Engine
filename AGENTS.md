@@ -32,7 +32,102 @@ Before marking a task as complete, you MUST run:
 3. `pytest` (Backend Logic)
 4. `npm run test:e2e` (Frontend Layout & Integration)
 
-## IV-A. Local CI Verification (CI Environment Parity)
+## IV-A. Pre-commit Hooks (Catch Issues Before Commit)
+
+**CRITICAL: Pre-commit hooks must be installed to catch issues before they reach CI.**
+
+### Installation
+
+```bash
+# 1. Install pre-commit tool
+pip install pre-commit
+
+# 2. Install hooks into .git/hooks/ (one-time setup)
+pre-commit install
+
+# 3. Verify installation
+pre-commit --version  # Should show version
+ls -la .git/hooks/pre-commit  # Should NOT be a .sample file
+```
+
+### What Gets Checked
+
+The pre-commit hooks enforce the same checks as CI:
+
+| Hook | Purpose | CI Equivalent |
+|------|---------|---------------|
+| `check-requirements` | pyproject.toml ↔ requirements.txt consistency | Manual verification |
+| `validate-test-markers` | All tests have @pytest.mark.* | `validate-markers` job |
+| `pytest-smoke` | Quick smoke tests (~30s) | `smoke-tests` job |
+| `ruff` | Python linting | `ruff check` in CI |
+| `ruff-format` | Python formatting | `ruff format` check |
+| `mypy` | Type checking | `mypy` job |
+| `bandit` | Security scanning | `bandit` job |
+| `frontend-lint` | ESLint | `frontend-ci.yml` |
+| `frontend-type-check` | TypeScript checks | `frontend-ci.yml` |
+
+### Usage
+
+```bash
+# Run all hooks on all files (first time setup)
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run ruff
+pre-commit run pytest-smoke
+
+# Run on staged files only (fast)
+pre-commit run
+
+# Skip specific hook (emergency only)
+SKIP=pytest-smoke git commit -m "WIP: temp commit"
+
+# Clean cached environments
+pre-commit clean
+
+# Uninstall hooks
+pre-commit uninstall
+```
+
+### Troubleshooting
+
+**Hook not running on commit?**
+```bash
+# Check if installed
+ls .git/hooks/pre-commit
+# If missing or is .sample file, reinstall:
+pre-commit install
+```
+
+**Hook failing but you need to commit?**
+```bash
+# Skip specific hook (use sparingly!)
+SKIP=ruff git commit -m "your message"
+
+# Skip all hooks (emergency only - will likely fail CI)
+git commit -m "your message" --no-verify
+```
+
+**Performance issues?**
+- First run is slow (downloads environments)
+- Subsequent runs are fast (cached)
+- Smoke tests are skipped in CI (separate job)
+
+### Why Pre-commit Matters
+
+Without pre-commit hooks:
+1. ⚠️ Code passes locally but fails in CI
+2. ⚠️ Wasted CI minutes on trivial issues
+3. ⚠️ Delayed feedback loop (push → wait → fail → fix → push)
+4. ⚠️ "Why did local allow commit?" frustration
+
+With pre-commit hooks:
+1. ✅ Issues caught before commit
+2. ✅ Fast local feedback (seconds, not minutes)
+3. ✅ CI only runs clean code
+4. ✅ Consistent with CI checks
+
+## IV-B. Local CI Verification (CI Environment Parity)
 
 To catch CI failures before pushing, use the local CI verification tools:
 
