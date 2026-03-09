@@ -66,12 +66,12 @@ setup: install
 install:
 	@echo "Installing dependencies..."
 	python -m pip install --upgrade pip
-	pip install -r requirements.txt -r requirements-test.txt
+	pip install -r requirements.txt -r requirements-dev.txt
 	@echo "✓ Dependencies installed"
 
 upgrade:
 	@echo "Upgrading dependencies..."
-	pip install --upgrade -r requirements.txt -r requirements-test.txt
+	pip install --upgrade -r requirements.txt -r requirements-dev.txt
 	pip freeze > requirements-frozen.txt
 	@echo "✓ Dependencies upgraded (see requirements-frozen.txt)"
 
