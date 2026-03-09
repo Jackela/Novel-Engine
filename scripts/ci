@@ -177,8 +177,13 @@ run_changed() {
             ;;
         both)
             print_info "Running both backend and frontend checks..."
-            run_backend || true
-            run_frontend || true
+            backend_failed=0
+            frontend_failed=0
+            run_backend || backend_failed=1
+            run_frontend || frontend_failed=1
+            if [ $backend_failed -eq 1 ] || [ $frontend_failed -eq 1 ]; then
+                exit 1
+            fi
             ;;
     esac
 }
@@ -349,7 +354,10 @@ case "$MODE" in
             run_fast
         fi
         ;;
-    full|ci)
+    ci)
+        run_ci
+        ;;
+    full)
         run_full
         ;;
     changed)
