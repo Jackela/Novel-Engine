@@ -2,7 +2,7 @@ name: Python Tests
 
 on:
   push:
-    branches: [ main, develop, audit/vibe-coding-compliance ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
 
@@ -79,11 +79,11 @@ jobs:
             const lineRate = parseFloat(lineRateMatch[1]) * 100;
             const branchRate = branchRateMatch ? parseFloat(branchRateMatch[1]) * 100 : 0;
             
-            const threshold = 70;
+            const threshold = parseFloat(process.env.MIN_COVERAGE || '70');
             const status = lineRate >= threshold ? '✅' : '⚠️';
             const message = lineRate >= threshold 
-              ? 'Coverage meets minimum threshold (70%)' 
-              : 'Coverage below minimum threshold (70%)';
+              ? `Coverage meets minimum threshold (${threshold}%)` 
+              : `Coverage below minimum threshold (${threshold}%)`;
             
             const body = `## 📊 Coverage Report
             
@@ -136,14 +136,13 @@ jobs:
       
       - name: Run Ruff linter
         run: ruff check src/ tests/ --output-format=github
-        continue-on-error: true
       
       - name: Run MyPy type checker
         run: mypy src/ --no-error-summary --show-column-numbers
-        continue-on-error: true
       
       - name: Run Bandit security scan
-        run: bandit -r src/ -ll -ii -f json -o bandit-report.json || true
+        run: bandit -r src/ -ll -ii -f json -o bandit-report.json
+        continue-on-error: true
       
       - name: Upload Bandit report
         if: always()
