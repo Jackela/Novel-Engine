@@ -1889,7 +1889,7 @@ Original system prompt"""
         with patch.object(
             gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'
         ):
-            with patch("src.contexts.world.infrastructure.generators.llm_world_generator.log") as mock_log:
+            with patch("src.contexts.world.infrastructure.generators.llm_world_generator.logger") as mock_log:
                 character = CharacterData(name="Alice", traits=["brave"])
 
                 await gen.generate_dialogue(
