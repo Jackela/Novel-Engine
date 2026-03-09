@@ -350,5 +350,5 @@ class PostgreSQLStateStore(StateStore):
         """Close PostgreSQL connection pool."""
         if self.pool:
             await self.pool.close()
-            self._connected = False
-            logger.info("postgresql_connection_pool_closed")
+        self._connected = False
+        logger.info("postgresql_connection_pool_closed")

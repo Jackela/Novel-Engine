@@ -14,6 +14,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.api.error_handlers import ServiceUnavailableException, setup_error_handlers
 from src.api.routers.world import (
     _safe_era,
     _safe_genre,
@@ -30,6 +31,7 @@ def app() -> FastAPI:
     """Create a test FastAPI app."""
     app = FastAPI()
     app.include_router(router, prefix="/api")
+    setup_error_handlers(app)
     return app
 
 
@@ -51,18 +53,20 @@ class TestWorldGeneration:
         mock_generator = MagicMock()
         mock_result = MagicMock()
 
-        # Setup world setting
-        mock_result.world_setting = MagicMock(
-            id="world_001",
-            name="Test World",
-            description="A test world",
-            genre=Genre.FANTASY,
-            era=Era.MEDIEVAL,
-            tone=ToneType.HEROIC,
-            themes=["adventure", "magic"],
-            magic_level=5,
-            technology_level=3,
-        )
+        # Setup world setting - use a simple class instead of MagicMock
+        # to avoid MagicMock's reserved 'name' attribute issue
+        class MockWorldSetting:
+            id = "world_001"
+            name = "Test World"
+            description = "A test world"
+            genre = Genre.FANTASY
+            era = Era.MEDIEVAL
+            tone = ToneType.HEROIC
+            themes = ["adventure", "magic"]
+            magic_level = 5
+            technology_level = 3
+
+        mock_result.world_setting = MockWorldSetting()
 
         # Setup factions
         faction = MagicMock()
@@ -134,17 +138,19 @@ class TestWorldGeneration:
         mock_generator = MagicMock()
         mock_result = MagicMock()
 
-        mock_result.world_setting = MagicMock(
-            id="world_002",
-            name="Default World",
-            description="Default description",
-            genre=Genre.FANTASY,
-            era=Era.MEDIEVAL,
-            tone=ToneType.HEROIC,
-            themes=["adventure", "heroism"],
-            magic_level=5,
-            technology_level=3,
-        )
+        # Use a simple class to avoid MagicMock's reserved 'name' attribute
+        class MockWorldSetting:
+            id = "world_002"
+            name = "Default World"
+            description = "Default description"
+            genre = Genre.FANTASY
+            era = Era.MEDIEVAL
+            tone = ToneType.HEROIC
+            themes = ["adventure", "heroism"]
+            magic_level = 5
+            technology_level = 3
+
+        mock_result.world_setting = MockWorldSetting()
         mock_result.factions = []
         mock_result.locations = []
         mock_result.events = []
@@ -169,7 +175,11 @@ class TestWorldGeneration:
         mock_generator = MagicMock()
         mock_result = MagicMock()
 
-        mock_result.world_setting = MagicMock(name="Generation Failed")
+        # Use a simple class to avoid MagicMock's reserved 'name' attribute
+        class MockWorldSetting:
+            name = "Generation Failed"
+
+        mock_result.world_setting = MockWorldSetting()
         mock_result.generation_summary = "Error: Generation failed"
         mock_result.factions = []
         mock_result.locations = []
@@ -211,12 +221,17 @@ class TestSafeEnumConversion:
     def test_safe_genre_valid(self) -> None:
         """Test valid genre conversion."""
         assert _safe_genre("fantasy") == Genre.FANTASY
-        assert _safe_genre("sci-fi") == Genre.SCI_FI
-        assert _safe_genre("sci_fi") == Genre.SCI_FI
+        assert _safe_genre("science_fiction") == Genre.SCIENCE_FICTION
+        assert _safe_genre("science-fiction") == Genre.SCIENCE_FICTION
+        assert _safe_genre("horror") == Genre.HORROR
+        assert _safe_genre("mystery") == Genre.MYSTERY
 
-    def test_safe_genre_with_spaces(self) -> None:
-        """Test genre conversion with spaces."""
-        assert _safe_genre("sci fi") == Genre.SCI_FI
+    def test_safe_genre_invalid_fallback(self) -> None:
+        """Test genre conversion falls back to fantasy for unsupported inputs."""
+        # "sci-fi" normalizes to "sci_fi" which is not a valid enum value
+        assert _safe_genre("sci-fi") == Genre.FANTASY
+        assert _safe_genre("sci_fi") == Genre.FANTASY
+        assert _safe_genre("sci fi") == Genre.FANTASY
 
     def test_safe_genre_invalid(self) -> None:
         """Test invalid genre falls back to fantasy."""
@@ -231,7 +246,10 @@ class TestSafeEnumConversion:
 
     def test_safe_era_with_hyphens(self) -> None:
         """Test era conversion with hyphens."""
-        assert _safe_era("industrial-age") == Era.INDUSTRIAL_AGE
+        # "industrial" is the valid enum value
+        assert _safe_era("industrial") == Era.INDUSTRIAL
+        # "industrial-age" normalizes to "industrial_age" which is not valid
+        assert _safe_era("industrial-age") == Era.MEDIEVAL
 
     def test_safe_era_invalid(self) -> None:
         """Test invalid era falls back to medieval."""
@@ -241,7 +259,10 @@ class TestSafeEnumConversion:
         """Test valid tone conversion."""
         assert _safe_tone("heroic") == ToneType.HEROIC
         assert _safe_tone("dark") == ToneType.DARK
-        assert _safe_tone("mysterious") == ToneType.MYSTERIOUS
+        assert _safe_tone("gritty") == ToneType.GRITTY
+        assert _safe_tone("epic") == ToneType.EPIC
+        assert _safe_tone("light") == ToneType.LIGHT
+        assert _safe_tone("hopeful") == ToneType.HOPEFUL
 
     def test_safe_tone_invalid(self) -> None:
         """Test invalid tone falls back to heroic."""

@@ -4,6 +4,8 @@ Tests cover CRUD operations, query operations, and world event
 management for the in-memory event repository.
 """
 
+import _thread
+
 import pytest
 
 from src.contexts.world.domain.entities.history_event import EventType, HistoryEvent
@@ -29,10 +31,10 @@ def sample_event():
         name="The Great Battle",
         description="A significant battle took place",
         event_type=EventType.BATTLE,
-        year=1000,
+        date_description="Year 1000",
         location_ids=["loc-001"],
         faction_ids=["faction-001"],
-        character_ids=["char-001"],
+        key_figures=["char-001"],
         narrative_importance=8,
         consequences=["Kingdom fell", "New ruler crowned"],
     )
@@ -46,10 +48,10 @@ def second_event():
         name="The Treaty Signing",
         description="Peace was established",
         event_type=EventType.POLITICAL,
-        year=1001,
+        date_description="Year 1001",
         location_ids=["loc-002"],
         faction_ids=["faction-001", "faction-002"],
-        character_ids=["char-002"],
+        key_figures=["char-002"],
         narrative_importance=5,
         consequences=["Trade opened", "Alliance formed"],
     )
@@ -97,10 +99,10 @@ class TestEventRepositorySave:
             name="The REALLY Great Battle",
             description="An even more significant battle",
             event_type=EventType.BATTLE,
-            year=1000,
+            date_description="Year 1000",
             location_ids=["loc-001"],
             faction_ids=["faction-001"],
-            character_ids=["char-001"],
+            key_figures=["char-001"],
             narrative_importance=10,
             consequences=["Kingdom fell"],
         )
@@ -187,7 +189,7 @@ class TestEventRepositoryGetByWorldId:
                 name=f"Event {i}",
                 description="Test event",
                 event_type=EventType.BATTLE,
-                year=1000 + i,
+                date_description=f"Year {1000 + i}",
                 narrative_importance=i,
             )
             await event_repository.save(event)
@@ -204,7 +206,7 @@ class TestEventRepositoryGetByWorldId:
             name="Low Importance",
             description="Not important",
             event_type=EventType.BATTLE,
-            year=1000,
+            date_description="Year 1000",
             narrative_importance=2,
         )
         high_importance = HistoryEvent(
@@ -212,7 +214,7 @@ class TestEventRepositoryGetByWorldId:
             name="High Importance",
             description="Very important",
             event_type=EventType.BATTLE,
-            year=1001,
+            date_description="Year 1001",
             narrative_importance=9,
         )
 
@@ -261,6 +263,7 @@ class TestEventRepositoryGetByLocationId:
             name="Low",
             description="Low importance",
             event_type=EventType.BATTLE,
+            date_description="Year 1000",
             location_ids=["loc-001"],
             narrative_importance=1,
         )
@@ -269,6 +272,7 @@ class TestEventRepositoryGetByLocationId:
             name="High",
             description="High importance",
             event_type=EventType.BATTLE,
+            date_description="Year 1001",
             location_ids=["loc-001"],
             narrative_importance=10,
         )
@@ -364,6 +368,7 @@ class TestEventRepositoryDeriveWorldId:
             name="Test Event",
             description="Test",
             event_type=EventType.BATTLE,
+            date_description="Year 1000",
             location_ids=["loc-001", "loc-002"],
         )
 
@@ -378,6 +383,7 @@ class TestEventRepositoryDeriveWorldId:
             name="Test Event",
             description="Test",
             event_type=EventType.BATTLE,
+            date_description="Year 1000",
             location_ids=[],
         )
 
@@ -391,6 +397,4 @@ class TestEventRepositoryThreadSafety:
 
     def test_repository_uses_rlock(self, event_repository):
         """repository uses RLock for thread safety."""
-        import threading
-
-        assert isinstance(event_repository._lock, threading.RLock)
+        assert isinstance(event_repository._lock, _thread.RLock)

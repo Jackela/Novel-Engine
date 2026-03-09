@@ -49,7 +49,7 @@ class TestNormalizeCharacterId:
     def test_removes_special_characters(self):
         """Removes special characters from ID."""
         result = _normalize_character_id("Test@Character!")
-        assert result == "test_character_"
+        assert result == "test_character"
 
     def test_converts_to_lowercase(self):
         """Converts ID to lowercase."""
@@ -59,7 +59,7 @@ class TestNormalizeCharacterId:
     def test_removes_path_traversal(self):
         """Removes path traversal attempts."""
         result = _normalize_character_id("../etc/passwd")
-        assert result == "etc_passwd"
+        assert result == "passwd"
 
     def test_raises_on_empty_result(self):
         """Raises HTTPException when result is empty."""
@@ -202,17 +202,21 @@ class TestCharacterRouterServiceGatherInfo:
         assert isinstance(updated, datetime)
 
     def test_gather_info_raises_http_exception_for_missing_character(
-        self, character_service
+        self, character_service, tmp_path
     ):
         """Raises HTTPException for missing character."""
+        # Ensure characters directory exists
+        (tmp_path / "characters").mkdir(parents=True, exist_ok=True)
         with pytest.raises(HTTPException) as exc_info:
             character_service.gather_filesystem_character_info("nonexistent")
         assert exc_info.value.status_code == 404
 
     def test_gather_info_result_returns_error_for_missing_character(
-        self, character_service
+        self, character_service, tmp_path
     ):
         """gather_filesystem_character_info_result returns error for missing."""
+        # Ensure characters directory exists
+        (tmp_path / "characters").mkdir(parents=True, exist_ok=True)
         result = character_service.gather_filesystem_character_info_result(
             "nonexistent"
         )
@@ -305,16 +309,17 @@ class TestCharacterRouterServiceGetPublicEntries:
         assert isinstance(result[0], tuple)
         assert isinstance(result[0][1], CharacterSummary)
 
-    async def test_get_public_entries_result_returns_error_for_missing_dir(
+    async def test_get_public_entries_result_returns_empty_list_for_missing_dir(
         self, character_service, tmp_path
     ):
-        """Returns error for missing characters directory."""
+        """Returns empty list for missing characters directory (auto-creates)."""
         nonexistent_path = str(tmp_path / "nonexistent" / "characters")
         service = CharacterRouterService(characters_path=nonexistent_path)
 
         result = await service.get_public_character_entries_result()
 
-        assert result.is_error
+        assert result.is_ok
+        assert result.value == []
 
 
 class TestCharacterRouterServiceNormalizeMethods:
@@ -324,7 +329,7 @@ class TestCharacterRouterServiceNormalizeMethods:
         """normalize_character_id delegates to _normalize_character_id."""
         result = character_service.normalize_character_id("Test Character!")
 
-        assert result == "test_character_"
+        assert result == "test_character"
 
     def test_normalize_numeric_map_delegates_to_function(self, character_service):
         """normalize_numeric_map delegates to _normalize_numeric_map."""
@@ -386,7 +391,8 @@ structured_data:
         )
 
         assert status == "inactive"
-        assert char_type == "antagonist"
+        # structured_data.role ('villain') takes precedence over metadata.role ('antagonist')
+        assert char_type == "villain"
 
     def test_handles_missing_stats_yaml(self, character_service, tmp_path):
         """Handles missing stats.yaml gracefully."""

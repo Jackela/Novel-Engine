@@ -82,10 +82,17 @@ class RedisStateStore(StateStore):
             if raw_value is None:
                 return None
 
-            # Try to deserialize as JSON first, then pickle
+            # Try to deserialize as JSON first (if decodable as UTF-8), then pickle
             try:
-                return json.loads(raw_value)
-            except (json.JSONDecodeError, TypeError):
+                # Attempt to decode as UTF-8 and parse as JSON
+                str_value = (
+                    raw_value.decode("utf-8")
+                    if isinstance(raw_value, bytes)
+                    else raw_value
+                )
+                return json.loads(str_value)
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                # JSON parsing failed, try pickle (for binary data)
                 try:
                     # nosec B301 - pickle used for internal Redis cache data only
                     # Data is stored by trusted application code, not external users
@@ -93,7 +100,7 @@ class RedisStateStore(StateStore):
                 except Exception:
                     # Return as string if deserialization fails
                     return (
-                        raw_value.decode("utf-8")
+                        raw_value.decode("utf-8", errors="replace")
                         if isinstance(raw_value, bytes)
                         else raw_value
                     )

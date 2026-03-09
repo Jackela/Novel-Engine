@@ -72,6 +72,7 @@ def redis_manager(redis_config, mock_redis):
     manager = RedisManager(config=redis_config)
     manager.connection_pool.redis = mock_redis
     manager.connection_pool._initialized = True
+    manager.connection_pool.initialize = AsyncMock()
     manager._initialized = True
     return manager
 
@@ -215,9 +216,13 @@ class TestRedisConnectionPoolBasicOperations:
 
     @pytest.mark.asyncio
     async def test_set_raises_when_not_initialized(self, redis_config):
-        """set raises when pool not initialized."""
+        """set raises when pool not initialized and initialization fails."""
         pool = RedisConnectionPool(config=redis_config)
 
+        # Mock initialize to prevent actual connection but mark as initialized
+        pool.initialize = AsyncMock()
+
+        # Should raise AssertionError because self.redis is None
         with pytest.raises(AssertionError):
             await pool.set("key", "value")
 

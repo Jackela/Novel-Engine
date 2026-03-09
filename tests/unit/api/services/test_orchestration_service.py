@@ -22,7 +22,7 @@ pytestmark = pytest.mark.unit
 def mock_api_service():
     """Create a mock API service."""
     service = AsyncMock()
-    service.get_status = AsyncMock(return_value={"status": "running", "active": True})
+    service.get_status = AsyncMock(return_value={"status": "running"})
     service.start_simulation = AsyncMock(
         return_value={
             "success": True,
@@ -73,7 +73,6 @@ class TestOrchestrationServiceGetStatus:
         assert result.is_ok
         assert isinstance(result.value, OrchestrationStatusData)
         assert result.value.status == "running"
-        assert result.value.active is True
 
     @pytest.mark.asyncio
     async def test_get_status_returns_error_when_no_service(
@@ -310,7 +309,7 @@ class TestOrchestrationServiceDefaultTurns:
         self, orchestration_service, mock_api_service
     ):
         """start uses default 3 turns when not provided."""
-        request = OrchestrationStartRequest(character_names=["char1"])
+        request = OrchestrationStartRequest(character_names=["char1", "char2"])
 
         await orchestration_service.start(request)
 

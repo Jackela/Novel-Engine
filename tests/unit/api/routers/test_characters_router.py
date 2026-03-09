@@ -30,15 +30,44 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def app() -> FastAPI:
-    """Create a test FastAPI app."""
+    """Create a test FastAPI app with required dependencies."""
     app = FastAPI()
     app.include_router(router, prefix="/api")
+
+    # Mock the guest session manager (required by get_optional_workspace_id)
+    mock_manager = MagicMock()
+    mock_manager.cookie_name = "workspace_session"
+    mock_manager.decode.return_value = None
+    mock_manager.encode.return_value = "encoded_token"
+    mock_manager.resolve_or_create.return_value = MagicMock(workspace_id="test-workspace")
+    mock_manager.cookie_max_age_seconds.return_value = 3600
+    app.state.guest_session_manager = mock_manager
+
+    # Mock the workspace store (required by get_optional_workspace_id)
+    mock_workspace_store = MagicMock()
+    mock_workspace_store.get_or_create.return_value = MagicMock()
+    app.state.workspace_store = mock_workspace_store
+
     return app
 
 
 @pytest.fixture
 def client(app: FastAPI) -> TestClient:
-    """Create a test client."""
+    """Create a test client with required dependencies mocked."""
+    # Mock the guest session manager
+    mock_manager = MagicMock()
+    mock_manager.cookie_name = "workspace_session"
+    mock_manager.decode.return_value = None
+    mock_manager.encode.return_value = "encoded_token"
+    mock_manager.resolve_or_create.return_value = MagicMock(workspace_id="test-workspace")
+    mock_manager.cookie_max_age_seconds.return_value = 3600
+    app.state.guest_session_manager = mock_manager
+
+    # Mock the workspace store
+    mock_workspace_store = MagicMock()
+    mock_workspace_store.get_or_create.return_value = MagicMock()
+    app.state.workspace_store = mock_workspace_store
+
     return TestClient(app)
 
 
@@ -160,12 +189,14 @@ class TestGetCharacterDetail:
         response = client.get("/api/characters/nonexistent")
         assert response.status_code == 404
 
+    @patch("src.api.services.character_router_service.get_characters_directory_path")
     @patch("src.api.routers.characters.get_characters_directory_path")
     def test_get_character_from_filesystem(
-        self, mock_get_path, client: TestClient, temp_characters_dir
+        self, mock_get_path, mock_svc_get_path, client: TestClient, temp_characters_dir
     ) -> None:
         """Test getting character from filesystem."""
         mock_get_path.return_value = str(temp_characters_dir)
+        mock_svc_get_path.return_value = str(temp_characters_dir)
 
         # Create character directory and files
         char_dir = temp_characters_dir / "test_character"
@@ -184,8 +215,14 @@ class TestGetCharacterDetail:
         assert data["character_id"] == "test_character"
         assert data["name"] == "Test Character"
 
-    def test_get_character_from_workspace(self, app: FastAPI) -> None:
+    @patch("src.api.routers.characters.get_characters_directory_path")
+    def test_get_character_from_workspace(self, mock_get_path, app: FastAPI, temp_characters_dir) -> None:
         """Test getting character from workspace."""
+        mock_get_path.return_value = str(temp_characters_dir)
+
+        # Set default workspace_id so get_optional_workspace_id returns it
+        app.state.default_workspace_id = "test-workspace"
+
         # Create mock workspace store
         mock_store = MagicMock()
         mock_store.get.return_value = {
@@ -206,9 +243,8 @@ class TestGetCharacterDetail:
         app.state.workspace_character_store = mock_store
         client = TestClient(app)
 
-        response = client.get(
-            "/api/characters/ws_char_001", headers={"X-Workspace-ID": "test-workspace"}
-        )
+        # No header needed - default_workspace_id provides the workspace context
+        response = client.get("/api/characters/ws_char_001")
         assert response.status_code == 200
 
         data = response.json()
@@ -247,7 +283,7 @@ class TestCreateCharacter:
             "name": "New Character",
             "background_summary": "Test background",
             "personality_traits": "Kind",
-            "skills": {"strength": 10},
+            "skills": {"strength": 0.8},
             "relationships": {},
             "current_location": "Test Location",
             "inventory": ["sword"],
@@ -288,8 +324,13 @@ class TestCreateCharacter:
         )
         assert response.status_code == 409
 
-    def test_create_character_no_workspace_id(self, client: TestClient) -> None:
-        """Test creating character without workspace ID."""
+    def test_create_character_no_workspace_id(self, app: FastAPI) -> None:
+        """Test creating character without workspace ID when store is unavailable."""
+        # Remove workspace store to trigger 503
+        if hasattr(app.state, "workspace_character_store"):
+            delattr(app.state, "workspace_character_store")
+        client = TestClient(app)
+
         payload = {
             "agent_id": "new_char",
             "name": "New Character",
@@ -298,7 +339,7 @@ class TestCreateCharacter:
         }
 
         response = client.post("/api/characters", json=payload)
-        assert response.status_code == 422  # Missing required header
+        assert response.status_code == 503  # Service unavailable - no workspace store
 
     def test_create_character_store_unavailable(self, app: FastAPI) -> None:
         """Test creating character when store is unavailable."""

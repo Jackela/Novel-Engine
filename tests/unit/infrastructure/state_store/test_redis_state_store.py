@@ -187,7 +187,7 @@ class TestRedisStateStoreSet:
         mock_redis.setex.assert_called_once()
         call_args = mock_redis.setex.call_args[0]
         assert call_args[0] == "test:character:char-001"
-        assert b'"name": "Test"' in call_args[2]
+        assert '"name": "Test"' in call_args[2]
 
     @pytest.mark.asyncio
     async def test_set_stores_string_directly(
