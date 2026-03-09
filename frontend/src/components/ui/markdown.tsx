@@ -111,6 +111,11 @@ export function Markdown({ content, className }: MarkdownProps) {
         '[&_hr]:my-2 [&_hr]:border-border',
         className
       )}
+      // SECURITY: dangerouslySetInnerHTML is safe here because:
+      // 1. MarkdownIt is configured with html: false (disables raw HTML)
+      // 2. All content is escaped by markdown-it before rendering
+      // 3. Code blocks are syntax-highlighted but not executed
+      // nosec: XSS protection via markdown-it sanitization
       dangerouslySetInnerHTML={{ __html: renderedHtml }}
     />
   );

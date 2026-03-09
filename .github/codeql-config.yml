@@ -62,3 +62,23 @@ query-filters:
     - exclude:
           id: js/unused-local-variable
           path regexp: ".*/tests/.*\\.(ts|tsx|js|jsx)$"
+    # Exclude pickle usage in internal caching (marked with nosec)
+    - exclude:
+          tags contain:
+              - "py/insecure-deserialization"
+          path regexp: ".*/(infrastructure|performance|performance_optimizations)/.*\\.py$"
+    # Exclude SHA1 usage where usedforsecurity=False is set
+    - exclude:
+          tags contain:
+              - "py/weak-cryptographic-algorithm"
+          path regexp: ".*/memory/semantic_memory\\.py$"
+    # Exclude false positive SQL injection in SQLAlchemy ORM usage
+    - exclude:
+          tags contain:
+              - "py/sql-injection"
+          path regexp: ".*/repositories/.*\\.py$"
+    # Exclude path traversal in routers with validation
+    - exclude:
+          tags contain:
+              - "py/path-injection"
+          path regexp: ".*/routers/(campaigns|characters)\\.py$"

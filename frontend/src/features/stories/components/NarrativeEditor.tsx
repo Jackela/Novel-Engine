@@ -25,6 +25,15 @@ interface NarrativeEditorProps {
 }
 
 /**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
  * Default world context for demo/testing.
  * In production, this would come from the Weaver or story state.
  */
@@ -167,8 +176,10 @@ export function NarrativeEditor({
               <div className="prose prose-sm dark:prose-invert max-w-none py-4">
                 <div
                   className="whitespace-pre-wrap leading-relaxed"
+                  // SECURITY: Safe because content is escaped before HTML replacement
+                  // nosec: XSS protection via escapeHtml function
                   dangerouslySetInnerHTML={{
-                    __html: content
+                    __html: escapeHtml(content)
                       .replace(
                         /^## (.+)$/gm,
                         '<h2 class="text-lg font-semibold mt-6 mb-2">$1</h2>'

@@ -17,10 +17,14 @@ import os
 import re
 from datetime import datetime
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import structlog
 import yaml
+
+# Safe filename pattern: alphanumeric, hyphens, underscores, dots only
+SAFE_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
 
 logger = structlog.get_logger(__name__)
 
@@ -152,9 +156,16 @@ class CharacterInterpreter:
         md_files: list[Any] = []
         yaml_files: list[Any] = []
         try:
+            base_path = Path(self.character_directory_path).resolve()
             for filename in os.listdir(self.character_directory_path):
+                # SECURITY: Validate filename to prevent path traversal
+                if not SAFE_FILENAME_PATTERN.match(filename):
+                    logger.warning("invalid_filename_skipped", filename=filename)
+                    continue
+
                 file_lower = filename.lower()
-                full_path = os.path.join(self.character_directory_path, filename)
+                # Use Path.joinpath for safer path construction
+                full_path = str(base_path / filename)
 
                 if file_lower.endswith(".md"):
                     md_files.append(full_path)

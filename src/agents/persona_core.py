@@ -10,12 +10,16 @@ Part of Wave 6.2 PersonaAgent Decomposition Strategy.
 """
 
 import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import structlog
+
+# Safe filename pattern: alphanumeric, hyphens, underscores, dots only
+SAFE_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
 
 # Core systems integration
 from src.core.error_handler import (
@@ -189,13 +193,22 @@ class PersonaCore:
         """
         Read a character file from the character directory.
 
+        SECURITY: Filename is validated to prevent path traversal attacks.
+        Only filenames matching the safe pattern are allowed.
+
         Args:
             filename: Name of file to read (e.g., 'character_sheet.md')
 
         Returns:
             str: File contents, or empty string if file not found
         """
-        file_path = os.path.join(self.character_directory_path, filename)
+        # SECURITY: Validate filename to prevent path traversal
+        if not SAFE_FILENAME_PATTERN.match(filename):
+            logger.warning("invalid_filename_rejected", filename=filename)
+            return ""
+        
+        base_path = Path(self.character_directory_path).resolve()
+        file_path = str(base_path / filename)
         return self._read_cached_file(file_path)
 
     def get_status(self) -> Dict[str, Any]:

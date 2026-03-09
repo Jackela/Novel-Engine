@@ -1134,6 +1134,9 @@ function HighlightedTextarea({
         style={{
           color: 'transparent',
         }}
+        // SECURITY: Safe because getHighlightedHTML escapes HTML before highlighting
+        // All <, >, & characters are converted to entities before any replacement
+        // nosec: XSS protection via HTML escaping in getHighlightedHTML
         dangerouslySetInnerHTML={{ __html: getHighlightedHTML(value) }}
       />
       {/* Actual textarea */}

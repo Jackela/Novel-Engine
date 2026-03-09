@@ -17,15 +17,20 @@ import asyncio
 import json
 import logging
 import os
+import re
 import statistics
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import psutil
 import structlog
+
+# Safe filename pattern for metrics files (alphanumeric, underscores, dots, hyphens)
+SAFE_METRICS_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
 
 logger = structlog.get_logger(__name__)
 
@@ -568,8 +573,15 @@ class PerformanceMonitor:
                     export_data["metrics"][metric_name] = recent_metrics
 
             # Write to file
+            # SECURITY: Filename is auto-generated from timestamp, not user input
             filename = f"metrics_{int(current_time)}.json"
-            filepath = os.path.join(self.config.export_path, filename)
+            # Validate auto-generated filename as defense-in-depth
+            if not SAFE_METRICS_FILENAME_PATTERN.match(filename):
+                logger.error("invalid_metrics_filename_generated", filename=filename)
+                return
+            
+            export_path = Path(self.config.export_path).resolve()
+            filepath = export_path / filename
 
             with open(filepath, "w") as f:
                 json.dump(export_data, f, indent=2)
@@ -585,7 +597,10 @@ class PerformanceMonitor:
 
             if len(export_files) > 100:
                 for old_file in export_files[:-100]:
-                    os.remove(os.path.join(self.config.export_path, old_file))
+                    old_file_path = export_path / old_file
+                    # SECURITY: Validate filename before deletion
+                    if SAFE_METRICS_FILENAME_PATTERN.match(old_file):
+                        os.remove(old_file_path)
 
         except Exception as e:
             logger.error("metrics_export_error", error=str(e), error_type=type(e).__name__)
