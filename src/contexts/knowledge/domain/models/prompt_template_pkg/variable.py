@@ -72,28 +72,38 @@ class VariableDefinition:
 
     def coerce_value(self, value: Any) -> Any:
         """Coerce a value to match this variable's type.
-        
+
         Args:
             value: The value to coerce
-            
+
         Returns:
             The coerced value
-            
+
         Raises:
             ValueError: If the value cannot be coerced
         """
         if value is None:
             return self.default_value
-            
+
         coercers = {
             VariableType.STRING: lambda v: str(v),
-            VariableType.INTEGER: lambda v: int(v) if isinstance(v, (int, float, str)) and not isinstance(v, bool) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to int")),
-            VariableType.FLOAT: lambda v: float(v) if isinstance(v, (int, float, str)) and not isinstance(v, bool) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to float")),
-            VariableType.BOOLEAN: lambda v: bool(v) if not isinstance(v, str) else v.lower() in ('true', '1', 'yes', 'on'),
-            VariableType.LIST: lambda v: list(v) if isinstance(v, (list, tuple)) else [v],
-            VariableType.DICT: lambda v: dict(v) if isinstance(v, dict) else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to dict")),
+            VariableType.INTEGER: lambda v: int(v)
+            if isinstance(v, (int, float, str)) and not isinstance(v, bool)
+            else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to int")),
+            VariableType.FLOAT: lambda v: float(v)
+            if isinstance(v, (int, float, str)) and not isinstance(v, bool)
+            else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to float")),
+            VariableType.BOOLEAN: lambda v: bool(v)
+            if not isinstance(v, str)
+            else v.lower() in ("true", "1", "yes", "on"),
+            VariableType.LIST: lambda v: list(v)
+            if isinstance(v, (list, tuple))
+            else [v],
+            VariableType.DICT: lambda v: dict(v)
+            if isinstance(v, dict)
+            else (_ for _ in ()).throw(ValueError(f"Cannot coerce {v!r} to dict")),
         }
-        
+
         coercer = coercers.get(self.type)
         if coercer:
             result = coercer(value)
@@ -101,14 +111,13 @@ class VariableDefinition:
             self._validate_value(result)
             return result
         return value
-    
+
     def _validate_value(self, value: Any) -> None:
         """Validate a value against this variable's type."""
         type_validators = {
             VariableType.STRING: lambda v: isinstance(v, str),
-            VariableType.INTEGER: lambda v: isinstance(v, int) and not isinstance(
-                v, bool
-            ),
+            VariableType.INTEGER: lambda v: isinstance(v, int)
+            and not isinstance(v, bool),
             VariableType.FLOAT: lambda v: isinstance(v, (int, float))
             and not isinstance(v, bool),
             VariableType.BOOLEAN: lambda v: isinstance(v, bool),
@@ -118,9 +127,7 @@ class VariableDefinition:
 
         validator = type_validators.get(self.type)
         if validator and not validator(value):
-            raise ValueError(
-                f"Value {value!r} does not match type {self.type.value}"
-            )
+            raise ValueError(f"Value {value!r} does not match type {self.type.value}")
 
     def validate(self, value: Any) -> tuple[bool, Optional[str]]:
         """

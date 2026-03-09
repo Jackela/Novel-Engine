@@ -228,15 +228,19 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
 
         # Final SELECT query - uses parameterized conditions with params dict
         # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
-        query_string = """
+        query_string = (
+            """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
-            WHERE """ + where_clause + """
+            WHERE """
+            + where_clause
+            + """
             ORDER BY updated_at DESC
         """
+        )
         select_sql = text(query_string)
 
         result = await self._session.execute(select_sql, params)
@@ -278,7 +282,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         result = await self._session.execute(delete_sql, {"entry_id": UUID(entry_id)})
 
         # Check if entry was actually deleted
-        if getattr(result, 'rowcount', 0) == 0:
+        if getattr(result, "rowcount", 0) == 0:
             raise ValueError(f"Knowledge entry not found: {entry_id}")
 
     async def retrieve_for_agent_semantic(
@@ -324,9 +328,7 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         from sqlalchemy import text
 
         # Generate embedding for search query
-        query_embedding = await self._embedding_generator.embed(
-            semantic_query
-        )
+        query_embedding = await self._embedding_generator.embed(semantic_query)
 
         # Build dynamic WHERE clause for filters
         where_conditions: list[Any] = []
@@ -363,17 +365,21 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         # Cosine distance: 0 = identical, 2 = opposite
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
         # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
-        query_string = """
+        query_string = (
+            """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by,
                 (1 - (embedding <=> CAST(:query_embedding AS vector(1536)) / 2)) AS similarity_score
             FROM knowledge_entries
-            WHERE """ + where_clause + """
+            WHERE """
+            + where_clause
+            + """
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
         """
+        )
         semantic_sql = text(query_string)
 
         result = await self._session.execute(semantic_sql, params)

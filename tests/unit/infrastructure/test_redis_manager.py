@@ -296,7 +296,10 @@ class TestRedisConnectionPoolHashOperations:
     @pytest.mark.asyncio
     async def test_hgetall_retrieves_all_fields(self, connection_pool, mock_redis):
         """hgetall retrieves all hash fields."""
-        mock_redis.hgetall.return_value = {b"field1": b'"value1"', b"field2": b'"value2"'}
+        mock_redis.hgetall.return_value = {
+            b"field1": b'"value1"',
+            b"field2": b'"value2"',
+        }
 
         result = await connection_pool.hgetall("hash-key")
 
@@ -404,7 +407,9 @@ class TestRedisConnectionPoolNovelEngineOperations:
 
         assert result is True
         mock_redis.lpush.assert_called_once()
-        mock_redis.ltrim.assert_called_once_with("novel_engine:narrative_stream:narr-001", 0, 999)
+        mock_redis.ltrim.assert_called_once_with(
+            "novel_engine:narrative_stream:narr-001", 0, 999
+        )
 
 
 class TestRedisConnectionPoolSerialization:

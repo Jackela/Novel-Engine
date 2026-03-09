@@ -30,7 +30,6 @@ from src.contexts.ai.domain.value_objects.common import (
 pytestmark = pytest.mark.unit
 
 
-
 # ============================================================================
 # Unit Tests (20 tests)
 # ============================================================================
@@ -77,14 +76,14 @@ class TestLLMRequest:
         """Test creating basic LLM request."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
             model_id=model,
             prompt="Test prompt",
         )
-        
+
         assert request.request_type == LLMRequestType.COMPLETION
         assert request.prompt == "Test prompt"
         assert request.model_id == model
@@ -93,7 +92,7 @@ class TestLLMRequest:
         """Test creating request with all parameters."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.CHAT,
@@ -112,7 +111,7 @@ class TestLLMRequest:
             stream=True,
             metadata={"user": "test"},
         )
-        
+
         assert request.system_prompt == "System prompt"
         assert request.max_tokens == 100
         assert request.temperature == 0.5
@@ -122,14 +121,14 @@ class TestLLMRequest:
         """Test request default values."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
             model_id=model,
             prompt="Test",
         )
-        
+
         assert request.temperature == 0.7
         assert request.top_p == 1.0
         assert request.timeout_seconds == 30
@@ -141,19 +140,19 @@ class TestLLMRequest:
         """Test create_chat_request factory method."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         messages = [
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi!"},
         ]
-        
+
         request = LLMRequest.create_chat_request(
             model_id=model,
             messages=messages,
             system_prompt="Be helpful",
             temperature=0.8,
         )
-        
+
         assert request.request_type == LLMRequestType.CHAT
         assert "user: Hello" in request.prompt
         assert request.system_prompt == "Be helpful"
@@ -163,14 +162,14 @@ class TestLLMRequest:
         """Test create_completion_request factory method."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest.create_completion_request(
             model_id=model,
             prompt="Complete this",
             max_tokens=50,
             temperature=0.9,
         )
-        
+
         assert request.request_type == LLMRequestType.COMPLETION
         assert request.prompt == "Complete this"
         assert request.max_tokens == 50
@@ -179,7 +178,7 @@ class TestLLMRequest:
         """Test token estimation."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -187,7 +186,7 @@ class TestLLMRequest:
             prompt="This is a test prompt",
             system_prompt="System instruction",
         )
-        
+
         tokens = request.estimate_input_tokens()
         assert tokens > 0  # Should be roughly (22 + 18) / 4 = 10
 
@@ -195,7 +194,7 @@ class TestLLMRequest:
         """Test getting effective max tokens."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -203,21 +202,21 @@ class TestLLMRequest:
             prompt="Test",
             max_tokens=100,
         )
-        
+
         assert request.get_effective_max_tokens() == 100
 
     def test_is_compatible_with_model(self):
         """Test model compatibility check."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
             model_id=model,
             prompt="Test",
         )
-        
+
         assert request.is_compatible_with_model() is True
 
 
@@ -230,7 +229,7 @@ class TestLLMResponse:
         request_id = uuid4()
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         response = LLMResponse.create_success(
             request_id=request_id,
             content="Generated content",
@@ -238,7 +237,7 @@ class TestLLMResponse:
             input_tokens=10,
             output_tokens=20,
         )
-        
+
         assert response.status == LLMResponseStatus.SUCCESS
         assert response.content == "Generated content"
         assert response.request_id == request_id
@@ -249,13 +248,13 @@ class TestLLMResponse:
     def test_create_error_response(self):
         """Test creating error response."""
         request_id = uuid4()
-        
+
         response = LLMResponse.create_error(
             request_id=request_id,
             status=LLMResponseStatus.RATE_LIMITED,
             error_details="Rate limit exceeded",
         )
-        
+
         assert response.status == LLMResponseStatus.RATE_LIMITED
         assert response.error_details == "Rate limit exceeded"
         assert not response.is_successful()
@@ -265,7 +264,7 @@ class TestLLMResponse:
         request_id = uuid4()
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         success_response = LLMResponse.create_success(
             request_id=request_id,
             content="Content",
@@ -278,14 +277,14 @@ class TestLLMResponse:
     def test_response_default_usage_stats(self):
         """Test default usage stats."""
         request_id = uuid4()
-        
+
         response = LLMResponse(
             request_id=request_id,
             response_id=uuid4(),
             status=LLMResponseStatus.FAILED,
             error_details="Error",
         )
-        
+
         assert response.get_input_tokens() == 0
         assert response.get_output_tokens() == 0
         assert response.get_total_tokens() == 0
@@ -329,7 +328,7 @@ class TestRequestResponseIntegration:
         """Test full request to response flow."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         # Create request
         request = LLMRequest(
             request_id=uuid4(),
@@ -338,7 +337,7 @@ class TestRequestResponseIntegration:
             prompt="Test prompt",
             max_tokens=100,
         )
-        
+
         # Create response referencing same request
         response = LLMResponse.create_success(
             request_id=request.request_id,
@@ -347,7 +346,7 @@ class TestRequestResponseIntegration:
             input_tokens=request.estimate_input_tokens(),
             output_tokens=50,
         )
-        
+
         assert response.request_id == request.request_id
         assert response.is_successful()
 
@@ -355,12 +354,12 @@ class TestRequestResponseIntegration:
         """Test chat request to response flow."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest.create_chat_request(
             model_id=model,
             messages=[{"role": "user", "content": "Hello"}],
         )
-        
+
         response = LLMResponse.create_success(
             request_id=request.request_id,
             content="Hello! How can I help?",
@@ -368,7 +367,7 @@ class TestRequestResponseIntegration:
             input_tokens=10,
             output_tokens=15,
         )
-        
+
         assert response.status == LLMResponseStatus.SUCCESS
 
     def test_token_budget_integration(self):
@@ -376,7 +375,7 @@ class TestRequestResponseIntegration:
         budget = TokenBudget.create_daily_budget("test_budget", 1000)
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -384,8 +383,10 @@ class TestRequestResponseIntegration:
             prompt="Test",
             max_tokens=100,
         )
-        
-        estimated_tokens = request.estimate_input_tokens() + request.get_effective_max_tokens()
+
+        estimated_tokens = (
+            request.estimate_input_tokens() + request.get_effective_max_tokens()
+        )
         assert budget.can_reserve_tokens(estimated_tokens)
 
 
@@ -397,7 +398,7 @@ class TestModelCapabilityIntegration:
         """Test capability compatibility."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         assert model.supports_capability(ModelCapability.TEXT_GENERATION)
         assert model.supports_capability(ModelCapability.CONVERSATION)
         assert model.supports_capability(ModelCapability.CODE_GENERATION)
@@ -406,14 +407,14 @@ class TestModelCapabilityIntegration:
         """Test request capability matching with model."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         chat_request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.CHAT,
             model_id=model,
             prompt="Test",
         )
-        
+
         assert chat_request.is_compatible_with_model()
 
 
@@ -430,7 +431,7 @@ class TestLLMRequestBoundaryConditions:
         """Test temperature at minimum boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -444,7 +445,7 @@ class TestLLMRequestBoundaryConditions:
         """Test temperature at maximum boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -458,7 +459,7 @@ class TestLLMRequestBoundaryConditions:
         """Test top_p at boundary values."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -472,7 +473,7 @@ class TestLLMRequestBoundaryConditions:
         """Test max_tokens at boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -486,7 +487,7 @@ class TestLLMRequestBoundaryConditions:
         """Test timeout at minimum boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -500,7 +501,7 @@ class TestLLMRequestBoundaryConditions:
         """Test empty stop sequences."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -514,7 +515,7 @@ class TestLLMRequestBoundaryConditions:
         """Test penalty at negative boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,
@@ -530,7 +531,7 @@ class TestLLMRequestBoundaryConditions:
         """Test penalty at positive boundary."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         request = LLMRequest(
             request_id=uuid4(),
             request_type=LLMRequestType.COMPLETION,

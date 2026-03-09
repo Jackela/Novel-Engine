@@ -150,7 +150,7 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
     logger.info(
         "gemini_api_call_successful",
         tokens_used=response.tokens_used,
-        cost_estimate=response.cost_estimate
+        cost_estimate=response.cost_estimate,
     )
     return response.content
 
@@ -426,7 +426,9 @@ class PersonaAgent(_PersonaAgentImpl):
     ) -> ThreatLevel:
         return self._assess_threat_from_description(description or "")
 
-    def _assess_available_resources(self, overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _assess_available_resources(
+        self, overrides: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         resources: Dict[str, Any] = {
             "energy": 75,
             "supplies": 60,
@@ -550,7 +552,7 @@ class PersonaAgent(_PersonaAgentImpl):
                 logger.error(
                     "gemini_api_request_failed_in_production",
                     error=str(exc),
-                    exc_info=True
+                    exc_info=True,
                 )
                 return "[LLM-Fallback] Gemini service unavailable."
 
@@ -754,8 +756,8 @@ class PersonaAgent(_PersonaAgentImpl):
         return self.character_interpreter._extract_knowledge_domains()
 
     def _initialize_subjective_worldview(self) -> None:
-        if hasattr(super(), '_initialize_subjective_worldview'):
-            getattr(super(), '_initialize_subjective_worldview')()  # type: ignore[misc]
+        if hasattr(super(), "_initialize_subjective_worldview"):
+            getattr(super(), "_initialize_subjective_worldview")()  # type: ignore[misc]
 
 
 __all__ = [

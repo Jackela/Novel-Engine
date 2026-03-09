@@ -56,7 +56,9 @@ class DialogueManager:
         """Create a new dialogue between two agents."""
         from .types import AgentDialogue, DialogueState
 
-        dialogue_id = f"dialogue_{initiator_id}_{target_id}_{datetime.now().strftime('%H%M%S')}"
+        dialogue_id = (
+            f"dialogue_{initiator_id}_{target_id}_{datetime.now().strftime('%H%M%S')}"
+        )
 
         dialogue = AgentDialogue(
             dialogue_id=dialogue_id,
@@ -120,9 +122,7 @@ class DialogueManager:
                     "context": dialogue.context,
                 },
                 priority=priority,
-                timeout_seconds=min(
-                    remaining_time - 0.5, dialogue.max_exchanges * 0.5
-                ),
+                timeout_seconds=min(remaining_time - 0.5, dialogue.max_exchanges * 0.5),
             )
 
             if llm_result.get("success"):
@@ -205,6 +205,7 @@ class DialogueManager:
 
         # Add dialogue type specific guidance
         from .types import CommunicationType
+
         if dialogue.communication_type == CommunicationType.NEGOTIATION:
             prompt_parts.append("Focus on conflict resolution and compromise.")
         elif dialogue.communication_type == CommunicationType.COLLABORATION:
@@ -239,17 +240,31 @@ class DialogueManager:
 
         # Simple sentiment analysis
         positive_indicators = [
-            "agree", "understand", "help", "support", "thank", "appreciate"
+            "agree",
+            "understand",
+            "help",
+            "support",
+            "thank",
+            "appreciate",
         ]
         negative_indicators = [
-            "disagree", "refuse", "angry", "disappointed", "conflict", "argue"
+            "disagree",
+            "refuse",
+            "angry",
+            "disappointed",
+            "conflict",
+            "argue",
         ]
 
         positive_score = sum(
-            1 for word in positive_indicators if word.lower() in dialogue_content.lower()
+            1
+            for word in positive_indicators
+            if word.lower() in dialogue_content.lower()
         )
         negative_score = sum(
-            1 for word in negative_indicators if word.lower() in dialogue_content.lower()
+            1
+            for word in negative_indicators
+            if word.lower() in dialogue_content.lower()
         )
 
         net_sentiment = (positive_score - negative_score) / max(
@@ -258,6 +273,7 @@ class DialogueManager:
 
         # Calculate relationship impact
         from .types import CommunicationType
+
         base_impact = 0.1
         if dialogue.communication_type == CommunicationType.COLLABORATION:
             base_impact = 0.2
@@ -271,7 +287,9 @@ class DialogueManager:
         for i, agent in enumerate(dialogue.participants):
             for j, other_agent in enumerate(dialogue.participants):
                 if i != j:
-                    outcome["relationship_impact"][f"{agent}_{other_agent}"] = relationship_change
+                    outcome["relationship_impact"][f"{agent}_{other_agent}"] = (
+                        relationship_change
+                    )
 
         return outcome
 
@@ -385,6 +403,7 @@ class DialogueManager:
 
         for dialogue in list(self.active_dialogues.values()):
             from .types import DialogueState
+
             if dialogue.state in [DialogueState.CONCLUDED, DialogueState.FAILED]:
                 del self.active_dialogues[dialogue.dialogue_id]
                 cleaned += 1

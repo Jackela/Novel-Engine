@@ -123,7 +123,9 @@ class SemanticMemory:
             (r"(\w+(?:\s+\w+)*) can (.+)", "can"),
         ]
 
-        logger.info("semantic_memory_initialized", agent_id=agent_id, max_facts=max_facts)
+        logger.info(
+            "semantic_memory_initialized", agent_id=agent_id, max_facts=max_facts
+        )
 
     async def extract_and_store_knowledge(self, memory: MemoryItem) -> StandardResponse:
         """
@@ -155,7 +157,7 @@ class SemanticMemory:
                 "knowledge_extracted",
                 facts_extracted=stored_count,
                 memory_id=memory.memory_id,
-                entities_found=len(entities)
+                entities_found=len(entities),
             )
 
             return StandardResponse(
@@ -164,7 +166,12 @@ class SemanticMemory:
             )
 
         except Exception as e:
-            logger.error("knowledge_extraction_failed", error=str(e), error_type=type(e).__name__, exc_info=True)
+            logger.error(
+                "knowledge_extraction_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="KNOWLEDGE_EXTRACTION_FAILED", message=str(e)),
@@ -211,14 +218,24 @@ class SemanticMemory:
 
             fact_statements = [fact.to_natural_language() for fact in matching_facts]
 
-            logger.info("facts_retrieved_by_subject", subject=subject, fact_count=len(matching_facts))
+            logger.info(
+                "facts_retrieved_by_subject",
+                subject=subject,
+                fact_count=len(matching_facts),
+            )
 
             return StandardResponse(
                 success=True, data={"subject": subject, "facts": fact_statements}
             )
 
         except Exception as e:
-            logger.error("fact_retrieval_by_subject_failed", subject=subject, error=str(e), error_type=type(e).__name__, exc_info=True)
+            logger.error(
+                "fact_retrieval_by_subject_failed",
+                subject=subject,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="SUBJECT_FACT_RETRIEVAL_FAILED", message=str(e)),
@@ -244,14 +261,24 @@ class SemanticMemory:
             limited_facts = matching_facts[:limit]
             fact_statements = [fact.to_natural_language() for fact in limited_facts]
 
-            logger.info("facts_retrieved_by_predicate", predicate=predicate, fact_count=len(limited_facts))
+            logger.info(
+                "facts_retrieved_by_predicate",
+                predicate=predicate,
+                fact_count=len(limited_facts),
+            )
 
             return StandardResponse(
                 success=True, data={"predicate": predicate, "facts": fact_statements}
             )
 
         except Exception as e:
-            logger.error("fact_retrieval_by_predicate_failed", predicate=predicate, error=str(e), error_type=type(e).__name__, exc_info=True)
+            logger.error(
+                "fact_retrieval_by_predicate_failed",
+                predicate=predicate,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(code="PREDICATE_FACT_RETRIEVAL_FAILED", message=str(e)),
@@ -294,7 +321,13 @@ class SemanticMemory:
             return StandardResponse(success=True, data=knowledge)
 
         except Exception as e:
-            logger.error("concept_knowledge_retrieval_failed", concept_name=concept_name, error=str(e), error_type=type(e).__name__, exc_info=True)
+            logger.error(
+                "concept_knowledge_retrieval_failed",
+                concept_name=concept_name,
+                error=str(e),
+                error_type=type(e).__name__,
+                exc_info=True,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -395,22 +428,28 @@ async def test_semantic_memory():
     logger.info(
         "knowledge_extraction_test_result",
         success=result.success,
-        facts_extracted=result.data.get('facts_extracted')
+        facts_extracted=result.data.get("facts_extracted"),
     )
 
-    facts_result = await semantic_memory.query_facts_by_subject("The sky")  # Subject includes "The"
+    facts_result = await semantic_memory.query_facts_by_subject(
+        "The sky"
+    )  # Subject includes "The"
     logger.info(
         "subject_query_test_result",
         success=facts_result.success,
-        facts=facts_result.data.get('facts')
+        facts=facts_result.data.get("facts"),
     )
     # Note: regex is greedy and captures "The sky is blue. The AI can learn." as one fact
     assert any("The sky is" in fact for fact in facts_result.data.get("facts", []))
 
-    concept_result = await semantic_memory.get_concept_knowledge("The sky")  # Concept includes "The"
+    concept_result = await semantic_memory.get_concept_knowledge(
+        "The sky"
+    )  # Concept includes "The"
     logger.info("concept_query_test_result", success=concept_result.success)
     # Note: regex is greedy and captures "The sky is blue. The AI can learn." as one fact
-    assert any("The sky is" in fact for fact in concept_result.data.get("associated_facts", []))
+    assert any(
+        "The sky is" in fact for fact in concept_result.data.get("associated_facts", [])
+    )
 
     stats = semantic_memory.get_memory_statistics()
     logger.info("semantic_memory_statistics", stats=stats)

@@ -16,6 +16,7 @@ from src.contexts.knowledge.domain.models.prompt_usage import (
 
 pytestmark = pytest.mark.unit
 
+
 def _utcnow() -> datetime:
     """Get current UTC timestamp."""
     return datetime.now(timezone.utc)
@@ -119,6 +120,7 @@ class TestPromptUsage:
         # create() calculates total_tokens automatically, so we test
         # the direct constructor instead
         from uuid import uuid4
+
         with pytest.raises(ValueError, match="total_tokens.*must equal"):
             PromptUsage(
                 id=str(uuid4()),

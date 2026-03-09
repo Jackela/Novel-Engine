@@ -324,7 +324,6 @@ class TestHybridConfig:
     def test_weights_warning_when_not_summing_to_one(self, caplog):
         """Warning logged when weights don't sum to 1.0."""
 
-
         # This should trigger a warning
         config = HybridConfig(vector_weight=0.8, bm25_weight=0.4)
 

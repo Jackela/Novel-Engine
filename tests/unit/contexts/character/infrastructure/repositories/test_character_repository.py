@@ -126,6 +126,7 @@ def sample_character(sample_character_id):
         SkillCategory,
         SkillGroup,
     )
+
     combat_skill = Skill(
         name="sword",
         category=SkillCategory.COMBAT,
@@ -192,19 +193,39 @@ class TestCharacterRepositoryGetById:
             education="Military",
         )
         mock_orm.stats = Mock(
-            strength=15, dexterity=12, constitution=14,
-            intelligence=10, wisdom=11, charisma=13,
-            max_health=100, current_health=100,
-            max_mana=50, current_mana=50,
-            max_stamina=80, current_stamina=80,
-            armor_class=15, speed=30,
-            base_attack_bonus=5, initiative_modifier=2,
-            damage_reduction=0, spell_resistance=0,
-            critical_hit_chance=0.05, critical_damage_multiplier=2.0,
-            experience_points=0, skill_points=0,
+            strength=15,
+            dexterity=12,
+            constitution=14,
+            intelligence=10,
+            wisdom=11,
+            charisma=13,
+            max_health=100,
+            current_health=100,
+            max_mana=50,
+            current_mana=50,
+            max_stamina=80,
+            current_stamina=80,
+            armor_class=15,
+            speed=30,
+            base_attack_bonus=5,
+            initiative_modifier=2,
+            damage_reduction=0,
+            spell_resistance=0,
+            critical_hit_chance=0.05,
+            critical_damage_multiplier=2.0,
+            experience_points=0,
+            skill_points=0,
         )
         mock_orm.skills = Mock(
-            skill_groups={"combat": {"sword": {"proficiency_level": 2, "modifier": 2, "description": None}}},
+            skill_groups={
+                "combat": {
+                    "sword": {
+                        "proficiency_level": 2,
+                        "modifier": 2,
+                        "description": None,
+                    }
+                }
+            },
             languages=["Common"],
             specializations={"sword_mastery": 2},
         )
@@ -439,7 +460,9 @@ class TestCharacterRepositoryFindByName:
         mock_session.query.return_value = mock_query
 
         with patch.object(
-            character_repository, '_map_orm_to_domain', return_value=Mock(spec=Character)
+            character_repository,
+            "_map_orm_to_domain",
+            return_value=Mock(spec=Character),
         ):
             result = await character_repository.find_by_name("Test")
 
@@ -485,7 +508,10 @@ class TestCharacterRepositoryBulkOperations:
         mock_query.count.return_value = 2
         mock_session.query.return_value = mock_query
 
-        char_ids = [CharacterID("12345678-1234-1234-1234-123456789001"), CharacterID("12345678-1234-1234-1234-123456789002")]
+        char_ids = [
+            CharacterID("12345678-1234-1234-1234-123456789001"),
+            CharacterID("12345678-1234-1234-1234-123456789002"),
+        ]
         result = await character_repository.delete_multiple(char_ids)
 
         assert result == 2
@@ -495,9 +521,7 @@ class TestCharacterRepositoryBulkOperations:
 class TestCharacterRepositoryNotSupportedOperations:
     """Tests for operations that are not supported."""
 
-    async def test_find_by_smart_tag_raises_not_supported(
-        self, character_repository
-    ):
+    async def test_find_by_smart_tag_raises_not_supported(self, character_repository):
         """find_by_smart_tag raises NotSupportedException."""
         from src.contexts.character.domain.repositories.character_repository import (
             NotSupportedException,
@@ -506,9 +530,7 @@ class TestCharacterRepositoryNotSupportedOperations:
         with pytest.raises(NotSupportedException):
             await character_repository.find_by_smart_tag("category", "tag")
 
-    async def test_find_by_smart_tags_raises_not_supported(
-        self, character_repository
-    ):
+    async def test_find_by_smart_tags_raises_not_supported(self, character_repository):
         """find_by_smart_tags raises NotSupportedException."""
         from src.contexts.character.domain.repositories.character_repository import (
             NotSupportedException,
@@ -517,9 +539,7 @@ class TestCharacterRepositoryNotSupportedOperations:
         with pytest.raises(NotSupportedException):
             await character_repository.find_by_smart_tags({"category": ["tag"]})
 
-    async def test_find_by_metadata_raises_not_supported(
-        self, character_repository
-    ):
+    async def test_find_by_metadata_raises_not_supported(self, character_repository):
         """find_by_metadata raises NotSupportedException."""
         from src.contexts.character.domain.repositories.character_repository import (
             NotSupportedException,

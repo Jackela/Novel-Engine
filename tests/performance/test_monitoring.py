@@ -55,7 +55,7 @@ class TestPerformanceMetric:
             metric_type=MetricType.GAUGE,
             tags={"host": "server1"},
         )
-        
+
         assert metric.name == "cpu_usage"
         assert metric.value == 75.5
         assert metric.metric_type == MetricType.GAUGE
@@ -69,9 +69,9 @@ class TestPerformanceMetric:
             metric_type=MetricType.GAUGE,
             tags={"host": "server1"},
         )
-        
+
         d = metric.to_dict()
-        
+
         assert d["name"] == "cpu_usage"
         assert d["value"] == 75.5
         assert d["type"] == "gauge"
@@ -91,7 +91,7 @@ class TestPerformanceAlert:
             actual_value=95.0,
             timestamp=1234567890.0,
         )
-        
+
         assert alert.alert_id == "cpu_high"
         assert alert.severity == AlertSeverity.CRITICAL
         assert alert.resolved is False
@@ -103,7 +103,7 @@ class TestMonitoringConfig:
     def test_default_config(self):
         """Test default monitoring configuration."""
         config = MonitoringConfig()
-        
+
         assert config.collection_interval == 1.0
         assert config.retention_period == 3600
         assert config.enable_system_metrics is True
@@ -112,7 +112,7 @@ class TestMonitoringConfig:
     def test_default_thresholds(self):
         """Test default alert thresholds."""
         config = MonitoringConfig()
-        
+
         assert "cpu_usage_percent" in config.alert_thresholds
         assert "memory_usage_percent" in config.alert_thresholds
 
@@ -128,21 +128,21 @@ class TestSystemResourceMonitor:
     def test_get_cpu_metrics(self, monitor):
         """Test getting CPU metrics."""
         metrics = monitor.get_cpu_metrics()
-        
+
         assert "cpu_usage_percent" in metrics
         assert "cpu_count" in metrics
 
     def test_get_memory_metrics(self, monitor):
         """Test getting memory metrics."""
         metrics = monitor.get_memory_metrics()
-        
+
         assert "memory_total_mb" in metrics
         assert "memory_usage_percent" in metrics
 
     def test_get_disk_metrics(self, monitor):
         """Test getting disk metrics."""
         metrics = monitor.get_disk_metrics()
-        
+
         assert "disk_total_gb" in metrics
         assert "disk_usage_percent" in metrics
 
@@ -172,7 +172,7 @@ class TestPerformanceMonitor:
             value=100.0,
             metric_type=MetricType.GAUGE,
         )
-        
+
         assert "test_metric" in monitor.metrics
         assert len(monitor.metrics["test_metric"]) == 1
 
@@ -184,7 +184,7 @@ class TestPerformanceMonitor:
             metric_type=MetricType.GAUGE,
             tags={"host": "server1"},
         )
-        
+
         metric = monitor.metrics["test_metric"][0]
         assert metric.tags == {"host": "server1"}
 
@@ -195,7 +195,7 @@ class TestPerformanceMonitor:
             duration_ms=50.0,
             status_code=200,
         )
-        
+
         assert "/api/test" in monitor.endpoint_metrics
         assert monitor.endpoint_metrics["/api/test"]["count"] == 1
 
@@ -207,7 +207,7 @@ class TestPerformanceMonitor:
             status_code=500,
             error="Internal Server Error",
         )
-        
+
         assert monitor.endpoint_metrics["/api/test"]["errors"] == 1
 
     def test_record_database_query(self, monitor):
@@ -217,7 +217,7 @@ class TestPerformanceMonitor:
             duration_ms=10.0,
             table="users",
         )
-        
+
         assert "database_query_time_ms" in monitor.metrics
 
     def test_record_cache_operation_hit(self, monitor):
@@ -227,13 +227,13 @@ class TestPerformanceMonitor:
             hit=True,
             duration_ms=1.0,
         )
-        
+
         assert "cache_hit_count" in monitor.metrics
 
     def test_record_concurrent_users(self, monitor):
         """Test recording concurrent users."""
         monitor.record_concurrent_users(count=100)
-        
+
         assert "concurrent_users" in monitor.metrics
         assert monitor.metrics["concurrent_users"][0].value == 100
 
@@ -245,9 +245,9 @@ class TestPerformanceMonitor:
                 value=float(i),
                 metric_type=MetricType.GAUGE,
             )
-        
+
         stats = monitor.get_metric_stats("test_metric")
-        
+
         assert stats is not None
         assert stats["count"] == 10
         assert stats["min"] == 0.0
@@ -257,18 +257,18 @@ class TestPerformanceMonitor:
         """Test getting endpoint statistics."""
         monitor.record_request_duration("/api/test1", 50.0, 200)
         monitor.record_request_duration("/api/test1", 100.0, 200)
-        
+
         stats = monitor.get_endpoint_stats()
-        
+
         assert "/api/test1" in stats
         assert stats["/api/test1"]["request_count"] == 2
 
     def test_get_performance_summary(self, monitor):
         """Test getting performance summary."""
         monitor.record_request_duration("/api/test", 50.0, 200)
-        
+
         summary = monitor.get_performance_summary()
-        
+
         assert "timestamp" in summary
         assert "total_requests" in summary
 
@@ -284,15 +284,15 @@ class TestPerformanceMonitor:
             timestamp=1234567890.0,
         )
         monitor.active_alerts["test_alert"] = alert
-        
+
         alerts = monitor.get_alerts()
-        
+
         assert len(alerts) == 1
 
     def test_reset_metrics(self, monitor):
         """Test resetting metrics."""
         monitor.record_metric("test_metric", 100.0, MetricType.GAUGE)
-        
+
         # Reset metrics manually
         monitor._metrics = {
             "events_emitted": 0,
@@ -300,7 +300,7 @@ class TestPerformanceMonitor:
             "events_failed": 0,
             "retries_attempted": 0,
         }
-        
+
         assert monitor._metrics["events_emitted"] == 0
 
 
@@ -318,18 +318,18 @@ class TestPerformanceMonitorEdgeCases:
     def test_get_metric_stats_nonexistent(self, monitor):
         """Test getting stats for non-existent metric."""
         stats = monitor.get_metric_stats("nonexistent")
-        
+
         assert stats is None
 
     def test_endpoint_stats_empty(self, monitor):
         """Test getting endpoint stats with no data."""
         stats = monitor.get_endpoint_stats()
-        
+
         assert stats == {}
 
     def test_multiple_metric_types_same_name(self, monitor):
         """Test recording different metric types with same name."""
         monitor.record_metric("metric", 1.0, MetricType.COUNTER)
         monitor.record_metric("metric", 2.0, MetricType.GAUGE)
-        
+
         assert len(monitor.metrics["metric"]) == 2

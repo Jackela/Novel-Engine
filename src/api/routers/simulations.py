@@ -67,7 +67,9 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
         try:
             director.run_turn()
         except Exception as exc:
-            logger.error("director_turn_failed", error=str(exc), error_type=type(exc).__name__)
+            logger.error(
+                "director_turn_failed", error=str(exc), error_type=type(exc).__name__
+            )
             continue
 
     try:

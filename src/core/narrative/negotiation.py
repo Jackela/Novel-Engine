@@ -387,7 +387,9 @@ class AgentNegotiationEngine:
             logger.error(f"Mediation failed: {e}")
             session.status = NegotiationStatus.DEADLOCK
 
-    def _update_agent_reputations(self, session: NegotiationSession, success: bool) -> None:
+    def _update_agent_reputations(
+        self, session: NegotiationSession, success: bool
+    ) -> None:
         """更新Agent声誉"""
         for agent_id in session.participants:
             if agent_id in self.agent_negotiation_profiles:

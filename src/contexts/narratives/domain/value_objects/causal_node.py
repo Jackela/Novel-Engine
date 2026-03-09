@@ -199,7 +199,9 @@ class CausalNode:
             raise ValueError("Node description too long (max 1000 characters)")
 
     def _hash_components(self) -> tuple[Any, ...]:
-        def _dict_to_hashable(values: Optional[Dict[Any, Any]]) -> frozenset[tuple[Any, Any]]:
+        def _dict_to_hashable(
+            values: Optional[Dict[Any, Any]],
+        ) -> frozenset[tuple[Any, Any]]:
             if not values:
                 return frozenset()
             items: list[tuple[Any, Any]] = []
@@ -255,12 +257,16 @@ class CausalNode:
     @property
     def total_causes(self) -> int:
         """Total number of direct and indirect causes."""
-        return len(self.direct_causes or frozenset()) + len(self.indirect_causes or frozenset())
+        return len(self.direct_causes or frozenset()) + len(
+            self.indirect_causes or frozenset()
+        )
 
     @property
     def total_effects(self) -> int:
         """Total number of direct and indirect effects."""
-        return len(self.direct_effects or frozenset()) + len(self.indirect_effects or frozenset())
+        return len(self.direct_effects or frozenset()) + len(
+            self.indirect_effects or frozenset()
+        )
 
     @property
     def has_causes(self) -> bool:

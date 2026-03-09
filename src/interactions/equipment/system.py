@@ -66,9 +66,9 @@ class DynamicEquipmentSystem:
         self._equipment_registry: Dict[str, DynamicEquipment] = {}
         self._agent_equipment: Dict[str, List[str]] = {}  # agent_id -> equipment_ids
         self._equipment_templates: Dict[str, Dict[str, Any]] = {}
-        self._maintenance_queue: List[Tuple[datetime, str]] = (
-            []
-        )  # scheduled maintenance
+        self._maintenance_queue: List[
+            Tuple[datetime, str]
+        ] = []  # scheduled maintenance
 
         # Blessed equipment processors
         self._category_processors = {
@@ -110,18 +110,24 @@ class DynamicEquipmentSystem:
         if not self._equipment_templates:
             self._equipment_templates = {}
 
-    async def _process_weapon_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_weapon_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         """Placeholder processor for weapon interactions."""
         return StandardResponse(
             success=True, data={"effects": ["weapon_usage"], "warnings": []}
         )
 
-    async def _process_armor_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_armor_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["armor_absorption"], "warnings": []}
         )
 
-    async def _process_tool_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_tool_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["tool_operation"], "warnings": []}
         )
@@ -140,7 +146,9 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["augmetic_interface"], "warnings": []}
         )
 
-    async def _process_relic_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_relic_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["relic_activation"], "warnings": []}
         )
@@ -159,12 +167,16 @@ class DynamicEquipmentSystem:
             success=True, data={"effects": ["communication_link"], "warnings": []}
         )
 
-    async def _process_medical_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_medical_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["medical_aid"], "warnings": []}
         )
 
-    async def _process_sensor_usage(self, equipment, usage_context, expected_duration) -> None:
+    async def _process_sensor_usage(
+        self, equipment, usage_context, expected_duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["sensor_scan"], "warnings": []}
         )

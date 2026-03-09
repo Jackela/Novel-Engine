@@ -479,6 +479,7 @@ class TestDiplomacyMatrixAggregate:
 
         # Validation should catch the unknown factions
         from datetime import datetime
+
         matrix.created_at = datetime.now()
         matrix.updated_at = datetime.now()
 

@@ -42,9 +42,7 @@ class EnhancedMultiAgentBridge:
     def __init__(
         self,
         director_or_event_bus: Union[DirectorAgent, EventBus],
-        config_or_director: Optional[
-            Union[BridgeConfiguration, DirectorAgent]
-        ] = None,
+        config_or_director: Optional[Union[BridgeConfiguration, DirectorAgent]] = None,
         llm_coordination_config: Optional[LLMCoordinationConfig] = None,
     ) -> None:
         """
@@ -119,9 +117,7 @@ class EnhancedMultiAgentBridge:
             self.llm_config, self.performance_budget
         )
         self.state_manager = StateManager()
-        self.task_scheduler = TaskScheduler(
-            self.llm_config, self.performance_budget
-        )
+        self.task_scheduler = TaskScheduler(self.llm_config, self.performance_budget)
 
         # AI orchestrator placeholder
         self.ai_orchestrator: Any = None
@@ -325,7 +321,9 @@ class EnhancedMultiAgentBridge:
 
             # Prepare world state (side effect: updates internal state)
             self.state_manager.prepare_enhanced_world_state(
-                turn_number, self.agent_relationships, list(self.active_dialogues.values())
+                turn_number,
+                self.agent_relationships,
+                list(self.active_dialogues.values()),
             )
 
             # Identify dialogue opportunities

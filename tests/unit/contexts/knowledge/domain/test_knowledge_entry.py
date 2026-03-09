@@ -151,7 +151,9 @@ class TestKnowledgeEntry:
             KnowledgeEntry(**valid_entry_data)
         assert "id is required" in str(exc_info.value)
 
-    def test_knowledge_entry_invalid_knowledge_type_raises_error(self, valid_entry_data):
+    def test_knowledge_entry_invalid_knowledge_type_raises_error(
+        self, valid_entry_data
+    ):
         """Test that invalid knowledge_type raises ValueError."""
         valid_entry_data["knowledge_type"] = "invalid_type"
         with pytest.raises(ValueError) as exc_info:
@@ -165,7 +167,9 @@ class TestKnowledgeEntry:
             KnowledgeEntry(**valid_entry_data)
         assert "created_by is required" in str(exc_info.value)
 
-    def test_knowledge_entry_updated_before_created_raises_error(self, valid_entry_data):
+    def test_knowledge_entry_updated_before_created_raises_error(
+        self, valid_entry_data
+    ):
         """Test that updated_at before created_at raises ValueError."""
         now = datetime.now(timezone.utc)
         valid_entry_data["created_at"] = now

@@ -345,7 +345,9 @@ class RumorService:
             return "False"
 
     @staticmethod
-    def get_veracity_label_result(truth_value: int) -> Result[str, RumorValidationError]:
+    def get_veracity_label_result(
+        truth_value: int,
+    ) -> Result[str, RumorValidationError]:
         """Get the veracity label for a truth value (Result pattern).
 
         This utility method converts a numeric truth value to a
@@ -542,18 +544,20 @@ class RumorService:
                 max_hops=max_hops_found,
             )
 
-            return Ok({
-                "world_id": world_id,
-                "graph": {
-                    "nodes": nodes,
-                    "edges": edges,
-                },
-                "metadata": {
-                    "total_nodes": len(nodes),
-                    "total_edges": len(edges),
-                    "max_hops": max_hops_found,
-                },
-            })
+            return Ok(
+                {
+                    "world_id": world_id,
+                    "graph": {
+                        "nodes": nodes,
+                        "edges": edges,
+                    },
+                    "metadata": {
+                        "total_nodes": len(nodes),
+                        "total_edges": len(edges),
+                        "max_hops": max_hops_found,
+                    },
+                }
+            )
         except Exception as e:
             logger.error(
                 "get_propagation_graph_failed",

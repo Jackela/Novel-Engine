@@ -989,8 +989,7 @@ class EnterpriseSecurityManager:
                     self.behavioral_profiles[row[0]] = profile
 
                 logger.info(
-                    "📊 Loaded %d behavioral profiles",
-                    len(self.behavioral_profiles)
+                    "📊 Loaded %d behavioral profiles", len(self.behavioral_profiles)
                 )
 
         except Exception as e:
@@ -1079,7 +1078,9 @@ class EnterpriseSecurityManager:
 
         logger.warning(
             "🚨 SECURITY ALERT: %s - %s from %s",
-            event.severity.value.upper(), event.event_type, event.source_ip
+            event.severity.value.upper(),
+            event.event_type,
+            event.source_ip,
         )
 
     async def get_security_metrics(self) -> Dict[str, Any]:
@@ -1164,8 +1165,7 @@ class EnterpriseSecurityManager:
             await conn.commit()
 
         logger.info(
-            "🛡️ Added IP %s to %s (severity: %s)",
-            ip_address, list_type, severity.value
+            "🛡️ Added IP %s to %s (severity: %s)", ip_address, list_type, severity.value
         )
 
     async def cleanup(self) -> None:

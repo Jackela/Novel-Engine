@@ -20,7 +20,6 @@ from src.contexts.knowledge.domain.models.token_usage import TokenUsage, TokenUs
 pytestmark = pytest.mark.unit
 
 
-
 class TestKnowledgeEntryBoundaryCases:
     """Boundary tests for KnowledgeEntry domain model."""
 
@@ -99,7 +98,7 @@ class TestKnowledgeEntryBoundaryCases:
         """Test that updated_at before created_at raises ValueError."""
         created = datetime(2024, 1, 2, 12, 0, 0, tzinfo=timezone.utc)
         updated = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-        
+
         with pytest.raises(ValueError, match="updated_at cannot be earlier"):
             KnowledgeEntry(
                 id=str(uuid4()),

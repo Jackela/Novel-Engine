@@ -127,9 +127,13 @@ class TestTextMatching:
     def test_substring_match_word_overlap(self):
         """Should match with significant word overlap (75%)."""
         # 3 out of 4 words match = 75% threshold
-        assert check_substring_match("brave knight fights honor", "brave knight fights with honor")
+        assert check_substring_match(
+            "brave knight fights honor", "brave knight fights with honor"
+        )
         # 2 out of 4 words = 50% < 75%
-        assert not check_substring_match("brave knight fights honor", "brave knight here")
+        assert not check_substring_match(
+            "brave knight fights honor", "brave knight here"
+        )
 
     def test_fuzzy_match_basic(self):
         """Should find fuzzy matches using SequenceMatcher."""
@@ -211,7 +215,9 @@ class TestInMemoryVectorStore:
     async def test_add_and_query_documents(self, vector_store):
         """Should add documents and query them."""
         docs = [
-            GoldenDocument(id="1", source_type="LORE", content="knight fights with honor"),
+            GoldenDocument(
+                id="1", source_type="LORE", content="knight fights with honor"
+            ),
             GoldenDocument(id="2", source_type="LORE", content="wizard casts spells"),
         ]
 
@@ -278,11 +284,7 @@ class TestEvaluationQuestion:
         from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
             RetrievedChunk,
         )
-        from src.contexts.knowledge.application.services.retrieval_service import (
-            RetrievalResult,
-        )
         from src.contexts.knowledge.domain.models.source_type import SourceType
-        from src.core.result import Ok
 
         service = AsyncMock()
 
@@ -300,7 +302,7 @@ class TestEvaluationQuestion:
 
         # The source code expects to access .chunks directly on the result
         # (not result.value.chunks), so we mock must return an object with .chunks attribute
-        mock_result = type('MockResult', (), {'chunks': chunks})()
+        mock_result = type("MockResult", (), {"chunks": chunks})()
         service.retrieve_relevant.return_value = mock_result
 
         return service
@@ -332,7 +334,7 @@ class TestEvaluationQuestion:
 
         # The source code expects to access .chunks directly on the result
         # (not result.value.chunks), so mock returns an object with .chunks attribute
-        mock_result = type('MockResult', (), {'chunks': []})()
+        mock_result = type("MockResult", (), {"chunks": []})()
         service.retrieve_relevant.return_value = mock_result
 
         question = GoldenQuestion(
@@ -359,7 +361,9 @@ class TestGoldenDatasetIntegration:
     handling the Result type returned by RetrievalService.
     """
 
-    @pytest.mark.skip(reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type")
+    @pytest.mark.skip(
+        reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type"
+    )
     @pytest.mark.asyncio
     async def test_run_evaluation_full_pipeline(self):
         """Should run full evaluation pipeline and generate report."""
@@ -375,7 +379,9 @@ class TestGoldenDatasetIntegration:
         assert report.average_relevance_score >= 0.0
         assert len(report.results) == report.total_questions
 
-    @pytest.mark.skip(reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type")
+    @pytest.mark.skip(
+        reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type"
+    )
     @pytest.mark.asyncio
     async def test_evaluation_report_serialization(self):
         """Report should have all required fields for JSON output."""
@@ -396,7 +402,9 @@ class TestGoldenDatasetIntegration:
         assert hasattr(report, "pass_rate")
         assert hasattr(report, "results")
 
-    @pytest.mark.skip(reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type")
+    @pytest.mark.skip(
+        reason="Source code bug: run_golden_dataset.py accesses result.chunks instead of result.value.chunks on Result type"
+    )
     @pytest.mark.asyncio
     async def test_evaluation_meets_baseline(self):
         """Golden dataset evaluation should meet baseline score."""

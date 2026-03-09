@@ -22,7 +22,7 @@ from .shared.errors import (
 class ResponseAnalysisService:
     """
     Service for analyzing proposal responses.
-    
+
     Provides business operations for response pattern analysis,
     acceptance metrics, and trend detection.
     """
@@ -45,37 +45,46 @@ class ResponseAnalysisService:
             Result containing pattern analysis or error
         """
         if not responses:
-            return Err(ProposalError(
-                message="At least one response required for pattern analysis",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one response required for pattern analysis",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Count response types
             response_counts: Dict[str, int] = {}
             for response in responses:
                 response_type = response.overall_response.value
-                response_counts[response_type] = response_counts.get(response_type, 0) + 1
+                response_counts[response_type] = (
+                    response_counts.get(response_type, 0) + 1
+                )
 
             # Calculate acceptance metrics
             acceptances = sum(1 for r in responses if r.is_complete_acceptance())
             rejections = sum(
-                1 for r in responses 
-                if r.overall_response.value == "rejected"
+                1 for r in responses if r.overall_response.value == "rejected"
             )
             conditional = len(responses) - acceptances - rejections
 
             acceptance_rate = acceptances / len(responses) if responses else 0.0
 
             # Calculate average acceptance percentage
-            avg_acceptance = sum(
-                r.get_acceptance_percentage() for r in responses
-            ) / len(responses) if responses else 0.0
+            avg_acceptance = (
+                sum(r.get_acceptance_percentage() for r in responses) / len(responses)
+                if responses
+                else 0.0
+            )
 
             # Analyze timing patterns
             timestamps = [r.response_timestamp for r in responses]
-            time_range = (max(timestamps) - min(timestamps)).total_seconds() if len(timestamps) > 1 else 0
-            
+            time_range = (
+                (max(timestamps) - min(timestamps)).total_seconds()
+                if len(timestamps) > 1
+                else 0
+            )
+
             # Detect response clusters
             sorted_responses = sorted(responses, key=lambda r: r.response_timestamp)
             clusters = self._detect_response_clusters(sorted_responses)
@@ -95,10 +104,12 @@ class ResponseAnalysisService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to analyze response patterns: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to analyze response patterns: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def analyze_party_response_history(
         self,
@@ -116,25 +127,28 @@ class ResponseAnalysisService:
             Result containing party response analysis or error
         """
         if not responses:
-            return Err(ProposalError(
-                message="At least one response required",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one response required",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Filter responses for this party
             party_responses = [
-                r for r in responses 
-                if r.responding_party_id == party_id
+                r for r in responses if r.responding_party_id == party_id
             ]
 
             if not party_responses:
-                return Err(NotFoundError(
-                    message=f"No responses found for party {party_id}",
-                    entity_type="PartyResponses",
-                    entity_id=str(party_id),
-                    recoverable=False,
-                ))
+                return Err(
+                    NotFoundError(
+                        message=f"No responses found for party {party_id}",
+                        entity_type="PartyResponses",
+                        entity_id=str(party_id),
+                        recoverable=False,
+                    )
+                )
 
             # Sort by time
             party_responses.sort(key=lambda r: r.response_timestamp)
@@ -152,8 +166,13 @@ class ResponseAnalysisService:
 
             # Time pattern
             time_span = (
-                party_responses[-1].response_timestamp - party_responses[0].response_timestamp
-            ).total_seconds() if len(party_responses) > 1 else 0
+                (
+                    party_responses[-1].response_timestamp
+                    - party_responses[0].response_timestamp
+                ).total_seconds()
+                if len(party_responses) > 1
+                else 0
+            )
 
             result = {
                 "party_id": str(party_id),
@@ -169,10 +188,12 @@ class ResponseAnalysisService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to analyze party response history: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to analyze party response history: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def calculate_collective_response_metrics(
         self,
@@ -190,16 +211,20 @@ class ResponseAnalysisService:
             Result containing collective metrics or error
         """
         if not responses:
-            return Err(ProposalError(
-                message="At least one response required",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one response required",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(ProposalError(
-                message="At least one party required",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one party required",
+                    recoverable=True,
+                )
+            )
 
         try:
             decision_makers = [p for p in parties if p.is_decision_maker]
@@ -226,15 +251,18 @@ class ResponseAnalysisService:
                     set(r.responding_party_id for r in proposal_responses)
                 )
 
-                proposal_metrics.append({
-                    "proposal_id": str(proposal_id),
-                    "response_count": len(proposal_responses),
-                    "responding_parties": responding_parties,
-                    "acceptance_count": acceptances,
-                    "average_acceptance": avg_acceptance,
-                    "response_rate": responding_parties / total_decision_makers 
-                        if total_decision_makers > 0 else 0,
-                })
+                proposal_metrics.append(
+                    {
+                        "proposal_id": str(proposal_id),
+                        "response_count": len(proposal_responses),
+                        "responding_parties": responding_parties,
+                        "acceptance_count": acceptances,
+                        "average_acceptance": avg_acceptance,
+                        "response_rate": responding_parties / total_decision_makers
+                        if total_decision_makers > 0
+                        else 0,
+                    }
+                )
 
             # Overall consensus
             all_acceptances = sum(1 for r in responses if r.is_complete_acceptance())
@@ -248,15 +276,20 @@ class ResponseAnalysisService:
                 "proposal_metrics": proposal_metrics,
                 "overall_acceptance_rate": sum(
                     1 for r in responses if r.is_complete_acceptance()
-                ) / len(responses) if responses else 0,
+                )
+                / len(responses)
+                if responses
+                else 0,
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to calculate collective metrics: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to calculate collective metrics: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def identify_response_outliers(
         self,
@@ -272,33 +305,39 @@ class ResponseAnalysisService:
             Result containing outlier analysis or error
         """
         if len(responses) < 3:
-            return Err(ProposalError(
-                message="At least 3 responses required for outlier detection",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least 3 responses required for outlier detection",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate statistics
             acceptance_percentages = [r.get_acceptance_percentage() for r in responses]
             mean = sum(acceptance_percentages) / len(acceptance_percentages)
-            variance = sum((x - mean) ** 2 for x in acceptance_percentages) / len(acceptance_percentages)
-            std_dev = variance ** 0.5
+            variance = sum((x - mean) ** 2 for x in acceptance_percentages) / len(
+                acceptance_percentages
+            )
+            std_dev = variance**0.5
 
             # Identify outliers (beyond 2 standard deviations)
             outliers: List[Dict[str, Any]] = []
             for response in responses:
                 pct = response.get_acceptance_percentage()
                 z_score = (pct - mean) / std_dev if std_dev > 0 else 0
-                
+
                 if abs(z_score) > 2:
-                    outliers.append({
-                        "response_id": str(response.response_id),
-                        "proposal_id": str(response.proposal_id),
-                        "party_id": str(response.responding_party_id),
-                        "acceptance_percentage": pct,
-                        "z_score": z_score,
-                        "deviation_direction": "high" if z_score > 0 else "low",
-                    })
+                    outliers.append(
+                        {
+                            "response_id": str(response.response_id),
+                            "proposal_id": str(response.proposal_id),
+                            "party_id": str(response.responding_party_id),
+                            "acceptance_percentage": pct,
+                            "z_score": z_score,
+                            "deviation_direction": "high" if z_score > 0 else "low",
+                        }
+                    )
 
             result = {
                 "total_responses": len(responses),
@@ -311,10 +350,12 @@ class ResponseAnalysisService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to identify outliers: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to identify outliers: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def _detect_response_clusters(
         self, sorted_responses: List[ProposalResponse]
@@ -329,27 +370,36 @@ class ResponseAnalysisService:
 
         for i in range(1, len(sorted_responses)):
             time_diff = (
-                sorted_responses[i].response_timestamp - sorted_responses[i-1].response_timestamp
+                sorted_responses[i].response_timestamp
+                - sorted_responses[i - 1].response_timestamp
             ).total_seconds()
 
             if time_diff <= cluster_threshold:
                 current_cluster.append(sorted_responses[i])
             else:
                 if len(current_cluster) > 1:
-                    clusters.append({
-                        "size": len(current_cluster),
-                        "start_time": current_cluster[0].response_timestamp.isoformat(),
-                        "end_time": current_cluster[-1].response_timestamp.isoformat(),
-                    })
+                    clusters.append(
+                        {
+                            "size": len(current_cluster),
+                            "start_time": current_cluster[
+                                0
+                            ].response_timestamp.isoformat(),
+                            "end_time": current_cluster[
+                                -1
+                            ].response_timestamp.isoformat(),
+                        }
+                    )
                 current_cluster = [sorted_responses[i]]
 
         # Don't forget the last cluster
         if len(current_cluster) > 1:
-            clusters.append({
-                "size": len(current_cluster),
-                "start_time": current_cluster[0].response_timestamp.isoformat(),
-                "end_time": current_cluster[-1].response_timestamp.isoformat(),
-            })
+            clusters.append(
+                {
+                    "size": len(current_cluster),
+                    "start_time": current_cluster[0].response_timestamp.isoformat(),
+                    "end_time": current_cluster[-1].response_timestamp.isoformat(),
+                }
+            )
 
         return clusters
 
@@ -365,8 +415,12 @@ class ResponseAnalysisService:
         first_half = sorted_responses[:mid]
         second_half = sorted_responses[mid:]
 
-        first_avg = sum(r.get_acceptance_percentage() for r in first_half) / len(first_half)
-        second_avg = sum(r.get_acceptance_percentage() for r in second_half) / len(second_half)
+        first_avg = sum(r.get_acceptance_percentage() for r in first_half) / len(
+            first_half
+        )
+        second_avg = sum(r.get_acceptance_percentage() for r in second_half) / len(
+            second_half
+        )
 
         diff = second_avg - first_avg
         if diff > 15:
@@ -386,12 +440,13 @@ class ResponseAnalysisService:
         time_diffs = []
         for i in range(1, len(sorted_responses)):
             diff = (
-                sorted_responses[i].response_timestamp - sorted_responses[i-1].response_timestamp
+                sorted_responses[i].response_timestamp
+                - sorted_responses[i - 1].response_timestamp
             ).total_seconds()
             time_diffs.append(diff)
 
         avg_diff = sum(time_diffs) / len(time_diffs)
-        
+
         # Score based on responsiveness (lower is better)
         # Scale: <1 hour = excellent, 1-24 hours = good, >24 hours = poor
         if avg_diff < 3600:

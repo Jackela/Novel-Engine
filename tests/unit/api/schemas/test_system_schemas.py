@@ -20,6 +20,7 @@ class TestSystemSchemas:
         """Test that system schemas can be imported."""
         try:
             from src.api.schemas import system_schemas  # noqa: F401
+
             assert True
         except ImportError:
             pytest.skip("system_schemas module not found")
@@ -31,41 +32,49 @@ class TestSchemaImports:
     def test_import_character_schemas(self) -> None:
         """Test importing character schemas module."""
         from src.api.schemas import character_schemas
+
         assert character_schemas is not None
 
     def test_import_narrative_schemas(self) -> None:
         """Test importing narrative schemas module."""
         from src.api.schemas import narrative_schemas
+
         assert narrative_schemas is not None
 
     def test_import_world_schemas(self) -> None:
         """Test importing world schemas module."""
         from src.api.schemas import world_schemas
+
         assert world_schemas is not None
 
     def test_import_lore_schemas(self) -> None:
         """Test importing lore schemas module."""
         from src.api.schemas import lore_schemas
+
         assert lore_schemas is not None
 
     def test_import_social_schemas(self) -> None:
         """Test importing social schemas module."""
         from src.api.schemas import social_schemas
+
         assert social_schemas is not None
 
     def test_import_knowledge_schemas(self) -> None:
         """Test importing knowledge schemas module."""
         from src.api.schemas import knowledge_schemas
+
         assert knowledge_schemas is not None
 
     def test_import_experiment_schemas(self) -> None:
         """Test importing experiment schemas module."""
         from src.api.schemas import experiment_schemas
+
         assert experiment_schemas is not None
 
     def test_import_orchestration_schemas(self) -> None:
         """Test importing orchestration schemas module."""
         from src.api.schemas import orchestration_schemas
+
         assert orchestration_schemas is not None
 
 

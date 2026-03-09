@@ -34,11 +34,13 @@ def calendar() -> WorldCalendar:
 @pytest.fixture
 def sample_state_json() -> str:
     """Create sample state JSON."""
-    return json.dumps({
-        "id": "world-123",
-        "factions": [],
-        "locations": [],
-    })
+    return json.dumps(
+        {
+            "id": "world-123",
+            "factions": [],
+            "locations": [],
+        }
+    )
 
 
 class TestCreateSnapshot:
@@ -136,9 +138,7 @@ class TestCreateSnapshot:
         list_result = service.list_snapshots("world-123")
         assert list_result.is_ok
         for i in range(5):
-            assert snapshot_ids[i] not in [
-                s.snapshot_id for s in list_result.value
-            ]
+            assert snapshot_ids[i] not in [s.snapshot_id for s in list_result.value]
 
     def test_create_snapshot_separate_worlds(
         self,
@@ -223,7 +223,10 @@ class TestRestoreSnapshot:
         result = service.restore_snapshot(snapshot.snapshot_id)
 
         assert result.is_error
-        assert "restore" in str(result.error).lower() or "json" in str(result.error).lower()
+        assert (
+            "restore" in str(result.error).lower()
+            or "json" in str(result.error).lower()
+        )
 
 
 class TestListSnapshots:

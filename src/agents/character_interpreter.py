@@ -24,7 +24,7 @@ import structlog
 import yaml
 
 # Safe filename pattern: alphanumeric, hyphens, underscores, dots only
-SAFE_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
+SAFE_FILENAME_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 logger = structlog.get_logger(__name__)
 
@@ -73,8 +73,7 @@ class CharacterInterpreter:
         """
         try:
             logger.info(
-                "loading_character_context",
-                directory=self.character_directory_path
+                "loading_character_context", directory=self.character_directory_path
             )
 
             # Validate directory exists
@@ -137,7 +136,7 @@ class CharacterInterpreter:
             logger.info(
                 "character_context_loaded",
                 character_name=character_name,
-                file_count=total_files
+                file_count=total_files,
             )
 
             return self.character_data
@@ -175,7 +174,7 @@ class CharacterInterpreter:
             logger.debug(
                 "discovered_character_files",
                 md_files=len(md_files),
-                yaml_files=len(yaml_files)
+                yaml_files=len(yaml_files),
             )
 
         except Exception as e:
@@ -207,8 +206,7 @@ class CharacterInterpreter:
 
             combined_content = "\n\n".join(markdown_parts)
             logger.debug(
-                "combined_markdown_content",
-                character_count=len(combined_content)
+                "combined_markdown_content", character_count=len(combined_content)
             )
 
             return combined_content
@@ -239,7 +237,9 @@ class CharacterInterpreter:
                     yaml_data[filename_key] = parsed_yaml
 
                 except yaml.YAMLError as e:
-                    logger.warning("failed_to_parse_yaml_file", file_path=file_path, error=str(e))
+                    logger.warning(
+                        "failed_to_parse_yaml_file", file_path=file_path, error=str(e)
+                    )
                     # Store as raw text if YAML parsing fails
                     filename_key = os.path.splitext(os.path.basename(file_path))[0]
                     raw_content = self._read_cached_file(file_path)
@@ -291,13 +291,12 @@ class CharacterInterpreter:
                 yaml_content = yaml.safe_load(file)
 
             if not isinstance(yaml_content, dict):
-                logger.warning(
-                    "yaml_file_not_dictionary",
-                    file_path=file_path
-                )
+                logger.warning("yaml_file_not_dictionary", file_path=file_path)
                 yaml_content = {"content": yaml_content}
 
-            logger.debug("parsed_yaml", file_path=file_path, key_count=len(yaml_content))
+            logger.debug(
+                "parsed_yaml", file_path=file_path, key_count=len(yaml_content)
+            )
             return yaml_content
 
         except Exception as e:
@@ -587,7 +586,7 @@ class CharacterInterpreter:
 
             logger.debug(
                 "extracted_character_characteristics",
-                character_name=self.character_data.get("name", "Unknown")
+                character_name=self.character_data.get("name", "Unknown"),
             )
 
         except Exception as e:

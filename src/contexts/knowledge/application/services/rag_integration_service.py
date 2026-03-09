@@ -404,7 +404,6 @@ class RAGIntegrationService:
         """
         return self._config
 
-
     def get_metrics_result(self) -> Result[RAGMetrics, ServiceError]:
         """
         Get current RAG operation metrics (Result pattern).

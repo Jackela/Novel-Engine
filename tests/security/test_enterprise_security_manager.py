@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Set
 # Define local enums for testing (avoid importing full module with dependencies)
 class ThreatLevel(str, Enum):
     """Enterprise Threat Classification System"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -30,6 +31,7 @@ class ThreatLevel(str, Enum):
 
 class SecurityAction(str, Enum):
     """Automated Security Response Actions"""
+
     MONITOR = "monitor"
     RATE_LIMIT = "rate_limit"
     CHALLENGE = "challenge"
@@ -41,6 +43,7 @@ class SecurityAction(str, Enum):
 
 class ComplianceFramework(str, Enum):
     """Supported Compliance Frameworks"""
+
     GDPR = "gdpr"
     SOC2 = "soc2"
     HIPAA = "hipaa"
@@ -52,6 +55,7 @@ class ComplianceFramework(str, Enum):
 @dataclass
 class ThreatIntelligence:
     """Real-time Threat Intelligence Data"""
+
     ip_address: str
     reputation_score: float
     country_code: Optional[str]
@@ -67,6 +71,7 @@ class ThreatIntelligence:
 @dataclass
 class BehavioralProfile:
     """User Behavioral Analytics Profile"""
+
     user_id: str
     typical_access_hours: List[int] = field(default_factory=list)
     typical_countries: Set[str] = field(default_factory=set)
@@ -80,6 +85,7 @@ class BehavioralProfile:
 @dataclass
 class SecurityEvent:
     """Enhanced Security Event with Threat Intelligence"""
+
     id: str
     timestamp: datetime
     event_type: str
@@ -150,7 +156,7 @@ class TestThreatIntelligence:
             threat_categories=["malware", "botnet"],
             confidence_score=0.9,
         )
-        
+
         assert intel.ip_address == "192.168.1.1"
         assert intel.reputation_score == 0.8
         assert intel.country_code == "US"
@@ -175,7 +181,7 @@ class TestBehavioralProfile:
             average_session_duration=3600.0,
             anomaly_score=0.1,
         )
-        
+
         assert profile.user_id == "user123"
         assert 9 in profile.typical_access_hours
         assert "US" in profile.typical_countries
@@ -185,7 +191,7 @@ class TestBehavioralProfile:
     def test_behavioral_profile_defaults(self):
         """Test BehavioralProfile default values."""
         profile = BehavioralProfile(user_id="user456")
-        
+
         assert profile.typical_access_hours == []
         assert profile.typical_countries == set()
         assert profile.typical_user_agents == set()
@@ -213,7 +219,7 @@ class TestSecurityEvent:
             evidence={"attempts": 5},
             compliance_tags=[ComplianceFramework.SOC2],
         )
-        
+
         assert event.id == "evt123"
         assert event.event_type == "login_failed"
         assert event.severity == ThreatLevel.HIGH
@@ -236,5 +242,5 @@ class TestSecurityEvent:
             evidence={},
             compliance_tags=[],
         )
-        
+
         assert event.investigation_status == "open"

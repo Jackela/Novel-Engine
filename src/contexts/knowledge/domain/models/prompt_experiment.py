@@ -541,7 +541,9 @@ class PromptExperiment:
         winner_name = (
             "A"
             if self.winner == self.prompt_a_id
-            else "B" if self.winner == self.prompt_b_id else None
+            else "B"
+            if self.winner == self.prompt_b_id
+            else None
         )
 
         return {

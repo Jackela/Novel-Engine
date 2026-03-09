@@ -115,7 +115,7 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
                 else:
                     serializable_error[key] = value
             serializable_errors.append(serializable_error)
-        
+
         return JSONResponse(
             status_code=422,
             content=_envelope(

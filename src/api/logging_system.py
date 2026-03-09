@@ -355,7 +355,9 @@ class StructuredLogger:
         """Log warning level message."""
         self.log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, exc_info: Optional[Exception] = None, **kwargs) -> None:
+    def error(
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+    ) -> None:
         """Log error level message with optional exception info."""
 
         error_details = None
@@ -381,7 +383,9 @@ class StructuredLogger:
 
         self.logger.error(log_message, exc_info=exc_info if exc_info else False)
 
-    def critical(self, message: str, exc_info: Optional[Exception] = None, **kwargs) -> None:
+    def critical(
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+    ) -> None:
         """Log critical level message."""
         self.error(message, exc_info, **kwargs)
         self.log(LogLevel.CRITICAL, message, LogCategory.ERROR, **kwargs)

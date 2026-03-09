@@ -78,25 +78,21 @@ class TestPersonaAgentInitialization:
     @pytest.mark.integration
     def test_initialization_with_valid_character_directory(self):
         """Test PersonaAgent initialization with valid character directory"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=self.test_character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=self.test_character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=self.test_character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=self.test_character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
@@ -114,25 +110,21 @@ class TestPersonaAgentInitialization:
     @pytest.mark.integration
     def test_initialization_auto_generate_agent_id(self):
         """Test agent ID auto-generation from character directory path"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=self.test_character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=self.test_character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=self.test_character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=self.test_character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/imperial_guard/marcus",
@@ -157,9 +149,11 @@ class TestPersonaAgentInitialization:
     @pytest.mark.integration
     def test_initialization_empty_character_directory(self):
         """Test initialization with empty character directory"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=[]):
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=[]),
+        ):
             with pytest.raises(ValueError, match="No .md or .yaml files found"):
                 PersonaAgent(
                     character_directory_path=self.temp_char_dir,
@@ -169,25 +163,21 @@ class TestPersonaAgentInitialization:
     @pytest.mark.integration
     def test_event_bus_subscription(self):
         """Test that PersonaAgent subscribes to TURN_START event"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=self.test_character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=self.test_character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=self.test_character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=self.test_character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path=self.temp_char_dir,
@@ -210,25 +200,21 @@ class TestPersonaAgentCharacterLoading:
 
     def create_test_agent(self, character_content: str):
         """Helper to create test agent with specific character content"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             return PersonaAgent(
                 character_directory_path="test_character",
@@ -296,31 +282,28 @@ Just random text"""
     @pytest.mark.integration
     def test_multiple_character_files_handling(self):
         """Test handling multiple character files in directory"""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch(
-            "os.listdir",
-            return_value=["character.md", "background.md", "equipment.yaml"],
-        ), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value="# Test Character",
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._parse_cached_yaml",
-            return_value={},
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch(
+                "os.listdir",
+                return_value=["character.md", "background.md", "equipment.yaml"],
+            ),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value="# Test Character",
+            ),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._parse_cached_yaml",
+                return_value={},
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="test_character", event_bus=self.mock_event_bus
@@ -354,25 +337,21 @@ class TestPersonaAgentDecisionMaking:
 - Tactical and careful
 - Loyal to Emperor
 """
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             return PersonaAgent(
                 character_directory_path="test_character",
@@ -477,25 +456,21 @@ class TestPersonaAgentWorldInterpretation:
 - Protective of civilians
 - Hates orks with passion
 """
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             return PersonaAgent(
                 character_directory_path="test_character",
@@ -569,25 +544,21 @@ class TestPersonaAgentAIIntegration:
     def create_test_agent(self):
         """Helper to create test agent"""
         character_content = "# Character Sheet: AI Test Agent\n## Basic Information\n- **Name**: AI Agent"
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             return PersonaAgent(
                 character_directory_path="ai_test_character",
@@ -662,25 +633,21 @@ class TestPersonaAgentMemoryAndEvolution:
 - Eager to learn
 - Adaptive to situations
 """
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=character_content)
-        ), patch(
-            "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
-            return_value=character_content,
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=character_content)),
+            patch(
+                "src.agents.persona_agent.agent.PersonaAgent._read_cached_file",
+                return_value=character_content,
+            ),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             return PersonaAgent(
                 character_directory_path="evolving_character",

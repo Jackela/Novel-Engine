@@ -274,9 +274,7 @@ class RedisConnectionPool:
             if strategy == RedisStorageStrategy.JSON:
                 return json.loads(value)
             elif strategy == RedisStorageStrategy.PICKLE:
-                return pickle.loads(
-                    bytes.fromhex(value)
-                )  # nosec B301 - trusted Redis cache data
+                return pickle.loads(bytes.fromhex(value))  # nosec B301 - trusted Redis cache data
             elif strategy == RedisStorageStrategy.PLAIN:
                 return value
             else:
@@ -626,7 +624,9 @@ class RedisConnectionPool:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
 
         if self.redis:
             await self.redis.close()

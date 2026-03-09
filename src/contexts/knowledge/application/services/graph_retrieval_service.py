@@ -812,12 +812,14 @@ class GraphRetrievalService:
             total = self._cache_hits + self._cache_misses
             hit_rate = self._cache_hits / total if total > 0 else 0.0
 
-            return Ok({
-                "hits": float(self._cache_hits),
-                "misses": float(self._cache_misses),
-                "total": float(total),
-                "hit_rate": hit_rate,
-            })
+            return Ok(
+                {
+                    "hits": float(self._cache_hits),
+                    "misses": float(self._cache_misses),
+                    "total": float(total),
+                    "hit_rate": hit_rate,
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

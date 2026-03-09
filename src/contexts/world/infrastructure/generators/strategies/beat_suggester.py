@@ -44,14 +44,20 @@ class BeatSuggesterStrategy(WorldGenerationStrategy):
 
         try:
             base_system_prompt = self._load_prompt("beat_suggester")
-            user_prompt = self._build_user_prompt(current_beats, scene_context, mood_target)
+            user_prompt = self._build_user_prompt(
+                current_beats, scene_context, mood_target
+            )
 
             # Enrich with RAG if enabled
             if use_rag and self.generator._rag_service is not None:
-                rag_query = self._extract_keywords(current_beats, scene_context, mood_target)
-                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
-                    rag_query, base_system_prompt
+                rag_query = self._extract_keywords(
+                    current_beats, scene_context, mood_target
                 )
+                (
+                    system_prompt,
+                    chunks_retrieved,
+                    tokens_added,
+                ) = await self._enrich_with_rag(rag_query, base_system_prompt)
                 log.info(
                     "rag_context_injected",
                     chunks_retrieved=chunks_retrieved,
@@ -60,10 +66,15 @@ class BeatSuggesterStrategy(WorldGenerationStrategy):
             else:
                 system_prompt = base_system_prompt
 
-            response_text = await self.generator._call_gemini(system_prompt, user_prompt)
+            response_text = await self.generator._call_gemini(
+                system_prompt, user_prompt
+            )
             result = self._parse_response(response_text)
 
-            log.info("Beat suggestion generation completed", num_suggestions=len(result.suggestions))
+            log.info(
+                "Beat suggestion generation completed",
+                num_suggestions=len(result.suggestions),
+            )
             return result
 
         except Exception as exc:
@@ -84,7 +95,9 @@ class BeatSuggesterStrategy(WorldGenerationStrategy):
                 beat_type = beat.get("beat_type", "unknown")
                 content = beat.get("content", "")
                 mood = beat.get("mood_shift", 0)
-                beats_section += f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+                beats_section += (
+                    f"{i}. [{beat_type.upper()}] (mood: {mood:+d}) {content}\n"
+                )
         else:
             beats_section = "No beats yet - this is the start of the scene."
 
@@ -94,9 +107,13 @@ class BeatSuggesterStrategy(WorldGenerationStrategy):
         reaction_count = sum(1 for t in beat_types if t in ("reaction", "dialogue"))
 
         if action_count > reaction_count + 1:
-            balance_hint = "The scene is heavy on action - consider a reaction or dialogue."
+            balance_hint = (
+                "The scene is heavy on action - consider a reaction or dialogue."
+            )
         elif reaction_count > action_count + 1:
-            balance_hint = "The scene is heavy on reaction/dialogue - consider an action."
+            balance_hint = (
+                "The scene is heavy on reaction/dialogue - consider an action."
+            )
         else:
             balance_hint = "The action/reaction balance is good."
 
@@ -105,7 +122,11 @@ class BeatSuggesterStrategy(WorldGenerationStrategy):
             mood_shifts = [b.get("mood_shift", 0) for b in current_beats]
             current_mood = sum(mood_shifts)
             mood_trend = (
-                "upward" if current_mood > 0 else "downward" if current_mood < 0 else "neutral"
+                "upward"
+                if current_mood > 0
+                else "downward"
+                if current_mood < 0
+                else "neutral"
             )
         else:
             current_mood = 0

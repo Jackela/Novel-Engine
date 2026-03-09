@@ -27,7 +27,7 @@ SCHEMA_VERSION = 1
 
 def _utc_now() -> datetime:
     """Get current UTC datetime.
-    
+
     Returns:
         Current time in UTC timezone
     """
@@ -36,15 +36,15 @@ def _utc_now() -> datetime:
 
 def _atomic_write_bytes(path: Path, data: bytes) -> None:
     """Atomically write bytes to a file using a temp file and rename.
-    
+
     Ensures data integrity by writing to a temporary file first, then
     renaming it to the target path. This prevents partial writes in case
     of crashes or errors during write operations.
-    
+
     Args:
         path: Target file path
         data: Bytes to write
-        
+
     Note:
         Uses fsync where available for durability guarantees
     """
@@ -71,10 +71,10 @@ def _atomic_write_bytes(path: Path, data: bytes) -> None:
 
 def _atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:
     """Atomically write JSON data to a file.
-    
+
     Serializes the payload to JSON with consistent formatting and
     writes atomically using _atomic_write_bytes.
-    
+
     Args:
         path: Target file path
         payload: Dictionary to serialize as JSON
@@ -87,13 +87,13 @@ def _atomic_write_json(path: Path, payload: Dict[str, Any]) -> None:
 
 def _read_json(path: Path) -> Dict[str, Any]:
     """Read and parse JSON from a file.
-    
+
     Args:
         path: Path to the JSON file
-        
+
     Returns:
         Parsed JSON as a dictionary
-        
+
     Raises:
         ValueError: If the JSON is not a valid dictionary
         FileNotFoundError: If the file doesn't exist
@@ -106,13 +106,13 @@ def _read_json(path: Path) -> Dict[str, Any]:
 
 def _validate_workspace_id(workspace_id: str) -> str:
     """Validate and normalize a workspace ID.
-    
+
     Args:
         workspace_id: Raw workspace identifier
-        
+
     Returns:
         Normalized (lowercase, trimmed) workspace ID
-        
+
     Raises:
         ValueError: If the ID doesn't match the expected format (32 hex chars)
     """
@@ -124,7 +124,7 @@ def _validate_workspace_id(workspace_id: str) -> str:
 
 def _new_workspace_id() -> str:
     """Generate a new unique workspace ID.
-    
+
     Returns:
         32-character hexadecimal UUID string
     """
@@ -133,14 +133,14 @@ def _new_workspace_id() -> str:
 
 def _validate_resource_id(resource_id: str, resource_name: str) -> str:
     """Validate a resource ID to prevent path traversal attacks.
-    
+
     Args:
         resource_id: Raw resource identifier
         resource_name: Name of the resource type for error messages
-        
+
     Returns:
         Normalized (trimmed) resource ID
-        
+
     Raises:
         ValueError: If the ID contains path separators, parent references,
                    or doesn't match the allowed character pattern
@@ -158,20 +158,21 @@ def _validate_resource_id(resource_id: str, resource_name: str) -> str:
 @dataclass(frozen=True)
 class WorkspaceManifest:
     """Metadata manifest for a workspace.
-    
+
     Tracks schema version and timestamps for workspace lifecycle management.
     Manifests are stored as JSON in the workspace root directory.
-    
+
     Attributes:
         schemaVersion: Version of the workspace schema for migrations
         createdAt: ISO8601 timestamp of workspace creation
         lastAccessedAt: ISO8601 timestamp of last access
-        
+
     Example:
         >>> manifest = WorkspaceManifest.create()
         >>> manifest.schemaVersion
         1
     """
+
     schemaVersion: int
     createdAt: str
     lastAccessedAt: str
@@ -179,10 +180,10 @@ class WorkspaceManifest:
     @staticmethod
     def create(now: Optional[datetime] = None) -> "WorkspaceManifest":
         """Create a new manifest with current timestamps.
-        
+
         Args:
             now: Optional datetime to use (defaults to current UTC time)
-            
+
         Returns:
             New WorkspaceManifest with synchronized created/updated times
         """
@@ -194,10 +195,10 @@ class WorkspaceManifest:
 
     def touch(self, now: Optional[datetime] = None) -> "WorkspaceManifest":
         """Update the lastAccessedAt timestamp.
-        
+
         Args:
             now: Optional datetime to use (defaults to current UTC time)
-            
+
         Returns:
             New WorkspaceManifest with updated access time (immutable update)
         """
@@ -210,7 +211,7 @@ class WorkspaceManifest:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert manifest to dictionary for JSON serialization.
-        
+
         Returns:
             Dictionary representation of the manifest
         """
@@ -223,10 +224,10 @@ class WorkspaceManifest:
     @staticmethod
     def from_dict(payload: Dict[str, Any]) -> "WorkspaceManifest":
         """Create manifest from a dictionary (JSON deserialization).
-        
+
         Args:
             payload: Dictionary containing manifest data
-            
+
         Returns:
             WorkspaceManifest with values from the dictionary
         """
@@ -242,7 +243,7 @@ class WorkspaceManifest:
 
 class FilesystemWorkspaceStore(WorkspaceStore):
     """Filesystem-based implementation of WorkspaceStore.
-    
+
     Stores workspaces as directories on the local filesystem with the following
     structure:
         {base_dir}/{workspace_id}/
@@ -252,10 +253,10 @@ class FilesystemWorkspaceStore(WorkspaceStore):
             narratives/
             exports/
     """
-    
+
     def __init__(self, base_dir: Path) -> None:
         """Initialize the filesystem workspace store.
-        
+
         Args:
             base_dir: Root directory for all workspaces
         """
@@ -264,7 +265,7 @@ class FilesystemWorkspaceStore(WorkspaceStore):
     @property
     def base_dir(self) -> Path:
         """Get the base directory for all workspaces.
-        
+
         Returns:
             Root path where workspaces are stored
         """
@@ -272,7 +273,7 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
     def create(self) -> Workspace:
         """Create a new workspace with a generated ID.
-        
+
         Returns:
             Newly created workspace
         """
@@ -281,10 +282,10 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
     def get_or_create(self, workspace_id: str) -> Workspace:
         """Get or create a workspace, initializing its directory structure.
-        
+
         Args:
             workspace_id: ID of the workspace to get or create
-            
+
         Returns:
             The workspace instance
         """
@@ -311,13 +312,13 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
     def export_zip(self, workspace_id: str) -> bytes:
         """Export a workspace as a ZIP archive.
-        
+
         Creates a ZIP containing all files in the workspace directory,
         preserving the directory structure.
-        
+
         Args:
             workspace_id: ID of the workspace to export
-            
+
         Returns:
             ZIP file contents as bytes
         """
@@ -333,16 +334,16 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
     def import_zip(self, zip_bytes: bytes) -> Workspace:
         """Import a workspace from a ZIP archive.
-        
+
         Creates a new workspace and extracts the ZIP contents into it.
         If extraction fails, the workspace is cleaned up.
-        
+
         Args:
             zip_bytes: ZIP file contents as bytes
-            
+
         Returns:
             The imported workspace
-            
+
         Raises:
             ValueError: If ZIP contains unsafe paths
         """
@@ -359,14 +360,14 @@ class FilesystemWorkspaceStore(WorkspaceStore):
 
 class FilesystemCharacterStore(CharacterStore):
     """Filesystem-based implementation of CharacterStore.
-    
+
     Stores characters as individual JSON files within workspace directories:
         {workspace}/characters/{character_id}.json
     """
-    
+
     def __init__(self, workspace_store: FilesystemWorkspaceStore) -> None:
         """Initialize the character store.
-        
+
         Args:
             workspace_store: Workspace store for resolving workspace paths
         """
@@ -374,10 +375,10 @@ class FilesystemCharacterStore(CharacterStore):
 
     def list_ids(self, workspace_id: str) -> List[str]:
         """List all character IDs in a workspace.
-        
+
         Args:
             workspace_id: ID of the workspace
-            
+
         Returns:
             Sorted list of character IDs (filenames without .json extension)
         """
@@ -391,11 +392,11 @@ class FilesystemCharacterStore(CharacterStore):
 
     def get(self, workspace_id: str, character_id: str) -> Optional[Dict[str, Any]]:
         """Get character data by ID.
-        
+
         Args:
             workspace_id: ID of the workspace containing the character
             character_id: ID of the character to retrieve
-            
+
         Returns:
             Character data dictionary, or None if not found or corrupted
         """
@@ -416,15 +417,15 @@ class FilesystemCharacterStore(CharacterStore):
         self, workspace_id: str, character_id: str, payload: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Create a new character.
-        
+
         Args:
             workspace_id: ID of the workspace for the character
             character_id: Unique ID for the new character
             payload: Character data to store
-            
+
         Returns:
             The stored character data with metadata
-            
+
         Raises:
             FileExistsError: If character already exists
         """
@@ -445,15 +446,15 @@ class FilesystemCharacterStore(CharacterStore):
         self, workspace_id: str, character_id: str, updates: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Update an existing character.
-        
+
         Args:
             workspace_id: ID of the workspace containing the character
             character_id: ID of the character to update
             updates: Dictionary of fields to update (None values ignored)
-            
+
         Returns:
             The updated character data
-            
+
         Raises:
             FileNotFoundError: If character doesn't exist
         """
@@ -476,7 +477,7 @@ class FilesystemCharacterStore(CharacterStore):
 
     def delete(self, workspace_id: str, character_id: str) -> None:
         """Delete a character.
-        
+
         Args:
             workspace_id: ID of the workspace containing the character
             character_id: ID of the character to delete
@@ -490,16 +491,16 @@ class FilesystemCharacterStore(CharacterStore):
 
 def _safe_extract_zip_bytes(zip_bytes: bytes, destination_dir: Path) -> None:
     """Safely extract ZIP bytes to a directory, preventing path traversal.
-    
+
     Validates all ZIP entries before extraction to prevent:
     - Absolute path attacks
     - Directory traversal (../)
     - Drive letter attacks (C:)
-    
+
     Args:
         zip_bytes: ZIP file contents as bytes
         destination_dir: Directory to extract files into
-        
+
     Raises:
         ValueError: If ZIP contains unsafe paths
     """

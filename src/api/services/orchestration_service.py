@@ -87,7 +87,11 @@ class OrchestrationService:
                 }
             )
         except ValueError as exc:
-            logger.warning("invalid_orchestration_request", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "invalid_orchestration_request",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return Err(
                 Error(
                     code="INVALID_REQUEST",
@@ -181,5 +185,9 @@ class OrchestrationService:
                         available.add(item.name)
             return sorted(list(available))[:3] or ["pilot", "scientist", "engineer"]
         except Exception as exc:
-            logger.warning("failed_to_fetch_characters", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "failed_to_fetch_characters",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return ["pilot", "scientist", "engineer"]

@@ -168,9 +168,7 @@ class LLMWorldGenerator(WorldGeneratorPort):
         user_prompt = self._build_user_prompt(request)
 
         try:
-            response_text = asyncio.run(
-                self._call_gemini(system_prompt, user_prompt)
-            )
+            response_text = asyncio.run(self._call_gemini(system_prompt, user_prompt))
             result = self._parse_and_build(response_text, request)
             log.info(
                 "World generation completed",
@@ -863,9 +861,11 @@ Use temp_id values (temp_faction_1, temp_location_1, etc.) for cross-references.
                 rag_query = self._extract_keywords_for_dialogue(
                     character, context, mood
                 )
-                system_prompt, chunks_retrieved, tokens_added = (
-                    await self._enrich_with_rag(rag_query, base_system_prompt)
-                )
+                (
+                    system_prompt,
+                    chunks_retrieved,
+                    tokens_added,
+                ) = await self._enrich_with_rag(rag_query, base_system_prompt)
                 log.info(
                     "rag_context_injected",
                     chunks_retrieved=chunks_retrieved,
@@ -1044,9 +1044,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
             import asyncio
 
-            response_text = asyncio.run(
-                self._call_gemini(system_prompt, user_prompt)
-            )
+            response_text = asyncio.run(self._call_gemini(system_prompt, user_prompt))
             result = self._parse_relationship_history_response(response_text)
 
             log.info("Relationship history generation completed")
@@ -1236,9 +1234,11 @@ Return valid JSON only with the exact structure specified in the system prompt."
                 rag_query = self._extract_keywords_for_beats(
                     current_beats, scene_context, mood_target
                 )
-                system_prompt, chunks_retrieved, tokens_added = (
-                    await self._enrich_with_rag(rag_query, base_system_prompt)
-                )
+                (
+                    system_prompt,
+                    chunks_retrieved,
+                    tokens_added,
+                ) = await self._enrich_with_rag(rag_query, base_system_prompt)
                 log.info(
                     "rag_context_injected",
                     chunks_retrieved=chunks_retrieved,
@@ -1338,7 +1338,9 @@ Return valid JSON only with the exact structure specified in the system prompt."
             mood_trend = (
                 "upward"
                 if current_mood > 0
-                else "downward" if current_mood < 0 else "neutral"
+                else "downward"
+                if current_mood < 0
+                else "neutral"
             )
         else:
             current_mood = 0
@@ -1455,9 +1457,7 @@ Return valid JSON only with the exact structure specified in the system prompt."
 
             import asyncio
 
-            response_text = asyncio.run(
-                self._call_gemini(system_prompt, user_prompt)
-            )
+            response_text = asyncio.run(self._call_gemini(system_prompt, user_prompt))
             result = self._parse_critique_response(response_text)
 
             log.info(
@@ -1603,4 +1603,3 @@ Return valid JSON only with the exact structure specified in the system prompt."
             highlights=highlights,
             summary=summary,
         )
-

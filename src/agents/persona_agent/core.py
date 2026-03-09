@@ -199,7 +199,9 @@ class PersonaAgentCore:
         except Exception:
             logger.error("failed_to_set_up_event_handling")
 
-    def handle_turn_start(self, world_state_update: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def handle_turn_start(
+        self, world_state_update: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         Handle the TURN_START event by processing the world state and initiating decision-making.
 
@@ -224,9 +226,7 @@ class PersonaAgentCore:
 
         except Exception as e:
             logger.error(
-                "error_handling_turn_start",
-                agent_id=self.agent_id,
-                error=str(e)
+                "error_handling_turn_start", agent_id=self.agent_id, error=str(e)
             )
             # Emit a safe fallback action
             self.event_bus.emit("AGENT_ACTION_COMPLETE", agent=self, action=None)
@@ -271,16 +271,16 @@ class PersonaAgentCore:
                     )
 
                 logger.debug(
-                "agent_processed_world_state_update",
-                agent_id=self.agent_id,
-                turn_number=event_summary["turn_number"]
-            )
+                    "agent_processed_world_state_update",
+                    agent_id=self.agent_id,
+                    turn_number=event_summary["turn_number"],
+                )
 
         except Exception as e:
             logger.error(
                 "error_processing_world_state_update",
                 agent_id=self.agent_id,
-                error=str(e)
+                error=str(e),
             )
 
     def _create_basic_action(
@@ -311,9 +311,7 @@ class PersonaAgentCore:
 
         except Exception as e:
             logger.error(
-                "error_creating_basic_action",
-                agent_id=self.agent_id,
-                error=str(e)
+                "error_creating_basic_action", agent_id=self.agent_id, error=str(e)
             )
             return None
 
@@ -356,7 +354,11 @@ class PersonaAgentCore:
                 return content
             return ""
         except Exception as e:
-            logger.error("error_accessing_character_context", agent_id=self.agent_id, error=str(e))
+            logger.error(
+                "error_accessing_character_context",
+                agent_id=self.agent_id,
+                error=str(e),
+            )
             return ""
 
     @property
@@ -401,7 +403,9 @@ class PersonaAgentCore:
                 "initialization_time": getattr(self, "_initialization_time", "unknown"),
             }
         except Exception as e:
-            logger.error("error_generating_agent_info", agent_id=self.agent_id, error=str(e))
+            logger.error(
+                "error_generating_agent_info", agent_id=self.agent_id, error=str(e)
+            )
             return {"agent_id": self.agent_id, "error": str(e)}
 
     def update_character_state(
@@ -421,7 +425,9 @@ class PersonaAgentCore:
         try:
             if status is not None:
                 self.current_status = status
-                logger.info("agent_status_updated", agent_id=self.agent_id, status=status)
+                logger.info(
+                    "agent_status_updated", agent_id=self.agent_id, status=status
+                )
 
             if location is not None:
                 old_location = self.current_location
@@ -430,7 +436,7 @@ class PersonaAgentCore:
                     "agent_moved",
                     agent_id=self.agent_id,
                     from_location=old_location,
-                    to_location=location
+                    to_location=location,
                 )
 
             if morale is not None:
@@ -439,11 +445,13 @@ class PersonaAgentCore:
                 logger.info(
                     "agent_morale_updated",
                     agent_id=self.agent_id,
-                    morale=self.morale_level
+                    morale=self.morale_level,
                 )
 
         except Exception as e:
-            logger.error("error_updating_character_state", agent_id=self.agent_id, error=str(e))
+            logger.error(
+                "error_updating_character_state", agent_id=self.agent_id, error=str(e)
+            )
 
     def add_relationship(self, entity_id: str, relationship_strength: float) -> None:
         """
@@ -462,11 +470,13 @@ class PersonaAgentCore:
                 "agent_relationship_updated",
                 agent_id=self.agent_id,
                 entity_id=entity_id,
-                strength=strength
+                strength=strength,
             )
 
         except Exception as e:
-            logger.error("error_adding_relationship", agent_id=self.agent_id, error=str(e))
+            logger.error(
+                "error_adding_relationship", agent_id=self.agent_id, error=str(e)
+            )
 
     def get_relationship_strength(self, entity_id: str) -> float:
         """
@@ -497,23 +507,23 @@ class PersonaAgentCore:
                     self.subjective_worldview[category].append({key: value})
 
                 logger.debug(
-                "agent_updated_subjective_worldview",
-                agent_id=self.agent_id,
-                category=category,
-                key=key
-            )
+                    "agent_updated_subjective_worldview",
+                    agent_id=self.agent_id,
+                    category=category,
+                    key=key,
+                )
             else:
                 logger.warning(
-                "unknown_worldview_category",
-                agent_id=self.agent_id,
-                category=category
-            )
+                    "unknown_worldview_category",
+                    agent_id=self.agent_id,
+                    category=category,
+                )
 
         except Exception as e:
             logger.error(
                 "error_updating_subjective_worldview",
                 agent_id=self.agent_id,
-                error=str(e)
+                error=str(e),
             )
 
     def is_active(self) -> bool:
@@ -557,5 +567,7 @@ class PersonaAgentCore:
                 "last_updated": datetime.now().isoformat(),
             }
         except Exception as e:
-            logger.error("error_generating_core_metrics", agent_id=self.agent_id, error=str(e))
+            logger.error(
+                "error_generating_core_metrics", agent_id=self.agent_id, error=str(e)
+            )
             return {"agent_id": self.agent_id, "error": str(e)}

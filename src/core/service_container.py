@@ -112,7 +112,11 @@ class ServiceContainerError(Error):
             code="SERVICE_CONTAINER_ERROR",
             message=message,
             recoverable=True,
-            details={"operation": operation, "service_name": service_name, **(details or {})},
+            details={
+                "operation": operation,
+                "service_name": service_name,
+                **(details or {}),
+            },
         )
 
 
@@ -140,9 +144,9 @@ class ServiceContainer:
 
         # Service registry
         self._services: Dict[Type, ServiceDescriptor] = {}
-        self._instances: Dict[Type, Dict[str, ServiceInstance]] = (
-            {}
-        )  # Type -> {scope_key: instance}
+        self._instances: Dict[
+            Type, Dict[str, ServiceInstance]
+        ] = {}  # Type -> {scope_key: instance}
         self._singletons: Dict[Type, ServiceInstance] = {}
 
         # Lifecycle management
@@ -630,7 +634,9 @@ class ServiceContainer:
                         "interface": service_type.__name__,
                         "implementation": descriptor.implementation.__name__,
                         "scope": descriptor.scope.value,
-                        "dependencies": [dep.__name__ for dep in descriptor.dependencies],
+                        "dependencies": [
+                            dep.__name__ for dep in descriptor.dependencies
+                        ],
                         "tags": list(descriptor.tags),
                         "priority": descriptor.priority,
                         "configuration_section": descriptor.configuration_section,
@@ -809,6 +815,7 @@ class ServiceContainer:
         visited: set[Any] = set()
         temp_visited: set[Any] = set()
         order: list[Any] = []
+
         def visit(service_type: Type) -> None:
             if service_type in temp_visited:
                 raise DependencyResolutionError(

@@ -20,7 +20,7 @@ _semantic_caches: "weakref.WeakSet[SemanticCacheBucketed]" = weakref.WeakSet()
 
 def register_exact(cache: ExactCache) -> None:
     """Register an exact cache for global invalidation.
-    
+
     Args:
         cache: ExactCache instance to register
     """
@@ -29,7 +29,7 @@ def register_exact(cache: ExactCache) -> None:
 
 def register_semantic(cache: SemanticCacheBucketed) -> None:
     """Register a semantic cache for global invalidation.
-    
+
     Args:
         cache: SemanticCacheBucketed instance to register
     """
@@ -38,13 +38,13 @@ def register_semantic(cache: SemanticCacheBucketed) -> None:
 
 def invalidate_by_tags(tags: Sequence[str]) -> int:
     """Invalidate cache entries matching any of the given tags.
-    
+
     Iterates through all registered caches and removes entries
     whose metadata tags match the provided tags.
-    
+
     Args:
         tags: Sequence of tags to match for invalidation
-        
+
     Returns:
         Total number of entries invalidated across all caches
     """

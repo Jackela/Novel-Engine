@@ -124,7 +124,9 @@ async def get_campaigns() -> CampaignsListResponse:
         return CampaignsListResponse(campaigns=campaigns)
 
     except Exception as exc:
-        logger.error("retrieve_campaigns_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "retrieve_campaigns_failed", error=str(exc), error_type=type(exc).__name__
+        )
         return CampaignsListResponse(campaigns=[])
 
 
@@ -161,7 +163,12 @@ async def get_campaign(campaign_id: str) -> CampaignDetailResponse:
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("retrieve_campaign_failed", error=str(exc), error_type=type(exc).__name__, campaign_id=campaign_id)
+        logger.error(
+            "retrieve_campaign_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            campaign_id=campaign_id,
+        )
         raise HTTPException(
             status_code=500, detail="Failed to retrieve campaign"
         ) from exc
@@ -197,5 +204,7 @@ async def create_campaign(request: CampaignCreationRequest) -> CampaignCreationR
         )
 
     except Exception as exc:
-        logger.error("create_campaign_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "create_campaign_failed", error=str(exc), error_type=type(exc).__name__
+        )
         raise HTTPException(status_code=500, detail=f"Failed to create campaign: {exc}")

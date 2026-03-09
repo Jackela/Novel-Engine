@@ -40,7 +40,9 @@ class EnhancedPerformanceTracker(PerformanceTracker):
     while adding comprehensive observability capabilities.
     """
 
-    def __init__(self, metrics_collector: Optional[PrometheusMetricsCollector] = None) -> None:
+    def __init__(
+        self, metrics_collector: Optional[PrometheusMetricsCollector] = None
+    ) -> None:
         """
         Initialize enhanced performance tracker.
 

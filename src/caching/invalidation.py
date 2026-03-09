@@ -23,16 +23,16 @@ _EVENT_TAG_MAP = {
 
 def invalidate_event(event: Dict[str, str]) -> int:
     """Invalidate cache entries based on a domain event.
-    
+
     Maps event types to cache tags and invalidates matching entries
     across all registered caches.
-    
+
     Args:
         event: Domain event dictionary with 'type' and relevant fields
-        
+
     Returns:
         Number of cache entries invalidated
-        
+
     Example:
         >>> event = {"type": "TemplateUpdated", "template_id": "welcome"}
         >>> invalidate_event(event)

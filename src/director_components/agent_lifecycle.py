@@ -236,7 +236,9 @@ class AgentLifecycleManager:
             for agent_id, metrics in self._agent_metrics.items()
         }
 
-    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0) -> None:
+    async def update_agent_activity(
+        self, agent_id: str, response_time: float = 0.0
+    ) -> None:
         """Update agent activity metrics."""
         metrics = self._agent_metrics.get(agent_id)
         if metrics:

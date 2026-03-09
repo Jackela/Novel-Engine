@@ -12,7 +12,6 @@ This module provides test coverage for the RumorService including:
 Total: 35 tests
 """
 
-
 import pytest
 
 from src.api.schemas.world_schemas import SortByEnum
@@ -26,7 +25,6 @@ from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository im
 )
 
 pytestmark = pytest.mark.unit
-
 
 
 @pytest.fixture
@@ -122,7 +120,9 @@ class TestGetLocationRumors:
     """Tests for get_location_rumors method."""
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_success(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_location_rumors_success(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test successful retrieval of location rumors."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -149,7 +149,9 @@ class TestGetLocationRumors:
         assert result.value == []
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_sort_by_recent(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_location_rumors_sort_by_recent(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test sorting rumors by recent."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -167,7 +169,9 @@ class TestGetLocationRumors:
         assert rumors[0].rumor_id == "rumor-2"  # Feb 1
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_sort_by_reliable(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_location_rumors_sort_by_reliable(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test sorting rumors by reliability (truth value)."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -185,7 +189,9 @@ class TestGetLocationRumors:
         assert rumors[0].truth_value == 90
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_sort_by_spread(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_location_rumors_sort_by_spread(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test sorting rumors by spread count."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -203,7 +209,9 @@ class TestGetLocationRumors:
         assert rumors[0].spread_count == 10
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_with_limit(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_location_rumors_with_limit(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test limiting number of returned rumors."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -219,7 +227,9 @@ class TestGetLocationRumors:
         assert len(result.value) == 1
 
     @pytest.mark.asyncio
-    async def test_get_location_rumors_not_at_location(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_location_rumors_not_at_location(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test that rumors not at the location are not returned."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -242,7 +252,9 @@ class TestGetWorldRumors:
     """Tests for get_world_rumors method."""
 
     @pytest.mark.asyncio
-    async def test_get_world_rumors_success(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_world_rumors_success(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test successful retrieval of world rumors."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -262,7 +274,9 @@ class TestGetWorldRumors:
         assert result.value == []
 
     @pytest.mark.asyncio
-    async def test_get_world_rumors_filtered_by_location(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_world_rumors_filtered_by_location(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test filtering world rumors by location."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -278,7 +292,9 @@ class TestGetWorldRumors:
         assert len(result.value) == 1
 
     @pytest.mark.asyncio
-    async def test_get_world_rumors_with_sorting(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_world_rumors_with_sorting(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test world rumors with sorting."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -296,7 +312,9 @@ class TestGetWorldRumors:
             assert rumors[i].truth_value >= rumors[i + 1].truth_value
 
     @pytest.mark.asyncio
-    async def test_get_world_rumors_with_limit(self, rumor_service, rumor_repo, multiple_rumors):
+    async def test_get_world_rumors_with_limit(
+        self, rumor_service, rumor_repo, multiple_rumors
+    ):
         """Test limiting world rumors."""
         for rumor in multiple_rumors:
             await rumor_repo.save(rumor)
@@ -345,7 +363,9 @@ class TestGetRumor:
         assert result.value is None
 
     @pytest.mark.asyncio
-    async def test_get_rumor_returns_rumor_type(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_rumor_returns_rumor_type(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test that get_rumor returns Rumor type."""
         await rumor_repo.save(sample_rumor)
 
@@ -358,7 +378,9 @@ class TestGetRumor:
         assert isinstance(result.value, Rumor)
 
     @pytest.mark.asyncio
-    async def test_get_rumor_correct_content(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_rumor_correct_content(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test that retrieved rumor has correct content."""
         await rumor_repo.save(sample_rumor)
 
@@ -420,7 +442,9 @@ class TestGetPropagationGraph:
     """Tests for get_propagation_graph method."""
 
     @pytest.mark.asyncio
-    async def test_get_propagation_graph_success(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_propagation_graph_success(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test successful graph generation."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -436,7 +460,9 @@ class TestGetPropagationGraph:
         assert "metadata" in data
 
     @pytest.mark.asyncio
-    async def test_get_propagation_graph_specific_rumor(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_propagation_graph_specific_rumor(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test graph for specific rumor."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -461,7 +487,9 @@ class TestGetPropagationGraph:
         assert data["metadata"]["total_nodes"] == 0
 
     @pytest.mark.asyncio
-    async def test_get_propagation_graph_node_types(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_propagation_graph_node_types(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test that graph contains correct node types."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -470,14 +498,16 @@ class TestGetPropagationGraph:
 
         assert result.is_ok
         nodes = result.value["graph"]["nodes"]
-        
+
         # Should have rumor node and location nodes
         node_types = {node["type"] for node in nodes}
         assert "rumor" in node_types
         assert "location" in node_types
 
     @pytest.mark.asyncio
-    async def test_get_propagation_graph_edge_types(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_propagation_graph_edge_types(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test that graph contains correct edge types."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")
@@ -486,14 +516,16 @@ class TestGetPropagationGraph:
 
         assert result.is_ok
         edges = result.value["graph"]["edges"]
-        
+
         # Should have origin and spread edges
         edge_types = {edge["type"] for edge in edges}
         assert "origin" in edge_types
         assert "spread" in edge_types
 
     @pytest.mark.asyncio
-    async def test_get_propagation_graph_metadata(self, rumor_service, rumor_repo, sample_rumor):
+    async def test_get_propagation_graph_metadata(
+        self, rumor_service, rumor_repo, sample_rumor
+    ):
         """Test graph metadata."""
         await rumor_repo.save(sample_rumor)
         rumor_repo.register_rumor_world(sample_rumor.rumor_id, "world-1")

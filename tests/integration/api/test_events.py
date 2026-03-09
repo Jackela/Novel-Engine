@@ -33,7 +33,9 @@ class TestEventStreamEndpoint:
     These tests are skipped because they require async HTTP client.
     """
 
-    @pytest.mark.skip(reason="SSE streaming hangs with sync TestClient - requires async client")
+    @pytest.mark.skip(
+        reason="SSE streaming hangs with sync TestClient - requires async client"
+    )
     def test_stream_events_returns_sse(self, client):
         """Test that stream endpoint returns SSE content type."""
         response = client.get("/api/events/stream")
@@ -41,7 +43,9 @@ class TestEventStreamEndpoint:
         assert response.status_code == 200
         assert "text/event-stream" in response.headers.get("content-type", "")
 
-    @pytest.mark.skip(reason="SSE streaming hangs with sync TestClient - requires async client")
+    @pytest.mark.skip(
+        reason="SSE streaming hangs with sync TestClient - requires async client"
+    )
     def test_stream_events_with_limit(self, client):
         """Test streaming events with a limit."""
         # This test just verifies the endpoint accepts the parameter
@@ -50,7 +54,9 @@ class TestEventStreamEndpoint:
         assert response.status_code == 200
         assert "text/event-stream" in response.headers.get("content-type", "")
 
-    @pytest.mark.skip(reason="SSE streaming hangs with sync TestClient - requires async client")
+    @pytest.mark.skip(
+        reason="SSE streaming hangs with sync TestClient - requires async client"
+    )
     def test_stream_events_with_interval(self, client):
         """Test streaming events with custom interval."""
         response = client.get("/api/events/stream?interval=1.0")
@@ -369,9 +375,7 @@ class TestHistoricalEventsEndpoints:
             )
 
         # Get first page
-        response = client.get(
-            "/api/world/pagination-world/events?page=1&page_size=2"
-        )
+        response = client.get("/api/world/pagination-world/events?page=1&page_size=2")
 
         assert response.status_code == 200
         data = response.json()

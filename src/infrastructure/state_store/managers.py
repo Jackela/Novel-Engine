@@ -210,11 +210,12 @@ class StateStoreManager:
 
         # Create the appropriate store based on config
         from src.infrastructure.state_store.factory import StateStoreFactory
+
         self._store = StateStoreFactory.create_store(config)
 
     async def _initialize_store(self) -> None:
         """Initialize the underlying store."""
-        if self._store and hasattr(self._store, 'connect'):
+        if self._store and hasattr(self._store, "connect"):
             await self._store.connect()
 
     async def initialize(self) -> None:
@@ -265,13 +266,16 @@ class ConfigurationManager:
         self.config = config
 
         from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+
         self.store = PostgreSQLStateStore(config)
 
     async def initialize(self) -> None:
         """Initialize configuration manager."""
         await self.store.connect()
 
-    async def get_config(self, config_type: str, config_id: str) -> Optional[Dict[str, Any]]:
+    async def get_config(
+        self, config_type: str, config_id: str
+    ) -> Optional[Dict[str, Any]]:
         """Get configuration by type and ID.
 
         Args:

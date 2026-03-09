@@ -20,12 +20,14 @@ from .shared.errors import (
 class ConflictResolutionService:
     """
     Service for conflict detection and resolution.
-    
+
     Provides business operations for identifying conflicts, suggesting
     resolutions, and mediating disputes.
     """
 
-    def __init__(self, negotiation_service: Optional[NegotiationService] = None) -> None:
+    def __init__(
+        self, negotiation_service: Optional[NegotiationService] = None
+    ) -> None:
         """Initialize with domain negotiation service."""
         self.negotiation_service = negotiation_service or NegotiationService()
 
@@ -45,10 +47,12 @@ class ConflictResolutionService:
             Result containing conflict analysis or error
         """
         if not parties:
-            return Err(ConflictError(
-                message="At least one party required for conflict analysis",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message="At least one party required for conflict analysis",
+                    recoverable=True,
+                )
+            )
 
         try:
             all_responses = responses or []
@@ -90,10 +94,12 @@ class ConflictResolutionService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ConflictError(
-                message=f"Failed to analyze conflicts: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message=f"Failed to analyze conflicts: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def suggest_conflict_resolutions(
         self,
@@ -111,11 +117,13 @@ class ConflictResolutionService:
             Result containing resolution suggestions or error
         """
         if not conflict:
-            return Err(ValidationError(
-                message="Conflict is required",
-                field="conflict",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Conflict is required",
+                    field="conflict",
+                    recoverable=True,
+                )
+            )
 
         try:
             conflict_type = conflict.get("type", "unknown")
@@ -125,39 +133,51 @@ class ConflictResolutionService:
             suggestions: List[Dict[str, Any]] = []
 
             if conflict_type == "negotiation_style_conflict":
-                suggestions.append({
-                    "approach": "mediation",
-                    "description": "Use neutral mediator to bridge style differences",
-                    "effectiveness": "high",
-                })
-                suggestions.append({
-                    "approach": "protocol",
-                    "description": "Establish common ground rules",
-                    "effectiveness": "medium",
-                })
+                suggestions.append(
+                    {
+                        "approach": "mediation",
+                        "description": "Use neutral mediator to bridge style differences",
+                        "effectiveness": "high",
+                    }
+                )
+                suggestions.append(
+                    {
+                        "approach": "protocol",
+                        "description": "Establish common ground rules",
+                        "effectiveness": "medium",
+                    }
+                )
             elif conflict_type == "authority_conflict":
-                suggestions.append({
-                    "approach": "escalation",
-                    "description": "Escalate to decision makers",
-                    "effectiveness": "high",
-                })
-                suggestions.append({
-                    "approach": "delegation",
-                    "description": "Grant limited authority to representatives",
-                    "effectiveness": "medium",
-                })
+                suggestions.append(
+                    {
+                        "approach": "escalation",
+                        "description": "Escalate to decision makers",
+                        "effectiveness": "high",
+                    }
+                )
+                suggestions.append(
+                    {
+                        "approach": "delegation",
+                        "description": "Grant limited authority to representatives",
+                        "effectiveness": "medium",
+                    }
+                )
             elif conflict_type == "response_conflict":
-                suggestions.append({
-                    "approach": "renegotiation",
-                    "description": "Revisit conflicting terms",
-                    "effectiveness": "high",
-                })
+                suggestions.append(
+                    {
+                        "approach": "renegotiation",
+                        "description": "Revisit conflicting terms",
+                        "effectiveness": "high",
+                    }
+                )
             else:
-                suggestions.append({
-                    "approach": "dialogue",
-                    "description": "Facilitate open discussion",
-                    "effectiveness": "medium",
-                })
+                suggestions.append(
+                    {
+                        "approach": "dialogue",
+                        "description": "Facilitate open discussion",
+                        "effectiveness": "medium",
+                    }
+                )
 
             result = {
                 "conflict_type": conflict_type,
@@ -169,10 +189,12 @@ class ConflictResolutionService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ConflictError(
-                message=f"Failed to suggest resolutions: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message=f"Failed to suggest resolutions: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def assess_mediation_needed(
         self,
@@ -190,10 +212,12 @@ class ConflictResolutionService:
             Result containing mediation assessment or error
         """
         if not parties:
-            return Err(ConflictError(
-                message="At least one party required",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message="At least one party required",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate mediation score
@@ -201,7 +225,9 @@ class ConflictResolutionService:
             reasons: List[str] = []
 
             # Factor 1: Conflict severity
-            critical_count = sum(1 for c in conflicts if c.get("severity") == "critical")
+            critical_count = sum(
+                1 for c in conflicts if c.get("severity") == "critical"
+            )
             if critical_count > 0:
                 mediation_score += 30 * critical_count
                 reasons.append(f"{critical_count} critical conflict(s) detected")
@@ -227,17 +253,23 @@ class ConflictResolutionService:
             result = {
                 "mediation_score": min(100, mediation_score),
                 "mediation_recommended": mediation_recommended,
-                "urgency": "high" if mediation_score >= 60 else "medium" if mediation_score >= 40 else "low",
+                "urgency": "high"
+                if mediation_score >= 60
+                else "medium"
+                if mediation_score >= 40
+                else "low",
                 "reasons": reasons,
                 "benefits": self._get_mediation_benefits(mediation_score),
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(ConflictError(
-                message=f"Failed to assess mediation needs: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message=f"Failed to assess mediation needs: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def generate_de_escalation_plan(
         self,
@@ -255,51 +287,58 @@ class ConflictResolutionService:
             Result containing de-escalation plan or error
         """
         if not conflicts:
-            return Err(ConflictError(
-                message="At least one conflict required",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message="At least one conflict required",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Sort conflicts by severity
             severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
             sorted_conflicts = sorted(
-                conflicts,
-                key=lambda c: severity_order.get(c.get("severity", "low"), 3)
+                conflicts, key=lambda c: severity_order.get(c.get("severity", "low"), 3)
             )
 
             # Generate steps
             steps: List[Dict[str, Any]] = []
-            
+
             # Immediate steps for critical conflicts
             critical = [c for c in sorted_conflicts if c.get("severity") == "critical"]
             if critical:
-                steps.append({
-                    "order": 1,
-                    "phase": "immediate",
-                    "action": "Address critical conflicts",
-                    "description": f"Prioritize resolving {len(critical)} critical conflict(s)",
-                    "estimated_time": "1-2 hours",
-                })
+                steps.append(
+                    {
+                        "order": 1,
+                        "phase": "immediate",
+                        "action": "Address critical conflicts",
+                        "description": f"Prioritize resolving {len(critical)} critical conflict(s)",
+                        "estimated_time": "1-2 hours",
+                    }
+                )
 
             # Build rapport
-            steps.append({
-                "order": 2,
-                "phase": "rapport",
-                "action": "Rebuild trust",
-                "description": "Facilitate open dialogue between parties",
-                "estimated_time": "2-4 hours",
-            })
+            steps.append(
+                {
+                    "order": 2,
+                    "phase": "rapport",
+                    "action": "Rebuild trust",
+                    "description": "Facilitate open dialogue between parties",
+                    "estimated_time": "2-4 hours",
+                }
+            )
 
             # Address remaining conflicts
             if len(sorted_conflicts) > len(critical):
-                steps.append({
-                    "order": 3,
-                    "phase": "resolution",
-                    "action": "Resolve remaining conflicts",
-                    "description": f"Address {len(sorted_conflicts) - len(critical)} remaining conflict(s)",
-                    "estimated_time": "4-8 hours",
-                })
+                steps.append(
+                    {
+                        "order": 3,
+                        "phase": "resolution",
+                        "action": "Resolve remaining conflicts",
+                        "description": f"Address {len(sorted_conflicts) - len(critical)} remaining conflict(s)",
+                        "estimated_time": "4-8 hours",
+                    }
+                )
 
             result = {
                 "total_conflicts": len(conflicts),
@@ -315,20 +354,20 @@ class ConflictResolutionService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ConflictError(
-                message=f"Failed to generate de-escalation plan: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message=f"Failed to generate de-escalation plan: {e!s}",
+                    recoverable=True,
+                )
+            )
 
-    def _calculate_intensity(
-        self, by_severity: Dict[str, List[Dict[str, Any]]]
-    ) -> str:
+    def _calculate_intensity(self, by_severity: Dict[str, List[Dict[str, Any]]]) -> str:
         """Calculate overall conflict intensity."""
         score = (
-            len(by_severity["critical"]) * 4 +
-            len(by_severity["high"]) * 3 +
-            len(by_severity["medium"]) * 2 +
-            len(by_severity["low"]) * 1
+            len(by_severity["critical"]) * 4
+            + len(by_severity["high"]) * 3
+            + len(by_severity["medium"]) * 2
+            + len(by_severity["low"]) * 1
         )
 
         if score >= 10:
@@ -351,7 +390,7 @@ class ConflictResolutionService:
     def _get_mediation_benefits(self, score: int) -> List[str]:
         """Get benefits of mediation based on score."""
         benefits = ["Neutral perspective"]
-        
+
         if score >= 40:
             benefits.append("Structured process")
         if score >= 60:
@@ -364,6 +403,6 @@ class ConflictResolutionService:
         """Estimate total time for de-escalation."""
         if not steps:
             return "0 hours"
-        
+
         # Simple estimation
         return "8-16 hours"

@@ -16,7 +16,6 @@ from src.contexts.narratives.domain.value_objects import StoryArcPhase, StoryArc
 pytestmark = pytest.mark.unit
 
 
-
 class TestStoryArcManagerInitialization:
     """测试StoryArcManager初始化"""
 
@@ -497,11 +496,11 @@ class TestEdgeCases:
             transition_requirements=[],
         )
         manager = StoryArcManager(state)
-        
+
         # 推进到 RISING_ACTION
         state1 = manager.advance_to_next_phase()
         assert state1.current_phase == StoryArcPhase.RISING_ACTION
-        
+
         # 手动设置为可推进
         state2 = StoryArcState(
             arc_id="test",
@@ -510,7 +509,7 @@ class TestEdgeCases:
             transition_requirements=[],
         )
         manager.update_state(state2)
-        
+
         # 推进到 CLIMAX
         state3 = manager.advance_to_next_phase()
         assert state3.current_phase == StoryArcPhase.CLIMAX
@@ -533,7 +532,7 @@ class TestEdgeCases:
     def test_state_timestamp_updated_on_advance(self):
         """测试推进时更新时间戳"""
         from datetime import datetime, timezone
-        
+
         ready_state = StoryArcState(
             arc_id="test-arc",
             current_phase=StoryArcPhase.EXPOSITION,

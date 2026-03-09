@@ -50,9 +50,11 @@ class DialogueGeneratorStrategy(WorldGenerationStrategy):
             # Enrich with RAG if enabled
             if use_rag and self.generator._rag_service is not None:
                 rag_query = self._extract_keywords(character, context, mood)
-                system_prompt, chunks_retrieved, tokens_added = await self._enrich_with_rag(
-                    rag_query, base_system_prompt
-                )
+                (
+                    system_prompt,
+                    chunks_retrieved,
+                    tokens_added,
+                ) = await self._enrich_with_rag(rag_query, base_system_prompt)
                 log.info(
                     "rag_context_injected",
                     chunks_retrieved=chunks_retrieved,
@@ -61,7 +63,9 @@ class DialogueGeneratorStrategy(WorldGenerationStrategy):
             else:
                 system_prompt = base_system_prompt
 
-            response_text = await self.generator._call_gemini(system_prompt, user_prompt)
+            response_text = await self.generator._call_gemini(
+                system_prompt, user_prompt
+            )
             result = self._parse_response(response_text)
 
             log.info("Dialogue generation completed", tone=result.tone)

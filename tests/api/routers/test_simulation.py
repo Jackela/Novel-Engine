@@ -61,8 +61,14 @@ class TestPreviewSimulation:
         assert data["diplomacy_changes"] == []
         assert data["calendar_before"] is not None
         assert data["calendar_after"] is not None
-        assert data["calendar_before"]["formatted_date"] == "Year 1, Month 1, Day 1 - First Age"
-        assert data["calendar_after"]["formatted_date"] == "Year 1, Month 1, Day 2 - First Age"
+        assert (
+            data["calendar_before"]["formatted_date"]
+            == "Year 1, Month 1, Day 1 - First Age"
+        )
+        assert (
+            data["calendar_after"]["formatted_date"]
+            == "Year 1, Month 1, Day 2 - First Age"
+        )
 
     def test_preview_simulation_custom_days(self, client):
         """Test preview with custom days parameter."""
@@ -242,7 +248,9 @@ class TestCommitSimulation:
             assert "status_url" in detail
         else:
             # Detail might be a string representation
-            assert "accepted" in str(detail).lower() or "background" in str(detail).lower()
+            assert (
+                "accepted" in str(detail).lower() or "background" in str(detail).lower()
+            )
 
     def test_commit_simulation_invalid_days(self, client):
         """Test commit with invalid days."""
@@ -506,7 +514,9 @@ class TestEdgeCases:
 
         # Commit more than max history (but respect rate limit)
         tick_ids = []
-        max_commits = min(sim_module.MAX_HISTORY_PER_WORLD + 5, MAX_COMMITS_PER_MINUTE - 1)
+        max_commits = min(
+            sim_module.MAX_HISTORY_PER_WORLD + 5, MAX_COMMITS_PER_MINUTE - 1
+        )
 
         for i in range(max_commits):
             response = client.post(

@@ -282,7 +282,9 @@ class TestFactionIntentStatusTransitions:
             rationale="Test rationale",
         )
 
-        with pytest.raises(ValueError, match="Cannot transition from proposed to executed"):
+        with pytest.raises(
+            ValueError, match="Cannot transition from proposed to executed"
+        ):
             intent.execute()
 
     @pytest.mark.unit

@@ -77,7 +77,6 @@ from src.contexts.world.domain.entities.location import (  # noqa: E402
     LocationType,
 )
 
-
 # Now import the actual modules we're testing
 from src.contexts.world.domain.entities.world_setting import (  # noqa: E402
     Era,

@@ -4,7 +4,6 @@ Test suite for BM25 Retriever module.
 Tests BM25 scoring, ranking, and retrieval functionality.
 """
 
-
 import pytest
 
 from src.contexts.knowledge.application.services.bm25_retriever import (
@@ -18,7 +17,6 @@ from src.contexts.knowledge.application.services.bm25_retriever import (
 )
 
 pytestmark = pytest.mark.unit
-
 
 
 class TestTokenize:
@@ -53,7 +51,7 @@ class TestIndexedDocument:
             tokens=["test", "content"],
             metadata={"key": "value"},
         )
-        
+
         assert doc.doc_id == "doc1"
         assert doc.source_id == "source1"
         assert doc.source_type == "CHARACTER"
@@ -72,7 +70,7 @@ class TestBM25Result:
             score=1.5,
             metadata={"key": "value"},
         )
-        
+
         assert result.doc_id == "doc1"
         assert result.score == 1.5
 
@@ -88,7 +86,7 @@ class TestBM25IndexStats:
             avg_doc_length=50.0,
             last_updated="2024-01-01T00:00:00",
         )
-        
+
         assert stats.total_documents == 100
         assert stats.total_tokens == 5000
 
@@ -190,16 +188,12 @@ class TestBM25RetrieverFilters:
 
     def test_matches_filters_tags_single(self, retriever, sample_document):
         """Test single tag filter matching."""
-        matches = retriever._matches_filters(
-            sample_document, {"tags": "hero"}
-        )
+        matches = retriever._matches_filters(sample_document, {"tags": "hero"})
         assert matches is True
 
     def test_matches_filters_metadata(self, retriever, sample_document):
         """Test metadata filter matching."""
-        matches = retriever._matches_filters(
-            sample_document, {"level": 10}
-        )
+        matches = retriever._matches_filters(sample_document, {"level": 10})
         assert matches is True
 
     def test_matches_filters_no_filters(self, retriever, sample_document):

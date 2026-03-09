@@ -72,7 +72,7 @@ class EnhancedDecisionEngine(DecisionEngine):
                 "action_enhanced",
                 action_type=action.get("action_type", "unknown"),
                 base_score=base_score,
-                context_score=context_score
+                context_score=context_score,
             )
             return context_score
 
@@ -226,7 +226,9 @@ class EnhancedDecisionEngine(DecisionEngine):
             return max(0.7, min(1.5, modifier))  # 30% penalty to 50% bonus
 
         except Exception as e:
-            logger.warning("error_calculating_behavioral_trigger_modifier", error=str(e))
+            logger.warning(
+                "error_calculating_behavioral_trigger_modifier", error=str(e)
+            )
             return 1.0
 
     def _get_relationship_modifier(self, action: Dict, relationships: Dict) -> float:
@@ -420,7 +422,7 @@ class EnhancedDecisionEngine(DecisionEngine):
     ) -> Dict[str, Any]:
         """Get summary of context-driven decision factors."""
         try:
-            agent_core = getattr(self, 'core', None)
+            agent_core = getattr(self, "core", None)
             if (
                 not agent_core
                 or not hasattr(agent_core, "character_data")
@@ -453,8 +455,8 @@ class EnhancedDecisionEngine(DecisionEngine):
             # Calculate individual modifiers for transparency
             if "active_objectives" in character_data:
                 objective_modifier = self._get_objective_alignment_modifier(
-                action, character_data["active_objectives"]
-            )
+                    action, character_data["active_objectives"]
+                )
             summary["modifiers_applied"]["objective_alignment"] = objective_modifier
 
             if "behavioral_triggers" in character_data:

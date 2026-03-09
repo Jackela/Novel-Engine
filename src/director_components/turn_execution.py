@@ -422,9 +422,9 @@ class TurnExecutionEngine:
                         )
 
             phase_duration = time.time() - phase_start
-            context.execution_metrics["phase_durations"][
-                "conflict_resolution"
-            ] = phase_duration
+            context.execution_metrics["phase_durations"]["conflict_resolution"] = (
+                phase_duration
+            )
             context.execution_metrics["conflicts_resolved"] = len(conflicts)
 
             return {"success": True, "conflicts_resolved": len(conflicts)}
@@ -453,9 +453,9 @@ class TurnExecutionEngine:
             context.world_state_updates = state_changes
 
             phase_duration = time.time() - phase_start
-            context.execution_metrics["phase_durations"][
-                "state_update"
-            ] = phase_duration
+            context.execution_metrics["phase_durations"]["state_update"] = (
+                phase_duration
+            )
             context.execution_metrics["state_changes_count"] = len(state_changes)
 
             return {"success": True, "state_changes": len(state_changes)}
@@ -480,9 +480,9 @@ class TurnExecutionEngine:
             context.execution_metrics["finalized_at"] = datetime.now().isoformat()
 
             phase_duration = time.time() - phase_start
-            context.execution_metrics["phase_durations"][
-                "finalization"
-            ] = phase_duration
+            context.execution_metrics["phase_durations"]["finalization"] = (
+                phase_duration
+            )
 
             return {"success": True}
 

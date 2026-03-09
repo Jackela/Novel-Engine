@@ -232,7 +232,9 @@ class ResultMixin:
         details: dict[str, Any] | None = None,
     ) -> Result[Any, Error]:
         """Create an Err result."""
-        return Err(Error(code=code, message=message, recoverable=recoverable, details=details))
+        return Err(
+            Error(code=code, message=message, recoverable=recoverable, details=details)
+        )
 
     def _to_standard_response(self, result: Result[T, Error]) -> StandardResponse:
         """Convert Result to StandardResponse for backward compatibility."""

@@ -310,7 +310,9 @@ class PhaseStatus:
             metadata=metadata or {},
         )
 
-    def transition_to(self, new_status: PhaseStatusEnum, **updates: Any) -> "PhaseStatus":
+    def transition_to(
+        self, new_status: PhaseStatusEnum, **updates: Any
+    ) -> "PhaseStatus":
         """
         Create new phase status with status transition.
 

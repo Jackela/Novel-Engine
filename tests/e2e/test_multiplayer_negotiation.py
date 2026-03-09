@@ -37,7 +37,7 @@ def data_factory():
     """Provide test data factory."""
     from datetime import datetime
     from typing import Any, Dict
-    
+
     class TestDataFactory:
         @staticmethod
         def create_character_data(
@@ -47,7 +47,7 @@ def data_factory():
         ) -> Dict[str, Any]:
             char_name = name or f"TestChar_{datetime.now().timestamp()}"
             char_id = agent_id or char_name.lower().replace(" ", "_")
-            
+
             return {
                 "agent_id": char_id,
                 "name": char_name,
@@ -63,8 +63,9 @@ def data_factory():
                 "inventory": ["test_item"],
                 "metadata": {"test": True},
             }
-    
+
     return TestDataFactory()
+
 
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
@@ -83,12 +84,10 @@ class TestMultiplayerNegotiation:
         """
         # Create characters for negotiation
         char1 = data_factory.create_character_data(
-            name="Negotiator One",
-            agent_id="negotiator_one"
+            name="Negotiator One", agent_id="negotiator_one"
         )
         char2 = data_factory.create_character_data(
-            name="Negotiator Two",
-            agent_id="negotiator_two"
+            name="Negotiator Two", agent_id="negotiator_two"
         )
 
         response1 = client.post("/api/characters", json=char1)
@@ -101,7 +100,7 @@ class TestMultiplayerNegotiation:
         dialogue_request = {
             "character_id": "negotiator_one",
             "context": "Negotiating a trade agreement with negotiator_two",
-            "mood": "diplomatic"
+            "mood": "diplomatic",
         }
 
         response = client.post("/api/dialogue/generate", json=dialogue_request)
@@ -121,8 +120,7 @@ class TestMultiplayerNegotiation:
         """
         # Create negotiators
         char1 = data_factory.create_character_data(
-            name="Proposer",
-            agent_id="proposer_char"
+            name="Proposer", agent_id="proposer_char"
         )
         client.post("/api/characters", json=char1)
 
@@ -130,7 +128,7 @@ class TestMultiplayerNegotiation:
         proposal_request = {
             "character_id": "proposer_char",
             "context": "Making a proposal: I offer 100 gold for the artifact",
-            "mood": "persuasive"
+            "mood": "persuasive",
         }
 
         response = client.post("/api/dialogue/generate", json=proposal_request)
@@ -153,11 +151,11 @@ class TestMultiplayerNegotiation:
         """
         # List factions
         factions_response = client.get("/api/factions")
-        
+
         # Factions endpoint may not exist (404) or may return data
         if factions_response.status_code == 404:
             pytest.skip("Factions endpoint not available")
-        
+
         assert factions_response.status_code == 200
 
         data = factions_response.json()
@@ -191,11 +189,11 @@ class TestFactionInteractions:
         - GET /api/factions returns faction list
         """
         response = client.get("/api/factions")
-        
+
         # Factions endpoint may not exist
         if response.status_code == 404:
             pytest.skip("Factions endpoint not available")
-        
+
         assert response.status_code == 200
 
         data = response.json()
@@ -298,10 +296,7 @@ class TestDiplomacySystem:
             "from_faction": "faction_a",
             "to_faction": "faction_b",
             "type": "trade_agreement",
-            "terms": {
-                "duration": "1_year",
-                "benefits": ["resource_sharing"]
-            }
+            "terms": {"duration": "1_year", "benefits": ["resource_sharing"]},
         }
 
         response = client.post("/api/diplomacy/proposals", json=proposal_data)
@@ -339,7 +334,7 @@ class TestNegotiationAPI:
         negotiation_data = {
             "participants": ["char1", "char2"],
             "topic": "Trade Agreement",
-            "context": "Negotiating terms of trade"
+            "context": "Negotiating terms of trade",
         }
 
         response = client.post("/api/negotiations", json=negotiation_data)
@@ -376,8 +371,8 @@ class TestNegotiationAPI:
             "proposer": "char1",
             "proposal": {
                 "terms": "Exchange 100 gold for the artifact",
-                "conditions": ["immediate_transfer"]
-            }
+                "conditions": ["immediate_transfer"],
+            },
         }
 
         response = client.post("/api/negotiations/propose", json=proposal_data)
@@ -397,7 +392,7 @@ class TestNegotiationAPI:
             "negotiation_id": "test_neg_123",
             "responder": "char2",
             "response": "accept",  # or "reject", "counter"
-            "counter_proposal": None
+            "counter_proposal": None,
         }
 
         response = client.post("/api/negotiations/respond", json=response_data)
@@ -420,8 +415,7 @@ class TestCharacterNegotiation:
         """
         # Create negotiator
         char = data_factory.create_character_data(
-            name="Master Negotiator",
-            agent_id="master_negotiator"
+            name="Master Negotiator", agent_id="master_negotiator"
         )
         char["personality_traits"] = "diplomatic, persuasive, patient"
 
@@ -431,7 +425,7 @@ class TestCharacterNegotiation:
         dialogue_request = {
             "character_id": "master_negotiator",
             "context": "Negotiating a peace treaty between two warring factions",
-            "mood": "diplomatic"
+            "mood": "diplomatic",
         }
 
         response = client.post("/api/dialogue/generate", json=dialogue_request)
@@ -457,7 +451,7 @@ class TestCharacterNegotiation:
         chars = [
             ("Negotiator A", "nego_a", "aggressive, ambitious"),
             ("Negotiator B", "nego_b", "cautious, analytical"),
-            ("Mediator", "mediator", "neutral, fair, diplomatic")
+            ("Mediator", "mediator", "neutral, fair, diplomatic"),
         ]
 
         for name, agent_id, traits in chars:
@@ -470,7 +464,7 @@ class TestCharacterNegotiation:
             dialogue_request = {
                 "character_id": agent_id,
                 "context": "Three-way negotiation over territory dispute",
-                "mood": "formal"
+                "mood": "formal",
             }
 
             _ = client.post("/api/dialogue/generate", json=dialogue_request)
@@ -484,12 +478,10 @@ class TestCharacterNegotiation:
         """
         # Create characters with relationship
         char1 = data_factory.create_character_data(
-            name="Old Friend",
-            agent_id="old_friend"
+            name="Old Friend", agent_id="old_friend"
         )
         char2 = data_factory.create_character_data(
-            name="Trusted Ally",
-            agent_id="trusted_ally"
+            name="Trusted Ally", agent_id="trusted_ally"
         )
 
         char1["relationships"] = {"trusted_ally": 0.9}  # High positive
@@ -501,7 +493,7 @@ class TestCharacterNegotiation:
         dialogue_request = {
             "character_id": "old_friend",
             "context": "Negotiating with trusted_ally about a mutual business venture",
-            "mood": "friendly"
+            "mood": "friendly",
         }
 
         response = client.post("/api/dialogue/generate", json=dialogue_request)
@@ -524,11 +516,8 @@ class TestCharacterNegotiation:
         outcome_data = {
             "negotiation_id": "neg_123",
             "outcome": "agreement_reached",
-            "terms": {
-                "agreed_price": 500,
-                "delivery_date": "immediate"
-            },
-            "participants": ["char1", "char2"]
+            "terms": {"agreed_price": 500, "delivery_date": "immediate"},
+            "participants": ["char1", "char2"],
         }
 
         response = client.post("/api/negotiations/outcome", json=outcome_data)

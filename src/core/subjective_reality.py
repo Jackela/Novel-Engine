@@ -757,7 +757,9 @@ class SubjectiveRealityEngine:
         )
         return brief
 
-    async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]) -> None:
+    async def update_agent_knowledge(
+        self, agent_id: str, new_information: List[Dict]
+    ) -> None:
         """更新Agent的知识状态"""
 
         if agent_id not in self.active_agents:

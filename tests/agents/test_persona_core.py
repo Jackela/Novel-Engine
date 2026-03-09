@@ -124,7 +124,9 @@ class TestPersonaCoreInitialization:
         assert core.identity.agent_id == "custom_agent_id"
         assert core.agent_id == "custom_agent_id"
 
-    def test_initialization_derives_agent_id_from_path(self, mock_event_bus, temp_char_dir):
+    def test_initialization_derives_agent_id_from_path(
+        self, mock_event_bus, temp_char_dir
+    ):
         """Test that agent_id is derived from directory name."""
         core = PersonaCore(
             character_directory_path=temp_char_dir,
@@ -133,7 +135,9 @@ class TestPersonaCoreInitialization:
 
         assert "test_character" in core.identity.agent_id
 
-    def test_initialization_creates_character_sheet_path(self, mock_event_bus, temp_char_dir):
+    def test_initialization_creates_character_sheet_path(
+        self, mock_event_bus, temp_char_dir
+    ):
         """Test that character_sheet_path is automatically set."""
         core = PersonaCore(
             character_directory_path=temp_char_dir,
@@ -171,7 +175,9 @@ class TestPersonaCoreProperties:
     def test_character_directory_name_property(self, persona_core):
         """Test character_directory_name property."""
         # Get the directory name from the path
-        expected_name = os.path.basename(persona_core.character_directory_path.rstrip(os.sep))
+        expected_name = os.path.basename(
+            persona_core.character_directory_path.rstrip(os.sep)
+        )
         assert persona_core.character_directory_name == expected_name
 
     def test_character_context_property(self, persona_core):
@@ -453,6 +459,7 @@ class TestPersonaCoreEdgeCases:
 
             # Modify file
             import time
+
             time.sleep(0.01)  # Ensure different mtime
             test_file.write_text("version 2")
 
@@ -493,7 +500,9 @@ class TestPersonaCoreErrorHandling:
     def test_read_cached_file_error(self, persona_core):
         """Test handling of file read errors."""
         with patch("pathlib.Path.exists", return_value=True):
-            with patch("pathlib.Path.stat", side_effect=PermissionError("Access denied")):
+            with patch(
+                "pathlib.Path.stat", side_effect=PermissionError("Access denied")
+            ):
                 content = persona_core._read_cached_file("/restricted/file.txt")
                 assert content == ""
 

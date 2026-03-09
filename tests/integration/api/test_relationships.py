@@ -234,7 +234,9 @@ class TestRelationshipsAPIListEndpoint:
             },
         )
 
-        response = client.get("/api/relationships", params={"relationship_type": "ally"})
+        response = client.get(
+            "/api/relationships", params={"relationship_type": "ally"}
+        )
 
         assert response.status_code == 200
         data = response.json()
@@ -299,7 +301,6 @@ class TestRelationshipsAPIByEntityEndpoint:
         )
 
         assert response.status_code == 200
-
 
     @pytest.mark.integration
     def test_get_relationships_by_entity_include_inactive(self, client):

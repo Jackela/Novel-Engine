@@ -18,6 +18,7 @@ from src.contexts.knowledge.domain.models.prompt_template import (
 
 pytestmark = pytest.mark.unit
 
+
 class TestVariableDefinition:
     """Tests for VariableDefinition value object."""
 
@@ -173,7 +174,9 @@ class TestVariableDefinition:
 
     def test_coerce_required_variable_with_none_raises_error(self) -> None:
         """Should raise error when coercing None to required variable."""
-        var = VariableDefinition(name="required", type=VariableType.STRING, required=True)
+        var = VariableDefinition(
+            name="required", type=VariableType.STRING, required=True
+        )
         # coerce_value returns default_value (None) for None input, it doesn't raise
         result = var.coerce_value(None)
         assert result is None
@@ -311,9 +314,7 @@ class TestPromptTemplate:
                 id="test-1",
                 name="Test",
                 content="Hello {{name}}, you are {{age}} years old.",
-                variables=(
-                    VariableDefinition(name="name", type=VariableType.STRING),
-                ),
+                variables=(VariableDefinition(name="name", type=VariableType.STRING),),
                 model_config=ModelConfig(provider="openai", model_name="gpt-4"),
             )
 
@@ -355,9 +356,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Count: {{count}}",
-            variables=(
-                VariableDefinition(name="count", type=VariableType.INTEGER),
-            ),
+            variables=(VariableDefinition(name="count", type=VariableType.INTEGER),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -407,9 +406,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Items: {{items}}",
-            variables=(
-                VariableDefinition(name="items", type=VariableType.LIST),
-            ),
+            variables=(VariableDefinition(name="items", type=VariableType.LIST),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -422,9 +419,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Config: {{config}}",
-            variables=(
-                VariableDefinition(name="config", type=VariableType.DICT),
-            ),
+            variables=(VariableDefinition(name="config", type=VariableType.DICT),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -468,9 +463,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Original",
             content="Original content {{var}}",
-            variables=(
-                VariableDefinition(name="var", type=VariableType.STRING),
-            ),
+            variables=(VariableDefinition(name="var", type=VariableType.STRING),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
             version=1,
         )
@@ -491,9 +484,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Original",
             content="Original content {{var}}",
-            variables=(
-                VariableDefinition(name="var", type=VariableType.STRING),
-            ),
+            variables=(VariableDefinition(name="var", type=VariableType.STRING),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
             version=1,
             tags=("original",),
@@ -605,9 +596,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Items: {{items}}",
-            variables=(
-                VariableDefinition(name="items", type=VariableType.LIST),
-            ),
+            variables=(VariableDefinition(name="items", type=VariableType.LIST),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -620,9 +609,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Config: {{config}}",
-            variables=(
-                VariableDefinition(name="config", type=VariableType.DICT),
-            ),
+            variables=(VariableDefinition(name="config", type=VariableType.DICT),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -636,9 +623,7 @@ class TestPromptTemplate:
             id="test-1",
             name="Test",
             content="Value: {{value}}",
-            variables=(
-                VariableDefinition(name="value", type=VariableType.STRING),
-            ),
+            variables=(VariableDefinition(name="value", type=VariableType.STRING),),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
@@ -738,13 +723,15 @@ Generate a story scene featuring this character with {{mood}} tone.""",
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
-        result = template.render({
-            "name": "Elena",
-            "age": 28,
-            "traits": ["brave", "curious", "kind"],
-            "background": "A scholar from the capital",
-            "mood": "mysterious",
-        })
+        result = template.render(
+            {
+                "name": "Elena",
+                "age": 28,
+                "traits": ["brave", "curious", "kind"],
+                "background": "A scholar from the capital",
+                "mood": "mysterious",
+            }
+        )
 
         assert "Character Profile: Elena" in result
         assert "Age: 28" in result
@@ -875,11 +862,13 @@ class TestPromptTemplateInheritance:
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
-        resolved = child.resolve_content({
-            "Header": header,
-            "Footer": footer,
-            "child-1": child,
-        })
+        resolved = child.resolve_content(
+            {
+                "Header": header,
+                "Footer": footer,
+                "child-1": child,
+            }
+        )
 
         assert "# System Header" in resolved
         assert "You are a helpful assistant" in resolved
@@ -905,10 +894,12 @@ class TestPromptTemplateInheritance:
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
         )
 
-        resolved = child.resolve_content({
-            "parent-id-123": parent,
-            "child-1": child,
-        })
+        resolved = child.resolve_content(
+            {
+                "parent-id-123": parent,
+                "child-1": child,
+            }
+        )
 
         assert "Parent content" in resolved
 
@@ -944,10 +935,12 @@ class TestPromptTemplateInheritance:
         )
 
         with pytest.raises(ValueError, match="Circular reference detected"):
-            template_a.resolve_content({
-                "TemplateA": template_a,
-                "TemplateB": template_b,
-            })
+            template_a.resolve_content(
+                {
+                    "TemplateA": template_a,
+                    "TemplateB": template_b,
+                }
+            )
 
     def test_resolve_variables_merges_parent_variables(self) -> None:
         """Should merge variables from parent templates."""
@@ -968,7 +961,9 @@ class TestPromptTemplateInheritance:
             content="Child {{child_var}} and {{shared_var}}",
             variables=(
                 VariableDefinition(name="child_var", type=VariableType.STRING),
-                VariableDefinition(name="shared_var", type=VariableType.STRING),  # Override
+                VariableDefinition(
+                    name="shared_var", type=VariableType.STRING
+                ),  # Override
             ),
             model_config=ModelConfig(provider="openai", model_name="gpt-4"),
             extends=("BasePrompt",),
@@ -1057,11 +1052,13 @@ class TestPromptTemplateInheritance:
             extends=("ParentA", "ParentB"),
         )
 
-        resolved = child.resolve_variables({
-            "ParentA": parent_a,
-            "ParentB": parent_b,
-            "child-1": child,
-        })
+        resolved = child.resolve_variables(
+            {
+                "ParentA": parent_a,
+                "ParentB": parent_b,
+                "child-1": child,
+            }
+        )
 
         var_names = [v.name for v in resolved]
         assert "var_a" in var_names  # From ParentA
@@ -1361,4 +1358,3 @@ class TestPromptTemplateInheritance:
 
         # Should not raise any error
         child.check_circular_extends(parent_templates)
-

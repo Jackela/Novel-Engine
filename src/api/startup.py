@@ -100,7 +100,9 @@ def validate_environment() -> None:
             if value is None:
                 # This is fine in development - APISettings provides a default
                 logger.debug(
-                    "optional_production_variable_not_set", variable=var, mode="development"
+                    "optional_production_variable_not_set",
+                    variable=var,
+                    mode="development",
                 )
 
     # Check that optional API keys are non-empty when set
@@ -160,7 +162,10 @@ def ensure_workspace_services(
             logger.info("guest_workspace_store_initialized")
         except Exception as exc:
             logger.error(
-                "guest_workspace_store_init_failed", error=str(exc), error_type=type(exc).__name__, exc_info=True
+                "guest_workspace_store_init_failed",
+                error=str(exc),
+                error_type=type(exc).__name__,
+                exc_info=True,
             )
             app.state.workspace_store = None
             app.state.workspace_character_store = None
@@ -193,7 +198,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         container.register_singleton(EventBus, global_event_bus)
         logger.info("global_eventbus_initialized")
     except Exception as exc:
-        logger.warning("could_not_initialize_eventbus", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_initialize_eventbus",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         app.state.event_bus = None
 
     # EventBus is now accessed via request.app.state.event_bus in routers
@@ -209,7 +218,11 @@ async def initialize_app_state(app: FastAPI) -> None:
             global_event_bus.register_handler(time_handler)
             logger.info("time_advanced_handler_registered")
         except Exception as exc:
-            logger.warning("could_not_register_time_advanced_handler", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "could_not_register_time_advanced_handler",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
 
         # Note: RumorPropagationHandler is registered after repositories below
 
@@ -229,7 +242,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         logger.info("faction_intent_repository_registered")
     except Exception as exc:
         app.state.faction_intent_repository_available = False
-        logger.warning("could_not_register_faction_intent_repository", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_register_faction_intent_repository",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # Register CalendarRepository in DI container
     try:
@@ -246,7 +263,11 @@ async def initialize_app_state(app: FastAPI) -> None:
         logger.info("calendar_repository_registered")
     except Exception as exc:
         app.state.calendar_repository = None
-        logger.warning("could_not_register_calendar_repository", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_register_calendar_repository",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # Register EventRepository in DI container
     try:
@@ -263,7 +284,11 @@ async def initialize_app_state(app: FastAPI) -> None:
     except Exception as exc:
         app.state.event_repository = None
         app.state.event_repository_available = False
-        logger.warning("could_not_register_event_repository", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_register_event_repository",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # Register RumorRepository in DI container
     try:
@@ -280,7 +305,11 @@ async def initialize_app_state(app: FastAPI) -> None:
     except Exception as exc:
         app.state.rumor_repository = None
         app.state.rumor_repository_available = False
-        logger.warning("could_not_register_rumor_repository", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_register_rumor_repository",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # Register LocationRepository in DI container
     try:
@@ -299,7 +328,11 @@ async def initialize_app_state(app: FastAPI) -> None:
     except Exception as exc:
         app.state.location_repository = None
         app.state.location_repository_available = False
-        logger.warning("could_not_register_location_repository", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_register_location_repository",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # Register RumorPropagationHandler for rumor propagation on time advance
     # This must happen AFTER repositories are registered above
@@ -319,9 +352,7 @@ async def initialize_app_state(app: FastAPI) -> None:
                     rumor_repo=rumor_repo,
                 )
                 global_event_bus.register_handler(rumor_handler)
-                logger.info(
-                    "rumor_propagation_handler_registered"
-                )
+                logger.info("rumor_propagation_handler_registered")
             else:
                 logger.warning(
                     "rumor_propagation_handler_not_registered",
@@ -329,7 +360,11 @@ async def initialize_app_state(app: FastAPI) -> None:
                     rumor_repo_available=rumor_repo is not None,
                 )
         except Exception as exc:
-            logger.warning("could_not_register_rumor_propagation_handler", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "could_not_register_rumor_propagation_handler",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
 
     # Register RetrievalService reference for FactionDecisionService
     try:
@@ -343,12 +378,14 @@ async def initialize_app_state(app: FastAPI) -> None:
             logger.info("retrieval_service_available")
         else:
             app.state.retrieval_service = None
-            logger.warning(
-                "retrieval_service_not_available"
-            )
+            logger.warning("retrieval_service_not_available")
     except Exception as exc:
         app.state.retrieval_service = None
-        logger.warning("could_not_retrieve_retrieval_service", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "could_not_retrieve_retrieval_service",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
 
     # EventBus is now accessed via request.app.state.event_bus
     # No global set_event_bus() call needed - see Issue 6 fix
@@ -365,7 +402,12 @@ async def initialize_app_state(app: FastAPI) -> None:
             container.register_singleton(SystemOrchestrator, orchestrator)
             logger.info("system_orchestrator_initialized")
     except Exception as exc:
-        logger.error("failed_to_initialize_system_orchestrator", error=str(exc), error_type=type(exc).__name__, exc_info=True)
+        logger.error(
+            "failed_to_initialize_system_orchestrator",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            exc_info=True,
+        )
         orchestrator = None
 
     try:
@@ -384,7 +426,10 @@ async def initialize_app_state(app: FastAPI) -> None:
             logger.info("api_orchestration_service_skipped")
     except Exception as exc:
         logger.error(
-            "failed_to_initialize_api_orchestration_service", error=str(exc), error_type=type(exc).__name__, exc_info=True
+            "failed_to_initialize_api_orchestration_service",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            exc_info=True,
         )
         app.state.api_service = None
 
@@ -399,7 +444,11 @@ async def initialize_app_state(app: FastAPI) -> None:
 
             ensure_templates_registered()
         except Exception as exc:
-            logger.warning("prompt_templates_registration_failed", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "prompt_templates_registration_failed",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
 
     if getattr(app.state, "decision_router_available", False):
         try:
@@ -427,7 +476,11 @@ async def initialize_app_state(app: FastAPI) -> None:
             )
             logger.info("decision_system_initialized")
         except Exception as exc:
-            logger.warning("failed_to_initialize_decision_system", error=str(exc), error_type=type(exc).__name__)
+            logger.warning(
+                "failed_to_initialize_decision_system",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
 
 
 async def shutdown_app_state(app: FastAPI) -> None:
@@ -437,4 +490,9 @@ async def shutdown_app_state(app: FastAPI) -> None:
         if api_service:
             await api_service.stop_simulation()
     except Exception as exc:
-        logger.error("shutdown_error", error=str(exc), error_type=type(exc).__name__, exc_info=True)
+        logger.error(
+            "shutdown_error",
+            error=str(exc),
+            error_type=type(exc).__name__,
+            exc_info=True,
+        )

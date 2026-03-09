@@ -139,7 +139,9 @@ class SecurityMetrics(BaseModel):
 class SecurityDashboard:
     """Enterprise Security Monitoring Dashboard"""
 
-    def __init__(self, database_path: str, redis_url: str = "redis://localhost:6379") -> None:
+    def __init__(
+        self, database_path: str, redis_url: str = "redis://localhost:6379"
+    ) -> None:
         self.database_path = database_path
         self.redis_url = redis_url
 

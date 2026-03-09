@@ -20,13 +20,14 @@ from .interfaces import CacheEntryMeta
 @dataclass
 class SemanticCacheConfig:
     """Configuration for semantic cache.
-    
+
     Attributes:
         max_cache_size: Maximum entries to store
         similarity_threshold: Minimum cosine similarity (0.0-1.0)
         persistence_file: Path for cache persistence (None = no persistence)
         ttl_seconds: Entry time-to-live in seconds
     """
+
     max_cache_size: int = 256
     similarity_threshold: float = 0.85
     persistence_file: Path | None = None
@@ -36,7 +37,7 @@ class SemanticCacheConfig:
 @dataclass
 class _SemanticEntry:
     """Internal cache entry for semantic storage.
-    
+
     Attributes:
         key: Lookup key
         value: Cached response value
@@ -46,6 +47,7 @@ class _SemanticEntry:
         created_ts: Unix timestamp of creation
         meta: Entry metadata (tags, TTL, etc.)
     """
+
     key: str
     value: str
     query_text: str
@@ -56,11 +58,11 @@ class _SemanticEntry:
 
     def expired(self, now: float, ttl: int) -> bool:
         """Check if entry has expired.
-        
+
         Args:
             now: Current Unix timestamp
             ttl: TTL in seconds (0 = no expiry)
-            
+
         Returns:
             True if entry has expired
         """
@@ -92,7 +94,7 @@ class SemanticCache:
         tags: Optional[Iterable[str]] = None,
     ) -> bool:
         """Store a value in the semantic cache.
-        
+
         Args:
             key: Primary lookup key
             value: Value to cache
@@ -100,7 +102,7 @@ class SemanticCache:
             content_type: Content type identifier
             creation_cost: Cost to generate this value
             tags: Optional metadata tags
-            
+
         Returns:
             True if stored successfully
         """
@@ -120,14 +122,14 @@ class SemanticCache:
 
     def get(self, key: str, query_text: str | None = None) -> Optional[str]:
         """Get a value from cache by key or semantic similarity.
-        
+
         First attempts exact key match, then falls back to semantic
         similarity matching if query_text is provided.
-        
+
         Args:
             key: Primary lookup key
             query_text: Optional query for semantic matching
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -147,7 +149,7 @@ class SemanticCache:
 
     def get_stats(self) -> Dict[str, int | float]:
         """Get cache statistics.
-        
+
         Returns:
             Dictionary with size, hits, and misses
         """
@@ -184,10 +186,10 @@ class SemanticCache:
 
     def _find_semantic_match(self, query_text: str) -> Optional[_SemanticEntry]:
         """Find a semantically similar entry.
-        
+
         Args:
             query_text: Query text to match
-            
+
         Returns:
             Best matching entry or None
         """
@@ -234,13 +236,13 @@ class SemanticCache:
 
 def _cosine_similarity(a: str, b: str) -> float:
     """Calculate cosine similarity between two strings.
-    
+
     Uses word frequency vectors for approximation.
-    
+
     Args:
         a: First string
         b: Second string
-        
+
     Returns:
         Similarity score between 0.0 and 1.0
     """
@@ -261,10 +263,10 @@ def _cosine_similarity(a: str, b: str) -> float:
 
 def _token_frequency(text: str) -> Dict[str, int]:
     """Calculate word frequency in text.
-    
+
     Args:
         text: Input text
-        
+
     Returns:
         Dictionary of lowercase word -> count
     """

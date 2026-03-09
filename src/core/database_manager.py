@@ -113,7 +113,9 @@ class ConnectionMetrics:
 class DatabaseConnection:
     """Managed database connection wrapper."""
 
-    def __init__(self, connection: aiosqlite.Connection, config: DatabaseConfig) -> None:
+    def __init__(
+        self, connection: aiosqlite.Connection, config: DatabaseConfig
+    ) -> None:
         """Initialize database connection wrapper."""
         self.connection = connection
         self.config = config
@@ -135,7 +137,11 @@ class DatabaseConnection:
             logger.debug("database_connection_initialized")
 
         except Exception as e:
-            logger.error("database_connection_initialization_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "database_connection_initialization_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             raise
 
     async def _initialize_sqlite(self) -> None:
@@ -156,7 +162,9 @@ class DatabaseConnection:
                 await self.connection.execute(setting)
                 logger.debug("sqlite_setting_applied", setting=setting)
             except Exception as e:
-                logger.warning("sqlite_setting_application_failed", setting=setting, error=str(e))
+                logger.warning(
+                    "sqlite_setting_application_failed", setting=setting, error=str(e)
+                )
 
         await self.connection.commit()
 
@@ -198,7 +206,11 @@ class DatabaseConnection:
                 self.metrics.failed_queries += 1
                 self.metrics.last_error = str(e)
 
-                logger.error("query_execution_failed", execution_time_ms=round(execution_time * 1000, 2), error=str(e))
+                logger.error(
+                    "query_execution_failed",
+                    execution_time_ms=round(execution_time * 1000, 2),
+                    error=str(e),
+                )
                 raise
 
             finally:
@@ -368,27 +380,29 @@ class DatabaseConnection:
             - Err(DatabaseError): If metrics retrieval fails
         """
         try:
-            return Ok({
-                "state": self.state.value,
-                "created_at": self.metrics.created_at.isoformat(),
-                "last_used": self.metrics.last_used.isoformat(),
-                "total_queries": self.metrics.total_queries,
-                "successful_queries": self.metrics.successful_queries,
-                "failed_queries": self.metrics.failed_queries,
-                "success_rate": (
-                    self.metrics.successful_queries / self.metrics.total_queries
-                    if self.metrics.total_queries > 0
-                    else 0.0
-                ),
-                "average_query_time": self.metrics.average_query_time,
-                "health_status": self.metrics.health_status,
-                "last_health_check": (
-                    self.metrics.last_health_check.isoformat()
-                    if self.metrics.last_health_check
-                    else None
-                ),
-                "last_error": self.metrics.last_error,
-            })
+            return Ok(
+                {
+                    "state": self.state.value,
+                    "created_at": self.metrics.created_at.isoformat(),
+                    "last_used": self.metrics.last_used.isoformat(),
+                    "total_queries": self.metrics.total_queries,
+                    "successful_queries": self.metrics.successful_queries,
+                    "failed_queries": self.metrics.failed_queries,
+                    "success_rate": (
+                        self.metrics.successful_queries / self.metrics.total_queries
+                        if self.metrics.total_queries > 0
+                        else 0.0
+                    ),
+                    "average_query_time": self.metrics.average_query_time,
+                    "health_status": self.metrics.health_status,
+                    "last_health_check": (
+                        self.metrics.last_health_check.isoformat()
+                        if self.metrics.last_health_check
+                        else None
+                    ),
+                    "last_error": self.metrics.last_error,
+                }
+            )
         except Exception as e:
             return Err(
                 DatabaseError(
@@ -461,7 +475,11 @@ class DatabaseConnectionPool:
                     self._pool_metrics["total_connections_created"] += 1
 
                 except Exception as e:
-                    logger.error("initial_connection_creation_failed", error=str(e), error_type=type(e).__name__)
+                    logger.error(
+                        "initial_connection_creation_failed",
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
                     if self.error_handler:
                         error_context = ErrorContext(
                             component="DatabaseConnectionPool",
@@ -475,7 +493,10 @@ class DatabaseConnectionPool:
             self._maintenance_task = asyncio.create_task(self._maintenance_loop())
 
             self._initialized = True
-            logger.info("connection_pool_initialized", connection_count=len(self._available_connections))
+            logger.info(
+                "connection_pool_initialized",
+                connection_count=len(self._available_connections),
+            )
 
     async def get_connection(self) -> AsyncContextManager[DatabaseConnection]:
         """Get connection from pool with context manager."""
@@ -548,7 +569,11 @@ class DatabaseConnectionPool:
                     return connection
 
                 except Exception as e:
-                    logger.error("new_connection_creation_failed", error=str(e), error_type=type(e).__name__)
+                    logger.error(
+                        "new_connection_creation_failed",
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
                     raise
 
             # Pool exhausted, wait for connection to become available
@@ -682,7 +707,11 @@ class DatabaseConnectionPool:
                         self._pool_metrics["total_connections_created"] += 1
 
                     except Exception as e:
-                        logger.error("maintenance_connection_creation_failed", error=str(e), error_type=type(e).__name__)
+                        logger.error(
+                            "maintenance_connection_creation_failed",
+                            error=str(e),
+                            error_type=type(e).__name__,
+                        )
                         break
 
             # Update pool utilization metrics
@@ -729,20 +758,22 @@ class DatabaseConnectionPool:
                 self._active_connections
             )
 
-            return Ok({
-                "total_connections": total_connections,
-                "available_connections": len(self._available_connections),
-                "active_connections": len(self._active_connections),
-                "min_pool_size": self.config.min_pool_size,
-                "max_pool_size": self.config.max_pool_size,
-                "pool_utilization": (
-                    len(self._active_connections) / total_connections
-                    if total_connections > 0
-                    else 0.0
-                ),
-                "initialized": self._initialized,
-                "closed": self._closed,
-            })
+            return Ok(
+                {
+                    "total_connections": total_connections,
+                    "available_connections": len(self._available_connections),
+                    "active_connections": len(self._active_connections),
+                    "min_pool_size": self.config.min_pool_size,
+                    "max_pool_size": self.config.max_pool_size,
+                    "pool_utilization": (
+                        len(self._active_connections) / total_connections
+                        if total_connections > 0
+                        else 0.0
+                    ),
+                    "initialized": self._initialized,
+                    "closed": self._closed,
+                }
+            )
         except Exception as e:
             return Err(
                 DatabaseError(
@@ -782,19 +813,27 @@ class DatabaseConnectionPool:
         try:
             wait_times = self._pool_metrics["connection_wait_times"]
 
-            return Ok({
-                "total_connections_created": self._pool_metrics[
-                    "total_connections_created"
-                ],
-                "total_connections_closed": self._pool_metrics["total_connections_closed"],
-                "peak_active_connections": self._pool_metrics["peak_active_connections"],
-                "average_pool_utilization": self._pool_metrics["average_pool_utilization"],
-                "average_wait_time": (
-                    sum(wait_times) / len(wait_times) if wait_times else 0.0
-                ),
-                "max_wait_time": max(wait_times) if wait_times else 0.0,
-                "total_wait_samples": len(wait_times),
-            })
+            return Ok(
+                {
+                    "total_connections_created": self._pool_metrics[
+                        "total_connections_created"
+                    ],
+                    "total_connections_closed": self._pool_metrics[
+                        "total_connections_closed"
+                    ],
+                    "peak_active_connections": self._pool_metrics[
+                        "peak_active_connections"
+                    ],
+                    "average_pool_utilization": self._pool_metrics[
+                        "average_pool_utilization"
+                    ],
+                    "average_wait_time": (
+                        sum(wait_times) / len(wait_times) if wait_times else 0.0
+                    ),
+                    "max_wait_time": max(wait_times) if wait_times else 0.0,
+                    "total_wait_samples": len(wait_times),
+                }
+            )
         except Exception as e:
             return Err(
                 DatabaseError(
@@ -811,7 +850,9 @@ class DatabaseConnectionPool:
         )
         return [conn.get_metrics() for conn in all_connections]
 
-    def get_connection_metrics_result(self) -> Result[List[Dict[str, Any]], DatabaseError]:
+    def get_connection_metrics_result(
+        self,
+    ) -> Result[List[Dict[str, Any]], DatabaseError]:
         """
         Get metrics for all connections (Result pattern).
 
@@ -1077,7 +1118,9 @@ class DatabaseManager:
                     await pool.close_pool()
                     logger.info("database_pool_closed", pool_name=name)
                 except Exception as e:
-                    logger.error("database_pool_close_error", pool_name=name, error=str(e))
+                    logger.error(
+                        "database_pool_close_error", pool_name=name, error=str(e)
+                    )
 
             self._pools.clear()
             self._initialized = False

@@ -22,7 +22,6 @@ from src.contexts.narratives.domain.value_objects import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestNarrativePlanningEngineInitialization:
     """测试NarrativePlanningEngine初始化"""
 
@@ -105,25 +104,30 @@ class TestGenerateGuidanceForTurn:
         """测试生成的指导包含所有必要字段"""
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(state=exposition_state)
-        assert hasattr(guidance, 'guidance_id')
-        assert hasattr(guidance, 'turn_number')
-        assert hasattr(guidance, 'arc_state')
-        assert hasattr(guidance, 'primary_narrative_goal')
-        assert hasattr(guidance, 'target_tension_level')
-        assert hasattr(guidance, 'secondary_narrative_goals')
+        assert hasattr(guidance, "guidance_id")
+        assert hasattr(guidance, "turn_number")
+        assert hasattr(guidance, "arc_state")
+        assert hasattr(guidance, "primary_narrative_goal")
+        assert hasattr(guidance, "target_tension_level")
+        assert hasattr(guidance, "secondary_narrative_goals")
 
     def test_exposition_phase_guidance(self, exposition_state):
         """测试展示阶段的指导"""
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(state=exposition_state)
-        assert guidance.primary_narrative_goal == "Introduce new characters and establish setting"
+        assert (
+            guidance.primary_narrative_goal
+            == "Introduce new characters and establish setting"
+        )
         assert guidance.target_tension_level == Decimal("3.0")
 
     def test_rising_action_phase_guidance(self, rising_action_state):
         """测试上升动作阶段的指导"""
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(state=rising_action_state)
-        assert guidance.primary_narrative_goal == "Increase tension and develop conflicts"
+        assert (
+            guidance.primary_narrative_goal == "Increase tension and develop conflicts"
+        )
         assert guidance.target_tension_level == Decimal("6.0")
 
     def test_climax_phase_guidance(self, climax_state):
@@ -144,7 +148,10 @@ class TestGenerateGuidanceForTurn:
         """测试结局阶段的指导"""
         engine = NarrativePlanningEngine()
         guidance = engine.generate_guidance_for_turn(state=resolution_state)
-        assert guidance.primary_narrative_goal == "Provide closure and finalize character arcs"
+        assert (
+            guidance.primary_narrative_goal
+            == "Provide closure and finalize character arcs"
+        )
         assert guidance.target_tension_level == Decimal("2.0")
 
 
@@ -350,7 +357,7 @@ class TestTensionLevels:
     def test_tension_progression_across_phases(self):
         """测试各阶段张力进展"""
         engine = NarrativePlanningEngine()
-        
+
         exposition_state = StoryArcState(
             arc_id="test",
             current_phase=StoryArcPhase.EXPOSITION,
@@ -366,7 +373,7 @@ class TestTensionLevels:
             current_phase=StoryArcPhase.CLIMAX,
             turn_number=1,
         )
-        
+
         exposition_tension = engine.generate_guidance_for_turn(
             state=exposition_state
         ).target_tension_level
@@ -376,7 +383,7 @@ class TestTensionLevels:
         climax_tension = engine.generate_guidance_for_turn(
             state=climax_state
         ).target_tension_level
-        
+
         assert exposition_tension < rising_tension < climax_tension
 
 
@@ -385,17 +392,18 @@ class TestEdgeCases:
 
     def test_unknown_phase_defaults_to_maintenance(self):
         """测试未知阶段默认维护连续性"""
+
         # 使用一个不在标准枚举中的值
         class UnknownPhase:
             value = "UNKNOWN"
-        
+
         # 通过model_copy创建一个带有未知阶段的State
         _ = StoryArcState(
             arc_id="test",
             current_phase=StoryArcPhase.EXPOSITION,
             turn_number=1,
         )
-        
+
         # 由于StoryArcPhase是枚举，我们不能直接设置未知值
         # 这个测试验证如果有新的阶段被添加但未被处理的情况
         # 实际上代码应该处理所有StoryArcPhase的值

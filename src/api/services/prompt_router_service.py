@@ -656,7 +656,11 @@ class PromptRouterService:
                     await self._usage_repository.record(usage)
                 except Exception as record_error:
                     # Don't fail the request if analytics recording fails
-                    logger.debug("failed_to_record_prompt_usage", error=str(record_error), error_type=type(record_error).__name__)
+                    logger.debug(
+                        "failed_to_record_prompt_usage",
+                        error=str(record_error),
+                        error_type=type(record_error).__name__,
+                    )
 
         return {
             "rendered": rendered,

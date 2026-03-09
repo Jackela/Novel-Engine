@@ -84,7 +84,9 @@ def client():
     def override_require_workspace_id():
         return "test-workspace"
 
-    app.dependency_overrides[deps.get_optional_workspace_id] = override_get_optional_workspace_id
+    app.dependency_overrides[deps.get_optional_workspace_id] = (
+        override_get_optional_workspace_id
+    )
     app.dependency_overrides[deps.require_workspace_id] = override_require_workspace_id
 
     with TestClient(app) as test_client:

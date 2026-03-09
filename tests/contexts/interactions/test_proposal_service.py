@@ -22,7 +22,6 @@ from src.contexts.interactions.domain.value_objects.proposal_terms import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestProposalType:
     """Test suite for ProposalType enumeration."""
 
@@ -80,7 +79,7 @@ class TestTermConditionCreation:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.term_id == "term_1"
         assert term.term_type == TermType.RESOURCE_QUANTITY
         assert term.value == 100
@@ -97,7 +96,7 @@ class TestTermConditionCreation:
             priority=ProposalPriority.CRITICAL,
             is_negotiable=False,
         )
-        
+
         assert term.is_negotiable is False
 
     def test_create_term_with_constraints(self):
@@ -110,7 +109,7 @@ class TestTermConditionCreation:
             priority=ProposalPriority.HIGH,
             constraints={"min": 50, "max": 200},
         )
-        
+
         assert term.constraints == {"min": 50, "max": 200}
 
     def test_create_term_with_dependencies(self):
@@ -123,7 +122,7 @@ class TestTermConditionCreation:
             priority=ProposalPriority.HIGH,
             dependencies=["term_1"],
         )
-        
+
         assert term.dependencies == ["term_1"]
 
 
@@ -222,9 +221,9 @@ class TestTermConditionImmutability:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         new_term = term.with_value(150)
-        
+
         assert new_term.value == 150
         assert term.value == 100  # Original unchanged
         assert new_term.term_id == term.term_id
@@ -238,9 +237,9 @@ class TestTermConditionImmutability:
             value=100,
             priority=ProposalPriority.MEDIUM,
         )
-        
+
         new_term = term.with_priority(ProposalPriority.HIGH)
-        
+
         assert new_term.priority == ProposalPriority.HIGH
         assert term.priority == ProposalPriority.MEDIUM
 
@@ -254,9 +253,9 @@ class TestTermConditionImmutability:
             priority=ProposalPriority.HIGH,
             is_negotiable=True,
         )
-        
+
         fixed_term = term.make_non_negotiable()
-        
+
         assert fixed_term.is_negotiable is False
         assert term.is_negotiable is True
 
@@ -273,7 +272,7 @@ class TestTermConditionProperties:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.numeric_value == 100
 
     def test_numeric_value_non_numeric(self):
@@ -285,7 +284,7 @@ class TestTermConditionProperties:
             value="ally",
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.numeric_value is None
 
     def test_string_value(self):
@@ -297,7 +296,7 @@ class TestTermConditionProperties:
             value="ally",
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.string_value == "ally"
 
     def test_string_value_non_string(self):
@@ -309,7 +308,7 @@ class TestTermConditionProperties:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.string_value is None
 
     def test_boolean_value(self):
@@ -321,7 +320,7 @@ class TestTermConditionProperties:
             value=True,
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.boolean_value is True
 
     def test_boolean_value_non_boolean(self):
@@ -333,7 +332,7 @@ class TestTermConditionProperties:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         assert term.boolean_value is None
 
 
@@ -351,14 +350,14 @@ class TestProposalTermsCreation:
                 priority=ProposalPriority.HIGH,
             )
         ]
-        
+
         proposal = ProposalTerms.create(
             proposal_type=ProposalType.TRADE_OFFER,
             title="Trade Offer",
             summary="Exchange resources",
             terms=terms,
         )
-        
+
         assert proposal.proposal_type == ProposalType.TRADE_OFFER
         assert proposal.title == "Trade Offer"
         assert len(proposal.terms) == 1
@@ -368,7 +367,7 @@ class TestProposalTermsCreation:
     def test_create_proposal_with_validity_period(self):
         """Test creating a proposal with validity period."""
         validity = datetime.now(timezone.utc) + timedelta(days=7)
-        
+
         proposal = ProposalTerms.create(
             proposal_type=ProposalType.ALLIANCE_REQUEST,
             title="Alliance Request",
@@ -384,7 +383,7 @@ class TestProposalTermsCreation:
             ],
             validity_period=validity,
         )
-        
+
         assert proposal.validity_period == validity
 
     def test_create_proposal_with_metadata(self):
@@ -404,7 +403,7 @@ class TestProposalTermsCreation:
             ],
             metadata={"created_by": "player_1", "urgency": "high"},
         )
-        
+
         assert proposal.metadata == {"created_by": "player_1", "urgency": "high"}
 
 
@@ -530,7 +529,7 @@ class TestProposalTermsValidation:
         """Test validation with validity period before created_at."""
         created = datetime.now(timezone.utc)
         validity = created - timedelta(days=1)
-        
+
         with pytest.raises(ValueError, match="validity_period must be after"):
             ProposalTerms(
                 proposal_id=uuid4(),
@@ -577,9 +576,9 @@ class TestProposalTermsQueries:
                 ),
             ],
         )
-        
+
         term = proposal.get_term_by_id("term_2")
-        
+
         assert term is not None
         assert term.term_id == "term_2"
         assert term.term_type == TermType.MONETARY_VALUE
@@ -600,9 +599,9 @@ class TestProposalTermsQueries:
                 )
             ],
         )
-        
+
         term = proposal.get_term_by_id("nonexistent")
-        
+
         assert term is None
 
     def test_get_terms_by_type(self):
@@ -635,9 +634,9 @@ class TestProposalTermsQueries:
                 ),
             ],
         )
-        
+
         resource_terms = proposal.get_terms_by_type(TermType.RESOURCE_QUANTITY)
-        
+
         assert len(resource_terms) == 2
         assert all(t.term_type == TermType.RESOURCE_QUANTITY for t in resource_terms)
 
@@ -664,9 +663,9 @@ class TestProposalTermsQueries:
                 ),
             ],
         )
-        
+
         critical_terms = proposal.get_terms_by_priority(ProposalPriority.CRITICAL)
-        
+
         assert len(critical_terms) == 1
         assert critical_terms[0].term_id == "term_1"
 
@@ -693,9 +692,9 @@ class TestProposalTermsQueries:
                 ),
             ],
         )
-        
+
         critical_terms = proposal.get_critical_terms()
-        
+
         assert len(critical_terms) == 1
         assert critical_terms[0].priority == ProposalPriority.CRITICAL
 
@@ -724,10 +723,10 @@ class TestProposalTermsQueries:
                 ),
             ],
         )
-        
+
         negotiable = proposal.get_negotiable_terms()
         non_negotiable = proposal.get_non_negotiable_terms()
-        
+
         assert len(negotiable) == 1
         assert len(non_negotiable) == 1
         assert negotiable[0].term_id == "term_1"
@@ -746,17 +745,17 @@ class TestProposalTermsImmutability:
             value=100,
             priority=ProposalPriority.HIGH,
         )
-        
+
         proposal = ProposalTerms.create(
             proposal_type=ProposalType.TRADE_OFFER,
             title="Trade",
             summary="Exchange",
             terms=[original_term],
         )
-        
+
         updated_term = original_term.with_value(150)
         new_proposal = proposal.update_term("term_1", updated_term)
-        
+
         assert new_proposal.get_term_by_id("term_1").value == 150
         assert proposal.get_term_by_id("term_1").value == 100  # Original unchanged
 
@@ -776,7 +775,7 @@ class TestProposalTermsImmutability:
                 )
             ],
         )
-        
+
         wrong_term = TermCondition(
             term_id="different_id",
             term_type=TermType.RESOURCE_QUANTITY,
@@ -784,7 +783,7 @@ class TestProposalTermsImmutability:
             value=150,
             priority=ProposalPriority.HIGH,
         )
-        
+
         with pytest.raises(ValueError, match="Updated term ID must match"):
             proposal.update_term("term_1", wrong_term)
 
@@ -804,7 +803,7 @@ class TestProposalTermsImmutability:
                 )
             ],
         )
-        
+
         new_term = TermCondition(
             term_id="term_2",
             term_type=TermType.MONETARY_VALUE,
@@ -812,9 +811,9 @@ class TestProposalTermsImmutability:
             value=500,
             priority=ProposalPriority.CRITICAL,
         )
-        
+
         new_proposal = proposal.add_term(new_term)
-        
+
         assert len(new_proposal.terms) == 2
         assert len(proposal.terms) == 1  # Original unchanged
         assert new_proposal.get_term_by_id("term_2") is not None
@@ -835,7 +834,7 @@ class TestProposalTermsImmutability:
                 )
             ],
         )
-        
+
         duplicate_term = TermCondition(
             term_id="term_1",
             term_type=TermType.MONETARY_VALUE,
@@ -843,7 +842,7 @@ class TestProposalTermsImmutability:
             value=500,
             priority=ProposalPriority.CRITICAL,
         )
-        
+
         with pytest.raises(ValueError, match="already exists"):
             proposal.add_term(duplicate_term)
 
@@ -870,9 +869,9 @@ class TestProposalTermsImmutability:
                 ),
             ],
         )
-        
+
         new_proposal = proposal.remove_term("term_1")
-        
+
         assert len(new_proposal.terms) == 1
         assert len(proposal.terms) == 2  # Original unchanged
         assert new_proposal.get_term_by_id("term_1") is None
@@ -901,7 +900,7 @@ class TestProposalTermsImmutability:
                 ),
             ],
         )
-        
+
         with pytest.raises(ValueError, match="has dependents"):
             proposal.remove_term("term_1")
 
@@ -921,7 +920,7 @@ class TestProposalTermsImmutability:
                 )
             ],
         )
-        
+
         with pytest.raises(ValueError, match="Cannot remove last term"):
             proposal.remove_term("term_1")
 
@@ -932,7 +931,7 @@ class TestProposalTermsProperties:
     def test_is_expired_true(self):
         """Test expired proposal detection."""
         past_date = datetime.now(timezone.utc) - timedelta(days=1)
-        
+
         proposal = ProposalTerms(
             proposal_id=uuid4(),
             proposal_type=ProposalType.TRADE_OFFER,
@@ -950,13 +949,13 @@ class TestProposalTermsProperties:
             validity_period=past_date,
             created_at=datetime.now(timezone.utc) - timedelta(days=2),
         )
-        
+
         assert proposal.is_expired is True
 
     def test_is_expired_false(self):
         """Test non-expired proposal detection."""
         future_date = datetime.now(timezone.utc) + timedelta(days=7)
-        
+
         proposal = ProposalTerms.create(
             proposal_type=ProposalType.TRADE_OFFER,
             title="Valid",
@@ -972,7 +971,7 @@ class TestProposalTermsProperties:
             ],
             validity_period=future_date,
         )
-        
+
         assert proposal.is_expired is False
 
     def test_is_expired_no_validity(self):
@@ -991,7 +990,7 @@ class TestProposalTermsProperties:
                 )
             ],
         )
-        
+
         assert proposal.is_expired is False
 
     def test_total_terms_count(self):
@@ -1017,7 +1016,7 @@ class TestProposalTermsProperties:
                 ),
             ],
         )
-        
+
         assert proposal.total_terms_count == 2
 
     def test_negotiable_terms_count(self):
@@ -1045,7 +1044,7 @@ class TestProposalTermsProperties:
                 ),
             ],
         )
-        
+
         assert proposal.negotiable_terms_count == 1
 
     def test_critical_terms_count(self):
@@ -1071,7 +1070,7 @@ class TestProposalTermsProperties:
                 ),
             ],
         )
-        
+
         assert proposal.critical_terms_count == 1
 
 
@@ -1082,7 +1081,7 @@ class TestProposalTermsEquality:
         """Test equality of identical proposals."""
         proposal_id = uuid4()
         created_at = datetime.now(timezone.utc)
-        
+
         proposal1 = ProposalTerms(
             proposal_id=proposal_id,
             proposal_type=ProposalType.TRADE_OFFER,
@@ -1099,7 +1098,7 @@ class TestProposalTermsEquality:
             ],
             created_at=created_at,
         )
-        
+
         proposal2 = ProposalTerms(
             proposal_id=proposal_id,
             proposal_type=ProposalType.TRADE_OFFER,
@@ -1116,7 +1115,7 @@ class TestProposalTermsEquality:
             ],
             created_at=created_at,
         )
-        
+
         assert proposal1 == proposal2
 
     def test_equality_different(self):
@@ -1135,7 +1134,7 @@ class TestProposalTermsEquality:
                 )
             ],
         )
-        
+
         proposal2 = ProposalTerms.create(
             proposal_type=ProposalType.TRADE_OFFER,
             title="Trade 2",
@@ -1150,7 +1149,7 @@ class TestProposalTermsEquality:
                 )
             ],
         )
-        
+
         assert proposal1 != proposal2
 
     def test_equality_different_type(self):
@@ -1169,7 +1168,7 @@ class TestProposalTermsEquality:
                 )
             ],
         )
-        
+
         assert proposal != "not a proposal"
 
     def test_str(self):
@@ -1188,8 +1187,8 @@ class TestProposalTermsEquality:
                 )
             ],
         )
-        
+
         repr_str = str(proposal)
-        
+
         assert "ProposalTerms" in repr_str
         assert "trade_offer" in repr_str

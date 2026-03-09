@@ -444,7 +444,9 @@ class NarrativeFlowService:
         if not arc.primary_characters:
             return Decimal("5.0")
 
-        character_appearances: Dict[Any, List[int]] = {char_id: [] for char_id in arc.primary_characters}
+        character_appearances: Dict[Any, List[int]] = {
+            char_id: [] for char_id in arc.primary_characters
+        }
 
         # Track character appearances in plot points
         for plot_point in plot_points:
@@ -589,7 +591,9 @@ class NarrativeFlowService:
 
         for char_id in arc.primary_characters:
             appearances = sum(
-                1 for pp in plot_points if char_id in (pp.involved_characters or frozenset())
+                1
+                for pp in plot_points
+                if char_id in (pp.involved_characters or frozenset())
             )
 
             if len(plot_points) > 0:
@@ -853,7 +857,9 @@ class NarrativeFlowService:
         # Good distribution has tension points spread throughout
         if len(high_tension_positions) >= 2:
             spread = max(high_tension_positions) - min(high_tension_positions)
-            return bool(spread >= Decimal("0.5"))  # Spread across at least half the story
+            return bool(
+                spread >= Decimal("0.5")
+            )  # Spread across at least half the story
 
         return False
 

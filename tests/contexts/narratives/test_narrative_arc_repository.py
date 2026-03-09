@@ -31,7 +31,6 @@ from src.contexts.narratives.infrastructure.repositories.narrative_arc_repositor
 pytestmark = pytest.mark.unit
 
 
-
 class TestNarrativeArcRepositoryInitialization:
     """测试仓库初始化"""
 
@@ -67,7 +66,7 @@ class TestSave:
         """测试保存新弧线 - 验证事务流程"""
         repo = NarrativeArcRepository(session=mock_session)
         # 模拟实体创建和保存流程
-        with patch.object(repo, '_create_arc_entity') as mock_create:
+        with patch.object(repo, "_create_arc_entity") as mock_create:
             mock_entity = MagicMock()
             mock_create.return_value = mock_entity
             repo.save(sample_arc)
@@ -81,8 +80,8 @@ class TestSave:
         # 保存前应该有创建事件
         events_before = sample_arc.get_uncommitted_events()
         assert len(events_before) > 0
-        
-        with patch.object(repo, '_create_arc_entity'):
+
+        with patch.object(repo, "_create_arc_entity"):
             repo.save(sample_arc)
             # 验证事件已被清除
             assert len(sample_arc.get_uncommitted_events()) == 0
@@ -95,10 +94,12 @@ class TestSave:
         existing_entity.themes = []
         existing_entity.pacing_segments = []
         existing_entity.narrative_contexts = []
-        mock_session.query.return_value.filter_by.return_value.first.return_value = existing_entity
-        
+        mock_session.query.return_value.filter_by.return_value.first.return_value = (
+            existing_entity
+        )
+
         repo = NarrativeArcRepository(session=mock_session)
-        with patch.object(repo, '_update_arc_entity') as mock_update:
+        with patch.object(repo, "_update_arc_entity") as mock_update:
             repo.save(sample_arc)
             mock_update.assert_called_once_with(existing_entity, sample_arc)
             mock_session.commit.assert_called_once()
@@ -106,9 +107,9 @@ class TestSave:
     def test_save_rollback_on_error(self, mock_session, sample_arc):
         """测试错误时回滚"""
         mock_session.commit.side_effect = Exception("DB Error")
-        
+
         repo = NarrativeArcRepository(session=mock_session)
-        with patch.object(repo, '_create_arc_entity'):
+        with patch.object(repo, "_create_arc_entity"):
             with pytest.raises(Exception):
                 repo.save(sample_arc)
             mock_session.rollback.assert_called_once()
@@ -125,7 +126,7 @@ class TestGetById:
     def test_get_by_id_returns_none_when_not_found(self, mock_session):
         """测试获取不存在的弧线返回None"""
         mock_session.query.return_value.filter_by.return_value.first.return_value = None
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         result = repo.get_by_id(arc_id)
@@ -134,7 +135,7 @@ class TestGetById:
     def test_get_by_id_raises_on_db_error(self, mock_session):
         """测试数据库错误时抛出异常"""
         mock_session.query.side_effect = Exception("DB Error")
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         with pytest.raises(Exception):
@@ -169,7 +170,9 @@ class TestGetByType:
         repo = NarrativeArcRepository(session=mock_session)
         repo.get_by_type("main", limit=10, offset=5)
         # 验证分页被应用
-        mock_session.query.return_value.filter_by.return_value.order_by.return_value.offset.assert_called_with(5)
+        mock_session.query.return_value.filter_by.return_value.order_by.return_value.offset.assert_called_with(
+            5
+        )
 
 
 class TestSearch:
@@ -241,8 +244,10 @@ class TestDelete:
     def test_delete_existing_arc(self, mock_session):
         """测试删除现有弧线"""
         existing_entity = MagicMock()
-        mock_session.query.return_value.filter_by.return_value.first.return_value = existing_entity
-        
+        mock_session.query.return_value.filter_by.return_value.first.return_value = (
+            existing_entity
+        )
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         result = repo.delete(arc_id)
@@ -253,7 +258,7 @@ class TestDelete:
     def test_delete_nonexistent_arc(self, mock_session):
         """测试删除不存在的弧线"""
         mock_session.query.return_value.filter_by.return_value.first.return_value = None
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         result = repo.delete(arc_id)
@@ -262,9 +267,11 @@ class TestDelete:
     def test_delete_rollback_on_error(self, mock_session):
         """测试删除错误时回滚"""
         existing_entity = MagicMock()
-        mock_session.query.return_value.filter_by.return_value.first.return_value = existing_entity
+        mock_session.query.return_value.filter_by.return_value.first.return_value = (
+            existing_entity
+        )
         mock_session.commit.side_effect = Exception("DB Error")
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         with pytest.raises(Exception):
@@ -283,7 +290,7 @@ class TestExists:
     def test_exists_returns_true_when_found(self, mock_session):
         """测试找到时返回True"""
         mock_session.query.return_value.filter_by.return_value.count.return_value = 1
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         result = repo.exists(arc_id)
@@ -292,7 +299,7 @@ class TestExists:
     def test_exists_returns_false_when_not_found(self, mock_session):
         """测试未找到时返回False"""
         mock_session.query.return_value.filter_by.return_value.count.return_value = 0
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         result = repo.exists(arc_id)
@@ -301,7 +308,7 @@ class TestExists:
     def test_exists_raises_on_db_error(self, mock_session):
         """测试数据库错误时抛出异常"""
         mock_session.query.side_effect = Exception("DB Error")
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arc_id = NarrativeId.generate()
         with pytest.raises(Exception):
@@ -327,15 +334,24 @@ class TestEntityConversion:
         )
         repo = NarrativeArcRepository(session=mock_session)
         # 使用patch避免SQLAlchemy映射问题
-        with patch('src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.NarrativeArcEntity') as mock_entity_class:
+        with patch(
+            "src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.NarrativeArcEntity"
+        ) as mock_entity_class:
             mock_entity = MagicMock()
             mock_entity_class.return_value = mock_entity
             _ = repo._create_arc_entity(arc)
             # 验证实体被创建
             mock_entity_class.assert_called_once()
             # 验证关键字段
-            call_kwargs = mock_entity_class.call_args.kwargs if mock_entity_class.call_args else {}
-            assert call_kwargs.get('arc_name') == "Test Arc" or mock_entity.arc_name == "Test Arc"
+            call_kwargs = (
+                mock_entity_class.call_args.kwargs
+                if mock_entity_class.call_args
+                else {}
+            )
+            assert (
+                call_kwargs.get("arc_name") == "Test Arc"
+                or mock_entity.arc_name == "Test Arc"
+            )
 
     def test_update_arc_entity_mapping(self, mock_session):
         """测试更新弧线实体的字段映射"""
@@ -344,7 +360,7 @@ class TestEntityConversion:
         existing_entity.themes = []
         existing_entity.pacing_segments = []
         existing_entity.narrative_contexts = []
-        
+
         arc = NarrativeArc(
             arc_id=NarrativeId.generate(),
             arc_name="Updated Arc",
@@ -380,7 +396,9 @@ class TestHelperMethods:
         repo = NarrativeArcRepository(session=mock_session)
         # 由于PlotPoint实体字段与Domain对象不完全匹配，我们跳过详细检查
         # 只验证方法可以运行而不抛出异常
-        with patch('src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.PlotPointEntity') as mock_entity_class:
+        with patch(
+            "src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.PlotPointEntity"
+        ) as mock_entity_class:
             mock_entity = MagicMock()
             mock_entity_class.return_value = mock_entity
             # 方法应该成功运行
@@ -406,7 +424,9 @@ class TestHelperMethods:
         arc_id = uuid4()
         repo = NarrativeArcRepository(session=mock_session)
         # 由于StoryPacing实体字段与Domain对象不完全匹配，我们跳过详细检查
-        with patch('src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.StoryPacingEntity') as mock_entity_class:
+        with patch(
+            "src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.StoryPacingEntity"
+        ) as mock_entity_class:
             mock_entity = MagicMock()
             mock_entity_class.return_value = mock_entity
             # 方法应该成功运行或优雅处理字段不匹配
@@ -442,12 +462,12 @@ class TestEdgeCases:
             sequence_order=1,
         )
         arc.add_plot_point(plot)
-        
+
         mock_session.query.return_value.filter_by.return_value.first.return_value = None
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         # 由于SQLAlchemy映射问题，我们使用patch来模拟整个保存流程
-        with patch.object(repo, '_create_arc_entity') as mock_create_arc:
+        with patch.object(repo, "_create_arc_entity") as mock_create_arc:
             mock_arc_entity = MagicMock()
             mock_arc_entity.plot_points = []
             mock_create_arc.return_value = mock_arc_entity
@@ -459,7 +479,7 @@ class TestEdgeCases:
         """测试搜索返回空结果"""
         mock_session.query.return_value.filter.return_value.count.return_value = 0
         mock_session.query.return_value.filter.return_value.all.return_value = []
-        
+
         repo = NarrativeArcRepository(session=mock_session)
         arcs, total = repo.search(search_term="nonexistent")
         assert arcs == []
@@ -468,8 +488,10 @@ class TestEdgeCases:
     def test_delete_with_uuid_conversion(self, mock_session):
         """测试删除时的UUID转换"""
         existing_entity = MagicMock()
-        mock_session.query.return_value.filter_by.return_value.first.return_value = existing_entity
-        
+        mock_session.query.return_value.filter_by.return_value.first.return_value = (
+            existing_entity
+        )
+
         repo = NarrativeArcRepository(session=mock_session)
         # 使用NarrativeId
         arc_id = NarrativeId.generate()
@@ -486,7 +508,9 @@ class TestLogging:
         """创建模拟会话"""
         return MagicMock()
 
-    @patch("src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.logger")
+    @patch(
+        "src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.logger"
+    )
     def test_save_logs_debug_message(self, mock_logger, mock_session):
         """测试保存时记录调试消息"""
         arc = NarrativeArc(
@@ -495,13 +519,15 @@ class TestLogging:
             arc_type="main",
         )
         mock_session.query.return_value.filter_by.return_value.first.return_value = None
-        
+
         repo = NarrativeArcRepository(session=mock_session)
-        with patch.object(repo, '_create_arc_entity'):
+        with patch.object(repo, "_create_arc_entity"):
             repo.save(arc)
             mock_logger.debug.assert_called()
 
-    @patch("src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.logger")
+    @patch(
+        "src.contexts.narratives.infrastructure.repositories.narrative_arc_repository.logger"
+    )
     def test_save_logs_error_on_failure(self, mock_logger, mock_session):
         """测试保存失败时记录错误"""
         arc = NarrativeArc(
@@ -511,9 +537,9 @@ class TestLogging:
         )
         mock_session.query.return_value.filter_by.return_value.first.return_value = None
         mock_session.commit.side_effect = Exception("DB Error")
-        
+
         repo = NarrativeArcRepository(session=mock_session)
-        with patch.object(repo, '_create_arc_entity'):
+        with patch.object(repo, "_create_arc_entity"):
             with pytest.raises(Exception):
                 repo.save(arc)
             mock_logger.error.assert_called()

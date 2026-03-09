@@ -28,6 +28,7 @@ from src.core.result import Err, Error, NotFoundError, Ok, Result, ValidationErr
 
 logger = structlog.get_logger(__name__)
 
+
 class ModelRegistry:
     """
     Registry for LLM model configurations.
@@ -410,7 +411,9 @@ class ModelRegistry:
                 ModelLookupResult(
                     provider=alias.provider,
                     model_name=alias.model_name,
-                    model_definition=model_result.unwrap() if model_result.is_ok else None,
+                    model_definition=model_result.unwrap()
+                    if model_result.is_ok
+                    else None,
                     alias_used=alias.alias,
                 )
             )
@@ -431,7 +434,9 @@ class ModelRegistry:
                         ModelLookupResult(
                             provider=alias.provider,
                             model_name=model_name,
-                            model_definition=model_result.unwrap() if model_result.is_ok else None,
+                            model_definition=model_result.unwrap()
+                            if model_result.is_ok
+                            else None,
                             alias_used=f"{provider_str}:{model_name}",
                         )
                     )
@@ -450,7 +455,9 @@ class ModelRegistry:
                 ModelLookupResult(
                     provider=provider,
                     model_name=model_name,
-                    model_definition=model_result.unwrap() if model_result.is_ok else None,
+                    model_definition=model_result.unwrap()
+                    if model_result.is_ok
+                    else None,
                 )
             )
 
@@ -532,7 +539,9 @@ class ModelRegistry:
                 if task_config_result.is_ok:
                     task_config = task_config_result.unwrap()
                     if task_config is not None:
-                        model_result = self.get_model(task_config.provider, task_config.model_name)
+                        model_result = self.get_model(
+                            task_config.provider, task_config.model_name
+                        )
                         if model_result.is_ok:
                             model_def = model_result.unwrap()
                             if model_def is not None:
@@ -540,7 +549,9 @@ class ModelRegistry:
 
                         # Check fallback providers (null-safe iteration)
                         for provider in task_config.fallback_providers or []:
-                            fallback_result = self.get_model(provider, task_config.model_name)
+                            fallback_result = self.get_model(
+                                provider, task_config.model_name
+                            )
                             if fallback_result.is_ok:
                                 fallback_model = fallback_result.unwrap()
                                 if fallback_model is not None:
@@ -655,5 +666,3 @@ class ModelRegistry:
                 [m for m in self._models.values() if m.deprecated]
             ),
         }
-
-

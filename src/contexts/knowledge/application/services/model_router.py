@@ -464,10 +464,14 @@ class ModelRouter:
             # Fallback to CHEAP task type
             task_config_result = self._registry.get_model_for_task(TaskType.CHEAP)
             if task_config_result.is_error:
-                raise ValueError(f"No model configuration available for task type: {task_type.value}")
+                raise ValueError(
+                    f"No model configuration available for task type: {task_type.value}"
+                )
         task_config = task_config_result.unwrap()
         if task_config is None:
-            raise ValueError(f"No model configuration available for task type: {task_type.value}")
+            raise ValueError(
+                f"No model configuration available for task type: {task_type.value}"
+            )
 
         # Build candidate list with primary and fallbacks
         candidates = [(task_config.provider, task_config.model_name)]
@@ -521,7 +525,11 @@ class ModelRouter:
                 model_result = self._registry.get_model(provider, model_name)
                 if model_result.is_ok:
                     model_def = model_result.unwrap()
-                    if model_def is not None and model_def.cost_per_1m_output_tokens > config.max_cost_per_1m_tokens:
+                    if (
+                        model_def is not None
+                        and model_def.cost_per_1m_output_tokens
+                        > config.max_cost_per_1m_tokens
+                    ):
                         log.debug(
                             "model_too_expensive",
                             model=model_key,
@@ -666,7 +674,7 @@ class ModelRouter:
                 reason=RoutingReason.MANUAL_OVERRIDE,
                 fallback_used=False,
                 execution_time_ms=execution_time,
-                metadata={"alias_used": getattr(lookup_result, 'alias_used', None)},
+                metadata={"alias_used": getattr(lookup_result, "alias_used", None)},
             )
 
             self._record_decision(decision)
@@ -884,16 +892,18 @@ class ModelRouter:
                 if v.is_open()
             ]
 
-            return Ok({
-                "total_decisions": len(self._routing_history),
-                "fallback_count": fallback_count,
-                "fallback_rate": fallback_count / len(self._routing_history),
-                "reason_counts": reason_counts,
-                "provider_counts": provider_counts,
-                "avg_routing_time_ms": avg_time,
-                "open_circuits": open_circuits,
-                "total_circuits": len(self._circuit_breakers),
-            })
+            return Ok(
+                {
+                    "total_decisions": len(self._routing_history),
+                    "fallback_count": fallback_count,
+                    "fallback_rate": fallback_count / len(self._routing_history),
+                    "reason_counts": reason_counts,
+                    "provider_counts": provider_counts,
+                    "avg_routing_time_ms": avg_time,
+                    "open_circuits": open_circuits,
+                    "total_circuits": len(self._circuit_breakers),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

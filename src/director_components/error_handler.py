@@ -598,9 +598,7 @@ class SystemErrorHandler:
         )
         error_hash = hashlib.md5(
             error_signature.encode(), usedforsecurity=False
-        ).hexdigest()[
-            :12
-        ]  # nosec B324
+        ).hexdigest()[:12]  # nosec B324
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"err_{timestamp}_{error_hash}"
 

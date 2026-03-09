@@ -109,7 +109,7 @@ class TestNarrativeStream:
         # Parse SSE events
         content = response.content.decode("utf-8")
         events = [line for line in content.split("\n\n") if line.startswith("data:")]
-        
+
         # Should have chunk events + completion event
         assert len(events) >= 2  # At least one chunk + completion
 
@@ -376,8 +376,18 @@ class TestNarrativeSchemas:
     def test_narrative_stream_request_max_tokens_validation(self) -> None:
         """Test max_tokens validation."""
         # Valid values
-        assert NarrativeStreamRequest(prompt="Test", world_context=WorldContext(), max_tokens=100).max_tokens == 100
-        assert NarrativeStreamRequest(prompt="Test", world_context=WorldContext(), max_tokens=8000).max_tokens == 8000
+        assert (
+            NarrativeStreamRequest(
+                prompt="Test", world_context=WorldContext(), max_tokens=100
+            ).max_tokens
+            == 100
+        )
+        assert (
+            NarrativeStreamRequest(
+                prompt="Test", world_context=WorldContext(), max_tokens=8000
+            ).max_tokens
+            == 8000
+        )
 
     def test_narrative_stream_chunk(self) -> None:
         """Test NarrativeStreamChunk schema."""

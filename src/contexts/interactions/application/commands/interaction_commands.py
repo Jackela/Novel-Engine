@@ -586,4 +586,6 @@ class SchedulePeriodicAnalysisCommand(InteractionCommand):
         if self.analysis_frequency_hours <= 0:
             raise ValueError("analysis_frequency_hours must be positive")
         if self.analysis_types is None:
-            object.__setattr__(self, "analysis_types", ["momentum", "conflicts", "viability"])
+            object.__setattr__(
+                self, "analysis_types", ["momentum", "conflicts", "viability"]
+            )

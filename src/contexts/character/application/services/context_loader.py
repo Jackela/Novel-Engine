@@ -147,9 +147,9 @@ class ContextLoaderService:
         self.logger.info(
             "context_loader_service_initialized",
             base_path=str(self.base_path),
-            max_file_size_mb=max_file_size/1024/1024,
+            max_file_size_mb=max_file_size / 1024 / 1024,
             caching_enabled=enable_caching,
-            concurrent_limit=max_concurrent_loads
+            concurrent_limit=max_concurrent_loads,
         )
 
     async def load_character_context(
@@ -181,7 +181,9 @@ class ContextLoaderService:
         # Check circuit breaker
         await self._check_circuit_breaker()
 
-        self.logger.info("loading_character_context", character_identifier=character_identifier)
+        self.logger.info(
+            "loading_character_context", character_identifier=character_identifier
+        )
 
         # Acquire load semaphore to control concurrency
         async with self._load_semaphore:
@@ -201,7 +203,9 @@ class ContextLoaderService:
                         cached_result = await self._get_from_cache(sanitized_id)
                         if cached_result:
                             self._load_stats["cache_hits"] += 1
-                            self.logger.debug("cache_hit", character_identifier=character_identifier)
+                            self.logger.debug(
+                                "cache_hit", character_identifier=character_identifier
+                            )
                             return cached_result
                         else:
                             self._load_stats["cache_misses"] += 1
@@ -247,7 +251,7 @@ class ContextLoaderService:
                         character_identifier=character_identifier,
                         duration_seconds=load_duration,
                         success=character_context.load_success,
-                        partial=character_context.partial_load
+                        partial=character_context.partial_load,
                     )
 
                     return character_context
@@ -257,14 +261,20 @@ class ContextLoaderService:
 
             except asyncio.TimeoutError:
                 await self._record_failure()
-                self.logger.error("context_loading_timeout", character_identifier=character_identifier)
+                self.logger.error(
+                    "context_loading_timeout", character_identifier=character_identifier
+                )
                 raise ContextLoaderError(
                     "Context loading timeout - operation took too long"
                 )
 
             except SecurityError as e:
                 self._load_stats["security_violations"] += 1
-                self.logger.error("security_violation", character_identifier=character_identifier, error=str(e))
+                self.logger.error(
+                    "security_violation",
+                    character_identifier=character_identifier,
+                    error=str(e),
+                )
                 raise
 
             except Exception as e:
@@ -272,7 +282,7 @@ class ContextLoaderService:
                 self.logger.error(
                     "context_loading_failed",
                     character_identifier=character_identifier,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise ContextLoaderError(f"Context loading failed: {str(e)}") from e
 
@@ -307,7 +317,9 @@ class ContextLoaderService:
                 f"Character identifier too long (max 100 chars): {identifier}"
             )
 
-        self.logger.debug("identifier_sanitized", original=identifier, sanitized=sanitized)
+        self.logger.debug(
+            "identifier_sanitized", original=identifier, sanitized=sanitized
+        )
         return sanitized
 
     async def _find_character_directory(self, character_id: str) -> Path:
@@ -326,7 +338,9 @@ class ContextLoaderService:
         character_dir = self.base_path / character_id
 
         if not character_dir.exists():
-            self.logger.warning("character_directory_not_found", directory=str(character_dir))
+            self.logger.warning(
+                "character_directory_not_found", directory=str(character_dir)
+            )
             raise ContextLoaderError(
                 f"Character directory not found for: {character_id}"
             )
@@ -360,7 +374,11 @@ class ContextLoaderService:
                 file_path = character_dir / f"{character_id}{file_suffix}"
 
                 if file_path.exists():
-                    self.logger.debug("loading_context_file", context_type=context_type, file_path=str(file_path))
+                    self.logger.debug(
+                        "loading_context_file",
+                        context_type=context_type,
+                        file_path=str(file_path),
+                    )
 
                     # Load and parse file based on type
                     if context_type == "stats":
@@ -374,7 +392,9 @@ class ContextLoaderService:
                     context_data["loaded_files"].append(file_info)
 
                 else:
-                    self.logger.info("optional_file_not_found", file_path=str(file_path))
+                    self.logger.info(
+                        "optional_file_not_found", file_path=str(file_path)
+                    )
                     # Create file info for missing file
                     context_data["loaded_files"].append(
                         LoadedFileInfo(
@@ -386,7 +406,9 @@ class ContextLoaderService:
                     )
 
             except Exception as e:
-                self.logger.error("context_file_load_error", context_type=context_type, error=str(e))
+                self.logger.error(
+                    "context_file_load_error", context_type=context_type, error=str(e)
+                )
                 context_data["loaded_files"].append(
                     LoadedFileInfo(
                         file_name=f"{character_id}{file_suffix}",
@@ -449,7 +471,9 @@ class ContextLoaderService:
         except Exception as e:
             error_msg = f"YAML parsing error: {str(e)}"
             file_info.error_message = error_msg
-            self.logger.error("yaml_file_load_failed", file_path=str(file_path), error=error_msg)
+            self.logger.error(
+                "yaml_file_load_failed", file_path=str(file_path), error=error_msg
+            )
             return None, file_info
 
     async def _load_markdown_file(
@@ -499,7 +523,11 @@ class ContextLoaderService:
                 raise FileParsingError(f"Unknown context type: {context_type}")
 
             file_info.loaded_successfully = True
-            self.logger.debug("markdown_file_loaded", context_type=context_type, file_path=str(file_path))
+            self.logger.debug(
+                "markdown_file_loaded",
+                context_type=context_type,
+                file_path=str(file_path),
+            )
 
             return parsed_context, file_info
 
@@ -507,7 +535,10 @@ class ContextLoaderService:
             error_msg = f"Markdown parsing error: {str(e)}"
             file_info.error_message = error_msg
             self.logger.error(
-                "markdown_file_load_failed", context_type=context_type, file_path=str(file_path), error=error_msg
+                "markdown_file_load_failed",
+                context_type=context_type,
+                file_path=str(file_path),
+                error=error_msg,
             )
             return None, file_info
 
@@ -850,7 +881,7 @@ class ContextLoaderService:
                 success=character_context.load_success,
                 partial=character_context.partial_load,
                 files_loaded=len([f for f in loaded_files if f.loaded_successfully]),
-                total_files=len(loaded_files)
+                total_files=len(loaded_files),
             )
 
             return character_context
@@ -897,7 +928,7 @@ class ContextLoaderService:
             self._circuit_breaker["state"] = "OPEN"
             self.logger.warning(
                 "circuit_breaker_opened",
-                failure_count=self._circuit_breaker["failure_count"]
+                failure_count=self._circuit_breaker["failure_count"],
             )
 
     async def _record_partial_failure(self) -> None:
@@ -942,7 +973,9 @@ class ContextLoaderService:
         except Exception as e:
             raise SecurityError(f"Path validation error: {str(e)}")
 
-    async def _validate_context_integrity(self, character_context: CharacterContext) -> None:
+    async def _validate_context_integrity(
+        self, character_context: CharacterContext
+    ) -> None:
         """
         Perform comprehensive data integrity validation.
 

@@ -80,7 +80,6 @@ class TestSnapshotsAPICreateEndpoint:
         data = response.json()
         assert data["tick_number"] == 5
 
-
     @pytest.mark.integration
     def test_create_multiple_snapshots(self, client):
         """Test creating multiple snapshots for a world."""
@@ -203,7 +202,9 @@ class TestSnapshotsAPIRestoreEndpoint:
         snapshot_id = create_response.json()["snapshot_id"]
 
         # Restore it
-        response = client.post(f"/api/world/restore-world/snapshots/{snapshot_id}/restore")
+        response = client.post(
+            f"/api/world/restore-world/snapshots/{snapshot_id}/restore"
+        )
 
         assert response.status_code == 200
         data = response.json()

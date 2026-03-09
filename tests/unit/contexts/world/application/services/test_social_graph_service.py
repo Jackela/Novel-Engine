@@ -197,9 +197,15 @@ class TestAnalyzeSocialNetwork:
     ) -> None:
         """Should analyze network with multiple relationships."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY, trust=70),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY, trust=80),
-            create_character_relationship("char-002", "char-003", RelationshipType.ENEMY, trust=20),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY, trust=70
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY, trust=80
+            ),
+            create_character_relationship(
+                "char-002", "char-003", RelationshipType.ENEMY, trust=20
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -218,10 +224,18 @@ class TestAnalyzeSocialNetwork:
         # char-003 has 2 relationships (to char-001, char-002)
         # char-004 has 1 relationship (to char-001)
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY),
-            create_character_relationship("char-001", "char-004", RelationshipType.ALLY),
-            create_character_relationship("char-002", "char-003", RelationshipType.ENEMY),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY
+            ),
+            create_character_relationship(
+                "char-001", "char-004", RelationshipType.ALLY
+            ),
+            create_character_relationship(
+                "char-002", "char-003", RelationshipType.ENEMY
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -232,10 +246,18 @@ class TestAnalyzeSocialNetwork:
         # char-002: 2 relationships (to 001, 003)
         # char-003: 2 relationships (to 001, 002)
         # char-004: 1 relationship (to 001)
-        assert result.unwrap().character_centralities["char-001"].relationship_count == 3
-        assert result.unwrap().character_centralities["char-002"].relationship_count == 2
-        assert result.unwrap().character_centralities["char-003"].relationship_count == 2
-        assert result.unwrap().character_centralities["char-004"].relationship_count == 1
+        assert (
+            result.unwrap().character_centralities["char-001"].relationship_count == 3
+        )
+        assert (
+            result.unwrap().character_centralities["char-002"].relationship_count == 2
+        )
+        assert (
+            result.unwrap().character_centralities["char-003"].relationship_count == 2
+        )
+        assert (
+            result.unwrap().character_centralities["char-004"].relationship_count == 1
+        )
         assert result.unwrap().most_connected == "char-001"
 
     @pytest.mark.asyncio
@@ -244,9 +266,15 @@ class TestAnalyzeSocialNetwork:
     ) -> None:
         """Should identify character with most negative relationships."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ENEMY),
-            create_character_relationship("char-001", "char-003", RelationshipType.ENEMY),
-            create_character_relationship("char-002", "char-003", RelationshipType.ALLY),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ENEMY
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ENEMY
+            ),
+            create_character_relationship(
+                "char-002", "char-003", RelationshipType.ALLY
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -261,9 +289,15 @@ class TestAnalyzeSocialNetwork:
     ) -> None:
         """Should identify character with highest trust/romance."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY, trust=90),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY, trust=85),
-            create_character_relationship("char-002", "char-003", RelationshipType.ALLY, trust=50),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY, trust=90
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY, trust=85
+            ),
+            create_character_relationship(
+                "char-002", "char-003", RelationshipType.ALLY, trust=50
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -279,7 +313,9 @@ class TestAnalyzeSocialNetwork:
         """Should calculate network density correctly."""
         # 3 characters, 1 relationship (density = 1 / (3*2/2) = 1/3 = 0.333)
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -297,7 +333,9 @@ class TestAnalyzeSocialNetwork:
         """Should only analyze character-to-character relationships."""
         # The service calls find_by_entity_types with CHARACTER filters
         # Our mock returns whatever we set, but the test verifies the service handles the filtering
-        char_rel = create_character_relationship("char-001", "char-002", RelationshipType.ALLY)
+        char_rel = create_character_relationship(
+            "char-001", "char-002", RelationshipType.ALLY
+        )
         mock_relationship_repo.find_by_entity_types.return_value = [char_rel]
 
         result = await service.analyze_social_network()
@@ -311,8 +349,12 @@ class TestAnalyzeSocialNetwork:
     ) -> None:
         """Should calculate average trust for each character."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY, trust=60),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY, trust=80),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY, trust=60
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY, trust=80
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -328,8 +370,12 @@ class TestAnalyzeSocialNetwork:
     ) -> None:
         """Should calculate average romance for each character."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ROMANTIC, romance=80),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY, romance=10),  # ALLY instead of FRIEND
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ROMANTIC, romance=80
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY, romance=10
+            ),  # ALLY instead of FRIEND
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 
@@ -364,8 +410,12 @@ class TestGetCharacterCentrality:
     ) -> None:
         """Should return centrality for character with relationships."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY, trust=70),
-            create_character_relationship("char-001", "char-003", RelationshipType.ENEMY, trust=30),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY, trust=70
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ENEMY, trust=30
+            ),
         ]
         mock_relationship_repo.find_by_entity.return_value = relationships
 
@@ -384,7 +434,9 @@ class TestGetCharacterCentrality:
     ) -> None:
         """Should only count character-to-character relationships."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY
+            ),
             Relationship(
                 source_id="char-001",
                 source_type=EntityType.CHARACTER,
@@ -406,9 +458,15 @@ class TestGetCharacterCentrality:
     ) -> None:
         """Should set centrality_score to relationship count for single character."""
         relationships = [
-            create_character_relationship("char-001", "char-002", RelationshipType.ALLY),
-            create_character_relationship("char-001", "char-003", RelationshipType.ALLY),
-            create_character_relationship("char-001", "char-004", RelationshipType.ALLY),
+            create_character_relationship(
+                "char-001", "char-002", RelationshipType.ALLY
+            ),
+            create_character_relationship(
+                "char-001", "char-003", RelationshipType.ALLY
+            ),
+            create_character_relationship(
+                "char-001", "char-004", RelationshipType.ALLY
+            ),
         ]
         mock_relationship_repo.find_by_entity.return_value = relationships
 
@@ -436,7 +494,9 @@ class TestHelperMethods:
     def test_find_most_connected_single(self, service: SocialGraphService) -> None:
         """Should return single character when only one exists."""
         metrics = {
-            "char-001": CharacterCentrality(character_id="char-001", relationship_count=5)
+            "char-001": CharacterCentrality(
+                character_id="char-001", relationship_count=5
+            )
         }
 
         result = service._find_most_connected(metrics)
@@ -446,9 +506,15 @@ class TestHelperMethods:
     def test_find_most_connected_multiple(self, service: SocialGraphService) -> None:
         """Should return character with highest relationship count."""
         metrics = {
-            "char-001": CharacterCentrality(character_id="char-001", relationship_count=3),
-            "char-002": CharacterCentrality(character_id="char-002", relationship_count=7),
-            "char-003": CharacterCentrality(character_id="char-003", relationship_count=5),
+            "char-001": CharacterCentrality(
+                character_id="char-001", relationship_count=3
+            ),
+            "char-002": CharacterCentrality(
+                character_id="char-002", relationship_count=7
+            ),
+            "char-003": CharacterCentrality(
+                character_id="char-003", relationship_count=5
+            ),
         }
 
         result = service._find_most_connected(metrics)
@@ -490,7 +556,9 @@ class TestHelperMethods:
 
         assert result is None
 
-    def test_find_most_loved_uses_weighted_score(self, service: SocialGraphService) -> None:
+    def test_find_most_loved_uses_weighted_score(
+        self, service: SocialGraphService
+    ) -> None:
         """Should use weighted trust/romance score."""
         metrics = {
             "char-001": CharacterCentrality(
@@ -515,7 +583,9 @@ class TestHelperMethods:
         metrics: dict = {}
         trusts: dict = {}
         romances: dict = {}
-        rel = create_character_relationship("char-001", "char-002", RelationshipType.ALLY, trust=70, romance=10)
+        rel = create_character_relationship(
+            "char-001", "char-002", RelationshipType.ALLY, trust=70, romance=10
+        )
 
         service._update_character_metrics(metrics, trusts, romances, "char-001", rel)
 
@@ -530,11 +600,15 @@ class TestHelperMethods:
     ) -> None:
         """Should update existing metrics for known character."""
         metrics = {
-            "char-001": CharacterCentrality(character_id="char-001", relationship_count=2)
+            "char-001": CharacterCentrality(
+                character_id="char-001", relationship_count=2
+            )
         }
         trusts = {"char-001": [70, 80]}
         romances = {"char-001": [10, 20]}
-        rel = create_character_relationship("char-001", "char-003", RelationshipType.ALLY, trust=60, romance=5)
+        rel = create_character_relationship(
+            "char-001", "char-003", RelationshipType.ALLY, trust=60, romance=5
+        )
 
         service._update_character_metrics(metrics, trusts, romances, "char-001", rel)
 
@@ -549,7 +623,9 @@ class TestHelperMethods:
         metrics = {"char-001": CharacterCentrality(character_id="char-001")}
         trusts: dict = {"char-001": []}
         romances: dict = {"char-001": []}
-        rel = create_character_relationship("char-001", "char-002", RelationshipType.ALLY)
+        rel = create_character_relationship(
+            "char-001", "char-002", RelationshipType.ALLY
+        )
 
         service._update_character_metrics(metrics, trusts, romances, "char-001", rel)
 
@@ -563,7 +639,9 @@ class TestHelperMethods:
         metrics = {"char-001": CharacterCentrality(character_id="char-001")}
         trusts: dict = {"char-001": []}
         romances: dict = {"char-001": []}
-        rel = create_character_relationship("char-001", "char-002", RelationshipType.ENEMY)
+        rel = create_character_relationship(
+            "char-001", "char-002", RelationshipType.ENEMY
+        )
 
         service._update_character_metrics(metrics, trusts, romances, "char-001", rel)
 
@@ -587,14 +665,26 @@ class TestSocialGraphServiceIntegration:
         # Create a realistic social network
         relationships = [
             # Protagonist with many allies
-            create_character_relationship("hero", "ally1", RelationshipType.ALLY, trust=90),
-            create_character_relationship("hero", "ally2", RelationshipType.ALLY, trust=85),
-            create_character_relationship("hero", "mentor", RelationshipType.MENTOR, trust=95),
+            create_character_relationship(
+                "hero", "ally1", RelationshipType.ALLY, trust=90
+            ),
+            create_character_relationship(
+                "hero", "ally2", RelationshipType.ALLY, trust=85
+            ),
+            create_character_relationship(
+                "hero", "mentor", RelationshipType.MENTOR, trust=95
+            ),
             # Villain with many enemies
-            create_character_relationship("villain", "hero", RelationshipType.ENEMY, trust=10),
-            create_character_relationship("villain", "ally1", RelationshipType.ENEMY, trust=5),
+            create_character_relationship(
+                "villain", "hero", RelationshipType.ENEMY, trust=10
+            ),
+            create_character_relationship(
+                "villain", "ally1", RelationshipType.ENEMY, trust=5
+            ),
             # Neutral character
-            create_character_relationship("neutral", "hero", RelationshipType.NEUTRAL, trust=50),
+            create_character_relationship(
+                "neutral", "hero", RelationshipType.NEUTRAL, trust=50
+            ),
         ]
         mock_relationship_repo.find_by_entity_types.return_value = relationships
 

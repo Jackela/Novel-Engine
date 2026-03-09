@@ -19,7 +19,6 @@ from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 pytestmark = pytest.mark.unit
 
 
-
 class TestDiplomaticStatusIntegration:
     """Integration tests for diplomatic status."""
 
@@ -57,7 +56,7 @@ class TestDiplomaticStatusIntegration:
         """Test that strength values are clamped to valid range."""
         high = DiplomaticStatus.from_relation_strength(200)
         assert high == DiplomaticStatus.ALLIED
-        
+
         low = DiplomaticStatus.from_relation_strength(-200)
         assert low == DiplomaticStatus.AT_WAR
 
@@ -110,7 +109,7 @@ class TestCoordinatesIntegration:
         coord1 = Coordinates(x=10, y=20, z=5)
         coord2 = Coordinates(x=10, y=20, z=5)
         coord3 = Coordinates(x=15, y=25, z=10)
-        
+
         assert coord1 == coord2
         assert coord1 != coord3
 
@@ -123,7 +122,7 @@ class TestCoordinatesIntegration:
         """Test distance calculation between coordinates."""
         coord1 = Coordinates(x=0, y=0, z=0)
         coord2 = Coordinates(x=3, y=4, z=0)
-        
+
         distance = coord1.distance_to(coord2)
         assert distance == 5.0  # 3-4-5 triangle
 
@@ -137,7 +136,7 @@ class TestCoordinatesIntegration:
     def test_coordinates_negative_values(self):
         """Test coordinates with negative values."""
         coord = Coordinates(x=-10, y=-20, z=-30)
-        
+
         assert coord.x == -10
         assert coord.y == -20
         assert coord.z == -30
@@ -154,7 +153,7 @@ class TestWorldCalendarIntegration:
             year=1000,
             era_name="Third Age",
         )
-        
+
         assert calendar.day == 15
         assert calendar.month == 6
         assert calendar.year == 1000
@@ -164,16 +163,20 @@ class TestWorldCalendarIntegration:
         """Test calendar equality."""
         calendar1 = WorldCalendar(day=1, month=1, year=1000, era_name="Age")
         calendar2 = WorldCalendar(day=1, month=1, year=1000, era_name="Age")
-        
+
         assert calendar1 == calendar2
 
     def test_calendar_comparison_by_fields(self):
         """Test calendar comparison by comparing fields."""
         calendar1 = WorldCalendar(day=1, month=1, year=1000, era_name="Age")
         calendar2 = WorldCalendar(day=2, month=1, year=1000, era_name="Age")
-        
+
         # Compare using year, month, day
-        assert (calendar1.year, calendar1.month, calendar1.day) < (calendar2.year, calendar2.month, calendar2.day)
+        assert (calendar1.year, calendar1.month, calendar1.day) < (
+            calendar2.year,
+            calendar2.month,
+            calendar2.day,
+        )
 
 
 class TestSimulationTickIntegration:
@@ -182,7 +185,7 @@ class TestSimulationTickIntegration:
     def test_simulation_tick_type_exists(self):
         """Test that SimulationTick type exists."""
         assert SimulationTick is not None
-        
+
     def test_simulation_tick_can_be_created(self):
         """Test that SimulationTick can be instantiated."""
         # Try different possible constructor signatures
@@ -228,7 +231,7 @@ class TestFactionTypeIntegration:
             FactionType.ADVENTURER_GROUP,
             FactionType.NOBLE_HOUSE,
         ]
-        
+
         for ft in types:
             assert isinstance(ft, FactionType)
 
@@ -276,7 +279,7 @@ class TestResourceIntegration:
             ResourceType.TRADE_GOODS,
             ResourceType.CULTURAL_INFLUENCE,
         ]
-        
+
         for rt in resources:
             assert isinstance(rt, ResourceType)
 
@@ -285,7 +288,7 @@ class TestResourceIntegration:
         strategic = [r for r in ResourceType if r.is_strategic()]
         consumable = [r for r in ResourceType if r.is_consumable()]
         tradeable = [r for r in ResourceType if r.is_tradeable()]
-        
+
         assert len(strategic) > 0
         assert len(consumable) > 0
         assert len(tradeable) > 0
@@ -300,7 +303,7 @@ class TestWorldEntityCreation:
             name="Test Kingdom",
             faction_type=FactionType.KINGDOM,
         )
-        
+
         assert faction.name == "Test Kingdom"
         assert faction.faction_type == FactionType.KINGDOM
 
@@ -310,6 +313,6 @@ class TestWorldEntityCreation:
             name="Test City",
             coordinates=Coordinates(x=10, y=20, z=0),
         )
-        
+
         assert location.name == "Test City"
         assert location.coordinates.x == 10

@@ -628,7 +628,9 @@ class EquipmentUsageProcessor:
             try:
                 return EquipmentCategory(equipment.base_equipment.category)
             except (ValueError, AttributeError):
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
         name_lower = getattr(equipment.base_equipment, "name", "").lower()
 
         # Basic category inference

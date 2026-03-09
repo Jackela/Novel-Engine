@@ -18,6 +18,7 @@ from src.contexts.knowledge.domain.models.routing_config import (
 
 pytestmark = pytest.mark.unit
 
+
 class TestTaskRoutingRule:
     """Tests for TaskRoutingRule value object."""
 
@@ -59,7 +60,9 @@ class TestTaskRoutingRule:
             model_name="",
         )
 
-        assert rule.qualified_model_name == "gemini"  # Just provider when model_name is empty
+        assert (
+            rule.qualified_model_name == "gemini"
+        )  # Just provider when model_name is empty
 
 
 class TestRoutingConstraints:
@@ -223,7 +226,9 @@ class TestWorkspaceRoutingConfig:
         config = WorkspaceRoutingConfig.create_global()
         d = config.to_dict()
 
-        assert d["workspace_id"] == "" or d["workspace_id"] == "global"  # Accept either format
+        assert (
+            d["workspace_id"] == "" or d["workspace_id"] == "global"
+        )  # Accept either format
         assert d["scope"] == "global"
         assert "task_rules" in d
         assert "enable_circuit_breaker" in d

@@ -273,7 +273,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self.security_events.append(event)
 
         # Log to system logger
-        logger.warning("Security event: %s from %s at %s", event_type, source_ip, endpoint)
+        logger.warning(
+            "Security event: %s from %s at %s", event_type, source_ip, endpoint
+        )
 
         # Keep only recent events (last 1000)
         if len(self.security_events) > 1000:

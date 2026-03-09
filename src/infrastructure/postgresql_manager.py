@@ -133,11 +133,15 @@ class PostgreSQLConnectionPool:
             logger.info(
                 "postgresql_pool_initialized",
                 host=self.config.host,
-                port=self.config.port
+                port=self.config.port,
             )
 
         except Exception as e:
-            logger.error("postgresql_pool_initialization_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "postgresql_pool_initialization_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             raise
 
     async def _initialize_extensions(self) -> None:
@@ -151,7 +155,11 @@ class PostgreSQLConnectionPool:
                     await conn.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}"')
                     logger.debug("postgresql_extension_enabled", extension=extension)
                 except Exception as e:
-                    logger.warning("postgresql_extension_enable_failed", extension=extension, error=str(e))
+                    logger.warning(
+                        "postgresql_extension_enable_failed",
+                        extension=extension,
+                        error=str(e),
+                    )
 
     async def _initialize_schema(self) -> None:
         """Initialize database schema for Novel Engine."""
@@ -264,7 +272,10 @@ class PostgreSQLConnectionPool:
                 self._metrics["active_connections"] -= 1
 
     async def execute_query(
-        self, query: str, *args: Any, fetch_mode: str = "none"  # none, one, all
+        self,
+        query: str,
+        *args: Any,
+        fetch_mode: str = "none",  # none, one, all
     ) -> Any:
         """Execute query with performance monitoring."""
         start_time = asyncio.get_running_loop().time()
@@ -290,7 +301,7 @@ class PostgreSQLConnectionPool:
                         logger.warning(
                             "slow_query_detected",
                             execution_time_ms=round(execution_time * 1000, 2),
-                            query_preview=query[:100]
+                            query_preview=query[:100],
                         )
 
                 # Limit metrics history
@@ -301,7 +312,9 @@ class PostgreSQLConnectionPool:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error("postgresql_query_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "postgresql_query_failed", error=str(e), error_type=type(e).__name__
+            )
             raise
 
     async def execute_transaction(self, queries: List[tuple]) -> bool:
@@ -316,7 +329,9 @@ class PostgreSQLConnectionPool:
                 return True
 
         except Exception as e:
-            logger.error("transaction_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "transaction_failed", error=str(e), error_type=type(e).__name__
+            )
             raise
 
     # Novel Engine specific operations
@@ -608,7 +623,9 @@ class PostgreSQLManager:
             }
 
         except Exception as e:
-            logger.error("health_check_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "health_check_failed", error=str(e), error_type=type(e).__name__
+            )
             return {
                 "healthy": False,
                 "error": str(e),

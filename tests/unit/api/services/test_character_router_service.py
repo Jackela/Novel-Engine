@@ -249,9 +249,7 @@ class TestCharacterRouterServiceSummarizePublic:
 class TestCharacterRouterServiceSummarizeWorkspace:
     """Tests for summarize_workspace_character methods."""
 
-    def test_summarize_workspace_returns_summary_and_timestamp(
-        self, character_service
-    ):
+    def test_summarize_workspace_returns_summary_and_timestamp(self, character_service):
         """Returns CharacterSummary and timestamp from workspace record."""
         record = {
             "id": "workspace-char-001",
@@ -322,17 +320,13 @@ class TestCharacterRouterServiceGetPublicEntries:
 class TestCharacterRouterServiceNormalizeMethods:
     """Tests for normalize methods."""
 
-    def test_normalize_character_id_delegates_to_function(
-        self, character_service
-    ):
+    def test_normalize_character_id_delegates_to_function(self, character_service):
         """normalize_character_id delegates to _normalize_character_id."""
         result = character_service.normalize_character_id("Test Character!")
 
         assert result == "test_character_"
 
-    def test_normalize_numeric_map_delegates_to_function(
-        self, character_service
-    ):
+    def test_normalize_numeric_map_delegates_to_function(self, character_service):
         """normalize_numeric_map delegates to _normalize_numeric_map."""
         result = character_service.normalize_numeric_map({"a": 1, "b": "2"})
 

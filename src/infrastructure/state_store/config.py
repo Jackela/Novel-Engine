@@ -129,14 +129,11 @@ class StateStoreConfig:
         import os
 
         return cls(
-            default_store=StateStoreType(
-                os.getenv("STATE_STORE_TYPE", "redis")
-            ),
+            default_store=StateStoreType(os.getenv("STATE_STORE_TYPE", "redis")),
             redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
             redis_password=os.getenv("REDIS_PASSWORD"),
             postgres_url=os.getenv(
-                "DATABASE_URL",
-                "postgresql://user:pass@localhost/db"
+                "DATABASE_URL", "postgresql://user:pass@localhost/db"
             ),
             postgres_host=os.getenv("POSTGRES_HOST", "localhost"),
             postgres_port=int(os.getenv("POSTGRES_PORT", "5432")),
@@ -150,6 +147,10 @@ class StateStoreConfig:
             s3_endpoint=os.getenv("S3_ENDPOINT"),
             connection_timeout=int(os.getenv("STATE_STORE_TIMEOUT", "30")),
             cache_ttl=int(os.getenv("STATE_STORE_CACHE_TTL", "3600")),
-            enable_caching=os.getenv("STATE_STORE_ENABLE_CACHE", "true").lower() == "true",
-            enable_encryption=os.getenv("STATE_STORE_ENABLE_ENCRYPTION", "false").lower() == "true",
+            enable_caching=os.getenv("STATE_STORE_ENABLE_CACHE", "true").lower()
+            == "true",
+            enable_encryption=os.getenv(
+                "STATE_STORE_ENABLE_ENCRYPTION", "false"
+            ).lower()
+            == "true",
         )

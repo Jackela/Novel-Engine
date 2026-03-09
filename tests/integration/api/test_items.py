@@ -224,7 +224,11 @@ class TestItemsAPIListEndpoint:
         )
         client.post(
             "/api/items",
-            json={"name": "Health Potion", "item_type": "consumable", "rarity": "common"},
+            json={
+                "name": "Health Potion",
+                "item_type": "consumable",
+                "rarity": "common",
+            },
         )
 
         response = client.get("/api/items", params={"search": "Dragon"})

@@ -28,7 +28,10 @@ def client():
 
     # Ensure a shared repository is available in app.state for the DI pattern
     # This simulates what initialize_app_state does in production
-    if not hasattr(app.state, "faction_intent_repository") or app.state.faction_intent_repository is None:
+    if (
+        not hasattr(app.state, "faction_intent_repository")
+        or app.state.faction_intent_repository is None
+    ):
         app.state.faction_intent_repository = InMemoryFactionIntentRepository()
 
     return TestClient(app)
@@ -172,7 +175,7 @@ class TestFactionIntelAPIValidation:
 
         # Workaround: Create a direct reference to the repository
         # by generating another request and inspecting the app
-        _ = client.application if hasattr(client, 'application') else None
+        _ = client.application if hasattr(client, "application") else None
 
         # Alternative: Get repo via the router's dependency
         # Since we're in the same process, we can access the module-level state

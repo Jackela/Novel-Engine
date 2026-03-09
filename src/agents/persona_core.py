@@ -19,7 +19,7 @@ from typing import Any, Dict, Optional, Tuple
 import structlog
 
 # Safe filename pattern: alphanumeric, hyphens, underscores, dots only
-SAFE_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
+SAFE_FILENAME_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 # Core systems integration
 from src.core.error_handler import (
@@ -206,7 +206,7 @@ class PersonaCore:
         if not SAFE_FILENAME_PATTERN.match(filename):
             logger.warning("invalid_filename_rejected", filename=filename)
             return ""
-        
+
         base_path = Path(self.character_directory_path).resolve()
         file_path = str(base_path / filename)
         return self._read_cached_file(file_path)
@@ -324,7 +324,11 @@ class PersonaCore:
         self.state.turn_count += 1
         self.state.last_world_state_update = world_state_update.copy()
 
-        logger.debug("agent_starting_turn", agent_id=self.agent_id, turn_count=self.state.turn_count)
+        logger.debug(
+            "agent_starting_turn",
+            agent_id=self.agent_id,
+            turn_count=self.state.turn_count,
+        )
 
     def get_agent_state(self) -> Dict[str, Any]:
         """

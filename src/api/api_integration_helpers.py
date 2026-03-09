@@ -219,7 +219,9 @@ class APIValidationEnhancer:
             return {"valid": False, "message": f"Validation error: {str(e)}"}
 
 
-def enhance_api_with_context7(context7_api=None, config: Optional[APIEnhancementConfig] = None) -> None:
+def enhance_api_with_context7(
+    context7_api=None, config: Optional[APIEnhancementConfig] = None
+) -> None:
     """Decorator to enhance API endpoints with Context7 integration."""
     if config is None:
         config = APIEnhancementConfig()
@@ -255,7 +257,10 @@ class APIIntegrationManager:
     """Manages integration between existing APIs and Context7 enhancements."""
 
     def __init__(
-        self, app: FastAPI, context7_api=None, config: Optional[APIEnhancementConfig] = None
+        self,
+        app: FastAPI,
+        context7_api=None,
+        config: Optional[APIEnhancementConfig] = None,
     ) -> None:
         self.app = app
         self.context7_api = context7_api

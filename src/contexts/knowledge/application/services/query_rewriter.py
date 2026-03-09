@@ -376,11 +376,13 @@ class QueryRewriter:
             - Err(ServiceError): If stats retrieval fails
         """
         try:
-            return Ok({
-                "cache_size": len(self._cache),
-                "cache_enabled": self._cache_enabled,
-                "total_tokens_saved": self._total_tokens_saved,
-            })
+            return Ok(
+                {
+                    "cache_size": len(self._cache),
+                    "cache_enabled": self._cache_enabled,
+                    "total_tokens_saved": self._total_tokens_saved,
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

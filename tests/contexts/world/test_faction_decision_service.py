@@ -11,7 +11,6 @@ This module provides test coverage for the FactionDecisionService including:
 Total: 40 tests
 """
 
-
 import pytest
 
 from src.contexts.world.application.services.faction_decision_service import (
@@ -36,7 +35,6 @@ from src.contexts.world.infrastructure.persistence.in_memory_faction_intent_repo
 )
 
 pytestmark = pytest.mark.unit
-
 
 
 @pytest.fixture
@@ -119,7 +117,9 @@ class TestGenerateIntents:
     """Tests for generate_intents method."""
 
     @pytest.mark.asyncio
-    async def test_generate_intents_success(self, decision_service, sample_faction, sample_context):
+    async def test_generate_intents_success(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test successful intent generation."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -130,7 +130,9 @@ class TestGenerateIntents:
         assert len(intents) <= MAX_INTENTS_PER_GENERATION
 
     @pytest.mark.asyncio
-    async def test_generate_intents_returns_intent_objects(self, decision_service, sample_faction, sample_context):
+    async def test_generate_intents_returns_intent_objects(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that generated intents are FactionIntent objects."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -140,7 +142,9 @@ class TestGenerateIntents:
             assert isinstance(intent, FactionIntent)
 
     @pytest.mark.asyncio
-    async def test_generate_intents_faction_id_set(self, decision_service, sample_faction, sample_context):
+    async def test_generate_intents_faction_id_set(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that generated intents have correct faction ID."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -150,7 +154,9 @@ class TestGenerateIntents:
             assert intent.faction_id == "faction-1"
 
     @pytest.mark.asyncio
-    async def test_generate_intents_status_proposed(self, decision_service, sample_faction, sample_context):
+    async def test_generate_intents_status_proposed(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that generated intents have PROPOSED status."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -160,7 +166,9 @@ class TestGenerateIntents:
             assert intent.status == IntentStatus.PROPOSED
 
     @pytest.mark.asyncio
-    async def test_generate_intents_emits_event(self, decision_service, sample_faction, sample_context):
+    async def test_generate_intents_emits_event(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that intent generation emits event."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -170,7 +178,9 @@ class TestGenerateIntents:
         assert len(event.intent_ids) > 0
 
     @pytest.mark.asyncio
-    async def test_generate_intents_persists_intents(self, decision_service, intent_repo, sample_faction, sample_context):
+    async def test_generate_intents_persists_intents(
+        self, decision_service, intent_repo, sample_faction, sample_context
+    ):
         """Test that generated intents are persisted."""
         result = await decision_service.generate_intents(sample_faction, sample_context)
 
@@ -183,9 +193,13 @@ class TestGenerateIntents:
             assert retrieved is not None
 
     @pytest.mark.asyncio
-    async def test_generate_intents_with_low_resources(self, decision_service, sample_faction, low_resources_context):
+    async def test_generate_intents_with_low_resources(
+        self, decision_service, sample_faction, low_resources_context
+    ):
         """Test intent generation with low resources."""
-        result = await decision_service.generate_intents(sample_faction, low_resources_context)
+        result = await decision_service.generate_intents(
+            sample_faction, low_resources_context
+        )
 
         assert result.is_ok
         intents, _ = result.value
@@ -286,7 +300,9 @@ class TestGetAvailableActions:
 class TestGenerateFallbackIntents:
     """Tests for _generate_fallback_intents method."""
 
-    def test_fallback_intents_generated(self, decision_service, sample_faction, sample_context):
+    def test_fallback_intents_generated(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that fallback intents are generated."""
         available_actions = decision_service._get_available_actions(sample_context)
         intents = decision_service._generate_fallback_intents(
@@ -296,7 +312,9 @@ class TestGenerateFallbackIntents:
         assert len(intents) > 0
         assert len(intents) <= MAX_INTENTS_PER_GENERATION
 
-    def test_fallback_intents_have_rationale(self, decision_service, sample_faction, sample_context):
+    def test_fallback_intents_have_rationale(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that fallback intents have rationales."""
         available_actions = decision_service._get_available_actions(sample_context)
         intents = decision_service._generate_fallback_intents(
@@ -307,7 +325,9 @@ class TestGenerateFallbackIntents:
             assert intent.rationale
             assert len(intent.rationale) > 0
 
-    def test_fallback_intents_stabilize_when_critical_resources(self, decision_service, sample_faction):
+    def test_fallback_intents_stabilize_when_critical_resources(
+        self, decision_service, sample_faction
+    ):
         """Test STABILIZE is generated when resources are critical."""
         context = DecisionContext(
             faction_id="faction-1",
@@ -323,7 +343,9 @@ class TestGenerateFallbackIntents:
         action_types = {i.action_type for i in intents}
         assert ActionType.STABILIZE in action_types
 
-    def test_fallback_intents_prioritized(self, decision_service, sample_faction, sample_context):
+    def test_fallback_intents_prioritized(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that fallback intents are prioritized."""
         available_actions = decision_service._get_available_actions(sample_context)
         intents = decision_service._generate_fallback_intents(
@@ -334,7 +356,9 @@ class TestGenerateFallbackIntents:
         for intent in intents:
             assert 1 <= intent.priority <= 3
 
-    def test_fallback_intents_sorted_by_priority(self, decision_service, sample_faction, sample_context):
+    def test_fallback_intents_sorted_by_priority(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that fallback intents are sorted by priority."""
         available_actions = decision_service._get_available_actions(sample_context)
         intents = decision_service._generate_fallback_intents(
@@ -345,7 +369,9 @@ class TestGenerateFallbackIntents:
         for i in range(len(intents) - 1):
             assert intents[i].priority <= intents[i + 1].priority
 
-    def test_fallback_intents_limited_to_max(self, decision_service, sample_faction, sample_context):
+    def test_fallback_intents_limited_to_max(
+        self, decision_service, sample_faction, sample_context
+    ):
         """Test that fallback intents are limited to max."""
         available_actions = decision_service._get_available_actions(sample_context)
         intents = decision_service._generate_fallback_intents(

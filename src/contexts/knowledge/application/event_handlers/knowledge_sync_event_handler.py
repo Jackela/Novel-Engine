@@ -335,7 +335,9 @@ class KnowledgeSyncEventHandler:
                         )
                     else:
                         # Ingestion returned None or failed
-                        await self._handle_failure(task, "Ingestion returned invalid result")
+                        await self._handle_failure(
+                            task, "Ingestion returned invalid result"
+                        )
                 else:
                     # Ingestion failed - retry or dead letter
                     err = ingest_result.error

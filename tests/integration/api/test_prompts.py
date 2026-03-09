@@ -31,7 +31,7 @@ def reset_repository(client):
     from src.api.routers.prompts import get_prompt_repository
 
     # Get the repository from app state
-    request = type('Request', (), {'app': client.app})()
+    request = type("Request", (), {"app": client.app})()
     repo = get_prompt_repository(request)
     repo._templates.clear()
 
@@ -95,9 +95,7 @@ class TestPromptAPICreateEndpoint:
         prompt_data = {
             "name": "Simple Prompt",
             "content": "Hello, {{name}}!",
-            "variables": [
-                {"name": "name", "type": "string", "required": True}
-            ],
+            "variables": [{"name": "name", "type": "string", "required": True}],
         }
 
         response = client.post("/api/prompts", json=prompt_data)
@@ -275,7 +273,12 @@ class TestPromptAPIRenderEndpoint:
                 "content": "Hello, {{name}}! Welcome to {{place}}.",
                 "variables": [
                     {"name": "name", "type": "string", "required": True},
-                    {"name": "place", "type": "string", "required": False, "default_value": "our world"},
+                    {
+                        "name": "place",
+                        "type": "string",
+                        "required": False,
+                        "default_value": "our world",
+                    },
                 ],
             },
         )
@@ -312,7 +315,12 @@ class TestPromptAPIRenderEndpoint:
                 "content": "Hello, {{name}}! Welcome to {{place}}.",
                 "variables": [
                     {"name": "name", "type": "string", "required": True},
-                    {"name": "place", "type": "string", "required": False, "default_value": "our world"},
+                    {
+                        "name": "place",
+                        "type": "string",
+                        "required": False,
+                        "default_value": "our world",
+                    },
                 ],
             },
         )

@@ -284,7 +284,9 @@ class TestErrorClass:
 
     def test_error_multiple_details(self) -> None:
         """Test adding multiple details."""
-        error = Error(code="VALIDATION", message="Invalid input", details={"field": "name"})
+        error = Error(
+            code="VALIDATION", message="Invalid input", details={"field": "name"}
+        )
         error_full = error.with_detail("value", "test")
         assert error_full.details == {"field": "name", "value": "test"}
 

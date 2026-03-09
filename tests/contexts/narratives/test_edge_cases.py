@@ -28,7 +28,6 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestNarrativeIdEdgeCases:
     """Edge case tests for NarrativeId."""
 
@@ -36,7 +35,7 @@ class TestNarrativeIdEdgeCases:
         """Test narrative ID generation."""
         id1 = NarrativeId.generate()
         id2 = NarrativeId.generate()
-        
+
         assert id1 != id2
         assert isinstance(id1.value, UUID)
 
@@ -44,14 +43,14 @@ class TestNarrativeIdEdgeCases:
         """Test narrative ID from valid UUID string."""
         uuid_str = "550e8400-e29b-41d4-a716-446655440000"
         nid = NarrativeId.from_string(uuid_str)
-        
+
         assert str(nid.value) == uuid_str
 
     def test_narrative_id_from_string_without_dashes(self):
         """Test narrative ID from UUID string without dashes."""
         uuid_str = "550e8400e29b41d4a716446655440000"
         nid = NarrativeId.from_string(uuid_str)
-        
+
         assert nid.value.hex == uuid_str
 
     def test_narrative_id_from_string_empty_raises(self):
@@ -74,14 +73,14 @@ class TestNarrativeIdEdgeCases:
         uuid_str = "550e8400-e29b-41d4-a716-446655440000"
         id1 = NarrativeId.from_string(uuid_str)
         id2 = NarrativeId.from_string(uuid_str)
-        
+
         assert id1 == id2
 
     def test_narrative_id_hash(self):
         """Test narrative ID hashing."""
         uuid_str = "550e8400-e29b-41d4-a716-446655440000"
         nid = NarrativeId.from_string(uuid_str)
-        
+
         # Hash should be consistent
         assert hash(nid) == hash(nid)
         # Different NarrativeIds with same value should have same hash
@@ -162,7 +161,7 @@ class TestPlotPointEdgeCases:
             PlotPointType.SACRIFICE,
             PlotPointType.TRANSFORMATION,
         ]
-        
+
         for pt_type in types:
             assert isinstance(pt_type, PlotPointType)
 
@@ -175,7 +174,7 @@ class TestPlotPointEdgeCases:
             PlotPointImportance.MINOR,
             PlotPointImportance.SUPPLEMENTAL,
         ]
-        
+
         for level in levels:
             assert isinstance(level, PlotPointImportance)
 
@@ -211,7 +210,7 @@ class TestNarrativeThemeEdgeCases:
             ThemeType.FAMILY,
             ThemeType.COMING_OF_AGE,
         ]
-        
+
         for t_type in types:
             assert isinstance(t_type, ThemeType)
 
@@ -224,7 +223,7 @@ class TestNarrativeThemeEdgeCases:
             ThemeIntensity.CENTRAL,
             ThemeIntensity.OVERWHELMING,
         ]
-        
+
         for intensity in intensities:
             assert isinstance(intensity, ThemeIntensity)
 
@@ -239,6 +238,7 @@ class TestStoryPacingEdgeCases:
         from src.contexts.narratives.domain.value_objects.story_pacing import (
             PacingIntensity,
         )
+
         pacing = StoryPacing(
             pacing_id="pacing_001",
             pacing_type=PacingType.STEADY,
@@ -266,7 +266,7 @@ class TestStoryPacingEdgeCases:
             PacingType.SLOW_BURN,
             PacingType.STACCATO,
         ]
-        
+
         for p_type in types:
             assert isinstance(p_type, PacingType)
 
@@ -291,7 +291,7 @@ class TestCausalNodeEdgeCases:
             description="Simple event",
         )
         assert node1.node_id == "node_001"
-        
+
         # Test with additional fields if supported
         try:
             node2 = CausalNode(
@@ -317,7 +317,7 @@ class TestStringHandlingEdgeCases:
             "Café résumé naïve",
             "Καλημέρα κόσμε",
         ]
-        
+
         for s in unicode_strings:
             arc = NarrativeArc(
                 arc_id=NarrativeId.generate(),
@@ -343,10 +343,10 @@ class TestNarrativeIdValidation:
     def test_narrative_id_str_and_repr(self):
         """Test string representations."""
         nid = NarrativeId.generate()
-        
+
         str_repr = str(nid)
         assert "NarrativeId" in str_repr
-        
+
         repr_str = repr(nid)
         assert "NarrativeId" in repr_str
         assert "value" in repr_str
@@ -386,12 +386,13 @@ class TestThemeTypeAndIntensity:
 
 class TestPacingIntensity:
     """Tests for PacingIntensity."""
-    
+
     def test_pacing_intensity_values(self):
         """Test pacing intensity string values."""
         from src.contexts.narratives.domain.value_objects.story_pacing import (
             PacingIntensity,
         )
+
         assert PacingIntensity.GLACIAL.value == "glacial"
         assert PacingIntensity.SLOW.value == "slow"
         assert PacingIntensity.MODERATE.value == "moderate"

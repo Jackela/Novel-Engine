@@ -49,9 +49,7 @@ class LLMSceneGenerator(SceneGeneratorPort):
         system_prompt = self._load_system_prompt()
         user_prompt = self._build_user_prompt(request)
         try:
-            response_text = asyncio.run(
-                self._call_gemini(system_prompt, user_prompt)
-            )
+            response_text = asyncio.run(self._call_gemini(system_prompt, user_prompt))
             response = self._parse_response(response_text)
         except Exception as exc:  # pragma: no cover - defensive fallback
             return self._error_result(request, str(exc))

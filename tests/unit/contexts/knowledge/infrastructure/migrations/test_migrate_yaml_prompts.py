@@ -149,7 +149,8 @@ def temp_project_dir() -> tempfile.TemporaryDirectory:
 @pytest.fixture
 def sample_yaml_content() -> dict[str, str]:
     """Sample YAML content for testing."""
-    return {"system_prompt": """You are a creative writing assistant.
+    return {
+        "system_prompt": """You are a creative writing assistant.
 
 Generate content based on the {{input_type}} provided.
 
@@ -158,7 +159,8 @@ Follow these guidelines:
 - Stay in character
 - Use {{tone}} consistently
 
-Output must be valid JSON."""}
+Output must be valid JSON."""
+    }
 
 
 @pytest.fixture
@@ -635,9 +637,13 @@ class TestYAMLPromptMigratorMigrate:
 
         # Create a prompt that includes the base
         (world_prompts / "dialogue_gen.yaml").write_text(
-            yaml.dump({"system_prompt": """{{> base_prompt }}
+            yaml.dump(
+                {
+                    "system_prompt": """{{> base_prompt }}
 
-Generate dialogue for {{character_name}} with {{mood}} tone."""}),
+Generate dialogue for {{character_name}} with {{mood}} tone."""
+                }
+            ),
             encoding="utf-8",
         )
 

@@ -23,6 +23,7 @@ from src.contexts.knowledge.domain.models.knowledge_metadata import (
 
 pytestmark = pytest.mark.unit
 
+
 class TestConfidentialityLevel:
     """Unit tests for ConfidentialityLevel enum."""
 
@@ -375,7 +376,9 @@ class TestKnowledgeMetadata:
         original = KnowledgeMetadata(
             world_version="3.2.1",
             confidentiality_level=ConfidentialityLevel.SENSITIVE,
-            last_accessed=datetime.datetime(2025, 6, 15, 14, 30, 0, tzinfo=timezone.utc),
+            last_accessed=datetime.datetime(
+                2025, 6, 15, 14, 30, 0, tzinfo=timezone.utc
+            ),
             source_version=5,
         )
 

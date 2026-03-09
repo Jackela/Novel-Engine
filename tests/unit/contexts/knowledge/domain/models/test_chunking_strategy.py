@@ -25,6 +25,7 @@ from src.contexts.knowledge.domain.models.chunking_strategy import (
 
 pytestmark = pytest.mark.unit
 
+
 class TestChunkingStrategy:
     """Unit tests for ChunkingStrategy value object."""
 

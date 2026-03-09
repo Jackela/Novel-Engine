@@ -253,9 +253,7 @@ class RumorPropagationService:
         # This cache persists for the lifetime of the service instance
         self._adjacency_cache: Dict[str, List[str]] = {}
 
-    async def propagate_rumors(
-        self, world: WorldState
-    ) -> Result[List[Rumor], Error]:
+    async def propagate_rumors(self, world: WorldState) -> Result[List[Rumor], Error]:
         """Propagate all active rumors to adjacent locations.
 
         This is the main entry point for rumor propagation. It processes
@@ -614,10 +612,12 @@ class RumorPropagationService:
             - Err: Error if operation fails
         """
         try:
-            return Ok({
-                "cache_size": len(self._adjacency_cache),
-                "cached_location_count": len(self._adjacency_cache),
-            })
+            return Ok(
+                {
+                    "cache_size": len(self._adjacency_cache),
+                    "cached_location_count": len(self._adjacency_cache),
+                }
+            )
         except Exception as e:
             return Err(
                 RumorError(

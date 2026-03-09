@@ -438,9 +438,7 @@ class ConfigurationManager:
         """Reload configuration from files. (Legacy - use reload_result)"""
         result = self.reload_result()
         if result.is_error and result.error:
-            logger.error(
-                "configuration_reload_failed", error=result.error.message
-            )
+            logger.error("configuration_reload_failed", error=result.error.message)
 
     def reload_result(self) -> Result[bool, ConfigError]:
         """
@@ -500,7 +498,10 @@ class ConfigurationManager:
                         ConfigError(
                             message=f"Unsupported format: {format}",
                             operation="save_to_file",
-                            details={"file_path": str(file_path), "format": format.value},
+                            details={
+                                "file_path": str(file_path),
+                                "format": format.value,
+                            },
                         )
                     )
 

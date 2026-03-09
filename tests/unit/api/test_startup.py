@@ -42,7 +42,9 @@ class TestEventBusInitialization:
 class TestEnvironmentValidation:
     """Tests for environment variable validation at startup."""
 
-    def test_validate_environment_passes_in_development(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_passes_in_development(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation passes in development mode with no required vars."""
         # Clear any existing environment settings
         monkeypatch.delenv("ENVIRONMENT", raising=False)
@@ -52,7 +54,9 @@ class TestEnvironmentValidation:
         # Should not raise in development mode
         validate_environment()
 
-    def test_validate_environment_fails_in_production_missing_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_fails_in_production_missing_secret(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation fails in production when SECRET_KEY is missing."""
         monkeypatch.setenv("ENVIRONMENT", "production")
         monkeypatch.delenv("SECRET_KEY", raising=False)
@@ -63,7 +67,9 @@ class TestEnvironmentValidation:
 
         assert "SECRET_KEY" in str(exc_info.value)
 
-    def test_validate_environment_fails_in_production_missing_jwt(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_fails_in_production_missing_jwt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation fails in production when JWT_SECRET_KEY is missing."""
         monkeypatch.setenv("ENVIRONMENT", "production")
         monkeypatch.setenv("SECRET_KEY", "test-secret-key")
@@ -74,7 +80,9 @@ class TestEnvironmentValidation:
 
         assert "JWT_SECRET_KEY" in str(exc_info.value)
 
-    def test_validate_environment_passes_in_production_with_required_vars(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_passes_in_production_with_required_vars(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation passes in production when all required vars are set."""
         monkeypatch.setenv("ENVIRONMENT", "production")
         monkeypatch.setenv("SECRET_KEY", "secure-secret-key-for-testing")
@@ -83,7 +91,9 @@ class TestEnvironmentValidation:
         # Should not raise
         validate_environment()
 
-    def test_validate_environment_fails_with_empty_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_fails_with_empty_api_key(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation fails when an API key is explicitly set to empty string."""
         monkeypatch.delenv("ENVIRONMENT", raising=False)
         monkeypatch.setenv("GEMINI_API_KEY", "")  # Empty string
@@ -93,7 +103,9 @@ class TestEnvironmentValidation:
 
         assert "GEMINI_API_KEY" in str(exc_info.value)
 
-    def test_validate_environment_passes_with_valid_api_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_passes_with_valid_api_key(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation passes when API keys are properly set."""
         monkeypatch.delenv("ENVIRONMENT", raising=False)
         monkeypatch.setenv("GEMINI_API_KEY", "valid-api-key-12345")
@@ -101,7 +113,9 @@ class TestEnvironmentValidation:
         # Should not raise
         validate_environment()
 
-    def test_validate_environment_warns_about_placeholder_values(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+    def test_validate_environment_warns_about_placeholder_values(
+        self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+    ) -> None:
         """Test that validation warns about placeholder values in API keys."""
         monkeypatch.delenv("ENVIRONMENT", raising=False)
         monkeypatch.setenv("OPENAI_API_KEY", "your_openai_api_key_here")
@@ -128,7 +142,9 @@ class TestEnvironmentValidation:
         assert "OPENAI_API_KEY" in NON_EMPTY_WHEN_SET
         assert "ANTHROPIC_API_KEY" in NON_EMPTY_WHEN_SET
 
-    def test_validate_environment_fails_with_empty_secret_in_production(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_environment_fails_with_empty_secret_in_production(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Test that validation fails when SECRET_KEY is empty in production."""
         monkeypatch.setenv("ENVIRONMENT", "production")
         monkeypatch.setenv("SECRET_KEY", "")  # Empty string
@@ -139,4 +155,3 @@ class TestEnvironmentValidation:
 
         error_msg = str(exc_info.value)
         assert "SECRET_KEY" in error_msg or "JWT_SECRET_KEY" in error_msg
-

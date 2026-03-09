@@ -69,12 +69,12 @@ def create_test_rumor(
     truth_value: int = 75,
     origin_type: RumorOrigin = RumorOrigin.EVENT,
     origin_location_id: str = None,
-    **kwargs
+    **kwargs,
 ) -> Rumor:
     """Create a test Rumor with default values."""
     if origin_location_id is None:
         origin_location_id = str(uuid.uuid4())
-    
+
     return Rumor(
         content=content,
         truth_value=truth_value,
@@ -98,11 +98,11 @@ class TestPostgreSQLRumorRepositoryBasic:
             content="Dragon sighted in the north!",
             origin_location_id=origin_id,
         )
-        
+
         saved = await rumor_repo.save(rumor)
         assert saved.rumor_id == rumor.rumor_id
         assert saved.content == "Dragon sighted in the north!"
-        
+
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
         assert retrieved is not None
         assert retrieved.rumor_id == rumor.rumor_id
@@ -120,9 +120,11 @@ class TestPostgreSQLRumorRepositoryBasic:
     async def test_update_existing_rumor(self, rumor_repo: PostgreSQLRumorRepository):
         """Test updating an existing rumor."""
         origin_id = str(uuid.uuid4())
-        rumor = create_test_rumor(content="Original content", origin_location_id=origin_id)
+        rumor = create_test_rumor(
+            content="Original content", origin_location_id=origin_id
+        )
         await rumor_repo.save(rumor)
-        
+
         # Create new instance with same ID but updated content (Rumor is immutable)
         updated_rumor = Rumor(
             rumor_id=rumor.rumor_id,
@@ -133,7 +135,7 @@ class TestPostgreSQLRumorRepositoryBasic:
             current_locations=rumor.current_locations,
         )
         await rumor_repo.save(updated_rumor)
-        
+
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
         assert retrieved is not None
         assert retrieved.content == "Updated content"
@@ -145,19 +147,21 @@ class TestPostgreSQLRumorRepositoryBasic:
         origin_id = str(uuid.uuid4())
         rumor = create_test_rumor(origin_location_id=origin_id)
         await rumor_repo.save(rumor)
-        
+
         # Verify it exists
         assert await rumor_repo.get_by_id(rumor.rumor_id) is not None
-        
+
         # Delete it
         deleted = await rumor_repo.delete(rumor.rumor_id)
         assert deleted is True
-        
+
         # Verify it's gone
         assert await rumor_repo.get_by_id(rumor.rumor_id) is None
 
     @pytest.mark.integration
-    async def test_delete_nonexistent_rumor(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_delete_nonexistent_rumor(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test deleting a non-existent rumor returns False."""
         result = await rumor_repo.delete(str(uuid.uuid4()))
         assert result is False
@@ -167,10 +171,12 @@ class TestPostgreSQLRumorRepositoryActiveRumors:
     """Active rumors query tests."""
 
     @pytest.mark.integration
-    async def test_get_active_rumors_filters_by_truth_value(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_get_active_rumors_filters_by_truth_value(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test that get_active_rumors only returns rumors with truth_value > 0."""
         origin_id = str(uuid.uuid4())
-        
+
         # Create active rumor (truth > 0)
         active_rumor = create_test_rumor(
             content="Active rumor",
@@ -178,7 +184,7 @@ class TestPostgreSQLRumorRepositoryActiveRumors:
             origin_location_id=origin_id,
         )
         await rumor_repo.save(active_rumor)
-        
+
         # Create dead rumor (truth = 0)
         dead_rumor = create_test_rumor(
             content="Dead rumor",
@@ -186,25 +192,33 @@ class TestPostgreSQLRumorRepositoryActiveRumors:
             origin_location_id=origin_id,
         )
         await rumor_repo.save(dead_rumor)
-        
+
         active_rumors = await rumor_repo.get_active_rumors(origin_id)
         assert len(active_rumors) == 1
         assert active_rumors[0].rumor_id == active_rumor.rumor_id
 
     @pytest.mark.integration
-    async def test_get_active_rumors_sorted_by_truth(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_get_active_rumors_sorted_by_truth(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test that active rumors are sorted by truth_value descending."""
         origin_id = str(uuid.uuid4())
-        
+
         # Create rumors with different truth values
-        rumor_high = create_test_rumor(content="High truth", truth_value=90, origin_location_id=origin_id)
-        rumor_low = create_test_rumor(content="Low truth", truth_value=30, origin_location_id=origin_id)
-        rumor_medium = create_test_rumor(content="Medium truth", truth_value=60, origin_location_id=origin_id)
-        
+        rumor_high = create_test_rumor(
+            content="High truth", truth_value=90, origin_location_id=origin_id
+        )
+        rumor_low = create_test_rumor(
+            content="Low truth", truth_value=30, origin_location_id=origin_id
+        )
+        rumor_medium = create_test_rumor(
+            content="Medium truth", truth_value=60, origin_location_id=origin_id
+        )
+
         await rumor_repo.save(rumor_low)
         await rumor_repo.save(rumor_high)
         await rumor_repo.save(rumor_medium)
-        
+
         active_rumors = await rumor_repo.get_active_rumors(origin_id)
         assert len(active_rumors) == 3
         assert active_rumors[0].truth_value == 90
@@ -212,10 +226,12 @@ class TestPostgreSQLRumorRepositoryActiveRumors:
         assert active_rumors[2].truth_value == 30
 
     @pytest.mark.integration
-    async def test_get_by_world_id_includes_dead_rumors(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_get_by_world_id_includes_dead_rumors(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test that get_by_world_id returns all rumors including dead ones."""
         origin_id = str(uuid.uuid4())
-        
+
         active_rumor = create_test_rumor(
             content="Active",
             truth_value=50,
@@ -226,10 +242,10 @@ class TestPostgreSQLRumorRepositoryActiveRumors:
             truth_value=0,
             origin_location_id=origin_id,
         )
-        
+
         await rumor_repo.save(active_rumor)
         await rumor_repo.save(dead_rumor)
-        
+
         all_rumors = await rumor_repo.get_by_world_id(origin_id)
         assert len(all_rumors) == 2
 
@@ -243,7 +259,7 @@ class TestPostgreSQLRumorRepositoryLocationQueries:
         loc1 = str(uuid.uuid4())
         loc2 = str(uuid.uuid4())
         origin_id = str(uuid.uuid4())
-        
+
         # Create rumors at different locations
         rumor1 = create_test_rumor(
             content="At location 1",
@@ -260,11 +276,11 @@ class TestPostgreSQLRumorRepositoryLocationQueries:
             origin_location_id=origin_id,
             current_locations={loc2, origin_id},
         )
-        
+
         await rumor_repo.save(rumor1)
         await rumor_repo.save(rumor2)
         await rumor_repo.save(rumor3)
-        
+
         results = await rumor_repo.get_by_location_id(loc1)
         assert len(results) == 2
         assert all(r.rumor_id in [rumor1.rumor_id, rumor2.rumor_id] for r in results)
@@ -274,7 +290,7 @@ class TestPostgreSQLRumorRepositoryLocationQueries:
         """Test retrieving rumors by source event ID."""
         event_id = str(uuid.uuid4())
         origin_id = str(uuid.uuid4())
-        
+
         # Create rumors from same event
         rumor1 = create_test_rumor(
             content="From event",
@@ -291,11 +307,11 @@ class TestPostgreSQLRumorRepositoryLocationQueries:
             origin_location_id=origin_id,
             source_event_id=str(uuid.uuid4()),
         )
-        
+
         await rumor_repo.save(rumor1)
         await rumor_repo.save(rumor2)
         await rumor_repo.save(rumor3)
-        
+
         results = await rumor_repo.get_by_event_id(event_id)
         assert len(results) == 2
         assert all(r.rumor_id in [rumor1.rumor_id, rumor2.rumor_id] for r in results)
@@ -305,17 +321,19 @@ class TestPostgreSQLRumorRepositoryBatchOperations:
     """Batch operation tests."""
 
     @pytest.mark.integration
-    async def test_save_all_multiple_rumors(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_save_all_multiple_rumors(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test saving multiple rumors in one operation."""
         origin_id = str(uuid.uuid4())
         rumors = [
             create_test_rumor(content=f"Batch rumor {i}", origin_location_id=origin_id)
             for i in range(5)
         ]
-        
+
         saved = await rumor_repo.save_all(rumors)
         assert len(saved) == 5
-        
+
         # Verify all were saved
         for rumor in rumors:
             retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
@@ -340,7 +358,7 @@ class TestPostgreSQLRumorRepositoryComplexData:
         loc1 = str(uuid.uuid4())
         loc2 = str(uuid.uuid4())
         calendar = WorldCalendar(1042, 6, 15, "Third Age")
-        
+
         rumor = Rumor(
             content="The king has been assassinated!",
             truth_value=85,
@@ -351,10 +369,10 @@ class TestPostgreSQLRumorRepositoryComplexData:
             created_date=calendar,
             spread_count=3,
         )
-        
+
         await rumor_repo.save(rumor)
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
-        
+
         assert retrieved is not None
         assert retrieved.content == "The king has been assassinated!"
         assert retrieved.truth_value == 85
@@ -372,7 +390,7 @@ class TestPostgreSQLRumorRepositoryComplexData:
     async def test_rumor_origin_types(self, rumor_repo: PostgreSQLRumorRepository):
         """Test that all origin types are correctly preserved."""
         origin_id = str(uuid.uuid4())
-        
+
         for origin_type in RumorOrigin:
             rumor = create_test_rumor(
                 content=f"Rumor from {origin_type.value}",
@@ -380,7 +398,7 @@ class TestPostgreSQLRumorRepositoryComplexData:
                 origin_location_id=origin_id,
             )
             await rumor_repo.save(rumor)
-            
+
             retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
             assert retrieved is not None
             assert retrieved.origin_type == origin_type
@@ -391,7 +409,7 @@ class TestPostgreSQLRumorRepositoryComplexData:
         origin_id = str(uuid.uuid4())
         loc1 = str(uuid.uuid4())
         loc2 = str(uuid.uuid4())
-        
+
         # Create initial rumor
         rumor = create_test_rumor(
             content="Treasure hidden in the castle",
@@ -401,15 +419,15 @@ class TestPostgreSQLRumorRepositoryComplexData:
             spread_count=0,
         )
         await rumor_repo.save(rumor)
-        
+
         # Simulate spread to new location
         spread_rumor = rumor.spread_to(loc1)
         await rumor_repo.save(spread_rumor)
-        
+
         # Simulate another spread
         spread_rumor2 = spread_rumor.spread_to(loc2)
         await rumor_repo.save(spread_rumor2)
-        
+
         # Verify truth decay
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
         assert retrieved is not None
@@ -422,14 +440,16 @@ class TestPostgreSQLRumorRepositoryComplexData:
     async def test_clear_all_rumors(self, rumor_repo: PostgreSQLRumorRepository):
         """Test clearing all rumors."""
         origin_id = str(uuid.uuid4())
-        
+
         # Create some rumors
         for i in range(3):
-            await rumor_repo.save(create_test_rumor(content=f"Rumor {i}", origin_location_id=origin_id))
-        
+            await rumor_repo.save(
+                create_test_rumor(content=f"Rumor {i}", origin_location_id=origin_id)
+            )
+
         # Clear all
         await rumor_repo.clear()
-        
+
         # Verify all are gone
         rumors = await rumor_repo.get_by_world_id(origin_id)
         assert len(rumors) == 0
@@ -439,10 +459,12 @@ class TestPostgreSQLRumorRepositoryEdgeCases:
     """Edge case tests."""
 
     @pytest.mark.integration
-    async def test_rumor_with_empty_locations(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_rumor_with_empty_locations(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test rumor with empty current_locations."""
         origin_id = str(uuid.uuid4())
-        
+
         rumor = Rumor(
             content="Secret rumor",
             truth_value=50,
@@ -450,18 +472,20 @@ class TestPostgreSQLRumorRepositoryEdgeCases:
             origin_location_id=origin_id,
             current_locations=set(),
         )
-        
+
         await rumor_repo.save(rumor)
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
-        
+
         assert retrieved is not None
         assert retrieved.current_locations == set()
 
     @pytest.mark.integration
-    async def test_rumor_without_source_event(self, rumor_repo: PostgreSQLRumorRepository):
+    async def test_rumor_without_source_event(
+        self, rumor_repo: PostgreSQLRumorRepository
+    ):
         """Test rumor with no source event (npc or unknown origin)."""
         origin_id = str(uuid.uuid4())
-        
+
         rumor = Rumor(
             content="Heard from a traveler",
             truth_value=40,
@@ -469,10 +493,10 @@ class TestPostgreSQLRumorRepositoryEdgeCases:
             source_event_id=None,
             origin_location_id=origin_id,
         )
-        
+
         await rumor_repo.save(rumor)
         retrieved = await rumor_repo.get_by_id(rumor.rumor_id)
-        
+
         assert retrieved is not None
         assert retrieved.source_event_id is None
         assert retrieved.origin_type == RumorOrigin.NPC

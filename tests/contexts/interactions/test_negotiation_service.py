@@ -37,7 +37,6 @@ from src.contexts.interactions.domain.value_objects import (
 pytestmark = pytest.mark.unit
 
 
-
 @pytest.fixture
 def negotiation_service():
     """Create a NegotiationService instance for testing."""
@@ -130,7 +129,7 @@ class TestNegotiationServiceInitialization:
     def test_initialization(self):
         """Test service initialization."""
         service = NegotiationService()
-        
+
         assert service is not None
 
 
@@ -142,7 +141,7 @@ class TestAssessPartyCompatibility:
         score = negotiation_service.assess_party_compatibility(
             party_collaborative, party_collaborative
         )
-        
+
         assert score == Decimal("0")
 
     def test_compatibility_same_style(self, negotiation_service, party_collaborative):
@@ -161,11 +160,11 @@ class TestAssessPartyCompatibility:
                 time_pressure_sensitivity=Decimal("30"),
             ),
         )
-        
+
         score = negotiation_service.assess_party_compatibility(
             party_collaborative, party2
         )
-        
+
         assert score > Decimal("50")
 
     def test_compatibility_different_styles(
@@ -175,7 +174,7 @@ class TestAssessPartyCompatibility:
         score = negotiation_service.assess_party_compatibility(
             party_collaborative, party_competitive
         )
-        
+
         # Just verify the score is in valid range
         assert Decimal("0") <= score <= Decimal("100")
 
@@ -186,7 +185,7 @@ class TestAssessPartyCompatibility:
         score = negotiation_service.assess_party_compatibility(
             party_collaborative, party_competitive, negotiation_domain="diplomacy"
         )
-        
+
         assert Decimal("0") <= score <= Decimal("100")
 
 
@@ -197,10 +196,8 @@ class TestAnalyzeProposalViability:
         self, negotiation_service, sample_proposal
     ):
         """Test viability analysis with no parties."""
-        analysis = negotiation_service.analyze_proposal_viability(
-            sample_proposal, []
-        )
-        
+        analysis = negotiation_service.analyze_proposal_viability(sample_proposal, [])
+
         assert "critical_issues" in analysis
         assert any("No parties" in str(issue) for issue in analysis["critical_issues"])
 
@@ -211,7 +208,7 @@ class TestAnalyzeProposalViability:
         analysis = negotiation_service.analyze_proposal_viability(
             sample_proposal, [party_collaborative]
         )
-        
+
         assert "overall_viability_score" in analysis
         assert "acceptance_probability" in analysis
         assert "risk_factors" in analysis
@@ -224,15 +221,13 @@ class TestAnalyzeProposalViability:
         analysis = negotiation_service.analyze_proposal_viability(
             sample_proposal, [party_collaborative], negotiation_domain="trade"
         )
-        
+
         assert "party_specific_analysis" in analysis
 
-    def test_viability_expired_proposal(
-        self, negotiation_service, party_collaborative
-    ):
+    def test_viability_expired_proposal(self, negotiation_service, party_collaborative):
         """Test viability analysis with expired proposal."""
         from datetime import datetime, timezone
-        
+
         expired_proposal = ProposalTerms(
             proposal_id=uuid4(),
             proposal_type=ProposalType.TRADE_OFFER,
@@ -250,11 +245,11 @@ class TestAnalyzeProposalViability:
             validity_period=datetime(2020, 1, 1, tzinfo=timezone.utc),
             created_at=datetime(2019, 12, 1, tzinfo=timezone.utc),
         )
-        
+
         analysis = negotiation_service.analyze_proposal_viability(
             expired_proposal, [party_collaborative]
         )
-        
+
         assert any("expired" in str(risk).lower() for risk in analysis["risk_factors"])
 
 
@@ -264,7 +259,7 @@ class TestRecommendNegotiationStrategy:
     def test_strategy_recommendation_empty_parties(self, negotiation_service):
         """Test strategy recommendation with no parties."""
         strategy = negotiation_service.recommend_negotiation_strategy([])
-        
+
         assert strategy["recommended_approach"] == "collaborative"
         assert strategy["phase_sequence"] == []
 
@@ -275,7 +270,7 @@ class TestRecommendNegotiationStrategy:
         strategy = negotiation_service.recommend_negotiation_strategy(
             [party_collaborative, party_competitive]
         )
-        
+
         assert "recommended_approach" in strategy
         assert "phase_sequence" in strategy
         assert "key_tactics" in strategy
@@ -290,7 +285,7 @@ class TestRecommendNegotiationStrategy:
             [party_collaborative],
             negotiation_domain="diplomacy",
         )
-        
+
         assert "party_specific_strategies" in strategy
 
     def test_strategy_recommendation_with_target(
@@ -301,7 +296,7 @@ class TestRecommendNegotiationStrategy:
             [party_collaborative],
             target_outcome="Alliance formation",
         )
-        
+
         assert any(
             "Alliance formation" in str(metric)
             for metric in strategy["success_metrics"]
@@ -311,14 +306,12 @@ class TestRecommendNegotiationStrategy:
 class TestDetectNegotiationConflicts:
     """Test suite for conflict detection."""
 
-    def test_detect_no_conflicts(
-        self, negotiation_service, party_collaborative
-    ):
+    def test_detect_no_conflicts(self, negotiation_service, party_collaborative):
         """Test conflict detection with single party."""
         conflicts = negotiation_service.detect_negotiation_conflicts(
             [party_collaborative], []
         )
-        
+
         # Single party should have minimal conflicts
         assert isinstance(conflicts, list)
 
@@ -329,13 +322,14 @@ class TestDetectNegotiationConflicts:
         conflicts = negotiation_service.detect_negotiation_conflicts(
             [party_collaborative, party_competitive], []
         )
-        
+
         # Check for style conflicts in the result
         style_conflicts = [
-            c for c in conflicts
-            if c.get("type") == "negotiation_style_conflict"
+            c for c in conflicts if c.get("type") == "negotiation_style_conflict"
         ]
-        assert len(style_conflicts) > 0 or len(conflicts) >= 0  # May or may not find conflicts
+        assert (
+            len(style_conflicts) > 0 or len(conflicts) >= 0
+        )  # May or may not find conflicts
 
     def test_detect_authority_conflicts(self, negotiation_service):
         """Test detection of authority conflicts."""
@@ -353,16 +347,13 @@ class TestDetectNegotiationConflicts:
                 time_pressure_sensitivity=Decimal("50"),
             ),
         )
-        
+
         conflicts = negotiation_service.detect_negotiation_conflicts(
             [non_decision_maker], []
         )
-        
+
         # Should detect no decision makers
-        _ = [
-            c for c in conflicts
-            if "authority" in str(c.get("type", "")).lower()
-        ]
+        _ = [c for c in conflicts if "authority" in str(c.get("type", "")).lower()]
         # The test may or may not find specific conflicts depending on implementation
 
 
@@ -374,13 +365,11 @@ class TestCalculateNegotiationMomentum:
         momentum = negotiation_service.calculate_negotiation_momentum(
             [], NegotiationPhase.OPENING
         )
-        
+
         assert momentum["momentum_score"] == Decimal("0")
         assert momentum["direction"] == "stagnant"
 
-    def test_momentum_with_acceptances(
-        self, negotiation_service, party_collaborative
-    ):
+    def test_momentum_with_acceptances(self, negotiation_service, party_collaborative):
         """Test momentum calculation with acceptance responses."""
         proposal_id = uuid4()
         responses = [
@@ -396,11 +385,11 @@ class TestCalculateNegotiationMomentum:
                 ],
             )
         ]
-        
+
         momentum = negotiation_service.calculate_negotiation_momentum(
             responses, NegotiationPhase.BARGAINING
         )
-        
+
         assert "momentum_score" in momentum
         assert "direction" in momentum
         assert "velocity" in momentum
@@ -428,16 +417,16 @@ class TestCalculateNegotiationMomentum:
                     TermResponse(
                         term_id="term1",
                         response_type=ResponseType.REJECT,
-                        comments="Unacceptable terms"
+                        comments="Unacceptable terms",
                     )
                 ],
             ),
         ]
-        
+
         momentum = negotiation_service.calculate_negotiation_momentum(
             responses, NegotiationPhase.BARGAINING
         )
-        
+
         assert "momentum_score" in momentum
         assert "key_drivers" in momentum
         assert "inhibiting_factors" in momentum
@@ -446,14 +435,10 @@ class TestCalculateNegotiationMomentum:
 class TestOptimizeProposalTerms:
     """Test suite for proposal term optimization."""
 
-    def test_optimization_empty_parties(
-        self, negotiation_service, sample_proposal
-    ):
+    def test_optimization_empty_parties(self, negotiation_service, sample_proposal):
         """Test optimization with no parties."""
-        optimization = negotiation_service.optimize_proposal_terms(
-            sample_proposal, []
-        )
-        
+        optimization = negotiation_service.optimize_proposal_terms(sample_proposal, [])
+
         assert optimization["optimized_terms"] == []
 
     def test_optimization_with_parties(
@@ -463,7 +448,7 @@ class TestOptimizeProposalTerms:
         optimization = negotiation_service.optimize_proposal_terms(
             sample_proposal, [party_collaborative]
         )
-        
+
         assert "optimized_terms" in optimization
         assert "expected_improvement" in optimization
         assert "risk_assessment" in optimization
@@ -476,7 +461,7 @@ class TestOptimizeProposalTerms:
         optimization = negotiation_service.optimize_proposal_terms(
             sample_proposal, [party_collaborative], negotiation_domain="trade"
         )
-        
+
         # Should provide domain-specific optimizations
         assert isinstance(optimization, dict)
 
@@ -491,7 +476,7 @@ class TestPrivateHelperMethods:
         score = negotiation_service._assess_authority_compatibility(
             party_collaborative, party_collaborative
         )
-        
+
         assert score == Decimal("80")
 
     def test_assess_authority_compatibility_one_can_decide(
@@ -512,26 +497,22 @@ class TestPrivateHelperMethods:
                 time_pressure_sensitivity=Decimal("50"),
             ),
         )
-        
+
         score = negotiation_service._assess_authority_compatibility(
             party_collaborative, advisor
         )
-        
+
         assert score == Decimal("60")
 
-    def test_assess_communication_compatibility_matching(
-        self, negotiation_service
-    ):
+    def test_assess_communication_compatibility_matching(self, negotiation_service):
         """Test communication compatibility with matching styles."""
         party1 = MagicMock()
         party1.preferences.communication_preference = CommunicationPreference.DIRECT
         party2 = MagicMock()
         party2.preferences.communication_preference = CommunicationPreference.DIRECT
-        
-        score = negotiation_service._assess_communication_compatibility(
-            party1, party2
-        )
-        
+
+        score = negotiation_service._assess_communication_compatibility(party1, party2)
+
         assert score > Decimal("50")
 
     def test_assess_negotiation_style_compatibility_collaborative(
@@ -542,11 +523,11 @@ class TestPrivateHelperMethods:
         party1.preferences.negotiation_style = NegotiationStyle.COLLABORATIVE
         party2 = MagicMock()
         party2.preferences.negotiation_style = NegotiationStyle.COLLABORATIVE
-        
+
         score = negotiation_service._assess_negotiation_style_compatibility(
             party1, party2
         )
-        
+
         assert score == Decimal("95")
 
     def test_calculate_acceptance_probability(self, negotiation_service):
@@ -555,11 +536,11 @@ class TestPrivateHelperMethods:
         proposal = MagicMock()
         proposal.is_expired = False
         proposal.get_critical_terms.return_value = []
-        
+
         probability = negotiation_service._calculate_acceptance_probability(
             scores, proposal
         )
-        
+
         assert Decimal("0") <= probability <= Decimal("100")
 
     def test_identify_proposal_risks(self, negotiation_service):
@@ -569,9 +550,9 @@ class TestPrivateHelperMethods:
         proposal.get_critical_terms.return_value = [1, 2, 3, 4, 5]
         proposal.get_non_negotiable_terms.return_value = []
         proposal.total_terms_count = 15
-        
+
         risks = negotiation_service._identify_proposal_risks(proposal, [])
-        
+
         assert len(risks) > 0
 
     @pytest.mark.skip(reason="Mock setup too complex")
@@ -582,11 +563,11 @@ class TestPrivateHelperMethods:
             "party1": {"concerns": ["Price too high"]},
             "party2": {"concerns": ["Price too high"]},
         }
-        
+
         suggestions = negotiation_service._generate_optimization_suggestions(
             proposal, [], party_analysis
         )
-        
+
         assert isinstance(suggestions, list)
 
     def test_analyze_negotiation_power_balance(
@@ -596,22 +577,20 @@ class TestPrivateHelperMethods:
         analysis = negotiation_service._analyze_negotiation_power_balance(
             [party_collaborative], "diplomacy"
         )
-        
+
         assert "total_power" in analysis
         assert "power_distribution" in analysis
         assert "imbalance_score" in analysis
 
-    def test_recommend_overall_approach_collaborative(
-        self, negotiation_service
-    ):
+    def test_recommend_overall_approach_collaborative(self, negotiation_service):
         """Test approach recommendation for collaborative group."""
         dominant_styles = {"collaborative": 3, "competitive": 1}
         power_balance = {"imbalance_score": Decimal("0.2")}
-        
+
         approach = negotiation_service._recommend_overall_approach(
             dominant_styles, power_balance
         )
-        
+
         assert approach == "collaborative"
 
     def test_recommend_timeline(self, negotiation_service, party_collaborative):
@@ -619,7 +598,7 @@ class TestPrivateHelperMethods:
         timeline = negotiation_service._recommend_timeline(
             [party_collaborative], "standard"
         )
-        
+
         assert isinstance(timeline, dict)
         assert "preparation" in timeline
         assert "bargaining" in timeline
@@ -631,7 +610,7 @@ class TestPrivateHelperMethods:
         conflicts = negotiation_service._detect_style_conflicts(
             [party_collaborative, party_competitive]
         )
-        
+
         assert isinstance(conflicts, list)
 
     @pytest.mark.skip(reason="Mock setup too complex")
@@ -642,7 +621,7 @@ class TestPrivateHelperMethods:
             MagicMock(overall_response=ResponseType.ACCEPT),
             MagicMock(overall_response=ResponseType.REJECT),
         ]
-        
+
         trend = negotiation_service._calculate_acceptance_trend(responses)
-        
+
         assert isinstance(trend, Decimal)

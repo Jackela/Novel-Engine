@@ -420,19 +420,21 @@ class QueryAwareRetrievalService:
             - Err(ServiceError): If metrics retrieval fails
         """
         try:
-            return Ok({
-                "queries_total": self._metrics.queries_total,
-                "rewrites_total": self._metrics.rewrites_total,
-                "cache_hits_total": self._metrics.cache_hits_total,
-                "tokens_used_total": self._metrics.tokens_used_total,
-                "tokens_saved_total": self._metrics.tokens_saved_total,
-                "merged_results_total": self._metrics.merged_results_total,
-                "cache_hit_rate": (
-                    self._metrics.cache_hits_total / self._metrics.rewrites_total
-                    if self._metrics.rewrites_total > 0
-                    else 0.0
-                ),
-            })
+            return Ok(
+                {
+                    "queries_total": self._metrics.queries_total,
+                    "rewrites_total": self._metrics.rewrites_total,
+                    "cache_hits_total": self._metrics.cache_hits_total,
+                    "tokens_used_total": self._metrics.tokens_used_total,
+                    "tokens_saved_total": self._metrics.tokens_saved_total,
+                    "merged_results_total": self._metrics.merged_results_total,
+                    "cache_hit_rate": (
+                        self._metrics.cache_hits_total / self._metrics.rewrites_total
+                        if self._metrics.rewrites_total > 0
+                        else 0.0
+                    ),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

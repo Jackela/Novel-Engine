@@ -6,7 +6,6 @@ Tests for AwarenessState, AlertnessLevel, AttentionFocus, and AwarenessModifier.
 Covers unit tests, integration tests, and boundary tests.
 """
 
-
 import pytest
 
 from src.contexts.subjective.domain.value_objects.awareness import (
@@ -17,7 +16,6 @@ from src.contexts.subjective.domain.value_objects.awareness import (
 )
 
 pytestmark = pytest.mark.unit
-
 
 
 # ============================================================================
@@ -163,7 +161,11 @@ class TestAwarenessState:
         )
         effective = state.calculate_effective_alertness()
         # Fatigue should decrease alertness
-        assert effective in [AlertnessLevel.RELAXED, AlertnessLevel.DROWSY, AlertnessLevel.SLEEPING]
+        assert effective in [
+            AlertnessLevel.RELAXED,
+            AlertnessLevel.DROWSY,
+            AlertnessLevel.SLEEPING,
+        ]
 
     def test_get_perception_bonus(self):
         """Test perception bonus calculation."""
@@ -240,7 +242,7 @@ class TestAwarenessStateIntegration:
             current_alertness=AlertnessLevel.RELAXED,
             attention_focus=AttentionFocus.ENVIRONMENTAL,
         )
-        
+
         new_state = state.with_modified_alertness(AlertnessLevel.ALERT)
         assert new_state.current_alertness == AlertnessLevel.ALERT
         assert new_state.base_alertness == AlertnessLevel.RELAXED  # Unchanged
@@ -252,7 +254,7 @@ class TestAwarenessStateIntegration:
             current_alertness=AlertnessLevel.ALERT,
             attention_focus=AttentionFocus.ENVIRONMENTAL,
         )
-        
+
         new_state = state.with_focus_change(
             AttentionFocus.TARGET_SPECIFIC,
             new_target="target_1",
@@ -268,7 +270,7 @@ class TestAwarenessStateIntegration:
             attention_focus=AttentionFocus.ENVIRONMENTAL,
             awareness_modifiers={AwarenessModifier.TRAINING: 0.5},
         )
-        
+
         new_state = state.with_added_modifier(AwarenessModifier.FEAR, 0.3)
         assert AwarenessModifier.TRAINING in new_state.awareness_modifiers
         assert AwarenessModifier.FEAR in new_state.awareness_modifiers
@@ -281,16 +283,16 @@ class TestAwarenessStateIntegration:
             current_alertness=AlertnessLevel.RELAXED,
             attention_focus=AttentionFocus.UNFOCUSED,
         )
-        
+
         # Modify alertness
         state = state.with_modified_alertness(AlertnessLevel.ALERT)
-        
+
         # Change focus
         state = state.with_focus_change(AttentionFocus.THREAT_SCANNING)
-        
+
         # Add modifier
         state = state.with_added_modifier(AwarenessModifier.TRAINING, 0.5)
-        
+
         assert state.current_alertness == AlertnessLevel.ALERT
         assert state.attention_focus == AttentionFocus.THREAT_SCANNING
         assert AwarenessModifier.TRAINING in state.awareness_modifiers
@@ -308,17 +310,17 @@ class TestAwarenessBehaviorIntegration:
             attention_focus=AttentionFocus.ENVIRONMENTAL,
             fatigue_level=0.0,
         )
-        
+
         tired_state = AwarenessState(
             base_alertness=AlertnessLevel.ALERT,
             current_alertness=AlertnessLevel.ALERT,
             attention_focus=AttentionFocus.ENVIRONMENTAL,
             fatigue_level=0.8,
         )
-        
+
         fresh_bonus = fresh_state.get_perception_bonus()
         tired_bonus = tired_state.get_perception_bonus()
-        
+
         assert fresh_bonus > tired_bonus
 
     def test_focus_affects_perception(self):
@@ -328,16 +330,16 @@ class TestAwarenessBehaviorIntegration:
             current_alertness=AlertnessLevel.ALERT,
             attention_focus=AttentionFocus.UNFOCUSED,
         )
-        
+
         scanning_state = AwarenessState(
             base_alertness=AlertnessLevel.ALERT,
             current_alertness=AlertnessLevel.ALERT,
             attention_focus=AttentionFocus.THREAT_SCANNING,
         )
-        
+
         unfocused_bonus = unfocused_state.get_perception_bonus()
         scanning_bonus = scanning_state.get_perception_bonus()
-        
+
         assert scanning_bonus > unfocused_bonus
 
 

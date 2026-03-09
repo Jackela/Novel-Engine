@@ -194,7 +194,7 @@ def _make_gemini_api_request(prompt: str) -> Any:
     logger.info(
         "gemini_api_call_successful",
         tokens_used=response.tokens_used,
-        cost_estimate=response.cost_estimate
+        cost_estimate=response.cost_estimate,
     )
     return response.content
 
@@ -336,7 +336,7 @@ class ChroniclerAgent:
                 logger.info(
                     "using_template_for_genre_language",
                     genre=genre.value,
-                    language=language.value
+                    language=language.value,
                 )
 
         try:
@@ -372,7 +372,9 @@ class ChroniclerAgent:
                 tmp_file.unlink()
             except FileNotFoundError:  # type: ignore[unreachable]
                 pass
-            logger.info("output_directory_validated", output_directory=self.output_directory)
+            logger.info(
+                "output_directory_validated", output_directory=self.output_directory
+            )
         except Exception as e:
             raise OSError(f"Output directory initialization failed: {e}")
 
@@ -382,8 +384,7 @@ class ChroniclerAgent:
         self.narrative_style_options = tuple(self.narrative_templates.keys())
         self.faction_descriptions = GENERIC_FACTIONS.copy()
         logger.info(
-            "narrative_templates_initialized",
-            styles=self.narrative_style_options
+            "narrative_templates_initialized", styles=self.narrative_style_options
         )
 
     def set_narrative_style(self, style: str) -> bool:

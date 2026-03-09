@@ -269,7 +269,9 @@ class TestGeneratorSelection:
         # Note: In the test environment, LLM generator may or may not be available
         with patch.dict(os.environ, {"ENABLE_LLM_GENERATION": "true"}, clear=True):
             # Remove PYTEST_CURRENT_TEST to test LLM path
-            env_without_test = {k: v for k, v in os.environ.items() if k != "PYTEST_CURRENT_TEST"}
+            env_without_test = {
+                k: v for k, v in os.environ.items() if k != "PYTEST_CURRENT_TEST"
+            }
             with patch.dict(os.environ, env_without_test, clear=True):
                 with patch.dict(os.environ, {"ENABLE_LLM_GENERATION": "true"}):
                     generator = _select_default_generator()
@@ -278,7 +280,10 @@ class TestGeneratorSelection:
         from src.contexts.character.infrastructure.generators.llm_character_generator import (
             LLMCharacterGenerator,
         )
-        assert isinstance(generator, (DeterministicCharacterGenerator, LLMCharacterGenerator))
+
+        assert isinstance(
+            generator, (DeterministicCharacterGenerator, LLMCharacterGenerator)
+        )
 
     @pytest.mark.unit
     def test_select_default_generator_default(self):

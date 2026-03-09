@@ -252,7 +252,9 @@ class TestEventServiceCreate:
         )
 
         assert result.is_error
-        assert "Invalid significance" in result.error or "Must be one of" in result.error
+        assert (
+            "Invalid significance" in result.error or "Must be one of" in result.error
+        )
 
 
 @pytest.mark.unit

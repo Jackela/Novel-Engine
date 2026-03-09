@@ -131,13 +131,13 @@ class SocialGraphService:
             if not relationships:
                 return Ok(SocialAnalysisResult())
 
-        # Build character metrics
+            # Build character metrics
             character_metrics: Dict[str, CharacterCentrality] = {}
             character_trusts: Dict[str, List[int]] = {}
             character_romances: Dict[str, List[int]] = {}
 
             for rel in relationships:
-            # Process source character
+                # Process source character
                 self._update_character_metrics(
                     character_metrics,
                     character_trusts,
@@ -145,7 +145,7 @@ class SocialGraphService:
                     rel.source_id,
                     rel,
                 )
-            # Process target character (relationships are counted for both parties)
+                # Process target character (relationships are counted for both parties)
                 self._update_character_metrics(
                     character_metrics,
                     character_trusts,
@@ -154,38 +154,38 @@ class SocialGraphService:
                     rel,
                 )
 
-        # Calculate averages and normalized scores
+            # Calculate averages and normalized scores
             max_relationships = max(
                 (c.relationship_count for c in character_metrics.values()),
                 default=0,
             )
 
             for char_id, metrics in character_metrics.items():
-            # Calculate average trust
+                # Calculate average trust
                 trusts = character_trusts.get(char_id, [])
                 if trusts:
                     metrics.average_trust = sum(trusts) / len(trusts)
 
-            # Calculate average romance
+                # Calculate average romance
                 romances = character_romances.get(char_id, [])
                 if romances:
                     metrics.average_romance = sum(romances) / len(romances)
 
-            # Normalize centrality score (0-100 scale)
+                # Normalize centrality score (0-100 scale)
                 if max_relationships > 0:
                     metrics.centrality_score = (
                         metrics.relationship_count / max_relationships
                     ) * 100
 
-        # Find extremes
+            # Find extremes
             most_connected = self._find_most_connected(character_metrics)
             most_hated = self._find_most_hated(character_metrics)
             most_loved = self._find_most_loved(character_metrics)
 
-        # Calculate network density
+            # Calculate network density
             num_characters = len(character_metrics)
             total_relationships = len(relationships)
-        # Maximum possible edges in undirected graph: n*(n-1)/2
+            # Maximum possible edges in undirected graph: n*(n-1)/2
             max_possible = (
                 (num_characters * (num_characters - 1)) / 2 if num_characters > 1 else 0
             )

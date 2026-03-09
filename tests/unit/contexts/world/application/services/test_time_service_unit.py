@@ -70,7 +70,9 @@ class TestTimeServiceInit:
 
     def test_init_logs_debug(self, mock_repository: MagicMock) -> None:
         """Should log debug message on initialization."""
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             TimeService(repository=mock_repository)
             mock_logger.debug.assert_called_once_with("time_service_initialized")
 
@@ -125,7 +127,9 @@ class TestGetTime:
         """Should log warning when creating default calendar."""
         mock_repository.exists.return_value = False
 
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             service.get_time("new-world")
 
             mock_logger.warning.assert_called_once()
@@ -142,7 +146,9 @@ class TestGetTime:
         """Should log debug when retrieving existing calendar."""
         mock_repository.exists.return_value = True
 
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             service.get_time("world-123")
 
             mock_logger.debug.assert_called()
@@ -306,7 +312,9 @@ class TestAdvanceTime:
         """Should log info on time advancement."""
         mock_repository.get_or_create.return_value = default_calendar
 
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             service.advance_time("world-123", 5)
 
             mock_logger.info.assert_called_once()
@@ -397,7 +405,10 @@ class TestSetTime:
     ) -> None:
         """Should fail with non-integer date types."""
         result = service.set_time(
-            "world-123", year="2024", month=1, day=1  # type: ignore
+            "world-123",
+            year="2024",
+            month=1,
+            day=1,  # type: ignore
         )
 
         assert result.is_error
@@ -409,7 +420,11 @@ class TestSetTime:
     ) -> None:
         """Should fail with non-string era name."""
         result = service.set_time(
-            "world-123", year=100, month=1, day=1, era_name=123  # type: ignore
+            "world-123",
+            year=100,
+            month=1,
+            day=1,
+            era_name=123,  # type: ignore
         )
 
         assert result.is_error
@@ -433,7 +448,9 @@ class TestSetTime:
         mock_repository: MagicMock,
     ) -> None:
         """Should log info when time is set."""
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             service.set_time("world-123", year=2000, month=1, day=1)
 
             mock_logger.info.assert_called_once()
@@ -510,7 +527,9 @@ class TestEventManagement:
         service: TimeService,
     ) -> None:
         """Should log debug when clearing events."""
-        with patch("src.contexts.world.application.services.time_service.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.application.services.time_service.logger"
+        ) as mock_logger:
             service.clear_pending_events()
 
             mock_logger.debug.assert_called_once_with("pending_events_cleared")

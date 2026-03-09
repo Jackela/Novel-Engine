@@ -19,6 +19,7 @@ pytestmark = pytest.mark.unit
 
 try:
     import chromadb  # noqa: F401 - imported for availability check
+
     CHROMADB_AVAILABLE = True
 except ImportError:
     CHROMADB_AVAILABLE = False
@@ -35,7 +36,10 @@ from src.contexts.knowledge.infrastructure.adapters.chromadb_vector_store import
 )
 
 # Skip all tests if chromadb is not installed, and mark as unit tests
-pytestmark = [pytest.mark.unit, pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed")]
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(not CHROMADB_AVAILABLE, reason="chromadb not installed"),
+]
 
 
 @pytest.fixture

@@ -340,9 +340,7 @@ class LLMCharacterProfileGenerator:
         user_prompt = self._build_user_prompt(name, archetype, context)
 
         try:
-            response_text = asyncio.run(
-                self._call_gemini(system_prompt, user_prompt)
-            )
+            response_text = asyncio.run(self._call_gemini(system_prompt, user_prompt))
             result = self._parse_response(response_text, name, archetype)
             log.info("Character profile generation completed")
             return result

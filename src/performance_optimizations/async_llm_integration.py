@@ -163,7 +163,9 @@ class AsyncLLMClient:
             try:
                 await self._batch_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
 
         if self._session:
             await self._session.close()
@@ -303,9 +305,7 @@ class AsyncLLMClient:
         context_str = json.dumps(context_data, sort_keys=True)
         context_hash = hashlib.md5(
             context_str.encode(), usedforsecurity=False
-        ).hexdigest()[
-            :8
-        ]  # nosec B324
+        ).hexdigest()[:8]  # nosec B324
 
         # Create prompt hash
         prompt_hash = hashlib.md5(prompt.encode(), usedforsecurity=False).hexdigest()[

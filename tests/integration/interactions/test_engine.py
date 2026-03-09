@@ -960,7 +960,8 @@ class ComprehensiveTestSuite:
         try:
             # Test queue exhaustion
             config = InteractionEngineConfig(
-                max_queue_size=5, max_concurrent_interactions=1  # Very small queue
+                max_queue_size=5,
+                max_concurrent_interactions=1,  # Very small queue
             )
             engine = InteractionEngine(config=config)
             await asyncio.sleep(0.1)

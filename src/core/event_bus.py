@@ -194,7 +194,9 @@ class EventBus:
             self._subscribers[event_type].append(callback)
             callback_name = getattr(callback, "__name__", "mock_callback")
             logger.debug(
-                "event_subscription_added", callback=callback_name, event_type=event_type
+                "event_subscription_added",
+                callback=callback_name,
+                event_type=event_type,
             )
             return Ok(True)
         except Exception as e:
@@ -218,13 +220,19 @@ class EventBus:
             try:
                 self._subscribers[event_type].remove(callback)
                 callback_name = getattr(callback, "__name__", "unknown_callback")
-                logger.debug("event_subscription_removed", callback=callback_name, event_type=event_type)
+                logger.debug(
+                    "event_subscription_removed",
+                    callback=callback_name,
+                    event_type=event_type,
+                )
 
                 # Clean up empty subscriber lists
                 if not self._subscribers[event_type]:
                     del self._subscribers[event_type]
             except ValueError:
-                logger.warning("callback_not_found_in_subscribers", event_type=event_type)
+                logger.warning(
+                    "callback_not_found_in_subscribers", event_type=event_type
+                )
 
     def emit(
         self,
@@ -338,7 +346,7 @@ class EventBus:
                 event_type=event.event_type,
                 error=str(e),
                 error_type=type(e).__name__,
-                exc_info=True
+                exc_info=True,
             )
             self._metrics["events_failed"] += 1
 
@@ -356,7 +364,11 @@ class EventBus:
     ) -> Optional[str]:
         """Publish an event asynchronously. (Legacy - use publish_result)"""
         result = await self.publish_result(
-            event_type, data, priority=priority, source=source, correlation_id=correlation_id
+            event_type,
+            data,
+            priority=priority,
+            source=source,
+            correlation_id=correlation_id,
         )
         if result.is_ok:
             return result.value
@@ -452,7 +464,7 @@ class EventBus:
                 event_type=event.event_type,
                 error=str(e),
                 error_type=type(e).__name__,
-                exc_info=True
+                exc_info=True,
             )
             self._metrics["events_failed"] += 1
 
@@ -494,19 +506,23 @@ class EventBus:
             "event_added_to_dead_letter",
             event_type=event.event_type,
             event_id=event.event_id[:8],
-            handler=handler_name
+            handler=handler_name,
         )
 
     # Circuit breaker methods
     def pause_event_type(self, event_type: str) -> None:
         """Pause processing for a specific event type (circuit breaker)."""
         self._paused_types.add(event_type)
-        logger.warning("circuit_breaker_activated", event_type=event_type, action="paused")
+        logger.warning(
+            "circuit_breaker_activated", event_type=event_type, action="paused"
+        )
 
     def resume_event_type(self, event_type: str) -> None:
         """Resume processing for a specific event type."""
         self._paused_types.discard(event_type)
-        logger.info("circuit_breaker_deactivated", event_type=event_type, action="resumed")
+        logger.info(
+            "circuit_breaker_deactivated", event_type=event_type, action="resumed"
+        )
 
     def is_paused(self, event_type: str) -> bool:
         """Check if an event type is paused."""
@@ -667,13 +683,17 @@ class EventBus:
             - Err(EventBusError): If metrics retrieval fails
         """
         try:
-            return Ok({
-                **self._metrics,
-                "history_size": len(self._history),
-                "dead_letter_size": len(self._dead_letters),
-                "paused_event_types": list(self._paused_types),
-                "subscriber_counts": {k: len(v) for k, v in self._subscribers.items()},
-            })
+            return Ok(
+                {
+                    **self._metrics,
+                    "history_size": len(self._history),
+                    "dead_letter_size": len(self._dead_letters),
+                    "paused_event_types": list(self._paused_types),
+                    "subscriber_counts": {
+                        k: len(v) for k, v in self._subscribers.items()
+                    },
+                }
+            )
         except Exception as e:
             return Err(
                 EventBusError(

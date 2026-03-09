@@ -24,12 +24,14 @@ from .shared.errors import (
 class CompatibilityService:
     """
     Service for party compatibility analysis.
-    
+
     Provides business operations for assessing compatibility between
     negotiation parties across multiple dimensions.
     """
 
-    def __init__(self, negotiation_service: Optional[NegotiationService] = None) -> None:
+    def __init__(
+        self, negotiation_service: Optional[NegotiationService] = None
+    ) -> None:
         """Initialize with domain negotiation service."""
         self.negotiation_service = negotiation_service or NegotiationService()
 
@@ -51,17 +53,21 @@ class CompatibilityService:
             Result containing detailed compatibility assessment or error
         """
         if party1 is None or party2 is None:
-            return Err(CompatibilityError(
-                message="Both parties must be provided",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="Both parties must be provided",
+                    recoverable=True,
+                )
+            )
 
         if party1.party_id == party2.party_id:
-            return Err(CompatibilityError(
-                message="Cannot assess compatibility of a party with itself",
-                party_ids=[str(party1.party_id)],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="Cannot assess compatibility of a party with itself",
+                    party_ids=[str(party1.party_id)],
+                    recoverable=True,
+                )
+            )
 
         try:
             # Get overall score from domain service
@@ -71,7 +77,9 @@ class CompatibilityService:
 
             # Calculate dimension-specific scores
             authority_score = self._assess_authority_compatibility(party1, party2)
-            communication_score = self._assess_communication_compatibility(party1, party2)
+            communication_score = self._assess_communication_compatibility(
+                party1, party2
+            )
             style_score = self._assess_negotiation_style_compatibility(party1, party2)
             time_score = self._assess_time_compatibility(party1, party2)
 
@@ -124,11 +132,13 @@ class CompatibilityService:
 
             return Ok(result)
         except Exception as e:
-            return Err(CompatibilityError(
-                message=f"Failed to assess compatibility: {e!s}",
-                party_ids=[str(party1.party_id), str(party2.party_id)],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message=f"Failed to assess compatibility: {e!s}",
+                    party_ids=[str(party1.party_id), str(party2.party_id)],
+                    recoverable=True,
+                )
+            )
 
     def assess_group_compatibility(
         self,
@@ -146,17 +156,21 @@ class CompatibilityService:
             Result containing group compatibility assessment or error
         """
         if not parties:
-            return Err(CompatibilityError(
-                message="At least one party required",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="At least one party required",
+                    recoverable=True,
+                )
+            )
 
         if len(parties) < 2:
-            return Err(CompatibilityError(
-                message="At least two parties required for group compatibility",
-                party_ids=[str(p.party_id) for p in parties],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="At least two parties required for group compatibility",
+                    party_ids=[str(p.party_id) for p in parties],
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate all pairwise scores
@@ -169,24 +183,28 @@ class CompatibilityService:
                         party1, party2, negotiation_domain
                     )
                     pairwise_scores.append(float(score))
-                    
-                    compatibility_pairs.append({
-                        "party1_id": str(party1.party_id),
-                        "party1_name": party1.party_name,
-                        "party2_id": str(party2.party_id),
-                        "party2_name": party2.party_name,
-                        "score": float(score),
-                    })
+
+                    compatibility_pairs.append(
+                        {
+                            "party1_id": str(party1.party_id),
+                            "party1_name": party1.party_name,
+                            "party2_id": str(party2.party_id),
+                            "party2_name": party2.party_name,
+                            "score": float(score),
+                        }
+                    )
 
             # Calculate statistics
-            avg_score = sum(pairwise_scores) / len(pairwise_scores) if pairwise_scores else 100.0
+            avg_score = (
+                sum(pairwise_scores) / len(pairwise_scores)
+                if pairwise_scores
+                else 100.0
+            )
             min_score = min(pairwise_scores) if pairwise_scores else 100.0
             max_score = max(pairwise_scores) if pairwise_scores else 100.0
 
             # Find problematic pairs
-            problematic_pairs = [
-                p for p in compatibility_pairs if p["score"] < 40
-            ]
+            problematic_pairs = [p for p in compatibility_pairs if p["score"] < 40]
 
             # Calculate cohesion score
             cohesion = self._calculate_group_cohesion(pairwise_scores)
@@ -210,11 +228,13 @@ class CompatibilityService:
 
             return Ok(result)
         except Exception as e:
-            return Err(CompatibilityError(
-                message=f"Failed to assess group compatibility: {e!s}",
-                party_ids=[str(p.party_id) for p in parties],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message=f"Failed to assess group compatibility: {e!s}",
+                    party_ids=[str(p.party_id) for p in parties],
+                    recoverable=True,
+                )
+            )
 
     def find_compatible_parties(
         self,
@@ -236,24 +256,30 @@ class CompatibilityService:
             Result containing compatible parties or error
         """
         if reference_party is None:
-            return Err(CompatibilityError(
-                message="Reference party is required",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="Reference party is required",
+                    recoverable=True,
+                )
+            )
 
         if not candidate_parties:
-            return Err(CompatibilityError(
-                message="At least one candidate party required",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="At least one candidate party required",
+                    recoverable=True,
+                )
+            )
 
         if min_compatibility < 0 or min_compatibility > 100:
-            return Err(ValidationError(
-                message="Compatibility threshold must be between 0 and 100",
-                field="min_compatibility",
-                field_value=min_compatibility,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Compatibility threshold must be between 0 and 100",
+                    field="min_compatibility",
+                    field_value=min_compatibility,
+                    recoverable=True,
+                )
+            )
 
         try:
             compatible_parties: List[Dict[str, Any]] = []
@@ -281,7 +307,9 @@ class CompatibilityService:
                     incompatible_parties.append(party_info)
 
             # Sort by compatibility score
-            compatible_parties.sort(key=lambda x: x["compatibility_score"], reverse=True)
+            compatible_parties.sort(
+                key=lambda x: x["compatibility_score"], reverse=True
+            )
 
             result = {
                 "reference_party_id": str(reference_party.party_id),
@@ -293,18 +321,22 @@ class CompatibilityService:
                 "compatible_parties": compatible_parties,
                 "incompatible_parties": incompatible_parties[:5],  # Top 5 incompatible
                 "average_compatible_score": (
-                    sum(p["compatibility_score"] for p in compatible_parties) / len(compatible_parties)
-                    if compatible_parties else 0.0
+                    sum(p["compatibility_score"] for p in compatible_parties)
+                    / len(compatible_parties)
+                    if compatible_parties
+                    else 0.0
                 ),
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(CompatibilityError(
-                message=f"Failed to find compatible parties: {e!s}",
-                party_ids=[str(reference_party.party_id)],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message=f"Failed to find compatible parties: {e!s}",
+                    party_ids=[str(reference_party.party_id)],
+                    recoverable=True,
+                )
+            )
 
     def _assess_authority_compatibility(
         self, party1: NegotiationParty, party2: NegotiationParty
@@ -325,12 +357,28 @@ class CompatibilityService:
         style2 = party2.preferences.communication_preference
 
         compatibility_map = {
-            (CommunicationPreference.DIRECT, CommunicationPreference.DIRECT): Decimal("90"),
-            (CommunicationPreference.DIRECT, CommunicationPreference.DIPLOMATIC): Decimal("60"),
-            (CommunicationPreference.DIPLOMATIC, CommunicationPreference.DIPLOMATIC): Decimal("85"),
-            (CommunicationPreference.FORMAL, CommunicationPreference.FORMAL): Decimal("80"),
-            (CommunicationPreference.INFORMAL, CommunicationPreference.INFORMAL): Decimal("75"),
-            (CommunicationPreference.ANALYTICAL, CommunicationPreference.ANALYTICAL): Decimal("90"),
+            (CommunicationPreference.DIRECT, CommunicationPreference.DIRECT): Decimal(
+                "90"
+            ),
+            (
+                CommunicationPreference.DIRECT,
+                CommunicationPreference.DIPLOMATIC,
+            ): Decimal("60"),
+            (
+                CommunicationPreference.DIPLOMATIC,
+                CommunicationPreference.DIPLOMATIC,
+            ): Decimal("85"),
+            (CommunicationPreference.FORMAL, CommunicationPreference.FORMAL): Decimal(
+                "80"
+            ),
+            (
+                CommunicationPreference.INFORMAL,
+                CommunicationPreference.INFORMAL,
+            ): Decimal("75"),
+            (
+                CommunicationPreference.ANALYTICAL,
+                CommunicationPreference.ANALYTICAL,
+            ): Decimal("90"),
         }
 
         key = (style1, style2)
@@ -351,19 +399,33 @@ class CompatibilityService:
         style2 = party2.preferences.negotiation_style
 
         # High compatibility pairs
-        if style1 == NegotiationStyle.COLLABORATIVE and style2 == NegotiationStyle.COLLABORATIVE:
+        if (
+            style1 == NegotiationStyle.COLLABORATIVE
+            and style2 == NegotiationStyle.COLLABORATIVE
+        ):
             return Decimal("95")
 
-        if style1 == NegotiationStyle.INTEGRATIVE and style2 == NegotiationStyle.INTEGRATIVE:
+        if (
+            style1 == NegotiationStyle.INTEGRATIVE
+            and style2 == NegotiationStyle.INTEGRATIVE
+        ):
             return Decimal("90")
 
         # Moderate compatibility
-        if style1 == NegotiationStyle.COMPROMISING or style2 == NegotiationStyle.COMPROMISING:
+        if (
+            style1 == NegotiationStyle.COMPROMISING
+            or style2 == NegotiationStyle.COMPROMISING
+        ):
             return Decimal("70")
 
         # Problematic combinations
-        if ((style1 == NegotiationStyle.COMPETITIVE and style2 == NegotiationStyle.AVOIDING) or
-            (style1 == NegotiationStyle.AVOIDING and style2 == NegotiationStyle.COMPETITIVE)):
+        if (
+            style1 == NegotiationStyle.COMPETITIVE
+            and style2 == NegotiationStyle.AVOIDING
+        ) or (
+            style1 == NegotiationStyle.AVOIDING
+            and style2 == NegotiationStyle.COMPETITIVE
+        ):
             return Decimal("20")
 
         return Decimal("50")
@@ -377,12 +439,16 @@ class CompatibilityService:
 
         # Check session duration compatibility
         if pref1.maximum_session_duration and pref2.maximum_session_duration:
-            min_duration = min(pref1.maximum_session_duration, pref2.maximum_session_duration)
+            min_duration = min(
+                pref1.maximum_session_duration, pref2.maximum_session_duration
+            )
             if min_duration < 30:
                 return Decimal("30")
 
         # Check time pressure sensitivity
-        sensitivity_diff = abs(pref1.time_pressure_sensitivity - pref2.time_pressure_sensitivity)
+        sensitivity_diff = abs(
+            pref1.time_pressure_sensitivity - pref2.time_pressure_sensitivity
+        )
         if sensitivity_diff > 50:
             return Decimal("40")
 
@@ -420,7 +486,7 @@ class CompatibilityService:
         # Cohesion considers both average and variance
         avg = sum(pairwise_scores) / len(pairwise_scores)
         variance = sum((s - avg) ** 2 for s in pairwise_scores) / len(pairwise_scores)
-        std_dev = variance ** 0.5
+        std_dev = variance**0.5
 
         # High cohesion = high average with low variance
         cohesion = avg - (std_dev / 2)
@@ -445,7 +511,7 @@ class CompatibilityService:
     ) -> List[str]:
         """Generate recommendations based on compatibility."""
         recommendations: List[str] = []
-        
+
         score_float = float(score)
         if score_float < 40:
             recommendations.append("Consider mediation for this negotiation pair")
@@ -469,7 +535,7 @@ class CompatibilityService:
     ) -> List[str]:
         """Generate recommendations for group compatibility."""
         recommendations: List[str] = []
-        
+
         if avg_score < 50:
             recommendations.append("Consider splitting into smaller negotiation groups")
         elif avg_score < 70:

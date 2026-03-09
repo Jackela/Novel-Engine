@@ -61,7 +61,10 @@ class TestRumorPropagationFlow:
         }
 
         response = client.post("/api/world/events", json=event_data)
-        assert response.status_code in [200, 201], f"Failed to create event: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Failed to create event: {response.text}"
 
         return response.json()
 
@@ -96,7 +99,9 @@ class TestRumorPropagationFlow:
             List of all rumors in the world
         """
         response = client.get(f"/api/world/{world_id}/rumors")
-        assert response.status_code == 200, f"Failed to get world rumors: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Failed to get world rumors: {response.text}"
 
         data = response.json()
         return data.get("rumors", [])
@@ -157,7 +162,9 @@ class TestRumorPropagationFlow:
 
         # Advance time
         advance_response = client.post("/api/world/time/advance", json={"days": 5})
-        assert advance_response.status_code == 200, f"Failed to advance time: {advance_response.text}"
+        assert (
+            advance_response.status_code == 200
+        ), f"Failed to advance time: {advance_response.text}"
 
         data = advance_response.json()
         assert "day" in data, "Response missing day"
@@ -166,9 +173,9 @@ class TestRumorPropagationFlow:
 
         # Verify time advanced
         new_day = data.get("day", 0)
-        assert new_day != initial_day or data.get("month") != initial_data.get("month"), (
-            "Time did not advance"
-        )
+        assert new_day != initial_day or data.get("month") != initial_data.get(
+            "month"
+        ), "Time did not advance"
 
     def test_rumors_api_returns_valid_structure(self, client: TestClient) -> None:
         """Test that rumors API returns valid response structure.
@@ -185,7 +192,9 @@ class TestRumorPropagationFlow:
         assert "total" in data, "Response missing 'total' field"
         assert isinstance(data["rumors"], list), "Rumors should be a list"
 
-    def test_location_rumors_api_returns_valid_structure(self, client: TestClient) -> None:
+    def test_location_rumors_api_returns_valid_structure(
+        self, client: TestClient
+    ) -> None:
         """Test that location rumors API returns valid response structure.
 
         Verifies:
@@ -193,7 +202,9 @@ class TestRumorPropagationFlow:
         - Response has correct structure
         """
         response = client.get("/api/world/locations/capital/rumors")
-        assert response.status_code == 200, f"Failed to get location rumors: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Failed to get location rumors: {response.text}"
 
         data = response.json()
         assert "rumors" in data, "Response missing 'rumors' field"
@@ -230,7 +241,9 @@ class TestRumorPropagationFlow:
         assert event_response.get("name") == "Rumor Generation Test"
         assert event_response.get("event_type") == "discovery"
 
-    def test_event_without_generate_rumor_no_rumor_created(self, client: TestClient) -> None:
+    def test_event_without_generate_rumor_no_rumor_created(
+        self, client: TestClient
+    ) -> None:
         """Test that events without generate_rumor flag don't create rumors.
 
         Verifies:
@@ -272,9 +285,12 @@ class TestRumorPropagationFlow:
 
         response = client.post("/api/world/events", json=event_data)
         # Should either succeed (event created but no rumor) or fail with validation error
-        assert response.status_code in [200, 201, 400, 422], (
-            f"Unexpected status: {response.status_code}"
-        )
+        assert response.status_code in [
+            200,
+            201,
+            400,
+            422,
+        ], f"Unexpected status: {response.status_code}"
 
 
 class TestRumorAPIEndpoints:
@@ -283,7 +299,9 @@ class TestRumorAPIEndpoints:
     def test_get_world_rumors_endpoint(self, client: TestClient) -> None:
         """Test GET /api/world/{world_id}/rumors endpoint."""
         response = client.get("/api/world/default/rumors")
-        assert response.status_code == 200, f"Failed to get world rumors: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Failed to get world rumors: {response.text}"
 
         data = response.json()
         assert "rumors" in data, "Response missing 'rumors' field"
@@ -316,9 +334,9 @@ class TestRumorAPIEndpoints:
         assert "rumors" in data, "Response missing 'rumors' field"
         # All returned rumors should be at the specified location
         for rumor in data.get("rumors", []):
-            assert "capital" in rumor.get("current_locations", []), (
-                f"Rumor not at capital: {rumor}"
-            )
+            assert "capital" in rumor.get(
+                "current_locations", []
+            ), f"Rumor not at capital: {rumor}"
 
     def test_get_single_rumor_endpoint_404(self, client: TestClient) -> None:
         """Test GET /api/world/rumors/{rumor_id} with non-existent ID."""
@@ -328,7 +346,9 @@ class TestRumorAPIEndpoints:
     def test_get_location_rumors_endpoint(self, client: TestClient) -> None:
         """Test GET /api/world/locations/{location_id}/rumors endpoint."""
         response = client.get("/api/world/locations/capital/rumors")
-        assert response.status_code == 200, f"Failed to get location rumors: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Failed to get location rumors: {response.text}"
 
         data = response.json()
         assert "rumors" in data, "Response missing 'rumors' field"
@@ -359,9 +379,9 @@ class TestTimeAdvanceAPI:
 
         # Advance time
         advance_response = client.post("/api/world/time/advance", json={"days": 7})
-        assert advance_response.status_code == 200, (
-            f"Failed to advance time: {advance_response.text}"
-        )
+        assert (
+            advance_response.status_code == 200
+        ), f"Failed to advance time: {advance_response.text}"
 
         data = advance_response.json()
         assert "year" in data, "Response missing 'year'"
@@ -369,8 +389,14 @@ class TestTimeAdvanceAPI:
         assert "day" in data, "Response missing 'day'"
 
         # Verify time actually advanced
-        total_days_initial = initial_data.get("year", 0) * 365 + initial_data.get("month", 0) * 30 + initial_data.get("day", 0)
-        total_days_new = data.get("year", 0) * 365 + data.get("month", 0) * 30 + data.get("day", 0)
+        total_days_initial = (
+            initial_data.get("year", 0) * 365
+            + initial_data.get("month", 0) * 30
+            + initial_data.get("day", 0)
+        )
+        total_days_new = (
+            data.get("year", 0) * 365 + data.get("month", 0) * 30 + data.get("day", 0)
+        )
         assert total_days_new > total_days_initial, "Time did not advance"
 
     def test_advance_time_validation(self, client: TestClient) -> None:
@@ -421,9 +447,12 @@ class TestEventsAPI:
         }
         response = client.post("/api/world/events", json=invalid_event)
         # Should fail validation
-        assert response.status_code in [200, 201, 400, 422], (
-            f"Unexpected status: {response.status_code}"
-        )
+        assert response.status_code in [
+            200,
+            201,
+            400,
+            422,
+        ], f"Unexpected status: {response.status_code}"
 
     def test_create_event_with_all_fields(self, client: TestClient) -> None:
         """Test event creation with all valid fields."""

@@ -20,11 +20,13 @@ class TestEventIntegration(unittest.TestCase):
         event_bus = EventBus()
 
         # Mock file system operations for agent creation
-        with patch("os.path.isdir", return_value=True), patch(
-            "os.listdir", return_value=["character.md"]
-        ), patch(
-            "builtins.open",
-            unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
+        with (
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch(
+                "builtins.open",
+                unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
+            ),
         ):
             # Instantiate the agents and director with the real event bus
             director = DirectorAgent(event_bus=event_bus)

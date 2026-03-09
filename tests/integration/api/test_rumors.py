@@ -35,9 +35,7 @@ class TestRumorsEndpoints:
 
     def test_list_rumors_with_location_filter(self, client: TestClient) -> None:
         """Test GET /api/world/{world_id}/rumors with location filter."""
-        response = client.get(
-            "/api/world/test-world/rumors?location_id=loc-capital"
-        )
+        response = client.get("/api/world/test-world/rumors?location_id=loc-capital")
 
         assert response.status_code == 200
         data = response.json()
@@ -145,9 +143,7 @@ class TestRumorsResponseFormat:
 class TestRumorsFiltering:
     """Tests for rumors filtering and sorting behavior."""
 
-    def test_sort_by_reliable_orders_by_truth_value(
-        self, client: TestClient
-    ) -> None:
+    def test_sort_by_reliable_orders_by_truth_value(self, client: TestClient) -> None:
         """Test that sort_by=reliable orders by truth_value descending."""
         response = client.get("/api/world/test-world/rumors?sort_by=reliable")
         assert response.status_code == 200
@@ -158,9 +154,7 @@ class TestRumorsFiltering:
             for i in range(len(rumors) - 1):
                 assert rumors[i]["truth_value"] >= rumors[i + 1]["truth_value"]
 
-    def test_sort_by_spread_orders_by_spread_count(
-        self, client: TestClient
-    ) -> None:
+    def test_sort_by_spread_orders_by_spread_count(self, client: TestClient) -> None:
         """Test that sort_by=spread orders by spread_count descending."""
         response = client.get("/api/world/test-world/rumors?sort_by=spread")
         assert response.status_code == 200
@@ -170,14 +164,10 @@ class TestRumorsFiltering:
             for i in range(len(rumors) - 1):
                 assert rumors[i]["spread_count"] >= rumors[i + 1]["spread_count"]
 
-    def test_location_filter_returns_matching_rumors(
-        self, client: TestClient
-    ) -> None:
+    def test_location_filter_returns_matching_rumors(self, client: TestClient) -> None:
         """Test that location filter only returns rumors at that location."""
         location_id = "loc-capital"
-        response = client.get(
-            f"/api/world/test-world/rumors?location_id={location_id}"
-        )
+        response = client.get(f"/api/world/test-world/rumors?location_id={location_id}")
 
         assert response.status_code == 200
         rumors = response.json()["rumors"]
@@ -219,9 +209,7 @@ class TestRumorsValidation:
 class TestRumorsVeracityLabels:
     """Tests for rumor veracity label behavior."""
 
-    def test_veracity_label_matches_truth_value(
-        self, client: TestClient
-    ) -> None:
+    def test_veracity_label_matches_truth_value(self, client: TestClient) -> None:
         """Test that veracity_label corresponds to truth_value."""
         response = client.get("/api/world/test-world/rumors")
         rumors = response.json()["rumors"]

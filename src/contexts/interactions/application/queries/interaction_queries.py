@@ -209,7 +209,9 @@ class GetNegotiationAnalyticsQuery(InteractionQuery):
     """Query to get comprehensive analytics for a negotiation session."""
 
     session_id: UUID
-    analytics_types: Optional[List[str]] = None  # momentum, conflicts, viability, compatibility
+    analytics_types: Optional[List[str]] = (
+        None  # momentum, conflicts, viability, compatibility
+    )
     time_window_hours: int = 168  # 1 week default
     include_trends: bool = True
     include_predictions: bool = False
@@ -361,7 +363,9 @@ class SearchNegotiationSessionsQuery(InteractionQuery):
 
     search_term: Optional[str] = None
     filters: Optional[Dict[str, Any]] = None
-    search_fields: Optional[List[str]] = None  # session_name, session_type, party_names, etc.
+    search_fields: Optional[List[str]] = (
+        None  # session_name, session_type, party_names, etc.
+    )
     full_text_search: bool = False
     fuzzy_matching: bool = False
     limit: int = 50
@@ -415,7 +419,9 @@ class GetNegotiationTrendsQuery(InteractionQuery):
     time_period: str = "last_30_days"  # last_7_days, last_30_days, last_90_days, custom
     custom_start_date: Optional[datetime] = None
     custom_end_date: Optional[datetime] = None
-    trend_metrics: Optional[List[str]] = None  # success_rate, avg_duration, party_satisfaction
+    trend_metrics: Optional[List[str]] = (
+        None  # success_rate, avg_duration, party_satisfaction
+    )
     group_by: str = "week"  # day, week, month
     filters: Optional[Dict[str, Any]] = None
 

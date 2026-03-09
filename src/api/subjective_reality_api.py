@@ -245,7 +245,11 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.error("error_getting_turn_brief", error="exception_occurred", error_type="exception")
+                logger.error(
+                    "error_getting_turn_brief",
+                    error="exception_occurred",
+                    error_type="exception",
+                )
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -314,7 +318,11 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.error("error_getting_all_turn_briefs", error="exception_occurred", error_type="exception")
+                logger.error(
+                    "error_getting_all_turn_briefs",
+                    error="exception_occurred",
+                    error_type="exception",
+                )
                 raise HTTPException(status_code=500, detail="Internal server error")
 
         @app.get(
@@ -368,7 +376,11 @@ class SubjectiveRealityAPI:
             except HTTPException:
                 raise
             except Exception:
-                logger.error("error_getting_belief_model", error="exception_occurred", error_type="exception")
+                logger.error(
+                    "error_getting_belief_model",
+                    error="exception_occurred",
+                    error_type="exception",
+                )
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 

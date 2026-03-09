@@ -635,7 +635,9 @@ class TestEntityExtractionService:
         # Find the tavern entity and check aliases
         assert result.is_ok
         extraction = result.unwrap()
-        tavern = next((e for e in extraction.entities if "tavern" in e.name.lower()), None)
+        tavern = next(
+            (e for e in extraction.entities if "tavern" in e.name.lower()), None
+        )
         assert tavern is not None
         assert tavern.has_alias("the tavern") or tavern.has_alias("the inn")
 

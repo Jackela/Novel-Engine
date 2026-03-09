@@ -32,7 +32,7 @@ from .shared.errors import (
 class SessionManagementService:
     """
     Service for negotiation session lifecycle management.
-    
+
     Provides business operations for session creation, configuration,
     lifecycle management, and state transitions.
     """
@@ -74,34 +74,42 @@ class SessionManagementService:
         """
         # Validation
         if not session_name or not session_name.strip():
-            return Err(ValidationError(
-                message="Session name is required",
-                field="session_name",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session name is required",
+                    field="session_name",
+                    recoverable=True,
+                )
+            )
 
         if not session_type or not session_type.strip():
-            return Err(ValidationError(
-                message="Session type is required",
-                field="session_type",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session type is required",
+                    field="session_type",
+                    recoverable=True,
+                )
+            )
 
         if max_parties < 2:
-            return Err(ValidationError(
-                message="Maximum parties must be at least 2",
-                field="max_parties",
-                field_value=max_parties,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Maximum parties must be at least 2",
+                    field="max_parties",
+                    field_value=max_parties,
+                    recoverable=True,
+                )
+            )
 
         if session_timeout_hours <= 0:
-            return Err(ValidationError(
-                message="Session timeout must be positive",
-                field="session_timeout_hours",
-                field_value=session_timeout_hours,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session timeout must be positive",
+                    field="session_timeout_hours",
+                    field_value=session_timeout_hours,
+                    recoverable=True,
+                )
+            )
 
         try:
             session = NegotiationSession.create(
@@ -140,10 +148,12 @@ class SessionManagementService:
 
             return Ok(result)
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to create session: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to create session: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     async def get_session(
         self, session_id: UUID
@@ -159,23 +169,27 @@ class SessionManagementService:
         """
         try:
             session = await self.session_repository.get_by_id(InteractionId(session_id))
-            
+
             if session is None:
-                return Err(NotFoundError(
-                    message=f"Session {session_id} not found",
-                    entity_type="NegotiationSession",
-                    entity_id=str(session_id),
-                    recoverable=False,
-                ))
+                return Err(
+                    NotFoundError(
+                        message=f"Session {session_id} not found",
+                        entity_type="NegotiationSession",
+                        entity_id=str(session_id),
+                        recoverable=False,
+                    )
+                )
 
             return Ok(session)
         except Exception as e:
-            return Err(NotFoundError(
-                message=f"Failed to retrieve session: {e!s}",
-                entity_type="NegotiationSession",
-                entity_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                NotFoundError(
+                    message=f"Failed to retrieve session: {e!s}",
+                    entity_type="NegotiationSession",
+                    entity_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def add_party_to_session(
         self,
@@ -195,43 +209,53 @@ class SessionManagementService:
             Result containing operation result or error
         """
         if party is None:
-            return Err(ValidationError(
-                message="Party is required",
-                field="party",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Party is required",
+                    field="party",
+                    recoverable=True,
+                )
+            )
 
         session_result = await self.get_session(session_id)
         if session_result.is_error:
-            return Err(SessionError(
-                message=f"Session {session_id} not found",
-                session_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         session = session_result.value
 
         if not session.is_active:
-            return Err(SessionError(
-                message="Cannot add party to inactive session",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message="Cannot add party to inactive session",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
 
         if len(session.parties) >= session.max_parties:
-            return Err(SessionError(
-                message=f"Session at maximum capacity ({session.max_parties} parties)",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session at maximum capacity ({session.max_parties} parties)",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
         if party.party_id in session.parties:
-            return Err(SessionError(
-                message=f"Party {party.party_id} already in session",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Party {party.party_id} already in session",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
         try:
             session.add_party(party)
@@ -247,17 +271,21 @@ class SessionManagementService:
 
             return Ok(result)
         except ValueError as e:
-            return Err(SessionError(
-                message=f"Failed to add party: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to add party: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Unexpected error adding party: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Unexpected error adding party: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def remove_party_from_session(
         self,
@@ -280,28 +308,34 @@ class SessionManagementService:
         """
         session_result = await self.get_session(session_id)
         if session_result.is_error:
-            return Err(SessionError(
-                message=f"Session {session_id} not found",
-                session_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         session = session_result.value
 
         if party_id not in session.parties:
-            return Err(NotFoundError(
-                message=f"Party {party_id} not found in session",
-                entity_type="NegotiationParty",
-                entity_id=str(party_id),
-                recoverable=False,
-            ))
+            return Err(
+                NotFoundError(
+                    message=f"Party {party_id} not found in session",
+                    entity_type="NegotiationParty",
+                    entity_id=str(party_id),
+                    recoverable=False,
+                )
+            )
 
         if len(session.parties) <= 2:
-            return Err(SessionError(
-                message="Cannot remove party: minimum 2 parties required",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message="Cannot remove party: minimum 2 parties required",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
         party = session.parties[party_id]
 
@@ -319,17 +353,21 @@ class SessionManagementService:
 
             return Ok(result)
         except ValueError as e:
-            return Err(SessionError(
-                message=f"Failed to remove party: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to remove party: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Unexpected error removing party: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Unexpected error removing party: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def advance_session_phase(
         self,
@@ -352,29 +390,35 @@ class SessionManagementService:
         """
         session_result = await self.get_session(session_id)
         if session_result.is_error:
-            return Err(SessionError(
-                message=f"Session {session_id} not found",
-                session_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         session = session_result.value
 
         if not session.is_active:
-            return Err(SessionError(
-                message="Cannot advance phase of inactive session",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message="Cannot advance phase of inactive session",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
 
         if session.status.phase == target_phase:
-            return Err(SessionError(
-                message=f"Session is already in {target_phase.value} phase",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session is already in {target_phase.value} phase",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
 
         try:
             old_phase = session.status.phase
@@ -391,18 +435,22 @@ class SessionManagementService:
 
             return Ok(result)
         except ValueError as e:
-            return Err(SessionError(
-                message=f"Failed to advance phase: {e!s}",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to advance phase: {e!s}",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Unexpected error advancing phase: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Unexpected error advancing phase: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def terminate_session(
         self,
@@ -425,29 +473,35 @@ class SessionManagementService:
         """
         session_result = await self.get_session(session_id)
         if session_result.is_error:
-            return Err(SessionError(
-                message=f"Session {session_id} not found",
-                session_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         session = session_result.value
 
         if not session.is_active:
-            return Err(SessionError(
-                message="Session is already inactive",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message="Session is already inactive",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
 
         if terminated_by not in session.parties:
-            return Err(AuthorizationError(
-                message="Only session participants can terminate",
-                party_id=str(terminated_by),
-                required_permission="terminate_session",
-                recoverable=False,
-            ))
+            return Err(
+                AuthorizationError(
+                    message="Only session participants can terminate",
+                    party_id=str(terminated_by),
+                    required_permission="terminate_session",
+                    recoverable=False,
+                )
+            )
 
         try:
             session.terminate_negotiation(outcome, termination_reason, terminated_by)
@@ -463,18 +517,22 @@ class SessionManagementService:
 
             return Ok(result)
         except ValueError as e:
-            return Err(SessionError(
-                message=f"Failed to terminate session: {e!s}",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to terminate session: {e!s}",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Unexpected error terminating session: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Unexpected error terminating session: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def update_session_configuration(
         self,
@@ -503,30 +561,36 @@ class SessionManagementService:
         """
         session_result = await self.get_session(session_id)
         if session_result.is_error:
-            return Err(SessionError(
-                message=f"Session {session_id} not found",
-                session_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         session = session_result.value
 
         if not session.is_active:
-            return Err(SessionError(
-                message="Cannot configure inactive session",
-                session_id=str(session_id),
-                session_status=session.status.phase.value,
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message="Cannot configure inactive session",
+                    session_id=str(session_id),
+                    session_status=session.status.phase.value,
+                    recoverable=True,
+                )
+            )
 
         # Validate inputs
         if max_parties is not None and max_parties < len(session.parties):
-            return Err(ValidationError(
-                message=f"Cannot set max_parties below current party count ({len(session.parties)})",
-                field="max_parties",
-                field_value=max_parties,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Cannot set max_parties below current party count ({len(session.parties)})",
+                    field="max_parties",
+                    field_value=max_parties,
+                    recoverable=True,
+                )
+            )
 
         try:
             updates_made: List[str] = []
@@ -567,11 +631,13 @@ class SessionManagementService:
 
             return Ok(result)
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to update configuration: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to update configuration: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def get_session_summary(
         self, session_id: UUID

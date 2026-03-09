@@ -130,7 +130,9 @@ class EquipmentProcessorRegistry:
         )
 
     # Placeholder implementations for other categories
-    async def _process_consumable_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_consumable_usage(
+        self, equipment, usage_context, duration
+    ) -> None:
         """Process enhanced consumable usage with depletion tracking"""
         quantity_used = usage_context.get("quantity_used", 1)
         effects = [f"Consumable used: {quantity_used} units"]
@@ -156,12 +158,16 @@ class EquipmentProcessorRegistry:
             data={"effects": ["Sacred relic activated", "system core pleased"]},
         )
 
-    async def _process_transport_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_transport_usage(
+        self, equipment, usage_context, duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["Transport operational"]}
         )
 
-    async def _process_communication_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_communication_usage(
+        self, equipment, usage_context, duration
+    ) -> None:
         return StandardResponse(
             success=True, data={"effects": ["Communication established"]}
         )

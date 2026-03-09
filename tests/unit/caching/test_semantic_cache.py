@@ -105,7 +105,7 @@ class TestSemanticCacheSimilarityMatching:
         """Test retrieval with similar query text."""
         cache = SemanticCache()
         cache.put("key1", "value1", "hello world test")
-        
+
         # Similar query should match
         result = cache.get("key1", query_text="hello world example")
         assert result == "value1"
@@ -114,7 +114,7 @@ class TestSemanticCacheSimilarityMatching:
         """Test that dissimilar queries don't match when key exists."""
         cache = SemanticCache(config=SemanticCacheConfig(similarity_threshold=0.95))
         cache.put("key1", "value1", "aaa bbb ccc ddd")  # Use words unlikely to match
-        
+
         # Different query - should not match above high threshold
         # Note: When key exists, it first tries key lookup which succeeds
         # So we need to test with wrong key to test semantic matching
@@ -125,7 +125,7 @@ class TestSemanticCacheSimilarityMatching:
         """Test that queries below similarity threshold don't match with wrong key."""
         cache = SemanticCache(config=SemanticCacheConfig(similarity_threshold=0.95))
         cache.put("key1", "value1", "hello world test query")
-        
+
         # Different enough query should not match with high threshold
         # Use wrong key to force semantic matching
         result = cache.get("wrong_key", query_text="something else entirely different")
@@ -135,7 +135,7 @@ class TestSemanticCacheSimilarityMatching:
         """Test semantic matching only when query_text provided."""
         cache = SemanticCache()
         cache.put("key1", "value1", "hello world")
-        
+
         # Without query_text, should return None for non-matching key
         result = cache.get("wrong_key")
         assert result is None
@@ -148,10 +148,10 @@ class TestSemanticCacheTTL:
         """Test that entries expire after TTL."""
         config = SemanticCacheConfig(ttl_seconds=0.1)
         cache = SemanticCache(config=config)
-        
+
         cache.put("key", "value", "query")
         assert cache.get("key") == "value"  # Still valid
-        
+
         time.sleep(0.15)
         assert cache.get("key") is None  # Expired
 
@@ -159,7 +159,7 @@ class TestSemanticCacheTTL:
         """Test that entries don't expire when TTL is 0."""
         config = SemanticCacheConfig(ttl_seconds=0)
         cache = SemanticCache(config=config)
-        
+
         cache.put("key", "value", "query")
         time.sleep(0.05)
         assert cache.get("key") == "value"
@@ -168,10 +168,10 @@ class TestSemanticCacheTTL:
         """Test that expired entries are not found by key lookup."""
         config = SemanticCacheConfig(ttl_seconds=0.1)
         cache = SemanticCache(config=config)
-        
+
         cache.put("key1", "value1", "hello world")
         time.sleep(0.15)
-        
+
         # Expired entry should not be found by key
         result = cache.get("key1")
         assert result is None
@@ -186,12 +186,12 @@ class TestSemanticCacheEviction:
         """Test LRU eviction when cache is full."""
         config = SemanticCacheConfig(max_cache_size=3)
         cache = SemanticCache(config=config)
-        
+
         cache.put("a", "1", "query a")
         cache.put("b", "2", "query b")
         cache.put("c", "3", "query c")
         cache.put("d", "4", "query d")  # Should evict "a"
-        
+
         assert cache.get("a") is None
         assert cache.get("b") == "2"
         assert cache.get("c") == "3"
@@ -201,17 +201,17 @@ class TestSemanticCacheEviction:
         """Test that accessing an item updates LRU position."""
         config = SemanticCacheConfig(max_cache_size=3)
         cache = SemanticCache(config=config)
-        
+
         cache.put("a", "1", "query a")
         cache.put("b", "2", "query b")
         cache.put("c", "3", "query c")
-        
+
         # Access "a" to make it recently used
         cache.get("a")
-        
+
         # Add new item - should evict "b"
         cache.put("d", "4", "query d")
-        
+
         assert cache.get("a") == "1"  # Still present
         assert cache.get("b") is None  # Evicted
 
@@ -231,10 +231,10 @@ class TestSemanticCacheStats:
         """Test hit tracking."""
         cache = SemanticCache()
         cache.put("key", "value", "query")
-        
+
         cache.get("key")  # Hit
         cache.get("key")  # Hit
-        
+
         stats = cache.get_stats()
         assert stats["hit_count"] == 2
         assert stats["miss_count"] == 0
@@ -242,10 +242,10 @@ class TestSemanticCacheStats:
     def test_miss_tracking(self) -> None:
         """Test miss tracking."""
         cache = SemanticCache()
-        
+
         cache.get("nonexistent1")  # Miss
         cache.get("nonexistent2")  # Miss
-        
+
         stats = cache.get_stats()
         assert stats["hit_count"] == 0
         assert stats["miss_count"] == 2
@@ -256,7 +256,7 @@ class TestSemanticCacheStats:
         cache = SemanticCache(config=config)
         cache.put("key", "value", "query")
         time.sleep(0.15)
-        
+
         cache.get("key")  # Expired - counts as miss
         stats = cache.get_stats()
         assert stats["hit_count"] == 0
@@ -270,13 +270,13 @@ class TestSemanticCachePersistence:
         """Test saving and loading cache."""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "cache.json"
-            
+
             # Create and populate cache
             config = SemanticCacheConfig(persistence_file=file_path)
             cache1 = SemanticCache(config)
             cache1.put("key1", "value1", "query1", content_type="json")
             cache1.save_cache()
-            
+
             # Load cache in new instance
             cache2 = SemanticCache(config)
             result = cache2.get("key1")
@@ -286,16 +286,13 @@ class TestSemanticCachePersistence:
         """Test that loading filters out expired entries."""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "cache.json"
-            
+
             # Create cache with short TTL and populate
-            config = SemanticCacheConfig(
-                persistence_file=file_path,
-                ttl_seconds=0.1
-            )
+            config = SemanticCacheConfig(persistence_file=file_path, ttl_seconds=0.1)
             cache1 = SemanticCache(config)
             cache1.put("key1", "value1", "query1")
             cache1.save_cache()
-            
+
             # Wait for expiration and load
             time.sleep(0.15)
             cache2 = SemanticCache(config)
@@ -319,7 +316,7 @@ class TestSemanticCachePersistence:
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "cache.json"
             file_path.write_text("invalid json", encoding="utf-8")
-            
+
             config = SemanticCacheConfig(persistence_file=file_path)
             cache = SemanticCache(config)  # Should not raise
             assert cache.get_stats()["cache_size"] == 0

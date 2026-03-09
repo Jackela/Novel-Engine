@@ -640,7 +640,9 @@ class CentralizedErrorHandler:
             distribution[record.severity.value] += record.occurrence_count
         return dict(distribution)
 
-    def _get_severity_distribution_result(self) -> Result[Dict[str, int], ErrorHandlerError]:
+    def _get_severity_distribution_result(
+        self,
+    ) -> Result[Dict[str, int], ErrorHandlerError]:
         """
         Get distribution of errors by severity (Result pattern).
 
@@ -669,7 +671,9 @@ class CentralizedErrorHandler:
             distribution[record.category.value] += record.occurrence_count
         return dict(distribution)
 
-    def _get_category_distribution_result(self) -> Result[Dict[str, int], ErrorHandlerError]:
+    def _get_category_distribution_result(
+        self,
+    ) -> Result[Dict[str, int], ErrorHandlerError]:
         """
         Get distribution of errors by category (Result pattern).
 
@@ -704,7 +708,9 @@ class CentralizedErrorHandler:
             "success_rate": successful / attempted if attempted > 0 else 0.0,
         }
 
-    def _get_recovery_statistics_result(self) -> Result[Dict[str, Any], ErrorHandlerError]:
+    def _get_recovery_statistics_result(
+        self,
+    ) -> Result[Dict[str, Any], ErrorHandlerError]:
         """
         Get recovery attempt statistics (Result pattern).
 
@@ -714,16 +720,20 @@ class CentralizedErrorHandler:
             - Err(ErrorHandlerError): If statistics calculation fails
         """
         try:
-            attempted = sum(1 for r in self.error_records.values() if r.recovery_attempted)
+            attempted = sum(
+                1 for r in self.error_records.values() if r.recovery_attempted
+            )
             successful = sum(
                 1 for r in self.error_records.values() if r.recovery_successful
             )
 
-            return Ok({
-                "recovery_attempts": attempted,
-                "successful_recoveries": successful,
-                "success_rate": successful / attempted if attempted > 0 else 0.0,
-            })
+            return Ok(
+                {
+                    "recovery_attempts": attempted,
+                    "successful_recoveries": successful,
+                    "success_rate": successful / attempted if attempted > 0 else 0.0,
+                }
+            )
         except Exception as e:
             return Err(
                 ErrorHandlerError(

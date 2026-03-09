@@ -72,7 +72,9 @@ class PromptModelConfig(BaseModel):
     max_tokens: int = Field(
         default=1000, ge=1, description="Maximum tokens to generate"
     )
-    top_p: Optional[float] = Field(default=1.0, ge=0.0, le=1.0, description="Nucleus sampling")
+    top_p: Optional[float] = Field(
+        default=1.0, ge=0.0, le=1.0, description="Nucleus sampling"
+    )
     frequency_penalty: Optional[float] = Field(
         default=0.0, ge=-2.0, le=2.0, description="Frequency penalty"
     )

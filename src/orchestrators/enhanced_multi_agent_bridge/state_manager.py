@@ -85,9 +85,7 @@ class StateManager:
             insights.extend(self.narrative_intelligence["last_insights"])
         return insights
 
-    def update_narrative_intelligence(
-        self, post_turn_analysis: Dict[str, Any]
-    ) -> None:
+    def update_narrative_intelligence(self, post_turn_analysis: Dict[str, Any]) -> None:
         """Update narrative intelligence based on turn analysis."""
         if post_turn_analysis.get("narrative_insights"):
             self.narrative_intelligence["last_insights"] = post_turn_analysis[
@@ -192,9 +190,7 @@ class StateManager:
                             "change": value,
                             "source": "dialogue",
                         }
-                        for key, value in dialogue_result[
-                            "relationship_impact"
-                        ].items()
+                        for key, value in dialogue_result["relationship_impact"].items()
                     ]
                 )
 
@@ -219,9 +215,9 @@ class StateManager:
             if "narrative_pressure" not in self.narrative_intelligence:
                 self.narrative_intelligence["narrative_pressure"] = {}
 
-            self.narrative_intelligence["narrative_pressure"][
-                pressure_type
-            ] = pressure_value
+            self.narrative_intelligence["narrative_pressure"][pressure_type] = (
+                pressure_value
+            )
 
     def handle_ai_insight(self, insight_data: Dict[str, Any]) -> None:
         """Handle AI-generated insights."""

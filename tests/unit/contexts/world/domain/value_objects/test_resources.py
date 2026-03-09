@@ -238,18 +238,33 @@ class TestFactionResources:
             faction_id="faction-123",
             resources={ResourceType.GOLD: 1000, ResourceType.FOOD: 500},
         )
-        assert resources.can_afford_all({
-            ResourceType.GOLD: 500,
-            ResourceType.FOOD: 200,
-        }) is True
-        assert resources.can_afford_all({
-            ResourceType.GOLD: 1500,
-            ResourceType.FOOD: 200,
-        }) is False
-        assert resources.can_afford_all({
-            ResourceType.GOLD: 500,
-            ResourceType.FOOD: 600,
-        }) is False
+        assert (
+            resources.can_afford_all(
+                {
+                    ResourceType.GOLD: 500,
+                    ResourceType.FOOD: 200,
+                }
+            )
+            is True
+        )
+        assert (
+            resources.can_afford_all(
+                {
+                    ResourceType.GOLD: 1500,
+                    ResourceType.FOOD: 200,
+                }
+            )
+            is False
+        )
+        assert (
+            resources.can_afford_all(
+                {
+                    ResourceType.GOLD: 500,
+                    ResourceType.FOOD: 600,
+                }
+            )
+            is False
+        )
 
     def test_total_value(self) -> None:
         """Test total value calculation."""
@@ -283,7 +298,9 @@ class TestFactionResources:
         """Test merging resources from different faction raises error."""
         resources1 = FactionResources(faction_id="faction-123")
         resources2 = FactionResources(faction_id="faction-456")
-        with pytest.raises(ValueError, match="Cannot merge resources from different factions"):
+        with pytest.raises(
+            ValueError, match="Cannot merge resources from different factions"
+        ):
             resources1.merge(resources2)
 
     def test_to_dict_and_from_dict(self) -> None:

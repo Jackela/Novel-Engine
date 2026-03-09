@@ -154,8 +154,7 @@ class CreateCharacterCommandHandler:
             await self.repository.save(character)
 
             self.logger.info(
-                "character_created",
-                character_id=str(character.character_id)
+                "character_created", character_id=str(character.character_id)
             )
             return character.character_id
 
@@ -283,7 +282,7 @@ class UpdateCharacterSkillCommandHandler:
         self.logger.info(
             "updating_character_skill",
             skill_name=command.skill_name,
-            character_id=str(character_id)
+            character_id=str(character_id),
         )
 
         try:
@@ -407,7 +406,7 @@ class LevelUpCharacterCommandHandler:
                 # Tracked in: https://github.com/your-repo/issues/XXX
                 self.logger.info(
                     "ability_improvements_requested",
-                    improvements=command.ability_score_improvements
+                    improvements=command.ability_score_improvements,
                 )
 
             # Apply skill improvements if specified
@@ -420,7 +419,7 @@ class LevelUpCharacterCommandHandler:
                 # Tracked in: https://github.com/your-repo/issues/YYY
                 self.logger.info(
                     "skill_improvements_requested",
-                    improvements=command.skill_improvements
+                    improvements=command.skill_improvements,
                 )
 
             # Save character
@@ -455,16 +454,16 @@ class DeleteCharacterCommandHandler:
         """
         character_id = CharacterID.from_string(command.character_id)
         self.logger.info(
-            "deleting_character",
-            character_id=str(character_id),
-            reason=command.reason
+            "deleting_character", character_id=str(character_id), reason=command.reason
         )
 
         try:
             # Check if character exists first
             character = await self.repository.get_by_id(character_id)
             if not character:
-                self.logger.warning("character_not_found_for_deletion", character_id=str(character_id))
+                self.logger.warning(
+                    "character_not_found_for_deletion", character_id=str(character_id)
+                )
                 return False
 
             # NOTE: CharacterDeleted domain event not yet implemented.
@@ -480,7 +479,9 @@ class DeleteCharacterCommandHandler:
             if deleted:
                 self.logger.info("character_deleted", character_id=str(character_id))
             else:
-                self.logger.warning("character_deletion_failed", character_id=str(character_id))
+                self.logger.warning(
+                    "character_deletion_failed", character_id=str(character_id)
+                )
 
             return deleted
 
@@ -512,7 +513,7 @@ class HealCharacterCommandHandler:
             "healing_character",
             character_id=str(character_id),
             healing_amount=command.healing_amount,
-            healing_type=command.healing_type
+            healing_type=command.healing_type,
         )
 
         try:
@@ -557,7 +558,7 @@ class DamageCharacterCommandHandler:
             "applying_damage",
             character_id=str(character_id),
             damage_amount=command.damage_amount,
-            damage_type=command.damage_type
+            damage_type=command.damage_type,
         )
 
         try:
@@ -572,10 +573,7 @@ class DamageCharacterCommandHandler:
             # Save character
             await self.repository.save(character)
 
-            self.logger.info(
-                "damage_applied",
-                character_id=str(character_id)
-            )
+            self.logger.info("damage_applied", character_id=str(character_id))
 
         except Exception as e:
             self.logger.error("damage_application_failed", error=str(e))

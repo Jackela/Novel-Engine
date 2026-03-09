@@ -373,7 +373,11 @@ class EventsService:
                     logger.info("sse_client_disconnected", client_id=client_id)
                     break
                 except Exception:
-                    logger.error("sse_event_generation_error", error="exception_occurred", error_type="exception")
+                    logger.error(
+                        "sse_event_generation_error",
+                        error="exception_occurred",
+                        error_type="exception",
+                    )
                     error_event = self.create_event(
                         event_type="system",
                         title="Stream Error",

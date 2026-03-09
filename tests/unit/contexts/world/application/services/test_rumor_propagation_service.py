@@ -191,7 +191,11 @@ class TestPropagateRumors:
     ) -> None:
         """Should spread to all adjacent locations."""
         mock_rumor_repo.get_active_rumors.return_value = [base_rumor]
-        mock_location_repo.find_adjacent.return_value = ["loc-town", "loc-village", "loc-fort"]
+        mock_location_repo.find_adjacent.return_value = [
+            "loc-town",
+            "loc-village",
+            "loc-fort",
+        ]
 
         result = await service.propagate_rumors(world_state)
 
@@ -526,7 +530,9 @@ class TestCreateRumorFromEvent:
 
         assert result.is_ok
         rumor = result.unwrap()
-        assert "disaster" in rumor.content.lower() or "terrifying" in rumor.content.lower()
+        assert (
+            "disaster" in rumor.content.lower() or "terrifying" in rumor.content.lower()
+        )
 
     def test_create_from_discovery_event(
         self,
@@ -548,7 +554,9 @@ class TestCreateRumorFromEvent:
 
         assert result.is_ok
         rumor = result.unwrap()
-        assert "discovery" in rumor.content.lower() or "whispers" in rumor.content.lower()
+        assert (
+            "discovery" in rumor.content.lower() or "whispers" in rumor.content.lower()
+        )
         assert rumor.truth_value == 50  # LOCAL impact
 
     def test_create_from_revolution_event(
@@ -571,7 +579,9 @@ class TestCreateRumorFromEvent:
 
         assert result.is_ok
         rumor = result.unwrap()
-        assert "uprising" in rumor.content.lower() or "revolution" in rumor.content.lower()
+        assert (
+            "uprising" in rumor.content.lower() or "revolution" in rumor.content.lower()
+        )
 
     def test_create_from_miracle_event(
         self,

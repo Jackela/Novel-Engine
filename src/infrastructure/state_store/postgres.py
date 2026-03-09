@@ -14,6 +14,7 @@ from src.infrastructure.state_store.config import StateKey, StateStoreConfig
 # Import asyncpg if available
 try:
     import asyncpg
+
     ASYNCPG_AVAILABLE = True
 except ImportError:
     ASYNCPG_AVAILABLE = False
@@ -139,6 +140,7 @@ class PostgreSQLStateStore(StateStore):
             expires_at = None
             if ttl:
                 from datetime import datetime, timedelta
+
                 expires_at = datetime.now() + timedelta(seconds=ttl)
 
             async with self.pool.acquire() as conn:
@@ -214,7 +216,9 @@ class PostgreSQLStateStore(StateStore):
                 return row is not None
 
         except Exception as e:
-            logger.error("postgres_exists_check_failed", key=key.to_string(), error=str(e))
+            logger.error(
+                "postgres_exists_check_failed", key=key.to_string(), error=str(e)
+            )
             return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
@@ -306,6 +310,7 @@ class PostgreSQLStateStore(StateStore):
 
         try:
             from datetime import datetime, timedelta
+
             expires_at = datetime.now() + timedelta(seconds=ttl)
 
             async with self.pool.acquire() as conn:

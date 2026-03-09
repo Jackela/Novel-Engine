@@ -60,8 +60,16 @@ class TestLogLevel:
     def test_all_levels_defined(self) -> None:
         """Test that all expected levels are defined."""
         expected = {
-            "TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING",
-            "ERROR", "CRITICAL", "AUDIT", "PERFORMANCE", "SECURITY"
+            "TRACE",
+            "DEBUG",
+            "INFO",
+            "SUCCESS",
+            "WARNING",
+            "ERROR",
+            "CRITICAL",
+            "AUDIT",
+            "PERFORMANCE",
+            "SECURITY",
         }
         actual = {level.value for level in LogLevel}
         assert actual == expected

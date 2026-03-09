@@ -18,7 +18,7 @@ except ImportError:
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(not SLOWAPI_AVAILABLE, reason="slowapi not installed")
+    pytest.mark.skipif(not SLOWAPI_AVAILABLE, reason="slowapi not installed"),
 ]
 
 

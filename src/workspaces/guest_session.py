@@ -29,7 +29,7 @@ _COOKIE_VALUE_RE = re.compile(r"^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
 
 def _utc_now() -> datetime:
     """Get current UTC datetime.
-    
+
     Returns:
         Current time in UTC timezone
     """
@@ -38,10 +38,10 @@ def _utc_now() -> datetime:
 
 def _ttl_seconds() -> int:
     """Get guest session TTL in seconds from environment.
-    
+
     Reads GUEST_WORKSPACE_TTL_DAYS environment variable, defaulting
     to 30 days if not set or invalid.
-    
+
     Returns:
         Session lifetime in seconds
     """
@@ -59,13 +59,13 @@ def _ttl_seconds() -> int:
 
 def _assert_safe_cookie_value(token: str) -> str:
     """Validate that a token is safe to use as a cookie value.
-    
+
     Args:
         token: JWT token string
-        
+
     Returns:
         The validated token
-        
+
     Raises:
         ValueError: If token contains unsafe characters
     """
@@ -77,31 +77,32 @@ def _assert_safe_cookie_value(token: str) -> str:
 @dataclass(frozen=True)
 class GuestSessionResult:
     """Result of resolving or creating a guest session.
-    
+
     Attributes:
         workspace_id: ID of the workspace associated with the session
         created: True if a new workspace was created, False if existing
     """
+
     workspace_id: str
     created: bool
 
 
 class GuestSessionManager:
     """Manages guest session tokens and workspace assignment.
-    
+
     Uses JWT tokens to maintain anonymous sessions, mapping each token
     to a workspace. New visitors get new workspaces; returning visitors
     with valid tokens get their existing workspace.
-    
+
     Attributes:
         cookie_name: Name of the HTTP cookie for the session token
-        
+
     Example:
         >>> manager = GuestSessionManager(store, secret_key="secret")
         >>> result = manager.resolve_or_create(None)
         >>> token = manager.encode(result.workspace_id)
     """
-    
+
     def __init__(
         self,
         workspace_store: FilesystemWorkspaceStore,
@@ -111,7 +112,7 @@ class GuestSessionManager:
         cookie_name: str = GUEST_SESSION_COOKIE_NAME,
     ) -> None:
         """Initialize the guest session manager.
-        
+
         Args:
             workspace_store: Store for creating/retrieving workspaces
             secret_key: Secret key for JWT signing
@@ -126,7 +127,7 @@ class GuestSessionManager:
     @property
     def cookie_name(self) -> str:
         """Get the session cookie name.
-        
+
         Returns:
             Cookie name string
         """
@@ -134,10 +135,10 @@ class GuestSessionManager:
 
     def decode(self, token: str) -> Optional[str]:
         """Decode a session token to extract workspace ID.
-        
+
         Args:
             token: JWT session token
-            
+
         Returns:
             Workspace ID if token is valid, None otherwise
         """
@@ -157,10 +158,10 @@ class GuestSessionManager:
 
     def encode(self, workspace_id: str) -> str:
         """Encode a workspace ID into a session token.
-        
+
         Args:
             workspace_id: Workspace ID to encode
-            
+
         Returns:
             JWT token string safe for cookie storage
         """
@@ -178,13 +179,13 @@ class GuestSessionManager:
 
     def resolve_or_create(self, token: Optional[str]) -> GuestSessionResult:
         """Resolve a token to a workspace or create a new session.
-        
+
         If a valid token is provided, returns the associated workspace.
         Otherwise, creates a new workspace and returns it.
-        
+
         Args:
             token: Optional existing session token
-            
+
         Returns:
             Result containing workspace ID and creation flag
         """
@@ -200,7 +201,7 @@ class GuestSessionManager:
 
     def cookie_max_age_seconds(self) -> int:
         """Get the max-age for session cookies in seconds.
-        
+
         Returns:
             Cookie lifetime in seconds
         """

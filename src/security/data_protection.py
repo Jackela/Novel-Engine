@@ -620,7 +620,9 @@ class DataProtectionService:
 
         logger.info(
             "DATA DELETION SCHEDULED: %s | User: %s | Delete after: %s",
-            data_type, user_id, delete_after
+            data_type,
+            user_id,
+            delete_after,
         )
 
     async def process_data_deletions(self) -> None:
@@ -658,7 +660,9 @@ class DataProtectionService:
                 except Exception as e:
                     logger.error(
                         "DATA DELETION FAILED: %s | User: %s | Error: %s",
-                        data_type, user_id, e
+                        data_type,
+                        user_id,
+                        e,
                     )
 
             await conn.commit()

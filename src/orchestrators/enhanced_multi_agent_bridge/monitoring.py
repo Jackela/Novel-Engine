@@ -93,7 +93,12 @@ class BridgeMonitor:
                 "batch_utilization": self.coordination_stats.get(
                     "average_batch_size", 0
                 )
-                / max(1, self.llm_config.max_batch_size if hasattr(self, 'llm_config') else 5),
+                / max(
+                    1,
+                    self.llm_config.max_batch_size
+                    if hasattr(self, "llm_config")
+                    else 5,
+                ),
                 "priority_bypass_rate": self.coordination_stats.get(
                     "priority_bypasses", 0
                 )

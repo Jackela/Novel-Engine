@@ -372,7 +372,9 @@ class RedisCache(CacheInterface):
             return bool(result)
 
         except Exception as e:
-            logger.error("redis_delete_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "redis_delete_error", error=str(e), error_type=type(e).__name__
+            )
             return False
 
     async def exists(self, key: str) -> bool:
@@ -385,7 +387,9 @@ class RedisCache(CacheInterface):
             return bool(result)
 
         except Exception as e:
-            logger.error("redis_exists_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "redis_exists_error", error=str(e), error_type=type(e).__name__
+            )
             return False
 
     async def clear(self) -> bool:
@@ -599,7 +603,12 @@ class DistributedCache:
                     else:
                         return loader(key)
                 except Exception as e:
-                    logger.error("cache_loader_error", key=key, error=str(e), error_type=type(e).__name__)
+                    logger.error(
+                        "cache_loader_error",
+                        key=key,
+                        error=str(e),
+                        error_type=type(e).__name__,
+                    )
         return None
 
     async def _write_to_source(self, key: str, value: Any) -> None:
@@ -700,11 +709,17 @@ async def main():
 
     # First access - should load from source
     character = await character_cache.get_character("test_char_1")
-    logger.info("first_access_completed", character_id=character.get('id') if character else None)
+    logger.info(
+        "first_access_completed",
+        character_id=character.get("id") if character else None,
+    )
 
     # Second access - should hit cache
     character = await character_cache.get_character("test_char_1")
-    logger.info("second_access_completed", character_id=character.get('id') if character else None)
+    logger.info(
+        "second_access_completed",
+        character_id=character.get("id") if character else None,
+    )
 
     # Set custom character
     custom_character = {
@@ -716,7 +731,10 @@ async def main():
 
     # Retrieve custom character
     retrieved = await character_cache.get_character("custom_1")
-    logger.info("custom_character_retrieved", character_id=retrieved.get('id') if retrieved else None)
+    logger.info(
+        "custom_character_retrieved",
+        character_id=retrieved.get("id") if retrieved else None,
+    )
 
     # Test cache warming
     await distributed_cache.warm_cache(
@@ -731,7 +749,7 @@ async def main():
             cache_level=level,
             hit_rate_percent=round(metric.hit_rate, 1),
             total_requests=metric.total_requests,
-            avg_response_ms=round(metric.average_response_time * 1000, 1)
+            avg_response_ms=round(metric.average_response_time * 1000, 1),
         )
 
     logger.info("distributed_caching_demo_completed")

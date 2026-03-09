@@ -53,7 +53,7 @@ class TestGeopoliticsService:
         matrix.register_faction("faction_a")
         matrix.register_faction("faction_b")
 
-        with patch.object(service, '_emit_event') as mock_emit:
+        with patch.object(service, "_emit_event") as mock_emit:
             service.declare_war(
                 matrix=matrix,
                 aggressor_id="faction_a",
@@ -129,7 +129,7 @@ class TestGeopoliticsService:
             controlling_faction_id="faction_a",
         )
 
-        with patch.object(service, '_emit_event') as mock_emit:
+        with patch.object(service, "_emit_event") as mock_emit:
             service.transfer_territory(
                 location=location,
                 new_controller_id="faction_b",

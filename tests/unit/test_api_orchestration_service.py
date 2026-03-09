@@ -38,9 +38,10 @@ class TestApiOrchestrationService:
         # When
         # Mocking internal dependencies to isolate the service logic
         # We must explicitly patch the imported names in the module under test
-        with patch("src.services.api_service.DirectorAgent") as MockDirector, patch(
-            "src.services.api_service.ChroniclerAgent"
-        ) as MockChronicler:
+        with (
+            patch("src.services.api_service.DirectorAgent") as MockDirector,
+            patch("src.services.api_service.ChroniclerAgent") as MockChronicler,
+        ):
             mock_director_instance = MockDirector.return_value
             mock_director_instance.initialize = AsyncMock()
 

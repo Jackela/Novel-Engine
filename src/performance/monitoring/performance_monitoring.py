@@ -121,7 +121,9 @@ class MetricsCollector:
 
             self._add_metric_point(name, value, MetricType.HISTOGRAM, tags)
 
-    def record_timer(self, name: str, duration: float, tags: Optional[Dict[str, str]] = None) -> None:
+    def record_timer(
+        self, name: str, duration: float, tags: Optional[Dict[str, str]] = None
+    ) -> None:
         """Record a timer metric."""
         with self.lock:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
@@ -530,7 +532,9 @@ class PerformanceRegression:
             "severity": (
                 "high"
                 if z_score > self.sensitivity * 1.5
-                else "medium" if is_regression else "low"
+                else "medium"
+                if is_regression
+                else "low"
             ),
         }
 
@@ -665,7 +669,9 @@ class PerformanceMonitor:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
 
         logger.info("Performance monitoring stopped")
 
@@ -748,7 +754,9 @@ class PerformanceMonitor:
                 trend = (
                     "up"
                     if values[-1] > values[0]
-                    else "down" if values[-1] < values[0] else "stable"
+                    else "down"
+                    if values[-1] < values[0]
+                    else "stable"
                 )
                 trends[metric] = {
                     "trend": trend,
@@ -822,7 +830,9 @@ class TimerContext:
             )
 
 
-def monitor_performance(metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
+def monitor_performance(
+    metric_name: str, tags: Optional[Dict[str, str]] = None
+) -> None:
     """Decorator for monitoring function performance."""
 
     def decorator(func) -> None:

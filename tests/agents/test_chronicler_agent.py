@@ -252,7 +252,9 @@ class TestChroniclerAgentEventHandling:
         action.parameters = {}
 
         # Mock the LLM call to avoid API dependency
-        with patch.object(chronicler, '_call_llm', return_value="Hero attacked villain."):
+        with patch.object(
+            chronicler, "_call_llm", return_value="Hero attacked villain."
+        ):
             chronicler.handle_agent_action(agent, action)
 
         assert len(chronicler.narrative_segments) == 1
@@ -625,7 +627,9 @@ class TestChroniclerAgentIntegration:
         action2.reasoning = "Fixing engine"
 
         # Mock the LLM call to avoid API dependency
-        with patch.object(chronicler, '_call_llm', return_value="Pilot navigated. Engineer repaired."):
+        with patch.object(
+            chronicler, "_call_llm", return_value="Pilot navigated. Engineer repaired."
+        ):
             chronicler.handle_agent_action(agent1, action1)
             chronicler.handle_agent_action(agent2, action2)
 

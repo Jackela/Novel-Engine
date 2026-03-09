@@ -17,7 +17,9 @@ logger = structlog.get_logger(__name__)
 class LearningSystem:
     """Learns from usage patterns and optimizes template selection."""
 
-    async def _learn_from_context(self, persona_id: str, context: TemplateContext) -> None:
+    async def _learn_from_context(
+        self, persona_id: str, context: TemplateContext
+    ) -> None:
         """Learn enhanced patterns from context usage"""
         if not self.enable_learning:
             return

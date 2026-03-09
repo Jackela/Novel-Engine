@@ -51,8 +51,6 @@ from src.contexts.character.domain.value_objects.skills import (
 )
 
 
-
-
 class TestCharacterAggregate:
     """Test suite for Character aggregate root."""
 
@@ -1395,12 +1393,14 @@ class TestCharacterBirthDate:
         calendar.month = 3
         calendar.day = 15
         calendar.era_name = "Third Age"
-        calendar.to_dict = Mock(return_value={
-            "year": 1042,
-            "month": 3,
-            "day": 15,
-            "era_name": "Third Age",
-        })
+        calendar.to_dict = Mock(
+            return_value={
+                "year": 1042,
+                "month": 3,
+                "day": 15,
+                "era_name": "Third Age",
+            }
+        )
         return calendar
 
     @pytest.fixture
@@ -1421,9 +1421,7 @@ class TestCharacterBirthDate:
         assert sample_character.birth_date is None
 
     @pytest.mark.unit
-    def test_birth_date_can_be_set(
-        self, sample_character, mock_birth_calendar
-    ):
+    def test_birth_date_can_be_set(self, sample_character, mock_birth_calendar):
         """Test that birth_date can be set on a character."""
         sample_character.birth_date = mock_birth_calendar
 
@@ -1452,9 +1450,7 @@ class TestCharacterBirthDate:
         assert age == 25
 
     @pytest.mark.unit
-    def test_get_age_same_year(
-        self, sample_character, mock_world_calendar
-    ):
+    def test_get_age_same_year(self, sample_character, mock_world_calendar):
         """Test get_age when current year equals birth year."""
         mock_birth = Mock()
         mock_birth.year = 1042  # Same as current year
@@ -1589,8 +1585,11 @@ class TestCharacterBirthDate:
 
     @pytest.mark.unit
     def test_character_creation_with_birth_date(
-        self, sample_character_profile, sample_character_stats,
-        sample_skills, mock_birth_calendar
+        self,
+        sample_character_profile,
+        sample_character_stats,
+        sample_skills,
+        mock_birth_calendar,
     ):
         """Test that characters can be created with birth_date."""
         character = Character(
@@ -1733,12 +1732,14 @@ class TestCharacterLocationTracking:
         calendar.month = 3
         calendar.day = 15
         calendar.era_name = "Third Age"
-        calendar.to_dict = Mock(return_value={
-            "year": 1042,
-            "month": 3,
-            "day": 15,
-            "era_name": "Third Age",
-        })
+        calendar.to_dict = Mock(
+            return_value={
+                "year": 1042,
+                "month": 3,
+                "day": 15,
+                "era_name": "Third Age",
+            }
+        )
         return calendar
 
     # ==================== Location Field Tests ====================
@@ -1757,18 +1758,14 @@ class TestCharacterLocationTracking:
     # ==================== move_to Method Tests ====================
 
     @pytest.mark.unit
-    def test_move_to_sets_current_location(
-        self, sample_character, mock_calendar
-    ):
+    def test_move_to_sets_current_location(self, sample_character, mock_calendar):
         """Test that move_to sets the current location."""
         sample_character.move_to("location-tavern", mock_calendar)
 
         assert sample_character.current_location_id == "location-tavern"
 
     @pytest.mark.unit
-    def test_move_to_creates_travel_record(
-        self, sample_character, mock_calendar
-    ):
+    def test_move_to_creates_travel_record(self, sample_character, mock_calendar):
         """Test that move_to creates a travel record."""
         sample_character.move_to("location-tavern", mock_calendar)
 
@@ -1800,9 +1797,7 @@ class TestCharacterLocationTracking:
         assert sample_character.travel_history[1].is_current() is True
 
     @pytest.mark.unit
-    def test_move_to_updates_version(
-        self, sample_character, mock_calendar
-    ):
+    def test_move_to_updates_version(self, sample_character, mock_calendar):
         """Test that move_to increments version."""
         initial_version = sample_character.version
 
@@ -1910,9 +1905,7 @@ class TestCharacterLocationTracking:
     # ==================== Summary Integration Tests ====================
 
     @pytest.mark.unit
-    def test_summary_includes_location_when_set(
-        self, sample_character, mock_calendar
-    ):
+    def test_summary_includes_location_when_set(self, sample_character, mock_calendar):
         """Test that get_character_summary includes location info."""
         sample_character.move_to("location-tavern", mock_calendar)
 

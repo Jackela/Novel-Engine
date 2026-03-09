@@ -235,7 +235,9 @@ class WorldStateCoordinator:
 
     def _get_environmental_updates(self) -> Dict[str, Any]:
         """Get environmental status updates."""
-        environmental_state: dict[str, Any] = self.world_state_data.get("environmental_state", {})
+        environmental_state: dict[str, Any] = self.world_state_data.get(
+            "environmental_state", {}
+        )
 
         if not environmental_state:
             return {"weather": "stable", "visibility": "normal", "hazards": []}

@@ -380,7 +380,9 @@ class EventBus:
             try:
                 await task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
         if self.redis:
             await self.redis.close()
 

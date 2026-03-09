@@ -7,7 +7,6 @@ all rule-based decision logic, edge cases, and intent prioritization.
 """
 
 import sys
-from typing import Any, Dict, Optional
 from unittest.mock import MagicMock
 
 import pytest
@@ -95,7 +94,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_collapsed_faction_returns_empty_list(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that a disbanded faction returns no intents."""
         faction = Faction(
@@ -113,7 +115,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_low_wealth_triggers_stabilize_intent(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that low wealth (< 20) generates STABILIZE intent."""
         faction = Faction(
@@ -134,7 +139,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_stabilize_intent_priority_highest(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that STABILIZE intent has highest priority when triggered."""
         faction = Faction(
@@ -157,7 +165,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_attack_intent_with_weak_enemy(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test ATTACK intent when faction has enemies and sufficient military."""
         faction = Faction(
@@ -180,7 +191,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_attack_without_enemies(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no ATTACK intent when faction has no enemies."""
         faction = Faction(
@@ -200,7 +214,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_attack_with_low_military(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no ATTACK intent when military strength is low (< 30)."""
         faction = Faction(
@@ -222,7 +239,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_trade_intent_with_neutrals(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test TRADE intent when faction is wealthy and has neutrals."""
         faction = Faction(
@@ -245,7 +265,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_trade_intent_without_wealth(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no TRADE intent when faction lacks wealth."""
         faction = Faction(
@@ -267,7 +290,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_expand_intent_few_territories_and_wealthy(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test EXPAND intent when faction has few territories and wealth."""
         faction = Faction(
@@ -289,7 +315,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_expand_with_many_territories(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no EXPAND intent when faction has 3+ territories."""
         faction = Faction(
@@ -308,7 +337,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_expand_without_wealth(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no EXPAND intent when faction lacks wealth."""
         faction = Faction(
@@ -329,7 +361,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_sabotage_intent_strong_military_with_enemies(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test SABOTAGE intent when military > 50 and has enemies."""
         faction = Faction(
@@ -351,7 +386,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_sabotage_without_enemies(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no SABOTAGE intent when faction has no enemies."""
         faction = Faction(
@@ -370,7 +408,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_no_sabotage_with_low_military(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test no SABOTAGE intent when military strength is not > 50."""
         faction = Faction(
@@ -391,7 +432,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_default_stabilize_intent(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test STABILIZE intent as default when no other rules match."""
         faction = Faction(
@@ -416,7 +460,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_max_three_intents_returned(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that at most 3 intents are returned."""
         faction = Faction(
@@ -437,7 +484,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_intents_sorted_by_priority_ascending(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that intents are sorted by priority (1 = highest)."""
         faction = Faction(
@@ -461,7 +511,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_multiple_intents_generated(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that multiple intents can be generated for a faction."""
         faction = Faction(
@@ -483,7 +536,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_intent_faction_id_matches(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that all intents have correct faction_id."""
         faction = Faction(
@@ -503,7 +559,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_attack_is_offensive(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that ATTACK intents are marked as offensive."""
         faction = Faction(
@@ -524,7 +583,10 @@ class TestFactionIntentGenerator:
 
     @pytest.mark.integration
     def test_stabilize_is_defensive(
-        self, generator: FactionIntentGenerator, world: WorldState, diplomacy: DiplomacyMatrix
+        self,
+        generator: FactionIntentGenerator,
+        world: WorldState,
+        diplomacy: DiplomacyMatrix,
     ):
         """Test that STABILIZE intents are marked as defensive."""
         faction = Faction(
@@ -537,7 +599,9 @@ class TestFactionIntentGenerator:
 
         assert result.is_ok
         intents = result.value
-        stabilize_intents = [i for i in intents if i.action_type == ActionType.STABILIZE]
+        stabilize_intents = [
+            i for i in intents if i.action_type == ActionType.STABILIZE
+        ]
         if stabilize_intents:
             assert stabilize_intents[0].is_defensive is True
             assert stabilize_intents[0].is_offensive is False

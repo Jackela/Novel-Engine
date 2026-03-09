@@ -40,7 +40,9 @@ class ModelConfig:
     frequency_penalty: Optional[float] = None
     stop_sequences: Optional[tuple[str, ...]] = None
     supports_functions: bool = False  # Whether the model supports function calling
-    extra: dict[str, Any] = field(default_factory=dict)  # Extra model-specific parameters
+    extra: dict[str, Any] = field(
+        default_factory=dict
+    )  # Extra model-specific parameters
 
     def __post_init__(self) -> None:
         """Validate model configuration."""
@@ -62,9 +64,7 @@ class ModelConfig:
         if self.max_tokens < 1:
             raise ValueError(f"max_tokens must be positive, got {self.max_tokens}")
         if self.max_tokens > 8192:
-            raise ValueError(
-                f"max_tokens cannot exceed 8192, got {self.max_tokens}"
-            )
+            raise ValueError(f"max_tokens cannot exceed 8192, got {self.max_tokens}")
 
         # Validate optional parameters
         if self.top_p is not None and not 0.0 <= self.top_p <= 1.0:
@@ -74,13 +74,19 @@ class ModelConfig:
             raise ValueError(f"top_k must be positive, got {self.top_k}")
 
         # Validate frequency_penalty (-2.0 to 2.0 is standard range)
-        if self.frequency_penalty is not None and not -2.0 <= self.frequency_penalty <= 2.0:
+        if (
+            self.frequency_penalty is not None
+            and not -2.0 <= self.frequency_penalty <= 2.0
+        ):
             raise ValueError(
                 f"frequency_penalty must be between -2.0 and 2.0, got {self.frequency_penalty}"
             )
 
         # Validate presence_penalty (-2.0 to 2.0 is standard range)
-        if self.presence_penalty is not None and not -2.0 <= self.presence_penalty <= 2.0:
+        if (
+            self.presence_penalty is not None
+            and not -2.0 <= self.presence_penalty <= 2.0
+        ):
             raise ValueError(
                 f"presence_penalty must be between -2.0 and 2.0, got {self.presence_penalty}"
             )

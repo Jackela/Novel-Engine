@@ -461,12 +461,12 @@ class TestDecisionAPIEndpoints:
     ):
         """Test GET /api/decision/status - success case."""
         # Initialize the decision system
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch(
-            "src.decision.api_router._decision_detector", mock_decision_detector
-        ), patch(
-            "src.decision.api_router._negotiation_engine", mock_negotiation_engine
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._decision_detector", mock_decision_detector),
+            patch(
+                "src.decision.api_router._negotiation_engine", mock_negotiation_engine
+            ),
         ):
             # Call the endpoint function directly
             from src.decision.api_router import get_decision_status
@@ -533,9 +533,10 @@ class TestDecisionAPIEndpoints:
         mock_pause_controller.current_decision_point = sample_decision_point
         mock_pause_controller.submit_response = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -634,12 +635,12 @@ class TestDecisionAPIEndpoints:
             return_value=sample_negotiation_result
         )
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch(
-            "src.decision.api_router._negotiation_engine", mock_negotiation_engine
-        ), patch(
-            "src.decision.api_router._broadcast_sse_event", MagicMock()
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch(
+                "src.decision.api_router._negotiation_engine", mock_negotiation_engine
+            ),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
         ):
             from src.decision.api_router import submit_decision_response
 
@@ -689,9 +690,10 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/confirm - accept adjustment."""
         mock_pause_controller.confirm_negotiation = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import confirm_negotiation
 
             request = NegotiationConfirmRequest(
@@ -716,9 +718,10 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/confirm - insist original."""
         mock_pause_controller.confirm_negotiation = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import confirm_negotiation
 
             request = NegotiationConfirmRequest(
@@ -764,9 +767,10 @@ class TestDecisionAPIEndpoints:
         """Test POST /api/decision/skip - success."""
         mock_pause_controller.skip_decision = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import skip_decision
 
             request = SkipDecisionRequest(decision_id="test-001")
@@ -845,9 +849,11 @@ class TestDecisionSystemIntegration:
         mock_broadcast = MagicMock()
 
         # Reset global state
-        with patch("src.decision.api_router._pause_controller", None), patch(
-            "src.decision.api_router._decision_detector", None
-        ), patch("src.decision.api_router._negotiation_engine", None):
+        with (
+            patch("src.decision.api_router._pause_controller", None),
+            patch("src.decision.api_router._decision_detector", None),
+            patch("src.decision.api_router._negotiation_engine", None),
+        ):
             initialize_decision_system(
                 pause_controller=mock_pause_controller,
                 decision_detector=mock_decision_detector,
@@ -917,9 +923,10 @@ class TestDecisionSystemIntegration:
         # 3. User submits option
         mock_pause_controller.submit_response = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import submit_decision_response
 
             request = DecisionResponseRequest(
@@ -951,12 +958,12 @@ class TestDecisionSystemIntegration:
         )
 
         # 1. Submit freetext - triggers negotiation
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch(
-            "src.decision.api_router._negotiation_engine", mock_negotiation_engine
-        ), patch(
-            "src.decision.api_router._broadcast_sse_event", MagicMock()
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch(
+                "src.decision.api_router._negotiation_engine", mock_negotiation_engine
+            ),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
         ):
             from src.decision.api_router import submit_decision_response
 
@@ -973,9 +980,10 @@ class TestDecisionSystemIntegration:
         # 2. User accepts negotiation
         mock_pause_controller.confirm_negotiation = AsyncMock(return_value=True)
 
-        with patch(
-            "src.decision.api_router._pause_controller", mock_pause_controller
-        ), patch("src.decision.api_router._broadcast_sse_event", MagicMock()):
+        with (
+            patch("src.decision.api_router._pause_controller", mock_pause_controller),
+            patch("src.decision.api_router._broadcast_sse_event", MagicMock()),
+        ):
             from src.decision.api_router import confirm_negotiation
 
             confirm_request = NegotiationConfirmRequest(

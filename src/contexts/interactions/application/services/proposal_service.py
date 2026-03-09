@@ -23,12 +23,14 @@ from .shared.errors import (
 class ProposalService:
     """
     Application service for proposal operations.
-    
+
     Provides business operations for proposal analysis, viability assessment,
     optimization, and lifecycle management with Result pattern.
     """
 
-    def __init__(self, negotiation_service: Optional[NegotiationService] = None) -> None:
+    def __init__(
+        self, negotiation_service: Optional[NegotiationService] = None
+    ) -> None:
         """Initialize with domain negotiation service."""
         self.negotiation_service = negotiation_service or NegotiationService()
 
@@ -50,17 +52,21 @@ class ProposalService:
             Result containing viability analysis or error
         """
         if proposal is None:
-            return Err(ProposalError(
-                message="Proposal is required for viability analysis",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="Proposal is required for viability analysis",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(ProposalError(
-                message="At least one party required for viability analysis",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one party required for viability analysis",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )
 
         try:
             analysis = self.negotiation_service.analyze_proposal_viability(
@@ -70,8 +76,12 @@ class ProposalService:
             )
 
             # Convert Decimal values to float for JSON serialization
-            analysis["overall_viability_score"] = float(analysis["overall_viability_score"])
-            analysis["acceptance_probability"] = float(analysis["acceptance_probability"])
+            analysis["overall_viability_score"] = float(
+                analysis["overall_viability_score"]
+            )
+            analysis["acceptance_probability"] = float(
+                analysis["acceptance_probability"]
+            )
 
             # Convert party-specific analysis
             for party_id, party_analysis in analysis["party_specific_analysis"].items():
@@ -81,11 +91,13 @@ class ProposalService:
 
             return Ok(analysis)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to analyze proposal viability: {e!s}",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to analyze proposal viability: {e!s}",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )
 
     def optimize_proposal_terms(
         self,
@@ -107,25 +119,31 @@ class ProposalService:
             Result containing optimization results or error
         """
         if proposal is None:
-            return Err(ProposalError(
-                message="Proposal is required for optimization",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="Proposal is required for optimization",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(ProposalError(
-                message="At least one party required for optimization",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one party required for optimization",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )
 
         if max_modifications < 1:
-            return Err(ValidationError(
-                message="max_modifications must be at least 1",
-                field="max_modifications",
-                field_value=max_modifications,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="max_modifications must be at least 1",
+                    field="max_modifications",
+                    field_value=max_modifications,
+                    recoverable=True,
+                )
+            )
 
         try:
             optimization = self.negotiation_service.optimize_proposal_terms(
@@ -135,7 +153,9 @@ class ProposalService:
             )
 
             # Convert Decimal values
-            optimization["expected_improvement"] = float(optimization["expected_improvement"])
+            optimization["expected_improvement"] = float(
+                optimization["expected_improvement"]
+            )
 
             # Limit modifications if needed
             optimized_terms = optimization.get("optimized_terms", [])
@@ -145,11 +165,13 @@ class ProposalService:
 
             return Ok(optimization)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to optimize proposal: {e!s}",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to optimize proposal: {e!s}",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )
 
     def compare_proposals(
         self,
@@ -169,56 +191,70 @@ class ProposalService:
             Result containing comparison results or error
         """
         if not proposals:
-            return Err(ProposalError(
-                message="At least one proposal required for comparison",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one proposal required for comparison",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(ProposalError(
-                message="At least one party required for comparison",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one party required for comparison",
+                    recoverable=True,
+                )
+            )
 
         try:
             comparison_results: List[Dict[str, Any]] = []
-            
+
             for proposal in proposals:
                 analysis = self.negotiation_service.analyze_proposal_viability(
                     proposal=proposal,
                     parties=parties,
                     negotiation_domain=negotiation_domain,
                 )
-                
-                comparison_results.append({
-                    "proposal_id": str(proposal.proposal_id),
-                    "proposal_title": proposal.title,
-                    "viability_score": float(analysis["overall_viability_score"]),
-                    "acceptance_probability": float(analysis["acceptance_probability"]),
-                    "risk_factors": analysis["risk_factors"],
-                    "critical_issues": analysis["critical_issues"],
-                })
+
+                comparison_results.append(
+                    {
+                        "proposal_id": str(proposal.proposal_id),
+                        "proposal_title": proposal.title,
+                        "viability_score": float(analysis["overall_viability_score"]),
+                        "acceptance_probability": float(
+                            analysis["acceptance_probability"]
+                        ),
+                        "risk_factors": analysis["risk_factors"],
+                        "critical_issues": analysis["critical_issues"],
+                    }
+                )
 
             # Sort by viability score
-            comparison_results.sort(
-                key=lambda x: x["viability_score"],
-                reverse=True
-            )
+            comparison_results.sort(key=lambda x: x["viability_score"], reverse=True)
 
             result = {
                 "proposals_compared": len(proposals),
                 "party_count": len(parties),
                 "rankings": comparison_results,
-                "best_proposal_id": comparison_results[0]["proposal_id"] if comparison_results else None,
-                "average_viability": sum(r["viability_score"] for r in comparison_results) / len(comparison_results) if comparison_results else 0.0,
+                "best_proposal_id": comparison_results[0]["proposal_id"]
+                if comparison_results
+                else None,
+                "average_viability": sum(
+                    r["viability_score"] for r in comparison_results
+                )
+                / len(comparison_results)
+                if comparison_results
+                else 0.0,
             }
-            
+
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to compare proposals: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to compare proposals: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def validate_proposal_terms(
         self,
@@ -238,11 +274,13 @@ class ProposalService:
             Result containing validation results or error
         """
         if proposal is None:
-            return Err(ValidationError(
-                message="Proposal is required for validation",
-                field="proposal",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Proposal is required for validation",
+                    field="proposal",
+                    recoverable=True,
+                )
+            )
 
         validation_errors: List[str] = []
         warnings: List[str] = []
@@ -296,12 +334,14 @@ class ProposalService:
         }
 
         if validation_errors:
-            return Err(ValidationError(
-                message=f"Proposal validation failed: {'; '.join(validation_errors)}",
-                field="proposal",
-                recoverable=True,
-                details={"validation_result": result},
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Proposal validation failed: {'; '.join(validation_errors)}",
+                    field="proposal",
+                    recoverable=True,
+                    details={"validation_result": result},
+                )
+            )
 
         return Ok(result)
 
@@ -323,17 +363,21 @@ class ProposalService:
             Result containing acceptance estimate or error
         """
         if proposal is None:
-            return Err(ProposalError(
-                message="Proposal is required for acceptance estimation",
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="Proposal is required for acceptance estimation",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(ProposalError(
-                message="At least one party required for estimation",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message="At least one party required for estimation",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )
 
         try:
             analysis = self.negotiation_service.analyze_proposal_viability(
@@ -371,8 +415,10 @@ class ProposalService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to estimate acceptance: {e!s}",
-                proposal_id=str(proposal.proposal_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to estimate acceptance: {e!s}",
+                    proposal_id=str(proposal.proposal_id),
+                    recoverable=True,
+                )
+            )

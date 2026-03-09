@@ -246,6 +246,7 @@ class TestFactionDecisionServiceIntegration:
 
         # Create a faction and context for the test
         from src.contexts.world.domain.entities.faction import Faction
+
         faction = Faction(id="test-faction", name="Test Faction")
         context = DecisionContext(
             faction_id="test-faction",
@@ -272,6 +273,7 @@ class TestFactionDecisionServiceIntegration:
         )
 
         from src.contexts.world.domain.entities.faction import Faction
+
         faction = Faction(id="test-faction", name="Test Faction")
         context = DecisionContext(
             faction_id="test-faction",
@@ -300,6 +302,7 @@ class TestFactionDecisionServiceIntegration:
         )
 
         from src.contexts.world.domain.entities.faction import Faction
+
         faction = Faction(id="test-faction", name="Test Faction")
         context = DecisionContext(faction_id="test-faction")
 
@@ -319,6 +322,7 @@ class TestFactionDecisionServiceIntegration:
         )
 
         from src.contexts.world.domain.entities.faction import Faction
+
         faction = Faction(id="test-faction", name="Test Faction")
         context = DecisionContext(
             faction_id="test-faction",
@@ -354,6 +358,7 @@ class TestFactionDecisionServiceErrorPaths:
     def faction(self):
         """Create a test faction."""
         from src.contexts.world.domain.entities.faction import Faction
+
         return Faction(id="test-faction", name="Test Faction")
 
     @pytest.fixture
@@ -631,4 +636,3 @@ class TestSelectIntentMethod:
 
         assert result.is_error
         assert "failed" in str(result.error).lower()
-

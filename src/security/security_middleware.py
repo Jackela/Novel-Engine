@@ -31,7 +31,9 @@ class SecurityEventLogger:
         self.security_logger.addHandler(handler)
         self.security_logger.setLevel(logging.WARNING)
 
-    def log_event(self, event_type: str, client_ip: str, details: Dict[str, Any]) -> None:
+    def log_event(
+        self, event_type: str, client_ip: str, details: Dict[str, Any]
+    ) -> None:
         """Log a security event."""
         self.security_logger.warning(f"{event_type} from {client_ip}: {details}")
 
@@ -88,7 +90,9 @@ class RequestAnalyzer:
 
         # Check for rapid requests (potential DoS)
         recent_requests = [
-            t for t in self.request_history[client_ip] if now - t < 60  # Last minute
+            t
+            for t in self.request_history[client_ip]
+            if now - t < 60  # Last minute
         ]
 
         if len(recent_requests) > 30:  # More than 30 requests per minute

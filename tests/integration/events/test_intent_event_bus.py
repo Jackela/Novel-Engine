@@ -164,7 +164,7 @@ class TestIntentGeneratedEventPublishing:
         # The FactionDecisionService sets rag_enriched via payload update after creation
         # Simulate what the service does
         event.payload["rag_enriched"] = True
-        object.__setattr__(event, 'rag_enriched', True)
+        object.__setattr__(event, "rag_enriched", True)
 
         # Verify it's updated
         assert event.rag_enriched is True

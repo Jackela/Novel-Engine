@@ -55,9 +55,9 @@ class MarkdownMigrationAdapter:
             repository: Knowledge repository for persisting migrated entries
         """
         self._repository = repository
-        self._migration_metadata: Dict[str, Dict[str, Any]] = (
-            {}
-        )  # Track migration details
+        self._migration_metadata: Dict[
+            str, Dict[str, Any]
+        ] = {}  # Track migration details
 
     async def migrate_all_agents(
         self,

@@ -39,7 +39,7 @@ def data_factory():
     """Provide test data factory."""
     from datetime import datetime
     from typing import Any, Dict, List
-    
+
     class TestDataFactory:
         @staticmethod
         def create_character_data(
@@ -49,7 +49,7 @@ def data_factory():
         ) -> Dict[str, Any]:
             char_name = name or f"TestChar_{datetime.now().timestamp()}"
             char_id = agent_id or char_name.lower().replace(" ", "_")
-            
+
             return {
                 "agent_id": char_id,
                 "name": char_name,
@@ -65,31 +65,33 @@ def data_factory():
                 "inventory": ["test_item"],
                 "metadata": {"test": True},
             }
-        
+
         @staticmethod
         def create_story_request(characters: List[str], title=None) -> Dict[str, Any]:
             return {
                 "characters": characters,
                 "title": title or f"Test Story {datetime.now().timestamp()}",
             }
-    
+
     return TestDataFactory()
 
 
 @pytest.fixture
 def api_helper(client):
     """Provide API helper instance."""
+
     class APITestHelper:
         def __init__(self, client):
             self.client = client
-        
+
         def list_characters(self):
             response = self.client.get("/api/characters")
             response.raise_for_status()
             data = response.json()
             return data.get("characters", [])
-    
+
     return APITestHelper(client)
+
 
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
@@ -109,12 +111,10 @@ class TestStorySession:
         """
         # Step 1: Create characters for the story
         char1_data = data_factory.create_character_data(
-            name="Aria Stormwind",
-            agent_id="aria_stormwind"
+            name="Aria Stormwind", agent_id="aria_stormwind"
         )
         char2_data = data_factory.create_character_data(
-            name="Marcus Shadowblade",
-            agent_id="marcus_shadowblade"
+            name="Marcus Shadowblade", agent_id="marcus_shadowblade"
         )
 
         response1 = client.post("/api/characters", json=char1_data)
@@ -126,7 +126,7 @@ class TestStorySession:
         # Step 2: Start story generation
         story_request = data_factory.create_story_request(
             characters=["aria_stormwind", "marcus_shadowblade"],
-            title="The Storm and the Shadow"
+            title="The Storm and the Shadow",
         )
 
         response = client.post("/api/stories/generate", json=story_request)
@@ -134,11 +134,16 @@ class TestStorySession:
         if response.status_code == 404:
             pytest.skip("Story generation API not available")
 
-        assert response.status_code in [200, 202], f"Story generation failed: {response.text}"
+        assert response.status_code in [
+            200,
+            202,
+        ], f"Story generation failed: {response.text}"
 
         # Step 3: Get generation ID
         story_response = response.json()
-        generation_id = story_response.get("generation_id") or story_response.get("data", {}).get("generation_id")
+        generation_id = story_response.get("generation_id") or story_response.get(
+            "data", {}
+        ).get("generation_id")
         assert generation_id, "No generation_id returned"
 
     def test_story_generation_with_three_characters(self, client, data_factory):
@@ -163,10 +168,7 @@ class TestStorySession:
             char_ids.append(agent_id)
 
         # Start story
-        story_request = {
-            "characters": char_ids,
-            "title": "The Unlikely Alliance"
-        }
+        story_request = {"characters": char_ids, "title": "The Unlikely Alliance"}
 
         response = client.post("/api/stories/generate", json=story_request)
         if response.status_code == 404:
@@ -176,7 +178,9 @@ class TestStorySession:
 
         # Verify generation ID is returned
         data = response.json()
-        generation_id = data.get("generation_id") or data.get("data", {}).get("generation_id")
+        generation_id = data.get("generation_id") or data.get("data", {}).get(
+            "generation_id"
+        )
         assert generation_id
 
     def test_story_session_status_tracking(self, client, data_factory):
@@ -188,14 +192,13 @@ class TestStorySession:
         """
         # Create character and start story
         char_data = data_factory.create_character_data(
-            name="Status Test Char",
-            agent_id="status_test_char"
+            name="Status Test Char", agent_id="status_test_char"
         )
         client.post("/api/characters", json=char_data)
 
         story_request = {
             "characters": ["status_test_char"],
-            "title": "Status Test Story"
+            "title": "Status Test Story",
         }
 
         start_response = client.post("/api/stories/generate", json=story_request)
@@ -205,8 +208,9 @@ class TestStorySession:
         if start_response.status_code not in [200, 202]:
             pytest.skip("Story generation not functional")
 
-        generation_id = start_response.json().get("generation_id") or \
-                       start_response.json().get("data", {}).get("generation_id")
+        generation_id = start_response.json().get(
+            "generation_id"
+        ) or start_response.json().get("data", {}).get("generation_id")
 
         # Check status
         status_response = client.get(f"/api/stories/status/{generation_id}")
@@ -228,8 +232,7 @@ class TestStorySession:
 
         for i in range(2):
             char_data = data_factory.create_character_data(
-                name=f"Story1Char{i}",
-                agent_id=f"story1_char{i}"
+                name=f"Story1Char{i}", agent_id=f"story1_char{i}"
             )
             response = client.post("/api/characters", json=char_data)
             assert response.status_code in [200, 201]
@@ -237,8 +240,7 @@ class TestStorySession:
 
         for i in range(2):
             char_data = data_factory.create_character_data(
-                name=f"Story2Char{i}",
-                agent_id=f"story2_char{i}"
+                name=f"Story2Char{i}", agent_id=f"story2_char{i}"
             )
             response = client.post("/api/characters", json=char_data)
             assert response.status_code in [200, 201]
@@ -258,10 +260,12 @@ class TestStorySession:
         assert response2.status_code in [200, 202]
 
         # Verify unique IDs
-        gen_id1 = response1.json().get("generation_id") or \
-                  response1.json().get("data", {}).get("generation_id")
-        gen_id2 = response2.json().get("generation_id") or \
-                  response2.json().get("data", {}).get("generation_id")
+        gen_id1 = response1.json().get("generation_id") or response1.json().get(
+            "data", {}
+        ).get("generation_id")
+        gen_id2 = response2.json().get("generation_id") or response2.json().get(
+            "data", {}
+        ).get("generation_id")
 
         assert gen_id1
         assert gen_id2
@@ -281,7 +285,7 @@ class TestStoryValidation:
         """
         story_request = {
             "characters": ["nonexistent_char_1", "nonexistent_char_2"],
-            "title": "Invalid Story"
+            "title": "Invalid Story",
         }
 
         response = client.post("/api/stories/generate", json=story_request)
@@ -289,8 +293,11 @@ class TestStoryValidation:
             pytest.skip("Story generation API not available")
 
         # Should fail with 4xx error
-        assert response.status_code in [400, 404, 422], \
-            f"Expected error for invalid characters, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            404,
+            422,
+        ], f"Expected error for invalid characters, got {response.status_code}"
 
     def test_story_empty_character_list(self, client):
         """Test story generation with empty character list.
@@ -299,17 +306,16 @@ class TestStoryValidation:
         - Empty character list is rejected
         - Validation error is returned
         """
-        story_request = {
-            "characters": [],
-            "title": "Empty Story"
-        }
+        story_request = {"characters": [], "title": "Empty Story"}
 
         response = client.post("/api/stories/generate", json=story_request)
         if response.status_code == 404:
             pytest.skip("Story generation API not available")
 
-        assert response.status_code in [400, 422], \
-            f"Expected validation error for empty characters, got {response.status_code}"
+        assert response.status_code in [
+            400,
+            422,
+        ], f"Expected validation error for empty characters, got {response.status_code}"
 
     def test_story_missing_title(self, client, data_factory):
         """Test story generation with missing title.
@@ -430,15 +436,14 @@ class TestStoryGenerationFlow:
         """
         # Create characters
         char_data = data_factory.create_character_data(
-            name="Completion Test",
-            agent_id="completion_test_char"
+            name="Completion Test", agent_id="completion_test_char"
         )
         client.post("/api/characters", json=char_data)
 
         # Start generation
         story_request = {
             "characters": ["completion_test_char"],
-            "title": "Completion Test Story"
+            "title": "Completion Test Story",
         }
 
         start_response = client.post("/api/stories/generate", json=story_request)
@@ -448,8 +453,9 @@ class TestStoryGenerationFlow:
         if start_response.status_code not in [200, 202]:
             pytest.skip("Story generation not functional")
 
-        generation_id = start_response.json().get("generation_id") or \
-                       start_response.json().get("data", {}).get("generation_id")
+        generation_id = start_response.json().get(
+            "generation_id"
+        ) or start_response.json().get("data", {}).get("generation_id")
 
         # Poll for status (limited attempts)
         for _ in range(5):
@@ -473,8 +479,7 @@ class TestStoryGenerationFlow:
         """
         # Create character
         char_data = data_factory.create_character_data(
-            name="World Context Char",
-            agent_id="world_context_char"
+            name="World Context Char", agent_id="world_context_char"
         )
         client.post("/api/characters", json=char_data)
 
@@ -482,7 +487,7 @@ class TestStoryGenerationFlow:
         story_request = {
             "characters": ["world_context_char"],
             "title": "World Context Story",
-            "world_id": "default"
+            "world_id": "default",
         }
 
         response = client.post("/api/stories/generate", json=story_request)
@@ -501,14 +506,13 @@ class TestStoryGenerationFlow:
         """
         # Create character and start story
         char_data = data_factory.create_character_data(
-            name="Content Test",
-            agent_id="content_test_char"
+            name="Content Test", agent_id="content_test_char"
         )
         client.post("/api/characters", json=char_data)
 
         story_request = {
             "characters": ["content_test_char"],
-            "title": "Content Test Story"
+            "title": "Content Test Story",
         }
 
         start_response = client.post("/api/stories/generate", json=story_request)
@@ -518,8 +522,9 @@ class TestStoryGenerationFlow:
         if start_response.status_code not in [200, 202]:
             pytest.skip("Story generation not functional")
 
-        generation_id = start_response.json().get("generation_id") or \
-                       start_response.json().get("data", {}).get("generation_id")
+        generation_id = start_response.json().get(
+            "generation_id"
+        ) or start_response.json().get("data", {}).get("generation_id")
 
         # Get status/content
         content_response = client.get(f"/api/stories/status/{generation_id}")
@@ -537,13 +542,9 @@ class TestStoryGenerationFlow:
         - Relationships are considered
         """
         # Create characters with relationship
-        char1 = data_factory.create_character_data(
-            name="Hero",
-            agent_id="story_hero"
-        )
+        char1 = data_factory.create_character_data(name="Hero", agent_id="story_hero")
         char2 = data_factory.create_character_data(
-            name="Villain",
-            agent_id="story_villain"
+            name="Villain", agent_id="story_villain"
         )
 
         client.post("/api/characters", json=char1)
@@ -552,7 +553,7 @@ class TestStoryGenerationFlow:
         # Start story with both characters
         story_request = {
             "characters": ["story_hero", "story_villain"],
-            "title": "Hero vs Villain"
+            "title": "Hero vs Villain",
         }
 
         response = client.post("/api/stories/generate", json=story_request)

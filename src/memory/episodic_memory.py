@@ -56,7 +56,9 @@ class EpisodicEvent:
             base_significance + social_factor + causal_factor + emotional_peak_factor,
         )
 
-    def add_causal_link(self, linked_memory_id: str, link_type: str = "follows") -> None:
+    def add_causal_link(
+        self, linked_memory_id: str, link_type: str = "follows"
+    ) -> None:
         """Adds a causal link to another memory and recalculates significance."""
         causal_link = f"{link_type}:{linked_memory_id}"
         if causal_link not in self.causal_links:

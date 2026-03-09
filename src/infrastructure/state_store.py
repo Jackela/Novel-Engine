@@ -8,8 +8,7 @@
 import warnings
 
 warnings.warn(
-    "state_store.py is deprecated. "
-    "Use src.infrastructure.state_store instead.",
+    "state_store.py is deprecated. " "Use src.infrastructure.state_store instead.",
     DeprecationWarning,
     stacklevel=2,
 )

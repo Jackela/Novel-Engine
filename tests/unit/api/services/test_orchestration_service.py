@@ -107,7 +107,9 @@ class TestOrchestrationServiceStart:
     ):
         """start uses default characters when none provided."""
         with patch.object(
-            orchestration_service, "_get_default_characters", return_value=["char1", "char2"]
+            orchestration_service,
+            "_get_default_characters",
+            return_value=["char1", "char2"],
         ):
             await orchestration_service.start()
 
@@ -253,9 +255,7 @@ class TestOrchestrationServiceGetNarrative:
 class TestOrchestrationServiceGetDefaultCharacters:
     """Tests for _get_default_characters method."""
 
-    def test_get_default_characters_returns_available_characters(
-        self, tmp_path
-    ):
+    def test_get_default_characters_returns_available_characters(self, tmp_path):
         """_get_default_characters returns available characters from filesystem."""
         # Create mock characters directory
         chars_dir = tmp_path / "characters"
@@ -287,9 +287,7 @@ class TestOrchestrationServiceGetDefaultCharacters:
 
         assert result == ["pilot", "scientist", "engineer"]
 
-    def test_get_default_characters_returns_fallback_for_empty_dir(
-        self, tmp_path
-    ):
+    def test_get_default_characters_returns_fallback_for_empty_dir(self, tmp_path):
         """_get_default_characters returns fallback for empty directory."""
         chars_dir = tmp_path / "empty_characters"
         chars_dir.mkdir()

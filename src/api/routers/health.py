@@ -56,7 +56,11 @@ async def check_chroma() -> tuple[bool, str]:
         # Treat "not installed" errors as not configured rather than unhealthy
         if "not installed" in error_msg.lower() or "not found" in error_msg.lower():
             return (True, "not_configured")
-        logger.warning("chromadb_health_check_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "chromadb_health_check_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         return (False, error_msg)
 
 
@@ -100,7 +104,11 @@ async def check_postgres() -> tuple[bool, str]:
     except ImportError:
         return (True, "not_installed")
     except Exception as exc:
-        logger.warning("postgresql_health_check_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "postgresql_health_check_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
         return (False, str(exc))
 
 
@@ -142,7 +150,9 @@ async def check_redis() -> tuple[bool, str]:
     except ImportError:
         return (True, "not_installed")
     except Exception as exc:
-        logger.warning("redis_health_check_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "redis_health_check_failed", error=str(exc), error_type=type(exc).__name__
+        )
         return (False, str(exc))
 
 
@@ -179,7 +189,9 @@ async def check_llm() -> tuple[bool, str]:
         return (True, f"ok (providers: {providers_str})")
 
     except Exception as exc:
-        logger.warning("llm_health_check_failed", error=str(exc), error_type=type(exc).__name__)
+        logger.warning(
+            "llm_health_check_failed", error=str(exc), error_type=type(exc).__name__
+        )
         return (False, str(exc))
 
 
@@ -290,7 +302,9 @@ async def health_check(request: Request) -> HealthCheckResponse:
         status = "healthy"
         logger.info("health_check_endpoint_accessed")
     except Exception as exc:
-        logger.error("health_check_config_error", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "health_check_config_error", error=str(exc), error_type=type(exc).__name__
+        )
         if "Severe system error" in str(exc):
             raise HTTPException(status_code=500, detail=str(exc))
         config_status = "error"
@@ -354,7 +368,11 @@ async def chromadb_health_check() -> dict[str, Any]:
             "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception:
-        logger.error("chromadb_health_check_error", error="exception_occurred", error_type="exception")
+        logger.error(
+            "chromadb_health_check_error",
+            error="exception_occurred",
+            error_type="exception",
+        )
         return {
             "status": "error",
             "message": "ChromaDB health check failed",

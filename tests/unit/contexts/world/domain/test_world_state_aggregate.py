@@ -69,7 +69,6 @@ from src.contexts.world.domain.aggregates.world_state import (
 from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 
-
 class TestWorldStateAggregate:
     """Test suite for WorldState aggregate root."""
 
@@ -545,7 +544,10 @@ class TestWorldStateAggregate:
         """Test advancing time backwards fails."""
         result = world_state.advance_time(-1, "Invalid time")
         assert result.is_error
-        assert "must be >= 0" in str(result.error) or "negative" in str(result.error).lower()
+        assert (
+            "must be >= 0" in str(result.error)
+            or "negative" in str(result.error).lower()
+        )
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -1063,4 +1065,3 @@ class TestWorldStateAggregate:
         assert result.is_error
         assert result.error.code == "SAVE_ERROR"
         assert "WorldState" in result.error.details.get("entity_type", "")
-

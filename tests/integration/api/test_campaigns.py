@@ -58,7 +58,9 @@ class TestListCampaignsEndpoint:
         assert "campaigns" in data
         assert isinstance(data["campaigns"], list)
 
-    @pytest.mark.skip(reason="Router uses hardcoded 'campaigns' directory, cannot isolate test files")
+    @pytest.mark.skip(
+        reason="Router uses hardcoded 'campaigns' directory, cannot isolate test files"
+    )
     def test_list_campaigns_success(self, client, temp_campaign_dir):
         """Test listing campaigns returns available campaigns."""
         # Create a test campaign file
@@ -76,7 +78,9 @@ class TestListCampaignsEndpoint:
         # Note: Test file was created in temp directory, but router reads from 'campaigns/'
         # This test would need the router to support configurable campaigns directory
 
-    @pytest.mark.skip(reason="Campaigns API uses hardcoded 'campaigns/', 'logs/', and 'private/campaigns' directory paths for security. Test files cannot be isolated from the filesystem scan.")
+    @pytest.mark.skip(
+        reason="Campaigns API uses hardcoded 'campaigns/', 'logs/', and 'private/campaigns' directory paths for security. Test files cannot be isolated from the filesystem scan."
+    )
     def test_list_campaigns_includes_json_and_md(self, client, temp_campaign_dir):
         """Test that listing includes both JSON and markdown files."""
         # Create both types
@@ -119,7 +123,9 @@ class TestGetCampaignEndpoint:
 
         assert response.status_code == 404
 
-    @pytest.mark.skip(reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files")
+    @pytest.mark.skip(
+        reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files"
+    )
     def test_get_campaign_json_success(self, client, temp_campaign_dir):
         """Test getting a JSON campaign file."""
         campaign_data = {
@@ -144,7 +150,9 @@ class TestGetCampaignEndpoint:
         assert "created_at" in data
         assert "updated_at" in data
 
-    @pytest.mark.skip(reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files")
+    @pytest.mark.skip(
+        reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files"
+    )
     def test_get_campaign_markdown_success(self, client, temp_campaign_dir):
         """Test getting a markdown campaign file."""
         campaign_file = temp_campaign_dir / "markdown_campaign.md"
@@ -228,7 +236,9 @@ class TestCreateCampaignEndpoint:
 
         assert response.status_code == 422
 
-    @pytest.mark.skip(reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files")
+    @pytest.mark.skip(
+        reason="Router uses hardcoded 'campaigns/' directory, cannot isolate test files"
+    )
     def test_create_campaign_persists_file(self, client, temp_campaign_dir):
         """Test that created campaign is persisted to file."""
         response = client.post(

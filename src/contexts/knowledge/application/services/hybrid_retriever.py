@@ -433,16 +433,20 @@ class HybridRetriever:
             ...         print(f"Search failed: {error.message}")
         """
         if not query or not query.strip():
-            return Err(ValidationError(
-                message="query cannot be empty",
-                field="query",
-            ))
+            return Err(
+                ValidationError(
+                    message="query cannot be empty",
+                    field="query",
+                )
+            )
 
         if k < 1:
-            return Err(ValidationError(
-                message="k must be at least 1",
-                field="k",
-            ))
+            return Err(
+                ValidationError(
+                    message="k must be at least 1",
+                    field="k",
+                )
+            )
 
         target_collection = collection or self._default_collection
         config = config_override or self._config
@@ -476,7 +480,9 @@ class HybridRetriever:
                 logger.warning(
                     "hybrid_vector_search_failed",
                     query=query,
-                    error=vector_result.error.message if hasattr(vector_result.error, 'message') else str(vector_result.error),
+                    error=vector_result.error.message
+                    if hasattr(vector_result.error, "message")
+                    else str(vector_result.error),
                 )
         except Exception as e:
             logger.warning(
@@ -503,7 +509,9 @@ class HybridRetriever:
                 logger.warning(
                     "hybrid_bm25_search_failed",
                     query=query,
-                    error=bm25_result.error.message if hasattr(bm25_result.error, 'message') else str(bm25_result.error),
+                    error=bm25_result.error.message
+                    if hasattr(bm25_result.error, "message")
+                    else str(bm25_result.error),
                 )
         except Exception as e:
             logger.warning(
@@ -546,12 +554,14 @@ class HybridRetriever:
             fusion_method=fusion_method,
         )
 
-        return Ok(HybridResult(
-            chunks=fused_chunks,
-            vector_results=vector_chunks,
-            bm25_results=bm25_chunks,
-            fusion_method=fusion_method,
-        ))
+        return Ok(
+            HybridResult(
+                chunks=fused_chunks,
+                vector_results=vector_chunks,
+                bm25_results=bm25_chunks,
+                fusion_method=fusion_method,
+            )
+        )
 
     def _convert_filters(self, filters: Any) -> dict[str, Any] | None:
         """
@@ -568,17 +578,17 @@ class HybridRetriever:
 
         bm25_filters: dict[str, Any] = {}
 
-        if hasattr(filters, 'source_types') and filters.source_types:
+        if hasattr(filters, "source_types") and filters.source_types:
             if len(filters.source_types) == 1:
                 bm25_filters["source_type"] = filters.source_types[0].value
             else:
                 # BM25 filter method doesn't support list, take first
                 bm25_filters["source_type"] = filters.source_types[0].value
 
-        if hasattr(filters, 'tags') and filters.tags:
+        if hasattr(filters, "tags") and filters.tags:
             bm25_filters["tags"] = filters.tags
 
-        if hasattr(filters, 'custom_metadata') and filters.custom_metadata:
+        if hasattr(filters, "custom_metadata") and filters.custom_metadata:
             bm25_filters.update(filters.custom_metadata)
 
         return bm25_filters if bm25_filters else None

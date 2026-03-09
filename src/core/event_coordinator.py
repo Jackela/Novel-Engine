@@ -105,7 +105,9 @@ class EventCoordinator:
     # Event Emission
     # ===================================================================
 
-    async def emit_integration_event(self, event_type: str, data: Dict[str, Any]) -> None:
+    async def emit_integration_event(
+        self, event_type: str, data: Dict[str, Any]
+    ) -> None:
         """
         Emit integration event for monitoring and coordination.
 

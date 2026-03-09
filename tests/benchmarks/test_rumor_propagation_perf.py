@@ -153,7 +153,9 @@ async def test_propagate_100_rumors(benchmark_setup: BenchmarkWorldBuilder) -> N
 
     print(f"\n100 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert (
+        result.is_ok
+    ), f"Propagation failed: {result.error if result.is_error else ''}"
     assert len(result.value) > 0, "Should have updated rumors"
     assert elapsed_ms < 100, f"Expected < 100ms, got {elapsed_ms:.2f}ms"
 
@@ -180,7 +182,9 @@ async def test_propagate_1000_rumors(benchmark_setup: BenchmarkWorldBuilder) -> 
 
     print(f"\n1,000 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert (
+        result.is_ok
+    ), f"Propagation failed: {result.error if result.is_error else ''}"
     assert len(result.value) > 0, "Should have updated rumors"
     # CI adjusted threshold: 1000ms instead of 100ms for slower CI runners
     assert elapsed_ms < 1000, f"Expected < 1000ms, got {elapsed_ms:.2f}ms"
@@ -191,7 +195,7 @@ async def test_propagate_1000_rumors(benchmark_setup: BenchmarkWorldBuilder) -> 
 @pytest.mark.slow
 async def test_propagate_10000_rumors(benchmark_setup: BenchmarkWorldBuilder) -> None:
     """Performance target: 10,000 rumors should complete in < 500ms.
-    
+
     Note: Uses a more realistic scenario with fewer locations relative to rumors,
     simulating a world where rumors are concentrated in specific regions.
     """
@@ -213,7 +217,9 @@ async def test_propagate_10000_rumors(benchmark_setup: BenchmarkWorldBuilder) ->
 
     print(f"\n10,000 rumors propagation time: {elapsed_ms:.2f}ms")
 
-    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert (
+        result.is_ok
+    ), f"Propagation failed: {result.error if result.is_error else ''}"
     assert len(result.value) > 0, "Should have updated rumors"
     # CI adjusted threshold: 5000ms instead of 500ms for slower CI runners
     assert elapsed_ms < 5000, f"Expected < 5000ms, got {elapsed_ms:.2f}ms"
@@ -258,14 +264,20 @@ async def test_propagate_rumors_batch_processing(
         result = await service.propagate_rumors_batch(world, batch_size=batch_size)
         elapsed_ms = (time.perf_counter() - start_time) * 1000
 
-        assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+        assert (
+            result.is_ok
+        ), f"Propagation failed: {result.error if result.is_error else ''}"
         results.append((batch_size, elapsed_ms, len(result.value)))
-        print(f"\nBatch size {batch_size}: {elapsed_ms:.2f}ms, {len(result.value)} rumors")
+        print(
+            f"\nBatch size {batch_size}: {elapsed_ms:.2f}ms, {len(result.value)} rumors"
+        )
 
     # All batch sizes should complete successfully
     for batch_size, elapsed_ms, count in results:
         assert count > 0, f"Batch size {batch_size} should produce results"
-        assert elapsed_ms < 200, f"Batch size {batch_size} took too long: {elapsed_ms:.2f}ms"
+        assert (
+            elapsed_ms < 200
+        ), f"Batch size {batch_size} took too long: {elapsed_ms:.2f}ms"
 
 
 @pytest.mark.benchmark
@@ -295,12 +307,14 @@ async def test_adjacency_caching_performance(
 
     print(f"\nFirst run (cold cache): {first_run_ms:.2f}ms")
 
-    assert result1.is_ok, f"First run failed: {result1.error if result1.is_error else ''}"
+    assert (
+        result1.is_ok
+    ), f"First run failed: {result1.error if result1.is_error else ''}"
 
     # Second run with same service and repos (cache should be warm)
     # Use same builder/repos but create new rumors in existing locations
     calendar = builder.calendar
-    
+
     # Create new rumors in the existing world
     for i in range(500, 1000):
         origin_loc_id = f"loc-{(i % 400) // 20}-{i % 20}"
@@ -323,7 +337,9 @@ async def test_adjacency_caching_performance(
 
     print(f"Second run (warm cache): {second_run_ms:.2f}ms")
 
-    assert result2.is_ok, f"Second run failed: {result2.error if result2.is_error else ''}"
+    assert (
+        result2.is_ok
+    ), f"Second run failed: {result2.error if result2.is_error else ''}"
 
     # Both runs should complete successfully
     assert len(result1.value) > 0, "First run should produce results"
@@ -350,14 +366,14 @@ async def test_propagation_correctness_under_load(
 
     # Get initial state
     initial_rumors = await builder.rumor_repo.get_active_rumors(world.id)
-    initial_locations_count = sum(
-        len(r.current_locations) for r in initial_rumors
-    )
+    initial_locations_count = sum(len(r.current_locations) for r in initial_rumors)
 
     # Propagate
     result = await service.propagate_rumors(world)
 
-    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert (
+        result.is_ok
+    ), f"Propagation failed: {result.error if result.is_error else ''}"
     rumors = result.value
 
     # Verify results
@@ -371,15 +387,18 @@ async def test_propagation_correctness_under_load(
     print(f"  Average truth: {avg_truth:.1f}")
 
     # Should have spread to more locations
-    assert total_locations_after >= initial_locations_count, "Should spread to new locations"
+    assert (
+        total_locations_after >= initial_locations_count
+    ), "Should spread to new locations"
 
     # Truth should decay
     assert avg_truth < 90, "Truth should decay during propagation"
 
     # No duplicate locations in any rumor
     for rumor in rumors:
-        assert len(rumor.current_locations) == len(set(rumor.current_locations)), \
-            f"Rumor {rumor.rumor_id} has duplicate locations"
+        assert len(rumor.current_locations) == len(
+            set(rumor.current_locations)
+        ), f"Rumor {rumor.rumor_id} has duplicate locations"
 
 
 @pytest.mark.benchmark
@@ -419,10 +438,14 @@ async def test_memory_efficiency_with_large_world(
     # Force garbage collection after
     gc.collect()
 
-    assert result.is_ok, f"Propagation failed: {result.error if result.is_error else ''}"
+    assert (
+        result.is_ok
+    ), f"Propagation failed: {result.error if result.is_error else ''}"
 
     print(f"\nLarge world (2500 rumors) processed in: {elapsed_ms:.2f}ms")
     print(f"  Result count: {len(result.value)}")
 
     assert len(result.value) > 0, "Should produce results"
-    assert elapsed_ms < 300, f"Should complete in reasonable time, got {elapsed_ms:.2f}ms"
+    assert (
+        elapsed_ms < 300
+    ), f"Should complete in reasonable time, got {elapsed_ms:.2f}ms"

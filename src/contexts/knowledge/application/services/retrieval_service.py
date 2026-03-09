@@ -719,8 +719,8 @@ class RetrievalService:
             # Group chunks by source
             from collections import defaultdict
 
-            source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = defaultdict(
-                list
+            source_groups: dict[tuple[SourceType, str], list[RetrievedChunk]] = (
+                defaultdict(list)
             )
             for chunk in chunks:
                 key = (chunk.source_type, chunk.source_id)

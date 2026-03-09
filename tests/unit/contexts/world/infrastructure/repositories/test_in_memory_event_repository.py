@@ -70,9 +70,7 @@ class TestEventRepositoryGetById:
         assert result.id == "event-001"
         assert result.name == "The Great Battle"
 
-    async def test_get_by_id_returns_none_when_not_found(
-        self, event_repository
-    ):
+    async def test_get_by_id_returns_none_when_not_found(self, event_repository):
         """get_by_id returns None when event not found."""
         result = await event_repository.get_by_id("nonexistent")
 
@@ -82,9 +80,7 @@ class TestEventRepositoryGetById:
 class TestEventRepositorySave:
     """Tests for save method."""
 
-    async def test_save_creates_new_event(
-        self, event_repository, sample_event
-    ):
+    async def test_save_creates_new_event(self, event_repository, sample_event):
         """save creates a new event."""
         result = await event_repository.save(sample_event)
 
@@ -92,9 +88,7 @@ class TestEventRepositorySave:
         retrieved = await event_repository.get_by_id("event-001")
         assert retrieved is not None
 
-    async def test_save_updates_existing_event(
-        self, event_repository, sample_event
-    ):
+    async def test_save_updates_existing_event(self, event_repository, sample_event):
         """save updates an existing event."""
         await event_repository.save(sample_event)
 
@@ -131,9 +125,7 @@ class TestEventRepositorySaveAll:
         assert await event_repository.get_by_id("event-001") is not None
         assert await event_repository.get_by_id("event-002") is not None
 
-    async def test_save_all_returns_empty_list_for_empty_input(
-        self, event_repository
-    ):
+    async def test_save_all_returns_empty_list_for_empty_input(self, event_repository):
         """save_all returns empty list for empty input."""
         result = await event_repository.save_all([])
 
@@ -143,9 +135,7 @@ class TestEventRepositorySaveAll:
 class TestEventRepositoryDelete:
     """Tests for delete method."""
 
-    async def test_delete_removes_event(
-        self, event_repository, sample_event
-    ):
+    async def test_delete_removes_event(self, event_repository, sample_event):
         """delete removes the event."""
         await event_repository.save(sample_event)
 
@@ -155,9 +145,7 @@ class TestEventRepositoryDelete:
         retrieved = await event_repository.get_by_id("event-001")
         assert retrieved is None
 
-    async def test_delete_returns_false_when_not_found(
-        self, event_repository
-    ):
+    async def test_delete_returns_false_when_not_found(self, event_repository):
         """delete returns False when event not found."""
         result = await event_repository.delete("nonexistent")
 
@@ -191,9 +179,7 @@ class TestEventRepositoryGetByWorldId:
         assert len(result) == 1
         assert result[0].id == "event-001"
 
-    async def test_get_by_world_id_uses_pagination(
-        self, event_repository
-    ):
+    async def test_get_by_world_id_uses_pagination(self, event_repository):
         """get_by_world_id respects pagination parameters."""
         for i in range(5):
             event = HistoryEvent(
@@ -211,9 +197,7 @@ class TestEventRepositoryGetByWorldId:
 
         assert len(result) == 2
 
-    async def test_get_by_world_id_returns_sorted_by_importance(
-        self, event_repository
-    ):
+    async def test_get_by_world_id_returns_sorted_by_importance(self, event_repository):
         """get_by_world_id returns events sorted by narrative importance."""
         low_importance = HistoryEvent(
             id="low",
@@ -373,9 +357,7 @@ class TestEventRepositoryRegisterWorldEvent:
 class TestEventRepositoryDeriveWorldId:
     """Tests for _derive_world_id method."""
 
-    def test_derive_world_id_returns_first_location_id(
-        self, event_repository
-    ):
+    def test_derive_world_id_returns_first_location_id(self, event_repository):
         """_derive_world_id returns first location ID as world proxy."""
         event = HistoryEvent(
             id="event",
@@ -389,9 +371,7 @@ class TestEventRepositoryDeriveWorldId:
 
         assert result == "loc-001"
 
-    def test_derive_world_id_returns_none_when_no_locations(
-        self, event_repository
-    ):
+    def test_derive_world_id_returns_none_when_no_locations(self, event_repository):
         """_derive_world_id returns None when event has no locations."""
         event = HistoryEvent(
             id="event",

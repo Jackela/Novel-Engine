@@ -25,6 +25,7 @@ pytestmark = pytest.mark.unit
 
 # ============ ResolutionResult Tests ============
 
+
 class TestResolutionResult:
     """Tests for the ResolutionResult dataclass."""
 
@@ -107,7 +108,8 @@ class TestResolutionResult:
         """has_changes should return True with diplomacy changes."""
         result = ResolutionResult()
         result.add_diplomacy_change(
-            "a", "b",
+            "a",
+            "b",
             DiplomaticStatus.NEUTRAL,
             DiplomaticStatus.ALLIED,
         )
@@ -130,7 +132,8 @@ class TestResolutionResult:
         result = ResolutionResult()
         result.add_resource_change("faction-1", wealth_delta=5)
         result.add_diplomacy_change(
-            "a", "b",
+            "a",
+            "b",
             DiplomaticStatus.NEUTRAL,
             DiplomaticStatus.ALLIED,
         )
@@ -147,6 +150,7 @@ class TestResolutionResult:
 
 
 # ============ Intent Resolution Tests ============
+
 
 @pytest.fixture
 def mock_world_repo() -> MagicMock:
@@ -381,7 +385,9 @@ class TestResolveIntentsAttack:
         # Both lose military, but only stronger attacker gets territory
         assert result.resource_changes["faction-a1"].military_delta == -5
         assert result.resource_changes["faction-a2"].military_delta == -5
-        assert result.resource_changes["faction-defender"].military_delta == -10  # Both attacks
+        assert (
+            result.resource_changes["faction-defender"].military_delta == -10
+        )  # Both attacks
 
         # Only attacker2 should be marked successful
         assert "intent-1" in result.failed_intents

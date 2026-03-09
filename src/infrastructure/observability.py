@@ -247,7 +247,9 @@ class MetricsCollector:
                     name=name, metric_type="counter", value=value, labels=labels
                 )
 
-    def set_gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
+    def set_gauge(
+        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+    ) -> None:
         """Set a gauge metric"""
         labels = labels or {}
 
@@ -463,7 +465,9 @@ class StructuredFormatter(logging.Formatter):
 class TracingManager:
     """Distributed tracing manager"""
 
-    def __init__(self, service_name: str = "novel-engine", jaeger_endpoint: str = None) -> None:
+    def __init__(
+        self, service_name: str = "novel-engine", jaeger_endpoint: str = None
+    ) -> None:
         self.service_name = service_name
         self.active_spans: Dict[str, TraceSpan] = {}
         self.span_history = deque(maxlen=1000)  # Keep recent spans
@@ -839,7 +843,9 @@ class ObservabilityManager:
     """Main observability manager orchestrating all components"""
 
     def __init__(
-        self, service_name: str = "novel-engine", config: Optional[Dict[str, Any]] = None
+        self,
+        service_name: str = "novel-engine",
+        config: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.service_name = service_name
         self.config = config or {}

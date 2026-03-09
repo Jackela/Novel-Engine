@@ -33,7 +33,7 @@ from src.contexts.knowledge.application.services.bm25_retriever import (
 
 pytestmark = [
     pytest.mark.unit,
-    pytest.mark.skipif(not RANK_BM25_AVAILABLE, reason="rank-bm25 not installed")
+    pytest.mark.skipif(not RANK_BM25_AVAILABLE, reason="rank-bm25 not installed"),
 ]
 
 
@@ -422,7 +422,11 @@ class TestBM25RetrieverSearch:
         assert result_lower.is_ok
         assert result_upper.is_ok
         assert result_mixed.is_ok
-        assert len(result_lower.unwrap()) == len(result_upper.unwrap()) == len(result_mixed.unwrap())
+        assert (
+            len(result_lower.unwrap())
+            == len(result_upper.unwrap())
+            == len(result_mixed.unwrap())
+        )
 
     def test_search_partial_match(self, indexed_retriever):
         """Test searching for partial word matches."""

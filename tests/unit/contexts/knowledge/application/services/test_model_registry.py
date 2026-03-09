@@ -809,6 +809,7 @@ class TestResultPattern:
     def test_result_and_then_chaining(self) -> None:
         """Test Result and_then chaining."""
         from src.core.result import Ok
+
         registry = ModelRegistry()
         result = registry.get_model(LLMProvider.OPENAI, "gpt-4o")
         chained = result.and_then(lambda m: Ok(m.model_name))

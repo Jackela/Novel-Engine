@@ -23,6 +23,7 @@ from src.contexts.knowledge.domain.models.source_type import SourceType
 
 pytestmark = pytest.mark.unit
 
+
 class TestSourceMetadata:
     """Unit tests for SourceMetadata value object."""
 
@@ -457,7 +458,9 @@ class TestSourceMetadataWithKnowledgeMetadata:
         )
 
         assert metadata.knowledge.world_version == "2.0.0"
-        assert metadata.knowledge.confidentiality_level == ConfidentialityLevel.RESTRICTED
+        assert (
+            metadata.knowledge.confidentiality_level == ConfidentialityLevel.RESTRICTED
+        )
         assert metadata.knowledge.source_version == 3
 
     @pytest.mark.unit
@@ -540,7 +543,10 @@ class TestSourceMetadataWithKnowledgeMetadata:
         )
 
         assert entry.metadata.knowledge.world_version == "2.5.0"
-        assert entry.metadata.knowledge.confidentiality_level == ConfidentialityLevel.RESTRICTED
+        assert (
+            entry.metadata.knowledge.confidentiality_level
+            == ConfidentialityLevel.RESTRICTED
+        )
 
     @pytest.mark.unit
     @pytest.mark.fast
@@ -630,4 +636,7 @@ class TestSourceMetadataWithKnowledgeMetadata:
 
         # knowledge_metadata object should take precedence
         assert entry.metadata.knowledge.world_version == "3.0.0"
-        assert entry.metadata.knowledge.confidentiality_level == ConfidentialityLevel.SENSITIVE
+        assert (
+            entry.metadata.knowledge.confidentiality_level
+            == ConfidentialityLevel.SENSITIVE
+        )

@@ -256,9 +256,7 @@ class WorldStateManager:
         """
         try:
             summary = {
-                "total_entities": len(
-                    self.world_state_data.get("entity_registry", {})
-                ),
+                "total_entities": len(self.world_state_data.get("entity_registry", {})),
                 "total_locations": len(
                     self.world_state_data.get("location_registry", {})
                 ),

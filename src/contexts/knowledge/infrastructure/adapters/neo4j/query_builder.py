@@ -149,7 +149,9 @@ class QueryBuilder:
         entity_name: str, rel_type: Optional[str] = None
     ) -> tuple[str, Dict[str, Any]]:
         """Build query to get relationships for an entity."""
-        params: Dict[str, Any] = {"normalized_name": QueryBuilder.normalize_name(entity_name)}
+        params: Dict[str, Any] = {
+            "normalized_name": QueryBuilder.normalize_name(entity_name)
+        }
 
         if rel_type is not None:
             query = """

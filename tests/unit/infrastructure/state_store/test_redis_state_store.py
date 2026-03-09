@@ -13,6 +13,7 @@ from src.infrastructure.state_store.config import StateKey, StateStoreConfig
 # Skip tests if redis is not installed
 try:
     from src.infrastructure.state_store.redis import RedisStateStore
+
     HAS_REDIS = True
 except ImportError:
     HAS_REDIS = False
@@ -94,9 +95,7 @@ class TestRedisStateStoreConnect:
         mock_redis.ping.assert_not_called()  # Already connected
 
     @pytest.mark.asyncio
-    async def test_connect_raises_on_connection_failure(
-        self, state_store_config
-    ):
+    async def test_connect_raises_on_connection_failure(self, state_store_config):
         """connect raises exception on connection failure."""
         with patch("src.infrastructure.state_store.redis.aioredis") as mock_aioredis:
             mock_redis = AsyncMock()
@@ -204,9 +203,7 @@ class TestRedisStateStoreSet:
         assert call_args[2] == "test string"
 
     @pytest.mark.asyncio
-    async def test_set_uses_custom_ttl(
-        self, redis_state_store, mock_redis, sample_key
-    ):
+    async def test_set_uses_custom_ttl(self, redis_state_store, mock_redis, sample_key):
         """set uses custom TTL when provided."""
         mock_redis.setex.return_value = True
 
@@ -306,9 +303,7 @@ class TestRedisStateStoreListKeys:
     """Tests for list_keys method."""
 
     @pytest.mark.asyncio
-    async def test_list_keys_returns_matching_keys(
-        self, redis_state_store, mock_redis
-    ):
+    async def test_list_keys_returns_matching_keys(self, redis_state_store, mock_redis):
         """list_keys returns keys matching pattern."""
         mock_redis.keys.return_value = [
             b"test:character:char-001",
@@ -450,9 +445,7 @@ class TestRedisStateStoreClose:
     """Tests for close method."""
 
     @pytest.mark.asyncio
-    async def test_close_closes_connection(
-        self, redis_state_store, mock_redis
-    ):
+    async def test_close_closes_connection(self, redis_state_store, mock_redis):
         """close closes Redis connection."""
         await redis_state_store.close()
 

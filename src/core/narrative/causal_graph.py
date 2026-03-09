@@ -67,6 +67,7 @@ class CausalGraph:
     def find_causal_chain(self, start_node: str, max_depth: int = 5) -> List[List[str]]:
         """查找因果链"""
         chains: list[Any] = []
+
         def dfs(current: str, path: List[str], depth: int) -> None:
             if depth >= max_depth:
                 return

@@ -26,7 +26,6 @@ from src.contexts.orchestration.domain.value_objects import (
 pytestmark = pytest.mark.unit
 
 
-
 @pytest.fixture
 def sample_turn():
     """Create a sample turn for testing."""
@@ -56,14 +55,14 @@ class TestTurnStateTransitionConflicts:
     def test_valid_state_transition_created_to_planning(self, sample_turn):
         """Test valid transition from CREATED to PLANNING."""
         sample_turn.start_planning()
-        
+
         assert sample_turn.state == TurnState.PLANNING
 
     def test_valid_state_transition_planning_to_executing(self, sample_turn):
         """Test valid transition from PLANNING to EXECUTING."""
         sample_turn.start_planning()
         sample_turn.start_execution()
-        
+
         assert sample_turn.state == TurnState.EXECUTING
 
     def test_valid_state_transition_executing_to_completed(self, executing_turn):
@@ -77,7 +76,7 @@ class TestTurnStateTransitionConflicts:
                 phase_type=phase_type,
                 events_processed=1,
             )
-        
+
         assert executing_turn.state == TurnState.COMPLETED
 
     def test_invalid_state_transition_created_to_executing(self, sample_turn):
@@ -105,7 +104,7 @@ class TestTurnStateTransitionConflicts:
                 phase_type, datetime.now()
             )
             turn.complete_phase(phase_type=phase_type, events_processed=1)
-        
+
         # Try to transition from COMPLETED
         with pytest.raises(ValueError, match="Invalid state transition"):
             turn._validate_state_transition(TurnState.EXECUTING)
@@ -164,14 +163,13 @@ class TestCompensationConflicts:
         turn = Turn.create(
             turn_id=TurnId.generate(),
             configuration=TurnConfiguration(
-                rollback_enabled=False,
-                participants=["agent_1"]
+                rollback_enabled=False, participants=["agent_1"]
             ),
             participants=["agent_1"],
         )
         turn.start_planning()
         turn.start_execution()
-        
+
         # Fail a phase without rollback
         turn.phase_statuses[PhaseType.WORLD_UPDATE] = PhaseStatus.create_running(
             PhaseType.WORLD_UPDATE, datetime.now()
@@ -181,13 +179,13 @@ class TestCompensationConflicts:
             error_message="Test error",
             can_compensate=False,  # Disable compensation
         )
-        
+
         assert turn.state == TurnState.FAILED
 
     def test_complete_compensation_action_not_found(self, executing_turn):
         """Test completing a non-existent compensation action."""
         executing_turn.state = TurnState.COMPENSATING
-        
+
         with pytest.raises(ValueError, match="Compensation action not found"):
             executing_turn.complete_compensation_action(
                 action_id=uuid4(),
@@ -197,23 +195,23 @@ class TestCompensationConflicts:
     def test_compensation_action_sequence(self, executing_turn):
         """Test proper sequencing of compensation actions."""
         # Start with a completed phase
-        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = PhaseStatus.create_running(
-            PhaseType.WORLD_UPDATE, datetime.now()
+        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = (
+            PhaseStatus.create_running(PhaseType.WORLD_UPDATE, datetime.now())
         )
         executing_turn.complete_phase(
             phase_type=PhaseType.WORLD_UPDATE,
             events_processed=5,
         )
-        
+
         # Move to next phase and fail it
-        executing_turn.phase_statuses[PhaseType.SUBJECTIVE_BRIEF] = PhaseStatus.create_running(
-            PhaseType.SUBJECTIVE_BRIEF, datetime.now()
+        executing_turn.phase_statuses[PhaseType.SUBJECTIVE_BRIEF] = (
+            PhaseStatus.create_running(PhaseType.SUBJECTIVE_BRIEF, datetime.now())
         )
         executing_turn.fail_phase(
             phase_type=PhaseType.SUBJECTIVE_BRIEF,
             error_message="AI service unavailable",
         )
-        
+
         assert executing_turn.state == TurnState.COMPENSATING
         assert len(executing_turn.compensation_actions) > 0
 
@@ -224,31 +222,31 @@ class TestConcurrentModificationConflicts:
     def test_version_increment_on_state_change(self, sample_turn):
         """Test version increment on state changes."""
         initial_version = sample_turn.version
-        
+
         sample_turn.start_planning()
-        
+
         assert sample_turn.version == initial_version + 1
 
     def test_version_increment_on_phase_complete(self, executing_turn):
         """Test version increment on phase completion."""
-        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = PhaseStatus.create_running(
-            PhaseType.WORLD_UPDATE, datetime.now()
+        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = (
+            PhaseStatus.create_running(PhaseType.WORLD_UPDATE, datetime.now())
         )
         initial_version = executing_turn.version
-        
+
         executing_turn.complete_phase(
             phase_type=PhaseType.WORLD_UPDATE,
             events_processed=1,
         )
-        
+
         assert executing_turn.version == initial_version + 1
 
     def test_updated_at_timestamp_update(self, sample_turn):
         """Test updated_at timestamp is updated on changes."""
         initial_updated = sample_turn.updated_at
-        
+
         sample_turn.start_planning()
-        
+
         assert sample_turn.updated_at > initial_updated
 
 
@@ -261,13 +259,13 @@ class TestResourceLimitConflicts:
         executing_turn.started_at = datetime.now() - timedelta(
             milliseconds=executing_turn.configuration.max_execution_time_ms + 1000
         )
-        
+
         assert executing_turn.is_overdue() is True
 
     def test_turn_not_overdue(self, executing_turn):
         """Test non-overdue turn detection."""
         executing_turn.started_at = datetime.now() - timedelta(seconds=1)
-        
+
         assert executing_turn.is_overdue() is False
 
     def test_turn_not_overdue_terminal(self):
@@ -285,10 +283,10 @@ class TestResourceLimitConflicts:
                 phase_type, datetime.now()
             )
             turn.complete_phase(phase_type=phase_type, events_processed=1)
-        
+
         # Even with old started_at, completed turns are not overdue
         turn.started_at = datetime.now() - timedelta(hours=1)
-        
+
         assert turn.is_overdue() is False
 
 
@@ -297,43 +295,49 @@ class TestPhaseOrderConflicts:
 
     def test_get_next_phase_sequence(self):
         """Test getting next phase in sequence."""
-        assert Turn._get_next_phase(None, PhaseType.WORLD_UPDATE) == PhaseType.SUBJECTIVE_BRIEF
-        assert Turn._get_next_phase(None, PhaseType.SUBJECTIVE_BRIEF) == PhaseType.INTERACTION_ORCHESTRATION
+        assert (
+            Turn._get_next_phase(None, PhaseType.WORLD_UPDATE)
+            == PhaseType.SUBJECTIVE_BRIEF
+        )
+        assert (
+            Turn._get_next_phase(None, PhaseType.SUBJECTIVE_BRIEF)
+            == PhaseType.INTERACTION_ORCHESTRATION
+        )
         assert Turn._get_next_phase(None, PhaseType.NARRATIVE_INTEGRATION) is None
 
     def test_all_phases_complete_check(self, executing_turn):
         """Test checking if all phases are complete."""
         # Initially no phases completed
         assert executing_turn._are_all_phases_complete() is False
-        
+
         # Complete all phases
         for phase_type in PhaseType.get_all_phases_ordered():
             executing_turn.phase_statuses[phase_type] = PhaseStatus.create_completed(
                 phase_type, datetime.now()
             )
-        
+
         assert executing_turn._are_all_phases_complete() is True
 
     def test_get_completed_phases(self, executing_turn):
         """Test getting list of completed phases."""
         # Complete one phase
-        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = PhaseStatus.create_completed(
-            PhaseType.WORLD_UPDATE, datetime.now()
+        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = (
+            PhaseStatus.create_completed(PhaseType.WORLD_UPDATE, datetime.now())
         )
-        
+
         completed = executing_turn.get_completed_phases()
-        
+
         assert PhaseType.WORLD_UPDATE in completed
         assert PhaseType.SUBJECTIVE_BRIEF not in completed
 
     def test_get_failed_phases(self, executing_turn):
         """Test getting list of failed phases."""
-        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = PhaseStatus.create_failed(
-            PhaseType.WORLD_UPDATE, "Test failure"
+        executing_turn.phase_statuses[PhaseType.WORLD_UPDATE] = (
+            PhaseStatus.create_failed(PhaseType.WORLD_UPDATE, "Test failure")
         )
-        
+
         failed = executing_turn.get_failed_phases()
-        
+
         assert PhaseType.WORLD_UPDATE in failed
 
 
@@ -342,7 +346,9 @@ class TestConfigurationConflicts:
 
     def test_configuration_participants_overlap(self):
         """Test configuration with overlapping participants."""
-        with pytest.raises(ValueError, match="excluded_agents and required_agents cannot overlap"):
+        with pytest.raises(
+            ValueError, match="excluded_agents and required_agents cannot overlap"
+        ):
             TurnConfiguration(
                 participants=["agent_1"],
                 excluded_agents={"agent_1"},
@@ -355,9 +361,9 @@ class TestConfigurationConflicts:
             participants=["agent_1"],
             required_agents={"agent_1", "agent_2"},
         )
-        
+
         errors = config.validate_constraints()
-        
+
         assert any("Missing required agents" in str(e) for e in errors)
 
     def test_configuration_phase_timeout_exceeds_max(self):
@@ -368,11 +374,11 @@ class TestConfigurationConflicts:
                 "world_update": 10000,  # 10 seconds - way over
                 "subjective_brief": 10000,
             },
-            participants=["agent_1"]
+            participants=["agent_1"],
         )
-        
+
         errors = config.validate_constraints()
-        
+
         assert len(errors) > 0
         assert any("exceed" in str(e).lower() for e in errors)
 
@@ -383,9 +389,9 @@ class TestConfigurationConflicts:
             max_ai_cost=Decimal("0.01"),  # Very low limit
             participants=["agent_1"] * 100,  # Many participants
         )
-        
+
         errors = config.validate_constraints()
-        
+
         assert len(errors) > 0
 
 
@@ -395,24 +401,26 @@ class TestAuditAndEventConflicts:
     def test_audit_trail_recorded(self, sample_turn):
         """Test that audit events are recorded."""
         initial_count = len(sample_turn.audit_trail)
-        
+
         sample_turn.start_planning()
-        
+
         assert len(sample_turn.audit_trail) > initial_count
 
     def test_domain_events_generated(self, sample_turn):
         """Test that domain events are generated."""
         sample_turn.start_planning()
-        
+
         # Events should be generated
         assert len(sample_turn.events_generated) > 0
 
     def test_event_type_in_audit(self, sample_turn):
         """Test that event types are recorded in audit."""
         sample_turn.start_planning()
-        
+
         event_types = [e["event_type"] for e in sample_turn.audit_trail]
-        assert any("state_transition" in str(et) or "turn" in str(et) for et in event_types)
+        assert any(
+            "state_transition" in str(et) or "turn" in str(et) for et in event_types
+        )
 
 
 class TestCompensationTypeConflicts:
@@ -443,12 +451,12 @@ class TestCompensationTypeConflicts:
     def test_get_phase_compensations(self):
         """Test getting appropriate compensations for phases."""
         world_compensations = CompensationType.get_phase_compensations("world_update")
-        
+
         assert CompensationType.ROLLBACK_WORLD_STATE in world_compensations
         assert CompensationType.LOG_FAILURE in world_compensations
 
     def test_get_phase_compensations_unknown(self):
         """Test getting compensations for unknown phase."""
         compensations = CompensationType.get_phase_compensations("unknown_phase")
-        
+
         assert compensations == [CompensationType.LOG_FAILURE]

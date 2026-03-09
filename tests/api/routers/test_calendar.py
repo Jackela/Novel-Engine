@@ -68,6 +68,7 @@ class TestCalendarEndpoints:
         # Create a calendar via the storage directly for testing
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -86,6 +87,7 @@ class TestCalendarEndpoints:
         # Create a calendar via the storage directly for testing
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -104,6 +106,7 @@ class TestCalendarEndpoints:
         """Advancing past month end rolls over to next month."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=25, era_name="First Age", days_per_month=30
         )
@@ -122,8 +125,14 @@ class TestCalendarEndpoints:
         """Advancing past year end rolls over to next year."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
-            year=1, month=12, day=25, era_name="First Age", days_per_month=30, months_per_year=12
+            year=1,
+            month=12,
+            day=25,
+            era_name="First Age",
+            days_per_month=30,
+            months_per_year=12,
         )
 
         response = client.post(
@@ -140,6 +149,7 @@ class TestCalendarEndpoints:
         """Advancing with default days advances by 1."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -156,6 +166,7 @@ class TestCalendarEndpoints:
         """Advancing 7 days works correctly."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -172,6 +183,7 @@ class TestCalendarEndpoints:
         """Advancing 30 days works correctly with month rollover."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age", days_per_month=30
         )
@@ -189,6 +201,7 @@ class TestCalendarEndpoints:
         """Advancing with 0 days returns validation error."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -203,6 +216,7 @@ class TestCalendarEndpoints:
         """Advancing with negative days returns validation error."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -217,6 +231,7 @@ class TestCalendarEndpoints:
         """Advancing with more than 365 days returns validation error."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1, month=1, day=1, era_name="First Age"
         )
@@ -231,6 +246,7 @@ class TestCalendarEndpoints:
         """Formatted date follows expected pattern."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
             year=1042, month=3, day=15, era_name="Third Age"
         )
@@ -245,9 +261,14 @@ class TestCalendarEndpoints:
         """Calendar response includes all required fields."""
         storage = get_calendar_storage()
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         storage["test-world"] = WorldCalendar(
-            year=1042, month=3, day=15, era_name="Third Age",
-            days_per_month=30, months_per_year=12
+            year=1042,
+            month=3,
+            day=15,
+            era_name="Third Age",
+            days_per_month=30,
+            months_per_year=12,
         )
 
         response = client.get("/api/calendar/test-world")
@@ -277,8 +298,12 @@ class TestCalendarEndpoints:
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
         # Create two worlds with different calendars
-        storage["world-1"] = WorldCalendar(year=100, month=1, day=1, era_name="First Era")
-        storage["world-2"] = WorldCalendar(year=200, month=6, day=15, era_name="Second Era")
+        storage["world-1"] = WorldCalendar(
+            year=100, month=1, day=1, era_name="First Era"
+        )
+        storage["world-2"] = WorldCalendar(
+            year=200, month=6, day=15, era_name="Second Era"
+        )
 
         # Get both calendars
         response1 = client.get("/api/calendar/world-1")

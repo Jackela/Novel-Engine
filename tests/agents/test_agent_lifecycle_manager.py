@@ -110,7 +110,9 @@ class TestAgentLifecycleManagerAdjudication:
             reasoning="Careful observation of surroundings",
         )
 
-    def test_adjudicate_valid_action_no_iron_laws(self, manager, mock_agent, valid_action):
+    def test_adjudicate_valid_action_no_iron_laws(
+        self, manager, mock_agent, valid_action
+    ):
         """Test adjudicating a valid action when Iron Laws not available."""
         manager.validation_enabled = False
 
@@ -514,7 +516,9 @@ class TestAgentLifecycleManagerIntegration:
 
         agent = Mock()
         agent.agent_id = "test_agent"
-        action = MockProposedAction(action_id="action_1", action_type="observe", target=None)
+        action = MockProposedAction(
+            action_id="action_1", action_type="observe", target=None
+        )
 
         result = manager.adjudicate_agent_action(agent, action)
 
@@ -530,7 +534,9 @@ class TestAgentLifecycleManagerIntegration:
 
         # Process some actions
         for i in range(5):
-            action = MockProposedAction(action_id=f"action_{i}", action_type="observe", target=None)
+            action = MockProposedAction(
+                action_id=f"action_{i}", action_type="observe", target=None
+            )
             manager.adjudicate_agent_action(Mock(), action)
 
         metrics = manager.get_lifecycle_metrics()

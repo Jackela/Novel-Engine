@@ -17,7 +17,7 @@ from .shared.errors import (
 class BatchOperationService:
     """
     Service for executing batch operations.
-    
+
     Provides business operations for batch processing with partial
     success handling and comprehensive result reporting.
     """
@@ -42,11 +42,13 @@ class BatchOperationService:
             Result containing batch execution results or error
         """
         if not operations:
-            return Err(ValidationError(
-                message="At least one operation required",
-                field="operations",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one operation required",
+                    field="operations",
+                    recoverable=True,
+                )
+            )
 
         try:
             results: List[Dict[str, Any]] = []
@@ -99,10 +101,12 @@ class BatchOperationService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to execute batch: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to execute batch: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def execute_parallel_operations(
         self,
@@ -120,32 +124,38 @@ class BatchOperationService:
             Result containing parallel execution results or error
         """
         if not operations:
-            return Err(ValidationError(
-                message="At least one operation required",
-                field="operations",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one operation required",
+                    field="operations",
+                    recoverable=True,
+                )
+            )
 
         if max_concurrent < 1:
-            return Err(ValidationError(
-                message="max_concurrent must be at least 1",
-                field="max_concurrent",
-                field_value=max_concurrent,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="max_concurrent must be at least 1",
+                    field="max_concurrent",
+                    field_value=max_concurrent,
+                    recoverable=True,
+                )
+            )
 
         try:
             # In real implementation, this would execute in parallel
             # For now, simulate sequential execution
             results: List[Dict[str, Any]] = []
-            
+
             for i, operation in enumerate(operations):
                 op_id = operation.get("id", f"op_{i}")
-                results.append({
-                    "operation_id": op_id,
-                    "status": "completed",
-                    "index": i,
-                })
+                results.append(
+                    {
+                        "operation_id": op_id,
+                        "status": "completed",
+                        "index": i,
+                    }
+                )
 
             result = {
                 "total_operations": len(operations),
@@ -157,10 +167,12 @@ class BatchOperationService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to execute parallel operations: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to execute parallel operations: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def validate_batch_operations(
         self,
@@ -176,11 +188,13 @@ class BatchOperationService:
             Result containing validation results or error
         """
         if not operations:
-            return Err(ValidationError(
-                message="At least one operation required",
-                field="operations",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one operation required",
+                    field="operations",
+                    recoverable=True,
+                )
+            )
 
         try:
             valid_operations: List[Dict[str, Any]] = []
@@ -188,11 +202,11 @@ class BatchOperationService:
 
             for i, operation in enumerate(operations):
                 errors: List[str] = []
-                
+
                 # Check required fields
                 if "type" not in operation:
                     errors.append("Missing required field: type")
-                
+
                 if "id" not in operation:
                     errors.append("Missing required field: id")
 
@@ -202,16 +216,20 @@ class BatchOperationService:
                     errors.append("Invalid operation type")
 
                 if errors:
-                    invalid_operations.append({
-                        "index": i,
-                        "operation": operation,
-                        "errors": errors,
-                    })
+                    invalid_operations.append(
+                        {
+                            "index": i,
+                            "operation": operation,
+                            "errors": errors,
+                        }
+                    )
                 else:
-                    valid_operations.append({
-                        "index": i,
-                        "operation": operation,
-                    })
+                    valid_operations.append(
+                        {
+                            "index": i,
+                            "operation": operation,
+                        }
+                    )
 
             result = {
                 "total_operations": len(operations),
@@ -224,10 +242,12 @@ class BatchOperationService:
 
             return Ok(result)
         except Exception as e:
-            return Err(ValidationError(
-                message=f"Failed to validate batch: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Failed to validate batch: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def merge_batch_results(
         self,
@@ -243,11 +263,13 @@ class BatchOperationService:
             Result containing merged results or error
         """
         if not batch_results:
-            return Err(ValidationError(
-                message="At least one batch result required",
-                field="batch_results",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one batch result required",
+                    field="batch_results",
+                    recoverable=True,
+                )
+            )
 
         try:
             total_operations = 0
@@ -274,10 +296,12 @@ class BatchOperationService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to merge batch results: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to merge batch results: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def calculate_batch_statistics(
         self,
@@ -293,11 +317,13 @@ class BatchOperationService:
             Result containing statistics or error
         """
         if not operations:
-            return Err(ValidationError(
-                message="At least one operation required",
-                field="operations",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one operation required",
+                    field="operations",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Count by type
@@ -314,7 +340,11 @@ class BatchOperationService:
                 score += len(op.get("parameters", {}))
                 complexity_scores.append(score)
 
-            avg_complexity = sum(complexity_scores) / len(complexity_scores) if complexity_scores else 0
+            avg_complexity = (
+                sum(complexity_scores) / len(complexity_scores)
+                if complexity_scores
+                else 0
+            )
 
             result = {
                 "total_operations": len(operations),
@@ -326,7 +356,9 @@ class BatchOperationService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to calculate statistics: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to calculate statistics: {e!s}",
+                    recoverable=True,
+                )
+            )

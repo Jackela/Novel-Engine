@@ -29,6 +29,8 @@ def reset_calendar_storage() -> None:
     """Reset calendar storage (for testing)."""
     global _world_calendars
     _world_calendars = {}
+
+
 # === Helper Functions ===
 
 

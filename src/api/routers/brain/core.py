@@ -46,7 +46,7 @@ def get_encryption_key() -> bytes:
         if not _ENCRYPTION_KEY_WARNING_SHOWN:
             logger.warning(
                 "security_encryption_key_not_set",
-                message="BRAIN_SETTINGS_ENCRYPTION_KEY not set. API keys will not be persisted securely."
+                message="BRAIN_SETTINGS_ENCRYPTION_KEY not set. API keys will not be persisted securely.",
             )
             _ENCRYPTION_KEY_WARNING_SHOWN = True
         # Return a placeholder that will cause encryption to fail
@@ -92,7 +92,7 @@ def get_fernet() -> Fernet | None:
         if not _ENCRYPTION_KEY_WARNING_SHOWN:
             logger.warning(
                 "security_encryption_key_not_set",
-                message="BRAIN_SETTINGS_ENCRYPTION_KEY not set. API keys cannot be stored securely."
+                message="BRAIN_SETTINGS_ENCRYPTION_KEY not set. API keys cannot be stored securely.",
             )
             _ENCRYPTION_KEY_WARNING_SHOWN = True
         return None
@@ -102,7 +102,9 @@ def get_fernet() -> Fernet | None:
     try:
         return Fernet(key_bytes)
     except Exception as e:
-        logger.error("invalid_encryption_key", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "invalid_encryption_key", error=str(e), error_type=type(e).__name__
+        )
         return None
 
 
@@ -122,12 +124,16 @@ def encrypt_api_key(key: str, fernet: Fernet | None) -> str:
     if not key:
         return ""
     if fernet is None:
-        logger.warning("cannot_encrypt_api_key", message="BRAIN_SETTINGS_ENCRYPTION_KEY not set")
+        logger.warning(
+            "cannot_encrypt_api_key", message="BRAIN_SETTINGS_ENCRYPTION_KEY not set"
+        )
         return ""
     try:
         return fernet.encrypt(key.encode()).decode()
     except Exception as e:
-        logger.error("failed_to_encrypt_api_key", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_encrypt_api_key", error=str(e), error_type=type(e).__name__
+        )
         return ""
 
 
@@ -147,12 +153,16 @@ def decrypt_api_key(encrypted: str, fernet: Fernet | None) -> str:
     if not encrypted:
         return ""
     if fernet is None:
-        logger.warning("cannot_decrypt_api_key", message="BRAIN_SETTINGS_ENCRYPTION_KEY not set")
+        logger.warning(
+            "cannot_decrypt_api_key", message="BRAIN_SETTINGS_ENCRYPTION_KEY not set"
+        )
         return ""
     try:
         return fernet.decrypt(encrypted.encode()).decode()
     except Exception as e:
-        logger.error("failed_to_decrypt_api_key", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_decrypt_api_key", error=str(e), error_type=type(e).__name__
+        )
         return ""
 
 

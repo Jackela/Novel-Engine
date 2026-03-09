@@ -131,7 +131,9 @@ class TestInMemoryFactionIntentRepositoryConstraints:
 
         # The oldest intents should have been rejected
         all_intents = repo.find_by_faction(faction_id)
-        rejected_count = sum(1 for i in all_intents if i.status == IntentStatus.REJECTED)
+        rejected_count = sum(
+            1 for i in all_intents if i.status == IntentStatus.REJECTED
+        )
         assert rejected_count >= 5  # At least 5 should be rejected
 
     @pytest.mark.unit

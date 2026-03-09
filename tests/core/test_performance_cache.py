@@ -58,6 +58,7 @@ class TestCacheEntry:
         entry = CacheEntry(key="test", value="value", ttl=0.001)
         assert not entry.is_expired()
         import time
+
         time.sleep(0.002)
         assert entry.is_expired()
 
@@ -105,10 +106,11 @@ class TestMemoryCache:
         await cache.set("key1", "value1", ttl=0.001)
         result = await cache.get("key1")
         assert result == "value1"
-        
+
         import time
+
         time.sleep(0.002)
-        
+
         result = await cache.get("key1")
         assert result is None
 
@@ -146,13 +148,13 @@ class TestMemoryCache:
         await cache.set("key1", "value1")
         await cache.set("key2", "value2")
         await cache.set("key3", "value3")
-        
+
         # Access key1 to make it recently used
         await cache.get("key1")
-        
+
         # Add new entry, should evict key2 (least recently used)
         await cache.set("key4", "value4")
-        
+
         assert await cache.get("key1") is not None  # Still exists
         assert await cache.get("key2") is None  # Evicted
         assert await cache.get("key3") is not None  # Still exists
@@ -165,7 +167,7 @@ class TestMemoryCache:
         await cache.set("key1", "value1", level=CacheLevel.CRITICAL)
         await cache.set("key2", "value2", level=CacheLevel.LOW)
         await cache.set("key3", "value3", level=CacheLevel.LOW)
-        
+
         # key1 should still exist because it's CRITICAL
         assert await cache.get("key1") is not None
 
@@ -173,15 +175,15 @@ class TestMemoryCache:
     async def test_memory_size_calculation(self):
         """Test memory size calculation for different value types."""
         cache = MemoryCache(max_size=100, max_memory_mb=10)
-        
+
         # Test string
         size1 = cache._calculate_memory_size("test string")
         assert size1 == len("test string")
-        
+
         # Test dict
         size2 = cache._calculate_memory_size({"key": "value"})
         assert size2 > 0
-        
+
         # Test list
         size3 = cache._calculate_memory_size([1, 2, 3])
         assert size3 > 0
@@ -193,7 +195,7 @@ class TestMemoryCache:
         await cache.set("key1", "value1")
         await cache.get("key1")
         await cache.get("nonexistent")
-        
+
         stats = await cache.get_stats()
         assert stats["entries"] == 1
         assert stats["hit_count"] == 1
@@ -216,15 +218,15 @@ class TestPerformanceCache:
         """Test character data caching."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
         character_data = {"id": "char1", "name": "Test Character"}
-        
+
         # Set character
         result = await cache.set_character("char1", character_data)
         assert result is True
-        
+
         # Get character
         retrieved = await cache.get_character("char1")
         assert retrieved == character_data
-        
+
         # Check stats
         assert cache.cache_stats["character_hits"] == 1
 
@@ -233,15 +235,15 @@ class TestPerformanceCache:
         """Test story generation caching."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
         story_data = {"id": "story1", "content": "Once upon a time..."}
-        
+
         # Set story
         result = await cache.set_story_generation("story1", story_data)
         assert result is True
-        
+
         # Get story
         retrieved = await cache.get_story_generation("story1")
         assert retrieved == story_data
-        
+
         # Check stats
         assert cache.cache_stats["story_hits"] == 1
 
@@ -250,15 +252,15 @@ class TestPerformanceCache:
         """Test template caching with critical level."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
         template = "Template content here"
-        
+
         # Set template
         result = await cache.set_template("template1", template)
         assert result is True
-        
+
         # Get template
         retrieved = await cache.get_template("template1")
         assert retrieved == template
-        
+
         # Check stats
         assert cache.cache_stats["template_hits"] == 1
 
@@ -266,13 +268,13 @@ class TestPerformanceCache:
     async def test_invalidate_pattern(self):
         """Test invalidating cache entries by pattern."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
-        
+
         await cache.set_character("char1", {"name": "Character 1"})
         await cache.set_character("char2", {"name": "Character 2"})
         await cache.set_template("template1", "Template 1")
-        
+
         await cache.invalidate_pattern("character:")
-        
+
         assert await cache.get_character("char1") is None
         assert await cache.get_character("char2") is None
         assert await cache.get_template("template1") is not None
@@ -281,11 +283,11 @@ class TestPerformanceCache:
     async def test_get_comprehensive_stats(self):
         """Test getting comprehensive cache statistics."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
-        
+
         await cache.set_character("char1", {"name": "Character 1"})
         await cache.get_character("char1")
         await cache.get_character("nonexistent")
-        
+
         stats = await cache.get_comprehensive_stats()
         assert "memory_cache" in stats
         assert "domain_stats" in stats
@@ -297,11 +299,11 @@ class TestPerformanceCache:
     async def test_background_cleanup(self):
         """Test background cleanup task."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
-        
+
         # Start background tasks
         await cache.start_background_tasks()
         assert cache.cleanup_task is not None
-        
+
         # Stop background tasks
         await cache.stop_background_tasks()
         # Task should be cancelled (None or cancelled task is acceptable)
@@ -311,10 +313,10 @@ class TestPerformanceCache:
     async def test_warm_cache(self):
         """Test cache warming functionality."""
         cache = PerformanceCache(memory_cache_size=100, memory_limit_mb=10)
-        
+
         # Warm cache with character IDs
         await cache.warm_cache(character_ids=["char1", "char2"])
-        
+
         # Should complete without error
         assert True
 
@@ -327,13 +329,13 @@ class TestGlobalCache:
         """Test getting global cache instance."""
         # Close any existing global cache first
         await close_global_cache()
-        
+
         cache1 = await get_global_cache()
         cache2 = await get_global_cache()
-        
+
         # Should return same instance
         assert cache1 is cache2
-        
+
         # Cleanup
         await close_global_cache()
 
@@ -343,11 +345,11 @@ class TestGlobalCache:
         # Get and close global cache
         cache = await get_global_cache()
         await close_global_cache()
-        
+
         # Getting again should create new instance
         cache2 = await get_global_cache()
         assert cache is not cache2
-        
+
         # Cleanup
         await close_global_cache()
 
@@ -402,11 +404,11 @@ class TestEdgeCases:
     async def test_memory_limit_eviction(self):
         """Test eviction when memory limit is reached."""
         cache = MemoryCache(max_size=1000, max_memory_mb=1)  # 1MB limit
-        
+
         # Add entries until memory limit
         for i in range(100):
             await cache.set(f"key{i}", "x" * 10000)  # ~10KB each
-        
+
         # Cache should still be functional
         await cache.set("new_key", "new_value")
         result = await cache.get("new_key")

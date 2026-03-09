@@ -48,6 +48,7 @@ logger = structlog.get_logger()
 # Custom exception for entity extraction errors (for backward compatibility)
 class EntityExtractionError(Exception):
     """Raised when entity extraction fails."""
+
     pass
 
 
@@ -200,7 +201,9 @@ Respond with ONLY valid JSON matching the schema above."""
 
         return system_prompt, user_prompt
 
-    def _parse_llm_response(self, response_text: str) -> Result[dict[str, object], ProcessingError]:
+    def _parse_llm_response(
+        self, response_text: str
+    ) -> Result[dict[str, object], ProcessingError]:
         """
         Parse the LLM response into structured data.
 
@@ -236,9 +239,11 @@ Respond with ONLY valid JSON matching the schema above."""
                 error=str(e),
                 response_length=len(response_text),
             )
-            return Err(ProcessingError(
-                message=f"Failed to parse LLM response as JSON: {e}",
-            ))
+            return Err(
+                ProcessingError(
+                    message=f"Failed to parse LLM response as JSON: {e}",
+                )
+            )
 
     def _build_entities(
         self, entities_data: list[dict], source_length: int
@@ -374,16 +379,20 @@ Respond with ONLY valid JSON matching the schema above."""
             ...         print(f"Extraction failed: {error.message}")
         """
         if not isinstance(text, str):
-            return Err(ValidationError(  # type: ignore[unreachable]
-                message=f"text must be a string, got {type(text).__name__}",
-                field="text",
-            ))
+            return Err(
+                ValidationError(  # type: ignore[unreachable]
+                    message=f"text must be a string, got {type(text).__name__}",
+                    field="text",
+                )
+            )
 
         if not text or not text.strip():
-            return Err(ValidationError(
-                message="text cannot be empty",
-                field="text",
-            ))
+            return Err(
+                ValidationError(
+                    message="text cannot be empty",
+                    field="text",
+                )
+            )
 
         effective_config = config or self._config
         source_length = len(text)
@@ -413,32 +422,38 @@ Respond with ONLY valid JSON matching the schema above."""
             tokens_used = response.tokens_used
         except Exception as e:
             self._logger.error("llm_generation_failed", error=str(e))
-            return Err(ExtractionError(
-                message=f"LLM generation failed: {e}",
-                text_length=source_length,
-            ))
+            return Err(
+                ExtractionError(
+                    message=f"LLM generation failed: {e}",
+                    text_length=source_length,
+                )
+            )
 
         # Parse response
         parse_result = self._parse_llm_response(response.text)
         if parse_result.is_error:
             # Return empty result on parse failure
-            return Ok(ExtractionResult(
-                entities=(),
-                mentions=(),
-                source_length=source_length,
-                model_used=model_used,
-                tokens_used=tokens_used,
-            ))
+            return Ok(
+                ExtractionResult(
+                    entities=(),
+                    mentions=(),
+                    source_length=source_length,
+                    model_used=model_used,
+                    tokens_used=tokens_used,
+                )
+            )
 
         parsed = parse_result.value
         if parsed is None:
-            return Ok(ExtractionResult(
-                entities=(),
-                mentions=(),
-                source_length=source_length,
-                model_used=model_used,
-                tokens_used=tokens_used,
-            ))
+            return Ok(
+                ExtractionResult(
+                    entities=(),
+                    mentions=(),
+                    source_length=source_length,
+                    model_used=model_used,
+                    tokens_used=tokens_used,
+                )
+            )
 
         # Build entities and mentions
         entities_data_raw = parsed.get("entities", [])
@@ -498,10 +513,12 @@ Respond with ONLY valid JSON matching the schema above."""
             rather than failing the entire batch.
         """
         if not isinstance(texts, (list, tuple)):
-            return Err(ValidationError(
-                message="texts must be a list or tuple",
-                field="texts",
-            ))
+            return Err(
+                ValidationError(
+                    message="texts must be a list or tuple",
+                    field="texts",
+                )
+            )
 
         results: list[ExtractionResult] = []
 
@@ -518,18 +535,22 @@ Respond with ONLY valid JSON matching the schema above."""
                     results.append(extraction)
                 else:
                     # Return empty result on None extraction
-                    results.append(ExtractionResult(
+                    results.append(
+                        ExtractionResult(
+                            entities=(),
+                            mentions=(),
+                            source_length=len(text) if isinstance(text, str) else 0,
+                        )
+                    )
+            else:
+                # Return empty result on individual failure
+                results.append(
+                    ExtractionResult(
                         entities=(),
                         mentions=(),
                         source_length=len(text) if isinstance(text, str) else 0,
-                    ))
-            else:
-                # Return empty result on individual failure
-                results.append(ExtractionResult(
-                    entities=(),
-                    mentions=(),
-                    source_length=len(text) if isinstance(text, str) else 0,
-                ))
+                    )
+                )
 
         return Ok(results)
 
@@ -560,22 +581,28 @@ Respond with ONLY valid JSON matching the schema above."""
             - Err(ExtractionError): If extraction fails
         """
         if not isinstance(text, str):
-            return Err(ValidationError(  # type: ignore[unreachable]
-                message=f"text must be a string, got {type(text).__name__}",
-                field="text",
-            ))
+            return Err(
+                ValidationError(  # type: ignore[unreachable]
+                    message=f"text must be a string, got {type(text).__name__}",
+                    field="text",
+                )
+            )
 
         if chunk_size < 100:
-            return Err(ValidationError(
-                message="chunk_size must be at least 100",
-                field="chunk_size",
-            ))
+            return Err(
+                ValidationError(
+                    message="chunk_size must be at least 100",
+                    field="chunk_size",
+                )
+            )
 
         if overlap < 0 or overlap >= chunk_size:
-            return Err(ValidationError(
-                message="overlap must be between 0 and chunk_size",
-                field="overlap",
-            ))
+            return Err(
+                ValidationError(
+                    message="overlap must be between 0 and chunk_size",
+                    field="overlap",
+                )
+            )
 
         effective_config = config or self._config
         source_length = len(text)
@@ -917,25 +944,31 @@ Respond with ONLY valid JSON matching the schema above."""
             # Propagate error - convert to ExtractionError if needed
             err = entity_result.error
             if err is None:
-                return Err(ExtractionError(
-                    message="Unknown extraction error",
-                    text_length=len(text),
-                ))
+                return Err(
+                    ExtractionError(
+                        message="Unknown extraction error",
+                        text_length=len(text),
+                    )
+                )
             if isinstance(err, ExtractionError):
                 return Err(err)
             if isinstance(err, ValidationError):
                 return Err(err)
-            return Err(ExtractionError(  # type: ignore[unreachable]
-                message=str(err),
-                text_length=len(text),
-            ))
+            return Err(
+                ExtractionError(  # type: ignore[unreachable]
+                    message=str(err),
+                    text_length=len(text),
+                )
+            )
 
         entity_data = entity_result.value
         if entity_data is None:
-            return Err(ExtractionError(
-                message="Entity extraction returned None",
-                text_length=len(text),
-            ))
+            return Err(
+                ExtractionError(
+                    message="Entity extraction returned None",
+                    text_length=len(text),
+                )
+            )
 
         self._logger.info(
             "starting_relationship_extraction",
@@ -962,42 +995,48 @@ Respond with ONLY valid JSON matching the schema above."""
         except Exception as e:
             self._logger.error("relationship_llm_generation_failed", error=str(e))
             # Return entities only on failure
-            return Ok(ExtractionResultWithRelationships(
-                entities=entity_data.entities,
-                mentions=entity_data.mentions,
-                source_length=entity_data.source_length,
-                relationships=(),
-                timestamp=entity_data.timestamp,
-                model_used=entity_data.model_used,
-                tokens_used=entity_data.tokens_used,
-            ))
+            return Ok(
+                ExtractionResultWithRelationships(
+                    entities=entity_data.entities,
+                    mentions=entity_data.mentions,
+                    source_length=entity_data.source_length,
+                    relationships=(),
+                    timestamp=entity_data.timestamp,
+                    model_used=entity_data.model_used,
+                    tokens_used=entity_data.tokens_used,
+                )
+            )
 
         # Parse relationship response
         parse_result = self._parse_llm_response(response.text)
         if parse_result.is_error:
             # Return entities only on parse failure
-            return Ok(ExtractionResultWithRelationships(
-                entities=entity_data.entities,
-                mentions=entity_data.mentions,
-                source_length=entity_data.source_length,
-                relationships=(),
-                timestamp=entity_data.timestamp,
-                model_used=entity_data.model_used,
-                tokens_used=entity_data.tokens_used,
-            ))
+            return Ok(
+                ExtractionResultWithRelationships(
+                    entities=entity_data.entities,
+                    mentions=entity_data.mentions,
+                    source_length=entity_data.source_length,
+                    relationships=(),
+                    timestamp=entity_data.timestamp,
+                    model_used=entity_data.model_used,
+                    tokens_used=entity_data.tokens_used,
+                )
+            )
 
         parsed = parse_result.value
         if parsed is None:
             # Return entities only when parsed is None
-            return Ok(ExtractionResultWithRelationships(
-                entities=entity_data.entities,
-                mentions=entity_data.mentions,
-                source_length=entity_data.source_length,
-                relationships=(),
-                timestamp=entity_data.timestamp,
-                model_used=entity_data.model_used,
-                tokens_used=entity_data.tokens_used,
-            ))
+            return Ok(
+                ExtractionResultWithRelationships(
+                    entities=entity_data.entities,
+                    mentions=entity_data.mentions,
+                    source_length=entity_data.source_length,
+                    relationships=(),
+                    timestamp=entity_data.timestamp,
+                    model_used=entity_data.model_used,
+                    tokens_used=entity_data.tokens_used,
+                )
+            )
 
         # Build relationships
         relationships_data_raw = parsed.get("relationships", [])
@@ -1014,15 +1053,17 @@ Respond with ONLY valid JSON matching the schema above."""
             relationship_count=len(relationships),
         )
 
-        return Ok(ExtractionResultWithRelationships(
-            entities=entity_data.entities,
-            mentions=entity_data.mentions,
-            source_length=entity_data.source_length,
-            relationships=tuple(relationships),
-            timestamp=entity_data.timestamp,
-            model_used=entity_data.model_used,
-            tokens_used=entity_data.tokens_used,
-        ))
+        return Ok(
+            ExtractionResultWithRelationships(
+                entities=entity_data.entities,
+                mentions=entity_data.mentions,
+                source_length=entity_data.source_length,
+                relationships=tuple(relationships),
+                timestamp=entity_data.timestamp,
+                model_used=entity_data.model_used,
+                tokens_used=entity_data.tokens_used,
+            )
+        )
 
 
 __all__ = [

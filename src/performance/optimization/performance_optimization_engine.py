@@ -120,7 +120,9 @@ class PerformanceMonitor:
             try:
                 await self._monitoring_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
 
     async def _monitor_loop(self) -> None:
         """Background monitoring loop."""

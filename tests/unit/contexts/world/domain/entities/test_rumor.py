@@ -6,7 +6,6 @@ Comprehensive test suite for the Rumor entity covering
 validation, spread mechanics, veracity labels, and serialization.
 """
 
-
 import pytest
 
 pytestmark = pytest.mark.unit

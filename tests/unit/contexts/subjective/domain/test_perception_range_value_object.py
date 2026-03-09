@@ -1135,7 +1135,8 @@ class TestEdgeCasesAndBoundaryConditions:
 
         # Try to focus on a non-existent perception type
         visibility = capabilities.get_best_visibility_at_distance(
-            50.0, focused_perception=PerceptionType.THERMAL  # Not in capabilities
+            50.0,
+            focused_perception=PerceptionType.THERMAL,  # Not in capabilities
         )
 
         # Should still work using available perceptions (visual)

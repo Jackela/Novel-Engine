@@ -125,7 +125,9 @@ class AuthenticationManager:
     """JWT-based authentication manager."""
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> None:
+    def create_access_token(
+        data: dict, expires_delta: Optional[timedelta] = None
+    ) -> None:
         """Create JWT access token."""
         to_encode = data.copy()
 

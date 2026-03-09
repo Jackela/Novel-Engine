@@ -380,7 +380,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
         except Exception as e:
             self.session.rollback()
             logger.error(
-                "narrative_arc_save_failed", arc_id=str(narrative_arc.arc_id), error=str(e)
+                "narrative_arc_save_failed",
+                arc_id=str(narrative_arc.arc_id),
+                error=str(e),
             )
             raise
 
@@ -399,7 +401,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return self._entity_to_aggregate(arc_entity)
 
         except Exception as e:
-            logger.error("narrative_arc_retrieval_failed", arc_id=str(arc_id), error=str(e))
+            logger.error(
+                "narrative_arc_retrieval_failed", arc_id=str(arc_id), error=str(e)
+            )
             raise
 
     def get_by_type(
@@ -427,7 +431,11 @@ class NarrativeArcRepository(INarrativeArcRepository):
             return [self._entity_to_aggregate(entity) for entity in arc_entities]
 
         except Exception as e:
-            logger.error("narrative_arcs_by_type_retrieval_failed", arc_type=arc_type, error=str(e))
+            logger.error(
+                "narrative_arcs_by_type_retrieval_failed",
+                arc_type=arc_type,
+                error=str(e),
+            )
             raise
 
     def search(
@@ -547,7 +555,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
 
         except Exception as e:
             self.session.rollback()
-            logger.error("narrative_arc_deletion_failed", arc_id=str(arc_id), error=str(e))
+            logger.error(
+                "narrative_arc_deletion_failed", arc_id=str(arc_id), error=str(e)
+            )
             raise
 
     def exists(self, arc_id: NarrativeId) -> bool:
@@ -560,7 +570,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 > 0
             )
         except Exception as e:
-            logger.error("narrative_arc_existence_check_failed", arc_id=str(arc_id), error=str(e))
+            logger.error(
+                "narrative_arc_existence_check_failed", arc_id=str(arc_id), error=str(e)
+            )
             raise
 
     def _create_arc_entity(self, narrative_arc: NarrativeArc) -> NarrativeArcEntity:
@@ -839,7 +851,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
         # Convert pacing segments
         pacing_segments: dict[Any, Any] = {}
         for pacing_entity in arc_entity.pacing_segments:
-            tension_curve_tuple = tuple(Decimal(str(t)) for t in (pacing_entity.tension_curve or []))
+            tension_curve_tuple = tuple(
+                Decimal(str(t)) for t in (pacing_entity.tension_curve or [])
+            )
             pacing = StoryPacing(
                 pacing_id=pacing_entity.id,
                 pacing_type=PacingType(pacing_entity.pacing_type),

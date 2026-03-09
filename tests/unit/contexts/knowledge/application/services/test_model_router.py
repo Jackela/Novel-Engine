@@ -474,7 +474,9 @@ class TestModelRouterFallbackChain:
     ) -> None:
         """Test that fallback chain activates when primary circuit is open."""
         # Open circuit on primary model for CREATIVE task
-        task_config_result = model_router._registry.get_model_for_task(TaskType.CREATIVE)
+        task_config_result = model_router._registry.get_model_for_task(
+            TaskType.CREATIVE
+        )
         assert task_config_result.is_ok
         task_config = task_config_result.unwrap()
         primary_key = f"{task_config.provider.value}:{task_config.model_name}"

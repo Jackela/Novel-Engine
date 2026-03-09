@@ -91,7 +91,10 @@ class TestDeclareWar:
         )
 
         assert result.is_ok
-        assert diplomacy_matrix.get_status("faction-a", "faction-b") == DiplomaticStatus.AT_WAR
+        assert (
+            diplomacy_matrix.get_status("faction-a", "faction-b")
+            == DiplomaticStatus.AT_WAR
+        )
         mock_event_bus.publish.assert_called_once()
 
         # Verify event type
@@ -176,7 +179,10 @@ class TestFormAlliance:
         )
 
         assert result.is_ok
-        assert diplomacy_matrix.get_status("faction-a", "faction-b") == DiplomaticStatus.ALLIED
+        assert (
+            diplomacy_matrix.get_status("faction-a", "faction-b")
+            == DiplomaticStatus.ALLIED
+        )
         mock_event_bus.publish.assert_called_once()
 
         event = mock_event_bus.publish.call_args[0][0]

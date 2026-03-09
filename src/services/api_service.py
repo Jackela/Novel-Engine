@@ -26,10 +26,10 @@ logger = structlog.get_logger(__name__)
 
 class ApiOrchestrationService:
     """Service layer bridging REST API and System Orchestrator.
-    
+
     Manages the lifecycle of orchestration sessions requested via API,
     including background task execution, state tracking, and SSE broadcasting.
-    
+
     Attributes:
         core: The system orchestrator instance
         event_bus: Event bus for broadcasting updates
@@ -43,7 +43,7 @@ class ApiOrchestrationService:
         character_factory: Optional[CharacterFactory] = None,
     ) -> None:
         """Initialize the orchestration service.
-        
+
         Args:
             orchestrator: System orchestrator instance
             event_bus: Event bus for SSE broadcasting
@@ -76,13 +76,13 @@ class ApiOrchestrationService:
 
     async def start_simulation(self, request: SimulationRequest) -> Dict[str, Any]:
         """Start a new simulation in the background.
-        
+
         Args:
             request: Simulation configuration request
-            
+
         Returns:
             Dictionary with success status and task ID
-            
+
         Raises:
             ValueError: If simulation is already running
         """
@@ -103,7 +103,7 @@ class ApiOrchestrationService:
 
     async def stop_simulation(self) -> Dict[str, Any]:
         """Stop the current simulation.
-        
+
         Returns:
             Dictionary with success status
         """
@@ -117,7 +117,7 @@ class ApiOrchestrationService:
 
     async def pause_simulation(self) -> Dict[str, Any]:
         """Pause the current simulation.
-        
+
         Returns:
             Dictionary with success status and message
         """
@@ -137,7 +137,7 @@ class ApiOrchestrationService:
 
     async def get_status(self) -> Dict[str, Any]:
         """Get current orchestration status.
-        
+
         Returns:
             Dictionary with current state information
         """
@@ -145,7 +145,7 @@ class ApiOrchestrationService:
 
     async def get_narrative(self) -> Dict[str, Any]:
         """Get generated narrative.
-        
+
         Returns:
             Dictionary with narrative data and metadata
         """
@@ -155,9 +155,9 @@ class ApiOrchestrationService:
         self, character_names: List[str], total_turns: int
     ):
         """Main orchestration loop.
-        
+
         Runs the simulation turn-by-turn with pause/stop support.
-        
+
         Args:
             character_names: List of character names to simulate
             total_turns: Number of turns to run
@@ -191,7 +191,9 @@ class ApiOrchestrationService:
                     )
                     continue
                 except Exception as e:
-                    logger.error("Failed to create agent '%s': %s", name, e, exc_info=True)
+                    logger.error(
+                        "Failed to create agent '%s': %s", name, e, exc_info=True
+                    )
                     await self._broadcast_sse(
                         "system", f"Agent Creation Failed: {name}", str(e), "high"
                     )
@@ -310,7 +312,7 @@ class ApiOrchestrationService:
         self, event_type: str, title: str, description: str, severity: str
     ):
         """Emit SSE events via EventBus.
-        
+
         Args:
             event_type: Type of event (system, story, character)
             title: Event title

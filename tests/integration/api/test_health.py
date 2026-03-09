@@ -114,9 +114,9 @@ class TestHealthReadinessEndpoint:
             valid_statuses = ["ok", "error", "not_configured", "not_installed"]
 
             for service, check in checks.items():
-                assert check["status"] in valid_statuses, (
-                    f"Invalid status '{check['status']}' for {service}"
-                )
+                assert (
+                    check["status"] in valid_statuses
+                ), f"Invalid status '{check['status']}' for {service}"
 
     def test_readiness_not_configured_is_healthy(self, client: TestClient) -> None:
         """Test that not_configured services are treated as healthy.

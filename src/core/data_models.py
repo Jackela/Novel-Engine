@@ -320,7 +320,9 @@ class CharacterState:
                 in [EmotionalState.AGGRESSIVE, EmotionalState.CONFIDENT]
                 else 1.0
             )
-            stress_factor = max(0.3, 1.0 - (self.physical_condition.stress_level / 100.0))
+            stress_factor = max(
+                0.3, 1.0 - (self.physical_condition.stress_level / 100.0)
+            )
 
             return Ok(health_factor * equipment_factor * mood_factor * stress_factor)
         except Exception as e:
@@ -391,13 +393,17 @@ class EnvironmentalState:
             - Err(ServiceError): If assessment generation fails
         """
         try:
-            return Ok({
-                "overall_danger": self.threat_level,
-                "visibility": "good" if self.lighting in ["normal", "bright"] else "poor",
-                "concealment_options": len(self.available_cover),
-                "social_complexity": len(self.nearby_agents),
-                "resource_abundance": sum(self.resources_available.values()),
-            })
+            return Ok(
+                {
+                    "overall_danger": self.threat_level,
+                    "visibility": "good"
+                    if self.lighting in ["normal", "bright"]
+                    else "poor",
+                    "concealment_options": len(self.available_cover),
+                    "social_complexity": len(self.nearby_agents),
+                    "resource_abundance": sum(self.resources_available.values()),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(
@@ -684,7 +690,7 @@ def Character(
     personality: Optional[str] = None,
     skills: Optional[List[str]] = None,
     equipment: Optional[List[str]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Any:
     """
     Legacy Character constructor that wraps CharacterState with simplified interface.
@@ -751,7 +757,7 @@ def ActionResult(
     description: str = "",
     consequences: Optional[List[Any]] = None,
     world_state_changes: Optional[Dict[str, Any]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Any:
     """
     Legacy ActionResult constructor that wraps InteractionResult.

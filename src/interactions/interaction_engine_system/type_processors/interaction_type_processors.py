@@ -25,7 +25,13 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
+        def __init__(
+            self,
+            success: bool = True,
+            data: Any = None,
+            error: Any = None,
+            metadata: Any = None,
+        ) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
@@ -38,7 +44,9 @@ except ImportError:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
+        def __init__(
+            self, code: str = "", message: str = "", recoverable: bool = True
+        ) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable

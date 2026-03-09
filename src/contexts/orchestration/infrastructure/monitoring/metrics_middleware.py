@@ -410,6 +410,7 @@ class MetricsRegistry:
 
     _instance = None
     _collectors: dict[Any, Any] = {}
+
     def __new__(cls) -> None:
         if cls._instance is None:
             cls._instance = super().__new__(cls)

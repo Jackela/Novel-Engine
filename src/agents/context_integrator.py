@@ -102,7 +102,7 @@ class ContextIntegrator:
 
             logger.info(
                 "context_integration_completed",
-                character_name=new_context.character_name
+                character_name=new_context.character_name,
             )
             return merged_data
 

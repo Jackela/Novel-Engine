@@ -21,7 +21,6 @@ from src.contexts.subjective.domain.value_objects.knowledge_level import (
 pytestmark = pytest.mark.unit
 
 
-
 # ============================================================================
 # Unit Tests (15 tests)
 # ============================================================================
@@ -67,7 +66,10 @@ class TestKnowledgeSource:
         assert KnowledgeSource.REPORTED_BY_ALLY.value == "reported_by_ally"
         assert KnowledgeSource.REPORTED_BY_NEUTRAL.value == "reported_by_neutral"
         assert KnowledgeSource.REPORTED_BY_ENEMY.value == "reported_by_enemy"
-        assert KnowledgeSource.INTERCEPTED_COMMUNICATION.value == "intercepted_communication"
+        assert (
+            KnowledgeSource.INTERCEPTED_COMMUNICATION.value
+            == "intercepted_communication"
+        )
         assert KnowledgeSource.DEDUCTION.value == "deduction"
         assert KnowledgeSource.SPECULATION.value == "speculation"
         assert KnowledgeSource.HISTORICAL_RECORD.value == "historical_record"
@@ -111,7 +113,7 @@ class TestKnowledgeItem:
         """Test knowledge item with expiration."""
         acquired = datetime.now()
         expires = acquired + timedelta(hours=1)
-        
+
         item = KnowledgeItem(
             subject="subject_1",
             information="Time-sensitive info",
@@ -128,7 +130,7 @@ class TestKnowledgeItem:
         """Test that expired knowledge is not current."""
         acquired = datetime.now() - timedelta(hours=2)
         expires = acquired + timedelta(hours=1)
-        
+
         item = KnowledgeItem(
             subject="subject_1",
             information="Expired info",
@@ -192,12 +194,12 @@ class TestKnowledgeItem:
             source=KnowledgeSource.REPORTED_BY_NEUTRAL,
             acquired_at=datetime.now(),
         )
-        
+
         updated = original.with_updated_certainty(
             CertaintyLevel.HIGH,
             new_source=KnowledgeSource.DIRECT_OBSERVATION,
         )
-        
+
         assert updated.certainty_level == CertaintyLevel.HIGH
         assert updated.source == KnowledgeSource.DIRECT_OBSERVATION
         assert updated.information == original.information  # Unchanged
@@ -279,7 +281,7 @@ class TestKnowledgeItemIntegration:
             (KnowledgeSource.REPORTED_BY_ALLY, CertaintyLevel.HIGH, 0.765),
             (KnowledgeSource.SPECULATION, CertaintyLevel.HIGH, 0.255),
         ]
-        
+
         for source, certainty, expected_min in sources_scores:
             item = KnowledgeItem(
                 subject="test",
@@ -295,7 +297,7 @@ class TestKnowledgeItemIntegration:
     def test_knowledge_base_add_knowledge(self):
         """Test adding knowledge to base."""
         base = KnowledgeBase(knowledge_items={})
-        
+
         item = KnowledgeItem(
             subject="new_subject",
             information="New info",
@@ -304,7 +306,7 @@ class TestKnowledgeItemIntegration:
             source=KnowledgeSource.DIRECT_OBSERVATION,
             acquired_at=datetime.now(),
         )
-        
+
         new_base = base.add_knowledge(item)
         assert new_base.has_knowledge_about("new_subject")
         assert base.get_total_knowledge_count() == 0  # Original unchanged
@@ -324,7 +326,7 @@ class TestKnowledgeFilteringIntegration:
             source=KnowledgeSource.DIRECT_OBSERVATION,
             acquired_at=datetime.now(),
         )
-        
+
         rumor = KnowledgeItem(
             subject="subject_1",
             information="Rumor info",
@@ -333,9 +335,9 @@ class TestKnowledgeFilteringIntegration:
             source=KnowledgeSource.SPECULATION,
             acquired_at=datetime.now(),
         )
-        
+
         base = KnowledgeBase(knowledge_items={"subject_1": [factual, rumor]})
-        
+
         subjects = base.get_subjects_by_type(KnowledgeType.FACTUAL)
         assert "subject_1" in subjects
 
@@ -350,9 +352,9 @@ class TestKnowledgeFilteringIntegration:
             acquired_at=datetime.now(),
             tags={"important"},
         )
-        
+
         base = KnowledgeBase(knowledge_items={"subject_1": [item]})
-        
+
         subjects = base.get_subjects_by_tag("important")
         assert "subject_1" in subjects
 
@@ -393,7 +395,9 @@ class TestKnowledgeBoundaryConditions:
     def test_expires_at_same_time_as_acquired(self):
         """Test expiration at same time as acquisition."""
         acquired = datetime.now()
-        with pytest.raises(ValueError, match="Expiration time must be after acquisition time"):
+        with pytest.raises(
+            ValueError, match="Expiration time must be after acquisition time"
+        ):
             KnowledgeItem(
                 subject="subject_1",
                 information="Test info",

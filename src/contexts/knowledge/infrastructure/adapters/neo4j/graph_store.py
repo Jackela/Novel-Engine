@@ -148,7 +148,9 @@ class Neo4jGraphStore(IGraphStore):
         relationship_type: RelationshipType | None = None,
     ) -> list[GraphRelationship]:
         """Get all relationships for an entity."""
-        return await self._relationship_repo.get_for_entity(entity_name, relationship_type)
+        return await self._relationship_repo.get_for_entity(
+            entity_name, relationship_type
+        )
 
     async def get_relationships_between(
         self,
@@ -407,7 +409,9 @@ class Neo4jGraphStore(IGraphStore):
                 # Count relationships by type
                 relationship_type_counts: dict[str, int] = {}
                 for rt in record.get("rel_types", []):
-                    count_query, count_params = self._query.count_relationships_by_type(rt)
+                    count_query, count_params = self._query.count_relationships_by_type(
+                        rt
+                    )
                     count_result = session.run(count_query, count_params)
                     count_record = count_result.single()
                     if count_record:

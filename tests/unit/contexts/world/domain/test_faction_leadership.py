@@ -7,7 +7,6 @@ remove_leader, and related methods.
 """
 
 import sys
-from typing import Optional
 from unittest.mock import MagicMock
 
 import pytest

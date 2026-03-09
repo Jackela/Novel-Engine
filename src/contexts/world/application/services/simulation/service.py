@@ -42,6 +42,7 @@ if TYPE_CHECKING:
 
 logger = structlog.get_logger()
 
+
 class WorldSimulationService:
     """Service for advancing world simulation.
 
@@ -683,8 +684,12 @@ class WorldSimulationService:
                     error=str(error),
                 )
                 if error is not None:
-                    return Err(SnapshotFailedError(f"Failed to create snapshot: {error}"))
-                return Err(SnapshotFailedError("Failed to create snapshot: unknown error"))
+                    return Err(
+                        SnapshotFailedError(f"Failed to create snapshot: {error}")
+                    )
+                return Err(
+                    SnapshotFailedError("Failed to create snapshot: unknown error")
+                )
             snapshot = snapshot_result.value
             logger.info(
                 "simulation_snapshot_created",
@@ -1037,9 +1042,7 @@ class WorldSimulationService:
             oldest_key = next(iter(history))
             del history[oldest_key]
 
-    def get_tick_history(
-        self, world_id: str, limit: int = 20
-    ) -> List[SimulationTick]:
+    def get_tick_history(self, world_id: str, limit: int = 20) -> List[SimulationTick]:
         """Get simulation tick history for a world.
 
         Args:
@@ -1057,9 +1060,7 @@ class WorldSimulationService:
         ticks = list(history.values())
         return ticks[-limit:][::-1]
 
-    def get_tick_by_id(
-        self, world_id: str, tick_id: str
-    ) -> Optional[SimulationTick]:
+    def get_tick_by_id(self, world_id: str, tick_id: str) -> Optional[SimulationTick]:
         """Get a specific tick by ID.
 
         Args:

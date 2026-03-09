@@ -249,7 +249,9 @@ class NarrativeContext:
             raise ValueError("Context description too long (max 2000 characters)")
 
     def _hash_components(self) -> tuple[Any, ...]:
-        def _dict_to_hashable(values: Optional[Dict[Any, Any]]) -> frozenset[tuple[Any, Any]]:
+        def _dict_to_hashable(
+            values: Optional[Dict[Any, Any]],
+        ) -> frozenset[tuple[Any, Any]]:
             if not values:
                 return frozenset()
             items: list[tuple[Any, Any]] = []

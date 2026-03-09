@@ -127,7 +127,9 @@ class WeakReferenceManager:
         self.cleanup_callbacks: Dict[str, Callable] = {}
         self._lock = threading.Lock()
 
-    def register(self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None) -> None:
+    def register(
+        self, key: str, obj: Any, cleanup_callback: Optional[Callable] = None
+    ) -> None:
         """Register object with weak reference."""
         with self._lock:
             if cleanup_callback:
@@ -253,7 +255,9 @@ class MemoryOptimizer:
             try:
                 await self.monitoring_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
             self.monitoring_task = None
 
         # Restore original GC thresholds

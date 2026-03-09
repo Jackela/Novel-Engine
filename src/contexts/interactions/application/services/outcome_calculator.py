@@ -23,7 +23,7 @@ from .shared.errors import (
 class OutcomeCalculator:
     """
     Service for calculating negotiation outcomes and results.
-    
+
     Provides business operations for determining negotiation results,
     calculating outcome metrics, and analyzing success factors.
     """
@@ -52,45 +52,50 @@ class OutcomeCalculator:
             Result containing outcome calculation or error
         """
         if not responses:
-            return Err(OutcomeError(
-                message="No responses provided for outcome calculation",
-                outcome_type="pending",
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message="No responses provided for outcome calculation",
+                    outcome_type="pending",
+                    recoverable=True,
+                )
+            )
 
         if not parties:
-            return Err(OutcomeError(
-                message="At least one party required for outcome calculation",
-                outcome_type="error",
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message="At least one party required for outcome calculation",
+                    outcome_type="error",
+                    recoverable=True,
+                )
+            )
 
         try:
             decision_makers = [p for p in parties if p.is_decision_maker]
             if not decision_makers:
-                return Err(OutcomeError(
-                    message="No decision makers found in parties",
-                    outcome_type="blocked",
-                    recoverable=True,
-                ))
+                return Err(
+                    OutcomeError(
+                        message="No decision makers found in parties",
+                        outcome_type="blocked",
+                        recoverable=True,
+                    )
+                )
 
             # Filter responses for the specific proposal
-            proposal_responses = [
-                r for r in responses if r.proposal_id == proposal_id
-            ]
+            proposal_responses = [r for r in responses if r.proposal_id == proposal_id]
 
             if not proposal_responses:
-                return Err(OutcomeError(
-                    message=f"No responses found for proposal {proposal_id}",
-                    outcome_type="pending",
-                    recoverable=True,
-                ))
+                return Err(
+                    OutcomeError(
+                        message=f"No responses found for proposal {proposal_id}",
+                        outcome_type="pending",
+                        recoverable=True,
+                    )
+                )
 
             # Count acceptances
             acceptances = [r for r in proposal_responses if r.is_complete_acceptance()]
             rejections = [
-                r for r in proposal_responses 
-                if r.overall_response.value == "rejected"
+                r for r in proposal_responses if r.overall_response.value == "rejected"
             ]
 
             total_decision_makers = len(decision_makers)
@@ -120,12 +125,19 @@ class OutcomeCalculator:
                     outcome_status = "pending"
 
             # Calculate metrics
-            acceptance_rate = acceptance_count / total_decision_makers if total_decision_makers > 0 else 0
-            
+            acceptance_rate = (
+                acceptance_count / total_decision_makers
+                if total_decision_makers > 0
+                else 0
+            )
+
             # Calculate average acceptance percentage
-            avg_acceptance = sum(
-                r.get_acceptance_percentage() for r in proposal_responses
-            ) / len(proposal_responses) if proposal_responses else 0
+            avg_acceptance = (
+                sum(r.get_acceptance_percentage() for r in proposal_responses)
+                / len(proposal_responses)
+                if proposal_responses
+                else 0
+            )
 
             result = {
                 "proposal_id": str(proposal_id),
@@ -133,7 +145,9 @@ class OutcomeCalculator:
                 "outcome_status": outcome_status,
                 "acceptance_count": acceptance_count,
                 "rejection_count": rejection_count,
-                "pending_count": total_decision_makers - acceptance_count - rejection_count,
+                "pending_count": total_decision_makers
+                - acceptance_count
+                - rejection_count,
                 "total_decision_makers": total_decision_makers,
                 "acceptance_rate": acceptance_rate,
                 "average_acceptance_percentage": avg_acceptance,
@@ -143,11 +157,13 @@ class OutcomeCalculator:
 
             return Ok(result)
         except Exception as e:
-            return Err(OutcomeError(
-                message=f"Failed to calculate outcome: {e!s}",
-                outcome_type="error",
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message=f"Failed to calculate outcome: {e!s}",
+                    outcome_type="error",
+                    recoverable=True,
+                )
+            )
 
     def calculate_negotiation_success_metrics(
         self,
@@ -174,11 +190,13 @@ class OutcomeCalculator:
             end_time = datetime.now(timezone.utc)
 
         if start_time > end_time:
-            return Err(ValidationError(
-                message="Start time cannot be after end time",
-                field="start_time",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Start time cannot be after end time",
+                    field="start_time",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate duration
@@ -186,9 +204,7 @@ class OutcomeCalculator:
             duration_hours = duration / 3600
 
             # Calculate party participation
-            participating_parties = len(set(
-                r.responding_party_id for r in responses
-            ))
+            participating_parties = len(set(r.responding_party_id for r in responses))
             total_parties = len(parties)
             participation_rate = (
                 participating_parties / total_parties if total_parties > 0 else 0
@@ -199,7 +215,7 @@ class OutcomeCalculator:
                 avg_acceptance = sum(
                     r.get_acceptance_percentage() for r in responses
                 ) / len(responses)
-                
+
                 complete_responses = sum(
                     1 for r in responses if r.is_complete_acceptance()
                 )
@@ -246,11 +262,13 @@ class OutcomeCalculator:
 
             return Ok(result)
         except Exception as e:
-            return Err(OutcomeError(
-                message=f"Failed to calculate success metrics: {e!s}",
-                outcome_type=outcome.value,
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message=f"Failed to calculate success metrics: {e!s}",
+                    outcome_type=outcome.value,
+                    recoverable=True,
+                )
+            )
 
     def analyze_outcome_factors(
         self,
@@ -287,7 +305,7 @@ class OutcomeCalculator:
                 acceptance_rate = sum(
                     1 for r in responses if r.is_complete_acceptance()
                 ) / len(responses)
-                
+
                 if acceptance_rate > 0.7:
                     positive_factors.append("High acceptance rate among responses")
                 elif acceptance_rate < 0.3:
@@ -301,14 +319,16 @@ class OutcomeCalculator:
 
             # Analyze party styles
             collaborative_count = sum(
-                1 for p in parties 
+                1
+                for p in parties
                 if p.preferences.negotiation_style.value == "collaborative"
             )
             if collaborative_count > len(parties) // 2:
                 positive_factors.append("Majority of parties have collaborative style")
 
             competitive_count = sum(
-                1 for p in parties 
+                1
+                for p in parties
                 if p.preferences.negotiation_style.value == "competitive"
             )
             if competitive_count > len(parties) // 2:
@@ -326,11 +346,13 @@ class OutcomeCalculator:
 
             return Ok(result)
         except Exception as e:
-            return Err(OutcomeError(
-                message=f"Failed to analyze outcome factors: {e!s}",
-                outcome_type=outcome.value,
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message=f"Failed to analyze outcome factors: {e!s}",
+                    outcome_type=outcome.value,
+                    recoverable=True,
+                )
+            )
 
     def predict_outcome_likelihood(
         self,
@@ -350,16 +372,18 @@ class OutcomeCalculator:
             Result containing outcome predictions or error
         """
         if total_expected_responses <= 0:
-            return Err(ValidationError(
-                message="Total expected responses must be positive",
-                field="total_expected_responses",
-                field_value=total_expected_responses,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Total expected responses must be positive",
+                    field="total_expected_responses",
+                    field_value=total_expected_responses,
+                    recoverable=True,
+                )
+            )
 
         try:
             current_count = len(current_responses)
-            
+
             if current_count == 0:
                 # No data yet - base on party composition
                 decision_makers = [p for p in parties if p.is_decision_maker]
@@ -377,7 +401,8 @@ class OutcomeCalculator:
                     1 for r in current_responses if r.is_complete_acceptance()
                 )
                 rejections = sum(
-                    1 for r in current_responses 
+                    1
+                    for r in current_responses
                     if r.overall_response.value == "rejected"
                 )
 
@@ -406,28 +431,35 @@ class OutcomeCalculator:
             result = {
                 "current_responses": current_count,
                 "total_expected": total_expected_responses,
-                "completion_percentage": (current_count / total_expected_responses) * 100,
+                "completion_percentage": (current_count / total_expected_responses)
+                * 100,
                 "predictions": {
                     "agreement_likelihood": agreement_prob,
                     "partial_agreement_likelihood": partial_prob,
                     "rejection_likelihood": reject_prob,
                 },
                 "most_likely_outcome": max(
-                    [("agreement", agreement_prob), 
-                     ("partial_agreement", partial_prob),
-                     ("rejection", reject_prob)],
-                    key=lambda x: x[1]
+                    [
+                        ("agreement", agreement_prob),
+                        ("partial_agreement", partial_prob),
+                        ("rejection", reject_prob),
+                    ],
+                    key=lambda x: x[1],
                 )[0],
-                "confidence": "low" if current_count < total_expected_responses / 2 else "medium",
+                "confidence": "low"
+                if current_count < total_expected_responses / 2
+                else "medium",
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(OutcomeError(
-                message=f"Failed to predict outcome: {e!s}",
-                outcome_type="prediction",
-                recoverable=True,
-            ))
+            return Err(
+                OutcomeError(
+                    message=f"Failed to predict outcome: {e!s}",
+                    outcome_type="prediction",
+                    recoverable=True,
+                )
+            )
 
     def _generate_outcome_recommendations(
         self,
@@ -437,13 +469,15 @@ class OutcomeCalculator:
     ) -> List[str]:
         """Generate recommendations based on outcome factors."""
         recommendations: List[str] = []
-        
+
         if outcome == NegotiationOutcome.AGREEMENT_REACHED:
             recommendations.append("Document agreement terms clearly")
             recommendations.append("Establish implementation timeline")
         elif outcome == NegotiationOutcome.REJECTED:
             if negative_factors:
-                recommendations.append("Address identified negative factors before retry")
+                recommendations.append(
+                    "Address identified negative factors before retry"
+                )
             recommendations.append("Consider mediation for future negotiations")
         elif outcome == NegotiationOutcome.PENDING:
             if len(negative_factors) > len(positive_factors):

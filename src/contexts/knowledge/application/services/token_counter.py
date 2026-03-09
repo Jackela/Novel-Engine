@@ -356,7 +356,9 @@ class TokenCounter:
 
             return Ok(results)
         except Exception as e:
-            logger.error("batch_token_counting_failed", error=str(e), text_count=len(texts))
+            logger.error(
+                "batch_token_counting_failed", error=str(e), text_count=len(texts)
+            )
             return Err(
                 Error(
                     code="BATCH_COUNTING_ERROR",

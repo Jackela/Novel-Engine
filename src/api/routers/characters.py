@@ -304,9 +304,7 @@ async def get_character_detail_api(
                 etag = cache_service.build_etag(character_id, timestamp)
                 cache_service.set_cache_headers(response, etag, timestamp)
             except ValueError:
-                logger.warning(
-                    "malformed_workspace_character_record_skip_cache"
-                )
+                logger.warning("malformed_workspace_character_record_skip_cache")
             return _workspace_record_to_character_detail(record)
 
     event_bus = getattr(request.app.state, "event_bus", None)
@@ -373,10 +371,7 @@ async def create_workspace_character(
         try:
             orchestrator.active_agents[character_id] = datetime.now()
         except Exception:
-            logger.debug(
-                "orchestrator_register_character_failed",
-                exc_info=True
-            )
+            logger.debug("orchestrator_register_character_failed", exc_info=True)
 
     return _workspace_record_to_character_detail(record)
 
@@ -441,10 +436,7 @@ async def delete_workspace_character(
         try:
             orchestrator.active_agents.pop(character_id, None)
         except Exception:
-            logger.debug(
-                "orchestrator_unregister_character_failed",
-                exc_info=True
-            )
+            logger.debug("orchestrator_unregister_character_failed", exc_info=True)
 
     return Response(status_code=204)
 

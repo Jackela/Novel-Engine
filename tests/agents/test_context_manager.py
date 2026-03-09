@@ -326,7 +326,11 @@ class TestCharacterContextManagerEdgeCases:
 
     def test_load_character_context_exception(self, manager):
         """Test loading with exception."""
-        with patch.object(manager, "_parse_character_sheet_content", side_effect=Exception("Parse error")):
+        with patch.object(
+            manager,
+            "_parse_character_sheet_content",
+            side_effect=Exception("Parse error"),
+        ):
             manager.load_character_context()
 
         # Should not raise
@@ -349,7 +353,9 @@ class TestCharacterContextManagerEdgeCases:
         content = "Invalid content"
 
         # Mock a parser method that raises exception
-        with patch.object(manager, "_parse_identity_section", side_effect=Exception("Error")):
+        with patch.object(
+            manager, "_parse_identity_section", side_effect=Exception("Error")
+        ):
             result = manager._parse_character_sheet_content(content)
 
         # Should handle error gracefully

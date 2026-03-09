@@ -372,7 +372,10 @@ class TestEnhancedDecisionEngineIntegration:
                 "duty": {"weight": 0.9},
             },
             "formative_events": {
-                "training": {"trigger_phrases": ["command"], "decision_influence": "follow orders"},
+                "training": {
+                    "trigger_phrases": ["command"],
+                    "decision_influence": "follow orders",
+                },
             },
         }
 

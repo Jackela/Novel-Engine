@@ -315,7 +315,9 @@ class MemoryCache(CacheBackend):
 class PerformanceCache:
     """Main performance cache system with multiple backends and intelligent routing."""
 
-    def __init__(self, memory_cache_size: int = 10000, memory_limit_mb: int = 500) -> None:
+    def __init__(
+        self, memory_cache_size: int = 10000, memory_limit_mb: int = 500
+    ) -> None:
         self.memory_cache = MemoryCache(memory_cache_size, memory_limit_mb)
         self.cache_stats = {
             "character_hits": 0,
@@ -350,7 +352,9 @@ class PerformanceCache:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("cache_cleanup_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "cache_cleanup_error", error=str(e), error_type=type(e).__name__
+                )
 
     async def _cleanup_expired(self) -> None:
         """Remove expired entries from cache."""
@@ -659,7 +663,9 @@ class PerformanceCache:
         for key in keys_to_delete:
             await self.memory_cache.delete(key)
 
-        logger.debug("cache_entries_invalidated", count=len(keys_to_delete), pattern=pattern)
+        logger.debug(
+            "cache_entries_invalidated", count=len(keys_to_delete), pattern=pattern
+        )
 
     async def get_comprehensive_stats(self) -> Dict[str, Any]:
         """Get comprehensive cache statistics."""
@@ -703,7 +709,9 @@ class PerformanceCache:
         logger.info("cache_warming_initiated")
 
         if character_ids:
-            logger.info("character_cache_pre_warming", character_count=len(character_ids))
+            logger.info(
+                "character_cache_pre_warming", character_count=len(character_ids)
+            )
             # Would load character data here
 
         # Pre-load critical templates

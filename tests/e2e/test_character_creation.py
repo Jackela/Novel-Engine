@@ -37,7 +37,7 @@ def data_factory():
     """Provide test data factory."""
     from datetime import datetime
     from typing import Any, Dict
-    
+
     class TestDataFactory:
         @staticmethod
         def create_character_data(
@@ -47,7 +47,7 @@ def data_factory():
         ) -> Dict[str, Any]:
             char_name = name or f"TestChar_{datetime.now().timestamp()}"
             char_id = agent_id or char_name.lower().replace(" ", "_")
-            
+
             return {
                 "agent_id": char_id,
                 "name": char_name,
@@ -63,24 +63,26 @@ def data_factory():
                 "inventory": ["test_item"],
                 "metadata": {"test": True},
             }
-    
+
     return TestDataFactory()
 
 
 @pytest.fixture
 def api_helper(client):
     """Provide API helper instance."""
+
     class APITestHelper:
         def __init__(self, client):
             self.client = client
-        
+
         def list_characters(self):
             response = self.client.get("/api/characters")
             response.raise_for_status()
             data = response.json()
             return data.get("characters", [])
-    
+
     return APITestHelper(client)
+
 
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
@@ -100,29 +102,33 @@ class TestCharacterCreation:
         """
         # Step 1: Create character with comprehensive data
         character_data = data_factory.create_character_data(
-            name="Elara Moonweaver",
-            agent_id="elara_moonweaver"
+            name="Elara Moonweaver", agent_id="elara_moonweaver"
         )
-        character_data.update({
-            "background_summary": "A skilled mage from the mystical forests of Eldoria",
-            "personality_traits": "wise, compassionate, determined, mysterious",
-            "skills": {
-                "arcane_magic": 0.95,
-                "healing": 0.80,
-                "herbalism": 0.75,
-                "divination": 0.70,
-            },
-            "current_location": "Tower of Eldoria",
-            "inventory": ["staff_of_ages", "healing_potions", "spellbook"],
-            "metadata": {
-                "age": 147,
-                "faction": "Order of the Moon",
-                "race": "High Elf"
+        character_data.update(
+            {
+                "background_summary": "A skilled mage from the mystical forests of Eldoria",
+                "personality_traits": "wise, compassionate, determined, mysterious",
+                "skills": {
+                    "arcane_magic": 0.95,
+                    "healing": 0.80,
+                    "herbalism": 0.75,
+                    "divination": 0.70,
+                },
+                "current_location": "Tower of Eldoria",
+                "inventory": ["staff_of_ages", "healing_potions", "spellbook"],
+                "metadata": {
+                    "age": 147,
+                    "faction": "Order of the Moon",
+                    "race": "High Elf",
+                },
             }
-        })
+        )
 
         response = client.post("/api/characters", json=character_data)
-        assert response.status_code in [200, 201], f"Character creation failed: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Character creation failed: {response.text}"
 
         # Step 2: Verify character was created
         get_response = client.get("/api/characters/elara_moonweaver")
@@ -144,11 +150,14 @@ class TestCharacterCreation:
         character_data = {
             "agent_id": "minimal_char",
             "name": "Minimal Character",
-            "background_summary": "A simple character"
+            "background_summary": "A simple character",
         }
 
         response = client.post("/api/characters", json=character_data)
-        assert response.status_code in [200, 201], f"Minimal character creation failed: {response.text}"
+        assert response.status_code in [
+            200,
+            201,
+        ], f"Minimal character creation failed: {response.text}"
 
         # Verify creation
         get_response = client.get("/api/characters/minimal_char")
@@ -162,8 +171,7 @@ class TestCharacterCreation:
         - Skill values are validated (0.0-1.0 range)
         """
         character_data = data_factory.create_character_data(
-            name="Skill Master",
-            agent_id="skill_master"
+            name="Skill Master", agent_id="skill_master"
         )
         character_data["skills"] = {
             "combat": 0.90,
@@ -191,8 +199,7 @@ class TestCharacterCreation:
         - Appropriate error is returned
         """
         character_data = data_factory.create_character_data(
-            name="Duplicate Test",
-            agent_id="duplicate_char"
+            name="Duplicate Test", agent_id="duplicate_char"
         )
 
         # First creation should succeed
@@ -201,7 +208,11 @@ class TestCharacterCreation:
 
         # Second creation should fail
         response2 = client.post("/api/characters", json=character_data)
-        assert response2.status_code in [400, 409, 422], "Duplicate character should be rejected"
+        assert response2.status_code in [
+            400,
+            409,
+            422,
+        ], "Duplicate character should be rejected"
 
         # Cleanup
         client.delete("/api/characters/duplicate_char")
@@ -220,8 +231,7 @@ class TestCharacterUpdates:
         """
         # Create character first
         char_data = data_factory.create_character_data(
-            name="Update Test",
-            agent_id="update_test_char"
+            name="Update Test", agent_id="update_test_char"
         )
         client.post("/api/characters", json=char_data)
 
@@ -229,7 +239,7 @@ class TestCharacterUpdates:
         update_data = {
             "background_summary": "Updated background story",
             "current_location": "New Location",
-            "personality_traits": "brave, adventurous"
+            "personality_traits": "brave, adventurous",
         }
 
         response = client.put("/api/characters/update_test_char", json=update_data)
@@ -254,8 +264,7 @@ class TestCharacterUpdates:
         """
         # Create character with initial skills
         char_data = data_factory.create_character_data(
-            name="Skill Update Test",
-            agent_id="skill_update_char"
+            name="Skill Update Test", agent_id="skill_update_char"
         )
         char_data["skills"] = {"combat": 0.5}
         client.post("/api/characters", json=char_data)
@@ -264,8 +273,8 @@ class TestCharacterUpdates:
         update_data = {
             "skills": {
                 "combat": 0.75,  # Improved
-                "magic": 0.60,   # New skill
-                "stealth": 0.40  # New skill
+                "magic": 0.60,  # New skill
+                "stealth": 0.40,  # New skill
             }
         }
 
@@ -291,12 +300,10 @@ class TestCharacterUpdates:
         """
         # Create two characters
         char1 = data_factory.create_character_data(
-            name="Character One",
-            agent_id="char_one"
+            name="Character One", agent_id="char_one"
         )
         char2 = data_factory.create_character_data(
-            name="Character Two",
-            agent_id="char_two"
+            name="Character Two", agent_id="char_two"
         )
 
         client.post("/api/characters", json=char1)
@@ -330,16 +337,13 @@ class TestCharacterUpdates:
         """
         # Create character
         char_data = data_factory.create_character_data(
-            name="Inventory Test",
-            agent_id="inventory_char"
+            name="Inventory Test", agent_id="inventory_char"
         )
         char_data["inventory"] = ["sword", "shield"]
         client.post("/api/characters", json=char_data)
 
         # Update inventory
-        update_data = {
-            "inventory": ["sword", "shield", "health_potion", "map"]
-        }
+        update_data = {"inventory": ["sword", "shield", "health_potion", "map"]}
 
         response = client.put("/api/characters/inventory_char", json=update_data)
         assert response.status_code in [200, 204]
@@ -368,7 +372,7 @@ class TestCharacterValidation:
         """
         invalid_char = {
             "agent_id": "invalid id with spaces!",
-            "name": "Invalid Character"
+            "name": "Invalid Character",
         }
 
         response = client.post("/api/characters", json=invalid_char)
@@ -401,7 +405,11 @@ class TestCharacterValidation:
 
         response = client.post("/api/characters", json=char_data)
         # API may return 400 (validation error), 422 (pydantic validation), or 500 (unhandled)
-        assert response.status_code in [400, 422, 500], "Invalid skill values should be rejected"
+        assert response.status_code in [
+            400,
+            422,
+            500,
+        ], "Invalid skill values should be rejected"
 
     def test_update_nonexistent_character(self, client):
         """Test updating a character that doesn't exist.
@@ -411,8 +419,12 @@ class TestCharacterValidation:
         """
         update_data = {"name": "Updated Name"}
 
-        response = client.put("/api/characters/nonexistent_char_12345", json=update_data)
-        assert response.status_code == 404, "Should return 404 for non-existent character"
+        response = client.put(
+            "/api/characters/nonexistent_char_12345", json=update_data
+        )
+        assert (
+            response.status_code == 404
+        ), "Should return 404 for non-existent character"
 
 
 @pytest.mark.e2e
@@ -428,8 +440,7 @@ class TestCharacterLifecycle:
         """
         # Create
         char_data = data_factory.create_character_data(
-            name="Lifecycle Test",
-            agent_id="lifecycle_char"
+            name="Lifecycle Test", agent_id="lifecycle_char"
         )
         create_response = client.post("/api/characters", json=char_data)
         assert create_response.status_code in [200, 201]
@@ -440,8 +451,7 @@ class TestCharacterLifecycle:
 
         # Update
         update_response = client.put(
-            "/api/characters/lifecycle_char",
-            json={"background_summary": "Updated"}
+            "/api/characters/lifecycle_char", json={"background_summary": "Updated"}
         )
         assert update_response.status_code in [200, 204]
 
@@ -474,7 +484,9 @@ class TestCharacterLifecycle:
         - 404 is returned for non-existent character ID
         """
         response = client.get("/api/characters/nonexistent_character_99999")
-        assert response.status_code == 404, "Should return 404 for non-existent character"
+        assert (
+            response.status_code == 404
+        ), "Should return 404 for non-existent character"
 
     def test_bulk_character_operations(self, client, data_factory):
         """Test creating and deleting multiple characters.
@@ -488,8 +500,7 @@ class TestCharacterLifecycle:
         # Create multiple characters
         for i in range(3):
             char_data = data_factory.create_character_data(
-                name=f"Bulk Char {i}",
-                agent_id=f"bulk_char_{i}"
+                name=f"Bulk Char {i}", agent_id=f"bulk_char_{i}"
             )
             response = client.post("/api/characters", json=char_data)
             assert response.status_code in [200, 201]

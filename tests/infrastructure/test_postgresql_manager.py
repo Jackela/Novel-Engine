@@ -21,6 +21,7 @@ try:
         create_postgresql_config_from_env,
         create_postgresql_manager,
     )
+
     ASYNCPG_AVAILABLE = True
 except ImportError:
     ASYNCPG_AVAILABLE = False
@@ -164,8 +165,10 @@ class TestPostgreSQLManagerUnit:
         """Test that initialize sets the initialized flag."""
         config = PostgreSQLConfig()
         manager = PostgreSQLManager(config)
-        
-        with patch.object(manager.connection_pool, 'initialize', new_callable=AsyncMock):
+
+        with patch.object(
+            manager.connection_pool, "initialize", new_callable=AsyncMock
+        ):
             await manager.initialize()
             assert manager._initialized
 
@@ -205,8 +208,11 @@ class TestFactoryFunctions:
     async def test_create_postgresql_manager(self):
         """Test creating and initializing PostgreSQL manager."""
         config = PostgreSQLConfig()
-        
-        with patch('src.infrastructure.postgresql_manager.PostgreSQLManager.initialize', new_callable=AsyncMock):
+
+        with patch(
+            "src.infrastructure.postgresql_manager.PostgreSQLManager.initialize",
+            new_callable=AsyncMock,
+        ):
             manager = await create_postgresql_manager(config)
             assert isinstance(manager, PostgreSQLManager)
             assert manager.config == config
@@ -242,11 +248,11 @@ class TestPostgreSQLIntegration:
         """Test metrics accumulation across operations."""
         config = PostgreSQLConfig()
         pool = PostgreSQLConnectionPool(config)
-        
+
         # Simulate metrics updates
         pool._metrics["total_queries"] = 10
         pool._metrics["query_times"] = [0.1, 0.2, 0.3]
-        
+
         metrics = pool.get_metrics()
         assert metrics["total_queries"] == 10
         assert metrics["average_query_time"] == pytest.approx(0.2)
@@ -261,10 +267,12 @@ class TestPostgreSQLManagerIntegration:
         """Test health check returns proper structure."""
         config = PostgreSQLConfig()
         manager = PostgreSQLManager(config)
-        
-        with patch.object(manager.connection_pool, 'execute_query', new_callable=AsyncMock) as mock_query:
+
+        with patch.object(
+            manager.connection_pool, "execute_query", new_callable=AsyncMock
+        ) as mock_query:
             mock_query.return_value = {"result": 1}
-            with patch.object(manager.connection_pool, '_initialized', True):
+            with patch.object(manager.connection_pool, "_initialized", True):
                 health = await manager.health_check()
                 assert "healthy" in health
                 assert "timestamp" in health

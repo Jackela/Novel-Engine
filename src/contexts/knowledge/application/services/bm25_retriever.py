@@ -223,10 +223,12 @@ class BM25Retriever:
             ...         print(f"Indexing failed: {error.message}")
         """
         if not isinstance(documents, list):
-            return Err(ValidationError(  # type: ignore[unreachable]
-                message="documents must be a list",
-                field="documents",
-            ))
+            return Err(
+                ValidationError(  # type: ignore[unreachable]
+                    message="documents must be a list",
+                    field="documents",
+                )
+            )
 
         if not documents:
             return Ok(0)
@@ -242,10 +244,12 @@ class BM25Retriever:
                 "bm25_library_not_found",
                 message="rank-bm25 library not installed. Install with: pip install rank-bm25",
             )
-            return Err(BM25Error(
-                message="rank-bm25 library not found. Install with: pip install rank-bm25",
-                operation="index",
-            ))
+            return Err(
+                BM25Error(
+                    message="rank-bm25 library not found. Install with: pip install rank-bm25",
+                    operation="index",
+                )
+            )
 
         try:
             # Get or create index for collection
@@ -264,7 +268,11 @@ class BM25Retriever:
 
                 # Check if document already exists in corpus
                 existing_idx = next(
-                    (i for i, d in enumerate(index_data["documents"]) if d == doc.doc_id),
+                    (
+                        i
+                        for i, d in enumerate(index_data["documents"])
+                        if d == doc.doc_id
+                    ),
                     None,
                 )
 
@@ -297,10 +305,12 @@ class BM25Retriever:
                 collection=target_collection,
                 error=str(e),
             )
-            return Err(BM25Error(
-                message=f"Failed to index documents: {e}",
-                operation="index",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Failed to index documents: {e}",
+                    operation="index",
+                )
+            )
 
     def search(
         self,
@@ -334,16 +344,20 @@ class BM25Retriever:
             ...         print(f"Search failed: {error.message}")
         """
         if not query or not query.strip():
-            return Err(ValidationError(
-                message="query cannot be empty",
-                field="query",
-            ))
+            return Err(
+                ValidationError(
+                    message="query cannot be empty",
+                    field="query",
+                )
+            )
 
         if k < 1:
-            return Err(ValidationError(
-                message="k must be at least 1",
-                field="k",
-            ))
+            return Err(
+                ValidationError(
+                    message="k must be at least 1",
+                    field="k",
+                )
+            )
 
         target_collection = collection or self._default_collection
 
@@ -352,10 +366,12 @@ class BM25Retriever:
                 "bm25_collection_not_found",
                 collection=target_collection,
             )
-            return Err(BM25Error(
-                message=f"Collection not found: {target_collection}",
-                operation="search",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Collection not found: {target_collection}",
+                    operation="search",
+                )
+            )
 
         index_data = self._indices[target_collection]
         bm25_index = index_data["bm25"]
@@ -365,10 +381,12 @@ class BM25Retriever:
                 "bm25_index_not_built",
                 collection=target_collection,
             )
-            return Err(BM25Error(
-                message=f"Index not built for collection: {target_collection}",
-                operation="search",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Index not built for collection: {target_collection}",
+                    operation="search",
+                )
+            )
 
         try:
             # Tokenize query
@@ -443,10 +461,12 @@ class BM25Retriever:
                 query=query,
                 error=str(e),
             )
-            return Err(BM25Error(
-                message=f"Search failed: {e}",
-                operation="search",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Search failed: {e}",
+                    operation="search",
+                )
+            )
 
     def remove_document(
         self,
@@ -467,10 +487,12 @@ class BM25Retriever:
             - Err(BM25Error): If removal fails
         """
         if not doc_id or not doc_id.strip():
-            return Err(ValidationError(
-                message="doc_id cannot be empty",
-                field="doc_id",
-            ))
+            return Err(
+                ValidationError(
+                    message="doc_id cannot be empty",
+                    field="doc_id",
+                )
+            )
 
         target_collection = collection or self._default_collection
 
@@ -520,10 +542,12 @@ class BM25Retriever:
                 doc_id=doc_id,
                 error=str(e),
             )
-            return Err(BM25Error(
-                message=f"Failed to remove document: {e}",
-                operation="remove",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Failed to remove document: {e}",
+                    operation="remove",
+                )
+            )
 
     def clear_collection(
         self,
@@ -570,10 +594,12 @@ class BM25Retriever:
                 collection=target_collection,
                 error=str(e),
             )
-            return Err(BM25Error(
-                message=f"Failed to clear collection: {e}",
-                operation="clear",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Failed to clear collection: {e}",
+                    operation="clear",
+                )
+            )
 
     def get_stats(
         self,
@@ -593,10 +619,12 @@ class BM25Retriever:
         target_collection = collection or self._default_collection
 
         if target_collection not in self._indices:
-            return Err(BM25Error(
-                message=f"Collection not found: {target_collection}",
-                operation="stats",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Collection not found: {target_collection}",
+                    operation="stats",
+                )
+            )
 
         try:
             index_data = self._indices[target_collection]
@@ -612,22 +640,26 @@ class BM25Retriever:
                 total_tokens = 0
                 avg_doc_length = 0.0
 
-            return Ok(BM25IndexStats(
-                total_documents=doc_count,
-                total_tokens=total_tokens,
-                avg_doc_length=avg_doc_length,
-                last_updated=datetime.utcnow().isoformat(),
-            ))
+            return Ok(
+                BM25IndexStats(
+                    total_documents=doc_count,
+                    total_tokens=total_tokens,
+                    avg_doc_length=avg_doc_length,
+                    last_updated=datetime.utcnow().isoformat(),
+                )
+            )
         except Exception as e:
             logger.error(
                 "bm25_stats_failed",
                 collection=target_collection,
                 error=str(e),
             )
-            return Err(BM25Error(
-                message=f"Failed to get stats: {e}",
-                operation="stats",
-            ))
+            return Err(
+                BM25Error(
+                    message=f"Failed to get stats: {e}",
+                    operation="stats",
+                )
+            )
 
     def _matches_filters(
         self,

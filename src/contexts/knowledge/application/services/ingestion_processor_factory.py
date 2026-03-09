@@ -301,7 +301,9 @@ class IngestionProcessorFactory:
         return cls()
 
     @classmethod
-    def get_default_factory_result(cls) -> Result[IngestionProcessorFactory, ServiceError]:
+    def get_default_factory_result(
+        cls,
+    ) -> Result[IngestionProcessorFactory, ServiceError]:
         """
         Get a factory instance with all default processors (Result pattern).
 

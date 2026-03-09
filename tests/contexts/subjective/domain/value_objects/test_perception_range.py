@@ -18,7 +18,6 @@ from src.contexts.subjective.domain.value_objects.perception_range import (
 pytestmark = pytest.mark.unit
 
 
-
 # ============================================================================
 # Unit Tests (12 tests)
 # ============================================================================
@@ -92,7 +91,11 @@ class TestPerceptionRange:
             environmental_modifiers={},
         )
         visibility = range_obj.calculate_visibility_at_distance(50.0)
-        assert visibility in [VisibilityLevel.CLEAR, VisibilityLevel.PARTIAL, VisibilityLevel.OBSCURED]
+        assert visibility in [
+            VisibilityLevel.CLEAR,
+            VisibilityLevel.PARTIAL,
+            VisibilityLevel.OBSCURED,
+        ]
 
     def test_calculate_visibility_beyond_range(self):
         """Test visibility beyond range."""
@@ -128,7 +131,7 @@ class TestPerceptionRange:
             accuracy_modifier=1.0,
             environmental_modifiers={},
         )
-        
+
         new_range = range_obj.apply_environmental_modifier("darkness", 0.5)
         assert "darkness" in new_range.environmental_modifiers
         assert new_range.environmental_modifiers["darkness"] == 0.5
@@ -235,10 +238,10 @@ class TestPerceptionRangeIntegration:
             accuracy_modifier=1.0,
             environmental_modifiers={"fog": 0.5},
         )
-        
+
         # Same distance should have worse visibility with fog
         visibility_with_fog = range_obj.calculate_visibility_at_distance(50.0)
-        
+
         range_obj_no_fog = PerceptionRange(
             perception_type=PerceptionType.VISUAL,
             base_range=100.0,
@@ -247,7 +250,7 @@ class TestPerceptionRangeIntegration:
             environmental_modifiers={},
         )
         visibility_without_fog = range_obj_no_fog.calculate_visibility_at_distance(50.0)
-        
+
         # Fog should degrade visibility
         assert visibility_with_fog.value <= visibility_without_fog.value
 
@@ -271,7 +274,7 @@ class TestPerceptionRangeIntegration:
                 ),
             }
         )
-        
+
         # At 30 distance, visual should be clear but auditory might be partial
         best_visibility = capabilities.get_best_visibility_at_distance(30.0)
         assert best_visibility in [VisibilityLevel.CLEAR, VisibilityLevel.PARTIAL]
@@ -308,7 +311,7 @@ class TestPerceptionCapabilitiesIntegration:
                 ),
             }
         )
-        
+
         assert capabilities.get_maximum_range() == 100.0
         assert len(capabilities.get_perception_types()) == 3
 
@@ -326,7 +329,7 @@ class TestPerceptionCapabilitiesIntegration:
             },
             focused_perception_multiplier=2.0,
         )
-        
+
         # At 150 distance (beyond normal range), with focus should be visible
         visibility = capabilities.get_best_visibility_at_distance(
             150.0,

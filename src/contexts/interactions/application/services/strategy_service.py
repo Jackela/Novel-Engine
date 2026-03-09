@@ -20,12 +20,14 @@ from .shared.errors import (
 class StrategyService:
     """
     Service for negotiation strategy development and recommendation.
-    
+
     Provides business operations for strategy analysis, tactic recommendation,
     and negotiation planning.
     """
 
-    def __init__(self, negotiation_service: Optional[NegotiationService] = None) -> None:
+    def __init__(
+        self, negotiation_service: Optional[NegotiationService] = None
+    ) -> None:
         """Initialize with domain negotiation service."""
         self.negotiation_service = negotiation_service or NegotiationService()
 
@@ -49,19 +51,23 @@ class StrategyService:
             Result containing strategy or error
         """
         if not parties:
-            return Err(NegotiationError(
-                message="At least one party required for strategy development",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message="At least one party required for strategy development",
+                    recoverable=True,
+                )
+            )
 
         valid_focuses = ["balanced", "aggressive", "conservative", "collaborative"]
         if strategy_focus not in valid_focuses:
-            return Err(ValidationError(
-                message=f"Invalid strategy focus. Must be one of: {valid_focuses}",
-                field="strategy_focus",
-                field_value=strategy_focus,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Invalid strategy focus. Must be one of: {valid_focuses}",
+                    field="strategy_focus",
+                    field_value=strategy_focus,
+                    recoverable=True,
+                )
+            )
 
         try:
             # Get base strategy from domain service
@@ -86,15 +92,19 @@ class StrategyService:
                 "risk_mitigation": enhanced_strategy["risk_mitigation"],
                 "success_metrics": enhanced_strategy["success_metrics"],
                 "timeline": enhanced_strategy["timeline"],
-                "party_specific_strategies": enhanced_strategy["party_specific_strategies"],
+                "party_specific_strategies": enhanced_strategy[
+                    "party_specific_strategies"
+                ],
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to develop strategy: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to develop strategy: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def recommend_tactics_for_phase(
         self,
@@ -114,22 +124,30 @@ class StrategyService:
             Result containing tactics or error
         """
         if not parties:
-            return Err(NegotiationError(
-                message="At least one party required",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message="At least one party required",
+                    recoverable=True,
+                )
+            )
 
         valid_phases = [
-            "preparation", "opening", "bargaining", "closing", 
-            "implementation", "relationship_building"
+            "preparation",
+            "opening",
+            "bargaining",
+            "closing",
+            "implementation",
+            "relationship_building",
         ]
         if current_phase not in valid_phases:
-            return Err(ValidationError(
-                message=f"Invalid phase. Must be one of: {valid_phases}",
-                field="current_phase",
-                field_value=current_phase,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Invalid phase. Must be one of: {valid_phases}",
+                    field="current_phase",
+                    field_value=current_phase,
+                    recoverable=True,
+                )
+            )
 
         try:
             tactics = self._generate_phase_tactics(parties, current_phase, objectives)
@@ -144,10 +162,12 @@ class StrategyService:
 
             return Ok(result)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to recommend tactics: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to recommend tactics: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def analyze_power_dynamics(
         self,
@@ -165,10 +185,12 @@ class StrategyService:
             Result containing power analysis or error
         """
         if not parties:
-            return Err(NegotiationError(
-                message="At least one party required for power analysis",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message="At least one party required for power analysis",
+                    recoverable=True,
+                )
+            )
 
         try:
             power_distribution: Dict[str, Any] = {}
@@ -194,7 +216,9 @@ class StrategyService:
                     dominant_party = party
 
             # Calculate balance
-            powers = [p.get_negotiation_power(negotiation_domain or "") for p in parties]
+            powers = [
+                p.get_negotiation_power(negotiation_domain or "") for p in parties
+            ]
             if powers and max(powers) > 0:
                 imbalance = (max(powers) - min(powers)) / max(powers)
             else:
@@ -208,17 +232,21 @@ class StrategyService:
                     "party_id": str(dominant_party.party_id),
                     "party_name": dominant_party.party_name,
                     "power_score": float(max_power),
-                } if dominant_party else None,
+                }
+                if dominant_party
+                else None,
                 "imbalance_score": float(imbalance),
                 "balance_assessment": self._assess_balance(imbalance),
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to analyze power dynamics: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to analyze power dynamics: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def create_negotiation_plan(
         self,
@@ -240,25 +268,31 @@ class StrategyService:
             Result containing negotiation plan or error
         """
         if not parties:
-            return Err(NegotiationError(
-                message="At least one party required for plan creation",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message="At least one party required for plan creation",
+                    recoverable=True,
+                )
+            )
 
         if not objectives:
-            return Err(ValidationError(
-                message="At least one objective required",
-                field="objectives",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one objective required",
+                    field="objectives",
+                    recoverable=True,
+                )
+            )
 
         if timeline_days < 1:
-            return Err(ValidationError(
-                message="Timeline must be at least 1 day",
-                field="timeline_days",
-                field_value=timeline_days,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Timeline must be at least 1 day",
+                    field="timeline_days",
+                    field_value=timeline_days,
+                    recoverable=True,
+                )
+            )
 
         try:
             # Generate phases
@@ -283,10 +317,12 @@ class StrategyService:
 
             return Ok(result)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to create negotiation plan: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to create negotiation plan: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def _enhance_strategy(
         self,
@@ -349,7 +385,8 @@ class StrategyService:
 
         # Add party-specific tactics
         analytical_parties = [
-            p for p in parties 
+            p
+            for p in parties
             if p.preferences.communication_preference.value == "analytical"
         ]
         if analytical_parties:
@@ -395,13 +432,13 @@ class StrategyService:
 
         for party in parties:
             party_resp: List[str] = []
-            
+
             if party.is_decision_maker:
                 party_resp.append("Final decision making")
-            
+
             if party.authority_level.value in ["high", "executive"]:
                 party_resp.append("Policy approval")
-            
+
             responsibilities[str(party.party_id)] = party_resp
 
         return responsibilities
@@ -413,11 +450,13 @@ class StrategyService:
 
         for phase in phases:
             cumulative_days += phase["duration_days"]
-            milestones.append({
-                "name": f"Complete {phase['name']}",
-                "target_day": cumulative_days,
-                "phase": phase["name"],
-            })
+            milestones.append(
+                {
+                    "name": f"Complete {phase['name']}",
+                    "target_day": cumulative_days,
+                    "phase": phase["name"],
+                }
+            )
 
         return milestones
 
@@ -439,8 +478,7 @@ class StrategyService:
         risks: List[str] = []
 
         competitive_count = sum(
-            1 for p in parties 
-            if p.preferences.negotiation_style.value == "competitive"
+            1 for p in parties if p.preferences.negotiation_style.value == "competitive"
         )
         if competitive_count > len(parties) // 2:
             risks.append("Competitive style majority")

@@ -99,6 +99,7 @@ def create_reranker(
     elif reranker_type == RerankerType.MOCK:
         # Import here to avoid circular dependency
         from ...application.services.rerank_service import MockReranker
+
         return MockReranker(**kwargs)
     elif reranker_type == RerankerType.NOOP:
         return NoOpReranker(**kwargs)
@@ -158,9 +159,11 @@ class CohereReranker:
         Raises:
             ValueError: If API key is not provided and not in environment
         """
-        self._model: str = model or os.getenv(
-            "COHERE_RERANK_MODEL", DEFAULT_COHERE_MODEL
-        ) or DEFAULT_COHERE_MODEL
+        self._model: str = (
+            model
+            or os.getenv("COHERE_RERANK_MODEL", DEFAULT_COHERE_MODEL)
+            or DEFAULT_COHERE_MODEL
+        )
         self._api_key = api_key or os.getenv("COHERE_API_KEY", "")
 
         if not self._api_key:
@@ -409,9 +412,11 @@ class LocalReranker:
             device: Device for inference (cpu/cuda, defaults to cpu)
             cache_dir: Optional cache directory for model files
         """
-        self._model_name: str = model or os.getenv(
-            "LOCAL_RERANK_MODEL", DEFAULT_LOCAL_MODEL
-        ) or DEFAULT_LOCAL_MODEL
+        self._model_name: str = (
+            model
+            or os.getenv("LOCAL_RERANK_MODEL", DEFAULT_LOCAL_MODEL)
+            or DEFAULT_LOCAL_MODEL
+        )
         self._device: str = device or os.getenv("LOCAL_RERANK_DEVICE", "cpu") or "cpu"
         self._cache_dir = cache_dir
         self._model: Any = None  # Lazy loaded

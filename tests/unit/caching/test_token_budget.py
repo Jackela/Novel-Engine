@@ -116,7 +116,9 @@ class TestAddBudgetLimit:
     def test_add_multiple_limits(self) -> None:
         """Test adding multiple budget limits."""
         manager = TokenBudgetManager()
-        manager.add_budget_limit(BudgetLimit(period=BudgetPeriod.HOURLY, max_tokens=100))
+        manager.add_budget_limit(
+            BudgetLimit(period=BudgetPeriod.HOURLY, max_tokens=100)
+        )
         manager.add_budget_limit(BudgetLimit(period=BudgetPeriod.DAILY, max_cost=10.0))
         report = manager.get_usage_report(BudgetPeriod.DAILY)
         assert len(report["limits"]) == 2
@@ -169,7 +171,10 @@ class TestEstimateOperationCost:
             completion_tokens_estimate=10,
         )
         # Different models should have different costs
-        assert result_gpt35["estimated_total_cost"] != result_fallback["estimated_total_cost"]
+        assert (
+            result_gpt35["estimated_total_cost"]
+            != result_fallback["estimated_total_cost"]
+        )
 
 
 class TestCheckBudgetApproval:
@@ -178,7 +183,9 @@ class TestCheckBudgetApproval:
     def test_approval_within_budget(self) -> None:
         """Test approval when within budget."""
         manager = TokenBudgetManager()
-        manager.add_budget_limit(BudgetLimit(period=BudgetPeriod.DAILY, max_tokens=10000))
+        manager.add_budget_limit(
+            BudgetLimit(period=BudgetPeriod.DAILY, max_tokens=10000)
+        )
         result = manager.check_budget_approval(
             operation_type=OperationType.CHAT_COMPLETION,
             estimated_tokens=100,
@@ -366,7 +373,7 @@ class TestPersistence:
         """Test saving and loading usage data."""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "budget.json"
-            
+
             # Create and populate manager
             config = TokenBudgetConfig(persistence_file=file_path)
             manager1 = TokenBudgetManager(config)
@@ -380,7 +387,7 @@ class TestPersistence:
                 success=True,
             )
             manager1.save_usage_data()
-            
+
             # Load in new manager
             manager2 = TokenBudgetManager(config)
             report = manager2.get_usage_report(BudgetPeriod.DAILY)
@@ -417,7 +424,12 @@ class TestPersistence:
         """Test loading with missing file."""
         config = TokenBudgetConfig(persistence_file=Path("/nonexistent/file.json"))
         manager = TokenBudgetManager(config)  # Should not raise
-        assert manager.get_usage_report(BudgetPeriod.DAILY)["summary_metrics"]["total_operations"] == 0
+        assert (
+            manager.get_usage_report(BudgetPeriod.DAILY)["summary_metrics"][
+                "total_operations"
+            ]
+            == 0
+        )
 
     def test_load_invalid_json(self) -> None:
         """Test loading with invalid JSON."""
@@ -426,7 +438,12 @@ class TestPersistence:
             file_path.write_text("invalid json")
             config = TokenBudgetConfig(persistence_file=file_path)
             manager = TokenBudgetManager(config)  # Should not raise
-            assert manager.get_usage_report(BudgetPeriod.DAILY)["summary_metrics"]["total_operations"] == 0
+            assert (
+                manager.get_usage_report(BudgetPeriod.DAILY)["summary_metrics"][
+                    "total_operations"
+                ]
+                == 0
+            )
 
 
 class TestComputeCost:

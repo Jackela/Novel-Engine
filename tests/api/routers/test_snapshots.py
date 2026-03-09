@@ -204,9 +204,7 @@ class TestRestoreSnapshot:
         snapshot_id = create_response.json()["snapshot_id"]
 
         # Restore snapshot
-        response = client.post(
-            f"/api/world/test-world/snapshots/{snapshot_id}/restore"
-        )
+        response = client.post(f"/api/world/test-world/snapshots/{snapshot_id}/restore")
 
         assert response.status_code == 200
         data = response.json()

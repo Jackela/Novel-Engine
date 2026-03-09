@@ -188,10 +188,7 @@ class DirectorAgent:
                 try:
                     brief_loader = CampaignBriefLoader(self.campaign_brief_path)
                     self.campaign_brief = brief_loader.load_campaign_brief()
-                    logger.info(
-                    "campaign_brief_loaded",
-                    path=self.campaign_brief_path
-                )
+                    logger.info("campaign_brief_loaded", path=self.campaign_brief_path)
                 except Exception as e:
                     logger.warning("failed_to_load_campaign_brief", error=str(e))
 
@@ -271,8 +268,7 @@ class DirectorAgent:
         success = self.base.register_agent(agent)
         if success:
             logger.info(
-                "agent_registered",
-                agent_id=getattr(agent, "agent_id", "unknown")
+                "agent_registered", agent_id=getattr(agent, "agent_id", "unknown")
             )
             return True
 
@@ -423,7 +419,9 @@ class DirectorAgent:
                     )
                     self._adjudicate_action(heartbeat_action, primary_agent)
                 except Exception as validation_error:
-                    logger.debug("heartbeat_adjudication_failed", error=str(validation_error))
+                    logger.debug(
+                        "heartbeat_adjudication_failed", error=str(validation_error)
+                    )
 
             return turn_result
 
@@ -867,10 +865,10 @@ class DirectorAgent:
                     self._adjudicate_action(proposed_action, agent)
                 except Exception as validation_error:
                     logger.warning(
-                    "global_adjudication_failed",
-                    agent_id=agent.agent_id,
-                    error=str(validation_error)
-                )
+                        "global_adjudication_failed",
+                        agent_id=agent.agent_id,
+                        error=str(validation_error),
+                    )
                     self._record_turn_error(str(validation_error))
 
         except Exception as e:
@@ -998,7 +996,12 @@ class DirectorAgent:
                 faction=faction,
                 position=Position(x=0.0, y=0.0, z=0.0),
                 stats=CharacterStats(
-                    strength=5, dexterity=5, intelligence=5, willpower=5, perception=5, charisma=5
+                    strength=5,
+                    dexterity=5,
+                    intelligence=5,
+                    willpower=5,
+                    perception=5,
+                    charisma=5,
                 ),
                 resources=CharacterResources(
                     health=ResourceValue(current=100, maximum=100),

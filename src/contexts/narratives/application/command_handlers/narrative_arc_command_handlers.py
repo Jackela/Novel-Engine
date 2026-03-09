@@ -125,6 +125,7 @@ class NarrativeArcCommandHandler:
         """Handle narrative arc updates."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -161,6 +162,7 @@ class NarrativeArcCommandHandler:
         """Handle plot point addition."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -179,8 +181,12 @@ class NarrativeArcCommandHandler:
                 emotional_intensity=command.emotional_intensity,
                 dramatic_tension=command.dramatic_tension,
                 story_significance=command.story_significance,
-                involved_characters=frozenset(involved_chars) if involved_chars else None,
-                prerequisite_events=list(command.prerequisite_events) if command.prerequisite_events else None,
+                involved_characters=frozenset(involved_chars)
+                if involved_chars
+                else None,
+                prerequisite_events=list(command.prerequisite_events)
+                if command.prerequisite_events
+                else None,
                 tags=frozenset(command.tags) if command.tags else None,
             )
 
@@ -208,6 +214,7 @@ class NarrativeArcCommandHandler:
         """Handle plot point updates."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -273,6 +280,7 @@ class NarrativeArcCommandHandler:
         """Handle plot point removal."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -302,6 +310,7 @@ class NarrativeArcCommandHandler:
         """Handle theme addition."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -338,6 +347,7 @@ class NarrativeArcCommandHandler:
         """Handle theme development."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -360,6 +370,7 @@ class NarrativeArcCommandHandler:
         """Handle pacing segment addition."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -397,6 +408,7 @@ class NarrativeArcCommandHandler:
         """Handle narrative context addition."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -408,6 +420,7 @@ class NarrativeArcCommandHandler:
                 ContextScope,
                 ContextType,
             )
+
             ctx_type = command.context_type
             if isinstance(ctx_type, str):
                 ctx_type = ContextType(ctx_type)
@@ -438,6 +451,7 @@ class NarrativeArcCommandHandler:
         """Handle context activation."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -460,6 +474,7 @@ class NarrativeArcCommandHandler:
         """Handle context deactivation."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -482,6 +497,7 @@ class NarrativeArcCommandHandler:
         """Handle character addition to arc."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -514,6 +530,7 @@ class NarrativeArcCommandHandler:
         """Handle narrative arc start."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -538,6 +555,7 @@ class NarrativeArcCommandHandler:
         """Handle narrative arc completion."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -562,6 +580,7 @@ class NarrativeArcCommandHandler:
         """Handle narrative flow analysis."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -597,6 +616,7 @@ class NarrativeArcCommandHandler:
         """Handle sequence optimization."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -626,6 +646,7 @@ class NarrativeArcCommandHandler:
         """Handle causal link establishment."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -683,6 +704,7 @@ class NarrativeArcCommandHandler:
         """Handle causality analysis."""
         try:
             from uuid import UUID
+
             arc_id = command.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)

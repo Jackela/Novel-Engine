@@ -568,6 +568,7 @@ class TestResultPattern:
     def test_result_and_then(self):
         """Test Result and_then method."""
         from src.core.result import Ok
+
         counter = TokenCounter()
         result = counter.count("Hello")
         chained = result.and_then(lambda r: Ok(r.token_count))

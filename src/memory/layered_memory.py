@@ -577,7 +577,9 @@ class LayeredMemorySystem:
 
         return insights
 
-    def _update_performance_metrics(self, query_duration_ms: float, _result_count: int) -> None:
+    def _update_performance_metrics(
+        self, query_duration_ms: float, _result_count: int
+    ) -> None:
         """Updates performance metrics after a query."""
         total = self.total_queries
         avg_time = self.performance_metrics["average_query_time"]

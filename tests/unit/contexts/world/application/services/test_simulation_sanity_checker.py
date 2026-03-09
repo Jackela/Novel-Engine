@@ -33,6 +33,7 @@ pytestmark = pytest.mark.unit
 @dataclass
 class MockCharacterID:
     """Mock CharacterID for testing."""
+
     value: str
 
     def __str__(self) -> str:
@@ -42,12 +43,14 @@ class MockCharacterID:
 @dataclass
 class MockProfile:
     """Mock CharacterProfile for testing."""
+
     name: str
 
 
 @dataclass
 class MockCharacter:
     """Mock Character for testing."""
+
     character_id: MockCharacterID
     profile: MockProfile
     is_deceased: bool = False
@@ -57,6 +60,7 @@ class MockCharacter:
 @dataclass
 class MockFactionRelation:
     """Mock FactionRelation for testing."""
+
     target_faction_id: str
     strength: int = 0
 
@@ -64,6 +68,7 @@ class MockFactionRelation:
 @dataclass
 class MockFaction:
     """Mock Faction for testing."""
+
     id: str
     name: str
     influence: int = 50
@@ -74,6 +79,7 @@ class MockFaction:
 @dataclass
 class MockLocation:
     """Mock Location for testing."""
+
     id: str
     name: str
     parent_location_id: Optional[str] = None
@@ -289,7 +295,9 @@ class TestDeadCharacterHasLocation:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "dead_character_has_location"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "dead_character_has_location"
+        ]
         assert len(violations) == 0
 
     def test_no_violation_when_dead_no_location(
@@ -310,7 +318,9 @@ class TestDeadCharacterHasLocation:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "dead_character_has_location"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "dead_character_has_location"
+        ]
         assert len(violations) == 0
 
     def test_violation_when_dead_with_location(
@@ -331,7 +341,9 @@ class TestDeadCharacterHasLocation:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "dead_character_has_location"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "dead_character_has_location"
+        ]
         assert len(violations) == 1
         assert violations[0].severity == Severity.ERROR
         assert "char-1" in violations[0].affected_ids
@@ -360,7 +372,9 @@ class TestDeadCharacterHasLocation:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "dead_character_has_location"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "dead_character_has_location"
+        ]
         assert len(violations) == 2
 
 
@@ -390,7 +404,11 @@ class TestFactionNoInfluenceHasTerritories:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "faction_no_influence_has_territories"]
+        violations = [
+            v
+            for v in result.unwrap()
+            if v.rule_name == "faction_no_influence_has_territories"
+        ]
         assert len(violations) == 0
 
     def test_no_violation_when_no_influence_no_territories(
@@ -411,7 +429,11 @@ class TestFactionNoInfluenceHasTerritories:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "faction_no_influence_has_territories"]
+        violations = [
+            v
+            for v in result.unwrap()
+            if v.rule_name == "faction_no_influence_has_territories"
+        ]
         assert len(violations) == 0
 
     def test_violation_when_no_influence_has_territories(
@@ -432,7 +454,11 @@ class TestFactionNoInfluenceHasTerritories:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "faction_no_influence_has_territories"]
+        violations = [
+            v
+            for v in result.unwrap()
+            if v.rule_name == "faction_no_influence_has_territories"
+        ]
         assert len(violations) == 1
         assert violations[0].severity == Severity.WARNING
 
@@ -460,7 +486,11 @@ class TestFactionNoInfluenceHasTerritories:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "faction_no_influence_has_territories"]
+        violations = [
+            v
+            for v in result.unwrap()
+            if v.rule_name == "faction_no_influence_has_territories"
+        ]
         assert len(violations) == 2
 
 
@@ -486,7 +516,9 @@ class TestCircularLocationHierarchy:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"
+        ]
         assert len(violations) == 0
 
     def test_no_violation_when_valid_hierarchy(
@@ -504,7 +536,9 @@ class TestCircularLocationHierarchy:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"
+        ]
         assert len(violations) == 0
 
     def test_violation_when_direct_cycle(
@@ -521,7 +555,9 @@ class TestCircularLocationHierarchy:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"
+        ]
         assert len(violations) == 1
         assert violations[0].severity == Severity.ERROR
 
@@ -538,7 +574,9 @@ class TestCircularLocationHierarchy:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"
+        ]
         assert len(violations) == 1
 
     def test_violation_when_longer_cycle(
@@ -556,7 +594,9 @@ class TestCircularLocationHierarchy:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "circular_location_hierarchy"
+        ]
         assert len(violations) == 1
 
 
@@ -672,7 +712,9 @@ class TestDuplicateFactionRelations:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"
+        ]
         assert len(violations) == 0
 
     def test_no_violation_when_no_relations(
@@ -692,7 +734,9 @@ class TestDuplicateFactionRelations:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"
+        ]
         assert len(violations) == 0
 
     def test_violation_when_duplicate_relations(
@@ -715,7 +759,9 @@ class TestDuplicateFactionRelations:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"
+        ]
         assert len(violations) == 1
         assert violations[0].severity == Severity.ERROR
 
@@ -741,7 +787,9 @@ class TestDuplicateFactionRelations:
         result = checker.check()
 
         assert result.is_ok
-        violations = [v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"]
+        violations = [
+            v for v in result.unwrap() if v.rule_name == "duplicate_faction_relations"
+        ]
         assert len(violations) == 1
         # Should report both duplicate targets
         assert "faction-2" in violations[0].message
@@ -893,7 +941,9 @@ class TestSetEntities:
             MockLocation(id="loc-1", name="Test"),
         ]
 
-        checker.set_entities(characters=characters, factions=factions, locations=locations)
+        checker.set_entities(
+            characters=characters, factions=factions, locations=locations
+        )
 
         assert checker._characters == characters
         assert checker._factions == factions
@@ -951,7 +1001,9 @@ class TestCombinedScenarios:
         locations = [
             MockLocation(id="loc-1", name="Cycle", parent_location_id="loc-1"),
         ]
-        checker.set_entities(characters=characters, factions=factions, locations=locations)
+        checker.set_entities(
+            characters=characters, factions=factions, locations=locations
+        )
 
         result = checker.check()
 

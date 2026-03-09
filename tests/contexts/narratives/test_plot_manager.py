@@ -20,7 +20,6 @@ from src.contexts.narratives.domain.value_objects import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestPacingManagerInitialization:
     """测试PacingManager初始化"""
 
@@ -212,7 +211,11 @@ class TestIntensityModifiers:
     def test_default_phases_intensity_modifier_zero(self):
         """测试默认阶段强度修改器为零"""
         manager = PacingManager()
-        for phase in [StoryArcPhase.EXPOSITION, StoryArcPhase.RISING_ACTION, StoryArcPhase.FALLING_ACTION]:
+        for phase in [
+            StoryArcPhase.EXPOSITION,
+            StoryArcPhase.RISING_ACTION,
+            StoryArcPhase.FALLING_ACTION,
+        ]:
             state = StoryArcState(
                 arc_id="test",
                 current_phase=phase,
@@ -384,7 +387,10 @@ class TestEdgeCases:
         manager = PacingManager()
         adjustment = manager.adjust_pacing(state=state)
         assert adjustment.turn_number == 0
-        assert adjustment.adjustment_id.endswith("-0-") or "-0-" in adjustment.adjustment_id
+        assert (
+            adjustment.adjustment_id.endswith("-0-")
+            or "-0-" in adjustment.adjustment_id
+        )
 
     def test_large_turn_number(self):
         """测试大回合数"""

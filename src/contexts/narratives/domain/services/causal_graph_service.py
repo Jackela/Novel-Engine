@@ -173,9 +173,13 @@ class CausalGraphService:
         cause_rels = cause_node.causal_relationships or {}
 
         if relationship_type == CausalRelationType.DIRECT_CAUSE:
-            object.__setattr__(cause_node, "direct_effects", cause_direct_effects | {effect_id})
+            object.__setattr__(
+                cause_node, "direct_effects", cause_direct_effects | {effect_id}
+            )
         else:
-            object.__setattr__(cause_node, "indirect_effects", cause_indirect_effects | {effect_id})
+            object.__setattr__(
+                cause_node, "indirect_effects", cause_indirect_effects | {effect_id}
+            )
 
         new_cause_rels = dict(cause_rels)
         new_cause_rels[effect_id] = {
@@ -193,9 +197,13 @@ class CausalGraphService:
         effect_rels = effect_node.causal_relationships or {}
 
         if relationship_type == CausalRelationType.DIRECT_CAUSE:
-            object.__setattr__(effect_node, "direct_causes", effect_direct_causes | {cause_id})
+            object.__setattr__(
+                effect_node, "direct_causes", effect_direct_causes | {cause_id}
+            )
         else:
-            object.__setattr__(effect_node, "indirect_causes", effect_indirect_causes | {cause_id})
+            object.__setattr__(
+                effect_node, "indirect_causes", effect_indirect_causes | {cause_id}
+            )
 
         new_effect_rels = dict(effect_rels)
         new_effect_rels[cause_id] = {
@@ -474,6 +482,7 @@ class CausalGraphService:
         feedback_loops: list[Any] = []
         visited: set[Any] = set()
         rec_stack: set[Any] = set()
+
         def dfs_cycle_detection(node_id: str, path: List[str]) -> None:
             visited.add(node_id)
             rec_stack.add(node_id)
@@ -644,7 +653,9 @@ class CausalGraphService:
                 continue
 
             # Check that causes come before effects temporally
-            causes = (node.direct_causes or frozenset()) | (node.indirect_causes or frozenset())
+            causes = (node.direct_causes or frozenset()) | (
+                node.indirect_causes or frozenset()
+            )
             for cause_id in causes:
                 if cause_id in self.nodes:
                     cause_node = self.nodes[cause_id]
@@ -795,7 +806,8 @@ class CausalGraphService:
             "consistency_score": float(analysis.consistency_score),
             "narrative_flow_score": float(analysis.narrative_flow_score),
             "total_relationships": sum(
-                len(node.direct_causes or frozenset()) + len(node.direct_effects or frozenset())
+                len(node.direct_causes or frozenset())
+                + len(node.direct_effects or frozenset())
                 for node in self.nodes.values()
             )
             // 2,

@@ -51,6 +51,7 @@ except ImportError:
     @dataclass
     class ActionTarget:  # type: ignore[no-redef]
         """Fallback ActionTarget for when shared types unavailable."""
+
         entity_id: str = ""
         entity_type: str = "character"
 
@@ -130,7 +131,7 @@ class AgentLifecycleManager:
 
         logger.info(
             "agent_lifecycle_manager_initialized",
-            iron_laws_enabled=self.validation_enabled
+            iron_laws_enabled=self.validation_enabled,
         )
 
     def adjudicate_agent_action(
@@ -160,7 +161,7 @@ class AgentLifecycleManager:
             logger.info(
                 "adjudicating_action",
                 action_id=proposed_action.action_id,
-                agent_id=agent_id
+                agent_id=agent_id,
             )
 
             if not self.validation_enabled:
@@ -208,7 +209,7 @@ class AgentLifecycleManager:
             logger.warning(
                 "action_has_violations",
                 action_id=proposed_action.action_id,
-                violation_count=len(violations)
+                violation_count=len(violations),
             )
 
             validated_action, repair_log = self._attempt_action_repairs(
@@ -217,7 +218,7 @@ class AgentLifecycleManager:
 
             if validated_action is not None:
                 # Check validation result
-                result = getattr(validated_action, 'validation_result', None)
+                result = getattr(validated_action, "validation_result", None)
                 if result == ValidationResult.VALID:
                     # Repairs successful
                     self.successful_repairs_count += 1
@@ -528,7 +529,7 @@ class AgentLifecycleManager:
                 logger.info(
                     "action_repaired",
                     action_id=proposed_action.action_id,
-                    repair_count=len(repair_log)
+                    repair_count=len(repair_log),
                 )
                 return validated_action, repair_log
             else:
@@ -544,7 +545,7 @@ class AgentLifecycleManager:
             logger.error(
                 "repair_system_failure",
                 action_id=proposed_action.action_id,
-                error=str(e)
+                error=str(e),
             )
             repair_log.append(f"Repair system error: {str(e)}")
             return None, repair_log
@@ -669,23 +670,27 @@ class AgentLifecycleManager:
         parameters = getattr(proposed_action, "parameters", None)
         target = getattr(proposed_action, "target", None)
         action_type = getattr(proposed_action, "action_type", "unknown")
-        
+
         # Handle Pydantic types when Iron Laws available
         if IRON_LAWS_AVAILABLE:
             # Convert action_type string to ActionType enum
             if isinstance(action_type, str):
                 try:
-                    action_type = ActionType(action_type.lower()) if action_type else ActionType.OTHER
+                    action_type = (
+                        ActionType(action_type.lower())
+                        if action_type
+                        else ActionType.OTHER
+                    )
                 except (ValueError, AttributeError):
                     action_type = ActionType.OTHER
-            
+
             # Convert target string to ActionTarget or None
             if isinstance(target, str):
                 target = ActionTarget(entity_id=target, entity_type="character")
             # If target is not an ActionTarget, set to None for compatibility
-            elif target is not None and not hasattr(target, 'entity_id'):
+            elif target is not None and not hasattr(target, "entity_id"):
                 target = None
-        
+
         return ValidatedAction(
             action_id=getattr(proposed_action, "action_id", "unknown"),
             character_id=getattr(proposed_action, "character_id", "unknown"),
@@ -705,23 +710,27 @@ class AgentLifecycleManager:
         parameters = getattr(proposed_action, "parameters", None)
         target = getattr(proposed_action, "target", None)
         action_type = getattr(proposed_action, "action_type", "unknown")
-        
+
         # Handle Pydantic types when Iron Laws available
         if IRON_LAWS_AVAILABLE:
             # Convert action_type string to ActionType enum
             if isinstance(action_type, str):
                 try:
-                    action_type = ActionType(action_type.lower()) if action_type else ActionType.OTHER
+                    action_type = (
+                        ActionType(action_type.lower())
+                        if action_type
+                        else ActionType.OTHER
+                    )
                 except (ValueError, AttributeError):
                     action_type = ActionType.OTHER
-            
+
             # Convert target string to ActionTarget or None
             if isinstance(target, str):
                 target = ActionTarget(entity_id=target, entity_type="character")
             # If target is not an ActionTarget, set to None for compatibility
-            elif target is not None and not hasattr(target, 'entity_id'):
+            elif target is not None and not hasattr(target, "entity_id"):
                 target = None
-        
+
         return ValidatedAction(
             action_id=getattr(proposed_action, "action_id", "unknown"),
             character_id=getattr(proposed_action, "character_id", "unknown"),

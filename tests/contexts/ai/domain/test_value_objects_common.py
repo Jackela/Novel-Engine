@@ -22,7 +22,6 @@ from src.contexts.ai.domain.value_objects.common import (
 pytestmark = pytest.mark.unit
 
 
-
 # ============================================================================
 # Unit Tests (20 tests)
 # ============================================================================
@@ -113,7 +112,9 @@ class TestProviderId:
 
     def test_provider_validation_api_version(self):
         """Test API version validation."""
-        with pytest.raises(ValueError, match="api_version must follow semantic versioning"):
+        with pytest.raises(
+            ValueError, match="api_version must follow semantic versioning"
+        ):
             ProviderId(
                 provider_name="Test",
                 provider_type=ProviderType.CUSTOM,
@@ -206,7 +207,9 @@ class TestModelId:
     def test_model_validation_token_limits(self):
         """Test token limit validation."""
         provider = ProviderId.create_openai()
-        with pytest.raises(ValueError, match="max_context_tokens must be a positive integer"):
+        with pytest.raises(
+            ValueError, match="max_context_tokens must be a positive integer"
+        ):
             ModelId(
                 model_name="test",
                 provider_id=provider,
@@ -216,7 +219,9 @@ class TestModelId:
     def test_model_validation_output_exceeds_context(self):
         """Test output tokens exceeding context validation."""
         provider = ProviderId.create_openai()
-        with pytest.raises(ValueError, match="max_output_tokens cannot exceed max_context_tokens"):
+        with pytest.raises(
+            ValueError, match="max_output_tokens cannot exceed max_context_tokens"
+        ):
             ModelId(
                 model_name="test",
                 provider_id=provider,
@@ -227,7 +232,9 @@ class TestModelId:
     def test_model_validation_cost_negative(self):
         """Test negative cost validation."""
         provider = ProviderId.create_openai()
-        with pytest.raises(ValueError, match="cost_per_input_token must be a non-negative"):
+        with pytest.raises(
+            ValueError, match="cost_per_input_token must be a non-negative"
+        ):
             ModelId(
                 model_name="test",
                 provider_id=provider,
@@ -366,7 +373,7 @@ class TestProviderModelIntegration:
         """Test model capabilities with provider context."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         capabilities = model.capabilities
         assert ModelCapability.TEXT_GENERATION in capabilities
         assert model.supports_capability(ModelCapability.CONVERSATION)
@@ -375,10 +382,12 @@ class TestProviderModelIntegration:
         """Test cost estimation with provider context."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         # GPT-4 costs: input $0.00003, output $0.00006 per token
         cost = model.estimate_cost(1000, 500)
-        expected = Decimal("1000") * Decimal("0.00003") + Decimal("500") * Decimal("0.00006")
+        expected = Decimal("1000") * Decimal("0.00003") + Decimal("500") * Decimal(
+            "0.00006"
+        )
         assert cost == expected
 
 
@@ -389,11 +398,11 @@ class TestTokenBudgetIntegration:
     def test_budget_flow_reserve_consume(self):
         """Test full budget flow: reserve then consume."""
         budget = TokenBudget.create_daily_budget("test", 1000)
-        
+
         # Reserve tokens
         budget = budget.reserve_tokens(300)
         assert budget.get_available_tokens() == 700
-        
+
         # Consume some reserved tokens
         budget = budget.consume_tokens(200, Decimal("2.00"))
         assert budget.consumed_tokens == 200
@@ -403,20 +412,20 @@ class TestTokenBudgetIntegration:
         """Test budget with model token usage."""
         provider = ProviderId.create_openai()
         model = ModelId.create_gpt4(provider)
-        
+
         budget = TokenBudget.create_daily_budget("ai_budget", 10000)
-        
+
         # Simulate using model
         input_tokens = 500
         output_tokens = 200
         cost = model.estimate_cost(input_tokens, output_tokens)
-        
+
         total_tokens = input_tokens + output_tokens
         assert budget.can_reserve_tokens(total_tokens)
-        
+
         new_budget = budget.reserve_tokens(total_tokens)
         new_budget = new_budget.consume_tokens(total_tokens, cost)
-        
+
         assert new_budget.consumed_tokens == total_tokens
 
 

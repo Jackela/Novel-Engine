@@ -27,7 +27,6 @@ SHARED_TYPES_AVAILABLE = (
 )
 
 if not SHARED_TYPES_AVAILABLE:
-
     logging.warning("Shared types not available, using fallback hashing.")
 
 
@@ -126,19 +125,15 @@ class StateHasher:
         """Converts data to a JSON-serializable format."""
 
         if isinstance(data, (datetime, Path)):
-
             return str(data)
 
         if isinstance(data, dict):
-
             return {k: self._make_json_serializable(v) for k, v in data.items()}
 
         if isinstance(data, list):
-
             return [self._make_json_serializable(v) for v in data]
 
         if hasattr(data, "to_dict"):
-
             return data.to_dict()
 
         return data
@@ -161,7 +156,6 @@ class StateHasher:
         )
 
         if self.config.cache_intermediate_results:
-
             self.hash_cache[f"{component_type}_{component_id or 'singleton'}"] = (
                 state_hash
             )

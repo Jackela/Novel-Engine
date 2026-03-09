@@ -78,7 +78,11 @@ def initialize_decision_system(
     Initialize the decision system with required components.
     Called by api_server.py during startup.
     """
-    global _pause_controller, _decision_detector, _negotiation_engine, _broadcast_sse_event
+    global \
+        _pause_controller, \
+        _decision_detector, \
+        _negotiation_engine, \
+        _broadcast_sse_event
 
     _pause_controller = pause_controller
     _decision_detector = decision_detector

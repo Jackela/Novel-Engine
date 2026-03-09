@@ -36,9 +36,7 @@ class AgentCoordinator:
             return self.agent_relationships[agent_a].get(agent_b, 0.0)
         return 0.0
 
-    def update_relationship(
-        self, agent_a: str, agent_b: str, change: float
-    ) -> float:
+    def update_relationship(self, agent_a: str, agent_b: str, change: float) -> float:
         """Update relationship between two agents.
 
         Args:
@@ -101,9 +99,7 @@ class AgentCoordinator:
         """Update communication performance metrics."""
         self.communication_metrics["total_communications"] += len(dialogue_results)
 
-        successful_dialogues = len(
-            [d for d in dialogue_results if d.get("success")]
-        )
+        successful_dialogues = len([d for d in dialogue_results if d.get("success")])
         self.communication_metrics["successful_dialogues"] += successful_dialogues
         self.communication_metrics["failed_dialogues"] += (
             len(dialogue_results) - successful_dialogues
@@ -124,7 +120,9 @@ class AgentCoordinator:
             )
 
     def identify_dialogue_opportunities(
-        self, active_dialogues: Dict[str, AgentDialogue], narrative_intelligence: Dict[str, Any]
+        self,
+        active_dialogues: Dict[str, AgentDialogue],
+        narrative_intelligence: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Identify opportunities for agent dialogue based on current state."""
         opportunities: List[Dict[str, Any]] = []

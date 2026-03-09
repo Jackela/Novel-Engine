@@ -593,5 +593,3 @@ class ModelLookupResult:
     def qualified_name(self) -> str:
         """Get the fully qualified model name."""
         return f"{self.provider.value}:{self.model_name}"
-
-

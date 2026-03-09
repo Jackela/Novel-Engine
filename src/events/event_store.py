@@ -41,7 +41,11 @@ class EventStore:
     def store_event(self, event: Event) -> None:
         """Store an event."""
         # Minimal implementation - just log for now
-        logger.info("event_storing", event_id=getattr(event, 'event_id', 'unknown'), event_type=getattr(event, 'event_type', 'unknown'))
+        logger.info(
+            "event_storing",
+            event_id=getattr(event, "event_id", "unknown"),
+            event_type=getattr(event, "event_type", "unknown"),
+        )
 
     def get_events(self, event_type: Optional[str] = None) -> List[Event]:
         """Retrieve events from store."""

@@ -514,7 +514,9 @@ class TestLLMWorldGeneratorIntegration:
         generator: LLMWorldGenerator,
     ) -> None:
         """Test that API errors return error result."""
-        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
+        mock_call.side_effect = RuntimeError(
+            "Gemini API error 500: Internal Server Error"
+        )
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             request = WorldGenerationInput()
@@ -890,7 +892,9 @@ class TestBeatSuggestionIntegration:
         generator: LLMWorldGenerator,
     ) -> None:
         """Test beat suggestion handles API errors gracefully."""
-        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
+        mock_call.side_effect = RuntimeError(
+            "Gemini API error 500: Internal Server Error"
+        )
 
         result = await generator.suggest_next_beats(
             current_beats=[],
@@ -1367,7 +1371,9 @@ class TestCritiqueIntegration:
         generator: LLMWorldGenerator,
     ) -> None:
         """Test scene critique handles API errors gracefully."""
-        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
+        mock_call.side_effect = RuntimeError(
+            "Gemini API error 500: Internal Server Error"
+        )
 
         result = generator.critique_scene(scene_text="Test scene.")
 
@@ -1674,7 +1680,9 @@ Generate dialogue for Alice."""
         base_prompt = "Original prompt"
 
         # Mock the logger to capture log calls
-        with patch("src.contexts.world.infrastructure.generators.llm_world_generator.logger") as mock_logger:
+        with patch(
+            "src.contexts.world.infrastructure.generators.llm_world_generator.logger"
+        ) as mock_logger:
             prompt, chunks, tokens = await gen._enrich_with_rag(
                 query="test query",
                 base_prompt=base_prompt,
@@ -1889,7 +1897,9 @@ Original system prompt"""
         with patch.object(
             gen, "_call_gemini", return_value='{"dialogue": "Test", "tone": "neutral"}'
         ):
-            with patch("src.contexts.world.infrastructure.generators.llm_world_generator.logger") as mock_log:
+            with patch(
+                "src.contexts.world.infrastructure.generators.llm_world_generator.logger"
+            ) as mock_log:
                 character = CharacterData(name="Alice", traits=["brave"])
 
                 await gen.generate_dialogue(

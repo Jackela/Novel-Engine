@@ -472,7 +472,9 @@ class TestGetHistoricalEvent:
         data = response.json()
         # Error response format varies - check for "detail" or "message" key
         error_text = data.get("detail", data.get("message", ""))
-        assert "not found" in error_text.lower() or "does not exist" in error_text.lower()
+        assert (
+            "not found" in error_text.lower() or "does not exist" in error_text.lower()
+        )
 
     def test_get_event_wrong_world(self, client):
         """Getting event from wrong world returns 404."""
@@ -523,13 +525,31 @@ class TestEventResponseFields:
 
         # Check all required fields
         required_fields = [
-            "id", "name", "description", "event_type", "significance",
-            "outcome", "date_description", "duration_description",
-            "location_ids", "faction_ids", "key_figures", "causes",
-            "consequences", "preceding_event_ids", "following_event_ids",
-            "related_event_ids", "is_secret", "sources", "narrative_importance",
-            "impact_scope", "affected_faction_ids", "affected_location_ids",
-            "structured_date", "created_at", "updated_at",
+            "id",
+            "name",
+            "description",
+            "event_type",
+            "significance",
+            "outcome",
+            "date_description",
+            "duration_description",
+            "location_ids",
+            "faction_ids",
+            "key_figures",
+            "causes",
+            "consequences",
+            "preceding_event_ids",
+            "following_event_ids",
+            "related_event_ids",
+            "is_secret",
+            "sources",
+            "narrative_importance",
+            "impact_scope",
+            "affected_faction_ids",
+            "affected_location_ids",
+            "structured_date",
+            "created_at",
+            "updated_at",
         ]
         for field in required_fields:
             assert field in data, f"Missing field: {field}"
@@ -537,12 +557,34 @@ class TestEventResponseFields:
     def test_response_event_types(self, client):
         """Test that various event types are accepted and returned."""
         event_types = [
-            "war", "battle", "treaty", "founding", "destruction",
-            "discovery", "invention", "coronation", "death", "birth",
-            "marriage", "revolution", "migration", "disaster", "miracle",
-            "prophecy", "conquest", "liberation", "alliance", "betrayal",
-            "religious", "cultural", "economic", "scientific", "magical",
-            "political", "trade", "natural",
+            "war",
+            "battle",
+            "treaty",
+            "founding",
+            "destruction",
+            "discovery",
+            "invention",
+            "coronation",
+            "death",
+            "birth",
+            "marriage",
+            "revolution",
+            "migration",
+            "disaster",
+            "miracle",
+            "prophecy",
+            "conquest",
+            "liberation",
+            "alliance",
+            "betrayal",
+            "religious",
+            "cultural",
+            "economic",
+            "scientific",
+            "magical",
+            "political",
+            "trade",
+            "natural",
         ]
 
         for i, event_type in enumerate(event_types):

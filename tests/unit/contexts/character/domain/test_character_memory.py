@@ -27,8 +27,6 @@ from src.contexts.character.domain.value_objects.character_memory import (
 )
 
 
-
-
 class TestCharacterMemoryValueObject:
     """Test suite for CharacterMemory value object."""
 

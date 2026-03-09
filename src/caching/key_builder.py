@@ -16,11 +16,11 @@ _BUCKET_TOKENS = 100
 
 def _bucket(value: float, size: float) -> float:
     """Bucket a float value to reduce cache key variation.
-    
+
     Args:
         value: The value to bucket
         size: Bucket size
-        
+
     Returns:
         Rounded bucket value
     """
@@ -29,10 +29,10 @@ def _bucket(value: float, size: float) -> float:
 
 def _bucket_tokens(value: int) -> int:
     """Bucket a token count to reduce cache key variation.
-    
+
     Args:
         value: Token count to bucket
-        
+
     Returns:
         Rounded bucket value in 100-token increments
     """
@@ -43,16 +43,16 @@ def _bucket_tokens(value: int) -> int:
 
 def build_exact(params: Dict[str, Any], prompt: str) -> str:
     """Build an exact-cache key incorporating prompt hash and config buckets.
-    
+
     Creates a unique key for exact-match caching by combining:
     - Character/session/model identifiers
     - Bucketed temperature, top_p, and max_tokens
     - SHA256 hash of the prompt
-    
+
     Args:
         params: Request parameters dictionary
         prompt: The prompt text
-        
+
     Returns:
         Cache key string for exact lookup
     """
@@ -76,14 +76,14 @@ def build_exact(params: Dict[str, Any], prompt: str) -> str:
 
 def build_semantic_bucket(params: Dict[str, Any]) -> str:
     """Build a semantic cache bucket key.
-    
+
     Similar to exact key but omits the prompt hash, allowing
     similar prompts to share cache entries within configuration
     boundaries.
-    
+
     Args:
         params: Request parameters dictionary
-        
+
     Returns:
         Cache bucket key for semantic lookup
     """
@@ -105,10 +105,10 @@ def build_semantic_bucket(params: Dict[str, Any]) -> str:
 
 def _normalize_params(params: Dict[str, Any]) -> Dict[str, Any]:
     """Normalize and bucket parameters for cache key construction.
-    
+
     Args:
         params: Raw request parameters
-        
+
     Returns:
         Normalized dictionary with bucketed numeric values
     """

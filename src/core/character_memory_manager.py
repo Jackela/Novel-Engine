@@ -214,14 +214,16 @@ class MemoryManager:
             - Err(ServiceError): If summary generation fails
         """
         try:
-            return Ok({
-                "short_term_count": len(self.short_term_memory),
-                "long_term_count": len(self.long_term_memory),
-                "working_memory_items": len(self.working_memory),
-                "entities_tracked": len(self.memory_by_entity),
-                "locations_known": len(self.memory_by_location),
-                "event_types_seen": len(self.memory_by_event_type),
-            })
+            return Ok(
+                {
+                    "short_term_count": len(self.short_term_memory),
+                    "long_term_count": len(self.long_term_memory),
+                    "working_memory_items": len(self.working_memory),
+                    "entities_tracked": len(self.memory_by_entity),
+                    "locations_known": len(self.memory_by_location),
+                    "event_types_seen": len(self.memory_by_event_type),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

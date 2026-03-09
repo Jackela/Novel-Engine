@@ -29,7 +29,13 @@ try:
 except ImportError:
     # Fallback for testing
     class StandardResponse:
-        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
+        def __init__(
+            self,
+            success: bool = True,
+            data: Any = None,
+            error: Any = None,
+            metadata: Any = None,
+        ) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
@@ -42,7 +48,9 @@ except ImportError:
             return getattr(self, key)
 
     class ErrorInfo:
-        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
+        def __init__(
+            self, code: str = "", message: str = "", recoverable: bool = True
+        ) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
@@ -131,7 +139,9 @@ class InteractionEngine:
         except Exception as e:
             self.logger.error(f"Engine initialization failed: {e}")
 
-    async def process_interaction(self, context: Any, async_processing: bool = False) -> Any:
+    async def process_interaction(
+        self, context: Any, async_processing: bool = False
+    ) -> Any:
         """Process a complete interaction through the modular engine."""
         try:
             if not self.is_initialized:
@@ -338,7 +348,10 @@ class InteractionEngine:
 
 
 def create_interaction_engine(
-    config: Any = None, memory_manager: Any = None, character_manager: Any = None, equipment_manager: Any = None
+    config: Any = None,
+    memory_manager: Any = None,
+    character_manager: Any = None,
+    equipment_manager: Any = None,
 ) -> Any:
     """Factory function to create interaction engine with optimal defaults."""
     if config is None:

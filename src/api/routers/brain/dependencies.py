@@ -26,7 +26,6 @@ from src.api.routers.brain.services.usage_broadcaster import (
 )
 
 if TYPE_CHECKING:
-
     from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
         KnowledgeIngestionService,
     )

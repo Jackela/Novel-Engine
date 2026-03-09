@@ -237,7 +237,7 @@ class CharacterAPI:
 
         @app.get("/api/characters/{character_id}", response_model=dict)
         async def get_character(
-            character_id: str = Path(..., description="Character ID")
+            character_id: str = Path(..., description="Character ID"),
         ):
             """Get detailed character information."""
             if not self.orchestrator:
@@ -320,7 +320,7 @@ class CharacterAPI:
 
         @app.delete("/api/characters/{character_id}", response_model=dict)
         async def delete_character(
-            character_id: str = Path(..., description="Character ID")
+            character_id: str = Path(..., description="Character ID"),
         ):
             """Delete a character."""
             if not self.orchestrator:

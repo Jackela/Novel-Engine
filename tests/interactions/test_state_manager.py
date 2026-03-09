@@ -36,7 +36,7 @@ class TestStateUpdate:
             change_amount=10.0,
             change_reason="Test interaction",
         )
-        
+
         assert update.agent_id == "agent1"
         assert update.state_type == "mood"
         assert update.old_value == 50
@@ -57,7 +57,7 @@ class TestMemoryUpdate:
             memory_type="episodic",
             significance=0.8,
         )
-        
+
         assert update.agent_id == "agent1"
         assert update.memory_item == memory_item
         assert update.memory_type == "episodic"
@@ -84,7 +84,7 @@ class TestStateManager:
     def test_initialization(self, config):
         """Test state manager initialization."""
         sm = StateManager(config)
-        
+
         assert sm.config == config
         assert sm.memory_manager is None
         assert sm.character_manager is None
@@ -94,7 +94,7 @@ class TestStateManager:
     def test_get_pending_updates_empty(self, state_manager):
         """Test getting pending updates when none exist."""
         updates = state_manager.get_pending_updates()
-        
+
         assert updates["all_state_updates"] == {}
         assert updates["all_memory_updates"] == {}
         assert updates["relationship_changes"] == {}
@@ -104,9 +104,9 @@ class TestStateManager:
         # Add some stats
         state_manager.state_update_stats["total_updates"] = 10
         state_manager.state_update_stats["successful_updates"] = 8
-        
+
         stats = state_manager.get_state_statistics()
-        
+
         assert stats["total_updates"] == 10
         assert stats["successful_updates"] == 8
 
@@ -131,11 +131,11 @@ class TestStateManagerCalculations:
             participants=["agent1", "agent2", "agent3"],
             location="arena",
         )
-        
+
         significance = state_manager._calculate_interaction_significance(
             context, {"success": True}
         )
-        
+
         assert 0 <= significance <= 1.0
 
     def test_calculate_base_relationship_change(self, state_manager):
@@ -143,11 +143,11 @@ class TestStateManagerCalculations:
         combat_change = state_manager._calculate_base_relationship_change(
             InteractionType.COMBAT, {"success": True}
         )
-        
+
         cooperation_change = state_manager._calculate_base_relationship_change(
             InteractionType.COOPERATION, {"success": True}
         )
-        
+
         assert isinstance(combat_change, float)
         assert isinstance(cooperation_change, float)
 
@@ -156,7 +156,7 @@ class TestStateManagerCalculations:
         change = state_manager._calculate_base_relationship_change(
             InteractionType.COOPERATION, {"success": False}
         )
-        
+
         assert isinstance(change, float)
 
 
@@ -182,6 +182,6 @@ class TestStateManagerEdgeCases:
             change_reason="Test",
             metadata={"source": "test", "version": 1},
         )
-        
+
         assert update.metadata["source"] == "test"
         assert update.metadata["version"] == 1

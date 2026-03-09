@@ -41,8 +41,6 @@ from src.contexts.character.domain.value_objects.character_stats import (
 from src.contexts.character.domain.value_objects.skills import Skills
 
 
-
-
 def _create_test_character(faction_id: str | None = None) -> Character:
     """Helper to create a valid character for testing."""
     profile = CharacterProfile(

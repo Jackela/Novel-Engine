@@ -494,7 +494,9 @@ class Turn:
                         turn_id=self.turn_id.turn_uuid,
                         failed_phase=phase_name,
                         compensation_type=compensation_type,
-                        rollback_data=cast(Dict[str, Any], self.rollback_snapshots.get(phase_name, {})),
+                        rollback_data=cast(
+                            Dict[str, Any], self.rollback_snapshots.get(phase_name, {})
+                        ),
                         affected_entities=self.configuration.participants,
                         metadata={
                             "original_failure": failed_phase.value,

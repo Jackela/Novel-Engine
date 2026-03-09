@@ -13,7 +13,7 @@ from . import MetricsPublisher, MetricsSnapshot
 @dataclass
 class _Counters:
     """Internal mutable counter storage.
-    
+
     Attributes:
         exact: Exact cache hit counter
         semantic: Semantic cache hit counter
@@ -26,6 +26,7 @@ class _Counters:
         saved_cost: Cost savings accumulator
         cache_size: Current cache entry count
     """
+
     exact: int = 0
     semantic: int = 0
     tool: int = 0
@@ -40,21 +41,21 @@ class _Counters:
 
 class InMemoryMetrics(MetricsPublisher):
     """In-memory implementation of MetricsPublisher.
-    
+
     Stores all counters in memory. Not suitable for multi-process
     deployments but efficient for single-process applications.
-    
+
     Note:
         Python's GIL ensures thread-safety for counter operations.
     """
-    
+
     def __init__(self) -> None:
         """Initialize in-memory metrics with zeroed counters."""
         self._c = _Counters()
 
     def record_hit(self, kind: str) -> None:
         """Record a cache hit by type.
-        
+
         Args:
             kind: One of 'exact', 'semantic', or 'tool'
         """
@@ -67,7 +68,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def record_eviction(self, count: int = 1) -> None:
         """Record cache eviction(s).
-        
+
         Args:
             count: Number of entries evicted
         """
@@ -75,7 +76,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def record_invalidation(self, count: int = 1) -> None:
         """Record cache invalidation(s).
-        
+
         Args:
             count: Number of entries invalidated
         """
@@ -83,7 +84,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def record_single_flight_merged(self, count: int = 1) -> None:
         """Record single-flight merged requests.
-        
+
         Args:
             count: Number of requests merged
         """
@@ -91,7 +92,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def record_replay_hit(self, count: int = 1) -> None:
         """Record SSE replay hits.
-        
+
         Args:
             count: Number of replay hits
         """
@@ -99,7 +100,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def record_savings(self, tokens: int, cost: float) -> None:
         """Record cost savings from caching.
-        
+
         Args:
             tokens: Tokens saved
             cost: Estimated cost saved
@@ -109,7 +110,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def set_cache_size(self, size: int) -> None:
         """Update current cache size metric.
-        
+
         Args:
             size: Current number of cache entries
         """
@@ -117,7 +118,7 @@ class InMemoryMetrics(MetricsPublisher):
 
     def snapshot(self) -> MetricsSnapshot:
         """Create a snapshot of current metrics.
-        
+
         Returns:
             MetricsSnapshot with all current counter values
         """

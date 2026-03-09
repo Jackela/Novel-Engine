@@ -17,6 +17,7 @@ from typing import Any, Dict, List
 
 class OperationType(str, Enum):
     """Types of operations that consume API tokens."""
+
     CHAT_COMPLETION = "chat_completion"
     EMBEDDING = "embedding"
     IMAGE_GENERATION = "image_generation"
@@ -24,6 +25,7 @@ class OperationType(str, Enum):
 
 class BudgetPeriod(str, Enum):
     """Time periods for budget limit windows."""
+
     HOURLY = "hourly"
     DAILY = "daily"
     MONTHLY = "monthly"
@@ -41,13 +43,14 @@ class BudgetPeriod(str, Enum):
 @dataclass
 class BudgetLimit:
     """A budget limit constraint for a specific time period.
-    
+
     Attributes:
         period: Time window for the limit
         max_tokens: Maximum tokens allowed (None = unlimited)
         max_cost: Maximum cost allowed (None = unlimited)
         max_operations: Maximum operations allowed (None = unlimited)
     """
+
     period: BudgetPeriod
     max_tokens: int | None = None
     max_cost: float | None = None
@@ -57,13 +60,14 @@ class BudgetLimit:
 @dataclass
 class TokenBudgetConfig:
     """Configuration for token budget management.
-    
+
     Attributes:
         enable_persistence: Whether to save/load usage data
         persistence_file: Path for usage data storage
         enable_cache_integration: Whether to integrate with caching
         enable_debug_logging: Whether to log debug messages
     """
+
     enable_persistence: bool = True
     persistence_file: Path | None = None
     enable_cache_integration: bool = True
@@ -73,7 +77,7 @@ class TokenBudgetConfig:
 @dataclass
 class _UsageRecord:
     """Internal record of an API operation.
-    
+
     Attributes:
         operation_id: Unique operation identifier
         operation_type: Type of operation performed
@@ -87,6 +91,7 @@ class _UsageRecord:
         created_ts: Unix timestamp of the operation
         context: Optional context string
     """
+
     operation_id: str
     operation_type: OperationType
     model_name: str
@@ -109,15 +114,15 @@ _FALLBACK_PRICING = {"prompt": 0.002, "completion": 0.0025}
 
 class TokenBudgetManager:
     """Manages token budgets and tracks API usage.
-    
+
     Provides cost estimation, budget checking, and usage reporting
     for LLM operations. Supports persistence and multiple concurrent
     budget limits.
     """
-    
+
     def __init__(self, config: TokenBudgetConfig | None = None) -> None:
         """Initialize the token budget manager.
-        
+
         Args:
             config: Configuration options (uses defaults if None)
         """
@@ -128,7 +133,7 @@ class TokenBudgetManager:
 
     def add_budget_limit(self, limit: BudgetLimit) -> None:
         """Add a budget limit constraint.
-        
+
         Args:
             limit: Budget limit to enforce
         """
@@ -142,13 +147,13 @@ class TokenBudgetManager:
         completion_tokens_estimate: int,
     ) -> Dict[str, float | bool | str]:
         """Estimate the cost of an operation before execution.
-        
+
         Args:
             operation_type: Type of operation
             prompt_text: The prompt text
             model_name: Model to use
             completion_tokens_estimate: Estimated completion tokens
-            
+
         Returns:
             Dictionary with cost estimates and budget check result
         """
@@ -175,13 +180,13 @@ class TokenBudgetManager:
         priority: str = "normal",
     ) -> Dict[str, str | bool]:
         """Check if an operation is within budget.
-        
+
         Args:
             operation_type: Type of operation
             estimated_tokens: Estimated token count
             estimated_cost: Estimated cost
             priority: Operation priority ('low', 'normal', 'high')
-            
+
         Returns:
             Dictionary with 'approved' boolean and 'reason' string
         """
@@ -206,7 +211,7 @@ class TokenBudgetManager:
         operation_context: str | None = None,
     ) -> bool:
         """Record an operation and update usage tracking.
-        
+
         Args:
             operation_id: Unique operation identifier
             operation_type: Type of operation
@@ -217,7 +222,7 @@ class TokenBudgetManager:
             success: Whether operation succeeded
             character_id: Associated character ID
             operation_context: Optional context
-            
+
         Returns:
             True if operation was within budget and recorded
         """
@@ -242,10 +247,10 @@ class TokenBudgetManager:
 
     def get_usage_report(self, period: BudgetPeriod) -> Dict[str, object]:
         """Generate a usage report for a time period.
-        
+
         Args:
             period: Time period for the report
-            
+
         Returns:
             Dictionary with summary metrics, operations by type, and limits
         """
@@ -280,7 +285,7 @@ class TokenBudgetManager:
 
     def optimize_costs(self) -> Dict[str, List[str]]:
         """Generate cost optimization recommendations.
-        
+
         Returns:
             Dictionary with list of recommendation strings
         """
@@ -324,11 +329,11 @@ class TokenBudgetManager:
 
     def _check_limits(self, tokens: int, cost: float) -> bool:
         """Check if usage is within all configured limits.
-        
+
         Args:
             tokens: Token count to check
             cost: Cost to check
-            
+
         Returns:
             True if within all limits
         """
@@ -347,10 +352,10 @@ class TokenBudgetManager:
 
     def _operations_in_period(self, period: BudgetPeriod) -> int:
         """Count operations within a time period.
-        
+
         Args:
             period: Time period to check
-            
+
         Returns:
             Number of operations in the period
         """
@@ -385,12 +390,12 @@ class TokenBudgetManager:
 
 def _compute_cost(model_name: str, prompt_tokens: int, completion_tokens: int) -> float:
     """Compute operation cost based on model pricing.
-    
+
     Args:
         model_name: Name of the model
         prompt_tokens: Number of prompt tokens
         completion_tokens: Number of completion tokens
-        
+
     Returns:
         Total cost in USD
     """

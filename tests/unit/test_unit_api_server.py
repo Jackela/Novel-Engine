@@ -140,9 +140,10 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("src.api.routers.characters.EventBus"), patch(
-                "src.api.routers.characters.CharacterFactory"
-            ) as mock_factory:
+            with (
+                patch("src.api.routers.characters.EventBus"),
+                patch("src.api.routers.characters.CharacterFactory") as mock_factory,
+            ):
                 # 模拟CharacterFactory失败，但仍应返回基础信息
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Factory error"
@@ -184,13 +185,12 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("src.api.routers.simulations.EventBus"), patch(
-                "src.api.routers.simulations.CharacterFactory"
-            ) as mock_factory, patch(
-                "src.api.routers.simulations.DirectorAgent"
-            ), patch(
-                "src.api.routers.simulations.ChroniclerAgent"
-            ) as mock_chronicler:
+            with (
+                patch("src.api.routers.simulations.EventBus"),
+                patch("src.api.routers.simulations.CharacterFactory") as mock_factory,
+                patch("src.api.routers.simulations.DirectorAgent"),
+                patch("src.api.routers.simulations.ChroniclerAgent") as mock_chronicler,
+            ):
                 # 模拟成功的组件创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -416,13 +416,12 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("src.api.routers.simulations.EventBus"), patch(
-                "src.api.routers.simulations.CharacterFactory"
-            ) as mock_factory, patch(
-                "src.api.routers.simulations.DirectorAgent"
-            ) as mock_director, patch(
-                "src.api.routers.simulations.ChroniclerAgent"
-            ) as mock_chronicler:
+            with (
+                patch("src.api.routers.simulations.EventBus"),
+                patch("src.api.routers.simulations.CharacterFactory") as mock_factory,
+                patch("src.api.routers.simulations.DirectorAgent") as mock_director,
+                patch("src.api.routers.simulations.ChroniclerAgent") as mock_chronicler,
+            ):
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -459,13 +458,12 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("src.api.routers.simulations.EventBus"), patch(
-                "src.api.routers.simulations.CharacterFactory"
-            ) as mock_factory, patch(
-                "src.api.routers.simulations.DirectorAgent"
-            ), patch(
-                "src.api.routers.simulations.ChroniclerAgent"
-            ) as mock_chronicler:
+            with (
+                patch("src.api.routers.simulations.EventBus"),
+                patch("src.api.routers.simulations.CharacterFactory") as mock_factory,
+                patch("src.api.routers.simulations.DirectorAgent"),
+                patch("src.api.routers.simulations.ChroniclerAgent") as mock_chronicler,
+            ):
                 # 设置成功的角色创建
                 mock_agent = Mock()
                 mock_agent.character.name = "engineer"
@@ -501,9 +499,10 @@ class TestAPIServerEndpoints:
             "src.api.routers.characters.get_characters_directory_path",
             return_value=str(characters_directory),
         ):
-            with patch("src.api.routers.characters.EventBus"), patch(
-                "src.api.routers.characters.CharacterFactory"
-            ) as mock_factory:
+            with (
+                patch("src.api.routers.characters.EventBus"),
+                patch("src.api.routers.characters.CharacterFactory") as mock_factory,
+            ):
                 mock_factory.return_value.create_character.side_effect = Exception(
                     "Unexpected character error"
                 )

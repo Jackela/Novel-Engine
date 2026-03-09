@@ -32,14 +32,13 @@ from src.contexts.knowledge.domain.models.source_type import SourceType
 pytestmark = pytest.mark.unit
 
 
-
 class TestQueryAwareConfig:
     """Tests for QueryAwareConfig dataclass."""
 
     def test_default_config(self):
         """Test default configuration."""
         config = QueryAwareConfig()
-        
+
         assert config.enable_rewriting is True
         assert config.rewrite_strategy == RewriteStrategy.HYBRID
         assert config.max_variants == 3
@@ -57,7 +56,7 @@ class TestQueryAwareConfig:
             max_concurrent=5,
             deduplicate_results=False,
         )
-        
+
         assert config.enable_rewriting is False
         assert config.rewrite_strategy == RewriteStrategy.SYNONYM
         assert config.max_variants == 5
@@ -77,7 +76,7 @@ class TestQueryAwareRetrievalResult:
             queries_executed=["test query"],
             total_retrieved=0,
         )
-        
+
         assert result.original_query == "test query"
         assert result.queries_executed == ["test query"]
         assert result.total_retrieved == 0
@@ -92,7 +91,7 @@ class TestQueryAwareRetrievalResult:
             tokens_used=100,
             strategy=RewriteStrategy.HYBRID,
         )
-        
+
         result = QueryAwareRetrievalResult(
             chunks=[],
             original_query="test query",
@@ -101,7 +100,7 @@ class TestQueryAwareRetrievalResult:
             rewrite_result=rewrite_result,
             tokens_used=100,
         )
-        
+
         assert result.rewrite_result is not None
         assert len(result.queries_executed) == 2
 
@@ -112,7 +111,7 @@ class TestQueryAwareMetrics:
     def test_default_metrics(self):
         """Test default metrics."""
         metrics = QueryAwareMetrics()
-        
+
         assert metrics.queries_total == 0
         assert metrics.rewrites_total == 0
         assert metrics.cache_hits_total == 0
@@ -123,10 +122,10 @@ class TestQueryAwareMetrics:
     def test_metrics_increment(self):
         """Test incrementing metrics."""
         metrics = QueryAwareMetrics()
-        
+
         metrics.queries_total += 1
         metrics.rewrites_total += 1
-        
+
         assert metrics.queries_total == 1
         assert metrics.rewrites_total == 1
 
@@ -153,18 +152,22 @@ class TestQueryAwareRetrievalService:
     async def mock_query_rewriter(self):
         """Create mock query rewriter."""
         rewriter = AsyncMock()
-        rewriter.rewrite = AsyncMock(return_value=RewriteResult(
-            original_query="test",
-            variants=["test", "variant 1", "variant 2"],
-            tokens_used=50,
-            strategy=RewriteStrategy.HYBRID,
-        ))
+        rewriter.rewrite = AsyncMock(
+            return_value=RewriteResult(
+                original_query="test",
+                variants=["test", "variant 1", "variant 2"],
+                tokens_used=50,
+                strategy=RewriteStrategy.HYBRID,
+            )
+        )
         return rewriter
-    
+
     # Note: retrieval_service fixture moved up to combine with mock_query_rewriter
 
     @pytest_asyncio.fixture
-    async def retrieval_service(self, mock_embedding_service, mock_vector_store, mock_query_rewriter):
+    async def retrieval_service(
+        self, mock_embedding_service, mock_vector_store, mock_query_rewriter
+    ):
         """Create query-aware retrieval service."""
         return QueryAwareRetrievalService(
             embedding_service=mock_embedding_service,
@@ -179,11 +182,13 @@ class TestQueryAwareRetrievalService:
             vector_store=mock_vector_store,
             default_collection="custom_collection",
         )
-        
+
         assert service._default_collection == "custom_collection"
         assert service._query_rewriter is None
 
-    async def test_initialization_with_rewriter(self, retrieval_service, mock_query_rewriter):
+    async def test_initialization_with_rewriter(
+        self, retrieval_service, mock_query_rewriter
+    ):
         """Test initialization with query rewriter."""
         assert retrieval_service._query_rewriter == mock_query_rewriter
 
@@ -197,7 +202,9 @@ class TestQueryAwareRetrievalService:
         with pytest.raises(ValueError, match="cannot be empty"):
             await retrieval_service.retrieve_relevant("   ")
 
-    async def test_retrieve_relevant_without_rewriting(self, retrieval_service, mock_vector_store):
+    async def test_retrieve_relevant_without_rewriting(
+        self, retrieval_service, mock_vector_store
+    ):
         """Test retrieval without query rewriting."""
         mock_results = [
             QueryResult(
@@ -208,18 +215,20 @@ class TestQueryAwareRetrievalService:
             ),
         ]
         mock_vector_store.query = AsyncMock(return_value=mock_results)
-        
+
         config = QueryAwareConfig(enable_rewriting=False)
         result = await retrieval_service.retrieve_relevant(
             query="test query",
             config_override=config,
         )
-        
+
         assert result.original_query == "test query"
         assert len(result.queries_executed) == 1
         assert result.queries_executed[0] == "test query"
 
-    async def test_retrieve_relevant_with_rewriting(self, retrieval_service, mock_query_rewriter, mock_vector_store):
+    async def test_retrieve_relevant_with_rewriting(
+        self, retrieval_service, mock_query_rewriter, mock_vector_store
+    ):
         """Test retrieval with query rewriting."""
         mock_results = [
             QueryResult(
@@ -230,16 +239,18 @@ class TestQueryAwareRetrievalService:
             ),
         ]
         mock_vector_store.query = AsyncMock(return_value=mock_results)
-        
+
         result = await retrieval_service.retrieve_relevant("test query")
-        
+
         assert len(result.queries_executed) > 1  # Should have variants
         mock_query_rewriter.rewrite.assert_called_once()
 
-    async def test_retrieve_relevant_no_rewriter(self, retrieval_service, mock_query_rewriter, mock_vector_store):
+    async def test_retrieve_relevant_no_rewriter(
+        self, retrieval_service, mock_query_rewriter, mock_vector_store
+    ):
         """Test retrieval when rewriter is None but rewriting is enabled."""
         retrieval_service._query_rewriter = None
-        
+
         mock_results = [
             QueryResult(
                 id="chunk_1",
@@ -249,13 +260,15 @@ class TestQueryAwareRetrievalService:
             ),
         ]
         mock_vector_store.query = AsyncMock(return_value=mock_results)
-        
+
         result = await retrieval_service.retrieve_relevant("test query")
-        
+
         # Should still work with just original query
         assert len(result.queries_executed) == 1
 
-    async def test_retrieve_relevant_with_filters(self, retrieval_service, mock_vector_store):
+    async def test_retrieve_relevant_with_filters(
+        self, retrieval_service, mock_vector_store
+    ):
         """Test retrieval with filters."""
         mock_results = [
             QueryResult(
@@ -266,17 +279,19 @@ class TestQueryAwareRetrievalService:
             ),
         ]
         mock_vector_store.query = AsyncMock(return_value=mock_results)
-        
+
         filters = RetrievalFilter(source_types=[SourceType.CHARACTER])
         result = await retrieval_service.retrieve_relevant(
             query="test query",
             filters=filters,
         )
-        
+
         # Verify filter was passed to underlying query
         assert result.original_query == "test query"
 
-    async def test_retrieve_relevant_with_custom_collection(self, retrieval_service, mock_vector_store):
+    async def test_retrieve_relevant_with_custom_collection(
+        self, retrieval_service, mock_vector_store
+    ):
         """Test retrieval with custom collection."""
         mock_results = [
             QueryResult(
@@ -287,12 +302,12 @@ class TestQueryAwareRetrievalService:
             ),
         ]
         mock_vector_store.query = AsyncMock(return_value=mock_results)
-        
+
         result = await retrieval_service.retrieve_relevant(
             query="test query",
             collection="custom_collection",
         )
-        
+
         assert result.original_query == "test query"
 
 
@@ -305,7 +320,7 @@ class TestQueryAwareRetrievalServiceMerging:
         """Create retrieval service."""
         embedding_service = AsyncMock()
         vector_store = AsyncMock()
-        
+
         return QueryAwareRetrievalService(
             embedding_service=embedding_service,
             vector_store=vector_store,
@@ -314,7 +329,7 @@ class TestQueryAwareRetrievalServiceMerging:
     def test_merge_rrf_empty_list(self, retrieval_service):
         """Test RRF merge with empty list."""
         result = retrieval_service._merge_rrf([], k=5)
-        
+
         assert result == []
 
     def test_merge_rrf_single_chunk(self, retrieval_service):
@@ -328,9 +343,9 @@ class TestQueryAwareRetrievalServiceMerging:
             metadata={},
         )
         all_chunks = [(chunk, 0, 0)]  # (chunk, query_idx, rank)
-        
+
         result = retrieval_service._merge_rrf(all_chunks, k=5)
-        
+
         assert len(result) == 1
         assert result[0].chunk_id == "chunk_1"
 
@@ -348,9 +363,9 @@ class TestQueryAwareRetrievalServiceMerging:
             for i in range(3)
         ]
         all_chunks = [(chunk, 0, i) for i, chunk in enumerate(chunks)]
-        
+
         result = retrieval_service._merge_rrf(all_chunks, k=5)
-        
+
         assert len(result) == 3
         # Higher rank (lower index) should have higher score
         assert result[0].score > result[1].score
@@ -370,9 +385,9 @@ class TestQueryAwareRetrievalServiceMerging:
             (chunk, 0, 0),
             (chunk, 1, 1),
         ]
-        
+
         result = retrieval_service._merge_rrf(all_chunks, k=5)
-        
+
         assert len(result) == 1
         # Score should be accumulated from both appearances
         # RRF score formula: 1 / (k + rank + 1) where k = 60
@@ -383,7 +398,7 @@ class TestQueryAwareRetrievalServiceMerging:
     def test_merge_by_score_empty_list(self, retrieval_service):
         """Test score-based merge with empty list."""
         result = retrieval_service._merge_by_score([], k=5)
-        
+
         assert result == []
 
     def test_merge_by_score_single_chunk(self, retrieval_service):
@@ -397,9 +412,9 @@ class TestQueryAwareRetrievalServiceMerging:
             metadata={},
         )
         all_chunks = [(chunk, 0, 0)]
-        
+
         result = retrieval_service._merge_by_score(all_chunks, k=5)
-        
+
         assert len(result) == 1
 
     def test_merge_by_score_keeps_highest_score(self, retrieval_service):
@@ -424,9 +439,9 @@ class TestQueryAwareRetrievalServiceMerging:
             (chunk_low, 0, 1),
             (chunk_high, 1, 0),
         ]
-        
+
         result = retrieval_service._merge_by_score(all_chunks, k=5)
-        
+
         assert len(result) == 1
         assert result[0].score == 0.9
 
@@ -441,9 +456,9 @@ class TestQueryAwareRetrievalServiceMerging:
             metadata={},
         )
         all_chunks = [(chunk, 0, 0)]
-        
+
         result = retrieval_service._merge_results(all_chunks, merge_strategy="rrf", k=5)
-        
+
         assert len(result) == 1
 
     def test_merge_results_score_strategy(self, retrieval_service):
@@ -457,9 +472,11 @@ class TestQueryAwareRetrievalServiceMerging:
             metadata={},
         )
         all_chunks = [(chunk, 0, 0)]
-        
-        result = retrieval_service._merge_results(all_chunks, merge_strategy="score", k=5)
-        
+
+        result = retrieval_service._merge_results(
+            all_chunks, merge_strategy="score", k=5
+        )
+
         assert len(result) == 1
 
 
@@ -471,7 +488,7 @@ class TestQueryAwareRetrievalServiceDeduplication:
         """Create retrieval service."""
         embedding_service = AsyncMock()
         vector_store = AsyncMock()
-        
+
         return QueryAwareRetrievalService(
             embedding_service=embedding_service,
             vector_store=vector_store,
@@ -480,7 +497,7 @@ class TestQueryAwareRetrievalServiceDeduplication:
     def test_deduplicate_chunks_empty_list(self, retrieval_service):
         """Test deduplication with empty list."""
         result = retrieval_service._deduplicate_chunks([])
-        
+
         assert result == []
 
     def test_deduplicate_chunks_single_chunk(self, retrieval_service):
@@ -495,9 +512,9 @@ class TestQueryAwareRetrievalServiceDeduplication:
                 metadata={},
             ),
         ]
-        
+
         result = retrieval_service._deduplicate_chunks(chunks)
-        
+
         assert len(result) == 1
 
     def test_deduplicate_chunks_unique_content(self, retrieval_service):
@@ -520,9 +537,9 @@ class TestQueryAwareRetrievalServiceDeduplication:
                 metadata={},
             ),
         ]
-        
+
         result = retrieval_service._deduplicate_chunks(chunks)
-        
+
         assert len(result) == 2
 
     def test_deduplicate_chunks_duplicate_content(self, retrieval_service):
@@ -545,9 +562,9 @@ class TestQueryAwareRetrievalServiceDeduplication:
                 metadata={},
             ),
         ]
-        
+
         result = retrieval_service._deduplicate_chunks(chunks)
-        
+
         assert len(result) == 1
 
 
@@ -560,7 +577,7 @@ class TestQueryAwareRetrievalServiceFormatting:
         """Create retrieval service."""
         embedding_service = AsyncMock()
         vector_store = AsyncMock()
-        
+
         return QueryAwareRetrievalService(
             embedding_service=embedding_service,
             vector_store=vector_store,
@@ -584,9 +601,9 @@ class TestQueryAwareRetrievalServiceFormatting:
             queries_executed=["test query"],
             total_retrieved=1,
         )
-        
+
         context = retrieval_service.format_context(result)
-        
+
         assert context.text != ""
         assert context.chunk_count == 1
 
@@ -598,9 +615,9 @@ class TestQueryAwareRetrievalServiceFormatting:
             queries_executed=["test query"],
             total_retrieved=0,
         )
-        
+
         context = retrieval_service.format_context(result)
-        
+
         assert context.text == ""
         assert context.chunk_count == 0
 
@@ -613,7 +630,7 @@ class TestQueryAwareRetrievalServiceMetrics:
         """Create retrieval service."""
         embedding_service = AsyncMock()
         vector_store = AsyncMock()
-        
+
         return QueryAwareRetrievalService(
             embedding_service=embedding_service,
             vector_store=vector_store,
@@ -622,7 +639,7 @@ class TestQueryAwareRetrievalServiceMetrics:
     def test_get_metrics_initial(self, retrieval_service):
         """Test getting initial metrics."""
         metrics = retrieval_service.get_metrics()
-        
+
         assert metrics["queries_total"] == 0
         assert metrics["rewrites_total"] == 0
         assert metrics["cache_hits_total"] == 0
@@ -631,10 +648,10 @@ class TestQueryAwareRetrievalServiceMetrics:
         """Test resetting metrics."""
         # Modify metrics
         retrieval_service._metrics.queries_total = 10
-        
+
         # Reset
         retrieval_service.reset_metrics()
-        
+
         metrics = retrieval_service.get_metrics()
         assert metrics["queries_total"] == 0
 
@@ -642,13 +659,13 @@ class TestQueryAwareRetrievalServiceMetrics:
         """Test cache hit rate calculation."""
         retrieval_service._metrics.rewrites_total = 10
         retrieval_service._metrics.cache_hits_total = 7
-        
+
         metrics = retrieval_service.get_metrics()
-        
+
         assert metrics["cache_hit_rate"] == 0.7
 
     def test_metrics_cache_hit_rate_no_rewrites(self, retrieval_service):
         """Test cache hit rate when no rewrites."""
         metrics = retrieval_service.get_metrics()
-        
+
         assert metrics["cache_hit_rate"] == 0.0

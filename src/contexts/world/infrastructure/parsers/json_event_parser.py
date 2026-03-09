@@ -252,7 +252,9 @@ class JSONEventParser:
             elif opt_field == "narrative_importance":
                 # Parse integer
                 try:
-                    event[opt_field] = int(value) if value is not None else default_value
+                    event[opt_field] = (
+                        int(value) if value is not None else default_value
+                    )
                     if not 0 <= event[opt_field] <= 100:
                         errors.append(
                             {
@@ -290,7 +292,9 @@ class JSONEventParser:
                     event[opt_field] = [str(v) for v in value if v is not None]
                 elif isinstance(value, str):
                     # Support semicolon-separated string
-                    event[opt_field] = [v.strip() for v in value.split(";") if v.strip()]
+                    event[opt_field] = [
+                        v.strip() for v in value.split(";") if v.strip()
+                    ]
                 else:
                     event[opt_field] = [str(value)] if value is not None else []
             else:

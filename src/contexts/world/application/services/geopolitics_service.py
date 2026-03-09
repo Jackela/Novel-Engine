@@ -227,12 +227,14 @@ class GeopoliticsService:
             - Err: GeopoliticsError on failure
         """
         try:
-            return Ok({
-                "faction_id": faction_id,
-                "allies": matrix.get_allies(faction_id),
-                "enemies": matrix.get_enemies(faction_id),
-                "neutral": matrix.get_neutral(faction_id),
-            })
+            return Ok(
+                {
+                    "faction_id": faction_id,
+                    "allies": matrix.get_allies(faction_id),
+                    "enemies": matrix.get_enemies(faction_id),
+                    "neutral": matrix.get_neutral(faction_id),
+                }
+            )
         except Exception as e:
             return Err(
                 GeopoliticsError(

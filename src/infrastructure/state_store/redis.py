@@ -15,6 +15,7 @@ from src.infrastructure.state_store.config import StateKey, StateStoreConfig
 # Import redis with async support
 try:
     from redis import asyncio as aioredis
+
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False

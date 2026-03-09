@@ -71,7 +71,6 @@ class TestSimulationAPIPreviewEndpoint:
         assert data["calendar_after"]["year"] == 1
         assert data["calendar_after"]["month"] == 1
 
-
         assert data["calendar_after"]["day"] == 11  # 1 + 10 days
 
     @pytest.mark.integration
@@ -141,7 +140,8 @@ class TestSimulationAPICommitEndpoint:
             client.post(
                 "/api/world/rate-test-world/simulate/commit",
                 json={"days": 1},
-            ).status_code == 429
+            ).status_code
+            == 429
             for _ in range(20)
         )
         assert rate_limited or False  # At least one should hit rate limit

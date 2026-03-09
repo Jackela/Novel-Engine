@@ -169,7 +169,9 @@ async def list_experiments(
         )
 
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_list_experiments", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_list_experiments", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -200,7 +202,11 @@ async def experiments_health(
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except ExperimentRepositoryError:
-        logger.error("experiment_repository_health_check_failed", error="exception_occurred", error_type="exception")
+        logger.error(
+            "experiment_repository_health_check_failed",
+            error="exception_occurred",
+            error_type="exception",
+        )
         return {
             "status": "unhealthy",
             "error": "repository_error",
@@ -274,7 +280,9 @@ async def get_experiment(
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_get_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_get_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -305,7 +313,11 @@ async def get_experiment_results(
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_get_experiment_results", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_get_experiment_results",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -338,7 +350,9 @@ async def delete_experiment(
     except HTTPException:
         raise
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_delete_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_delete_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -373,7 +387,9 @@ async def start_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_start_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_start_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -405,7 +421,9 @@ async def pause_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_pause_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_pause_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -437,7 +455,9 @@ async def resume_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_resume_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_resume_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -482,7 +502,9 @@ async def complete_experiment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_complete_experiment", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_complete_experiment", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -523,7 +545,11 @@ async def record_result(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except ExperimentRepositoryError as e:
-        logger.error("failed_to_record_experiment_result", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_record_experiment_result",
+            error=str(e),
+            error_type=type(e).__name__,
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

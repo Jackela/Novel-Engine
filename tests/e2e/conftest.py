@@ -90,7 +90,10 @@ def client(api_app):
                 f"Last service_status: {last_service_status}"
             )
             if ci_env:
-                pytest.skip(f"API server not available in CI environment: {error_msg}", allow_module_level=True)
+                pytest.skip(
+                    f"API server not available in CI environment: {error_msg}",
+                    allow_module_level=True,
+                )
             else:
                 raise RuntimeError(error_msg)
 

@@ -32,6 +32,7 @@ def client():
     with TestClient(app) as test_client:
         yield test_client
 
+
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
 
@@ -53,11 +54,13 @@ class TestKnowledgeBase:
             "content": "Long ago, there was a kingdom of great power and wisdom...",
             "category": "history",
             "tags": ["ancient", "kingdom", "history"],
-            "summary": "History of the ancient kingdom"
+            "summary": "History of the ancient kingdom",
         }
 
         response = client.post("/api/lore", json=entry_data)
-        assert response.status_code == 201, f"Lore entry creation failed: {response.text}"
+        assert (
+            response.status_code == 201
+        ), f"Lore entry creation failed: {response.text}"
 
         data = response.json()
         assert "id" in data, "Entry ID not returned"
@@ -82,7 +85,7 @@ class TestKnowledgeBase:
         entry_data = {
             "title": "Test Entry",
             "content": "Original content",
-            "category": "history"
+            "category": "history",
         }
 
         create_response = client.post("/api/lore", json=entry_data)
@@ -90,10 +93,7 @@ class TestKnowledgeBase:
         entry_id = create_response.json()["id"]
 
         # Update entry
-        update_data = {
-            "title": "Updated Test Entry",
-            "content": "Updated content"
-        }
+        update_data = {"title": "Updated Test Entry", "content": "Updated content"}
 
         update_response = client.put(f"/api/lore/{entry_id}", json=update_data)
         assert update_response.status_code == 200, "Update failed"
@@ -122,14 +122,14 @@ class TestKnowledgeBase:
                 "title": "Magic Spells Guide",
                 "content": "A comprehensive guide to magic spells",
                 "category": "magic",
-                "tags": ["magic", "spells"]
+                "tags": ["magic", "spells"],
             },
             {
                 "title": "Combat Techniques",
                 "content": "Advanced combat training manual",
                 "category": "combat",
-                "tags": ["combat", "fighting"]
-            }
+                "tags": ["combat", "fighting"],
+            },
         ]
 
         created_ids = []
@@ -159,7 +159,11 @@ class TestKnowledgeBase:
         """
         # Create entries with different categories
         entries = [
-            {"title": "History Entry", "content": "History content", "category": "history"},
+            {
+                "title": "History Entry",
+                "content": "History content",
+                "category": "history",
+            },
             {"title": "Magic Entry", "content": "Magic content", "category": "magic"},
         ]
 
@@ -201,7 +205,7 @@ class TestKnowledgeRetrieval:
             "title": "Dragon Lore",
             "content": "Dragons are ancient creatures of immense power. They hoard treasures and breathe fire.",
             "category": "creatures",
-            "tags": ["dragons", "creatures"]
+            "tags": ["dragons", "creatures"],
         }
 
         create_response = client.post("/api/lore", json=entry_data)
@@ -228,7 +232,7 @@ class TestKnowledgeRetrieval:
         chat_request = {
             "query": "Tell me about the world",
             "max_chunks": 3,
-            "session_id": "test_session_123"
+            "session_id": "test_session_123",
         }
 
         response = client.post("/api/brain/chat", json=chat_request)
@@ -255,7 +259,7 @@ class TestKnowledgeRetrieval:
             entry = {
                 "title": f"{category.title()} Entry",
                 "content": f"Content about {category}",
-                "category": category
+                "category": category,
             }
             response = client.post("/api/lore", json=entry)
             if response.status_code == 201:
@@ -280,13 +284,13 @@ class TestKnowledgeRetrieval:
             "title": "Fire Magic",
             "content": "About fire magic",
             "category": "magic",
-            "tags": ["fire", "magic", "elemental"]
+            "tags": ["fire", "magic", "elemental"],
         }
         entry2 = {
             "title": "Ice Magic",
             "content": "About ice magic",
             "category": "magic",
-            "tags": ["ice", "magic", "elemental"]
+            "tags": ["ice", "magic", "elemental"],
         }
 
         response1 = client.post("/api/lore", json=entry1)
@@ -338,10 +342,7 @@ class TestChatSessions:
         - GET /api/brain/chat/sessions/{id}/messages returns messages
         """
         # First create a session by sending a message
-        chat_request = {
-            "query": "Hello",
-            "session_id": "test_messages_session"
-        }
+        chat_request = {"query": "Hello", "session_id": "test_messages_session"}
 
         chat_response = client.post("/api/brain/chat", json=chat_request)
 
@@ -349,7 +350,9 @@ class TestChatSessions:
             pytest.skip("Chat endpoint not available")
 
         # Try to get messages
-        messages_response = client.get("/api/brain/chat/sessions/test_messages_session/messages")
+        messages_response = client.get(
+            "/api/brain/chat/sessions/test_messages_session/messages"
+        )
 
         if messages_response.status_code == 404:
             pytest.skip("Session messages endpoint not available")
@@ -365,10 +368,7 @@ class TestChatSessions:
         - DELETE /api/brain/chat/sessions/{id} clears session
         """
         # Create a session first
-        chat_request = {
-            "query": "Test message",
-            "session_id": "test_clear_session"
-        }
+        chat_request = {"query": "Test message", "session_id": "test_clear_session"}
         client.post("/api/brain/chat", json=chat_request)
 
         # Clear session
@@ -410,7 +410,7 @@ class TestLoreManagement:
         entry_data = {
             "title": "Smart Tags Test",
             "content": "Test content for smart tags",
-            "category": "history"
+            "category": "history",
         }
 
         create_response = client.post("/api/lore", json=entry_data)
@@ -423,7 +423,11 @@ class TestLoreManagement:
 
         data = tags_response.json()
         # SmartTagsResponse returns smart_tags, manual_smart_tags, effective_tags
-        assert "smart_tags" in data or "manual_smart_tags" in data or "effective_tags" in data
+        assert (
+            "smart_tags" in data
+            or "manual_smart_tags" in data
+            or "effective_tags" in data
+        )
 
         # Cleanup
         client.delete(f"/api/lore/{entry_id}")
@@ -434,14 +438,21 @@ class TestLoreManagement:
         Verifies:
         - All categories are accepted
         """
-        categories = ["history", "geography", "culture", "politics", "magic", "religion"]
+        categories = [
+            "history",
+            "geography",
+            "culture",
+            "politics",
+            "magic",
+            "religion",
+        ]
         created_ids = []
 
         for category in categories:
             entry = {
                 "title": f"{category.title()} Test",
                 "content": f"Test content for {category}",
-                "category": category
+                "category": category,
             }
             response = client.post("/api/lore", json=entry)
             if response.status_code == 201:
@@ -464,12 +475,12 @@ class TestLoreManagement:
         entry1 = {
             "title": "Parent Entry",
             "content": "Main content",
-            "category": "history"
+            "category": "history",
         }
         entry2 = {
             "title": "Child Entry",
             "content": "Related content",
-            "category": "history"
+            "category": "history",
         }
 
         response1 = client.post("/api/lore", json=entry1)
@@ -480,9 +491,7 @@ class TestLoreManagement:
             entry2_id = response2.json()["id"]
 
             # Update entry1 to link to entry2
-            update_data = {
-                "related_entry_ids": [entry2_id]
-            }
+            update_data = {"related_entry_ids": [entry2_id]}
             update_response = client.put(f"/api/lore/{entry1_id}", json=update_data)
             assert update_response.status_code == 200
 
@@ -500,7 +509,7 @@ class TestLoreManagement:
         entry = {
             "title": "Category Search Test",
             "content": "Test content",
-            "category": "geography"
+            "category": "geography",
         }
 
         create_response = client.post("/api/lore", json=entry)

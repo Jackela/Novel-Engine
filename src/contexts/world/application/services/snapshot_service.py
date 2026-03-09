@@ -114,9 +114,7 @@ class SnapshotService:
                 )
             )
 
-    def restore_snapshot(
-        self, snapshot_id: str
-    ) -> Result[WorldSnapshot, Error]:
+    def restore_snapshot(self, snapshot_id: str) -> Result[WorldSnapshot, Error]:
         """Restore world state from a snapshot.
 
         Finds the snapshot by ID and returns it for restoration.

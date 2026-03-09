@@ -20,7 +20,12 @@ class TestTimeAdvancedEvent:
     def test_create_event_success(self):
         """Creating event with valid data succeeds."""
         event = TimeAdvancedEvent.create(
-            previous_date={"year": 1042, "month": 5, "day": 10, "era_name": "Third Age"},
+            previous_date={
+                "year": 1042,
+                "month": 5,
+                "day": 10,
+                "era_name": "Third Age",
+            },
             new_date={"year": 1042, "month": 5, "day": 15, "era_name": "Third Age"},
             days_advanced=5,
         )
@@ -46,7 +51,12 @@ class TestTimeAdvancedEvent:
         """Event with negative days raises validation error."""
         with pytest.raises(ValueError) as exc_info:
             TimeAdvancedEvent.create(
-                previous_date={"year": 1, "month": 1, "day": 1, "era_name": "First Age"},
+                previous_date={
+                    "year": 1,
+                    "month": 1,
+                    "day": 1,
+                    "era_name": "First Age",
+                },
                 new_date={"year": 1, "month": 1, "day": 2, "era_name": "First Age"},
                 days_advanced=-1,
             )
@@ -68,7 +78,12 @@ class TestTimeAdvancedEvent:
         """Event with incomplete new_date raises validation error."""
         with pytest.raises(ValueError) as exc_info:
             TimeAdvancedEvent.create(
-                previous_date={"year": 1, "month": 1, "day": 1, "era_name": "First Age"},
+                previous_date={
+                    "year": 1,
+                    "month": 1,
+                    "day": 1,
+                    "era_name": "First Age",
+                },
                 new_date={"year": 1},  # Missing month and day
                 days_advanced=1,
             )
@@ -78,7 +93,12 @@ class TestTimeAdvancedEvent:
     def test_get_summary(self):
         """Event summary provides human-readable format."""
         event = TimeAdvancedEvent.create(
-            previous_date={"year": 1042, "month": 5, "day": 10, "era_name": "Third Age"},
+            previous_date={
+                "year": 1042,
+                "month": 5,
+                "day": 10,
+                "era_name": "Third Age",
+            },
             new_date={"year": 1042, "month": 5, "day": 15, "era_name": "Third Age"},
             days_advanced=5,
         )
@@ -114,7 +134,12 @@ class TestTimeAdvancedEvent:
     def test_event_payload_contains_dates(self):
         """Event payload includes previous and new dates."""
         event = TimeAdvancedEvent.create(
-            previous_date={"year": 100, "month": 6, "day": 15, "era_name": "Second Age"},
+            previous_date={
+                "year": 100,
+                "month": 6,
+                "day": 15,
+                "era_name": "Second Age",
+            },
             new_date={"year": 100, "month": 7, "day": 1, "era_name": "Second Age"},
             days_advanced=16,
         )
@@ -223,7 +248,12 @@ class TestTimeAdvancedEventUniqueness:
         events = []
         for i in range(100):
             event = TimeAdvancedEvent.create(
-                previous_date={"year": 1, "month": 1, "day": 1, "era_name": "First Age"},
+                previous_date={
+                    "year": 1,
+                    "month": 1,
+                    "day": 1,
+                    "era_name": "First Age",
+                },
                 new_date={"year": 1, "month": 1, "day": i + 2, "era_name": "First Age"},
                 days_advanced=1,
             )

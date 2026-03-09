@@ -196,7 +196,8 @@ class TestAuthentication:
         # Account should now be locked - even correct password should fail
         with pytest.raises(AuthenticationError) as exc_info:
             await auth_manager.authenticate_user(
-                user_data["email"], user_data["password"]  # Correct password
+                user_data["email"],
+                user_data["password"],  # Correct password
             )
         assert "locked" in str(exc_info.value).lower()
 

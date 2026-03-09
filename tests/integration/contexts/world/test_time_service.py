@@ -44,7 +44,9 @@ class TestTimeServiceGetTime:
     def test_get_time_returns_existing_calendar(self, service, repository):
         """Getting time for existing world returns stored calendar."""
         # Set up initial calendar
-        result = service.set_time("existing-world", year=1042, month=5, day=14, era_name="Third Age")
+        result = service.set_time(
+            "existing-world", year=1042, month=5, day=14, era_name="Third Age"
+        )
         assert result.is_ok
 
         # Get should return the same calendar
@@ -140,7 +142,9 @@ class TestTimeServiceAdvanceTime:
 
     def test_advance_time_year_rollover(self, service):
         """Advancing past year end rolls over correctly."""
-        service.set_time("test-world", year=1042, month=12, day=28, era_name="Third Age")
+        service.set_time(
+            "test-world", year=1042, month=12, day=28, era_name="Third Age"
+        )
         result = service.advance_time("test-world", 5)
 
         assert result.is_ok
@@ -170,7 +174,9 @@ class TestTimeServiceSetTime:
 
     def test_set_time_success(self, service):
         """Setting time creates calendar with specified values."""
-        result = service.set_time("test-world", year=1042, month=5, day=14, era_name="Third Age")
+        result = service.set_time(
+            "test-world", year=1042, month=5, day=14, era_name="Third Age"
+        )
 
         assert result.is_ok
         calendar = result.value
@@ -257,7 +263,9 @@ class TestTimeServiceRepositoryFailures:
         assert result.is_error
         assert "Invalid date" in str(result.error)
 
-    def test_advance_time_handles_repository_save_failure(self, repository, monkeypatch):
+    def test_advance_time_handles_repository_save_failure(
+        self, repository, monkeypatch
+    ):
         """TimeService advance_time propagates repository save failures."""
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
 
@@ -279,6 +287,7 @@ class TestTimeServiceRepositoryFailures:
 
     def test_get_time_handles_repository_failure(self, repository, monkeypatch):
         """TimeService get_time returns error on repository failures."""
+
         def failing_get(world_id: str):
             raise RuntimeError("Storage system error")
 

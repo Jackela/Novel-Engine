@@ -74,6 +74,7 @@ class TestDirectorAgentBaseAgentManagement:
         """Create a valid mock agent."""
         # Need to patch isinstance check since Mock doesn't pass isinstance(agent, PersonaAgent)
         from src.agents.persona_agent.agent import PersonaAgent
+
         agent = Mock(spec=PersonaAgent)
         agent.agent_id = "test_agent"
         agent.handle_turn_start = Mock()
@@ -98,6 +99,7 @@ class TestDirectorAgentBaseAgentManagement:
     def test_register_agent_missing_method(self, director):
         """Test registering agent without required method."""
         from src.agents.persona_agent.agent import PersonaAgent
+
         agent = Mock(spec=PersonaAgent)
         agent.agent_id = "test"
         # Explicitly remove handle_turn_start to simulate missing method
@@ -111,6 +113,7 @@ class TestDirectorAgentBaseAgentManagement:
     def test_register_agent_missing_id(self, director):
         """Test registering agent without agent_id."""
         from src.agents.persona_agent.agent import PersonaAgent
+
         agent = Mock(spec=PersonaAgent)
         agent.handle_turn_start = Mock()
         # Explicitly set agent_id to None to simulate missing id
@@ -149,7 +152,7 @@ class TestDirectorAgentBaseAgentManagement:
         """Test getting list of agents."""
         valid_agent.character_name = "Test Character"
         valid_agent.faction = "Alliance"
-        
+
         with patch("src.agents.director_agent_base.PersonaAgent", Mock):
             director.register_agent(valid_agent)
 
@@ -188,10 +191,11 @@ class TestDirectorAgentBaseSimulationStatus:
     def test_get_simulation_status_with_agents(self, director):
         """Test status with registered agents."""
         from src.agents.persona_agent.agent import PersonaAgent
+
         agent = Mock(spec=PersonaAgent)
         agent.agent_id = "test_agent"
         agent.handle_turn_start = Mock()
-        
+
         with patch("src.agents.director_agent_base.PersonaAgent", Mock):
             director.register_agent(agent)
 
@@ -313,6 +317,7 @@ class TestDirectorAgentBaseEdgeCases:
 
         # Create agent that will cause exception
         from src.agents.persona_agent.agent import PersonaAgent
+
         agent = Mock(spec=PersonaAgent)
         agent.agent_id = "test"
         agent.handle_turn_start = Mock()
@@ -346,6 +351,7 @@ class TestDirectorAgentBaseIntegration:
 
         # Create and register agents
         from src.agents.persona_agent.agent import PersonaAgent
+
         with patch("src.agents.director_agent_base.PersonaAgent", Mock):
             for i in range(3):
                 agent = Mock(spec=PersonaAgent)

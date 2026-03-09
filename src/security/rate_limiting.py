@@ -207,7 +207,9 @@ class ClientState:
 class RateLimitExceeded(Exception):
     """ENHANCED RATE LIMIT EXCEPTION"""
 
-    def __init__(self, message: str, retry_after: int, threat_level: ThreatLevel) -> None:
+    def __init__(
+        self, message: str, retry_after: int, threat_level: ThreatLevel
+    ) -> None:
         self.message = message
         self.retry_after = retry_after
         self.threat_level = threat_level
@@ -282,9 +284,7 @@ class RateLimiter:
         user_agent = request.headers.get("user-agent", "")
         user_agent_hash = hashlib.md5(
             user_agent.encode(), usedforsecurity=False
-        ).hexdigest()[
-            :8
-        ]  # nosec B324
+        ).hexdigest()[:8]  # nosec B324
 
         return f"{client_ip}:{user_agent_hash}"
 
@@ -389,7 +389,9 @@ class RateLimiter:
 
         return threat_level
 
-    def _apply_adaptive_limits(self, client: ClientState, threat_level: ThreatLevel) -> None:
+    def _apply_adaptive_limits(
+        self, client: ClientState, threat_level: ThreatLevel
+    ) -> None:
         """STANDARD ADAPTIVE LIMIT APPLICATION"""
         if not self.config.enable_adaptive:
             return
@@ -419,7 +421,9 @@ class RateLimiter:
         ip_address = client_id.split(":")[0]
         if ip_address in self.config.blacklist_ips:
             raise RateLimitExceeded(
-                "IP address is blacklisted", 3600, ThreatLevel.CRITICAL  # 1 hour
+                "IP address is blacklisted",
+                3600,
+                ThreatLevel.CRITICAL,  # 1 hour
             )
 
         if ip_address in self.config.whitelist_ips:

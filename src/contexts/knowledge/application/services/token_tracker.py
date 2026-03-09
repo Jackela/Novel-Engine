@@ -564,9 +564,9 @@ class TokenTracker:
                     elif hasattr(result, "usage"):
                         usage_attr = result.usage
                         if isinstance(usage_attr, dict):
-                            input_tokens = usage_attr.get("prompt_tokens", 0) or usage_attr.get(
-                                "input_tokens", 0
-                            )
+                            input_tokens = usage_attr.get(
+                                "prompt_tokens", 0
+                            ) or usage_attr.get("input_tokens", 0)
                             output_tokens = usage_attr.get(
                                 "completion_tokens", 0
                             ) or usage_attr.get("output_tokens", 0)
@@ -586,11 +586,19 @@ class TokenTracker:
                             if lookup_result is not None:
                                 model_def = lookup_result.model_definition
                                 if model_def:
-                                    cost_per_1m_input = model_def.cost_per_1m_input_tokens
-                                    cost_per_1m_output = model_def.cost_per_1m_output_tokens
+                                    cost_per_1m_input = (
+                                        model_def.cost_per_1m_input_tokens
+                                    )
+                                    cost_per_1m_output = (
+                                        model_def.cost_per_1m_output_tokens
+                                    )
 
                                 # Create usage record
-                                provider_str = str(lookup_result.provider.value) if hasattr(lookup_result.provider, 'value') else str(lookup_result.provider)
+                                provider_str = (
+                                    str(lookup_result.provider.value)
+                                    if hasattr(lookup_result.provider, "value")
+                                    else str(lookup_result.provider)
+                                )
                                 model_name_str = lookup_result.model_name
 
                         usage_record = TokenUsage.create(
@@ -630,12 +638,20 @@ class TokenTracker:
                             if lookup_result is not None:
                                 model_def = lookup_result.model_definition
                                 cost_per_1m_input = (
-                                    model_def.cost_per_1m_input_tokens if model_def else 0.0
+                                    model_def.cost_per_1m_input_tokens
+                                    if model_def
+                                    else 0.0
                                 )
                                 cost_per_1m_output = (
-                                    model_def.cost_per_1m_output_tokens if model_def else 0.0
+                                    model_def.cost_per_1m_output_tokens
+                                    if model_def
+                                    else 0.0
                                 )
-                                provider_str = str(lookup_result.provider.value) if hasattr(lookup_result.provider, 'value') else str(lookup_result.provider)
+                                provider_str = (
+                                    str(lookup_result.provider.value)
+                                    if hasattr(lookup_result.provider, "value")
+                                    else str(lookup_result.provider)
+                                )
                                 model_name_str = lookup_result.model_name
 
                         usage_record = TokenUsage.create(

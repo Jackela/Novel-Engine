@@ -613,9 +613,15 @@ class SQLAlchemyNegotiationSessionRepository(NegotiationSessionRepository):
                 "completed_sessions": total_sessions - active_sessions,
                 "sessions_by_type": sessions_by_type,
                 "sessions_by_priority": sessions_by_priority,
-                "average_parties_per_session": float(avg_stats.avg_parties if avg_stats else 0),
-                "average_proposals_per_session": float(avg_stats.avg_proposals if avg_stats else 0),
-                "average_responses_per_session": float(avg_stats.avg_responses if avg_stats else 0),
+                "average_parties_per_session": float(
+                    avg_stats.avg_parties if avg_stats else 0
+                ),
+                "average_proposals_per_session": float(
+                    avg_stats.avg_proposals if avg_stats else 0
+                ),
+                "average_responses_per_session": float(
+                    avg_stats.avg_responses if avg_stats else 0
+                ),
                 "generated_at": datetime.now(timezone.utc),
             }
 

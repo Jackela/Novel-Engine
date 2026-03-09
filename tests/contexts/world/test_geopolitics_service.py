@@ -10,7 +10,6 @@ This module provides test coverage for the GeopoliticsService including:
 Total: 25 tests
 """
 
-
 import pytest
 
 from src.contexts.world.application.services.geopolitics_service import (
@@ -22,7 +21,6 @@ from src.contexts.world.domain.value_objects.diplomatic_status import Diplomatic
 from src.events.event_bus import EventBus
 
 pytestmark = pytest.mark.unit
-
 
 
 @pytest.fixture
@@ -103,7 +101,9 @@ class TestDeclareWar:
         status = diplomacy_matrix.get_status("faction-a", "faction-b")
         assert status == DiplomaticStatus.AT_WAR
 
-    def test_declare_war_updates_matrix_status(self, geopolitics_service, diplomacy_matrix):
+    def test_declare_war_updates_matrix_status(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test that war declaration updates the matrix status."""
         # Initially no status
         assert diplomacy_matrix.get_status("faction-a", "faction-b") is None
@@ -119,7 +119,9 @@ class TestDeclareWar:
         status = diplomacy_matrix.get_status("faction-a", "faction-b")
         assert status == DiplomaticStatus.AT_WAR
 
-    def test_declare_war_registers_factions(self, geopolitics_service, diplomacy_matrix):
+    def test_declare_war_registers_factions(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test that factions are registered in the matrix."""
         assert len(diplomacy_matrix.faction_ids) == 0
 
@@ -133,7 +135,9 @@ class TestDeclareWar:
         assert "faction-a" in diplomacy_matrix.faction_ids
         assert "faction-b" in diplomacy_matrix.faction_ids
 
-    def test_declare_war_with_world_id_in_reason(self, geopolitics_service, diplomacy_matrix):
+    def test_declare_war_with_world_id_in_reason(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test war declaration with world ID context."""
         result = geopolitics_service.declare_war(
             matrix=diplomacy_matrix,
@@ -168,7 +172,9 @@ class TestFormAlliance:
         status = diplomacy_matrix.get_status("faction-a", "faction-b")
         assert status == DiplomaticStatus.ALLIED
 
-    def test_form_alliance_fails_when_at_war(self, geopolitics_service, diplomacy_matrix):
+    def test_form_alliance_fails_when_at_war(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test that alliance cannot be formed when factions are at war."""
         # First declare war
         diplomacy_matrix.set_status("faction-a", "faction-b", DiplomaticStatus.AT_WAR)
@@ -182,7 +188,9 @@ class TestFormAlliance:
 
         assert result.is_error
 
-    def test_form_alliance_updates_matrix_status(self, geopolitics_service, diplomacy_matrix):
+    def test_form_alliance_updates_matrix_status(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test that alliance formation updates the matrix status."""
         assert diplomacy_matrix.get_status("faction-a", "faction-b") is None
 
@@ -271,7 +279,9 @@ class TestGetDiplomacySummary:
         assert summary["enemies"] == []
         assert summary["neutral"] == []
 
-    def test_get_diplomacy_summary_returns_dict(self, geopolitics_service, diplomacy_matrix):
+    def test_get_diplomacy_summary_returns_dict(
+        self, geopolitics_service, diplomacy_matrix
+    ):
         """Test that summary returns dictionary."""
         result = geopolitics_service.get_diplomacy_summary(
             matrix=diplomacy_matrix,

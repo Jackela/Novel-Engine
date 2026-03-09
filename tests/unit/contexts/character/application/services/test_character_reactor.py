@@ -51,6 +51,7 @@ pytestmark = pytest.mark.unit
 
 # ==================== Test Fixtures ====================
 
+
 @pytest.fixture
 def mock_memory_service() -> MagicMock:
     """Create a mock memory service."""
@@ -170,18 +171,25 @@ def global_event() -> HistoryEvent:
 
 # ==================== Intensity Calculation Tests ====================
 
+
 class TestIntensityCalculation:
     """Tests for the intensity calculation logic."""
 
-    def test_base_intensity_local(self, basic_character, local_event, basic_world_state):
+    def test_base_intensity_local(
+        self, basic_character, local_event, basic_world_state
+    ):
         """Test base intensity for LOCAL impact scope."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # LOCAL = 3, no modifiers
         assert reaction.intensity == 3
 
-    def test_base_intensity_regional(self, basic_character, war_event, basic_world_state):
+    def test_base_intensity_regional(
+        self, basic_character, war_event, basic_world_state
+    ):
         """Test base intensity for REGIONAL impact scope."""
         reactor = CharacterReactor()
         reaction = reactor.react_to_event(basic_character, war_event, basic_world_state)
@@ -189,10 +197,14 @@ class TestIntensityCalculation:
         # REGIONAL = 5, no modifiers
         assert reaction.intensity == 5
 
-    def test_base_intensity_global(self, basic_character, global_event, basic_world_state):
+    def test_base_intensity_global(
+        self, basic_character, global_event, basic_world_state
+    ):
         """Test base intensity for GLOBAL impact scope."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         # GLOBAL = 7, no modifiers
         assert reaction.intensity == 7
@@ -273,7 +285,9 @@ class TestIntensityCalculation:
         # GLOBAL = 7, +2 faction, +1 location = 10 (clamped from 10)
         assert reaction.intensity == 10
 
-    def test_no_faction_modifier_when_not_in_affected(self, basic_character, basic_world_state):
+    def test_no_faction_modifier_when_not_in_affected(
+        self, basic_character, basic_world_state
+    ):
         """Test no modifier when faction not in affected_faction_ids."""
         basic_character.faction_id = "faction-999"
         event = HistoryEvent(
@@ -294,6 +308,7 @@ class TestIntensityCalculation:
 
 # ==================== Reaction Type Tests ====================
 
+
 class TestReactionTypeDetermination:
     """Tests for the reaction type determination rules."""
 
@@ -308,25 +323,38 @@ class TestReactionTypeDetermination:
             character_class=CharacterClass.CLERIC,
             age=30,
             level=5,
-            personality_traits=PersonalityTraits(traits={"pacifist": 0.8, "courage": 0.3}),
+            personality_traits=PersonalityTraits(
+                traits={"pacifist": 0.8, "courage": 0.3}
+            ),
             physical_traits=PhysicalTraits(),
             background=Background(),
         )
         stats = CharacterStats(
             core_abilities=CoreAbilities(
-                strength=10, dexterity=12, constitution=12,
-                intelligence=14, wisdom=16, charisma=12,
+                strength=10,
+                dexterity=12,
+                constitution=12,
+                intelligence=14,
+                wisdom=16,
+                charisma=12,
             ),
             vital_stats=VitalStats(
-                max_health=24, current_health=24,
-                max_mana=20, current_mana=20,
-                max_stamina=16, current_stamina=16,
-                armor_class=12, speed=30,
+                max_health=24,
+                current_health=24,
+                max_mana=20,
+                current_mana=20,
+                max_stamina=16,
+                current_stamina=16,
+                armor_class=12,
+                speed=30,
             ),
             combat_stats=CombatStats(
-                base_attack_bonus=2, initiative_modifier=1,
-                damage_reduction=0, spell_resistance=0,
-                critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+                base_attack_bonus=2,
+                initiative_modifier=1,
+                damage_reduction=0,
+                spell_resistance=0,
+                critical_hit_chance=0.05,
+                critical_damage_multiplier=2.0,
             ),
             experience_points=1000,
             skill_points=10,
@@ -375,25 +403,38 @@ class TestReactionTypeDetermination:
             character_class=CharacterClass.MERCHANT,
             age=35,
             level=5,
-            personality_traits=PersonalityTraits(traits={"merchant": 0.9, "courage": 0.5}),
+            personality_traits=PersonalityTraits(
+                traits={"merchant": 0.9, "courage": 0.5}
+            ),
             physical_traits=PhysicalTraits(),
             background=Background(),
         )
         stats = CharacterStats(
             core_abilities=CoreAbilities(
-                strength=10, dexterity=12, constitution=12,
-                intelligence=14, wisdom=12, charisma=16,
+                strength=10,
+                dexterity=12,
+                constitution=12,
+                intelligence=14,
+                wisdom=12,
+                charisma=16,
             ),
             vital_stats=VitalStats(
-                max_health=24, current_health=24,
-                max_mana=10, current_mana=10,
-                max_stamina=16, current_stamina=16,
-                armor_class=12, speed=30,
+                max_health=24,
+                current_health=24,
+                max_mana=10,
+                current_mana=10,
+                max_stamina=16,
+                current_stamina=16,
+                armor_class=12,
+                speed=30,
             ),
             combat_stats=CombatStats(
-                base_attack_bonus=2, initiative_modifier=1,
-                damage_reduction=0, spell_resistance=0,
-                critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+                base_attack_bonus=2,
+                initiative_modifier=1,
+                damage_reduction=0,
+                spell_resistance=0,
+                critical_hit_chance=0.05,
+                critical_damage_multiplier=2.0,
             ),
             experience_points=1000,
             skill_points=10,
@@ -418,7 +459,9 @@ class TestReactionTypeDetermination:
 
         assert reaction.reaction_type == ReactionType.CELEBRATE
 
-    def test_war_location_affected_flee(self, basic_character, war_event, basic_world_state):
+    def test_war_location_affected_flee(
+        self, basic_character, war_event, basic_world_state
+    ):
         """Test that character flees when their location is affected by war."""
         basic_character.current_location_id = "village-123"
         war_event.affected_location_ids = ["village-123", "city-456"]
@@ -428,17 +471,23 @@ class TestReactionTypeDetermination:
 
         assert reaction.reaction_type == ReactionType.FLEE
 
-    def test_global_scope_observe(self, basic_character, global_event, basic_world_state):
+    def test_global_scope_observe(
+        self, basic_character, global_event, basic_world_state
+    ):
         """Test that GLOBAL events cause OBSERVE reaction."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         assert reaction.reaction_type == ReactionType.OBSERVE
 
     def test_default_ignore(self, basic_character, local_event, basic_world_state):
         """Test that events with no matching rules cause IGNORE reaction."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # BATTLE with no special conditions -> IGNORE
         assert reaction.reaction_type == ReactionType.IGNORE
@@ -454,25 +503,38 @@ class TestReactionTypeDetermination:
             character_class=CharacterClass.CLERIC,
             age=30,
             level=5,
-            personality_traits=PersonalityTraits(traits={"pacifist": 0.9, "courage": 0.3}),
+            personality_traits=PersonalityTraits(
+                traits={"pacifist": 0.9, "courage": 0.3}
+            ),
             physical_traits=PhysicalTraits(),
             background=Background(),
         )
         stats = CharacterStats(
             core_abilities=CoreAbilities(
-                strength=10, dexterity=12, constitution=12,
-                intelligence=14, wisdom=16, charisma=12,
+                strength=10,
+                dexterity=12,
+                constitution=12,
+                intelligence=14,
+                wisdom=16,
+                charisma=12,
             ),
             vital_stats=VitalStats(
-                max_health=24, current_health=24,
-                max_mana=20, current_mana=20,
-                max_stamina=16, current_stamina=16,
-                armor_class=12, speed=30,
+                max_health=24,
+                current_health=24,
+                max_mana=20,
+                current_mana=20,
+                max_stamina=16,
+                current_stamina=16,
+                armor_class=12,
+                speed=30,
             ),
             combat_stats=CombatStats(
-                base_attack_bonus=2, initiative_modifier=1,
-                damage_reduction=0, spell_resistance=0,
-                critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+                base_attack_bonus=2,
+                initiative_modifier=1,
+                damage_reduction=0,
+                spell_resistance=0,
+                critical_hit_chance=0.05,
+                critical_damage_multiplier=2.0,
             ),
             experience_points=1000,
             skill_points=10,
@@ -503,13 +565,16 @@ class TestReactionTypeDetermination:
 
 # ==================== Narrative Generation Tests ====================
 
+
 class TestNarrativeGeneration:
     """Tests for narrative generation."""
 
     def test_narrative_format(self, basic_character, local_event, basic_world_state):
         """Test that narrative follows the expected format."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # Format: "{character_name} {reaction_verb} upon hearing {event_title}"
         assert basic_character.profile.name in reaction.narrative
@@ -528,13 +593,16 @@ class TestNarrativeGeneration:
     def test_observe_narrative(self, basic_character, global_event, basic_world_state):
         """Test narrative for OBSERVE reaction."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         assert "watches with interest" in reaction.narrative
         assert global_event.name in reaction.narrative
 
 
 # ==================== Memory Integration Tests ====================
+
 
 class TestMemoryIntegration:
     """Tests for memory creation integration."""
@@ -544,7 +612,9 @@ class TestMemoryIntegration:
     ):
         """Test that memory is created for significant reactions."""
         reactor = CharacterReactor(memory_service=mock_memory_service)
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         # GLOBAL event with OBSERVE reaction, intensity >= 4
         assert reaction.memory_created is True
@@ -555,7 +625,9 @@ class TestMemoryIntegration:
     ):
         """Test that memory is not created for IGNORE reactions."""
         reactor = CharacterReactor(memory_service=mock_memory_service)
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # IGNORE reaction, even if intensity is present
         assert reaction.reaction_type == ReactionType.IGNORE
@@ -567,7 +639,9 @@ class TestMemoryIntegration:
     ):
         """Test that no memory is created when no memory service is provided."""
         reactor = CharacterReactor(memory_service=None)
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         # Even though reaction should create memory, no service means no creation
         assert reaction.memory_created is False
@@ -580,7 +654,9 @@ class TestMemoryIntegration:
         reactor.react_to_event(basic_character, global_event, basic_world_state)
 
         call_args = mock_memory_service.create_memory.call_args
-        content = call_args.kwargs.get("content", call_args[0][1] if call_args[0] else "")
+        content = call_args.kwargs.get(
+            "content", call_args[0][1] if call_args[0] else ""
+        )
 
         assert global_event.description[:100] in content
 
@@ -589,15 +665,20 @@ class TestMemoryIntegration:
     ):
         """Test that memory importance matches reaction intensity."""
         reactor = CharacterReactor(memory_service=mock_memory_service)
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         call_args = mock_memory_service.create_memory.call_args
-        importance = call_args.kwargs.get("importance", call_args[0][2] if len(call_args[0]) > 2 else None)
+        importance = call_args.kwargs.get(
+            "importance", call_args[0][2] if len(call_args[0]) > 2 else None
+        )
 
         assert importance == reaction.intensity
 
 
 # ==================== Edge Case Tests ====================
+
 
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
@@ -674,16 +755,21 @@ class TestEdgeCases:
         # REGIONAL = 5, no modifiers
         assert reaction.intensity == 5
 
-    def test_deceased_character_still_reacts(self, basic_character, global_event, basic_world_state):
+    def test_deceased_character_still_reacts(
+        self, basic_character, global_event, basic_world_state
+    ):
         """Test that deceased characters can still have reactions (for historical records)."""
         # Mark character as deceased
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
+
         death_date = WorldCalendar(year=5, month=1, day=1, era_name="First Age")
         basic_character.is_deceased = True
         basic_character.death_date = death_date
 
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         # Should still generate a reaction
         assert reaction is not None
@@ -692,10 +778,13 @@ class TestEdgeCases:
 
 # ==================== Batch Processing Tests ====================
 
+
 class TestBatchProcessing:
     """Tests for batch reaction processing."""
 
-    def test_batch_react_multiple_characters(self, basic_world_state, mock_memory_service):
+    def test_batch_react_multiple_characters(
+        self, basic_world_state, mock_memory_service
+    ):
         """Test batch processing of multiple characters."""
         # Create multiple characters
         characters = []
@@ -714,19 +803,30 @@ class TestBatchProcessing:
             )
             stats = CharacterStats(
                 core_abilities=CoreAbilities(
-                    strength=14, dexterity=12, constitution=14,
-                    intelligence=10, wisdom=10, charisma=10,
+                    strength=14,
+                    dexterity=12,
+                    constitution=14,
+                    intelligence=10,
+                    wisdom=10,
+                    charisma=10,
                 ),
                 vital_stats=VitalStats(
-                    max_health=30, current_health=30,
-                    max_mana=10, current_mana=10,
-                    max_stamina=20, current_stamina=20,
-                    armor_class=14, speed=30,
+                    max_health=30,
+                    current_health=30,
+                    max_mana=10,
+                    current_mana=10,
+                    max_stamina=20,
+                    current_stamina=20,
+                    armor_class=14,
+                    speed=30,
                 ),
                 combat_stats=CombatStats(
-                    base_attack_bonus=3, initiative_modifier=1,
-                    damage_reduction=0, spell_resistance=0,
-                    critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+                    base_attack_bonus=3,
+                    initiative_modifier=1,
+                    damage_reduction=0,
+                    spell_resistance=0,
+                    critical_hit_chance=0.05,
+                    critical_damage_multiplier=2.0,
                 ),
                 experience_points=1000,
                 skill_points=10,
@@ -758,6 +858,7 @@ class TestBatchProcessing:
 
 # ==================== Trait Detection Tests ====================
 
+
 class TestTraitDetection:
     """Tests for trait detection in characters."""
 
@@ -772,25 +873,38 @@ class TestTraitDetection:
             character_class=CharacterClass.MERCHANT,
             age=35,
             level=5,
-            personality_traits=PersonalityTraits(traits={"merchant": 0.85, "courage": 0.5}),
+            personality_traits=PersonalityTraits(
+                traits={"merchant": 0.85, "courage": 0.5}
+            ),
             physical_traits=PhysicalTraits(),
             background=Background(),
         )
         stats = CharacterStats(
             core_abilities=CoreAbilities(
-                strength=10, dexterity=12, constitution=12,
-                intelligence=14, wisdom=12, charisma=16,
+                strength=10,
+                dexterity=12,
+                constitution=12,
+                intelligence=14,
+                wisdom=12,
+                charisma=16,
             ),
             vital_stats=VitalStats(
-                max_health=24, current_health=24,
-                max_mana=10, current_mana=10,
-                max_stamina=16, current_stamina=16,
-                armor_class=12, speed=30,
+                max_health=24,
+                current_health=24,
+                max_mana=10,
+                current_mana=10,
+                max_stamina=16,
+                current_stamina=16,
+                armor_class=12,
+                speed=30,
             ),
             combat_stats=CombatStats(
-                base_attack_bonus=2, initiative_modifier=1,
-                damage_reduction=0, spell_resistance=0,
-                critical_hit_chance=0.05, critical_damage_multiplier=2.0,
+                base_attack_bonus=2,
+                initiative_modifier=1,
+                damage_reduction=0,
+                spell_resistance=0,
+                critical_hit_chance=0.05,
+                critical_damage_multiplier=2.0,
             ),
             experience_points=1000,
             skill_points=10,
@@ -815,7 +929,9 @@ class TestTraitDetection:
         # Merchant trait should trigger CELEBRATE
         assert reaction.reaction_type == ReactionType.CELEBRATE
 
-    def test_trait_below_threshold_not_detected(self, basic_character, basic_world_state):
+    def test_trait_below_threshold_not_detected(
+        self, basic_character, basic_world_state
+    ):
         """Test that traits below threshold (0.7) are not detected."""
         # basic_character has courage: 0.5 which is below threshold
         # This is already below 0.7, so we test that weak traits don't trigger
@@ -854,13 +970,18 @@ class TestTraitDetection:
 
 # ==================== Reaction Properties Tests ====================
 
+
 class TestReactionProperties:
     """Tests for reaction value object properties."""
 
-    def test_reaction_intense_threshold(self, basic_character, global_event, basic_world_state):
+    def test_reaction_intense_threshold(
+        self, basic_character, global_event, basic_world_state
+    ):
         """Test is_intense method with custom threshold."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, global_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, global_event, basic_world_state
+        )
 
         # GLOBAL = 7, so is_intense(threshold=7) should be True
         assert reaction.is_intense(7) is True
@@ -869,7 +990,9 @@ class TestReactionProperties:
     def test_reaction_mild(self, basic_character, local_event, basic_world_state):
         """Test is_mild method."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # LOCAL = 3, should be mild
         assert reaction.is_mild() is True
@@ -891,10 +1014,14 @@ class TestReactionProperties:
         # OBSERVE creates memory, intensity 7 >= 4
         assert reaction.should_create_memory() is True
 
-    def test_ignore_never_creates_memory(self, basic_character, local_event, basic_world_state):
+    def test_ignore_never_creates_memory(
+        self, basic_character, local_event, basic_world_state
+    ):
         """Test that IGNORE reactions never create memory regardless of intensity."""
         reactor = CharacterReactor()
-        reaction = reactor.react_to_event(basic_character, local_event, basic_world_state)
+        reaction = reactor.react_to_event(
+            basic_character, local_event, basic_world_state
+        )
 
         # IGNORE type
         assert reaction.reaction_type == ReactionType.IGNORE

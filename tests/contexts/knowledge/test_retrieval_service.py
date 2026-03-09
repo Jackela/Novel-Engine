@@ -20,7 +20,6 @@ from src.contexts.knowledge.domain.models.source_type import SourceType
 pytestmark = pytest.mark.unit
 
 
-
 class TestRetrievalFilter:
     """Test RetrievalFilter dataclass."""
 
@@ -30,7 +29,7 @@ class TestRetrievalFilter:
             source_types=[SourceType.CHARACTER, SourceType.LORE],
             tags=["important", "hero"],
         )
-        
+
         assert filter_obj.source_types == [SourceType.CHARACTER, SourceType.LORE]
         assert filter_obj.tags == ["important", "hero"]
 
@@ -38,14 +37,14 @@ class TestRetrievalFilter:
         """Test converting empty filter to where clause."""
         filter_obj = RetrievalFilter()
         clause = filter_obj.to_where_clause()
-        
+
         assert clause == {}
 
     def test_to_where_clause_with_source_types(self):
         """Test where clause with source types."""
         filter_obj = RetrievalFilter(source_types=[SourceType.CHARACTER])
         clause = filter_obj.to_where_clause()
-        
+
         assert "source_type" in clause
 
     def test_matches_no_metadata(self):
@@ -60,7 +59,7 @@ class TestRetrievalOptions:
     def test_default_options(self):
         """Test default retrieval options."""
         options = RetrievalOptions()
-        
+
         assert options.k == 5
         assert options.min_score == DEFAULT_RELEVANCE_THRESHOLD
         assert options.deduplicate is True
@@ -74,7 +73,7 @@ class TestRetrievalOptions:
             deduplicate=False,
             enable_rerank=False,
         )
-        
+
         assert options.k == 10
         assert options.min_score == 0.7
 
@@ -90,7 +89,7 @@ class TestFormattedContext:
             total_tokens=100,
             chunk_count=2,
         )
-        
+
         assert context.text == "Context text here"
         assert context.sources == ["char1", "loc1"]
         assert context.total_tokens == 100
@@ -145,7 +144,7 @@ class TestRetrievalService:
             "The quick brown fox",
             "The quick brown fox",
         )
-        
+
         assert similarity == 1.0
 
     def test_content_similarity_different(self, retrieval_service):
@@ -154,7 +153,7 @@ class TestRetrievalService:
             "The quick brown fox",
             "A completely different sentence",
         )
-        
+
         assert 0 <= similarity < 1.0
 
 
@@ -177,7 +176,7 @@ class TestRetrievalServiceDeduplication:
         from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
             RetrievedChunk,
         )
-        
+
         chunks = [
             RetrievedChunk(
                 chunk_id="chunk1",
@@ -188,7 +187,7 @@ class TestRetrievalServiceDeduplication:
                 metadata={},
             ),
         ]
-        
+
         result = retrieval_service._deduplicate_chunks(chunks)
         assert len(result) == 1
 
@@ -197,7 +196,7 @@ class TestRetrievalServiceDeduplication:
         from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
             RetrievedChunk,
         )
-        
+
         chunks = [
             RetrievedChunk(
                 chunk_id="chunk1",
@@ -216,6 +215,6 @@ class TestRetrievalServiceDeduplication:
                 metadata={},
             ),
         ]
-        
+
         result = retrieval_service._deduplicate_chunks(chunks, threshold=0.9)
         assert len(result) == 2

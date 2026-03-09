@@ -69,9 +69,9 @@ class TypeProcessors:
                 for participant2 in context.participants[i + 1 :]:
                     if participant1 not in outcome.relationship_changes:
                         outcome.relationship_changes[participant1] = {}
-                    outcome.relationship_changes[participant1][
-                        participant2
-                    ] = 0.1  # Small positive change
+                    outcome.relationship_changes[participant1][participant2] = (
+                        0.1  # Small positive change
+                    )
 
             return StandardResponse(
                 success=True, metadata={"blessing": "dialogue_processed"}
@@ -145,9 +145,9 @@ class TypeProcessors:
                 for participant2 in context.participants[i + 1 :]:
                     if participant1 not in outcome.relationship_changes:
                         outcome.relationship_changes[participant1] = {}
-                    outcome.relationship_changes[participant1][
-                        participant2
-                    ] = 0.2  # Positive cooperation boost
+                    outcome.relationship_changes[participant1][participant2] = (
+                        0.2  # Positive cooperation boost
+                    )
 
             outcome.generated_content.extend(cooperation_results)
 

@@ -29,8 +29,6 @@ from src.contexts.character.domain.value_objects.character_goal import (
 )
 
 
-
-
 class TestCharacterGoalValueObject:
     """Test suite for CharacterGoal value object."""
 

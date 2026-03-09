@@ -168,9 +168,7 @@ class RelationshipRepository:
                 details={"error": str(e), "entity": entity_name},
             ) from e
 
-    async def get_between(
-        self, source: str, target: str
-    ) -> List[GraphRelationship]:
+    async def get_between(self, source: str, target: str) -> List[GraphRelationship]:
         """Get all relationships between two entities.
 
         Args:

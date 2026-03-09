@@ -17,7 +17,9 @@ def get_cache_metrics() -> Dict[str, Any]:
     try:
         return global_metrics.snapshot().to_dict()
     except Exception as exc:
-        logger.error("metrics_snapshot_error", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "metrics_snapshot_error", error=str(exc), error_type=type(exc).__name__
+        )
         raise HTTPException(status_code=500, detail="metrics error") from exc
 
 
@@ -26,7 +28,9 @@ def invalidate_cache(tags_all_of: Iterable[str]) -> Dict[str, Any]:
         removed = invalidate_by_tags(list(tags_all_of))
         return {"removed": int(removed)}
     except Exception as exc:
-        logger.error("cache_invalidation_error", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "cache_invalidation_error", error=str(exc), error_type=type(exc).__name__
+        )
         raise HTTPException(status_code=500, detail="invalidation error") from exc
 
 
@@ -35,7 +39,9 @@ def append_chunk(key: str, seq: int, data: str) -> Dict[str, Any]:
         chunk_cache.add_chunk(key, seq, data)
         return {"ok": True}
     except Exception as exc:
-        logger.error("chunk_append_error", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "chunk_append_error", error=str(exc), error_type=type(exc).__name__
+        )
         raise HTTPException(status_code=500, detail="chunk append error") from exc
 
 
@@ -44,7 +50,9 @@ def mark_chunk_complete(key: str) -> Dict[str, Any]:
         chunk_cache.mark_complete(key)
         return {"ok": True}
     except Exception as exc:
-        logger.error("chunk_complete_error", error=str(exc), error_type=type(exc).__name__)
+        logger.error(
+            "chunk_complete_error", error=str(exc), error_type=type(exc).__name__
+        )
         raise HTTPException(status_code=500, detail="chunk complete error") from exc
 
 

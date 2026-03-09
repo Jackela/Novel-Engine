@@ -30,14 +30,13 @@ from src.contexts.knowledge.domain.models.entity import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestExtractionConfig:
     """Tests for ExtractionConfig dataclass."""
 
     def test_default_config(self):
         """Test default extraction configuration."""
         config = ExtractionConfig()
-        
+
         assert config.confidence_threshold == 0.5
         assert config.max_entities == 50
         assert config.include_mentions is True
@@ -59,7 +58,7 @@ class TestExtractionConfig:
             temperature=0.5,
             max_tokens=3000,
         )
-        
+
         assert config.confidence_threshold == 0.7
         assert config.max_entities == 20
         assert config.include_mentions is False
@@ -122,7 +121,7 @@ class TestEntityExtractionServiceInitialization:
         """Test initialization with default config."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         assert service._llm_client == mock_llm
         assert isinstance(service._config, ExtractionConfig)
 
@@ -131,7 +130,7 @@ class TestEntityExtractionServiceInitialization:
         mock_llm = Mock(spec=ILLMClient)
         custom_config = ExtractionConfig(max_entities=10)
         service = EntityExtractionService(llm_client=mock_llm, config=custom_config)
-        
+
         assert service._config.max_entities == 10
 
 
@@ -143,11 +142,13 @@ class TestEntityExtractionServiceExtract:
     async def mock_llm_client(self):
         """Create mock LLM client."""
         client = AsyncMock(spec=ILLMClient)
-        client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"entities": [{"name": "Alice", "type": "character", "aliases": ["Ali"], "description": "Main character", "first_appearance": 0}], "mentions": [{"entity_name": "Alice", "mention_text": "Alice", "start_pos": 0, "end_pos": 5, "is_pronoun": false}]}',
-            model="test-model",
-            tokens_used=100,
-        ))
+        client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"entities": [{"name": "Alice", "type": "character", "aliases": ["Ali"], "description": "Main character", "first_appearance": 0}], "mentions": [{"entity_name": "Alice", "mention_text": "Alice", "start_pos": 0, "end_pos": 5, "is_pronoun": false}]}',
+                model="test-model",
+                tokens_used=100,
+            )
+        )
         return client
 
     @pytest_asyncio.fixture
@@ -158,50 +159,54 @@ class TestEntityExtractionServiceExtract:
     async def test_extract_success(self, extraction_service):
         """Test successful entity extraction."""
         result = await extraction_service.extract("Alice went to the store.")
-        
+
         assert result.is_ok
         assert result.value.entity_count > 0
 
     async def test_extract_empty_text(self, extraction_service):
         """Test extraction with empty text."""
         result = await extraction_service.extract("")
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
     async def test_extract_whitespace_text(self, extraction_service):
         """Test extraction with whitespace-only text."""
         result = await extraction_service.extract("   ")
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
     async def test_extract_non_string_text(self, extraction_service):
         """Test extraction with non-string text."""
         result = await extraction_service.extract(123)
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
     async def test_extract_llm_failure(self, extraction_service, mock_llm_client):
         """Test extraction when LLM fails."""
         mock_llm_client.generate = AsyncMock(side_effect=Exception("LLM error"))
-        
+
         result = await extraction_service.extract("Test text.")
-        
+
         assert result.is_error
         assert isinstance(result.error, ExtractionError)
 
-    async def test_extract_invalid_json_response(self, extraction_service, mock_llm_client):
+    async def test_extract_invalid_json_response(
+        self, extraction_service, mock_llm_client
+    ):
         """Test extraction with invalid JSON response."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text="Not valid JSON",
-            model="test-model",
-            tokens_used=50,
-        ))
-        
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text="Not valid JSON",
+                model="test-model",
+                tokens_used=50,
+            )
+        )
+
         result = await extraction_service.extract("Test text.")
-        
+
         # Should return empty result on parse failure
         assert result.is_ok
         assert result.value.entity_count == 0
@@ -209,27 +214,31 @@ class TestEntityExtractionServiceExtract:
     async def test_extract_with_custom_config(self, extraction_service):
         """Test extraction with custom config."""
         custom_config = ExtractionConfig(confidence_threshold=0.8)
-        
+
         result = await extraction_service.extract(
             "Alice went to the store.",
             config=custom_config,
         )
-        
+
         assert result.is_ok
 
-    async def test_extract_entities_filtered_by_confidence(self, extraction_service, mock_llm_client):
+    async def test_extract_entities_filtered_by_confidence(
+        self, extraction_service, mock_llm_client
+    ):
         """Test that entities are filtered by confidence threshold."""
-        mock_llm_client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"entities": [{"name": "Alice", "type": "character", "confidence": 0.9}, {"name": "Bob", "type": "character", "confidence": 0.3}], "mentions": []}',
-            model="test-model",
-            tokens_used=100,
-        ))
-        
+        mock_llm_client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"entities": [{"name": "Alice", "type": "character", "confidence": 0.9}, {"name": "Bob", "type": "character", "confidence": 0.3}], "mentions": []}',
+                model="test-model",
+                tokens_used=100,
+            )
+        )
+
         result = await extraction_service.extract(
             "Test text.",
             config=ExtractionConfig(confidence_threshold=0.5),
         )
-        
+
         assert result.is_ok
         # Only Alice should pass the confidence filter
         assert result.value.entity_count == 1
@@ -243,11 +252,13 @@ class TestEntityExtractionServiceBatch:
     async def mock_llm_client(self):
         """Create mock LLM client."""
         client = AsyncMock(spec=ILLMClient)
-        client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"entities": [{"name": "Test", "type": "character"}], "mentions": []}',
-            model="test-model",
-            tokens_used=50,
-        ))
+        client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"entities": [{"name": "Test", "type": "character"}], "mentions": []}',
+                model="test-model",
+                tokens_used=50,
+            )
+        )
         return client
 
     @pytest_asyncio.fixture
@@ -258,35 +269,43 @@ class TestEntityExtractionServiceBatch:
     async def test_extract_batch_success(self, extraction_service):
         """Test successful batch extraction."""
         texts = ["Text one.", "Text two."]
-        
+
         result = await extraction_service.extract_batch(texts)
-        
+
         assert result.is_ok
         assert len(result.value) == 2
 
     async def test_extract_batch_invalid_input(self, extraction_service):
         """Test batch extraction with invalid input."""
         result = await extraction_service.extract_batch("not a list")
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
     async def test_extract_batch_empty_list(self, extraction_service):
         """Test batch extraction with empty list."""
         result = await extraction_service.extract_batch([])
-        
+
         assert result.is_ok
         assert len(result.value) == 0
 
-    async def test_extract_batch_partial_failure(self, extraction_service, mock_llm_client):
+    async def test_extract_batch_partial_failure(
+        self, extraction_service, mock_llm_client
+    ):
         """Test batch extraction with partial failure."""
-        mock_llm_client.generate = AsyncMock(side_effect=[
-            LLMResponse(text='{"entities": [], "mentions": []}', model="test-model", tokens_used=50),
-            Exception("LLM error"),
-        ])
-        
+        mock_llm_client.generate = AsyncMock(
+            side_effect=[
+                LLMResponse(
+                    text='{"entities": [], "mentions": []}',
+                    model="test-model",
+                    tokens_used=50,
+                ),
+                Exception("LLM error"),
+            ]
+        )
+
         result = await extraction_service.extract_batch(["Text one.", "Text two."])
-        
+
         assert result.is_ok
         assert len(result.value) == 2
         # Second result should be empty due to failure
@@ -301,11 +320,13 @@ class TestEntityExtractionServiceLargeText:
     async def mock_llm_client(self):
         """Create mock LLM client."""
         client = AsyncMock(spec=ILLMClient)
-        client.generate = AsyncMock(return_value=LLMResponse(
-            text='{"entities": [{"name": "Test", "type": "character"}], "mentions": []}',
-            model="test-model",
-            tokens_used=50,
-        ))
+        client.generate = AsyncMock(
+            return_value=LLMResponse(
+                text='{"entities": [{"name": "Test", "type": "character"}], "mentions": []}',
+                model="test-model",
+                tokens_used=50,
+            )
+        )
         return client
 
     @pytest_asyncio.fixture
@@ -316,17 +337,19 @@ class TestEntityExtractionServiceLargeText:
     async def test_extract_large_text_success(self, extraction_service):
         """Test successful large text extraction."""
         large_text = "Test content. " * 1000  # Create large text
-        
+
         result = await extraction_service.extract_large_text(large_text)
-        
+
         assert result.is_ok
 
-    async def test_extract_large_text_small_text(self, extraction_service, mock_llm_client):
+    async def test_extract_large_text_small_text(
+        self, extraction_service, mock_llm_client
+    ):
         """Test large text extraction with small text (no chunking needed)."""
         small_text = "Small text."
-        
+
         result = await extraction_service.extract_large_text(small_text)
-        
+
         assert result.is_ok
         # Should call extract directly for small texts
 
@@ -336,7 +359,7 @@ class TestEntityExtractionServiceLargeText:
             "Text.",
             chunk_size=50,  # Too small
         )
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
@@ -347,7 +370,7 @@ class TestEntityExtractionServiceLargeText:
             chunk_size=1000,
             overlap=1500,  # Larger than chunk_size
         )
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
@@ -358,7 +381,7 @@ class TestEntityExtractionServiceLargeText:
             chunk_size=1000,
             overlap=-100,
         )
-        
+
         assert result.is_error
         assert isinstance(result.error, ValidationError)
 
@@ -371,7 +394,7 @@ class TestEntityExtractionServiceRelationships:
     async def mock_llm_client(self):
         """Create mock LLM client."""
         client = AsyncMock(spec=ILLMClient)
-        
+
         async def mock_generate(request):
             if "relationship" in request.system_prompt.lower():
                 return LLMResponse(
@@ -385,7 +408,7 @@ class TestEntityExtractionServiceRelationships:
                     model="test-model",
                     tokens_used=100,
                 )
-        
+
         client.generate = AsyncMock(side_effect=mock_generate)
         return client
 
@@ -399,18 +422,21 @@ class TestEntityExtractionServiceRelationships:
         result = await extraction_service.extract_with_relationships(
             "Alice and Bob are friends.",
         )
-        
+
         assert result.is_ok
         assert isinstance(result.value, ExtractionResultWithRelationships)
 
     async def test_extract_with_relationships_empty_text(self, extraction_service):
         """Test relationship extraction with empty text."""
         result = await extraction_service.extract_with_relationships("")
-        
+
         assert result.is_error
 
-    async def test_extract_with_relationships_llm_failure(self, extraction_service, mock_llm_client):
+    async def test_extract_with_relationships_llm_failure(
+        self, extraction_service, mock_llm_client
+    ):
         """Test relationship extraction when relationship LLM call fails."""
+
         async def failing_generate(request):
             if "relationship" in request.system_prompt.lower():
                 raise Exception("Relationship extraction failed")
@@ -420,11 +446,11 @@ class TestEntityExtractionServiceRelationships:
                     model="test-model",
                     tokens_used=50,
                 )
-        
+
         mock_llm_client.generate = AsyncMock(side_effect=failing_generate)
-        
+
         result = await extraction_service.extract_with_relationships("Text.")
-        
+
         # Should return entities even if relationship extraction fails
         assert result.is_ok
         assert result.value.entity_count > 0
@@ -438,10 +464,10 @@ class TestEntityExtractionServiceParsing:
         """Test parsing JSON from markdown code block."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         response = '```json\n{"entities": [], "mentions": []}\n```'
         result = service._parse_llm_response(response)
-        
+
         assert result.is_ok
         assert "entities" in result.value
 
@@ -449,20 +475,20 @@ class TestEntityExtractionServiceParsing:
         """Test parsing plain JSON."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         response = '{"entities": [], "mentions": []}'
         result = service._parse_llm_response(response)
-        
+
         assert result.is_ok
 
     def test_parse_llm_response_invalid_json(self):
         """Test parsing invalid JSON."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
-        response = 'Not valid JSON'
+
+        response = "Not valid JSON"
         result = service._parse_llm_response(response)
-        
+
         assert result.is_error
 
 
@@ -473,14 +499,14 @@ class TestEntityExtractionServiceEntityBuilding:
         """Test building entities with type mapping."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         entities_data = [
             {"name": "John", "type": "person"},  # Maps to CHARACTER
             {"name": "Paris", "type": "place"},  # Maps to LOCATION
         ]
-        
+
         entities = service._build_entities(entities_data, 100)
-        
+
         assert len(entities) == 2
         assert entities[0].entity_type == EntityType.CHARACTER
         assert entities[1].entity_type == EntityType.LOCATION
@@ -489,13 +515,13 @@ class TestEntityExtractionServiceEntityBuilding:
         """Test building entities with unknown type defaults to CHARACTER."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         entities_data = [
             {"name": "Unknown", "type": "unknown_type"},
         ]
-        
+
         entities = service._build_entities(entities_data, 100)
-        
+
         assert len(entities) == 1
         assert entities[0].entity_type == EntityType.CHARACTER
 
@@ -506,14 +532,11 @@ class TestEntityExtractionServiceEntityBuilding:
             llm_client=mock_llm,
             config=ExtractionConfig(max_entities=2),
         )
-        
-        entities_data = [
-            {"name": f"Entity{i}", "type": "character"}
-            for i in range(10)
-        ]
-        
+
+        entities_data = [{"name": f"Entity{i}", "type": "character"} for i in range(10)]
+
         entities = service._build_entities(entities_data, 100)
-        
+
         assert len(entities) == 2
 
 
@@ -524,14 +547,24 @@ class TestEntityExtractionServiceMentionBuilding:
         """Test automatic pronoun detection in mentions."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         mentions_data = [
-            {"entity_name": "Alice", "mention_text": "she", "start_pos": 10, "end_pos": 13},
-            {"entity_name": "Bob", "mention_text": "Bob", "start_pos": 20, "end_pos": 23},
+            {
+                "entity_name": "Alice",
+                "mention_text": "she",
+                "start_pos": 10,
+                "end_pos": 13,
+            },
+            {
+                "entity_name": "Bob",
+                "mention_text": "Bob",
+                "start_pos": 20,
+                "end_pos": 23,
+            },
         ]
-        
+
         mentions = service._build_mentions(mentions_data, 100)
-        
+
         assert len(mentions) == 2
         # "she" should be detected as pronoun
         assert mentions[0].is_pronoun is True
@@ -546,18 +579,18 @@ class TestEntityExtractionServiceRelationshipBuilding:
         """Test building relationships with type mapping."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         known_entities = (
             ExtractedEntity(name="Alice", entity_type=EntityType.CHARACTER),
             ExtractedEntity(name="Bob", entity_type=EntityType.CHARACTER),
         )
-        
+
         relationships_data = [
             {"source": "Alice", "target": "Bob", "type": "know"},  # Maps to KNOWS
         ]
-        
+
         relationships = service._build_relationships(relationships_data, known_entities)
-        
+
         assert len(relationships) == 1
         assert relationships[0].relationship_type == RelationshipType.KNOWS
 
@@ -565,34 +598,34 @@ class TestEntityExtractionServiceRelationshipBuilding:
         """Test that relationships with unknown entities are skipped."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         known_entities = (
             ExtractedEntity(name="Alice", entity_type=EntityType.CHARACTER),
         )
-        
+
         relationships_data = [
             {"source": "Alice", "target": "UnknownEntity", "type": "knows"},
         ]
-        
+
         relationships = service._build_relationships(relationships_data, known_entities)
-        
+
         assert len(relationships) == 0
 
     def test_build_relationships_skips_self_relationships(self):
         """Test that self-relationships are skipped."""
         mock_llm = Mock(spec=ILLMClient)
         service = EntityExtractionService(llm_client=mock_llm)
-        
+
         known_entities = (
             ExtractedEntity(name="Alice", entity_type=EntityType.CHARACTER),
         )
-        
+
         relationships_data = [
             {"source": "Alice", "target": "Alice", "type": "knows"},
         ]
-        
+
         relationships = service._build_relationships(relationships_data, known_entities)
-        
+
         assert len(relationships) == 0
 
     def test_build_relationships_filters_by_strength(self):
@@ -602,18 +635,28 @@ class TestEntityExtractionServiceRelationshipBuilding:
             llm_client=mock_llm,
             config=ExtractionConfig(relationship_strength_threshold=0.5),
         )
-        
+
         known_entities = (
             ExtractedEntity(name="Alice", entity_type=EntityType.CHARACTER),
             ExtractedEntity(name="Bob", entity_type=EntityType.CHARACTER),
         )
-        
+
         relationships_data = [
-            {"source": "Alice", "target": "Bob", "type": "knows", "strength": 0.3},  # Below threshold
-            {"source": "Alice", "target": "Bob", "type": "loves", "strength": 0.9},  # Above threshold
+            {
+                "source": "Alice",
+                "target": "Bob",
+                "type": "knows",
+                "strength": 0.3,
+            },  # Below threshold
+            {
+                "source": "Alice",
+                "target": "Bob",
+                "type": "loves",
+                "strength": 0.9,
+            },  # Above threshold
         ]
-        
+
         relationships = service._build_relationships(relationships_data, known_entities)
-        
+
         assert len(relationships) == 1
         assert relationships[0].relationship_type == RelationshipType.LOVES

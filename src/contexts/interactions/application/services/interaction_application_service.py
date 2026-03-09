@@ -92,18 +92,22 @@ class InteractionApplicationService:
         """
         # Validation
         if not session_name or not session_name.strip():
-            return Err(ValidationError(
-                message="Session name is required",
-                field="session_name",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session name is required",
+                    field="session_name",
+                    recoverable=True,
+                )
+            )
 
         if not session_type or not session_type.strip():
-            return Err(ValidationError(
-                message="Session type is required",
-                field="session_type",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session type is required",
+                    field="session_type",
+                    recoverable=True,
+                )
+            )
 
         try:
             command = CreateNegotiationSessionCommand(
@@ -125,28 +129,36 @@ class InteractionApplicationService:
                 confidentiality_level=kwargs.get("confidentiality_level", "standard"),
             )
 
-            result = await self.command_handler.handle_create_negotiation_session(command)
+            result = await self.command_handler.handle_create_negotiation_session(
+                command
+            )
 
-            return Ok({
-                "operation": "create_negotiation_session",
-                "success": True,
-                "session_id": result["session_id"],
-                "session_name": result["session_name"],
-                "created_at": result["created_at"],
-                "status": result["status"],
-                "configuration": {
-                    "max_parties": result["max_parties"],
-                    "timeout_hours": kwargs.get("session_timeout_hours", 72),
-                    "auto_advance_phases": kwargs.get("auto_advance_phases", True),
-                    "require_unanimous": kwargs.get("require_unanimous_agreement", False),
-                },
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "create_negotiation_session",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "session_name": result["session_name"],
+                    "created_at": result["created_at"],
+                    "status": result["status"],
+                    "configuration": {
+                        "max_parties": result["max_parties"],
+                        "timeout_hours": kwargs.get("session_timeout_hours", 72),
+                        "auto_advance_phases": kwargs.get("auto_advance_phases", True),
+                        "require_unanimous": kwargs.get(
+                            "require_unanimous_agreement", False
+                        ),
+                    },
+                    "events_generated": result["events"],
+                }
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to create session: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to create session: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     async def add_party_to_negotiation(
         self,
@@ -168,11 +180,13 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if party is None:
-            return Err(ValidationError(
-                message="Party is required",
-                field="party",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Party is required",
+                    field="party",
+                    recoverable=True,
+                )
+            )
 
         try:
             command = AddPartyToSessionCommand(
@@ -186,33 +200,39 @@ class InteractionApplicationService:
 
             result = await self.command_handler.handle_add_party_to_session(command)
 
-            return Ok({
-                "operation": "add_party_to_negotiation",
-                "success": True,
-                "session_id": result["session_id"],
-                "party_added": {
-                    "party_id": result["party_id"],
-                    "party_name": result["party_name"],
-                    "party_role": result["party_role"],
-                    "compatibility_score": result["compatibility_score"],
-                },
-                "session_status": {
-                    "total_parties": result["total_parties"],
-                    "can_start": result["total_parties"] >= 2,
-                },
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "add_party_to_negotiation",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "party_added": {
+                        "party_id": result["party_id"],
+                        "party_name": result["party_name"],
+                        "party_role": result["party_role"],
+                        "compatibility_score": result["compatibility_score"],
+                    },
+                    "session_status": {
+                        "total_parties": result["total_parties"],
+                        "can_start": result["total_parties"] >= 2,
+                    },
+                    "events_generated": result["events"],
+                }
+            )
         except ValueError as e:
-            return Err(ValidationError(
-                message=str(e),
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=str(e),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to add party: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to add party: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def submit_proposal(
         self,
@@ -234,11 +254,13 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if proposal is None:
-            return Err(ValidationError(
-                message="Proposal is required",
-                field="proposal",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Proposal is required",
+                    field="proposal",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Pre-submission analysis
@@ -251,8 +273,10 @@ class InteractionApplicationService:
                 analysis_depth="standard",
             )
 
-            analysis_result = await self.command_handler.handle_analyze_proposal_viability(
-                analysis_command
+            analysis_result = (
+                await self.command_handler.handle_analyze_proposal_viability(
+                    analysis_command
+                )
             )
 
             # Submit proposal
@@ -267,43 +291,49 @@ class InteractionApplicationService:
 
             result = await self.command_handler.handle_submit_proposal(command)
 
-            return Ok({
-                "operation": "submit_proposal",
-                "success": True,
-                "session_id": result["session_id"],
-                "proposal_submitted": {
-                    "proposal_id": result["proposal_id"],
-                    "proposal_title": result["proposal_title"],
-                    "proposal_type": result["proposal_type"],
-                    "terms_count": result["terms_count"],
-                    "viability_score": analysis_result["analysis_result"][
-                        "overall_viability_score"
-                    ],
-                    "acceptance_probability": analysis_result["analysis_result"][
-                        "acceptance_probability"
-                    ],
-                },
-                "session_status": {
-                    "current_phase": result["current_phase"],
-                    "submitted_by": result["submitted_by"],
-                },
-                "pre_submission_analysis": analysis_result["analysis_result"],
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "submit_proposal",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "proposal_submitted": {
+                        "proposal_id": result["proposal_id"],
+                        "proposal_title": result["proposal_title"],
+                        "proposal_type": result["proposal_type"],
+                        "terms_count": result["terms_count"],
+                        "viability_score": analysis_result["analysis_result"][
+                            "overall_viability_score"
+                        ],
+                        "acceptance_probability": analysis_result["analysis_result"][
+                            "acceptance_probability"
+                        ],
+                    },
+                    "session_status": {
+                        "current_phase": result["current_phase"],
+                        "submitted_by": result["submitted_by"],
+                    },
+                    "pre_submission_analysis": analysis_result["analysis_result"],
+                    "events_generated": result["events"],
+                }
+            )
         except ValueError as e:
-            return Err(ProposalError(
-                message=str(e),
-                proposal_id=str(proposal.proposal_id) if proposal else None,
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=str(e),
+                    proposal_id=str(proposal.proposal_id) if proposal else None,
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(ProposalError(
-                message=f"Failed to submit proposal: {e!s}",
-                proposal_id=str(proposal.proposal_id) if proposal else None,
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                ProposalError(
+                    message=f"Failed to submit proposal: {e!s}",
+                    proposal_id=str(proposal.proposal_id) if proposal else None,
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def submit_proposal_response(
         self, session_id: UUID, response: ProposalResponse, submitted_by: UUID
@@ -320,11 +350,13 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if response is None:
-            return Err(ValidationError(
-                message="Response is required",
-                field="response",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Response is required",
+                    field="response",
+                    recoverable=True,
+                )
+            )
 
         try:
             command = SubmitProposalResponseCommand(
@@ -352,35 +384,41 @@ class InteractionApplicationService:
                 )
             )
 
-            return Ok({
-                "operation": "submit_proposal_response",
-                "success": True,
-                "session_id": result["session_id"],
-                "response_submitted": {
-                    "response_id": result["response_id"],
-                    "proposal_id": result["proposal_id"],
-                    "responding_party_id": result["responding_party_id"],
-                    "overall_response": result["overall_response"],
-                    "acceptance_percentage": result["acceptance_percentage"],
-                    "requires_follow_up": result["requires_follow_up"],
-                },
-                "session_status": {
-                    "current_phase": result["current_phase"],
-                    "momentum": momentum_result["momentum_analysis"],
-                },
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "submit_proposal_response",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "response_submitted": {
+                        "response_id": result["response_id"],
+                        "proposal_id": result["proposal_id"],
+                        "responding_party_id": result["responding_party_id"],
+                        "overall_response": result["overall_response"],
+                        "acceptance_percentage": result["acceptance_percentage"],
+                        "requires_follow_up": result["requires_follow_up"],
+                    },
+                    "session_status": {
+                        "current_phase": result["current_phase"],
+                        "momentum": momentum_result["momentum_analysis"],
+                    },
+                    "events_generated": result["events"],
+                }
+            )
         except ValueError as e:
-            return Err(ValidationError(
-                message=str(e),
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=str(e),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to submit response: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to submit response: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def advance_negotiation_phase(
         self,
@@ -411,31 +449,39 @@ class InteractionApplicationService:
                 force_advancement=force_advancement,
             )
 
-            result = await self.command_handler.handle_advance_negotiation_phase(command)
+            result = await self.command_handler.handle_advance_negotiation_phase(
+                command
+            )
 
-            return Ok({
-                "operation": "advance_negotiation_phase",
-                "success": True,
-                "session_id": result["session_id"],
-                "phase_transition": {
-                    "from_phase": result["from_phase"],
-                    "to_phase": result["to_phase"],
-                    "forced": result["forced"],
-                    "advancement_reason": result["advancement_reason"],
-                },
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "advance_negotiation_phase",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "phase_transition": {
+                        "from_phase": result["from_phase"],
+                        "to_phase": result["to_phase"],
+                        "forced": result["forced"],
+                        "advancement_reason": result["advancement_reason"],
+                    },
+                    "events_generated": result["events"],
+                }
+            )
         except ValueError as e:
-            return Err(ValidationError(
-                message=str(e),
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=str(e),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to advance phase: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to advance phase: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def complete_negotiation(
         self,
@@ -503,34 +549,40 @@ class InteractionApplicationService:
                 command
             )
 
-            return Ok({
-                "operation": "complete_negotiation",
-                "success": True,
-                "session_id": result["session_id"],
-                "completion_summary": {
-                    "outcome": result["outcome"],
-                    "termination_reason": result["termination_reason"],
-                    "terminated_at": result["terminated_at"],
-                    "total_duration": result["duration"],
-                    "completion_notes": completion_notes,
-                },
-                "final_analysis": {
-                    "momentum": final_momentum["momentum_analysis"],
-                    "conflicts": final_conflicts["conflicts_detected"],
-                },
-                "events_generated": result["events"],
-            })
+            return Ok(
+                {
+                    "operation": "complete_negotiation",
+                    "success": True,
+                    "session_id": result["session_id"],
+                    "completion_summary": {
+                        "outcome": result["outcome"],
+                        "termination_reason": result["termination_reason"],
+                        "terminated_at": result["terminated_at"],
+                        "total_duration": result["duration"],
+                        "completion_notes": completion_notes,
+                    },
+                    "final_analysis": {
+                        "momentum": final_momentum["momentum_analysis"],
+                        "conflicts": final_conflicts["conflicts_detected"],
+                    },
+                    "events_generated": result["events"],
+                }
+            )
         except ValueError as e:
-            return Err(ValidationError(
-                message=str(e),
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=str(e),
+                    recoverable=True,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to complete negotiation: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to complete negotiation: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def get_negotiation_insights(
         self,
@@ -620,40 +672,55 @@ class InteractionApplicationService:
                 momentum_result["momentum_analysis"]["momentum_score"],
             )
 
-            return Ok({
-                "operation": "get_negotiation_insights",
-                "success": True,
-                "session_id": str(session_id),
-                "analysis_depth": analysis_depth,
-                "insights": {
-                    "party_compatibility": compatibility_result,
-                    "recommended_strategy": strategy_result["strategy_recommendation"],
-                    "detected_conflicts": conflicts_result["conflicts_detected"],
-                    "momentum_analysis": momentum_result["momentum_analysis"],
-                },
-                "overall_assessment": {
-                    "compatibility_score": compatibility_result["overall_compatibility"],
-                    "conflict_level": len(conflicts_result["conflicts_detected"]),
-                    "momentum_direction": momentum_result["momentum_analysis"]["direction"],
-                    "success_probability": success_probability,
-                },
-                "recommendations": self._generate_recommendations(
-                    compatibility_result, strategy_result, conflicts_result, momentum_result
-                ),
-            })
+            return Ok(
+                {
+                    "operation": "get_negotiation_insights",
+                    "success": True,
+                    "session_id": str(session_id),
+                    "analysis_depth": analysis_depth,
+                    "insights": {
+                        "party_compatibility": compatibility_result,
+                        "recommended_strategy": strategy_result[
+                            "strategy_recommendation"
+                        ],
+                        "detected_conflicts": conflicts_result["conflicts_detected"],
+                        "momentum_analysis": momentum_result["momentum_analysis"],
+                    },
+                    "overall_assessment": {
+                        "compatibility_score": compatibility_result[
+                            "overall_compatibility"
+                        ],
+                        "conflict_level": len(conflicts_result["conflicts_detected"]),
+                        "momentum_direction": momentum_result["momentum_analysis"][
+                            "direction"
+                        ],
+                        "success_probability": success_probability,
+                    },
+                    "recommendations": self._generate_recommendations(
+                        compatibility_result,
+                        strategy_result,
+                        conflicts_result,
+                        momentum_result,
+                    ),
+                }
+            )
         except ValueError as e:
-            return Err(NotFoundError(
-                message=str(e),
-                entity_type="NegotiationSession",
-                entity_id=str(session_id),
-                recoverable=False,
-            ))
+            return Err(
+                NotFoundError(
+                    message=str(e),
+                    entity_type="NegotiationSession",
+                    entity_id=str(session_id),
+                    recoverable=False,
+                )
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to get insights: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to get insights: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def optimize_active_proposals(
         self,
@@ -676,12 +743,14 @@ class InteractionApplicationService:
             # Get session to find active proposals
             session = await self.session_repository.get_by_id(InteractionId(session_id))
             if not session:
-                return Err(NotFoundError(
-                    message=f"Session {session_id} not found",
-                    entity_type="NegotiationSession",
-                    entity_id=str(session_id),
-                    recoverable=False,
-                ))
+                return Err(
+                    NotFoundError(
+                        message=f"Session {session_id} not found",
+                        entity_type="NegotiationSession",
+                        entity_id=str(session_id),
+                        recoverable=False,
+                    )
+                )
 
             optimization_results: list[Any] = []
             for proposal_id in session.active_proposals.keys():
@@ -710,7 +779,9 @@ class InteractionApplicationService:
                         "optimization_suggestions": analysis_result["analysis_result"][
                             "optimization_suggestions"
                         ],
-                        "risk_factors": analysis_result["analysis_result"]["risk_factors"],
+                        "risk_factors": analysis_result["analysis_result"][
+                            "risk_factors"
+                        ],
                         "success_factors": analysis_result["analysis_result"][
                             "success_factors"
                         ],
@@ -722,27 +793,33 @@ class InteractionApplicationService:
             for result in optimization_results:
                 total_viability += result["current_viability"]
             avg_viability_value = (
-                total_viability / len(optimization_results) if optimization_results else 0.0
+                total_viability / len(optimization_results)
+                if optimization_results
+                else 0.0
             )
 
-            return Ok({
-                "operation": "optimize_active_proposals",
-                "success": True,
-                "session_id": str(session_id),
-                "optimization_target": optimization_target,
-                "proposals_analyzed": len(optimization_results),
-                "average_viability": avg_viability_value,
-                "proposal_optimizations": optimization_results,
-                "overall_recommendations": self._generate_proposal_optimization_recommendations(
-                    optimization_results
-                ),
-            })
+            return Ok(
+                {
+                    "operation": "optimize_active_proposals",
+                    "success": True,
+                    "session_id": str(session_id),
+                    "optimization_target": optimization_target,
+                    "proposals_analyzed": len(optimization_results),
+                    "average_viability": avg_viability_value,
+                    "proposal_optimizations": optimization_results,
+                    "overall_recommendations": self._generate_proposal_optimization_recommendations(
+                        optimization_results
+                    ),
+                }
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to optimize proposals: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to optimize proposals: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     async def monitor_session_health(
         self, session_id: UUID, initiated_by: UUID
@@ -761,12 +838,14 @@ class InteractionApplicationService:
             # Get session basic info
             session = await self.session_repository.get_by_id(InteractionId(session_id))
             if not session:
-                return Err(NotFoundError(
-                    message=f"Session {session_id} not found",
-                    entity_type="NegotiationSession",
-                    entity_id=str(session_id),
-                    recoverable=False,
-                ))
+                return Err(
+                    NotFoundError(
+                        message=f"Session {session_id} not found",
+                        entity_type="NegotiationSession",
+                        entity_id=str(session_id),
+                        recoverable=False,
+                    )
+                )
 
             # Check for timeout issues
             timeout_approaching = session.is_timeout_approaching(24)
@@ -846,38 +925,46 @@ class InteractionApplicationService:
                     }
                 )
 
-            return Ok({
-                "operation": "monitor_session_health",
-                "success": True,
-                "session_id": str(session_id),
-                "health_summary": {
-                    "health_score": health_score,
-                    "health_status": self._get_health_status(health_score),
-                    "active_alerts": health_alerts,
-                    "session_age_hours": int(
-                        (datetime.now(timezone.utc) - session.created_at).total_seconds()
-                        // 3600
+            return Ok(
+                {
+                    "operation": "monitor_session_health",
+                    "success": True,
+                    "session_id": str(session_id),
+                    "health_summary": {
+                        "health_score": health_score,
+                        "health_status": self._get_health_status(health_score),
+                        "active_alerts": health_alerts,
+                        "session_age_hours": int(
+                            (
+                                datetime.now(timezone.utc) - session.created_at
+                            ).total_seconds()
+                            // 3600
+                        ),
+                        "time_since_last_activity_hours": time_since_activity // 3600,
+                    },
+                    "key_metrics": {
+                        "total_parties": len(session.parties),
+                        "active_proposals": len(session.active_proposals),
+                        "total_responses": session.total_responses,
+                        "current_phase": session.status.phase.value,
+                        "momentum_direction": momentum_result["momentum_analysis"][
+                            "direction"
+                        ],
+                        "conflict_count": len(conflicts_result["conflicts_detected"]),
+                    },
+                    "recommendations": self._generate_health_recommendations(
+                        health_score, health_alerts
                     ),
-                    "time_since_last_activity_hours": time_since_activity // 3600,
-                },
-                "key_metrics": {
-                    "total_parties": len(session.parties),
-                    "active_proposals": len(session.active_proposals),
-                    "total_responses": session.total_responses,
-                    "current_phase": session.status.phase.value,
-                    "momentum_direction": momentum_result["momentum_analysis"]["direction"],
-                    "conflict_count": len(conflicts_result["conflicts_detected"]),
-                },
-                "recommendations": self._generate_health_recommendations(
-                    health_score, health_alerts
-                ),
-            })
+                }
+            )
         except Exception as e:
-            return Err(SessionError(
-                message=f"Failed to monitor health: {e!s}",
-                session_id=str(session_id),
-                recoverable=True,
-            ))
+            return Err(
+                SessionError(
+                    message=f"Failed to monitor health: {e!s}",
+                    session_id=str(session_id),
+                    recoverable=True,
+                )
+            )
 
     # Private Helper Methods
 
@@ -910,7 +997,7 @@ class InteractionApplicationService:
     ) -> List[str]:
         """Generate actionable recommendations based on analysis results."""
         recommendations: list[Any] = []
-        
+
         # Compatibility recommendations
         if compatibility_result["overall_compatibility"] < 50:
             recommendations.append(
@@ -940,7 +1027,7 @@ class InteractionApplicationService:
     ) -> List[str]:
         """Generate recommendations for proposal optimization."""
         recommendations: list[Any] = []
-        
+
         # Analyze common issues across proposals
         all_suggestions: list[Any] = []
         for result in optimization_results:
@@ -1036,7 +1123,7 @@ class InteractionApplicationService:
     ) -> List[str]:
         """Generate recommendations for improving session health."""
         recommendations: list[Any] = []
-        
+
         # Address specific alerts
         for alert in health_alerts:
             if alert["type"] == "timeout_warning":

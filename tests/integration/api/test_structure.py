@@ -67,7 +67,9 @@ class TestStoryEndpoints:
 
     def test_get_nonexistent_story(self, client: TestClient) -> None:
         """Test GET /api/structure/stories/{story_id} with invalid ID."""
-        response = client.get("/api/structure/stories/00000000-0000-0000-0000-000000000000")
+        response = client.get(
+            "/api/structure/stories/00000000-0000-0000-0000-000000000000"
+        )
 
         assert response.status_code == 404
 

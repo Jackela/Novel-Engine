@@ -486,7 +486,8 @@ Developed expertise in systematic validation and quality assurance.
         """Test that cache entries expire correctly."""
         # Create service with very short cache TTL
         short_cache_service = ContextLoaderService(
-            base_characters_path=self.temp_dir, cache_ttl_minutes=0.01  # ~0.6 seconds
+            base_characters_path=self.temp_dir,
+            cache_ttl_minutes=0.01,  # ~0.6 seconds
         )
 
         character_id = "cache_expiry_test"

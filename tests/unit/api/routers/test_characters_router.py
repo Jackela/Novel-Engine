@@ -61,14 +61,14 @@ def mock_workspace_store() -> MagicMock:
 def app_with_workspace(mock_workspace_store: MagicMock) -> FastAPI:
     """Create app with workspace store."""
     app = FastAPI()
-    
+
     # Add workspace store to app state
     @app.middleware("http")
     async def add_workspace_store(request, call_next):
         request.app.state.workspace_character_store = mock_workspace_store
         response = await call_next(request)
         return response
-    
+
     app.include_router(router, prefix="/api")
     return app
 
@@ -99,7 +99,7 @@ class TestGetCharacters:
     ) -> None:
         """Test getting characters with existing entries."""
         mock_get_path.return_value = str(temp_characters_dir)
-        
+
         # Create mock character entries
         timestamp = datetime.now()
         summary = CharacterSummary(
@@ -142,8 +142,7 @@ class TestGetCharacters:
         client = TestClient(app)
 
         response = client.get(
-            "/api/characters",
-            headers={"X-Workspace-ID": "test-workspace"}
+            "/api/characters", headers={"X-Workspace-ID": "test-workspace"}
         )
         assert response.status_code == 200
 
@@ -171,10 +170,10 @@ class TestGetCharacterDetail:
         # Create character directory and files
         char_dir = temp_characters_dir / "test_character"
         char_dir.mkdir()
-        
+
         char_file = char_dir / "character_test_character.md"
         char_file.write_text("# Test Character\n\nThis is a test character.")
-        
+
         stats_file = char_dir / "stats.yaml"
         stats_file.write_text("skills:\n  strength: 10\nrelationships: {}\n")
 
@@ -208,8 +207,7 @@ class TestGetCharacterDetail:
         client = TestClient(app)
 
         response = client.get(
-            "/api/characters/ws_char_001",
-            headers={"X-Workspace-ID": "test-workspace"}
+            "/api/characters/ws_char_001", headers={"X-Workspace-ID": "test-workspace"}
         )
         assert response.status_code == 200
 
@@ -260,7 +258,7 @@ class TestCreateCharacter:
         response = client.post(
             "/api/characters",
             json=payload,
-            headers={"X-Workspace-ID": "test-workspace"}
+            headers={"X-Workspace-ID": "test-workspace"},
         )
         assert response.status_code == 201
 
@@ -286,7 +284,7 @@ class TestCreateCharacter:
         response = client.post(
             "/api/characters",
             json=payload,
-            headers={"X-Workspace-ID": "test-workspace"}
+            headers={"X-Workspace-ID": "test-workspace"},
         )
         assert response.status_code == 409
 
@@ -317,7 +315,7 @@ class TestCreateCharacter:
         response = client.post(
             "/api/characters",
             json=payload,
-            headers={"X-Workspace-ID": "test-workspace"}
+            headers={"X-Workspace-ID": "test-workspace"},
         )
         assert response.status_code == 503
 
@@ -351,7 +349,7 @@ class TestUpdateCharacter:
         response = client.put(
             "/api/characters/char_001",
             json=payload,
-            headers={"X-Workspace-ID": "test-workspace"}
+            headers={"X-Workspace-ID": "test-workspace"},
         )
         assert response.status_code == 200
 
@@ -371,7 +369,7 @@ class TestUpdateCharacter:
         response = client.put(
             "/api/characters/nonexistent",
             json=payload,
-            headers={"X-Workspace-ID": "test-workspace"}
+            headers={"X-Workspace-ID": "test-workspace"},
         )
         assert response.status_code == 404
 
@@ -389,8 +387,7 @@ class TestDeleteCharacter:
         client = TestClient(app)
 
         response = client.delete(
-            "/api/characters/char_001",
-            headers={"X-Workspace-ID": "test-workspace"}
+            "/api/characters/char_001", headers={"X-Workspace-ID": "test-workspace"}
         )
         assert response.status_code == 204
 
@@ -403,8 +400,7 @@ class TestDeleteCharacter:
         client = TestClient(app)
 
         response = client.delete(
-            "/api/characters/nonexistent",
-            headers={"X-Workspace-ID": "test-workspace"}
+            "/api/characters/nonexistent", headers={"X-Workspace-ID": "test-workspace"}
         )
         assert response.status_code == 400
 
@@ -423,7 +419,9 @@ class TestGetCharacterEnhanced:
         assert "psychological_profile" in data
         assert "tactical_analysis" in data
 
-    def test_get_character_enhanced_with_special_chars(self, client: TestClient) -> None:
+    def test_get_character_enhanced_with_special_chars(
+        self, client: TestClient
+    ) -> None:
         """Test getting enhanced context with special character IDs."""
         response = client.get("/api/characters/my_character_123/enhanced")
         assert response.status_code == 200

@@ -102,11 +102,13 @@ def query_aware_service(
     # Mock the internal retrieval service to return Result[RetrievalResult]
     mock_internal_retrieval = AsyncMock(spec=RetrievalService)
     mock_internal_retrieval.retrieve_relevant = AsyncMock(
-        return_value=Ok(RetrievalResult(
-            chunks=[],
-            query="",
-            total_retrieved=0,
-        ))
+        return_value=Ok(
+            RetrievalResult(
+                chunks=[],
+                query="",
+                total_retrieved=0,
+            )
+        )
     )
     service._retrieval_service = mock_internal_retrieval
     return service
@@ -218,11 +220,13 @@ class TestQueryAwareRetrievalService:
         config = QueryAwareConfig(enable_rewriting=False)
 
         # Set up mock to return empty result wrapped in Ok
-        query_aware_service._retrieval_service.retrieve_relevant.return_value = Ok(RetrievalResult(
-            chunks=[],
-            query="brave warrior",
-            total_retrieved=0,
-        ))
+        query_aware_service._retrieval_service.retrieve_relevant.return_value = Ok(
+            RetrievalResult(
+                chunks=[],
+                query="brave warrior",
+                total_retrieved=0,
+            )
+        )
 
         result = await query_aware_service.retrieve_relevant(
             query="brave warrior",
@@ -261,11 +265,13 @@ class TestQueryAwareRetrievalService:
             metadata={},
         )
         mock_internal_retrieval.retrieve_relevant = AsyncMock(
-            return_value=Ok(RetrievalResult(
-                chunks=[mock_chunk],
-                query="brave warrior",
-                total_retrieved=1,
-            ))
+            return_value=Ok(
+                RetrievalResult(
+                    chunks=[mock_chunk],
+                    query="brave warrior",
+                    total_retrieved=1,
+                )
+            )
         )
         service._retrieval_service = mock_internal_retrieval
 
@@ -310,6 +316,7 @@ class TestQueryAwareRetrievalService:
         from src.contexts.knowledge.application.services.retrieval_service import (
             FormattedContext,
         )
+
         query_aware_service._retrieval_service.format_context = MagicMock(
             return_value=FormattedContext(
                 text="[1] CHARACTER:char1 (part ?/?)\nA brave warrior",
@@ -343,11 +350,13 @@ class TestQueryAwareRetrievalService:
 
         async def do_retrieval():
             # Set up mock to return empty result wrapped in Ok
-            query_aware_service._retrieval_service.retrieve_relevant.return_value = Ok(RetrievalResult(
-                chunks=[],
-                query="test",
-                total_retrieved=0,
-            ))
+            query_aware_service._retrieval_service.retrieve_relevant.return_value = Ok(
+                RetrievalResult(
+                    chunks=[],
+                    query="test",
+                    total_retrieved=0,
+                )
+            )
             await query_aware_service.retrieve_relevant(
                 query="test",
                 config_override=QueryAwareConfig(enable_rewriting=False),

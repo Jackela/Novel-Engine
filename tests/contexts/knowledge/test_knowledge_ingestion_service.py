@@ -26,7 +26,6 @@ from src.contexts.knowledge.domain.models.source_type import SourceType
 pytestmark = pytest.mark.unit
 
 
-
 class TestIngestionProgress:
     """Tests for IngestionProgress dataclass."""
 
@@ -38,7 +37,7 @@ class TestIngestionProgress:
             source_id="source_001",
             success=True,
         )
-        
+
         assert progress.current == 5
         assert progress.total == 10
         assert progress.source_id == "source_001"
@@ -49,7 +48,7 @@ class TestIngestionProgress:
         """Test progress percentage calculation."""
         progress = IngestionProgress(current=5, total=10, source_id="source_001")
         assert progress.percentage == 50.0
-        
+
         # Edge case: total is 0
         progress_zero = IngestionProgress(current=0, total=0, source_id="source_001")
         assert progress_zero.percentage == 100.0
@@ -63,7 +62,7 @@ class TestIngestionProgress:
             success=False,
             error="Something went wrong",
         )
-        
+
         assert progress.success is False
         assert progress.error == "Something went wrong"
 
@@ -79,7 +78,7 @@ class TestIngestionResult:
             chunk_count=5,
             entries_created=5,
         )
-        
+
         assert result.success is True
         assert result.source_id == "source_001"
         assert result.chunk_count == 5
@@ -94,7 +93,7 @@ class TestIngestionResult:
             chunk_count=0,
             error="Failed to process",
         )
-        
+
         assert result.success is False
         assert result.error == "Failed to process"
 
@@ -110,7 +109,7 @@ class TestBatchIngestionResult:
             successful=10,
             failed=0,
         )
-        
+
         assert result.success is True
         assert result.total_entries == 10
         assert result.successful == 10
@@ -125,7 +124,7 @@ class TestBatchIngestionResult:
             failed=3,
             errors={"source_1": "Error 1", "source_2": "Error 2"},
         )
-        
+
         assert result.success is False
         assert result.successful == 7
         assert result.failed == 3
@@ -145,7 +144,7 @@ class TestRetrievedChunk:
             score=0.95,
             metadata={"key": "value"},
         )
-        
+
         assert chunk.chunk_id == "chunk_001"
         assert chunk.source_id == "source_001"
         assert chunk.source_type == SourceType.LORE
@@ -161,9 +160,11 @@ class TestKnowledgeIngestionService:
     async def mock_embedding_service(self):
         """Create a mock embedding service."""
         service = AsyncMock()
+
         # Dynamic mock: return same number of embeddings as input texts
         async def mock_embed_batch(texts):
             return [[0.1, 0.2, 0.3] for _ in texts]
+
         service.embed_batch = AsyncMock(side_effect=mock_embed_batch)
         service.get_dimension = Mock(return_value=3)
         return service
@@ -195,41 +196,45 @@ class TestKnowledgeIngestionService:
             vector_store=mock_vector_store,
             default_collection="custom_collection",
         )
-        
+
         assert service._embedding_service == mock_embedding_service
         assert service._vector_store == mock_vector_store
         assert service._default_collection == "custom_collection"
 
-    def test_initialization_default_collection(self, mock_embedding_service, mock_vector_store):
+    def test_initialization_default_collection(
+        self, mock_embedding_service, mock_vector_store
+    ):
         """Test service initialization with default collection."""
         service = KnowledgeIngestionService(
             embedding_service=mock_embedding_service,
             vector_store=mock_vector_store,
         )
-        
+
         assert service._default_collection == DEFAULT_COLLECTION
 
-    async def test_ingest_success(self, ingestion_service, mock_embedding_service, mock_vector_store):
+    async def test_ingest_success(
+        self, ingestion_service, mock_embedding_service, mock_vector_store
+    ):
         """Test successful ingestion."""
         content = "This is a test content. It has multiple sentences for chunking."
-        
+
         result = await ingestion_service.ingest(
             content=content,
             source_type=SourceType.LORE,
             source_id="lore_001",
             tags=["test", "lore"],
         )
-        
+
         assert result.is_ok
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
         assert ingestion_result.source_id == "lore_001"
         assert ingestion_result.chunk_count > 0
         assert ingestion_result.entries_created > 0
-        
+
         # Verify embedding service was called
         mock_embedding_service.embed_batch.assert_called_once()
-        
+
         # Verify vector store was called
         mock_vector_store.upsert.assert_called_once()
 
@@ -253,28 +258,32 @@ class TestKnowledgeIngestionService:
         assert result.is_error
         assert "source_id cannot be empty" in result.error.message
 
-    async def test_ingest_with_string_source_type(self, ingestion_service, mock_embedding_service):
+    async def test_ingest_with_string_source_type(
+        self, ingestion_service, mock_embedding_service
+    ):
         """Test ingestion with string source type."""
         result = await ingestion_service.ingest(
             content="Test content",
             source_type="LORE",
             source_id="lore_001",
         )
-        
+
         assert result.is_ok
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
 
-    async def test_ingest_embedding_error(self, ingestion_service, mock_embedding_service):
+    async def test_ingest_embedding_error(
+        self, ingestion_service, mock_embedding_service
+    ):
         """Test ingestion with embedding error returns error result."""
         from src.contexts.knowledge.application.ports.i_embedding_service import (
             EmbeddingError,
         )
-        
+
         mock_embedding_service.embed_batch = AsyncMock(
             side_effect=EmbeddingError("Embedding failed")
         )
-        
+
         result = await ingestion_service.ingest(
             content="Test content",
             source_type=SourceType.LORE,
@@ -297,9 +306,9 @@ class TestKnowledgeIngestionService:
                 "source_id": "char_001",
             },
         ]
-        
+
         result = await ingestion_service.batch_ingest(entries)
-        
+
         assert result.is_ok
         batch_result = result.unwrap()
         assert batch_result.success is True
@@ -321,9 +330,9 @@ class TestKnowledgeIngestionService:
                 "source_id": "lore_002",
             },
         ]
-        
+
         result = await ingestion_service.batch_ingest(entries)
-        
+
         assert result.is_ok
         batch_result = result.unwrap()
         assert batch_result.success is False
@@ -335,17 +344,25 @@ class TestKnowledgeIngestionService:
     async def test_batch_ingest_with_progress_callback(self, ingestion_service):
         """Test batch ingestion with progress callback."""
         progress_calls = []
-        
+
         async def progress_callback(progress):
             progress_calls.append(progress)
-        
+
         entries = [
-            {"content": "Entry 1", "source_type": SourceType.LORE, "source_id": "lore_001"},
-            {"content": "Entry 2", "source_type": SourceType.LORE, "source_id": "lore_002"},
+            {
+                "content": "Entry 1",
+                "source_type": SourceType.LORE,
+                "source_id": "lore_001",
+            },
+            {
+                "content": "Entry 2",
+                "source_type": SourceType.LORE,
+                "source_id": "lore_002",
+            },
         ]
-        
+
         await ingestion_service.batch_ingest(entries, on_progress=progress_callback)
-        
+
         assert len(progress_calls) == 2
         assert progress_calls[0].source_id == "lore_001"
         assert progress_calls[1].source_id == "lore_002"
@@ -356,15 +373,17 @@ class TestKnowledgeIngestionService:
             source_id="source_001",
             source_type=SourceType.LORE,
         )
-        
+
         assert result.is_ok
         assert result.unwrap() == 5
         mock_vector_store.delete.assert_called_once()
 
-    async def test_delete_without_source_type(self, ingestion_service, mock_vector_store):
+    async def test_delete_without_source_type(
+        self, ingestion_service, mock_vector_store
+    ):
         """Test deleting chunks without specifying source type."""
         result = await ingestion_service.delete(source_id="source_001")
-        
+
         assert result.is_ok
         assert result.unwrap() == 5
         # Should not include source_type in filter
@@ -379,7 +398,7 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.LORE,
             tags=["updated"],
         )
-        
+
         assert result.is_ok
         update_result = result.unwrap()
         assert update_result.success is True
@@ -406,31 +425,33 @@ class TestKnowledgeIngestionService:
         mock_result.score = 0.95
         mock_result.metadata = {"source_id": "source_001", "source_type": "LORE"}
         mock_vector_store.query = AsyncMock(return_value=[mock_result])
-        
+
         result = await ingestion_service.query_by_source(
             source_id="source_001",
             source_type=SourceType.LORE,
         )
-        
+
         assert result.is_ok
         chunks = result.unwrap()
         assert len(chunks) == 1
         assert chunks[0].chunk_id == "chunk_001"
         assert chunks[0].source_id == "source_001"
 
-    async def test_query_by_source_empty_result(self, ingestion_service, mock_vector_store):
+    async def test_query_by_source_empty_result(
+        self, ingestion_service, mock_vector_store
+    ):
         """Test querying by source with no results."""
         mock_vector_store.query = AsyncMock(return_value=[])
-        
+
         result = await ingestion_service.query_by_source(source_id="nonexistent")
-        
+
         assert result.is_ok
         assert len(result.unwrap()) == 0
 
     async def test_health_check(self, ingestion_service, mock_vector_store):
         """Test health check."""
         result = await ingestion_service.health_check()
-        
+
         assert result.is_ok
         assert result.unwrap() is True
         mock_vector_store.health_check.assert_called_once()
@@ -438,15 +459,17 @@ class TestKnowledgeIngestionService:
     async def test_get_count(self, ingestion_service, mock_vector_store):
         """Test getting chunk count."""
         result = await ingestion_service.get_count()
-        
+
         assert result.is_ok
         assert result.unwrap() == 100
         mock_vector_store.count.assert_called_once_with(DEFAULT_COLLECTION)
 
-    async def test_get_count_custom_collection(self, ingestion_service, mock_vector_store):
+    async def test_get_count_custom_collection(
+        self, ingestion_service, mock_vector_store
+    ):
         """Test getting chunk count for custom collection."""
         result = await ingestion_service.get_count(collection="custom")
-        
+
         assert result.is_ok
         assert result.unwrap() == 100
         mock_vector_store.count.assert_called_once_with("custom")
@@ -454,34 +477,35 @@ class TestKnowledgeIngestionService:
     async def test_call_progress_callback_sync(self, ingestion_service):
         """Test calling synchronous progress callback."""
         calls = []
-        
+
         def sync_callback(progress):
             calls.append(progress)
-        
+
         progress = IngestionProgress(current=1, total=10, source_id="source_001")
         await ingestion_service._call_progress_callback(sync_callback, progress)
-        
+
         assert len(calls) == 1
         assert calls[0].source_id == "source_001"
 
     async def test_call_progress_callback_async(self, ingestion_service):
         """Test calling asynchronous progress callback."""
         calls = []
-        
+
         async def async_callback(progress):
             calls.append(progress)
-        
+
         progress = IngestionProgress(current=1, total=10, source_id="source_001")
         await ingestion_service._call_progress_callback(async_callback, progress)
-        
+
         assert len(calls) == 1
 
     async def test_call_progress_callback_error(self, ingestion_service):
         """Test progress callback with error."""
+
         def bad_callback(progress):
             raise Exception("Callback error")
-        
+
         progress = IngestionProgress(current=1, total=10, source_id="source_001")
-        
+
         # Should not raise, just log warning
         await ingestion_service._call_progress_callback(bad_callback, progress)

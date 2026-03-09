@@ -589,9 +589,9 @@ class PerformanceTestSuite:
             for sim_count in [3, 5, 8]:
                 try:
                     sim_results = self.run_simulation_load_test(sim_count)
-                    results["simulation_tests"][
-                        f"{sim_count}_simulations"
-                    ] = sim_results
+                    results["simulation_tests"][f"{sim_count}_simulations"] = (
+                        sim_results
+                    )
 
                     logger.info(
                         f"{sim_count} simulations: "

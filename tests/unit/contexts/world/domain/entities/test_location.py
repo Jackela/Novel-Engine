@@ -71,7 +71,9 @@ class TestLocationTerritoryControl:
             controlling_faction_id="faction-123",
         )
 
-        with pytest.raises(ValueError, match="Cannot add controlling faction as contender"):
+        with pytest.raises(
+            ValueError, match="Cannot add controlling faction as contender"
+        ):
             location.add_contender("faction-123")
 
     def test_remove_contender(self) -> None:
@@ -124,7 +126,9 @@ class TestLocationTerritoryControl:
         )
 
         # When we set a new controller that was in contested, it should be removed
-        location.contested_by.append("faction-abc")  # Add new controller manually (bypassing validation)
+        location.contested_by.append(
+            "faction-abc"
+        )  # Add new controller manually (bypassing validation)
         location.set_controlling_faction("faction-abc")
 
         assert location.controlling_faction_id == "faction-abc"
@@ -189,8 +193,12 @@ class TestLocationResourceYields:
         location = Location(
             name="Town",
             resource_yields=[
-                ResourceYield(resource_type=ResourceType.GOLD, base_amount=100, modifier=1.0),
-                ResourceYield(resource_type=ResourceType.FOOD, base_amount=50, modifier=2.0),
+                ResourceYield(
+                    resource_type=ResourceType.GOLD, base_amount=100, modifier=1.0
+                ),
+                ResourceYield(
+                    resource_type=ResourceType.FOOD, base_amount=50, modifier=2.0
+                ),
             ],
         )
 
@@ -236,10 +244,14 @@ class TestLocationInfrastructure:
         """Test that invalid territory value raises error."""
         location = Location(name="Point")
 
-        with pytest.raises(ValueError, match="Territory value must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="Territory value must be between 0 and 100"
+        ):
             location.set_territory_value(150)
 
-        with pytest.raises(ValueError, match="Territory value must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="Territory value must be between 0 and 100"
+        ):
             location.set_territory_value(-10)
 
 
@@ -248,7 +260,9 @@ class TestLocationValidation:
 
     def test_invalid_territory_value_raises_error(self) -> None:
         """Test that invalid territory value raises validation error."""
-        with pytest.raises(ValueError, match="Territory value must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="Territory value must be between 0 and 100"
+        ):
             Location(
                 name="Test",
                 territory_value=150,
@@ -256,7 +270,9 @@ class TestLocationValidation:
 
     def test_invalid_infrastructure_level_raises_error(self) -> None:
         """Test that invalid infrastructure level raises validation error."""
-        with pytest.raises(ValueError, match="Infrastructure level must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="Infrastructure level must be between 0 and 100"
+        ):
             Location(
                 name="Test",
                 infrastructure_level=-5,
@@ -292,7 +308,9 @@ class TestLocationDemographics:
 
     def test_invalid_happiness_level_raises_error(self) -> None:
         """Test that invalid happiness level raises validation error."""
-        with pytest.raises(ValueError, match="Happiness level must be between 0 and 100"):
+        with pytest.raises(
+            ValueError, match="Happiness level must be between 0 and 100"
+        ):
             Location(
                 name="Test",
                 happiness_level=150,

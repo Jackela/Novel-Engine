@@ -190,7 +190,9 @@ class MetricsCollector:
         with self._lock:
             self.active_requests[request_id] = time.time()
 
-    def end_request_timer(self, request_id: str, request_metrics: RequestMetrics) -> None:
+    def end_request_timer(
+        self, request_id: str, request_metrics: RequestMetrics
+    ) -> None:
         """End timing a request and record metrics."""
         with self._lock:
             if request_id in self.active_requests:

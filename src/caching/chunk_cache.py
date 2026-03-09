@@ -11,12 +11,13 @@ from typing import Dict, List
 @dataclass
 class Chunk:
     """A single SSE chunk.
-    
+
     Attributes:
         seq: Sequence number for ordering
         data: Chunk payload
         ts: Timestamp
     """
+
     seq: int
     data: str
     ts: float
@@ -25,12 +26,13 @@ class Chunk:
 @dataclass
 class _StreamState:
     """Internal state for a stream.
-    
+
     Attributes:
         chunks: List of chunks in order
         complete: Whether stream is complete
         created_ts: Stream creation timestamp
     """
+
     chunks: List[Chunk]
     complete: bool = False
     created_ts: float = 0.0
@@ -38,13 +40,13 @@ class _StreamState:
 
 class ChunkCache:
     """Cache for SSE stream chunks enabling replay.
-    
+
     Stores chunks per stream key with TTL-based cleanup.
     """
-    
+
     def __init__(self, ttl_seconds: int = 300) -> None:
         """Initialize chunk cache.
-        
+
         Args:
             ttl_seconds: Stream TTL after completion
         """
@@ -54,7 +56,7 @@ class ChunkCache:
 
     def add_chunk(self, key: str, seq: int, data: str) -> None:
         """Add a chunk to a stream.
-        
+
         Args:
             key: Stream identifier
             seq: Sequence number
@@ -70,7 +72,7 @@ class ChunkCache:
 
     def mark_complete(self, key: str) -> None:
         """Mark a stream as complete.
-        
+
         Args:
             key: Stream identifier
         """
@@ -83,11 +85,11 @@ class ChunkCache:
 
     def get_since(self, key: str, last_seq: int) -> List[Chunk]:
         """Get chunks since a sequence number.
-        
+
         Args:
             key: Stream identifier
             last_seq: Last received sequence number
-            
+
         Returns:
             List of chunks with seq > last_seq
         """
@@ -99,10 +101,10 @@ class ChunkCache:
 
     def is_complete(self, key: str) -> bool:
         """Check if a stream is complete.
-        
+
         Args:
             key: Stream identifier
-            
+
         Returns:
             True if stream is marked complete
         """

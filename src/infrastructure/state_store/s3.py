@@ -16,6 +16,7 @@ from src.infrastructure.state_store.config import StateKey, StateStoreConfig
 try:
     import boto3
     from botocore.exceptions import ClientError
+
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
@@ -213,9 +214,7 @@ class S3StateStore(StateStore):
 
         try:
             s3_key = self._get_s3_key(key)
-            self.s3_client.delete_object(
-                Bucket=self.config.s3_bucket, Key=s3_key
-            )
+            self.s3_client.delete_object(Bucket=self.config.s3_bucket, Key=s3_key)
             return True
 
         except Exception as e:
@@ -239,9 +238,7 @@ class S3StateStore(StateStore):
 
         try:
             s3_key = self._get_s3_key(key)
-            self.s3_client.head_object(
-                Bucket=self.config.s3_bucket, Key=s3_key
-            )
+            self.s3_client.head_object(Bucket=self.config.s3_bucket, Key=s3_key)
             return True
 
         except ClientError as e:

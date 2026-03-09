@@ -42,6 +42,8 @@ from .types import (
 __all__ = ["EnhancedMultiAgentBridge"]
 
 logger = structlog.get_logger(__name__)
+
+
 class EnhancedMultiAgentBridge:
     """
     Enhanced bridge connecting Novel Engine core with advanced AI intelligence systems.
@@ -433,7 +435,9 @@ class EnhancedMultiAgentBridge:
             "batched_requests"
         ] / max(1, total_batches)
 
-    async def _process_request_batch(self, batch_requests: List[LLMBatchRequest]) -> None:
+    async def _process_request_batch(
+        self, batch_requests: List[LLMBatchRequest]
+    ) -> None:
         """Process a batch of LLM requests efficiently."""
         try:
             # Group requests by type for better batching efficiency
@@ -1528,9 +1532,9 @@ class EnhancedMultiAgentBridge:
         for i, agent in enumerate(dialogue.participants):
             for j, other_agent in enumerate(dialogue.participants):
                 if i != j:
-                    outcome["relationship_impact"][
-                        f"{agent}_{other_agent}"
-                    ] = relationship_change
+                    outcome["relationship_impact"][f"{agent}_{other_agent}"] = (
+                        relationship_change
+                    )
 
         return outcome
 
@@ -1612,9 +1616,9 @@ class EnhancedMultiAgentBridge:
                     else:
                         relationship_change = quality_score * 0.05
 
-                    outcome["relationship_impact"][
-                        f"{agent}_{other_agent}"
-                    ] = relationship_change
+                    outcome["relationship_impact"][f"{agent}_{other_agent}"] = (
+                        relationship_change
+                    )
 
         return outcome
 
@@ -1728,7 +1732,9 @@ class EnhancedMultiAgentBridge:
             },
         }
 
-    async def _update_agent_relationships(self, dialogue_results: List[Dict[str, Any]]) -> None:
+    async def _update_agent_relationships(
+        self, dialogue_results: List[Dict[str, Any]]
+    ) -> None:
         """Update agent relationships based on dialogue results."""
         for dialogue_result in dialogue_results:
             if dialogue_result.get("relationship_impact"):
@@ -1748,7 +1754,9 @@ class EnhancedMultiAgentBridge:
 
                     self.communication_metrics["relationship_changes"] += 1
 
-    async def _update_narrative_intelligence(self, post_turn_analysis: Dict[str, Any]) -> None:
+    async def _update_narrative_intelligence(
+        self, post_turn_analysis: Dict[str, Any]
+    ) -> None:
         """Update narrative intelligence based on turn analysis."""
         # Update narrative intelligence state
         if post_turn_analysis.get("narrative_insights"):
@@ -1911,9 +1919,9 @@ class EnhancedMultiAgentBridge:
             if "narrative_pressure" not in self.narrative_intelligence:
                 self.narrative_intelligence["narrative_pressure"] = {}
 
-            self.narrative_intelligence["narrative_pressure"][
-                pressure_type
-            ] = pressure_value
+            self.narrative_intelligence["narrative_pressure"][pressure_type] = (
+                pressure_value
+            )
 
     async def _handle_ai_insight(self, insight_data: Dict[str, Any]) -> None:
         """Handle AI-generated insights."""
@@ -2020,4 +2028,3 @@ class EnhancedMultiAgentBridge:
             },
             "performance_score": performance_score,
         }
-

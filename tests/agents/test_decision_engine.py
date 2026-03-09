@@ -111,9 +111,7 @@ class TestDecisionEngineDecisionMaking:
         with patch.object(
             engine, "_identify_available_actions", return_value=available_actions
         ):
-            with patch.object(
-                engine, "_evaluate_action"
-            ) as mock_eval:
+            with patch.object(engine, "_evaluate_action") as mock_eval:
                 mock_eval.return_value = ActionEvaluation(
                     action=available_actions[0],
                     base_score=0.1,
@@ -135,9 +133,7 @@ class TestDecisionEngineDecisionMaking:
         with patch.object(
             engine, "_identify_available_actions", return_value=available_actions
         ):
-            with patch.object(
-                engine, "_evaluate_action"
-            ) as mock_eval:
+            with patch.object(engine, "_evaluate_action") as mock_eval:
                 mock_eval.return_value = ActionEvaluation(
                     action=available_actions[0],
                     base_score=0.8,

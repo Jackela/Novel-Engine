@@ -396,13 +396,17 @@ Agent State: Active and operational with current morale {morale_level:.2f}
                 # Use safe async execution without deprecated get_event_loop()
                 try:
                     loop = asyncio.get_running_loop()
-                    llm_response = loop.run_until_complete(llm_service.generate(request))
+                    llm_response = loop.run_until_complete(
+                        llm_service.generate(request)
+                    )
                 except RuntimeError:
                     # No running loop - create a new one and run
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
-                        llm_response = loop.run_until_complete(llm_service.generate(request))
+                        llm_response = loop.run_until_complete(
+                            llm_service.generate(request)
+                        )
                     finally:
                         loop.close()
 

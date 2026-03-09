@@ -119,9 +119,7 @@ class TestProcessTick:
         assert result.value.world_id == "world-123"
         assert result.value.days_advanced == 5
 
-    def test_process_tick_success_no_errors(
-        self, service: FactionTickService
-    ) -> None:
+    def test_process_tick_success_no_errors(self, service: FactionTickService) -> None:
         """Should return success=True when no errors."""
         result = service.process_tick(world_id="world-123", days_advanced=1)
 
@@ -197,9 +195,7 @@ class TestProcessTick:
         assert result.value.days_advanced == 365
         assert result.value.success is True
 
-    def test_process_tick_multiple_worlds(
-        self, service: FactionTickService
-    ) -> None:
+    def test_process_tick_multiple_worlds(self, service: FactionTickService) -> None:
         """Should process different worlds independently."""
         result1 = service.process_tick(world_id="world-1", days_advanced=5)
         result2 = service.process_tick(world_id="world-2", days_advanced=10)

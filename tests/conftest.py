@@ -62,6 +62,7 @@ def test_data_dir():
 # Database Fixtures (Issue #43)
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def test_database_url():
     """
@@ -368,13 +369,14 @@ def ensure_required_services(request):
 @pytest.fixture(autouse=True, scope="session")
 def configure_test_logging():
     """Configure logging for tests to prevent structlog/standard logging conflicts.
-    
+
     This prevents KeyError: "Attempt to overwrite 'message' in LogRecord" errors
     that can occur when structlog and standard library logging interact.
     """
     # Import and configure structlog for test environment
     try:
         import structlog
+
         # Use a simple console renderer for tests to avoid conflicts
         structlog.configure(
             processors=[

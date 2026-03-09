@@ -174,7 +174,9 @@ async def list_prompts(
         )
 
     except PromptRepositoryError as e:
-        logger.error("failed_to_list_prompts", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_list_prompts", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -213,7 +215,9 @@ async def search_prompts(
         )
 
     except PromptRepositoryError as e:
-        logger.error("failed_to_search_prompts", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_search_prompts", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -235,7 +239,9 @@ async def list_prompt_tags(
     try:
         return await service.get_all_tags()
     except PromptRepositoryError as e:
-        logger.error("failed_to_list_prompt_tags", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_list_prompt_tags", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -285,7 +291,9 @@ async def get_prompt_analytics(
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_get_analytics", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_get_analytics", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -341,7 +349,9 @@ async def export_prompt_analytics(
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_export_analytics", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_export_analytics", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -374,7 +384,11 @@ async def prompts_health(
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except PromptRepositoryError:
-        logger.error("prompt_repository_health_check_failed", error="exception_occurred", error_type="exception")
+        logger.error(
+            "prompt_repository_health_check_failed",
+            error="exception_occurred",
+            error_type="exception",
+        )
         return {
             "status": "unhealthy",
             "error": "repository_error",
@@ -458,7 +472,9 @@ async def create_prompt(
     except (ValueError, PromptValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_create_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_create_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -599,7 +615,9 @@ async def update_prompt(
     except (ValueError, PromptValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_update_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_update_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -634,7 +652,9 @@ async def delete_prompt(
     except HTTPException:
         raise
     except PromptRepositoryError as e:
-        logger.error("failed_to_delete_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_delete_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -687,7 +707,9 @@ async def render_prompt(
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_render_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_render_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -760,7 +782,9 @@ async def generate_prompt(
     except (ValueError, KeyError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_generate_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_generate_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -802,7 +826,9 @@ async def get_prompt_versions(
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_get_version_history", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_get_version_history", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -838,7 +864,9 @@ async def rollback_prompt(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_rollback_prompt", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_rollback_prompt", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -871,7 +899,9 @@ async def compare_prompt_versions(
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except PromptRepositoryError as e:
-        logger.error("failed_to_compare_versions", error=str(e), error_type=type(e).__name__)
+        logger.error(
+            "failed_to_compare_versions", error=str(e), error_type=type(e).__name__
+        )
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 

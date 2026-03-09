@@ -171,7 +171,9 @@ class CharacterApplicationService:
             return Ok(character)
 
         except ValueError as e:
-            self.logger.error("invalid_character_id", character_id=character_id, error=str(e))
+            self.logger.error(
+                "invalid_character_id", character_id=character_id, error=str(e)
+            )
             return Err(
                 Error(
                     code="INVALID_ID",
@@ -180,7 +182,9 @@ class CharacterApplicationService:
                 )
             )
         except Exception as e:
-            self.logger.error("character_retrieval_failed", character_id=character_id, error=str(e))
+            self.logger.error(
+                "character_retrieval_failed", character_id=character_id, error=str(e)
+            )
             return Err(
                 Error(
                     code="RETRIEVAL_FAILED",
@@ -263,7 +267,9 @@ class CharacterApplicationService:
         Returns:
             Result with None on success, Error on failure
         """
-        self.logger.info("updating_character_skill", skill_name=skill_name, character_id=character_id)
+        self.logger.info(
+            "updating_character_skill", skill_name=skill_name, character_id=character_id
+        )
 
         try:
             command = UpdateCharacterSkillCommand(
@@ -378,7 +384,7 @@ class CharacterApplicationService:
         self.logger.info(
             "healing_character",
             character_id=character_id,
-            healing_amount=healing_amount
+            healing_amount=healing_amount,
         )
 
         try:
@@ -441,7 +447,7 @@ class CharacterApplicationService:
             "applying_damage",
             character_id=character_id,
             damage_amount=damage_amount,
-            damage_type=damage_type
+            damage_type=damage_type,
         )
 
         try:
@@ -476,7 +482,9 @@ class CharacterApplicationService:
                 )
             )
 
-    async def delete_character(self, character_id: str, reason: str) -> Result[bool, Error]:
+    async def delete_character(
+        self, character_id: str, reason: str
+    ) -> Result[bool, Error]:
         """
         Delete a character.
 
@@ -501,7 +509,9 @@ class CharacterApplicationService:
             if deleted:
                 self.logger.info("character_deleted", character_id=character_id)
             else:
-                self.logger.info("character_not_found_for_deletion", character_id=character_id)
+                self.logger.info(
+                    "character_not_found_for_deletion", character_id=character_id
+                )
 
             return Ok(deleted)
 
@@ -525,7 +535,9 @@ class CharacterApplicationService:
 
     # ==================== Character Query Operations ====================
 
-    async def find_characters_by_name(self, name: str) -> Result[List[Character], Error]:
+    async def find_characters_by_name(
+        self, name: str
+    ) -> Result[List[Character], Error]:
         """
         Find characters by name (supports partial matching).
 
@@ -549,7 +561,9 @@ class CharacterApplicationService:
                 )
             )
 
-    async def find_characters_by_class(self, character_class: str) -> Result[List[Character], Error]:
+    async def find_characters_by_class(
+        self, character_class: str
+    ) -> Result[List[Character], Error]:
         """
         Find characters by class.
 
@@ -564,7 +578,11 @@ class CharacterApplicationService:
             characters = await self.repository.find_by_class(char_class)
             return Ok(characters)
         except ValueError as e:
-            self.logger.error("find_characters_by_class_validation_failed", character_class=character_class, error=str(e))
+            self.logger.error(
+                "find_characters_by_class_validation_failed",
+                character_class=character_class,
+                error=str(e),
+            )
             return Err(
                 ValidationError(
                     message=f"Invalid character class: {e}",
@@ -574,7 +592,9 @@ class CharacterApplicationService:
             )
         except Exception as e:
             self.logger.error(
-                "find_characters_by_class_failed", character_class=character_class, error=str(e)
+                "find_characters_by_class_failed",
+                character_class=character_class,
+                error=str(e),
             )
             return Err(
                 Error(
@@ -585,7 +605,9 @@ class CharacterApplicationService:
                 )
             )
 
-    async def find_characters_by_race(self, race: str) -> Result[List[Character], Error]:
+    async def find_characters_by_race(
+        self, race: str
+    ) -> Result[List[Character], Error]:
         """
         Find characters by race.
 
@@ -600,7 +622,9 @@ class CharacterApplicationService:
             characters = await self.repository.find_by_race(char_race)
             return Ok(characters)
         except ValueError as e:
-            self.logger.error("find_characters_by_race_validation_failed", race=race, error=str(e))
+            self.logger.error(
+                "find_characters_by_race_validation_failed", race=race, error=str(e)
+            )
             return Err(
                 ValidationError(
                     message=f"Invalid character race: {e}",
@@ -654,7 +678,7 @@ class CharacterApplicationService:
                 "find_characters_by_level_range_failed",
                 min_level=min_level,
                 max_level=max_level,
-                error=str(e)
+                error=str(e),
             )
             return Err(
                 Error(
@@ -761,7 +785,9 @@ class CharacterApplicationService:
             count = await self.repository.count_by_criteria(criteria)
             return Ok(count)
         except Exception as e:
-            self.logger.error("count_characters_failed", error=str(e), criteria=criteria)
+            self.logger.error(
+                "count_characters_failed", error=str(e), criteria=criteria
+            )
             return Err(
                 Error(
                     code="QUERY_FAILED",
@@ -789,9 +815,7 @@ class CharacterApplicationService:
             return Ok(exists)
         except ValueError as e:
             self.logger.error(
-                "invalid_character_id_format",
-                character_id=character_id,
-                error=str(e)
+                "invalid_character_id_format", character_id=character_id, error=str(e)
             )
             return Err(
                 ValidationError(
@@ -804,7 +828,7 @@ class CharacterApplicationService:
             self.logger.error(
                 "check_character_existence_failed",
                 character_id=character_id,
-                error=str(e)
+                error=str(e),
             )
             return Err(
                 Error(
@@ -839,7 +863,9 @@ class CharacterApplicationService:
             return Ok(character.get_character_summary())
 
         except Exception as e:
-            self.logger.error("get_character_summary_failed", character_id=character_id, error=str(e))
+            self.logger.error(
+                "get_character_summary_failed", character_id=character_id, error=str(e)
+            )
             return Err(
                 Error(
                     code="QUERY_FAILED",
@@ -849,7 +875,9 @@ class CharacterApplicationService:
                 )
             )
 
-    async def validate_character_name_availability(self, name: str) -> Result[bool, Error]:
+    async def validate_character_name_availability(
+        self, name: str
+    ) -> Result[bool, Error]:
         """
         Check if a character name is available.
 

@@ -185,8 +185,12 @@ class TestDiplomaticPact:
 
     def test_is_incompatible_with(self) -> None:
         """Test pact incompatibility checking."""
-        war_pact = DiplomaticPact(pact_type=PactType.WAR, faction_a_id="f1", faction_b_id="f2")
-        trade_pact = DiplomaticPact(pact_type=PactType.TRADE_AGREEMENT, faction_a_id="f1", faction_b_id="f2")
+        war_pact = DiplomaticPact(
+            pact_type=PactType.WAR, faction_a_id="f1", faction_b_id="f2"
+        )
+        trade_pact = DiplomaticPact(
+            pact_type=PactType.TRADE_AGREEMENT, faction_a_id="f1", faction_b_id="f2"
+        )
 
         assert war_pact.is_incompatible_with(PactType.TRADE_AGREEMENT) is True
         assert trade_pact.is_incompatible_with(PactType.WAR) is True
@@ -203,7 +207,9 @@ class TestDiplomaticPact:
 
     def test_validation_expires_before_signed_raises_error(self) -> None:
         """Test that expiration before signed raises error."""
-        with pytest.raises(ValueError, match="Expiration date cannot be before signed date"):
+        with pytest.raises(
+            ValueError, match="Expiration date cannot be before signed date"
+        ):
             DiplomaticPact(
                 pact_type=PactType.CEASEFIRE,
                 faction_a_id="f1",

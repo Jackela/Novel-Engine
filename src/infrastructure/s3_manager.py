@@ -294,9 +294,7 @@ class S3StorageManager:
 
     def _generate_cache_key(self, s3_key: str) -> str:
         """Generate cache key for local storage."""
-        return hashlib.md5(
-            s3_key.encode(), usedforsecurity=False
-        ).hexdigest()  # nosec B324
+        return hashlib.md5(s3_key.encode(), usedforsecurity=False).hexdigest()  # nosec B324
 
     async def _get_from_cache(self, s3_key: str) -> Optional[bytes]:
         """Get object from local cache."""
@@ -469,7 +467,9 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error("Failed to upload file %s to S3 key %s: %s", local_path, s3_key, e)
+            logger.error(
+                "Failed to upload file %s to S3 key %s: %s", local_path, s3_key, e
+            )
             raise
 
     async def upload_bytes(
@@ -595,7 +595,9 @@ class S3StorageManager:
 
         except Exception as e:
             self._metrics["errors"] += 1
-            logger.error("Failed to download S3 key %s to %s: %s", s3_key, local_path, e)
+            logger.error(
+                "Failed to download S3 key %s to %s: %s", s3_key, local_path, e
+            )
             raise
 
     async def download_bytes(self, s3_key: str, use_cache: bool = True) -> bytes:
@@ -629,7 +631,9 @@ class S3StorageManager:
             self._metrics["bytes_downloaded"] += len(content)
             self._metrics["download_times"].append(download_time)
 
-            logger.debug("Downloaded bytes from S3: %s (%d bytes)", s3_key, len(content))
+            logger.debug(
+                "Downloaded bytes from S3: %s (%d bytes)", s3_key, len(content)
+            )
             return content
 
         except Exception as e:

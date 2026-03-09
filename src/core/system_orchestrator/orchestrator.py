@@ -44,6 +44,7 @@ if TYPE_CHECKING:
         InteractionType,
     )
 
+
 class SystemOrchestrator:
     """
     System Orchestrator - Unified Coordination
@@ -412,7 +413,13 @@ class SystemOrchestrator:
             )
 
             if not agent_registration.success:
-                logger.warning("agent_registration_failed", agent_id=agent_id, error=agent_registration.error.message if agent_registration.error else 'Unknown')
+                logger.warning(
+                    "agent_registration_failed",
+                    agent_id=agent_id,
+                    error=agent_registration.error.message
+                    if agent_registration.error
+                    else "Unknown",
+                )
 
             # Initialize agent memory system
             agent_memory = LayeredMemorySystem(agent_id, self.database)
@@ -458,7 +465,11 @@ class SystemOrchestrator:
                     if character_result.error
                     else "Unknown error"
                 )
-                logger.warning("character_template_creation_failed", agent_id=agent_id, error=error_msg)
+                logger.warning(
+                    "character_template_creation_failed",
+                    agent_id=agent_id,
+                    error=error_msg,
+                )
 
             # Register agent as active
             self.active_agents[agent_id] = datetime.now()
@@ -478,7 +489,12 @@ class SystemOrchestrator:
             )
 
         except Exception as e:
-            logger.error("agent_context_creation_failed", agent_id=agent_id, error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "agent_context_creation_failed",
+                agent_id=agent_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -572,7 +588,12 @@ class SystemOrchestrator:
             )
 
         except Exception as e:
-            logger.error("dynamic_context_processing_failed", agent_id=context.agent_id, error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "dynamic_context_processing_failed",
+                agent_id=context.agent_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -592,6 +613,7 @@ class SystemOrchestrator:
         # Import and set default value at runtime to avoid circular imports
         if interaction_type is None:
             from src.interactions.engine import InteractionType
+
             interaction_type = InteractionType.DIALOGUE
         """
         Multi-Agent Interaction Orchestration
@@ -638,13 +660,22 @@ class SystemOrchestrator:
                 )
 
                 # Log successful interaction
-                logger.info("multi_agent_interaction_completed", interaction_id=interaction_context.interaction_id, participant_count=len(participants))
+                logger.info(
+                    "multi_agent_interaction_completed",
+                    interaction_id=interaction_context.interaction_id,
+                    participant_count=len(participants),
+                )
 
             self.operation_count += 1
             return interaction_result
 
         except Exception as e:
-            logger.error("multi_agent_interaction_failed", error=str(e), error_type=type(e).__name__, participant_count=len(participants))
+            logger.error(
+                "multi_agent_interaction_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                participant_count=len(participants),
+            )
             self.error_count += 1
             return StandardResponse(
                 success=False,
@@ -705,7 +736,9 @@ class SystemOrchestrator:
             )
 
         except Exception as e:
-            logger.error("metrics_retrieval_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "metrics_retrieval_failed", error=str(e), error_type=type(e).__name__
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -748,7 +781,9 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("health_check_loop_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "health_check_loop_error", error=str(e), error_type=type(e).__name__
+                )
                 self.system_health = SystemHealth.DEGRADED
 
     async def _memory_cleanup_loop(self) -> None:
@@ -764,7 +799,11 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("memory_cleanup_loop_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "memory_cleanup_loop_error",
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
 
     async def _backup_loop(self) -> None:
         """Background backup loop."""
@@ -779,7 +818,9 @@ class SystemOrchestrator:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("backup_loop_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "backup_loop_error", error=str(e), error_type=type(e).__name__
+                )
 
     async def _perform_health_check(self) -> Dict[str, Any]:
         """Perform comprehensive system health check."""
@@ -818,7 +859,9 @@ class SystemOrchestrator:
             }
 
         except Exception as e:
-            logger.error("health_check_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "health_check_failed", error=str(e), error_type=type(e).__name__
+            )
             return {"system_health": SystemHealth.CRITICAL, "error": str(e)}
 
     async def _perform_memory_cleanup(self) -> None:
@@ -838,10 +881,14 @@ class SystemOrchestrator:
                 logger.debug("inactive_agent_cleaned_up", agent_id=agent_id)
 
             self.last_cleanup = datetime.now()
-            logger.info("memory_cleanup_completed", removed_agents_count=len(inactive_agents))
+            logger.info(
+                "memory_cleanup_completed", removed_agents_count=len(inactive_agents)
+            )
 
         except Exception as e:
-            logger.error("memory_cleanup_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "memory_cleanup_failed", error=str(e), error_type=type(e).__name__
+            )
 
     async def _perform_backup(self) -> None:
         """Perform system state backup."""
@@ -896,7 +943,9 @@ class SystemOrchestrator:
             logger.info("system_state_saved")
 
         except Exception as e:
-            logger.error("system_state_save_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "system_state_save_failed", error=str(e), error_type=type(e).__name__
+            )
 
     async def _update_character_state(
         self, agent_id: str, character_state: CharacterState
@@ -927,7 +976,12 @@ class SystemOrchestrator:
             return update_result
 
         except Exception as e:
-            logger.error("character_state_update_failed", agent_id=agent_id, error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "character_state_update_failed",
+                agent_id=agent_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -955,7 +1009,12 @@ class SystemOrchestrator:
             return await self.memory_system.store_memory(env_memory)
 
         except Exception as e:
-            logger.error("environmental_context_processing_failed", agent_id=agent_id, error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "environmental_context_processing_failed",
+                agent_id=agent_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
@@ -997,10 +1056,17 @@ class SystemOrchestrator:
             for participant in interaction_context.participants:
                 await self._analyze_agent_causal_relationships(participant, event_data)
 
-            logger.debug("narrative_event_recorded", interaction_id=interaction_context.interaction_id)
+            logger.debug(
+                "narrative_event_recorded",
+                interaction_id=interaction_context.interaction_id,
+            )
 
         except Exception as e:
-            logger.error("narrative_event_recording_failed", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "narrative_event_recording_failed",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
     async def _analyze_agent_causal_relationships(
         self, agent_id: str, event_data: Dict[str, Any]
@@ -1024,7 +1090,12 @@ class SystemOrchestrator:
                 )
 
         except Exception as e:
-            logger.error("causal_relationship_analysis_failed", agent_id=agent_id, error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "causal_relationship_analysis_failed",
+                agent_id=agent_id,
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
     async def _count_memory_items(self) -> int:
         """Count total memory items in the system."""

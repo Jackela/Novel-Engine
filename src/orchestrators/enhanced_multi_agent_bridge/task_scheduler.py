@@ -130,7 +130,9 @@ class TaskScheduler:
 
         if batch_size < self.llm_config.max_batch_size:
             oldest_request_time = (
-                self.llm_request_queue[0].created_at if self.llm_request_queue else time.time()
+                self.llm_request_queue[0].created_at
+                if self.llm_request_queue
+                else time.time()
             )
             wait_time = (time.time() - oldest_request_time) * 1000  # Convert to ms
 

@@ -33,6 +33,7 @@ class TestPersonaAgentCore:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 from src.core.event_bus import EventBus
+
                 core = PersonaAgentCore(
                     agent_id="test",
                     character_directory_path=str(tmpdir),
@@ -110,6 +111,7 @@ class TestPersonaAgent:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 from src.core.event_bus import EventBus
+
                 agent = PersonaAgent(
                     character_directory_path=str(tmpdir),
                     event_bus=EventBus(),
@@ -138,6 +140,7 @@ class TestPersonaAgentIntegrated:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 from src.core.event_bus import EventBus
+
                 agent = IntegratedPersonaAgent(
                     character_directory_path=str(tmpdir),
                     event_bus=EventBus(),
@@ -192,6 +195,7 @@ class TestPersonaAgentEdgeCases:
 
             # Should handle gracefully
             from src.core.event_bus import EventBus
+
             agent = PersonaAgent(
                 character_directory_path="/nonexistent/path",
                 event_bus=EventBus(),
@@ -210,6 +214,7 @@ class TestPersonaAgentEdgeCases:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 from src.core.event_bus import EventBus
+
                 core = PersonaAgentCore(
                     agent_id="test",
                     character_directory_path=str(tmpdir),
@@ -228,6 +233,7 @@ class TestPersonaAgentEdgeCases:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 from src.core.event_bus import EventBus
+
                 core = PersonaAgentCore(
                     agent_id="test",
                     character_directory_path=str(tmpdir),
@@ -254,6 +260,7 @@ class TestPersonaAgentIntegration:
                 sheet.write_text("# Test Character\n\nname: Test\n")
 
                 from src.core.event_bus import EventBus
+
                 agent = PersonaAgent(
                     character_directory_path=str(tmpdir),
                     event_bus=EventBus(),

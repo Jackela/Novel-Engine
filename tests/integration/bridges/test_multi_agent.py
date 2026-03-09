@@ -72,6 +72,7 @@ async def test_bridge_initialization():
 
         # Use structlog logger instead of standard logging.Logger
         import structlog
+
         struct_logger = structlog.get_logger(__name__)
 
         bridge = EnhancedMultiAgentBridge(

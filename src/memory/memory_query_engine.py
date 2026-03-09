@@ -556,7 +556,9 @@ class MemoryQueryEngine:
         for key in expired_keys:
             del self._query_cache[key]
 
-    def _update_query_statistics(self, query_type: QueryType, metrics: QueryMetrics) -> None:
+    def _update_query_statistics(
+        self, query_type: QueryType, metrics: QueryMetrics
+    ) -> None:
         """Updates query statistics."""
         self._query_statistics["total_queries"] += 1
         self._query_statistics[f"{query_type.value}_queries"] += 1

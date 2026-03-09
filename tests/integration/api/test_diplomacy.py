@@ -185,9 +185,7 @@ class TestFactionDiplomacyEndpoint:
         )
 
         # Get faction diplomacy
-        response = client.get(
-            f"/api/world/{world_id}/diplomacy/faction/{faction_id}"
-        )
+        response = client.get(f"/api/world/{world_id}/diplomacy/faction/{faction_id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -215,9 +213,7 @@ class TestFactionDiplomacyEndpoint:
         )
 
         # The faction should have relations now
-        response = client.get(
-            f"/api/world/{world_id}/diplomacy/faction/{faction_id}"
-        )
+        response = client.get(f"/api/world/{world_id}/diplomacy/faction/{faction_id}")
 
         assert response.status_code == 200
 
@@ -234,9 +230,7 @@ class TestDiplomacySymmetry:
         )
 
         # Get diplomacy for faction-B
-        response = client.get(
-            "/api/world/symmetric-world/diplomacy/faction/faction-B"
-        )
+        response = client.get("/api/world/symmetric-world/diplomacy/faction/faction-B")
 
         assert response.status_code == 200
         data = response.json()

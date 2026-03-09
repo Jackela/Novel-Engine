@@ -463,7 +463,9 @@ class EquipmentRegistry:
             try:
                 return EquipmentCategory(equipment_item.category)
             except ValueError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
         name_lower = getattr(equipment_item, "name", "").lower()
 
         # Basic category inference

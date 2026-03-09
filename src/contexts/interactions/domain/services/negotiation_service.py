@@ -111,9 +111,9 @@ class NegotiationService:
                 party_analysis = self._analyze_party_proposal_fit(
                     proposal, party, negotiation_domain
                 )
-                analysis["party_specific_analysis"][
-                    str(party.party_id)
-                ] = party_analysis
+                analysis["party_specific_analysis"][str(party.party_id)] = (
+                    party_analysis
+                )
                 party_scores.append(party_analysis["acceptance_score"])
 
         if party_scores:
@@ -702,8 +702,9 @@ class NegotiationService:
             factors.append("Good proportion of negotiable terms allows flexibility")
 
         # Check proposal type - access via attribute
-        if hasattr(proposal, 'proposal_type') and proposal.proposal_type in [
-            ProposalType.ALLIANCE_REQUEST, ProposalType.RESOURCE_EXCHANGE,
+        if hasattr(proposal, "proposal_type") and proposal.proposal_type in [
+            ProposalType.ALLIANCE_REQUEST,
+            ProposalType.RESOURCE_EXCHANGE,
         ]:
             factors.append("Proposal type typically has good success rate")
 
@@ -1166,7 +1167,9 @@ class NegotiationService:
 
         # Simple metric based on response count and recency
         recent_responses = [
-            r for r in responses if r.age_in_seconds < 3600  # Within last hour
+            r
+            for r in responses
+            if r.age_in_seconds < 3600  # Within last hour
         ]
 
         speed_score = min(len(recent_responses) * 20, 100)
@@ -1365,7 +1368,11 @@ class NegotiationService:
         self, optimized_terms: List[TermCondition], parties: List[NegotiationParty]
     ) -> Dict[str, Any]:
         """Assess risks of proposed optimizations."""
-        risks: Dict[str, Any] = {"risk_level": "low", "risk_factors": [], "mitigation_strategies": []}
+        risks: Dict[str, Any] = {
+            "risk_level": "low",
+            "risk_factors": [],
+            "mitigation_strategies": [],
+        }
 
         if len(optimized_terms) > 3:
             risks["risk_level"] = "medium"

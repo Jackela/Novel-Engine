@@ -11,7 +11,6 @@ Tests for A/B testing experiment functionality including:
 - Winner detection based on metrics
 """
 
-
 import pytest
 
 from src.contexts.knowledge.domain.models.prompt_experiment import (
@@ -22,6 +21,7 @@ from src.contexts.knowledge.domain.models.prompt_experiment import (
 )
 
 pytestmark = pytest.mark.unit
+
 
 class TestExperimentMetrics:
     """Tests for ExperimentMetrics value object."""
@@ -108,7 +108,9 @@ class TestExperimentMetrics:
     def test_record_run_success(self) -> None:
         """Test recording a successful run."""
         metrics = ExperimentMetrics()
-        updated = metrics.record_run(success=True, tokens=100, latency_ms=50.0, rating=4.5)
+        updated = metrics.record_run(
+            success=True, tokens=100, latency_ms=50.0, rating=4.5
+        )
 
         assert updated.total_runs == 1
         assert updated.success_count == 1
@@ -235,7 +237,9 @@ class TestPromptExperimentCreation:
 
     def test_experiment_validation_invalid_confidence_threshold(self) -> None:
         """Test validation rejects confidence_threshold outside 0-1."""
-        with pytest.raises(ValueError, match="confidence_threshold must be between 0 and 1"):
+        with pytest.raises(
+            ValueError, match="confidence_threshold must be between 0 and 1"
+        ):
             PromptExperiment.create(
                 name="Test",
                 prompt_a_id="a",

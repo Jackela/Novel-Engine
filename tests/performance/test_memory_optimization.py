@@ -663,9 +663,7 @@ class MemoryOptimizationTest:
                     "optimization_stats", {}
                 ).get("memory_cleanups", 0) > initial_report.get(
                     "optimization_stats", {}
-                ).get(
-                    "memory_cleanups", 0
-                )
+                ).get("memory_cleanups", 0)
 
                 logger.info(
                     f"Memory pressure: {initial_pressure} -> {pressure_detected} -> {final_pressure}"

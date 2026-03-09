@@ -18,6 +18,7 @@ from src.contexts.knowledge.domain.models.token_usage import (
 
 pytestmark = pytest.mark.unit
 
+
 def _utcnow() -> datetime:
     """Get current UTC timestamp."""
     return datetime.now(timezone.utc)
@@ -291,7 +292,9 @@ class TestTokenUsageStats:
             ),
         ]
 
-        stats = TokenUsageStats.from_usages(usages, provider="openai", model_name="gpt-4o")
+        stats = TokenUsageStats.from_usages(
+            usages, provider="openai", model_name="gpt-4o"
+        )
 
         assert stats.provider == "openai"
         assert stats.model_name == "gpt-4o"
@@ -359,8 +362,12 @@ class TestTokenUsageStats:
     def test_avg_latency_ms(self):
         """Test average latency calculation."""
         usages = [
-            TokenUsage.create(provider="openai", model_name="gpt-4o", latency_ms=1000.0),
-            TokenUsage.create(provider="openai", model_name="gpt-4o", latency_ms=2000.0),
+            TokenUsage.create(
+                provider="openai", model_name="gpt-4o", latency_ms=1000.0
+            ),
+            TokenUsage.create(
+                provider="openai", model_name="gpt-4o", latency_ms=2000.0
+            ),
         ]
 
         stats = TokenUsageStats.from_usages(usages)

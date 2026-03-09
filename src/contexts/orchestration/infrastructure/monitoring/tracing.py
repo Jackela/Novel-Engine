@@ -445,7 +445,9 @@ class NovelEngineTracer:
         propagate.extract(carrier)
 
 
-def trace_async_operation(operation_name: str, **span_attributes: Any) -> Callable[[Callable], Callable]:
+def trace_async_operation(
+    operation_name: str, **span_attributes: Any
+) -> Callable[[Callable], Callable]:
     """
     Decorator for tracing async operations.
 

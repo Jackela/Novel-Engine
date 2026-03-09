@@ -54,6 +54,7 @@ class MockBehavioralTrigger:
 @dataclass
 class MockRelationshipType:
     """Mock RelationshipType for testing."""
+
     value: str = "ally"
 
 
@@ -80,6 +81,7 @@ class MockTrustLevel:
 @dataclass
 class MockMemoryType:
     """Mock MemoryType for testing."""
+
     value: str = "formative"
 
 

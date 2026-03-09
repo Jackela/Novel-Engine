@@ -7,7 +7,8 @@ simulation preview, validation, and error handling scenarios.
 """
 
 import sys
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -153,9 +154,15 @@ class TestWorldSimulationService:
         faction_with_relations: Faction,
     ) -> MockFactionRepository:
         """Create a mock faction repository with test factions."""
-        return MockFactionRepository({
-            "world-test-123": [faction_active, faction_disbanded, faction_with_relations],
-        })
+        return MockFactionRepository(
+            {
+                "world-test-123": [
+                    faction_active,
+                    faction_disbanded,
+                    faction_with_relations,
+                ],
+            }
+        )
 
     @pytest.fixture
     def service(
@@ -249,7 +256,9 @@ class TestWorldSimulationService:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_error_days_zero(self, service: WorldSimulationService, world: WorldState):
+    async def test_error_days_zero(
+        self, service: WorldSimulationService, world: WorldState
+    ):
         """Test error when days is 0."""
         result = await service.advance_simulation(world.id, days=0)
 
@@ -259,7 +268,9 @@ class TestWorldSimulationService:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_error_days_negative(self, service: WorldSimulationService, world: WorldState):
+    async def test_error_days_negative(
+        self, service: WorldSimulationService, world: WorldState
+    ):
         """Test error when days is negative."""
         result = await service.advance_simulation(world.id, days=-1)
 
@@ -269,7 +280,9 @@ class TestWorldSimulationService:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_error_days_exceeds_max(self, service: WorldSimulationService, world: WorldState):
+    async def test_error_days_exceeds_max(
+        self, service: WorldSimulationService, world: WorldState
+    ):
         """Test error when days exceeds maximum (365)."""
         result = await service.advance_simulation(world.id, days=366)
 
@@ -313,10 +326,14 @@ class TestWorldSimulationService:
 
     @pytest.mark.asyncio
     @pytest.mark.integration
-    async def test_error_faction_repository_fails(self, world: WorldState, intent_generator):
+    async def test_error_faction_repository_fails(
+        self, world: WorldState, intent_generator
+    ):
         """Test error when faction repository throws exception."""
         failing_repo = MagicMock()
-        failing_repo.get_by_world_id = AsyncMock(side_effect=Exception("Database error"))
+        failing_repo.get_by_world_id = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         service = WorldSimulationService(
             world_repo=MockWorldRepository({world.id: world}),
@@ -404,9 +421,9 @@ class TestWorldSimulationService:
         intent_generator,
     ):
         """Test that diplomacy matrix includes all factions even without explicit relations."""
-        faction_repo = MockFactionRepository({
-            world.id: [faction_active, faction_with_relations]
-        })
+        faction_repo = MockFactionRepository(
+            {world.id: [faction_active, faction_with_relations]}
+        )
 
         service = WorldSimulationService(
             world_repo=MockWorldRepository({world.id: world}),
@@ -806,7 +823,9 @@ class TestWorldSimulationCommit:
             state_json='{"id": "test"}',
             tick_number=0,
         )
-        mock_snapshot_service.create_snapshot = MagicMock(return_value=Ok(mock_snapshot))
+        mock_snapshot_service.create_snapshot = MagicMock(
+            return_value=Ok(mock_snapshot)
+        )
         mock_snapshot_service.restore_snapshot = MagicMock(
             return_value=Ok(mock_snapshot)
         )
@@ -839,13 +858,15 @@ class TestWorldSimulationCommit:
 
         # Create mock sanity checker that returns warnings
         mock_checker = MagicMock(spec=SimulationSanityChecker)
-        mock_checker.check = MagicMock(return_value=[
-            SanityViolation(
-                rule_name="test_warning",
-                severity=Severity.WARNING,
-                message="Test warning",
-            )
-        ])
+        mock_checker.check = MagicMock(
+            return_value=[
+                SanityViolation(
+                    rule_name="test_warning",
+                    severity=Severity.WARNING,
+                    message="Test warning",
+                )
+            ]
+        )
 
         faction_repo = MockFactionRepository({world.id: [faction_active]})
         service = WorldSimulationService(

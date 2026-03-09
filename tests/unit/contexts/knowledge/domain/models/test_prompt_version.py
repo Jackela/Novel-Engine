@@ -19,6 +19,7 @@ from src.contexts.knowledge.domain.models.prompt_version import (
 
 pytestmark = pytest.mark.unit
 
+
 class TestVersionDiff:
     """Tests for VersionDiff value object."""
 
@@ -171,7 +172,9 @@ class TestPromptVersion:
 
     def test_cannot_reference_self_as_parent(self) -> None:
         """Should raise error when parent_version_id references self."""
-        with pytest.raises(ValueError, match="parent_version_id cannot reference itself"):
+        with pytest.raises(
+            ValueError, match="parent_version_id cannot reference itself"
+        ):
             PromptVersion(
                 id="version-2",
                 template_id="template-1",

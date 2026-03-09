@@ -1338,9 +1338,7 @@ class TestPlotPointEdgeCasesAndBoundaryConditions:
             (Decimal("8.987654321") * Decimal("0.4"))
             + (Decimal("9.555555555") * Decimal("0.4"))
             + (Decimal("7.123456789") * Decimal("0.2"))
-        ) * Decimal(
-            "0.8"
-        )  # MAJOR importance weight
+        ) * Decimal("0.8")  # MAJOR importance weight
         assert impact_score == expected
 
     @pytest.mark.unit

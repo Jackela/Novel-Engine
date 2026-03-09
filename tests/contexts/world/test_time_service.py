@@ -10,7 +10,6 @@ This module provides test coverage for the TimeService including:
 Total: 30 tests
 """
 
-
 import pytest
 
 from src.contexts.world.application.services.time_service import TimeService
@@ -21,7 +20,6 @@ from src.contexts.world.infrastructure.persistence.in_memory_calendar_repository
 )
 
 pytestmark = pytest.mark.unit
-
 
 
 @pytest.fixture
@@ -80,7 +78,9 @@ class TestTimeServiceInitialization:
 class TestGetTime:
     """Tests for get_time method."""
 
-    def test_get_time_existing_calendar(self, time_service, calendar_repo, sample_calendar):
+    def test_get_time_existing_calendar(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test getting time for world with existing calendar."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -101,7 +101,9 @@ class TestGetTime:
         assert result.value.day == 1
         assert result.value.era_name == "First Age"
 
-    def test_get_time_returns_world_calendar(self, time_service, calendar_repo, sample_calendar):
+    def test_get_time_returns_world_calendar(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test that get_time returns WorldCalendar type."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -162,7 +164,9 @@ class TestAdvanceTime:
         new_calendar, event = result.value
         assert new_calendar.day == 25  # 15 + 10
 
-    def test_advance_time_emits_event(self, time_service, calendar_repo, sample_calendar):
+    def test_advance_time_emits_event(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test that time advancement emits event."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -185,7 +189,9 @@ class TestAdvanceTime:
 
         assert result.is_error
 
-    def test_advance_time_updates_repository(self, time_service, calendar_repo, sample_calendar):
+    def test_advance_time_updates_repository(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test that advanced time is saved to repository."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -194,7 +200,9 @@ class TestAdvanceTime:
         updated = calendar_repo.get("world-1")
         assert updated.day == 25
 
-    def test_advance_time_event_contains_dates(self, time_service, calendar_repo, sample_calendar):
+    def test_advance_time_event_contains_dates(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test that event contains previous and new dates."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -231,7 +239,9 @@ class TestAdvanceTime:
         assert new_calendar.month == 1
         assert new_calendar.day == 5
 
-    def test_advance_time_large_amount(self, time_service, calendar_repo, sample_calendar):
+    def test_advance_time_large_amount(
+        self, time_service, calendar_repo, sample_calendar
+    ):
         """Test advancing time by large amount."""
         calendar_repo.save("world-1", sample_calendar)
 
@@ -252,7 +262,9 @@ class TestSetTime:
 
     def test_set_time_success(self, time_service):
         """Test successful time setting."""
-        result = time_service.set_time("world-1", year=1500, month=6, day=20, era_name="Fourth Age")
+        result = time_service.set_time(
+            "world-1", year=1500, month=6, day=20, era_name="Fourth Age"
+        )
 
         assert result.is_ok
         calendar = result.value
@@ -263,31 +275,41 @@ class TestSetTime:
 
     def test_set_time_saves_to_repository(self, time_service, calendar_repo):
         """Test that set time is saved to repository."""
-        time_service.set_time("world-1", year=2000, month=1, day=1, era_name="First Age")
+        time_service.set_time(
+            "world-1", year=2000, month=1, day=1, era_name="First Age"
+        )
 
         saved = calendar_repo.get("world-1")
         assert saved.year == 2000
 
     def test_set_time_invalid_year_type(self, time_service):
         """Test that invalid year type returns error."""
-        result = time_service.set_time("world-1", year="invalid", month=1, day=1, era_name="First Age")
+        result = time_service.set_time(
+            "world-1", year="invalid", month=1, day=1, era_name="First Age"
+        )
 
         assert result.is_error
 
     def test_set_time_invalid_month_type(self, time_service):
         """Test that invalid month type returns error."""
-        result = time_service.set_time("world-1", year=1000, month="invalid", day=1, era_name="First Age")
+        result = time_service.set_time(
+            "world-1", year=1000, month="invalid", day=1, era_name="First Age"
+        )
 
         assert result.is_error
 
     def test_set_time_invalid_day_type(self, time_service):
         """Test that invalid day type returns error."""
-        result = time_service.set_time("world-1", year=1000, month=1, day="invalid", era_name="First Age")
+        result = time_service.set_time(
+            "world-1", year=1000, month=1, day="invalid", era_name="First Age"
+        )
 
         assert result.is_error
 
     def test_set_time_invalid_era_name_type(self, time_service):
         """Test that invalid era_name type returns error."""
-        result = time_service.set_time("world-1", year=1000, month=1, day=1, era_name=123)
+        result = time_service.set_time(
+            "world-1", year=1000, month=1, day=1, era_name=123
+        )
 
         assert result.is_error

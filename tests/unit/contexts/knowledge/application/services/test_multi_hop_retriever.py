@@ -105,11 +105,13 @@ def mock_retrieval_service():
                 ),
             ]
 
-        return Ok(RetrievalResult(
-            chunks=chunks,
-            query=query,
-            total_retrieved=len(chunks),
-        ))
+        return Ok(
+            RetrievalResult(
+                chunks=chunks,
+                query=query,
+                total_retrieved=len(chunks),
+            )
+        )
 
     service.retrieve_relevant = mock_retrieve
     return service

@@ -64,9 +64,7 @@ class TestLocationRepositoryGetById:
         assert result.id == "loc-001"
         assert result.name == "Test Castle"
 
-    async def test_get_by_id_returns_none_when_not_found(
-        self, location_repository
-    ):
+    async def test_get_by_id_returns_none_when_not_found(self, location_repository):
         """get_by_id returns None when location not found."""
         result = await location_repository.get_by_id("nonexistent")
 
@@ -124,9 +122,7 @@ class TestLocationRepositorySave:
 class TestLocationRepositoryDelete:
     """Tests for delete method."""
 
-    async def test_delete_removes_location(
-        self, location_repository, sample_location
-    ):
+    async def test_delete_removes_location(self, location_repository, sample_location):
         """delete removes the location."""
         await location_repository.save(sample_location)
 
@@ -136,9 +132,7 @@ class TestLocationRepositoryDelete:
         retrieved = await location_repository.get_by_id("loc-001")
         assert retrieved is None
 
-    async def test_delete_returns_false_when_not_found(
-        self, location_repository
-    ):
+    async def test_delete_returns_false_when_not_found(self, location_repository):
         """delete returns False when location not found."""
         result = await location_repository.delete("nonexistent")
 
@@ -180,19 +174,25 @@ class TestLocationRepositoryGetByWorldId:
 
         assert result == []
 
-    async def test_get_by_world_id_returns_sorted_by_name(
-        self, location_repository
-    ):
+    async def test_get_by_world_id_returns_sorted_by_name(self, location_repository):
         """get_by_world_id returns locations sorted by name."""
         loc_a = Location(
-            id="loc-b", name="Beta", description="B",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="loc-b",
+            name="Beta",
+            description="B",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
         loc_b = Location(
-            id="loc-a", name="Alpha", description="A",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="loc-a",
+            name="Alpha",
+            description="A",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
 
         await location_repository.save(loc_a)
@@ -210,24 +210,34 @@ class TestLocationRepositoryGetByWorldId:
 class TestLocationRepositoryFindAdjacent:
     """Tests for find_adjacent method."""
 
-    async def test_find_adjacent_includes_siblings(
-        self, location_repository
-    ):
+    async def test_find_adjacent_includes_siblings(self, location_repository):
         """find_adjacent includes sibling locations."""
         parent = Location(
-            id="parent", name="Parent", description="Parent location",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="parent",
+            name="Parent",
+            description="Parent location",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
         child1 = Location(
-            id="child1", name="Child 1", description="First child",
-            location_type=LocationType.BUILDING, coordinates=None,
-            parent_location_id="parent", connections=[],
+            id="child1",
+            name="Child 1",
+            description="First child",
+            location_type=LocationType.BUILDING,
+            coordinates=None,
+            parent_location_id="parent",
+            connections=[],
         )
         child2 = Location(
-            id="child2", name="Child 2", description="Second child",
-            location_type=LocationType.BUILDING, coordinates=None,
-            parent_location_id="parent", connections=[],
+            id="child2",
+            name="Child 2",
+            description="Second child",
+            location_type=LocationType.BUILDING,
+            coordinates=None,
+            parent_location_id="parent",
+            connections=[],
         )
 
         await location_repository.save(parent)
@@ -246,9 +256,13 @@ class TestLocationRepositoryFindAdjacent:
         await location_repository.save(sample_location)
 
         connected = Location(
-            id="connected", name="Connected", description="Connected location",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=["loc-001"],
+            id="connected",
+            name="Connected",
+            description="Connected location",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=["loc-001"],
         )
         await location_repository.save(connected)
 
@@ -300,24 +314,34 @@ class TestLocationRepositoryGetChildren:
 
         assert result == []
 
-    async def test_get_children_returns_sorted_by_name(
-        self, location_repository
-    ):
+    async def test_get_children_returns_sorted_by_name(self, location_repository):
         """get_children returns children sorted by name."""
         parent = Location(
-            id="parent", name="Parent", description="Parent",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="parent",
+            name="Parent",
+            description="Parent",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
         child_z = Location(
-            id="child-z", name="Zebra", description="Z child",
-            location_type=LocationType.BUILDING, coordinates=None,
-            parent_location_id="parent", connections=[],
+            id="child-z",
+            name="Zebra",
+            description="Z child",
+            location_type=LocationType.BUILDING,
+            coordinates=None,
+            parent_location_id="parent",
+            connections=[],
         )
         child_a = Location(
-            id="child-a", name="Apple", description="A child",
-            location_type=LocationType.BUILDING, coordinates=None,
-            parent_location_id="parent", connections=[],
+            id="child-a",
+            name="Apple",
+            description="A child",
+            location_type=LocationType.BUILDING,
+            coordinates=None,
+            parent_location_id="parent",
+            connections=[],
         )
 
         await location_repository.save(parent)
@@ -334,19 +358,25 @@ class TestLocationRepositoryGetChildren:
 class TestLocationRepositoryGetByType:
     """Tests for get_by_type method."""
 
-    async def test_get_by_type_returns_matching_locations(
-        self, location_repository
-    ):
+    async def test_get_by_type_returns_matching_locations(self, location_repository):
         """get_by_type returns locations of specified type."""
         city = Location(
-            id="city", name="Test City", description="A city",
-            location_type=LocationType.CITY, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="city",
+            name="Test City",
+            description="A city",
+            location_type=LocationType.CITY,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
         dungeon = Location(
-            id="dungeon", name="Test Dungeon", description="A dungeon",
-            location_type=LocationType.DUNGEON, coordinates=None,
-            parent_location_id=None, connections=[],
+            id="dungeon",
+            name="Test Dungeon",
+            description="A dungeon",
+            location_type=LocationType.DUNGEON,
+            coordinates=None,
+            parent_location_id=None,
+            connections=[],
         )
 
         await location_repository.save(city)

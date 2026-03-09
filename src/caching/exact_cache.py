@@ -14,13 +14,14 @@ from .interfaces import CacheEntryMeta
 @dataclass(slots=True)
 class _CacheEntry:
     """Internal cache entry.
-    
+
     Attributes:
         value: Cached value
         created_ts: Creation timestamp
         meta: Entry metadata
         ttl_seconds: Time-to-live (None = no expiry)
     """
+
     value: str
     created_ts: float
     meta: CacheEntryMeta
@@ -28,10 +29,10 @@ class _CacheEntry:
 
     def is_expired(self, now: float) -> bool:
         """Check if entry has expired.
-        
+
         Args:
             now: Current timestamp
-            
+
         Returns:
             True if expired
         """
@@ -43,9 +44,11 @@ class _CacheEntry:
 class ExactCache:
     """Thread-safe LRU cache with optional TTL and tag metadata."""
 
-    def __init__(self, max_size: int = 512, default_ttl_seconds: int | None = 3600) -> None:
+    def __init__(
+        self, max_size: int = 512, default_ttl_seconds: int | None = 3600
+    ) -> None:
         """Initialize exact cache.
-        
+
         Args:
             max_size: Maximum entries to store
             default_ttl_seconds: Default TTL (None = no expiry)
@@ -59,10 +62,10 @@ class ExactCache:
 
     def get(self, key: str) -> Optional[str]:
         """Get value from cache.
-        
+
         Args:
             key: Cache key
-            
+
         Returns:
             Cached value or None if not found/expired
         """
@@ -88,7 +91,7 @@ class ExactCache:
         ttl_seconds: int | None = None,
     ) -> None:
         """Store a value in cache.
-        
+
         Args:
             key: Cache key
             value: Value to store
@@ -110,10 +113,10 @@ class ExactCache:
 
     def invalidate(self, tags: Sequence[str]) -> int:
         """Invalidate entries matching any tag.
-        
+
         Args:
             tags: Tags to match
-            
+
         Returns:
             Number of entries removed
         """
@@ -141,7 +144,7 @@ class ExactCache:
 
     def stats(self) -> Dict[str, int]:
         """Get cache statistics.
-        
+
         Returns:
             Dictionary with size, hits, misses
         """

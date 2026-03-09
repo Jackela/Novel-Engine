@@ -349,7 +349,9 @@ class StructuredLogger:
         """Log warning message."""
         self._log(LogLevel.WARNING, message, **kwargs)
 
-    def error(self, message: str, error: Optional[Exception] = None, **kwargs: Any) -> None:
+    def error(
+        self, message: str, error: Optional[Exception] = None, **kwargs: Any
+    ) -> None:
         """Log error message with optional exception details."""
         error_details = None
         if error:
@@ -412,7 +414,9 @@ class StructuredLogger:
                 with self.track_performance(operation, context):
                     return func(*args, **kwargs)
 
-            wrapper = async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            wrapper = (
+                async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+            )
             return cast(F, wrapper)
 
         return decorator
@@ -471,14 +475,16 @@ class StructuredLogger:
 
             durations = [m.get("duration_ms", 0) for m in relevant_metrics]
 
-            return Ok({
-                "operation_filter": operation_filter,
-                "total_operations": len(relevant_metrics),
-                "avg_duration_ms": sum(durations) / len(durations),
-                "min_duration_ms": min(durations),
-                "max_duration_ms": max(durations),
-                "total_duration_ms": sum(durations),
-            })
+            return Ok(
+                {
+                    "operation_filter": operation_filter,
+                    "total_operations": len(relevant_metrics),
+                    "avg_duration_ms": sum(durations) / len(durations),
+                    "min_duration_ms": min(durations),
+                    "max_duration_ms": max(durations),
+                    "total_duration_ms": sum(durations),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(
@@ -492,7 +498,9 @@ class StructuredLogger:
         """Get recent audit trail entries."""
         return list(self.audit_trail)[-limit:]
 
-    def get_audit_trail_result(self, limit: int = 100) -> Result[List[Dict[str, Any]], ServiceError]:
+    def get_audit_trail_result(
+        self, limit: int = 100
+    ) -> Result[List[Dict[str, Any]], ServiceError]:
         """
         Get recent audit trail entries (Result pattern).
 
@@ -535,13 +543,15 @@ class StructuredLogger:
             - Err(ServiceError): If statistics retrieval fails
         """
         try:
-            return Ok({
-                "performance_entries": len(self.performance_metrics),
-                "audit_entries": len(self.audit_trail),
-                "context_stack_depth": len(self._context_stack),
-                "handlers_configured": len(self._logger.handlers),
-                "current_log_level": self._logger.level,
-            })
+            return Ok(
+                {
+                    "performance_entries": len(self.performance_metrics),
+                    "audit_entries": len(self.audit_trail),
+                    "context_stack_depth": len(self._context_stack),
+                    "handlers_configured": len(self._logger.handlers),
+                    "current_log_level": self._logger.level,
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

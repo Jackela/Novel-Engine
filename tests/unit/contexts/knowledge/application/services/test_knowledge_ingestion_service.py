@@ -296,7 +296,9 @@ class TestKnowledgeIngestionService:
             chunking_strategy=chunking_strategy,
         )
 
-        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
         assert ingestion_result.chunk_count > 0
@@ -327,7 +329,9 @@ class TestKnowledgeIngestionService:
             extra_metadata={"rarity": "legendary", "damage": 100},
         )
 
-        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
 
@@ -359,7 +363,10 @@ class TestKnowledgeIngestionService:
 
         # With Result pattern, error is returned as Err, not raised
         assert result.is_error, "Expected error for empty content"
-        assert "content" in str(result.error.message).lower() or "empty" in str(result.error.message).lower()
+        assert (
+            "content" in str(result.error.message).lower()
+            or "empty" in str(result.error.message).lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -473,6 +480,7 @@ class TestKnowledgeIngestionService:
                 from src.contexts.knowledge.application.ports.i_embedding_service import (
                     EmbeddingError,
                 )
+
                 raise EmbeddingError("Simulated failure")
             return await original_embed_batch(texts)
 
@@ -529,7 +537,9 @@ class TestKnowledgeIngestionService:
         result = await ingestion_service.delete("char_to_delete")
 
         # The mock's delete implementation tracks deletions
-        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         deleted_count = result.unwrap()
         assert deleted_count >= 0
 
@@ -562,7 +572,9 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.CHARACTER,
         )
 
-        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         deleted_count = result.unwrap()
         assert deleted_count >= 0
 
@@ -580,7 +592,9 @@ class TestKnowledgeIngestionService:
         """Test deleting a non-existent source returns 0."""
         result = await ingestion_service.delete("nonexistent_char")
 
-        assert result.is_ok, f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Delete failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         deleted_count = result.unwrap()
         assert deleted_count == 0
 
@@ -610,7 +624,9 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.CHARACTER,
         )
 
-        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         update_result = result.unwrap()
         assert update_result.success is True
         # entries_deleted will be 0 in mock because mock delete doesn't track state
@@ -647,7 +663,9 @@ class TestKnowledgeIngestionService:
             extra_metadata={"version": 2},
         )
 
-        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         update_result = result.unwrap()
         assert update_result.success is True
 
@@ -673,7 +691,9 @@ class TestKnowledgeIngestionService:
             source_type=SourceType.CHARACTER,
         )
 
-        assert result.is_ok, f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Update failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         update_result = result.unwrap()
         assert update_result.success is True
         assert update_result.entries_created > 0
@@ -717,7 +737,9 @@ class TestKnowledgeIngestionService:
         # Query by source_id
         result = await ingestion_service.query_by_source("char_query")
 
-        assert result.is_ok, f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         results = result.unwrap()
         assert len(results) > 0
         assert all(r.source_id == "char_query" for r in results)
@@ -732,7 +754,9 @@ class TestKnowledgeIngestionService:
         """Test querying non-existent source returns empty list."""
         result = await ingestion_service.query_by_source("nonexistent")
 
-        assert result.is_ok, f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Query failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         results = result.unwrap()
         assert results == []
 
@@ -752,7 +776,9 @@ class TestKnowledgeIngestionService:
             collection="custom_collection",
         )
 
-        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
 
@@ -773,6 +799,7 @@ class TestKnowledgeIngestionService:
         from src.contexts.knowledge.application.ports.i_embedding_service import (
             EmbeddingError,
         )
+
         mock_embedding_service.embed_batch.side_effect = EmbeddingError("API error")
 
         result = await ingestion_service.ingest(
@@ -783,7 +810,10 @@ class TestKnowledgeIngestionService:
 
         # With Result pattern, error is returned as Err, not raised
         assert result.is_error, "Expected error Result for embedding failure"
-        assert "embedding" in str(result.error.message).lower() or "embed" in str(result.error.message).lower()
+        assert (
+            "embedding" in str(result.error.message).lower()
+            or "embed" in str(result.error.message).lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -797,6 +827,7 @@ class TestKnowledgeIngestionService:
         from src.contexts.knowledge.application.ports.i_vector_store import (
             VectorStoreError,
         )
+
         mock_vector_store.upsert.side_effect = VectorStoreError("Storage error")
 
         result = await ingestion_service.ingest(
@@ -807,7 +838,10 @@ class TestKnowledgeIngestionService:
 
         # With Result pattern, error is returned as Err, not raised
         assert result.is_error, "Expected error Result for vector store failure"
-        assert "store" in str(result.error.message).lower() or "storage" in str(result.error.message).lower()
+        assert (
+            "store" in str(result.error.message).lower()
+            or "storage" in str(result.error.message).lower()
+        )
 
     @pytest.mark.integration
     @pytest.mark.fast
@@ -824,7 +858,9 @@ class TestKnowledgeIngestionService:
             source_id="char_embed",
         )
 
-        assert result.is_ok, f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
+        assert (
+            result.is_ok
+        ), f"Ingest failed: {result.error if hasattr(result, 'error') else 'unknown'}"
         ingestion_result = result.unwrap()
         assert ingestion_result.success is True
 

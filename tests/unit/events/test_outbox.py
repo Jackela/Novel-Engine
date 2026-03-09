@@ -8,7 +8,6 @@ Tests cover:
 - Metrics collection
 """
 
-
 import pytest
 
 from src.events.outbox import (
@@ -270,9 +269,7 @@ class TestOutbox:
         assert len(outbox._events) == 3
 
         # Add one more - should evict lowest priority
-        outbox.enqueue(
-            OutboxEvent(event_type="NEW", priority=EventPriority.CRITICAL)
-        )
+        outbox.enqueue(OutboxEvent(event_type="NEW", priority=EventPriority.CRITICAL))
 
         metrics = outbox.get_metrics()
         # Still at capacity (3) but newest added

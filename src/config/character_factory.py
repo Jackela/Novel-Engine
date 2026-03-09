@@ -46,7 +46,9 @@ class CharacterFactory:
     character data.
     """
 
-    def __init__(self, event_bus: EventBus, base_character_path: str = "characters") -> None:
+    def __init__(
+        self, event_bus: EventBus, base_character_path: str = "characters"
+    ) -> None:
         """
         Initialize the CharacterFactory.
 

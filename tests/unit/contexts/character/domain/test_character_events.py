@@ -282,7 +282,9 @@ class TestCharacterUpdated:
             )
         assert "Updated fields cannot be empty" in str(exc_info.value)
 
-    def test_character_updated_invalid_old_version_raises_error(self, sample_character_id):
+    def test_character_updated_invalid_old_version_raises_error(
+        self, sample_character_id
+    ):
         """Test that old_version < 1 raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             CharacterUpdated.create(
@@ -351,7 +353,9 @@ class TestCharacterStatsChanged:
         assert event.old_mana == 50
         assert event.new_mana == 50
 
-    def test_character_stats_changed_negative_health_raises_error(self, sample_character_id):
+    def test_character_stats_changed_negative_health_raises_error(
+        self, sample_character_id
+    ):
         """Test that negative health raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             CharacterStatsChanged.create(
@@ -364,7 +368,9 @@ class TestCharacterStatsChanged:
             )
         assert "Health values cannot be negative" in str(exc_info.value)
 
-    def test_character_stats_changed_negative_mana_raises_error(self, sample_character_id):
+    def test_character_stats_changed_negative_mana_raises_error(
+        self, sample_character_id
+    ):
         """Test that negative mana raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             CharacterStatsChanged.create(
@@ -394,7 +400,9 @@ class TestCharacterStatsChanged:
         )
         assert event.is_healing() is True
 
-    def test_character_stats_changed_is_mana_consumed(self, valid_stats_data, sample_character_id):
+    def test_character_stats_changed_is_mana_consumed(
+        self, valid_stats_data, sample_character_id
+    ):
         """Test is_mana_consumed returns appropriate value."""
         # Mana unchanged in valid_stats_data
         event = CharacterStatsChanged.create(**valid_stats_data)
@@ -427,7 +435,9 @@ class TestCharacterStatsChanged:
         event = CharacterStatsChanged.create(**valid_stats_data)
         assert event.get_damage_amount() == 20
 
-    def test_character_stats_changed_get_damage_amount_no_damage(self, sample_character_id):
+    def test_character_stats_changed_get_damage_amount_no_damage(
+        self, sample_character_id
+    ):
         """Test get_damage_amount returns 0 when no damage."""
         event = CharacterStatsChanged.create(
             character_id=sample_character_id,
@@ -524,7 +534,9 @@ class TestCharacterLeveledUp:
             )
         assert "New level must be greater than old level" in str(exc_info.value)
 
-    def test_character_leveled_up_negative_skill_points_raises_error(self, sample_character_id):
+    def test_character_leveled_up_negative_skill_points_raises_error(
+        self, sample_character_id
+    ):
         """Test that negative skill_points_gained raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             CharacterLeveledUp.create(
@@ -674,7 +686,9 @@ class TestCharacterLocationChanged:
         assert event.location_id_before is None
         assert event.location_id_after == "loc_456"
 
-    def test_character_location_changed_empty_new_location_raises_error(self, sample_character_id):
+    def test_character_location_changed_empty_new_location_raises_error(
+        self, sample_character_id
+    ):
         """Test that empty new location raises ValueError."""
         with pytest.raises(ValueError) as exc_info:
             CharacterLocationChanged.create(
@@ -690,7 +704,9 @@ class TestCharacterLocationChanged:
         event = CharacterLocationChanged.create(**valid_location_data)
         assert event.is_initial_placement() is False
 
-    def test_character_location_changed_is_initial_placement_true(self, sample_character_id):
+    def test_character_location_changed_is_initial_placement_true(
+        self, sample_character_id
+    ):
         """Test is_initial_placement returns True for initial placement."""
         event = CharacterLocationChanged.create(
             character_id=sample_character_id,

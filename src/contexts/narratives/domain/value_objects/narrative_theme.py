@@ -277,9 +277,7 @@ class NarrativeTheme:
         # Add complexity for thematic relationships
         conflicts = self.conflicts_with_themes or frozenset()
         reinforces = self.reinforces_themes or frozenset()
-        relationship_bonus = Decimal(
-            str((len(conflicts) + len(reinforces)) * 0.3)
-        )
+        relationship_bonus = Decimal(str((len(conflicts) + len(reinforces)) * 0.3))
 
         # Cap at 10
         return min(

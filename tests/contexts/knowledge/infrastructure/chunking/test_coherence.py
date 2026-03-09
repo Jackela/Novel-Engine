@@ -22,11 +22,12 @@ from src.contexts.knowledge.infrastructure.chunking.coherence import (
 pytestmark = pytest.mark.unit
 
 
-
 class MockChunk:
     """Mock chunk for testing."""
-    
-    def __init__(self, text: str, index: int = 0, metadata: dict[str, Any] | None = None) -> None:
+
+    def __init__(
+        self, text: str, index: int = 0, metadata: dict[str, Any] | None = None
+    ) -> None:
         self.text = text
         self.index = index
         self.metadata = metadata or {}
@@ -34,7 +35,7 @@ class MockChunk:
 
 class MockConfig:
     """Mock config for testing."""
-    
+
     def __init__(self, chunk_size: int = 500, min_chunk_size: int = 50) -> None:
         self.chunk_size = chunk_size
         self.min_chunk_size = min_chunk_size
@@ -46,10 +47,15 @@ class TestChunkCoherenceAnalyzerInit:
     def test_analyzer_creation_with_defaults(self) -> None:
         """Test creating analyzer with default values."""
         analyzer = ChunkCoherenceAnalyzer()
-        
+
         assert analyzer._embedding_service is None
-        assert analyzer._acceptable_threshold == ChunkCoherenceAnalyzer.DEFAULT_ACCEPTABLE_THRESHOLD
-        assert analyzer._internal_weight == ChunkCoherenceAnalyzer.DEFAULT_INTERNAL_WEIGHT
+        assert (
+            analyzer._acceptable_threshold
+            == ChunkCoherenceAnalyzer.DEFAULT_ACCEPTABLE_THRESHOLD
+        )
+        assert (
+            analyzer._internal_weight == ChunkCoherenceAnalyzer.DEFAULT_INTERNAL_WEIGHT
+        )
 
     def test_analyzer_creation_with_custom_values(self) -> None:
         """Test creating analyzer with custom values."""
@@ -61,9 +67,9 @@ class TestChunkCoherenceAnalyzerInit:
             excellent_threshold=0.8,
             internal_weight=0.6,
             boundary_weight=0.25,
-            size_weight=0.15
+            size_weight=0.15,
         )
-        
+
         assert analyzer._embedding_service == mock_service
         assert analyzer._acceptable_threshold == 0.4
         assert analyzer._good_threshold == 0.6
@@ -80,27 +86,27 @@ class TestCalculateBoundaryQuality:
         """Test high score when chunk ends with sentence punctuation."""
         analyzer = ChunkCoherenceAnalyzer()
         chunk = MockChunk("This is a complete sentence.")
-        
+
         score = analyzer._calculate_boundary_quality(chunk)
-        
+
         assert score > 0.5  # Should have bonus for proper ending
 
     def test_ends_with_quote_score(self) -> None:
         """Test score when chunk ends with quote."""
         analyzer = ChunkCoherenceAnalyzer()
         chunk = MockChunk('She said "hello".')
-        
+
         score = analyzer._calculate_boundary_quality(chunk)
-        
+
         assert score > 0.5
 
     def test_no_punctuation_penalty(self) -> None:
         """Test penalty when chunk doesn't end with punctuation."""
         analyzer = ChunkCoherenceAnalyzer()
         chunk = MockChunk("This is incomplete")
-        
+
         score = analyzer._calculate_boundary_quality(chunk)
-        
+
         assert score < 1.0  # Should have penalty
 
     def test_starts_with_capital_bonus(self) -> None:
@@ -108,10 +114,10 @@ class TestCalculateBoundaryQuality:
         analyzer = ChunkCoherenceAnalyzer()
         chunk1 = MockChunk("Capital start with proper ending.")
         chunk2 = MockChunk("lowercase start with proper ending.")
-        
+
         score1 = analyzer._calculate_boundary_quality(chunk1)
         score2 = analyzer._calculate_boundary_quality(chunk2)
-        
+
         # Both should end properly, but capital start should score higher or equal
         assert score1 >= score2
 
@@ -119,9 +125,9 @@ class TestCalculateBoundaryQuality:
         """Test bonus for paragraph structure within chunk."""
         analyzer = ChunkCoherenceAnalyzer()
         chunk = MockChunk("Para 1.\n\nPara 2.\n\nPara 3.")
-        
+
         score = analyzer._calculate_boundary_quality(chunk)
-        
+
         assert score > 0.5  # Should have bonus for structure
 
 
@@ -132,20 +138,24 @@ class TestCalculateSizeScore:
         """Test perfect score for ideal chunk size."""
         analyzer = ChunkCoherenceAnalyzer()
         config = MockConfig(chunk_size=100, min_chunk_size=10)
-        chunk = MockChunk("word " * 50, metadata={"word_count": 50})  # Half of chunk_size
-        
+        chunk = MockChunk(
+            "word " * 50, metadata={"word_count": 50}
+        )  # Half of chunk_size
+
         score = analyzer._calculate_size_score(chunk, config)
-        
+
         assert score == 1.0
 
     def test_too_small_penalty(self) -> None:
         """Test penalty for chunks below min size."""
         analyzer = ChunkCoherenceAnalyzer()
         config = MockConfig(chunk_size=100, min_chunk_size=50)
-        chunk = MockChunk("word " * 10, metadata={"word_count": 10})  # Below min_chunk_size
-        
+        chunk = MockChunk(
+            "word " * 10, metadata={"word_count": 10}
+        )  # Below min_chunk_size
+
         score = analyzer._calculate_size_score(chunk, config)
-        
+
         assert score < 0.5  # Should be penalized
 
     def test_slightly_over_score(self) -> None:
@@ -153,9 +163,9 @@ class TestCalculateSizeScore:
         analyzer = ChunkCoherenceAnalyzer()
         config = MockConfig(chunk_size=100, min_chunk_size=10)
         chunk = MockChunk("word " * 110, metadata={"word_count": 110})  # 10% over
-        
+
         score = analyzer._calculate_size_score(chunk, config)
-        
+
         assert 0.8 < score <= 0.9  # Slightly reduced
 
     def test_way_over_score(self) -> None:
@@ -163,9 +173,9 @@ class TestCalculateSizeScore:
         analyzer = ChunkCoherenceAnalyzer()
         config = MockConfig(chunk_size=100, min_chunk_size=10)
         chunk = MockChunk("word " * 200, metadata={"word_count": 200})  # 2x over
-        
+
         score = analyzer._calculate_size_score(chunk, config)
-        
+
         assert score < 0.5  # Significantly reduced
 
     def test_size_score_from_text_when_no_metadata(self) -> None:
@@ -173,9 +183,9 @@ class TestCalculateSizeScore:
         analyzer = ChunkCoherenceAnalyzer()
         config = MockConfig(chunk_size=100, min_chunk_size=10)
         chunk = MockChunk("one two three four five")
-        
+
         score = analyzer._calculate_size_score(chunk, config)
-        
+
         # Should calculate word count from text
         assert score > 0  # Should have a valid score
 
@@ -187,28 +197,30 @@ class TestHeuristicCoherence:
         """Test high score for small text."""
         analyzer = ChunkCoherenceAnalyzer()
         text = "Short text."
-        
+
         score = analyzer._heuristic_coherence(text, {})
-        
+
         assert score > 0.7
 
     def test_large_text_penalty(self) -> None:
         """Test penalty for large text."""
         analyzer = ChunkCoherenceAnalyzer()
         text = "word " * 600  # More than 500 words
-        
+
         score = analyzer._heuristic_coherence(text, {})
-        
+
         # Should have some penalty for large text (score < 1.0)
         assert score < 1.0
 
     def test_dialogue_coherence_bonus(self) -> None:
         """Test bonus for well-structured dialogue."""
         analyzer = ChunkCoherenceAnalyzer()
-        text = '"Hello," she said. "How are you?" he replied. "I am well," she answered.'
-        
+        text = (
+            '"Hello," she said. "How are you?" he replied. "I am well," she answered.'
+        )
+
         score = analyzer._heuristic_coherence(text, {})
-        
+
         # Even number of quotes should get bonus
         assert score > 0
 
@@ -216,9 +228,9 @@ class TestHeuristicCoherence:
         """Test bonus for paragraph structure."""
         analyzer = ChunkCoherenceAnalyzer()
         text = "Paragraph one.\n\nParagraph two.\n\nParagraph three."
-        
+
         score = analyzer._heuristic_coherence(text, {})
-        
+
         # Multiple paragraphs should get bonus
         assert score > 0.8
 
@@ -230,9 +242,9 @@ class TestCosineSimilarity:
         """Test cosine similarity of identical vectors is 1.0."""
         analyzer = ChunkCoherenceAnalyzer()
         vec = [1.0, 2.0, 3.0]
-        
+
         similarity = analyzer._cosine_similarity(vec, vec)
-        
+
         assert similarity == 1.0
 
     def test_orthogonal_vectors(self) -> None:
@@ -240,9 +252,9 @@ class TestCosineSimilarity:
         analyzer = ChunkCoherenceAnalyzer()
         vec1 = [1.0, 0.0, 0.0]
         vec2 = [0.0, 1.0, 0.0]
-        
+
         similarity = analyzer._cosine_similarity(vec1, vec2)
-        
+
         assert similarity == 0.0
 
     def test_opposite_vectors(self) -> None:
@@ -250,9 +262,9 @@ class TestCosineSimilarity:
         analyzer = ChunkCoherenceAnalyzer()
         vec1 = [1.0, 0.0, 0.0]
         vec2 = [-1.0, 0.0, 0.0]
-        
+
         similarity = analyzer._cosine_similarity(vec1, vec2)
-        
+
         assert similarity == -1.0
 
     def test_different_length_vectors(self) -> None:
@@ -260,9 +272,9 @@ class TestCosineSimilarity:
         analyzer = ChunkCoherenceAnalyzer()
         vec1 = [1.0, 2.0, 3.0]
         vec2 = [1.0, 2.0]
-        
+
         similarity = analyzer._cosine_similarity(vec1, vec2)
-        
+
         assert similarity == 0.0
 
     def test_zero_vector(self) -> None:
@@ -270,9 +282,9 @@ class TestCosineSimilarity:
         analyzer = ChunkCoherenceAnalyzer()
         vec1 = [1.0, 2.0, 3.0]
         vec2 = [0.0, 0.0, 0.0]
-        
+
         similarity = analyzer._cosine_similarity(vec1, vec2)
-        
+
         assert similarity == 0.0
 
 
@@ -285,9 +297,9 @@ class TestAnalyzeChunk:
         analyzer = ChunkCoherenceAnalyzer()
         chunk = MockChunk("This is a complete sentence with proper structure.")
         config = MockConfig()
-        
+
         score = await analyzer.analyze_chunk(chunk, config)
-        
+
         assert isinstance(score, CoherenceScore)
         assert 0 <= score.score <= 1
 
@@ -297,28 +309,30 @@ class TestAnalyzeChunk:
         # Very short chunk (below min size)
         chunk = MockChunk("Hi.", metadata={"word_count": 1})
         config = MockConfig(min_chunk_size=50)
-        
+
         score = await analyzer.analyze_chunk(chunk, config)
-        
+
         assert len(score.warnings) > 0
 
     async def test_analyze_chunk_boundary_quality_warning(self) -> None:
         """Test warning for poor boundary quality or small chunk size."""
         analyzer = ChunkCoherenceAnalyzer()
         # Very small chunk that triggers warnings
-        chunk = MockChunk(
-            "tiny", 
-            metadata={"word_count": 1}
-        )
+        chunk = MockChunk("tiny", metadata={"word_count": 1})
         config = MockConfig(chunk_size=200, min_chunk_size=10)
-        
+
         score = await analyzer.analyze_chunk(chunk, config)
-        
+
         # Should have some warning (boundary, coherence, or size)
         has_boundary_warning = any("boundary" in w.lower() for w in score.warnings)
         has_coherence_warning = any("coherence" in w.lower() for w in score.warnings)
         has_size_warning = any("small" in w.lower() for w in score.warnings)
-        assert has_boundary_warning or has_coherence_warning or has_size_warning or not score.is_acceptable
+        assert (
+            has_boundary_warning
+            or has_coherence_warning
+            or has_size_warning
+            or not score.is_acceptable
+        )
 
 
 @pytest.mark.asyncio
@@ -334,9 +348,9 @@ class TestAnalyzeChunks:
             MockChunk("Third chunk."),
         ]
         config = MockConfig()
-        
+
         scores = await analyzer.analyze_chunks(chunks, config)
-        
+
         assert len(scores) == 3
         assert all(isinstance(s, CoherenceScore) for s in scores)
 
@@ -345,9 +359,9 @@ class TestAnalyzeChunks:
         analyzer = ChunkCoherenceAnalyzer()
         chunks: list[MockChunk] = []
         config = MockConfig()
-        
+
         scores = await analyzer.analyze_chunks(chunks, config)
-        
+
         assert scores == []
 
 
@@ -359,10 +373,10 @@ class TestEmbeddingBasedCoherence:
         """Test single sentence has perfect coherence."""
         mock_service = AsyncMock()
         analyzer = ChunkCoherenceAnalyzer(embedding_service=mock_service)
-        
+
         # Single sentence should have coherence of 1.0
         coherence = await analyzer._embedding_based_coherence("Single sentence.")
-        
+
         assert coherence == 1.0
         # Should not call embedding service for single sentence
         mock_service.embed_batch.assert_not_called()
@@ -377,11 +391,11 @@ class TestEmbeddingBasedCoherence:
             [0.8, 0.2, 0.0],
         ]
         analyzer = ChunkCoherenceAnalyzer(embedding_service=mock_service)
-        
+
         coherence = await analyzer._embedding_based_coherence(
             "First sentence. Second sentence. Third sentence."
         )
-        
+
         assert 0 < coherence <= 1.0
         mock_service.embed_batch.assert_called_once()
 
@@ -390,12 +404,12 @@ class TestEmbeddingBasedCoherence:
         mock_service = AsyncMock()
         mock_service.embed_batch.side_effect = Exception("Embedding failed")
         analyzer = ChunkCoherenceAnalyzer(embedding_service=mock_service)
-        
+
         # Should not raise, should fallback to heuristic
         coherence = await analyzer._embedding_based_coherence(
             "First sentence. Second sentence."
         )
-        
+
         assert 0 <= coherence <= 1.0
 
 
@@ -412,9 +426,9 @@ class TestInternalCoherence:
         ]
         analyzer = ChunkCoherenceAnalyzer(embedding_service=mock_service)
         chunk = MockChunk("Sentence one. Sentence two.")
-        
+
         coherence = await analyzer._calculate_internal_coherence(chunk)
-        
+
         mock_service.embed_batch.assert_called_once()
         assert coherence == 1.0  # Identical embeddings
 
@@ -423,9 +437,9 @@ class TestInternalCoherence:
         """Test that heuristic is used when no embedding service."""
         analyzer = ChunkCoherenceAnalyzer()  # No embedding service
         chunk = MockChunk("Sentence one. Sentence two.")
-        
+
         coherence = await analyzer._calculate_internal_coherence(chunk)
-        
+
         assert 0 <= coherence <= 1.0
 
 

@@ -445,9 +445,9 @@ class TestProposalOperations:
             "submitted_by": uuid4(),
             "events": ["proposal_submitted"],
         }
-        mock_dependencies["command_handler"].handle_submit_proposal.return_value = (
-            mock_submission_result
-        )
+        mock_dependencies[
+            "command_handler"
+        ].handle_submit_proposal.return_value = mock_submission_result
 
         result = await service.submit_proposal(
             session_id=session_id,
@@ -468,7 +468,8 @@ class TestProposalOperations:
         assert result.value["proposal_submitted"]["viability_score"] == 0.78
         assert result.value["proposal_submitted"]["acceptance_probability"] == 0.65
         assert (
-            result.value["pre_submission_analysis"] == mock_analysis_result["analysis_result"]
+            result.value["pre_submission_analysis"]
+            == mock_analysis_result["analysis_result"]
         )
 
     @pytest.mark.asyncio
@@ -533,7 +534,9 @@ class TestProposalOperations:
         assert result.value["operation"] == "submit_proposal_response"
         assert result.value["success"] is True
         assert result.value["response_submitted"]["response_id"] == response_id
-        assert result.value["response_submitted"]["overall_response"] == "partial_accept"
+        assert (
+            result.value["response_submitted"]["overall_response"] == "partial_accept"
+        )
         assert result.value["response_submitted"]["acceptance_percentage"] == 0.75
         assert (
             result.value["session_status"]["momentum"]
@@ -684,7 +687,10 @@ class TestNegotiationCompletion:
         assert result.value["operation"] == "complete_negotiation"
         assert result.value["success"] is True
         assert result.value["completion_summary"]["outcome"] == "agreement_reached"
-        assert result.value["completion_summary"]["termination_reason"] == "mutual_agreement"
+        assert (
+            result.value["completion_summary"]["termination_reason"]
+            == "mutual_agreement"
+        )
         assert (
             result.value["completion_summary"]["completion_notes"]
             == "Successfully reached agreement"
@@ -862,7 +868,9 @@ class TestAnalyticalOperations:
         assert result.value["operation"] == "get_negotiation_insights"
         assert result.value["success"] is True
         assert result.value["analysis_depth"] == "comprehensive"
-        assert result.value["insights"]["party_compatibility"] == mock_compatibility_result
+        assert (
+            result.value["insights"]["party_compatibility"] == mock_compatibility_result
+        )
         assert (
             result.value["insights"]["recommended_strategy"]
             == mock_strategy_result["strategy_recommendation"]
@@ -998,9 +1006,9 @@ class TestProposalOptimization:
         service.command_handler = mock_dependencies["command_handler"]
 
         session_id = uuid4()
-        mock_dependencies["repository"].get_by_id.return_value = (
-            mock_negotiation_session
-        )
+        mock_dependencies[
+            "repository"
+        ].get_by_id.return_value = mock_negotiation_session
 
         # Mock analysis results for each proposal
         proposal_ids = list(mock_negotiation_session.active_proposals.keys())
@@ -1477,7 +1485,8 @@ class TestPrivateHelperMethods:
         ]
 
         recommendations = service._generate_health_recommendations(
-            health_score=45.0, health_alerts=health_alerts  # Poor health
+            health_score=45.0,
+            health_alerts=health_alerts,  # Poor health
         )
 
         # Should address each alert type

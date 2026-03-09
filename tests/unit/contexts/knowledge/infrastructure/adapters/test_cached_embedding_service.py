@@ -4,7 +4,6 @@ Unit tests for CachedEmbeddingService.
 Tests caching behavior, batch operations, fallback, and cache management.
 """
 
-
 import pytest
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (

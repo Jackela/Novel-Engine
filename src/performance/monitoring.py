@@ -30,7 +30,7 @@ import psutil
 import structlog
 
 # Safe filename pattern for metrics files (alphanumeric, underscores, dots, hyphens)
-SAFE_METRICS_FILENAME_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
+SAFE_METRICS_FILENAME_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 logger = structlog.get_logger(__name__)
 
@@ -262,7 +262,9 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("monitoring_loop_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "monitoring_loop_error", error=str(e), error_type=type(e).__name__
+                )
 
     async def _cleanup_loop(self) -> None:
         """Background cleanup loop for old metrics and alerts."""
@@ -274,7 +276,9 @@ class PerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error("cleanup_loop_error", error=str(e), error_type=type(e).__name__)
+                logger.error(
+                    "cleanup_loop_error", error=str(e), error_type=type(e).__name__
+                )
 
     async def _collect_system_metrics(self) -> None:
         """Collect comprehensive system performance metrics."""
@@ -302,7 +306,11 @@ class PerformanceMonitor:
                 self.record_metric(name, value, MetricType.COUNTER, current_time)
 
         except Exception as e:
-            logger.error("system_metrics_collection_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "system_metrics_collection_error",
+                error=str(e),
+                error_type=type(e).__name__,
+            )
 
     def record_metric(
         self,
@@ -393,7 +401,9 @@ class PerformanceMonitor:
                 "database_error_count", 1, MetricType.COUNTER, current_time, tags
             )
 
-    def record_cache_operation(self, operation: str, hit: bool, duration_ms: float) -> None:
+    def record_cache_operation(
+        self, operation: str, hit: bool, duration_ms: float
+    ) -> None:
         """Record cache operation performance and hit rate metrics."""
         current_time = time.time()
         tags = {"operation": operation}
@@ -518,7 +528,7 @@ class PerformanceMonitor:
             metric_name=alert.metric_name,
             actual_value=round(alert.actual_value, 2),
             threshold_value=round(alert.threshold_value, 2),
-            message=alert.message
+            message=alert.message,
         )
 
         # In a production system, you might:
@@ -531,7 +541,7 @@ class PerformanceMonitor:
         logger.info(
             "performance_alert_resolved",
             metric_name=alert.metric_name,
-            duration_seconds=round(alert.resolution_timestamp - alert.timestamp, 1)
+            duration_seconds=round(alert.resolution_timestamp - alert.timestamp, 1),
         )
 
     def _cleanup_old_metrics(self) -> None:
@@ -579,7 +589,7 @@ class PerformanceMonitor:
             if not SAFE_METRICS_FILENAME_PATTERN.match(filename):
                 logger.error("invalid_metrics_filename_generated", filename=filename)
                 return
-            
+
             export_path = Path(self.config.export_path).resolve()
             filepath = export_path / filename
 
@@ -603,7 +613,9 @@ class PerformanceMonitor:
                         os.remove(old_file_path)
 
         except Exception as e:
-            logger.error("metrics_export_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "metrics_export_error", error=str(e), error_type=type(e).__name__
+            )
 
     def get_metric_stats(
         self, metric_name: str, time_range_seconds: int = 300
@@ -737,7 +749,9 @@ class PerformanceMonitor:
             logger.info("performance_monitor_shutdown_complete")
 
         except Exception as e:
-            logger.error("monitor_shutdown_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "monitor_shutdown_error", error=str(e), error_type=type(e).__name__
+            )
 
 
 # Performance measurement decorator

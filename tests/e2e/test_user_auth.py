@@ -32,6 +32,7 @@ def client():
     with TestClient(app) as test_client:
         yield test_client
 
+
 # Mark all tests in this module as e2e tests
 pytestmark = pytest.mark.e2e
 
@@ -49,10 +50,7 @@ class TestUserAuth:
         - Cookies are properly set
         """
         # Step 1: Login with valid credentials
-        login_data = {
-            "email": "testuser@example.com",
-            "password": "securepassword123"
-        }
+        login_data = {"email": "testuser@example.com", "password": "securepassword123"}
 
         response = client.post("/api/auth/login", json=login_data)
         assert response.status_code == 200, f"Login failed: {response.text}"
@@ -86,11 +84,13 @@ class TestUserAuth:
         login_data = {
             "email": "rememberme@example.com",
             "password": "securepassword123",
-            "remember_me": True
+            "remember_me": True,
         }
 
         response = client.post("/api/auth/login", json=login_data)
-        assert response.status_code == 200, f"Login with remember_me failed: {response.text}"
+        assert (
+            response.status_code == 200
+        ), f"Login with remember_me failed: {response.text}"
 
         data = response.json()
         assert "access_token" in data
@@ -107,23 +107,21 @@ class TestUserAuth:
         # Step 1: Login
         login_response = client.post(
             "/api/auth/login",
-            json={"email": "logouttest@example.com", "password": "password123"}
+            json={"email": "logouttest@example.com", "password": "password123"},
         )
         assert login_response.status_code == 200
         access_token = login_response.json()["access_token"]
 
         # Step 2: Verify token is valid by calling validate endpoint
         validate_response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {access_token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {access_token}"}
         )
         assert validate_response.status_code == 200
         assert validate_response.json()["valid"] is True
 
         # Step 3: Logout
         logout_response = client.post(
-            "/api/auth/logout",
-            headers={"Authorization": f"Bearer {access_token}"}
+            "/api/auth/logout", headers={"Authorization": f"Bearer {access_token}"}
         )
         assert logout_response.status_code == 200
         assert logout_response.json()["success"] is True
@@ -139,7 +137,7 @@ class TestUserAuth:
         # Step 1: Login to get refresh token
         login_response = client.post(
             "/api/auth/login",
-            json={"email": "refreshtest@example.com", "password": "password123"}
+            json={"email": "refreshtest@example.com", "password": "password123"},
         )
         assert login_response.status_code == 200
 
@@ -149,13 +147,16 @@ class TestUserAuth:
 
         # Step 2: Refresh the token
         refresh_response = client.post(
-            "/api/auth/refresh",
-            json={"refresh_token": refresh_token}
+            "/api/auth/refresh", json={"refresh_token": refresh_token}
         )
-        assert refresh_response.status_code == 200, f"Token refresh failed: {refresh_response.text}"
+        assert (
+            refresh_response.status_code == 200
+        ), f"Token refresh failed: {refresh_response.text}"
 
         refresh_data = refresh_response.json()
-        assert "access_token" in refresh_data, "New access_token not in refresh response"
+        assert (
+            "access_token" in refresh_data
+        ), "New access_token not in refresh response"
         new_access_token = refresh_data["access_token"]
 
         # Step 3: Verify new token is different (or same if implementation reuses valid tokens)
@@ -166,7 +167,7 @@ class TestUserAuth:
         # Step 4: Verify new token is valid
         validate_response = client.get(
             "/api/auth/validate",
-            headers={"Authorization": f"Bearer {new_access_token}"}
+            headers={"Authorization": f"Bearer {new_access_token}"},
         )
         assert validate_response.status_code == 200
         assert validate_response.json()["valid"] is True
@@ -184,10 +185,7 @@ class TestAuthValidation:
         - Missing fields return 422
         """
         # Test empty credentials
-        response = client.post(
-            "/api/auth/login",
-            json={"email": "", "password": ""}
-        )
+        response = client.post("/api/auth/login", json={"email": "", "password": ""})
         assert response.status_code == 400, "Empty credentials should return 400"
 
     def test_login_missing_fields(self, client):
@@ -198,17 +196,11 @@ class TestAuthValidation:
         - Missing password returns 422
         """
         # Missing email
-        response = client.post(
-            "/api/auth/login",
-            json={"password": "password123"}
-        )
+        response = client.post("/api/auth/login", json={"password": "password123"})
         assert response.status_code == 422, "Missing email should return 422"
 
         # Missing password
-        response = client.post(
-            "/api/auth/login",
-            json={"email": "test@example.com"}
-        )
+        response = client.post("/api/auth/login", json={"email": "test@example.com"})
         assert response.status_code == 422, "Missing password should return 422"
 
     def test_validate_invalid_token(self, client):
@@ -221,8 +213,7 @@ class TestAuthValidation:
         """
         # Test invalid token
         response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": "Bearer invalid-token"}
+            "/api/auth/validate", headers={"Authorization": "Bearer invalid-token"}
         )
         assert response.status_code == 401
         assert response.json()["valid"] is False
@@ -233,8 +224,7 @@ class TestAuthValidation:
 
         # Test malformed header
         response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": "InvalidFormat"}
+            "/api/auth/validate", headers={"Authorization": "InvalidFormat"}
         )
         assert response.status_code == 401
 
@@ -274,7 +264,7 @@ class TestAuthSessionManagement:
         # Login
         login_response = client.post(
             "/api/auth/login",
-            json={"email": "session@example.com", "password": "password123"}
+            json={"email": "session@example.com", "password": "password123"},
         )
         assert login_response.status_code == 200
 
@@ -282,8 +272,7 @@ class TestAuthSessionManagement:
 
         # Validate token
         validate_response = client.get(
-            "/api/auth/validate",
-            headers={"Authorization": f"Bearer {access_token}"}
+            "/api/auth/validate", headers={"Authorization": f"Bearer {access_token}"}
         )
         assert validate_response.status_code == 200
 
@@ -313,7 +302,7 @@ class TestAuthSessionManagement:
         # Login first
         login_response = client.post(
             "/api/auth/login",
-            json={"email": "cookietest@example.com", "password": "password123"}
+            json={"email": "cookietest@example.com", "password": "password123"},
         )
         assert login_response.status_code == 200
 
@@ -321,8 +310,7 @@ class TestAuthSessionManagement:
 
         # Logout
         logout_response = client.post(
-            "/api/auth/logout",
-            headers={"Authorization": f"Bearer {access_token}"}
+            "/api/auth/logout", headers={"Authorization": f"Bearer {access_token}"}
         )
         assert logout_response.status_code == 200
 
@@ -339,7 +327,7 @@ class TestAuthSessionManagement:
         # Login first
         login_response = client.post(
             "/api/auth/login",
-            json={"email": "cookierefresh@example.com", "password": "password123"}
+            json={"email": "cookierefresh@example.com", "password": "password123"},
         )
         assert login_response.status_code == 200
 

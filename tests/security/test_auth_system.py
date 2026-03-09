@@ -147,7 +147,7 @@ class TestSecurityService:
         """Test password hashing with bcrypt."""
         password = "test_password_123"
         hashed = security_service._hash_password(password)
-        
+
         # Hash should be different from original
         assert hashed != password
         # Hash should be valid bcrypt format
@@ -162,7 +162,7 @@ class TestSecurityService:
         password = "test_password_123"
         hash1 = security_service._hash_password(password)
         hash2 = security_service._hash_password(password)
-        
+
         # Hashes should be different due to different salts
         assert hash1 != hash2
         # But both should verify correctly
@@ -177,13 +177,13 @@ class TestSecurityService:
             password="secure_password_123",
             role=UserRole.READER,
         )
-        
+
         user = await security_service.register_user(
             registration,
             ip_address="127.0.0.1",
             user_agent="Test Agent",
         )
-        
+
         assert user.username == "testuser"
         assert user.email == "test@example.com"
         assert user.role == UserRole.READER
@@ -197,18 +197,16 @@ class TestSecurityService:
             email="test@example.com",
             password="secure_password_123",
         )
-        
-        await security_service.register_user(
-            registration, "127.0.0.1", "Test Agent"
-        )
-        
+
+        await security_service.register_user(registration, "127.0.0.1", "Test Agent")
+
         # Try to register again with same username
         registration2 = UserRegistration(
             username="testuser",
             email="different@example.com",
             password="secure_password_123",
         )
-        
+
         with pytest.raises(AuthenticationError, match="Username already exists"):
             await security_service.register_user(
                 registration2, "127.0.0.1", "Test Agent"
@@ -221,18 +219,16 @@ class TestSecurityService:
             email="test@example.com",
             password="secure_password_123",
         )
-        
-        await security_service.register_user(
-            registration, "127.0.0.1", "Test Agent"
-        )
-        
+
+        await security_service.register_user(registration, "127.0.0.1", "Test Agent")
+
         # Try to register again with same email
         registration2 = UserRegistration(
             username="user2",
             email="test@example.com",
             password="secure_password_123",
         )
-        
+
         with pytest.raises(AuthenticationError, match="Email already exists"):
             await security_service.register_user(
                 registration2, "127.0.0.1", "Test Agent"
@@ -246,16 +242,14 @@ class TestSecurityService:
             email="auth@example.com",
             password="secure_password_123",
         )
-        await security_service.register_user(
-            registration, "127.0.0.1", "Test Agent"
-        )
-        
+        await security_service.register_user(registration, "127.0.0.1", "Test Agent")
+
         # Authenticate
         login = UserLogin(username="authuser", password="secure_password_123")
         user = await security_service.authenticate_user(
             login, ip_address="127.0.0.1", user_agent="Test Agent"
         )
-        
+
         assert user is not None
         assert user.username == "authuser"
         assert user.last_login is not None
@@ -268,16 +262,14 @@ class TestSecurityService:
             email="auth2@example.com",
             password="secure_password_123",
         )
-        await security_service.register_user(
-            registration, "127.0.0.1", "Test Agent"
-        )
-        
+        await security_service.register_user(registration, "127.0.0.1", "Test Agent")
+
         # Try to authenticate with wrong password
         login = UserLogin(username="authuser2", password="wrong_password")
         user = await security_service.authenticate_user(
             login, ip_address="127.0.0.1", user_agent="Test Agent"
         )
-        
+
         assert user is None
 
     async def test_authenticate_user_not_found(self, security_service):
@@ -286,7 +278,7 @@ class TestSecurityService:
         user = await security_service.authenticate_user(
             login, ip_address="127.0.0.1", user_agent="Test Agent"
         )
-        
+
         assert user is None
 
     async def test_authenticate_user_account_locked(self, security_service):
@@ -297,17 +289,15 @@ class TestSecurityService:
             email="locked@example.com",
             password="secure_password_123",
         )
-        await security_service.register_user(
-            registration, "127.0.0.1", "Test Agent"
-        )
-        
+        await security_service.register_user(registration, "127.0.0.1", "Test Agent")
+
         # Fail login multiple times to lock account
         login = UserLogin(username="lockeduser", password="wrong")
         for _ in range(5):
             await security_service.authenticate_user(
                 login, ip_address="127.0.0.1", user_agent="Test Agent"
             )
-        
+
         # Next attempt should raise account locked error
         with pytest.raises(AuthenticationError, match="Account is temporarily locked"):
             await security_service.authenticate_user(
@@ -324,9 +314,9 @@ class TestSecurityService:
             password_hash="hashed_password",
             role=UserRole.READER,
         )
-        
+
         token_pair = await security_service.create_token_pair(user)
-        
+
         assert isinstance(token_pair, TokenPair)
         assert token_pair.access_token is not None
         assert token_pair.refresh_token is not None
@@ -340,7 +330,7 @@ class TestSecurityService:
         token = security_service._generate_token(
             payload, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         )
-        
+
         # Verify token can be decoded
         decoded = security_service._decode_token(token)
         assert decoded["user_id"] == "test123"
@@ -355,9 +345,10 @@ class TestSecurityService:
         # Create an expired token
         payload = {"user_id": "test123"}
         token = security_service._generate_token(
-            payload, timedelta(seconds=-1)  # Already expired
+            payload,
+            timedelta(seconds=-1),  # Already expired
         )
-        
+
         with pytest.raises(AuthenticationError, match="Token has expired"):
             security_service._decode_token(token)
 
@@ -376,7 +367,7 @@ class TestSecurityService:
             password_hash="hashed",
             role=UserRole.READER,
         )
-        
+
         # Insert user into database
         async with security_service._connection() as conn:
             await conn.execute(
@@ -384,18 +375,24 @@ class TestSecurityService:
                 INSERT INTO users (id, username, email, password_hash, role, is_active)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
-                (user.id, user.username, user.email, user.password_hash, 
-                 user.role.value, True),
+                (
+                    user.id,
+                    user.username,
+                    user.email,
+                    user.password_hash,
+                    user.role.value,
+                    True,
+                ),
             )
             await conn.commit()
-        
+
         token_pair = await security_service.create_token_pair(user)
-        
+
         # Refresh the token
         new_token_pair = await security_service.refresh_access_token(
             token_pair.refresh_token
         )
-        
+
         assert isinstance(new_token_pair, TokenPair)
         assert new_token_pair.access_token != token_pair.access_token
 
@@ -408,12 +405,10 @@ class TestSecurityService:
         """Test successful token validation."""
         # Create a valid token
         payload = {"user_id": "test123", "type": "access"}
-        token = security_service._generate_token(
-            payload, timedelta(minutes=15)
-        )
-        
+        token = security_service._generate_token(payload, timedelta(minutes=15))
+
         result = await security_service.validate_token(token)
-        
+
         assert result.success is True
         assert result.data["user_id"] == "test123"
         assert result.data["token_type"] == "access"
@@ -422,12 +417,10 @@ class TestSecurityService:
         """Test expired token validation returns error."""
         # Create an expired token
         payload = {"user_id": "test123"}
-        token = security_service._generate_token(
-            payload, timedelta(seconds=-1)
-        )
-        
+        token = security_service._generate_token(payload, timedelta(seconds=-1))
+
         result = await security_service.validate_token(token)
-        
+
         assert result.success is False
         assert result.error is not None
         assert "expired" in result.error.message.lower()
@@ -435,25 +428,40 @@ class TestSecurityService:
     async def test_has_permission(self, security_service):
         """Test permission checking."""
         # Admin should have all permissions
-        assert security_service.has_permission(UserRole.ADMIN, Permission.SYSTEM_ADMIN) is True
-        assert security_service.has_permission(UserRole.ADMIN, Permission.USER_DELETE) is True
-        
+        assert (
+            security_service.has_permission(UserRole.ADMIN, Permission.SYSTEM_ADMIN)
+            is True
+        )
+        assert (
+            security_service.has_permission(UserRole.ADMIN, Permission.USER_DELETE)
+            is True
+        )
+
         # Reader should have limited permissions
-        assert security_service.has_permission(UserRole.READER, Permission.STORY_READ) is True
-        assert security_service.has_permission(UserRole.READER, Permission.STORY_CREATE) is False
-        
+        assert (
+            security_service.has_permission(UserRole.READER, Permission.STORY_READ)
+            is True
+        )
+        assert (
+            security_service.has_permission(UserRole.READER, Permission.STORY_CREATE)
+            is False
+        )
+
         # String role should work too
         assert security_service.has_permission("admin", Permission.SYSTEM_ADMIN) is True
-        assert security_service.has_permission("invalid_role", Permission.SYSTEM_ADMIN) is False
+        assert (
+            security_service.has_permission("invalid_role", Permission.SYSTEM_ADMIN)
+            is False
+        )
 
     async def test_get_role_permissions(self, security_service):
         """Test getting permissions for a role."""
         admin_perms = security_service.get_role_permissions(UserRole.ADMIN)
         assert len(admin_perms) > 10  # Admin has many permissions
-        
+
         guest_perms = security_service.get_role_permissions(UserRole.GUEST)
         assert len(guest_perms) == 2
-        
+
         # Invalid role returns empty set
         invalid_perms = security_service.get_role_permissions("invalid")
         assert len(invalid_perms) == 0
@@ -467,13 +475,19 @@ class TestSecurityService:
                 INSERT INTO users (id, username, email, password_hash, role, is_active)
                 VALUES (?, ?, ?, ?, ?, ?)
             """,
-                ("api_test_id", "apiuser", "api@example.com", "hashed", 
-                 UserRole.API_USER.value, True),
+                (
+                    "api_test_id",
+                    "apiuser",
+                    "api@example.com",
+                    "hashed",
+                    UserRole.API_USER.value,
+                    True,
+                ),
             )
             await conn.commit()
-        
+
         api_key = await security_service.generate_api_key("api_test_id")
-        
+
         assert api_key.startswith("nve_")
         assert len(api_key) > 20  # Should be reasonably long
 
@@ -487,13 +501,20 @@ class TestSecurityService:
                 INSERT INTO users (id, username, email, password_hash, role, is_active, api_key)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-                ("api_val_id", "apiuser", "api@example.com", "hashed", 
-                 UserRole.API_USER.value, True, api_key),
+                (
+                    "api_val_id",
+                    "apiuser",
+                    "api@example.com",
+                    "hashed",
+                    UserRole.API_USER.value,
+                    True,
+                    api_key,
+                ),
             )
             await conn.commit()
-        
+
         user = await security_service.validate_api_key(api_key)
-        
+
         assert user is not None
         assert user.username == "apiuser"
         assert user.role == UserRole.API_USER
@@ -512,7 +533,7 @@ class TestSecurityService:
             password="Secure_Pass123",
             role=UserRole.READER,
         )
-        
+
         assert result.success is True
         assert result.data["username"] == "validuser"
 
@@ -573,7 +594,7 @@ class TestUser:
             is_active=True,
             is_verified=False,
         )
-        
+
         assert user.id == "user123"
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -591,7 +612,7 @@ class TestUser:
             password_hash="hashed",
             role=UserRole.READER,
         )
-        
+
         assert user.created_at is not None
         assert isinstance(user.created_at, datetime)
 
@@ -641,9 +662,10 @@ class TestGlobalInstances:
     async def test_get_security_service_not_initialized(self):
         """Test getting service before initialization raises error."""
         import src.security.auth_system as auth_module
+
         original = auth_module.security_service
         auth_module.security_service = None
-        
+
         try:
             with pytest.raises(RuntimeError, match="not initialized"):
                 get_security_service()
@@ -653,8 +675,9 @@ class TestGlobalInstances:
     async def test_initialize_security_service(self):
         """Test security service initialization."""
         import src.security.auth_system as auth_module
+
         original = auth_module.security_service
-        
+
         try:
             auth_module.security_service = None
             service = initialize_security_service(":memory:", "test_key")

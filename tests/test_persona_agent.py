@@ -19,11 +19,13 @@ class TestPersonaAgent(unittest.TestCase):
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
         # Mock the file system operations
-        with patch("os.path.isdir", return_value=True), patch(
-            "os.listdir", return_value=["character.md"]
-        ), patch(
-            "builtins.open",
-            unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
+        with (
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch(
+                "builtins.open",
+                unittest.mock.mock_open(read_data="# Character Sheet: Test Agent"),
+            ),
         ):
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -108,12 +110,12 @@ psychological_profile:
     loyalty: 0.9
 """
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md", "stats.yaml"]), patch(
-            "builtins.open", mock_open()
-        ) as mock_file, patch(
-            "yaml.safe_load", return_value=self.test_character_data
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md", "stats.yaml"]),
+            patch("builtins.open", mock_open()) as mock_file,
+            patch("yaml.safe_load", return_value=self.test_character_data),
         ):
             # Configure mock_open to return different content based on filename
             def file_side_effect(*args, **kwargs):
@@ -126,14 +128,13 @@ psychological_profile:
             mock_file.side_effect = file_side_effect
 
             # Mock the extract methods to avoid complex initialization
-            with patch.object(PersonaAgent, "_extract_core_identity"), patch.object(
-                PersonaAgent, "_extract_personality_traits"
-            ), patch.object(PersonaAgent, "_extract_decision_weights"), patch.object(
-                PersonaAgent, "_extract_relationships"
-            ), patch.object(
-                PersonaAgent, "_extract_knowledge_domains"
-            ), patch.object(
-                PersonaAgent, "_initialize_subjective_worldview"
+            with (
+                patch.object(PersonaAgent, "_extract_core_identity"),
+                patch.object(PersonaAgent, "_extract_personality_traits"),
+                patch.object(PersonaAgent, "_extract_decision_weights"),
+                patch.object(PersonaAgent, "_extract_relationships"),
+                patch.object(PersonaAgent, "_extract_knowledge_domains"),
+                patch.object(PersonaAgent, "_initialize_subjective_worldview"),
             ):
                 agent = PersonaAgent(
                     character_directory_path="characters/test",
@@ -148,10 +149,13 @@ psychological_profile:
     @pytest.mark.unit
     def test_load_character_context_missing_directory(self):
         """Test error handling when character directory doesn't exist."""
-        with patch("os.path.exists", return_value=False), patch.object(
-            PersonaAgent,
-            "load_character_context",
-            side_effect=FileNotFoundError("Character directory not found"),
+        with (
+            patch("os.path.exists", return_value=False),
+            patch.object(
+                PersonaAgent,
+                "load_character_context",
+                side_effect=FileNotFoundError("Character directory not found"),
+            ),
         ):
             with self.assertRaises(FileNotFoundError):
                 PersonaAgent(
@@ -163,22 +167,17 @@ psychological_profile:
     @pytest.mark.unit
     def test_character_properties(self):
         """Test character property accessors."""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/test_char",
@@ -195,22 +194,17 @@ psychological_profile:
         """Test the cached file reading functionality."""
         test_content = "Test file content"
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data=test_content)
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data=test_content)),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -225,22 +219,17 @@ psychological_profile:
     @pytest.mark.unit
     def test_derive_agent_id_from_path(self):
         """Test agent ID derivation from directory path."""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/test_character",
@@ -257,22 +246,17 @@ psychological_profile:
     @pytest.mark.unit
     def test_estimate_trait_strength(self):
         """Test personality trait strength estimation."""
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -308,22 +292,17 @@ psychological_profile:
 - Personality: Aggressive, Loyal
         """
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -344,22 +323,17 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -377,15 +351,12 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         }
 
         # Mock the internal decision-making methods
-        with patch.object(
-            self.agent, "_llm_enhanced_decision_making"
-        ) as mock_llm, patch.object(
-            self.agent, "_process_world_state_update"
-        ) as mock_process, patch.object(
-            self.agent, "_assess_current_situation"
-        ) as mock_assess, patch.object(
-            self.agent, "_identify_available_actions"
-        ) as mock_actions:
+        with (
+            patch.object(self.agent, "_llm_enhanced_decision_making") as mock_llm,
+            patch.object(self.agent, "_process_world_state_update") as mock_process,
+            patch.object(self.agent, "_assess_current_situation") as mock_assess,
+            patch.object(self.agent, "_identify_available_actions") as mock_actions,
+        ):
             mock_action = CharacterAction(
                 action_type="tactical_move", reasoning="Strategic positioning required"
             )
@@ -404,21 +375,25 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
         """Test decision making when AI integration fails."""
         world_state = {"current_turn": 1}
 
-        with patch.object(
-            self.agent,
-            "_llm_enhanced_decision_making",
-            side_effect=Exception("AI Error"),
-        ), patch.object(self.agent, "_process_world_state_update"), patch.object(
-            self.agent,
-            "_assess_current_situation",
-            return_value={"threat_level": "low"},
-        ), patch.object(
-            self.agent,
-            "_identify_available_actions",
-            return_value=[{"action_type": "hold_position"}],
-        ), patch.object(
-            self.agent, "_select_best_action"
-        ) as mock_select:
+        with (
+            patch.object(
+                self.agent,
+                "_llm_enhanced_decision_making",
+                side_effect=Exception("AI Error"),
+            ),
+            patch.object(self.agent, "_process_world_state_update"),
+            patch.object(
+                self.agent,
+                "_assess_current_situation",
+                return_value={"threat_level": "low"},
+            ),
+            patch.object(
+                self.agent,
+                "_identify_available_actions",
+                return_value=[{"action_type": "hold_position"}],
+            ),
+            patch.object(self.agent, "_select_best_action") as mock_select,
+        ):
             fallback_action = CharacterAction(
                 action_type="hold_position", reasoning="Maintaining defensive stance"
             )
@@ -461,21 +436,20 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
 
         world_state = {"threat_level": "high"}
 
-        with patch.object(
-            self.agent, "_evaluate_action_option"
-        ) as mock_evaluate, patch.object(
-            self.agent, "_process_world_state_update"
-        ), patch.object(
-            self.agent,
-            "_assess_current_situation",
-            return_value={"threat_level": "high"},
-        ), patch.object(
-            self.agent, "_identify_available_actions"
-        ) as mock_actions, patch.object(
-            self.agent, "_llm_enhanced_decision_making", return_value=None
-        ), patch.object(
-            self.agent, "_select_best_action"
-        ) as mock_select:
+        with (
+            patch.object(self.agent, "_evaluate_action_option") as mock_evaluate,
+            patch.object(self.agent, "_process_world_state_update"),
+            patch.object(
+                self.agent,
+                "_assess_current_situation",
+                return_value={"threat_level": "high"},
+            ),
+            patch.object(self.agent, "_identify_available_actions") as mock_actions,
+            patch.object(
+                self.agent, "_llm_enhanced_decision_making", return_value=None
+            ),
+            patch.object(self.agent, "_select_best_action") as mock_select,
+        ):
             mock_actions.return_value = [
                 {"action_type": "retreat", "target": "safe_zone"},
                 {"action_type": "attack", "target": "enemy"},
@@ -496,20 +470,24 @@ class TestPersonaAgentDecisionMaking(unittest.TestCase):
     @pytest.mark.unit
     def test_assess_current_situation(self):
         """Test current situation assessment."""
-        with patch.object(
-            self.agent,
-            "_assess_overall_threat_level",
-            return_value=ThreatLevel.MODERATE,
-        ), patch.object(
-            self.agent, "_assess_available_resources", return_value={"energy": 80}
-        ), patch.object(
-            self.agent, "_assess_social_obligations", return_value=[]
-        ), patch.object(
-            self.agent, "_assess_mission_status", return_value={"status": "active"}
-        ), patch.object(
-            self.agent,
-            "_assess_environmental_factors",
-            return_value={"weather": "clear"},
+        with (
+            patch.object(
+                self.agent,
+                "_assess_overall_threat_level",
+                return_value=ThreatLevel.MODERATE,
+            ),
+            patch.object(
+                self.agent, "_assess_available_resources", return_value={"energy": 80}
+            ),
+            patch.object(self.agent, "_assess_social_obligations", return_value=[]),
+            patch.object(
+                self.agent, "_assess_mission_status", return_value={"status": "active"}
+            ),
+            patch.object(
+                self.agent,
+                "_assess_environmental_factors",
+                return_value={"weather": "clear"},
+            ),
         ):
             result = self.agent._assess_current_situation()
             self.assertIsInstance(result, dict)
@@ -571,22 +549,17 @@ class TestPersonaAgentWorldInterpretation(unittest.TestCase):
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -655,22 +628,17 @@ class TestPersonaAgentAIIntegration(unittest.TestCase):
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",
@@ -730,22 +698,17 @@ class TestPersonaAgentMemoryAndEvolution(unittest.TestCase):
     def setUp(self):
         self.event_bus = Mock(spec=EventBus)
 
-        with patch("os.path.exists", return_value=True), patch(
-            "os.path.isdir", return_value=True
-        ), patch("os.listdir", return_value=["character.md"]), patch(
-            "builtins.open", mock_open(read_data="# Test Character")
-        ), patch.object(
-            PersonaAgent, "_extract_core_identity"
-        ), patch.object(
-            PersonaAgent, "_extract_personality_traits"
-        ), patch.object(
-            PersonaAgent, "_extract_decision_weights"
-        ), patch.object(
-            PersonaAgent, "_extract_relationships"
-        ), patch.object(
-            PersonaAgent, "_extract_knowledge_domains"
-        ), patch.object(
-            PersonaAgent, "_initialize_subjective_worldview"
+        with (
+            patch("os.path.exists", return_value=True),
+            patch("os.path.isdir", return_value=True),
+            patch("os.listdir", return_value=["character.md"]),
+            patch("builtins.open", mock_open(read_data="# Test Character")),
+            patch.object(PersonaAgent, "_extract_core_identity"),
+            patch.object(PersonaAgent, "_extract_personality_traits"),
+            patch.object(PersonaAgent, "_extract_decision_weights"),
+            patch.object(PersonaAgent, "_extract_relationships"),
+            patch.object(PersonaAgent, "_extract_knowledge_domains"),
+            patch.object(PersonaAgent, "_initialize_subjective_worldview"),
         ):
             self.agent = PersonaAgent(
                 character_directory_path="characters/test",

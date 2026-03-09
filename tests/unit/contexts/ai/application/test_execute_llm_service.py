@@ -432,9 +432,9 @@ class TestProviderRouter:
     def test_is_provider_healthy_false_not_available(self):
         """Test _is_provider_healthy method for unavailable provider."""
         self.router.register_provider(self.mock_provider_1)
-        self.router._provider_health[self.provider_id_1.provider_name][
-            "available"
-        ] = False
+        self.router._provider_health[self.provider_id_1.provider_name]["available"] = (
+            False
+        )
 
         is_healthy = self.router._is_provider_healthy(self.provider_id_1.provider_name)
 

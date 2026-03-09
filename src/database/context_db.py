@@ -140,7 +140,9 @@ class ContextDatabase:
         self._connection_pool.clear()
         self._initialized = False
 
-    async def store_context(self, session_id: str, character_id: str, context: str) -> None:
+    async def store_context(
+        self, session_id: str, character_id: str, context: str
+    ) -> None:
         """Store context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:

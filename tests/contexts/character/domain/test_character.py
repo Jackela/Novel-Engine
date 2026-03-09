@@ -44,7 +44,6 @@ from src.contexts.character.domain.value_objects.skills import (
 pytestmark = pytest.mark.unit
 
 
-
 @pytest.fixture
 def character_id():
     """Create a test character ID."""
@@ -74,7 +73,7 @@ def character_stats():
         wisdom=11,
         charisma=10,
     )
-    
+
     vital_stats = VitalStats(
         max_health=30,
         current_health=30,
@@ -85,7 +84,7 @@ def character_stats():
         armor_class=15,
         speed=30,
     )
-    
+
     combat_stats = CombatStats(
         base_attack_bonus=2,
         initiative_modifier=1,
@@ -94,7 +93,7 @@ def character_stats():
         critical_hit_chance=0.05,
         critical_damage_multiplier=2.0,
     )
-    
+
     return CharacterStats(
         core_abilities=core_abilities,
         vital_stats=vital_stats,
@@ -136,7 +135,7 @@ class TestCharacterCreation:
     def test_character_creation_event(self, character):
         """Test character creation generates event."""
         events = character.get_events()
-        
+
         # Should have CharacterCreated event
         created_events = [e for e in events if isinstance(e, CharacterCreated)]
         assert len(created_events) == 1
@@ -150,7 +149,7 @@ class TestCharacterCreation:
             PersonalityTraits,
             PhysicalTraits,
         )
-        
+
         # Cannot create a CharacterProfile with level 0
         with pytest.raises(ValueError, match="Level must be between 1 and 100"):
             CharacterProfile(
@@ -178,9 +177,9 @@ class TestCharacterEvents:
     def test_clear_events(self, character):
         """Test clearing events."""
         assert len(character.get_events()) > 0
-        
+
         character.clear_events()
-        
+
         assert len(character.get_events()) == 0
 
 
@@ -199,7 +198,7 @@ class TestCharacterStatsOperations:
             armor_class=16,
             speed=30,
         )
-        
+
         new_stats = CharacterStats(
             core_abilities=character.stats.core_abilities,
             vital_stats=new_vital,
@@ -207,9 +206,9 @@ class TestCharacterStatsOperations:
             experience_points=100,
             skill_points=5,
         )
-        
+
         character.update_stats(new_stats)
-        
+
         assert character.stats.vital_stats.max_health == 35
         assert character.version == 2
 
@@ -226,7 +225,7 @@ class TestCharacterStatsOperations:
             armor_class=15,
             speed=30,
         )
-        
+
         new_stats = CharacterStats(
             core_abilities=character.stats.core_abilities,
             vital_stats=new_vital,
@@ -234,7 +233,7 @@ class TestCharacterStatsOperations:
             experience_points=0,
             skill_points=5,
         )
-        
+
         with pytest.raises(ValueError, match="Cannot lose more than half health"):
             character.update_stats(new_stats)
 
@@ -245,7 +244,7 @@ class TestCharacterStatsOperations:
             CharacterStats,
             VitalStats,
         )
-        
+
         damaged_vital = VitalStats(
             max_health=character.stats.vital_stats.max_health,
             current_health=15,  # Damaged
@@ -256,7 +255,7 @@ class TestCharacterStatsOperations:
             armor_class=character.stats.vital_stats.armor_class,
             speed=character.stats.vital_stats.speed,
         )
-        
+
         damaged_stats = CharacterStats(
             core_abilities=character.stats.core_abilities,
             vital_stats=damaged_vital,
@@ -264,26 +263,26 @@ class TestCharacterStatsOperations:
             experience_points=character.stats.experience_points,
             skill_points=character.stats.skill_points,
         )
-        
+
         character.stats = damaged_stats
-        
+
         character.heal(10)
-        
+
         assert character.stats.vital_stats.current_health == 25
 
     def test_heal_max_cap(self, character):
         """Test healing doesn't exceed max health."""
         # Character starts with full health in fixture, damage first then heal
         character.take_damage(10)  # Now at 20
-        
+
         character.heal(20)  # Would exceed max of 30
-        
+
         assert character.stats.vital_stats.current_health == 30
 
     def test_take_damage(self, character):
         """Test taking damage."""
         character.take_damage(10)
-        
+
         assert character.stats.vital_stats.current_health == 20
 
 
@@ -293,9 +292,9 @@ class TestCharacterSkillOperations:
     def test_update_skills_success(self, character, character_skills):
         """Test successful skills update."""
         new_skills = character_skills  # Use same skills for simplicity
-        
+
         character.update_skills(new_skills)
-        
+
         assert character.version == 2
 
 
@@ -311,9 +310,9 @@ class TestCharacterMemoryOperations:
             tags=("test", "memory"),
             timestamp=datetime.now(),
         )
-        
+
         character.add_memory(memory)
-        
+
         assert len(character.memories) == 1
         assert character.memories[0].content == "Test memory"
 
@@ -338,10 +337,10 @@ class TestCharacterMemoryOperations:
             tags=("achievement",),
             timestamp=datetime.now(),
         )
-        
+
         character.add_memory(memory1)
         character.add_memory(memory2)
-        
+
         core_memories = character.get_core_memories()
         assert len(core_memories) == 1
         assert core_memories[0].memory_id == "mem2"
@@ -358,9 +357,9 @@ class TestCharacterGoalOperations:
             urgency=GoalUrgency.HIGH,
             status=GoalStatus.ACTIVE,
         )
-        
+
         character.add_goal(goal)
-        
+
         assert len(character.goals) == 1
         assert "Defeat the dragon" in character.goals[0].description
         assert character.goals[0].is_urgent() is True
@@ -371,9 +370,9 @@ class TestCharacterGoalOperations:
             goal_id="goal1",
             description="Goal - Description",
         )
-        
+
         character.add_goal(goal)
-        
+
         with pytest.raises(ValueError, match="already exists"):
             character.add_goal(goal)
 
@@ -384,10 +383,10 @@ class TestCharacterGoalOperations:
             description="Goal - Description",
             status=GoalStatus.ACTIVE,
         )
-        
+
         character.add_goal(goal)
         completed = character.complete_goal("goal1")
-        
+
         assert completed.is_completed() is True
 
     def test_get_urgent_goals(self, character):
@@ -404,10 +403,10 @@ class TestCharacterGoalOperations:
             urgency=GoalUrgency.LOW,
             status=GoalStatus.ACTIVE,
         )
-        
+
         character.add_goal(urgent_goal)
         character.add_goal(normal_goal)
-        
+
         urgent = character.get_urgent_goals()
         assert len(urgent) == 1
         assert urgent[0].goal_id == "goal1"
@@ -419,14 +418,14 @@ class TestCharacterInventoryOperations:
     def test_give_item(self, character):
         """Test giving item to character."""
         character.give_item("sword_001")
-        
+
         assert "sword_001" in character.inventory
         assert character.get_inventory_count() == 1
 
     def test_give_item_duplicate(self, character):
         """Test giving duplicate item raises error."""
         character.give_item("sword_001")
-        
+
         with pytest.raises(ValueError, match="already in inventory"):
             character.give_item("sword_001")
 
@@ -434,14 +433,14 @@ class TestCharacterInventoryOperations:
         """Test removing item from inventory."""
         character.give_item("sword_001")
         result = character.remove_item("sword_001")
-        
+
         assert result is True
         assert "sword_001" not in character.inventory
 
     def test_has_item(self, character):
         """Test checking if character has item."""
         character.give_item("sword_001")
-        
+
         assert character.has_item("sword_001") is True
         assert character.has_item("shield_001") is False
 
@@ -452,7 +451,7 @@ class TestCharacterFactionOperations:
     def test_join_faction(self, character):
         """Test joining faction."""
         character.join_faction("faction_001")
-        
+
         assert character.faction_id == "faction_001"
         assert character.is_in_faction() is True
 
@@ -460,7 +459,7 @@ class TestCharacterFactionOperations:
         """Test leaving faction."""
         character.join_faction("faction_001")
         result = character.leave_faction()
-        
+
         assert result is True
         assert character.faction_id is None
 
@@ -471,7 +470,7 @@ class TestCharacterLifecycle:
     def test_is_alive(self, character):
         """Test checking if character is alive."""
         assert character.is_alive() is True
-        
+
         # Apply damage to reduce health to 0
         character.take_damage(character.stats.vital_stats.max_health)
         assert character.is_alive() is False
@@ -479,10 +478,10 @@ class TestCharacterLifecycle:
     def test_mark_deceased(self, character):
         """Test marking character as deceased."""
         from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-        
+
         death_date = WorldCalendar(year=1000, month=1, day=1, era_name="Third Age")
         character.mark_deceased(death_date)
-        
+
         assert character.is_deceased is True
         assert character.death_date == death_date
 
@@ -500,7 +499,7 @@ class TestCharacterFactory:
             wisdom=11,
             charisma=10,
         )
-        
+
         character = Character.create_new_character(
             name="New Character",
             gender=Gender.FEMALE,
@@ -509,6 +508,6 @@ class TestCharacterFactory:
             age=120,
             core_abilities=core_abilities,
         )
-        
+
         assert character.profile.name == "New Character"
         assert character.profile.level == 1

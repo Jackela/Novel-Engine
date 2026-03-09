@@ -120,11 +120,13 @@ class EnterpriseStorageConfig:
             ),
             # Sessions: Redis primary (ephemeral)
             DataCategory.SESSIONS: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=7200  # 2 hours
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=7200,  # 2 hours
             ),
             # Cache data: Redis only
             DataCategory.CACHE: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=3600  # 1 hour default
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=3600,  # 1 hour default
             ),
             # File storage: S3 primary
             DataCategory.FILES: StoragePolicy(
@@ -144,7 +146,8 @@ class EnterpriseStorageConfig:
             ),
             # Metrics: Redis primary (ephemeral)
             DataCategory.METRICS: StoragePolicy(
-                primary_backend=StorageBackend.REDIS, ttl_seconds=86400  # 24 hours
+                primary_backend=StorageBackend.REDIS,
+                ttl_seconds=86400,  # 24 hours
             ),
         }
 
@@ -814,7 +817,9 @@ class EnterpriseStorageManager:
             try:
                 await self._health_check_task
             except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+                structlog.get_logger(__name__).debug(
+                    "Suppressed exception", exc_info=True
+                )
         if self.postgresql:
             await self.postgresql.close()
 

@@ -234,7 +234,11 @@ class TestLoreAPISearchEndpoint:
         )
         client.post(
             "/api/lore",
-            json={"title": "Elven History", "content": "Content", "category": "history"},
+            json={
+                "title": "Elven History",
+                "content": "Content",
+                "category": "history",
+            },
         )
 
         response = client.get("/api/lore/search", params={"q": "Dragon"})

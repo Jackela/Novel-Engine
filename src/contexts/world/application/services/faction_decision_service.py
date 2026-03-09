@@ -770,7 +770,8 @@ class FactionDecisionService:
         lore_section = ""
         if context.relevant_lore:
             lore_section = "\nRelevant Lore:\n" + "\n".join(
-                f"- {lore_item.get('summary', str(lore_item))}" for lore_item in context.relevant_lore[:3]
+                f"- {lore_item.get('summary', str(lore_item))}"
+                for lore_item in context.relevant_lore[:3]
             )
 
         prompt = f"""You are an AI assistant generating strategic intents for a faction.

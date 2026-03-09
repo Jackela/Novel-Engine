@@ -31,7 +31,6 @@ from src.contexts.narratives.domain.value_objects.story_pacing import (
 pytestmark = pytest.mark.unit
 
 
-
 class TestNarrativeFlowServiceInitialization:
     """测试叙事流程服务初始化"""
 
@@ -106,13 +105,13 @@ class TestAnalyzeNarrativeFlow:
         """测试分析结果包含所有必要字段"""
         service = NarrativeFlowService()
         result = service.analyze_narrative_flow(empty_arc)
-        assert hasattr(result, 'pacing_score')
-        assert hasattr(result, 'tension_progression')
-        assert hasattr(result, 'climax_positioning')
-        assert hasattr(result, 'resolution_quality')
-        assert hasattr(result, 'narrative_momentum')
-        assert hasattr(result, 'flow_consistency')
-        assert hasattr(result, 'recommended_adjustments')
+        assert hasattr(result, "pacing_score")
+        assert hasattr(result, "tension_progression")
+        assert hasattr(result, "climax_positioning")
+        assert hasattr(result, "resolution_quality")
+        assert hasattr(result, "narrative_momentum")
+        assert hasattr(result, "flow_consistency")
+        assert hasattr(result, "recommended_adjustments")
 
     def test_analyze_caches_result(self, empty_arc):
         """测试结果会被缓存"""
@@ -559,7 +558,9 @@ class TestRecommendations:
             plot = PlotPoint(
                 plot_point_id=f"plot_{i}",
                 plot_point_type=plot_type,
-                importance=PlotPointImportance.CRITICAL if i == 0 else PlotPointImportance.MODERATE,
+                importance=PlotPointImportance.CRITICAL
+                if i == 0
+                else PlotPointImportance.MODERATE,
                 title=f"Plot {i}",
                 description=f"Description {i}",
                 sequence_order=i,
@@ -571,7 +572,9 @@ class TestRecommendations:
         # 验证有建议被生成（可能是高潮位置或节奏改进建议）
         assert isinstance(recommendations, list)
         # 由于高潮在位置0/9=0%，应该会有climax_positioning建议
-        climax_recs = [r for r in recommendations if r.get("type") == "climax_positioning"]
+        climax_recs = [
+            r for r in recommendations if r.get("type") == "climax_positioning"
+        ]
         # 早位置的高潮(0%)会产生低分(<6)，所以会生成建议
         assert len(climax_recs) >= 0  # 可能有也可能没有，取决于算法
 

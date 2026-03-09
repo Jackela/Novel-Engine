@@ -208,6 +208,7 @@ class DirectorAgentBase:
     def _initialize_world_state_tracker(self) -> None:
         """Initialize dynamic world state tracking system."""
         from typing import Any, Dict
+
         self.world_state_tracker: Dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes
@@ -236,10 +237,7 @@ class DirectorAgentBase:
 
             # Validate the agent instance
             if not isinstance(agent, PersonaAgent):
-                logger.error(
-                    "invalid_agent_type",
-                    agent_type=str(type(agent))
-                )
+                logger.error("invalid_agent_type", agent_type=str(type(agent)))
                 return False
 
             # Validate required methods
@@ -269,7 +267,7 @@ class DirectorAgentBase:
             logger.info(
                 "agent_registered",
                 agent_id=agent.agent_id,
-                total_agents=len(self.registered_agents)
+                total_agents=len(self.registered_agents),
             )
 
             return True
@@ -381,7 +379,9 @@ class DirectorAgentBase:
             with open(self.campaign_log_path, "a", encoding="utf-8") as file:
                 file.write(log_entry)
 
-            logger.info("event_logged_to_campaign", event_preview=event_description[:50])
+            logger.info(
+                "event_logged_to_campaign", event_preview=event_description[:50]
+            )
 
         except Exception as e:
             logger.error("error_logging_event", error=str(e))
@@ -403,7 +403,7 @@ class DirectorAgentBase:
             logger.error(
                 "director_agent_error",
                 error_message=error_message,
-                exception=str(exception)
+                exception=str(exception),
             )
         else:
             logger.error("director_agent_error", error_message=error_message)

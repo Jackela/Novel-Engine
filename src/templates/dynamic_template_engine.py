@@ -581,7 +581,9 @@ class DynamicTemplateEngine:
                 logger.info("CROSS-REFERENCE RESOLVED: %s", ref_path)
 
             except Exception as e:
-                logger.error("CROSS-REFERENCE RESOLUTION FAILED FOR %s: %s", ref_path, e)
+                logger.error(
+                    "CROSS-REFERENCE RESOLUTION FAILED FOR %s: %s", ref_path, e
+                )
                 cross_references[ref_path] = f"[Reference Error: {ref_path}]"
 
         return cross_references
@@ -1059,7 +1061,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
 
     # Get enhanced template list
     template_list = template_engine.get_template_list()
-    logger.info("DISCOVERED TEMPLATES: %s", [t['template_id'] for t in template_list])
+    logger.info("DISCOVERED TEMPLATES: %s", [t["template_id"] for t in template_list])
 
     # Cleanup enhanced test files
     import shutil

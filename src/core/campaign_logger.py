@@ -221,12 +221,14 @@ class CampaignLogger:
             if os.path.exists(self.campaign_log_path):
                 log_size = os.path.getsize(self.campaign_log_path)
 
-            return Ok({
-                "log_path": self.campaign_log_path,
-                "events_logged": self.events_logged,
-                "log_size_bytes": log_size,
-                "log_exists": os.path.exists(self.campaign_log_path),
-            })
+            return Ok(
+                {
+                    "log_path": self.campaign_log_path,
+                    "events_logged": self.events_logged,
+                    "log_size_bytes": log_size,
+                    "log_exists": os.path.exists(self.campaign_log_path),
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

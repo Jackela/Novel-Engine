@@ -116,11 +116,11 @@ class TestDatabaseConnection:
     async def test_initialize_sqlite(self, mock_connection, db_config):
         """Test SQLite-specific initialization."""
         connection = DatabaseConnection(mock_connection, db_config)
-        
+
         # Stop the health check task that gets created during initialization
-        with patch.object(connection, '_health_check_task'):
+        with patch.object(connection, "_health_check_task"):
             await connection.initialize()
-            
+
             # Check that PRAGMA commands were executed
             assert mock_connection.execute.call_count >= 5  # Multiple PRAGMA settings
             mock_connection.commit.assert_called_once()
@@ -131,9 +131,9 @@ class TestDatabaseConnection:
         mock_cursor = AsyncMock()
         mock_cursor.fetchone = AsyncMock(return_value=(1,))
         mock_connection.execute = AsyncMock(return_value=mock_cursor)
-        
+
         cursor = await db_connection.execute("SELECT 1", ())
-        
+
         assert cursor == mock_cursor
         assert db_connection.metrics.total_queries == 1
         assert db_connection.metrics.successful_queries == 1
@@ -142,10 +142,10 @@ class TestDatabaseConnection:
     async def test_execute_failure(self, db_connection, mock_connection):
         """Test query execution failure."""
         mock_connection.execute = AsyncMock(side_effect=Exception("Query failed"))
-        
+
         with pytest.raises(Exception, match="Query failed"):
             await db_connection.execute("SELECT 1", ())
-        
+
         assert db_connection.metrics.total_queries == 1
         assert db_connection.metrics.failed_queries == 1
         assert db_connection.metrics.last_error == "Query failed"
@@ -154,10 +154,10 @@ class TestDatabaseConnection:
         """Test successful batch query execution."""
         mock_cursor = AsyncMock()
         mock_connection.executemany = AsyncMock(return_value=mock_cursor)
-        
+
         params = [("value1",), ("value2",), ("value3",)]
         cursor = await db_connection.executemany("INSERT INTO test VALUES (?)", params)
-        
+
         assert cursor == mock_cursor
         assert db_connection.metrics.total_queries == 3
         assert db_connection.metrics.successful_queries == 3
@@ -175,17 +175,17 @@ class TestDatabaseConnection:
     async def test_close(self, db_connection, mock_connection):
         """Test connection close."""
         # Create a real asyncio task that completes quickly for testing
-        
+
         async def dummy_task():
             await asyncio.sleep(0)
-        
+
         # Create and immediately cancel a real task to simulate the scenario
         task = asyncio.create_task(dummy_task())
         task.cancel()
         db_connection._health_check_task = task
-        
+
         await db_connection.close()
-        
+
         assert db_connection.state == ConnectionState.CLOSED
         mock_connection.close.assert_called_once()
 
@@ -194,9 +194,9 @@ class TestDatabaseConnection:
         mock_cursor = AsyncMock()
         mock_cursor.fetchone = AsyncMock(return_value=(1,))
         mock_connection.execute = AsyncMock(return_value=mock_cursor)
-        
+
         result = await db_connection.health_check()
-        
+
         assert result is True
         assert db_connection.metrics.health_status is True
         assert db_connection.metrics.last_health_check is not None
@@ -204,9 +204,9 @@ class TestDatabaseConnection:
     async def test_health_check_failure(self, db_connection, mock_connection):
         """Test failed health check."""
         mock_connection.execute = AsyncMock(side_effect=Exception("Connection lost"))
-        
+
         result = await db_connection.health_check()
-        
+
         assert result is False
         assert db_connection.metrics.health_status is False
         assert db_connection.state == ConnectionState.UNHEALTHY
@@ -216,10 +216,10 @@ class TestDatabaseConnection:
         db_connection.state = ConnectionState.IDLE
         db_connection.metrics.health_status = True
         assert db_connection.is_healthy is True
-        
+
         db_connection.state = ConnectionState.UNHEALTHY
         assert db_connection.is_healthy is False
-        
+
         db_connection.state = ConnectionState.CLOSED
         assert db_connection.is_healthy is False
 
@@ -227,7 +227,7 @@ class TestDatabaseConnection:
         """Test is_idle property."""
         db_connection.state = ConnectionState.IDLE
         assert db_connection.is_idle is True
-        
+
         db_connection.state = ConnectionState.ACTIVE
         assert db_connection.is_idle is False
 
@@ -237,9 +237,9 @@ class TestDatabaseConnection:
         db_connection.metrics.total_queries = 10
         db_connection.metrics.successful_queries = 8
         db_connection.metrics.failed_queries = 2
-        
+
         metrics = db_connection.get_metrics()
-        
+
         assert metrics["state"] == "idle"
         assert metrics["total_queries"] == 10
         assert metrics["successful_queries"] == 8
@@ -279,35 +279,38 @@ class TestDatabaseConnectionPool:
     async def test_initialize_pool(self, db_config):
         """Test pool initialization creates min connections."""
         pool = DatabaseConnectionPool(db_config)
-        
+
         # Skip actual connection creation by mocking _create_connection
         mock_conn = AsyncMock()
         mock_conn.initialize = AsyncMock()
         mock_conn._health_check_task = AsyncMock()
         mock_conn._health_check_task.done = Mock(return_value=True)
-        
-        with patch.object(pool, '_create_connection', return_value=mock_conn):
+
+        with patch.object(pool, "_create_connection", return_value=mock_conn):
             await pool.initialize()
-            
+
             assert pool._initialized is True
-            assert pool._pool_metrics["total_connections_created"] == db_config.min_pool_size
+            assert (
+                pool._pool_metrics["total_connections_created"]
+                == db_config.min_pool_size
+            )
 
     async def test_get_pool_status(self, pool):
         """Test get_pool_status method."""
         pool._initialized = True
         pool._closed = False
-        
+
         # Add some mock connections
         mock_conn1 = Mock()
         mock_conn1.is_healthy = True
         mock_conn2 = Mock()
         mock_conn2.is_healthy = True
-        
+
         pool._available_connections = [mock_conn1]
         pool._active_connections = {id(mock_conn2): mock_conn2}
-        
+
         status = pool.get_pool_status()
-        
+
         assert status["total_connections"] == 2
         assert status["available_connections"] == 1
         assert status["active_connections"] == 1
@@ -320,9 +323,9 @@ class TestDatabaseConnectionPool:
         pool._pool_metrics["total_connections_created"] = 10
         pool._pool_metrics["total_connections_closed"] = 3
         pool._pool_metrics["peak_active_connections"] = 5
-        
+
         metrics = pool.get_pool_metrics()
-        
+
         assert metrics["total_connections_created"] == 10
         assert metrics["total_connections_closed"] == 3
         assert metrics["peak_active_connections"] == 5
@@ -334,16 +337,16 @@ class TestDatabaseConnectionPool:
         mock_conn1.close = AsyncMock()
         mock_conn2 = AsyncMock()
         mock_conn2.close = AsyncMock()
-        
+
         pool._available_connections = [mock_conn1]
         pool._active_connections = {id(mock_conn2): mock_conn2}
-        
+
         # Mock maintenance task
         pool._maintenance_task = AsyncMock()
         pool._maintenance_task.done = Mock(return_value=True)
-        
+
         await pool.close_pool()
-        
+
         assert pool._closed is True
         mock_conn1.close.assert_called_once()
         mock_conn2.close.assert_called_once()
@@ -373,21 +376,21 @@ class TestDatabaseManager:
             min_pool_size=1,
             max_pool_size=3,
         )
-        
+
         # Mock the pool initialization
-        with patch.object(DatabaseConnectionPool, 'initialize', AsyncMock()):
+        with patch.object(DatabaseConnectionPool, "initialize", AsyncMock()):
             await db_manager.add_pool("test_pool", config)
-            
+
             assert "test_pool" in db_manager._pools
             assert db_manager._pools["test_pool"].config == config
 
     async def test_add_duplicate_pool(self, db_manager):
         """Test adding duplicate pool raises error."""
         config = DatabaseConfig()
-        
-        with patch.object(DatabaseConnectionPool, 'initialize', AsyncMock()):
+
+        with patch.object(DatabaseConnectionPool, "initialize", AsyncMock()):
             await db_manager.add_pool("test_pool", config)
-            
+
             with pytest.raises(ValueError, match="Pool test_pool already exists"):
                 await db_manager.add_pool("test_pool", config)
 
@@ -397,9 +400,9 @@ class TestDatabaseManager:
         mock_pool.get_pool_status = Mock(return_value={"test": "status"})
         db_manager._pools["pool1"] = mock_pool
         db_manager._pools["pool2"] = mock_pool
-        
+
         status = db_manager.get_pool_status()
-        
+
         assert "pool1" in status
         assert "pool2" in status
         assert status["pool1"]["test"] == "status"
@@ -409,9 +412,9 @@ class TestDatabaseManager:
         mock_pool = Mock()
         mock_pool.get_pool_status = Mock(return_value={"test": "status"})
         db_manager._pools["test_pool"] = mock_pool
-        
+
         status = db_manager.get_pool_status("test_pool")
-        
+
         assert "test_pool" in status
         assert status["test_pool"]["test"] == "status"
 
@@ -427,9 +430,9 @@ class TestDatabaseManager:
         db_manager._pools["pool1"] = mock_pool
         db_manager._pools["pool2"] = mock_pool
         db_manager._initialized = True
-        
+
         await db_manager.close_all_pools()
-        
+
         assert len(db_manager._pools) == 0
         assert db_manager._initialized is False
         assert mock_pool.close_pool.call_count == 2
@@ -442,9 +445,10 @@ class TestGlobalInstances:
         """Test that get_database_manager returns singleton."""
         # Clear any existing instance
         import src.core.database_manager as db_module
+
         original = db_module._global_database_manager
         db_module._global_database_manager = None
-        
+
         try:
             manager1 = get_database_manager()
             manager2 = get_database_manager()

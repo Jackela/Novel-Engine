@@ -46,6 +46,7 @@ from src.core.result import ConflictError, NotFoundError, ValidationError
 def valid_uuid() -> str:
     return str(uuid4())
 
+
 pytestmark = pytest.mark.unit
 
 
@@ -128,7 +129,9 @@ class TestCharacterCreation:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_create_character_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_create_character_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character creation."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[])
@@ -157,7 +160,12 @@ class TestCharacterCreation:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_create_character_duplicate_name(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_create_character_duplicate_name(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test character creation with duplicate name returns ConflictError."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[sample_character])
@@ -179,11 +187,15 @@ class TestCharacterCreation:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_create_character_repository_error(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_create_character_repository_error(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test character creation handles repository errors."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[])
-        mock_repository.save = AsyncMock(side_effect=Exception("Database connection failed"))
+        mock_repository.save = AsyncMock(
+            side_effect=Exception("Database connection failed")
+        )
 
         # Execute
         result = await service.create_character(
@@ -207,7 +219,12 @@ class TestCharacterRetrieval:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_character_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_get_character_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test successful character retrieval."""
         # Setup
         char_id_str = str(sample_character.character_id)
@@ -222,7 +239,9 @@ class TestCharacterRetrieval:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_character_not_found(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_get_character_not_found(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test retrieval of non-existent character returns NotFoundError."""
         # Setup
         mock_repository.get_by_id = AsyncMock(return_value=None)
@@ -237,7 +256,9 @@ class TestCharacterRetrieval:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_character_invalid_id_format(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_get_character_invalid_id_format(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test retrieval with invalid ID format returns error."""
         # Execute
         result = await service.get_character("invalid-id-format!!!")
@@ -255,10 +276,14 @@ class TestCharacterUpdates:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_update_character_stats_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_update_character_stats_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character stats update."""
         # Setup - patch the command handler to avoid validation issues
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = None
 
             # Execute - use valid vital stats parameters
@@ -275,16 +300,20 @@ class TestCharacterUpdates:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_update_character_skill_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_update_character_skill_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character skill update."""
         # Setup - patch the command handler at the module level to bypass validation
         with patch(
-            'src.contexts.character.application.services.character_application_service.UpdateCharacterSkillCommand'
+            "src.contexts.character.application.services.character_application_service.UpdateCharacterSkillCommand"
         ) as mock_cmd_class:
             mock_cmd = Mock()
             mock_cmd_class.return_value = mock_cmd
-            
-            with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+
+            with patch.object(
+                service.command_handlers, "handle_command", new_callable=AsyncMock
+            ) as mock_handle:
                 mock_handle.return_value = None
 
                 # Execute
@@ -302,10 +331,14 @@ class TestCharacterUpdates:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_level_up_character_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_level_up_character_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character level up."""
         # Setup - patch the command handler
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = None
             ability_improvements = {"strength": 1, "constitution": 1}
 
@@ -321,10 +354,14 @@ class TestCharacterUpdates:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_heal_character_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_heal_character_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character healing."""
         # Setup - patch the command handler
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = None
 
             # Execute
@@ -341,10 +378,14 @@ class TestCharacterUpdates:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_damage_character_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_damage_character_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful damage application."""
         # Setup - patch the command handler
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = None
 
             # Execute - use valid damage type from enum
@@ -368,10 +409,14 @@ class TestCharacterDeletion:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_delete_character_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_delete_character_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test successful character deletion."""
         # Setup - patch the command handler
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = True  # Character was deleted
 
             # Execute
@@ -386,10 +431,14 @@ class TestCharacterDeletion:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_delete_character_not_found(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_delete_character_not_found(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test deletion of non-existent character."""
         # Setup - patch the command handler
-        with patch.object(service.command_handlers, 'handle_command', new_callable=AsyncMock) as mock_handle:
+        with patch.object(
+            service.command_handlers, "handle_command", new_callable=AsyncMock
+        ) as mock_handle:
             mock_handle.return_value = False  # Character not found
 
             # Execute
@@ -411,7 +460,12 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_name_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_find_characters_by_name_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test finding characters by name."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[sample_character])
@@ -426,7 +480,12 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_class_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_find_characters_by_class_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test finding characters by class."""
         # Setup
         mock_repository.find_by_class = AsyncMock(return_value=[sample_character])
@@ -440,7 +499,9 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_class_invalid(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_characters_by_class_invalid(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test finding characters with invalid class returns validation error."""
         # Execute
         result = await service.find_characters_by_class("invalid_class")
@@ -451,7 +512,12 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_race_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_find_characters_by_race_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test finding characters by race."""
         # Setup
         mock_repository.find_by_race = AsyncMock(return_value=[sample_character])
@@ -465,7 +531,12 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_level_range_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_find_characters_by_level_range_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test finding characters by level range."""
         # Setup
         mock_repository.find_by_level_range = AsyncMock(return_value=[sample_character])
@@ -479,10 +550,14 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_level_range_invalid(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_characters_by_level_range_invalid(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test finding characters with invalid level range."""
         # Execute with negative level
-        result = await service.find_characters_by_level_range(min_level=-1, max_level=10)
+        result = await service.find_characters_by_level_range(
+            min_level=-1, max_level=10
+        )
 
         # Verify
         assert result.is_error
@@ -490,7 +565,9 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_characters_by_level_range_inverted(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_characters_by_level_range_inverted(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test finding characters with min > max level."""
         # Execute with inverted range
         result = await service.find_characters_by_level_range(min_level=10, max_level=1)
@@ -501,10 +578,17 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_alive_characters_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_find_alive_characters_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test finding alive characters."""
         # Setup
-        mock_repository.find_alive_characters = AsyncMock(return_value=[sample_character])
+        mock_repository.find_alive_characters = AsyncMock(
+            return_value=[sample_character]
+        )
 
         # Execute
         result = await service.find_alive_characters()
@@ -515,7 +599,9 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_character_statistics_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_get_character_statistics_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test getting character statistics."""
         # Setup
         stats = {"total": 100, "by_class": {"fighter": 30}, "by_race": {"human": 50}}
@@ -530,7 +616,12 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_search_characters_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_search_characters_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test searching characters with criteria."""
         # Setup
         mock_repository.find_by_criteria = AsyncMock(return_value=[sample_character])
@@ -545,7 +636,9 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_count_characters_by_criteria_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_count_characters_by_criteria_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test counting characters by criteria."""
         # Setup
         mock_repository.count_by_criteria = AsyncMock(return_value=42)
@@ -559,7 +652,9 @@ class TestCharacterQueries:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_count_characters_invalid_criteria(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_count_characters_invalid_criteria(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test counting characters with invalid criteria type."""
         # Execute with non-dict criteria
         result = await service.count_characters_by_criteria("invalid_criteria")
@@ -577,7 +672,9 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_character_exists_true(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_character_exists_true(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test checking existence of existing character."""
         # Setup
         mock_repository.exists = AsyncMock(return_value=True)
@@ -591,7 +688,9 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_character_exists_false(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_character_exists_false(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test checking existence of non-existent character."""
         # Setup
         mock_repository.exists = AsyncMock(return_value=False)
@@ -605,7 +704,9 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_character_exists_invalid_id(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_character_exists_invalid_id(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test checking existence with invalid ID format."""
         # Execute
         result = await service.character_exists("invalid!!!")
@@ -616,7 +717,12 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_character_summary_success(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_get_character_summary_success(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test getting character summary."""
         # Setup
         mock_repository.get_by_id = AsyncMock(return_value=sample_character)
@@ -631,7 +737,9 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_validate_character_name_available(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_validate_character_name_available(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test validating available character name."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[])
@@ -645,7 +753,12 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_validate_character_name_taken(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_validate_character_name_taken(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test validating taken character name."""
         # Setup
         mock_repository.find_by_name = AsyncMock(return_value=[sample_character])
@@ -659,7 +772,9 @@ class TestUtilityOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_validate_character_name_empty(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_validate_character_name_empty(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test validating empty character name."""
         # Execute
         result = await service.validate_character_name_availability("")
@@ -677,14 +792,19 @@ class TestBulkOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_create_multiple_characters_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_create_multiple_characters_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test creating multiple characters."""
         # Setup - patch create_character to bypass validation
-        with patch.object(service, 'create_character', new_callable=AsyncMock) as mock_create:
+        with patch.object(
+            service, "create_character", new_callable=AsyncMock
+        ) as mock_create:
             from src.contexts.character.domain.value_objects.character_id import (
                 CharacterID,
             )
             from src.core.result import Ok
+
             mock_create.side_effect = [
                 Ok(CharacterID.generate()),
                 Ok(CharacterID.generate()),
@@ -692,8 +812,20 @@ class TestBulkOperations:
 
             # Execute
             character_data_list = [
-                {"character_name": "Hero 1", "gender": "male", "race": "human", "character_class": "fighter", "age": 20},
-                {"character_name": "Hero 2", "gender": "female", "race": "elf", "character_class": "wizard", "age": 120},
+                {
+                    "character_name": "Hero 1",
+                    "gender": "male",
+                    "race": "human",
+                    "character_class": "fighter",
+                    "age": 20,
+                },
+                {
+                    "character_name": "Hero 2",
+                    "gender": "female",
+                    "race": "elf",
+                    "character_class": "wizard",
+                    "age": 120,
+                },
             ]
             result = await service.create_multiple_characters(character_data_list)
 
@@ -703,15 +835,32 @@ class TestBulkOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_create_multiple_characters_partial_failure(self, service: CharacterApplicationService, mock_repository: Mock, sample_character: Character):
+    async def test_create_multiple_characters_partial_failure(
+        self,
+        service: CharacterApplicationService,
+        mock_repository: Mock,
+        sample_character: Character,
+    ):
         """Test batch creation stops on first failure."""
         # Setup - first call returns empty (success), second returns existing character (failure)
         mock_repository.find_by_name = AsyncMock(side_effect=[[], [sample_character]])
 
         # Execute
         character_data_list = [
-            {"character_name": "New Hero", "gender": "male", "race": "human", "character_class": "fighter", "age": 20},
-            {"character_name": "Test Character", "gender": "female", "race": "elf", "character_class": "wizard", "age": 120},
+            {
+                "character_name": "New Hero",
+                "gender": "male",
+                "race": "human",
+                "character_class": "fighter",
+                "age": 20,
+            },
+            {
+                "character_name": "Test Character",
+                "gender": "female",
+                "race": "elf",
+                "character_class": "wizard",
+                "age": 120,
+            },
         ]
         result = await service.create_multiple_characters(character_data_list)
 
@@ -721,11 +870,16 @@ class TestBulkOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_delete_multiple_characters_success(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_delete_multiple_characters_success(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test deleting multiple characters."""
         # Setup - patch delete_character to bypass validation
-        with patch.object(service, 'delete_character', new_callable=AsyncMock) as mock_delete:
+        with patch.object(
+            service, "delete_character", new_callable=AsyncMock
+        ) as mock_delete:
             from src.core.result import Ok
+
             mock_delete.return_value = Ok(True)
 
             # Execute
@@ -738,11 +892,16 @@ class TestBulkOperations:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_delete_multiple_characters_partial(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_delete_multiple_characters_partial(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test deleting multiple characters with partial success."""
         # Setup - patch delete_character
-        with patch.object(service, 'delete_character', new_callable=AsyncMock) as mock_delete:
+        with patch.object(
+            service, "delete_character", new_callable=AsyncMock
+        ) as mock_delete:
             from src.core.result import Ok
+
             mock_delete.side_effect = [Ok(True), Ok(False), Ok(True)]
 
             # Execute
@@ -762,10 +921,14 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_by_name_repository_error(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_by_name_repository_error(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test find_by_name handles repository errors."""
         # Setup
-        mock_repository.find_by_name = AsyncMock(side_effect=Exception("Database error"))
+        mock_repository.find_by_name = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         # Execute
         result = await service.find_characters_by_name("Test")
@@ -776,10 +939,14 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_by_class_repository_error(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_by_class_repository_error(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test find_by_class handles repository errors."""
         # Setup
-        mock_repository.find_by_class = AsyncMock(side_effect=Exception("Database error"))
+        mock_repository.find_by_class = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         # Execute
         result = await service.find_characters_by_class("fighter")
@@ -790,10 +957,14 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_find_alive_characters_repository_error(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_find_alive_characters_repository_error(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test find_alive_characters handles repository errors."""
         # Setup
-        mock_repository.find_alive_characters = AsyncMock(side_effect=Exception("Database error"))
+        mock_repository.find_alive_characters = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         # Execute
         result = await service.find_alive_characters()
@@ -804,10 +975,14 @@ class TestErrorHandling:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_statistics_repository_error(self, service: CharacterApplicationService, mock_repository: Mock):
+    async def test_get_statistics_repository_error(
+        self, service: CharacterApplicationService, mock_repository: Mock
+    ):
         """Test get_statistics handles repository errors."""
         # Setup
-        mock_repository.get_statistics = AsyncMock(side_effect=Exception("Database error"))
+        mock_repository.get_statistics = AsyncMock(
+            side_effect=Exception("Database error")
+        )
 
         # Execute
         result = await service.get_character_statistics()

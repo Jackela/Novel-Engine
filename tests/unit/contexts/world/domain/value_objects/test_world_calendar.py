@@ -30,9 +30,7 @@ class TestWorldCalendarValueObject:
     @pytest.mark.fast
     def test_calendar_creation_success(self):
         """Test successful calendar creation."""
-        calendar = WorldCalendar(
-            year=1042, month=3, day=15, era_name="Third Age"
-        )
+        calendar = WorldCalendar(year=1042, month=3, day=15, era_name="Third Age")
 
         assert calendar.year == 1042
         assert calendar.month == 3
@@ -250,7 +248,12 @@ class TestWorldCalendarValueObject:
     def test_advance_preserves_configuration(self):
         """Test that advance preserves custom days_per_month and months_per_year."""
         calendar = WorldCalendar(
-            year=1, month=1, day=1, era_name="Custom", days_per_month=28, months_per_year=13
+            year=1,
+            month=1,
+            day=1,
+            era_name="Custom",
+            days_per_month=28,
+            months_per_year=13,
         )
         # Advance exactly 28 days to reach month 2, day 1
         result = calendar.advance(28)
@@ -474,7 +477,12 @@ class TestWorldCalendarValueObject:
     def test_serialization_roundtrip(self):
         """Test that to_dict -> from_dict preserves all values."""
         original = WorldCalendar(
-            year=1042, month=3, day=15, era_name="Third Age", days_per_month=28, months_per_year=13
+            year=1042,
+            month=3,
+            day=15,
+            era_name="Third Age",
+            days_per_month=28,
+            months_per_year=13,
         )
         data = original.to_dict()
         restored = WorldCalendar.from_dict(data)

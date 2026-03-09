@@ -45,28 +45,28 @@ logger = structlog.get_logger(__name__)
 def _validate_and_fix_cache_dir_permissions(cache_dir: str) -> None:
     """
     Validate cache directory has secure permissions (owner-only access).
-    
+
     SECURITY: Creates new directories with 0o700 permissions.
     Warns and attempts to fix if existing directory is too permissive.
-    
+
     Args:
         cache_dir: Path to the cache directory to validate
     """
     import stat
-    
+
     if not os.path.exists(cache_dir):
         # Create with restricted permissions (owner only: rwx------)
         os.makedirs(cache_dir, mode=0o700)
-        logger.info("Created cache directory with secure permissions", extra={
-            "path": cache_dir,
-            "mode": "0o700"
-        })
+        logger.info(
+            "Created cache directory with secure permissions",
+            extra={"path": cache_dir, "mode": "0o700"},
+        )
         return
-    
+
     # Check existing directory permissions
     dir_stat = os.stat(cache_dir)
     mode = stat.S_IMODE(dir_stat.st_mode)
-    
+
     # Check if group or others have any permissions (read/write/execute)
     if mode & stat.S_IRWXG or mode & stat.S_IRWXO:
         logger.warning(
@@ -74,21 +74,22 @@ def _validate_and_fix_cache_dir_permissions(cache_dir: str) -> None:
             extra={
                 "path": cache_dir,
                 "current_mode": oct(mode),
-                "recommended_mode": "0o700"
-            }
+                "recommended_mode": "0o700",
+            },
         )
         # Attempt to fix permissions
         try:
             os.chmod(cache_dir, 0o700)
-            logger.info("Fixed cache directory permissions", extra={
-                "path": cache_dir,
-                "new_mode": "0o700"
-            })
+            logger.info(
+                "Fixed cache directory permissions",
+                extra={"path": cache_dir, "new_mode": "0o700"},
+            )
         except OSError as e:
             logger.error(
                 "Failed to fix cache directory permissions",
-                extra={"path": cache_dir, "error": str(e)}
+                extra={"path": cache_dir, "error": str(e)},
             )
+
 
 T = TypeVar("T")
 

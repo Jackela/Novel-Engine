@@ -53,7 +53,7 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="A beautiful sunset",
         )
-        
+
         emotional_item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.8,
@@ -61,7 +61,7 @@ class TestEmotionalMemoryItem:
             dominance=0.6,
             emotional_tags=["happy", "peaceful"],
         )
-        
+
         assert emotional_item.valence == 0.8
         assert emotional_item.arousal == 0.5
         assert emotional_item.dominance == 0.6
@@ -73,7 +73,7 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=2.0,
@@ -87,7 +87,7 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=-2.0,
@@ -101,7 +101,7 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             arousal=2.0,
@@ -115,7 +115,7 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             arousal=-0.5,
@@ -129,13 +129,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.8,
             arousal=0.5,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "very_positive" in tags
 
@@ -146,13 +146,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.4,
             arousal=0.5,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "positive" in tags
 
@@ -163,13 +163,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=-0.4,
             arousal=0.5,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "negative" in tags
 
@@ -180,13 +180,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.0,
             arousal=0.5,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "neutral" in tags
 
@@ -197,13 +197,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.0,
             arousal=0.8,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "high_arousal" in tags
 
@@ -214,13 +214,13 @@ class TestEmotionalMemoryItem:
             memory_type=MemoryType.EMOTIONAL,
             content="Test",
         )
-        
+
         item = EmotionalMemoryItem(
             memory_item=memory_item,
             valence=0.0,
             arousal=0.2,
         )
-        
+
         tags = item._derive_emotional_tags()
         assert "low_arousal" in tags
 
@@ -252,7 +252,7 @@ class TestEmotionalMemory:
             max_memories=500,
             threshold=0.5,
         )
-        
+
         assert em.agent_id == "test_agent"
         assert em.max_memories == 500
         assert em.threshold == 0.5
@@ -264,6 +264,6 @@ class TestEmotionalMemory:
             agent_id="test_agent",
             database=mock_database,
         )
-        
+
         assert em.max_memories == 500
         assert em.threshold == 0.3

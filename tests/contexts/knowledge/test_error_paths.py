@@ -20,7 +20,6 @@ from src.core.result import Err, Error, NotFoundError, Ok, ValidationError
 pytestmark = pytest.mark.unit
 
 
-
 class TestKnowledgeEntryErrorPaths:
     """Error path tests for KnowledgeEntry."""
 
@@ -36,7 +35,7 @@ class TestKnowledgeEntryErrorPaths:
             updated_at=datetime.now(timezone.utc),
             created_by="test_user",
         )
-        
+
         with pytest.raises(ValueError, match="Content cannot be empty"):
             entry.update_content("", "updater")
 
@@ -52,7 +51,7 @@ class TestKnowledgeEntryErrorPaths:
             updated_at=datetime.now(timezone.utc),
             created_by="test_user",
         )
-        
+
         with pytest.raises(ValueError, match="updated_by is required"):
             entry.update_content("New content", "")
 
@@ -198,7 +197,7 @@ class TestTokenUsageErrorPaths:
         )
         data = original.to_dict()
         restored = TokenUsage.from_dict(data)
-        
+
         assert restored.id == original.id
         assert restored.provider == original.provider
         assert restored.model_name == original.model_name

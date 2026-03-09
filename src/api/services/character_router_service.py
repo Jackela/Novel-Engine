@@ -54,6 +54,7 @@ class CharacterServiceError(Error):
             details={"operation": operation, **(details or {})},
         )
 
+
 _CHARACTER_ID_SLUG_RE = re.compile(r"[^a-z0-9_-]+")
 _CHARACTER_DIRNAME_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
 
@@ -550,7 +551,11 @@ class CharacterRouterService:
                     entries.append((timestamp, summary))
             return Ok(entries)
         except FileNotFoundError as exc:
-            self.logger.error("characters_directory_missing", error=str(exc), error_type=type(exc).__name__)
+            self.logger.error(
+                "characters_directory_missing",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return Err(
                 CharacterServiceError(
                     message="Characters directory not found",
@@ -558,7 +563,11 @@ class CharacterRouterService:
                 )
             )
         except PermissionError as exc:
-            self.logger.error("permission_denied_reading_characters", error=str(exc), error_type=type(exc).__name__)
+            self.logger.error(
+                "permission_denied_reading_characters",
+                error=str(exc),
+                error_type=type(exc).__name__,
+            )
             return Err(
                 CharacterServiceError(
                     message="Permission denied accessing characters directory",
@@ -567,7 +576,10 @@ class CharacterRouterService:
             )
         except Exception as exc:
             self.logger.error(
-                "unexpected_error_loading_characters", error=str(exc), error_type=type(exc).__name__, exc_info=True
+                "unexpected_error_loading_characters",
+                error=str(exc),
+                error_type=type(exc).__name__,
+                exc_info=True,
             )
             return Err(
                 CharacterServiceError(

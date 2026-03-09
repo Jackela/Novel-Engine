@@ -19,7 +19,7 @@ from .shared.errors import (
 class AnalyticsService:
     """
     Service for interaction analytics and reporting.
-    
+
     Provides business operations for calculating metrics,
     generating reports, and trend analysis.
     """
@@ -42,11 +42,13 @@ class AnalyticsService:
             Result containing metrics or error
         """
         if session is None:
-            return Err(ValidationError(
-                message="Session is required",
-                field="session",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session is required",
+                    field="session",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate duration
@@ -83,10 +85,12 @@ class AnalyticsService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to calculate metrics: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to calculate metrics: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def analyze_session_trends(
         self,
@@ -102,17 +106,17 @@ class AnalyticsService:
             Result containing trend analysis or error
         """
         if not sessions:
-            return Err(ValidationError(
-                message="At least one session required",
-                field="sessions",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one session required",
+                    field="sessions",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate completion rate
-            completed = sum(
-                1 for s in sessions if not s.is_active
-            )
+            completed = sum(1 for s in sessions if not s.is_active)
             completion_rate = completed / len(sessions)
 
             # Calculate average duration
@@ -145,10 +149,12 @@ class AnalyticsService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to analyze trends: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to analyze trends: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def generate_session_report(
         self,
@@ -164,11 +170,13 @@ class AnalyticsService:
             Result containing report or error
         """
         if session is None:
-            return Err(ValidationError(
-                message="Session is required",
-                field="session",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="Session is required",
+                    field="session",
+                    recoverable=True,
+                )
+            )
 
         try:
             metrics_result = self.calculate_session_metrics(session)
@@ -200,7 +208,9 @@ class AnalyticsService:
                     {
                         "id": str(p.proposal_id),
                         "title": p.title,
-                        "type": p.proposal_type.value if hasattr(p.proposal_type, 'value') else str(p.proposal_type),
+                        "type": p.proposal_type.value
+                        if hasattr(p.proposal_type, "value")
+                        else str(p.proposal_type),
                         "term_count": len(p.terms),
                     }
                     for p in session.active_proposals.values()
@@ -214,10 +224,12 @@ class AnalyticsService:
 
             return Ok(report)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to generate report: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to generate report: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def compare_sessions(
         self,
@@ -233,29 +245,37 @@ class AnalyticsService:
             Result containing comparison or error
         """
         if len(sessions) < 2:
-            return Err(ValidationError(
-                message="At least two sessions required for comparison",
-                field="sessions",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least two sessions required for comparison",
+                    field="sessions",
+                    recoverable=True,
+                )
+            )
 
         try:
             session_summaries: List[Dict[str, Any]] = []
-            
+
             for session in sessions:
                 metrics_result = self.calculate_session_metrics(session)
                 if metrics_result.is_ok:
-                    session_summaries.append({
-                        "session_id": str(session.session_id),
-                        "name": session.session_name,
-                        "metrics": metrics_result.value,
-                    })
+                    session_summaries.append(
+                        {
+                            "session_id": str(session.session_id),
+                            "name": session.session_name,
+                            "metrics": metrics_result.value,
+                        }
+                    )
 
             # Find best performing
-            best_session = max(
-                session_summaries,
-                key=lambda s: s["metrics"].get("engagement_score", 0)
-            ) if session_summaries else None
+            best_session = (
+                max(
+                    session_summaries,
+                    key=lambda s: s["metrics"].get("engagement_score", 0),
+                )
+                if session_summaries
+                else None
+            )
 
             result = {
                 "compared_sessions": len(sessions),
@@ -263,15 +283,20 @@ class AnalyticsService:
                 "best_performing": best_session,
                 "average_engagement": sum(
                     s["metrics"].get("engagement_score", 0) for s in session_summaries
-                ) / len(session_summaries) if session_summaries else 0,
+                )
+                / len(session_summaries)
+                if session_summaries
+                else 0,
             }
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to compare sessions: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to compare sessions: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def calculate_efficiency_metrics(
         self,
@@ -287,11 +312,13 @@ class AnalyticsService:
             Result containing efficiency metrics or error
         """
         if not sessions:
-            return Err(ValidationError(
-                message="At least one session required",
-                field="sessions",
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message="At least one session required",
+                    field="sessions",
+                    recoverable=True,
+                )
+            )
 
         try:
             # Calculate metrics
@@ -307,16 +334,16 @@ class AnalyticsService:
                     total_duration += duration
                     completed_count += 1
 
-                total_responses += sum(
-                    len(r) for r in session.responses.values()
-                )
+                total_responses += sum(len(r) for r in session.responses.values())
 
-            avg_duration = total_duration / completed_count if completed_count > 0 else 0
+            avg_duration = (
+                total_duration / completed_count if completed_count > 0 else 0
+            )
 
             # Calculate efficiency score
             # Based on: completion rate, response rate, and duration efficiency
             completion_rate = completed_count / len(sessions)
-            
+
             result = {
                 "total_sessions": len(sessions),
                 "completed_count": completed_count,
@@ -329,10 +356,12 @@ class AnalyticsService:
 
             return Ok(result)
         except Exception as e:
-            return Err(InteractionError(
-                message=f"Failed to calculate efficiency: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                InteractionError(
+                    message=f"Failed to calculate efficiency: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def _calculate_engagement(self, session: NegotiationSession) -> float:
         """Calculate engagement score for a session."""
@@ -341,8 +370,7 @@ class AnalyticsService:
 
         # Factor 1: Response participation
         participating_parties = sum(
-            1 for party_id in session.parties 
-            if session.responses.get(party_id)
+            1 for party_id in session.parties if session.responses.get(party_id)
         )
         participation_rate = participating_parties / len(session.parties)
 
@@ -350,7 +378,7 @@ class AnalyticsService:
         proposal_rate = min(1.0, len(session.active_proposals) / 3)
 
         # Combined score
-        return (participation_rate * 60 + proposal_rate * 40)
+        return participation_rate * 60 + proposal_rate * 40
 
     def _determine_trend(self, sessions: List[NegotiationSession]) -> str:
         """Determine overall trend direction."""
@@ -362,8 +390,12 @@ class AnalyticsService:
         older = sessions[:mid]
         newer = sessions[mid:]
 
-        older_completed = sum(1 for s in older if not s.is_active) / len(older) if older else 0
-        newer_completed = sum(1 for s in newer if not s.is_active) / len(newer) if newer else 0
+        older_completed = (
+            sum(1 for s in older if not s.is_active) / len(older) if older else 0
+        )
+        newer_completed = (
+            sum(1 for s in newer if not s.is_active) / len(newer) if newer else 0
+        )
 
         if newer_completed > older_completed + 0.1:
             return "improving"

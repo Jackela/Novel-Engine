@@ -78,7 +78,12 @@ class TestResourceChanges:
     def test_has_changes_false(self):
         """Test has_changes returns False when all deltas are zero."""
         assert ResourceChanges().has_changes is False
-        assert ResourceChanges(wealth_delta=0, military_delta=0, influence_delta=0).has_changes is False
+        assert (
+            ResourceChanges(
+                wealth_delta=0, military_delta=0, influence_delta=0
+            ).has_changes
+            is False
+        )
 
     @pytest.mark.unit
     def test_total_change(self):
@@ -406,7 +411,9 @@ class TestSimulationTick:
             },
         )
 
-        assert tick.total_resource_changes == 2  # Only faction-1 and faction-2 have changes
+        assert (
+            tick.total_resource_changes == 2
+        )  # Only faction-1 and faction-2 have changes
 
     @pytest.mark.unit
     def test_total_diplomacy_changes(self):
@@ -500,7 +507,11 @@ class TestSimulationTick:
             "days_advanced": 7,
             "events_generated": ["event-1"],
             "resource_changes": {
-                "faction-1": {"wealth_delta": 5, "military_delta": 0, "influence_delta": 0}
+                "faction-1": {
+                    "wealth_delta": 5,
+                    "military_delta": 0,
+                    "influence_delta": 0,
+                }
             },
             "diplomacy_changes": [
                 {
@@ -559,7 +570,9 @@ class TestSimulationTick:
             calendar_after=calendar_after,
             days_advanced=7,
             events_generated=["event-1", "event-2"],
-            resource_changes={"faction-1": ResourceChanges(wealth_delta=5, military_delta=-2)},
+            resource_changes={
+                "faction-1": ResourceChanges(wealth_delta=5, military_delta=-2)
+            },
             diplomacy_changes=[
                 DiplomacyChange(
                     faction_a="f1",

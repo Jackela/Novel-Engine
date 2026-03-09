@@ -159,8 +159,12 @@ class TestWorldTimeEndpoints:
         # Advance to a specific date: Year 2, Month 5, Day 14
         # 1 year = 360 days, so 360 + 4 months * 30 + 13 days = 360 + 120 + 13 = 493
         # Split into multiple advances since schema limits to 365 days per request
-        client.post("/api/world/time/advance", json={"days": 365})  # Year 2, Month 1, Day 6
-        client.post("/api/world/time/advance", json={"days": 128})   # Year 2, Month 5, Day 14
+        client.post(
+            "/api/world/time/advance", json={"days": 365}
+        )  # Year 2, Month 1, Day 6
+        client.post(
+            "/api/world/time/advance", json={"days": 128}
+        )  # Year 2, Month 5, Day 14
 
         response = client.get("/api/world/time")
         assert response.status_code == 200
@@ -196,7 +200,9 @@ class TestWorldTimeEndpoints:
         # Advance 720 days = 2 years
         # Split into multiple advances since schema limits to 365 days per request
         client.post("/api/world/time/advance", json={"days": 365})  # Year 2
-        response = client.post("/api/world/time/advance", json={"days": 355})  # +355 days to reach Year 3, Day 1
+        response = client.post(
+            "/api/world/time/advance", json={"days": 355}
+        )  # +355 days to reach Year 3, Day 1
 
         assert response.status_code == 200
         data = response.json()
@@ -232,5 +238,9 @@ class TestWorldTimeEventBusWiring:
         # Use TestClient to trigger the lifespan (startup/shutdown)
         with TestClient(app):
             # Inside the context, the startup event should have configured app.state.event_bus
-            assert hasattr(app.state, "event_bus"), "app.state should have event_bus attribute"
-            assert app.state.event_bus is not None, "Event bus should be configured on startup"
+            assert hasattr(
+                app.state, "event_bus"
+            ), "app.state should have event_bus attribute"
+            assert (
+                app.state.event_bus is not None
+            ), "Event bus should be configured on startup"

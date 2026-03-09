@@ -92,7 +92,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return self._map_orm_to_domain(character_orm)
 
         except SQLAlchemyError as e:
-            self.logger.error("character_retrieval_failed", character_id=str(character_id), error=str(e))
+            self.logger.error(
+                "character_retrieval_failed",
+                character_id=str(character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to retrieve character: {e}")
 
     async def save(self, character: Character) -> None:
@@ -143,7 +147,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         except ConcurrencyException:
             raise
         except SQLAlchemyError as e:
-            self.logger.error("character_save_failed", character_id=str(character.character_id), error=str(e))
+            self.logger.error(
+                "character_save_failed",
+                character_id=str(character.character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to save character: {e}")
 
     async def delete(self, character_id: CharacterID) -> bool:
@@ -164,7 +172,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return True
 
         except SQLAlchemyError as e:
-            self.logger.error("character_deletion_failed", character_id=str(character_id), error=str(e))
+            self.logger.error(
+                "character_deletion_failed",
+                character_id=str(character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to delete character: {e}")
 
     async def exists(self, character_id: CharacterID) -> bool:
@@ -180,7 +192,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return exists
 
         except SQLAlchemyError as e:
-            self.logger.error("character_existence_check_failed", character_id=str(character_id), error=str(e))
+            self.logger.error(
+                "character_existence_check_failed",
+                character_id=str(character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to check character existence: {e}")
 
     # ==================== Query Operations ====================
@@ -215,7 +231,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "find_characters_by_class_failed", character_class=str(character_class), error=str(e)
+                "find_characters_by_class_failed",
+                character_class=str(character_class),
+                error=str(e),
             )
             raise RepositoryException(f"Failed to find characters by class: {e}")
 
@@ -232,7 +250,9 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return [self._map_orm_to_domain(orm) for orm in character_orms]
 
         except SQLAlchemyError as e:
-            self.logger.error("find_characters_by_race_failed", race=str(race), error=str(e))
+            self.logger.error(
+                "find_characters_by_race_failed", race=str(race), error=str(e)
+            )
             raise RepositoryException(f"Failed to find characters by race: {e}")
 
     async def find_by_level_range(
@@ -256,7 +276,10 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         except SQLAlchemyError as e:
             self.logger.error(
-                "find_characters_by_level_range_failed", min_level=min_level, max_level=max_level, error=str(e)
+                "find_characters_by_level_range_failed",
+                min_level=min_level,
+                max_level=max_level,
+                error=str(e),
             )
             raise RepositoryException(f"Failed to find characters by level range: {e}")
 
@@ -541,7 +564,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 return version
 
         except SQLAlchemyError as e:
-            self.logger.error("get_character_version_failed", character_id=str(character_id), error=str(e))
+            self.logger.error(
+                "get_character_version_failed",
+                character_id=str(character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to get character version: {e}")
 
     async def get_character_history(
@@ -574,7 +601,11 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 ]
 
         except SQLAlchemyError as e:
-            self.logger.error("get_character_history_failed", character_id=str(character_id), error=str(e))
+            self.logger.error(
+                "get_character_history_failed",
+                character_id=str(character_id),
+                error=str(e),
+            )
             raise RepositoryException(f"Failed to get character history: {e}")
 
     # ==================== Private Mapping Methods ====================

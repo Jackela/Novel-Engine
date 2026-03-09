@@ -43,12 +43,14 @@ class TestWorldGeneration:
     """Tests for POST /api/world/generation endpoint."""
 
     @patch("src.api.routers.world.LLMWorldGenerator")
-    def test_generate_world_success(self, mock_generator_class, client: TestClient) -> None:
+    def test_generate_world_success(
+        self, mock_generator_class, client: TestClient
+    ) -> None:
         """Test successful world generation."""
         # Setup mock
         mock_generator = MagicMock()
         mock_result = MagicMock()
-        
+
         # Setup world setting
         mock_result.world_setting = MagicMock(
             id="world_001",
@@ -61,7 +63,7 @@ class TestWorldGeneration:
             magic_level=5,
             technology_level=3,
         )
-        
+
         # Setup factions
         faction = MagicMock()
         faction.id = "faction_001"
@@ -75,7 +77,7 @@ class TestWorldGeneration:
         faction.get_allies.return_value = []
         faction.get_enemies.return_value = []
         mock_result.factions = [faction]
-        
+
         # Setup locations
         location = MagicMock()
         location.id = "loc_001"
@@ -87,7 +89,7 @@ class TestWorldGeneration:
         location.notable_features = ["castle", "market"]
         location.get_danger_level.return_value = "low"
         mock_result.locations = [location]
-        
+
         # Setup events
         event = MagicMock()
         event.id = "event_001"
@@ -97,7 +99,7 @@ class TestWorldGeneration:
         event.significance = 5
         event.participant_ids = set(["faction_001"])
         mock_result.events = [event]
-        
+
         mock_result.generation_summary = "Successfully generated world"
         mock_generator.generate.return_value = mock_result
         mock_generator_class.return_value = mock_generator
@@ -125,11 +127,13 @@ class TestWorldGeneration:
         assert data["generation_summary"] == "Successfully generated world"
 
     @patch("src.api.routers.world.LLMWorldGenerator")
-    def test_generate_world_default_values(self, mock_generator_class, client: TestClient) -> None:
+    def test_generate_world_default_values(
+        self, mock_generator_class, client: TestClient
+    ) -> None:
         """Test world generation with default values."""
         mock_generator = MagicMock()
         mock_result = MagicMock()
-        
+
         mock_result.world_setting = MagicMock(
             id="world_002",
             name="Default World",
@@ -145,7 +149,7 @@ class TestWorldGeneration:
         mock_result.locations = []
         mock_result.events = []
         mock_result.generation_summary = "Generated with defaults"
-        
+
         mock_generator.generate.return_value = mock_result
         mock_generator_class.return_value = mock_generator
 
@@ -158,17 +162,19 @@ class TestWorldGeneration:
         assert data["world_setting"]["era"] == "medieval"
 
     @patch("src.api.routers.world.LLMWorldGenerator")
-    def test_generate_world_failure(self, mock_generator_class, client: TestClient) -> None:
+    def test_generate_world_failure(
+        self, mock_generator_class, client: TestClient
+    ) -> None:
         """Test world generation failure."""
         mock_generator = MagicMock()
         mock_result = MagicMock()
-        
+
         mock_result.world_setting = MagicMock(name="Generation Failed")
         mock_result.generation_summary = "Error: Generation failed"
         mock_result.factions = []
         mock_result.locations = []
         mock_result.events = []
-        
+
         mock_generator.generate.return_value = mock_result
         mock_generator_class.return_value = mock_generator
 

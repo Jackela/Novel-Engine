@@ -67,6 +67,7 @@ class DatabaseInterface(Protocol):
         """Get an async database connection context manager."""
         ...
 
+
 # Comprehensive logging and monitoring
 logger = structlog.get_logger(__name__)
 
@@ -145,5 +146,3 @@ class SystemMetrics:
     operations_per_minute: float = 0.0
     relationship_count: int = 0
     equipment_count: int = 0
-
-

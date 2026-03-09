@@ -302,6 +302,7 @@ def _patch_e2e_database_fixture() -> None:
                     rows = state["characters"]
                 else:
                     rows: list[Any] = []
+
                 class MockResult:
                     def __init__(self, data_rows) -> None:
                         self._rows = data_rows

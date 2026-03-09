@@ -4,7 +4,6 @@ This test suite covers the Plotline entity for Director Mode,
 testing plotline creation, validation, and state transitions.
 """
 
-
 import pytest
 
 from src.contexts.narrative.domain.entities.plotline import (

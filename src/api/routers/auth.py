@@ -268,7 +268,7 @@ async def logout(
             "logout_event",
             masked_token=masked_token,
             client_ip=client_ip,
-            user_agent=user_agent[:50]
+            user_agent=user_agent[:50],
         )
 
         response.delete_cookie(

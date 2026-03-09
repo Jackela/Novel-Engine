@@ -89,7 +89,9 @@ class DecisionEngine:
 
         # Decision-making configuration
         self.action_threshold = 0.3  # Minimum score for action consideration
-        self.decision_weights: Dict[str, float] = {}  # Will be loaded from character data
+        self.decision_weights: Dict[
+            str, float
+        ] = {}  # Will be loaded from character data
 
     def make_decision(
         self, world_state_update: Dict[str, Any]

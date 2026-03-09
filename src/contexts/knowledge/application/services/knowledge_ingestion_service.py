@@ -269,26 +269,32 @@ class KnowledgeIngestionService:
         """
         # Validate input
         if not content or not content.strip():
-            return Err(ValidationError(
-                message="content cannot be empty",
-                field="content",
-            ))
+            return Err(
+                ValidationError(
+                    message="content cannot be empty",
+                    field="content",
+                )
+            )
 
         if not source_id or not source_id.strip():
-            return Err(ValidationError(
-                message="source_id cannot be empty",
-                field="source_id",
-            ))
+            return Err(
+                ValidationError(
+                    message="source_id cannot be empty",
+                    field="source_id",
+                )
+            )
 
         # Normalize source_type
         if isinstance(source_type, str):
             try:
                 source_type = SourceType.from_string(source_type)
             except ValueError as e:
-                return Err(ValidationError(
-                    message=f"Invalid source_type: {e}",
-                    field="source_type",
-                ))
+                return Err(
+                    ValidationError(
+                        message=f"Invalid source_type: {e}",
+                        field="source_type",
+                    )
+                )
 
         target_collection = collection or self._default_collection
 
@@ -345,16 +351,20 @@ class KnowledgeIngestionService:
                 source_id=source_id,
                 error=str(e),
             )
-            return Err(EmbeddingError(
-                message=f"Failed to generate embeddings: {e}",
-                source_id=source_id,
-            ))
+            return Err(
+                EmbeddingError(
+                    message=f"Failed to generate embeddings: {e}",
+                    source_id=source_id,
+                )
+            )
 
         if len(embeddings) != len(chunked_doc.chunks):
-            return Err(EmbeddingError(
-                message=f"Embedding count mismatch: expected {len(chunked_doc.chunks)}, got {len(embeddings)}",
-                source_id=source_id,
-            ))
+            return Err(
+                EmbeddingError(
+                    message=f"Embedding count mismatch: expected {len(chunked_doc.chunks)}, got {len(embeddings)}",
+                    source_id=source_id,
+                )
+            )
 
         logger.debug(
             "ingestion_embedding_complete",
@@ -417,16 +427,20 @@ class KnowledgeIngestionService:
                 source_id=source_id,
                 error=str(e),
             )
-            return Err(VectorStoreError(
-                message=f"Failed to store documents: {e}",
-                operation="upsert",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Failed to store documents: {e}",
+                    operation="upsert",
+                )
+            )
 
         if not upsert_result.success:
-            return Err(VectorStoreError(
-                message=f"Failed to upsert documents for source {source_id}",
-                operation="upsert",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Failed to upsert documents for source {source_id}",
+                    operation="upsert",
+                )
+            )
 
         logger.info(
             "ingestion_complete",
@@ -436,12 +450,14 @@ class KnowledgeIngestionService:
             collection=target_collection,
         )
 
-        return Ok(IngestionResult(
-            success=True,
-            source_id=source_id,
-            chunk_count=chunked_doc.total_chunks,
-            entries_created=len(entries),
-        ))
+        return Ok(
+            IngestionResult(
+                success=True,
+                source_id=source_id,
+                chunk_count=chunked_doc.total_chunks,
+                entries_created=len(entries),
+            )
+        )
 
     async def batch_ingest(
         self,
@@ -479,10 +495,12 @@ class KnowledgeIngestionService:
             ...         print(f"Batch error: {error.message}")
         """
         if not isinstance(entries, list):
-            return Err(ValidationError(  # type: ignore[unreachable]
-                message="entries must be a list",
-                field="entries",
-            ))
+            return Err(
+                ValidationError(  # type: ignore[unreachable]
+                    message="entries must be a list",
+                    field="entries",
+                )
+            )
 
         total = len(entries)
         successful = 0
@@ -565,13 +583,15 @@ class KnowledgeIngestionService:
             failed=failed,
         )
 
-        return Ok(BatchIngestionResult(
-            success=overall_success,
-            total_entries=total,
-            successful=successful,
-            failed=failed,
-            errors=errors,
-        ))
+        return Ok(
+            BatchIngestionResult(
+                success=overall_success,
+                total_entries=total,
+                successful=successful,
+                failed=failed,
+                errors=errors,
+            )
+        )
 
     async def delete(
         self,
@@ -602,10 +622,12 @@ class KnowledgeIngestionService:
             ...         print(f"Delete failed: {error.message}")
         """
         if not source_id or not source_id.strip():
-            return Err(ValidationError(
-                message="source_id cannot be empty",
-                field="source_id",
-            ))
+            return Err(
+                ValidationError(
+                    message="source_id cannot be empty",
+                    field="source_id",
+                )
+            )
 
         target_collection = collection or self._default_collection
 
@@ -617,10 +639,12 @@ class KnowledgeIngestionService:
                 try:
                     source_type = SourceType.from_string(source_type)
                 except ValueError as e:
-                    return Err(ValidationError(
-                        message=f"Invalid source_type: {e}",
-                        field="source_type",
-                    ))
+                    return Err(
+                        ValidationError(
+                            message=f"Invalid source_type: {e}",
+                            field="source_type",
+                        )
+                    )
             where_filter["source_type"] = source_type.value
 
         logger.debug(
@@ -641,10 +665,12 @@ class KnowledgeIngestionService:
                 source_id=source_id,
                 error=str(e),
             )
-            return Err(VectorStoreError(
-                message=f"Failed to delete documents: {e}",
-                operation="delete",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Failed to delete documents: {e}",
+                    operation="delete",
+                )
+            )
 
         logger.info(
             "ingestion_delete_complete",
@@ -696,20 +722,24 @@ class KnowledgeIngestionService:
             ...         print(f"Update failed: {error.message}")
         """
         if not new_content or not new_content.strip():
-            return Err(ValidationError(
-                message="new_content cannot be empty",
-                field="new_content",
-            ))
+            return Err(
+                ValidationError(
+                    message="new_content cannot be empty",
+                    field="new_content",
+                )
+            )
 
         # Normalize source_type
         if isinstance(source_type, str):
             try:
                 source_type = SourceType.from_string(source_type)
             except ValueError as e:
-                return Err(ValidationError(
-                    message=f"Invalid source_type: {e}",
-                    field="source_type",
-                ))
+                return Err(
+                    ValidationError(
+                        message=f"Invalid source_type: {e}",
+                        field="source_type",
+                    )
+                )
 
         target_collection = collection or self._default_collection
 
@@ -756,17 +786,21 @@ class KnowledgeIngestionService:
 
         original_result = ingest_result.value
         if original_result is None:
-            return Err(ValidationError(
-                message="Ingest operation returned None",
-                field="ingest_result",
-            ))
-        return Ok(IngestionResult(
-            success=original_result.success,
-            source_id=source_id,
-            chunk_count=original_result.chunk_count,
-            entries_created=original_result.entries_created,
-            entries_deleted=deleted_count,
-        ))
+            return Err(
+                ValidationError(
+                    message="Ingest operation returned None",
+                    field="ingest_result",
+                )
+            )
+        return Ok(
+            IngestionResult(
+                success=original_result.success,
+                source_id=source_id,
+                chunk_count=original_result.chunk_count,
+                entries_created=original_result.entries_created,
+                entries_deleted=deleted_count,
+            )
+        )
 
     async def query_by_source(
         self,
@@ -798,10 +832,12 @@ class KnowledgeIngestionService:
             ...         print(f"Query failed: {error.message}")
         """
         if not source_id or not source_id.strip():
-            return Err(ValidationError(
-                message="source_id cannot be empty",
-                field="source_id",
-            ))
+            return Err(
+                ValidationError(
+                    message="source_id cannot be empty",
+                    field="source_id",
+                )
+            )
 
         target_collection = collection or self._default_collection
 
@@ -813,10 +849,12 @@ class KnowledgeIngestionService:
                 try:
                     source_type = SourceType.from_string(source_type)
                 except ValueError as e:
-                    return Err(ValidationError(
-                        message=f"Invalid source_type: {e}",
-                        field="source_type",
-                    ))
+                    return Err(
+                        ValidationError(
+                            message=f"Invalid source_type: {e}",
+                            field="source_type",
+                        )
+                    )
             where_filter["source_type"] = source_type.value
 
         logger.debug(
@@ -848,10 +886,12 @@ class KnowledgeIngestionService:
                 source_id=source_id,
                 error=str(e),
             )
-            return Err(VectorStoreError(
-                message=f"Failed to query documents: {e}",
-                operation="query",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Failed to query documents: {e}",
+                    operation="query",
+                )
+            )
 
         # Convert to RetrievedChunk
         retrieved: list[RetrievedChunk] = []
@@ -892,10 +932,12 @@ class KnowledgeIngestionService:
                 "health_check_failed",
                 error=str(e),
             )
-            return Err(VectorStoreError(
-                message=f"Health check failed: {e}",
-                operation="health_check",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Health check failed: {e}",
+                    operation="health_check",
+                )
+            )
 
     async def get_count(
         self,
@@ -920,10 +962,12 @@ class KnowledgeIngestionService:
                 collection=target_collection,
                 error=str(e),
             )
-            return Err(VectorStoreError(
-                message=f"Failed to get count: {e}",
-                operation="count",
-            ))
+            return Err(
+                VectorStoreError(
+                    message=f"Failed to get count: {e}",
+                    operation="count",
+                )
+            )
 
     async def _call_progress_callback(
         self,

@@ -38,7 +38,10 @@ class TestTimeEventFlow:
         new_data = response.json()
 
         # Verify time advanced
-        assert new_data["day"] != initial_data["day"] or new_data["month"] != initial_data["month"]
+        assert (
+            new_data["day"] != initial_data["day"]
+            or new_data["month"] != initial_data["month"]
+        )
 
     def test_event_handler_is_registered(self, client: TestClient) -> None:
         """Test that TimeAdvancedHandler is registered with EventBus."""

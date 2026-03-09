@@ -83,9 +83,6 @@ class SanityViolation:
         }
 
 
-
-
-
 class SimulationSanityChecker:
     """Service for validating world state consistency.
 
@@ -284,13 +281,15 @@ class SimulationSanityChecker:
             # If check() itself failed, we need to raise an exception
             # The error from check() is a domain Error, not an Exception
             # So we convert it to a SanityCheckError with a message
-            raise SanityCheckError([
-                SanityViolation(
-                    rule_name="check_execution_failed",
-                    severity=Severity.ERROR,
-                    message=str(check_result.error),
-                )
-            ])
+            raise SanityCheckError(
+                [
+                    SanityViolation(
+                        rule_name="check_execution_failed",
+                        severity=Severity.ERROR,
+                        message=str(check_result.error),
+                    )
+                ]
+            )
 
         violations = check_result.value
         errors = [v for v in violations if v.severity == Severity.ERROR]

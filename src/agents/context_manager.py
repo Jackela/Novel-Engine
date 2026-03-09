@@ -53,7 +53,10 @@ class CharacterContextManager:
             character_sheet_path = self.core.identity.character_sheet_path
 
             if not Path(character_sheet_path).exists():
-                self.logger.error("character_sheet_not_found", character_sheet_path=character_sheet_path)
+                self.logger.error(
+                    "character_sheet_not_found",
+                    character_sheet_path=character_sheet_path,
+                )
                 return
 
             # Read character sheet content
@@ -61,7 +64,7 @@ class CharacterContextManager:
             if not content:
                 self.logger.error(
                     "failed_to_read_character_sheet",
-                    character_sheet_path=character_sheet_path
+                    character_sheet_path=character_sheet_path,
                 )
                 return
 
@@ -76,7 +79,7 @@ class CharacterContextManager:
 
             self.logger.info(
                 "character_context_loaded",
-                character_name=self.core.identity.character_name
+                character_name=self.core.identity.character_name,
             )
 
         except Exception as e:
@@ -114,7 +117,7 @@ class CharacterContextManager:
                         self.logger.warning(
                             "failed_to_parse_section",
                             section_name=section_name,
-                            error=str(e)
+                            error=str(e),
                         )
                         parsed_data[section_name] = {}
                 else:
@@ -306,7 +309,7 @@ class CharacterContextManager:
             self.logger.debug(
                 "core_identity_extracted",
                 character_name=self.core.identity.character_name,
-                faction=self.core.identity.primary_faction
+                faction=self.core.identity.primary_faction,
             )
 
         except Exception as e:

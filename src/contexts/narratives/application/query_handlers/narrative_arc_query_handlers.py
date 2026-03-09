@@ -64,6 +64,7 @@ class NarrativeArcQueryHandler:
         """Handle get narrative arc query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -234,6 +235,7 @@ class NarrativeArcQueryHandler:
         """Handle get plot point query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -273,6 +275,7 @@ class NarrativeArcQueryHandler:
         """Handle get plot points in sequence query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -312,7 +315,8 @@ class NarrativeArcQueryHandler:
                         "dramatic_tension": float(plot_point.dramatic_tension),
                         "story_significance": float(plot_point.story_significance),
                         "involved_characters": [
-                            str(cid) for cid in (plot_point.involved_characters or frozenset())
+                            str(cid)
+                            for cid in (plot_point.involved_characters or frozenset())
                         ],
                     }
                 )
@@ -329,6 +333,7 @@ class NarrativeArcQueryHandler:
         """Handle get plot points by type query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -359,7 +364,10 @@ class NarrativeArcQueryHandler:
                                     plot_point.story_significance
                                 ),
                                 "involved_characters": [
-                                    str(cid) for cid in (plot_point.involved_characters or frozenset())
+                                    str(cid)
+                                    for cid in (
+                                        plot_point.involved_characters or frozenset()
+                                    )
                                 ],
                             }
                         )
@@ -378,6 +386,7 @@ class NarrativeArcQueryHandler:
         """Handle get theme query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -415,6 +424,7 @@ class NarrativeArcQueryHandler:
         """Handle get themes at sequence query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -448,6 +458,7 @@ class NarrativeArcQueryHandler:
         """Handle get arc metrics query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -517,6 +528,7 @@ class NarrativeArcQueryHandler:
         """Handle get arc summary query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -589,6 +601,7 @@ class NarrativeArcQueryHandler:
         """Handle narrative flow analysis query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)
@@ -627,6 +640,7 @@ class NarrativeArcQueryHandler:
         """Handle causal analysis query."""
         try:
             from uuid import UUID
+
             arc_id = query.arc_id
             if isinstance(arc_id, str):
                 arc_id = UUID(arc_id)

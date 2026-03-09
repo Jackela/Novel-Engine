@@ -376,7 +376,9 @@ class TestLLMCharacterProfileGeneratorIntegration:
         llm_generator: LLMCharacterProfileGenerator,
     ) -> None:
         """Test that API errors return error result."""
-        mock_call.side_effect = RuntimeError("Gemini API error 500: Internal Server Error")
+        mock_call.side_effect = RuntimeError(
+            "Gemini API error 500: Internal Server Error"
+        )
 
         with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
             llm_generator._api_key = "test-key"

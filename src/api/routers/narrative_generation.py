@@ -238,7 +238,9 @@ async def _sse_generator(request: GenerateStreamRequest) -> AsyncIterator[str]:
 
     except Exception:
         # Log full exception internally, send generic message to client
-        logger.error("narrative_stream_error", error="exception_occurred", error_type="exception")
+        logger.error(
+            "narrative_stream_error", error="exception_occurred", error_type="exception"
+        )
         error_data = {
             "type": "error",
             "content": "An error occurred during narrative generation. Please try again.",

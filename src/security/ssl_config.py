@@ -56,7 +56,10 @@ class SSLCertificateManager:
         logger.info(f"SSL CERTIFICATE MANAGER INITIALIZED: {self.cert_dir}")
 
     def generate_self_signed_cert(
-        self, domain: str = "localhost", alt_names: Optional[List[str]] = None, days: int = 365
+        self,
+        domain: str = "localhost",
+        alt_names: Optional[List[str]] = None,
+        days: int = 365,
     ) -> Tuple[str, str]:
         """
         STANDARD SELF-SIGNED CERTIFICATE GENERATION
@@ -68,7 +71,8 @@ class SSLCertificateManager:
 
         # Generate private key
         private_key = rsa.generate_private_key(
-            public_exponent=65537, key_size=4096  # Strong key size
+            public_exponent=65537,
+            key_size=4096,  # Strong key size
         )
 
         # Create certificate subject

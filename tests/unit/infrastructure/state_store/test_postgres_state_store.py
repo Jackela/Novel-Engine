@@ -13,6 +13,7 @@ from src.infrastructure.state_store.config import StateKey, StateStoreConfig
 # Skip tests if asyncpg is not installed
 try:
     from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+
     HAS_ASYNCPG = True
 except ImportError:
     HAS_ASYNCPG = False
@@ -73,9 +74,7 @@ class TestPostgresStateStoreConnect:
     """Tests for connect method."""
 
     @pytest.mark.asyncio
-    async def test_connect_initializes_pool(
-        self, state_store_config, mock_pool
-    ):
+    async def test_connect_initializes_pool(self, state_store_config, mock_pool):
         """connect initializes PostgreSQL connection pool."""
         with patch("src.infrastructure.state_store.postgres.asyncpg") as mock_asyncpg:
             mock_asyncpg.create_pool = AsyncMock(return_value=mock_pool)
@@ -96,9 +95,7 @@ class TestPostgresStateStoreConnect:
         mock_pool.acquire.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_connect_raises_on_connection_failure(
-        self, state_store_config
-    ):
+    async def test_connect_raises_on_connection_failure(self, state_store_config):
         """connect raises exception on connection failure."""
         with patch("src.infrastructure.state_store.postgres.asyncpg") as mock_asyncpg:
             mock_asyncpg.create_pool = AsyncMock(
@@ -540,9 +537,7 @@ class TestPostgresStateStoreClose:
     """Tests for close method."""
 
     @pytest.mark.asyncio
-    async def test_close_closes_pool(
-        self, postgres_state_store, mock_pool
-    ):
+    async def test_close_closes_pool(self, postgres_state_store, mock_pool):
         """close closes PostgreSQL connection pool."""
         await postgres_state_store.close()
 

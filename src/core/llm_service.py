@@ -202,7 +202,9 @@ class UnifiedLLMService:
             }
             logger.info("gemini_provider_configured")
         else:
-            logger.warning("gemini_provider_unavailable", reason="GEMINI_API_KEY_not_found")
+            logger.warning(
+                "gemini_provider_unavailable", reason="GEMINI_API_KEY_not_found"
+            )
 
         # Future providers (OpenAI, Anthropic) can be added here
         if os.getenv("OPENAI_API_KEY"):
@@ -258,7 +260,9 @@ class UnifiedLLMService:
             request_id="error",
         )
 
-    async def generate_result(self, request: LLMRequest) -> Result[LLMResponse, LLMError]:
+    async def generate_result(
+        self, request: LLMRequest
+    ) -> Result[LLMResponse, LLMError]:
         """
         Generate response using specified LLM provider with Result pattern.
 
@@ -478,16 +482,16 @@ class UnifiedLLMService:
             return True  # Default validation
 
         except Exception as e:
-            logger.error("format_validation_error", error=str(e), error_type=type(e).__name__)
+            logger.error(
+                "format_validation_error", error=str(e), error_type=type(e).__name__
+            )
             return False
 
     def _generate_request_id(self, request: LLMRequest) -> str:
         """Generate unique request ID."""
         prompt_hash = hashlib.md5(
             request.prompt.encode(), usedforsecurity=False
-        ).hexdigest()[
-            :8
-        ]  # nosec B324
+        ).hexdigest()[:8]  # nosec B324
         timestamp = int(time.time() * 1000) % 10000
         return f"{request.requester}_{prompt_hash}_{timestamp}"
 
@@ -928,40 +932,42 @@ Return in JSON format:
             - Err(ServiceError): If metrics retrieval fails
         """
         try:
-            return Ok({
-                "requests": {
-                    "total": self.metrics.total_requests,
-                    "successful": self.metrics.successful_requests,
-                    "failed": self.metrics.failed_requests,
-                    "success_rate": self.metrics.successful_requests
-                    / max(1, self.metrics.total_requests),
-                },
-                "cache": {
-                    "hits": self.metrics.cache_hits,
-                    "misses": self.metrics.cache_misses,
-                    "hit_rate": self.metrics.cache_hits
-                    / max(1, self.metrics.cache_hits + self.metrics.cache_misses),
-                },
-                "performance": {
-                    "average_response_time_ms": self.metrics.average_response_time,
-                    "total_tokens_used": self.metrics.total_tokens_used,
-                },
-                "cost": {
-                    "total_cost": self.metrics.total_cost,
-                    "daily_spend": self.metrics.daily_spend,
-                    "budget_remaining": max(
-                        0, self.cost_control.daily_budget - self.metrics.daily_spend
-                    ),
-                },
-                "providers": {
-                    "available": [
-                        p.value
-                        for p, config in self.providers.items()
-                        if config["available"]
-                    ],
-                    "primary": self.primary_provider.value,
-                },
-            })
+            return Ok(
+                {
+                    "requests": {
+                        "total": self.metrics.total_requests,
+                        "successful": self.metrics.successful_requests,
+                        "failed": self.metrics.failed_requests,
+                        "success_rate": self.metrics.successful_requests
+                        / max(1, self.metrics.total_requests),
+                    },
+                    "cache": {
+                        "hits": self.metrics.cache_hits,
+                        "misses": self.metrics.cache_misses,
+                        "hit_rate": self.metrics.cache_hits
+                        / max(1, self.metrics.cache_hits + self.metrics.cache_misses),
+                    },
+                    "performance": {
+                        "average_response_time_ms": self.metrics.average_response_time,
+                        "total_tokens_used": self.metrics.total_tokens_used,
+                    },
+                    "cost": {
+                        "total_cost": self.metrics.total_cost,
+                        "daily_spend": self.metrics.daily_spend,
+                        "budget_remaining": max(
+                            0, self.cost_control.daily_budget - self.metrics.daily_spend
+                        ),
+                    },
+                    "providers": {
+                        "available": [
+                            p.value
+                            for p, config in self.providers.items()
+                            if config["available"]
+                        ],
+                        "primary": self.primary_provider.value,
+                    },
+                }
+            )
         except Exception as e:
             return Err(
                 ServiceError(

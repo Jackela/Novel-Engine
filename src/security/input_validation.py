@@ -75,7 +75,9 @@ class SanitizationRule:
 class ValidationError(Exception):
     """ENHANCED VALIDATION EXCEPTION"""
 
-    def __init__(self, message: str, severity: ValidationSeverity, rule_name: str) -> None:
+    def __init__(
+        self, message: str, severity: ValidationSeverity, rule_name: str
+    ) -> None:
         self.message = message
         self.severity = severity
         self.rule_name = rule_name

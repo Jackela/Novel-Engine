@@ -135,8 +135,7 @@ class PersonaAgent:
             logger.error("failed_to_subscribe_to_turn_start", error=str(e))
 
         logger.info(
-            "persona_agent_architecture_initialized",
-            character_name=self.character_name
+            "persona_agent_architecture_initialized", character_name=self.character_name
         )
 
     def _load_character_data(self) -> None:
@@ -152,7 +151,7 @@ class PersonaAgent:
 
             logger.info(
                 "character_data_loaded",
-                character_name=character_data.get("name", "Unknown")
+                character_name=character_data.get("name", "Unknown"),
             )
 
         except Exception as e:
@@ -252,14 +251,13 @@ class PersonaAgent:
                 existing_data=self.core.character_data, new_context=context
             )
 
-            logger.info("enhanced_context_loaded", character_name=context.character_name)
+            logger.info(
+                "enhanced_context_loaded", character_name=context.character_name
+            )
             return True
 
         except Exception as e:
-            logger.warning(
-                "enhanced_context_loading_failed",
-                error=str(e)
-            )
+            logger.warning("enhanced_context_loading_failed", error=str(e))
             return False
 
     async def refresh_context(self) -> bool:
@@ -296,7 +294,9 @@ class PersonaAgent:
         # This is handled during initialization, but maintain method for compatibility
         try:
             self._load_character_data()
-            logger.info("character_context_reloaded", character_name=self.character_name)
+            logger.info(
+                "character_context_reloaded", character_name=self.character_name
+            )
         except Exception as e:
             logger.error("error_reloading_character_context", error=str(e))
 
@@ -575,8 +575,12 @@ class PersonaAgent:
                     "core_metrics": self.core.get_core_metrics(),
                 },
                 "decision_engine": {
-                    "llm_available": getattr(self.decision_engine, 'llm_available', False),
-                    "decision_metrics": getattr(self.decision_engine, 'get_decision_metrics', lambda: {})(),
+                    "llm_available": getattr(
+                        self.decision_engine, "llm_available", False
+                    ),
+                    "decision_metrics": getattr(
+                        self.decision_engine, "get_decision_metrics", lambda: {}
+                    )(),
                 },
                 "character_interpreter": {
                     "character_summary": self.character_interpreter.get_character_summary()
@@ -692,5 +696,3 @@ class PersonaAgent:
         except Exception as e:
             logger.error("error_getting_context_integration_status", error=str(e))
             return {"error": str(e)}
-
-

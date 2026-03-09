@@ -74,7 +74,7 @@ def create_test_event(
     name: str = "Test Event",
     event_type: EventType = EventType.POLITICAL,
     significance: EventSignificance = EventSignificance.MODERATE,
-    **kwargs
+    **kwargs,
 ) -> HistoryEvent:
     """Create a test HistoryEvent with default values."""
     return HistoryEvent(
@@ -98,11 +98,11 @@ class TestPostgreSQLEventRepositoryBasic:
     async def test_save_and_get_by_id(self, event_repo: PostgreSQLEventRepository):
         """Test saving an event and retrieving it by ID."""
         event = create_test_event(name="Battle of Test Plains")
-        
+
         saved = await event_repo.save(event)
         assert saved.id == event.id
         assert saved.name == "Battle of Test Plains"
-        
+
         retrieved = await event_repo.get_by_id(event.id)
         assert retrieved is not None
         assert retrieved.id == event.id
@@ -120,12 +120,12 @@ class TestPostgreSQLEventRepositoryBasic:
         """Test updating an existing event."""
         event = create_test_event(name="Original Name")
         await event_repo.save(event)
-        
+
         # Modify and save again
         event.name = "Updated Name"
         event.description = "Updated description"
         await event_repo.save(event)
-        
+
         retrieved = await event_repo.get_by_id(event.id)
         assert retrieved is not None
         assert retrieved.name == "Updated Name"
@@ -136,19 +136,21 @@ class TestPostgreSQLEventRepositoryBasic:
         """Test deleting an event."""
         event = create_test_event()
         await event_repo.save(event)
-        
+
         # Verify it exists
         assert await event_repo.get_by_id(event.id) is not None
-        
+
         # Delete it
         deleted = await event_repo.delete(event.id)
         assert deleted is True
-        
+
         # Verify it's gone
         assert await event_repo.get_by_id(event.id) is None
 
     @pytest.mark.integration
-    async def test_delete_nonexistent_event(self, event_repo: PostgreSQLEventRepository):
+    async def test_delete_nonexistent_event(
+        self, event_repo: PostgreSQLEventRepository
+    ):
         """Test deleting a non-existent event returns False."""
         result = await event_repo.delete(str(uuid.uuid4()))
         assert result is False
@@ -161,16 +163,22 @@ class TestPostgreSQLEventRepositoryQueries:
     async def test_get_by_location_id(self, event_repo: PostgreSQLEventRepository):
         """Test retrieving events by location ID."""
         location_id = str(uuid.uuid4())
-        
+
         # Create events at different locations
-        event1 = create_test_event(name="Event at Location 1", location_ids=[location_id])
-        event2 = create_test_event(name="Event at Location 1 too", location_ids=[location_id])
-        event3 = create_test_event(name="Event elsewhere", location_ids=[str(uuid.uuid4())])
-        
+        event1 = create_test_event(
+            name="Event at Location 1", location_ids=[location_id]
+        )
+        event2 = create_test_event(
+            name="Event at Location 1 too", location_ids=[location_id]
+        )
+        event3 = create_test_event(
+            name="Event elsewhere", location_ids=[str(uuid.uuid4())]
+        )
+
         await event_repo.save(event1)
         await event_repo.save(event2)
         await event_repo.save(event3)
-        
+
         results = await event_repo.get_by_location_id(location_id)
         assert len(results) == 2
         assert all(e.id in [event1.id, event2.id] for e in results)
@@ -179,58 +187,72 @@ class TestPostgreSQLEventRepositoryQueries:
     async def test_get_by_faction_id(self, event_repo: PostgreSQLEventRepository):
         """Test retrieving events by faction ID."""
         faction_id = str(uuid.uuid4())
-        
+
         # Create events with different factions
         event1 = create_test_event(name="Faction Event 1", faction_ids=[faction_id])
         event2 = create_test_event(name="Faction Event 2", faction_ids=[faction_id])
-        event3 = create_test_event(name="Other Faction Event", faction_ids=[str(uuid.uuid4())])
-        
+        event3 = create_test_event(
+            name="Other Faction Event", faction_ids=[str(uuid.uuid4())]
+        )
+
         await event_repo.save(event1)
         await event_repo.save(event2)
         await event_repo.save(event3)
-        
+
         results = await event_repo.get_by_faction_id(faction_id)
         assert len(results) == 2
         assert all(e.id in [event1.id, event2.id] for e in results)
 
     @pytest.mark.integration
-    async def test_get_by_world_id_with_pagination(self, event_repo: PostgreSQLEventRepository):
+    async def test_get_by_world_id_with_pagination(
+        self, event_repo: PostgreSQLEventRepository
+    ):
         """Test retrieving events by world ID with pagination."""
         world_id = str(uuid.uuid4())
-        
+
         # Create multiple events in the same world (via location_id)
         events = []
         for i in range(5):
             event = create_test_event(
                 name=f"World Event {i}",
                 location_ids=[world_id],
-                narrative_importance=50 + i * 10
+                narrative_importance=50 + i * 10,
             )
             await event_repo.save(event)
             events.append(event)
-        
+
         # Get first page
         page1 = await event_repo.get_by_world_id(world_id, limit=3, offset=0)
         assert len(page1) == 3
-        
+
         # Get second page
         page2 = await event_repo.get_by_world_id(world_id, limit=3, offset=3)
         assert len(page2) == 2
 
     @pytest.mark.integration
-    async def test_results_sorted_by_narrative_importance(self, event_repo: PostgreSQLEventRepository):
+    async def test_results_sorted_by_narrative_importance(
+        self, event_repo: PostgreSQLEventRepository
+    ):
         """Test that results are sorted by narrative_importance descending."""
         location_id = str(uuid.uuid4())
-        
+
         # Create events with different importance
-        event_low = create_test_event(name="Low Importance", location_ids=[location_id], narrative_importance=30)
-        event_high = create_test_event(name="High Importance", location_ids=[location_id], narrative_importance=90)
-        event_medium = create_test_event(name="Medium Importance", location_ids=[location_id], narrative_importance=60)
-        
+        event_low = create_test_event(
+            name="Low Importance", location_ids=[location_id], narrative_importance=30
+        )
+        event_high = create_test_event(
+            name="High Importance", location_ids=[location_id], narrative_importance=90
+        )
+        event_medium = create_test_event(
+            name="Medium Importance",
+            location_ids=[location_id],
+            narrative_importance=60,
+        )
+
         await event_repo.save(event_low)
         await event_repo.save(event_high)
         await event_repo.save(event_medium)
-        
+
         results = await event_repo.get_by_location_id(location_id)
         assert len(results) == 3
         assert results[0].narrative_importance == 90
@@ -242,16 +264,15 @@ class TestPostgreSQLEventRepositoryBatchOperations:
     """Batch operation tests."""
 
     @pytest.mark.integration
-    async def test_save_all_multiple_events(self, event_repo: PostgreSQLEventRepository):
+    async def test_save_all_multiple_events(
+        self, event_repo: PostgreSQLEventRepository
+    ):
         """Test saving multiple events in one operation."""
-        events = [
-            create_test_event(name=f"Batch Event {i}")
-            for i in range(5)
-        ]
-        
+        events = [create_test_event(name=f"Batch Event {i}") for i in range(5)]
+
         saved = await event_repo.save_all(events)
         assert len(saved) == 5
-        
+
         # Verify all were saved
         for event in events:
             retrieved = await event_repo.get_by_id(event.id)
@@ -272,7 +293,7 @@ class TestPostgreSQLEventRepositoryComplexData:
     async def test_event_with_all_fields(self, event_repo: PostgreSQLEventRepository):
         """Test saving and retrieving an event with all fields populated."""
         calendar = WorldCalendar(1042, 3, 15, "Third Age")
-        
+
         event = HistoryEvent(
             name="The Great Sundering",
             description="A cataclysmic event that split the continent",
@@ -297,10 +318,10 @@ class TestPostgreSQLEventRepositoryComplexData:
             affected_location_ids=[str(uuid.uuid4())],
             structured_date=calendar,
         )
-        
+
         await event_repo.save(event)
         retrieved = await event_repo.get_by_id(event.id)
-        
+
         assert retrieved is not None
         assert retrieved.name == "The Great Sundering"
         assert retrieved.event_type == EventType.DISASTER
@@ -321,9 +342,11 @@ class TestPostgreSQLEventRepositoryComplexData:
     async def test_event_enums_preserved(self, event_repo: PostgreSQLEventRepository):
         """Test that all enum types are correctly preserved."""
         for event_type in EventType:
-            event = create_test_event(name=f"Event type {event_type.value}", event_type=event_type)
+            event = create_test_event(
+                name=f"Event type {event_type.value}", event_type=event_type
+            )
             await event_repo.save(event)
-            
+
             retrieved = await event_repo.get_by_id(event.id)
             assert retrieved is not None
             assert retrieved.event_type == event_type
@@ -334,10 +357,10 @@ class TestPostgreSQLEventRepositoryComplexData:
         # Create some events
         for i in range(3):
             await event_repo.save(create_test_event(name=f"Event {i}"))
-        
+
         # Clear all
         await event_repo.clear()
-        
+
         # Verify all are gone
         events = await event_repo.get_by_world_id(str(uuid.uuid4()))
         assert len(events) == 0
@@ -355,10 +378,10 @@ class TestPostgreSQLEventRepositoryFactoryMethods:
             date_description="Year 1042",
             faction_ids=[str(uuid.uuid4()), str(uuid.uuid4())],
         )
-        
+
         await event_repo.save(war)
         retrieved = await event_repo.get_by_id(war.id)
-        
+
         assert retrieved is not None
         assert retrieved.name == "The War of Tests"
         assert retrieved.event_type == EventType.WAR
@@ -373,10 +396,10 @@ class TestPostgreSQLEventRepositoryFactoryMethods:
             date_description="After the Great Migration",
             location_ids=[str(uuid.uuid4())],
         )
-        
+
         await event_repo.save(founding)
         retrieved = await event_repo.get_by_id(founding.id)
-        
+
         assert retrieved is not None
         assert retrieved.name == "Founding of Test City"
         assert retrieved.event_type == EventType.FOUNDING
@@ -392,10 +415,10 @@ class TestPostgreSQLEventRepositoryFactoryMethods:
             location_ids=[str(uuid.uuid4())],
             significance=EventSignificance.WORLD_CHANGING,
         )
-        
+
         await event_repo.save(disaster)
         retrieved = await event_repo.get_by_id(disaster.id)
-        
+
         assert retrieved is not None
         assert retrieved.name == "The Great Test Flood"
         assert retrieved.event_type == EventType.DISASTER

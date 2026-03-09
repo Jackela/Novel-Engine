@@ -25,12 +25,14 @@ from .shared.errors import (
 class NegotiationApplicationService:
     """
     Application service for negotiation operations with Result pattern.
-    
+
     Provides business operations for negotiation analysis, compatibility
     assessment, conflict detection, and momentum calculation.
     """
 
-    def __init__(self, negotiation_service: Optional[NegotiationService] = None) -> None:
+    def __init__(
+        self, negotiation_service: Optional[NegotiationService] = None
+    ) -> None:
         """Initialize with domain negotiation service."""
         self.negotiation_service = negotiation_service or NegotiationService()
 
@@ -53,17 +55,21 @@ class NegotiationApplicationService:
         """
         # Validation
         if party1 is None or party2 is None:
-            return Err(CompatibilityError(
-                message="Both parties must be provided for compatibility assessment",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="Both parties must be provided for compatibility assessment",
+                    recoverable=True,
+                )
+            )
 
         if party1.party_id == party2.party_id:
-            return Err(CompatibilityError(
-                message="Cannot assess compatibility of a party with itself",
-                party_ids=[str(party1.party_id)],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="Cannot assess compatibility of a party with itself",
+                    party_ids=[str(party1.party_id)],
+                    recoverable=True,
+                )
+            )
 
         try:
             score = self.negotiation_service.assess_party_compatibility(
@@ -71,11 +77,13 @@ class NegotiationApplicationService:
             )
             return Ok(score)
         except Exception as e:
-            return Err(CompatibilityError(
-                message=f"Failed to assess compatibility: {e!s}",
-                party_ids=[str(party1.party_id), str(party2.party_id)],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message=f"Failed to assess compatibility: {e!s}",
+                    party_ids=[str(party1.party_id), str(party2.party_id)],
+                    recoverable=True,
+                )
+            )
 
     def analyze_party_compatibility_matrix(
         self,
@@ -93,27 +101,31 @@ class NegotiationApplicationService:
             Result containing compatibility matrix or error
         """
         if not parties:
-            return Err(CompatibilityError(
-                message="At least two parties required for compatibility matrix",
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="At least two parties required for compatibility matrix",
+                    recoverable=True,
+                )
+            )
 
         if len(parties) < 2:
-            return Err(CompatibilityError(
-                message="At least two parties required for compatibility matrix",
-                party_ids=[str(p.party_id) for p in parties],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message="At least two parties required for compatibility matrix",
+                    party_ids=[str(p.party_id) for p in parties],
+                    recoverable=True,
+                )
+            )
 
         try:
             compatibility_matrix: Dict[str, Any] = {}
-            
+
             for i, party1 in enumerate(parties):
                 for party2 in parties[i + 1 :]:
                     score = self.negotiation_service.assess_party_compatibility(
                         party1, party2, negotiation_domain
                     )
-                    
+
                     pair_key = f"{party1.party_id}_{party2.party_id}"
                     compatibility_matrix[pair_key] = {
                         "party1_id": str(party1.party_id),
@@ -127,7 +139,8 @@ class NegotiationApplicationService:
             # Calculate overall compatibility
             if compatibility_matrix:
                 scores = [
-                    comp["compatibility_score"] for comp in compatibility_matrix.values()
+                    comp["compatibility_score"]
+                    for comp in compatibility_matrix.values()
                 ]
                 overall_compatibility = sum(scores) / len(scores)
             else:
@@ -136,18 +149,22 @@ class NegotiationApplicationService:
             result = {
                 "compatibility_matrix": compatibility_matrix,
                 "overall_compatibility": overall_compatibility,
-                "compatibility_level": self._score_to_level(Decimal(overall_compatibility)),
+                "compatibility_level": self._score_to_level(
+                    Decimal(overall_compatibility)
+                ),
                 "party_count": len(parties),
                 "pair_count": len(compatibility_matrix),
             }
-            
+
             return Ok(result)
         except Exception as e:
-            return Err(CompatibilityError(
-                message=f"Failed to analyze compatibility matrix: {e!s}",
-                party_ids=[str(p.party_id) for p in parties],
-                recoverable=True,
-            ))
+            return Err(
+                CompatibilityError(
+                    message=f"Failed to analyze compatibility matrix: {e!s}",
+                    party_ids=[str(p.party_id) for p in parties],
+                    recoverable=True,
+                )
+            )
 
     def detect_negotiation_conflicts(
         self,
@@ -167,19 +184,23 @@ class NegotiationApplicationService:
             Result containing detected conflicts or error
         """
         if not parties:
-            return Err(ConflictError(
-                message="At least one party required for conflict detection",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message="At least one party required for conflict detection",
+                    recoverable=True,
+                )
+            )
 
         valid_thresholds = ["low", "medium", "high", "critical"]
         if severity_threshold not in valid_thresholds:
-            return Err(ValidationError(
-                message=f"Invalid severity threshold: {severity_threshold}",
-                field="severity_threshold",
-                field_value=severity_threshold,
-                recoverable=True,
-            ))
+            return Err(
+                ValidationError(
+                    message=f"Invalid severity threshold: {severity_threshold}",
+                    field="severity_threshold",
+                    field_value=severity_threshold,
+                    recoverable=True,
+                )
+            )
 
         try:
             all_responses = responses or []
@@ -194,7 +215,8 @@ class NegotiationApplicationService:
             filtered_conflicts = [
                 conflict
                 for conflict in conflicts
-                if severity_order.index(conflict.get("severity", "low")) >= threshold_index
+                if severity_order.index(conflict.get("severity", "low"))
+                >= threshold_index
             ]
 
             # Convert UUID objects to strings for JSON serialization
@@ -215,13 +237,15 @@ class NegotiationApplicationService:
                     1 for c in filtered_conflicts if c.get("severity") == "high"
                 ),
             }
-            
+
             return Ok(result)
         except Exception as e:
-            return Err(ConflictError(
-                message=f"Failed to detect conflicts: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                ConflictError(
+                    message=f"Failed to detect conflicts: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def calculate_negotiation_momentum(
         self,
@@ -249,10 +273,12 @@ class NegotiationApplicationService:
 
             return Ok(momentum)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to calculate momentum: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to calculate momentum: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def recommend_negotiation_strategy(
         self,
@@ -272,10 +298,12 @@ class NegotiationApplicationService:
             Result containing strategy recommendation or error
         """
         if not parties:
-            return Err(NegotiationError(
-                message="At least one party required for strategy recommendation",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message="At least one party required for strategy recommendation",
+                    recoverable=True,
+                )
+            )
 
         try:
             strategy = self.negotiation_service.recommend_negotiation_strategy(
@@ -285,10 +313,12 @@ class NegotiationApplicationService:
             )
             return Ok(strategy)
         except Exception as e:
-            return Err(NegotiationError(
-                message=f"Failed to generate strategy: {e!s}",
-                recoverable=True,
-            ))
+            return Err(
+                NegotiationError(
+                    message=f"Failed to generate strategy: {e!s}",
+                    recoverable=True,
+                )
+            )
 
     def _score_to_level(self, score: Decimal) -> str:
         """Convert numeric score to compatibility level."""
