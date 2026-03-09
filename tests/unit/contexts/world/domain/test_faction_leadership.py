@@ -7,59 +7,15 @@ remove_leader, and related methods.
 """
 
 import sys
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 import pytest
 
-# Mock problematic dependencies
-
 pytestmark = pytest.mark.unit
 
+# Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
-
-
-class MockEventPriority(Enum):
-    """Mock EventPriority for testing."""
-
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-@dataclass
-class MockEvent:
-    """Mock Event class that supports dataclass functionality."""
-
-    event_id: str | None = None
-    correlation_id: Optional[str] = None
-    source: Optional[str] = None
-    priority: MockEventPriority = MockEventPriority.NORMAL
-    timestamp: datetime | None = None
-    tags: set = field(default_factory=set)
-    payload: dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self) -> None:
-        if self.event_id is None:
-            self.event_id = str(uuid4())
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
-
-
-class MockEventBusModule:
-    Event = MockEvent
-    EventPriority = MockEventPriority
-
-
-# Save original module if it exists
-_original_event_bus = sys.modules.get("src.events.event_bus")
-
-sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 from src.contexts.world.domain.entities.faction import (
     Faction,
@@ -67,12 +23,6 @@ from src.contexts.world.domain.entities.faction import (
     FactionStatus,
     FactionType,
 )
-
-# Restore original module to avoid polluting other tests
-if _original_event_bus is not None:
-    sys.modules["src.events.event_bus"] = _original_event_bus
-else:
-    del sys.modules["src.events.event_bus"]
 
 
 def _create_test_faction(

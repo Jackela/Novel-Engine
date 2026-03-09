@@ -7,12 +7,8 @@ all rule-based decision logic, edge cases, and intent prioritization.
 """
 
 import sys
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional
 from unittest.mock import MagicMock
-from uuid import uuid4
 
 import pytest
 
@@ -20,43 +16,6 @@ pytestmark = pytest.mark.unit
 
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
-
-
-# Create mock event bus classes for testing
-class MockEventPriority(Enum):
-    """Mock EventPriority for testing."""
-    LOW = "low"
-    NORMAL = "normal"
-    HIGH = "high"
-    CRITICAL = "critical"
-
-
-@dataclass
-class MockEvent:
-    """Mock Event class that supports dataclass functionality."""
-    event_id: str = None
-    correlation_id: Optional[str] = None
-    source: Optional[str] = None
-    priority: MockEventPriority = MockEventPriority.NORMAL
-    timestamp: datetime = None
-    tags: Set = field(default_factory=set)
-    payload: Dict[str, Any] = field(default_factory=dict)
-
-    def __post_init__(self):
-        if self.event_id is None:
-            self.event_id = str(uuid4())
-        if self.timestamp is None:
-            self.timestamp = datetime.now()
-
-
-class MockEventBusModule:
-    Event = MockEvent
-    EventPriority = MockEventPriority
-
-
-# Save original module if it exists
-_original_event_bus = sys.modules.get("src.events.event_bus")
-sys.modules["src.events.event_bus"] = MockEventBusModule()
 
 # Import after mocking
 from src.contexts.world.application.services.faction_intent_generator import (
@@ -71,12 +30,6 @@ from src.contexts.world.domain.entities.faction import (
 from src.contexts.world.domain.entities.faction_intent import ActionType
 from src.contexts.world.domain.value_objects.diplomatic_status import DiplomaticStatus
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
-
-# Restore original module to avoid polluting other tests
-if _original_event_bus is not None:
-    sys.modules["src.events.event_bus"] = _original_event_bus
-else:
-    del sys.modules["src.events.event_bus"]
 
 
 class TestFactionIntentGenerator:

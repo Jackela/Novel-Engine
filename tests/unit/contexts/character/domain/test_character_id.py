@@ -19,8 +19,6 @@ pytestmark = pytest.mark.unit
 
 # Mock problematic dependencies
 sys.modules["aioredis"] = MagicMock()
-sys.modules["src.events.event_bus"] = MagicMock()
-
 from src.contexts.character.domain.value_objects.character_id import CharacterID
 
 

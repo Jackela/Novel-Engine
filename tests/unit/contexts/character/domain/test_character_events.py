@@ -26,8 +26,6 @@ event_bus_mock = MagicMock()
 event_mock = MagicMock()
 event_mock.return_value = Mock()
 event_bus_mock.Event = event_mock
-sys.modules["src.events.event_bus"] = event_bus_mock
-
 from src.contexts.character.domain.events.character_events import (
     CharacterCreated,
     CharacterDeleted,
