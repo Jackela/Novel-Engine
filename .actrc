@@ -1,38 +1,113 @@
 # ACT Configuration for Novel-Engine
 # Usage: act [options] [job-name]
 # Documentation: https://github.com/nektos/act
+#
+# This configuration ensures ACT accurately simulates GitHub Actions environment
+# to catch issues before pushing.
 
+# ============================================
+# Container Image Configuration
+# ============================================
 # Use medium-sized runner (enough for most workflows)
 # Available images:
-#   - catthehacker/ubuntu:act-latest (recommended, ~1.5GB)
+#   - catthehacker/ubuntu:act-latest (recommended, ~1.5GB, matches ubuntu-latest)
 #   - catthehacker/ubuntu:act-20.04 (smaller, ~800MB)
 #   - catthehacker/ubuntu:act-22.04 (medium, ~1GB)
 -P ubuntu-latest=catthehacker/ubuntu:act-latest
+-P ubuntu-22.04=catthehacker/ubuntu:act-22.04
+-P ubuntu-20.04=catthehacker/ubuntu:act-20.04
 
+# ============================================
+# Default Workflow Configuration
+# ============================================
 # Default workflow to run when no -W flag is provided
 -W .github/workflows/ci.yml
 
+# ============================================
+# Secrets and Environment
+# ============================================
 # Secrets file (copy from .github/act-secrets.sample and fill in your tokens)
 --secret-file .github/act-secrets
 
-# Environment variables file
+# Environment variables file (must match CI environment)
 --env-file .env.ci
 
+# ============================================
+# Execution Configuration
+# ============================================
 # Bind workspace (mounts current directory into container)
-# Set to false for faster runs but less accurate file system behavior
+# Required for accurate file system behavior matching CI
 --bind
 
 # Use local actions when available (faster for self-hosted actions)
 --use-local-actions
 
+# Pull Docker images if not present (ensures latest)
+--pull
+
+# ============================================
+# Artifact and Cache Configuration
+# ============================================
 # Artifact server path (where workflow artifacts are stored)
 --artifact-server-path /tmp/act-artifacts
 
-# Default job to run (can be overridden on command line)
-# -j tests
+# Cache server path (for caching between runs)
+--cache-server-path /tmp/act-cache
 
-# Additional options for debugging:
+# ============================================
+# Network Configuration
+# ============================================
+# Use host network for better compatibility
+# --use-host-network
+
+# ============================================
+# Default Job Configuration
+# ============================================
+# Default job to run (can be overridden on command line)
+# Uncomment to run specific jobs by default:
+# -j test-pyramid-check
+# -j validate-markers
+# -j unit-tests
+
+# ============================================
+# Environment Variables for CI Parity
+# ============================================
+# These ensure local ACT runs match GitHub Actions behavior
+--env CI=true
+--env GITHUB_ACTIONS=true
+--env PYTHON_VERSION=3.11
+--env MIN_COVERAGE=70
+--env MIN_PYRAMID_SCORE=5.5
+
+# ============================================
+# Additional Options for Debugging
+# ============================================
+# Uncomment these when debugging:
 # --verbose          # Enable verbose logging
 # --dryrun           # Dry run mode (show what would be executed)
 # --graph            # Display workflow graph
 # --watch            # Watch for file changes and re-run
+# --reuse            # Reuse containers (faster but less clean)
+
+# ============================================
+# Recommended Usage
+# ============================================
+# 1. Quick smoke test:
+#    act -j smoke-tests
+#
+# 2. Full CI simulation:
+#    act
+#
+# 3. Specific job:
+#    act -j unit-tests
+#
+# 4. With verbose output:
+#    act --verbose -j python-test
+#
+# 5. Dry run (see what would execute):
+#    act --dryrun
+#
+# For local CI without Docker, use:
+#   ./scripts/ci-local.sh
+#   or
+#   make ci-local

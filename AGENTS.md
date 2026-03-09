@@ -32,6 +32,94 @@ Before marking a task as complete, you MUST run:
 3. `pytest` (Backend Logic)
 4. `npm run test:e2e` (Frontend Layout & Integration)
 
+## IV-A. Local CI Verification (CI Environment Parity)
+
+To catch CI failures before pushing, use the local CI verification tools:
+
+### Quick Commands
+
+```bash
+# Full local CI simulation (matches GitHub Actions)
+make ci-local
+
+# Or directly:
+./scripts/ci-local.sh
+```
+
+### Available Options
+
+```bash
+# Python tests only (matches python-tests.yml)
+make ci-local-python
+
+# Quality checks only (ruff, mypy, bandit)
+make ci-local-quality
+
+# Verify local environment setup
+make ci-local-env
+
+# Compare local vs CI environment
+make ci-compare
+
+# Run CI with ACT (Docker-based, slower but most accurate)
+make ci-local-act
+```
+
+### Environment Setup
+
+Before running local CI, ensure your environment matches CI:
+
+```bash
+# 1. Source CI environment variables
+source .env.ci
+
+# 2. Verify environment
+make ci-local-env
+
+# 3. Run full CI check
+make ci-local
+```
+
+### Key Environment Variables
+
+The `.env.ci` file sets these critical variables:
+- `PYTHONPATH`: Must include `$(pwd):$(pwd)/src`
+- `ORCHESTRATOR_MODE=testing`: Required by many tests
+- `CI=true`: Enables CI-specific behavior
+- `PYTEST_DISABLE_PLUGIN_AUTOLOAD=0`: Required for test markers
+
+### Troubleshooting CI Parity
+
+If tests pass locally but fail in CI:
+
+1. **Check Python version**: CI uses Python 3.11
+   ```bash
+   python3 --version  # Should be 3.11.x
+   ```
+
+2. **Verify environment variables**:
+   ```bash
+   ./scripts/ci-local-vs-ga.sh
+   ```
+
+3. **Clear caches and reinstall**:
+   ```bash
+   make clean
+   pip install -r requirements.txt -r requirements/requirements-test.txt
+   pip install -e .
+   ```
+
+4. **Run comprehensive check**:
+   ```bash
+   ./scripts/ci-check.sh --full
+   ```
+
+### CI Workflow Reference
+
+Local CI tools match these GitHub Actions workflows:
+- `python-tests.yml` - Python tests with coverage
+- `ci.yml` - Full CI pipeline (pyramid, markers, unit/integration/E2E tests)
+
 ## V. Subagent外包工作模式 (推荐)
 
 ### 1. 模式概述

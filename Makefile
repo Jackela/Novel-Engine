@@ -32,6 +32,14 @@ help:
 	@echo "  make ci-full        - Run full CI simulation locally"
 	@echo "  make pre-push       - Quick pre-push verification"
 	@echo ""
+	@echo "Local CI Simulation (no Docker required):"
+	@echo "  make ci-local       - Run local CI verification (matches GitHub Actions)"
+	@echo "  make ci-local-python - Run Python tests only (matches python-tests.yml)"
+	@echo "  make ci-local-quality - Run quality checks only (ruff, mypy, bandit)"
+	@echo "  make ci-local-env   - Verify local CI environment setup"
+	@echo "  make ci-compare     - Compare local environment with CI"
+	@echo "  make ci-local-act   - Run CI simulation using ACT (Docker-based)"
+	@echo ""
 	@echo "ACT Local GitHub Actions:"
 	@echo "  make act-setup      - Setup ACT for local GitHub Actions testing"
 	@echo "  make act-test       - Run CI workflow with ACT (dry-run)"
@@ -224,6 +232,31 @@ pre-commit: format lint test-ci
 quality: lint type-check test-coverage
 	@echo "✓ Quality checks complete"
 
-# Simulate full CI pipeline locally
-ci-local: act-setup act-ci
-	@echo "✓ Local CI simulation complete"
+# Simulate full CI pipeline locally using ACT (Docker-based)
+ci-local-act: act-setup act-ci
+	@echo "✓ Local CI simulation (ACT) complete"
+
+# Quick local CI verification without Docker (matches python-tests.yml)
+ci-local:
+	@echo "Running local CI verification (matching GitHub Actions)..."
+	@bash scripts/ci-local.sh
+
+# Local Python tests only (matches python-tests.yml)
+ci-local-python:
+	@echo "Running Python tests (matching python-tests.yml)..."
+	@bash scripts/ci-local.sh --python
+
+# Local quality checks only (matches python-tests.yml quality job)
+ci-local-quality:
+	@echo "Running quality checks (matching python-tests.yml)..."
+	@bash scripts/ci-local.sh --quality
+
+# Local environment verification
+ci-local-env:
+	@echo "Verifying local CI environment..."
+	@bash scripts/ci-local.sh --env
+
+# Compare local environment with CI
+ci-compare:
+	@echo "Comparing local environment with GitHub Actions..."
+	@bash scripts/ci-local-vs-ga.sh
