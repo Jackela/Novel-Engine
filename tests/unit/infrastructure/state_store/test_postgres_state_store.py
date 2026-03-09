@@ -4,15 +4,23 @@ Tests cover connection management, CRUD operations, and error handling
 for the PostgreSQL-based state store implementation.
 """
 
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from src.infrastructure.state_store.config import StateKey, StateStoreConfig
-from src.infrastructure.state_store.postgres import PostgreSQLStateStore
 
-pytestmark = pytest.mark.unit
+# Skip tests if asyncpg is not installed
+try:
+    from src.infrastructure.state_store.postgres import PostgreSQLStateStore
+    HAS_ASYNCPG = True
+except ImportError:
+    HAS_ASYNCPG = False
+
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(not HAS_ASYNCPG, reason="asyncpg not installed"),
+]
 
 
 @pytest.fixture

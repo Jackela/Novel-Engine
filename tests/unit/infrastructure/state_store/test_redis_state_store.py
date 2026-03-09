@@ -4,14 +4,23 @@ Tests cover connection management, CRUD operations, and error handling
 for the Redis-based state store implementation.
 """
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 from src.infrastructure.state_store.config import StateKey, StateStoreConfig
-from src.infrastructure.state_store.redis import RedisStateStore
 
-pytestmark = pytest.mark.unit
+# Skip tests if redis is not installed
+try:
+    from src.infrastructure.state_store.redis import RedisStateStore
+    HAS_REDIS = True
+except ImportError:
+    HAS_REDIS = False
+
+pytestmark = [
+    pytest.mark.unit,
+    pytest.mark.skipif(not HAS_REDIS, reason="redis not installed"),
+]
 
 
 @pytest.fixture

@@ -108,7 +108,6 @@ class StateStoreConfig:
 
     # Connection settings
     connection_timeout: int = 30
-    cache_ttl: int = 3600  # 1 hour default
     max_retries: int = 3
 
     # Cache settings
