@@ -52,7 +52,7 @@ websockets==12.0
 
 # Concurrency & Async
 asyncio-mqtt==0.16.1
-aiofiles==23.2.1
+aiofiles==25.1.0
 aiojobs==1.2.1
 
 # Enterprise Utilities
