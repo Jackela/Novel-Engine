@@ -48,7 +48,7 @@ pydantic-settings==2.1.0
 # HTTP & API
 httpx==0.25.2
 aiohttp==3.9.1
-websockets==12.0
+websockets==16.0
 
 # Concurrency & Async
 asyncio-mqtt==0.16.1
