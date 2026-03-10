@@ -65,9 +65,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
@@ -236,9 +236,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
@@ -276,9 +276,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
@@ -334,9 +334,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
@@ -344,7 +344,7 @@ class NarrativeArcQueryHandler:
             results: list[Any] = []
             for plot_point in arc.plot_points.values():
                 if plot_point.plot_point_type.value in query.plot_point_types:
-                    plot_data = {
+                    plot_data: Dict[str, Any] = {
                         "plot_point_id": plot_point.plot_point_id,
                         "title": plot_point.title,
                         "plot_point_type": plot_point.plot_point_type.value,
@@ -387,9 +387,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return None
@@ -425,9 +425,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 return []
@@ -459,9 +459,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
@@ -529,9 +529,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
@@ -602,9 +602,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")
@@ -641,9 +641,9 @@ class NarrativeArcQueryHandler:
         try:
             from uuid import UUID
 
-            arc_id = query.arc_id
-            if isinstance(arc_id, str):
-                arc_id = UUID(arc_id)
+            arc_id: UUID = (
+                UUID(query.arc_id) if isinstance(query.arc_id, str) else query.arc_id
+            )
             arc = self.repository.get_by_id(NarrativeId(arc_id))
             if not arc:
                 raise ValueError(f"Narrative arc {query.arc_id} not found")

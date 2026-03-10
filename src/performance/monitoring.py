@@ -808,7 +808,9 @@ def get_performance_monitor() -> PerformanceMonitor:
     return performance_monitor
 
 
-def initialize_performance_monitor(config: Optional[MonitoringConfig] = None) -> PerformanceMonitor:
+def initialize_performance_monitor(
+    config: Optional[MonitoringConfig] = None,
+) -> PerformanceMonitor:
     """Initialize the global performance monitor with configuration."""
     global performance_monitor
     if config is None:

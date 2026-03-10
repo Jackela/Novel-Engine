@@ -8,7 +8,7 @@ representing significant occurrences in narrative development and management.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 from uuid import UUID
 
 from ..value_objects.narrative_id import NarrativeId
@@ -254,7 +254,7 @@ class NarrativeFlowChanged(NarrativeEvent):
     Event raised when narrative flow is modified.
     """
 
-    affected_sequence_range: Optional[List[int]] = None  # [start, end]
+    affected_sequence_range: Optional[Sequence[int]] = None  # [start, end]
     flow_change_type: str = "restructure"  # restructure, reorder, insert, delete
     previous_flow_state: Optional[Dict[str, Any]] = None
     new_flow_state: Optional[Dict[str, Any]] = None

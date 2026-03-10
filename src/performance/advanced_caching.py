@@ -823,7 +823,9 @@ def get_cache_manager() -> IntelligentCacheManager:
     return cache_manager
 
 
-def initialize_cache_manager(config: Optional[CacheConfig] = None) -> IntelligentCacheManager:
+def initialize_cache_manager(
+    config: Optional[CacheConfig] = None,
+) -> IntelligentCacheManager:
     """Initialize the global cache manager with configuration."""
     global cache_manager
     if config is None:

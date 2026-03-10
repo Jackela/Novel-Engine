@@ -577,7 +577,9 @@ class PersonaAgentMemoryOptimizer:
                     "decision_history_pooling"
                 )
                 current_estimate = optimization_results.get("memory_saved_estimate", 0)
-                optimization_results["memory_saved_estimate"] = current_estimate + len(old_decisions) * 1024
+                optimization_results["memory_saved_estimate"] = (
+                    current_estimate + len(old_decisions) * 1024
+                )
 
             # Optimize context history
             if hasattr(agent, "context_history") and len(agent.context_history) > 50:
@@ -593,7 +595,9 @@ class PersonaAgentMemoryOptimizer:
                     "context_history_pooling"
                 )
                 current_estimate = optimization_results.get("memory_saved_estimate", 0)
-                optimization_results["memory_saved_estimate"] = current_estimate + len(old_contexts) * 512
+                optimization_results["memory_saved_estimate"] = (
+                    current_estimate + len(old_contexts) * 512
+                )
 
             # Register agent with weak reference for lifecycle management
             agent_key = f"persona_agent_{optimization_results['agent_id']}"
@@ -647,7 +651,10 @@ class DirectorAgentMemoryOptimizer:
 
     def optimize_director_agent(self, director: Any) -> Dict[str, Any]:
         """Optimize memory usage for DirectorAgent."""
-        optimization_results: Dict[str, Any] = {"optimizations_applied": [], "memory_saved_estimate": 0}
+        optimization_results: Dict[str, Any] = {
+            "optimizations_applied": [],
+            "memory_saved_estimate": 0,
+        }
 
         try:
             # Optimize world state history
@@ -751,7 +758,10 @@ async def setup_memory_optimization() -> Dict[str, Any]:
 
 async def get_comprehensive_memory_optimization_report() -> Dict[str, Any]:
     """Get comprehensive memory optimization report."""
-    report: Dict[str, Any] = {"timestamp": datetime.now().isoformat(), "status": "active"}
+    report: Dict[str, Any] = {
+        "timestamp": datetime.now().isoformat(),
+        "status": "active",
+    }
 
     if _global_memory_optimizer:
         report["memory_optimizer"] = _global_memory_optimizer.get_memory_report()

@@ -319,7 +319,9 @@ class PersonaAgentMemoryMonitor:
             persona_agent_instance
         )  # Weak reference to prevent circular refs
         self.agent_id = persona_agent_instance.agent_id
-        self.memory_history: deque[MemoryStats] = deque(maxlen=100)  # Keep last 100 memory measurements
+        self.memory_history: deque[MemoryStats] = deque(
+            maxlen=100
+        )  # Keep last 100 memory measurements
         self.last_cleanup = datetime.now()
         self.cleanup_interval = timedelta(minutes=15)  # Check every 15 minutes
         self.memory_threshold_mb = 50  # Alert if agent uses > 50MB

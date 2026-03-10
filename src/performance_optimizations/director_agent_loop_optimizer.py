@@ -24,7 +24,6 @@ import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import aiofiles
@@ -297,7 +296,9 @@ class OptimizedWorldStateTracker:
 
 
 # Remove the lru_cache since we handle caching manually
-OptimizedWorldStateTracker.get_recent_discoveries_for_agent = OptimizedWorldStateTracker.get_recent_discoveries_for_agent
+OptimizedWorldStateTracker.get_recent_discoveries_for_agent = (
+    OptimizedWorldStateTracker.get_recent_discoveries_for_agent
+)
 
 
 class AsyncCampaignLogger:

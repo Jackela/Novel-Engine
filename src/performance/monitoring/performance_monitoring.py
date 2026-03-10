@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import aiosqlite
 import psutil
@@ -129,7 +129,11 @@ class MetricsCollector:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
 
     def _add_metric_point(
-        self, name: str, value: float, metric_type: MetricType, tags: Optional[Dict[str, str]]
+        self,
+        name: str,
+        value: float,
+        metric_type: MetricType,
+        tags: Optional[Dict[str, str]],
     ) -> None:
         """Add a metric point to the collection."""
         point = MetricPoint(
@@ -823,7 +827,12 @@ class TimerContext:
         self.start_time = time.time()
         return self
 
-    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[type],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
         if self.start_time:
             duration = time.time() - self.start_time
             performance_monitor.collector.record_timer(

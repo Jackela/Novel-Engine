@@ -205,7 +205,11 @@ class PerformanceOptimizer:
         return result
 
     async def measure_performance(
-        self, operation_name: str, operation: Callable[..., Any], *args: Any, **kwargs: Any
+        self,
+        operation_name: str,
+        operation: Callable[..., Any],
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """Measure and record operation performance."""
         start_time = time.time()
@@ -244,7 +248,9 @@ class PerformanceOptimizer:
 performance_optimizer = PerformanceOptimizer()
 
 
-async def optimize_character_loading(character_factory: Any, character_name: str) -> Any:
+async def optimize_character_loading(
+    character_factory: Any, character_name: str
+) -> Any:
     """Optimized character loading with caching."""
     cache_key = f"character:{character_name}"
 
@@ -387,7 +393,9 @@ class AsyncSimulationManager:
         finally:
             # Store result for retrieval
             if simulation_id in self.active_simulations:
-                self.simulation_results[simulation_id] = self.active_simulations[simulation_id]
+                self.simulation_results[simulation_id] = self.active_simulations[
+                    simulation_id
+                ]
 
     async def get_simulation_status(
         self, simulation_id: str

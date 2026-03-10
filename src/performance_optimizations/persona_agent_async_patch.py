@@ -16,7 +16,7 @@ Wave 5.1.1 CRITICAL Performance Improvements:
 """
 
 import asyncio
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict
 
 import structlog
 
@@ -24,8 +24,11 @@ try:
     from .async_llm_integration import call_llm_async_wrapper
 except ImportError:
     # Fallback if async_llm_integration is not available
-    def call_llm_async_wrapper(agent_id: str, prompt: str, context: Dict[str, Any]) -> str:
+    def call_llm_async_wrapper(
+        agent_id: str, prompt: str, context: Dict[str, Any]
+    ) -> str:
         return "ACTION: observe\nTARGET: none\nREASONING: Async LLM not available."
+
 
 logger = structlog.get_logger(__name__)
 
@@ -93,7 +96,9 @@ class PersonaAgentAsyncPatch:
                 try:
                     return str(original_call_llm(prompt))
                 except Exception as fallback_error:
-                    logger.error(f"Agent {agent_id} fallback also failed: {fallback_error}")
+                    logger.error(
+                        f"Agent {agent_id} fallback also failed: {fallback_error}"
+                    )
                     return "ACTION: observe\nTARGET: none\nREASONING: System error - using safe observation mode."
 
         # Replace the method
@@ -120,11 +125,15 @@ class PersonaAgentAsyncPatch:
             persona_agent_instance, "_llm_enhanced_decision_making", None
         )
         if not original_method:
-            logger.warning(f"Agent {agent_id} does not have _llm_enhanced_decision_making method")
+            logger.warning(
+                f"Agent {agent_id} does not have _llm_enhanced_decision_making method"
+            )
             return
 
         def optimized_enhanced_decision_making(
-            world_state_update: Any, situation_assessment: Dict[str, Any], available_actions: Any
+            world_state_update: Any,
+            situation_assessment: Dict[str, Any],
+            available_actions: Any,
         ) -> Any:
             """
             Optimized version of LLM-enhanced decision making with caching and performance improvements.
@@ -132,7 +141,9 @@ class PersonaAgentAsyncPatch:
             try:
                 # Quick validation to avoid unnecessary LLM calls
                 if not available_actions:
-                    logger.debug(f"Agent {agent_id} no available actions - skipping LLM call")
+                    logger.debug(
+                        f"Agent {agent_id} no available actions - skipping LLM call"
+                    )
                     return None
 
                 # Check if this is a repeat situation (cache at agent level)
@@ -143,11 +154,16 @@ class PersonaAgentAsyncPatch:
                     persona_agent_instance._decision_cache = {}
 
                 if situation_key in persona_agent_instance._decision_cache:
-                    logger.debug(f"Agent {agent_id} using cached decision for similar situation")
-                    cached_decision = persona_agent_instance._decision_cache[situation_key]
+                    logger.debug(
+                        f"Agent {agent_id} using cached decision for similar situation"
+                    )
+                    cached_decision = persona_agent_instance._decision_cache[
+                        situation_key
+                    ]
                     # Validate cached decision is still applicable
                     if any(
-                        action.get("action_type") == getattr(cached_decision, 'action_type', None)
+                        action.get("action_type")
+                        == getattr(cached_decision, "action_type", None)
                         for action in available_actions
                     ):
                         return cached_decision
@@ -156,15 +172,23 @@ class PersonaAgentAsyncPatch:
                 try:
                     loop = asyncio.get_running_loop()
                     start_time = loop.time()
-                    result = original_method(world_state_update, situation_assessment, available_actions)
+                    result = original_method(
+                        world_state_update, situation_assessment, available_actions
+                    )
                     duration = loop.time() - start_time
-                    logger.debug(f"Agent {agent_id} decision making took {duration:.3f}s")
+                    logger.debug(
+                        f"Agent {agent_id} decision making took {duration:.3f}s"
+                    )
                 except RuntimeError:
                     # No event loop running
-                    result = original_method(world_state_update, situation_assessment, available_actions)
+                    result = original_method(
+                        world_state_update, situation_assessment, available_actions
+                    )
 
                 # Cache successful decisions
-                if result and len(persona_agent_instance._decision_cache) < 100:  # Limit cache size
+                if (
+                    result and len(persona_agent_instance._decision_cache) < 100
+                ):  # Limit cache size
                     persona_agent_instance._decision_cache[situation_key] = result
 
                 return result
@@ -172,7 +196,9 @@ class PersonaAgentAsyncPatch:
             except Exception as e:
                 logger.error(f"Agent {agent_id} enhanced decision making error: {e}")
                 # Fallback to basic algorithmic decision
-                fallback_method = getattr(persona_agent_instance, "_make_algorithmic_decision", None)
+                fallback_method = getattr(
+                    persona_agent_instance, "_make_algorithmic_decision", None
+                )
                 if fallback_method:
                     return fallback_method(available_actions)
                 return None
@@ -244,7 +270,9 @@ class PersonaAgentAsyncPatch:
             results["patches_applied"].append("async_llm_calls")
 
             # Apply enhanced decision making optimization
-            PersonaAgentAsyncPatch.patch_enhanced_decision_making(persona_agent_instance)
+            PersonaAgentAsyncPatch.patch_enhanced_decision_making(
+                persona_agent_instance
+            )
             results["patches_applied"].append("enhanced_decision_making")
 
             # Add performance monitoring
@@ -289,11 +317,15 @@ def apply_async_optimization_to_agent_collection(
 
     for agent_id, agent_instance in agents.items():
         try:
-            patch_result = PersonaAgentAsyncPatch.apply_full_performance_patch(agent_instance)
+            patch_result = PersonaAgentAsyncPatch.apply_full_performance_patch(
+                agent_instance
+            )
             results["patch_results"][agent_id] = patch_result
 
             if patch_result.get("success", False):
-                results["successfully_patched"] = results.get("successfully_patched", 0) + 1
+                results["successfully_patched"] = (
+                    results.get("successfully_patched", 0) + 1
+                )
             else:
                 results["failed_patches"] = results.get("failed_patches", 0) + 1
 
