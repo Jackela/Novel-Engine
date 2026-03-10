@@ -49,17 +49,25 @@ from .domain.value_objects.character_stats import CharacterStats
 from .domain.value_objects.skills import Skills
 
 # Infrastructure Layer Exports (conditional import due to platform naming conflict)
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .infrastructure.persistence.character_models import Base as CharacterBase
+    from .infrastructure.repositories.character_repository import (
+        SQLAlchemyCharacterRepository,
+    )
+
 try:
     from .infrastructure.persistence.character_models import Base as CharacterBase
     from .infrastructure.repositories.character_repository import (
         SQLAlchemyCharacterRepository,
     )
 
-    INFRASTRUCTURE_AVAILABLE = True
+    INFRASTRUCTURE_AVAILABLE: bool = True
 except ImportError as e:
     # Handle gracefully if SQLAlchemy imports fail due to platform naming conflict
-    SQLAlchemyCharacterRepository = None
-    CharacterBase = None
+    SQLAlchemyCharacterRepository = None  # type: ignore[assignment,misc]
+    CharacterBase = None  # type: ignore[assignment,misc]
     INFRASTRUCTURE_AVAILABLE = False
     import warnings
 

@@ -232,7 +232,7 @@ class CharacterStatsORM(Base):
     @validates(
         "strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"
     )
-    def validate_ability_score(self, key, score) -> None:
+    def validate_ability_score(self, key: str, score: Any) -> Any:
         if not 1 <= score <= 30:
             raise ValueError(f"Ability score {key} must be between 1 and 30")
         return score
@@ -303,7 +303,8 @@ class CharacterSkillsORM(Base):
             return None
 
         category_skills = self.skill_groups.get(category, {})
-        return category_skills.get(skill_name.lower())
+        result: Optional[Dict[str, Any]] = category_skills.get(skill_name.lower())
+        return result
 
     def set_skill(
         self,
@@ -311,11 +312,11 @@ class CharacterSkillsORM(Base):
         skill_name: str,
         proficiency_level: int,
         modifier: int = 0,
-        description: str = None,
+        description: Optional[str] = None,
     ) -> None:
         """Set a specific skill in the skill groups."""
         if not self.skill_groups:
-            self.skill_groups = {}
+            self.skill_groups = {}  # type: ignore[assignment]
 
         if category not in self.skill_groups:
             self.skill_groups[category] = {}
@@ -331,7 +332,8 @@ class CharacterSkillsORM(Base):
         if not self.skill_groups:
             return {}
 
-        return self.skill_groups.get(category, {})
+        result: Dict[str, Dict[str, Any]] = self.skill_groups.get(category, {}) if self.skill_groups else {}
+        return result
 
 
 class CharacterEventORM(Base):

@@ -284,7 +284,7 @@ class CharacterReaction:
             character_id=str(data["character_id"]),
             event_id=str(data["event_id"]),
             reaction_type=reaction_type,
-            intensity=int(data["intensity"]),
+            intensity=int(data.get("intensity", 5)) if data.get("intensity") is not None else 5,  # type: ignore[call-overload]
             narrative=str(data["narrative"]),
             memory_created=bool(data.get("memory_created", False)),
             created_at=created_at,

@@ -189,7 +189,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     .exists()
                 ).scalar()
 
-                return exists
+                return bool(exists)
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -289,7 +289,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive is True)
+                    .filter(CharacterORM.is_alive == True)
                     .all()
                 )
 
@@ -371,7 +371,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                         else:
                             query = query.filter(getattr(CharacterORM, field) == value)
 
-                return query.count()
+                return int(query.count())
 
         except SQLAlchemyError as e:
             self.logger.error("count_characters_by_criteria_failed", error=str(e))
@@ -467,7 +467,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 # Alive characters
                 alive_characters = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive is True)
+                    .filter(CharacterORM.is_alive == True)
                     .count()
                 )
 
@@ -543,7 +543,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 ).delete(synchronize_session=False)
 
                 session.commit()
-                return deleted_count
+                return int(deleted_count)
 
         except SQLAlchemyError as e:
             self.logger.error("delete_multiple_characters_failed", error=str(e))
@@ -561,7 +561,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                     .scalar()
                 )
 
-                return version
+                return version if version is None else int(version)
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -701,14 +701,14 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         self, character_orm: CharacterORM, character: Character, session: Session
     ) -> None:
         """Update existing ORM model from domain object."""
-        # Update main character fields
-        character_orm.name = character.profile.name
-        character_orm.gender = character.profile.gender.value
-        character_orm.race = character.profile.race.value
-        character_orm.character_class = character.profile.character_class.value
-        character_orm.age = character.profile.age
-        character_orm.level = character.profile.level
-        character_orm.is_alive = character.is_alive()
+        # Update main character fields (type: ignore for SQLAlchemy Column assignments)
+        character_orm.name = character.profile.name  # type: ignore[assignment]
+        character_orm.gender = character.profile.gender.value  # type: ignore[assignment]
+        character_orm.race = character.profile.race.value  # type: ignore[assignment]
+        character_orm.character_class = character.profile.character_class.value  # type: ignore[assignment]
+        character_orm.age = character.profile.age  # type: ignore[assignment]
+        character_orm.level = character.profile.level  # type: ignore[assignment]
+        character_orm.is_alive = character.is_alive()  # type: ignore[assignment]
 
         # Update profile if exists, create if not
         if not character_orm.profile:
@@ -807,12 +807,12 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
         )
 
         profile = CharacterProfile(
-            name=character_orm.name,
-            gender=Gender(character_orm.gender),
-            race=CharacterRace(character_orm.race),
-            character_class=CharacterClass(character_orm.character_class),
-            age=character_orm.age,
-            level=character_orm.level,
+            name=str(character_orm.name),
+            gender=Gender(str(character_orm.gender)),
+            race=CharacterRace(str(character_orm.race)),
+            character_class=CharacterClass(str(character_orm.character_class)),
+            age=int(character_orm.age),
+            level=int(character_orm.level),
             physical_traits=physical_traits,
             personality_traits=personality_traits,
             background=background,
@@ -887,19 +887,19 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
 
         skills = Skills(
             skill_groups=skill_groups,
-            languages=character_orm.skills.languages or [],
-            specializations=character_orm.skills.specializations or [],
+            languages=set(character_orm.skills.languages or []),
+            specializations=dict(character_orm.skills.specializations or {}),
         )
 
-        # Create the character
+        # Create the character (SQLAlchemy returns actual values, not Column wrappers)
         character = Character(
-            character_id=CharacterID(character_orm.character_id),
+            character_id=CharacterID(str(character_orm.character_id)),
             profile=profile,
             stats=stats,
             skills=skills,
-            version=character_orm.version,
-            created_at=character_orm.created_at,
-            updated_at=character_orm.updated_at,
+            version=int(character_orm.version),
+            created_at=character_orm.created_at,  # type: ignore[arg-type]
+            updated_at=character_orm.updated_at,  # type: ignore[arg-type]
         )
 
         return character

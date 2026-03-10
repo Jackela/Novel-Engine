@@ -71,7 +71,7 @@ class CharacterApplicationService:
         intelligence: int = 10,
         wisdom: int = 10,
         charisma: int = 10,
-        **optional_data,
+        **optional_data: Any,
     ) -> Result[CharacterID, Error]:
         """
         Create a new character.
@@ -194,7 +194,7 @@ class CharacterApplicationService:
             )
 
     async def update_character_stats(
-        self, character_id: str, **stat_updates
+        self, character_id: str, **stat_updates: Any
     ) -> Result[None, Error]:
         """
         Update character statistics.
@@ -854,7 +854,11 @@ class CharacterApplicationService:
         try:
             character_result = await self.get_character(character_id)
             if character_result.is_error:
-                return character_result
+                # Convert Result[Character, Error] to Result[Optional[dict], Error]
+                error = character_result.error
+                if error is not None:
+                    return Err(error)
+                return Err(Error(code="UNKNOWN_ERROR", message="Unknown error occurred"))
 
             character = character_result.value
             if character is None:
@@ -937,7 +941,9 @@ class CharacterApplicationService:
                             details={"created_so_far": len(character_ids)},
                         )
                     )
-                character_ids.append(result.value)
+                char_id = result.value
+                if char_id is not None:
+                    character_ids.append(char_id)
 
             self.logger.info("multiple_characters_created", count=len(character_ids))
             return Ok(character_ids)

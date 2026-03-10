@@ -15,6 +15,16 @@ The persistence layer bridges the domain model and the database,
 providing object-relational mapping and data access capabilities.
 """
 
+from typing import TYPE_CHECKING, Optional, Type
+
+if TYPE_CHECKING:
+    from .character_models import (
+        CharacterORM,
+        CharacterProfileORM,
+        CharacterSkillsORM,
+        CharacterStatsORM,
+    )
+
 # Conditional import to handle platform naming conflict
 try:
     from .character_models import (
@@ -26,10 +36,10 @@ try:
 
 except ImportError:
     # Handle platform naming conflict gracefully
-    CharacterORM = None
-    CharacterProfileORM = None
-    CharacterStatsORM = None
-    CharacterSkillsORM = None
+    CharacterORM = None  # type: ignore[assignment,misc]
+    CharacterProfileORM = None  # type: ignore[assignment,misc]
+    CharacterStatsORM = None  # type: ignore[assignment,misc]
+    CharacterSkillsORM = None  # type: ignore[assignment,misc]
 
 
 def models_available() -> bool:

@@ -15,13 +15,18 @@ The repository implementations bridge the domain and infrastructure layers,
 providing concrete persistence capabilities for domain aggregates.
 """
 
+from typing import TYPE_CHECKING, Optional, Type
+
+if TYPE_CHECKING:
+    from .character_repository import SQLAlchemyCharacterRepository
+
 # Conditional import to handle platform naming conflict
 try:
     from .character_repository import SQLAlchemyCharacterRepository
 
 except ImportError:
     # Handle platform naming conflict gracefully
-    SQLAlchemyCharacterRepository = None
+    SQLAlchemyCharacterRepository = None  # type: ignore[assignment,misc]
 
 
 def repository_available() -> bool:
