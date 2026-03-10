@@ -58,10 +58,18 @@ class PerformanceMetrics:
         try:
             # Cast to specific types for safe operations
             total: int = cast(int, self._coordination_stats["total_coordinations"])
-            successful: int = cast(int, self._coordination_stats["successful_coordinations"])
-            quality_sum: float = cast(float, self._coordination_stats["coordination_quality_sum"])
-            coord_types: Dict[str, int] = cast(Dict[str, int], self._coordination_stats["coordination_types"])
-            agent_interactions: Dict[str, int] = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
+            successful: int = cast(
+                int, self._coordination_stats["successful_coordinations"]
+            )
+            quality_sum: float = cast(
+                float, self._coordination_stats["coordination_quality_sum"]
+            )
+            coord_types: Dict[str, int] = cast(
+                Dict[str, int], self._coordination_stats["coordination_types"]
+            )
+            agent_interactions: Dict[str, int] = cast(
+                Dict[str, int], self._coordination_stats["agent_interactions"]
+            )
 
             total += 1
             self._coordination_stats["total_coordinations"] = total
@@ -136,17 +144,21 @@ class PerformanceMetrics:
         try:
             total = cast(int, self._coordination_stats["total_coordinations"])
             successful = cast(int, self._coordination_stats["successful_coordinations"])
-            quality_sum = cast(float, self._coordination_stats["coordination_quality_sum"])
-            agent_interactions = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
-            coord_types = cast(Dict[str, int], self._coordination_stats["coordination_types"])
+            quality_sum = cast(
+                float, self._coordination_stats["coordination_quality_sum"]
+            )
+            agent_interactions = cast(
+                Dict[str, int], self._coordination_stats["agent_interactions"]
+            )
+            coord_types = cast(
+                Dict[str, int], self._coordination_stats["coordination_types"]
+            )
 
             return {
                 "total_coordinations": total,
                 "successful_coordinations": successful,
                 "success_rate": (successful / max(1, total)) * 100,
-                "avg_quality_score": (
-                    quality_sum / max(1, successful)
-                ),
+                "avg_quality_score": (quality_sum / max(1, successful)),
                 "most_active_agents": sorted(
                     agent_interactions.items(),
                     key=lambda x: x[1],
@@ -163,7 +175,9 @@ class PerformanceMetrics:
         try:
             total = cast(int, self._coordination_stats["total_coordinations"])
             successful = cast(int, self._coordination_stats["successful_coordinations"])
-            quality_sum = cast(float, self._coordination_stats["coordination_quality_sum"])
+            quality_sum = cast(
+                float, self._coordination_stats["coordination_quality_sum"]
+            )
 
             if not total:
                 return 0.0
@@ -322,7 +336,9 @@ class PerformanceMetrics:
     def get_agent_interaction_analysis(self) -> Dict[str, Any]:
         """Analyze agent interaction patterns."""
         try:
-            interactions = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
+            interactions = cast(
+                Dict[str, int], self._coordination_stats["agent_interactions"]
+            )
 
             if not interactions:
                 return {"status": "no_data"}

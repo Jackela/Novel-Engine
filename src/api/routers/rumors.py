@@ -171,7 +171,7 @@ def _sort_rumors(
     elif sort_by == SortByEnum.SPREAD:
         # Sort by spread_count descending (most spread first)
         return sorted(rumors, key=lambda r: r.get("spread_count", 0), reverse=True)
-    return rumors
+    return rumors  # type: ignore[unreachable]
 
 
 def _dict_to_response(rumor: Dict[str, Any]) -> RumorResponse:

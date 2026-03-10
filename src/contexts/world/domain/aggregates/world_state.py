@@ -532,7 +532,10 @@ class WorldState(Entity):
         advance_result = self.calendar.advance(days)
         if advance_result.is_error:
             # Return the error wrapped in the correct Result type
-            return Err(advance_result.error)
+            err = advance_result.error
+            if err is None:
+                err = ValueError("Calendar advance failed with unknown error")
+            return Err(err)
 
         previous_calendar = self.calendar
         updated_calendar = advance_result.value

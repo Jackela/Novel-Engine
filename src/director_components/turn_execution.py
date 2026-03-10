@@ -275,8 +275,10 @@ class TurnExecutionEngine:
 
                     # Update agent activity metrics
                     response_time = result.get("response_time", 0.0)
-                    if hasattr(self.agent_manager, 'update_agent_activity'):
-                        await self.agent_manager.update_agent_activity(agent_id, response_time)
+                    if hasattr(self.agent_manager, "update_agent_activity"):
+                        await self.agent_manager.update_agent_activity(
+                            agent_id, response_time
+                        )
                 else:
                     self.logger.warning(
                         f"Agent {agent_id} decision failed: {result.get('error', 'Unknown')}"

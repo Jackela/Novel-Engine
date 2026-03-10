@@ -177,7 +177,9 @@ class AgentLifecycleManager:
                 agent_validation = await self._validate_single_agent(agent_id, agent)
 
                 valid_agents: List[str] = validation_results["valid_agents"]
-                invalid_agents: List[Dict[str, Any]] = validation_results["invalid_agents"]
+                invalid_agents: List[Dict[str, Any]] = validation_results[
+                    "invalid_agents"
+                ]
                 if agent_validation["valid"]:
                     valid_agents.append(agent_id)
                 else:

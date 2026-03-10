@@ -53,7 +53,7 @@ class SecurityHeadersConfig:
 
     # Content Security Policy
     enable_csp: bool = True
-    csp_directives: Dict[CSPDirective, List[str]] = None
+    csp_directives: Optional[Dict[CSPDirective, List[str]]] = None
     csp_report_only: bool = False
     csp_report_uri: Optional[str] = None
 
@@ -173,7 +173,9 @@ class SecurityHeaders:
 
     def _build_csp_header(self) -> str:
         """STANDARD CSP HEADER CONSTRUCTION"""
-        csp_parts: list[Any] = []
+        csp_parts: list[str] = []
+        if self.config.csp_directives is None:
+            return ""
         for directive, values in self.config.csp_directives.items():
             if values:  # Only add directive if it has values
                 directive_str = f"{directive.value} {' '.join(values)}"
@@ -188,7 +190,9 @@ class SecurityHeaders:
 
     def _build_permissions_policy_header(self) -> str:
         """STANDARD PERMISSIONS POLICY HEADER CONSTRUCTION"""
-        policy_parts: list[Any] = []
+        policy_parts: list[str] = []
+        if self.config.permissions_policy is None:
+            return ""
         for feature, allowlist in self.config.permissions_policy.items():
             if allowlist == "none":
                 policy_parts.append(f"{feature}=()")
@@ -290,7 +294,7 @@ class SecurityHeaders:
             return None
 
         # Custom headers
-        if header_name in self.config.custom_headers:
+        if self.config.custom_headers and header_name in self.config.custom_headers:
             return self.config.custom_headers[header_name]
 
         # Static headers
@@ -379,8 +383,9 @@ class SecurityHeaders:
         response.headers["X-Content-Security"] = "Validated"
 
         # Custom headers
-        for header_name, header_value in self.config.custom_headers.items():
-            response.headers[header_name] = header_value
+        if self.config.custom_headers:
+            for header_name, header_value in self.config.custom_headers.items():
+                response.headers[header_name] = header_value
 
         # Remove potentially sensitive headers
         headers_to_remove = ["X-Powered-By", "Server-Timing"]
@@ -400,16 +405,16 @@ class SecurityHeaders:
         if self.config.force_https and request.url.scheme != "https" and not is_local:
             # In production, this would be handled by a reverse proxy
             # but we can log the attempt
+            client_host = request.client.host if request.client else "unknown"
             logger.warning(
                 f"INSECURE REQUEST DETECTED: HTTP request to {request.url.path} | "
-                f"Client: {request.client.host if request.client else 'unknown'}"
+                f"Client: {client_host}"
             )
             return False
 
         # Validate Origin header for state-changing requests
         if request.method in ["POST", "PUT", "PATCH", "DELETE"]:
             origin = request.headers.get("origin")
-            request.headers.get("referer")
 
             if self.config.enable_cors_security and self.config.allowed_origins:
                 if origin and origin not in self.config.allowed_origins:
@@ -420,12 +425,12 @@ class SecurityHeaders:
                     return False
 
         # Validate Host header
-        host = request.headers.get("host")
-        if host:
+        host_header = request.headers.get("host")
+        if host_header:
             # Basic host header validation
-            if "localhost" not in host and "127.0.0.1" not in host:
+            if "localhost" not in host_header and "127.0.0.1" not in host_header:
                 # In production, validate against allowed hosts
-                logger.debug("Host header validation skipped for %s", host)
+                logger.debug("Host header validation skipped for %s", host_header)
 
         return True
 
@@ -433,13 +438,13 @@ class SecurityHeaders:
 class SecurityHeadersMiddleware:
     """STANDARD SECURITY HEADERS MIDDLEWARE (ASGI)"""
 
-    def __init__(self, app, security_headers: SecurityHeaders) -> None:
+    def __init__(self, app: Any, security_headers: SecurityHeaders) -> None:
         self.app = app
         self.security_headers = security_headers
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Dict[str, Any], receive: Any, send: Any) -> None:
         """STANDARD SECURITY HEADERS APPLICATION"""
-        if scope["type"] != "http":
+        if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
 
@@ -515,8 +520,8 @@ class SecurityHeadersMiddleware:
 
 
 def create_security_headers_middleware(
-    app, config: Optional[SecurityHeadersConfig] = None
-) -> None:
+    app: Any, config: Optional[SecurityHeadersConfig] = None
+) -> SecurityHeadersMiddleware:
     """STANDARD SECURITY HEADERS MIDDLEWARE CREATOR"""
     if config is None:
         config = SecurityHeadersConfig()

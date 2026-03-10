@@ -203,7 +203,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             }
         )
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Any]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Any]
+    ) -> Response:
         """
         Process HTTP request and collect metrics.
 

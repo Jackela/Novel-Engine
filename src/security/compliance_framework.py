@@ -730,7 +730,7 @@ class ComplianceEngine:
 
 
 # Example usage and testing
-async def main():
+async def main() -> None:
     """Demonstrate compliance framework"""
     logger.info("Starting Novel Engine Compliance Framework Demo")
 
@@ -794,6 +794,7 @@ async def main():
             event_type="input_validation_failed",
             severity=RiskLevel.HIGH,
             source_ip="10.0.0.50",
+            user_id=None,
             endpoint="/api/search",
             description="SQL injection attempt detected: UNION SELECT",
         ),

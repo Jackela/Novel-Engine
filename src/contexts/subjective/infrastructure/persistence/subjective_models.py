@@ -23,7 +23,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, relationship
 
-from core_platform.persistence.models import BaseModel, FullAuditModel  # type: ignore[no-redef]
+from core_platform.persistence.models import (  # type: ignore[no-redef]
+    BaseModel,
+    FullAuditModel,
+)
 
 
 class TurnBriefORM(FullAuditModel):

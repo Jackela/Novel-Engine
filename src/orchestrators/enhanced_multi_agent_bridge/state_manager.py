@@ -145,7 +145,9 @@ class StateManager:
 
         # Analyze relationship tensions
         relationship_tensions: List[Dict[str, Any]] = analysis["relationship_tensions"]
-        dialogue_opportunities: List[Dict[str, Any]] = analysis["dialogue_opportunities"]
+        dialogue_opportunities: List[Dict[str, Any]] = analysis[
+            "dialogue_opportunities"
+        ]
         for agent_id, relationships in agent_relationships.items():
             for other_agent, relationship_value in relationships.items():
                 if relationship_value < -0.3:  # High tension
@@ -231,6 +233,24 @@ class StateManager:
         self.narrative_intelligence["ai_insights"].append(
             {"timestamp": datetime.now().isoformat(), "insight": insight_data}
         )
+
+    def identify_dialogue_opportunities(
+        self,
+        active_dialogues: Dict[str, Any],
+        narrative_intelligence: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """Identify potential dialogue opportunities based on narrative state."""
+        opportunities: List[Dict[str, Any]] = []
+        # Basic implementation - can be enhanced with more sophisticated logic
+        if narrative_intelligence.get("story_progression"):
+            opportunities.append(
+                {
+                    "type": "story_advancement",
+                    "priority": "high",
+                    "description": "Dialogue to advance story",
+                }
+            )
+        return opportunities
 
 
 __all__ = ["StateManager"]

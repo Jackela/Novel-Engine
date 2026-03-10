@@ -39,7 +39,9 @@ class AgentManagerProtocol(Protocol):
         pass
 
     @abstractmethod
-    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0) -> None:
+    async def update_agent_activity(
+        self, agent_id: str, response_time: float = 0.0
+    ) -> None:
         """Update agent activity metrics."""
         pass
 

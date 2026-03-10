@@ -7,15 +7,15 @@ Horoscope API Router - 星座运势API路由
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
 from typing import Optional
 
+from fastapi import APIRouter, Query
+from pydantic import BaseModel, Field
+
 from src.contexts.knowledge.services.horoscope_service import (
+    HoroscopeData,
     HoroscopeService,
     ZodiacSign,
-    HoroscopePeriod,
-    HoroscopeData,
 )
 
 router = APIRouter(
@@ -27,6 +27,7 @@ router = APIRouter(
 
 class FortuneResponse(BaseModel):
     """运势响应模型"""
+
     overall: int = Field(..., description="综合运势 (1-100)", ge=1, le=100)
     love: int = Field(..., description="爱情运势", ge=1, le=100)
     career: int = Field(..., description="事业运势", ge=1, le=100)
@@ -36,6 +37,7 @@ class FortuneResponse(BaseModel):
 
 class HoroscopeResponse(BaseModel):
     """星座运势响应模型"""
+
     sign: str = Field(..., description="星座英文名")
     sign_cn: str = Field(..., description="星座中文名")
     period: str = Field(..., description="查询周期")
@@ -90,11 +92,11 @@ def _convert_to_response(data: HoroscopeData) -> HoroscopeResponse:
 @router.get("/daily/{sign}", response_model=HoroscopeResponse)
 async def get_daily_horoscope(
     sign: ZodiacSign,
-    date: Optional[str] = Query(None, description="日期 (YYYY-MM-DD, 默认今天)")
+    date: Optional[str] = Query(None, description="日期 (YYYY-MM-DD, 默认今天)"),
 ):
     """
     获取每日星座运势
-    
+
     - **sign**: 星座 (aries, taurus, gemini, cancer, leo, virgo, libra, scorpio, sagittarius, capricorn, aquarius, pisces)
     - **date**: 可选，日期格式 YYYY-MM-DD
     """
@@ -106,11 +108,11 @@ async def get_daily_horoscope(
 @router.get("/weekly/{sign}", response_model=HoroscopeResponse)
 async def get_weekly_horoscope(
     sign: ZodiacSign,
-    week: Optional[str] = Query(None, description="周次 (YYYY-WNN, 默认本周)")
+    week: Optional[str] = Query(None, description="周次 (YYYY-WNN, 默认本周)"),
 ):
     """
     获取每周星座运势
-    
+
     - **sign**: 星座
     - **week**: 可选，周次格式 YYYY-WNN (如 2024-W01)
     """
@@ -122,11 +124,11 @@ async def get_weekly_horoscope(
 @router.get("/monthly/{sign}", response_model=HoroscopeResponse)
 async def get_monthly_horoscope(
     sign: ZodiacSign,
-    month: Optional[str] = Query(None, description="月份 (YYYY-MM, 默认本月)")
+    month: Optional[str] = Query(None, description="月份 (YYYY-MM, 默认本月)"),
 ):
     """
     获取每月星座运势
-    
+
     - **sign**: 星座
     - **month**: 可选，月份格式 YYYY-MM
     """
@@ -138,11 +140,11 @@ async def get_monthly_horoscope(
 @router.get("/yearly/{sign}", response_model=HoroscopeResponse)
 async def get_yearly_horoscope(
     sign: ZodiacSign,
-    year: Optional[str] = Query(None, description="年份 (YYYY, 默认今年)")
+    year: Optional[str] = Query(None, description="年份 (YYYY, 默认今年)"),
 ):
     """
     获取每年星座运势
-    
+
     - **sign**: 星座
     - **year**: 可选，年份格式 YYYY
     """
@@ -154,11 +156,11 @@ async def get_yearly_horoscope(
 @router.get("/by-birthday", response_model=HoroscopeResponse)
 async def get_horoscope_by_birthday(
     month: int = Query(..., description="出生月份 (1-12)", ge=1, le=12),
-    day: int = Query(..., description="出生日期 (1-31)", ge=1, le=31)
+    day: int = Query(..., description="出生日期 (1-31)", ge=1, le=31),
 ):
     """
     根据生日获取今日运势
-    
+
     - **month**: 出生月份 (1-12)
     - **day**: 出生日期 (1-31)
     """
@@ -176,7 +178,7 @@ async def list_zodiac_signs():
             {
                 "key": sign.value,
                 "name": SIGN_NAME_MAP[sign],
-                "date_range": _get_date_range(sign)
+                "date_range": _get_date_range(sign),
             }
             for sign in ZodiacSign
         ]

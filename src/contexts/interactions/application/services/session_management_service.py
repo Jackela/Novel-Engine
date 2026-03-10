@@ -22,10 +22,8 @@ from ....interactions.domain.value_objects.negotiation_status import (
     TerminationReason,
 )
 from .shared.errors import (
-    AuthorizationError,
     NotFoundError,
     SessionError,
-    ValidationError,
 )
 
 

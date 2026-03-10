@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO, Union
+from typing import Any, Dict, List, Optional, TextIO
 
 import structlog
 
@@ -350,7 +350,9 @@ class CampaignLoggingService:
             avg_entries_per_minute = len(recent_entries) / max(1, session_duration / 60)
 
             entries_by_level: Dict[str, int] = self._log_statistics["entries_by_level"]  # type: ignore
-            entries_by_category: Dict[str, int] = self._log_statistics["entries_by_category"]  # type: ignore
+            entries_by_category: Dict[str, int] = self._log_statistics[
+                "entries_by_category"
+            ]  # type: ignore
             return {
                 "session_id": self.session_id,
                 "session_duration": session_duration,
@@ -438,10 +440,16 @@ class CampaignLoggingService:
         total_entries: int = self._log_statistics["total_entries"]  # type: ignore
         self._log_statistics["total_entries"] = total_entries + 1
         entries_by_level: Dict[str, int] = self._log_statistics["entries_by_level"]  # type: ignore
-        entries_by_level[entry.level.value] = entries_by_level.get(entry.level.value, 0) + 1
+        entries_by_level[entry.level.value] = (
+            entries_by_level.get(entry.level.value, 0) + 1
+        )
         self._log_statistics["entries_by_level"] = entries_by_level
-        entries_by_category: Dict[str, int] = self._log_statistics["entries_by_category"]  # type: ignore
-        entries_by_category[entry.category.value] = entries_by_category.get(entry.category.value, 0) + 1
+        entries_by_category: Dict[str, int] = self._log_statistics[
+            "entries_by_category"
+        ]  # type: ignore
+        entries_by_category[entry.category.value] = (
+            entries_by_category.get(entry.category.value, 0) + 1
+        )
         self._log_statistics["entries_by_category"] = entries_by_category
 
         # Update error count for last hour

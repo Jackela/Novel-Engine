@@ -8,7 +8,7 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 
 import functools
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 from uuid import UUID
 
 import structlog

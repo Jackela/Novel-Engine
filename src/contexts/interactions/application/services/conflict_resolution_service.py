@@ -13,7 +13,6 @@ from ....interactions.domain.value_objects.negotiation_party import NegotiationP
 from ....interactions.domain.value_objects.proposal_response import ProposalResponse
 from .shared.errors import (
     ConflictError,
-    ValidationError,
 )
 
 

@@ -14,7 +14,7 @@ import time
 import weakref
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import aiosqlite
 import structlog

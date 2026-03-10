@@ -22,11 +22,14 @@ import ipaddress
 import json
 import os
 import time
+from typing import Any
 
 try:
+    # from types import ModuleType  # noqa: F401
+
     import aioredis
 except ImportError:
-    aioredis = None
+    aioredis = None  # type: ignore[misc]
 
 try:
     import aiosqlite
@@ -41,10 +44,10 @@ except ImportError:
 
     # Stub implementation when geoip2 is not available and mocks are allowed
     class MockGeoIP2Database:
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def city(self, ip) -> None:
+        def city(self, ip: str) -> Any:
             class MockCity:
                 country = type("", (), {"iso_code": "US"})()
                 city = type("", (), {"name": "Unknown"})()
@@ -53,7 +56,7 @@ except ImportError:
 
     geoip2 = type(
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
-    )()
+    )()  # type: ignore[misc]
 import logging
 import re
 import secrets
@@ -190,12 +193,12 @@ class SecurityMetrics:
     """Real-time Security Metrics"""
 
     def __init__(self) -> None:
-        self.requests_per_minute = defaultdict(int)
-        self.blocked_ips = set()
-        self.threat_events = deque(maxlen=1000)
-        self.compliance_violations = defaultdict(int)
-        self.false_positives = 0
-        self.true_positives = 0
+        self.requests_per_minute: Dict[str, int] = defaultdict(int)
+        self.blocked_ips: Set[str] = set()
+        self.threat_events: deque = deque(maxlen=1000)
+        self.compliance_violations: Dict[str, int] = defaultdict(int)
+        self.false_positives: int = 0
+        self.true_positives: int = 0
 
 
 class EnterpriseSecurityManager:
@@ -218,15 +221,15 @@ class EnterpriseSecurityManager:
         self.compliance_frameworks = compliance_frameworks or [ComplianceFramework.GDPR]
 
         # Initialize components
-        self.redis_client = None
-        self.geoip_reader = None
+        self.redis_client: Optional[Any] = None
+        self.geoip_reader: Optional[Any] = None
         self.metrics = SecurityMetrics()
         self.behavioral_profiles = {}
         self.threat_intelligence_cache = {}
 
         # Rate limiting stores
-        self.rate_limits = defaultdict(lambda: defaultdict(deque))
-        self.ip_reputation_cache = {}
+        self.rate_limits: Dict[str, Any] = defaultdict(lambda: defaultdict(deque))
+        self.ip_reputation_cache: Dict[str, Any] = {}
 
         # Security rules engine
         self.security_rules = self._initialize_security_rules()
@@ -502,6 +505,13 @@ class EnterpriseSecurityManager:
         window_day = int(current_time // 86400)
 
         # Use Redis for distributed rate limiting
+        if self.redis_client is None:
+            return {
+                "allowed": True,
+                "current_counts": {"minute": 0, "hour": 0, "day": 0},
+                "limits_exceeded": [],
+            }
+
         pipe = self.redis_client.pipeline()
 
         # Check per-minute rate limit
@@ -545,6 +555,14 @@ class EnterpriseSecurityManager:
 
     async def _check_ip_reputation(self, ip_address: str) -> Dict[str, Any]:
         """Check IP reputation against threat intelligence"""
+        # Initialize default reputation data
+        reputation_data: Dict[str, Any] = {
+            "threat_level": ThreatLevel.LOW,
+            "reputation_score": 0.0,
+            "threat_categories": [],
+            "is_known_threat": False,
+        }
+
         # Check local cache first
         if ip_address in self.ip_reputation_cache:
             cached = self.ip_reputation_cache[ip_address]
@@ -552,27 +570,28 @@ class EnterpriseSecurityManager:
                 return cached["data"]
 
         # Check Redis cache
-        redis_key = f"ip_reputation:{ip_address}"
-        cached_data = await self.redis_client.get(redis_key)
+        if self.redis_client is not None:
+            redis_key = f"ip_reputation:{ip_address}"
+            cached_data = await self.redis_client.get(redis_key)
 
-        if cached_data:
-            reputation_data = json.loads(cached_data)
-        else:
-            # Analyze IP reputation
-            reputation_data = await self._analyze_ip_reputation(ip_address)
+            if cached_data:
+                reputation_data = json.loads(cached_data)
+            else:
+                # Analyze IP reputation
+                reputation_data = await self._analyze_ip_reputation(ip_address)
 
-            # Cache result
-            await self.redis_client.setex(
-                redis_key,
-                3600 * 24,  # 24 hours
-                json.dumps(reputation_data, default=str),
-            )
+                # Cache result
+                await self.redis_client.setex(
+                    redis_key,
+                    3600 * 24,  # 24 hours
+                    json.dumps(reputation_data, default=str),
+                )
 
-        # Update local cache
-        self.ip_reputation_cache[ip_address] = {
-            "timestamp": datetime.now(timezone.utc),
-            "data": reputation_data,
-        }
+            # Update local cache
+            self.ip_reputation_cache[ip_address] = {
+                "timestamp": datetime.now(timezone.utc),
+                "data": reputation_data,
+            }
 
         return reputation_data
 
@@ -889,7 +908,7 @@ class EnterpriseSecurityManager:
         country_code: Optional[str],
         user_agent: str,
         request_category: str,
-    ):
+    ) -> None:
         """Update user's behavioral profile with new data"""
         try:
             profile = await self._get_behavioral_profile(user_id)
@@ -1006,7 +1025,7 @@ class EnterpriseSecurityManager:
         threat_indicators: List[str],
         automated_response: List[SecurityAction],
         evidence: Dict[str, Any],
-    ):
+    ) -> None:
         """Log enhanced security event"""
         event_id = secrets.token_urlsafe(16)
         event = SecurityEvent(
@@ -1062,6 +1081,9 @@ class EnterpriseSecurityManager:
 
     async def _send_security_alert(self, event: SecurityEvent) -> None:
         """Send real-time security alerts to administrators"""
+        if self.redis_client is None:
+            return
+
         alert_data = {
             "event_id": event.id,
             "severity": event.severity.value,
@@ -1147,7 +1169,7 @@ class EnterpriseSecurityManager:
         severity: ThreatLevel,
         created_by: str,
         expires_hours: Optional[int] = None,
-    ):
+    ) -> None:
         """Add IP to blacklist or whitelist"""
         expires_at = None
         if expires_hours:
@@ -1189,7 +1211,9 @@ def get_enterprise_security_manager() -> EnterpriseSecurityManager:
     return enterprise_security_manager
 
 
-async def initialize_enterprise_security_manager(**kwargs) -> EnterpriseSecurityManager:
+async def initialize_enterprise_security_manager(
+    **kwargs: Any,
+) -> EnterpriseSecurityManager:
     """Initialize the global enterprise security manager"""
     global enterprise_security_manager
     enterprise_security_manager = EnterpriseSecurityManager(**kwargs)

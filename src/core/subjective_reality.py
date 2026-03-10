@@ -221,7 +221,7 @@ class FogOfWarService:
     """迷雾战争服务 - 管理信息访问权限"""
 
     def __init__(self) -> None:
-        self.fog_states: Dict[str, FogOfWarState] = {}
+        self.fog_states: Dict[str, FogOfWarState] = dict()
         self.global_visibility_map: Dict[str, Set[str]] = defaultdict(
             set
         )  # location -> visible_agents
@@ -623,7 +623,7 @@ class TurnBriefFactory:
         """确定当前情境类型"""
 
         # 统计信息类型
-        info_categories: dict[KnowledgeCategory, int] = defaultdict(int)
+        info_categories: Dict[KnowledgeCategory, int] = defaultdict(int)
         for info in available_info:
             info_categories[info.category] += 1
 
@@ -645,11 +645,13 @@ class TurnBriefFactory:
             return ""
 
         # 按类别分组信息
-        categorized_info = defaultdict(list)
+        categorized_info: Dict[KnowledgeCategory, List[InformationFragment]] = (
+            defaultdict(list)
+        )
         for info in available_info[:5]:  # 只取前5个最重要的信息
             categorized_info[info.category].append(info)
 
-        summary_parts: list[Any] = []
+        summary_parts: List[str] = []
         # 生成每个类别的摘要
         for category, infos in categorized_info.items():
             if category == KnowledgeCategory.SPATIAL:

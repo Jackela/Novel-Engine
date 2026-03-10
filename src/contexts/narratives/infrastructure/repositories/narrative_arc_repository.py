@@ -8,7 +8,7 @@ repository interface defined in the application layer.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, Union, cast
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple, cast
 from uuid import UUID
 
 import structlog
@@ -718,7 +718,11 @@ class NarrativeArcRepository(INarrativeArcRepository):
         involved_chars: List[str] = []
         if plot_point.involved_characters:
             involved_chars = [str(cid) for cid in plot_point.involved_characters]
-        prereq_events: List[str] = list(plot_point.prerequisite_events) if plot_point.prerequisite_events else []
+        prereq_events: List[str] = (
+            list(plot_point.prerequisite_events)
+            if plot_point.prerequisite_events
+            else []
+        )
         tags_list: List[str] = list(plot_point.tags) if plot_point.tags else []
 
         return PlotPointEntity(
@@ -749,7 +753,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
         self, theme: NarrativeTheme, arc_id: UUID
     ) -> NarrativeThemeEntity:
         """Create NarrativeTheme entity from domain value object."""
-        symbolic_elems: List[str] = list(theme.symbolic_elements) if theme.symbolic_elements else []
+        symbolic_elems: List[str] = (
+            list(theme.symbolic_elements) if theme.symbolic_elements else []
+        )
         tags_list: List[str] = list(theme.tags) if theme.tags else []
 
         return NarrativeThemeEntity(
@@ -775,7 +781,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
         self, pacing: StoryPacing, arc_id: UUID
     ) -> StoryPacingEntity:
         """Create StoryPacing entity from domain value object."""
-        tension_list: List[float] = [float(t) for t in pacing.tension_curve] if pacing.tension_curve else []
+        tension_list: List[float] = (
+            [float(t) for t in pacing.tension_curve] if pacing.tension_curve else []
+        )
 
         return StoryPacingEntity(
             id=pacing.pacing_id,
@@ -837,15 +845,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
         for plot_entity in arc_entity.plot_points:
             involved_chars: Optional[FrozenSet[UUID]] = None
             prereq_events: Optional[List[str]] = None
-            tags_set: Optional[FrozenSet[str]] = None
             if plot_entity.involved_characters:
                 involved_chars = frozenset(
                     UUID(cid) for cid in plot_entity.involved_characters
                 )
             if plot_entity.prerequisite_events:
                 prereq_events = list(plot_entity.prerequisite_events)
-            if plot_entity.tags:
-                tags_set = frozenset(plot_entity.tags)
             pp_tags: Optional[FrozenSet[str]] = None
             if plot_entity.tags:
                 pp_tags = frozenset(plot_entity.tags)
@@ -999,7 +1004,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
                 char_arcs[UUID(str(k))] = str(v)
 
         # Process theme development
-        theme_dev_raw = cast(Optional[Dict[str, List[int]]], arc_entity.theme_development)
+        theme_dev_raw = cast(
+            Optional[Dict[str, List[int]]], arc_entity.theme_development
+        )
         theme_dev: Dict[str, List[int]] = dict(theme_dev_raw) if theme_dev_raw else {}
 
         # Create the aggregate
@@ -1020,7 +1027,9 @@ class NarrativeArcRepository(INarrativeArcRepository):
             supporting_characters=supporting_chars,
             character_arcs=char_arcs,
             target_length=cast(Optional[int], arc_entity.target_length),
-            current_length=cast(int, arc_entity.current_length) if arc_entity.current_length else 0,
+            current_length=cast(int, arc_entity.current_length)
+            if arc_entity.current_length
+            else 0,
             completion_percentage=cast(Decimal, arc_entity.completion_percentage),
             complexity_score=cast(Decimal, arc_entity.complexity_score),
             status=str(arc_entity.status) if arc_entity.status else "planning",
@@ -1045,6 +1054,8 @@ class NarrativeArcRepository(INarrativeArcRepository):
         )
 
         # Set internal version
-        narrative_arc._version = cast(int, arc_entity.version) if arc_entity.version else 1
+        narrative_arc._version = (
+            cast(int, arc_entity.version) if arc_entity.version else 1
+        )
 
         return narrative_arc

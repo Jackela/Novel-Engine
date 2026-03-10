@@ -3,12 +3,14 @@
 测试星座运势服务
 """
 
-import pytest
 import asyncio
+
+import pytest
+
 from src.contexts.knowledge.services.horoscope_service import (
+    HoroscopePeriod,
     HoroscopeService,
     ZodiacSign,
-    HoroscopePeriod,
 )
 
 
@@ -17,7 +19,7 @@ async def test_get_daily_fortune():
     """测试获取每日运势"""
     service = HoroscopeService()
     data = await service.get_daily_fortune(ZodiacSign.LEO)
-    
+
     assert data.sign == ZodiacSign.LEO
     assert data.period == HoroscopePeriod.DAILY
     assert data.fortune.overall >= 1 and data.fortune.overall <= 100
@@ -29,13 +31,13 @@ async def test_get_daily_fortune():
 async def test_get_sign_by_date():
     """测试根据日期获取星座"""
     service = HoroscopeService()
-    
+
     # 狮子座 (7/23 - 8/22)
     assert service.get_sign_by_date(8, 1) == ZodiacSign.LEO
-    
+
     # 水瓶座 (1/20 - 2/18)
     assert service.get_sign_by_date(2, 1) == ZodiacSign.AQUARIUS
-    
+
     # 双鱼座 (2/19 - 3/20)
     assert service.get_sign_by_date(3, 1) == ZodiacSign.PISCES
 
@@ -44,7 +46,7 @@ async def test_get_sign_by_date():
 async def test_all_zodiac_signs():
     """测试所有星座"""
     service = HoroscopeService()
-    
+
     for sign in ZodiacSign:
         data = await service.get_daily_fortune(sign)
         assert data.sign == sign

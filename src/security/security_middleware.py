@@ -161,7 +161,7 @@ class SecurityMiddleware:
         self.request_analyzer = RequestAnalyzer()
         self.security_logger = SecurityEventLogger()
 
-    async def __call__(self, request: Request, call_next):
+    async def __call__(self, request: Request, call_next: Any) -> Any:
         """Process request through security filters."""
         client_ip = self.request_analyzer.get_client_ip(request)
 

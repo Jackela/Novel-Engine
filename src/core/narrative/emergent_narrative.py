@@ -79,7 +79,7 @@ class EmergentNarrativeEngine:
             event = data["event"]
 
             # 事件不能在未来发生
-            return event.timestamp <= datetime.now()
+            return bool(event.timestamp <= datetime.now())
 
         self.coherence_engine.register_consistency_rule(basic_causality_rule)
         self.coherence_engine.register_consistency_rule(temporal_logic_rule)
@@ -218,8 +218,15 @@ class EmergentNarrativeEngine:
             strength += 0.3
 
         # 3. 参与者重叠
-        cause_participants = set([cause_event.agent_id] + cause_event.participants)
-        effect_participants = set([effect_event.agent_id] + effect_event.participants)
+        cause_participants: Set[str] = set()
+        if cause_event.agent_id:
+            cause_participants.add(cause_event.agent_id)
+        cause_participants.update(cause_event.participants)
+
+        effect_participants: Set[str] = set()
+        if effect_event.agent_id:
+            effect_participants.add(effect_event.agent_id)
+        effect_participants.update(effect_event.participants)
         overlap = len(cause_participants.intersection(effect_participants))
         if overlap > 0:
             strength += overlap * 0.1
@@ -361,9 +368,13 @@ class EmergentNarrativeEngine:
                 ]
 
                 # 启动协商
+                initiator_id = event_node.agent_id
+                target_id = conflicting_event.agent_id
+                if initiator_id is None or target_id is None:
+                    continue
                 negotiation_id = await self.negotiation_engine.initiate_negotiation(
-                    initiator_id=event_node.agent_id,
-                    target_agents=[conflicting_event.agent_id],
+                    initiator_id=initiator_id,
+                    target_agents=[target_id],
                     topic=f"conflict_resolution_{conflict['conflict_type']}",
                     initial_proposal={
                         "type": "conflict_resolution",
@@ -495,20 +506,24 @@ class EmergentNarrativeEngine:
             "causal_chains": [],
         }
 
+        affected_agents: Set[str] = set()
+        affected_locations: Set[str] = set()
         for successor_id in successors:
             if successor_id in self.causal_graph.nodes:
                 successor = self.causal_graph.nodes[successor_id]
                 if successor.agent_id:
-                    influence_scope["affected_agents"].add(successor.agent_id)
+                    affected_agents.add(successor.agent_id)
                 if successor.location:
-                    influence_scope["affected_locations"].add(successor.location)
+                    affected_locations.add(successor.location)
+        influence_scope["affected_agents"] = affected_agents
+        influence_scope["affected_locations"] = affected_locations
 
         # 查找因果链
         chains = self.causal_graph.find_causal_chain(event_node.node_id, max_depth=3)
         influence_scope["causal_chains"] = chains[:5]  # 最多返回5个链条
 
         # 转换集合为列表以便序列化
-        influence_scope["affected_agents"] = list(influence_scope["affected_agents"])
+        influence_scope["affected_agents"] = list(affected_agents)
         influence_scope["affected_locations"] = list(
             influence_scope["affected_locations"]
         )
@@ -608,15 +623,18 @@ class EmergentNarrativeEngine:
         """
 
         try:
+            llm_service = self.llm_service
+            if llm_service is None:
+                return []
+
             llm_request = LLMRequest(
                 prompt=opportunity_prompt,
-                response_format=ResponseFormat.JSON,
+                response_format=ResponseFormat.EVENT_JSON,
                 max_tokens=600,
             )
+            llm_response = await llm_service.generate(llm_request)
 
-            llm_response = await self.llm_service.process_request(llm_request)
-
-            if llm_response and llm_response.success:
+            if llm_response is not None and getattr(llm_response, "success", False):
                 opportunities = json.loads(llm_response.content)
                 if isinstance(opportunities, list):
                     return opportunities[:3]  # 限制为3个
@@ -700,13 +718,13 @@ class EmergentNarrativeEngine:
         try:
             llm_request = LLMRequest(
                 prompt=summary_prompt,
-                response_format=ResponseFormat.TEXT,
+                response_format=ResponseFormat.NARRATIVE_FORMAT,
                 max_tokens=500,
             )
 
             llm_response = await self.llm_service.process_request(llm_request)
 
-            if llm_response and llm_response.success:
+            if llm_response is not None and getattr(llm_response, "success", False):
                 return llm_response.content.strip()
 
         except Exception as e:
@@ -738,7 +756,7 @@ def create_emergent_narrative_engine(
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage():
+    async def example_usage() -> None:
         engine = create_emergent_narrative_engine()
 
         # 初始化两个Agent

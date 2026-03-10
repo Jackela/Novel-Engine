@@ -10,12 +10,13 @@ Provides additional security layers beyond basic headers.
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
+from starlette.types import ASGIApp
 
 logger = structlog.get_logger(__name__)
 
@@ -33,16 +34,23 @@ class SecurityEvent:
     details: Dict[str, Any]
 
 
+class RateLimitEntry:
+    """Rate limit tracking entry"""
+
+    def __init__(self) -> None:
+        self.requests: List[float] = []
+
+
 class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
     """Enhanced security middleware with threat detection"""
 
-    def __init__(self, app, config: Optional[Dict] = None) -> None:
+    def __init__(self, app: ASGIApp, config: Optional[Dict[str, Any]] = None) -> None:
         super().__init__(app)
-        self.config = config or {}
-        self.security_events = []
-        self.rate_limits = {}
+        self.config: Dict[str, Any] = config or {}
+        self.security_events: List[SecurityEvent] = []
+        self.rate_limits: Dict[str, List[float]] = {}
 
-    async def dispatch(self, request: Request, call_next) -> None:
+    async def dispatch(self, request: Request, call_next: Any) -> Response:
         """Process request with enhanced security checks"""
         start_time = time.time()
 
@@ -95,8 +103,9 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
             return real_ip
 
         # Fallback to direct connection
-        if hasattr(request.client, "host"):
-            return request.client.host
+        if request.client is not None and hasattr(request.client, "host"):
+            host: str = request.client.host
+            return host
 
         return "unknown"
 
@@ -104,7 +113,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         self, request: Request, client_ip: str, user_agent: str, endpoint: str
     ) -> Dict[str, Any]:
         """Perform comprehensive security checks"""
-        checks: list[Any] = []
+        checks: List[Dict[str, Any]] = []
         # Rate limiting check
         rate_check = self._check_rate_limit(client_ip, endpoint)
         checks.append(rate_check)
@@ -258,7 +267,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
         endpoint: str,
         severity: str,
         details: Dict[str, Any],
-    ):
+    ) -> None:
         """Log security event for monitoring"""
         event = SecurityEvent(
             event_type=event_type,
@@ -305,6 +314,8 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
 
 
 # Factory function for easy integration
-def create_enhanced_security_middleware(config: Optional[Dict] = None) -> None:
+def create_enhanced_security_middleware(
+    config: Optional[Dict[str, Any]] = None,
+) -> tuple[type[EnhancedSecurityMiddleware], Dict[str, Any]]:
     """Create enhanced security middleware with configuration"""
     return EnhancedSecurityMiddleware, config or {}

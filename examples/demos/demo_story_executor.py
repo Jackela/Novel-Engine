@@ -25,16 +25,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+# Import our enhanced multi-agent system
+from src.orchestrators.enterprise_multi_agent_orchestrator import (
+    create_enterprise_orchestrator,
+)
+
 from src.agents.chronicler_agent import ChroniclerAgent
 from src.agents.persona_agent.agent import PersonaAgent
 
 # Import Novel Engine core components
 from src.core.event_bus import EventBus
-
-# Import our enhanced multi-agent system
-from src.orchestrators.enterprise_multi_agent_orchestrator import (
-    create_enterprise_orchestrator,
-)
 
 # Setup logging
 logging.basicConfig(

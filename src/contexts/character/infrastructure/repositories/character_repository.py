@@ -289,7 +289,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
             with self.session_factory() as session:
                 character_orms = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive == True)
+                    .filter(CharacterORM.is_alive.is_(True))
                     .all()
                 )
 
@@ -467,7 +467,7 @@ class SQLAlchemyCharacterRepository(ICharacterRepository):
                 # Alive characters
                 alive_characters = (
                     session.query(CharacterORM)
-                    .filter(CharacterORM.is_alive == True)
+                    .filter(CharacterORM.is_alive.is_(True))
                     .count()
                 )
 

@@ -295,7 +295,9 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
         )
 
     @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    async def http_exception_handler(
+        request: Request, exc: HTTPException
+    ) -> JSONResponse:
         """Handle FastAPI HTTP exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -353,7 +355,9 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def general_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Handle all other exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -370,7 +374,7 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
             content=error_response.model_dump(mode="json"),
         )
 
-    return error_handler  # type: ignore[return-value]
+    return error_handler
 
 
 __all__ = [

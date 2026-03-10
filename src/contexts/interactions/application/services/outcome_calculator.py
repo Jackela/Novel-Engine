@@ -16,7 +16,6 @@ from ....interactions.domain.value_objects.negotiation_status import Negotiation
 from ....interactions.domain.value_objects.proposal_response import ProposalResponse
 from .shared.errors import (
     OutcomeError,
-    ValidationError,
 )
 
 

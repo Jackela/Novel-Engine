@@ -613,7 +613,7 @@ class QueryAwareRetrievalService:
         import hashlib
 
         for chunk in chunks:
-            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()
+            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()  # nosec B324 - Used for content deduplication, not security
 
             if content_hash not in seen_hashes:
                 deduplicated.append(chunk)

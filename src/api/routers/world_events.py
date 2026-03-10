@@ -608,8 +608,9 @@ async def export_events(
     if format.lower() == "json":
         from datetime import datetime
 
-        timeline_data["metadata"]["generated_at"] = datetime.utcnow().isoformat()
-        return timeline_data
+        result_data: Dict[str, Any] = timeline_data
+        result_data["metadata"]["generated_at"] = datetime.utcnow().isoformat()
+        return result_data
     elif format.lower() in ("pdf", "png"):
         # TODO: Implement PDF/PNG export
         raise HTTPException(

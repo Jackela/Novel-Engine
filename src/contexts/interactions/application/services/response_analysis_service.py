@@ -14,7 +14,6 @@ from ....interactions.domain.value_objects.proposal_response import (
     ProposalResponse,
 )
 from .shared.errors import (
-    NotFoundError,
     ProposalError,
 )
 

@@ -30,14 +30,14 @@ except ImportError as tracing_error:  # pragma: no cover - fallback when otel mi
         tracing_error,
     )
 
-    class NovelEngineTracingConfig:  # type: ignore[override,no-redef]
+    class NovelEngineTracingConfig:  # type: ignore[override,no-redef,misc]
         def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-    def initialize_tracing(*_: Any, **__: Any) -> None:
+    def initialize_tracing(*_: Any, **__: Any) -> Any:  # type: ignore[misc]
         return None
 
-    def setup_fastapi_tracing(app: Any, *_args: Any, **_kwargs: Any) -> Any:
+    def setup_fastapi_tracing(app: Any, *_args: Any, **_kwargs: Any) -> Any:  # type: ignore[misc]
         return app
 
 

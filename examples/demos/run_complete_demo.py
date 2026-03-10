@@ -25,6 +25,8 @@ from pathlib import Path
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
+from src.interactions.interaction_engine import InteractionType
+
 from src.core.data_models import (
     CharacterState,
     DynamicContext,
@@ -39,7 +41,6 @@ from src.core.system_orchestrator import (
     OrchestratorMode,
     SystemOrchestrator,
 )
-from src.interactions.interaction_engine import InteractionType
 from src.templates.character_template_manager import CharacterArchetype
 
 # Configure sacred logging

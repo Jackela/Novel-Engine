@@ -405,7 +405,9 @@ class NarrativeOrchestrator:
         await self._update_narrative_threads(event)
 
         # Update story statistics
-        self._story_statistics["total_events"] = self._story_statistics.get("total_events", 0) + 1
+        self._story_statistics["total_events"] = (
+            self._story_statistics.get("total_events", 0) + 1
+        )
         active_chars: set = self._story_statistics.get("active_characters", set())
         active_chars.update(event.participants)
         self._story_statistics["active_characters"] = active_chars
@@ -472,8 +474,12 @@ class NarrativeOrchestrator:
 
     def _update_event_statistics(self, event: NarrativeEvent) -> None:
         """Update event statistics."""
-        events_by_type: Dict[str, int] = self._story_statistics.get("events_by_type", {})
-        events_by_type[event.event_type.value] = events_by_type.get(event.event_type.value, 0) + 1
+        events_by_type: Dict[str, int] = self._story_statistics.get(
+            "events_by_type", {}
+        )
+        events_by_type[event.event_type.value] = (
+            events_by_type.get(event.event_type.value, 0) + 1
+        )
         self._story_statistics["events_by_type"] = events_by_type
         active_chars: set = self._story_statistics.get("active_characters", set())
         active_chars.update(event.participants)

@@ -125,6 +125,7 @@ class CharacterIdentity:
     """
 
     name: str
+    agent_id: str = ""  # Added for compatibility
     faction: List[str] = field(default_factory=list)
     rank: Optional[str] = None
     origin: Optional[str] = None

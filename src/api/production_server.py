@@ -137,14 +137,18 @@ class AuthenticationManager:
             expire = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        encoded_jwt: str = jwt.encode(
+            to_encode, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM
+        )
         return encoded_jwt
 
     @staticmethod
     def verify_token(token: str) -> Dict[str, Any]:
         """Verify JWT token."""
         try:
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+            payload: Dict[str, Any] = jwt.decode(
+                token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
+            )
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(
@@ -186,11 +190,12 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-):
+) -> str:
     """Dependency to get current authenticated user."""
     token = credentials.credentials
     payload = AuthenticationManager.verify_token(token)
-    return payload.get("sub")
+    result: str = payload.get("sub") or ""
+    return result
 
 
 @asynccontextmanager
@@ -428,7 +433,8 @@ async def get_characters_unversioned(
     request: Request, current_user: str = Depends(get_current_user)
 ) -> Dict[str, list[str]]:
     """Unversioned REST endpoint for characters."""
-    return await get_characters(request, current_user)
+    result: Dict[str, list[str]] = await get_characters(request, current_user)
+    return result
 
 
 @app.post("/simulations")

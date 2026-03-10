@@ -8,7 +8,7 @@ along with extended metrics for complete observability.
 """
 
 from decimal import Decimal
-from typing import Any, Callable, Dict, Generator, List, Optional, TypeVar, Union
+from typing import Any, Dict, Optional, TypeVar, Union
 from uuid import UUID
 
 import structlog

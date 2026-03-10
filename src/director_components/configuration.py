@@ -13,7 +13,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -26,7 +26,6 @@ except ImportError:
     YAML_AVAILABLE = False
 
 try:
-    from watchdog.events import FileSystemEventHandler
     from watchdog.observers import Observer
 
     WATCHDOG_AVAILABLE = True
@@ -68,9 +67,7 @@ class ConfigFileHandler:
             if self.logger:
                 self.logger.info(f"Config file modified: {event.src_path}")
             # Schedule config reload
-            asyncio.create_task(
-                self.config_service._handle_file_change(event.src_path)
-            )
+            asyncio.create_task(self.config_service._handle_file_change(event.src_path))
 
 
 class ConfigurationService:
@@ -486,7 +483,11 @@ class ConfigurationService:
 
     async def _validate_configuration(self) -> Dict[str, Any]:
         """Validate configuration against schema."""
-        validation_result: Dict[str, Any] = {"valid": True, "errors": [], "warnings": []}
+        validation_result: Dict[str, Any] = {
+            "valid": True,
+            "errors": [],
+            "warnings": [],
+        }
 
         try:
             # Check required keys

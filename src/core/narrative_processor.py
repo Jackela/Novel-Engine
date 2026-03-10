@@ -120,7 +120,7 @@ class NarrativeProcessor:
             logger.info("Falling back to combat mode")
             self.narrative_resolver = NarrativeActionResolver(None)
 
-    def trigger_initial_narrative_events(self, log_event_callback) -> None:
+    def trigger_initial_narrative_events(self, log_event_callback: Any) -> None:
         """
         Trigger initial narrative events marked for simulation start.
 
@@ -137,8 +137,12 @@ class NarrativeProcessor:
             if event.trigger_condition == "simulation_start":
                 logger.info(f"Triggering initial narrative event: {event.description}")
 
-                # Add event to story state
-                self.story_state["triggered_events"].append(
+                # Add event to story state - ensure triggered_events is a list
+                triggered_events = self.story_state.get("triggered_events", [])
+                if not isinstance(triggered_events, list):
+                    triggered_events = []
+                    self.story_state["triggered_events"] = triggered_events
+                triggered_events.append(
                     {
                         "event": event,
                         "turn_triggered": 0,
@@ -274,9 +278,10 @@ class NarrativeProcessor:
             should_trigger = False
 
             # Check for turn-based triggers
-            if "turn >=" in event.trigger_condition:
+            trigger_condition = getattr(event, "trigger_condition", "")
+            if "turn >=" in str(trigger_condition):
                 try:
-                    required_turn = int(event.trigger_condition.split(">=")[1].strip())
+                    required_turn = int(str(trigger_condition).split(">=")[1].strip())
                     if current_turn_number >= required_turn:
                         should_trigger = True
                 except ValueError:
@@ -285,10 +290,14 @@ class NarrativeProcessor:
                     )
 
             # Check for investigation count-based triggers
-            elif "investigation_count >=" in event.trigger_condition:
+            elif "investigation_count >=" in str(trigger_condition):
                 try:
-                    required_count = int(event.trigger_condition.split(">=")[1].strip())
-                    if self.story_state["investigation_count"] >= required_count:
+                    required_count = int(str(trigger_condition).split(">=")[1].strip())
+                    current_count = self.story_state.get("investigation_count", 0)
+                    if (
+                        isinstance(current_count, int)
+                        and current_count >= required_count
+                    ):
                         should_trigger = True
                 except ValueError:
                     logger.warning(
@@ -322,7 +331,7 @@ class NarrativeProcessor:
         available_actions = ["investigate", "observe_environment"]  # Always available
 
         # Add actions based on story state
-        if self.story_state["investigation_count"] > 0:
+        if self.story_state.get("investigation_count", 0) > 0:
             available_actions.append("analyze_data")
 
         if len(registered_agents) > 1:
@@ -354,8 +363,11 @@ class NarrativeProcessor:
         Returns:
             Dict mapping character names to relationship values
         """
-        agent_name = agent.character_data.get("name", agent.agent_id)
-        return self.story_state["character_relationships"].get(agent_name, {})
+        agent_name = str(agent.character_data.get("name", agent.agent_id))
+        relationships = self.story_state.get("character_relationships", {})
+        if isinstance(relationships, dict):
+            return relationships.get(agent_name, {})
+        return {}
 
     def process_narrative_action(
         self, action: CharacterAction, agent: PersonaAgent
@@ -447,7 +459,8 @@ class NarrativeProcessor:
 
             # Track investigation count for event triggers
             if "investigation" in str(narrative_outcome.description).lower():
-                self.story_state["investigation_count"] += 1
+                current_count = self.story_state.get("investigation_count", 0)
+                self.story_state["investigation_count"] = current_count + 1
 
             # Track dialogue count for event triggers
             if (
@@ -469,7 +482,7 @@ class NarrativeProcessor:
 
     def get_story_state(self) -> Dict[str, Any]:
         """Get the current story state."""
-        return self.story_state.copy()
+        return dict(self.story_state)
 
     def has_campaign_brief(self) -> bool:
         """Check if a campaign brief is loaded."""

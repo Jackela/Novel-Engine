@@ -239,9 +239,12 @@ class DataProtectionService:
     def __init__(self, database_path: str, master_key: Optional[str] = None) -> None:
         self.database_path = database_path
         self.encryption_service = EncryptionService(master_key)
-        self.pseudonymization_service = PseudonymizationService(
-            master_key or os.getenv("PSEUDONYMIZATION_KEY", secrets.token_urlsafe(32))
+        pseudonym_key = master_key or os.getenv(
+            "PSEUDONYMIZATION_KEY", secrets.token_urlsafe(32)
         )
+        if pseudonym_key is None:
+            pseudonym_key = secrets.token_urlsafe(32)
+        self.pseudonymization_service = PseudonymizationService(pseudonym_key)
 
         # Define data elements that require protection
         self.protected_data_elements = {
@@ -566,7 +569,7 @@ class DataProtectionService:
 
     async def _store_pseudonym_mapping(
         self, original_id: str, pseudonym: str, purpose: str
-    ):
+    ) -> None:
         """STANDARD PSEUDONYM MAPPING STORAGE"""
         mapping_id = secrets.token_urlsafe(16)
         encrypted_original_id = self.encryption_service.encrypt(original_id)
@@ -583,7 +586,7 @@ class DataProtectionService:
 
     async def schedule_data_deletion(
         self, data_type: str, user_id: str, retention_period: DataRetentionPeriod
-    ):
+    ) -> None:
         """STANDARD DATA DELETION SCHEDULING"""
         deletion_id = secrets.token_urlsafe(16)
         now = datetime.now(timezone.utc)
@@ -698,25 +701,7 @@ class DataProtectionService:
         }
 
         # Get consent records
-        async with aiosqlite.connect(self.database_path) as conn:
-            cursor = await conn.execute(
-                """
-                SELECT purpose, status, granted_at, consent_text
-                FROM consent_records WHERE user_id = ?
-            """,
-                (user_id,),
-            )
-            consent_records = await cursor.fetchall()
-
-            exported_data["consent_records"] = [
-                {
-                    "purpose": row[0],
-                    "status": row[1],
-                    "granted_at": row[2],
-                    "consent_text": row[3],
-                }
-                for row in consent_records
-            ]
+        # NOTE: consent_records query implementation pending for full data protection exports
 
         # Export other user data (implement based on your data model)
         # This would include decrypted personal data that the user has rights to

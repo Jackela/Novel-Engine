@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import networkx as nx  # type: ignore[import-untyped]
+import networkx as nx
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -70,7 +70,7 @@ class CausalNode:
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, CausalNode):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return self.node_id == other.node_id
 
     def to_dict(self) -> Dict[str, Any]:

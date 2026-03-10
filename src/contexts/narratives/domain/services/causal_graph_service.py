@@ -8,7 +8,7 @@ managing cause-and-effect relationships within narrative structures.
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Set, Tuple, Sequence
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import structlog
 

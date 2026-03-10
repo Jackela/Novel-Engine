@@ -302,7 +302,7 @@ class StructuredLogger:
         duration_ms: Optional[float] = None,
         error_details: Optional[Dict[str, Any]] = None,
         performance_metrics: Optional[Dict[str, Any]] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> StructuredLogEntry:
         """Create a structured log entry."""
 
@@ -326,7 +326,7 @@ class StructuredLogger:
         level: LogLevel,
         message: str,
         category: LogCategory = LogCategory.SYSTEM,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         """Log a message with structured format."""
 
@@ -577,7 +577,7 @@ def setup_logging(
 
     # Setup log endpoints
     @app.get("/api/logs/health", tags=["Monitoring"])
-    async def get_logging_health():
+    async def get_logging_health() -> Dict[str, Any]:
         """Get logging system health."""
         return {
             "status": "healthy",

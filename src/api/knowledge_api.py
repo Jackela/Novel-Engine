@@ -8,7 +8,7 @@ Constitution Compliance:
 - Article VII (Observability): Structured logging, metrics, tracing for all endpoints
 """
 
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 import structlog

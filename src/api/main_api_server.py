@@ -123,7 +123,7 @@ class OptimizedJSONResponse(JSONResponse):
     ) -> None:
         # Initialize headers dict
         response_headers: Dict[str, str] = dict(headers) if headers else {}
-        
+
         # Add cache control headers for performance
         if cache_control:
             response_headers["Cache-Control"] = cache_control
@@ -136,7 +136,9 @@ class OptimizedJSONResponse(JSONResponse):
         response_headers["X-API-Version"] = "1.0.0"
         response_headers["Server-Timing"] = "api;dur=0"
 
-        super().__init__(content=content, status_code=status_code, headers=response_headers)
+        super().__init__(
+            content=content, status_code=status_code, headers=response_headers
+        )
 
 
 class APIServerConfig:
@@ -311,17 +313,19 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         yield
 
     except Exception as startup_error:
-        global_structured_logger.error(
-            f"API server startup failed: {startup_error}",
-            exc_info=startup_error,
-            category=LogCategory.ERROR,
-        )
+        if global_structured_logger:
+            global_structured_logger.error(
+                f"API server startup failed: {startup_error}",
+                exc_info=startup_error,
+                category=LogCategory.ERROR,
+            )
         raise
 
     finally:
-        global_structured_logger.info(
-            "Shutting down Enhanced API Server", category=LogCategory.SYSTEM
-        )
+        if global_structured_logger:
+            global_structured_logger.info(
+                "Shutting down Enhanced API Server", category=LogCategory.SYSTEM
+            )
 
         # Stop background tasks (none for character generation yet)
 
@@ -329,14 +333,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if global_orchestrator:
             try:
                 await global_orchestrator.shutdown()
-                global_structured_logger.info(
-                    "System Orchestrator shutdown complete", category=LogCategory.SYSTEM
-                )
+                if global_structured_logger:
+                    global_structured_logger.info(
+                        "System Orchestrator shutdown complete",
+                        category=LogCategory.SYSTEM,
+                    )
             except Exception as e:
-                global_structured_logger.error(
-                    f"Error during orchestrator shutdown: {e}",
-                    category=LogCategory.ERROR,
-                )
+                if global_structured_logger:
+                    global_structured_logger.error(
+                        f"Error during orchestrator shutdown: {e}",
+                        category=LogCategory.ERROR,
+                    )
 
 
 def create_app() -> FastAPI:
@@ -387,14 +394,18 @@ def create_app() -> FastAPI:
 
     # Exception handlers that ensure minimal security headers on error responses
     @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    async def http_exception_handler(
+        request: Request, exc: HTTPException
+    ) -> JSONResponse:
         response = JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         return response
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def general_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         response = JSONResponse({"detail": "Bad Request"}, status_code=400)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -949,12 +960,14 @@ def _register_legacy_routes(app: FastAPI) -> None:
     @app.get("/api/characters", response_model=dict)
     async def legacy_get_characters_api() -> Dict[str, Any]:
         """Unversioned REST endpoint for legacy characters list."""
-        return await legacy_get_characters()
+        result: Dict[str, Any] = await legacy_get_characters()
+        return result
 
     @app.get("/api/characters/{character_id}", response_model=dict)
     async def legacy_get_character_detail_api(character_id: str) -> Dict[str, Any]:
         """Unversioned REST endpoint for legacy character detail."""
-        return await legacy_get_character_detail(character_id)
+        result: Dict[str, Any] = await legacy_get_character_detail(character_id)
+        return result
 
     def _ensure_workspace_services() -> None:
         if getattr(app.state, "workspace_store", None) is None:
@@ -975,21 +988,25 @@ def _register_legacy_routes(app: FastAPI) -> None:
             return None
         token = request.cookies.get(manager.cookie_name)
         if token:
-            workspace_id = manager.decode(token)
-            if workspace_id:
-                store.get_or_create(workspace_id)
-                return workspace_id
+            ws_id: Optional[str] = manager.decode(token)
+            if ws_id:
+                store.get_or_create(ws_id)
+                return ws_id
         default_workspace_id = getattr(app.state, "default_workspace_id", None)
         if default_workspace_id:
             store.get_or_create(default_workspace_id)
-            return default_workspace_id
+            dw_result: str = default_workspace_id
+            return dw_result
         if create_if_missing:
             workspace = store.create()
-            return workspace.id
+            ws_result: str = workspace.id
+            return ws_result
         return None
 
     def _get_world_store() -> Dict[str, Dict[str, Any]]:
-        store_obj: Optional[Dict[str, Dict[str, Any]]] = getattr(app.state, "world_store", None)
+        store_obj: Optional[Dict[str, Dict[str, Any]]] = getattr(
+            app.state, "world_store", None
+        )
         if store_obj is None:
             store_obj = {}
             app.state.world_store = store_obj
@@ -1015,7 +1032,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         return payload
 
     @app.post("/api/worlds", response_model=dict)
-    async def create_world(payload: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[return-value]
+    async def create_world(payload: Dict[str, Any]) -> Dict[str, Any]:
         name = (payload.get("name") or "").strip()
         if not name:
             raise HTTPException(status_code=422, detail="World name is required")
@@ -1044,7 +1061,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         return {"data": world}
 
     @app.get("/api/worlds/{world_id}", response_model=dict)
-    async def get_world(world_id: str) -> Dict[str, Any]:  # type: ignore[return-value]
+    async def get_world(world_id: str) -> Dict[str, Any]:
         store = _get_world_store()
         world = store.get(world_id)
         if not world:
@@ -1052,7 +1069,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         return {"data": world}
 
     @app.put("/api/worlds/{world_id}", response_model=dict)
-    async def update_world(world_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore[return-value]
+    async def update_world(world_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         store = _get_world_store()
         world = store.get(world_id)
         if not world:
@@ -1076,7 +1093,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         return {"data": world}
 
     @app.delete("/api/worlds/{world_id}", response_model=dict)
-    async def delete_world(world_id: str) -> Dict[str, Any]:  # type: ignore[return-value]
+    async def delete_world(world_id: str) -> Dict[str, Any]:
         store = _get_world_store()
         if world_id not in store:
             raise HTTPException(status_code=404, detail="World not found")
@@ -1084,7 +1101,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
         return {"data": {"id": world_id, "deleted": True}}
 
     @app.get("/api/worlds", response_model=dict)
-    async def list_worlds() -> Dict[str, Any]:  # type: ignore[return-value]
+    async def list_worlds() -> Dict[str, Any]:
         store = _get_world_store()
         return {"data": {"worlds": list(store.values())}}
 
@@ -1092,7 +1109,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
     async def export_character(
         request: Request,
         character_id: str,
-    ) -> Dict[str, Any]:  # type: ignore[return-value]
+    ) -> Dict[str, Any]:
         workspace_id = _resolve_workspace_id(request, create_if_missing=False)
         store = getattr(app.state, "workspace_character_store", None)
         if not workspace_id or not store:
@@ -1105,7 +1122,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
     @app.get("/api/export/all", response_model=dict)
     async def export_all(
         request: Request,
-    ) -> Dict[str, Any]:  # type: ignore[return-value]
+    ) -> Dict[str, Any]:
         workspace_id = _resolve_workspace_id(request, create_if_missing=False)
         store = getattr(app.state, "workspace_character_store", None)
         characters: list[Dict[str, Any]] = []
@@ -1127,7 +1144,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
     async def import_all(
         request: Request,
         payload: Dict[str, Any],
-    ) -> Dict[str, Any]:  # type: ignore[return-value]
+    ) -> Dict[str, Any]:
         workspace_id = _resolve_workspace_id(request, create_if_missing=True)
         store = getattr(app.state, "workspace_character_store", None)
         if not store or not workspace_id:
@@ -1212,7 +1229,9 @@ def _register_legacy_routes(app: FastAPI) -> None:
     # Track active SSE connections for monitoring
     active_sse_connections = {"count": 0}
 
-    async def event_generator(client_id: str, limit: Optional[int] = None) -> AsyncGenerator[str, None]:
+    async def event_generator(
+        client_id: str, limit: Optional[int] = None
+    ) -> AsyncGenerator[str, None]:
         """
         Async generator yielding SSE-formatted events for real-time dashboard updates.
 

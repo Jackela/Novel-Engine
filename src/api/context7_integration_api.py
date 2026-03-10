@@ -250,7 +250,9 @@ class Context7IntegrationAPI:
 
         try:
             if self.context7_client:
-                result: Dict[str, Any] = await self.context7_client.call(operation, params)
+                result: Dict[str, Any] = await self.context7_client.call(
+                    operation, params
+                )
                 return result
 
             if self.base_url:
@@ -400,7 +402,8 @@ if (response.ok) {{
             description="Generate Context7-powered code examples for API endpoints",
         )
         async def generate_code_example(
-            request: CodeExampleRequest, current_user: Dict[str, Any] = Depends(get_current_user)
+            request: CodeExampleRequest,
+            current_user: Dict[str, Any] = Depends(get_current_user),
         ) -> StandardResponse[CodeExampleResponse]:
             """Generate code examples using Context7 documentation patterns."""
             try:
@@ -657,6 +660,8 @@ if (response.ok) {{
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def create_context7_integration_api(orchestrator: Optional[Any] = None) -> Context7IntegrationAPI:
+def create_context7_integration_api(
+    orchestrator: Optional[Any] = None,
+) -> Context7IntegrationAPI:
     """Factory function to create Context7IntegrationAPI instance."""
     return Context7IntegrationAPI(orchestrator)

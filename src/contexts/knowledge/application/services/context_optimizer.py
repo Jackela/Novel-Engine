@@ -323,7 +323,7 @@ class RemoveRedundancyPackingStrategy(IPackingStrategy):
         seen_hashes: set[str] = set()
 
         for chunk in sorted_chunks:
-            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()
+            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()  # nosec B324 - Used for content deduplication, not security
 
             # Check for exact duplicate
             if content_hash in seen_hashes:

@@ -13,7 +13,12 @@ import structlog
 
 from src.agents.director_agent_integrated import DirectorAgent
 from src.core.event_bus import EventBus
-from src.core.llm_service import CostControl, LLMRequest, ResponseFormat, get_llm_service
+from src.core.llm_service import (
+    CostControl,
+    LLMRequest,
+    ResponseFormat,
+    get_llm_service,
+)
 
 from .dialogue_manager import DialogueManager
 from .state_manager import StateManager
@@ -223,7 +228,7 @@ class EnhancedMultiAgentBridge:
                 requester="llm_coordination",
             )
 
-            response = await self.llm_service.generate_response(llm_request)
+            response = await self.llm_service.generate_response(llm_request)  # type: ignore[attr-defined]
 
             processing_time = time.time() - start_time
             self.performance_budget.record_llm_time(processing_time)

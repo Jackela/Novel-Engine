@@ -144,5 +144,13 @@ async def advance_calendar(
 
     # Update stored calendar - unwrap() is safe here since we checked is_error
     updated_calendar = result.unwrap()
+    if updated_calendar is None:
+        raise HTTPException(
+            status_code=400,
+            detail=ErrorDetail(
+                code="CALENDAR_ADVANCE_FAILED",
+                message="Failed to advance calendar: result was None",
+            ).model_dump(),
+        )
     _world_calendars[world_id] = updated_calendar
     return _calendar_to_response(updated_calendar)

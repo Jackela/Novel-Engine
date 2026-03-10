@@ -27,7 +27,7 @@ logger = structlog.get_logger(__name__)
 class AgentNegotiationEngine:
     """多Agent协商引擎"""
 
-    def __init__(self, llm_service=None) -> None:
+    def __init__(self, llm_service: Optional[Any] = None) -> None:
         self.llm_service = llm_service or get_llm_service()
         self.active_sessions: Dict[str, NegotiationSession] = {}
         self.negotiation_history: List[NegotiationSession] = []
@@ -97,7 +97,7 @@ class AgentNegotiationEngine:
 
     async def _notify_agents_of_proposal(
         self, proposal: NegotiationProposal, target_agents: List[str]
-    ):
+    ) -> None:
         """通知Agent收到新的协商提议"""
         # 这里应该集成到消息系统中
         for agent_id in target_agents:
@@ -157,7 +157,7 @@ class AgentNegotiationEngine:
 
     async def _generate_intelligent_counter_proposal(
         self, session: NegotiationSession, response: NegotiationResponse
-    ):
+    ) -> None:
         """生成智能反提议"""
         if not self.llm_service:
             return
@@ -185,10 +185,13 @@ class AgentNegotiationEngine:
 
         try:
             llm_request = LLMRequest(
-                prompt=prompt, response_format=ResponseFormat.JSON, max_tokens=500
+                prompt=prompt, response_format=ResponseFormat.EVENT_JSON, max_tokens=500
             )
 
-            llm_response = await self.llm_service.process_request(llm_request)
+            llm_service = self.llm_service
+            if llm_service is None:
+                return
+            llm_response = await llm_service.generate(llm_request)
 
             if llm_response and llm_response.success:
                 counter_proposal = json.loads(llm_response.content)
@@ -271,23 +274,29 @@ class AgentNegotiationEngine:
 
     async def _handle_counter_proposals(
         self, session: NegotiationSession, counters: List[NegotiationResponse]
-    ):
+    ) -> None:
         """处理反提议"""
         if not counters:
             return
 
         # 选择最有希望的反提议
+        def get_viability(x: NegotiationResponse) -> float:
+            if x.counter_proposal is None:
+                return 0.0
+            return self._evaluate_proposal_viability(x.counter_proposal)
+
         best_counter = max(
             counters,
-            key=lambda x: self._evaluate_proposal_viability(x.counter_proposal),
+            key=get_viability,
         )
 
         # 创建新的提议基于最佳反提议
+        counter_data = best_counter.counter_proposal or {}
         new_proposal = NegotiationProposal(
             proposal_id=str(uuid.uuid4()),
             proposer_id=best_counter.responder_id,
-            proposal_type=best_counter.counter_proposal.get("type", "counter"),
-            content=best_counter.counter_proposal,
+            proposal_type=counter_data.get("type", "counter"),
+            content=counter_data,
             target_agents=[
                 aid for aid in session.participants if aid != best_counter.responder_id
             ],
@@ -299,9 +308,9 @@ class AgentNegotiationEngine:
 
         logger.info(f"New counter-proposal created in session {session.session_id}")
 
-    def _evaluate_proposal_viability(self, proposal: Dict[str, Any]) -> float:
+    def _evaluate_proposal_viability(self, proposal: Optional[Dict[str, Any]]) -> float:
         """评估提议的可行性"""
-        if not proposal:
+        if proposal is None:
             return 0.0
 
         # 简化的可行性评分
@@ -319,7 +328,7 @@ class AgentNegotiationEngine:
 
     async def _intelligent_mediation(
         self, session: NegotiationSession, responses: List[NegotiationResponse]
-    ):
+    ) -> None:
         """智能调解"""
         if not self.llm_service:
             session.status = NegotiationStatus.DEADLOCK
@@ -354,10 +363,13 @@ class AgentNegotiationEngine:
 
         try:
             llm_request = LLMRequest(
-                prompt=prompt, response_format=ResponseFormat.JSON, max_tokens=800
+                prompt=prompt, response_format=ResponseFormat.EVENT_JSON, max_tokens=800
             )
 
-            llm_response = await self.llm_service.process_request(llm_request)
+            llm_service = self.llm_service
+            if llm_service is None:
+                return
+            llm_response = await llm_service.generate(llm_request)
 
             if llm_response and llm_response.success:
                 mediation_result = json.loads(llm_response.content)

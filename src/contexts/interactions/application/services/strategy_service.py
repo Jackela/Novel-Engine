@@ -13,7 +13,6 @@ from ....interactions.domain.services.negotiation_service import NegotiationServ
 from ....interactions.domain.value_objects.negotiation_party import NegotiationParty
 from .shared.errors import (
     NegotiationError,
-    ValidationError,
 )
 
 

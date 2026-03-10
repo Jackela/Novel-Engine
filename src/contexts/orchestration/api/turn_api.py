@@ -258,12 +258,12 @@ def _patch_e2e_database_fixture() -> None:
     original_setup = DatabaseFixtures.setup_test_database
     original_cleanup = DatabaseFixtures.cleanup_test_database
 
-    async def _setup_wrapper(self) -> None:
+    async def _setup_wrapper(self: Any) -> None:
         _reset_e2e_state()
         if original_setup:
             await original_setup(self)
 
-    async def _cleanup_wrapper(self) -> None:
+    async def _cleanup_wrapper(self: Any) -> None:
         if original_cleanup:
             await original_cleanup(self)
         _reset_e2e_state()
@@ -274,9 +274,9 @@ def _patch_e2e_database_fixture() -> None:
     from contextlib import asynccontextmanager
 
     @asynccontextmanager
-    async def _patched_get_async_session(self):  # type: ignore[override]
+    async def _patched_get_async_session(self: Any) -> Any:  # type: ignore[override,no-untyped-def]
         class PatchedSession:
-            def add(self, obj) -> None:
+            def add(self, obj: Any) -> None:
                 data = _serialize_value(obj)
                 class_name = obj.__class__.__name__.lower()
                 if "world" in class_name:
@@ -289,7 +289,7 @@ def _patch_e2e_database_fixture() -> None:
             async def commit(self) -> None:
                 return
 
-            async def execute(self, query) -> None:
+            async def execute(self, query: Any) -> Any:
                 text_query = str(query).lower()
                 state = _load_e2e_state()
                 if "character_events" in text_query:
@@ -304,10 +304,10 @@ def _patch_e2e_database_fixture() -> None:
                     rows = []
 
                 class MockResult:
-                    def __init__(self, data_rows) -> None:
+                    def __init__(self, data_rows: Any) -> None:
                         self._rows = data_rows
 
-                    def fetchall(self) -> None:
+                    def fetchall(self) -> Any:
                         return self._rows
 
                 return MockResult(rows)
@@ -315,7 +315,7 @@ def _patch_e2e_database_fixture() -> None:
         try:
             yield PatchedSession()
         finally:
-            pass
+            return None
 
     DatabaseFixtures.get_async_session = _patched_get_async_session
 
@@ -390,7 +390,7 @@ active_turns: Dict[str, Dict[str, Any]] = {}
 
 # Lifespan context manager for startup/shutdown events
 @asynccontextmanager
-async def lifespan_handler(app: FastAPI):
+async def lifespan_handler(app: FastAPI) -> Any:
     """Manage application lifespan (startup and shutdown)."""
     # Startup
     logger.info("Starting Novel Engine Turn Orchestration API")
@@ -398,11 +398,12 @@ async def lifespan_handler(app: FastAPI):
     # Shutdown
     logger.info("Shutting down Novel Engine Turn Orchestration API")
     # Cleanup any active turn resources
-    for turn_id in list(active_turns.keys()):
+    for turn_id_str in list(active_turns.keys()):
         try:
-            await turn_orchestrator.cleanup_turn_resources(TurnId.parse(turn_id))
+            parsed_id = TurnId.parse(turn_id_str)
+            await turn_orchestrator.cleanup_turn_resources(parsed_id)
         except Exception as e:
-            logger.error(f"Error cleaning up turn {turn_id}: {e}")
+            logger.error(f"Error cleaning up turn {turn_id_str}: {e}")
 
 
 # Apply lifespan to app
@@ -876,7 +877,7 @@ def _summarise_phase(phase_type: PhaseType, phase_result: Any) -> PhaseResultSum
 
 
 @app.get("/metrics")
-async def get_prometheus_metrics():
+async def get_prometheus_metrics() -> Response:
     """
     Prometheus metrics endpoint.
 
@@ -902,7 +903,7 @@ async def get_prometheus_metrics():
 
 
 @app.get("/v1/metrics/business-kpis")
-async def get_business_kpis():
+async def get_business_kpis() -> JSONResponse:
     """
     Business KPIs summary endpoint.
 

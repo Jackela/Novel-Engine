@@ -569,7 +569,9 @@ class Location(Entity):
             self.resource_yields.append(resource_yield)
             self.touch()
 
-    def get_resource_yield(self, resource_type: "ResourceType") -> Optional["ResourceYield"]:
+    def get_resource_yield(
+        self, resource_type: "ResourceType"
+    ) -> Optional["ResourceYield"]:
         """
         Get the resource yield for a specific resource type.
 

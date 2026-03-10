@@ -34,7 +34,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Deque, Dict, List, Optional, Union
 
 import psutil
 import structlog

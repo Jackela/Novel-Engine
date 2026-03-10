@@ -78,7 +78,7 @@ class LLMBatchRequest:
     def __lt__(self, other: Any) -> bool:
         """For priority queue ordering."""
         if not isinstance(other, LLMBatchRequest):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return (self.priority.value, self.created_at) < (
             other.priority.value,
             other.created_at,

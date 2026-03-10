@@ -26,6 +26,16 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query
 from pydantic import BaseModel, Field, field_validator
+from src.contexts.world.application.queries.world_queries import (
+    GetEntitiesByType,
+    GetEntitiesInArea,
+    GetWorldSlice,
+    GetWorldSummary,
+    QueryExecutionException,
+    QueryValidationException,
+    SearchWorlds,
+    execute_query,
+)
 
 # World Context CQRS Imports
 from src.contexts.world.application.commands.world_commands import (
@@ -36,16 +46,6 @@ from src.contexts.world.application.commands.world_commands import (
     SnapshotOperation,
     TimeOperation,
     WorldOperationType,
-)
-from src.contexts.world.application.queries.world_queries import (
-    GetEntitiesByType,
-    GetEntitiesInArea,
-    GetWorldSlice,
-    GetWorldSummary,
-    QueryExecutionException,
-    QueryValidationException,
-    SearchWorlds,
-    execute_query,
 )
 from src.contexts.world.domain.aggregates.world_state import EntityType
 from src.contexts.world.domain.value_objects.coordinates import Coordinates

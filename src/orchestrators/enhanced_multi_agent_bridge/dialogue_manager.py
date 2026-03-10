@@ -102,7 +102,7 @@ class DialogueManager:
                     f"Turn time budget exceeded, falling back to fast dialogue for {dialogue.dialogue_id}"
                 )
                 dialogue_result = await simulate_callback(dialogue, fast_mode=True)
-                return dialogue_result
+                return dialogue_result  # type: ignore[no-any-return]
 
             # Determine priority
             priority = self._determine_priority(dialogue)
@@ -150,7 +150,7 @@ class DialogueManager:
                 )
                 dialogue.state = DialogueState.FAILED
                 dialogue_result = await simulate_callback(dialogue, fast_mode=True)
-                return dialogue_result
+                return dialogue_result  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error(f"Dialogue execution failed: {e}")

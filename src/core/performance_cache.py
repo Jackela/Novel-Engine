@@ -358,7 +358,7 @@ class PerformanceCache:
 
     async def _cleanup_expired(self) -> None:
         """Remove expired entries from cache."""
-        expired_keys: list[Any] = []
+        expired_keys: List[str] = []
         async with self.memory_cache.lock:
             for key, entry in self.memory_cache.entries.items():
                 if entry.is_expired():
@@ -654,7 +654,7 @@ class PerformanceCache:
     # Utility Methods
     async def invalidate_pattern(self, pattern: str) -> None:
         """Invalidate all keys matching pattern."""
-        keys_to_delete: list[Any] = []
+        keys_to_delete: List[str] = []
         async with self.memory_cache.lock:
             for key in self.memory_cache.entries.keys():
                 if pattern in key:

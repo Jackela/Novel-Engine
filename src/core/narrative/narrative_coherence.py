@@ -22,7 +22,9 @@ logger = structlog.get_logger(__name__)
 class NarrativeCoherenceEngine:
     """叙事连贯性引擎 - 保证故事的一致性和连贯性"""
 
-    def __init__(self, causal_graph: CausalGraph, llm_service=None) -> None:
+    def __init__(
+        self, causal_graph: CausalGraph, llm_service: Optional[Any] = None
+    ) -> None:
         self.causal_graph = causal_graph
         self.llm_service = llm_service or get_llm_service()
         self.story_timeline: List[Dict[str, Any]] = []
@@ -221,11 +223,14 @@ class NarrativeCoherenceEngine:
         try:
             llm_request = LLMRequest(
                 prompt=correction_prompt,
-                response_format=ResponseFormat.JSON,
+                response_format=ResponseFormat.EVENT_JSON,
                 max_tokens=500,
             )
 
-            llm_response = await self.llm_service.process_request(llm_request)
+            llm_service = self.llm_service
+            if llm_service is None:
+                return f"{event.agent_id or 'Someone'} performed {event.event_type}"
+            llm_response = await llm_service.generate(llm_request)
 
             if llm_response and llm_response.success:
                 correction_data = json.loads(llm_response.content)
@@ -401,14 +406,21 @@ class NarrativeCoherenceEngine:
         try:
             llm_request = LLMRequest(
                 prompt=narrative_prompt,
-                response_format=ResponseFormat.TEXT,
+                response_format=ResponseFormat.NARRATIVE_FORMAT,
                 max_tokens=400,
             )
 
-            llm_response = await self.llm_service.process_request(llm_request)
+            llm_service = self.llm_service
+            if llm_service is None:
+                return f"{event.agent_id or 'Someone'} performed {event.event_type}"
+            llm_response = await llm_service.generate(llm_request)
 
             if llm_response and llm_response.success:
-                return llm_response.content.strip()
+                return (
+                    str(llm_response.content).strip()
+                    if llm_response
+                    else self._generate_basic_narrative(event)
+                )
 
         except Exception as e:
             logger.error(f"Narrative generation failed: {e}")
@@ -424,7 +436,7 @@ class NarrativeCoherenceEngine:
         # 按时间排序并选取最相关的事件
         recent_events = sorted(context_events, key=lambda x: x.timestamp)[-5:]
 
-        summary_parts: list[Any] = []
+        summary_parts: List[str] = []
         for event in recent_events:
             agent_name = event.agent_id or "某人"
             action_desc = event.event_type

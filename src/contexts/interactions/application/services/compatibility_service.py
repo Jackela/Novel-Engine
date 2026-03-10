@@ -17,7 +17,6 @@ from ....interactions.domain.value_objects.negotiation_party import (
 )
 from .shared.errors import (
     CompatibilityError,
-    ValidationError,
 )
 
 

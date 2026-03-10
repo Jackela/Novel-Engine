@@ -164,7 +164,7 @@ class IronLawsProcessor:
                 )
 
             # Initialize violation collection
-            all_violations: list[Any] = []
+            all_violations: List[IronLawsViolation] = []
             # Validate against each Iron Law
             all_violations.extend(
                 self._validate_causality_law(
@@ -193,7 +193,7 @@ class IronLawsProcessor:
 
             # Attempt repairs if there are violations
             repaired_action = None
-            repair_log: list[Any] = []
+            repair_log: List[str] = []
             if all_violations and validation_result not in {
                 ValidationResult.INVALID,
                 ValidationResult.CATASTROPHIC_FAILURE,
@@ -647,7 +647,7 @@ class IronLawsProcessor:
         self, violations: List["IronLawsViolation"]
     ) -> Dict[str, List["IronLawsViolation"]]:
         """Group violations by law type."""
-        grouped: Dict[str, List[IronLawsViolation]] = {}
+        grouped: Dict[str, List[IronLawsViolation]] = dict()
         for violation in violations:
             grouped.setdefault(violation.law_code, []).append(violation)
         return grouped

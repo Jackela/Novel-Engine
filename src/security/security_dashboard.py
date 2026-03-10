@@ -36,7 +36,7 @@ except ImportError:
 try:
     import aiosqlite
 except ImportError:
-    aiosqlite = None
+    aiosqlite = None  # type: ignore[misc]
 
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
@@ -147,15 +147,15 @@ class SecurityDashboard:
 
         # Dashboard state
         self.connected_clients: List[WebSocket] = []
-        self.alerts_queue = deque(maxlen=1000)
+        self.alerts_queue: deque = deque(maxlen=1000)
         self.incidents: Dict[str, SecurityIncident] = {}
-        self.metrics_history = deque(maxlen=1440)  # 24 hours of minute data
+        self.metrics_history: deque = deque(maxlen=1440)  # 24 hours of minute data
 
         # Redis connection
-        self.redis_client = None
+        self.redis_client: Optional[Any] = None
 
         # Real-time metrics
-        self.current_metrics = SecurityMetrics(
+        self.current_metrics: SecurityMetrics = SecurityMetrics(
             timestamp=datetime.now(timezone.utc),
             total_requests=0,
             blocked_requests=0,
@@ -251,6 +251,8 @@ class SecurityDashboard:
 
     async def _security_alert_listener(self) -> None:
         """Listen for real-time security alerts from Redis"""
+        if self.redis_client is None:
+            return
         pubsub = self.redis_client.pubsub()
         await pubsub.subscribe("security_alerts")
 
@@ -470,13 +472,13 @@ class SecurityDashboard:
     async def _generate_compliance_report(
         self, framework: ComplianceFramework
     ) -> Optional[ComplianceReport]:
+        findings: List[Dict[str, Any]] = []
+        recommendations: List[str] = []
         """Generate compliance report for framework"""
         try:
             # This would integrate with actual compliance checking logic
             # For now, we'll simulate basic compliance checking
 
-            findings: list[Any] = []
-            recommendations: list[Any] = []
             passed_controls = 0
             failed_controls = 0
 
@@ -557,6 +559,12 @@ class SecurityDashboard:
         except Exception as e:
             logger.error("Error generating compliance report for %s: %s", framework, e)
             return None
+        finally:
+            # Ensure findings and recommendations are always lists
+            if "findings" not in locals():
+                findings = []
+            if "recommendations" not in locals():
+                recommendations = []
 
     async def _save_compliance_report(self, report: ComplianceReport) -> None:
         """Save compliance report to database"""
@@ -806,7 +814,9 @@ def get_security_dashboard() -> SecurityDashboard:
     return security_dashboard
 
 
-async def initialize_security_dashboard(**kwargs) -> SecurityDashboard:
+async def initialize_security_dashboard(
+    **kwargs: Any,
+) -> SecurityDashboard:
     """Initialize the global security dashboard"""
     global security_dashboard
     security_dashboard = SecurityDashboard(**kwargs)

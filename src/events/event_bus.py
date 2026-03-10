@@ -673,7 +673,8 @@ class EventBus:
         Returns:
             Event ID
         """
-        from .outbox import EventPriority as OutboxEventPriority, OutboxEvent
+        from .outbox import EventPriority as OutboxEventPriority
+        from .outbox import OutboxEvent
 
         # Convert EventPriority to OutboxEventPriority (they have same values)
         outbox_priority = OutboxEventPriority(priority.value)
@@ -691,7 +692,9 @@ class EventBus:
 
             self._simulation_outbox = Outbox()
 
-        event_id = self._simulation_outbox.enqueue(outbox_event, priority=outbox_priority)
+        event_id = self._simulation_outbox.enqueue(
+            outbox_event, priority=outbox_priority
+        )
 
         logger.debug(
             f"Enqueued simulation event {event_id} of type {event_type} with priority {priority.name}"

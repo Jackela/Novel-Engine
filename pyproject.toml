@@ -194,6 +194,14 @@ module = [
 ]
 ignore_missing_imports = true
 
+# Disable untyped decorator checks for FastAPI routes
+[[tool.mypy.overrides]]
+module = [
+    "src.api.*",
+    "src.api.routers.*",
+]
+disallow_untyped_decorators = false
+
 # Coverage configuration
 [tool.coverage.run]
 source = ["src"]

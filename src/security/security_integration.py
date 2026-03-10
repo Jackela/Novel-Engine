@@ -38,6 +38,7 @@ from .auth_system import (
     UserLogin,
     UserRegistration,
     UserRole,
+    get_security_service,
     initialize_security_service,
 )
 from .enterprise_security_manager import (
@@ -51,8 +52,10 @@ from .security_dashboard import (
     SecurityDashboard,
     initialize_security_dashboard,
 )
+from .security_headers import (
+    SecurityHeadersConfig as SecurityConfig,
+)
 from .security_middleware import (
-    SecurityConfig,
     SecurityMiddleware,
 )
 
@@ -73,7 +76,7 @@ class EnterpriseSecuritySuite:
         compliance_frameworks: Optional[List[ComplianceFramework]] = None,
         enable_geo_blocking: bool = True,
         enable_behavioral_analytics: bool = True,
-        security_config: SecurityConfig = None,
+        security_config: Optional[SecurityConfig] = None,
     ) -> None:
         self.database_path = database_path
         self.secret_key = secret_key or secrets.token_urlsafe(32)
@@ -104,9 +107,11 @@ class EnterpriseSecuritySuite:
 
             # 1. Initialize core authentication service
             logger.info("🔐 Initializing Authentication Service...")
-            self.auth_service = initialize_security_service(
+            # Note: initialize_security_service doesn't return a value, it sets a global
+            initialize_security_service(
                 database_path=self.database_path, secret_key=self.secret_key
             )
+            self.auth_service = get_security_service()  # type: ignore[assignment]
             await self.auth_service.initialize_database()
             logger.info("✅ Authentication Service initialized")
 
@@ -274,7 +279,9 @@ class EnterpriseSecuritySuite:
 
         # 3. Add custom security middleware for request evaluation
         @app.middleware("http")
-        async def security_evaluation_middleware(request: Request, call_next):
+        async def security_evaluation_middleware(
+            request: Request, call_next: Any
+        ) -> Any:
             # Skip evaluation for static assets and health checks
             if request.url.path.startswith("/static/") or request.url.path in [
                 "/health",
@@ -289,8 +296,9 @@ class EnterpriseSecuritySuite:
                 if auth_header and auth_header.startswith("Bearer "):
                     try:
                         token = auth_header.split(" ")[1]
-                        payload = self.auth_service._decode_token(token)
-                        user_id = payload.get("sub")
+                        if self.auth_service is not None:
+                            payload = self.auth_service._decode_token(token)
+                            user_id = payload.get("sub")
                     except Exception:
                         logging.getLogger(__name__).debug(
                             "Suppressed exception", exc_info=True
@@ -353,7 +361,9 @@ class EnterpriseSecuritySuite:
 
         # Authentication endpoints
         @app.post("/api/auth/register", response_model=dict)
-        async def register_user(registration: UserRegistration, request: Request):
+        async def register_user(
+            registration: UserRegistration, request: Request
+        ) -> dict:
             try:
                 client_ip = self.security_manager._extract_client_ip(request)
                 user_agent = request.headers.get("user-agent", "unknown")

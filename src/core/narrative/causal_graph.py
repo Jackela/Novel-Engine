@@ -105,7 +105,7 @@ class CausalGraph:
 
     def detect_narrative_patterns(self) -> Dict[str, Any]:
         """检测叙事模式"""
-        patterns = {
+        patterns: Dict[str, Any] = {
             "conflict_nodes": [],
             "resolution_nodes": [],
             "catalyst_events": [],

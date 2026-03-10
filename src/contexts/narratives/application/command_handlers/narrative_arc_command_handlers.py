@@ -198,7 +198,9 @@ class NarrativeArcCommandHandler:
             self.repository.save(arc)
 
             # Add to causal graph if service available
-            has_causal_relationships = plot_point.has_prerequisites or plot_point.has_consequences
+            has_causal_relationships = (
+                plot_point.has_prerequisites or plot_point.has_consequences
+            )
             if self.causal_service and has_causal_relationships:
                 causal_node = CausalNode(
                     node_id=plot_point.plot_point_id,

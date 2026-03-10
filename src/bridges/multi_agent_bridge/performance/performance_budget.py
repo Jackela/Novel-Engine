@@ -148,7 +148,9 @@ class PerformanceBudget:
                 entry["total_turn_time"] for entry in self.performance_history
             ]
             budget_exceeds = sum(
-                1 for entry in self.performance_history if entry.get("budget_exceeded", False)
+                1
+                for entry in self.performance_history
+                if entry.get("budget_exceeded", False)
             )
             utilizations = [
                 entry["budget_utilization"] for entry in self.performance_history

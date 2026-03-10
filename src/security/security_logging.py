@@ -547,7 +547,7 @@ class SecurityLogger:
 
     async def _trigger_security_alert(
         self, event: SecurityEvent, alert_message: str, risk_score: float
-    ):
+    ) -> None:
         """STANDARD SECURITY ALERT TRIGGERING"""
         alert_event = SecurityEvent(
             event_id=f"alert_{int(time.time())}_{hash(alert_message) % 10000}",
@@ -976,7 +976,7 @@ def get_security_logger() -> SecurityLogger:
 
 def initialize_security_logger(
     database_path: str, log_directory: str = "data/security_logs"
-) -> None:
+) -> SecurityLogger:
     """STANDARD SECURITY LOGGER INITIALIZATION"""
     global security_logger
     security_logger = SecurityLogger(database_path, log_directory)

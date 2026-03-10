@@ -8,7 +8,7 @@ personalized turn briefs, belief models, and fog-of-war management.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Path
@@ -179,7 +179,7 @@ class BeliefUpdateRequest(BaseModel):
 class SubjectiveRealityAPI:
     """API endpoints for SubjectiveRealityEngine functionality."""
 
-    def __init__(self, orchestrator=None) -> None:
+    def __init__(self, orchestrator: Optional[Any] = None) -> None:
         self.orchestrator = orchestrator
         self.subjective_reality_engine = None
         self.turn_brief_factory = None
@@ -198,8 +198,10 @@ class SubjectiveRealityAPI:
             agent_id: str = Path(..., description="Agent identifier"),
             request_params: TurnBriefRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
-            _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
-        ):
+            _: Any = Depends(
+                cast(Callable[..., Any], require_permission(Permission.NARRATIVE_READ))
+            ),
+        ) -> StandardResponse[TurnBriefData]:
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
                     raise HTTPException(
@@ -262,8 +264,10 @@ class SubjectiveRealityAPI:
             turn_id: int = Path(..., description="Turn identifier"),
             request_params: MultiBriefRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
-            _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
-        ):
+            _: Any = Depends(
+                cast(Callable[..., Any], require_permission(Permission.NARRATIVE_READ))
+            ),
+        ) -> StandardResponse[MultiBriefData]:
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
                     raise HTTPException(
@@ -335,8 +339,10 @@ class SubjectiveRealityAPI:
             agent_id: str = Path(..., description="Agent identifier"),
             request_params: BeliefModelRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
-            _: Any = Depends(require_permission(Permission.BELIEF_READ)),
-        ):
+            _: Any = Depends(
+                cast(Callable[..., Any], require_permission(Permission.BELIEF_READ))
+            ),
+        ) -> StandardResponse[BeliefModelData]:
             try:
                 if (
                     not self.orchestrator
@@ -384,6 +390,8 @@ class SubjectiveRealityAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def create_subjective_reality_api(orchestrator=None) -> SubjectiveRealityAPI:
+def create_subjective_reality_api(
+    orchestrator: Optional[Any] = None,
+) -> SubjectiveRealityAPI:
     """Factory function to create SubjectiveRealityAPI instance."""
     return SubjectiveRealityAPI(orchestrator)

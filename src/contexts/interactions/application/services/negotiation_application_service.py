@@ -18,7 +18,6 @@ from .shared.errors import (
     CompatibilityError,
     ConflictError,
     NegotiationError,
-    ValidationError,
 )
 
 

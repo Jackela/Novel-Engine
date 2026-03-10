@@ -8,7 +8,7 @@ Tracks and manages LLM usage costs and budgets for multi-agent coordination.
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 __all__ = ["CostTracker"]
 

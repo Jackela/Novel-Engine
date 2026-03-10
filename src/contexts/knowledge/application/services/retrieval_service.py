@@ -869,7 +869,7 @@ class RetrievalService:
 
         for chunk in sorted_chunks:
             # Check for exact duplicates via content hash
-            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()
+            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()  # nosec B324 - Used for content deduplication, not security
 
             if content_hash in seen_hashes:
                 continue

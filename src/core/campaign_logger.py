@@ -137,7 +137,7 @@ class CampaignLogger:
             logger.error(f"Even fallback logging failed: {e}")
 
     def log_simulation_start(
-        self, agent_count: int, simulation_config: dict = None
+        self, agent_count: int, simulation_config: Optional[dict] = None
     ) -> None:
         """Log simulation start event with configuration."""
         config_info = ""
@@ -159,7 +159,11 @@ class CampaignLogger:
         )
 
     def log_agent_action(
-        self, agent_name: str, agent_id: str, action_type: str, reasoning: str = None
+        self,
+        agent_name: str,
+        agent_id: str,
+        action_type: str,
+        reasoning: Optional[str] = None,
     ) -> None:
         """Log agent action with formatting."""
         action_description = (
@@ -181,7 +185,7 @@ class CampaignLogger:
         """Log world state changes."""
         self.log_event(f"🌍 **WORLD STATE**: {change_description}")
 
-    def log_error(self, error_description: str, context: str = None) -> None:
+    def log_error(self, error_description: str, context: Optional[str] = None) -> None:
         """Log error events."""
         error_msg = f"❌ **ERROR**: {error_description}"
         if context:

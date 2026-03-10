@@ -130,7 +130,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 # Return the saved aggregate with updated version
                 result = model_to_save.to_domain_aggregate()
                 if result is None:
-                    raise RepositoryException("Failed to convert saved model to domain aggregate")
+                    raise RepositoryException(
+                        "Failed to convert saved model to domain aggregate"
+                    )
                 return result
 
         except ConcurrencyException:
@@ -157,7 +159,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted == False,
+                            WorldStateModel.is_deleted.is_(False),
                         )
                     )
                     .first()
@@ -203,7 +205,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted == False,
+                            WorldStateModel.is_deleted.is_(False),
                         )
                     )
                     .first()
@@ -245,7 +247,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted == False,
+                            WorldStateModel.is_deleted.is_(False),
                         )
                     )
                     .count()
@@ -277,14 +279,18 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             with get_db_session() as session:
                 models = (
                     session.query(WorldStateModel)
-                    .filter(WorldStateModel.is_deleted == False)
+                    .filter(WorldStateModel.is_deleted.is_(False))
                     .order_by(WorldStateModel.created_at.desc())
                     .offset(offset)
                     .limit(limit)
                     .all()
                 )
 
-                return [model.to_domain_aggregate() for model in models if model.to_domain_aggregate() is not None]
+                return [
+                    model.to_domain_aggregate()
+                    for model in models
+                    if model.to_domain_aggregate() is not None
+                ]
 
         except SQLAlchemyError as e:
             self.logger.error("all_world_states_retrieval_database_error", error=str(e))
@@ -333,7 +339,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         try:
             with get_db_session() as session:
                 query = session.query(WorldStateModel).filter(
-                    WorldStateModel.is_deleted == False
+                    WorldStateModel.is_deleted.is_(False)
                 )
 
                 # Apply criteria filters
@@ -362,7 +368,11 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .limit(limit)
                     .all()
                 )
-                return [model.to_domain_aggregate() for model in models if model.to_domain_aggregate() is not None]
+                return [
+                    model.to_domain_aggregate()
+                    for model in models
+                    if model.to_domain_aggregate() is not None
+                ]
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -380,7 +390,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         try:
             with get_db_session() as session:
                 query = session.query(WorldStateModel).filter(
-                    WorldStateModel.is_deleted == False
+                    WorldStateModel.is_deleted.is_(False)
                 )
 
                 if criteria:
@@ -530,7 +540,9 @@ class PostgresWorldStateRepository(IWorldStateRepository):
 
                 # Reconstruct world state from version data
                 result = self._reconstruct_world_state_from_version_data(
-                    dict(version_model.version_data) if version_model.version_data else {}
+                    dict(version_model.version_data)
+                    if version_model.version_data
+                    else {}
                 )
                 return result
 
@@ -1089,7 +1101,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     # Global statistics
                     total_worlds = (
                         session.query(WorldStateModel)
-                        .filter(WorldStateModel.is_deleted == False)
+                        .filter(WorldStateModel.is_deleted.is_(False))
                         .count()
                     )
 
@@ -1098,7 +1110,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         session.query(WorldStateModel)
                         .filter(
                             and_(
-                                WorldStateModel.is_deleted == False,
+                                WorldStateModel.is_deleted.is_(False),
                                 WorldStateModel.status == "active",
                             )
                         )

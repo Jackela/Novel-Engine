@@ -16,7 +16,7 @@ clear separation from world state management and agent lifecycle concerns.
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -80,7 +80,7 @@ class TurnOrchestrator:
         self,
         registered_agents: List[PersonaAgent],
         world_state_data: Dict[str, Any],
-        log_event_callback: callable,
+        log_event_callback: Callable[..., Any],
     ) -> Dict[str, Any]:
         """
         Execute a single simulation turn with dynamic context loading.
@@ -312,7 +312,7 @@ class TurnOrchestrator:
         self,
         agent: PersonaAgent,
         action: Optional[CharacterAction],
-        log_event_callback: callable,
+        log_event_callback: Callable[..., Any],
     ) -> bool:
         """
         Handle an agent's action during turn execution.

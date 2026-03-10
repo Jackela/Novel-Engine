@@ -393,9 +393,9 @@ class CharacterInterpreter:
                 ]
 
                 for pattern in name_patterns:
-                    match = re.search(pattern, content, re.IGNORECASE)
-                    if match:
-                        name_candidate = match.group(1).strip()
+                    name_match = re.search(pattern, content, re.IGNORECASE)
+                    if name_match:
+                        name_candidate = name_match.group(1).strip()
                         # Skip if it's a file separator
                         if "===" not in name_candidate:
                             basic_info["name"] = name_candidate
@@ -409,9 +409,9 @@ class CharacterInterpreter:
             ]
 
             for pattern in faction_patterns:
-                match = re.search(pattern, content, re.IGNORECASE)
-                if match:
-                    basic_info["faction"] = match.group(1).strip()
+                faction_match = re.search(pattern, content, re.IGNORECASE)
+                if faction_match:
+                    basic_info["faction"] = faction_match.group(1).strip()
                     break
 
             # Extract rank/title
@@ -422,9 +422,9 @@ class CharacterInterpreter:
             ]
 
             for pattern in rank_patterns:
-                match = re.search(pattern, content, re.IGNORECASE)
-                if match:
-                    basic_info["rank"] = match.group(1).strip()
+                rank_match = re.search(pattern, content, re.IGNORECASE)
+                if rank_match:
+                    basic_info["rank"] = rank_match.group(1).strip()
                     break
 
         except Exception as e:

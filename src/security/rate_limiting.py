@@ -34,12 +34,12 @@ logger = structlog.get_logger(__name__)
 class _RateLimitStrategyMeta(EnumMeta):
     """Enum meta class that provides a sensible default when instantiated without a value."""
 
-    def __call__(self, value=None, *args, **kwargs) -> None:
-        if isinstance(value, self):
+    def __call__(cls, value: Any = None, *args: Any, **kwargs: Any) -> Any:
+        if isinstance(value, cls):
             return value
         if value is None:
             # Default to the first declared enum member (TOKEN_BUCKET for this enum)
-            return next(iter(self))
+            return next(iter(cls))
         return super().__call__(value, *args, **kwargs)
 
 
@@ -233,7 +233,7 @@ class RateLimiter:
             "unique_clients": 0,
             "threats_detected": 0,
         }
-        self._cleanup_task = None
+        self._cleanup_task: Optional[asyncio.Task[Any]] = None
         self.ddos_detector = DDoSDetector()
         self.whitelist = IPWhitelist(config.whitelist_ips)
         self._start_cleanup_task()
@@ -241,7 +241,7 @@ class RateLimiter:
     def _start_cleanup_task(self) -> None:
         """STANDARD CLEANUP TASK INITIALIZATION"""
 
-        async def cleanup_loop():
+        async def cleanup_loop() -> None:
             """
             Background cleanup task for expired rate limit entries.
             """
@@ -470,7 +470,8 @@ class RateLimiter:
         endpoint_config = self.config.endpoint_configs.get(request.url.path)
         if endpoint_config:
             endpoint_config.get("requests_per_minute", self.config.requests_per_minute)
-            if client.minute_bucket and not client.minute_bucket.consume():
+            minute_bucket = client.minute_bucket
+            if minute_bucket is not None and not minute_bucket.consume():
                 raise RateLimitExceeded(
                     f"Rate limit exceeded for endpoint {request.url.path}",
                     60,
@@ -479,7 +480,8 @@ class RateLimiter:
 
         # Check general rate limits
         if self.config.strategy == RateLimitStrategy.TOKEN_BUCKET:
-            if not client.minute_bucket.consume():
+            minute_bucket = client.minute_bucket
+            if minute_bucket is None or not minute_bucket.consume():
                 self.global_stats["blocked_requests"] += 1
                 client.failed_requests += 1
                 if (
@@ -491,14 +493,16 @@ class RateLimiter:
                     "Rate limit exceeded (per minute)", 60, threat_level
                 )
 
-            if not client.hour_bucket.consume():
+            hour_bucket = client.hour_bucket
+            if hour_bucket is None or not hour_bucket.consume():
                 self.global_stats["blocked_requests"] += 1
                 client.failed_requests += 1
                 raise RateLimitExceeded(
                     "Rate limit exceeded (per hour)", 3600, threat_level
                 )
 
-            if not client.day_bucket.consume():
+            day_bucket = client.day_bucket
+            if day_bucket is None or not day_bucket.consume():
                 self.global_stats["blocked_requests"] += 1
                 client.failed_requests += 1
                 raise RateLimitExceeded(
@@ -574,8 +578,8 @@ class InMemoryRateLimitBackend:
         }
 
     async def check_rate_limit(
-        self, client_id: str, rate_limit: RateLimit
-    ) -> RateLimitResult:
+        self, client_id: str, rate_limit: "RateLimit"
+    ) -> "RateLimitResult":
         """STANDARD RATE LIMIT CHECK
 
         Check if a client has exceeded their rate limit and return the result.
@@ -590,6 +594,7 @@ class InMemoryRateLimitBackend:
         now = time.time()
 
         # Get or create client state
+        window: SlidingWindow
         if client_id not in self.clients:
             # Create new client state with sliding window
             window = SlidingWindow(
@@ -602,17 +607,18 @@ class InMemoryRateLimitBackend:
                 first_seen=now,
                 last_request=now,
             )
-
-        client_state = self.clients[client_id]
-        window = client_state.minute_window
-
-        if window is None:
-            # Initialize window if not present
-            window = SlidingWindow(
-                window_size=rate_limit.window,
-                max_requests=rate_limit.requests,
-            )
-            client_state.minute_window = window
+            client_state = self.clients[client_id]
+        else:
+            client_state = self.clients[client_id]
+            if client_state.minute_window is None:
+                # Initialize window if not present
+                window = SlidingWindow(
+                    window_size=rate_limit.window,
+                    max_requests=rate_limit.requests,
+                )
+                client_state.minute_window = window
+            else:
+                window = client_state.minute_window
 
         # Remove old requests outside the window
         while window.requests and window.requests[0] <= now - rate_limit.window:
@@ -648,10 +654,10 @@ class InMemoryRateLimitBackend:
                 retry_after=retry_after,
             )
 
-    def cleanup_old_clients(self, max_age: float = 3600.0) -> None:
+    def cleanup_old_clients(self, max_age: float = 3600.0) -> int:
         """Remove clients inactive for more than max_age seconds"""
         now = time.time()
-        old_clients: list[Any] = []
+        old_clients: List[str] = []
         for client_id, client in self.clients.items():
             if now - client.last_request > max_age:
                 old_clients.append(client_id)
@@ -714,7 +720,7 @@ class RateLimitMiddleware:
 
     def __init__(
         self,
-        app,
+        app: Any,
         backend: Optional[InMemoryRateLimitBackend] = None,
         strategy: Optional[RateLimitStrategy] = None,
         config: Optional[RateLimitConfig] = None,
@@ -731,9 +737,9 @@ class RateLimitMiddleware:
         self.ddos_detector = self.rate_limiter.ddos_detector
         self.whitelist = self.rate_limiter.whitelist
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Dict[str, Any], receive: Any, send: Any) -> None:
         """STANDARD REQUEST RATE LIMITING"""
-        if scope["type"] != "http":
+        if scope.get("type") != "http":
             await self.app(scope, receive, send)
             return
 
@@ -860,7 +866,9 @@ def get_rate_limiter() -> RateLimiter:
     return rate_limiter
 
 
-def create_rate_limit_middleware(app, config: Optional[RateLimitConfig] = None) -> None:
+def create_rate_limit_middleware(
+    app: Any, config: Optional[RateLimitConfig] = None
+) -> RateLimitMiddleware:
     """STANDARD RATE LIMIT MIDDLEWARE CREATOR"""
     global rate_limiter
     if config:

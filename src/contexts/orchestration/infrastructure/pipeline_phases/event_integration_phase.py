@@ -7,7 +7,7 @@ updating entity states, world conditions, and maintaining event consistency.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from ...domain.value_objects import PhaseType

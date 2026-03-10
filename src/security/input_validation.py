@@ -394,11 +394,15 @@ class InputValidator:
     def _validate_json_recursive(self, obj: Any) -> Any:
         """STANDARD RECURSIVE JSON VALIDATION"""
         if isinstance(obj, dict):
-            return {
+            result: Dict[str, Any] = {
                 key: self._validate_json_recursive(value) for key, value in obj.items()
             }
+            return result
         elif isinstance(obj, list):
-            return [self._validate_json_recursive(item) for item in obj]
+            result_list: List[Any] = [
+                self._validate_json_recursive(item) for item in obj
+            ]
+            return result_list
         elif isinstance(obj, str):
             return self.validate_input(obj, InputType.TEXT)
         else:
@@ -453,12 +457,13 @@ class InputValidator:
 class ValidationMiddleware(BaseHTTPMiddleware):
     """STANDARD VALIDATION MIDDLEWARE ENHANCED BY PROTECTION"""
 
-    def __init__(self, app, validator: InputValidator) -> None:
+    def __init__(self, app: Any, validator: InputValidator) -> None:
         super().__init__(app)
         self.validator = validator
 
-    async def dispatch(self, request: Request, call_next) -> None:
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         """STANDARD REQUEST VALIDATION"""
+        response: Any = None
         try:
             # Skip validation for certain paths
             skip_paths = ["/health", "/docs", "/redoc", "/openapi.json"]
@@ -498,6 +503,9 @@ class ValidationMiddleware(BaseHTTPMiddleware):
                     self.validator.validate_input(
                         request.headers[header], InputType.TEXT
                     )
+
+            response = await call_next(request)
+            return response
         except ValidationError as e:
             logger.warning(
                 "validation.failed",
@@ -520,9 +528,6 @@ class ValidationMiddleware(BaseHTTPMiddleware):
             logger.error("validation.middleware_error", error=str(e))
             raise HTTPException(status_code=500, detail="Internal validation error")
 
-        response = await call_next(request)
-        return response
-
 
 # STANDARD GLOBAL VALIDATOR INSTANCE
 input_validator: Optional[InputValidator] = None
@@ -536,7 +541,7 @@ def get_input_validator() -> InputValidator:
     return input_validator
 
 
-def create_validation_middleware(app) -> None:
+def create_validation_middleware(app: Any) -> ValidationMiddleware:
     """STANDARD VALIDATION MIDDLEWARE CREATOR"""
     validator = get_input_validator()
     return ValidationMiddleware(app, validator)

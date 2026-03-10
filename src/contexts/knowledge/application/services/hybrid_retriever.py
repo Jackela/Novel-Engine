@@ -698,7 +698,7 @@ class HybridRetriever:
         chunk_content: dict[str, Any] = {}
 
         for chunk in vector_chunks + bm25_chunks:
-            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()
+            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()  # nosec B324 - Used for content deduplication, not security
             if content_hash not in chunk_content:
                 chunk_content[content_hash] = chunk
             elif chunk.score > chunk_content[content_hash].score:
@@ -719,7 +719,7 @@ class HybridRetriever:
                 continue
 
             # Check for duplicate content
-            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()
+            content_hash = hashlib.md5(chunk.content.encode()).hexdigest()  # nosec B324 - Used for content deduplication, not security
             if content_hash in seen_chunks:
                 continue
 

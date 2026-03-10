@@ -699,7 +699,9 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         orm_entity.last_world_update = turn_brief.last_world_update  # type: ignore[assignment]
         orm_entity.last_perception_update = turn_brief.last_perception_update  # type: ignore[assignment]
         orm_entity.base_alertness = turn_brief.awareness_state.base_alertness.value  # type: ignore[assignment]
-        orm_entity.current_alertness = turn_brief.awareness_state.current_alertness.value  # type: ignore[assignment]
+        orm_entity.current_alertness = (
+            turn_brief.awareness_state.current_alertness.value
+        )  # type: ignore[assignment]
         orm_entity.attention_focus = turn_brief.awareness_state.attention_focus.value  # type: ignore[assignment]
         orm_entity.focus_target = turn_brief.awareness_state.focus_target  # type: ignore[assignment]
         orm_entity.awareness_modifiers = self._serialize_awareness_modifiers(

@@ -1023,7 +1023,10 @@ class DatabaseManager:
         return await pool.get_connection()
 
     async def execute_query(
-        self, query: str, parameters: tuple = None, pool_name: Optional[str] = None
+        self,
+        query: str,
+        parameters: Optional[tuple] = None,
+        pool_name: Optional[str] = None,
     ) -> aiosqlite.Cursor:
         """Execute query on specified or default pool. (Legacy - use execute_query_result)"""
         result = await self.execute_query_result(query, parameters, pool_name)
@@ -1034,7 +1037,7 @@ class DatabaseManager:
     async def execute_query_result(
         self,
         query: str,
-        parameters: tuple = None,
+        parameters: Optional[tuple] = None,
         pool_name: Optional[str] = None,
     ) -> Result[aiosqlite.Cursor, DatabaseError]:
         """

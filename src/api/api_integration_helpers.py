@@ -33,7 +33,9 @@ class APIEnhancementConfig(BaseModel):
 class Context7EnhancedRoute(APIRoute):
     """Enhanced API route with Context7 integration."""
 
-    def __init__(self, *args: Any, context7_api: Optional[Any] = None, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, context7_api: Optional[Any] = None, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.context7_api = context7_api
         self.example_cache: Dict[str, Any] = {}
@@ -49,7 +51,8 @@ class Context7EnhancedRoute(APIRoute):
             if (
                 datetime.now() - cached_data["timestamp"]
             ).total_seconds() < 3600:  # 1 hour cache
-                return cached_data["examples"]
+                result: list[dict[str, Any]] = cached_data["examples"]
+                return result
 
         try:
             examples: list[Any] = []
@@ -117,6 +120,8 @@ class APIDocumentationEnhancer:
         self, endpoint_path: str, method: str
     ) -> List[Dict[str, Any]]:
         """Get Context7-powered code examples."""
+        if not self.context7_api:
+            return []
         try:
             response = await self.context7_api._call_context7(
                 "generate_code_example",
@@ -139,6 +144,8 @@ class APIDocumentationEnhancer:
 
     async def _get_best_practices(self, endpoint_path: str, method: str) -> List[str]:
         """Get relevant best practices for the endpoint."""
+        if not self.context7_api:
+            return []
         try:
             response = await self.context7_api._call_context7(
                 "get_best_practices",
@@ -210,7 +217,8 @@ class APIValidationEnhancer:
             )
 
             if response.get("success"):
-                return response["validation"]
+                result: dict[str, Any] = response["validation"]
+                return result
 
             return {"valid": False, "message": "Validation failed"}
 
@@ -292,7 +300,7 @@ class APIIntegrationManager:
 
             # Create enhanced endpoint
             @wraps(original_endpoint)
-            async def enhanced_endpoint(*args, **kwargs):
+            async def enhanced_endpoint(*args: Any, **kwargs: Any) -> Any:
                 return await original_endpoint(*args, **kwargs)
 
             # Replace with enhanced version
@@ -352,7 +360,7 @@ class APIIntegrationManager:
 def create_context7_middleware() -> Callable[..., Any]:
     """Create middleware for Context7 integration."""
 
-    async def context7_middleware(request: Request, call_next: Any) -> Any:
+    async def context7_middleware(request: Request, call_next: Any) -> Any:  # type: ignore[no-untyped-def]
         """Middleware to add Context7 enhancements to responses."""
         start_time = datetime.now()
 
@@ -380,10 +388,7 @@ class APISchemaEnhancer:
 
     def enhance_openapi_schema(self, app: FastAPI) -> dict[str, Any]:
         """Enhance OpenAPI schema with Context7 features."""
-        schema = app.openapi()
-
-        if not schema:
-            return {}
+        schema: dict[str, Any] = app.openapi() or {}
 
         # Add Context7 extension information
         if "info" in schema:
