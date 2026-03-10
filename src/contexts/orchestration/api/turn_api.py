@@ -315,7 +315,7 @@ def _patch_e2e_database_fixture() -> None:
         try:
             yield PatchedSession()
         finally:
-            return None
+            pass
 
     DatabaseFixtures.get_async_session = _patched_get_async_session
 
