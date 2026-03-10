@@ -25,7 +25,7 @@ from ...domain.value_objects.interaction_id import InteractionId
 
 # Import infrastructure models
 from ..persistence.models.negotiation_session_model import (
-    NegotiationSessionModel,  # type: ignore[import-not-found]
+    NegotiationSessionModel,
 )
 
 logger = structlog.get_logger(__name__)

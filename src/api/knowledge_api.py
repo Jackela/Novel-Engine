@@ -233,8 +233,8 @@ def create_knowledge_api() -> APIRouter:
         # Start OpenTelemetry span (Article VII - Observability)
         if OTEL_AVAILABLE and tracer:
             with tracer.start_as_current_span("knowledge.create_entry") as span:
-                span.set_attribute("knowledge_type", request.knowledge_type.value)
-                span.set_attribute("access_level", request.access_level.value)
+                span.set_attribute("knowledge_type", str(request.knowledge_type))
+                span.set_attribute("access_level", str(request.access_level))
                 span.set_attribute("user_id", user_id)
 
                 try:
@@ -392,7 +392,7 @@ def create_knowledge_api() -> APIRouter:
         repository: IKnowledgeRepository = Depends(get_repository),
         event_publisher: IEventPublisher = Depends(get_event_publisher),
         current_user: User = Depends(require_role(UserRole.ADMIN)),
-    ):
+    ) -> None:
         """
         Update a knowledge entry's content.
 
@@ -458,7 +458,7 @@ def create_knowledge_api() -> APIRouter:
         repository: IKnowledgeRepository = Depends(get_repository),
         event_publisher: IEventPublisher = Depends(get_event_publisher),
         current_user: User = Depends(require_role(UserRole.ADMIN)),
-    ):
+    ) -> None:
         """
         Delete a knowledge entry.
 
@@ -546,7 +546,7 @@ def create_knowledge_api() -> APIRouter:
     async def migrate_markdown_files(
         request: MigrateMarkdownRequest,
         repository: IKnowledgeRepository = Depends(get_repository),
-    ):
+    ) -> Any:
         """
         Migrate all Markdown files to PostgreSQL knowledge base.
 
@@ -578,7 +578,7 @@ def create_knowledge_api() -> APIRouter:
     async def rollback_migration(
         request: RollbackMigrationRequest,
         repository: IKnowledgeRepository = Depends(get_repository),
-    ):
+    ) -> Any:
         """
         Rollback migration by deleting entries and restoring Markdown files.
 
@@ -606,7 +606,7 @@ def create_knowledge_api() -> APIRouter:
     async def verify_migration(
         request: VerifyMigrationRequest,
         repository: IKnowledgeRepository = Depends(get_repository),
-    ):
+    ) -> Any:
         """
         Verify migration by comparing Markdown content vs PostgreSQL entries.
 

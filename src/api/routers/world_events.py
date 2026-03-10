@@ -48,6 +48,11 @@ router = APIRouter(tags=["world-events"])
 DEFAULT_WORLD_ID = "default"
 
 
+# Shared repository instances for fallback
+_event_repo_instance: Optional[EventRepository] = None
+_rumor_repo_instance: Optional[RumorRepository] = None
+
+
 def get_event_repository(request: Request) -> EventRepository:
     """Get the EventRepository from DI container.
 
@@ -63,20 +68,19 @@ def get_event_repository(request: Request) -> EventRepository:
     Raises:
         RuntimeError: If repository not configured
     """
+    global _event_repo_instance
     repo = getattr(request.app.state, "event_repository", None)
     if repo is None:
         # Fallback: create in-memory repository for testing
-        # Use a module-level singleton to ensure consistency across requests
         from src.contexts.world.infrastructure.persistence.in_memory_event_repository import (
             InMemoryEventRepository,
         )
 
-        # Check if we already have a shared instance
-        if not hasattr(get_event_repository, "_shared_repo"):
-            get_event_repository._shared_repo = InMemoryEventRepository()
+        if _event_repo_instance is None:
+            _event_repo_instance = InMemoryEventRepository()
             logger.warning("event_repository_fallback_created_shared")
 
-        repo = get_event_repository._shared_repo
+        repo = _event_repo_instance
         request.app.state.event_repository = repo
     return repo
 
@@ -96,20 +100,18 @@ def get_rumor_repository(request: Request) -> RumorRepository:
     Raises:
         RuntimeError: If repository not configured
     """
+    global _rumor_repo_instance
     repo = getattr(request.app.state, "rumor_repository", None)
     if repo is None:
-        # Fallback: create in-memory repository for testing
-        # Use a module-level singleton to ensure consistency across requests
         from src.contexts.world.infrastructure.persistence.in_memory_rumor_repository import (
             InMemoryRumorRepository,
         )
 
-        # Check if we already have a shared instance
-        if not hasattr(get_rumor_repository, "_shared_repo"):
-            get_rumor_repository._shared_repo = InMemoryRumorRepository()
+        if _rumor_repo_instance is None:
+            _rumor_repo_instance = InMemoryRumorRepository()
             logger.warning("rumor_repository_fallback_created_shared")
 
-        repo = get_rumor_repository._shared_repo
+        repo = _rumor_repo_instance
         request.app.state.rumor_repository = repo
     return repo
 
@@ -561,7 +563,7 @@ async def export_events(
     to_date: Optional[str] = Query(None, description="Filter to date"),
     event_types: Optional[str] = Query(None, description="Comma-separated event types"),
     service: EventService = Depends(get_event_service),
-):
+) -> Dict[str, Any]:
     """Export events as a timeline.
 
     Exports events in various formats (JSON, PDF, PNG) for external analysis.

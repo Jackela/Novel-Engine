@@ -75,38 +75,32 @@ class SessionManagementService:
         # Validation
         if not session_name or not session_name.strip():
             return Err(
-                ValidationError(
+                SessionError(
                     message="Session name is required",
-                    field="session_name",
                     recoverable=True,
                 )
             )
 
         if not session_type or not session_type.strip():
             return Err(
-                ValidationError(
+                SessionError(
                     message="Session type is required",
-                    field="session_type",
                     recoverable=True,
                 )
             )
 
         if max_parties < 2:
             return Err(
-                ValidationError(
-                    message="Maximum parties must be at least 2",
-                    field="max_parties",
-                    field_value=max_parties,
+                SessionError(
+                    message=f"Maximum parties must be at least 2, got {max_parties}",
                     recoverable=True,
                 )
             )
 
         if session_timeout_hours <= 0:
             return Err(
-                ValidationError(
-                    message="Session timeout must be positive",
-                    field="session_timeout_hours",
-                    field_value=session_timeout_hours,
+                SessionError(
+                    message=f"Session timeout must be positive, got {session_timeout_hours}",
                     recoverable=True,
                 )
             )
@@ -210,9 +204,8 @@ class SessionManagementService:
         """
         if party is None:
             return Err(
-                ValidationError(
+                SessionError(
                     message="Party is required",
-                    field="party",
                     recoverable=True,
                 )
             )
@@ -228,6 +221,14 @@ class SessionManagementService:
             )
 
         session = session_result.value
+        if session is None:
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         if not session.is_active:
             return Err(
@@ -317,13 +318,19 @@ class SessionManagementService:
             )
 
         session = session_result.value
+        if session is None:
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         if party_id not in session.parties:
             return Err(
-                NotFoundError(
+                SessionError(
                     message=f"Party {party_id} not found in session",
-                    entity_type="NegotiationParty",
-                    entity_id=str(party_id),
                     recoverable=False,
                 )
             )
@@ -399,6 +406,14 @@ class SessionManagementService:
             )
 
         session = session_result.value
+        if session is None:
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         if not session.is_active:
             return Err(
@@ -482,6 +497,14 @@ class SessionManagementService:
             )
 
         session = session_result.value
+        if session is None:
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         if not session.is_active:
             return Err(
@@ -495,10 +518,8 @@ class SessionManagementService:
 
         if terminated_by not in session.parties:
             return Err(
-                AuthorizationError(
+                SessionError(
                     message="Only session participants can terminate",
-                    party_id=str(terminated_by),
-                    required_permission="terminate_session",
                     recoverable=False,
                 )
             )
@@ -570,6 +591,14 @@ class SessionManagementService:
             )
 
         session = session_result.value
+        if session is None:
+            return Err(
+                SessionError(
+                    message=f"Session {session_id} not found",
+                    session_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         if not session.is_active:
             return Err(
@@ -584,10 +613,8 @@ class SessionManagementService:
         # Validate inputs
         if max_parties is not None and max_parties < len(session.parties):
             return Err(
-                ValidationError(
+                SessionError(
                     message=f"Cannot set max_parties below current party count ({len(session.parties)})",
-                    field="max_parties",
-                    field_value=max_parties,
                     recoverable=True,
                 )
             )
@@ -656,6 +683,15 @@ class SessionManagementService:
             return session_result  # type: ignore
 
         session = session_result.value
+        if session is None:
+            return Err(
+                NotFoundError(
+                    message=f"Session {session_id} not found",
+                    entity_type="NegotiationSession",
+                    entity_id=str(session_id),
+                    recoverable=False,
+                )
+            )
 
         summary = session.get_session_summary()
         return Ok(summary)

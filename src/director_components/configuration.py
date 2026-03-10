@@ -13,7 +13,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import structlog
 
@@ -46,33 +46,31 @@ class ConfigSchema:
     description: str = ""
 
 
-if WATCHDOG_AVAILABLE:
+class ConfigFileHandler:
+    """File system event handler for config file changes."""
 
-    class ConfigFileHandler(FileSystemEventHandler):
-        """File system event handler for config file changes."""
-
-        def __init__(self, config_service) -> None:
+    def __init__(self, config_service: Any) -> None:
+        if WATCHDOG_AVAILABLE:
             self.config_service = config_service
             self.logger = structlog.get_logger(__name__)
+        else:
+            self.config_service = None
+            self.logger = None
 
-        def on_modified(self, event) -> None:
-            if (
-                not event.is_directory
-                and event.src_path in self.config_service._watched_files
-            ):
+    def on_modified(self, event: Any) -> None:
+        if not WATCHDOG_AVAILABLE:
+            return
+        if (
+            self.config_service is not None
+            and not event.is_directory
+            and event.src_path in self.config_service._watched_files
+        ):
+            if self.logger:
                 self.logger.info(f"Config file modified: {event.src_path}")
-                # Schedule config reload
-                asyncio.create_task(
-                    self.config_service._handle_file_change(event.src_path)
-                )
-
-else:
-
-    class ConfigFileHandler:
-        """Dummy handler when watchdog is not available."""
-
-        def __init__(self, config_service) -> None:
-            pass
+            # Schedule config reload
+            asyncio.create_task(
+                self.config_service._handle_file_change(event.src_path)
+            )
 
 
 class ConfigurationService:
@@ -115,7 +113,7 @@ class ConfigurationService:
 
         # Change tracking
         self._config_history: List[Dict[str, Any]] = []
-        self._change_callbacks: List[callable] = []
+        self._change_callbacks: List[Callable[..., Any]] = []
 
         # Validation
         self._validation_enabled = True
@@ -275,7 +273,7 @@ class ConfigurationService:
             self.logger.error(f"Configuration reload failed: {e}")
             return False
 
-    async def register_change_callback(self, callback: callable) -> None:
+    async def register_change_callback(self, callback: Callable[..., Any]) -> None:
         """Register callback for configuration changes."""
         self._change_callbacks.append(callback)
 
@@ -488,7 +486,7 @@ class ConfigurationService:
 
     async def _validate_configuration(self) -> Dict[str, Any]:
         """Validate configuration against schema."""
-        validation_result = {"valid": True, "errors": [], "warnings": []}
+        validation_result: Dict[str, Any] = {"valid": True, "errors": [], "warnings": []}
 
         try:
             # Check required keys
@@ -516,6 +514,7 @@ class ConfigurationService:
                     if not isinstance(current_value, schema.data_type):
                         try:
                             # Try to convert
+                            converted_value: Any
                             if schema.data_type is int:
                                 converted_value = int(current_value)
                             elif schema.data_type is float:
@@ -532,9 +531,8 @@ class ConfigurationService:
                             self._set_nested_value(
                                 self._config_data, schema_key, converted_value
                             )
-                            validation_result["warnings"].append(
-                                f"Converted '{schema_key}' from {type(current_value).__name__} to {schema.data_type.__name__}"
-                            )
+                            warning_msg = f"Converted '{schema_key}' from {type(current_value).__name__} to {schema.data_type.__name__}"
+                            validation_result["warnings"].append(warning_msg)
                             current_value = converted_value
                         except (ValueError, TypeError):
                             validation_result["valid"] = False
@@ -634,10 +632,11 @@ class ConfigurationService:
         """Notify registered callbacks about configuration changes."""
         for callback in self._change_callbacks:
             try:
-                if asyncio.iscoroutinefunction(callback):
-                    await callback(changes)
-                else:
-                    callback(changes)
+                if callable(callback):
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(changes)
+                    else:
+                        callback(changes)
             except Exception as e:
                 self.logger.error(f"Configuration change callback failed: {e}")
 

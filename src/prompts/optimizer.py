@@ -361,7 +361,8 @@ Return ONLY the optimized prompt, no explanations."""
         )
 
         response = await llm_service.generate(request)
-        return response.content.strip()
+        content: str = response.content
+        return content.strip()
 
     async def optimize(
         self,

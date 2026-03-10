@@ -137,10 +137,8 @@ class ProposalService:
 
         if max_modifications < 1:
             return Err(
-                ValidationError(
+                ProposalError(
                     message="max_modifications must be at least 1",
-                    field="max_modifications",
-                    field_value=max_modifications,
                     recoverable=True,
                 )
             )

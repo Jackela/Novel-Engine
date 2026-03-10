@@ -101,7 +101,8 @@ class DialogueManager:
                 logger.warning(
                     f"Turn time budget exceeded, falling back to fast dialogue for {dialogue.dialogue_id}"
                 )
-                return await simulate_callback(dialogue, fast_mode=True)
+                dialogue_result = await simulate_callback(dialogue, fast_mode=True)
+                return dialogue_result
 
             # Determine priority
             priority = self._determine_priority(dialogue)
@@ -148,7 +149,8 @@ class DialogueManager:
                     f"LLM dialogue generation failed for {dialogue.dialogue_id}"
                 )
                 dialogue.state = DialogueState.FAILED
-                return await simulate_callback(dialogue, fast_mode=True)
+                dialogue_result = await simulate_callback(dialogue, fast_mode=True)
+                return dialogue_result
 
         except Exception as e:
             logger.error(f"Dialogue execution failed: {e}")

@@ -63,7 +63,7 @@ class WorldEntity:
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
-    def update_properties(self, **properties) -> None:
+    def update_properties(self, **properties: Any) -> None:
         """Update entity properties and timestamp."""
         self.properties.update(properties)
         self.updated_at = datetime.now()
@@ -529,12 +529,16 @@ class WorldState(Entity):
         Raises:
             ValueError: If days is negative (via calendar.advance)
         """
-        result = self.calendar.advance(days)
-        if result.is_error:
-            return result
+        advance_result = self.calendar.advance(days)
+        if advance_result.is_error:
+            # Return the error wrapped in the correct Result type
+            return Err(advance_result.error)
 
         previous_calendar = self.calendar
-        self.calendar = result.value
+        updated_calendar = advance_result.value
+        if updated_calendar is None:
+            return Err(ValueError("Calendar advance returned None"))
+        self.calendar = updated_calendar
         self.touch()
 
         # Raise domain event

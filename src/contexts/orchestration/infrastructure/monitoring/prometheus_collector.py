@@ -8,7 +8,7 @@ along with extended metrics for complete observability.
 """
 
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Generator, List, Optional, TypeVar, Union
 from uuid import UUID
 
 import structlog
@@ -30,47 +30,51 @@ except (
         "prometheus_client unavailable (%s); using no-op collectors.", prometheus_error
     )
 
+    from typing import Literal
+
+    Self = TypeVar("Self", bound="_NoOpMetric")
+
     class _NoOpMetric:
-        def __init__(self, *_, **__) -> None:
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-        def labels(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def labels(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def inc(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def inc(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def dec(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def dec(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def observe(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def observe(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def set(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def set(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def info(self, *_: Any, **__: Any) -> "_NoOpMetric":
+        def info(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def time(self) -> None:
-            class _Timer:
-                def __enter__(self) -> "_Timer":
-                    return self
-
-                def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> bool:
-                    return False
-
+        def time(self) -> "_Timer":
             return _Timer()
 
-    class CollectorRegistry:  # type: ignore[override]
-        def __init__(self, *_, **__) -> None:
+    class _Timer:
+        def __enter__(self) -> "_Timer":
+            return self
+
+        def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> Literal[False]:
+            return False
+
+    class CollectorRegistry:  # type: ignore[no-redef]
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
     Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
     CONTENT_TYPE_LATEST = "text/plain"
 
-    def generate_latest(_registry: Any) -> bytes:
-        return b""
+    def generate_latest(_registry: Any) -> str:  # type: ignore[misc]
+        return ""
 
 
 logger = structlog.get_logger(__name__)
@@ -575,7 +579,10 @@ class PrometheusMetricsCollector:
         Returns:
             Metrics data in Prometheus format
         """
-        return generate_latest(self.registry)
+        result: Union[str, bytes] = generate_latest(self.registry)
+        if isinstance(result, bytes):
+            return result.decode("utf-8")
+        return result
 
     def get_metrics_content_type(self) -> str:
         """

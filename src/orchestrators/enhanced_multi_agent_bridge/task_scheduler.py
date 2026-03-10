@@ -9,7 +9,7 @@ import asyncio
 import heapq
 import time
 from collections import deque
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Dict, List, Optional
 
 import structlog
 
@@ -75,7 +75,7 @@ class TaskScheduler:
     async def submit_request(
         self,
         request: LLMBatchRequest,
-        process_callback: Callable[[LLMBatchRequest], asyncio.Future[Dict[str, Any]]],
+        process_callback: Callable[[LLMBatchRequest], Awaitable[Dict[str, Any]]],
     ) -> Dict[str, Any]:
         """Submit a request for processing.
 
@@ -163,8 +163,6 @@ class TaskScheduler:
         self.coordination_stats["average_batch_size"] = self.coordination_stats[
             "batched_requests"
         ] / max(1, total_batches)
-
-        return batch_requests
 
     async def _wait_for_result(
         self, request_id: str, timeout_seconds: float

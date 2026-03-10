@@ -191,9 +191,9 @@ class OutcomeCalculator:
 
         if start_time > end_time:
             return Err(
-                ValidationError(
+                OutcomeError(
                     message="Start time cannot be after end time",
-                    field="start_time",
+                    outcome_type="validation_error",
                     recoverable=True,
                 )
             )
@@ -373,10 +373,9 @@ class OutcomeCalculator:
         """
         if total_expected_responses <= 0:
             return Err(
-                ValidationError(
+                OutcomeError(
                     message="Total expected responses must be positive",
-                    field="total_expected_responses",
-                    field_value=total_expected_responses,
+                    outcome_type="validation_error",
                     recoverable=True,
                 )
             )

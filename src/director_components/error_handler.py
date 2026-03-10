@@ -112,9 +112,9 @@ class SystemErrorHandler:
         self._escalation_cooldown = 3600  # 1 hour
 
         # System health
-        self._system_health = {
+        self._system_health: Dict[str, Any] = {
             "status": "healthy",
-            "error_rate": 0.0,
+            "error_rate": 0,
             "last_critical_error": None,
             "recovery_success_rate": 1.0,
         }
@@ -679,11 +679,13 @@ class SystemErrorHandler:
             )
 
         # Determine overall health status
+        error_rate: int = self._system_health.get("error_rate", 0)
+        recovery_rate: float = self._system_health.get("recovery_success_rate", 1.0)
         if error_record.severity == ErrorSeverity.CRITICAL:
             self._system_health["status"] = "critical"
-        elif self._system_health["error_rate"] > 20:  # More than 20 errors per hour
+        elif error_rate > 20:  # More than 20 errors per hour
             self._system_health["status"] = "degraded"
-        elif self._system_health["recovery_success_rate"] < 0.5:
+        elif recovery_rate < 0.5:
             self._system_health["status"] = "degraded"
         else:
             self._system_health["status"] = "healthy"
@@ -719,8 +721,8 @@ class SystemErrorHandler:
             "error_rate": self._system_health["error_rate"],
             "recovery_success_rate": self._system_health["recovery_success_rate"],
             "last_critical_error": (
-                self._system_health["last_critical_error"].isoformat()
-                if self._system_health["last_critical_error"]
+                str(self._system_health["last_critical_error"])
+                if self._system_health.get("last_critical_error")
                 else None
             ),
             "total_error_records": len(self._error_records),

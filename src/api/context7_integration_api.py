@@ -217,8 +217,8 @@ class Context7IntegrationAPI:
 
     def __init__(
         self,
-        orchestrator=None,
-        context7_client=None,
+        orchestrator: Optional[Any] = None,
+        context7_client: Optional[Any] = None,
         base_url: Optional[str] = None,
         allow_mock: Optional[bool] = None,
     ) -> None:
@@ -250,7 +250,8 @@ class Context7IntegrationAPI:
 
         try:
             if self.context7_client:
-                return await self.context7_client.call(operation, params)
+                result: Dict[str, Any] = await self.context7_client.call(operation, params)
+                return result
 
             if self.base_url:
                 async with httpx.AsyncClient(timeout=10) as client:
@@ -258,7 +259,8 @@ class Context7IntegrationAPI:
                         f"{self.base_url.rstrip('/')}/{operation}", json=params
                     )
                     response.raise_for_status()
-                    return response.json()
+                    result_data: Dict[str, Any] = response.json()
+                    return result_data
 
             if self.allow_mock:
                 logger.warning(
@@ -398,8 +400,8 @@ if (response.ok) {{
             description="Generate Context7-powered code examples for API endpoints",
         )
         async def generate_code_example(
-            request: CodeExampleRequest, current_user: Dict = Depends(get_current_user)
-        ):
+            request: CodeExampleRequest, current_user: Dict[str, Any] = Depends(get_current_user)
+        ) -> StandardResponse[CodeExampleResponse]:
             """Generate code examples using Context7 documentation patterns."""
             try:
                 # Call Context7 for code example generation
@@ -451,8 +453,8 @@ if (response.ok) {{
         )
         async def validate_api_pattern(
             request: PatternValidationRequest,
-            current_user: Dict = Depends(get_current_user),
-        ):
+            current_user: Dict[str, Any] = Depends(get_current_user),
+        ) -> StandardResponse[PatternValidationResponse]:
             """Validate API patterns using Context7 best practices."""
             try:
                 # Call Context7 for pattern validation
@@ -504,8 +506,8 @@ if (response.ok) {{
         )
         async def generate_enhanced_documentation(
             request: DocumentationRequest,
-            current_user: Dict = Depends(get_current_user),
-        ):
+            current_user: Dict[str, Any] = Depends(get_current_user),
+        ) -> StandardResponse[EnhancedDocumentationResponse]:
             """Generate enhanced documentation using Context7 patterns."""
             try:
                 # Call Context7 for documentation generation
@@ -582,8 +584,8 @@ if (response.ok) {{
             ),
             category: str = Query("general", description="Practice category"),
             include_examples: bool = Query(True, description="Include code examples"),
-            current_user: Dict = Depends(get_current_user),
-        ):
+            current_user: Dict[str, Any] = Depends(get_current_user),
+        ) -> StandardResponse[BestPracticesResponse]:
             """Get framework best practices from Context7."""
             try:
                 # Call Context7 for best practices
@@ -629,7 +631,7 @@ if (response.ok) {{
             summary="Get Context7 Status",
             description="Get Context7 MCP server status and capabilities",
         )
-        async def get_context7_status():
+        async def get_context7_status() -> StandardResponse[Dict[str, Any]]:
             """Get Context7 integration status."""
             try:
                 status_data = {
@@ -655,6 +657,6 @@ if (response.ok) {{
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def create_context7_integration_api(orchestrator=None) -> Context7IntegrationAPI:
+def create_context7_integration_api(orchestrator: Optional[Any] = None) -> Context7IntegrationAPI:
     """Factory function to create Context7IntegrationAPI instance."""
     return Context7IntegrationAPI(orchestrator)

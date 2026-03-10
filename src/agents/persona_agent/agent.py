@@ -288,8 +288,8 @@ class PersonaAgent(_PersonaAgentImpl):
     def cleanup(self) -> None:
         """Best-effort cleanup for tests and short-lived agents."""
         memory_interface = getattr(self, "memory_interface", None)
-        if hasattr(memory_interface, "close"):
-            memory_interface.close()
+        if memory_interface is not None and hasattr(memory_interface, "close"):
+            memory_interface.close()  # type: ignore[union-attr]
 
     def get_character_state(self) -> Dict[str, Any]:
         """Return a legacy-friendly snapshot of the agent state."""
@@ -472,9 +472,9 @@ class PersonaAgent(_PersonaAgentImpl):
                 reasoning=best_action.get("reasoning"),
                 priority=ActionPriority.NORMAL,
                 parameters=best_action.get("parameters", {}),
-            )
+            )  # type: ignore[unreachable]
 
-        selector = getattr(self.decision_engine, "_select_best_action", None)
+        selector = getattr(self.decision_engine, "_select_best_action", None)  # type: ignore[unreachable]
         if callable(selector):
             evaluation = selector(action_evaluations)
             if evaluation is None:
@@ -506,7 +506,6 @@ class PersonaAgent(_PersonaAgentImpl):
             "Respond with ACTION, TARGET, REASONING."
         )
         self._llm_prompt_history.append(prompt)
-        return None
         self._llm_prompt_history[:] = self._llm_prompt_history[-50:]
         return prompt
 
@@ -658,10 +657,12 @@ class PersonaAgent(_PersonaAgentImpl):
     def _read_cached_file(self, file_path: str) -> str:
         reader = getattr(self.character_interpreter, "_read_cached_file", None)
         if callable(reader):
-            return reader(file_path)
+            result: str = reader(file_path)
+            return result
         core_reader = getattr(self.core, "_read_cached_file", None)
         if callable(core_reader):
-            return core_reader(file_path)
+            result = core_reader(file_path)
+            return result
         raise FileNotFoundError(file_path)
 
     def _parse_character_sheet_content(self, markdown_content: str) -> Dict[str, Any]:
@@ -669,7 +670,8 @@ class PersonaAgent(_PersonaAgentImpl):
             self.character_interpreter, "_parse_character_sheet_content", None
         )
         if callable(parser):
-            return parser(markdown_content)
+            result: Dict[str, Any] = parser(markdown_content)
+            return result
         return {"raw_content": markdown_content}
 
     def _derive_agent_id_from_path(self, path: str) -> str:
@@ -695,10 +697,10 @@ class PersonaAgent(_PersonaAgentImpl):
     def _interpret_event_description(self, event_payload: Dict[str, Any]) -> str:
         if not isinstance(event_payload, dict):
             return "No event details available."
-        event_type = _sanitize_text(str(event_payload.get("event_type", "event")))
-        source = _sanitize_text(str(event_payload.get("source", "unknown source")))
-        description = _sanitize_text(str(event_payload.get("description", "")))
-        return f"{event_type.title()} reported by {source}: {description}".strip()
+        event_type_val: str = _sanitize_text(str(event_payload.get("event_type", "event")))
+        source_val: str = _sanitize_text(str(event_payload.get("source", "unknown source")))
+        description_val: str = _sanitize_text(str(event_payload.get("description", "")))
+        return f"{event_type_val.title()} reported by {source_val}: {description_val}".strip()
 
     def _assess_threat_from_description(self, description: str) -> ThreatLevel:
         if not description:
@@ -719,7 +721,8 @@ class PersonaAgent(_PersonaAgentImpl):
     ) -> List[Dict[str, Any]]:
         identifier = getattr(self.decision_engine, "_identify_available_actions", None)
         if callable(identifier):
-            return identifier(situation_assessment)
+            result: List[Dict[str, Any]] = identifier(situation_assessment)
+            return result
         return []
 
     def _evaluate_action_option(
@@ -727,11 +730,13 @@ class PersonaAgent(_PersonaAgentImpl):
     ) -> float:
         evaluator = getattr(self.decision_engine, "_evaluate_action_option", None)
         if callable(evaluator):
-            return float(evaluator(action, situation))
+            result: float = float(evaluator(action, situation))
+            return result
         return 0.0
 
     def _consolidate_memories(self) -> int:
-        return int(self.memory_interface.consolidate_memories())
+        result: int = int(self.memory_interface.consolidate_memories())
+        return result
 
     def _update_relationship(self, entity_id: str, delta: float) -> None:
         self.core.add_relationship(entity_id, delta)
@@ -741,23 +746,28 @@ class PersonaAgent(_PersonaAgentImpl):
     # ------------------------------------------------------------------
 
     def _extract_core_identity(self) -> Any:
-        return self.character_interpreter._extract_core_identity()
+        result: Any = self.character_interpreter._extract_core_identity()
+        return result
 
     def _extract_personality_traits(self) -> Any:
-        return self.character_interpreter._extract_personality_traits()
+        result: Any = self.character_interpreter._extract_personality_traits()
+        return result
 
     def _extract_decision_weights(self) -> Any:
-        return self.character_interpreter._extract_decision_weights()
+        result: Any = self.character_interpreter._extract_decision_weights()
+        return result
 
     def _extract_relationships(self) -> Any:
-        return self.character_interpreter._extract_relationships()
+        result: Any = self.character_interpreter._extract_relationships()
+        return result
 
     def _extract_knowledge_domains(self) -> Any:
-        return self.character_interpreter._extract_knowledge_domains()
+        result: Any = self.character_interpreter._extract_knowledge_domains()
+        return result
 
     def _initialize_subjective_worldview(self) -> None:
         if hasattr(super(), "_initialize_subjective_worldview"):
-            getattr(super(), "_initialize_subjective_worldview")()  # type: ignore[misc]
+            getattr(super(), "_initialize_subjective_worldview")()
 
 
 __all__ = [

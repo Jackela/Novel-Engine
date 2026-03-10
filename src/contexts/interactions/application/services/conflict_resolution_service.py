@@ -118,9 +118,8 @@ class ConflictResolutionService:
         """
         if not conflict:
             return Err(
-                ValidationError(
+                ConflictError(
                     message="Conflict is required",
-                    field="conflict",
                     recoverable=True,
                 )
             )

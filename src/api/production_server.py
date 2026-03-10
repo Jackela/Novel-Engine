@@ -15,7 +15,7 @@ import ssl
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import jwt
 import structlog
@@ -60,7 +60,7 @@ limiter = Limiter(key_func=get_remote_address)
 class SecurityHeaders(BaseHTTPMiddleware):
     """Security headers middleware."""
 
-    async def dispatch(self, request: Request, call_next) -> None:
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         response = await call_next(request)
 
         # Security headers
@@ -126,8 +126,8 @@ class AuthenticationManager:
 
     @staticmethod
     def create_access_token(
-        data: dict, expires_delta: Optional[timedelta] = None
-    ) -> None:
+        data: dict[str, Any], expires_delta: Optional[timedelta] = None
+    ) -> str:
         """Create JWT access token."""
         to_encode = data.copy()
 
@@ -163,7 +163,7 @@ class SimulationRequest(BaseModel):
 
     @field_validator("character_names")
     @classmethod
-    def validate_names(cls, v) -> None:
+    def validate_names(cls, v: list[str]) -> list[str]:
         return InputValidator.validate_character_names(v)
 
 
@@ -194,7 +194,7 @@ async def get_current_user(
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """FastAPI lifespan event handler with security checks."""
     logger.info("Starting production-hardened Novel Engine API server...")
 
@@ -294,7 +294,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Custom HTTP exception handler."""
     # Log security-relevant errors
     if exc.status_code in [401, 403, 429]:
@@ -314,7 +314,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Fallback exception handler with security headers."""
     logger.exception("Unhandled error", exc_info=exc)
     response = JSONResponse(
@@ -340,14 +340,14 @@ def _reject_query_credentials(request: Request) -> None:
 
 
 @app.get("/")
-@limiter.limit("10/minute")
+@limiter.limit("10/minute")  # type: ignore[misc]
 async def root(request: Request) -> Dict[str, str]:
     """Health check endpoint with rate limiting."""
     return {"message": "Novel Engine API is running securely!"}
 
 
 @app.get("/health")
-@limiter.limit("30/minute")
+@limiter.limit("30/minute")  # type: ignore[misc]
 async def health_check(request: Request) -> Dict[str, Any]:
     """Comprehensive health check endpoint."""
     return {
@@ -359,7 +359,7 @@ async def health_check(request: Request) -> Dict[str, Any]:
 
 
 @app.post("/auth/token")
-@limiter.limit("5/minute")
+@limiter.limit("5/minute")  # type: ignore[misc]
 async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
     """
     Authentication endpoint.
@@ -396,10 +396,10 @@ async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
 
 
 @app.get("/characters")
-@limiter.limit("20/minute")
+@limiter.limit("20/minute")  # type: ignore[misc]
 async def get_characters(
     request: Request, current_user: str = Depends(get_current_user)
-):
+) -> Dict[str, list[str]]:
     """Get characters list (protected endpoint)."""
     try:
         characters_path = "characters"
@@ -423,16 +423,16 @@ async def get_characters(
 
 
 @app.get("/api/characters")
-@limiter.limit("20/minute")
+@limiter.limit("20/minute")  # type: ignore[misc]
 async def get_characters_unversioned(
     request: Request, current_user: str = Depends(get_current_user)
-):
+) -> Dict[str, list[str]]:
     """Unversioned REST endpoint for characters."""
     return await get_characters(request, current_user)
 
 
 @app.post("/simulations")
-@limiter.limit("5/minute")
+@limiter.limit("5/minute")  # type: ignore[misc]
 async def run_simulation(
     request: Request,
     simulation_request: SimulationRequest,

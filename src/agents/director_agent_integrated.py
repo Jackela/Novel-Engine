@@ -58,23 +58,23 @@ try:
     IRON_LAWS_AVAILABLE = True
 except ImportError:
     IRON_LAWS_AVAILABLE = False
-    ActionTarget = Any  # type: ignore[misc]
-    ActionType = Any  # type: ignore[misc]
-    CharacterData = Any  # type: ignore[misc]
-    CharacterResources = Any  # type: ignore[misc]
-    CharacterStats = Any  # type: ignore[misc]
-    EntityType = Any  # type: ignore[misc]
-    Position = Any  # type: ignore[misc]
-    ProposedAction = Any  # type: ignore[misc]
-    ResourceValue = Any  # type: ignore[misc]
-    IronLawsReport = Any  # type: ignore[misc]
-    IronLawsViolation = Any  # type: ignore[misc]
-    ValidatedAction = Any  # type: ignore[misc]
-    ValidationResult = Any  # type: ignore[misc]
+    ActionTarget = Any  # type: ignore[misc,assignment]
+    ActionType = Any  # type: ignore[misc,assignment]
+    CharacterData = Any  # type: ignore[misc,assignment]
+    CharacterResources = Any  # type: ignore[misc,assignment]
+    CharacterStats = Any  # type: ignore[misc,assignment]
+    EntityType = Any  # type: ignore[misc,assignment]
+    Position = Any  # type: ignore[misc,assignment]
+    ProposedAction = Any  # type: ignore[misc,assignment]
+    ResourceValue = Any  # type: ignore[misc,assignment]
+    IronLawsReport = Any  # type: ignore[misc,assignment]
+    IronLawsViolation = Any  # type: ignore[misc,assignment]
+    ValidatedAction = Any  # type: ignore[misc,assignment]
+    ValidationResult = Any  # type: ignore[misc,assignment]
 
 # Import configuration and narrative components
 try:
-    from campaign_brief import (  # type: ignore[import-not-found]
+    from campaign_brief import (
         CampaignBrief,
         CampaignBriefLoader,
     )
@@ -86,8 +86,8 @@ except ImportError:
     def get_config() -> Optional[Any]:  # type: ignore[misc]
         return None
 
-    CampaignBrief = None  # type: ignore[misc,assignment]
-    CampaignBriefLoader = None  # type: ignore[misc,assignment]
+    CampaignBrief = None  # type: ignore[misc,assignment,unused-ignore]
+    CampaignBriefLoader = None  # type: ignore[misc,assignment,unused-ignore]
 
     class NarrativeActionResolver:  # type: ignore[no-redef]
         def __init__(self) -> None:
@@ -271,6 +271,8 @@ class DirectorAgent:
                 "agent_registered", agent_id=getattr(agent, "agent_id", "unknown")
             )
             return True
+
+        return False  # type: ignore[unreachable]
 
         # Fallback for legacy mock agents used in test suites
         if not self._is_legacy_agent_compatible(agent):
@@ -526,27 +528,27 @@ class DirectorAgent:
         return self._agent_facade
 
     @property
-    def world_state(self) -> None:
+    def world_state(self) -> Any:
         return self.world_state_coordinator
 
     @property
-    def turns(self) -> None:
+    def turns(self) -> Any:
         return self.turn_orchestrator
 
     @property
-    def narrative(self) -> None:
+    def narrative(self) -> Any:
         return getattr(self, "narrative_resolver", None)
 
     @property
-    def logging(self) -> None:
+    def logging(self) -> Any:
         return self.base
 
     @property
-    def config(self) -> None:
+    def config(self) -> Any:
         return _ConfigFacade(self.base)
 
     @property
-    def errors(self) -> None:
+    def errors(self) -> Any:
         return SimpleNamespace(
             get_error_statistics=lambda: {
                 "total_errors": self.base.error_count,
@@ -555,7 +557,7 @@ class DirectorAgent:
         )
 
     @property
-    def validation(self) -> None:
+    def validation(self) -> Any:
         return self.agent_lifecycle_manager
 
     def _get_legacy_agent_instances(self) -> List[Any]:
@@ -884,7 +886,7 @@ class DirectorAgent:
             agent: The PersonaAgent that performed the action (needed for character_id)
         """
         if not IRON_LAWS_AVAILABLE:
-            return action
+            return action  # type: ignore[return-value]
 
         # Extract character_id from agent
         character_id = getattr(agent, "agent_id", "unknown")
@@ -1151,43 +1153,36 @@ class DirectorAgent:
             proposed_action, violations, character_data
         )
 
-    @property
-    def current_turn_number(self) -> int:
+    def get_current_turn_number(self) -> int:
         """Get current turn number."""
         return max(
             self.base.current_turn_number, self.turn_orchestrator.current_turn_number
         )
 
-    @property
-    def simulation_start_time(self) -> datetime:
+    def get_simulation_start_time(self) -> datetime:
         """Get simulation start time."""
         return self.base.simulation_start_time
 
-    @property
-    def total_actions_processed(self) -> int:
+    def get_total_actions_processed(self) -> int:
         """Get total actions processed."""
         return max(
             self.base.total_actions_processed,
             self.turn_orchestrator.total_actions_processed,
         )
 
-    @property
-    def error_count(self) -> int:
+    def get_error_count(self) -> int:
         """Get error count."""
         return self.base.error_count
 
-    @property
-    def campaign_log_path(self) -> str:
+    def get_campaign_log_path(self) -> str:
         """Get campaign log path."""
         return self.base.campaign_log_path
 
-    @property
-    def world_state_file_path(self) -> Optional[str]:
+    def get_world_state_file_path(self) -> Optional[str]:
         """Get world state file path."""
         return self.world_state_coordinator.world_state_file_path
 
-    @property
-    def world_state_data(self) -> Dict[str, Any]:
+    def get_world_state_data(self) -> Dict[str, Any]:
         """Get world state data."""
         return self.world_state_coordinator.world_state_data
 
@@ -1295,7 +1290,7 @@ class _AgentCollectionFacade:
     def get_agent_list(self) -> List[Dict[str, Any]]:
         return self._director.get_agent_list()
 
-    def __iter__(self) -> None:
+    def __iter__(self) -> Any:
         yield from self._director._get_all_agent_instances()
 
     def __contains__(self, item: PersonaAgent) -> bool:

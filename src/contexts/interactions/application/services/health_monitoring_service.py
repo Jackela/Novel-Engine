@@ -376,6 +376,8 @@ class HealthMonitoringService:
                 health_result = self.assess_session_health(session)
                 if health_result.is_ok:
                     health = health_result.value
+                    if health is None:
+                        continue
                     session_healths.append(
                         {
                             "session_id": str(session.session_id),

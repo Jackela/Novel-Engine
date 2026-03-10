@@ -527,7 +527,7 @@ class WorldStateManager:
     ) -> bool:
         """Export world state to file with optional history."""
         try:
-            export_data = {
+            export_data: Dict[str, Any] = {
                 "world_state": await self.get_world_state(),
                 "metadata": {
                     "exported_at": datetime.now().isoformat(),

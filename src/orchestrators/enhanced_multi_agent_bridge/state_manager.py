@@ -125,7 +125,7 @@ class StateManager:
         """Get average turn execution time."""
         if not self.turn_history:
             return 0.0
-        vals = [t.get("execution_time", 0.0) for t in self.turn_history]
+        vals = [float(t.get("execution_time", 0.0)) for t in self.turn_history]
         return sum(vals) / max(1, len(vals))
 
     def get_narrative_intelligence(self) -> Dict[str, Any]:
@@ -136,7 +136,7 @@ class StateManager:
         self, agent_relationships: Dict[str, Dict[str, float]]
     ) -> Dict[str, Any]:
         """Analyze state before turn execution."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "relationship_tensions": [],
             "dialogue_opportunities": [],
             "narrative_pressure": self._calculate_narrative_pressure(),
@@ -144,10 +144,12 @@ class StateManager:
         }
 
         # Analyze relationship tensions
+        relationship_tensions: List[Dict[str, Any]] = analysis["relationship_tensions"]
+        dialogue_opportunities: List[Dict[str, Any]] = analysis["dialogue_opportunities"]
         for agent_id, relationships in agent_relationships.items():
             for other_agent, relationship_value in relationships.items():
                 if relationship_value < -0.3:  # High tension
-                    analysis["relationship_tensions"].append(
+                    relationship_tensions.append(
                         {
                             "agents": [agent_id, other_agent],
                             "tension_level": abs(relationship_value),
@@ -155,7 +157,7 @@ class StateManager:
                         }
                     )
                 elif relationship_value > 0.7:  # Strong positive
-                    analysis["dialogue_opportunities"].append(
+                    dialogue_opportunities.append(
                         {
                             "agents": [agent_id, other_agent],
                             "relationship_strength": relationship_value,
@@ -171,7 +173,7 @@ class StateManager:
         dialogue_results: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """Analyze results after turn execution."""
-        analysis = {
+        analysis: Dict[str, Any] = {
             "narrative_insights": [],
             "relationship_changes": [],
             "ai_insights": [],
@@ -179,11 +181,12 @@ class StateManager:
         }
 
         # Analyze dialogue impacts
+        relationship_changes: List[Dict[str, Any]] = analysis["relationship_changes"]
         for dialogue_result in dialogue_results:
             if dialogue_result.get("success") and dialogue_result.get(
                 "relationship_impact"
             ):
-                analysis["relationship_changes"].extend(
+                relationship_changes.extend(
                     [
                         {
                             "agents": key.split("_"),
@@ -195,8 +198,9 @@ class StateManager:
                 )
 
         # Generate narrative insights
+        narrative_insights: List[Dict[str, Any]] = analysis["narrative_insights"]
         if dialogue_results:
-            analysis["narrative_insights"].append(
+            narrative_insights.append(
                 {
                     "insight": f"Character interactions advanced story through {len(dialogue_results)} dialogues",
                     "impact": "story_progression",

@@ -142,10 +142,8 @@ class ResponseAnalysisService:
 
             if not party_responses:
                 return Err(
-                    NotFoundError(
+                    ProposalError(
                         message=f"No responses found for party {party_id}",
-                        entity_type="PartyResponses",
-                        entity_id=str(party_id),
                         recoverable=False,
                     )
                 )

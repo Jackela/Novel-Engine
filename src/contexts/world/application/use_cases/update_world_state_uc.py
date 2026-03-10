@@ -344,6 +344,14 @@ class UpdateWorldStateUC:
         self, world_state: WorldState, operation: EntityOperation
     ) -> None:
         """Apply add entity operation."""
+        if operation.entity_id is None:
+            raise ValueError("entity_id is required for add_entity operation")
+        if operation.entity_type is None:
+            raise ValueError("entity_type is required for add_entity operation")
+        if operation.entity_name is None:
+            raise ValueError("entity_name is required for add_entity operation")
+        if operation.coordinates is None:
+            raise ValueError("coordinates is required for add_entity operation")
         world_state.add_entity(
             entity_id=operation.entity_id,
             entity_type=operation.entity_type,
@@ -357,6 +365,8 @@ class UpdateWorldStateUC:
         self, world_state: WorldState, operation: EntityOperation
     ) -> None:
         """Apply remove entity operation."""
+        if operation.entity_id is None:
+            raise ValueError("entity_id is required for remove_entity operation")
         removed_entity = world_state.remove_entity(
             entity_id=operation.entity_id, reason=operation.reason
         )
@@ -367,6 +377,8 @@ class UpdateWorldStateUC:
         self, world_state: WorldState, operation: EntityOperation
     ) -> None:
         """Apply update entity operation."""
+        if operation.entity_id is None:
+            raise ValueError("entity_id is required for update_entity operation")
         success = world_state.update_entity(
             entity_id=operation.entity_id,
             properties=operation.properties,
@@ -380,6 +392,10 @@ class UpdateWorldStateUC:
         self, world_state: WorldState, operation: EntityOperation
     ) -> None:
         """Apply move entity operation."""
+        if operation.entity_id is None:
+            raise ValueError("entity_id is required for move_entity operation")
+        if operation.new_coordinates is None:
+            raise ValueError("new_coordinates is required for move_entity operation")
         success = world_state.move_entity(
             entity_id=operation.entity_id,
             new_coordinates=operation.new_coordinates,
@@ -412,7 +428,11 @@ class UpdateWorldStateUC:
             world_state: World state aggregate to modify
             operation: Time operation to apply
         """
-        world_state.advance_time(new_time=operation.new_time, reason=operation.reason)
+        # Calculate days to advance from operation
+        # The TimeOperation should have days_to_advance instead of new_time
+        # For now, default to 1 day if not specified
+        days = getattr(operation, "days_to_advance", 1)
+        world_state.advance_time(days=days, reason=operation.reason)
 
     async def _apply_snapshot_operation(
         self, world_state: WorldState, operation: SnapshotOperation

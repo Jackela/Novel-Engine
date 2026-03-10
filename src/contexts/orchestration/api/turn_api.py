@@ -40,10 +40,10 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
         monitoring_error,
     )
 
-    class PrometheusMetricsCollector:  # type: ignore[override]
+    class PrometheusMetricsCollector:  # type: ignore[override,no-redef]
         """Minimal collector that satisfies EnhancedPerformanceTracker expectations."""
 
-        def __init__(self, *_, **__) -> None:
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
         def get_metrics_data(self) -> str:
@@ -52,19 +52,19 @@ except ImportError as monitoring_error:  # pragma: no cover - exercised in test 
         def get_metrics_content_type(self) -> str:
             return "text/plain"
 
-    class PrometheusMiddleware:  # type: ignore[override]
+    class PrometheusMiddleware:  # type: ignore[override,no-redef]
         """No-op ASGI middleware when prometheus_client is unavailable."""
 
-        def __init__(self, app, *_, **__) -> None:
+        def __init__(self, app: Any, *_: Any, **__: Any) -> None:
             self.app = app
 
-        async def __call__(self, scope, receive, send):
+        async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
             await self.app(scope, receive, send)
 
-    def initialize_tracing(*_, **__) -> None:
+    def initialize_tracing(*_: Any, **__: Any) -> None:
         return None
 
-    def setup_fastapi_tracing(app: FastAPI, *_args, **_kwargs) -> FastAPI:
+    def setup_fastapi_tracing(app: FastAPI, *_args: Any, **_kwargs: Any) -> FastAPI:
         return app
 
 
@@ -94,7 +94,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v) -> None:
+    def validate_participants(cls, v: List[str]) -> List[str]:
         if not v or len(v) == 0:
             raise ValueError("At least one participant is required")
         if not all(isinstance(p, str) and p.strip() for p in v):
@@ -105,7 +105,7 @@ class TurnExecutionRequest(BaseModel):
 
     @field_validator("turn_id")
     @classmethod
-    def validate_turn_id(cls, v) -> None:
+    def validate_turn_id(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
             try:
                 UUID(v)
@@ -301,7 +301,7 @@ def _patch_e2e_database_fixture() -> None:
                 elif "character" in text_query:
                     rows = state["characters"]
                 else:
-                    rows: list[Any] = []
+                    rows = []
 
                 class MockResult:
                     def __init__(self, data_rows) -> None:
@@ -724,6 +724,7 @@ async def _execute_turn_background(
 
 
 def _execute_stub_turn(request: TurnExecutionRequest) -> TurnExecutionResponse:
+    """Execute a stub turn for E2E testing mode."""
     _patch_e2e_database_fixture()
 
     turn_id = uuid4().hex
@@ -775,7 +776,7 @@ def _execute_stub_turn(request: TurnExecutionRequest) -> TurnExecutionResponse:
     )
 
 
-def _convert_to_response(result) -> TurnExecutionResponse:
+def _convert_to_response(result: Any) -> TurnExecutionResponse:
     """Convert TurnExecutionResult to API response format."""
     default_phases = [
         PhaseType.WORLD_UPDATE.value,
@@ -849,7 +850,7 @@ def _convert_to_response(result) -> TurnExecutionResponse:
     )
 
 
-def _summarise_phase(phase_type: PhaseType, phase_result) -> PhaseResultSummary:
+def _summarise_phase(phase_type: PhaseType, phase_result: Any) -> PhaseResultSummary:
     """Helper to convert orchestrator phase result into API summary."""
     return PhaseResultSummary(
         phase=phase_type.value,
@@ -935,7 +936,7 @@ async def get_business_kpis():
 
 
 @app.exception_handler(ValueError)
-async def value_error_handler(request, exc):
+async def value_error_handler(request: Any, exc: Exception) -> JSONResponse:
     """Handle validation errors."""
     return JSONResponse(
         status_code=400,
@@ -947,7 +948,7 @@ async def value_error_handler(request, exc):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
+async def general_exception_handler(request: Any, exc: Exception) -> JSONResponse:
     """Handle unexpected errors."""
     logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(

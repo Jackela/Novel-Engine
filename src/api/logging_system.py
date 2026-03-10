@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Generator, List, Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -129,7 +129,7 @@ class SecurityLogger:
 
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
-        self.security_events = deque(maxlen=1000)
+        self.security_events: deque[StructuredLogEntry] = deque(maxlen=1000)
         self._lock = threading.Lock()
 
     def log_security_event(
@@ -180,7 +180,7 @@ class AuditLogger:
 
     def __init__(self, logger: logging.Logger) -> None:
         self.logger = logger
-        self.audit_trail = deque(maxlen=1000)
+        self.audit_trail: deque[StructuredLogEntry] = deque(maxlen=1000)
         self._lock = threading.Lock()
 
     def log_audit_event(
@@ -210,8 +210,9 @@ class AuditLogger:
             message=f"AUDIT: {action} on {resource} - {outcome}",
             logger_name="audit",
             context=context,
-            additional_fields=audit_context,
         )
+        # Update context additional_fields after creation
+        log_entry.context.additional_fields.update(audit_context)
 
         # Store audit event
         with self._lock:
@@ -283,7 +284,7 @@ class StructuredLogger:
         return getattr(self._context_storage, "context", LogContext())
 
     @contextmanager
-    def context(self, **kwargs) -> None:
+    def context(self, **kwargs: Any) -> Generator[LogContext, None, None]:
         """Context manager for temporary logging context."""
         old_context = self.get_context()
         new_context = LogContext(**{**asdict(old_context), **kwargs})
@@ -339,24 +340,24 @@ class StructuredLogger:
         python_level = getattr(logging, level.value)
         self.logger.log(python_level, log_message)
 
-    def trace(self, message: str, **kwargs) -> None:
+    def trace(self, message: str, **kwargs: Any) -> None:
         """Log trace level message."""
         self.log(LogLevel.TRACE, message, **kwargs)
 
-    def debug(self, message: str, **kwargs) -> None:
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug level message."""
         self.log(LogLevel.DEBUG, message, **kwargs)
 
-    def info(self, message: str, **kwargs) -> None:
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info level message."""
         self.log(LogLevel.INFO, message, **kwargs)
 
-    def warning(self, message: str, **kwargs) -> None:
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning level message."""
         self.log(LogLevel.WARNING, message, **kwargs)
 
     def error(
-        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs: Any
     ) -> None:
         """Log error level message with optional exception info."""
 
@@ -384,7 +385,7 @@ class StructuredLogger:
         self.logger.error(log_message, exc_info=exc_info if exc_info else False)
 
     def critical(
-        self, message: str, exc_info: Optional[Exception] = None, **kwargs
+        self, message: str, exc_info: Optional[Exception] = None, **kwargs: Any
     ) -> None:
         """Log critical level message."""
         self.error(message, exc_info, **kwargs)
@@ -419,7 +420,7 @@ class StructuredLogger:
         self.logger.info(log_message)
 
     @contextmanager
-    def performance_context(self, operation: str) -> None:
+    def performance_context(self, operation: str) -> Generator[None, None, None]:
         """Context manager for performance tracking."""
         operation_id = str(uuid.uuid4())
         self.performance_tracker.start_operation(operation_id)
@@ -459,11 +460,11 @@ class StructuredLogger:
 class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware for request/response logging."""
 
-    def __init__(self, app, logger: StructuredLogger) -> None:
+    def __init__(self, app: Any, logger: StructuredLogger) -> None:
         super().__init__(app)
         self.logger = logger
 
-    async def dispatch(self, request: Request, call_next) -> None:
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         """Log request and response with performance metrics."""
 
         # Generate request context
@@ -545,7 +546,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 
 def setup_logging(
-    app,
+    app: Any,
     log_level: LogLevel = LogLevel.INFO,
     log_file: Optional[str] = None,
     output_format: str = "json",
@@ -587,7 +588,7 @@ def setup_logging(
         }
 
     @app.get("/api/logs/security", tags=["Monitoring"])
-    async def get_security_events(limit: int = 100):
+    async def get_security_events(limit: int = 100) -> Dict[str, Any]:
         """Get recent security events."""
         events = logger.security_logger.get_recent_security_events(limit)
         return {"events": [event.to_dict() for event in events], "count": len(events)}

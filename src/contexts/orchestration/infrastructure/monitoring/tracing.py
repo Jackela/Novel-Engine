@@ -8,7 +8,7 @@ Provides turn-level and phase-level instrumentation with cross-context propagati
 
 import functools
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional, TypeVar, cast
 from uuid import UUID
 
 import structlog
@@ -113,8 +113,8 @@ class IntelligentSampler:
         Returns:
             Sampling decision
         """
-        if not attributes:
-            attributes: dict[Any, Any] = {}
+        if attributes is None:
+            attributes = {}
         # Always sample errors
         if any(key.startswith("error") for key in attributes.keys()):
             return self.error_sampler.should_sample(
@@ -160,8 +160,8 @@ class NovelEngineTracer:
             config: Tracing configuration
         """
         self.config = config
-        self.tracer_provider = None
-        self.tracer = None
+        self.tracer_provider: Optional[TracerProvider] = None
+        self.tracer: Optional[trace.Tracer] = None
         self._initialize_tracing()
 
         logger.info(f"NovelEngineTracer initialized for {config.service_name}")
@@ -242,6 +242,8 @@ class NovelEngineTracer:
         Returns:
             Root span for turn execution
         """
+        if self.tracer is None:
+            raise RuntimeError("Tracer not initialized")
         span = self.tracer.start_span(
             name="novel_engine.turn_execution", kind=trace.SpanKind.SERVER
         )
@@ -293,6 +295,8 @@ class NovelEngineTracer:
         Returns:
             Phase execution span
         """
+        if self.tracer is None:
+            raise RuntimeError("Tracer not initialized")
         # Create span name
         span_name = f"novel_engine.phase.{phase_name}"
 
@@ -431,7 +435,7 @@ class NovelEngineTracer:
         Returns:
             Trace context headers for HTTP propagation
         """
-        carrier: dict[Any, Any] = {}
+        carrier: Dict[str, str] = {}
         propagate.inject(carrier)
         return carrier
 

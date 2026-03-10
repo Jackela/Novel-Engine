@@ -71,11 +71,11 @@ class PostgresWorldStateRepository(IWorldStateRepository):
 
                 if existing_model:
                     # Update operation - check version for optimistic concurrency
-                    if existing_model.version != world_state.version:
+                    if int(existing_model.version) != world_state.version:
                         raise ConcurrencyException(
                             f"Version conflict for world state {world_state.id}",
                             expected_version=world_state.version,
-                            actual_version=existing_model.version,
+                            actual_version=int(existing_model.version),
                         )
 
                     # Increment version for the update
@@ -128,7 +128,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 session.commit()
 
                 # Return the saved aggregate with updated version
-                return model_to_save.to_domain_aggregate()
+                result = model_to_save.to_domain_aggregate()
+                if result is None:
+                    raise RepositoryException("Failed to convert saved model to domain aggregate")
+                return result
 
         except ConcurrencyException:
             raise
@@ -154,14 +157,17 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted is False,
+                            WorldStateModel.is_deleted == False,
                         )
                     )
                     .first()
                 )
 
                 if model:
-                    return model.to_domain_aggregate()
+                    result = model.to_domain_aggregate()
+                    if result is None:
+                        return None
+                    return result
                 return None
 
         except SQLAlchemyError as e:
@@ -197,7 +203,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted is False,
+                            WorldStateModel.is_deleted == False,
                         )
                     )
                     .first()
@@ -239,7 +245,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .filter(
                         and_(
                             WorldStateModel.id == uuid.UUID(world_state_id),
-                            WorldStateModel.is_deleted is False,
+                            WorldStateModel.is_deleted == False,
                         )
                     )
                     .count()
@@ -271,14 +277,14 @@ class PostgresWorldStateRepository(IWorldStateRepository):
             with get_db_session() as session:
                 models = (
                     session.query(WorldStateModel)
-                    .filter(WorldStateModel.is_deleted is False)
+                    .filter(WorldStateModel.is_deleted == False)
                     .order_by(WorldStateModel.created_at.desc())
                     .offset(offset)
                     .limit(limit)
                     .all()
                 )
 
-                return [model.to_domain_aggregate() for model in models]
+                return [model.to_domain_aggregate() for model in models if model.to_domain_aggregate() is not None]
 
         except SQLAlchemyError as e:
             self.logger.error("all_world_states_retrieval_database_error", error=str(e))
@@ -303,7 +309,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 )
 
                 if model:
-                    return model.to_domain_aggregate()
+                    result = model.to_domain_aggregate()
+                    if result is None:
+                        return None
+                    return result
                 return None
 
         except SQLAlchemyError as e:
@@ -324,7 +333,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         try:
             with get_db_session() as session:
                 query = session.query(WorldStateModel).filter(
-                    WorldStateModel.is_deleted is False
+                    WorldStateModel.is_deleted == False
                 )
 
                 # Apply criteria filters
@@ -353,7 +362,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     .limit(limit)
                     .all()
                 )
-                return [model.to_domain_aggregate() for model in models]
+                return [model.to_domain_aggregate() for model in models if model.to_domain_aggregate() is not None]
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -371,7 +380,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
         try:
             with get_db_session() as session:
                 query = session.query(WorldStateModel).filter(
-                    WorldStateModel.is_deleted is False
+                    WorldStateModel.is_deleted == False
                 )
 
                 if criteria:
@@ -520,9 +529,10 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     return None
 
                 # Reconstruct world state from version data
-                return self._reconstruct_world_state_from_version_data(
-                    version_model.version_data
+                result = self._reconstruct_world_state_from_version_data(
+                    dict(version_model.version_data) if version_model.version_data else {}
                 )
+                return result
 
         except SQLAlchemyError as e:
             self.logger.error(
@@ -852,7 +862,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                             raise ConcurrencyException(
                                 f"Version conflict for world state {world_state.id}",
                                 expected_version=world_state.version,
-                                actual_version=existing_model.version,
+                                actual_version=int(existing_model.version),
                             )
 
                         world_state.version += 1
@@ -920,8 +930,8 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     if model:
                         model.soft_delete()
                         results[world_state_id] = True
-                    else:
-                        results[world_state_id] = False
+                else:
+                    results[world_state_id] = False
 
                 session.commit()
                 self.logger.info(
@@ -1079,7 +1089,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                     # Global statistics
                     total_worlds = (
                         session.query(WorldStateModel)
-                        .filter(WorldStateModel.is_deleted is False)
+                        .filter(WorldStateModel.is_deleted == False)
                         .count()
                     )
 
@@ -1088,7 +1098,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                         session.query(WorldStateModel)
                         .filter(
                             and_(
-                                WorldStateModel.is_deleted is False,
+                                WorldStateModel.is_deleted == False,
                                 WorldStateModel.status == "active",
                             )
                         )

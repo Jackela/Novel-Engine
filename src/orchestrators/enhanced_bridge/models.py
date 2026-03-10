@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import total_ordering
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from .types import CommunicationType, DialogueState, RequestPriority
 
@@ -70,23 +70,23 @@ class LLMBatchRequest:
     prompt: str
     context: Dict[str, Any]
     created_at: float
-    callback: Optional[callable] = None
+    callback: Optional[Callable[..., Any]] = None
     timeout_seconds: float = 5.0
     estimated_cost: float = 0.0
     tokens_estimate: int = 0
 
-    def __lt__(self, other) -> None:
+    def __lt__(self, other: Any) -> bool:
         """For priority queue ordering."""
         if not isinstance(other, LLMBatchRequest):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
         return (self.priority.value, self.created_at) < (
             other.priority.value,
             other.created_at,
         )
 
-    def __eq__(self, other) -> None:
+    def __eq__(self, other: Any) -> bool:
         if not isinstance(other, LLMBatchRequest):
-            return NotImplemented
+            return False
         return (self.priority.value, self.created_at) == (
             other.priority.value,
             other.created_at,

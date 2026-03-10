@@ -55,6 +55,7 @@ class WorldStateChanged(Event):
     source: str = field(default="world_context")
 
     # World-specific event data
+    aggregate_id: Optional[str] = None  # ID of the world/aggregate that changed
     change_type: WorldChangeType = WorldChangeType.ENTITY_UPDATED
     severity: WorldEventSeverity = WorldEventSeverity.MINOR
     affected_entity_id: Optional[str] = None
@@ -128,10 +129,10 @@ class WorldStateChanged(Event):
         """
         errors: list[Any] = []
         if not isinstance(self.change_type, WorldChangeType):
-            errors.append("change_type must be a WorldChangeType enum value")
+            errors.append("change_type must be a WorldChangeType enum value")  # type: ignore[unreachable]
 
         if not isinstance(self.severity, WorldEventSeverity):
-            errors.append("severity must be a WorldEventSeverity enum value")
+            errors.append("severity must be a WorldEventSeverity enum value")  # type: ignore[unreachable]
 
         # Validate entity-related changes
         if self.change_type in [
@@ -429,6 +430,67 @@ class WorldStateChanged(Event):
             new_state={"world_time": new_str},
             change_reason=reason,
             world_time=datetime.now() if isinstance(new_time, str) else new_time,
+        )
+
+    @classmethod
+    def rollback_performed(
+        cls,
+        aggregate_id: str,
+        rollback_to_version: int,
+        previous_version: int,
+        source: str = "world_context",
+    ) -> "WorldStateChanged":
+        """
+        Create an event for when a world state rollback is performed.
+
+        Args:
+            aggregate_id: ID of the world state aggregate
+            rollback_to_version: Version being rolled back to
+            previous_version: Version before the rollback
+            source: Event source
+
+        Returns:
+            WorldStateChanged event
+        """
+        return cls(
+            event_id=str(uuid4()),
+            aggregate_id=aggregate_id,
+            source=source,
+            change_type=WorldChangeType.STATE_RESET,
+            severity=WorldEventSeverity.CRITICAL,
+            change_reason=f"Rolled back from version {previous_version} to {rollback_to_version}",
+            previous_state={"version": previous_version},
+            new_state={"version": rollback_to_version},
+        )
+
+    @classmethod
+    def snapshot_restored(
+        cls,
+        aggregate_id: str,
+        snapshot_id: str,
+        snapshot_name: str,
+        source: str = "world_context",
+    ) -> "WorldStateChanged":
+        """
+        Create an event for when a world state is restored from a snapshot.
+
+        Args:
+            aggregate_id: ID of the world state aggregate
+            snapshot_id: ID of the snapshot being restored
+            snapshot_name: Name of the snapshot
+            source: Event source
+
+        Returns:
+            WorldStateChanged event
+        """
+        return cls(
+            event_id=str(uuid4()),
+            aggregate_id=aggregate_id,
+            source=source,
+            change_type=WorldChangeType.STATE_RESET,
+            severity=WorldEventSeverity.CRITICAL,
+            change_reason=f"Restored from snapshot: {snapshot_name}",
+            new_state={"snapshot_id": snapshot_id, "snapshot_name": snapshot_name},
         )
 
     def add_cascade_effect(self, entity_id: str) -> None:

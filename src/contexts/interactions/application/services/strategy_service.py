@@ -61,10 +61,8 @@ class StrategyService:
         valid_focuses = ["balanced", "aggressive", "conservative", "collaborative"]
         if strategy_focus not in valid_focuses:
             return Err(
-                ValidationError(
+                NegotiationError(
                     message=f"Invalid strategy focus. Must be one of: {valid_focuses}",
-                    field="strategy_focus",
-                    field_value=strategy_focus,
                     recoverable=True,
                 )
             )
@@ -141,10 +139,8 @@ class StrategyService:
         ]
         if current_phase not in valid_phases:
             return Err(
-                ValidationError(
+                NegotiationError(
                     message=f"Invalid phase. Must be one of: {valid_phases}",
-                    field="current_phase",
-                    field_value=current_phase,
                     recoverable=True,
                 )
             )
@@ -277,19 +273,16 @@ class StrategyService:
 
         if not objectives:
             return Err(
-                ValidationError(
+                NegotiationError(
                     message="At least one objective required",
-                    field="objectives",
                     recoverable=True,
                 )
             )
 
         if timeline_days < 1:
             return Err(
-                ValidationError(
+                NegotiationError(
                     message="Timeline must be at least 1 day",
-                    field="timeline_days",
-                    field_value=timeline_days,
                     recoverable=True,
                 )
             )

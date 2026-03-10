@@ -17,7 +17,7 @@ The integrated PersonaAgent coordinates:
 import asyncio
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -68,6 +68,10 @@ class PersonaAgent:
     - Improved maintainability
     """
 
+    # Type annotations for instance variables
+    decision_engine: Union["DecisionEngine", "EnhancedDecisionEngine", Any]
+    core: PersonaAgentCore
+
     def __init__(
         self,
         character_directory_path: str,
@@ -115,7 +119,7 @@ class PersonaAgent:
 
         # Initialize decision engine with loaded character data (enhanced if context available)
         if CONTEXT_LOADER_AVAILABLE and self.context_loader:
-            self.decision_engine = EnhancedDecisionEngine(self.core)
+            self.decision_engine: Union[DecisionEngine, EnhancedDecisionEngine] = EnhancedDecisionEngine(self.core)
             logger.info("enhanced_decision_engine_initialized")
         else:
             self.decision_engine = DecisionEngine(self.core)
@@ -189,8 +193,8 @@ class PersonaAgent:
         """Set up coordination between components."""
         try:
             # Ensure all components have access to the same core data
-            self.decision_engine.core = self.core
-            self.memory_interface.agent_core = self.core
+            self.decision_engine.core = self.core  # type: ignore[assignment]
+            self.memory_interface.agent_core = self.core  # type: ignore[assignment]
 
             logger.debug("component_coordination_established")
 
@@ -232,7 +236,7 @@ class PersonaAgent:
                     )
 
             # Replace core's turn handler with integrated version
-            self.core.handle_turn_start = integrated_turn_handler
+            self.core.handle_turn_start = integrated_turn_handler  # type: ignore[method-assign]
 
         except Exception as e:
             logger.error("error_integrating_decision_engine", error=str(e))
@@ -441,48 +445,57 @@ class PersonaAgent:
 
             @property
             def name(self) -> str:
-                return self._agent.character_name
+                name: str = self._agent.character_name
+                return name
 
             @property
             def background_summary(self) -> str:
-                return self._agent.character_data.get(
+                summary: str = self._agent.character_data.get(
                     "background_summary", "No background available"
                 )
+                return summary
 
             @property
             def personality_traits(self) -> str:
-                traits = self._agent.personality_traits
+                traits: Any = self._agent.personality_traits
                 if isinstance(traits, dict):
                     return ", ".join([f"{k}: {v}" for k, v in traits.items()])
                 return str(traits) if traits else "No personality traits available"
 
             @property
             def current_status(self) -> str:
-                return self._agent.current_status
+                status: str = self._agent.current_status
+                return status
 
             @property
             def narrative_context(self) -> str:
-                return self._agent.character_context or "No narrative context"
+                ctx: str = self._agent.character_context or "No narrative context"
+                return ctx
 
             @property
             def skills(self) -> Dict[str, float]:
-                return self._agent.character_data.get("skills", {})
+                skills: Dict[str, float] = self._agent.character_data.get("skills", {})
+                return skills
 
             @property
             def relationships(self) -> Dict[str, float]:
-                return self._agent.relationships
+                rels: Dict[str, float] = self._agent.relationships
+                return rels
 
             @property
             def current_location(self) -> str:
-                return self._agent.current_location or "Unknown"
+                loc: str = self._agent.current_location or "Unknown"
+                return loc
 
             @property
             def inventory(self) -> List[str]:
-                return self._agent.character_data.get("inventory", [])
+                inv: List[str] = self._agent.character_data.get("inventory", [])
+                return inv
 
             @property
             def metadata(self) -> Dict[str, Any]:
-                return self._agent.character_data.get("metadata", {})
+                meta: Dict[str, Any] = self._agent.character_data.get("metadata", {})
+                return meta
 
             @property
             def structured_data(self) -> Dict[str, Any]:
@@ -517,7 +530,7 @@ class PersonaAgent:
                         }
                 return {"stats": stats}
 
-        return CharacterCompatibilityWrapper(self)  # type: ignore[return-value]
+        return CharacterCompatibilityWrapper(self)
 
     @property
     def event_bus(self) -> EventBus:
@@ -533,7 +546,7 @@ class PersonaAgent:
         # Add component-specific information
         base_info.update(
             {
-                "decision_metrics": self.decision_engine.get_decision_metrics(),
+                "decision_metrics": getattr(self.decision_engine, 'get_decision_metrics', lambda: {})(),
                 "memory_metrics": self.memory_interface.get_memory_metrics(),
                 "character_summary": self.character_interpreter.get_character_summary(),
                 "component_architecture": "integrated_modular",

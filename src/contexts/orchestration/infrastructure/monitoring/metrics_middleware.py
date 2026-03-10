@@ -7,7 +7,7 @@ Integrates with the PrometheusMetricsCollector to provide comprehensive API obse
 """
 
 import time
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from fastapi import Request, Response
@@ -23,36 +23,40 @@ except ImportError as prometheus_error:  # pragma: no cover - dependency-light m
         prometheus_error,
     )
 
+    from typing import Literal, TypeVar
+
+    Self = TypeVar("Self", bound="_NoOpMetric")
+
+    class _Timer:
+        def __enter__(self) -> "_Timer":
+            return self
+
+        def __exit__(self, exc_type: Any, exc: Any, tb: Any) -> Literal[False]:
+            return False
+
     class _NoOpMetric:
-        def __init__(self, *_, **__) -> None:
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-        def labels(self, *_, **__) -> None:
+        def labels(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def inc(self, *_, **__) -> None:
+        def inc(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def dec(self, *_, **__) -> None:
+        def dec(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def observe(self, *_, **__) -> None:
+        def observe(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def set(self, *_, **__) -> None:
+        def set(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def info(self, *_, **__) -> None:
+        def info(self: "Self", *_: Any, **__: Any) -> "Self":
             return self
 
-        def time(self) -> None:
-            class _Timer:
-                def __enter__(self) -> None:
-                    return self
-
-                def __exit__(self, exc_type, exc, tb):
-                    return False
-
+        def time(self) -> "_Timer":
             return _Timer()
 
     Counter = Gauge = Histogram = Info = _NoOpMetric  # type: ignore
@@ -199,7 +203,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
             }
         )
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Any]) -> Response:
         """
         Process HTTP request and collect metrics.
 
@@ -408,10 +412,10 @@ class MetricsRegistry:
     and provides easy access to metrics collectors.
     """
 
-    _instance = None
-    _collectors: dict[Any, Any] = {}
+    _instance: Optional["MetricsRegistry"] = None
+    _collectors: Dict[str, PrometheusMetricsCollector] = {}
 
-    def __new__(cls) -> None:
+    def __new__(cls) -> "MetricsRegistry":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -449,7 +453,7 @@ class MetricsRegistry:
         Returns:
             Combined metrics data
         """
-        all_data: list[Any] = []
+        all_data: List[str] = []
         for name, collector in self._collectors.items():
             try:
                 data = collector.get_metrics_data()

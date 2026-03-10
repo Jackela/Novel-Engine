@@ -273,10 +273,8 @@ class CompatibilityService:
 
         if min_compatibility < 0 or min_compatibility > 100:
             return Err(
-                ValidationError(
+                CompatibilityError(
                     message="Compatibility threshold must be between 0 and 100",
-                    field="min_compatibility",
-                    field_value=min_compatibility,
                     recoverable=True,
                 )
             )
@@ -489,7 +487,7 @@ class CompatibilityService:
         std_dev = variance**0.5
 
         # High cohesion = high average with low variance
-        cohesion = avg - (std_dev / 2)
+        cohesion: float = avg - (std_dev / 2)
         return max(0.0, min(100.0, cohesion))
 
     def _score_to_level(self, score: Decimal) -> str:

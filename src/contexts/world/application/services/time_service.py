@@ -138,6 +138,19 @@ class TimeService:
 
         # Get current calendar
         current = self._repository.get_or_create(world_id)
+        if current is None:
+            return Err(
+                TimeError(
+                    f"Failed to get or create calendar for world {world_id}",
+                    details={"world_id": world_id},
+                )
+            )
+
+        # Store current values before advancing
+        current_year = current.year
+        current_month = current.month
+        current_day = current.day
+        current_era = current.era_name
 
         # Advance the calendar
         advance_result = current.advance(days)
@@ -156,10 +169,10 @@ class TimeService:
         # Create event
         event = TimeAdvancedEvent.create(
             previous_date={
-                "year": current.year,
-                "month": current.month,
-                "day": current.day,
-                "era_name": current.era_name,
+                "year": current_year,
+                "month": current_month,
+                "day": current_day,
+                "era_name": current_era,
             },
             new_date={
                 "year": updated.year,
@@ -182,9 +195,9 @@ class TimeService:
             "time_advanced",
             world_id=world_id,
             days_advanced=days,
-            previous_year=current.year,
-            previous_month=current.month,
-            previous_day=current.day,
+            previous_year=current_year,
+            previous_month=current_month,
+            previous_day=current_day,
             new_year=updated.year,
             new_month=updated.month,
             new_day=updated.day,

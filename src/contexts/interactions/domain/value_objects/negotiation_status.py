@@ -34,6 +34,8 @@ class NegotiationOutcome(Enum):
     WALKAWAY = "walkaway"
     TIMEOUT = "timeout"
     CANCELLED = "cancelled"
+    REJECTED = "rejected"
+    COMPROMISE = "compromise"
 
 
 class TerminationReason(Enum):

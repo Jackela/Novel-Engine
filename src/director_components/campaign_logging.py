@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 import structlog
 
@@ -102,8 +102,8 @@ class CampaignLoggingService:
         }
 
         # Analysis
-        self._error_patterns = {}
-        self._performance_metrics = {}
+        self._error_patterns: Dict[str, Dict[str, Any]] = {}
+        self._performance_metrics: Dict[str, List[Dict[str, Any]]] = {}
 
     async def initialize(self) -> bool:
         """Initialize logging service."""
@@ -332,9 +332,9 @@ class CampaignLoggingService:
         """Get logging statistics and analytics."""
         try:
             current_time = datetime.now()
-            session_duration = (
-                current_time - self._log_statistics["session_start"]
-            ).total_seconds()
+            session_start = self._log_statistics["session_start"]
+            assert isinstance(session_start, datetime)
+            session_duration = (current_time - session_start).total_seconds()
 
             # Calculate error rate in last hour
             one_hour_ago = current_time - timedelta(hours=1)
@@ -349,14 +349,14 @@ class CampaignLoggingService:
             recent_entries = self._log_entries[-100:] if self._log_entries else []
             avg_entries_per_minute = len(recent_entries) / max(1, session_duration / 60)
 
+            entries_by_level: Dict[str, int] = self._log_statistics["entries_by_level"]  # type: ignore
+            entries_by_category: Dict[str, int] = self._log_statistics["entries_by_category"]  # type: ignore
             return {
                 "session_id": self.session_id,
                 "session_duration": session_duration,
                 "total_entries": self._log_statistics["total_entries"],
-                "entries_by_level": self._log_statistics["entries_by_level"].copy(),
-                "entries_by_category": self._log_statistics[
-                    "entries_by_category"
-                ].copy(),
+                "entries_by_level": entries_by_level.copy(),
+                "entries_by_category": entries_by_category.copy(),
                 "recent_errors": recent_errors,
                 "error_rate_last_hour": recent_errors,
                 "avg_entries_per_minute": avg_entries_per_minute,
@@ -435,9 +435,14 @@ class CampaignLoggingService:
 
     def _update_statistics(self, entry: LogEntry) -> None:
         """Update logging statistics."""
-        self._log_statistics["total_entries"] += 1
-        self._log_statistics["entries_by_level"][entry.level.value] += 1
-        self._log_statistics["entries_by_category"][entry.category.value] += 1
+        total_entries: int = self._log_statistics["total_entries"]  # type: ignore
+        self._log_statistics["total_entries"] = total_entries + 1
+        entries_by_level: Dict[str, int] = self._log_statistics["entries_by_level"]  # type: ignore
+        entries_by_level[entry.level.value] = entries_by_level.get(entry.level.value, 0) + 1
+        self._log_statistics["entries_by_level"] = entries_by_level
+        entries_by_category: Dict[str, int] = self._log_statistics["entries_by_category"]  # type: ignore
+        entries_by_category[entry.category.value] = entries_by_category.get(entry.category.value, 0) + 1
+        self._log_statistics["entries_by_category"] = entries_by_category
 
         # Update error count for last hour
         if entry.level in [LogLevel.ERROR, LogLevel.CRITICAL]:
@@ -701,7 +706,7 @@ class CampaignLoggingService:
                     "metadata": {
                         "total_entries": self._log_statistics["total_entries"],
                         "session_duration": (
-                            datetime.now() - self._log_statistics["session_start"]
+                            datetime.now() - self._log_statistics["session_start"]  # type: ignore
                         ).total_seconds(),
                     },
                 }

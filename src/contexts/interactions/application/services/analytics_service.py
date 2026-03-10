@@ -322,7 +322,7 @@ class AnalyticsService:
 
         try:
             # Calculate metrics
-            total_duration = 0
+            total_duration = 0.0
             total_responses = 0
             completed_count = 0
 

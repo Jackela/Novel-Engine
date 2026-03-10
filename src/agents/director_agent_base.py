@@ -39,7 +39,7 @@ try:
 except ImportError:
     CampaignBrief = None  # type: ignore[misc,assignment]
 
-    class NarrativeActionResolver:  # type: ignore[no-redef]
+    class NarrativeActionResolver:  # type: ignore[no-redef,misc]
         def __init__(self) -> None:
             pass
 
@@ -216,7 +216,8 @@ class DirectorAgentBase:
             "temporal_markers": {},  # timestamp -> events
             "investigation_history": [],  # chronological list of all investigations
         }
-        """Dynamic world state tracker."""  # type: ignore[assignment]
+        """Dynamic world state tracker."""
+        return None  # type: ignore[return-value,unreachable]
 
     def register_agent(self, agent: PersonaAgent) -> bool:
         """
@@ -439,3 +440,4 @@ class DirectorAgentBase:
             )
         except Exception:
             return False
+

@@ -9,7 +9,7 @@ phase outcomes, performance metrics, and comprehensive turn analytics.
 from dataclasses import dataclass, field
 from datetime import timedelta
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID
 
 from .phase_status import PhaseStatus, PhaseType
@@ -191,7 +191,7 @@ class PhaseResult:
         """Get comprehensive performance summary."""
         execution_time = self.get_execution_time()
 
-        return {
+        result: Dict[str, Any] = {
             "execution_time_ms": (
                 int(execution_time.total_seconds() * 1000) if execution_time else None
             ),
@@ -203,6 +203,7 @@ class PhaseResult:
             "compensation_required": self.was_compensated(),
             "success": self.was_successful(),
         }
+        return result
 
 
 @dataclass(frozen=True)
@@ -269,7 +270,7 @@ class PipelineResult:
             raise ValueError("Total AI cost cannot be negative")
 
         # Validate phase result consistency
-        phase_types_seen: set[Any] = set()
+        phase_types_seen: Set[PhaseType] = set()
         for result in self.phase_results:
             if result.phase_type in phase_types_seen:
                 raise ValueError(f"Duplicate phase result for {result.phase_type}")
@@ -300,7 +301,7 @@ class PipelineResult:
         total_ai_cost = sum((r.get_ai_cost() for r in phase_results), Decimal("0"))
 
         # Build performance summary
-        performance_summary = {
+        performance_summary: Dict[str, Any] = {
             "phases_completed": len(phase_results),
             "phases_successful": sum(1 for r in phase_results if r.was_successful()),
             "total_execution_time_ms": int(total_execution_time.total_seconds() * 1000),

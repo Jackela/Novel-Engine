@@ -182,6 +182,7 @@ class TurnOrchestrator:
         phase_results: Dict[PhaseType, PhaseResult] = {}
         compensation_actions: List[CompensationAction] = []
         phases_completed: List[PhaseType] = []
+        turn_id = cast(TurnId, turn_id)  # Ensure turn_id is not None
 
         try:
             # Start performance monitoring
@@ -641,7 +642,7 @@ class TurnOrchestrator:
         self, phase_results: Dict[PhaseType, PhaseResult]
     ) -> Dict[str, Dict[str, Any]]:
         """Extract metadata from previous phase results for context."""
-        metadata: dict[Any, Any] = {}
+        metadata: Dict[str, Dict[str, Any]] = {}
         for phase_type, result in phase_results.items():
             metadata[phase_type.value] = {
                 "success": result.success,
@@ -738,7 +739,7 @@ class TurnOrchestrator:
         Returns:
             Tuple of (is_valid, validation_errors)
         """
-        errors: list[Any] = []
+        errors: List[str] = []
         # Validate participants
         if not participants:
             errors.append("At least one participant is required")

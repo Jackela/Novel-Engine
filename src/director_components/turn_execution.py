@@ -108,7 +108,7 @@ class TurnExecutionEngine:
         context = TurnContext(turn_number=self._turn_counter)
         self._current_context = context
 
-        turn_result = {
+        turn_result: Dict[str, Any] = {
             "success": False,
             "turn_number": self._turn_counter,
             "error": None,
@@ -124,15 +124,15 @@ class TurnExecutionEngine:
             # Phase 1: Preparation
             prep_result = await self._execute_preparation_phase(context, turn_data)
             if not prep_result["success"]:
-                turn_result["error"] = f"Preparation failed: {prep_result['error']}"
+                error_msg: str = prep_result.get("error", "Unknown error")
+                turn_result["error"] = f"Preparation failed: {error_msg}"
                 return turn_result
 
             # Phase 2: Agent Decisions
             decision_result = await self._execute_decision_phase(context)
             if not decision_result["success"]:
-                turn_result["error"] = (
-                    f"Decision phase failed: {decision_result['error']}"
-                )
+                error_msg = decision_result.get("error", "Unknown error")
+                turn_result["error"] = f"Decision phase failed: {error_msg}"
                 return turn_result
 
             # Phase 3: Conflict Resolution
@@ -146,7 +146,8 @@ class TurnExecutionEngine:
             # Phase 4: State Update
             state_result = await self._execute_state_update_phase(context)
             if not state_result["success"]:
-                turn_result["error"] = f"State update failed: {state_result['error']}"
+                error_msg = state_result.get("error", "Unknown error")
+                turn_result["error"] = f"State update failed: {error_msg}"
                 return turn_result
 
             # Phase 5: Finalization
@@ -274,9 +275,8 @@ class TurnExecutionEngine:
 
                     # Update agent activity metrics
                     response_time = result.get("response_time", 0.0)
-                    await self.agent_manager.update_agent_activity(
-                        agent_id, response_time
-                    )
+                    if hasattr(self.agent_manager, 'update_agent_activity'):
+                        await self.agent_manager.update_agent_activity(agent_id, response_time)
                 else:
                     self.logger.warning(
                         f"Agent {agent_id} decision failed: {result.get('error', 'Unknown')}"
@@ -312,9 +312,9 @@ class TurnExecutionEngine:
             return {}
 
         # Limit concurrent execution
+        results: Dict[str, Dict[str, Any]] = {}
         if len(decision_tasks) > self._max_concurrent_agents:
             # Process in batches
-            results: dict[Any, Any] = {}
             for i in range(0, len(decision_tasks), self._max_concurrent_agents):
                 batch_tasks = decision_tasks[i : i + self._max_concurrent_agents]
                 batch_ids = agent_ids[i : i + self._max_concurrent_agents]
@@ -327,21 +327,18 @@ class TurnExecutionEngine:
                     if isinstance(result, Exception):
                         results[agent_id] = {"success": False, "error": str(result)}
                     else:
-                        results[agent_id] = result
-
-            return results
+                        results[agent_id] = result  # type: ignore
         else:
             # Process all at once
             results_list = await asyncio.gather(*decision_tasks, return_exceptions=True)
 
-            results: dict[Any, Any] = {}
             for agent_id, result in zip(agent_ids, results_list):
                 if isinstance(result, Exception):
                     results[agent_id] = {"success": False, "error": str(result)}
                 else:
-                    results[agent_id] = result
+                    results[agent_id] = result  # type: ignore
 
-            return results
+        return results
 
     async def _execute_sequential_decisions(
         self, context: TurnContext, agents: List[Any]

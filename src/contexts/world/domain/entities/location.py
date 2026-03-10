@@ -26,6 +26,7 @@ from .entity import Entity
 
 if TYPE_CHECKING:
     from src.contexts.world.domain.value_objects import ResourceYield
+    from src.contexts.world.domain.value_objects.resource_type import ResourceType
 
 
 # Type alias for demographic breakdown (race/species -> percentage)
@@ -568,7 +569,7 @@ class Location(Entity):
             self.resource_yields.append(resource_yield)
             self.touch()
 
-    def get_resource_yield(self, resource_type) -> Optional["ResourceYield"]:
+    def get_resource_yield(self, resource_type: "ResourceType") -> Optional["ResourceYield"]:
         """
         Get the resource yield for a specific resource type.
 

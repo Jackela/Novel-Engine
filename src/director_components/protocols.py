@@ -38,6 +38,11 @@ class AgentManagerProtocol(Protocol):
         """Validate all registered agents."""
         pass
 
+    @abstractmethod
+    async def update_agent_activity(self, agent_id: str, response_time: float = 0.0) -> None:
+        """Update agent activity metrics."""
+        pass
+
 
 class TurnEngineProtocol(Protocol):
     """Protocol for turn execution management."""

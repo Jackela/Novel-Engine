@@ -269,7 +269,7 @@ class ErrorHandler:
         )
 
 
-def setup_error_handlers(app, debug: bool = False) -> None:
+def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
     """Setup error handlers for FastAPI application."""
 
     error_handler = ErrorHandler(debug=debug)
@@ -277,7 +277,7 @@ def setup_error_handlers(app, debug: bool = False) -> None:
     @app.exception_handler(NovelEngineException)
     async def novel_engine_exception_handler(
         request: Request, exc: NovelEngineException
-    ):
+    ) -> JSONResponse:
         """Handle Novel Engine specific exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -295,7 +295,7 @@ def setup_error_handlers(app, debug: bool = False) -> None:
         )
 
     @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException):
+    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
         """Handle FastAPI HTTP exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -315,7 +315,7 @@ def setup_error_handlers(app, debug: bool = False) -> None:
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
-    ):
+    ) -> JSONResponse:
         """Handle Pydantic validation errors."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -353,7 +353,7 @@ def setup_error_handlers(app, debug: bool = False) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def general_exception_handler(request: Request, exc: Exception):
+    async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle all other exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -370,7 +370,7 @@ def setup_error_handlers(app, debug: bool = False) -> None:
             content=error_response.model_dump(mode="json"),
         )
 
-    return error_handler
+    return error_handler  # type: ignore[return-value]
 
 
 __all__ = [

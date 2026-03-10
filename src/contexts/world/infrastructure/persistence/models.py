@@ -67,7 +67,7 @@ class WorldStateModel(FullAuditModel):
         Index("idx_world_states_is_deleted", "is_deleted"),
     )
 
-    def to_domain_aggregate(self) -> None:
+    def to_domain_aggregate(self) -> "WorldState":
         """
         Convert database model to domain aggregate.
 
@@ -110,28 +110,32 @@ class WorldStateModel(FullAuditModel):
                     )
                     domain_entities[entity_id] = world_entity
 
-        # Create domain aggregate
+        # Create domain aggregate using calendar-based constructor
+        from ...domain.value_objects.world_calendar import WorldCalendar
+
+        calendar = WorldCalendar.from_datetime(self.world_time)
+
         world_state = WorldState(
             id=str(self.id),
-            name=self.name,
-            description=self.description,
+            name=str(self.name),
+            description=str(self.description) if self.description else None,
             status=WorldStatus(self.status),
-            world_time=self.world_time,
+            calendar=calendar,
             entities=domain_entities,
-            environment=self.environment or {},
-            spatial_index=self.spatial_index or {},
-            metadata=self.metadata or {},
-            max_entities=self.max_entities,
-            spatial_grid_size=self.spatial_grid_size,
+            environment=dict(self.environment) if self.environment else {},
+            spatial_index=dict(self.spatial_index) if self.spatial_index else {},
+            metadata=dict(self.metadata) if self.metadata else {},
+            max_entities=int(self.max_entities),
+            spatial_grid_size=float(self.spatial_grid_size),
             created_at=self.created_at,
             updated_at=self.updated_at,
-            version=self.version,
+            version=int(self.version),
         )
 
         return world_state
 
     @classmethod
-    def from_domain_aggregate(cls, world_state) -> None:
+    def from_domain_aggregate(cls, world_state: "WorldState") -> "WorldStateModel":
         """
         Create database model from domain aggregate.
 
@@ -167,7 +171,7 @@ class WorldStateModel(FullAuditModel):
             updated_at=world_state.updated_at,
         )
 
-    def update_from_domain_aggregate(self, world_state) -> None:
+    def update_from_domain_aggregate(self, world_state: "WorldState") -> None:
         """
         Update database model from domain aggregate.
 

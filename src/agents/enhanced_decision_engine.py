@@ -17,7 +17,7 @@ Features:
 """
 
 # Import base decision engine
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 import structlog
 
@@ -25,9 +25,11 @@ from src.agents.decision_engine import DecisionEngine
 
 if TYPE_CHECKING:
     from src.agents.persona_agent.core import PersonaAgentCore
+    from src.agents.persona_core import PersonaCore
 else:
     # Runtime import with cast to avoid type errors
     from src.agents.persona_agent.core import PersonaAgentCore
+    from src.agents.persona_core import PersonaCore
 
 logger = structlog.get_logger(__name__)
 
@@ -41,9 +43,9 @@ class EnhancedDecisionEngine(DecisionEngine):
     full backward compatibility with existing agent behavior.
     """
 
-    def __init__(self, agent_core: "PersonaAgentCore") -> None:
+    def __init__(self, agent_core: Union["PersonaAgentCore", "PersonaCore", Any]) -> None:
         """Initialize the enhanced decision engine."""
-        super().__init__(agent_core)
+        super().__init__(agent_core)  # type: ignore[arg-type]
         self.context_modifier_enabled = True
         self.modifier_weights = {
             "objective_alignment": 0.3,
@@ -238,33 +240,36 @@ class EnhancedDecisionEngine(DecisionEngine):
             if not target or target not in relationships:
                 return 1.0
 
-            relationship = relationships[target]
-            trust_level = relationship["trust_level"]
-            action_type = action.get("action_type", "").lower()
+            relationship: Dict[str, Any] = relationships[target]
+            trust_level: float = float(relationship.get("trust_level", 50.0))
+            action_type: str = action.get("action_type", "").lower()
 
             # High trust encourages cooperation, low trust encourages caution
             if any(
                 keyword in action_type
                 for keyword in ["cooperate", "help", "assist", "support"]
             ):
-                return 1.0 + (
+                result: float = 1.0 + (
                     trust_level / 250.0
                 )  # Up to 40% bonus for trust level 100
+                return result
             elif any(
                 keyword in action_type
                 for keyword in ["attack", "betray", "harm", "oppose"]
             ):
-                return 1.0 + (
+                result = 1.0 + (
                     (100 - trust_level) / 250.0
                 )  # Up to 40% bonus for low trust
+                return result
             elif any(
                 keyword in action_type for keyword in ["negotiate", "trade", "discuss"]
             ):
                 # Moderate trust levels favor negotiation
-                trust_factor = (
+                trust_factor: float = (
                     1.0 - abs(trust_level - 50) / 100.0
                 )  # Peak at trust level 50
-                return 1.0 + (trust_factor * 0.2)  # Up to 20% bonus
+                result = 1.0 + (trust_factor * 0.2)  # Up to 20% bonus
+                return result
 
             return 1.0
 
@@ -279,8 +284,8 @@ class EnhancedDecisionEngine(DecisionEngine):
             action_type = action.get("action_type", "").lower()
 
             for drive_name, drive_data in drives.items():
-                weight = drive_data["weight"]
-                drive_name_lower = drive_name.lower()
+                weight: float = float(drive_data.get("weight", 0.5))
+                drive_name_lower: str = drive_name.lower()
 
                 # Match drives to action types
                 if "security" in drive_name_lower or "safety" in drive_name_lower:
@@ -328,7 +333,8 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             for event_name, event_data in events.items():
                 # Check if any trigger phrases from memories match current situation
-                for trigger_phrase in event_data.get("trigger_phrases", []):
+                trigger_phrases: list = event_data.get("trigger_phrases", [])
+                for trigger_phrase in trigger_phrases:
                     if self._phrase_matches_context(trigger_phrase, action, situation):
                         decision_influence = event_data.get(
                             "decision_influence", ""
@@ -430,9 +436,9 @@ class EnhancedDecisionEngine(DecisionEngine):
             ):
                 return {"context_available": False}
 
-            character_data = agent_core.character_data
+            character_data: Dict[str, Any] = agent_core.character_data
 
-            summary = {
+            summary: Dict[str, Any] = {
                 "context_available": True,
                 "modifiers_applied": {},
                 "active_objectives_count": len(
@@ -453,14 +459,16 @@ class EnhancedDecisionEngine(DecisionEngine):
             }
 
             # Calculate individual modifiers for transparency
+            objective_modifier: float = 1.0
             if "active_objectives" in character_data:
                 objective_modifier = self._get_objective_alignment_modifier(
                     action, character_data["active_objectives"]
                 )
-            summary["modifiers_applied"]["objective_alignment"] = objective_modifier
+            summary["modifiers_applied"]["objective_alignment"] = objective_modifier  # type: ignore[index]
 
+            modifiers: Dict[str, Any] = summary.get("modifiers_applied", {})
             if "behavioral_triggers" in character_data:
-                summary["modifiers_applied"]["behavioral_trigger"] = (
+                modifiers["behavioral_trigger"] = (
                     self._get_behavioral_trigger_modifier(
                         action, situation, character_data["behavioral_triggers"]
                     )
@@ -470,25 +478,26 @@ class EnhancedDecisionEngine(DecisionEngine):
                 "enhanced_relationships" in character_data
                 and "target_character" in action
             ):
-                summary["modifiers_applied"]["relationship_context"] = (
+                modifiers["relationship_context"] = (
                     self._get_relationship_modifier(
                         action, character_data["enhanced_relationships"]
                     )
                 )
 
             if "emotional_drives" in character_data:
-                summary["modifiers_applied"]["emotional_drive"] = (
+                modifiers["emotional_drive"] = (
                     self._get_emotional_drive_modifier(
                         action, character_data["emotional_drives"]
                     )
                 )
 
             if "formative_events" in character_data:
-                summary["modifiers_applied"]["memory_influence"] = (
+                modifiers["memory_influence"] = (
                     self._get_memory_influence_modifier(
                         action, situation, character_data["formative_events"]
                     )
                 )
+            summary["modifiers_applied"] = modifiers
 
             return summary
 

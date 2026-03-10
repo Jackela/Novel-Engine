@@ -125,6 +125,7 @@ class AgentLifecycleManager:
         # Action tracking
         self.processed_actions: List[Dict[str, Any]] = []
         self.failed_actions: List[Dict[str, Any]] = []
+        self.validated_action: Optional[ValidatedAction] = None
 
         # Performance metrics
         self.total_validations = 0
@@ -216,9 +217,10 @@ class AgentLifecycleManager:
                 proposed_action, violations, character_data
             )
 
-            if validated_action is not None:
+            self.validated_action = validated_action
+            if self.validated_action is not None:
                 # Check validation result
-                result = getattr(validated_action, "validation_result", None)
+                result = getattr(self.validated_action, "validation_result", None)
                 if result == ValidationResult.VALID:
                     # Repairs successful
                     self.successful_repairs_count += 1
@@ -677,12 +679,12 @@ class AgentLifecycleManager:
             if isinstance(action_type, str):
                 try:
                     action_type = (
-                        ActionType(action_type.lower())
+                        ActionType(action_type.lower())  # type: ignore[assignment]
                         if action_type
                         else ActionType.OTHER
                     )
                 except (ValueError, AttributeError):
-                    action_type = ActionType.OTHER
+                    action_type = ActionType.OTHER  # type: ignore[assignment]
 
             # Convert target string to ActionTarget or None
             if isinstance(target, str):

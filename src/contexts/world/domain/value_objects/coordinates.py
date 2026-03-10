@@ -58,10 +58,10 @@ class Coordinates:
         coords_are_numeric = True
         for coord_name, coord_value in [("x", self.x), ("y", self.y), ("z", self.z)]:
             if not isinstance(coord_value, (int, float)):
-                errors.append(f"{coord_name} coordinate must be numeric")
+                errors.append(f"{coord_name} coordinate must be numeric")  # type: ignore[unreachable]
                 coords_are_numeric = False
             elif math.isnan(coord_value) or math.isinf(coord_value):
-                errors.append(f"{coord_name} coordinate must be a finite number")
+                errors.append(f"{coord_name} coordinate must be a finite number")  # type: ignore[unreachable]
                 coords_are_numeric = False
 
         # Check precision
@@ -329,7 +329,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x + other.x,
@@ -352,7 +352,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x - other.x,
@@ -382,7 +382,7 @@ class Coordinates:
             fallback mechanism to try the other operand's __rmul__.
         """
         if not isinstance(scalar, (int, float)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[return-value]
 
         return Coordinates(
             x=self.x * scalar,

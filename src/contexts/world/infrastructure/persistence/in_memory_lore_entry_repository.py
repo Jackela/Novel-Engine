@@ -203,9 +203,10 @@ class InMemoryLoreEntryRepository(ILoreEntryRepository):
 
         tags_lower = [t.lower().strip() for t in tags]
 
+        matching_ids: Optional[Set[str]]
         if match_all:
             # Intersection: entry must have ALL tags
-            matching_ids: Optional[Set[str]] = None
+            matching_ids = None
             for tag in tags_lower:
                 tag_entries = self._tag_index.get(tag, set())
                 if matching_ids is None:
@@ -214,7 +215,7 @@ class InMemoryLoreEntryRepository(ILoreEntryRepository):
                     matching_ids &= tag_entries
         else:
             # Union: entry can have ANY tag
-            matching_ids: set[Any] = set()
+            matching_ids = set()
             for tag in tags_lower:
                 matching_ids |= self._tag_index.get(tag, set())
 

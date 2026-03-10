@@ -112,6 +112,7 @@ class GetWorldSlice:
 
         # Validate circular parameters
         if has_circle:
+            assert self.radius is not None  # for type checker
             if self.radius <= 0:
                 raise QueryValidationException("radius must be positive")
 
@@ -307,6 +308,9 @@ class GetWorldSliceQueryHandler:
 
                 # Execute spatial query based on query type
                 if query.is_circular_query():
+                    assert query.center_x is not None  # for type checker
+                    assert query.center_y is not None  # for type checker
+                    assert query.radius is not None  # for type checker
                     entities = read_model.get_entities_in_area(
                         center_x=query.center_x,
                         center_y=query.center_y,
@@ -398,6 +402,13 @@ class GetWorldSliceQueryHandler:
 
         if query.is_circular_query():
             # Check if circle intersects with world bounds
+            assert query.center_x is not None  # for type checker
+            assert query.center_y is not None  # for type checker
+            assert query.radius is not None  # for type checker
+            assert read_model.min_x is not None  # for type checker
+            assert read_model.max_x is not None  # for type checker
+            assert read_model.min_y is not None  # for type checker
+            assert read_model.max_y is not None  # for type checker
             circle_min_x = query.center_x - query.radius
             circle_max_x = query.center_x + query.radius
             circle_min_y = query.center_y - query.radius

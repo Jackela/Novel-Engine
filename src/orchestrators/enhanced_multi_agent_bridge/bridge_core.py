@@ -13,7 +13,7 @@ import structlog
 
 from src.agents.director_agent_integrated import DirectorAgent
 from src.core.event_bus import EventBus
-from src.core.llm_service import CostControl, LLMRequest, get_llm_service
+from src.core.llm_service import CostControl, LLMRequest, ResponseFormat, get_llm_service
 
 from .dialogue_manager import DialogueManager
 from .state_manager import StateManager
@@ -218,7 +218,7 @@ class EnhancedMultiAgentBridge:
 
             llm_request = LLMRequest(
                 prompt=batch_request.prompt,
-                response_format="text",
+                response_format=ResponseFormat.NARRATIVE_FORMAT,
                 temperature=0.8,
                 requester="llm_coordination",
             )

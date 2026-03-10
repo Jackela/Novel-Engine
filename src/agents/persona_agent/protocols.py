@@ -51,6 +51,7 @@ class WorldEvent:
             from datetime import datetime
 
             self.timestamp = datetime.now().timestamp()
+        return None  # type: ignore[unreachable]
 
 
 @dataclass

@@ -149,6 +149,7 @@ class PostgreSQLConnectionPool:
         if not self.config.enable_extensions:
             return
 
+        assert self.pool is not None, "Pool not initialized"
         async with self.pool.acquire() as conn:
             for extension in self.config.enable_extensions:
                 try:
@@ -163,6 +164,7 @@ class PostgreSQLConnectionPool:
 
     async def _initialize_schema(self) -> None:
         """Initialize database schema for Novel Engine."""
+        assert self.pool is not None, "Pool not initialized"
         schema_queries = [
             # Characters table with JSON support
             """
@@ -239,6 +241,7 @@ class PostgreSQLConnectionPool:
             "CREATE INDEX IF NOT EXISTS idx_narrative_events_created ON narrative_events (created_at)",
         ]
 
+        assert self.pool is not None, "Pool not initialized"
         async with self.pool.acquire() as conn:
             # Create schema
             for query in schema_queries:
@@ -434,7 +437,7 @@ class PostgreSQLConnectionPool:
             "agent_id = $1",
             "search_vector @@ plainto_tsquery('english', $2)",
         ]
-        params = [agent_id, search_query]
+        params: List[Any] = [agent_id, search_query]
 
         if memory_types:
             where_clauses.append("memory_type = ANY($3)")

@@ -164,7 +164,7 @@ class AgentLifecycleManager:
         Returns:
             Dict containing validation results and agent health status
         """
-        validation_results = {
+        validation_results: Dict[str, Any] = {
             "valid_agents": [],
             "invalid_agents": [],
             "agent_count": len(self._agents),
@@ -176,10 +176,12 @@ class AgentLifecycleManager:
             for agent_id, agent in self._agents.items():
                 agent_validation = await self._validate_single_agent(agent_id, agent)
 
+                valid_agents: List[str] = validation_results["valid_agents"]
+                invalid_agents: List[Dict[str, Any]] = validation_results["invalid_agents"]
                 if agent_validation["valid"]:
-                    validation_results["valid_agents"].append(agent_id)
+                    valid_agents.append(agent_id)
                 else:
-                    validation_results["invalid_agents"].append(
+                    invalid_agents.append(
                         {"agent_id": agent_id, "errors": agent_validation["errors"]}
                     )
 
@@ -192,7 +194,8 @@ class AgentLifecycleManager:
                         metrics.health_status = "unhealthy"
                         metrics.error_count += 1
 
-                validation_results["health_summary"][agent_id] = {
+                health_summary: Dict[str, Any] = validation_results["health_summary"]
+                health_summary[agent_id] = {
                     "status": metrics.health_status if metrics else "unknown",
                     "last_activity": (
                         metrics.last_activity.isoformat() if metrics else None
@@ -257,7 +260,7 @@ class AgentLifecycleManager:
         required_methods = ["make_decision", "get_status"]
         required_attributes = ["agent_id", "character_data"]
 
-        validation_result = {"valid": True, "errors": []}
+        validation_result: Dict[str, Any] = {"valid": True, "errors": []}
 
         # Check required methods
         for method in required_methods:

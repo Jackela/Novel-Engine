@@ -284,15 +284,15 @@ class ChroniclerAgent:
         elif not character_names:
             raise ValueError("ChroniclerAgent requires at least one character name")
 
-        self.event_bus = event_bus  # type: ignore[assignment]
+        self.event_bus = event_bus
         self.narrative_segments: List[NarrativeSegment] = []
 
         try:
             config = get_config()
-            self._config = config  # type: ignore[assignment]
+            self._config = config
         except Exception as e:
             logger.warning("failed_to_load_configuration", error=str(e))
-            self._config = None  # type: ignore[assignment]
+            self._config = None
 
         self.output_directory = output_directory or (
             self._config.chronicler.output_directory if self._config else None
@@ -370,7 +370,7 @@ class ChroniclerAgent:
             tmp_file.touch()
             try:
                 tmp_file.unlink()
-            except FileNotFoundError:  # type: ignore[unreachable]
+            except FileNotFoundError:
                 pass
             logger.info(
                 "output_directory_validated", output_directory=self.output_directory
@@ -607,7 +607,8 @@ just the pure narrative prose that could be published in an anthology.
                 )
 
             if response:
-                return response
+                result: str = str(response)
+                return result
 
             # 生产环境: 允许 fallback
             logger.warning("llm_returned_none_using_fallback")

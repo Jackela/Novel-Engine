@@ -9,7 +9,7 @@ and smooth migration paths for API consumers.
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterator, List, Optional
 
 import structlog
 from fastapi import Request, Response, status
@@ -253,7 +253,7 @@ class VersionMiddleware:
         self.extractor = VersionExtractor()
         self.compatibility = CompatibilityLayer()
 
-    async def __call__(self, request: Request, call_next):
+    async def __call__(self, request: Request, call_next: Any) -> Response:
         """Process request with version handling."""
 
         # Extract API version
@@ -302,9 +302,9 @@ class VersionedRoute(APIRoute):
 
     def __init__(
         self,
-        *args,
-        version_handlers: Optional[Dict[APIVersion, Callable]] = None,
-        **kwargs,
+        *args: Any,
+        version_handlers: Optional[Dict[APIVersion, Callable[..., Any]]] = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.version_handlers = version_handlers or {}
@@ -323,10 +323,10 @@ class VersionedRoute(APIRoute):
         return await super().handle_request(request)
 
 
-def create_version_info_endpoint() -> None:
+def create_version_info_endpoint() -> Callable[[], Dict[str, Any]]:
     """Create endpoint that returns API version information."""
 
-    def get_api_versions() -> None:
+    def get_api_versions() -> Dict[str, Any]:
         """Get information about all API versions."""
         registry = APIVersionRegistry()
 
@@ -355,7 +355,7 @@ def create_version_info_endpoint() -> None:
     return get_api_versions
 
 
-def setup_versioning(app) -> None:
+def setup_versioning(app: Any) -> VersionMiddleware:
     """Setup API versioning middleware and endpoints."""
 
     # Add versioning middleware

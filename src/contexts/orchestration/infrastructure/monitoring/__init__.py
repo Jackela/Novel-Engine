@@ -19,6 +19,8 @@ import structlog
 from .metrics_middleware import PrometheusMiddleware
 from .prometheus_collector import PrometheusMetricsCollector
 
+from typing import Any
+
 try:
     from .tracing import NovelEngineTracingConfig, initialize_tracing
     from .tracing_middleware import setup_fastapi_tracing
@@ -28,14 +30,14 @@ except ImportError as tracing_error:  # pragma: no cover - fallback when otel mi
         tracing_error,
     )
 
-    class NovelEngineTracingConfig:  # type: ignore[override]
-        def __init__(self, *_, **__) -> None:
+    class NovelEngineTracingConfig:  # type: ignore[override,no-redef]
+        def __init__(self, *_: Any, **__: Any) -> None:
             pass
 
-    def initialize_tracing(*_, **__) -> None:
+    def initialize_tracing(*_: Any, **__: Any) -> None:
         return None
 
-    def setup_fastapi_tracing(app, *_args, **_kwargs) -> None:
+    def setup_fastapi_tracing(app: Any, *_args: Any, **_kwargs: Any) -> Any:
         return app
 
 

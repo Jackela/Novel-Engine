@@ -376,7 +376,7 @@ class EventRegistry:
 
     def generate_api_documentation(self) -> Dict[str, Any]:
         """Generate API documentation for all event types."""
-        docs = {
+        docs: Dict[str, Any] = {
             "version": "1.0",
             "description": "Novel Engine Event Types Documentation",
             "generated_at": datetime.now().isoformat(),
@@ -384,6 +384,8 @@ class EventRegistry:
         }
 
         for event_type in EventType:
-            docs["events"][event_type.value] = self.get_schema_documentation(event_type)
+            doc = self.get_schema_documentation(event_type)
+            if doc is not None:
+                docs["events"][event_type.value] = doc
 
         return docs

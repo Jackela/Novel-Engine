@@ -33,12 +33,12 @@ class APIEnhancementConfig(BaseModel):
 class Context7EnhancedRoute(APIRoute):
     """Enhanced API route with Context7 integration."""
 
-    def __init__(self, *args, context7_api=None, **kwargs) -> None:
+    def __init__(self, *args: Any, context7_api: Optional[Any] = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.context7_api = context7_api
         self.example_cache: Dict[str, Any] = {}
 
-    async def get_route_examples(self) -> List[Dict[str, Any]]:
+    async def get_route_examples(self) -> list[dict[str, Any]]:
         """Get Context7-powered examples for this route."""
         if not self.context7_api:
             return []
@@ -77,7 +77,7 @@ class Context7EnhancedRoute(APIRoute):
 class APIDocumentationEnhancer:
     """Enhances existing API endpoints with Context7-powered documentation."""
 
-    def __init__(self, context7_api=None) -> None:
+    def __init__(self, context7_api: Optional[Any] = None) -> None:
         self.context7_api = context7_api
         self.enhancement_cache: Dict[str, Any] = {}
 
@@ -184,12 +184,12 @@ class APIDocumentationEnhancer:
 class APIValidationEnhancer:
     """Provides Context7-powered API validation capabilities."""
 
-    def __init__(self, context7_api=None) -> None:
+    def __init__(self, context7_api: Optional[Any] = None) -> None:
         self.context7_api = context7_api
 
     async def validate_api_implementation(
         self, api_code: str, endpoint_path: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate API implementation using Context7 patterns."""
         if not self.context7_api:
             return {"valid": True, "message": "Context7 validation not available"}
@@ -220,15 +220,15 @@ class APIValidationEnhancer:
 
 
 def enhance_api_with_context7(
-    context7_api=None, config: Optional[APIEnhancementConfig] = None
-) -> None:
+    context7_api: Optional[Any] = None, config: Optional[APIEnhancementConfig] = None
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator to enhance API endpoints with Context7 integration."""
     if config is None:
         config = APIEnhancementConfig()
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             # Execute the original function
             result = await func(*args, **kwargs)
 
@@ -259,7 +259,7 @@ class APIIntegrationManager:
     def __init__(
         self,
         app: FastAPI,
-        context7_api=None,
+        context7_api: Optional[Any] = None,
         config: Optional[APIEnhancementConfig] = None,
     ) -> None:
         self.app = app
@@ -305,7 +305,7 @@ class APIIntegrationManager:
         """Add integration-specific endpoints."""
 
         @self.app.get("/api/integration/examples/{endpoint_path:path}")
-        async def get_endpoint_examples(endpoint_path: str):
+        async def get_endpoint_examples(endpoint_path: str) -> dict[str, Any]:
             """Get Context7 examples for a specific endpoint."""
             try:
                 examples = await self.documentation_enhancer._get_endpoint_examples(
@@ -316,7 +316,7 @@ class APIIntegrationManager:
                 return {"success": False, "error": str(e)}
 
         @self.app.post("/api/integration/validate")
-        async def validate_api_code(request: Dict[str, Any]):
+        async def validate_api_code(request: Dict[str, Any]) -> dict[str, Any]:
             """Validate API code using Context7 patterns."""
             api_code = request.get("code", "")
             endpoint_path = request.get("endpoint_path", "/")
@@ -332,7 +332,7 @@ class APIIntegrationManager:
                 return {"success": False, "error": str(e)}
 
         @self.app.get("/api/integration/status")
-        async def get_integration_status():
+        async def get_integration_status() -> dict[str, Any]:
             """Get integration status and capabilities."""
             return {
                 "context7_available": self.context7_api is not None,
@@ -349,10 +349,10 @@ class APIIntegrationManager:
             }
 
 
-def create_context7_middleware() -> None:
+def create_context7_middleware() -> Callable[..., Any]:
     """Create middleware for Context7 integration."""
 
-    async def context7_middleware(request: Request, call_next):
+    async def context7_middleware(request: Request, call_next: Any) -> Any:
         """Middleware to add Context7 enhancements to responses."""
         start_time = datetime.now()
 
@@ -378,7 +378,7 @@ class APISchemaEnhancer:
     def __init__(self, context7_api=None) -> None:
         self.context7_api = context7_api
 
-    def enhance_openapi_schema(self, app: FastAPI) -> Dict[str, Any]:
+    def enhance_openapi_schema(self, app: FastAPI) -> dict[str, Any]:
         """Enhance OpenAPI schema with Context7 features."""
         schema = app.openapi()
 
@@ -410,7 +410,7 @@ class APISchemaEnhancer:
 
 
 async def get_context7_enhanced_response(
-    original_response: Any, endpoint_path: str, context7_api=None
+    original_response: Any, endpoint_path: str, context7_api: Optional[Any] = None
 ) -> Any:
     """Enhance response with Context7 features."""
     if not context7_api:
@@ -427,7 +427,7 @@ async def get_context7_enhanced_response(
     return original_response
 
 
-def get_framework_recommendations(endpoint_path: str, method: str) -> List[str]:
+def get_framework_recommendations(endpoint_path: str, method: str) -> list[str]:
     """Get framework-specific recommendations for an endpoint."""
     recommendations: list[Any] = []
     # Analyze endpoint characteristics

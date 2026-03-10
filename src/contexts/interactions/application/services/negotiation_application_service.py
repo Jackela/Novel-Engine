@@ -194,10 +194,8 @@ class NegotiationApplicationService:
         valid_thresholds = ["low", "medium", "high", "critical"]
         if severity_threshold not in valid_thresholds:
             return Err(
-                ValidationError(
+                ConflictError(
                     message=f"Invalid severity threshold: {severity_threshold}",
-                    field="severity_threshold",
-                    field_value=severity_threshold,
                     recoverable=True,
                 )
             )

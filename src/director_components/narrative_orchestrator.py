@@ -83,7 +83,7 @@ class NarrativeOrchestrator:
         self._context_window_size = 10  # Recent events to consider
 
         # Story tracking
-        self._story_statistics = {
+        self._story_statistics: Dict[str, Any] = {
             "total_events": 0,
             "events_by_type": {},
             "active_characters": set(),
@@ -100,8 +100,10 @@ class NarrativeOrchestrator:
             self._story_state = self._create_default_story_state()
 
             # Setup event type counters
+            events_by_type: Dict[str, int] = {}
             for event_type in EventType:
-                self._story_statistics["events_by_type"][event_type.value] = 0
+                events_by_type[event_type.value] = 0
+            self._story_statistics["events_by_type"] = events_by_type
 
             self.logger.info("Narrative orchestrator initialized successfully")
             return True
@@ -403,8 +405,10 @@ class NarrativeOrchestrator:
         await self._update_narrative_threads(event)
 
         # Update story statistics
-        self._story_statistics["total_events"] += 1
-        self._story_statistics["active_characters"].update(event.participants)
+        self._story_statistics["total_events"] = self._story_statistics.get("total_events", 0) + 1
+        active_chars: set = self._story_statistics.get("active_characters", set())
+        active_chars.update(event.participants)
+        self._story_statistics["active_characters"] = active_chars
 
     async def _update_character_context(
         self, character_id: str, event: NarrativeEvent
@@ -468,8 +472,12 @@ class NarrativeOrchestrator:
 
     def _update_event_statistics(self, event: NarrativeEvent) -> None:
         """Update event statistics."""
-        self._story_statistics["events_by_type"][event.event_type.value] += 1
-        self._story_statistics["active_characters"].update(event.participants)
+        events_by_type: Dict[str, int] = self._story_statistics.get("events_by_type", {})
+        events_by_type[event.event_type.value] = events_by_type.get(event.event_type.value, 0) + 1
+        self._story_statistics["events_by_type"] = events_by_type
+        active_chars: set = self._story_statistics.get("active_characters", set())
+        active_chars.update(event.participants)
+        self._story_statistics["active_characters"] = active_chars
 
     async def _update_story_progression(self) -> None:
         """Update overall story progression metric."""
@@ -633,7 +641,7 @@ class NarrativeOrchestrator:
                 "statistics": {
                     **self._story_statistics,
                     "active_characters": list(
-                        self._story_statistics["active_characters"]
+                        self._story_statistics.get("active_characters", set())
                     ),
                 },
                 "export_metadata": {

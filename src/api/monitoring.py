@@ -299,8 +299,8 @@ class MetricsCollector:
         k = (len(sorted_values) - 1) * percentile / 100
         f = int(k)
         c = k - f
-        if f == len(sorted_values) - 1:
-            return sorted_values[f]
+        if f >= len(sorted_values) - 1:
+            return sorted_values[-1] if sorted_values else 0.0
         return sorted_values[f] * (1 - c) + sorted_values[f + 1] * c
 
 
@@ -439,10 +439,12 @@ class AlertManager:
             return sum(r.duration_ms for r in recent_requests) / len(recent_requests)
 
         elif rule.metric_name in summary.get("gauges", {}):
-            return summary["gauges"][rule.metric_name]
+            gauge_value: float = float(summary["gauges"][rule.metric_name])
+            return gauge_value
 
         elif rule.metric_name in summary.get("counters", {}):
-            return summary["counters"][rule.metric_name]
+            counter_value: float = float(summary["counters"][rule.metric_name])
+            return counter_value
 
         return 0.0
 
@@ -467,11 +469,11 @@ class AlertManager:
 class MonitoringMiddleware(BaseHTTPMiddleware):
     """Middleware for request monitoring and metrics collection."""
 
-    def __init__(self, app, metrics_collector: MetricsCollector) -> None:
+    def __init__(self, app: Any, metrics_collector: MetricsCollector) -> None:
         super().__init__(app)
         self.metrics_collector = metrics_collector
 
-    async def dispatch(self, request: Request, call_next) -> None:
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         """Process request with monitoring."""
         # Generate request ID
         request_id = str(uuid.uuid4())
@@ -532,7 +534,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             raise
 
 
-def setup_monitoring(app, enable_alerts: bool = True) -> None:
+def setup_monitoring(app: Any, enable_alerts: bool = True) -> Dict[str, Any]:
     """Setup monitoring middleware and endpoints."""
 
     # Create metrics collector and alert manager
@@ -544,7 +546,7 @@ def setup_monitoring(app, enable_alerts: bool = True) -> None:
 
     # Add metrics endpoint
     @app.get("/api/metrics", tags=["Monitoring"])
-    async def get_metrics():
+    async def get_metrics() -> Dict[str, Any]:
         """Get system metrics and statistics."""
         summary = metrics_collector.get_metrics_summary()
 
@@ -561,7 +563,7 @@ def setup_monitoring(app, enable_alerts: bool = True) -> None:
 
     # Add performance endpoint
     @app.get("/api/metrics/performance", tags=["Monitoring"])
-    async def get_performance_metrics():
+    async def get_performance_metrics() -> Dict[str, Any]:
         """Get detailed performance metrics."""
         summary = metrics_collector.get_metrics_summary()
 
@@ -576,6 +578,7 @@ def setup_monitoring(app, enable_alerts: bool = True) -> None:
     logger.info("Monitoring system initialized")
 
     return {"metrics_collector": metrics_collector, "alert_manager": alert_manager}
+    # End of setup_monitoring
 
 
 __all__ = [

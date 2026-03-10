@@ -7,8 +7,8 @@ updating entity states, world conditions, and maintaining event consistency.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
-from uuid import uuid4
+from typing import Any, Dict, List, Optional, Set
+from uuid import UUID, uuid4
 
 from ...domain.value_objects import PhaseType
 from .base_phase import BasePhaseImplementation, PhaseExecutionContext, PhaseResult
@@ -180,7 +180,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
             List of interaction results to process
         """
         # Get interaction results from previous phase metadata
-        interaction_results: list[Any] = []
+        interaction_results: List[Dict[str, Any]] = []
         # Check execution metadata for interaction results
         previous_results = context.execution_metadata.get("previous_phase_results", {})
         interaction_phase_results = previous_results.get(
@@ -227,7 +227,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         Returns:
             List of world events generated from this interaction
         """
-        events: list[Any] = []
+        events: List[Dict[str, Any]] = []
         participants = interaction_result.get("participants", [])
         interaction_type = interaction_result.get("interaction_type")
         resolution = interaction_result.get("resolution", {})
@@ -274,7 +274,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         resolution: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Process agent-to-agent interaction results into world events."""
-        events: list[Any] = []
+        events: List[Dict[str, Any]] = []
         outcome = resolution.get("outcome")
 
         if outcome == "agreement":
@@ -347,7 +347,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         resolution: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Process agent-environment interaction results into world events."""
-        events: list[Any] = []
+        events: List[Dict[str, Any]] = []
         target = resolution.get("target")
         actions_executed = resolution.get("actions_executed", 0)
 
@@ -375,7 +375,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         resolution: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Process agent-NPC interaction results into world events."""
-        events: list[Any] = []
+        events: List[Dict[str, Any]] = []
         npc = resolution.get("npc")
         interactions_completed = resolution.get("interactions_completed", 0)
 
@@ -404,7 +404,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         resolution: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """Process multi-agent collaboration results into world events."""
-        events: list[Any] = []
+        events: List[Dict[str, Any]] = []
         task = resolution.get("task")
         collaboration_outcome = resolution.get("collaboration_outcome", {})
 
@@ -458,7 +458,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         updates_applied = 0
 
         # Group events by impact type for efficient processing
-        event_groups: dict[Any, Any] = {}
+        event_groups: Dict[str, List[Dict[str, Any]]] = {}
         for event in world_events:
             impact_type = event.get("world_impact", "minor_change")
             if impact_type not in event_groups:
@@ -639,7 +639,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         events_processed: int,
         world_updates_applied: int,
         entity_changes: int,
-    ) -> List:
+    ) -> List[UUID]:
         """
         Generate events for integration phase results.
 
@@ -652,7 +652,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         Returns:
             List of generated event IDs
         """
-        events_generated: list[Any] = []
+        events_generated: List[UUID] = []
         # Generate event integration summary event
         summary_event_id = self._record_event_generation(
             context,
@@ -684,7 +684,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         Returns:
             Dictionary of state changes to apply
         """
-        changes: dict[Any, Any] = {}
+        changes: Dict[str, Any] = {}
         # Analyze events to determine state changes
         for event in entity_events:
             event_type = event.get("event_type")
@@ -738,7 +738,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
 
         # Check for reasonable temporal ordering
         timestamps = [
-            event.get("timestamp") for event in events if event.get("timestamp")
+            str(event.get("timestamp")) for event in events if event.get("timestamp")
         ]
         if len(timestamps) > 1:
             try:
@@ -763,7 +763,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
         violations = 0
 
         # Check for contradictory events
-        event_types = [event.get("event_type") for event in events]
+        event_types: List[Optional[str]] = [event.get("event_type") for event in events]
 
         # Example: Can't have both agreement and conflict resolution for same participants
         if "agent_agreement" in event_types and "conflict_resolution" in event_types:
@@ -790,6 +790,7 @@ class EventIntegrationPhase(BasePhaseImplementation):
     def _check_participant_consistency(
         self, events: List[Dict[str, Any]], valid_participants: List[str]
     ) -> int:
+        """Check participant consistency in events."""
         """Check participant consistency in events."""
         violations = 0
 
