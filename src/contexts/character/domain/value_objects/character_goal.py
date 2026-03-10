@@ -85,35 +85,7 @@ class CharacterGoal:
         if not self.description.strip():
             raise ValueError("description cannot be empty")
 
-        # Validate status
-        if not isinstance(self.status, GoalStatus):
-            if isinstance(self.status, str):
-                try:
-                    object.__setattr__(self, "status", GoalStatus(self.status))
-                except ValueError:
-                    raise ValueError(
-                        f"Invalid status: {self.status}. "
-                        f"Must be one of: {[s.value for s in GoalStatus]}"
-                    )
-            else:
-                raise TypeError(
-                    f"status must be a GoalStatus, got {type(self.status).__name__}"
-                )
-
-        # Validate urgency
-        if not isinstance(self.urgency, GoalUrgency):
-            if isinstance(self.urgency, str):
-                try:
-                    object.__setattr__(self, "urgency", GoalUrgency(self.urgency))
-                except ValueError:
-                    raise ValueError(
-                        f"Invalid urgency: {self.urgency}. "
-                        f"Must be one of: {[u.value for u in GoalUrgency]}"
-                    )
-            else:
-                raise TypeError(
-                    f"urgency must be a GoalUrgency, got {type(self.urgency).__name__}"
-                )
+        # Note: status and urgency are already typed as enums and validated by dataclass
 
         # Validate timestamps
         if not isinstance(self.created_at, datetime):

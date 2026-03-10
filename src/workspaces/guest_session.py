@@ -172,9 +172,9 @@ class GuestSessionManager:
             "iat": int(now.timestamp()),
             "exp": int((now + timedelta(seconds=_ttl_seconds())).timestamp()),
         }
-        token = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
+        raw_token = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
         # Handle both bytes and str return types from jwt.encode (version dependent)
-        token_str: str = token.decode("utf-8") if isinstance(token, bytes) else token
+        token_str: str = raw_token.decode("utf-8") if isinstance(raw_token, bytes) else raw_token  # type: ignore[union-attr]
         return _assert_safe_cookie_value(token_str)
 
     def resolve_or_create(self, token: Optional[str]) -> GuestSessionResult:

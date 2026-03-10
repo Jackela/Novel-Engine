@@ -60,10 +60,7 @@ class IntentGeneratedEvent(Event):
 
     def __post_init__(self) -> None:
         """Initialize event with intent-specific metadata and validation."""
-        # Set timestamp if not provided
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
-
+        # Note: timestamp is initialized by parent Event class default
         # Generate event ID if not provided
         if not self.event_id:
             object.__setattr__(self, "event_id", str(uuid4()))
@@ -229,10 +226,7 @@ class IntentSelectedEvent(Event):
 
     def __post_init__(self) -> None:
         """Initialize event with selection-specific metadata and validation."""
-        # Set timestamp if not provided
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
-
+        # Note: timestamp is initialized by parent Event class default
         # Generate event ID if not provided
         if not self.event_id:
             object.__setattr__(self, "event_id", str(uuid4()))

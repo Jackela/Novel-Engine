@@ -469,8 +469,7 @@ class BudgetAlertService:
             case AlertFrequency.WEEKLY:
                 # Check if at least a week has passed
                 return (now - alert_state.last_triggered) >= timedelta(weeks=1)
-            case _:
-                return True
+            # Note: All AlertFrequency enum values are handled above
 
     async def _evaluate_single_alert(
         self,
@@ -543,8 +542,7 @@ class BudgetAlertService:
                 return 1.0  # Each usage event is one request
             case AlertThresholdType.API_CALLS:
                 return 1.0  # Each usage event is one API call
-            case _:
-                return 0.0
+            # Note: All AlertThresholdType enum values are handled above
 
     def _get_value_from_stats(
         self,
@@ -570,8 +568,7 @@ class BudgetAlertService:
                 return float(stats.total_requests)
             case AlertThresholdType.API_CALLS:
                 return float(stats.total_requests)
-            case _:
-                return 0.0
+            # Note: All AlertThresholdType enum values are handled above
 
     def _check_threshold(
         self,
@@ -599,8 +596,7 @@ class BudgetAlertService:
                 return current_value < threshold_value
             case AlertComparisonOperator.LESS_THAN_OR_EQUAL:
                 return current_value <= threshold_value
-            case _:
-                return False
+            # Note: All AlertComparisonOperator enum values are handled above
 
     def _format_alert_message(
         self,

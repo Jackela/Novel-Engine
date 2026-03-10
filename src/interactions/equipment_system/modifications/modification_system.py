@@ -199,9 +199,10 @@ class ModificationSystem:
                 continue
 
             # Check category compatibility
-            if equipment_category in template.get("compatible_categories", []):
+            compatible_categories: list[str] = template.get("compatible_categories", [])
+            if equipment_category in compatible_categories:
                 # Check for conflicts
-                conflicts = template.get("conflicts_with", [])
+                conflicts: list[str] = template.get("conflicts_with", [])
                 has_conflict = any(
                     any(
                         mod.modification_id == conflict
@@ -229,7 +230,7 @@ class ModificationSystem:
 
         # Check category compatibility
         equipment_category = self._get_equipment_category(equipment)
-        compatible_categories = mod_template.get("compatible_categories", [])
+        compatible_categories: list[str] = mod_template.get("compatible_categories", [])
 
         if equipment_category not in compatible_categories:
             return {
@@ -238,7 +239,7 @@ class ModificationSystem:
             }
 
         # Check for conflicts with existing modifications
-        conflicts = mod_template.get("conflicts_with", [])
+        conflicts: list[str] = mod_template.get("conflicts_with", [])
         for existing_mod in equipment.modifications:
             if existing_mod.modification_name in conflicts:
                 return {
@@ -278,7 +279,7 @@ class ModificationSystem:
 
         # Apply template effects if available
         template = self._modification_templates.get(modification.modification_name, {})
-        template_impacts = template.get("performance_impact", {})
+        template_impacts: dict[str, float] = template.get("performance_impact", {})
 
         for metric, impact in template_impacts.items():
             current_value = equipment.performance_metrics.get(metric, 1.0)
@@ -287,11 +288,13 @@ class ModificationSystem:
     def _get_equipment_category(self, equipment: DynamicEquipment) -> str:
         """Get equipment category for compatibility checking."""
         # Try to get category from equipment
-        if hasattr(equipment.base_equipment, "category"):
-            return equipment.base_equipment.category
+        base_equip: Any = equipment.base_equipment
+        if hasattr(base_equip, "category"):
+            category: str = base_equip.category
+            return category
 
         # Fallback based on name
-        name_lower = getattr(equipment.base_equipment, "name", "").lower()
+        name_lower = str(getattr(base_equip, "name", "")).lower()
 
         if any(word in name_lower for word in ["weapon", "gun", "rifle"]):
             return "weapon"

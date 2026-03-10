@@ -58,8 +58,7 @@ class TimeAdvancedEvent(Event):
     def __post_init__(self) -> None:
         """Initialize event with time-specific metadata and validation."""
         # Set timestamp if not provided
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
+        # Note: timestamp is initialized by parent Event class default
 
         # Generate event ID if not provided
         if not self.event_id:

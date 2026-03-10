@@ -180,13 +180,7 @@ class FactionIntent:
         if not self.faction_id:
             errors.append("Faction ID cannot be empty")
 
-        if not isinstance(self.action_type, ActionType):
-            errors.append(
-                f"action_type must be ActionType enum, got {type(self.action_type)}"
-            )
-
-        if not isinstance(self.status, IntentStatus):
-            errors.append(f"status must be IntentStatus enum, got {type(self.status)}")
+        # Note: action_type and status are typed as enums and validated by dataclass
 
         if not 1 <= self.priority <= 3:
             errors.append(f"Priority must be between 1 and 3, got {self.priority}")

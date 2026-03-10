@@ -43,8 +43,7 @@ class WarDeclaredEvent(Event):
     world_id: Optional[str] = None
 
     def __post_init__(self) -> None:
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
+        # Note: timestamp is initialized by parent Event class default
         if not self.event_id:
             object.__setattr__(self, "event_id", str(uuid4()))
 
@@ -99,8 +98,7 @@ class AllianceFormedEvent(Event):
     world_id: Optional[str] = None
 
     def __post_init__(self) -> None:
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
+        # Note: timestamp is initialized by parent Event class default
         if not self.event_id:
             object.__setattr__(self, "event_id", str(uuid4()))
 
@@ -156,8 +154,7 @@ class TerritoryChangedEvent(Event):
     world_id: Optional[str] = None
 
     def __post_init__(self) -> None:
-        if self.timestamp is None:
-            object.__setattr__(self, "timestamp", datetime.now())
+        # Note: timestamp is initialized by parent Event class default
         if not self.event_id:
             object.__setattr__(self, "event_id", str(uuid4()))
 

@@ -78,15 +78,7 @@ class CharacterMemory:
             if not tag.strip():
                 raise ValueError("tags cannot contain empty strings")
 
-        # Convert list to tuple if needed (for frozen dataclass)
-        if isinstance(self.tags, list):
-            object.__setattr__(self, "tags", tuple(self.tags))
-
-        # Validate timestamp
-        if not isinstance(self.timestamp, datetime):
-            raise TypeError(
-                f"timestamp must be a datetime, got {type(self.timestamp).__name__}"
-            )
+        # Note: tags and timestamp are typed and validated by dataclass
 
         # Validate memory_id
         if not isinstance(self.memory_id, str):

@@ -65,7 +65,5 @@ class NarrativePlanningEngine:
                 **base_payload,
             )
 
-        return NarrativeGuidance(
-            primary_narrative_goal="Maintain narrative continuity",
-            **base_payload,
-        )
+        # All enum cases are handled above; this is a fallback for type safety
+        raise ValueError(f"Unknown story arc phase: {state.current_phase}")
