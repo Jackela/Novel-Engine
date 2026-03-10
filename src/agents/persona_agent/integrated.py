@@ -119,7 +119,9 @@ class PersonaAgent:
 
         # Initialize decision engine with loaded character data (enhanced if context available)
         if CONTEXT_LOADER_AVAILABLE and self.context_loader:
-            self.decision_engine: Union[DecisionEngine, EnhancedDecisionEngine] = EnhancedDecisionEngine(self.core)
+            self.decision_engine: Union[DecisionEngine, EnhancedDecisionEngine] = (
+                EnhancedDecisionEngine(self.core)
+            )
             logger.info("enhanced_decision_engine_initialized")
         else:
             self.decision_engine = DecisionEngine(self.core)
@@ -546,7 +548,9 @@ class PersonaAgent:
         # Add component-specific information
         base_info.update(
             {
-                "decision_metrics": getattr(self.decision_engine, 'get_decision_metrics', lambda: {})(),
+                "decision_metrics": getattr(
+                    self.decision_engine, "get_decision_metrics", lambda: {}
+                )(),
                 "memory_metrics": self.memory_interface.get_memory_metrics(),
                 "character_summary": self.character_interpreter.get_character_summary(),
                 "component_architecture": "integrated_modular",

@@ -14,12 +14,12 @@ The monitoring infrastructure integrates with the existing PerformanceTracker
 domain service to provide enterprise-grade observability capabilities.
 """
 
+from typing import Any
+
 import structlog
 
 from .metrics_middleware import PrometheusMiddleware
 from .prometheus_collector import PrometheusMetricsCollector
-
-from typing import Any
 
 try:
     from .tracing import NovelEngineTracingConfig, initialize_tracing

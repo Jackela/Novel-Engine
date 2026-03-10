@@ -301,13 +301,13 @@ class DecisionEngine:
         self, situation: Dict[str, Any]
     ) -> SituationAssessment:
         """Build a SituationAssessment from legacy dict-shaped input."""
-        threat_value = situation.get("threat_level")
+        threat_value: Any = situation.get("threat_level")
         threat_level = ThreatLevel.NEGLIGIBLE
         if isinstance(threat_value, ThreatLevel):
             threat_level = threat_value
         elif hasattr(threat_value, "value"):
             try:
-                threat_level = ThreatLevel(str(threat_value.value).lower())
+                threat_level = ThreatLevel(str(threat_value.value).lower())  # type: ignore[union-attr]
             except ValueError:
                 threat_level = ThreatLevel.NEGLIGIBLE
         elif isinstance(threat_value, str):
@@ -556,11 +556,13 @@ class DecisionEngine:
         self, world_state: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Assess environmental factors."""
-        return world_state.get("environmental_factors", {})
+        result: Dict[str, Any] = world_state.get("environmental_factors", {}) or {}
+        return result
 
     def _assess_mission_status(self, world_state: Dict[str, Any]) -> Dict[str, Any]:
         """Assess mission status."""
-        return world_state.get("mission_status", {})
+        result: Dict[str, Any] = world_state.get("mission_status", {}) or {}
+        return result
 
     def _get_location_modifiers(self, location: str, action_type: str) -> float:
         """Get location-based action modifiers."""

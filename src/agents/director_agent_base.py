@@ -440,4 +440,3 @@ class DirectorAgentBase:
             )
         except Exception:
             return False
-

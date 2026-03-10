@@ -697,8 +697,12 @@ class PersonaAgent(_PersonaAgentImpl):
     def _interpret_event_description(self, event_payload: Dict[str, Any]) -> str:
         if not isinstance(event_payload, dict):
             return "No event details available."
-        event_type_val: str = _sanitize_text(str(event_payload.get("event_type", "event")))
-        source_val: str = _sanitize_text(str(event_payload.get("source", "unknown source")))
+        event_type_val: str = _sanitize_text(
+            str(event_payload.get("event_type", "event"))
+        )
+        source_val: str = _sanitize_text(
+            str(event_payload.get("source", "unknown source"))
+        )
         description_val: str = _sanitize_text(str(event_payload.get("description", "")))
         return f"{event_type_val.title()} reported by {source_val}: {description_val}".strip()
 

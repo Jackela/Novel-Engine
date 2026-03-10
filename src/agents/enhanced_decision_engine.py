@@ -43,7 +43,9 @@ class EnhancedDecisionEngine(DecisionEngine):
     full backward compatibility with existing agent behavior.
     """
 
-    def __init__(self, agent_core: Union["PersonaAgentCore", "PersonaCore", Any]) -> None:
+    def __init__(
+        self, agent_core: Union["PersonaAgentCore", "PersonaCore", Any]
+    ) -> None:
         """Initialize the enhanced decision engine."""
         super().__init__(agent_core)  # type: ignore[arg-type]
         self.context_modifier_enabled = True
@@ -468,34 +470,26 @@ class EnhancedDecisionEngine(DecisionEngine):
 
             modifiers: Dict[str, Any] = summary.get("modifiers_applied", {})
             if "behavioral_triggers" in character_data:
-                modifiers["behavioral_trigger"] = (
-                    self._get_behavioral_trigger_modifier(
-                        action, situation, character_data["behavioral_triggers"]
-                    )
+                modifiers["behavioral_trigger"] = self._get_behavioral_trigger_modifier(
+                    action, situation, character_data["behavioral_triggers"]
                 )
 
             if (
                 "enhanced_relationships" in character_data
                 and "target_character" in action
             ):
-                modifiers["relationship_context"] = (
-                    self._get_relationship_modifier(
-                        action, character_data["enhanced_relationships"]
-                    )
+                modifiers["relationship_context"] = self._get_relationship_modifier(
+                    action, character_data["enhanced_relationships"]
                 )
 
             if "emotional_drives" in character_data:
-                modifiers["emotional_drive"] = (
-                    self._get_emotional_drive_modifier(
-                        action, character_data["emotional_drives"]
-                    )
+                modifiers["emotional_drive"] = self._get_emotional_drive_modifier(
+                    action, character_data["emotional_drives"]
                 )
 
             if "formative_events" in character_data:
-                modifiers["memory_influence"] = (
-                    self._get_memory_influence_modifier(
-                        action, situation, character_data["formative_events"]
-                    )
+                modifiers["memory_influence"] = self._get_memory_influence_modifier(
+                    action, situation, character_data["formative_events"]
                 )
             summary["modifiers_applied"] = modifiers
 
