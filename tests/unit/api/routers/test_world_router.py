@@ -14,7 +14,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.error_handlers import ServiceUnavailableException, setup_error_handlers
+from src.api.error_handlers import setup_error_handlers
 from src.api.routers.world import (
     _safe_era,
     _safe_genre,

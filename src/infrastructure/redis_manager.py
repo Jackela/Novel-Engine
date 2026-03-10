@@ -445,8 +445,10 @@ class RedisConnectionPool:
 
             # Deserialize all values and decode field names from bytes if needed
             return {
-                field.decode(self.config.encoding) if isinstance(field, bytes) else field:
-                self._deserialize_value(value) for field, value in result.items()
+                field.decode(self.config.encoding)
+                if isinstance(field, bytes)
+                else field: self._deserialize_value(value)
+                for field, value in result.items()
             }
 
         except Exception as e:

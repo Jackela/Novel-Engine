@@ -4,7 +4,7 @@ Tests cover connection management, CRUD operations, and error handling
 for the PostgreSQL-based state store implementation.
 """
 
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 

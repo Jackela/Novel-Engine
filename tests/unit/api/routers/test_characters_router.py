@@ -39,7 +39,9 @@ def app() -> FastAPI:
     mock_manager.cookie_name = "workspace_session"
     mock_manager.decode.return_value = None
     mock_manager.encode.return_value = "encoded_token"
-    mock_manager.resolve_or_create.return_value = MagicMock(workspace_id="test-workspace")
+    mock_manager.resolve_or_create.return_value = MagicMock(
+        workspace_id="test-workspace"
+    )
     mock_manager.cookie_max_age_seconds.return_value = 3600
     app.state.guest_session_manager = mock_manager
 
@@ -59,7 +61,9 @@ def client(app: FastAPI) -> TestClient:
     mock_manager.cookie_name = "workspace_session"
     mock_manager.decode.return_value = None
     mock_manager.encode.return_value = "encoded_token"
-    mock_manager.resolve_or_create.return_value = MagicMock(workspace_id="test-workspace")
+    mock_manager.resolve_or_create.return_value = MagicMock(
+        workspace_id="test-workspace"
+    )
     mock_manager.cookie_max_age_seconds.return_value = 3600
     app.state.guest_session_manager = mock_manager
 
@@ -216,7 +220,9 @@ class TestGetCharacterDetail:
         assert data["name"] == "Test Character"
 
     @patch("src.api.routers.characters.get_characters_directory_path")
-    def test_get_character_from_workspace(self, mock_get_path, app: FastAPI, temp_characters_dir) -> None:
+    def test_get_character_from_workspace(
+        self, mock_get_path, app: FastAPI, temp_characters_dir
+    ) -> None:
         """Test getting character from workspace."""
         mock_get_path.return_value = str(temp_characters_dir)
 
