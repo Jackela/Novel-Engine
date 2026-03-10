@@ -20,6 +20,9 @@ Architecture:
 - Infrastructure Layer: Repository implementations and persistence models
 """
 
+# Infrastructure Layer Exports (conditional import due to platform naming conflict)
+from typing import TYPE_CHECKING
+
 from .application.commands.character_commands import (
     CreateCharacterCommand,
     DamageCharacterCommand,
@@ -47,9 +50,6 @@ from .domain.value_objects.character_profile import (
 )
 from .domain.value_objects.character_stats import CharacterStats
 from .domain.value_objects.skills import Skills
-
-# Infrastructure Layer Exports (conditional import due to platform naming conflict)
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .infrastructure.persistence.character_models import Base as CharacterBase

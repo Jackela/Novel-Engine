@@ -858,7 +858,9 @@ class CharacterApplicationService:
                 error = character_result.error
                 if error is not None:
                     return Err(error)
-                return Err(Error(code="UNKNOWN_ERROR", message="Unknown error occurred"))
+                return Err(
+                    Error(code="UNKNOWN_ERROR", message="Unknown error occurred")
+                )
 
             character = character_result.value
             if character is None:

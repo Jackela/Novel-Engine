@@ -44,7 +44,7 @@ class DialogueManager:
         communication_type: CommunicationType,
         context: Optional[Dict[str, Any]] = None,
         max_exchanges: int = 3,
-    ) -> str:
+    ) -> Optional[str]:
         """
         Initiate a new dialogue between agents.
 
@@ -299,7 +299,7 @@ class DialogueManager:
 
     def _get_dialogue_type_distribution(self) -> Dict[str, int]:
         """Get distribution of dialogue types."""
-        distribution = defaultdict(int)
+        distribution: Dict[str, int] = defaultdict(int)
         for dialogue in self.active_dialogues.values():
             distribution[dialogue.communication_type.value] += 1
         return dict(distribution)

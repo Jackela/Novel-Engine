@@ -15,7 +15,7 @@ The repository implementations bridge the domain and infrastructure layers,
 providing concrete persistence capabilities for domain aggregates.
 """
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .character_repository import SQLAlchemyCharacterRepository

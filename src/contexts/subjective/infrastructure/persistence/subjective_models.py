@@ -23,26 +23,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, relationship
 
-try:
-    from core_platform.persistence.models import BaseModel, FullAuditModel
-except ImportError:
-    # Fallback for when platform models aren't available
-    from sqlalchemy.orm import DeclarativeBase
-
-    class Base(DeclarativeBase):
-        """Base class for all SQLAlchemy models."""
-
-    class BaseModel(Base):
-        __abstract__ = True
-        id = Column(String, primary_key=True)
-        created_at = Column(DateTime, default=datetime.now, nullable=False)
-        updated_at = Column(
-            DateTime, default=datetime.now, onupdate=datetime.now, nullable=False
-        )
-
-    class FullAuditModel(BaseModel):
-        __abstract__ = True
-        version = Column(Integer, default=1, nullable=False)
+from core_platform.persistence.models import BaseModel, FullAuditModel  # type: ignore[no-redef]
 
 
 class TurnBriefORM(FullAuditModel):

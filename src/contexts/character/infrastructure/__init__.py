@@ -16,7 +16,7 @@ layer and provides concrete implementations for data persistence,
 external communications, and other infrastructure concerns.
 """
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .persistence.character_models import (

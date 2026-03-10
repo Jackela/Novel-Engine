@@ -568,10 +568,10 @@ class RedisConnectionPool:
         # Store as hash for efficient partial updates
         pipe = self.redis.pipeline()
         for session_field, value in session_data.items():
-            await pipe.hset(session_key, session_field, self._serialize_value(value))
-        await pipe.expire(session_key, ttl)
+            await pipe.hset(session_key, session_field, self._serialize_value(value))  # type: ignore[misc]
+        await pipe.expire(session_key, ttl)  # type: ignore[misc]
 
-        await pipe.execute()
+        await pipe.execute()  # type: ignore[misc]
         return True
 
     async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:

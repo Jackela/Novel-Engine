@@ -8,7 +8,7 @@ Collects and analyzes comprehensive performance metrics for the multi-agent brid
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 
 from .cost_tracker import CostTracker
 from .performance_budget import PerformanceBudget
@@ -30,13 +30,13 @@ class PerformanceMetrics:
 
     cost_tracker: CostTracker
     performance_budget: PerformanceBudget
-    logger: Optional[logging.Logger] = field(default=None, init=False)
+    logger: logging.Logger = field(init=False)
 
     def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
 
         # Coordination metrics
-        self._coordination_stats = {
+        self._coordination_stats: Dict[str, Union[int, float, Dict[str, int]]] = {
             "total_coordinations": 0,
             "successful_coordinations": 0,
             "coordination_quality_sum": 0.0,
@@ -45,7 +45,7 @@ class PerformanceMetrics:
         }
 
         # Turn performance tracking
-        self._turn_metrics = []
+        self._turn_metrics: List[Dict[str, Any]] = []
 
     def record_coordination_event(
         self,
@@ -56,22 +56,32 @@ class PerformanceMetrics:
     ) -> None:
         """Record a coordination event."""
         try:
-            self._coordination_stats["total_coordinations"] += 1
+            # Cast to specific types for safe operations
+            total: int = cast(int, self._coordination_stats["total_coordinations"])
+            successful: int = cast(int, self._coordination_stats["successful_coordinations"])
+            quality_sum: float = cast(float, self._coordination_stats["coordination_quality_sum"])
+            coord_types: Dict[str, int] = cast(Dict[str, int], self._coordination_stats["coordination_types"])
+            agent_interactions: Dict[str, int] = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
+
+            total += 1
+            self._coordination_stats["total_coordinations"] = total
 
             if success:
-                self._coordination_stats["successful_coordinations"] += 1
-                self._coordination_stats["coordination_quality_sum"] += quality_score
+                successful += 1
+                self._coordination_stats["successful_coordinations"] = successful
+                quality_sum += quality_score
+                self._coordination_stats["coordination_quality_sum"] = quality_sum
 
             # Track by type
-            if coordination_type not in self._coordination_stats["coordination_types"]:
-                self._coordination_stats["coordination_types"][coordination_type] = 0
-            self._coordination_stats["coordination_types"][coordination_type] += 1
+            if coordination_type not in coord_types:
+                coord_types[coordination_type] = 0
+            coord_types[coordination_type] += 1
 
             # Track agent interactions
             for participant in participants:
-                if participant not in self._coordination_stats["agent_interactions"]:
-                    self._coordination_stats["agent_interactions"][participant] = 0
-                self._coordination_stats["agent_interactions"][participant] += 1
+                if participant not in agent_interactions:
+                    agent_interactions[participant] = 0
+                agent_interactions[participant] += 1
 
         except Exception as e:
             self.logger.error(f"Error recording coordination event: {e}")
@@ -85,7 +95,7 @@ class PerformanceMetrics:
             cost_stats = self.cost_tracker.get_cost_efficiency_stats()
             perf_stats = self.performance_budget.get_performance_stats()
 
-            turn_data = {
+            turn_data: Dict[str, Any] = {
                 "turn_number": turn_number,
                 "timestamp": datetime.now().isoformat(),
                 "cost_data": cost_stats,
@@ -124,25 +134,25 @@ class PerformanceMetrics:
     def _get_coordination_metrics(self) -> Dict[str, Any]:
         """Get coordination-specific metrics."""
         try:
-            total = self._coordination_stats["total_coordinations"]
-            successful = self._coordination_stats["successful_coordinations"]
+            total = cast(int, self._coordination_stats["total_coordinations"])
+            successful = cast(int, self._coordination_stats["successful_coordinations"])
+            quality_sum = cast(float, self._coordination_stats["coordination_quality_sum"])
+            agent_interactions = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
+            coord_types = cast(Dict[str, int], self._coordination_stats["coordination_types"])
 
             return {
                 "total_coordinations": total,
                 "successful_coordinations": successful,
                 "success_rate": (successful / max(1, total)) * 100,
                 "avg_quality_score": (
-                    self._coordination_stats["coordination_quality_sum"]
-                    / max(1, successful)
+                    quality_sum / max(1, successful)
                 ),
                 "most_active_agents": sorted(
-                    self._coordination_stats["agent_interactions"].items(),
+                    agent_interactions.items(),
                     key=lambda x: x[1],
                     reverse=True,
                 )[:5],
-                "coordination_types_breakdown": self._coordination_stats[
-                    "coordination_types"
-                ],
+                "coordination_types_breakdown": coord_types,
             }
         except Exception as e:
             self.logger.error(f"Error getting coordination metrics: {e}")
@@ -151,21 +161,19 @@ class PerformanceMetrics:
     def _calculate_coordination_effectiveness(self) -> float:
         """Calculate overall coordination effectiveness score."""
         try:
-            if not self._coordination_stats["total_coordinations"]:
+            total = cast(int, self._coordination_stats["total_coordinations"])
+            successful = cast(int, self._coordination_stats["successful_coordinations"])
+            quality_sum = cast(float, self._coordination_stats["coordination_quality_sum"])
+
+            if not total:
                 return 0.0
 
             # Base score from success rate
-            success_rate = (
-                self._coordination_stats["successful_coordinations"]
-                / self._coordination_stats["total_coordinations"]
-            )
+            success_rate = successful / total
 
             # Quality factor
-            if self._coordination_stats["successful_coordinations"] > 0:
-                avg_quality = (
-                    self._coordination_stats["coordination_quality_sum"]
-                    / self._coordination_stats["successful_coordinations"]
-                )
+            if successful > 0:
+                avg_quality = quality_sum / successful
             else:
                 avg_quality = 0.0
 
@@ -314,7 +322,7 @@ class PerformanceMetrics:
     def get_agent_interaction_analysis(self) -> Dict[str, Any]:
         """Analyze agent interaction patterns."""
         try:
-            interactions = self._coordination_stats["agent_interactions"]
+            interactions = cast(Dict[str, int], self._coordination_stats["agent_interactions"])
 
             if not interactions:
                 return {"status": "no_data"}

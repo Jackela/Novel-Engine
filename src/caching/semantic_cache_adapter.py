@@ -92,7 +92,8 @@ class SemanticCacheBucketed:
         """
         now = time.time()
         entries = self._buckets.get(bucket) or []
-        best: Tuple[float, Optional[_BucketEntry]] = (0.0, None)
+        best_score = 0.0
+        best_entry: Optional[_BucketEntry] = None
         for entry in entries:
             if self.ttl_seconds and (now - entry.created_ts) > self.ttl_seconds:
                 continue
@@ -103,14 +104,14 @@ class SemanticCacheBucketed:
                 entry.prompt, prompt, keyword_overlap_min, length_delta_pct
             ):
                 continue
-            if similarity > best[0]:
-                best = (similarity, entry)
+            if similarity > best_score:
+                best_score = similarity
+                best_entry = entry
                 if similarity >= high_threshold:
                     break
-        entry = best[1]
-        if not entry:
+        if not best_entry:
             return None, 0.0
-        return entry.value, best[0]
+        return best_entry.value, best_score
 
     def invalidate(self, tags: Sequence[str]) -> int:
         """Invalidate entries matching all tags.

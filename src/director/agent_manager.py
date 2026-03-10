@@ -27,8 +27,8 @@ class AgentLifecycleManager:
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         """Initialize agent lifecycle manager."""
         self.logger = logger or structlog.get_logger(__name__)
-        self.agents = {}  # agent_id -> agent instance
-        self.agent_metadata = {}  # agent_id -> metadata
+        self.agents: Dict[str, Any] = {}  # agent_id -> agent instance
+        self.agent_metadata: Dict[str, Dict[str, Any]] = {}  # agent_id -> metadata
         self._initialized = False
 
     async def initialize(self) -> bool:

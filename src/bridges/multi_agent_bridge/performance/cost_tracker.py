@@ -33,7 +33,7 @@ class CostTracker:
     tokens_by_type: Dict[str, int] = field(default_factory=dict)
     request_counts: Dict[str, int] = field(default_factory=dict)
     cost_history: List[Dict[str, Any]] = field(default_factory=list)
-    logger: Optional[logging.Logger] = field(default=None, init=False)
+    logger: logging.Logger = field(init=False)
 
     def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -120,7 +120,10 @@ class CostTracker:
     def get_cost_efficiency_stats(self) -> Dict[str, Any]:
         """Get cost efficiency statistics."""
         try:
-            stats = {
+            cost_per_token_by_type: Dict[str, float] = {}
+            avg_cost_per_request_by_type: Dict[str, float] = {}
+
+            stats: Dict[str, Any] = {
                 "total_cost": self.total_cost,
                 "current_turn_cost": self.current_turn_cost,
                 "remaining_turn_budget": self.get_remaining_turn_budget(),
@@ -128,8 +131,8 @@ class CostTracker:
                 "costs_by_type": self.costs_by_type.copy(),
                 "tokens_by_type": self.tokens_by_type.copy(),
                 "request_counts": self.request_counts.copy(),
-                "cost_per_token_by_type": {},
-                "avg_cost_per_request_by_type": {},
+                "cost_per_token_by_type": cost_per_token_by_type,
+                "avg_cost_per_request_by_type": avg_cost_per_request_by_type,
             }
 
             # Calculate efficiency metrics
@@ -139,10 +142,10 @@ class CostTracker:
                 count = self.request_counts.get(request_type, 0)
 
                 if tokens > 0:
-                    stats["cost_per_token_by_type"][request_type] = cost / tokens
+                    cost_per_token_by_type[request_type] = cost / tokens
 
                 if count > 0:
-                    stats["avg_cost_per_request_by_type"][request_type] = cost / count
+                    avg_cost_per_request_by_type[request_type] = cost / count
 
             return stats
 
@@ -153,7 +156,7 @@ class CostTracker:
     def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
         """Get cost optimization recommendations."""
         try:
-            recommendations: list[Any] = []
+            recommendations: List[Dict[str, Any]] = []
             # Check high-cost request types
             total_requests = sum(self.request_counts.values())
             if total_requests > 0:

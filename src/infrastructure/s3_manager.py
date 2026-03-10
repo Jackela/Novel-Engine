@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 import aioboto3
 import aiofiles
@@ -218,6 +218,7 @@ class S3StorageManager:
 
     async def _ensure_bucket_exists(self) -> None:
         """Ensure S3 bucket exists and configure it."""
+        assert self.s3_client is not None, "S3 client not initialized"
         try:
             # Check if bucket exists
             await self.s3_client.head_bucket(Bucket=self.config.bucket_name)
@@ -249,6 +250,7 @@ class S3StorageManager:
 
     async def _configure_bucket(self) -> None:
         """Configure bucket settings."""
+        assert self.s3_client is not None, "S3 client not initialized"
         try:
             # Enable versioning if requested
             if self.config.enable_versioning:
@@ -314,7 +316,7 @@ class S3StorageManager:
                     datetime.now() - cached_time
                 ).total_seconds() < self.config.cache_ttl:
                     async with aiofiles.open(cache_file, "rb") as f:
-                        content = await f.read()
+                        content: bytes = await f.read()
 
                     self._metrics["cache_hits"] += 1
                     return content
@@ -369,11 +371,13 @@ class S3StorageManager:
         content_type: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
         storage_class: Optional[S3StorageClass] = None,
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[Callable[[Any], None]] = None,
     ) -> S3ObjectInfo:
         """Upload file to S3 with progress tracking."""
         if not self._initialized:
             await self.initialize()
+
+        assert self.s3_client is not None, "S3 client not initialized"
 
         local_path = Path(local_path)
         if not local_path.exists():
@@ -387,7 +391,7 @@ class S3StorageManager:
                 content_type = self._detect_content_type(local_path)
 
             # Prepare upload parameters
-            extra_args = {
+            extra_args: Dict[str, Any] = {
                 "ContentType": content_type,
                 "StorageClass": (
                     storage_class or self.config.default_storage_class
@@ -484,11 +488,13 @@ class S3StorageManager:
         if not self._initialized:
             await self.initialize()
 
+        assert self.s3_client is not None, "S3 client not initialized"
+
         start_time = datetime.now()
 
         try:
             # Prepare upload parameters
-            extra_args = {
+            extra_args: Dict[str, Any] = {
                 "ContentType": content_type or S3ContentType.BINARY.value,
                 "StorageClass": (
                     storage_class or self.config.default_storage_class
@@ -536,11 +542,13 @@ class S3StorageManager:
         self,
         s3_key: str,
         local_path: Union[str, Path],
-        progress_callback: Optional[callable] = None,
+        progress_callback: Optional[Callable[[Any], None]] = None,
     ) -> bool:
         """Download file from S3 with progress tracking."""
         if not self._initialized:
             await self.initialize()
+
+        assert self.s3_client is not None, "S3 client not initialized"
 
         local_path = Path(local_path)
         local_path.parent.mkdir(parents=True, exist_ok=True)
@@ -605,6 +613,8 @@ class S3StorageManager:
         if not self._initialized:
             await self.initialize()
 
+        assert self.s3_client is not None, "S3 client not initialized"
+
         # Check cache first
         if use_cache:
             cached_content = await self._get_from_cache(s3_key)
@@ -619,7 +629,7 @@ class S3StorageManager:
                 Bucket=self.config.bucket_name, Key=s3_key
             )
 
-            content = await response["Body"].read()
+            content: bytes = await response["Body"].read()
 
             # Cache the content
             if use_cache:
@@ -647,6 +657,8 @@ class S3StorageManager:
         """Delete object from S3."""
         if not self._initialized:
             await self.initialize()
+
+        assert self.s3_client is not None, "S3 client not initialized"
 
         try:
             delete_args = {"Bucket": self.config.bucket_name, "Key": s3_key}
@@ -681,6 +693,8 @@ class S3StorageManager:
         """List objects with pagination."""
         if not self._initialized:
             await self.initialize()
+
+        assert self.s3_client is not None, "S3 client not initialized"
 
         try:
             list_args = {"Bucket": self.config.bucket_name, "MaxKeys": max_keys}
@@ -723,6 +737,8 @@ class S3StorageManager:
         if not self._initialized:
             await self.initialize()
 
+        assert self.s3_client is not None, "S3 client not initialized"
+
         try:
             await self.s3_client.head_object(Bucket=self.config.bucket_name, Key=s3_key)
             return True
@@ -734,6 +750,8 @@ class S3StorageManager:
         """Get object metadata."""
         if not self._initialized:
             await self.initialize()
+
+        assert self.s3_client is not None, "S3 client not initialized"
 
         try:
             response = await self.s3_client.head_object(
@@ -863,6 +881,7 @@ class S3StorageManager:
 
     async def health_check(self) -> Dict[str, Any]:
         """Perform S3 health check."""
+        assert self.s3_client is not None, "S3 client not initialized"
         try:
             # Test bucket access
             await self.s3_client.head_bucket(Bucket=self.config.bucket_name)

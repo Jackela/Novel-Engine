@@ -15,7 +15,7 @@ The persistence layer bridges the domain model and the database,
 providing object-relational mapping and data access capabilities.
 """
 
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .character_models import (

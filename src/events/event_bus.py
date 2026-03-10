@@ -18,7 +18,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
+
+if TYPE_CHECKING:
+    from .outbox import Outbox
 from uuid import uuid4
 
 import structlog
@@ -30,7 +33,7 @@ try:
     AIOREDIS_AVAILABLE = True
 except ImportError:
     AIOREDIS_AVAILABLE = False
-    aioredis = None
+    aioredis = None  # type: ignore[assignment]
 
 logger = structlog.get_logger(__name__)
 
@@ -223,18 +226,19 @@ class CircuitBreaker:
         self.failure_threshold = failure_threshold
         self.timeout = timeout
         self.failure_count = 0
-        self.last_failure_time = None
+        self.last_failure_time: Optional[float] = None
         self.state = "closed"  # closed, open, half_open
 
-    async def call(self, func: Callable, *args, **kwargs) -> None:
+    async def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """Execute function with circuit breaker protection."""
         if self.state == "open":
-            if (
-                self.last_failure_time
-                and time.time() - self.last_failure_time > self.timeout
-            ):
-                self.state = "half_open"
-                logger.info("Circuit breaker moving to half-open state")
+            if self.last_failure_time is not None:
+                elapsed = time.time() - self.last_failure_time
+                if elapsed > self.timeout:
+                    self.state = "half_open"
+                    logger.info("Circuit breaker moving to half-open state")
+                else:
+                    raise Exception("Circuit breaker is open")
             else:
                 raise Exception("Circuit breaker is open")
 
@@ -266,8 +270,8 @@ class EventMetrics:
         self.events_processed = 0
         self.events_failed = 0
         self.events_dead_letter = 0
-        self.processing_times = []
-        self.handler_metrics = {}
+        self.processing_times: List[float] = []
+        self.handler_metrics: Dict[str, Dict[str, Any]] = {}
         self.start_time = time.time()
 
     def record_event_published(self) -> None:
@@ -355,7 +359,7 @@ class EventBus:
             # Initialize Redis connection if enabled
             if self.config.redis_url:
                 self.redis = aioredis.from_url(self.config.redis_url)
-                await self.redis.ping()
+                await self.redis.ping()  # type: ignore[misc]
                 logger.info("Redis connection established for event bus")
 
             # Start background tasks
@@ -435,7 +439,7 @@ class EventBus:
 
     async def publish_batch(self, events: List[Event]) -> List[str]:
         """Publish multiple events as a batch."""
-        event_ids: list[Any] = []
+        event_ids: List[str] = []
         for event in events:
             event_id = await self.publish(event)
             event_ids.append(event_id)
@@ -459,7 +463,10 @@ class EventBus:
             for handler in handlers:
                 try:
                     if self.circuit_breaker and self.config.circuit_breaker_enabled:
-                        success = await self.circuit_breaker.call(handler.handle, event)
+                        cb_result = await self.circuit_breaker.call(
+                            handler.handle, event
+                        )
+                        success = bool(cb_result)
                     else:
                         success = await asyncio.wait_for(
                             handler.handle(event), timeout=event.timeout_seconds
@@ -666,12 +673,15 @@ class EventBus:
         Returns:
             Event ID
         """
-        from .outbox import OutboxEvent
+        from .outbox import EventPriority as OutboxEventPriority, OutboxEvent
+
+        # Convert EventPriority to OutboxEventPriority (they have same values)
+        outbox_priority = OutboxEventPriority(priority.value)
 
         outbox_event = OutboxEvent(
             event_type=event_type,
             payload=payload,
-            priority=priority,
+            priority=outbox_priority,
             metadata={"source": source},
         )
 
@@ -681,20 +691,21 @@ class EventBus:
 
             self._simulation_outbox = Outbox()
 
-        event_id = self._simulation_outbox.enqueue(outbox_event, priority=priority)
+        event_id = self._simulation_outbox.enqueue(outbox_event, priority=outbox_priority)
 
         logger.debug(
             f"Enqueued simulation event {event_id} of type {event_type} with priority {priority.name}"
         )
         return event_id
 
-    def get_simulation_outbox(self) -> None:
+    def get_simulation_outbox(self) -> "Outbox":
         """Get the simulation outbox for batch processing."""
-        if not hasattr(self, "_simulation_outbox"):
-            from .outbox import Outbox
+        from .outbox import Outbox
 
+        if not hasattr(self, "_simulation_outbox"):
             self._simulation_outbox = Outbox()
-        return self._simulation_outbox
+        outbox: "Outbox" = self._simulation_outbox
+        return outbox
 
     async def process_simulation_events(self, limit: int = 10) -> int:
         """
@@ -715,13 +726,15 @@ class EventBus:
         processed = 0
         for outbox_event in pending:
             try:
+                # Convert outbox priority to event priority (same values)
+                converted_priority = EventPriority(outbox_event.priority.value)
                 # Convert to Event for handler processing
                 event = Event(
                     event_id=outbox_event.event_id,
                     event_type=outbox_event.event_type,
                     payload=outbox_event.payload,
                     source=outbox_event.metadata.get("source", "simulation"),
-                    priority=outbox_event.priority,
+                    priority=converted_priority,
                 )
 
                 # Process through handlers
@@ -754,7 +767,7 @@ class EventBus:
 
     async def health_check(self) -> Dict[str, Any]:
         """Perform health check on the event bus."""
-        health = {
+        health: Dict[str, Any] = {
             "status": "healthy",
             "redis_connected": False,
             "active_handlers": sum(
@@ -768,8 +781,8 @@ class EventBus:
 
         if self.redis:
             try:
-                await self.redis.ping()
-                health["redis_connected"] = True
+                ping_result = await self.redis.ping()  # type: ignore[misc]
+                health["redis_connected"] = bool(ping_result)
             except Exception:
                 health["status"] = "degraded"
                 health["redis_connected"] = False

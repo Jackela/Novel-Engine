@@ -65,10 +65,9 @@ class EventProcessor:
     async def _call_handler(self, handler: EventHandler, event: Event) -> None:
         """Call an event handler safely."""
         try:
-            if asyncio.iscoroutinefunction(handler):
-                await handler(event)
-            else:
-                handler(event)
+            handle_result = handler.handle(event)
+            if asyncio.iscoroutinefunction(handler.handle):
+                await handle_result
         except Exception as e:
             logger.error(f"Error processing event {event.event_type}: {e}")
 

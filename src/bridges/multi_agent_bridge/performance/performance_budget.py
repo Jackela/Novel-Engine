@@ -33,7 +33,7 @@ class PerformanceBudget:
     batch_times: List[float] = field(default_factory=list)
     llm_times: List[float] = field(default_factory=list)
     performance_history: List[Dict[str, Any]] = field(default_factory=list)
-    logger: Optional[logging.Logger] = field(default=None, init=False)
+    logger: logging.Logger = field(init=False)
 
     def __post_init__(self) -> None:
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -98,7 +98,7 @@ class PerformanceBudget:
         try:
             total_time = time.time() - self.turn_start_time
 
-            performance_data = {
+            performance_data: Dict[str, Any] = {
                 "timestamp": datetime.now().isoformat(),
                 "total_turn_time": total_time,
                 "budget_exceeded": total_time > self.max_turn_time_seconds,
@@ -148,13 +148,13 @@ class PerformanceBudget:
                 entry["total_turn_time"] for entry in self.performance_history
             ]
             budget_exceeds = sum(
-                1 for entry in self.performance_history if entry["budget_exceeded"]
+                1 for entry in self.performance_history if entry.get("budget_exceeded", False)
             )
             utilizations = [
                 entry["budget_utilization"] for entry in self.performance_history
             ]
 
-            stats = {
+            stats: Dict[str, Any] = {
                 "total_turns": total_turns,
                 "avg_turn_time": sum(turn_times) / total_turns,
                 "min_turn_time": min(turn_times),
@@ -203,7 +203,7 @@ class PerformanceBudget:
     def get_optimization_recommendations(self) -> List[Dict[str, Any]]:
         """Get performance optimization recommendations."""
         try:
-            recommendations: list[Any] = []
+            recommendations: List[Dict[str, Any]] = []
             stats = self.get_performance_stats()
 
             if not stats or stats["total_turns"] == 0:
@@ -255,7 +255,7 @@ class PerformanceBudget:
 
     def adjust_budgets_for_performance(
         self, target_utilization: float = 80.0
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         """Automatically adjust budgets based on performance history."""
         try:
             stats = self.get_performance_stats()

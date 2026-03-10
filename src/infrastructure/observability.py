@@ -394,7 +394,9 @@ class StructuredLogger:
     def _get_context(self) -> Dict[str, Any]:
         """Get current context"""
         if hasattr(self._context_vars, "context"):
-            return self._context_vars.context.copy()
+            ctx = self._context_vars.context
+            if isinstance(ctx, dict):
+                return ctx.copy()
         return {}
 
     def _log(self, level: str, message: str, **kwargs: Any) -> None:
@@ -746,9 +748,9 @@ class HealthMonitor:
 
     def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics = metrics_collector
-        self.health_checks: Dict[str, Callable] = {}
-        self.last_check_results: Dict[str, Dict[str, Any]] = {}
-        self.health_history = deque(maxlen=100)
+        self.health_checks: Dict[str, Callable[..., Any]] = {}
+        self.last_check_results: Dict[str, Any] = {}
+        self.health_history: Deque[Dict[str, Any]] = deque(maxlen=100)
 
     def register_health_check(self, name: str, check_func: Callable) -> None:
         """Register a health check function"""
@@ -836,7 +838,8 @@ class HealthMonitor:
 
     def is_healthy(self) -> bool:
         """Check if system is currently healthy"""
-        return self.last_check_results.get("overall_healthy", False)
+        result = self.last_check_results.get("overall_healthy", False)
+        return bool(result)
 
 
 class ObservabilityManager:

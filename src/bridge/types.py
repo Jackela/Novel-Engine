@@ -87,7 +87,7 @@ class BatchedRequest:
     priority: RequestPriority
     content: Dict[str, Any]
     timestamp: datetime = field(default_factory=datetime.now)
-    callback: Optional[callable] = None
+    callback: Optional[Callable[..., Any]] = None
 
 
 @dataclass

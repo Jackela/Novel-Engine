@@ -332,7 +332,9 @@ class CharacterSkillsORM(Base):
         if not self.skill_groups:
             return {}
 
-        result: Dict[str, Dict[str, Any]] = self.skill_groups.get(category, {}) if self.skill_groups else {}
+        result: Dict[str, Dict[str, Any]] = (
+            self.skill_groups.get(category, {}) if self.skill_groups else {}
+        )
         return result
 
 

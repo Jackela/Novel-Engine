@@ -547,11 +547,12 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                 cutoff_time = datetime.now() - timedelta(hours=1)
 
             with self.session_factory() as session:
-                return (
+                result = (
                     session.query(func.count(TurnBriefORM.id))
                     .filter(TurnBriefORM.updated_at > cutoff_time)
                     .scalar()
                 )
+                return result  # type: ignore[return-value]
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error counting active TurnBriefs: {e}")
@@ -694,29 +695,27 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         self, orm_entity: TurnBriefORM, turn_brief: TurnBrief, session: Session
     ) -> None:
         """Update existing ORM entity from domain object."""
-        orm_entity.world_state_version = turn_brief.world_state_version
-        orm_entity.last_world_update = turn_brief.last_world_update
-        orm_entity.last_perception_update = turn_brief.last_perception_update
-        orm_entity.base_alertness = turn_brief.awareness_state.base_alertness.value
-        orm_entity.current_alertness = (
-            turn_brief.awareness_state.current_alertness.value
-        )
-        orm_entity.attention_focus = turn_brief.awareness_state.attention_focus.value
-        orm_entity.focus_target = turn_brief.awareness_state.focus_target
+        orm_entity.world_state_version = turn_brief.world_state_version  # type: ignore[assignment]
+        orm_entity.last_world_update = turn_brief.last_world_update  # type: ignore[assignment]
+        orm_entity.last_perception_update = turn_brief.last_perception_update  # type: ignore[assignment]
+        orm_entity.base_alertness = turn_brief.awareness_state.base_alertness.value  # type: ignore[assignment]
+        orm_entity.current_alertness = turn_brief.awareness_state.current_alertness.value  # type: ignore[assignment]
+        orm_entity.attention_focus = turn_brief.awareness_state.attention_focus.value  # type: ignore[assignment]
+        orm_entity.focus_target = turn_brief.awareness_state.focus_target  # type: ignore[assignment]
         orm_entity.awareness_modifiers = self._serialize_awareness_modifiers(
-            turn_brief.awareness_state.awareness_modifiers
+            turn_brief.awareness_state.awareness_modifiers or {}
         )
-        orm_entity.fatigue_level = turn_brief.awareness_state.fatigue_level
-        orm_entity.stress_level = turn_brief.awareness_state.stress_level
+        orm_entity.fatigue_level = turn_brief.awareness_state.fatigue_level  # type: ignore[assignment]
+        orm_entity.stress_level = turn_brief.awareness_state.stress_level  # type: ignore[assignment]
         orm_entity.perception_capabilities = self._serialize_perception_capabilities(
             turn_brief.perception_capabilities
         )
         orm_entity.visible_subjects = self._serialize_visible_subjects(
             turn_brief.visible_subjects
         )
-        orm_entity.known_threats = turn_brief.known_threats
-        orm_entity.updated_at = turn_brief.updated_at
-        orm_entity.version = turn_brief.version
+        orm_entity.known_threats = turn_brief.known_threats  # type: ignore[assignment]
+        orm_entity.updated_at = turn_brief.updated_at  # type: ignore[assignment]
+        orm_entity.version = turn_brief.version  # type: ignore[assignment]
 
     def _map_orm_to_domain(
         self, orm_entity: TurnBriefORM, session: Session

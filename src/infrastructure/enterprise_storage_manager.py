@@ -393,7 +393,7 @@ class EnterpriseStorageManager:
                 )
 
                 if results:
-                    character_data = results[0]["data"]
+                    character_data: Dict[str, Any] = results[0]["data"]
 
                     # Update cache
                     if cache_backend == StorageBackend.REDIS and self.redis:
