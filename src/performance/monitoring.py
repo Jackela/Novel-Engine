@@ -24,7 +24,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, DefaultDict, Dict, List, Optional
 
 import psutil
 import structlog
@@ -214,7 +214,7 @@ class PerformanceMonitor:
 
         # Performance tracking
         self.request_times: deque = deque(maxlen=1000)
-        self.error_counts: defaultdict = defaultdict(int)
+        self.error_counts: DefaultDict[str, int] = defaultdict(int)
         self.endpoint_metrics: Dict[str, Dict[str, Any]] = defaultdict(
             lambda: {
                 "count": 0,

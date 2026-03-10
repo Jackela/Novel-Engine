@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, TypeVar
 
 import aioredis
 import aiosqlite
@@ -427,7 +427,7 @@ class BatchProcessor:
 
     async def add_operation(self, operation_type: str, operation_data: Any) -> Any:
         """Add an operation to be batched."""
-        future = asyncio.Future()
+        future: asyncio.Future[Any] = asyncio.Future()
 
         async with self.batch_lock:
             self.pending_operations[operation_type].append((operation_data, future))
@@ -488,16 +488,16 @@ class BatchProcessor:
                     future.set_exception(e)
 
     async def _process_database_batch(
-        self, operations: List[Tuple[Any, asyncio.Future]]
-    ):
+        self, operations: List[Tuple[Any, asyncio.Future[Any]]]
+    ) -> None:
         """Process a batch of database operations."""
         # Implementation depends on specific database operations
         for operation_data, future in operations:
             future.set_result({"status": "batched", "data": operation_data})
 
     async def _process_cache_invalidation_batch(
-        self, operations: List[Tuple[Any, asyncio.Future]]
-    ):
+        self, operations: List[Tuple[Any, asyncio.Future[Any]]]
+    ) -> None:
         """Process a batch of cache invalidation operations."""
         # Implementation for batch cache invalidation
         for operation_data, future in operations:
@@ -519,7 +519,7 @@ class PerformanceOptimizationEngine:
 
         # Performance tracking
         self.request_times: deque = deque(maxlen=1000)
-        self.operation_counts = defaultdict(int)
+        self.operation_counts: Dict[str, int] = defaultdict(int)
         self.last_gc_time = time.time()
 
         # Background tasks
@@ -567,9 +567,9 @@ class PerformanceOptimizationEngine:
     def performance_track(self, operation_name: str) -> None:
         """Decorator to track operation performance."""
 
-        def decorator(func) -> None:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 start_time = time.time()
                 try:
                     result = await func(*args, **kwargs)
@@ -715,7 +715,7 @@ async def get_optimization_engine() -> PerformanceOptimizationEngine:
     return _optimization_engine
 
 
-async def shutdown_optimization_engine():
+async def shutdown_optimization_engine() -> None:
     """Shutdown the global optimization engine."""
     global _optimization_engine
     if _optimization_engine:

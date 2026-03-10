@@ -617,7 +617,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients: list[Any] = []
+        disconnected_clients: List[WebSocket] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -650,7 +650,7 @@ class SecurityDashboard:
         }
 
         # Send to all connected clients
-        disconnected_clients: list[Any] = []
+        disconnected_clients: List[WebSocket] = []
         for client in self.connected_clients:
             try:
                 await client.send_text(json.dumps(message))
@@ -773,7 +773,7 @@ class SecurityDashboard:
         """Get compliance summary"""
         try:
             async with aiosqlite.connect(self.database_path) as conn:
-                reports: dict[Any, Any] = {}
+                reports: Dict[str, Any] = {}
                 for framework in ComplianceFramework.__members__.values():
                     cursor = await conn.execute(
                         """

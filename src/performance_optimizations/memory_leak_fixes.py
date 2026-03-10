@@ -17,7 +17,7 @@ import weakref
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Callable, Deque, Dict, List, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional, Tuple
 
 import psutil
 import structlog
@@ -120,7 +120,7 @@ class SlidingWindowMemoryManager:
             return 0
 
         items_to_remove = len(data_deque) - self.archive_threshold
-        archived_items: list[Any] = []
+        archived_items: List[Any] = []
         # Archive oldest items
         for _ in range(items_to_remove):
             if data_deque:
@@ -145,7 +145,7 @@ class SlidingWindowMemoryManager:
             filename = f"{self.archive_path}_{name}_{timestamp}.json"
 
             # Convert items to JSON-serializable format
-            serializable_items: list[Any] = []
+            serializable_items: List[Any] = []
             for item in items:
                 try:
                     if hasattr(item, "__dict__"):
@@ -485,11 +485,11 @@ class SystemWideMemoryManager:
         self.memory_limit_mb = memory_limit_mb
         self.check_interval = check_interval
         self.monitoring_active = False
-        self.monitor_thread = None
+        self.monitor_thread: Optional[threading.Thread] = None
 
         self.memory_history = deque(maxlen=100)
-        self.leak_alerts = []
-        self.cleanup_callbacks = []  # Functions to call for cleanup
+        self.leak_alerts: List[MemoryLeakAlert] = []
+        self.cleanup_callbacks: List[Tuple[Callable[[], None], str]] = []  # Functions to call for cleanup
 
         # Component memory tracking
         self.component_memory = defaultdict(list)

@@ -14,7 +14,7 @@ import time
 import weakref
 from contextlib import asynccontextmanager
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 import aiosqlite
 import structlog
@@ -49,7 +49,7 @@ class AsyncDatabasePool:
         )
 
     @asynccontextmanager
-    async def get_connection(self) -> None:
+    async def get_connection(self) -> AsyncIterator[aiosqlite.Connection]:
         """Get a connection from the pool."""
         async with self._lock:
             if not self._pool:
@@ -178,7 +178,7 @@ class PerformanceOptimizer:
         logger.info("Performance optimization systems initialized")
 
     @asynccontextmanager
-    async def get_db_connection(self) -> None:
+    async def get_db_connection(self) -> AsyncIterator[aiosqlite.Connection]:
         """Get optimized database connection."""
         if not self.db_pool:
             raise RuntimeError("Database pool not initialized")
@@ -408,7 +408,7 @@ class AsyncSimulationManager:
         """Clean up old completed simulations."""
         current_time = time.time()
         async with self._lock:
-            to_remove: list[Any] = []
+            to_remove: List[str] = []
             for sim_id, sim_data in self.active_simulations.items():
                 if (
                     sim_data["status"] in ["completed", "failed"]

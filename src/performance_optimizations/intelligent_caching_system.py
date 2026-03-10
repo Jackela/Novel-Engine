@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple
 
 import aiofiles
 import psutil
@@ -128,8 +128,8 @@ class IntelligentCache:
         self._lock = threading.RLock()
 
         # Prefetching system
-        self.access_patterns = defaultdict(list)
-        self.prefetch_queue = asyncio.Queue(maxsize=1000)
+        self.access_patterns: DefaultDict[str, List[float]] = defaultdict(list)
+        self.prefetch_queue: asyncio.Queue[str] = asyncio.Queue(maxsize=1000)
         self.prefetch_enabled = True
         self.prefetch_task = None
 
@@ -742,14 +742,14 @@ class WorldStatePrefetcher:
 
     def __init__(self, cache: IntelligentCache) -> None:
         self.cache = cache
-        self.agent_behavior_patterns = defaultdict(dict)
+        self.agent_behavior_patterns: DefaultDict[str, Dict[str, Any]] = defaultdict(dict)
         self.prefetch_enabled = True
 
         logger.info("WorldStatePrefetcher initialized")
 
     async def analyze_agent_pattern(
         self, agent_id: str, world_state_request: Dict[str, Any]
-    ):
+    ) -> None:
         """Analyze agent request patterns for predictive prefetching."""
         if not self.prefetch_enabled:
             return
@@ -804,7 +804,7 @@ class WorldStatePrefetcher:
 
     async def _prefetch_predicted_requests(
         self, agent_id: str, pattern_data: Dict[str, Any]
-    ):
+    ) -> None:
         """Prefetch data for predicted future requests."""
         try:
             # Analyze recent request patterns
@@ -864,7 +864,7 @@ class WorldStatePrefetcher:
 
     async def _background_prefetch(
         self, prefetch_key: str, sample_request: Dict[str, Any]
-    ):
+    ) -> None:
         """Background task to prefetch predicted data."""
         try:
             # This is where you'd generate the predicted data

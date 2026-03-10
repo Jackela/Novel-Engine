@@ -22,7 +22,7 @@ import ipaddress
 import json
 import os
 import time
-from typing import Any
+from typing import Any, DefaultDict
 
 try:
     # from types import ModuleType  # noqa: F401
@@ -228,7 +228,7 @@ class EnterpriseSecurityManager:
         self.threat_intelligence_cache = {}
 
         # Rate limiting stores
-        self.rate_limits: Dict[str, Any] = defaultdict(lambda: defaultdict(deque))
+        self.rate_limits: DefaultDict[str, DefaultDict[str, deque[float]]] = defaultdict(lambda: defaultdict(deque))
         self.ip_reputation_cache: Dict[str, Any] = {}
 
         # Security rules engine
@@ -403,8 +403,8 @@ class EnterpriseSecurityManager:
         user_agent = request.headers.get("user-agent", "unknown")
         request_path = str(request.url.path)
 
-        threat_indicators: list[Any] = []
-        security_actions: list[Any] = []
+        threat_indicators: List[str] = []
+        security_actions: List[SecurityAction] = []
         max_threat_level = ThreatLevel.LOW
 
         try:
@@ -535,7 +535,7 @@ class EnterpriseSecurityManager:
         day_count = results[4]
 
         # Check if any limit exceeded
-        exceeded: list[Any] = []
+        exceeded: List[str] = []
         if minute_count > MAX_REQUESTS_PER_MINUTE:
             exceeded.append("minute")
         if hour_count > MAX_REQUESTS_PER_HOUR:
@@ -599,7 +599,7 @@ class EnterpriseSecurityManager:
         """Analyze IP reputation using multiple threat intelligence sources"""
         threat_level = ThreatLevel.LOW
         reputation_score = 0.0
-        threat_categories: list[Any] = []
+        threat_categories: List[str] = []
         try:
             # Check database for known threats
             async with aiosqlite.connect(self.database_path) as conn:
@@ -695,7 +695,7 @@ class EnterpriseSecurityManager:
             re.match(pattern, user_agent) for pattern in ALLOWED_USER_AGENTS_PATTERNS
         )
 
-        suspicious_indicators: list[Any] = []
+        suspicious_indicators: List[str] = []
         if not is_valid_pattern:
             suspicious_indicators.append("unknown_pattern")
 
@@ -733,7 +733,7 @@ class EnterpriseSecurityManager:
             return {"anomaly_score": 0.0, "is_first_time": True}
 
         anomaly_score = 0.0
-        anomalies: list[Any] = []
+        anomalies: List[str] = []
         # Check time-based patterns
         if current_hour not in profile.typical_access_hours:
             anomaly_score += 0.2
@@ -781,7 +781,7 @@ class EnterpriseSecurityManager:
         self, ip_address: str, request_path: str, user_agent: str
     ) -> Dict[str, Any]:
         """Analyze for attack patterns and suspicious behavior"""
-        attack_indicators: list[Any] = []
+        attack_indicators: List[str] = []
         # SQL injection patterns
         sql_patterns = [
             r"union.*select",

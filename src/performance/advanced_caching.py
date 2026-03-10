@@ -33,7 +33,7 @@ import time
 from collections import OrderedDict, defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Callable, DefaultDict, Dict, Generic, List, Optional, Set, TypeVar
 
 import structlog
 
@@ -199,7 +199,7 @@ class IntelligentCacheManager:
         self.cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self.stats = CacheStats()
         self.access_patterns: Dict[str, List[float]] = defaultdict(list)
-        self.key_relationships: Dict[str, set] = defaultdict(set)
+        self.key_relationships: Dict[str, Set[str]] = defaultdict(set)
 
         # Performance monitoring
         self.performance_metrics: Dict[str, List[float]] = defaultdict(list)
@@ -445,7 +445,7 @@ class IntelligentCacheManager:
 
     def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
-        expired_keys: list[Any] = []
+        expired_keys: List[str] = []
         for key, entry in self.cache.items():
             if entry.is_expired():
                 expired_keys.append(key)
@@ -512,7 +512,7 @@ class IntelligentCacheManager:
             return None
 
         # Score each key based on multiple factors
-        scores: dict[Any, Any] = {}
+        scores: Dict[str, float] = {}
         current_time = time.time()
 
         for key, entry in self.cache.items():

@@ -782,7 +782,7 @@ class SecurityLogger:
         """STANDARD SECURITY EVENTS RETRIEVAL"""
         try:
             query = "SELECT * FROM security_events WHERE 1=1"
-            params: list[Any] = []
+            params: List[Any] = []
             if event_type:
                 query += " AND event_type = ?"
                 params.append(event_type.value)
@@ -816,7 +816,7 @@ class SecurityLogger:
 
                 # Convert to dictionaries
                 columns = [description[0] for description in cursor.description]
-                events: list[Any] = []
+                events: List[Dict[str, Any]] = []
                 for row in rows:
                     event_dict = dict(zip(columns, row))
 

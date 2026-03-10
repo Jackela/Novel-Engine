@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, TypeVar, cast
+from typing import Any, Callable, DefaultDict, Dict, List, Optional, TypeVar, cast
 
 from src.contexts.shared.domain.errors import ServiceError
 from src.core.result import Err, Ok, Result
@@ -186,7 +186,7 @@ class StructuredLogger:
 
         # Performance tracking
         self.performance_metrics: deque = deque(maxlen=10000)
-        self.operation_stats: dict[str, list[Any]] = defaultdict(list)
+        self.operation_stats: DefaultDict[str, List[Any]] = defaultdict(list)
 
         # Audit trail
         self.audit_trail: deque = deque(maxlen=50000)
@@ -427,7 +427,7 @@ class StructuredLogger:
         self, operation_filter: Optional[str] = None
     ) -> Dict[str, Any]:
         """Get performance metrics summary."""
-        relevant_metrics: list[Any] = []
+        relevant_metrics: List[Any] = []
         for entry in self.performance_metrics:
             if operation_filter is None or operation_filter in entry.get(
                 "context", {}
@@ -463,7 +463,7 @@ class StructuredLogger:
             - Err(ServiceError): If summary generation fails
         """
         try:
-            relevant_metrics: list[Any] = []
+            relevant_metrics: List[Any] = []
             for entry in self.performance_metrics:
                 if operation_filter is None or operation_filter in entry.get(
                     "context", {}
