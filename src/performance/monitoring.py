@@ -325,7 +325,7 @@ class PerformanceMonitor:
             timestamp = time.time()
 
         if tags is None:
-            tags: dict[Any, Any] = {}
+            tags = {}
         metric = PerformanceMetric(
             name=name,
             value=value,
@@ -655,7 +655,7 @@ class PerformanceMonitor:
 
     def get_endpoint_stats(self) -> Dict[str, Dict[str, Any]]:
         """Get performance statistics for all monitored endpoints."""
-        stats: dict[Any, Any] = {}
+        stats: Dict[str, Dict[str, Any]] = {}
         for endpoint, metrics in self.endpoint_metrics.items():
             if metrics["count"] > 0:
                 stats[endpoint] = {
@@ -713,7 +713,7 @@ class PerformanceMonitor:
 
     def get_alerts(self, include_resolved: bool = False) -> List[Dict[str, Any]]:
         """Get list of active and optionally resolved alerts."""
-        alerts: list[Any] = []
+        alerts: List[Dict[str, Any]] = []
         # Active alerts
         for alert in self.active_alerts.values():
             alerts.append(alert.__dict__)
@@ -755,13 +755,13 @@ class PerformanceMonitor:
 
 
 # Performance measurement decorator
-def measure_performance(metric_name: str = None) -> None:
+def measure_performance(metric_name: Optional[str] = None) -> Callable[..., Any]:
     """Decorator to measure and record function performance metrics."""
 
-    def decorator(func: Callable) -> Callable:
-        async def async_wrapper(*args, **kwargs):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
-            error = None
+            error: Optional[str] = None
 
             try:
                 if asyncio.iscoroutinefunction(func):
@@ -784,11 +784,13 @@ def measure_performance(metric_name: str = None) -> None:
                 if error:
                     monitor.record_metric(f"{name}_error_count", 1, MetricType.COUNTER)
 
-        return (
-            async_wrapper
-            if asyncio.iscoroutinefunction(func)
-            else lambda *args, **kwargs: asyncio.run(async_wrapper(*args, **kwargs))
-        )
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            return asyncio.run(async_wrapper(*args, **kwargs))
+
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     return decorator
 
@@ -806,7 +808,7 @@ def get_performance_monitor() -> PerformanceMonitor:
     return performance_monitor
 
 
-def initialize_performance_monitor(config: Optional[MonitoringConfig] = None) -> None:
+def initialize_performance_monitor(config: Optional[MonitoringConfig] = None) -> PerformanceMonitor:
     """Initialize the global performance monitor with configuration."""
     global performance_monitor
     if config is None:

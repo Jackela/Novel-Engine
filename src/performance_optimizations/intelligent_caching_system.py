@@ -260,7 +260,7 @@ class IntelligentCache:
     def _adaptive_eviction(self) -> Tuple[str, CacheEntry]:
         """AI-driven adaptive eviction strategy."""
         # Score each entry based on multiple factors
-        scored_entries: list[Any] = []
+        scored_entries: List[Tuple[float, str, CacheEntry]] = []
         for key, entry in self.l1_cache.items():
             # Calculate composite score
             recency_score = (datetime.now() - entry.last_accessed).total_seconds()
@@ -505,7 +505,6 @@ class IntelligentCache:
 
     def _clean_expired_entries(self) -> None:
         """Remove expired entries from all cache levels."""
-        datetime.now()
 
         # Clean L1
         expired_l1 = [key for key, entry in self.l1_cache.items() if entry.is_expired()]
@@ -715,7 +714,7 @@ class LLMResponseCache(IntelligentCache):
 
     def _find_similar_keys(self, target_key: str, threshold: float) -> List[str]:
         """Find similar cache keys using simple string similarity."""
-        similar_keys: list[Any] = []
+        similar_keys: List[str] = []
         # Check L1 cache for similar keys
         for cached_key in self.l1_cache.keys():
             if self._calculate_similarity(target_key, cached_key) >= threshold:
@@ -791,7 +790,7 @@ class WorldStatePrefetcher:
     def _create_query_signature(self, request: Dict[str, Any]) -> str:
         """Create signature for world state query pattern."""
         # Extract key components of the request
-        components: list[Any] = []
+        components: List[str] = []
         if "turn_range" in request:
             components.append(f"turns:{request['turn_range']}")
 
@@ -850,7 +849,7 @@ class WorldStatePrefetcher:
     ) -> List[str]:
         """Predict which other agents this agent commonly interacts with."""
         # This is a simplified prediction - in production you'd use more sophisticated ML
-        related_agents: list[Any] = []
+        related_agents: List[str] = []
         # Analyze request history for agent interaction patterns
         for request_data in pattern_data["request_history"]:
             request = request_data["request"]

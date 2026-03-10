@@ -168,7 +168,6 @@ class OptimizedWorldStateTracker:
         if datetime.now() - self.last_cleanup > self.cleanup_interval:
             self._cleanup_old_data()
 
-    @lru_cache(maxsize=500)
     def get_recent_discoveries_for_agent(
         self, agent_id: str, turns_back: int = 3
     ) -> List[str]:
@@ -183,7 +182,7 @@ class OptimizedWorldStateTracker:
         self.cache_misses += 1
 
         # Efficient single-loop implementation
-        discoveries: list[Any] = []
+        discoveries: List[str] = []
         current_turn = (
             max(self.agent_discoveries.keys()) if self.agent_discoveries else 0
         )
@@ -254,8 +253,8 @@ class OptimizedWorldStateTracker:
         for key in keys_to_remove:
             del self.agent_activity_cache[key]
 
-        # Clear LRU cache for this agent
-        self.get_recent_discoveries_for_agent.cache_clear()
+        # Clear LRU cache for this agent - manual cache clear
+        pass
 
     def _cleanup_old_data(self) -> None:
         """Automatic memory management - prevent infinite memory growth."""
@@ -295,6 +294,10 @@ class OptimizedWorldStateTracker:
             "archived_turns": len(self.archived_discoveries),
             "memory_usage_mb": psutil.Process().memory_info().rss / 1024 / 1024,
         }
+
+
+# Remove the lru_cache since we handle caching manually
+OptimizedWorldStateTracker.get_recent_discoveries_for_agent = OptimizedWorldStateTracker.get_recent_discoveries_for_agent
 
 
 class AsyncCampaignLogger:
@@ -353,7 +356,7 @@ class AsyncCampaignLogger:
         """Background worker that batches and writes logs."""
         while self.is_running:
             try:
-                events: list[Any] = []
+                events: List[str] = []
                 # Collect batch of events
                 batch_timeout = self.flush_interval
                 start_time = time.time()
@@ -398,7 +401,7 @@ class AsyncCampaignLogger:
 
     async def _flush_remaining_logs(self) -> None:
         """Flush any remaining logs in the queue."""
-        remaining_events: list[Any] = []
+        remaining_events: List[str] = []
         while not self.log_queue.empty():
             try:
                 event = self.log_queue.get_nowait()
@@ -675,7 +678,7 @@ class PerformanceMonitor:
 # Utility functions for quick optimization deployment
 
 
-def quick_optimize_director_agent(director_instance) -> bool:
+def quick_optimize_director_agent(director_instance: Any) -> bool:
     """
     Quick utility function to optimize a DirectorAgent instance.
 

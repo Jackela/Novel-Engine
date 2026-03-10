@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 
 import aiosqlite
 import psutil
@@ -129,7 +129,7 @@ class MetricsCollector:
             self._add_metric_point(name, duration, MetricType.TIMER, tags)
 
     def _add_metric_point(
-        self, name: str, value: float, metric_type: MetricType, tags: Dict[str, str]
+        self, name: str, value: float, metric_type: MetricType, tags: Optional[Dict[str, str]]
     ) -> None:
         """Add a metric point to the collection."""
         point = MetricPoint(
@@ -159,7 +159,8 @@ class MetricsCollector:
         with self.lock:
             if name not in self.metrics or not self.metrics[name]:
                 return None
-            return self.metrics[name][-1].value
+            current_value = self.metrics[name][-1].value
+            return float(current_value) if current_value is not None else None
 
     def get_histogram_stats(self, name: str) -> Dict[str, float]:
         """Get histogram statistics."""
@@ -209,8 +210,8 @@ class SystemMetricsCollector:
     def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
         self.process = psutil.Process()
-        self.last_cpu_times = None
-        self.last_io_counters = None
+        self.last_cpu_times: Optional[Any] = None
+        self.last_io_counters: Optional[Any] = None
 
     def collect_system_metrics(self) -> None:
         """Collect comprehensive system metrics."""
@@ -289,7 +290,7 @@ class ApplicationMetricsCollector:
 
     def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
-        self.request_start_times = {}
+        self.request_start_times: Dict[str, float] = {}
 
     def start_request(self, request_id: str) -> None:
         """Start tracking a request."""
@@ -357,10 +358,10 @@ class AlertManager:
 
     def __init__(self, collector: MetricsCollector) -> None:
         self.collector = collector
-        self.thresholds = {}
-        self.alerts = {}
-        self.violation_counts = defaultdict(int)
-        self.alert_callbacks = []
+        self.thresholds: Dict[str, PerformanceThreshold] = {}
+        self.alerts: Dict[str, PerformanceAlert] = {}
+        self.violation_counts: Dict[str, int] = defaultdict(int)
+        self.alert_callbacks: List[Callable[[PerformanceAlert], None]] = []
 
     def add_threshold(self, threshold: PerformanceThreshold) -> None:
         """Add a performance threshold."""
@@ -405,7 +406,7 @@ class AlertManager:
         self, value: float, threshold: PerformanceThreshold
     ) -> bool:
         """Check if a value violates a threshold."""
-        operators = {
+        operators: Dict[str, Callable[[float, float], bool]] = {
             ">": lambda x, y: x > y,
             "<": lambda x, y: x < y,
             ">=": lambda x, y: x >= y,
@@ -471,7 +472,7 @@ class PerformanceRegression:
     def __init__(self, collector: MetricsCollector, sensitivity: float = 2.0) -> None:
         self.collector = collector
         self.sensitivity = sensitivity  # Standard deviations for regression detection
-        self.baselines = {}
+        self.baselines: Dict[str, Dict[str, Any]] = {}
 
     def establish_baseline(self, metric_name: str, duration_hours: int = 24) -> None:
         """Establish a performance baseline for a metric."""
@@ -559,7 +560,7 @@ class PerformanceMonitor:
         self.regression_detector = PerformanceRegression(self.collector)
 
         self.monitoring_active = False
-        self.monitoring_task = None
+        self.monitoring_task: Optional[asyncio.Task[None]] = None
         self.collection_interval = 10  # seconds
 
         self._init_database()
@@ -816,13 +817,13 @@ class TimerContext:
     def __init__(self, metric_name: str, tags: Optional[Dict[str, str]] = None) -> None:
         self.metric_name = metric_name
         self.tags = tags or {}
-        self.start_time = None
+        self.start_time: Optional[float] = None
 
-    def __enter__(self) -> None:
+    def __enter__(self) -> "TimerContext":
         self.start_time = time.time()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> None:
         if self.start_time:
             duration = time.time() - self.start_time
             performance_monitor.collector.record_timer(
@@ -831,19 +832,21 @@ class TimerContext:
 
 
 def monitor_performance(
-    metric_name: str, tags: Optional[Dict[str, str]] = None
-) -> None:
+    metric_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None
+) -> Callable[..., Any]:
     """Decorator for monitoring function performance."""
 
-    def decorator(func) -> None:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            with TimerContext(metric_name, tags):
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            actual_metric_name = metric_name or func.__name__
+            with TimerContext(actual_metric_name, tags):
                 return await func(*args, **kwargs)
 
         @wraps(func)
-        def sync_wrapper(*args, **kwargs) -> None:
-            with TimerContext(metric_name, tags):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+            actual_metric_name = metric_name or func.__name__
+            with TimerContext(actual_metric_name, tags):
                 return func(*args, **kwargs)
 
         return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
@@ -852,13 +855,13 @@ def monitor_performance(
 
 
 # Setup and initialization functions
-async def setup_performance_monitoring():
+async def setup_performance_monitoring() -> None:
     """Setup performance monitoring system."""
     await performance_monitor.start_monitoring()
     logger.info("Performance monitoring system initialized")
 
 
-async def shutdown_performance_monitoring():
+async def shutdown_performance_monitoring() -> None:
     """Shutdown performance monitoring system."""
     await performance_monitor.stop_monitoring()
     logger.info("Performance monitoring system shutdown")
@@ -866,7 +869,7 @@ async def shutdown_performance_monitoring():
 
 if __name__ == "__main__":
     # Example usage and testing
-    async def test_performance_monitoring():
+    async def test_performance_monitoring() -> None:
         """Test the performance monitoring system."""
         await setup_performance_monitoring()
 

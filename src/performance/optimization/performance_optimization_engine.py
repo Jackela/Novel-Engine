@@ -452,7 +452,7 @@ class BatchProcessor:
                 if operation_type in self.pending_operations:
                     await self._process_batch(operation_type)
         except asyncio.CancelledError:
-            structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+            logger.debug("Batch timer cancelled")
 
     async def _process_batch(self, operation_type: str) -> None:
         """Process a batch of operations."""

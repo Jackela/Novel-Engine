@@ -445,7 +445,6 @@ class IntelligentCacheManager:
 
     def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
-        time.time()
         expired_keys: list[Any] = []
         for key, entry in self.cache.items():
             if entry.is_expired():
@@ -647,7 +646,7 @@ class IntelligentCacheManager:
         self.stats.update_hit_rate()
 
         # Calculate average access time
-        all_times: list[Any] = []
+        all_times: List[float] = []
         for times in self.performance_metrics.values():
             all_times.extend(times)
 
@@ -764,11 +763,11 @@ class IntelligentCacheManager:
 
 
 # Cache decorator for functions
-def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> None:
+def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> Callable[..., Any]:
     """Decorator to cache function results with optional TTL."""
 
-    def decorator(func: Callable) -> Callable:
-        async def async_wrapper(*args, **kwargs):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             # Generate cache key
             key_parts = [key_prefix, func.__name__]
             key_parts.extend(str(arg) for arg in args)
@@ -776,8 +775,8 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> None:
             cache_key = ":".join(key_parts)
 
             # Try to get from cache
-            cache_manager = get_cache_manager()
-            result = await cache_manager.get(cache_key)
+            manager = get_cache_manager()
+            result = await manager.get(cache_key)
 
             if result is not None:
                 return result
@@ -788,12 +787,12 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> None:
             else:
                 result = func(*args, **kwargs)
 
-            await cache_manager.set(cache_key, result, ttl)
+            await manager.set(cache_key, result, ttl)
             return result
 
-        def sync_wrapper(*args, **kwargs) -> None:
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             # For synchronous functions, create async context
-            async def async_func():
+            async def async_func() -> Any:
                 return await async_wrapper(*args, **kwargs)
 
             try:
@@ -824,7 +823,7 @@ def get_cache_manager() -> IntelligentCacheManager:
     return cache_manager
 
 
-def initialize_cache_manager(config: Optional[CacheConfig] = None) -> None:
+def initialize_cache_manager(config: Optional[CacheConfig] = None) -> IntelligentCacheManager:
     """Initialize the global cache manager with configuration."""
     global cache_manager
     if config is None:

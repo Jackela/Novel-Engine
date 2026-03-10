@@ -196,7 +196,7 @@ class PersonaAgentMemoryFixer:
         Returns:
             Dict with fix results and memory improvements
         """
-        fix_results = {
+        fix_results: Dict[str, Any] = {
             "fixes_applied": [],
             "memory_before_mb": 0,
             "memory_after_mb": 0,
@@ -319,7 +319,7 @@ class PersonaAgentMemoryMonitor:
             persona_agent_instance
         )  # Weak reference to prevent circular refs
         self.agent_id = persona_agent_instance.agent_id
-        self.memory_history = deque(maxlen=100)  # Keep last 100 memory measurements
+        self.memory_history: deque[MemoryStats] = deque(maxlen=100)  # Keep last 100 memory measurements
         self.last_cleanup = datetime.now()
         self.cleanup_interval = timedelta(minutes=15)  # Check every 15 minutes
         self.memory_threshold_mb = 50  # Alert if agent uses > 50MB
@@ -445,7 +445,7 @@ class PersonaAgentMemoryMonitor:
         growth_trend = self._calculate_memory_growth_trend()
 
         agent = self.agent_instance()
-        agent_info: dict[Any, Any] = {}
+        agent_info: Dict[str, Any] = {}
         if agent:
             agent_info = {
                 "decision_history_size": len(getattr(agent, "decision_history", [])),
@@ -692,7 +692,7 @@ def apply_memory_fixes_to_persona_agent(persona_agent_instance: Any) -> bool:
         return False
 
 
-def monitor_persona_agent_memory(persona_agent_instance: Any) -> None:
+def monitor_persona_agent_memory(persona_agent_instance: Any) -> Any:
     """
     Add memory monitoring to a PersonaAgent instance.
 
@@ -749,7 +749,7 @@ def emergency_memory_cleanup() -> None:
 
         functools._CacheInfo.cache_clear()  # This won't work, but shows intent
     except Exception:
-        structlog.get_logger(__name__).debug("Suppressed exception", exc_info=True)
+        logger.debug("Cache clear attempt failed")
 
     logger.info("Emergency memory cleanup completed")
 

@@ -130,10 +130,10 @@ class AsyncEventBus:
     """High-performance async event bus."""
 
     def __init__(self) -> None:
-        self._subscribers: Dict[str, List[callable]] = {}
+        self._subscribers: Dict[str, List[Callable[..., Any]]] = {}
         self._lock = asyncio.Lock()
 
-    async def subscribe(self, event_type: str, callback: callable) -> None:
+    async def subscribe(self, event_type: str, callback: Callable[..., Any]) -> None:
         """Subscribe to an event type."""
         async with self._lock:
             if event_type not in self._subscribers:
@@ -186,8 +186,8 @@ class PerformanceOptimizer:
             yield conn
 
     async def cached_operation(
-        self, cache_key: str, operation: callable, *args, **kwargs
-    ):
+        self, cache_key: str, operation: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """Execute operation with caching."""
         # Try cache first
         cached_result = await self.cache.get(cache_key)
@@ -205,8 +205,8 @@ class PerformanceOptimizer:
         return result
 
     async def measure_performance(
-        self, operation_name: str, operation: callable, *args, **kwargs
-    ):
+        self, operation_name: str, operation: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> Any:
         """Measure and record operation performance."""
         start_time = time.time()
         try:
@@ -244,11 +244,11 @@ class PerformanceOptimizer:
 performance_optimizer = PerformanceOptimizer()
 
 
-async def optimize_character_loading(character_factory, character_name: str):
+async def optimize_character_loading(character_factory: Any, character_name: str) -> Any:
     """Optimized character loading with caching."""
     cache_key = f"character:{character_name}"
 
-    async def load_character():
+    async def load_character() -> Any:
         # Use event bus for async coordination
         await performance_optimizer.event_bus.emit(
             "character_loading_start", character_name
@@ -265,10 +265,10 @@ async def optimize_character_loading(character_factory, character_name: str):
     return await performance_optimizer.cached_operation(cache_key, load_character)
 
 
-async def optimize_simulation_execution(director, turns: int):
+async def optimize_simulation_execution(director: Any, turns: int) -> None:
     """Optimized simulation execution with async coordination."""
 
-    async def execute_turn_async(turn_number: int):
+    async def execute_turn_async(turn_number: int) -> None:
         """Execute a single turn asynchronously."""
         await performance_optimizer.event_bus.emit("turn_start", turn_number)
 
@@ -280,7 +280,7 @@ async def optimize_simulation_execution(director, turns: int):
     # Execute turns with controlled concurrency
     semaphore = asyncio.Semaphore(3)  # Limit concurrent turns
 
-    async def bounded_turn(turn_num):
+    async def bounded_turn(turn_num: int) -> None:
         async with semaphore:
             return await execute_turn_async(turn_num)
 
@@ -294,7 +294,7 @@ async def optimize_simulation_execution(director, turns: int):
 
 
 @lru_cache(maxsize=128)
-def cached_config_loader() -> None:
+def cached_config_loader() -> Any:
     """Cached configuration loading."""
     from src.core.config.config_loader import get_config
 
@@ -307,10 +307,11 @@ class AsyncSimulationManager:
     def __init__(self) -> None:
         self.active_simulations: Dict[str, Dict[str, Any]] = {}
         self._lock = asyncio.Lock()
+        self.simulation_results: Dict[str, Any] = {}
 
     async def start_simulation(
         self, simulation_id: str, character_names: List[str], turns: int
-    ):
+    ) -> Dict[str, Any]:
         """Start an async simulation."""
         async with self._lock:
             if simulation_id in self.active_simulations:
@@ -383,6 +384,10 @@ class AsyncSimulationManager:
                 self.active_simulations[simulation_id]["status"] = "failed"
                 self.active_simulations[simulation_id]["error"] = str(e)
             raise
+        finally:
+            # Store result for retrieval
+            if simulation_id in self.active_simulations:
+                self.simulation_results[simulation_id] = self.active_simulations[simulation_id]
 
     async def get_simulation_status(
         self, simulation_id: str
@@ -423,7 +428,7 @@ def optimize_memory() -> None:
     logger.info("Memory optimization completed")
 
 
-async def initialize_performance_systems():
+async def initialize_performance_systems() -> None:
     """Initialize all performance optimization systems."""
     await performance_optimizer.initialize()
     logger.info("All performance systems initialized")

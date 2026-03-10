@@ -405,7 +405,7 @@ class AsyncHttpClient:
             f"per_host={max_connections_per_host}"
         )
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> "AsyncHttpClient":
         """Async context manager entry."""
         await self.start()
         return self
@@ -862,7 +862,7 @@ class ConcurrentAgentProcessor:
 
     def get_processing_stats(self) -> Dict[str, Any]:
         """Get concurrent processing statistics."""
-        success_rate = 0
+        success_rate = 0.0
         if self.processing_stats["total_processed"] > 0:
             success_rate = (
                 self.processing_stats["successful_processing"]

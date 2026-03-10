@@ -285,14 +285,14 @@ class RedisCache(CacheInterface):
         self.prefix = prefix
         self.default_ttl = default_ttl
         self.metrics = CacheMetrics()
-        self._redis = None
+        self._redis: Optional[Any] = None
         self.allow_mock = (
             allow_mock
             if allow_mock is not None
             else os.getenv("ALLOW_MOCK_REDIS", "false").lower() == "true"
         )
 
-    async def _get_redis(self) -> None:
+    async def _get_redis(self) -> Any:
         """Get Redis connection (lazy initialization)"""
         if self._redis is None:
             try:
@@ -428,8 +428,8 @@ class MockRedis:
     """Mock Redis implementation for testing without Redis server"""
 
     def __init__(self) -> None:
-        self._data = {}
-        self._expiry = {}
+        self._data: Dict[str, Any] = {}
+        self._expiry: Dict[str, datetime] = {}
 
     async def get(self, key: str) -> Optional[str]:
         if key in self._expiry and datetime.now() > self._expiry[key]:
@@ -692,7 +692,7 @@ class CharacterCache:
 
 
 # Example usage and testing
-async def main():
+async def main() -> None:
     """Demonstrate distributed caching system"""
     logger.info("distributed_caching_demo_started")
 

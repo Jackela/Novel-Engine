@@ -74,7 +74,7 @@ class ObjectPool:
     def __init__(self, factory: Callable[[], Any], max_size: int = 100) -> None:
         self.factory = factory
         self.max_size = max_size
-        self.pool = deque(maxlen=max_size)
+        self.pool: deque[Any] = deque(maxlen=max_size)
         self.created_count = 0
         self.reused_count = 0
         self._lock = threading.Lock()
@@ -225,7 +225,7 @@ class MemoryOptimizer:
 
         # GC tuning
         self.original_gc_thresholds = gc.get_threshold()
-        self.gc_stats = defaultdict(int)
+        self.gc_stats: Dict[str, int] = defaultdict(int)
 
         # Monitoring control
         self.monitoring_active = True
@@ -251,14 +251,13 @@ class MemoryOptimizer:
         """Stop memory monitoring."""
         self.monitoring_active = False
         if self.monitoring_task:
-            self.monitoring_task.cancel()
-            try:
-                await self.monitoring_task
-            except asyncio.CancelledError:
-                structlog.get_logger(__name__).debug(
-                    "Suppressed exception", exc_info=True
-                )
+            task = self.monitoring_task
             self.monitoring_task = None
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                logger.debug("Monitoring task cancelled")
 
         # Restore original GC thresholds
         gc.set_threshold(*self.original_gc_thresholds)
@@ -553,7 +552,7 @@ class PersonaAgentMemoryOptimizer:
 
     def optimize_persona_agent(self, agent: Any) -> Dict[str, Any]:
         """Optimize memory usage for a specific PersonaAgent."""
-        optimization_results = {
+        optimization_results: Dict[str, Any] = {
             "agent_id": getattr(agent, "agent_id", "unknown"),
             "optimizations_applied": [],
             "memory_saved_estimate": 0,
@@ -577,9 +576,8 @@ class PersonaAgentMemoryOptimizer:
                 optimization_results["optimizations_applied"].append(
                     "decision_history_pooling"
                 )
-                optimization_results["memory_saved_estimate"] += (
-                    len(old_decisions) * 1024
-                )  # Rough estimate
+                current_estimate = optimization_results.get("memory_saved_estimate", 0)
+                optimization_results["memory_saved_estimate"] = current_estimate + len(old_decisions) * 1024
 
             # Optimize context history
             if hasattr(agent, "context_history") and len(agent.context_history) > 50:
@@ -594,7 +592,8 @@ class PersonaAgentMemoryOptimizer:
                 optimization_results["optimizations_applied"].append(
                     "context_history_pooling"
                 )
-                optimization_results["memory_saved_estimate"] += len(old_contexts) * 512
+                current_estimate = optimization_results.get("memory_saved_estimate", 0)
+                optimization_results["memory_saved_estimate"] = current_estimate + len(old_contexts) * 512
 
             # Register agent with weak reference for lifecycle management
             agent_key = f"persona_agent_{optimization_results['agent_id']}"
@@ -648,7 +647,7 @@ class DirectorAgentMemoryOptimizer:
 
     def optimize_director_agent(self, director: Any) -> Dict[str, Any]:
         """Optimize memory usage for DirectorAgent."""
-        optimization_results = {"optimizations_applied": [], "memory_saved_estimate": 0}
+        optimization_results: Dict[str, Any] = {"optimizations_applied": [], "memory_saved_estimate": 0}
 
         try:
             # Optimize world state history
@@ -752,7 +751,7 @@ async def setup_memory_optimization() -> Dict[str, Any]:
 
 async def get_comprehensive_memory_optimization_report() -> Dict[str, Any]:
     """Get comprehensive memory optimization report."""
-    report = {"timestamp": datetime.now().isoformat(), "status": "active"}
+    report: Dict[str, Any] = {"timestamp": datetime.now().isoformat(), "status": "active"}
 
     if _global_memory_optimizer:
         report["memory_optimizer"] = _global_memory_optimizer.get_memory_report()
@@ -779,7 +778,7 @@ async def get_comprehensive_memory_optimization_report() -> Dict[str, Any]:
     return report
 
 
-async def cleanup_memory_optimization():
+async def cleanup_memory_optimization() -> None:
     """Cleanup memory optimization system."""
     global _global_memory_optimizer, _persona_optimizer, _director_optimizer
 
@@ -794,7 +793,7 @@ async def cleanup_memory_optimization():
 
 
 @asynccontextmanager
-async def memory_optimization_context():
+async def memory_optimization_context() -> Any:
     """Context manager for memory optimization setup and cleanup."""
     try:
         setup_result = await setup_memory_optimization()
