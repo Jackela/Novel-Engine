@@ -12,7 +12,7 @@ import logging
 import time
 from collections import deque
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -94,7 +94,7 @@ class LLMCoordinator:
         request_type: str,
         content: Dict[str, Any],
         priority: RequestPriority = RequestPriority.NORMAL,
-        callback: Optional[callable] = None,
+        callback: Optional[Callable[..., Any]] = None,
     ) -> str:
         """
         Submit an LLM request for processing.

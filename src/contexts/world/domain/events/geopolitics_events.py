@@ -7,7 +7,6 @@ alliance formations, and territory transfers.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from enum import Enum
 from typing import Optional
 from uuid import uuid4

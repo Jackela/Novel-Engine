@@ -10,7 +10,6 @@ more general WorldStateChanged event, allowing for specific time-based handlers.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import uuid4
 

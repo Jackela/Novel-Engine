@@ -20,28 +20,7 @@ from ..core.types import (
 )
 
 # Import enhanced core systems
-try:
-    from src.core.data_models import ErrorInfo, StandardResponse
-except ImportError:
-    # Fallback for testing
-    class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
-            self.success = success
-            self.data = data or {}
-            self.error = error
-            self.metadata = metadata or {}
-
-        def get(self, key, default=None) -> None:
-            return getattr(self, key, default)
-
-        def __getitem__(self, key) -> None:
-            return getattr(self, key)
-
-    class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True) -> None:
-            self.code = code
-            self.message = message
-            self.recoverable = recoverable
+from src.core.data_models import ErrorInfo, StandardResponse
 
 
 __all__ = ["ModificationSystem"]
