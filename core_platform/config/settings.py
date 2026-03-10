@@ -264,9 +264,13 @@ class StorageSettings(BaseSettings):
     endpoint_url: str = Field(
         default="http://localhost:9000", description="Storage endpoint URL"
     )
-    access_key: str = Field(default="", description="Storage access key (set via STORAGE_ACCESS_KEY env var)")
+    access_key: str = Field(
+        default="",
+        description="Storage access key (set via STORAGE_ACCESS_KEY env var)",
+    )
     secret_key: str = Field(
-        default="", description="Storage secret key (set via STORAGE_SECRET_KEY env var)"
+        default="",
+        description="Storage secret key (set via STORAGE_SECRET_KEY env var)",
     )
     bucket_name: str = Field(default="novel-engine", description="Default bucket name")
     region: str = Field(default="us-east-1", description="Storage region")
@@ -499,7 +503,9 @@ class PlatformConfig:
         # Production-specific validations
         if self.is_production():
             if not self.security.jwt_secret_key:
-                errors.append("JWT secret key must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var")
+                errors.append(
+                    "JWT secret key must be set via SECURITY_JWT_SECRET_KEY or JWT_SECRET env var"
+                )
 
             if self.app.debug:
                 errors.append("Debug mode should be disabled in production")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """In-memory LLM provider for deterministic tests."""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,12 +10,17 @@ from typing import Any, AsyncIterator, Dict, List, Optional
 
 from ...domain.services.llm_provider import (
     ILLMProvider,
+    LLMProviderError,
     LLMRequest,
     LLMResponse,
-    LLMResponseStatus,
-    LLMProviderError,
 )
-from ...domain.value_objects.common import ModelCapability, ModelId, ProviderId, ProviderType, TokenBudget
+from ...domain.value_objects.common import (
+    ModelCapability,
+    ModelId,
+    ProviderId,
+    ProviderType,
+    TokenBudget,
+)
 
 
 @dataclass
@@ -91,7 +97,9 @@ class MockLLMProvider(ILLMProvider):
             input_tokens=self.estimate_tokens(request.prompt),
             output_tokens=self.estimate_tokens(content),
         )
-        self.calls.append(MockCall(request=request, timestamp=time.time(), response=response))
+        self.calls.append(
+            MockCall(request=request, timestamp=time.time(), response=response)
+        )
         return response
 
     async def generate_stream_async(

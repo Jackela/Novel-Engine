@@ -596,9 +596,9 @@ class SyntheticMonitor:
             # Handle authentication
             if config.authentication:
                 if config.authentication.get("type") == "bearer":
-                    headers[
-                        "Authorization"
-                    ] = f"Bearer {config.authentication['token']}"
+                    headers["Authorization"] = (
+                        f"Bearer {config.authentication['token']}"
+                    )
                 elif config.authentication.get("type") == "basic":
                     # Basic auth would be handled by aiohttp BasicAuth
                     pass

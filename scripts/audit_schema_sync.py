@@ -316,7 +316,12 @@ def main():
     discrepancies = compare_schemas(pydantic_schemas, zod_schemas)
 
     # Initialize by_severity at function scope for use in both printing and report
-    by_severity: Dict[str, List[Dict]] = {"CRITICAL": [], "HIGH": [], "MEDIUM": [], "LOW": []}
+    by_severity: Dict[str, List[Dict]] = {
+        "CRITICAL": [],
+        "HIGH": [],
+        "MEDIUM": [],
+        "LOW": [],
+    }
 
     if not discrepancies:
         print("  No discrepancies found! Schemas are synchronized.")

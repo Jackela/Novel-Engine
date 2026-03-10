@@ -20,13 +20,12 @@ content = content.replace(old, new)
 # Fix update_agent_knowledge
 content = content.replace(
     "async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]):",
-    "async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]) -> None:"
+    "async def update_agent_knowledge(self, agent_id: str, new_information: List[Dict]) -> None:",
 )
 
 # Fix example_usage
 content = content.replace(
-    "async def example_usage():",
-    "async def example_usage() -> None:"
+    "async def example_usage():", "async def example_usage() -> None:"
 )
 
 filepath.write_text(content)

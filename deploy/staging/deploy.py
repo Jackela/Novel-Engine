@@ -465,7 +465,9 @@ if __name__ == "__main__":
 
     def deploy(self, validate_only: bool = False) -> bool:
         """Execute complete staging deployment."""
-        logger.info(f"🚀 Starting Novel Engine staging deployment: {self.deployment_id}")
+        logger.info(
+            f"🚀 Starting Novel Engine staging deployment: {self.deployment_id}"
+        )
 
         # Step 1: System validation
         if not self.validate_system():
@@ -565,6 +567,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-

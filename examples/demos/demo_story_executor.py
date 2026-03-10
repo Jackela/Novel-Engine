@@ -8,7 +8,7 @@ enhancements through an interactive story: "The Stellar Convergence Protocol"
 
 Features Demonstrated:
 - Enterprise Multi-Agent Orchestration (Wave 5)
-- Emergent Narrative Intelligence (Wave 4) 
+- Emergent Narrative Intelligence (Wave 4)
 - Parallel Agent Coordination (Wave 3)
 - Enhanced Multi-Agent Bridge (Wave 2)
 - AI Intelligence Integration (Wave 1)
@@ -26,16 +26,15 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from src.agents.chronicler_agent import ChroniclerAgent
+from src.agents.persona_agent.agent import PersonaAgent
+
+# Import Novel Engine core components
+from src.core.event_bus import EventBus
 
 # Import our enhanced multi-agent system
 from src.orchestrators.enterprise_multi_agent_orchestrator import (
     create_enterprise_orchestrator,
 )
-
-
-# Import Novel Engine core components
-from src.core.event_bus import EventBus
-from src.agents.persona_agent.agent import PersonaAgent
 
 # Setup logging
 logging.basicConfig(
@@ -240,9 +239,7 @@ class MultiAgentDemoExecutor:
             logger.info(f"AI Intelligence systems initialized: {init_result}")
 
             # Initialize enhanced bridge AI systems
-            bridge_init = (
-                await self.enterprise_orchestrator.enhanced_bridge.initialize_ai_systems()
-            )
+            bridge_init = await self.enterprise_orchestrator.enhanced_bridge.initialize_ai_systems()
             logger.info(f"Enhanced bridge AI systems: {bridge_init}")
 
             # Start enterprise monitoring
@@ -388,9 +385,7 @@ class MultiAgentDemoExecutor:
 
                 # Get narrative intelligence insights
                 if hasattr(self.enterprise_orchestrator, "narrative_orchestrator"):
-                    narrative_dashboard = (
-                        await self.enterprise_orchestrator.narrative_orchestrator.get_narrative_intelligence_dashboard()
-                    )
+                    narrative_dashboard = await self.enterprise_orchestrator.narrative_orchestrator.get_narrative_intelligence_dashboard()
                     demo_results["narrative_intelligence"].append(narrative_dashboard)
 
                 # Track performance metrics
@@ -765,6 +760,3 @@ async def run_multi_agent_demo():
 if __name__ == "__main__":
     # Run the demo
     asyncio.run(run_multi_agent_demo())
-
-
-

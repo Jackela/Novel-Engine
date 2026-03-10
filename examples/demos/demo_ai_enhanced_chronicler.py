@@ -3,7 +3,7 @@
 AI-Enhanced ChroniclerAgent Demonstration
 =========================================
 
-This script demonstrates the complete end-to-end AI-powered workflow of the 
+This script demonstrates the complete end-to-end AI-powered workflow of the
 Novel Engine Multi-Agent Simulator, showcasing the ChroniclerAgent's ability
 to transcribe real Gemini API-generated campaign logs into dramatic narrative stories.
 

@@ -18,7 +18,6 @@ import logging
 from src.agents.chronicler_agent import ChroniclerAgent
 from src.agents.director_agent_integrated import DirectorAgent
 
-
 # Configure logging for demo output
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

@@ -366,39 +366,61 @@ def ensure_required_services(request):
         request.getfixturevalue("postgres_service")
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True, scope="function")
 def configure_test_logging():
     """Configure logging for tests to prevent structlog/standard logging conflicts.
 
     This prevents KeyError: "Attempt to overwrite 'message' in LogRecord" errors
     that can occur when structlog and standard library logging interact.
-    """
-    # Import and configure structlog for test environment
-    try:
-        import structlog
 
-        # Use a simple console renderer for tests to avoid conflicts
+    Uses function scope to properly isolate logging state between tests.
+    """
+    import structlog
+    from structlog._config import _CONFIG as structlog_config
+
+    # Save original configuration
+    original_processors = list(structlog_config.default_processors)
+    original_logger_factory = structlog_config.logger_factory
+    original_wrapper_class = structlog_config.default_wrapper_class
+    original_context_class = structlog_config.default_context_class
+    original_cache = structlog_config.cache_logger_on_first_use
+
+    # Configure structlog for test environment with safe settings
+    try:
         structlog.configure(
             processors=[
                 structlog.stdlib.filter_by_level,
                 structlog.stdlib.add_logger_name,
                 structlog.stdlib.add_log_level,
-                structlog.stdlib.PositionalArgumentsFormatter(),
                 structlog.processors.TimeStamper(fmt="iso"),
                 structlog.processors.StackInfoRenderer(),
                 structlog.processors.format_exc_info,
-                structlog.dev.ConsoleRenderer(colors=False),  # Disable colors for tests
+                # Use a safer renderer that doesn't conflict with stdlib
+                structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
             ],
             context_class=dict,
             logger_factory=structlog.stdlib.LoggerFactory(),
             wrapper_class=structlog.stdlib.BoundLogger,
-            cache_logger_on_first_use=True,
+            cache_logger_on_first_use=False,  # Disable caching for test isolation
         )
     except Exception:
         # If structlog configuration fails, continue with default logging
         pass
+
     yield
-    # No cleanup needed - logging configuration persists for test session
+
+    # Restore original configuration after test
+    try:
+        structlog_config.default_processors = original_processors
+        structlog_config.logger_factory = original_logger_factory
+        structlog_config.default_wrapper_class = original_wrapper_class
+        structlog_config.default_context_class = original_context_class
+        structlog_config.cache_logger_on_first_use = original_cache
+        # Clear context to prevent leakage between tests
+        structlog.contextvars.clear_contextvars()
+    except Exception:
+        # Ignore cleanup errors
+        pass
 
 
 @pytest.fixture

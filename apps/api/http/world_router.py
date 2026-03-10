@@ -349,7 +349,9 @@ async def apply_world_delta(
         # Execute command through command bus
         # In a real app, this would be injected via dependency injection
         from apps.api.infrastructure.command_bus import CommandBus
-        from src.contexts.world.application.commands.handlers import ApplyWorldDeltaHandler
+        from src.contexts.world.application.commands.handlers import (
+            ApplyWorldDeltaHandler,
+        )
 
         # Setup bus (temporary manual setup until DI is in place)
         bus = CommandBus()

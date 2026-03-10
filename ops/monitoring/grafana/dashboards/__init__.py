@@ -6,7 +6,7 @@ monitoring of the Novel Engine application and infrastructure components.
 
 Features:
 - Application performance dashboard templates
-- Infrastructure monitoring templates  
+- Infrastructure monitoring templates
 - Business metrics dashboard templates
 - Custom panel configurations
 - Dashboard variables and templating

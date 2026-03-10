@@ -243,21 +243,21 @@ class TestMigrationValidator:
 
         # Directory structure validation
         print("📁 Validating directory structure...")
-        self.results["validation_results"][
-            "directory_structure"
-        ] = self.validate_directory_structure()
+        self.results["validation_results"]["directory_structure"] = (
+            self.validate_directory_structure()
+        )
 
         # Pytest discovery validation
         print("🔍 Validating pytest discovery...")
-        self.results["validation_results"][
-            "pytest_discovery"
-        ] = self.validate_pytest_discovery()
+        self.results["validation_results"]["pytest_discovery"] = (
+            self.validate_pytest_discovery()
+        )
 
         # Import resolution validation
         print("📦 Validating import resolution...")
-        self.results["validation_results"][
-            "import_resolution"
-        ] = self.validate_import_resolution()
+        self.results["validation_results"]["import_resolution"] = (
+            self.validate_import_resolution()
+        )
 
         # File counting
         print("📊 Counting test files...")
@@ -265,9 +265,9 @@ class TestMigrationValidator:
 
         # Test distribution analysis
         print("🗂️ Analyzing test distribution...")
-        self.results["validation_results"][
-            "test_distribution"
-        ] = self.analyze_test_distribution()
+        self.results["validation_results"]["test_distribution"] = (
+            self.analyze_test_distribution()
+        )
 
         # Overall migration status
         self.determine_migration_status()

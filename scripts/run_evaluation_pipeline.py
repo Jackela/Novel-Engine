@@ -447,7 +447,9 @@ class AlertSystem:
         alert_level = (
             "CRITICAL"
             if not results.pipeline_success
-            else "WARNING" if regressions else "INFO"
+            else "WARNING"
+            if regressions
+            else "INFO"
         )
 
         # Generate alert message

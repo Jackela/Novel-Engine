@@ -473,6 +473,7 @@ class TestKnowledgeSyncEventHandler:
         await handler.stop()
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(60)
     async def test_queue_full_rejects_task(
         self,
         mock_ingestion_service: Mock,

@@ -36,58 +36,56 @@ def fix_file(filepath: Path) -> bool:
     global files_modified
     content = filepath.read_text()
     original_content = content
-    
+
     # Pattern 1: Fix _dict_to_hashable(values) -> _dict_to_hashable(values: Any)
     if "def _dict_to_hashable(values)" in content:
         content = content.replace(
-            "def _dict_to_hashable(values)",
-            "def _dict_to_hashable(values: Any)"
+            "def _dict_to_hashable(values)", "def _dict_to_hashable(values: Any)"
         )
         count_fix("_dict_to_hashable")
-    
+
     # Pattern 2: Fix __eq__(self, other) -> __eq__(self, other: Any)
     # Careful: only fix if it doesn't already have a type
     content = re.sub(
-        r'def __eq__\(self, other\)(?!\s*:)',  # Match if not already typed
-        'def __eq__(self, other: Any)',
-        content
+        r"def __eq__\(self, other\)(?!\s*:)",  # Match if not already typed
+        "def __eq__(self, other: Any)",
+        content,
     )
-    if 'def __eq__(self, other: Any)' in content and 'def __eq__(self, other)' in original_content:
+    if (
+        "def __eq__(self, other: Any)" in content
+        and "def __eq__(self, other)" in original_content
+    ):
         count_fix("__eq__ other: Any")
-    
+
     # Pattern 3: Fix **kwargs without type in method signatures
     # Pattern: def method(self, **kwargs): -> def method(self, **kwargs: Any):
     content = re.sub(
-        r'(\s)def ([a-z_][a-z0-9_]*)\(([^)]*),?\s*\*\*kwargs\)(?!\s*:)',
-        r'\1def \2(\3, **kwargs: Any)',
-        content
+        r"(\s)def ([a-z_][a-z0-9_]*)\(([^)]*),?\s*\*\*kwargs\)(?!\s*:)",
+        r"\1def \2(\3, **kwargs: Any)",
+        content,
     )
-    
+
     # Pattern 4: Fix default=None without type
     # Pattern: default=None -> default: Any = None
-    content = re.sub(
-        r'([a-z_][a-z0-9_]*)=None(?=\))',
-        r'\1: Any = None',
-        content
-    )
-    
+    content = re.sub(r"([a-z_][a-z0-9_]*)=None(?=\))", r"\1: Any = None", content)
+
     # Pattern 5: Fix other=anything without type
     # Pattern: def method(self, other): -> def method(self, other: Any):
     # But skip if it already has type annotation
     content = re.sub(
-        r'def ([a-z_][a-z0-9_]*)\(self, other\)(?!\s*:)(?!\s*->)',
-        r'def \1(self, other: Any)',
-        content
+        r"def ([a-z_][a-z0-9_]*)\(self, other\)(?!\s*:)(?!\s*->)",
+        r"def \1(self, other: Any)",
+        content,
     )
-    
+
     # Pattern 6: Fix cls methods without return type
     content = re.sub(
-        r'^(\s+)def ([a-z_][a-z0-9_]*)\(cls\)(?!\s*:\s*\n)(?!\s*->)',
-        r'\1def \2(cls) -> None:',
+        r"^(\s+)def ([a-z_][a-z0-9_]*)\(cls\)(?!\s*:\s*\n)(?!\s*->)",
+        r"\1def \2(cls) -> None:",
         content,
-        flags=re.MULTILINE
+        flags=re.MULTILINE,
     )
-    
+
     # Write back if changed
     if content != original_content:
         if not DRY_RUN:
@@ -109,7 +107,7 @@ def process_directory(directory: Path) -> None:
             continue
         if "test" in str(filepath).lower() and "testing" not in str(filepath).lower():
             continue
-            
+
         try:
             fix_file(filepath)
         except Exception as e:
@@ -122,11 +120,11 @@ def main():
     print("=" * 60)
     if DRY_RUN:
         print("DRY RUN MODE - No changes will be made")
-    
+
     print(f"\nProcessing Python files in {SRC_DIR}...")
-    
+
     process_directory(SRC_DIR)
-    
+
     print("\n" + "=" * 60)
     print("Summary:")
     print(f"  - Files modified: {files_modified}")

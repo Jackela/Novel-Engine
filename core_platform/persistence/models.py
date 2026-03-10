@@ -6,7 +6,7 @@ Base model classes, mixins, and common database patterns for Novel Engine platfo
 """
 
 import uuid
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, TypeVar
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, String, Text, event

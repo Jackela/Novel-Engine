@@ -33,11 +33,7 @@ import structlog
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.contexts.knowledge.application.ports.i_embedding_service import (
-    IEmbeddingService,
-)
 from src.contexts.knowledge.application.ports.i_vector_store import (
-    IVectorStore,
     QueryResult,
 )
 from src.contexts.knowledge.application.services.knowledge_ingestion_service import (
@@ -51,7 +47,6 @@ from src.contexts.knowledge.application.services.retrieval_service import (
     RetrievalOptions,
     RetrievalService,
 )
-from src.contexts.knowledge.domain.models.source_type import SourceType
 
 logger = structlog.get_logger()
 
@@ -269,7 +264,9 @@ class InMemoryVectorStore:
         return True
 
 
-def load_golden_dataset(path: Path) -> tuple[list[GoldenQuestion], list[GoldenDocument]]:
+def load_golden_dataset(
+    path: Path,
+) -> tuple[list[GoldenQuestion], list[GoldenDocument]]:
     """
     Load golden dataset from JSON file.
 
@@ -374,7 +371,12 @@ def check_fuzzy_match(expected: str, retrieved: str, threshold: float = 0.6) -> 
     Returns:
         True if fuzzy match above threshold
     """
-    return SequenceMatcher(None, normalize_text(expected), normalize_text(retrieved)).ratio() >= threshold
+    return (
+        SequenceMatcher(
+            None, normalize_text(expected), normalize_text(retrieved)
+        ).ratio()
+        >= threshold
+    )
 
 
 async def evaluate_question(
@@ -566,16 +568,16 @@ def print_report(report: EvaluationReport) -> None:
     print("GOLDEN DATASET EVALUATION REPORT")
     print("=" * 60)
     print(f"Timestamp: {report.timestamp}")
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Total Questions:     {report.total_questions}")
     print(f"  Passed:              {report.passed_questions}")
     print(f"  Failed:              {report.failed_questions}")
     print(f"  Pass Rate:           {report.pass_rate:.2%}")
-    print(f"\nMatch Statistics:")
+    print("\nMatch Statistics:")
     print(f"  Exact Matches:       {report.total_exact_matches}")
     print(f"  Substring Matches:   {report.total_substring_matches}")
     print(f"  Fuzzy Matches:       {report.total_fuzzy_matches}")
-    print(f"\nQuality Metrics:")
+    print("\nQuality Metrics:")
     print(f"  Avg Relevance Score: {report.average_relevance_score:.3f}")
     print(f"  Source Type Coverage: {report.source_type_coverage:.2%}")
 
@@ -588,7 +590,7 @@ def print_report(report: EvaluationReport) -> None:
             print(f"    Expected facts: {result.expected_facts}")
             print(f"    Matches found: {result.matches_found}")
             if not result.has_expected_source_type:
-                print(f"    Missing expected source type")
+                print("    Missing expected source type")
             print()
 
     print("=" * 60)
@@ -649,7 +651,7 @@ async def main() -> int:
     # Run evaluation
     try:
         report = await run_evaluation(args.dataset, args.baseline_score)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error("dataset_not_found", path=str(args.dataset))
         print(f"Error: Dataset file not found: {args.dataset}")
         return 1
@@ -698,10 +700,14 @@ async def main() -> int:
 
     # Return exit code based on pass rate
     if report.pass_rate >= args.baseline_score:
-        print(f"\n✓ Pass rate {report.pass_rate:.2%} meets baseline {args.baseline_score:.2%}")
+        print(
+            f"\n✓ Pass rate {report.pass_rate:.2%} meets baseline {args.baseline_score:.2%}"
+        )
         return 0
     else:
-        print(f"\n✗ Pass rate {report.pass_rate:.2%} below baseline {args.baseline_score:.2%}")
+        print(
+            f"\n✗ Pass rate {report.pass_rate:.2%} below baseline {args.baseline_score:.2%}"
+        )
         return 1
 
 

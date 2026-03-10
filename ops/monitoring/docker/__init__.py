@@ -35,7 +35,7 @@ __all__ = [
 
 
 def monitor_containers(
-    filter_labels: Optional[Dict[str, str]] = None
+    filter_labels: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
     Monitor Docker containers and their health status.

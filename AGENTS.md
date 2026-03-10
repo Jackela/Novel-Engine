@@ -25,12 +25,32 @@
   - Every public function MUST have a Docstring explaining "Why", not just "What".
 - **Logs**: Use `structlog`. All logs must be structured JSON.
 
-## IV. The Feedback Loop
-Before marking a task as complete, you MUST run:
-1. `npm run typecheck` (Frontend)
-2. `npm run lint` (Frontend & Backend)
-3. `pytest` (Backend Logic)
-4. `npm run test:e2e` (Frontend Layout & Integration)
+## IV. The Feedback Loop (NON-NEGOTIABLE)
+
+**⚠️ CRITICAL: ALL CHECKS MUST PASS - NO EXCEPTIONS**
+
+Before marking a task as complete, you MUST run AND ALL MUST PASS:
+1. ✅ `npm run typecheck` (Frontend)
+2. ✅ `npm run lint` (Frontend & Backend)
+3. ✅ `pytest` (Backend Logic - FULL SUITE)
+4. ✅ `npm run test:e2e` (Frontend Layout & Integration)
+5. ✅ `pre-commit run --all-files` (All hooks)
+6. ✅ `mypy src/` (Type checking - fix all errors)
+
+**NO BYPASSING, NO SKIPPING, NO EXEMPTIONS**
+- "不允许跳过任何检查" (No skipping checks allowed)
+- If checks fail → Fix them
+- If checks timeout → Increase timeout and run again
+- If checks are slow → Run them anyway
+
+Timeout configuration for large suites:
+```bash
+# Increase pre-commit timeout (default 120s)
+export PRE_COMMIT_TIMEOUT=600  # 10 minutes
+
+# Increase pytest timeout
+pytest tests/ --timeout=300  # 5 minutes per test
+```
 
 ## IV-A. Pre-commit Hooks (Catch Issues Before Commit)
 
@@ -99,19 +119,24 @@ ls .git/hooks/pre-commit
 pre-commit install
 ```
 
-**Hook failing but you need to commit?**
-```bash
-# Skip specific hook (use sparingly!)
-SKIP=ruff git commit -m "your message"
+**⚠️ CRITICAL: NO SKIPPING POLICY**
 
-# Skip all hooks (emergency only - will likely fail CI)
-git commit -m "your message" --no-verify
-```
+Per project standards, **YOU MUST NOT SKIP ANY CHECKS**. All hooks must pass:
+- ❌ NO `SKIP=hook_name git commit`
+- ❌ NO `git commit --no-verify`
+- ❌ NO bypassing pre-commit hooks
+
+If a hook fails:
+1. **Fix the root cause** - don't skip
+2. Run `pre-commit run --all-files` to verify fixes
+3. Only commit when all checks pass
+
+> "不允许跳过任何检查" - No checks may be skipped. Quality is non-negotiable.
 
 **Performance issues?**
 - First run is slow (downloads environments)
 - Subsequent runs are fast (cached)
-- Smoke tests are skipped in CI (separate job)
+- Increase timeout for large test suites: `PRE_COMMIT_TIMEOUT=600 pre-commit run --all-files`
 
 ### Why Pre-commit Matters
 

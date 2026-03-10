@@ -143,8 +143,12 @@ class CompleteDemoRunner:
             print(
                 f"✅ System started successfully: {startup_result.data['system_health']}"
             )
-            print(f"   📊 Active subsystems: {startup_result.data['active_subsystems']}")
-            print(f"   🚀 Configuration: {startup_result.data['configuration']['mode']}")
+            print(
+                f"   📊 Active subsystems: {startup_result.data['active_subsystems']}"
+            )
+            print(
+                f"   🚀 Configuration: {startup_result.data['configuration']['mode']}"
+            )
         else:
             error_msg = (
                 startup_result.error.message

@@ -34,8 +34,7 @@ from src.agents.chronicler_agent import create_chronicler_with_output
 
 # Configure logging for demonstration
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -124,33 +123,56 @@ def demonstrate_chronicler_transcription():
         print("-" * 40)
 
         # Check for key characters
-        has_trooper_86 = "Trooper 86" in complete_narrative or "trooper 86" in complete_narrative.lower()
-        has_griznork = "Griznork" in complete_narrative or "griznork" in complete_narrative.lower()
+        has_trooper_86 = (
+            "Trooper 86" in complete_narrative
+            or "trooper 86" in complete_narrative.lower()
+        )
+        has_griznork = (
+            "Griznork" in complete_narrative or "griznork" in complete_narrative.lower()
+        )
 
         # Check for Novel Engine atmosphere
         wh40k_terms = [
-            "Emperor", "grim darkness", "far future", "war", "41st millennium", 
-            "Space Marines", "Imperial", "Orks", "Death Korps", "Krieg"
+            "Emperor",
+            "grim darkness",
+            "far future",
+            "war",
+            "41st millennium",
+            "Space Marines",
+            "Imperial",
+            "Orks",
+            "Death Korps",
+            "Krieg",
         ]
-        wh40k_score = sum(1 for term in wh40k_terms if term.lower() in complete_narrative.lower())
+        wh40k_score = sum(
+            1 for term in wh40k_terms if term.lower() in complete_narrative.lower()
+        )
 
         # Check for narrative coherence (basic checks)
         has_opening = len(complete_narrative) > 100
-        has_proper_structure = "." in complete_narrative and len(complete_narrative.split('.')) > 3
+        has_proper_structure = (
+            "." in complete_narrative and len(complete_narrative.split(".")) > 3
+        )
 
         print("🪖 Character Representation:")
-        print(f"   Trooper 86 (Death Korps): {'✅ Present' if has_trooper_86 else '❌ Missing'}")
+        print(
+            f"   Trooper 86 (Death Korps): {'✅ Present' if has_trooper_86 else '❌ Missing'}"
+        )
         print(f"   Griznork (Orks): {'✅ Present' if has_griznork else '❌ Missing'}")
         print()
 
         print("🌌 Novel Engine Atmosphere:")
         print(f"   Atmospheric Terms: {wh40k_score}/{len(wh40k_terms)} detected")
-        print(f"   Atmosphere Quality: {'✅ Excellent' if wh40k_score >= 5 else '⚠️ Adequate' if wh40k_score >= 3 else '❌ Poor'}")
+        print(
+            f"   Atmosphere Quality: {'✅ Excellent' if wh40k_score >= 5 else '⚠️ Adequate' if wh40k_score >= 3 else '❌ Poor'}"
+        )
         print()
 
         print("📝 Narrative Structure:")
         print(f"   Length: {'✅ Sufficient' if has_opening else '❌ Too Short'}")
-        print(f"   Structure: {'✅ Coherent' if has_proper_structure else '❌ Fragmented'}")
+        print(
+            f"   Structure: {'✅ Coherent' if has_proper_structure else '❌ Fragmented'}"
+        )
         print()
 
         # Step 6: Display chronicler statistics
@@ -161,7 +183,9 @@ def demonstrate_chronicler_transcription():
 
         print("📈 Processing Statistics:")
         print(f"   Events Processed: {status['processing_stats']['events_processed']}")
-        print(f"   Narratives Generated: {status['processing_stats']['narratives_generated']}")
+        print(
+            f"   Narratives Generated: {status['processing_stats']['narratives_generated']}"
+        )
         print(f"   LLM Calls Made: {status['processing_stats']['llm_calls_made']}")
         print(f"   Error Count: {status['processing_stats']['error_count']}")
         print()
@@ -169,11 +193,13 @@ def demonstrate_chronicler_transcription():
         print("🏥 System Health:")
         print(f"   Status: {status['system_health']['status'].upper()}")
         print(f"   Templates Loaded: {status['system_health']['templates_loaded']}")
-        print(f"   Faction Descriptions: {status['system_health']['faction_descriptions_loaded']}")
+        print(
+            f"   Faction Descriptions: {status['system_health']['faction_descriptions_loaded']}"
+        )
         print()
 
         print("🔧 Capabilities:")
-        for capability, enabled in status['capabilities'].items():
+        for capability, enabled in status["capabilities"].items():
             status_icon = "✅" if enabled else "❌"
             print(f"   {capability.replace('_', ' ').title()}: {status_icon}")
         print()
@@ -183,8 +209,11 @@ def demonstrate_chronicler_transcription():
         print("-" * 40)
 
         overall_success = (
-            has_trooper_86 and has_griznork and 
-            wh40k_score >= 3 and has_opening and has_proper_structure
+            has_trooper_86
+            and has_griznork
+            and wh40k_score >= 3
+            and has_opening
+            and has_proper_structure
         )
 
         if overall_success:
@@ -230,7 +259,7 @@ def display_narrative_preview(narrative: str, max_lines: int = 20):
     print("📖 NARRATIVE PREVIEW (First 20 lines)")
     print("-" * 60)
 
-    lines = narrative.split('\n')
+    lines = narrative.split("\n")
     preview_lines = lines[:max_lines]
 
     for i, line in enumerate(preview_lines, 1):
@@ -254,55 +283,69 @@ def validate_novel_engine_atmosphere(narrative: str) -> dict:
         Dictionary of validation results
     """
     validation_results = {
-        'grimdark_terms': 0,
-        'faction_terms': 0,
-        'character_mentions': 0,
-        'atmospheric_quality': 'Unknown'
+        "grimdark_terms": 0,
+        "faction_terms": 0,
+        "character_mentions": 0,
+        "atmospheric_quality": "Unknown",
     }
 
     narrative_lower = narrative.lower()
 
     # Check for grimdark atmosphere
     grimdark_terms = [
-        'grim darkness', 'far future', 'only war', '41st millennium',
-        'emperor', 'darkness', 'war', 'death', 'sacrifice', 'duty'
+        "grim darkness",
+        "far future",
+        "only war",
+        "41st millennium",
+        "emperor",
+        "darkness",
+        "war",
+        "death",
+        "sacrifice",
+        "duty",
     ]
 
     for term in grimdark_terms:
         if term in narrative_lower:
-            validation_results['grimdark_terms'] += 1
+            validation_results["grimdark_terms"] += 1
 
     # Check for faction representation
     faction_terms = [
-        'death korps', 'krieg', 'astra militarum', 'imperial guard',
-        'orks', 'goff', 'space marines', 'Engineering Team'
+        "death korps",
+        "krieg",
+        "astra militarum",
+        "imperial guard",
+        "orks",
+        "goff",
+        "space marines",
+        "Engineering Team",
     ]
 
     for term in faction_terms:
         if term in narrative_lower:
-            validation_results['faction_terms'] += 1
+            validation_results["faction_terms"] += 1
 
     # Check for character mentions
-    characters = ['trooper 86', 'griznork']
+    characters = ["trooper 86", "griznork"]
     for character in characters:
         if character in narrative_lower:
-            validation_results['character_mentions'] += 1
+            validation_results["character_mentions"] += 1
 
     # Determine overall atmospheric quality
     total_score = (
-        validation_results['grimdark_terms'] +
-        validation_results['faction_terms'] +
-        validation_results['character_mentions']
+        validation_results["grimdark_terms"]
+        + validation_results["faction_terms"]
+        + validation_results["character_mentions"]
     )
 
     if total_score >= 8:
-        validation_results['atmospheric_quality'] = 'Excellent'
+        validation_results["atmospheric_quality"] = "Excellent"
     elif total_score >= 5:
-        validation_results['atmospheric_quality'] = 'Good'
+        validation_results["atmospheric_quality"] = "Good"
     elif total_score >= 3:
-        validation_results['atmospheric_quality'] = 'Adequate'
+        validation_results["atmospheric_quality"] = "Adequate"
     else:
-        validation_results['atmospheric_quality'] = 'Poor'
+        validation_results["atmospheric_quality"] = "Poor"
 
     return validation_results
 
@@ -318,7 +361,9 @@ def main():
         if narrative and success:
             print("🚀 ChroniclerAgent demonstration completed successfully!")
             print()
-            print("The Novel Engine Multi-Agent Simulator has successfully demonstrated")
+            print(
+                "The Novel Engine Multi-Agent Simulator has successfully demonstrated"
+            )
             print("its complete end-to-end workflow from structured simulation data")
             print("to dramatic narrative storytelling.")
             print()

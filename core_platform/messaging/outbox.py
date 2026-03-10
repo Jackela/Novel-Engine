@@ -9,7 +9,7 @@ to ensure eventual consistency between database operations and message publishin
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import and_, delete, or_, select, update

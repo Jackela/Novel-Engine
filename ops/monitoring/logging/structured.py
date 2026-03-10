@@ -115,9 +115,9 @@ class LoggingConfig:
 
     # Centralized logging
     enable_remote_logging: bool = False
-    remote_endpoint: Optional[
-        str
-    ] = None  # e.g., "http://localhost:3100/loki/api/v1/push"
+    remote_endpoint: Optional[str] = (
+        None  # e.g., "http://localhost:3100/loki/api/v1/push"
+    )
     remote_auth: Optional[Dict[str, str]] = None
 
     # Security logging
@@ -359,9 +359,7 @@ class StructuredLogger:
                 # This should be customized based on the authentication system.
                 self.logger.debug("User context extraction not configured")
             except Exception:
-                self.logger.debug(
-                    "User context extraction failed", exc_info=True
-                )
+                self.logger.debug("User context extraction failed", exc_info=True)
 
         return context
 

@@ -4,7 +4,7 @@ Novel Engine Observability Server
 
 Central server that integrates all monitoring components:
 - Prometheus metrics endpoint
-- Health check endpoints  
+- Health check endpoints
 - Dashboard data APIs
 - Alert management APIs
 - Synthetic monitoring status
@@ -535,7 +535,7 @@ class ObservabilityServer:
 
 # Factory function to create observability server
 def create_observability_server(
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None,
 ) -> ObservabilityServer:
     """Create and configure observability server"""
     return ObservabilityServer(config)
