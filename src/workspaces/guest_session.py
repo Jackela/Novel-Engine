@@ -174,7 +174,7 @@ class GuestSessionManager:
         }
         token = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
         # Handle both bytes and str return types from jwt.encode (version dependent)
-        token_str: str = token.decode("utf-8") if isinstance(token, bytes) else token  # type: ignore[unreachable]
+        token_str: str = token.decode("utf-8") if isinstance(token, bytes) else token
         return _assert_safe_cookie_value(token_str)
 
     def resolve_or_create(self, token: Optional[str]) -> GuestSessionResult:

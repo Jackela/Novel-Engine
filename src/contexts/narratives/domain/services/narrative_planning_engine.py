@@ -65,7 +65,7 @@ class NarrativePlanningEngine:
                 **base_payload,
             )
 
-        return NarrativeGuidance(  # type: ignore[unreachable]
+        return NarrativeGuidance(
             primary_narrative_goal="Maintain narrative continuity",
             **base_payload,
         )

@@ -129,10 +129,10 @@ class WorldStateChanged(Event):
         """
         errors: list[Any] = []
         if not isinstance(self.change_type, WorldChangeType):
-            errors.append("change_type must be a WorldChangeType enum value")  # type: ignore[unreachable]
+            errors.append("change_type must be a WorldChangeType enum value")
 
         if not isinstance(self.severity, WorldEventSeverity):
-            errors.append("severity must be a WorldEventSeverity enum value")  # type: ignore[unreachable]
+            errors.append("severity must be a WorldEventSeverity enum value")
 
         # Validate entity-related changes
         if self.change_type in [
