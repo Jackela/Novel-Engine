@@ -52,7 +52,7 @@ async def create_or_resume_guest_session(
         safe_cookie,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
+        samesite=settings.cookie_samesite,  # type: ignore[arg-type]
         max_age=manager.cookie_max_age_seconds(),
     )
     return GuestSessionResponse(workspace_id=workspace.id, created=True)
@@ -104,7 +104,7 @@ async def import_workspace_zip(
         safe_cookie,
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
+        samesite=settings.cookie_samesite,  # type: ignore[arg-type]
         max_age=manager.cookie_max_age_seconds(),
     )
     return GuestSessionResponse(workspace_id=workspace.id, created=True)

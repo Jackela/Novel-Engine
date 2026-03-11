@@ -132,7 +132,7 @@ async def generate_dialogue(
         request, payload.character_id, workspace_id, payload
     )
 
-    result = generator.generate_dialogue(
+    result = await generator.generate_dialogue(
         character=character_data,
         context=payload.context,
         mood=payload.mood,

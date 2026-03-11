@@ -203,6 +203,12 @@ module = [
 ]
 disallow_untyped_decorators = false
 
+# Disable unreachable warnings for coordinates module due to type narrowing
+[[tool.mypy.overrides]]
+module = "src.contexts.world.domain.value_objects.coordinates"
+warn_unreachable = false
+warn_unused_ignores = false
+
 # Coverage configuration
 [tool.coverage.run]
 source = ["src"]

@@ -64,7 +64,7 @@ class NarrativeActionResolver:
         """Initializes the NarrativeActionResolver."""
         self.campaign_brief = campaign_brief
         self.logger = logging.getLogger(f"{__name__}.NarrativeActionResolver")
-        self.investigation_counter = 0
+        self.investigation_counter: int = 0
         self.dialogue_history: List[Dict[str, Any]] = []
         self.story_state: Dict[str, Any] = {}
 
@@ -223,7 +223,7 @@ class NarrativeActionResolver:
 
     def _check_story_advancement(self, action_type: str) -> List[str]:
         """Checks if this action triggers story progression markers."""
-        advancement: list[Any] = []
+        advancement: List[Any] = []
         if self.campaign_brief:
             if action_type == "investigation" and self.investigation_counter >= 3:
                 advancement.append("Investigation milestone reached")

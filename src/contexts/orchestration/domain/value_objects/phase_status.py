@@ -9,7 +9,7 @@ types, and state transitions in the turn orchestration system.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 
 class PhaseType(Enum):
@@ -360,7 +360,7 @@ class PhaseStatus:
             compensation_actions=updates.get(
                 "compensation_actions", self.compensation_actions
             ),
-            metadata={**(self.metadata or {}), **(dict(updates.get("metadata") or {}))},
+            metadata={**(self.metadata or {}), **(updates.get("metadata") or {})},
         )
 
     def update_progress(
@@ -398,7 +398,7 @@ class PhaseStatus:
             events_processed=events_processed or self.events_processed,
             error_message=self.error_message,
             compensation_actions=self.compensation_actions,
-            metadata={**(self.metadata or {}), **(dict(updates.get("metadata") or {}))},
+            metadata={**(self.metadata or {}), **(cast(dict[str, Any], updates.get("metadata")) or {})},
         )
 
     def get_execution_time(self) -> Optional[timedelta]:

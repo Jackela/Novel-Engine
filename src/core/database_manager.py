@@ -323,8 +323,9 @@ class DatabaseConnection:
             try:
                 await asyncio.sleep(self.config.health_check_interval)
 
-                if self.state == ConnectionState.CLOSED:
-                    break
+                # State may have changed during sleep, check again
+                if self.state == ConnectionState.CLOSED:  # type: ignore[comparison-overlap]
+                    break  # type: ignore[unreachable]
 
                 await self.health_check()
 
@@ -1084,7 +1085,7 @@ class DatabaseManager:
         """Execute multiple queries in a transaction. (Legacy - use execute_transaction_result)"""
         result = await self.execute_transaction_result(queries, pool_name)
         if result.is_ok:
-            return result.value
+            return bool(result.value)
         if result.error:
             raise RuntimeError(result.error.message)
         raise RuntimeError("Unknown error")
@@ -1165,7 +1166,7 @@ class DatabaseManager:
         """Perform health check on all pools. (Legacy - use health_check_result)"""
         result = await self.health_check_result()
         if result.is_ok:
-            return result.value
+            return result.value  # type: ignore[no-any-return]
         error_msg = result.error.message if result.error else "Unknown error"
         return {"error": {"healthy": False, "message": error_msg}}
 

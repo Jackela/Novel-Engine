@@ -40,9 +40,9 @@ try:
 except ImportError as e:  # pragma: no cover - fallback for tooling-only contexts
     logging.getLogger(__name__).warning(f"Iron Laws types not available: {e}")
     IRON_LAWS_AVAILABLE = False
-    ActionIntensity = ActionTarget = ActionType = EntityType = CharacterData = object  # type: ignore
-    IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore
-    ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore
+    ActionIntensity = ActionTarget = ActionType = EntityType = CharacterData = object  # type: ignore[misc,unused-ignore]
+    IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore[misc,unused-ignore]
+    ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore[misc,unused-ignore]
 
 logger = structlog.get_logger(__name__)
 
@@ -619,7 +619,7 @@ class IronLawsProcessor:
     ) -> bool:
         """Check if character has required equipment."""
         items = getattr(character_data, "equipment", None)
-        if items is None and isinstance(character_data, dict):  # type: ignore[unreachable]
+        if items is None and isinstance(character_data, dict):
             items = character_data.get("equipment")
         if items is None:
             return False
@@ -822,15 +822,15 @@ class IronLawsProcessor:
     ) -> Optional["CharacterData"]:
         """Extract character data from agent for validation purposes."""
         if hasattr(agent, "character_data"):
-            return agent.character_data  # type: ignore[no-any-return]
+            return agent.character_data  # type: ignore[no-any-return,unused-ignore]
         if hasattr(agent, "model_dump"):
-            return agent.model_dump()  # type: ignore[no-any-return]
+            return agent.model_dump()  # type: ignore[no-any-return,unused-ignore]
         return None
 
     @staticmethod
     def _normalize_intensity(intensity: Any) -> str:
         if isinstance(intensity, ActionIntensity):
-            return intensity.value
+            return str(intensity.value)
         if isinstance(intensity, str):
             return intensity.lower()
         return "normal"

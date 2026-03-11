@@ -466,31 +466,34 @@ class NarrativeCoherenceEngine:
         if not event.agent_id:
             return {}
 
+        growth_indicators: List[str] = []
+        relationship_changes: List[Dict[str, Any]] = []
+        skill_demonstrations: List[str] = []
         development: Dict[str, Any] = {
             "agent_id": event.agent_id,
             "development_type": "action_based",
-            "growth_indicators": [],
-            "relationship_changes": [],
-            "skill_demonstrations": [],
+            "growth_indicators": growth_indicators,
+            "relationship_changes": relationship_changes,
+            "skill_demonstrations": skill_demonstrations,
         }
 
         # 基于事件类型推断发展
         event_type = event.event_type.lower()
 
         if "social" in event_type or "negotiate" in event_type:
-            development["growth_indicators"].append("social_skills")
+            growth_indicators.append("social_skills")
         elif "combat" in event_type or "attack" in event_type:
-            development["growth_indicators"].append("combat_experience")
+            growth_indicators.append("combat_experience")
         elif "explore" in event_type or "investigate" in event_type:
-            development["growth_indicators"].append("knowledge_seeking")
+            growth_indicators.append("knowledge_seeking")
         elif "help" in event_type or "assist" in event_type:
-            development["growth_indicators"].append("altruism")
+            growth_indicators.append("altruism")
 
         # 分析参与者关系
         if event.participants:
             for participant in event.participants:
                 if participant != event.agent_id:
-                    development["relationship_changes"].append(
+                    relationship_changes.append(
                         {
                             "other_agent": participant,
                             "interaction_type": event.event_type,

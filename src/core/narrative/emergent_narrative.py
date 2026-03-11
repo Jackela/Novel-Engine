@@ -332,7 +332,7 @@ class EmergentNarrativeEngine:
         self, event_node: CausalNode
     ) -> Dict[str, Any]:
         """检查并处理冲突"""
-        conflicts: list[Any] = []
+        conflicts: List[Dict[str, Any]] = []
         # 检查是否与其他Agent的行动冲突
         for existing_event in self.causal_graph.nodes.values():
             if (
@@ -499,13 +499,6 @@ class EmergentNarrativeEngine:
         successors = list(self.causal_graph.graph.successors(event_node.node_id))
 
         # 分析影响范围
-        influence_scope = {
-            "direct_effects": len(successors),
-            "affected_agents": set(),
-            "affected_locations": set(),
-            "causal_chains": [],
-        }
-
         affected_agents: Set[str] = set()
         affected_locations: Set[str] = set()
         for successor_id in successors:
@@ -515,8 +508,13 @@ class EmergentNarrativeEngine:
                     affected_agents.add(successor.agent_id)
                 if successor.location:
                     affected_locations.add(successor.location)
-        influence_scope["affected_agents"] = affected_agents
-        influence_scope["affected_locations"] = affected_locations
+
+        influence_scope: Dict[str, Any] = {
+            "direct_effects": len(successors),
+            "affected_agents": affected_agents,
+            "affected_locations": affected_locations,
+            "causal_chains": [],
+        }
 
         # 查找因果链
         chains = self.causal_graph.find_causal_chain(event_node.node_id, max_depth=3)
@@ -750,7 +748,8 @@ def create_emergent_narrative_engine(
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage() -> None:
+    async def example_usage() -> None:  # type: ignore[no-redef]
+        # Example usage function
         engine = create_emergent_narrative_engine()
 
         # 初始化两个Agent

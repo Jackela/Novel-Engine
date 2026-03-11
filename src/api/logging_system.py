@@ -18,7 +18,7 @@ from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Generator, List, Optional
+from typing import Any, Generator, Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -64,7 +64,7 @@ class LogContext:
     operation: Optional[str] = None
     environment: str = "development"
     api_version: Optional[str] = None
-    additional_fields: Dict[str, Any] = field(default_factory=dict)
+    additional_fields: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -78,11 +78,11 @@ class StructuredLogEntry:
     logger_name: str
     context: LogContext
     duration_ms: Optional[float] = None
-    error_details: Optional[Dict[str, Any]] = None
-    performance_metrics: Optional[Dict[str, Any]] = None
-    security_context: Optional[Dict[str, Any]] = None
+    error_details: Optional[dict[str, Any]] = None
+    performance_metrics: Optional[dict[str, Any]] = None
+    security_context: Optional[dict[str, Any]] = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert log entry to dictionary for JSON serialization."""
         return {
             "timestamp": self.timestamp.isoformat(),
@@ -106,7 +106,7 @@ class PerformanceTracker:
     """Track performance metrics for operations."""
 
     def __init__(self) -> None:
-        self.active_operations: Dict[str, float] = {}
+        self.active_operations: dict[str, float] = {}
         self._lock = threading.Lock()
 
     def start_operation(self, operation_id: str) -> str:
@@ -138,7 +138,7 @@ class SecurityLogger:
         severity: LogLevel,
         message: str,
         context: LogContext,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log a security event with proper context."""
 
@@ -169,7 +169,7 @@ class SecurityLogger:
         # Log to main logger
         self.logger.log(getattr(logging, severity.value), log_entry.to_json())
 
-    def get_recent_security_events(self, limit: int = 100) -> List[StructuredLogEntry]:
+    def get_recent_security_events(self, limit: int = 100) -> list[StructuredLogEntry]:
         """Get recent security events."""
         with self._lock:
             return list(self.security_events)[-limit:]
@@ -189,7 +189,7 @@ class AuditLogger:
         resource: str,
         context: LogContext,
         outcome: str = "success",
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log an audit event."""
 
@@ -300,8 +300,8 @@ class StructuredLogger:
         category: LogCategory,
         message: str,
         duration_ms: Optional[float] = None,
-        error_details: Optional[Dict[str, Any]] = None,
-        performance_metrics: Optional[Dict[str, Any]] = None,
+        error_details: Optional[dict[str, Any]] = None,
+        performance_metrics: Optional[dict[str, Any]] = None,
         **kwargs: Any,
     ) -> StructuredLogEntry:
         """Create a structured log entry."""
@@ -395,7 +395,7 @@ class StructuredLogger:
         self,
         operation: str,
         duration_ms: float,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log performance metrics."""
 
@@ -437,7 +437,7 @@ class StructuredLogger:
         event_type: str,
         severity: LogLevel,
         message: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log a security event."""
         context = self.get_context()
@@ -450,7 +450,7 @@ class StructuredLogger:
         action: str,
         resource: str,
         outcome: str = "success",
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[dict[str, Any]] = None,
     ) -> None:
         """Log an audit event."""
         context = self.get_context()
@@ -577,7 +577,7 @@ def setup_logging(
 
     # Setup log endpoints
     @app.get("/api/logs/health", tags=["Monitoring"])
-    async def get_logging_health() -> Dict[str, Any]:
+    async def get_logging_health() -> dict[str, Any]:
         """Get logging system health."""
         return {
             "status": "healthy",
@@ -588,7 +588,7 @@ def setup_logging(
         }
 
     @app.get("/api/logs/security", tags=["Monitoring"])
-    async def get_security_events(limit: int = 100) -> Dict[str, Any]:
+    async def get_security_events(limit: int = 100) -> dict[str, Any]:
         """Get recent security events."""
         events = logger.security_logger.get_recent_security_events(limit)
         return {"events": [event.to_dict() for event in events], "count": len(events)}

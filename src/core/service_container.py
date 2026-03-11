@@ -24,6 +24,7 @@ from typing import (
     Set,
     Type,
     TypeVar,
+    assert_never,
     get_type_hints,
 )
 
@@ -713,7 +714,9 @@ class ServiceContainer:
         elif scope == ServiceScope.THREAD:
             thread_ident = threading.current_thread().ident
             return f"thread_{thread_ident}" if thread_ident is not None else "thread_unknown"
-        return "default"
+        else:
+            # Exhaustiveness check - all enum values should be handled above
+            assert_never(scope)
 
     def _create_instance(
         self, service_type: Type, descriptor: ServiceDescriptor, scope_key: str

@@ -9,7 +9,7 @@ across all API endpoints with proper HTTP status codes and error classification.
 import logging
 import time
 from datetime import datetime
-from typing import Any, List, Optional, Union
+from typing import Any, Optional, Union
 
 import structlog
 from fastapi import HTTPException, Request, status
@@ -180,7 +180,7 @@ class ErrorHandler:
 
     def create_validation_error_response(
         self,
-        validation_errors: List[ValidationError],
+        validation_errors: list[ValidationError],
         request_id: Optional[str] = None,
         processing_time: Optional[float] = None,
     ) -> ErrorResponse:

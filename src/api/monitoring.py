@@ -15,7 +15,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import structlog
 from fastapi import Request
@@ -50,9 +50,9 @@ class Metric:
     type: MetricType
     value: float
     timestamp: datetime
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert metric to dictionary format."""
         return {
             "name": self.name,
@@ -98,10 +98,10 @@ class MetricsCollector:
 
     def __init__(self, max_metrics_history: int = 10000) -> None:
         self.metrics: deque = deque(maxlen=max_metrics_history)
-        self.counters: Dict[str, float] = defaultdict(float)
-        self.gauges: Dict[str, float] = {}
-        self.histograms: Dict[str, List[float]] = defaultdict(list)
-        self.timers: Dict[str, List[float]] = defaultdict(list)
+        self.counters: dict[str, float] = defaultdict(float)
+        self.gauges: dict[str, float] = {}
+        self.histograms: dict[str, list[float]] = defaultdict(list)
+        self.timers: dict[str, list[float]] = defaultdict(list)
         # Use a re-entrant lock to avoid deadlocks when helper methods that also
         # acquire the lock (e.g., record_metric via record_timer) are called
         # from within other locked sections like end_request_timer.
@@ -109,10 +109,10 @@ class MetricsCollector:
 
         # Request tracking
         self.requests: deque = deque(maxlen=1000)
-        self.active_requests: Dict[str, float] = {}
+        self.active_requests: dict[str, float] = {}
 
         # Performance tracking
-        self.endpoint_stats: Dict[str, Dict[str, Any]] = defaultdict(
+        self.endpoint_stats: dict[str, dict[str, Any]] = defaultdict(
             lambda: {
                 "count": 0,
                 "total_time": 0.0,
@@ -129,7 +129,7 @@ class MetricsCollector:
         name: str,
         value: float,
         metric_type: MetricType,
-        labels: Optional[Dict[str, str]] = None,
+        labels: Optional[dict[str, str]] = None,
     ) -> None:
         """Record a metric with thread safety."""
         labels = labels or {}
@@ -162,25 +162,25 @@ class MetricsCollector:
                     self.timers[name] = self.timers[name][-1000:]
 
     def increment_counter(
-        self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float = 1.0, labels: Optional[dict[str, str]] = None
     ) -> None:
         """Increment a counter metric."""
         self.record_metric(name, value, MetricType.COUNTER, labels)
 
     def set_gauge(
-        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: Optional[dict[str, str]] = None
     ) -> None:
         """Set a gauge metric."""
         self.record_metric(name, value, MetricType.GAUGE, labels)
 
     def record_histogram(
-        self, name: str, value: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, value: float, labels: Optional[dict[str, str]] = None
     ) -> None:
         """Record a histogram value."""
         self.record_metric(name, value, MetricType.HISTOGRAM, labels)
 
     def record_timer(
-        self, name: str, duration_ms: float, labels: Optional[Dict[str, str]] = None
+        self, name: str, duration_ms: float, labels: Optional[dict[str, str]] = None
     ) -> None:
         """Record a timer value."""
         self.record_metric(name, duration_ms, MetricType.TIMER, labels)
@@ -235,7 +235,7 @@ class MetricsCollector:
                 },
             )
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """Get summary of all collected metrics."""
         with self._lock:
             current_time = datetime.now()
@@ -291,7 +291,7 @@ class MetricsCollector:
                 "active_requests": len(self.active_requests),
             }
 
-    def _percentile(self, values: List[float], percentile: int) -> float:
+    def _percentile(self, values: list[float], percentile: int) -> float:
         """Calculate percentile of values."""
         if not values:
             return 0.0
@@ -309,8 +309,8 @@ class AlertManager:
 
     def __init__(self, metrics_collector: MetricsCollector) -> None:
         self.metrics_collector = metrics_collector
-        self.alert_rules: List[AlertRule] = []
-        self.active_alerts: Dict[str, datetime] = {}
+        self.alert_rules: list[AlertRule] = []
+        self.active_alerts: dict[str, datetime] = {}
         self.alert_history: deque = deque(maxlen=1000)
         self._setup_default_alerts()
 
@@ -358,7 +358,7 @@ class AlertManager:
         self.alert_rules.append(rule)
         logger.info("Added alert rule: %s", rule.name)
 
-    def check_alerts(self) -> List[Dict[str, Any]]:
+    def check_alerts(self) -> list[dict[str, Any]]:
         """Check all alert rules and return triggered alerts."""
         triggered_alerts: list[Any] = []
         current_time = datetime.now()
@@ -423,8 +423,8 @@ class AlertManager:
     def _calculate_metric_value(
         self,
         rule: AlertRule,
-        summary: Dict[str, Any],
-        recent_requests: List[RequestMetrics],
+        summary: dict[str, Any],
+        recent_requests: list[RequestMetrics],
     ) -> float:
         """Calculate the current value for a metric."""
         if rule.metric_name == "error_rate":
@@ -534,7 +534,7 @@ class MonitoringMiddleware(BaseHTTPMiddleware):
             raise
 
 
-def setup_monitoring(app: Any, enable_alerts: bool = True) -> Dict[str, Any]:
+def setup_monitoring(app: Any, enable_alerts: bool = True) -> dict[str, Any]:
     """Setup monitoring middleware and endpoints."""
 
     # Create metrics collector and alert manager
@@ -546,7 +546,7 @@ def setup_monitoring(app: Any, enable_alerts: bool = True) -> Dict[str, Any]:
 
     # Add metrics endpoint
     @app.get("/api/metrics", tags=["Monitoring"])
-    async def get_metrics() -> Dict[str, Any]:
+    async def get_metrics() -> dict[str, Any]:
         """Get system metrics and statistics."""
         summary = metrics_collector.get_metrics_summary()
 
@@ -563,7 +563,7 @@ def setup_monitoring(app: Any, enable_alerts: bool = True) -> Dict[str, Any]:
 
     # Add performance endpoint
     @app.get("/api/metrics/performance", tags=["Monitoring"])
-    async def get_performance_metrics() -> Dict[str, Any]:
+    async def get_performance_metrics() -> dict[str, Any]:
         """Get detailed performance metrics."""
         summary = metrics_collector.get_metrics_summary()
 

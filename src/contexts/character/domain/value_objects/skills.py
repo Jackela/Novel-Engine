@@ -243,7 +243,7 @@ class Skills:
 
     def get_all_skills(self) -> List[Skill]:
         """Get all skills across all categories."""
-        all_skills: list[Any] = []
+        all_skills: list[Skill] = []
         for group in self.skill_groups.values():
             all_skills.extend(group.skills.values())
         return all_skills

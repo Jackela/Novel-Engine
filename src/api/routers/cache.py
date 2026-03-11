@@ -18,22 +18,22 @@ router = APIRouter(tags=["Cache"])
 
 
 @router.get("/cache/metrics")
-async def cache_metrics() -> Any:
+async def cache_metrics() -> dict[str, Any]:
     return get_cache_metrics()
 
 
 @router.post("/cache/invalidate")
-async def cache_invalidate(req: InvalidationRequest) -> Any:
+async def cache_invalidate(req: InvalidationRequest) -> dict[str, Any]:
     return invalidate_cache(req.all_of)
 
 
 @router.post("/cache/chunk/{key}")
-async def cache_chunk_append(key: str, req: ChunkInRequest) -> Any:
+async def cache_chunk_append(key: str, req: ChunkInRequest) -> dict[str, Any]:
     return append_chunk(key, req.seq, req.data)
 
 
 @router.post("/cache/chunk/{key}/complete")
-async def cache_chunk_complete(key: str) -> Any:
+async def cache_chunk_complete(key: str) -> dict[str, Any]:
     return mark_chunk_complete(key)
 
 

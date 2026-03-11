@@ -240,8 +240,8 @@ class Context7IntegrationAPI:
         logger.info("Context7 availability: %s", self.context7_available)
 
     async def _call_context7(
-        self, operation: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, operation: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Call Context7 MCP server with error handling."""
         if not self.context7_available:
             raise HTTPException(
@@ -250,7 +250,7 @@ class Context7IntegrationAPI:
 
         try:
             if self.context7_client:
-                result: Dict[str, Any] = await self.context7_client.call(
+                result: dict[str, Any] = await self.context7_client.call(
                     operation, params
                 )
                 return result
@@ -261,7 +261,7 @@ class Context7IntegrationAPI:
                         f"{self.base_url.rstrip('/')}/{operation}", json=params
                     )
                     response.raise_for_status()
-                    result_data: Dict[str, Any] = response.json()
+                    result_data: dict[str, Any] = response.json()
                     return result_data
 
             if self.allow_mock:
@@ -281,8 +281,8 @@ class Context7IntegrationAPI:
             )
 
     async def _mock_context7_response(
-        self, operation: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, operation: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         """Mock Context7 responses for development."""
         if operation == "generate_code_example":
             return {

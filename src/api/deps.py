@@ -78,7 +78,7 @@ def require_workspace_id(
                 manager.encode(default_workspace_id),
                 httponly=settings.cookie_httponly,
                 secure=settings.cookie_secure,
-                samesite=cast(Any, settings.cookie_samesite),
+                samesite=settings.cookie_samesite,  # type: ignore[arg-type]
                 max_age=manager.cookie_max_age_seconds(),
             )
             store.get_or_create(default_workspace_id)
@@ -90,7 +90,7 @@ def require_workspace_id(
         manager.encode(result.workspace_id),
         httponly=True,
         secure=settings.cookie_secure,
-        samesite=cast(Any, settings.cookie_samesite),
+        samesite=settings.cookie_samesite,  # type: ignore[arg-type]
         max_age=manager.cookie_max_age_seconds(),
     )
     return str(result.workspace_id)

@@ -234,7 +234,7 @@ class ProposalTerms:
     def _validate_no_circular_dependencies(self) -> None:
         """Validate that there are no circular dependencies between terms."""
 
-        def has_circular_dependency(term_id: str, visited: set, path: set) -> bool:
+        def has_circular_dependency(term_id: str, visited: set[str], path: set[str]) -> bool:
             if term_id in path:
                 return True
             if term_id in visited:
@@ -252,7 +252,7 @@ class ProposalTerms:
             path.remove(term_id)
             return False
 
-        visited: set[Any] = set()
+        visited: set[str] = set()
         for term in self.terms:
             if term.term_id not in visited:
                 if has_circular_dependency(term.term_id, visited, set()):

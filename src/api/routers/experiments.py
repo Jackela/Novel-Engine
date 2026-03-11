@@ -260,7 +260,7 @@ async def create_experiment(
 async def get_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
-) -> ExperimentSummaryResponse:
+) -> dict[str, Any]:
     """
     Get a specific experiment by ID.
 
@@ -365,7 +365,7 @@ async def delete_experiment(
 async def start_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
-) -> ExperimentSummaryResponse:
+) -> dict[str, Any]:
     """
     Start an experiment.
 
@@ -399,7 +399,7 @@ async def start_experiment(
 async def pause_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
-) -> ExperimentSummaryResponse:
+) -> dict[str, Any]:
     """
     Pause a running experiment.
 
@@ -433,7 +433,7 @@ async def pause_experiment(
 async def resume_experiment(
     experiment_id: str,
     service: ExperimentRouterService = Depends(get_experiment_service),
-) -> ExperimentSummaryResponse:
+) -> dict[str, Any]:
     """
     Resume a paused experiment.
 

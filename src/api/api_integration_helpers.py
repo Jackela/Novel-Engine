@@ -9,7 +9,7 @@ providing seamless documentation, examples, and pattern validation.
 
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 import structlog
 from fastapi import FastAPI, Request
@@ -38,9 +38,9 @@ class Context7EnhancedRoute(APIRoute):
     ) -> None:
         super().__init__(*args, **kwargs)
         self.context7_api = context7_api
-        self.example_cache: Dict[str, Any] = {}
+        self.example_cache: dict[str, Any] = {}
 
-    async def get_route_examples(self) -> List[Dict[str, Any]]:
+    async def get_route_examples(self) -> list[dict[str, Any]]:
         """Get Context7-powered examples for this route."""
         if not self.context7_api:
             return []
@@ -51,11 +51,11 @@ class Context7EnhancedRoute(APIRoute):
             if (
                 datetime.now() - cached_data["timestamp"]
             ).total_seconds() < 3600:  # 1 hour cache
-                result_list: List[Dict[str, Any]] = cached_data["examples"]
+                result_list: list[dict[str, Any]] = cached_data["examples"]
                 return result_list
 
         try:
-            examples: List[Any] = []
+            examples: list[Any] = []
             for method in self.methods:
                 example = await self.context7_api._call_context7(
                     "generate_code_example",
@@ -82,11 +82,11 @@ class APIDocumentationEnhancer:
 
     def __init__(self, context7_api: Optional[Any] = None) -> None:
         self.context7_api = context7_api
-        self.enhancement_cache: Dict[str, Any] = {}
+        self.enhancement_cache: dict[str, Any] = {}
 
     async def enhance_endpoint_documentation(
-        self, endpoint_path: str, method: str, existing_docs: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, endpoint_path: str, method: str, existing_docs: dict[str, Any]
+    ) -> dict[str, Any]:
         """Enhance endpoint documentation with Context7 features."""
         if not self.context7_api:
             return existing_docs
@@ -118,7 +118,7 @@ class APIDocumentationEnhancer:
 
     async def _get_endpoint_examples(
         self, endpoint_path: str, method: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Get Context7-powered code examples."""
         if not self.context7_api:
             return []
@@ -142,7 +142,7 @@ class APIDocumentationEnhancer:
             logger.warning("Failed to get examples for %s: %s", endpoint_path, e)
             return []
 
-    async def _get_best_practices(self, endpoint_path: str, method: str) -> List[str]:
+    async def _get_best_practices(self, endpoint_path: str, method: str) -> list[str]:
         """Get relevant best practices for the endpoint."""
         if not self.context7_api:
             return []
@@ -166,9 +166,9 @@ class APIDocumentationEnhancer:
 
     async def _get_framework_patterns(
         self, endpoint_path: str, method: str
-    ) -> List[str]:
+    ) -> list[str]:
         """Get relevant framework patterns."""
-        patterns: List[str] = []
+        patterns: list[str] = []
         # Analyze endpoint to suggest relevant patterns
         if "/{" in endpoint_path:  # Path parameters
             patterns.append("Path Parameter Validation")
@@ -196,7 +196,7 @@ class APIValidationEnhancer:
 
     async def validate_api_implementation(
         self, api_code: str, endpoint_path: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate API implementation using Context7 patterns."""
         if not self.context7_api:
             return {"valid": True, "message": "Context7 validation not available"}
@@ -313,7 +313,7 @@ class APIIntegrationManager:
         """Add integration-specific endpoints."""
 
         @self.app.get("/api/integration/examples/{endpoint_path:path}")
-        async def get_endpoint_examples(endpoint_path: str) -> Dict[str, Any]:
+        async def get_endpoint_examples(endpoint_path: str) -> dict[str, Any]:
             """Get Context7 examples for a specific endpoint."""
             try:
                 examples = await self.documentation_enhancer._get_endpoint_examples(
@@ -324,7 +324,7 @@ class APIIntegrationManager:
                 return {"success": False, "error": str(e)}
 
         @self.app.post("/api/integration/validate")
-        async def validate_api_code(request: Dict[str, Any]) -> Dict[str, Any]:
+        async def validate_api_code(request: dict[str, Any]) -> dict[str, Any]:
             """Validate API code using Context7 patterns."""
             api_code = request.get("code", "")
             endpoint_path = request.get("endpoint_path", "/")
@@ -340,7 +340,7 @@ class APIIntegrationManager:
                 return {"success": False, "error": str(e)}
 
         @self.app.get("/api/integration/status")
-        async def get_integration_status() -> Dict[str, Any]:
+        async def get_integration_status() -> dict[str, Any]:
             """Get integration status and capabilities."""
             return {
                 "context7_available": self.context7_api is not None,
@@ -386,9 +386,9 @@ class APISchemaEnhancer:
     def __init__(self, context7_api: Any = None) -> None:
         self.context7_api = context7_api
 
-    def enhance_openapi_schema(self, app: FastAPI) -> Dict[str, Any]:
+    def enhance_openapi_schema(self, app: FastAPI) -> dict[str, Any]:
         """Enhance OpenAPI schema with Context7 features."""
-        schema: Dict[str, Any] = app.openapi() or {}
+        schema: dict[str, Any] = app.openapi() or {}
 
         # Add Context7 extension information
         if "info" in schema:
@@ -432,9 +432,9 @@ async def get_context7_enhanced_response(
     return original_response
 
 
-def get_framework_recommendations(endpoint_path: str, method: str) -> List[str]:
+def get_framework_recommendations(endpoint_path: str, method: str) -> list[str]:
     """Get framework-specific recommendations for an endpoint."""
-    recommendations: List[str] = []
+    recommendations: list[str] = []
     # Analyze endpoint characteristics
     if "/{id}" in endpoint_path or "/{" in endpoint_path:
         recommendations.append("Use path parameter validation with Pydantic")

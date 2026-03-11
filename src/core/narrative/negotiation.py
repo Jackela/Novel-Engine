@@ -40,18 +40,18 @@ class AgentNegotiationEngine:
         priorities: Optional[List[str]] = None,
     ) -> None:
         """初始化Agent协商档案"""
-        if negotiation_style is None:
-            negotiation_style = {
-                "cooperativeness": 0.5,
-                "competitiveness": 0.5,
-                "compromise_willingness": 0.6,
-                "patience": 0.7,
-                "trust_level": 0.5,
-            }
+        style: Dict[str, float] = negotiation_style if negotiation_style is not None else {
+            "cooperativeness": 0.5,
+            "competitiveness": 0.5,
+            "compromise_willingness": 0.6,
+            "patience": 0.7,
+            "trust_level": 0.5,
+        }
+        prio: List[str] = priorities if priorities is not None else ["survival", "mission_success"]
 
         self.agent_negotiation_profiles[agent_id] = {
-            "style": negotiation_style,
-            "priorities": priorities or ["survival", "mission_success"],
+            "style": style,
+            "priorities": prio,
             "successful_negotiations": 0,
             "failed_negotiations": 0,
             "reputation": 0.5,

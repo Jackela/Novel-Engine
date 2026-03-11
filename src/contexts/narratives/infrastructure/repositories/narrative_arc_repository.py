@@ -564,12 +564,12 @@ class NarrativeArcRepository(INarrativeArcRepository):
     def exists(self, arc_id: NarrativeId) -> bool:
         """Check if a narrative arc exists."""
         try:
-            return (
+            count: int = (
                 self.session.query(NarrativeArcEntity)
                 .filter_by(id=arc_id.value)
                 .count()
-                > 0
             )
+            return count > 0
         except Exception as e:
             logger.error(
                 "narrative_arc_existence_check_failed", arc_id=str(arc_id), error=str(e)

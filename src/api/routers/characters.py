@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 import structlog
 from fastapi import (
@@ -253,7 +253,7 @@ async def get_characters_api(
         except Exception:
             logger.warning("workspace_characters_load_failed", exc_info=True)
 
-    merged: Dict[str, Tuple[datetime, CharacterSummary]] = {}
+    merged: dict[str, tuple[datetime, CharacterSummary]] = {}
     for entry in public_entries:
         merged[entry[1].id] = entry
     for entry in workspace_entries:
@@ -267,7 +267,7 @@ async def get_characters_api(
     cache_service.set_cache_headers(response, etag, latest_timestamp)
 
     if cache_service.is_not_modified(request, etag, latest_timestamp):
-        return Response(status_code=304)
+        return Response(status_code=304)  # type: ignore[return-value]
 
     return CharactersListResponse(characters=sorted_summaries)
 

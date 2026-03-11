@@ -37,8 +37,8 @@ class CacheError(Error):
         self,
         message: str,
         operation: str,
-        key: str | None = None,
-        details: dict[str, Any] | None = None,
+        key: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
     ) -> None:
         full_details = details or {}
         full_details["operation"] = operation
@@ -239,7 +239,7 @@ class MemoryCache(CacheBackend):
 
     def _find_eviction_candidate(self, new_level: CacheLevel) -> Optional[str]:
         """Find best entry to evict using intelligent strategy."""
-        candidates: list[Any] = []
+        candidates: List[Tuple[str, float]] = []
         current_time = time.time()
 
         for key, entry in self.entries.items():
@@ -280,8 +280,10 @@ class MemoryCache(CacheBackend):
             return None
 
         # Return key with highest eviction score
-        result: str = max(candidates, key=lambda x: x[1])[0]
-        return result
+        if candidates:
+            result: str = max(candidates, key=lambda x: x[1])[0]
+            return result
+        return None
 
     def _calculate_memory_size(self, value: Any) -> int:
         """Estimate memory size of value."""
@@ -327,12 +329,13 @@ class PerformanceCache:
             "template_hits": 0,
             "template_misses": 0,
         }
-        self.cleanup_task: asyncio.Task[None] | None = None
+        self.cleanup_task: Optional[asyncio.Task[None]] = None
 
     async def start_background_tasks(self) -> None:
         """Start background cache maintenance."""
         if self.cleanup_task is None:
             self.cleanup_task = asyncio.create_task(self._cleanup_loop())
+        return None
 
     async def stop_background_tasks(self) -> None:
         """Stop background cache maintenance."""
@@ -342,6 +345,7 @@ class PerformanceCache:
                 await self.cleanup_task
             except asyncio.CancelledError:
                 logger.debug("cleanup_task_cancelled")
+        return None
 
     async def _cleanup_loop(self) -> None:
         """Background cleanup for expired entries."""
@@ -717,6 +721,7 @@ class PerformanceCache:
         # Pre-load critical templates
         logger.info("template_cache_pre_warming")
         # Would load templates here
+        return None
 
 
 # Global cache instance

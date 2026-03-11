@@ -58,8 +58,8 @@ class Coordinates:
         # Check for valid numeric values first
         coords_are_numeric = True
         for coord_name, coord_value in [("x", self.x), ("y", self.y), ("z", self.z)]:
-            if not isinstance(coord_value, (int, float)):
-                errors.append(f"{coord_name} coordinate must be numeric")  # type: ignore[unreachable]
+            if not isinstance(coord_value, (int, float)):  # type: ignore[unreachable]
+                errors.append(f"{coord_name} coordinate must be numeric")
                 coords_are_numeric = False
             elif math.isnan(coord_value) or math.isinf(coord_value):
                 errors.append(f"{coord_name} coordinate must be a finite number")
@@ -329,10 +329,10 @@ class Coordinates:
         Raises:
             TypeError: If other is not a Coordinates instance
         """
-        if not isinstance(other, Coordinates):
-            return NotImplemented  # type: ignore[unreachable]
+        if not isinstance(other, Coordinates):  # type: ignore[unreachable]
+            return NotImplemented
 
-        return Coordinates(
+        return Coordinates(  # type: ignore[unreachable]
             x=self.x + other.x,
             y=self.y + other.y,
             z=self.z + other.z,
@@ -352,10 +352,10 @@ class Coordinates:
         Raises:
             TypeError: If other is not a Coordinates instance
         """
-        if not isinstance(other, Coordinates):
-            return NotImplemented  # type: ignore[unreachable]
+        if not isinstance(other, Coordinates):  # type: ignore[unreachable]
+            return NotImplemented
 
-        return Coordinates(
+        return Coordinates(  # type: ignore[unreachable]
             x=self.x - other.x,
             y=self.y - other.y,
             z=self.z - other.z,
@@ -382,10 +382,10 @@ class Coordinates:
             Returns NotImplemented for non-numeric types to allow Python's
             fallback mechanism to try the other operand's __rmul__.
         """
-        if not isinstance(scalar, (int, float)):
-            return NotImplemented  # type: ignore[unreachable]
+        if not isinstance(scalar, (int, float)):  # type: ignore[unreachable]
+            return NotImplemented
 
-        return Coordinates(
+        return Coordinates(  # type: ignore[unreachable]
             x=self.x * scalar,
             y=self.y * scalar,
             z=self.z * scalar,

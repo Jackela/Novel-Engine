@@ -300,7 +300,7 @@ class FogOfWarService:
             }
 
         fog_state = self.fog_states[agent_id]
-        filtered_state: dict[str, Any] = {
+        filtered_state: Dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "visible_locations": list(fog_state.visible_locations),
             "known_agents": [],
@@ -403,10 +403,9 @@ class TurnBriefFactory:
         self, agent_id: str, personality_traits: Optional[Dict[str, float]] = None
     ) -> BeliefModel:
         """初始化Agent的信念模型"""
-        if personality_traits is None:
-            personality_traits = {}
+        traits: Dict[str, float] = personality_traits if personality_traits is not None else {}
         belief_model = BeliefModel(
-            agent_id=agent_id, personality_bias=personality_traits
+            agent_id=agent_id, personality_bias=traits
         )
 
         self.belief_models[agent_id] = belief_model
@@ -416,8 +415,8 @@ class TurnBriefFactory:
         self,
         agent_id: str,
         turn_number: int,
-        global_world_state: Dict,
-        recent_events: Optional[List[Dict]] = None,
+        global_world_state: Dict[str, Any],
+        recent_events: Optional[List[Dict[str, Any]]] = None,
     ) -> PersonalizedTurnBrief:
         """创建个性化回合简报"""
 
@@ -467,7 +466,7 @@ class TurnBriefFactory:
         )
 
     async def _process_recent_events(
-        self, belief_model: BeliefModel, events: List[Dict]
+        self, belief_model: BeliefModel, events: List[Dict[str, Any]]
     ) -> None:
         """处理最近发生的事件"""
         for event in events:
@@ -488,7 +487,7 @@ class TurnBriefFactory:
 
             belief_model.add_information(fragment)
 
-    def _categorize_event(self, event: Dict) -> KnowledgeCategory:
+    def _categorize_event(self, event: Dict[str, Any]) -> KnowledgeCategory:
         """将事件分类到知识类别"""
         event_type = event.get("type", "").lower()
 
@@ -739,8 +738,8 @@ class SubjectiveRealityEngine:
         self,
         agent_id: str,
         turn_number: int,
-        global_world_state: Dict,
-        recent_events: Optional[List[Dict]] = None,
+        global_world_state: Dict[str, Any],
+        recent_events: Optional[List[Dict[str, Any]]] = None,
     ) -> PersonalizedTurnBrief:
         """生成Agent的个性化回合简报"""
 
@@ -760,7 +759,7 @@ class SubjectiveRealityEngine:
         return brief
 
     async def update_agent_knowledge(
-        self, agent_id: str, new_information: List[Dict]
+        self, agent_id: str, new_information: List[Dict[str, Any]]
     ) -> None:
         """更新Agent的知识状态"""
 
@@ -820,7 +819,8 @@ def create_subjective_reality_engine() -> SubjectiveRealityEngine:
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage() -> None:
+    async def example_usage() -> None:  # type: ignore[no-redef]
+        # Type annotation added to satisfy mypy
         engine = create_subjective_reality_engine()
 
         # 初始化一个Agent

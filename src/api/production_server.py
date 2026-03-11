@@ -15,7 +15,7 @@ import ssl
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Optional
 
 import jwt
 import structlog
@@ -143,7 +143,7 @@ class AuthenticationManager:
         return encoded_jwt
 
     @staticmethod
-    def verify_token(token: str) -> Dict[str, Any]:
+    def verify_token(token: str) -> dict[str, Any]:
         """Verify JWT token."""
         try:
             payload: Dict[str, Any] = jwt.decode(
@@ -251,13 +251,13 @@ if os.getenv("ENVIRONMENT") == "production":
 
 
 # CORS with restricted origins for production
-def _parse_cors_origins(raw: Optional[str]) -> List[str]:
+def _parse_cors_origins(raw: Optional[str]) -> list[str]:
     if not raw:
         return []
     return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
-def _resolve_cors_origins() -> List[str]:
+def _resolve_cors_origins() -> list[str]:
     environment = os.getenv("ENVIRONMENT", "development")
     if environment == "production":
         origins = _parse_cors_origins(os.getenv("CORS_ORIGINS"))

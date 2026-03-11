@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Optional
 
 import psutil
 import structlog
@@ -54,7 +54,7 @@ class HealthCheckResult:
     status: HealthStatus
     response_time_ms: float
     message: str
-    details: Optional[Dict[str, Any]] = None
+    details: Optional[dict[str, Any]] = None
     timestamp: datetime = field(default_factory=datetime.now)
     error: Optional[str] = None
 
@@ -64,7 +64,7 @@ class SystemHealth:
     """Overall system health status."""
 
     status: HealthStatus
-    checks: List[HealthCheckResult]
+    checks: list[HealthCheckResult]
     uptime_seconds: float
     timestamp: datetime
     version: str
@@ -144,10 +144,10 @@ class HealthMonitor:
 
     def __init__(self, app_start_time: Optional[datetime] = None) -> None:
         self.app_start_time = app_start_time or datetime.now()
-        self.health_checkers: List[HealthChecker] = []
+        self.health_checkers: list[HealthChecker] = []
         self.last_check_time: Optional[datetime] = None
         self.last_check_result: Optional[SystemHealth] = None
-        self.check_history: List[SystemHealth] = []
+        self.check_history: list[SystemHealth] = []
         self.max_history_size = 100
 
     def register_checker(self, checker: HealthChecker) -> None:
@@ -499,7 +499,7 @@ class HealthMonitor:
             return self.last_check_result
         return None
 
-    def get_health_summary(self) -> Dict[str, Any]:
+    def get_health_summary(self) -> dict[str, Any]:
         """Get summary of health check history."""
         if not self.check_history:
             return {"message": "No health check history available"}

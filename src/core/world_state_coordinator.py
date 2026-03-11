@@ -49,7 +49,7 @@ class WorldStateCoordinator:
         self.world_state_data: Dict[str, Any] = {}
 
         # Dynamic world state tracker
-        self.world_state_tracker: dict[str, Any] = {
+        self.world_state_tracker: Dict[str, Any] = {
             "discovered_clues": {},  # agent_id -> list of discovered clues
             "environmental_changes": {},  # location -> list of changes
             "agent_discoveries": {},  # turn_number -> {agent_id: discoveries}
@@ -222,7 +222,7 @@ class WorldStateCoordinator:
 
     def _get_faction_updates(self) -> Dict[str, Any]:
         """Get current faction status information."""
-        faction_status: dict[str, Any] = self.world_state_data.get("faction_status", {})
+        faction_status: Dict[str, Any] = self.world_state_data.get("faction_status", {})
 
         if not faction_status:
             return {
@@ -235,7 +235,7 @@ class WorldStateCoordinator:
 
     def _get_environmental_updates(self) -> Dict[str, Any]:
         """Get environmental status updates."""
-        environmental_state: dict[str, Any] = self.world_state_data.get(
+        environmental_state: Dict[str, Any] = self.world_state_data.get(
             "environmental_state", {}
         )
 
@@ -257,7 +257,7 @@ class WorldStateCoordinator:
         Returns:
             Dictionary containing world state feedback or None if no feedback available
         """
-        feedback: dict[Any, Any] = {}
+        feedback: Dict[str, Any] = {}
         has_feedback = False
 
         try:
@@ -305,18 +305,18 @@ class WorldStateCoordinator:
         Returns:
             List of discovery feedback messages
         """
-        discovered_clues = self.world_state_tracker.get("discovered_clues", {}).get(
+        discovered_clues: List[str] = self.world_state_tracker.get("discovered_clues", {}).get(
             agent_id, []
         )
 
         if not discovered_clues:
             return []
 
-        feedback: list[Any] = []
+        feedback_list: List[str] = []
         for clue in discovered_clues[-3:]:  # Most recent 3 discoveries
-            feedback.append(f"You recall discovering: {clue}")
+            feedback_list.append(f"You recall discovering: {clue}")
 
-        return feedback
+        return feedback_list
 
     def _get_environmental_changes_feedback(self, agent_id: str) -> List[str]:
         """
@@ -328,16 +328,16 @@ class WorldStateCoordinator:
         Returns:
             List of environmental change feedback messages
         """
-        environmental_changes = self.world_state_tracker.get(
+        environmental_changes: Dict[str, List[str]] = self.world_state_tracker.get(
             "environmental_changes", {}
         )
 
-        feedback: list[Any] = []
+        feedback_list: List[str] = []
         for location, changes in environmental_changes.items():
             for change in changes[-2:]:  # Most recent 2 changes per location
-                feedback.append(f"Environmental change in {location}: {change}")
+                feedback_list.append(f"Environmental change in {location}: {change}")
 
-        return feedback
+        return feedback_list
 
     def _get_other_agents_activities_feedback(self, agent_id: str) -> List[str]:
         """
@@ -381,6 +381,10 @@ class WorldStateCoordinator:
     def record_agent_discovery(
         self, agent_id: str, discovery: str, turn_number: int
     ) -> None:
+        # Type assertions to help mypy
+        discovered_clues: Dict[str, List[str]] = self.world_state_tracker["discovered_clues"]
+        agent_discoveries: Dict[int, Dict[str, List[str]]] = self.world_state_tracker["agent_discoveries"]
+        investigation_history: List[Dict[str, Any]] = self.world_state_tracker["investigation_history"]
         """
         Record a discovery made by an agent.
 
@@ -391,34 +395,25 @@ class WorldStateCoordinator:
         """
         try:
             # Add to agent's personal discoveries
-            if agent_id not in self.world_state_tracker["discovered_clues"]:
-                self.world_state_tracker["discovered_clues"][agent_id] = []
-            self.world_state_tracker["discovered_clues"][agent_id].append(discovery)
+            if agent_id not in discovered_clues:
+                discovered_clues[agent_id] = []
+            discovered_clues[agent_id].append(discovery)
 
             # Add to turn-based discovery tracking
-            if turn_number not in self.world_state_tracker["agent_discoveries"]:
-                self.world_state_tracker["agent_discoveries"][turn_number] = {}
-            if (
-                agent_id
-                not in self.world_state_tracker["agent_discoveries"][turn_number]
-            ):
-                self.world_state_tracker["agent_discoveries"][turn_number][
-                    agent_id
-                ] = []
-            self.world_state_tracker["agent_discoveries"][turn_number][agent_id].append(
-                discovery
-            )
+            if turn_number not in agent_discoveries:
+                agent_discoveries[turn_number] = {}
+            if agent_id not in agent_discoveries[turn_number]:
+                agent_discoveries[turn_number][agent_id] = []
+            agent_discoveries[turn_number][agent_id].append(discovery)
 
             # Add to investigation history
-            investigation_entry = {
+            investigation_entry: Dict[str, Any] = {
                 "agent_id": agent_id,
                 "discovery": discovery,
                 "turn_number": turn_number,
                 "timestamp": datetime.now().isoformat(),
             }
-            self.world_state_tracker["investigation_history"].append(
-                investigation_entry
-            )
+            investigation_history.append(investigation_entry)
 
             logger.info(f"Recorded discovery for {agent_id}: {discovery}")
 
@@ -433,15 +428,17 @@ class WorldStateCoordinator:
             location: Location where the change occurred
             change: Description of the environmental change
         """
+        environmental_changes: Dict[str, List[str]] = self.world_state_tracker["environmental_changes"]
+        temporal_markers: Dict[str, Dict[str, Any]] = self.world_state_tracker["temporal_markers"]
         try:
-            if location not in self.world_state_tracker["environmental_changes"]:
-                self.world_state_tracker["environmental_changes"][location] = []
+            if location not in environmental_changes:
+                environmental_changes[location] = []
 
-            self.world_state_tracker["environmental_changes"][location].append(change)
+            environmental_changes[location].append(change)
 
             # Add temporal marker
             timestamp = datetime.now().isoformat()
-            self.world_state_tracker["temporal_markers"][timestamp] = {
+            temporal_markers[timestamp] = {
                 "type": "environmental_change",
                 "location": location,
                 "change": change,

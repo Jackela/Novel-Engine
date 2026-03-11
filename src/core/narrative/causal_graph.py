@@ -66,7 +66,7 @@ class CausalGraph:
 
     def find_causal_chain(self, start_node: str, max_depth: int = 5) -> List[List[str]]:
         """查找因果链"""
-        chains: list[Any] = []
+        chains: List[List[str]] = []
 
         def dfs(current: str, path: List[str], depth: int) -> None:
             if depth >= max_depth:
@@ -87,7 +87,7 @@ class CausalGraph:
         now = datetime.now()
         cutoff_time = now - time_window
 
-        influential_events: list[Any] = []
+        influential_events: List[CausalNode] = []
         for node_id, node in self.nodes.items():
             if node.timestamp >= cutoff_time:
                 # 计算影响力：出度 * 叙事权重 * 置信度
@@ -99,7 +99,7 @@ class CausalGraph:
 
         # 按影响力排序
         influential_events.sort(
-            key=lambda x: x.narrative_weight * x.confidence, reverse=True
+            key=lambda x: float(x.narrative_weight * x.confidence), reverse=True
         )
         return influential_events
 
@@ -151,7 +151,7 @@ class CausalGraph:
         self, current_state: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
         """预测可能的下一个事件"""
-        predictions: list[Any] = []
+        predictions: List[Dict[str, Any]] = []
         # 基于最近事件的因果链预测
         recent_events = self.get_influential_events()
 

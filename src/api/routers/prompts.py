@@ -467,7 +467,7 @@ async def create_prompt(
         # Fetch the saved template
         saved = await service.get_prompt_by_id(template_id)
 
-        return service.to_detail(saved)
+        return service.to_detail(saved)  # type: ignore[return-value]
 
     except (ValueError, PromptValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
@@ -483,7 +483,7 @@ async def get_prompt(
     prompt_id: str,
     request: Request,
     service: PromptRouterService = Depends(get_prompt_service),
-) -> PromptDetailResponse:
+) -> dict[str, Any]:
     """
     Get a specific prompt template by ID.
 
@@ -499,7 +499,7 @@ async def get_prompt(
     """
     try:
         template = await service.get_prompt_by_id(prompt_id)
-        return service.to_detail(template)
+        return service.to_detail(template)  # type: ignore[return-value]
 
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -514,7 +514,7 @@ async def update_prompt(
     payload: PromptUpdateRequest,
     request: Request,
     service: PromptRouterService = Depends(get_prompt_service),
-) -> PromptDetailResponse:
+) -> dict[str, Any]:
     """
     Update a prompt template (creates a new version).
 
@@ -593,7 +593,7 @@ async def update_prompt(
         # Create new version
         new_template = existing.create_new_version(
             content=payload.content if payload.content is not None else None,
-            variables=variables,
+            variables=variables,  # type: ignore[arg-type]
             model_config=model_config,
             name=payload.name if payload.name is not None else None,
             description=(
@@ -608,7 +608,7 @@ async def update_prompt(
         # Fetch the saved template
         saved = await service.get_prompt_by_id(new_id)
 
-        return service.to_detail(saved)
+        return service.to_detail(saved)  # type: ignore[return-value]
 
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -857,7 +857,7 @@ async def rollback_prompt(
     """
     try:
         rolled_back = await service.rollback_to_version(prompt_id, version)
-        return service.to_detail(rolled_back)
+        return service.to_detail(rolled_back)  # type: ignore[return-value]
 
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e

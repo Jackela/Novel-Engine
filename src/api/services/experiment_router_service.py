@@ -487,7 +487,7 @@ class ExperimentRouterService:
         experiment = await self.get_experiment(experiment_id)
 
         # Get basic results
-        results = experiment.get_results()
+        results: dict[str, Any] = experiment.get_results()
 
         # Add statistical significance analysis
         results["statistical_significance"] = self._calculate_significance(experiment)

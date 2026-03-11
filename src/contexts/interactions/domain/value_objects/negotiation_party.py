@@ -364,7 +364,7 @@ class NegotiationParty:
             for cap in relevant_capabilities
         )
 
-        avg_proficiency = Decimal(total_proficiency / len(relevant_capabilities))
+        avg_proficiency = Decimal(str(total_proficiency)) / len(relevant_capabilities)
 
         # Apply authority multiplier - cast to Decimal
         negotiation_power = avg_proficiency * Decimal(authority_multiplier)
@@ -476,7 +476,7 @@ class NegotiationParty:
         total = Decimal("0")
         for cap in self.capabilities:
             effective = cap.get_effective_proficiency()
-            total += Decimal(str(effective))
+            total += effective
         return total / len(self.capabilities)
 
     def __eq__(self, other: Any) -> bool:

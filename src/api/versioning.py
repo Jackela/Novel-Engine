@@ -9,7 +9,7 @@ and smooth migration paths for API consumers.
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 import structlog
 from fastapi import Request, Response, status
@@ -45,19 +45,19 @@ class VersionInfo:
     deprecation_date: Optional[datetime] = None
     sunset_date: Optional[datetime] = None
     description: str = ""
-    breaking_changes: Optional[List[str]] = None
+    breaking_changes: Optional[list[str]] = None
     migration_guide_url: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.breaking_changes is None:
-            self.breaking_changes: list[str] = []
+            self.breaking_changes = []
 
 
 class APIVersionRegistry:
     """Registry for managing API versions and their metadata."""
 
     def __init__(self) -> None:
-        self.versions: Dict[APIVersion, VersionInfo] = {}
+        self.versions: dict[APIVersion, VersionInfo] = {}
         self._initialize_versions()
 
     def _initialize_versions(self) -> None:
@@ -122,7 +122,7 @@ class APIVersionRegistry:
             return False
         return version_info.status in [VersionStatus.CURRENT, VersionStatus.SUPPORTED]
 
-    def get_supported_versions(self) -> List[APIVersion]:
+    def get_supported_versions(self) -> list[APIVersion]:
         """Get all currently supported versions."""
         return [
             v.version
@@ -196,14 +196,14 @@ class CompatibilityLayer:
     """Handle backward compatibility transformations."""
 
     def __init__(self) -> None:
-        self.transformers: Dict[APIVersion, List[Callable]] = {
+        self.transformers: dict[APIVersion, list[Callable]] = {
             APIVersion.V1_0: [self._transform_to_v1_0],
             APIVersion.V1_1: [self._transform_to_v1_1],
         }
 
     def transform_response(
-        self, response_data: Dict[str, Any], target_version: APIVersion
-    ) -> Dict[str, Any]:
+        self, response_data: dict[str, Any], target_version: APIVersion
+    ) -> dict[str, Any]:
         """Transform response to match target API version format."""
 
         if target_version not in self.transformers:
@@ -216,7 +216,7 @@ class CompatibilityLayer:
 
         return transformed_data
 
-    def _transform_to_v1_0(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_to_v1_0(self, data: dict[str, Any]) -> dict[str, Any]:
         """Transform response to v1.0 format (legacy)."""
 
         # Convert new error format back to simple format
@@ -239,7 +239,7 @@ class CompatibilityLayer:
 
         return data
 
-    def _transform_to_v1_1(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_to_v1_1(self, data: dict[str, Any]) -> dict[str, Any]:
         """Transform response to v1.1 format."""
         # v1.1 is the current standard format, no transformation needed
         return data
@@ -294,7 +294,7 @@ class VersionMiddleware:
                     f'<{version_info.migration_guide_url}>; rel="migration-guide"'
                 )
 
-        return response
+        return response  # type: ignore[no-any-return]
 
 
 class VersionedRoute(APIRoute):
@@ -303,7 +303,7 @@ class VersionedRoute(APIRoute):
     def __init__(
         self,
         *args: Any,
-        version_handlers: Optional[Dict[APIVersion, Callable[..., Any]]] = None,
+        version_handlers: Optional[dict[APIVersion, Callable[..., Any]]] = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -317,16 +317,16 @@ class VersionedRoute(APIRoute):
 
         # Use version-specific handler if available
         if api_version in self.version_handlers:
-            return await self.version_handlers[api_version](request)
+            return await self.version_handlers[api_version](request)  # type: ignore[no-any-return]
 
         # Fall back to default handler
-        return await super().handle_request(request)
+        return await super().handle_request(request)  # type: ignore[misc, no-any-return]
 
 
-def create_version_info_endpoint() -> Callable[[], Dict[str, Any]]:
+def create_version_info_endpoint() -> Callable[[], dict[str, Any]]:
     """Create endpoint that returns API version information."""
 
-    def get_api_versions() -> Dict[str, Any]:
+    def get_api_versions() -> dict[str, Any]:
         """Get information about all API versions."""
         registry = APIVersionRegistry()
 

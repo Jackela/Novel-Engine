@@ -102,7 +102,7 @@ async def login(
             value=access_token,
             httponly=settings.cookie_httponly,
             secure=settings.cookie_secure,
-            samesite=settings.cookie_samesite,
+            samesite=settings.cookie_samesite,  # type: ignore[arg-type]
             max_age=settings.cookie_max_age_seconds,
         )
 
@@ -111,7 +111,7 @@ async def login(
             value=refresh_token,
             httponly=settings.cookie_httponly,
             secure=settings.cookie_secure,
-            samesite=settings.cookie_samesite,
+            samesite=settings.cookie_samesite,  # type: ignore[arg-type]
             max_age=cookie_max_age,
         )
 
@@ -196,7 +196,7 @@ async def refresh_token(
             value=access_token,
             httponly=settings.cookie_httponly,
             secure=settings.cookie_secure,
-            samesite=settings.cookie_samesite,
+            samesite=settings.cookie_samesite,  # type: ignore[arg-type]
             max_age=settings.cookie_max_age_seconds,
         )
 
@@ -230,7 +230,7 @@ async def get_csrf_token(
             value=csrf_token,
             httponly=False,
             secure=settings.cookie_secure,
-            samesite="strict",
+            samesite="strict",  # type: ignore[arg-type]
             max_age=settings.csrf_cookie_max_age_seconds,
         )
 
@@ -274,17 +274,17 @@ async def logout(
         response.delete_cookie(
             key=settings.cookie_name,
             secure=settings.cookie_secure,
-            samesite=settings.cookie_samesite,
+            samesite=settings.cookie_samesite,  # type: ignore[arg-type]
         )
         response.delete_cookie(
             key=settings.refresh_cookie_name,
             secure=settings.cookie_secure,
-            samesite=settings.cookie_samesite,
+            samesite=settings.cookie_samesite,  # type: ignore[arg-type]
         )
         response.delete_cookie(
             key=settings.csrf_cookie_name,
             secure=settings.cookie_secure,
-            samesite="strict",
+            samesite="strict",  # type: ignore[arg-type]
         )
 
         logger.info("authentication_cookies_cleared")

@@ -29,7 +29,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Optional
 
 import structlog
 import uvicorn
@@ -117,12 +117,12 @@ class OptimizedJSONResponse(JSONResponse):
         self,
         content: Any = None,
         status_code: int = 200,
-        headers: Optional[Dict[str, str]] = None,
+        headers: Optional[dict[str, str]] = None,
         cache_control: Optional[str] = None,
         max_age: Optional[int] = None,
     ) -> None:
         # Initialize headers dict
-        response_headers: Dict[str, str] = dict(headers) if headers else {}
+        response_headers: dict[str, str] = dict(headers) if headers else {}
 
         # Add cache control headers for performance
         if cache_control:
@@ -1003,7 +1003,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
             return ws_result
         return None
 
-    def _get_world_store() -> Dict[str, Dict[str, Any]]:
+    def _get_world_store() -> dict[str, dict[str, Any]]:
         store_obj: Optional[Dict[str, Dict[str, Any]]] = getattr(
             app.state, "world_store", None
         )
@@ -1019,7 +1019,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
             raise HTTPException(status_code=422, detail="World name is required")
         return candidate
 
-    def _normalize_export_character(record: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_export_character(record: dict[str, Any]) -> dict[str, Any]:
         payload = dict(record)
         agent_id = (
             payload.get("agent_id")
