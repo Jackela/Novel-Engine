@@ -18,7 +18,15 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, AsyncIterator, Callable, Dict, List, Optional, Set
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Set,
+)
 
 if TYPE_CHECKING:
     from .outbox import Outbox

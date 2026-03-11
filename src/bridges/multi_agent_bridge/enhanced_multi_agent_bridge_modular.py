@@ -6,10 +6,10 @@ Modular implementation of the enhanced multi-agent bridge using component-based 
 Maintains full backward compatibility while providing enterprise-grade modularity.
 """
 
-import logging
 import asyncio
+import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -435,8 +435,13 @@ class EnhancedMultiAgentBridge:
             active_dialogues: list[Any] = []
             for d in active_dialogues_data:
                 if isinstance(d, dict):
-                    from ..core.types import AgentDialogue, DialogueState, CommunicationType
                     from datetime import datetime as dt
+
+                    from ..core.types import (
+                        AgentDialogue,
+                        CommunicationType,
+                        DialogueState,
+                    )
                     dialogue = AgentDialogue(
                         dialogue_id=d.get("dialogue_id", ""),
                         communication_type=CommunicationType(d.get("communication_type", "dialogue")),

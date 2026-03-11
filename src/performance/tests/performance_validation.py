@@ -12,7 +12,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Callable, Dict
+from typing import Any, Callable
 
 import aiohttp
 import structlog

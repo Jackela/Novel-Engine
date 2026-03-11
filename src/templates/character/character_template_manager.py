@@ -6,7 +6,7 @@ Character Template Manager - Core orchestration.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import structlog
 
@@ -20,6 +20,9 @@ from src.templates.dynamic_template_engine import (
 )
 
 from .archetype_config import ArchetypeConfiguration
+from .content_analyzer import ContentAnalyzer
+from .context_enhancer import ContextEnhancer
+from .learning_system import LearningSystem
 from .persona_models import (
     CharacterArchetype,
     CharacterContextProfile,
@@ -27,11 +30,8 @@ from .persona_models import (
     CharacterTemplate,
 )
 from .persona_persistence import PersonaPersistence
-from .learning_system import LearningSystem
-from .template_selector import TemplateSelector
 from .template_processor import TemplateProcessor
-from .content_analyzer import ContentAnalyzer
-from .context_enhancer import ContextEnhancer
+from .template_selector import TemplateSelector
 
 if TYPE_CHECKING:
     from src.templates.context_renderer import RenderFormat

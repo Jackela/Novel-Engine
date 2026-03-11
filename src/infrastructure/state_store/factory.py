@@ -5,7 +5,6 @@ Factory functions for creating state store instances.
 
 from typing import Any, Optional
 
-from src.infrastructure.state_store.base import StateStore
 from src.infrastructure.state_store.config import StateStoreConfig, StateStoreType
 from src.infrastructure.state_store.managers import (
     ConfigurationManager,

@@ -5,11 +5,9 @@ Persona persistence and file I/O.
 
 import json
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 
 import structlog
-
-from src.templates.context_renderer import RenderFormat
 
 from .persona_models import (
     CharacterArchetype,

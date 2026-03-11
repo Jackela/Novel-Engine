@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import structlog
 
-
 from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:

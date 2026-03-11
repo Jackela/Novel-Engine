@@ -9,7 +9,7 @@ Main emergent narrative engine orchestrating all subsystems.
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple, cast
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import structlog
 

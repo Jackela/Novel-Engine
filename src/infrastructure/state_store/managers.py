@@ -31,7 +31,6 @@ class UnifiedStateManager:
 
         # Lazy imports to avoid circular dependencies
         from src.infrastructure.state_store.postgres import PostgreSQLStateStore
-        from src.infrastructure.state_store.redis import RedisStateStore
         from src.infrastructure.state_store.s3 import S3StateStore
 
         self.redis_store = RedisStateStore(config)

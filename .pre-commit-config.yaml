@@ -4,80 +4,118 @@
 # INSTALLATION:
 #   pip install pre-commit
 #   pre-commit install
+#   pre-commit install --hook-type pre-push  # ALSO INSTALL PRE-PUSH HOOKS
 #
 # USAGE:
 #   pre-commit run --all-files    # Run all hooks on all files
 #   pre-commit run ruff           # Run specific hook
 #
-# ⚠️ CRITICAL: NO SKIPPING ALLOWED
-#   All hooks MUST pass before commit
+# ⚠️ CRITICAL: NO SKIPPING ALLOWED - ZERO TOLERANCE POLICY
+#   All hooks MUST pass before commit/push
+#   NO EXCEPTIONS, NO BYPASSES, NO EMERGENCY COMMITS
+#   "不允许跳过任何检查" - No checks may be skipped under any circumstances
 #
 # TIMEOUT CONFIGURATION:
 #   export PRE_COMMIT_TIMEOUT=600  # 10 minutes for large test suites
 
 repos:
-  # === 本地关键检查 (Local Critical Checks) ===
+  # === PRE-COMMIT: Fast Local Checks ===
   - repo: local
     hooks:
-      # 1. 依赖一致性检查 - 确保pyproject.toml和requirements.txt同步
+      # 1. 依赖一致性检查
       - id: check-requirements
-        name: Check requirements consistency
+        name: ✅ Check requirements consistency
         entry: python scripts/ci-check-requirements.py
         language: system
         pass_filenames: false
         files: ^(requirements.*\.txt|pyproject\.toml|uv\.lock)$
-        description: Verifies that pyproject.toml and requirements.txt are consistent.
+        description: Verifies pyproject.toml and requirements.txt consistency.
 
-      # 2. 测试标记验证 - 确保所有测试有正确的金字塔标记
+      # 2. 测试标记验证
       - id: validate-test-markers
-        name: Validate test pyramid markers
+        name: ✅ Validate test pyramid markers
         entry: python scripts/testing/validate-test-markers.py
         language: system
         files: ^tests/.*test_.*\.py$
         pass_filenames: true
         verbose: true
-        description: Ensures all test functions have proper pyramid markers.
+        description: Ensures all tests have proper pyramid markers.
 
-      # 3. pytest smoke测试 - 快速验证核心功能
+      # 3. Ruff Linting (Fast)
+      - id: ruff-check
+        name: ✅ Ruff lint check
+        entry: ruff check . --output-format=concise
+        language: system
+        pass_filenames: false
+        files: ^.*\.py$
+        description: Fast Python linting.
+
+      # 4. pytest smoke测试
       - id: pytest-smoke
-        name: Pytest smoke tests
+        name: ✅ Pytest smoke tests
         entry: python -m pytest tests/test_character_system_comprehensive.py tests/smoke/ -x -q --tb=line --maxfail=3
         language: system
         pass_filenames: false
         description: Quick smoke tests before commit.
 
-  # === Python代码质量 (Python Code Quality) ===
+  # === PRE-PUSH: Comprehensive Checks (Blocking) ===
+  - repo: local
+    hooks:
+      # MyPy Type Checking - ZERO ERRORS TOLERANCE
+      - id: mypy-zero-tolerance
+        name: 🔒 MyPy Type Check (ZERO ERRORS REQUIRED)
+        entry: python scripts/ci-mypy-zero-tolerance.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        description: |
+          CRITICAL: MyPy MUST have ZERO errors before push.
+          Current status: Check scripts/ci-mypy-status.json
+          If this fails, fix ALL MyPy errors before pushing.
+
+      # Full Test Suite
+      - id: pytest-full
+        name: 🔒 Full Pytest Suite
+        entry: python -m pytest tests/unit -x -q --tb=line
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        description: Full unit test suite must pass before push.
+
+      # Security Scan - High Severity
+      - id: bandit-high
+        name: 🔒 Bandit Security (High Severity)
+        entry: bandit -r src/ -ll -ii
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        description: Security scan - zero high severity issues allowed.
+
+  # === Python Formatting ===
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.3.0
     hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-        description: Python linting with auto-fix
       - id: ruff-format
         description: Python code formatting
 
-  # === 类型检查 (Type Checking) ===
-  - repo: local
-    hooks:
-      - id: mypy
-        name: MyPy type checking
-        entry: mypy src/ --ignore-missing-imports --no-error-summary
-        language: system
-        pass_filenames: false
-        files: ^src/.*\.py$
-        description: Type checking - NO ERRORS ALLOWED
-
-  # === 安全扫描 (Security Scanning) ===
+  # === Bandit (Pre-commit, non-blocking) ===
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.7
     hooks:
       - id: bandit
         args: ["-c", "pyproject.toml", "-ll"]
-        description: Security vulnerability scanning
+        stages: [pre-commit]
+        description: Security vulnerability scanning (pre-commit check)
 
 default_language_version:
   python: python3.12
 
-# 增加超时时间 (10分钟用于大型测试套件)
-# Increase timeout for large test suites
-default_stages: [pre-commit, pre-push]
+# Fail fast - stop on first failure
+fail_fast: true
+
+# Default stages for all hooks
+default_stages: [pre-commit]
+
+# CI timeout configuration
+ci:
+  skip: [mypy-zero-tolerance, pytest-full, bandit-high]  # Skip in CI (run separately)

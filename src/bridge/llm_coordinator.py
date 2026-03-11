@@ -304,7 +304,7 @@ class LLMCoordinator:
         """Process a single LLM request."""
         try:
             # Import here to avoid circular dependencies
-            from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
+            from src.core.llm_service import LLMRequest, get_llm_service
 
             llm_service = get_llm_service()
 
@@ -317,7 +317,6 @@ class LLMCoordinator:
                 self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0)
 
             # Make request
-            from src.core.llm_service import LLMRequest
 
             llm_req = LLMRequest(prompt=str(request.content.get("prompt", "")))
             response_result = llm_service.generate(llm_req)

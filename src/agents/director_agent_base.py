@@ -33,7 +33,9 @@ except ImportError:
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief  # type: ignore[import-not-found,unused-ignore]
+    from campaign_brief import (
+        CampaignBrief,  # type: ignore[import-not-found,unused-ignore]
+    )
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:

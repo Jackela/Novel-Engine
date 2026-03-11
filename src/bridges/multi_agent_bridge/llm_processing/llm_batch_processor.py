@@ -21,7 +21,8 @@ from ..performance.performance_budget import PerformanceBudget
 
 # Import unified LLM service
 try:
-    from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service as _get_llm_service
+    from src.core.llm_service import LLMRequest, ResponseFormat
+    from src.core.llm_service import get_llm_service as _get_llm_service
     get_llm_service = _get_llm_service
 except ImportError:
     # Fallback for testing - define stub classes with matching interface

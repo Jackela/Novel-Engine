@@ -14,8 +14,7 @@ from typing import Tuple
 
 import structlog
 
-from src.contexts.world.domain.errors import TimeError, TimeValidationError
-from src.core.result import Error
+from src.contexts.world.domain.errors import TimeError
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar

@@ -7,7 +7,7 @@ invalidation operations without preventing garbage collection.
 from __future__ import annotations
 
 import weakref
-from typing import Any, Sequence
+from typing import Sequence
 
 from src.metrics.global_metrics import metrics as global_metrics
 

@@ -6,7 +6,7 @@ Dynamic Equipment System - Main orchestrator.
 import asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, cast
+from typing import Any, Dict, List, Tuple
 
 import structlog
 

@@ -33,7 +33,16 @@ import time
 from collections import OrderedDict, defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, DefaultDict, Dict, Generic, List, Optional, Set, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    List,
+    Optional,
+    Set,
+    TypeVar,
+)
 
 import structlog
 

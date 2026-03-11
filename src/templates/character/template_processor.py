@@ -3,7 +3,7 @@
 Template generation and processing.
 """
 
-from typing import Any, Dict, List
+from typing import Dict, List
 
 import structlog
 

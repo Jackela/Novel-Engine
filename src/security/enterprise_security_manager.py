@@ -24,8 +24,6 @@ import os
 import time
 from typing import Any, DefaultDict, cast
 
-from types import ModuleType
-
 try:
     import aioredis
 except ImportError:

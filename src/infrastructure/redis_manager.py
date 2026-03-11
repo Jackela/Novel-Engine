@@ -13,12 +13,12 @@ import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union, cast
+from typing import Any, Dict, List, Optional, Set, Union
 
 import structlog
 from redis import asyncio as aioredis
 from redis.asyncio.client import Redis
-from redis.asyncio.cluster import RedisCluster, ClusterNode
+from redis.asyncio.cluster import ClusterNode, RedisCluster
 
 logger = structlog.get_logger(__name__)
 

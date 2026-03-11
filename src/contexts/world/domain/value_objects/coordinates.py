@@ -9,8 +9,8 @@ this value object is immutable and encapsulates coordinate-related logic.
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Dict, Tuple, Union, overload
 from types import NotImplementedType
+from typing import Any, Dict, Tuple, Union, overload
 
 
 @dataclass(frozen=True)

@@ -190,7 +190,7 @@ class ServiceContainer:
             tags=tags,
             priority=priority,
         )
-        if result.is_ok:
+        if result.is_ok and result.value is not None:
             return result.value
         error_msg = result.error.message if result.error else "Unknown error"
         raise DependencyResolutionError(error_msg)
@@ -267,9 +267,10 @@ class ServiceContainer:
     def register_singleton(self, interface: Type[T], instance: T) -> "ServiceContainer":
         """Register a singleton instance directly. (Legacy - use register_singleton_result)"""
         result = self.register_singleton_result(interface, instance)
-        if result.is_ok:
+        if result.is_ok and result.value is not None:
             return result.value
-        raise DependencyResolutionError(result.error.message)
+        error_msg = result.error.message if result.error else "Unknown error"
+        raise DependencyResolutionError(error_msg)
 
     def register_singleton_result(
         self, interface: Type[T], instance: T
@@ -710,9 +711,9 @@ class ServiceContainer:
         elif scope == ServiceScope.REQUEST:
             return context or "default_request"
         elif scope == ServiceScope.THREAD:
-            return f"thread_{threading.current_thread().ident}"
-        else:
-            return "default"
+            thread_ident = threading.current_thread().ident
+            return f"thread_{thread_ident}" if thread_ident is not None else "thread_unknown"
+        return "default"
 
     def _create_instance(
         self, service_type: Type, descriptor: ServiceDescriptor, scope_key: str
@@ -1010,7 +1011,7 @@ def register_service(
     return get_service_container().register_service(interface, implementation, **kwargs)
 
 
-def get_service(service_type: Type[T]) -> T:
+def get_service(service_type: Type[T]) -> Optional[T]:
     """Get service from global container."""
     return get_service_container().get_service(service_type)
 

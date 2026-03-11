@@ -9,7 +9,7 @@ providing seamless documentation, examples, and pattern validation.
 
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from fastapi import FastAPI, Request

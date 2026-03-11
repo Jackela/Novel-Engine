@@ -8,7 +8,9 @@ from typing import Any, Dict
 import structlog
 
 from src.core.data_models import EquipmentCondition
-from src.interactions.equipment.models import EquipmentCategory as LocalEquipmentCategory
+from src.interactions.equipment.models import (
+    EquipmentCategory as LocalEquipmentCategory,
+)
 
 from .models import DynamicEquipment, EquipmentCategory, EquipmentModification
 
