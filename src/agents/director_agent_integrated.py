@@ -32,7 +32,7 @@ from src.agents.director_agent_base import DirectorAgentBase
 # Import agent and shared types
 from src.agents.persona_agent.agent import PersonaAgent
 from src.core.event_bus import EventBus
-from src.core.iron_laws_processor import IronLawsProcessor
+from src.core.iron_laws_processor import IronLawsProcessor, ReportWrapper
 from src.core.turn_orchestrator import TurnOrchestrator
 from src.core.types.shared_types import CharacterAction
 from src.core.world_state_coordinator import WorldStateCoordinator
@@ -1019,7 +1019,7 @@ class DirectorAgent:
 
     def _adjudicate_action(
         self, proposed_action: "ProposedAction", agent: PersonaAgent
-    ) -> "IronLawsReport":
+    ) -> ReportWrapper:
         """Expose Iron Laws adjudication for regression tests."""
         world_context = self._get_current_world_context()
         return self.iron_laws_processor.adjudicate_action(

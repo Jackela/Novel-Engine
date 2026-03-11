@@ -40,14 +40,16 @@ try:
 except ImportError as e:  # pragma: no cover - fallback for tooling-only contexts
     logging.getLogger(__name__).warning(f"Iron Laws types not available: {e}")
     IRON_LAWS_AVAILABLE = False
-    ActionIntensity = ActionTarget = ActionType = EntityType = CharacterData = object  # type: ignore[misc,unused-ignore]
-    IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore[misc,unused-ignore]
-    ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore[misc,unused-ignore]
+    ActionIntensity = ActionTarget = ActionType = EntityType = CharacterData = object  # type: ignore[misc,assignment,unused-ignore]
+    IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore[misc,assignment,unused-ignore]
+    ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore[misc,assignment,unused-ignore]
 
 logger = structlog.get_logger(__name__)
 
+__all__ = ["IronLawsProcessor", "ReportWrapper"]
 
-class _ReportWrapper(dict):
+
+class ReportWrapper(dict):
     """Dict-like view of an IronLawsReport that still exposes attributes."""
 
     def __init__(self, report: IronLawsReport, **extra: Any) -> None:
@@ -68,7 +70,7 @@ class _ReportWrapper(dict):
         return sorted(set(super().__dir__()) | set(self._report.__dir__()))
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, _ReportWrapper):
+        if isinstance(other, ReportWrapper):
             return dict.__eq__(self, other) and self._report == other._report
         return dict.__eq__(self, other)
 
@@ -102,7 +104,7 @@ class IronLawsProcessor:
         proposed_action: "ProposedAction",
         agent: "PersonaAgent",
         world_context: Dict[str, Any],
-    ) -> "_ReportWrapper":
+    ) -> "ReportWrapper":
         """
         Validate proposed action against all 5 Iron Laws of the Novel Engine.
 
@@ -142,7 +144,7 @@ class IronLawsProcessor:
                 started_at,
             )
 
-        if raw_action is None:
+        if raw_action is None:  # type: ignore
             return self._wrap_report(
                 self._build_failure_report(
                     action_id, "No action provided for validation"
@@ -527,7 +529,7 @@ class IronLawsProcessor:
         if not violations:
             return None, []
 
-        if not isinstance(proposed_action, ProposedAction):
+        if not isinstance(proposed_action, ProposedAction):  # type: ignore
             dummy_agent = SimpleNamespace(
                 character_id=getattr(proposed_action, "character_id", "unknown")
             )
@@ -619,8 +621,8 @@ class IronLawsProcessor:
     ) -> bool:
         """Check if character has required equipment."""
         items = getattr(character_data, "equipment", None)
-        if items is None and isinstance(character_data, dict):
-            items = character_data.get("equipment")
+        if items is None and isinstance(character_data, dict):  # type: ignore
+            items = character_data.get("equipment")  # type: ignore
         if items is None:
             return False
         return equipment in items
@@ -628,7 +630,7 @@ class IronLawsProcessor:
     @staticmethod
     def _calculate_distance(pos1: "Position", pos2: "Position") -> float:
         """Calculate distance between two positions."""
-        if pos1 is None or pos2 is None:
+        if pos1 is None or pos2 is None:  # type: ignore
             return 0.0
         return math.sqrt(
             (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
@@ -822,9 +824,9 @@ class IronLawsProcessor:
     ) -> Optional["CharacterData"]:
         """Extract character data from agent for validation purposes."""
         if hasattr(agent, "character_data"):
-            return agent.character_data  # type: ignore[no-any-return,unused-ignore]
+            return agent.character_data  # type: ignore[no-any-return,return-value,unused-ignore]
         if hasattr(agent, "model_dump"):
-            return agent.model_dump()  # type: ignore[no-any-return,unused-ignore]
+            return agent.model_dump()  # type: ignore[no-any-return,return-value,unused-ignore]
         return None
 
     @staticmethod
@@ -945,8 +947,8 @@ class IronLawsProcessor:
 
         return ProposedAction(**payload)
 
-    def _wrap_report(self, report: IronLawsReport, started_at: float) -> _ReportWrapper:
-        return _ReportWrapper(report, processing_time=time.perf_counter() - started_at)
+    def _wrap_report(self, report: IronLawsReport, started_at: float) -> ReportWrapper:
+        return ReportWrapper(report, processing_time=time.perf_counter() - started_at)
 
     def _build_failure_report(self, action_id: str, message: str) -> IronLawsReport:
         return IronLawsReport(

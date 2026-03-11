@@ -334,7 +334,7 @@ class ConnectionPool:
         self.database_path = database_path
         self.config = config
         self.pool: List[aiosqlite.Connection] = []
-        self.available: asyncio.Queue = asyncio.Queue()
+        self.available: asyncio.Queue[aiosqlite.Connection] = asyncio.Queue()
         self.pool_lock = asyncio.Lock()
         self.active_connections = 0
         self.connection_stats = {
