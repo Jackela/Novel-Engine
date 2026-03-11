@@ -1042,7 +1042,9 @@ async def test_standard_database_operations() -> None:
     init_result = await test_db.initialize_standard_temple()
 
     if not init_result.success:
-        logger.error(f"DATABASE INITIALIZATION FAILED: {init_result.error.message if init_result.error else 'Unknown'}")
+        logger.error(
+            f"DATABASE INITIALIZATION FAILED: {init_result.error.message if init_result.error else 'Unknown'}"
+        )
         return
 
     # Test enhanced agent registration
@@ -1068,9 +1070,7 @@ async def test_standard_database_operations() -> None:
     # Test enhanced memory query
     query_result = await test_db.query_memories_by_agent("test_agent_001")
     memories = query_result.data.get("memories", []) if query_result.data else []
-    logger.info(
-        f"MEMORY QUERY: {query_result.success}, Count: {len(memories)}"
-    )
+    logger.info(f"MEMORY QUERY: {query_result.success}, Count: {len(memories)}")
 
     # Test enhanced database statistics
     stats_result = await test_db.get_database_statistics()

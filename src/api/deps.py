@@ -21,21 +21,27 @@ def get_settings(request: Request) -> APISettings:
 
 
 def get_workspace_store(request: Request) -> FilesystemWorkspaceStore:
-    store: FilesystemWorkspaceStore | None = getattr(request.app.state, "workspace_store", None)
+    store: FilesystemWorkspaceStore | None = getattr(
+        request.app.state, "workspace_store", None
+    )
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
     return store
 
 
 def get_workspace_character_store(request: Request) -> FilesystemCharacterStore:
-    store: FilesystemCharacterStore | None = getattr(request.app.state, "workspace_character_store", None)
+    store: FilesystemCharacterStore | None = getattr(
+        request.app.state, "workspace_character_store", None
+    )
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
     return store
 
 
 def get_guest_session_manager(request: Request) -> GuestSessionManager:
-    manager: GuestSessionManager | None = getattr(request.app.state, "guest_session_manager", None)
+    manager: GuestSessionManager | None = getattr(
+        request.app.state, "guest_session_manager", None
+    )
     if not manager:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
     return manager
@@ -48,7 +54,9 @@ def get_optional_workspace_id(
 ) -> Optional[str]:
     token: str | None = request.cookies.get(manager.cookie_name)
     if not token:
-        default_workspace_id: str | None = getattr(request.app.state, "default_workspace_id", None)
+        default_workspace_id: str | None = getattr(
+            request.app.state, "default_workspace_id", None
+        )
         if default_workspace_id:
             store.get_or_create(default_workspace_id)
             return default_workspace_id
@@ -67,10 +75,11 @@ def require_workspace_id(
     manager: GuestSessionManager = Depends(get_guest_session_manager),
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
 ) -> str:
-
     token: str | None = request.cookies.get(manager.cookie_name)
     if not token:
-        default_workspace_id: str | None = getattr(request.app.state, "default_workspace_id", None)
+        default_workspace_id: str | None = getattr(
+            request.app.state, "default_workspace_id", None
+        )
         if default_workspace_id:
             response.set_cookie(
                 manager.cookie_name,

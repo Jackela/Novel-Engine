@@ -106,7 +106,9 @@ class EnhancedMultiAgentBridge:
             )
 
             # LLM batch processor
-            llm_logger = getattr(self.logger, "bind", lambda **kwargs: self.logger)(component="llm_processor")
+            llm_logger = getattr(self.logger, "bind", lambda **kwargs: self.logger)(
+                component="llm_processor"
+            )
             self.llm_processor = LLMBatchProcessor(
                 cost_tracker=self.cost_tracker,
                 performance_budget=self.performance_budget,
@@ -116,7 +118,9 @@ class EnhancedMultiAgentBridge:
             )
 
             # Dialogue manager
-            dialogue_logger = getattr(self.logger, "bind", lambda **kwargs: self.logger)(component="dialogue")
+            dialogue_logger = getattr(
+                self.logger, "bind", lambda **kwargs: self.logger
+            )(component="dialogue")
             self.dialogue_manager = DialogueManager(
                 llm_processor=self.llm_processor,
                 logger=dialogue_logger,
@@ -274,8 +278,13 @@ class EnhancedMultiAgentBridge:
             )
 
             # Update integration stats
-            self._integration_stats["total_turns_processed"] = self._integration_stats.get("total_turns_processed", 0) + 1
-            self._integration_stats["successful_coordinations"] = self._integration_stats.get("successful_coordinations", 0) + coordination_count
+            self._integration_stats["total_turns_processed"] = (
+                self._integration_stats.get("total_turns_processed", 0) + 1
+            )
+            self._integration_stats["successful_coordinations"] = (
+                self._integration_stats.get("successful_coordinations", 0)
+                + coordination_count
+            )
 
             total_time = (datetime.now() - turn_start).total_seconds()
             self.logger.info(
@@ -442,13 +451,18 @@ class EnhancedMultiAgentBridge:
                         CommunicationType,
                         DialogueState,
                     )
+
                     dialogue = AgentDialogue(
                         dialogue_id=d.get("dialogue_id", ""),
-                        communication_type=CommunicationType(d.get("communication_type", "dialogue")),
+                        communication_type=CommunicationType(
+                            d.get("communication_type", "dialogue")
+                        ),
                         participants=d.get("participants", []),
                         initiator=d.get("initiator", ""),
                         state=DialogueState(d.get("state", "initiating")),
-                        created_at=dt.fromisoformat(d["created_at"]) if isinstance(d.get("created_at"), str) else d.get("created_at", dt.now()),
+                        created_at=dt.fromisoformat(d["created_at"])
+                        if isinstance(d.get("created_at"), str)
+                        else d.get("created_at", dt.now()),
                         max_exchanges=d.get("max_exchanges", 3),
                         current_exchange=d.get("current_exchange", 0),
                         context=d.get("context", {}),

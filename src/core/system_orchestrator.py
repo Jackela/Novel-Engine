@@ -292,7 +292,8 @@ class SystemOrchestrator:
 
             # Initialize memory systems
             self.memory_system = LayeredMemorySystem(
-                "system_orchestrator", self.database  # type: ignore[arg-type]
+                "system_orchestrator",
+                self.database,  # type: ignore[arg-type]
             )
             self.memory_query_engine = MemoryQueryEngine(
                 self.database,  # type: ignore[arg-type]
@@ -314,7 +315,8 @@ class SystemOrchestrator:
             from src.templates.context_renderer import ContextRenderer
 
             context_renderer = ContextRenderer(
-                self.template_engine, self.memory_query_engine  # type: ignore[arg-type]
+                self.template_engine,
+                self.memory_query_engine,  # type: ignore[arg-type]
             )
 
             self.interaction_engine = InteractionEngine(
@@ -526,10 +528,12 @@ class SystemOrchestrator:
             faction_data: List[str] = []
             if initial_state and initial_state.base_identity.faction:
                 faction_list = initial_state.base_identity.faction
-                faction_data = faction_list if isinstance(faction_list, list) else [faction_list]
+                faction_data = (
+                    faction_list if isinstance(faction_list, list) else [faction_list]
+                )
             if not faction_data:
                 faction_data = ["Unknown"]
-            
+
             agent_registration = await self.database.register_enhanced_agent(
                 agent_id=agent_id,
                 character_name=(
@@ -599,7 +603,7 @@ class SystemOrchestrator:
                         message="Character manager not initialized",
                     ),
                 )
-            
+
             character_result = await self.character_manager.create_persona(
                 basic_persona
             )
@@ -703,20 +707,24 @@ class SystemOrchestrator:
                         message="Template engine not initialized",
                     ),
                 )
-            
+
             # Create template context with proper data structure
             from src.templates.dynamic_template_engine import TemplateContext
+
             template_context = TemplateContext(
                 agent_id=context.agent_id,
                 character_state=context.character_state,
                 custom_variables={
                     "processed_memories": len(memory_results),
                     "successful_memories": sum(memory_results),
-                    "has_environmental_context": context.environmental_context is not None,
-                    "processing_timestamp": context.timestamp.isoformat() if context.timestamp else None,
+                    "has_environmental_context": context.environmental_context
+                    is not None,
+                    "processing_timestamp": context.timestamp.isoformat()
+                    if context.timestamp
+                    else None,
                 },
             )
-            
+
             template_result = await self.template_engine.render_template(
                 "dynamic_context_response", template_context
             )
@@ -800,7 +808,7 @@ class SystemOrchestrator:
                         message="Character interaction processor not initialized",
                     ),
                 )
-            
+
             interaction_result = (
                 await self.character_processor.process_character_interaction(
                     interaction_context, participants
@@ -1100,7 +1108,9 @@ class SystemOrchestrator:
                 )
                 await conn.commit()
             finally:
-                await self.database.get_enhanced_connection().__aexit__(None, None, None)
+                await self.database.get_enhanced_connection().__aexit__(
+                    None, None, None
+                )
 
             logger.info("system_state_saved")
 
@@ -1118,10 +1128,13 @@ class SystemOrchestrator:
                 self.character_manager is not None
             ), "Character manager not initialized"
             assert self.memory_system is not None, "Memory system not initialized"
-            
+
             # Check if character_manager has update_character_state method
-            if not hasattr(self.character_manager, 'update_character_state'):
-                logger.warning("character_manager_does_not_support_state_updates", agent_id=agent_id)
+            if not hasattr(self.character_manager, "update_character_state"):
+                logger.warning(
+                    "character_manager_does_not_support_state_updates",
+                    agent_id=agent_id,
+                )
                 return StandardResponse(
                     success=False,
                     error=ErrorInfo(
@@ -1129,11 +1142,14 @@ class SystemOrchestrator:
                         message="Character manager does not support state updates",
                     ),
                 )
-            
+
             # Update in character manager
             from src.core.data_models import StandardResponse as StdResp
-            update_result: StdResp = await self.character_manager.update_character_state(  # type: ignore[attr-defined]
-                agent_id, character_state
+
+            update_result: StdResp = (
+                await self.character_manager.update_character_state(  # type: ignore[attr-defined]
+                    agent_id, character_state
+                )
             )
 
             # Store state change as memory
@@ -1235,9 +1251,9 @@ class SystemOrchestrator:
             from datetime import datetime as dt
 
             from src.core.narrative.causal_graph import CausalNode
-            
+
             # Convert dict to CausalNode if needed
-            if hasattr(self.emergent_narrative_engine.causal_graph, 'add_event'):
+            if hasattr(self.emergent_narrative_engine.causal_graph, "add_event"):
                 timestamp_str = event_data.get("timestamp", "")
                 if isinstance(timestamp_str, str):
                     try:
@@ -1246,7 +1262,7 @@ class SystemOrchestrator:
                         timestamp_dt = dt.now()
                 else:
                     timestamp_dt = dt.now()
-                
+
                 node_id = str(event_data.get("event_id", ""))
                 event_type = str(event_data.get("event_type", ""))
                 interaction_data = event_data.get("interaction_data", {})
@@ -1258,7 +1274,7 @@ class SystemOrchestrator:
                     metadata = {}
                 if not isinstance(participants, list):
                     participants = list(participants) if participants else []
-                
+
                 causal_node = CausalNode(
                     node_id=node_id,
                     event_type=event_type,
@@ -1295,10 +1311,11 @@ class SystemOrchestrator:
                 return
 
             # Get recent events for this agent (using causal_graph directly)
-            if hasattr(self.emergent_narrative_engine, 'causal_graph'):
+            if hasattr(self.emergent_narrative_engine, "causal_graph"):
                 recent_events = [
-                    node for node in self.emergent_narrative_engine.causal_graph.nodes.values()
-                    if agent_id in getattr(node, 'participants', [])
+                    node
+                    for node in self.emergent_narrative_engine.causal_graph.nodes.values()
+                    if agent_id in getattr(node, "participants", [])
                 ]
 
                 # Analyze potential causal relationships
@@ -1323,7 +1340,9 @@ class SystemOrchestrator:
                 result = await cursor.fetchone()
                 return result[0] if result else 0
             finally:
-                await self.database.get_enhanced_connection().__aexit__(None, None, None)
+                await self.database.get_enhanced_connection().__aexit__(
+                    None, None, None
+                )
         except Exception:
             return 0
 
@@ -1344,7 +1363,9 @@ class SystemOrchestrator:
                 result = await cursor.fetchone()
                 return result[0] if result else 0
             finally:
-                await self.database.get_enhanced_connection().__aexit__(None, None, None)
+                await self.database.get_enhanced_connection().__aexit__(
+                    None, None, None
+                )
         except Exception:
             return 0
 

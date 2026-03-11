@@ -263,7 +263,9 @@ class ExponentialBackoffRetry(IRetryPolicy):
                     )
 
                 # Calculate delay for retry
-                delay = RetryConfigHelper.calculate_delay(config, attempt_num, retry_reason)
+                delay = RetryConfigHelper.calculate_delay(
+                    config, attempt_num, retry_reason
+                )
 
                 # Record retry attempt
                 attempt = RetryAttempt(
