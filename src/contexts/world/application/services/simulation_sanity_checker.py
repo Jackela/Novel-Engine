@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 
-# Note: SanityCheckError is now imported from src.contexts.world.domain.errors
+from src.contexts.world.domain.errors import SanityCheckError
 
 
 class Severity(Enum):

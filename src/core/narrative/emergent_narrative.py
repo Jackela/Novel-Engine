@@ -624,7 +624,7 @@ class EmergentNarrativeEngine:
                 response_format=ResponseFormat.EVENT_JSON,
                 max_tokens=600,
             )
-            llm_response = await llm_service.generate(llm_request)
+            llm_response = await self.llm_service.generate(llm_request)
 
             if llm_response is not None and getattr(llm_response, "success", False):
                 opportunities = json.loads(llm_response.content)

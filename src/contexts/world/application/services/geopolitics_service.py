@@ -6,7 +6,7 @@ Application service for managing geopolitical actions including
 diplomatic relations, territory control, and resource tracking.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 

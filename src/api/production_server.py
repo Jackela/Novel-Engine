@@ -15,7 +15,7 @@ import ssl
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 import jwt
 import structlog

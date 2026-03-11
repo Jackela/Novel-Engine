@@ -59,7 +59,6 @@ from src.memory.memory_query_engine import MemoryQueryEngine
 from src.templates.character import CharacterTemplateManager
 from src.templates.dynamic_template_engine import (
     DynamicTemplateEngine,
-    TemplateContext,
 )
 
 
@@ -1233,8 +1232,9 @@ class SystemOrchestrator:
             }
 
             # Record event in causal graph
-            from src.core.narrative.causal_graph import CausalNode
             from datetime import datetime as dt
+
+            from src.core.narrative.causal_graph import CausalNode
             
             # Convert dict to CausalNode if needed
             if hasattr(self.emergent_narrative_engine.causal_graph, 'add_event'):

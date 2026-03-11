@@ -29,7 +29,7 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, AsyncGenerator, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 import structlog
 import uvicorn

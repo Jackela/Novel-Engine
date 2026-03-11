@@ -342,6 +342,7 @@ class TurnBrief:
                 new_knowledge=knowledge_item,
                 update_reason=revelation_method,
             )
+            self._add_event(knowledge_event)
         else:
             # This is new knowledge
             revealed_event = KnowledgeRevealed(

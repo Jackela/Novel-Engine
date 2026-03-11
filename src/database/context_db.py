@@ -325,7 +325,6 @@ class ContextDatabase:
         if not self._initialized:
             await self.initialize_standard_temple()
 
-        connection = None
         try:
             conn: aiosqlite.Connection
             async with self._pool_lock:

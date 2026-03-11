@@ -202,7 +202,7 @@ class EnhancedMultiAgentBridge:
             pre_turn_analysis = await self._analyze_pre_turn_state()
 
             # Prepare enhanced world state
-            enhanced_world_state = await self._prepare_enhanced_world_state(turn_number)
+            await self._prepare_enhanced_world_state(turn_number)
 
             # Identify dialogue opportunities
             dialogue_opportunities = await self._identify_dialogue_opportunities()

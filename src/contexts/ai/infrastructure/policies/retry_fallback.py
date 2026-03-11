@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from ...application.ports.retry_policy_port import (
+    CircuitBreakerState,
     IRetryPolicy,
     RetryAttempt,
     RetryConfig,

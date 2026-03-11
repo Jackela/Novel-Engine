@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, Response
 
@@ -67,7 +67,6 @@ def require_workspace_id(
     manager: GuestSessionManager = Depends(get_guest_session_manager),
     store: FilesystemWorkspaceStore = Depends(get_workspace_store),
 ) -> str:
-    from typing import cast
 
     token: str | None = request.cookies.get(manager.cookie_name)
     if not token:
