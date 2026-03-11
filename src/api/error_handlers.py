@@ -229,7 +229,7 @@ class ErrorHandler:
         request: Optional[Request],
         api_error: APIError,
         status_code: int,
-    ) -> None:
+    ) -> None:  # type: ignore[no-untyped-def]
         """Log error with appropriate level and context."""
 
         # Determine log level
@@ -269,15 +269,15 @@ class ErrorHandler:
         )
 
 
-def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
+def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:  # type: ignore[no-untyped-def]
     """Setup error handlers for FastAPI application."""
 
     error_handler = ErrorHandler(debug=debug)
 
-    @app.exception_handler(NovelEngineException)
+    @app.exception_handler(NovelEngineException)  # type: ignore[misc]
     async def novel_engine_exception_handler(
         request: Request, exc: NovelEngineException
-    ) -> JSONResponse:
+    ) -> JSONResponse:  # type: ignore[no-untyped-def]
         """Handle Novel Engine specific exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -294,10 +294,10 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
             content=error_response.model_dump(mode="json"),
         )
 
-    @app.exception_handler(HTTPException)
+    @app.exception_handler(HTTPException)  # type: ignore[misc]
     async def http_exception_handler(
         request: Request, exc: HTTPException
-    ) -> JSONResponse:
+    ) -> JSONResponse:  # type: ignore[no-untyped-def]
         """Handle FastAPI HTTP exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -314,10 +314,10 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
             content=error_response.model_dump(mode="json"),
         )
 
-    @app.exception_handler(RequestValidationError)
+    @app.exception_handler(RequestValidationError)  # type: ignore[misc]
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
-    ) -> JSONResponse:
+    ) -> JSONResponse:  # type: ignore[no-untyped-def]
         """Handle Pydantic validation errors."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)
@@ -354,10 +354,10 @@ def setup_error_handlers(app: Any, debug: bool = False) -> ErrorHandler:
             content=error_response.model_dump(mode="json"),
         )
 
-    @app.exception_handler(Exception)
+    @app.exception_handler(Exception)  # type: ignore[misc]
     async def general_exception_handler(
         request: Request, exc: Exception
-    ) -> JSONResponse:
+    ) -> JSONResponse:  # type: ignore[no-untyped-def]
         """Handle all other exceptions."""
         processing_time = getattr(request.state, "processing_time", 0.0)
         request_id = getattr(request.state, "request_id", None)

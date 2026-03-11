@@ -69,7 +69,7 @@ def _sanitize_dict_for_json(data: dict[str, Any]) -> dict[str, Any]:
             result[key] = [_sanitize_float_for_json(v) for v in value]
         else:
             result[key] = _sanitize_float_for_json(value)
-    return result
+    return result  # type: ignore[return-value]
 
 
 def _calculate_z_score(p: float, n: int) -> float:

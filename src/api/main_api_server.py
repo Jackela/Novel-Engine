@@ -313,7 +313,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         yield
 
     except Exception as startup_error:
-        if global_structured_logger:
+        if global_structured_logger is not None:
             global_structured_logger.error(
                 f"API server startup failed: {startup_error}",
                 exc_info=startup_error,
@@ -322,7 +322,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         raise
 
     finally:
-        if global_structured_logger:
+        if global_structured_logger is not None:
             global_structured_logger.info(
                 "Shutting down Enhanced API Server", category=LogCategory.SYSTEM
             )
@@ -333,13 +333,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         if global_orchestrator:
             try:
                 await global_orchestrator.shutdown()
-                if global_structured_logger:
+                if global_structured_logger is not None:
                     global_structured_logger.info(
                         "System Orchestrator shutdown complete",
                         category=LogCategory.SYSTEM,
                     )
             except Exception as e:
-                if global_structured_logger:
+                if global_structured_logger is not None:
                     global_structured_logger.error(
                         f"Error during orchestrator shutdown: {e}",
                         category=LogCategory.ERROR,
@@ -902,7 +902,7 @@ def _register_legacy_routes(app: FastAPI) -> None:
             )
             stats_file = os.path.join(character_path, "stats.yaml")
 
-            character_data = {
+            character_data: dict[str, Any] = {
                 "character_id": safe_character_id,
                 "name": safe_character_id.replace("_", " ").title(),
                 "background_summary": "Character loaded from file system",

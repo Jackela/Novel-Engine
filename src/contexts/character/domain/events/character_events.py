@@ -10,7 +10,7 @@ of the system in a decoupled manner.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 from uuid import uuid4
 
 from ..value_objects.character_id import CharacterID
@@ -92,8 +92,8 @@ class TravelRecord:
         # Full implementation would need to deserialize WorldCalendar objects.
         return cls(
             location_id=data["location_id"],
-            arrived_date=data.get("arrived_date"),
-            departed_date=data.get("departed_date"),
+            arrived_date=cast("WorldCalendar", data.get("arrived_date")),
+            departed_date=cast(Optional["WorldCalendar"], data.get("departed_date")),
         )
 
 

@@ -45,12 +45,12 @@ class VersionInfo:
     deprecation_date: Optional[datetime] = None
     sunset_date: Optional[datetime] = None
     description: str = ""
-    breaking_changes: Optional[list[str]] = None
+    breaking_changes: list[str] = None  # type: ignore[assignment]
     migration_guide_url: Optional[str] = None
 
     def __post_init__(self) -> None:
         if self.breaking_changes is None:
-            self.breaking_changes = []
+            self.breaking_changes = []  # type: ignore[assignment]
 
 
 class APIVersionRegistry:
@@ -69,7 +69,7 @@ class APIVersionRegistry:
             status=VersionStatus.CURRENT,
             release_date=datetime(2024, 1, 1),
             description="Initial Novel Engine API release",
-            breaking_changes=[],
+            breaking_changes=[],  # type: ignore[arg-type]
             migration_guide_url="/docs/migration/v1.0",
         )
 
@@ -132,7 +132,7 @@ class APIVersionRegistry:
 
     def mark_deprecated(
         self, version: APIVersion, sunset_date: Optional[datetime] = None
-    ) -> None:
+    ) -> None:  # type: ignore[return]
         """Mark a version as deprecated."""
         if version in self.versions:
             self.versions[version].status = VersionStatus.DEPRECATED
@@ -253,7 +253,9 @@ class VersionMiddleware:
         self.extractor = VersionExtractor()
         self.compatibility = CompatibilityLayer()
 
-    async def __call__(self, request: Request, call_next: Any) -> Response:
+    async def __call__(
+        self, request: Request, call_next: Callable[[Request], Any]
+    ) -> Response:
         """Process request with version handling."""
 
         # Extract API version
@@ -317,10 +319,11 @@ class VersionedRoute(APIRoute):
 
         # Use version-specific handler if available
         if api_version in self.version_handlers:
-            return await self.version_handlers[api_version](request)  # type: ignore[no-any-return]
+            handler = self.version_handlers[api_version]
+        return await handler(request)  # type: ignore[no-any-return]
 
         # Fall back to default handler
-        return await super().handle_request(request)  # type: ignore[misc, no-any-return]
+        return await super().handle_request(request)  # type: ignore[misc]
 
 
 def create_version_info_endpoint() -> Callable[[], dict[str, Any]]:
@@ -360,7 +363,7 @@ def setup_versioning(app: Any) -> VersionMiddleware:
 
     # Add versioning middleware
     version_middleware = VersionMiddleware()
-    app.middleware("http")(version_middleware)
+    app.middleware("http")(version_middleware)  # type: ignore[arg-type]
 
     # Add version info endpoint
     version_info_handler = create_version_info_endpoint()

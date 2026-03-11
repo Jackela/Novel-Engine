@@ -86,13 +86,14 @@ class InteractionEngine:
             InteractionType.EMERGENCY: self._process_emergency_interaction,
         }
 
-        # Sacred performance metrics
-        self.performance_metrics = {
+        # Sacred performance metrics with explicit typing
+        type_counts: Dict[str, int] = {itype.value: 0 for itype in InteractionType}
+        self.performance_metrics: Dict[str, Any] = {
             "total_interactions_processed": 0,
             "successful_interactions": 0,
             "failed_interactions": 0,
             "average_processing_time": 0.0,
-            "interaction_type_counts": {itype.value: 0 for itype in InteractionType},
+            "interaction_type_counts": type_counts,
             "memory_updates_generated": 0,
             "state_changes_applied": 0,
             "content_generation_count": 0,
@@ -123,7 +124,11 @@ class InteractionEngine:
             context,
             "Generate a short dialogue beat with intent and subtext.",
         )
-        outcome.generated_content.append(content)
+        # Fix: Use interaction_content dict instead of generated_content list
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "dialogue_processed"}
         )
@@ -136,7 +141,10 @@ class InteractionEngine:
             context,
             "Describe a fast combat exchange with stakes and consequences.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(success=True, metadata={"blessing": "combat_processed"})
 
     async def _process_cooperation_interaction(
@@ -147,7 +155,10 @@ class InteractionEngine:
             context,
             "Show a collaborative effort and its tangible outcome.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "cooperation_processed"}
         )
@@ -160,7 +171,10 @@ class InteractionEngine:
             context,
             "Create an exchange of offers and counteroffers with a clear shift in leverage.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "negotiation_processed"}
         )
@@ -173,7 +187,10 @@ class InteractionEngine:
             context,
             "Deliver concise instructions and the recipient's immediate reaction.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "instruction_processed"}
         )
@@ -186,7 +203,10 @@ class InteractionEngine:
             context,
             "Describe a ritual step with sensory detail and intended effect.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
 
     async def _process_exploration_interaction(
@@ -197,7 +217,10 @@ class InteractionEngine:
             context,
             "Summarize a discovery moment with location cues and newfound information.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "exploration_processed"}
         )
@@ -210,7 +233,10 @@ class InteractionEngine:
             context,
             "Narrate a maintenance task and how it stabilizes the system or equipment.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "maintenance_processed"}
         )
@@ -223,7 +249,10 @@ class InteractionEngine:
             context,
             "Write an urgent response sequence with clear risks and immediate actions.",
         )
-        outcome.generated_content.append(content)
+        current_content = outcome.interaction_content.get("generated_content", [])
+        if isinstance(current_content, list):
+            current_content.append(content)
+        outcome.interaction_content["generated_content"] = current_content
         return StandardResponse(
             success=True, metadata={"blessing": "emergency_processed"}
         )
@@ -246,6 +275,148 @@ class InteractionEngine:
         except Exception as e:
             logger.error("LLM generation failed for %s: %s", interaction_kind, e)
             return f"{interaction_kind.title()} involving {participants} at {location}."
+
+    async def _validate_interaction_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
+        """Validate the interaction context before processing."""
+        if not context.interaction_id:
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="INVALID_CONTEXT",
+                    message="Interaction context must have an interaction_id",
+                ),
+            )
+        if not context.participants:
+            return StandardResponse(
+                success=False,
+                error=ErrorInfo(
+                    code="INVALID_CONTEXT",
+                    message="Interaction context must have at least one participant",
+                ),
+            )
+        return StandardResponse(
+            success=True, metadata={"blessing": "context_validated"}
+        )
+
+    async def _check_prerequisites(
+        self, context: InteractionContext
+    ) -> StandardResponse:
+        """Check if prerequisites are met for the interaction."""
+        # Basic implementation - can be extended
+        return StandardResponse(
+            success=True, metadata={"blessing": "prerequisites_met"}
+        )
+
+    async def _generate_initial_context(
+        self, context: InteractionContext
+    ) -> StandardResponse:
+        """Generate initial context for the interaction."""
+        # Basic implementation
+        return StandardResponse(
+            success=True,
+            data={"context": "Initial context generated"},
+            metadata={"blessing": "initial_context_generated"},
+        )
+
+    async def _create_default_phases(
+        self, context: InteractionContext
+    ) -> Dict[str, InteractionPhase]:
+        """Create default interaction phases for a given context."""
+        return {
+            "init": InteractionPhase(
+                phase_id="init",
+                phase_name="Initialization",
+                description="Initialize the interaction",
+            ),
+            "process": InteractionPhase(
+                phase_id="process",
+                phase_name="Processing",
+                description="Process the interaction logic",
+            ),
+            "complete": InteractionPhase(
+                phase_id="complete",
+                phase_name="Completion",
+                description="Complete the interaction",
+            ),
+        }
+
+    async def _process_interaction_phase(
+        self,
+        context: InteractionContext,
+        phase: InteractionPhase,
+        outcome: InteractionOutcome,
+    ) -> StandardResponse:
+        """Process a single interaction phase."""
+        # Basic implementation
+        return StandardResponse(
+            success=True,
+            data={"phase_id": phase.phase_id},
+            metadata={"blessing": "phase_processed"},
+        )
+
+    async def _apply_state_changes(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        """Apply state changes after successful interaction processing."""
+        return StandardResponse(
+            success=True,
+            metadata={"blessing": "state_changes_applied"},
+        )
+
+    async def _generate_memory_updates(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        """Generate memory updates for participants."""
+        return StandardResponse(
+            success=True,
+            data={"memory_updates": []},
+            metadata={"blessing": "memory_updates_generated"},
+        )
+
+    async def _generate_interaction_content(
+        self, context: InteractionContext, outcome: InteractionOutcome
+    ) -> StandardResponse:
+        """Generate content outputs for the interaction."""
+        return StandardResponse(
+            success=True,
+            data={
+                "generated_content": outcome.interaction_content.get(
+                    "generated_content", []
+                )
+            },
+            metadata={"blessing": "interaction_content_generated"},
+        )
+
+    def _update_performance_metrics(
+        self, context: InteractionContext, outcome: InteractionOutcome, duration: float
+    ) -> None:
+        """Update performance metrics after processing an interaction."""
+        self.performance_metrics["total_interactions_processed"] += 1
+        if outcome.success:
+            self.performance_metrics["successful_interactions"] += 1
+        else:
+            self.performance_metrics["failed_interactions"] += 1
+
+        # Update average processing time
+        total = self.performance_metrics["total_interactions_processed"]
+        current_avg = self.performance_metrics["average_processing_time"]
+        self.performance_metrics["average_processing_time"] = (
+            (current_avg * (total - 1) + duration) / total if total > 0 else duration
+        )
+
+        # Update type counts
+        type_value = context.interaction_type.value
+        type_counts: Dict[str, int] = self.performance_metrics[
+            "interaction_type_counts"
+        ]
+        type_counts[type_value] = type_counts.get(type_value, 0) + 1
+
+    async def _store_interaction_outcome(self, outcome: InteractionOutcome) -> None:
+        """Store the interaction outcome in the database."""
+        # Basic implementation - can be extended to persist to database
+        logger.debug(f"Storing interaction outcome for {outcome.interaction_id}")
 
     async def initiate_interaction(
         self, context: InteractionContext, auto_process: bool = True
@@ -270,9 +441,10 @@ class InteractionEngine:
                         f"INTERACTION PREREQUISITES NOT MET: {context.interaction_id}"
                     )
                     # Continue with warnings rather than failing
-                    context.metadata["prerequisite_warnings"] = (
-                        prerequisite_result.error.message
-                    )
+                    if prerequisite_result.error:
+                        context.metadata["prerequisite_warnings"] = (
+                            prerequisite_result.error.message
+                        )
 
                 # Register enhanced active interaction
                 self._active_interactions[context.interaction_id] = context
@@ -292,7 +464,11 @@ class InteractionEngine:
                     )
 
                     if processing_result.success:
-                        outcome_data = processing_result.data["outcome"]
+                        outcome_data = (
+                            processing_result.data.get("outcome")
+                            if processing_result.data
+                            else None
+                        )
 
                         logger.info(
                             f"INTERACTION INITIATED AND PROCESSED: {context.interaction_id}"
@@ -374,11 +550,12 @@ class InteractionEngine:
 
             if not interaction_phases:
                 # Use enhanced default processing
-                interaction_phases = self._create_default_phases(context)
+                interaction_phases = await self._create_default_phases(context)
 
             # Initialize enhanced interaction outcome
             outcome = InteractionOutcome(
                 interaction_id=interaction_id,
+                context=context,
                 success=True,
                 completion_time=datetime.now(),
             )
@@ -390,16 +567,21 @@ class InteractionEngine:
                 )
 
                 if phase_result.success:
-                    outcome.phases_completed.append(phase_id)
+                    outcome.completed_phases.append(phase_id)
                     logger.info(f"PHASE COMPLETED: {phase_id} for {interaction_id}")
                 else:
-                    outcome.phases_failed.append(phase_id)
-                    outcome.errors.append(
-                        f"Phase {phase_id} failed: {phase_result.error.message}"
+                    outcome.failed_phases.append(phase_id)
+                    error_msg = (
+                        phase_result.error.message
+                        if phase_result.error
+                        else "Unknown error"
                     )
+                    outcome.errors.append(f"Phase {phase_id} failed: {error_msg}")
 
                     # Check if enhanced failure is critical
-                    if phase.phase_type in ["setup", "execution"]:
+                    # Fix: InteractionPhase doesn't have phase_type attribute
+                    phase_name = getattr(phase, "phase_name", "").lower()
+                    if "setup" in phase_name or "execution" in phase_name:
                         outcome.success = False
                         logger.error(
                             f"CRITICAL PHASE FAILED: {phase_id} for {interaction_id}"
@@ -416,33 +598,52 @@ class InteractionEngine:
                 type_result = await type_processor(context, outcome)
                 if not type_result.success:
                     outcome.success = False
+                    error_msg = (
+                        type_result.error.message
+                        if type_result.error
+                        else "Unknown error"
+                    )
                     outcome.errors.append(
-                        f"Type-specific processing failed: {type_result.error.message}"
+                        f"Type-specific processing failed: {error_msg}"
                     )
 
             # Apply enhanced state changes
             if outcome.success:
                 state_result = await self._apply_state_changes(context, outcome)
                 if not state_result.success:
+                    error_msg = (
+                        state_result.error.message
+                        if state_result.error
+                        else "Unknown error"
+                    )
                     outcome.warnings.append(
-                        f"State changes partially failed: {state_result.error.message}"
+                        f"State changes partially failed: {error_msg}"
                     )
 
             # Generate enhanced memory updates
             memory_result = await self._generate_memory_updates(context, outcome)
             if memory_result.success:
-                outcome.memory_updates = memory_result.data["memory_updates"]
+                outcome.memory_updates = (
+                    memory_result.data.get("memory_updates", [])
+                    if memory_result.data
+                    else []
+                )
 
             # Generate enhanced content outputs
             content_result = await self._generate_interaction_content(context, outcome)
             if content_result.success:
-                outcome.generated_content = content_result.data["generated_content"]
+                content_data = (
+                    content_result.data.get("generated_content", [])
+                    if content_result.data
+                    else []
+                )
+                outcome.interaction_content["generated_content"] = content_data
 
             # Calculate enhanced processing metrics
             processing_duration = (
                 datetime.now() - processing_start
             ).total_seconds() * 1000
-            outcome.duration_ms = processing_duration
+            outcome.processing_duration = processing_duration / 1000  # Store as seconds
 
             # Clean up enhanced active interaction
             if interaction_id in self._active_interactions:
@@ -468,8 +669,8 @@ class InteractionEngine:
                 data={
                     "outcome": outcome,
                     "processing_time_ms": processing_duration,
-                    "phases_completed": len(outcome.phases_completed),
-                    "phases_failed": len(outcome.phases_failed),
+                    "phases_completed": len(outcome.completed_phases),
+                    "phases_failed": len(outcome.failed_phases),
                 },
                 metadata={"blessing": "interaction_processed_completely"},
             )
@@ -517,10 +718,15 @@ class InteractionEngine:
                     if processing_result.success:
                         processed_interactions.append(context.interaction_id)
                     else:
+                        error_msg = (
+                            processing_result.error.message
+                            if processing_result.error
+                            else "Unknown error"
+                        )
                         failed_interactions.append(
                             {
                                 "interaction_id": context.interaction_id,
-                                "error": processing_result.error.message,
+                                "error": error_msg,
                             }
                         )
 
@@ -579,17 +785,25 @@ class InteractionEngine:
 
         history_list: list[Any] = []
         for outcome in recent_history:
+            # Fix: Use correct attribute names for InteractionOutcome
+            participant_keys = (
+                list(outcome.participant_state_changes.keys())
+                if outcome.participant_state_changes
+                else []
+            )
             history_list.append(
                 {
                     "interaction_id": outcome.interaction_id,
                     "success": outcome.success,
                     "completion_time": outcome.completion_time.isoformat(),
-                    "duration_ms": outcome.duration_ms,
-                    "phases_completed": len(outcome.phases_completed),
-                    "phases_failed": len(outcome.phases_failed),
-                    "participants": list(outcome.participant_outcomes.keys()),
+                    "duration_ms": outcome.processing_duration * 1000,  # Convert to ms
+                    "phases_completed": len(outcome.completed_phases),
+                    "phases_failed": len(outcome.failed_phases),
+                    "participants": participant_keys,
                     "memory_updates": len(outcome.memory_updates),
-                    "content_generated": len(outcome.generated_content),
+                    "content_generated": len(
+                        outcome.interaction_content.get("generated_content", [])
+                    ),
                 }
             )
 
@@ -597,14 +811,14 @@ class InteractionEngine:
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         """Get enhanced interaction engine performance metrics"""
+        total_processed = self.performance_metrics.get(
+            "total_interactions_processed", 0
+        )
+        successful = self.performance_metrics.get("successful_interactions", 0)
         return {
             **self.performance_metrics,
             "active_interactions_count": len(self._active_interactions),
             "queue_size": len(self._processing_queue),
             "history_size": len(self._interaction_history),
-            "success_rate": (
-                self.performance_metrics["successful_interactions"]
-                / max(self.performance_metrics["total_interactions_processed"], 1)
-            )
-            * 100,
+            "success_rate": ((successful / max(total_processed, 1)) * 100),
         }

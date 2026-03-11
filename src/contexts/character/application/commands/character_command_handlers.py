@@ -7,7 +7,7 @@ Command handlers execute the business logic for commands by coordinating
 between the domain layer and infrastructure services.
 """
 
-from typing import Any
+from typing import Any, Dict, Protocol, Type, Union
 
 import structlog
 
@@ -580,11 +580,32 @@ class DamageCharacterCommandHandler:
             raise
 
 
+class CommandHandlerProtocol(Protocol):
+    """Protocol for command handlers."""
+
+    async def handle(self, command: Any) -> Any:
+        """Handle a command."""
+        ...
+
+
 class CharacterCommandHandlerRegistry:
     """Registry for character command handlers."""
 
     def __init__(self, character_repository: ICharacterRepository) -> None:
-        self.handlers = {
+        self.handlers: Dict[
+            Type[
+                Union[
+                    CreateCharacterCommand,
+                    UpdateCharacterStatsCommand,
+                    UpdateCharacterSkillCommand,
+                    LevelUpCharacterCommand,
+                    DeleteCharacterCommand,
+                    HealCharacterCommand,
+                    DamageCharacterCommand,
+                ]
+            ],
+            CommandHandlerProtocol,
+        ] = {
             CreateCharacterCommand: CreateCharacterCommandHandler(character_repository),
             UpdateCharacterStatsCommand: UpdateCharacterStatsCommandHandler(
                 character_repository
@@ -600,7 +621,7 @@ class CharacterCommandHandlerRegistry:
             DamageCharacterCommand: DamageCharacterCommandHandler(character_repository),
         }
 
-    async def handle_command(self, command) -> Any:
+    async def handle_command(self, command: Any) -> Any:
         """
         Handle a command by routing it to the appropriate handler.
 

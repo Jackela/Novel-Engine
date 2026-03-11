@@ -73,7 +73,7 @@ async def run_simulation(sim_request: SimulationRequest) -> SimulationResponse:
             continue
 
     try:
-        story = chronicler.transcribe_log(director.campaign_log_file)
+        story = chronicler.transcribe_log(director.campaign_log_path)
     except Exception as exc:
         participants = ", ".join(sim_request.character_names)
         story = _build_fallback_story(participants, exc)

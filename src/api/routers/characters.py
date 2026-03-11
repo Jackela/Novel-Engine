@@ -80,7 +80,7 @@ async def get_character_detail(
     character_name = safe_character_id
     display_name = safe_character_id.replace("_", " ").title()
 
-    character_data = {
+    character_data: dict[str, Any] = {
         "agent_id": safe_character_id,
         "character_id": safe_character_id,
         "character_name": character_name,

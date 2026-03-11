@@ -8,7 +8,7 @@ Multi-agent negotiation engine.
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -40,14 +40,20 @@ class AgentNegotiationEngine:
         priorities: Optional[List[str]] = None,
     ) -> None:
         """初始化Agent协商档案"""
-        style: Dict[str, float] = negotiation_style if negotiation_style is not None else {
-            "cooperativeness": 0.5,
-            "competitiveness": 0.5,
-            "compromise_willingness": 0.6,
-            "patience": 0.7,
-            "trust_level": 0.5,
-        }
-        prio: List[str] = priorities if priorities is not None else ["survival", "mission_success"]
+        style: Dict[str, float] = (
+            negotiation_style
+            if negotiation_style is not None
+            else {
+                "cooperativeness": 0.5,
+                "competitiveness": 0.5,
+                "compromise_willingness": 0.6,
+                "patience": 0.7,
+                "trust_level": 0.5,
+            }
+        )
+        prio: List[str] = (
+            priorities if priorities is not None else ["survival", "mission_success"]
+        )
 
         self.agent_negotiation_profiles[agent_id] = {
             "style": style,
@@ -193,7 +199,7 @@ class AgentNegotiationEngine:
                 return
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and cast(bool, llm_response.success):
+            if llm_response and getattr(llm_response, "success", False):
                 counter_proposal = json.loads(llm_response.content)
                 response.counter_proposal = counter_proposal
                 logger.debug(
@@ -371,7 +377,7 @@ class AgentNegotiationEngine:
                 return
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and cast(bool, llm_response.success):
+            if llm_response and getattr(llm_response, "success", False):
                 mediation_result = json.loads(llm_response.content)
 
                 # 创建调解提议

@@ -403,10 +403,10 @@ class TurnBriefFactory:
         self, agent_id: str, personality_traits: Optional[Dict[str, float]] = None
     ) -> BeliefModel:
         """初始化Agent的信念模型"""
-        traits: Dict[str, float] = personality_traits if personality_traits is not None else {}
-        belief_model = BeliefModel(
-            agent_id=agent_id, personality_bias=traits
+        traits: Dict[str, float] = (
+            personality_traits if personality_traits is not None else {}
         )
+        belief_model = BeliefModel(agent_id=agent_id, personality_bias=traits)
 
         self.belief_models[agent_id] = belief_model
         return belief_model
@@ -819,7 +819,7 @@ def create_subjective_reality_engine() -> SubjectiveRealityEngine:
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage() -> None:  # type: ignore[no-redef]
+    async def example_usage() -> None:
         # Type annotation added to satisfy mypy
         engine = create_subjective_reality_engine()
 

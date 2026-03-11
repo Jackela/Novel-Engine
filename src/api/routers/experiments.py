@@ -248,7 +248,8 @@ async def create_experiment(
             confidence_threshold=payload.confidence_threshold,
         )
 
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except PromptNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -259,8 +260,8 @@ async def create_experiment(
 @router.get("/experiments/{experiment_id}", response_model=ExperimentSummaryResponse)
 async def get_experiment(
     experiment_id: str,
-    service: ExperimentRouterService = Depends(get_experiment_service),
-) -> dict[str, Any]:
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
+) -> ExperimentSummaryResponse:
     """
     Get a specific experiment by ID.
 
@@ -275,7 +276,8 @@ async def get_experiment(
     """
     try:
         experiment = await service.get_experiment(experiment_id)
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -364,8 +366,8 @@ async def delete_experiment(
 )
 async def start_experiment(
     experiment_id: str,
-    service: ExperimentRouterService = Depends(get_experiment_service),
-) -> dict[str, Any]:
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
+) -> ExperimentSummaryResponse:
     """
     Start an experiment.
 
@@ -380,7 +382,8 @@ async def start_experiment(
     """
     try:
         experiment = await service.start_experiment(experiment_id)
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -398,8 +401,8 @@ async def start_experiment(
 )
 async def pause_experiment(
     experiment_id: str,
-    service: ExperimentRouterService = Depends(get_experiment_service),
-) -> dict[str, Any]:
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
+) -> ExperimentSummaryResponse:
     """
     Pause a running experiment.
 
@@ -414,7 +417,8 @@ async def pause_experiment(
     """
     try:
         experiment = await service.pause_experiment(experiment_id)
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -432,8 +436,8 @@ async def pause_experiment(
 )
 async def resume_experiment(
     experiment_id: str,
-    service: ExperimentRouterService = Depends(get_experiment_service),
-) -> dict[str, Any]:
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
+) -> ExperimentSummaryResponse:
     """
     Resume a paused experiment.
 
@@ -448,7 +452,8 @@ async def resume_experiment(
     """
     try:
         experiment = await service.resume_experiment(experiment_id)
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -467,7 +472,7 @@ async def resume_experiment(
 async def complete_experiment(
     experiment_id: str,
     payload: ExperimentActionRequest = ExperimentActionRequest(),
-    service: ExperimentRouterService = Depends(get_experiment_service),
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
 ) -> ExperimentSummaryResponse:
     """
     Complete an experiment and optionally declare a winner.
@@ -495,7 +500,8 @@ async def complete_experiment(
         experiment = await service.complete_experiment(
             experiment_id, winner_id=winner_id
         )
-        return service.to_summary(experiment)
+        summary = service.to_summary(experiment)
+        return ExperimentSummaryResponse(**summary)
 
     except ExperimentNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
@@ -514,7 +520,7 @@ async def complete_experiment(
 async def record_result(
     experiment_id: str,
     payload: ExperimentRecordRequest,
-    service: ExperimentRouterService = Depends(get_experiment_service),
+    service: ExperimentRouterService = Depends(get_experiment_service),  # type: ignore[assignment]
 ) -> ExperimentSummaryResponse:
     """
     Record a generation result for an experiment.

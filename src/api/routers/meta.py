@@ -15,7 +15,7 @@ def _uptime_seconds(request: Request) -> float:
     started_at = getattr(request.app.state, "api_start_time", None)
     if not started_at:
         return 0.0
-    return (datetime.now(UTC) - started_at).total_seconds()
+    return float((datetime.now(UTC) - started_at).total_seconds())
 
 
 @router.get("/meta/system-status", response_model=SystemStatusResponse)

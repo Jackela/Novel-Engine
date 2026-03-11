@@ -127,7 +127,7 @@ class MemoryContext(BaseModel):
 
     @field_validator("formative_events")
     @classmethod
-    def validate_age_progression(cls, events) -> None:
+    def validate_age_progression(cls, events: List[Any]) -> List[Any]:
         """Ensure events are chronologically reasonable."""
         if len(events) > 1:
             sorted_events = sorted(events, key=lambda x: x.age)
@@ -193,7 +193,7 @@ class ResourceAllocation(BaseModel):
 
     @field_validator("time_energy_percentages")
     @classmethod
-    def validate_percentages(cls, v) -> None:
+    def validate_percentages(cls, v: Dict[str, int]) -> Dict[str, int]:
         """Ensure percentages add up to 100."""
         if v and sum(v.values()) != 100:
             raise ValueError("Time/energy percentages must sum to 100")
@@ -323,7 +323,7 @@ class CombatStats(BaseModel):
 
     @field_validator("primary_stats")
     @classmethod
-    def validate_stat_ranges(cls, v) -> None:
+    def validate_stat_ranges(cls, v: Dict[str, int]) -> Dict[str, int]:
         """Ensure stats are in reasonable ranges."""
         for stat_name, value in v.items():
             if not (0 <= value <= 10):
@@ -340,7 +340,7 @@ class PsychologicalProfile(BaseModel):
 
     @field_validator("traits")
     @classmethod
-    def validate_trait_ranges(cls, v) -> None:
+    def validate_trait_ranges(cls, v: Dict[str, int]) -> Dict[str, int]:
         """Ensure trait scores are in valid ranges."""
         for trait_name, score in v.items():
             if not (0 <= score <= 10):
@@ -462,7 +462,7 @@ class CharacterContext(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def validate_character_consistency(cls, values) -> None:
+    def validate_character_consistency(cls, values: Dict[str, Any]) -> Dict[str, Any]:
         """Ensure character data is consistent across contexts."""
         warnings = values.get("validation_warnings", [])
 

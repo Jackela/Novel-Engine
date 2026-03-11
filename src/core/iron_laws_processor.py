@@ -40,9 +40,18 @@ try:
 except ImportError as e:  # pragma: no cover - fallback for tooling-only contexts
     logging.getLogger(__name__).warning(f"Iron Laws types not available: {e}")
     IRON_LAWS_AVAILABLE = False
-    ActionIntensity = ActionTarget = ActionType = EntityType = CharacterData = object  # type: ignore[misc,assignment,unused-ignore]
-    IronLawsReport = IronLawsViolation = Position = ProposedAction = object  # type: ignore[misc,assignment,unused-ignore]
-    ResourceValue = ValidatedAction = ValidationResult = object  # type: ignore[misc,assignment,unused-ignore]
+    from typing import Any as ActionIntensity  # type: ignore
+    from typing import Any as ActionTarget
+    from typing import Any as ActionType
+    from typing import Any as CharacterData
+    from typing import Any as EntityType
+    from typing import Any as IronLawsReport  # type: ignore
+    from typing import Any as IronLawsViolation
+    from typing import Any as Position
+    from typing import Any as ProposedAction
+    from typing import Any as ResourceValue  # type: ignore
+    from typing import Any as ValidatedAction
+    from typing import Any as ValidationResult
 
 logger = structlog.get_logger(__name__)
 
@@ -144,7 +153,7 @@ class IronLawsProcessor:
                 started_at,
             )
 
-        if raw_action is None:  # type: ignore
+        if raw_action is None:  # type: ignore[unreachable]
             return self._wrap_report(
                 self._build_failure_report(
                     action_id, "No action provided for validation"
@@ -529,7 +538,7 @@ class IronLawsProcessor:
         if not violations:
             return None, []
 
-        if not isinstance(proposed_action, ProposedAction):  # type: ignore
+        if not isinstance(proposed_action, ProposedAction):  # type: ignore[unreachable]
             dummy_agent = SimpleNamespace(
                 character_id=getattr(proposed_action, "character_id", "unknown")
             )
@@ -630,7 +639,7 @@ class IronLawsProcessor:
     @staticmethod
     def _calculate_distance(pos1: "Position", pos2: "Position") -> float:
         """Calculate distance between two positions."""
-        if pos1 is None or pos2 is None:  # type: ignore
+        if pos1 is None or pos2 is None:  # type: ignore[unreachable]
             return 0.0
         return math.sqrt(
             (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
@@ -655,7 +664,10 @@ class IronLawsProcessor:
         return grouped
 
     def _repair_causality_violations(
-        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        violations: List["IronLawsViolation"],
+        character_data: Optional["CharacterData"],
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair causality law violations."""
         repaired = self._clone_action(action)
@@ -677,7 +689,10 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Causality repair not required"]
 
     def _repair_resource_violations(
-        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        violations: List["IronLawsViolation"],
+        character_data: Optional["CharacterData"],
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair resource law violations."""
         repaired = self._clone_action(action)
@@ -716,7 +731,10 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Resource repair not required"]
 
     def _repair_physics_violations(
-        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        violations: List["IronLawsViolation"],
+        character_data: Optional["CharacterData"],
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair physics law violations."""
         repaired = self._clone_action(action)
@@ -750,7 +768,10 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Physics repair not required"]
 
     def _repair_narrative_violations(
-        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        violations: List["IronLawsViolation"],
+        character_data: Optional["CharacterData"],
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair narrative law violations."""
         repaired = self._clone_action(action)
@@ -770,7 +791,10 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Narrative repair not required"]
 
     def _repair_social_violations(
-        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
+        self,
+        action: "ProposedAction",
+        violations: List["IronLawsViolation"],
+        character_data: Optional["CharacterData"],
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair social law violations."""
         repaired = self._clone_action(action)

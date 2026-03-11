@@ -7,12 +7,12 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import asyncio
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import structlog
+from structlog.stdlib import BoundLogger
 
 # Import modular components
 from .core import (
@@ -37,7 +37,13 @@ except ImportError:
     EquipmentItem = dict  # type: ignore[misc,assignment]
 
     class StandardResponse:  # type: ignore[no-redef]
-        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
+        def __init__(
+            self,
+            success: bool = True,
+            data: Any = None,
+            error: Any = None,
+            metadata: Any = None,
+        ) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
@@ -50,13 +56,16 @@ except ImportError:
             return getattr(self, key)
 
     class ErrorInfo:  # type: ignore[no-redef]
-        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
+        def __init__(
+            self, code: str = "", message: str = "", recoverable: bool = True
+        ) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
 
     class ContextDatabase:  # type: ignore[no-redef]
         pass
+
 
 __all__ = ["DynamicEquipmentSystem"]
 
@@ -83,7 +92,7 @@ class DynamicEquipmentSystem:
         wear_threshold: float = 0.7,
         context_db: Optional[ContextDatabase] = None,
         equipment_template_path: Optional[str] = None,
-        logger: Optional[logging.Logger] = None,
+        logger: Optional[Any] = None,
     ) -> None:
         """
         Initialize modular dynamic equipment system.
@@ -96,7 +105,7 @@ class DynamicEquipmentSystem:
             equipment_template_path: Path to equipment templates
             logger: Optional logger instance
         """
-        self.logger = logger or structlog.get_logger(__name__)
+        self.logger: BoundLogger = logger or structlog.get_logger(__name__)
 
         # Create system configuration
         self.config = EquipmentSystemConfig(
@@ -126,7 +135,7 @@ class DynamicEquipmentSystem:
 
         # System state
         self._processing_lock = asyncio.Lock()
-        self._system_stats = {
+        self._system_stats: Dict[str, Any] = {
             "initialization_time": datetime.now(),
             "total_equipment_registered": 0,
             "total_usage_sessions": 0,
@@ -160,14 +169,20 @@ class DynamicEquipmentSystem:
                 initial_status=EquipmentStatus.READY,
             )
 
-            if result.get("success"):
+            # Fix: StandardResponse uses .success and .data attributes
+            success = getattr(result, "success", False)
+            if success:
                 self._system_stats["total_equipment_registered"] += 1
 
                 # Apply initial blessing level
-                equipment_id = result["data"]["equipment_id"]
-                equipment = await self.registry.get_equipment(equipment_id)
-                if equipment:
-                    equipment.blessing_level = initial_blessing_level
+                data = getattr(result, "data", {}) or {}
+                equipment_id = (
+                    data.get("equipment_id") if isinstance(data, dict) else None
+                )
+                if equipment_id:
+                    equipment = await self.registry.get_equipment(equipment_id)
+                    if equipment:
+                        equipment.blessing_level = initial_blessing_level
 
             return result
 
@@ -209,7 +224,8 @@ class DynamicEquipmentSystem:
                 duration_seconds=duration_seconds,
             )
 
-            if result.get("success"):
+            success = getattr(result, "success", False)
+            if success:
                 self._system_stats["total_usage_sessions"] += 1
 
                 # Auto-schedule maintenance if needed
@@ -258,7 +274,8 @@ class DynamicEquipmentSystem:
                 performed_by=performed_by,
             )
 
-            if result.get("success"):
+            success = getattr(result, "success", False)
+            if success:
                 self._system_stats["total_maintenance_performed"] += 1
 
             return result
@@ -296,7 +313,8 @@ class DynamicEquipmentSystem:
                 equipment=equipment, modification=modification, installer=installer
             )
 
-            if result.get("success"):
+            success = getattr(result, "success", False)
+            if success:
                 self._system_stats["total_modifications_installed"] += 1
 
             return result
@@ -447,27 +465,34 @@ class DynamicEquipmentSystem:
             maintenance_queue = self.maintenance_system.get_maintenance_queue()
 
             # Calculate system uptime
-            uptime = datetime.now() - self._system_stats["initialization_time"]
+            init_time = self._system_stats.get("initialization_time")
+            if isinstance(init_time, datetime):
+                uptime = datetime.now() - init_time
+                uptime_hours = uptime.total_seconds() / 3600
+                init_iso = init_time.isoformat()
+            else:
+                uptime_hours = 0.0
+                init_iso = ""
 
             return {
                 "system_info": {
-                    "initialization_time": self._system_stats[
-                        "initialization_time"
-                    ].isoformat(),
-                    "uptime_hours": uptime.total_seconds() / 3600,
+                    "initialization_time": init_iso,
+                    "uptime_hours": uptime_hours,
                     "modular_architecture": True,
                     "components_active": 5,
                 },
                 "equipment_statistics": {
                     "total_registered": self.registry.get_equipment_count(),
                     "by_category": category_counts,
-                    "total_usage_sessions": self._system_stats["total_usage_sessions"],
-                    "total_maintenance_performed": self._system_stats[
-                        "total_maintenance_performed"
-                    ],
-                    "total_modifications_installed": self._system_stats[
-                        "total_modifications_installed"
-                    ],
+                    "total_usage_sessions": self._system_stats.get(
+                        "total_usage_sessions", 0
+                    ),
+                    "total_maintenance_performed": self._system_stats.get(
+                        "total_maintenance_performed", 0
+                    ),
+                    "total_modifications_installed": self._system_stats.get(
+                        "total_modifications_installed", 0
+                    ),
                 },
                 "maintenance_info": {
                     "scheduled_maintenance_count": len(maintenance_queue),
@@ -516,7 +541,7 @@ class DynamicEquipmentSystem:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str) -> None:
+    def __getattr__(self, name: str) -> Any:
         """Provide backward compatibility for legacy method calls."""
         legacy_mappings = {
             "get_equipment": "registry.get_equipment",
@@ -543,7 +568,7 @@ def create_dynamic_equipment_system(
     maintenance_interval_hours: int = 168,
     wear_threshold: float = 0.7,
     context_db: Optional[ContextDatabase] = None,
-    logger: Optional[logging.Logger] = None,
+    logger: Optional[Any] = None,
 ) -> DynamicEquipmentSystem:
     """
     Factory function to create dynamic equipment system.

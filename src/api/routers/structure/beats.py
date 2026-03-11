@@ -23,6 +23,7 @@ from src.contexts.narrative.domain.entities.beat import Beat, BeatType
 from .common import _beat_to_response, _get_scene, _parse_uuid, _store_scene
 
 if TYPE_CHECKING:
+    from src.contexts.narrative.domain import Scene
     from src.contexts.world.infrastructure.generators.llm_world_generator import (
         LLMWorldGenerator,
     )
@@ -32,11 +33,11 @@ logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 
-def _get_scene_for_beat_ops(scene_id: str) -> "Beat":
+def _get_scene_for_beat_ops(scene_id: str) -> "Scene":
     """Get a scene from storage, raising HTTPException if not found."""
     from uuid import UUID
 
-    scene_uuid = UUID(scene_id) if isinstance(scene_id, str) else scene_id
+    scene_uuid = UUID(str(scene_id))
     scene = _get_scene(scene_uuid)
     if scene is None:
         raise HTTPException(status_code=404, detail=f"Scene not found: {scene_id}")

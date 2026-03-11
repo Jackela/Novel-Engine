@@ -53,7 +53,9 @@ class ContentGenerator:
                 )
 
                 # Generate enhanced contextual information using template manager
-                if self.template_manager and participant in getattr(self.template_manager, '_active_personas', {}):
+                if self.template_manager and participant in getattr(
+                    self.template_manager, "_active_personas", {}
+                ):
                     context_result = (
                         await self.template_manager.render_character_context(
                             participant, template_context, TemplateType.CONTEXT_SUMMARY
@@ -71,34 +73,36 @@ class ContentGenerator:
                             "archetype": data.get("archetype"),
                         }
                     else:
-                        error_msg = context_result.error.message if context_result.error else "Unknown error"
+                        error_msg = (
+                            context_result.error.message
+                            if context_result.error
+                            else "Unknown error"
+                        )
                         participant_contexts[participant] = {
                             "error": error_msg,
                             "fallback_context": f"Participant {participant} in {context.interaction_type.value} interaction",
                         }
                 else:
                     # Use enhanced basic context rendering
-                    basic_result = await self.context_renderer.render_context(
-                        template_context
-                    ) if self.context_renderer else None
+                    basic_result = (
+                        await self.context_renderer.render_context(template_context)
+                        if self.context_renderer
+                        else None
+                    )
                     if basic_result:
                         participant_contexts[participant] = {
                             "rendered_context": (
                                 basic_result.rendered_content
-                                if hasattr(basic_result, 'rendered_content')
+                                if hasattr(basic_result, "rendered_content")
                                 else str(basic_result)
                             ),
                         }
                     else:
                         participant_contexts[participant] = {
-                            "rendered_context": (
-                            basic_result.data["render_result"].rendered_content
-                            if basic_result.success
-                            else "Basic context unavailable"
-                        ),
-                        "persona_id": None,
-                        "archetype": "Unknown",
-                    }
+                            "rendered_context": "Basic context unavailable",
+                            "persona_id": None,
+                            "archetype": "Unknown",
+                        }
 
             return StandardResponse(
                 success=True,
@@ -135,9 +139,13 @@ class ContentGenerator:
                 },
             )
 
-            summary_result = await self.context_renderer.render_context(
-                summary_template_context, RenderFormat.SUMMARY
-            ) if self.context_renderer else None
+            summary_result = (
+                await self.context_renderer.render_context(
+                    summary_template_context, RenderFormat.SUMMARY
+                )
+                if self.context_renderer
+                else None
+            )
 
             if summary_result and summary_result.success:
                 data = summary_result.data or {}
@@ -146,10 +154,13 @@ class ContentGenerator:
                     generated_content.append(render_result.rendered_content)
 
             # Add type-specific content
-            generated_content.extend(outcome.interaction_content.get("generated_content", []))
+            generated_content.extend(
+                outcome.interaction_content.get("generated_content", [])
+            )
 
-            self.performance_metrics["content_generation_count"] = self.performance_metrics.get("content_generation_count", 0) + len(
-                generated_content
+            self.performance_metrics["content_generation_count"] = (
+                self.performance_metrics.get("content_generation_count", 0)
+                + len(generated_content)
             )
 
             return StandardResponse(

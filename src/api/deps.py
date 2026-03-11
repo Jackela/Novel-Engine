@@ -26,7 +26,7 @@ def get_workspace_store(request: Request) -> FilesystemWorkspaceStore:
     )
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
-    return store
+    return store  # type: ignore[no-any-return]
 
 
 def get_workspace_character_store(request: Request) -> FilesystemCharacterStore:
@@ -35,7 +35,7 @@ def get_workspace_character_store(request: Request) -> FilesystemCharacterStore:
     )
     if not store:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
-    return store
+    return store  # type: ignore[no-any-return]
 
 
 def get_guest_session_manager(request: Request) -> GuestSessionManager:
@@ -44,13 +44,13 @@ def get_guest_session_manager(request: Request) -> GuestSessionManager:
     )
     if not manager:
         raise HTTPException(status_code=503, detail="Workspace service unavailable")
-    return manager
+    return manager  # type: ignore[no-any-return]
 
 
 def get_optional_workspace_id(
     request: Request,
-    manager: GuestSessionManager = Depends(get_guest_session_manager),
-    store: FilesystemWorkspaceStore = Depends(get_workspace_store),
+    manager: GuestSessionManager = Depends(get_guest_session_manager),  # type: ignore[assignment]
+    store: FilesystemWorkspaceStore = Depends(get_workspace_store),  # type: ignore[assignment]
 ) -> Optional[str]:
     token: str | None = request.cookies.get(manager.cookie_name)
     if not token:
@@ -65,15 +65,15 @@ def get_optional_workspace_id(
     if not workspace_id:
         return None
     store.get_or_create(workspace_id)
-    return workspace_id
+    return workspace_id  # type: ignore[no-any-return]
 
 
 def require_workspace_id(
     request: Request,
     response: Response,
-    settings: APISettings = Depends(get_settings),
-    manager: GuestSessionManager = Depends(get_guest_session_manager),
-    store: FilesystemWorkspaceStore = Depends(get_workspace_store),
+    settings: APISettings = Depends(get_settings),  # type: ignore[assignment]
+    manager: GuestSessionManager = Depends(get_guest_session_manager),  # type: ignore[assignment]
+    store: FilesystemWorkspaceStore = Depends(get_workspace_store),  # type: ignore[assignment]
 ) -> str:
     token: str | None = request.cookies.get(manager.cookie_name)
     if not token:

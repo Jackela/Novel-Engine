@@ -748,7 +748,7 @@ def create_emergent_narrative_engine(
 
 if __name__ == "__main__":
     # 示例用法
-    async def example_usage() -> None:  # type: ignore[no-redef]
+    async def example_usage() -> None:
         # Example usage function
         engine = create_emergent_narrative_engine()
 

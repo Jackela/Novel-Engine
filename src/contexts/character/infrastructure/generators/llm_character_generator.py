@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import httpx
 import yaml
@@ -132,7 +132,7 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
             try:
                 response_json = response.json()
                 content = response_json["candidates"][0]["content"]["parts"][0]["text"]
-                return content
+                return str(content)
             except (KeyError, IndexError, TypeError) as e:
                 raise RuntimeError(f"Failed to parse Gemini response: {e}")
 
@@ -143,7 +143,7 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
     def _extract_json(self, content: str) -> Dict[str, Any]:
         # Try direct parse first
         try:
-            return json.loads(content)
+            return cast(Dict[str, Any], json.loads(content))
         except json.JSONDecodeError:
             pass
 
@@ -152,13 +152,13 @@ class LLMCharacterGenerator(CharacterGeneratorPort):
             start = content.find("```json") + 7
             end = content.find("```", start)
             if end > start:
-                return json.loads(content[start:end].strip())
+                return cast(Dict[str, Any], json.loads(content[start:end].strip()))
 
         # Try to find JSON object in content
         start = content.find("{")
         end = content.rfind("}")
         if start != -1 and end != -1 and end > start:
-            return json.loads(content[start : end + 1])
+            return cast(Dict[str, Any], json.loads(content[start : end + 1]))
 
         raise json.JSONDecodeError("No valid JSON found in response", content, 0)
 

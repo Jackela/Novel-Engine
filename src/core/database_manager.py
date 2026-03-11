@@ -951,7 +951,9 @@ class DatabaseManager:
         """Create default database pool from configuration."""
         # Get database configuration
         if self.config_manager:
-            database_config: dict[Any, Any] = self.config_manager.get_section("database")
+            database_config: dict[Any, Any] = self.config_manager.get_section(
+                "database"
+            )
         else:
             database_config = {}
         # Create database config
@@ -1166,7 +1168,7 @@ class DatabaseManager:
         """Perform health check on all pools. (Legacy - use health_check_result)"""
         result = await self.health_check_result()
         if result.is_ok:
-            return result.value  # type: ignore[no-any-return]
+            return result.value  # type: ignore
         error_msg = result.error.message if result.error else "Unknown error"
         return {"error": {"healthy": False, "message": error_msg}}
 
@@ -1230,7 +1232,9 @@ async def get_database_connection(
 
 
 @asynccontextmanager
-async def database_manager_context(db_manager: DatabaseManager) -> AsyncIterator[DatabaseManager]:
+async def database_manager_context(
+    db_manager: DatabaseManager,
+) -> AsyncIterator[DatabaseManager]:
     """Context manager for database manager lifecycle."""
     try:
         await db_manager.initialize()

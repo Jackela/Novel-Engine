@@ -67,10 +67,10 @@ def get_rumor_repository(request: Request) -> RumorRepository:
 
         # Check if we already have a shared instance
         if not hasattr(get_rumor_repository, "_shared_repo"):
-            get_rumor_repository._shared_repo = InMemoryRumorRepository()  # type: ignore[attr-defined]
+            setattr(get_rumor_repository, "_shared_repo", InMemoryRumorRepository())
             logger.warning("rumor_repository_fallback_created_shared")
 
-        repo = get_rumor_repository._shared_repo  # type: ignore[attr-defined]
+        repo = getattr(get_rumor_repository, "_shared_repo")
         request.app.state.rumor_repository = repo
     return repo
 

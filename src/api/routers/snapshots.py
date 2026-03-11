@@ -232,6 +232,7 @@ async def get_snapshot(
         # Check if snapshot exists in any world (cross-world access)
         result = service.restore_snapshot(snapshot_id)
         if result.is_error:
+            error_msg = str(result.error) if result.error else "Unknown error"
             raise HTTPException(
                 status_code=404,
                 detail=ErrorDetail(
@@ -244,11 +245,12 @@ async def get_snapshot(
         # Find the specific snapshot
         list_result = service.list_snapshots(world_id, limit=100)
         if list_result.is_error:
+            error_msg = str(list_result.error) if list_result.error else "Unknown error"
             raise HTTPException(
                 status_code=500,
                 detail=ErrorDetail(
                     code="LIST_FAILED",
-                    message=str(list_result.error),
+                    message=error_msg,
                 ).model_dump(),
             )
 

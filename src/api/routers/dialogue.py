@@ -138,14 +138,20 @@ async def generate_dialogue(
         mood=payload.mood,
     )
 
-    if result.is_error():
-        log.warning("dialogue_generation_error", error=result.error)
+    # Await the result if it's a coroutine
+    if hasattr(result, "is_error"):
+        dialogue_result = result
+    else:
+        dialogue_result = await result  # type: ignore[misc]
+
+    if dialogue_result.is_error():
+        log.warning("dialogue_generation_error", error=dialogue_result.error)
 
     return DialogueGenerationResponse(
-        dialogue=result.dialogue,
-        tone=result.tone,
-        internal_thought=result.internal_thought,
-        body_language=result.body_language,
+        dialogue=dialogue_result.dialogue,
+        tone=dialogue_result.tone,
+        internal_thought=dialogue_result.internal_thought,
+        body_language=dialogue_result.body_language,
         character_id=payload.character_id,
-        error=result.error,
+        error=dialogue_result.error,
     )
