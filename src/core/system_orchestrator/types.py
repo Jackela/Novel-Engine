@@ -15,7 +15,7 @@ Author: Novel Engine Development Team
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Optional, Protocol
 
 import structlog
 
@@ -63,7 +63,7 @@ class DatabaseInterface(Protocol):
         """Register a new agent in the database."""
         ...
 
-    def get_enhanced_connection(self) -> None:
+    def get_enhanced_connection(self) -> AsyncGenerator[Any, None]:
         """Get an async database connection context manager."""
         ...
 

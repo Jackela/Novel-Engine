@@ -71,7 +71,7 @@ class SystemOrchestrator:
         self,
         database_path: str = "data/context_engineering.db",
         config: Optional[OrchestratorConfig] = None,
-        event_bus=None,
+        event_bus: Optional[Any] = None,
         database: Optional["DatabaseInterface"] = None,
     ) -> None:
         """
@@ -271,9 +271,9 @@ class SystemOrchestrator:
             health_data = {
                 "mode": self.config.mode.value if self.config else "unknown",
                 "database_initialized": self.database is not None,
-                "memory_system_initialized": self.layered_memory_system is not None,
-                "template_engine_initialized": self.dynamic_template_engine is not None,
-                "is_running": self._is_running,
+                "memory_system_initialized": self.memory_system is not None,
+                "template_engine_initialized": self.template_engine is not None,
+                "is_running": not self._shutdown_requested,
                 "shutdown_requested": self._shutdown_requested,
                 "active_agents_count": (
                     len(self.active_agents) if self.active_agents else 0
