@@ -3,8 +3,9 @@
 Factory functions for creating state store instances.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
+from src.infrastructure.state_store.base import StateStore
 from src.infrastructure.state_store.config import StateStoreConfig, StateStoreType
 from src.infrastructure.state_store.managers import (
     ConfigurationManager,
@@ -16,7 +17,9 @@ class StateStoreFactory:
     """Factory for creating state store instances."""
 
     @staticmethod
-    def create_redis_store(config: Optional[StateStoreConfig] = None):
+    def create_redis_store(
+        config: Optional[StateStoreConfig] = None,
+    ) -> Any:
         """Create Redis state store.
 
         Args:
@@ -32,7 +35,9 @@ class StateStoreFactory:
         return RedisStateStore(config)
 
     @staticmethod
-    def create_postgres_store(config: Optional[StateStoreConfig] = None):
+    def create_postgres_store(
+        config: Optional[StateStoreConfig] = None,
+    ) -> Any:
         """Create PostgreSQL state store.
 
         Args:
@@ -48,7 +53,9 @@ class StateStoreFactory:
         return PostgreSQLStateStore(config)
 
     @staticmethod
-    def create_s3_store(config: Optional[StateStoreConfig] = None):
+    def create_s3_store(
+        config: Optional[StateStoreConfig] = None,
+    ) -> Any:
         """Create S3 state store.
 
         Args:
@@ -64,7 +71,9 @@ class StateStoreFactory:
         return S3StateStore(config)
 
     @staticmethod
-    def create_memory_store(config: Optional[StateStoreConfig] = None):
+    def create_memory_store(
+        config: Optional[StateStoreConfig] = None,
+    ) -> Any:
         """Create memory state store.
 
         Args:
@@ -80,7 +89,9 @@ class StateStoreFactory:
         return RedisStateStore(config)
 
     @staticmethod
-    def create_store(config: Optional[StateStoreConfig] = None):
+    def create_store(
+        config: Optional[StateStoreConfig] = None,
+    ) -> Any:
         """Create state store based on config.
 
         Args:

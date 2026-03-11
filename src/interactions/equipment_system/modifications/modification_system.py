@@ -169,7 +169,7 @@ class ModificationSystem:
 
     def get_compatible_modifications(self, equipment: DynamicEquipment) -> List[str]:
         """Get list of compatible modifications for equipment."""
-        compatible: list[Any] = []
+        compatible: List[str] = []
         equipment_category = self._get_equipment_category(equipment)
 
         for mod_id, template in self._modification_templates.items():
@@ -178,10 +178,10 @@ class ModificationSystem:
                 continue
 
             # Check category compatibility
-            compatible_categories: list[str] = template.get("compatible_categories", [])
+            compatible_categories: List[str] = template.get("compatible_categories", [])  # type: ignore[assignment]
             if equipment_category in compatible_categories:
                 # Check for conflicts
-                conflicts: list[str] = template.get("conflicts_with", [])
+                conflicts: List[str] = template.get("conflicts_with", [])  # type: ignore[assignment]
                 has_conflict = any(
                     any(
                         mod.modification_id == conflict
@@ -209,7 +209,7 @@ class ModificationSystem:
 
         # Check category compatibility
         equipment_category = self._get_equipment_category(equipment)
-        compatible_categories: list[str] = mod_template.get("compatible_categories", [])
+        compatible_categories: List[str] = mod_template.get("compatible_categories", [])  # type: ignore[assignment]
 
         if equipment_category not in compatible_categories:
             return {
@@ -218,7 +218,7 @@ class ModificationSystem:
             }
 
         # Check for conflicts with existing modifications
-        conflicts: list[str] = mod_template.get("conflicts_with", [])
+        conflicts: List[str] = mod_template.get("conflicts_with", [])  # type: ignore[assignment]
         for existing_mod in equipment.modifications:
             if existing_mod.modification_name in conflicts:
                 return {
@@ -258,7 +258,7 @@ class ModificationSystem:
 
         # Apply template effects if available
         template = self._modification_templates.get(modification.modification_name, {})
-        template_impacts: dict[str, float] = template.get("performance_impact", {})
+        template_impacts: Dict[str, float] = template.get("performance_impact", {})  # type: ignore[assignment]
 
         for metric, impact in template_impacts.items():
             current_value = equipment.performance_metrics.get(metric, 1.0)

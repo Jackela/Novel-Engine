@@ -8,7 +8,7 @@ backward compatibility while providing enhanced enterprise-grade functionality.
 
 import asyncio
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, cast
 
 import structlog
 
@@ -28,7 +28,7 @@ try:
     from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -47,7 +47,7 @@ except ImportError:
         def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:
@@ -202,7 +202,7 @@ class InteractionEngine:
                 and self.config.memory_integration_enabled
             ):
                 state_result = await self.state_manager.update_interaction_states(
-                    context, type_processing_result.data
+                    context, type_processing_result.data or {}
                 )
                 if not state_result.success:
                     self.logger.warning(f"State update failed: {state_result.error}")
@@ -215,7 +215,7 @@ class InteractionEngine:
                 context=context,
                 success=True,
                 processing_duration=processing_time,
-                interaction_content=type_processing_result.data,
+                interaction_content=type_processing_result.data or {},
                 completed_phases=["validation", "processing", "state_update"],
             )
 
@@ -257,10 +257,11 @@ class InteractionEngine:
                 ),
             )
 
-    def get_engine_status(self) -> None:
+    def get_engine_status(self) -> Dict[str, Any]:
         """Get comprehensive engine status."""
         current_time = datetime.now()
-        uptime = (current_time - self.engine_stats["startup_time"]).total_seconds()
+        startup_time = cast(datetime, self.engine_stats.get("startup_time", current_time))
+        uptime = (current_time - startup_time).total_seconds()
 
         return {
             "engine_status": {
@@ -277,7 +278,7 @@ class InteractionEngine:
             ],
         }
 
-    async def shutdown_engine(self) -> None:
+    async def shutdown_engine(self) -> StandardResponse:
         """Gracefully shutdown the engine."""
         try:
             self.logger.info("Shutting down interaction engine")
@@ -331,17 +332,20 @@ class InteractionEngine:
 
     def _update_engine_stats(self, success: bool, processing_time: float) -> None:
         """Update engine processing statistics."""
-        self.engine_stats["total_interactions_processed"] += 1
+        # Get current values with proper types
+        total_processed: int = cast(int, self.engine_stats["total_interactions_processed"]) + 1
+        successful: int = cast(int, self.engine_stats["successful_interactions"])
+        failed: int = cast(int, self.engine_stats["failed_interactions"])
+        current_avg: float = cast(float, self.engine_stats["average_processing_time"])
+
+        self.engine_stats["total_interactions_processed"] = total_processed
 
         if success:
-            self.engine_stats["successful_interactions"] += 1
+            self.engine_stats["successful_interactions"] = successful + 1
         else:
-            self.engine_stats["failed_interactions"] += 1
+            self.engine_stats["failed_interactions"] = failed + 1
 
         # Update average processing time
-        total_processed = self.engine_stats["total_interactions_processed"]
-        current_avg = self.engine_stats["average_processing_time"]
-
         self.engine_stats["average_processing_time"] = (
             (current_avg * (total_processed - 1)) + processing_time
         ) / total_processed
@@ -372,7 +376,7 @@ def create_interaction_engine(
     )
 
 
-def create_performance_optimized_config() -> None:
+def create_performance_optimized_config() -> InteractionEngineConfig:
     """Create performance-optimized configuration."""
     return InteractionEngineConfig(
         max_concurrent_interactions=5,

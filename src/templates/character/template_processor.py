@@ -3,7 +3,7 @@
 Template generation and processing.
 """
 
-from typing import List
+from typing import Any, Dict, List
 
 import structlog
 
@@ -16,6 +16,12 @@ logger = structlog.get_logger(__name__)
 
 class TemplateProcessor:
     """Processes and generates character-specific templates."""
+
+    def __init__(self) -> None:
+        """Initialize the template processor."""
+        self._archetype_base_templates: Dict[
+            CharacterArchetype, Dict[TemplateType, str]
+        ] = {}
 
     async def _generate_archetype_template_content(
         self, archetype: CharacterArchetype, template_type: TemplateType

@@ -8,6 +8,7 @@ from typing import Any, Dict
 import structlog
 
 from src.core.data_models import EquipmentCondition
+from src.interactions.equipment.models import EquipmentCategory as LocalEquipmentCategory
 
 from .models import DynamicEquipment, EquipmentCategory, EquipmentModification
 
@@ -31,7 +32,7 @@ class ModificationEngine:
         }
 
         required_categories = compatible_categories.get(modification.category, [])
-        equipment_category = EquipmentCategory(equipment.base_equipment.category.value)
+        equipment_category = LocalEquipmentCategory(equipment.base_equipment.category.value)  # type: ignore[attr-defined]
 
         if required_categories and equipment_category not in required_categories:
             return {
@@ -76,10 +77,9 @@ class ModificationEngine:
 
         # Blessed equipment condition factor
         condition_factors = {
-            EquipmentCondition.EXCELLENT: 1.1,
+            EquipmentCondition.PRISTINE: 1.1,
             EquipmentCondition.GOOD: 1.0,
-            EquipmentCondition.FAIR: 0.9,
-            EquipmentCondition.POOR: 0.7,
+            EquipmentCondition.WORN: 0.9,
             EquipmentCondition.DAMAGED: 0.5,
         }
         condition_factor = condition_factors.get(

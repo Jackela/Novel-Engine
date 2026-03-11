@@ -72,7 +72,7 @@ def initialize_decision_system(
     pause_controller: InteractionPauseController,
     decision_detector: DecisionPointDetector,
     negotiation_engine: NegotiationEngine,
-    broadcast_sse_event,
+    broadcast_sse_event: Any,
 ) -> None:
     """
     Initialize the decision system with required components.

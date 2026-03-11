@@ -3,7 +3,7 @@
 Template selection logic.
 """
 
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import structlog
 
@@ -16,6 +16,10 @@ logger = structlog.get_logger(__name__)
 
 class TemplateSelector:
     """Selects optimal templates based on context and persona."""
+
+    def __init__(self) -> None:
+        """Initialize the template selector."""
+        self._character_templates: Dict[str, Dict[str, Any]] = {}
 
     async def _select_optimal_template(
         self,

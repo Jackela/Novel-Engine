@@ -22,7 +22,7 @@ import structlog
 from src.core.result import Err, Error, Ok, Result, ValidationError
 
 try:
-    import tiktoken  # type: ignore[import-not-found]
+    import tiktoken
 
     TIKTOKEN_AVAILABLE = True
 except ImportError:

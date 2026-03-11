@@ -442,18 +442,18 @@ async def initialize_performance_systems() -> None:
     logger.info("All performance systems initialized")
 
 
+async def test_performance() -> None:
+    await initialize_performance_systems()
+
+    # Test database operations
+    async with performance_optimizer.get_db_connection() as conn:
+        await conn.execute(
+            "CREATE TABLE IF NOT EXISTS test (id INTEGER, data TEXT)"
+        )
+        await conn.commit()
+
+    logger.info("Performance optimization systems tested successfully")
+
+
 if __name__ == "__main__":
-    # Test performance optimization
-    async def test_performance():
-        await initialize_performance_systems()
-
-        # Test database operations
-        async with performance_optimizer.get_db_connection() as conn:
-            await conn.execute(
-                "CREATE TABLE IF NOT EXISTS test (id INTEGER, data TEXT)"
-            )
-            await conn.commit()
-
-        logger.info("Performance optimization systems tested successfully")
-
     asyncio.run(test_performance())

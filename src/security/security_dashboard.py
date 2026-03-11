@@ -24,7 +24,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import structlog
 
@@ -36,7 +36,7 @@ except ImportError:
 try:
     import aiosqlite
 except ImportError:
-    aiosqlite = None  # type: ignore[misc]
+    aiosqlite = None  # type: ignore
 
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel

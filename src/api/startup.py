@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import List, Optional, Set
+from typing import Any, List, Optional, Set
 
 import structlog
 from fastapi import FastAPI
@@ -189,7 +189,7 @@ async def initialize_app_state(app: FastAPI) -> None:
 
     ensure_workspace_services(app, settings)
 
-    global_event_bus: Optional[object] = None
+    global_event_bus: Optional[Any] = None
     try:
         from src.events.event_bus import EventBus
 

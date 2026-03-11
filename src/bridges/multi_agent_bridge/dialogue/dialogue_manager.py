@@ -51,7 +51,7 @@ class DialogueManager:
         self._agent_cache: Dict[str, Dict[str, Any]] = {}
 
         # Dialogue statistics
-        self._stats = {
+        self._stats: Dict[str, Any] = {
             "total_dialogues_initiated": 0,
             "successful_dialogues": 0,
             "failed_dialogues": 0,

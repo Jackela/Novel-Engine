@@ -176,8 +176,9 @@ class LLMRequest:
             raise ValueError("timeout_seconds must be a positive integer")
 
         # Validate stop sequences are unique
-        if len(self.stop_sequences) != len(set(self.stop_sequences)):
-            raise ValueError("stop_sequences must be unique")
+        if self.stop_sequences is not None:
+            if len(self.stop_sequences) != len(set(self.stop_sequences)):
+                raise ValueError("stop_sequences must be unique")
 
     @classmethod
     def create_chat_request(
@@ -360,9 +361,10 @@ class LLMResponse:
                 raise ValueError("Failed responses must have error_details")
 
         # Validate usage stats are non-negative
-        for key, value in self.usage_stats.items():
-            if not isinstance(value, int) or value < 0:
-                raise ValueError(f"usage_stats[{key}] must be a non-negative integer")
+        if self.usage_stats is not None:
+            for key, value in self.usage_stats.items():
+                if not isinstance(value, int) or value < 0:
+                    raise ValueError(f"usage_stats[{key}] must be a non-negative integer")
 
         # Validate cost estimate is non-negative
         if not isinstance(self.cost_estimate, Decimal) or self.cost_estimate < 0:
@@ -377,9 +379,11 @@ class LLMResponse:
         input_tokens: int,
         output_tokens: int,
         finish_reason: str = "stop",
+        cost_estimate: Optional[Decimal] = None,
+        provider_response: Optional[Dict[str, Any]] = None,
     ) -> "LLMResponse":
         """Factory method for successful responses."""
-        cost_estimate = model_id.estimate_cost(input_tokens, output_tokens)
+        final_cost = cost_estimate if cost_estimate is not None else model_id.estimate_cost(input_tokens, output_tokens)
 
         return cls(
             request_id=request_id,
@@ -393,7 +397,8 @@ class LLMResponse:
                 "output_tokens": output_tokens,
                 "total_tokens": input_tokens + output_tokens,
             },
-            cost_estimate=cost_estimate,
+            cost_estimate=final_cost,
+            provider_response=provider_response,
         )
 
     @classmethod
@@ -403,6 +408,7 @@ class LLMResponse:
         status: LLMResponseStatus,
         error_details: str,
         model_id: Optional[ModelId] = None,
+        provider_response: Optional[Dict[str, Any]] = None,
     ) -> "LLMResponse":
         """Factory method for error responses."""
         return cls(
@@ -411,6 +417,7 @@ class LLMResponse:
             status=status,
             error_details=error_details,
             model_id=model_id,
+            provider_response=provider_response,
         )
 
     def is_successful(self) -> bool:
@@ -422,15 +429,21 @@ class LLMResponse:
 
     def get_total_tokens(self) -> int:
         """Get total token usage."""
-        return self.usage_stats.get("total_tokens", 0)
+        if self.usage_stats is not None:
+            return self.usage_stats.get("total_tokens", 0)
+        return 0
 
     def get_input_tokens(self) -> int:
         """Get input token usage."""
-        return self.usage_stats.get("input_tokens", 0)
+        if self.usage_stats is not None:
+            return self.usage_stats.get("input_tokens", 0)
+        return 0
 
     def get_output_tokens(self) -> int:
         """Get output token usage."""
-        return self.usage_stats.get("output_tokens", 0)
+        if self.usage_stats is not None:
+            return self.usage_stats.get("output_tokens", 0)
+        return 0
 
 
 class LLMProviderError(Exception):
@@ -569,7 +582,7 @@ class ILLMProvider(ABC):
             loop.close()
 
     @abstractmethod
-    async def generate_stream_async(
+    def generate_stream_async(
         self, request: LLMRequest, budget: Optional[TokenBudget] = None
     ) -> AsyncIterator[str]:
         """
@@ -709,7 +722,7 @@ class ILLMProvider(ABC):
         """
         return {"requests_per_minute": 60, "tokens_per_minute": 10000}
 
-    def get_pricing_info(self, model_id: ModelId) -> Dict[str, Decimal]:
+    def get_pricing_info(self, model_id: ModelId) -> Dict[str, Any]:
         """
         Get pricing information for specific model.
 

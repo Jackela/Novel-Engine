@@ -8,7 +8,7 @@ Multi-agent negotiation engine.
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -193,7 +193,7 @@ class AgentNegotiationEngine:
                 return
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and llm_response.success:
+            if llm_response and cast(bool, llm_response.success):
                 counter_proposal = json.loads(llm_response.content)
                 response.counter_proposal = counter_proposal
                 logger.debug(
@@ -371,7 +371,7 @@ class AgentNegotiationEngine:
                 return
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and llm_response.success:
+            if llm_response and cast(bool, llm_response.success):
                 mediation_result = json.loads(llm_response.content)
 
                 # 创建调解提议

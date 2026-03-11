@@ -10,7 +10,7 @@ Extracted from DirectorAgent for better modularity and maintainability.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -58,7 +58,7 @@ class SimulationCoordinator:
         if self.world_state_file_path:
             self._load_world_state()
 
-    def register_agent(self, agent: PersonaAgent, log_event_callback) -> bool:
+    def register_agent(self, agent: PersonaAgent, log_event_callback: Callable[[str], None]) -> bool:
         """
         Register a PersonaAgent instance with the simulation for management.
 
@@ -75,13 +75,6 @@ class SimulationCoordinator:
         """
         try:
             logger.info("Attempting to register agent for simulation management")
-
-            # Validate the agent instance
-            if not isinstance(agent, PersonaAgent):
-                logger.error(
-                    f"Invalid agent type: {type(agent)}. Expected PersonaAgent instance"
-                )
-                return False
 
             # Validate that the agent has the required methods
             required_methods = ["decision_loop", "get_decision_with_reasoning"]
@@ -138,7 +131,7 @@ class SimulationCoordinator:
             logger.error(f"Unexpected error during agent registration: {str(e)}")
             return False
 
-    def remove_agent(self, agent_id: str, log_event_callback) -> bool:
+    def remove_agent(self, agent_id: str, log_event_callback: Callable[[str], None]) -> bool:
         """
         Remove an agent from the simulation.
 
@@ -247,7 +240,7 @@ class SimulationCoordinator:
         return agent_list
 
     def save_world_state(
-        self, file_path: Optional[str] = None, log_event_callback=None
+        self, file_path: Optional[str] = None, log_event_callback: Optional[Callable[[str], None]] = None
     ) -> bool:
         """
         Save current world state to file.

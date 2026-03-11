@@ -9,7 +9,7 @@ Main emergent narrative engine orchestrating all subsystems.
 import json
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import structlog
 
@@ -524,9 +524,7 @@ class EmergentNarrativeEngine:
 
         # 转换集合为列表以便序列化
         influence_scope["affected_agents"] = list(affected_agents)
-        influence_scope["affected_locations"] = list(
-            influence_scope["affected_locations"]
-        )
+        influence_scope["affected_locations"] = list(affected_locations)
 
         return influence_scope
 
@@ -623,10 +621,6 @@ class EmergentNarrativeEngine:
         """
 
         try:
-            llm_service = self.llm_service
-            if llm_service is None:
-                return []
-
             llm_request = LLMRequest(
                 prompt=opportunity_prompt,
                 response_format=ResponseFormat.EVENT_JSON,
@@ -722,7 +716,7 @@ class EmergentNarrativeEngine:
                 max_tokens=500,
             )
 
-            llm_response = await self.llm_service.process_request(llm_request)
+            llm_response = await self.llm_service.generate(llm_request)
 
             if llm_response is not None and getattr(llm_response, "success", False):
                 return llm_response.content.strip()

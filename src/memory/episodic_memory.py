@@ -129,7 +129,7 @@ class EpisodicMemory:
             self._update_indices(memory, themes)
 
             db_result = await self.database.store_enhanced_memory(memory)
-            if not db_result.success:
+            if not db_result.success and db_result.error:
                 logger.error(f"Database store failed: {db_result.error.message}")
 
             self.total_episodes += 1
@@ -466,7 +466,7 @@ class EpisodicMemory:
         }
 
 
-async def test_episodic_memory():
+async def test_episodic_memory() -> None:
     """Tests the episodic memory system."""
     logger.info("Testing Episodic Memory System...")
 
@@ -495,20 +495,23 @@ async def test_episodic_memory():
     temporal_result = await episodic_memory.retrieve_episodes_by_timeframe(
         start_time, end_time
     )
+    temporal_episodes = temporal_result.data.get("episodes", []) if temporal_result.data else []
     logger.info(
-        f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_result.data.get('episodes', []))}"
+        f"Temporal Retrieval: {temporal_result.success}, Count: {len(temporal_episodes)}"
     )
 
     participant_result = await episodic_memory.retrieve_episodes_by_participants(
         ["enemy_a"]
     )
+    participant_episodes = participant_result.data.get("episodes", []) if participant_result.data else []
     logger.info(
-        f"Participant Retrieval: {participant_result.success}, Count: {len(participant_result.data.get('episodes', []))}"
+        f"Participant Retrieval: {participant_result.success}, Count: {len(participant_episodes)}"
     )
 
     theme_result = await episodic_memory.retrieve_episodes_by_theme(["combat"])
+    theme_episodes = theme_result.data.get("episodes", []) if theme_result.data else []
     logger.info(
-        f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_result.data.get('episodes', []))}"
+        f"Thematic Retrieval: {theme_result.success}, Count: {len(theme_episodes)}"
     )
 
     stats = episodic_memory.get_memory_statistics()

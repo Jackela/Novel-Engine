@@ -495,8 +495,8 @@ class KnowledgeIngestionService:
             ...         print(f"Batch error: {error.message}")
         """
         if not isinstance(entries, list):
-            return Err(
-                ValidationError(  # type: ignore[unreachable]
+            return Err(  # type: ignore[unreachable]
+                ValidationError(
                     message="entries must be a list",
                     field="entries",
                 )

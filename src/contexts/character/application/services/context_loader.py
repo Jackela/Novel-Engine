@@ -16,7 +16,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import aiofiles
+import aiofiles  # type: ignore[import-untyped]
 import structlog
 import yaml
 
@@ -105,7 +105,7 @@ class ContextLoaderService:
         # Security and reliability configuration
         self.max_concurrent_loads = max_concurrent_loads
         self._load_semaphore = asyncio.Semaphore(max_concurrent_loads)
-        self._active_loads = set()
+        self._active_loads: set[str] = set()
 
         # File naming conventions for context files
         self.file_patterns = {
@@ -121,8 +121,8 @@ class ContextLoaderService:
         # Caching system
         self.enable_caching = enable_caching
         self.cache_ttl = timedelta(minutes=cache_ttl_minutes)
-        self._cache = {}
-        self._cache_timestamps = {}
+        self._cache: dict[str, Any] = {}
+        self._cache_timestamps: dict[str, datetime] = {}
 
         # Initialize monitoring counters
         self._load_stats = {

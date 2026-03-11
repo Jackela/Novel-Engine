@@ -122,7 +122,7 @@ class IngestionJobStore:
             job_id=job_id,
             source_id=source_id,
             source_type=source_type,
-        )
+        )  # type: ignore[call-arg]
 
         return job
 

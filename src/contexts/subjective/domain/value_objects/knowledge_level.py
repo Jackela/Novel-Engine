@@ -81,10 +81,15 @@ class KnowledgeItem:
             raise ValueError("Expiration time must be after acquisition time")
 
         # Initialize empty set for tags if None
+        tags_set: Set[str]
         if self.tags is None:
-            object.__setattr__(self, "tags", set())
+            tags_set = set()
+            object.__setattr__(self, "tags", tags_set)
         elif not isinstance(self.tags, set):
-            object.__setattr__(self, "tags", set(self.tags))
+            tags_set = set(self.tags)  # type: ignore[unreachable]
+            object.__setattr__(self, "tags", tags_set)
+        else:
+            tags_set = self.tags
 
     def is_current(self, current_time: Optional[datetime] = None) -> bool:
         """Check if this knowledge is still current/valid."""
@@ -127,7 +132,7 @@ class KnowledgeItem:
 
     def has_tag(self, tag: str) -> bool:
         """Check if knowledge has a specific tag."""
-        return tag in self.tags
+        return self.tags is not None and tag in self.tags
 
     def with_updated_certainty(
         self,

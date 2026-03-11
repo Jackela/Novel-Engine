@@ -398,7 +398,7 @@ class GetWorldSliceQueryHandler:
         """
         # If world has no spatial bounds, assume query is valid
         if read_model.min_x is None:
-            return True
+            return True  # type: ignore[unreachable]
 
         if query.is_circular_query():
             # Check if circle intersects with world bounds

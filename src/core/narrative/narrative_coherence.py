@@ -7,7 +7,7 @@ Narrative coherence engine for story consistency.
 
 import json
 from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import structlog
 
@@ -229,10 +229,10 @@ class NarrativeCoherenceEngine:
 
             llm_service = self.llm_service
             if llm_service is None:
-                return f"{event.agent_id or 'Someone'} performed {event.event_type}"
+                return None
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and llm_response.success:
+            if llm_response and cast(bool, llm_response.success):
                 correction_data = json.loads(llm_response.content)
 
                 # 创建修正后的事件
@@ -412,10 +412,10 @@ class NarrativeCoherenceEngine:
 
             llm_service = self.llm_service
             if llm_service is None:
-                return f"{event.agent_id or 'Someone'} performed {event.event_type}"
+                return self._generate_basic_narrative(event)
             llm_response = await llm_service.generate(llm_request)
 
-            if llm_response and llm_response.success:
+            if llm_response and cast(bool, llm_response.success):
                 return (
                     str(llm_response.content).strip()
                     if llm_response
@@ -466,7 +466,7 @@ class NarrativeCoherenceEngine:
         if not event.agent_id:
             return {}
 
-        development = {
+        development: Dict[str, Any] = {
             "agent_id": event.agent_id,
             "development_type": "action_based",
             "growth_indicators": [],

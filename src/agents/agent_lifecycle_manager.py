@@ -213,9 +213,10 @@ class AgentLifecycleManager:
                 violation_count=len(violations),
             )
 
-            validated_action, repair_log = self._attempt_action_repairs(
+            validated_action_result, repair_log = self._attempt_action_repairs(
                 proposed_action, violations, character_data
             )
+            validated_action = validated_action_result  # type: ignore[assignment]
 
             self.validated_action = validated_action
             if self.validated_action is not None:
@@ -572,7 +573,7 @@ class AgentLifecycleManager:
                     hasattr(modified_action, "action_type")
                     and not modified_action.action_type
                 ):
-                    modified_action.action_type = "observe"
+                    modified_action.action_type = ActionType.OBSERVE
                     repairs_made.append("Set default action type to 'observe'")
 
         return modified_action, repairs_made
@@ -615,7 +616,7 @@ class AgentLifecycleManager:
 
                     old_action = modified_action.action_type
                     if old_action in impossible_to_possible:
-                        modified_action.action_type = impossible_to_possible[old_action]
+                        modified_action.action_type = impossible_to_possible[old_action]  # type: ignore[assignment]
                         repairs_made.append(
                             f"Changed impossible action '{old_action}' to '{modified_action.action_type}'"
                         )
@@ -679,12 +680,12 @@ class AgentLifecycleManager:
             if isinstance(action_type, str):
                 try:
                     action_type = (
-                        ActionType(action_type.lower())  # type: ignore[assignment]
+                        ActionType(action_type.lower())
                         if action_type
                         else ActionType.OTHER
                     )
                 except (ValueError, AttributeError):
-                    action_type = ActionType.OTHER  # type: ignore[assignment]
+                    action_type = ActionType.OTHER
 
             # Convert target string to ActionTarget or None
             if isinstance(target, str):

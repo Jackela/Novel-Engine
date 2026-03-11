@@ -139,6 +139,11 @@ class MemoryQueryEngine:
             if not processing_result.success:
                 return processing_result
 
+            if not processing_result.data:
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(code="EMPTY_RESULT", message="Processing result data is empty")
+                )
             query_result = processing_result.data["query_result"]
             enhanced_result = self._apply_contextual_ranking(
                 query_result, context, query_text
@@ -272,7 +277,18 @@ class MemoryQueryEngine:
             if not temporal_result.success:
                 return temporal_result
 
-            memories = temporal_result.data["query_result"].memories
+            if not temporal_result.data:
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(code="EMPTY_RESULT", message="Temporal result data is empty")
+                )
+            query_res = temporal_result.data.get("query_result")
+            if not query_res:
+                return StandardResponse(
+                    success=False,
+                    error=ErrorInfo(code="EMPTY_RESULT", message="Query result is empty")
+                )
+            memories = query_res.memories
 
             analysis_map = {
                 "trends": self._analyze_memory_trends,
@@ -432,9 +448,11 @@ class MemoryQueryEngine:
             reverse=True,
         )
 
-        result.memories, result.relevance_scores, result.memory_sources = zip(
-            *sorted_results
-        )
+        if sorted_results:
+            mem_list, score_list, source_list = zip(*sorted_results)
+            result.memories = list(mem_list)
+            result.relevance_scores = list(score_list)
+            result.memory_sources = list(source_list)
         return result
 
     async def _find_contextual_associations(
@@ -447,10 +465,12 @@ class MemoryQueryEngine:
                 query_text="", participants=memory.participants, max_results=max_results
             )
             result = await self.layered_memory.query_memories(query)
-            if result.success:
-                for mem in result.data["query_result"].memories:
-                    if mem.memory_id != memory.memory_id:
-                        associations.append((mem, 0.6))
+            if result.success and result.data:
+                query_res = result.data.get("query_result")
+                if query_res:
+                    for mem in query_res.memories:
+                        if mem.memory_id != memory.memory_id:
+                            associations.append((mem, 0.6))
         return associations[:max_results]
 
     def _extract_key_terms(self, content: str) -> List[str]:
@@ -500,12 +520,14 @@ class MemoryQueryEngine:
         # This is a simplified retrieval. A real implementation would be more robust.
         query = MemoryQueryRequest(query_text=f"id:{memory_id}")
         result = await self.layered_memory.query_memories(query)
-        if result.success:
-            return [
-                mem
-                for mem in result.data["query_result"].memories
-                if mem.memory_id == memory_id
-            ]
+        if result.success and result.data:
+            query_res = result.data.get("query_result")
+            if query_res:
+                return [
+                    mem
+                    for mem in query_res.memories
+                    if mem.memory_id == memory_id
+                ]
         return []
 
     def _calculate_query_complexity(self, query_text: str) -> float:
@@ -514,7 +536,7 @@ class MemoryQueryEngine:
 
     def _analyze_memory_trends(self, memories: List[MemoryItem]) -> Dict[str, Any]:
         """Analyzes trends in a list of memories."""
-        daily_counts = defaultdict(int)
+        daily_counts: Dict[str, int] = defaultdict(int)
         for mem in memories:
             daily_counts[mem.timestamp.date().isoformat()] += 1
         return {"daily_memory_counts": dict(daily_counts)}
@@ -530,14 +552,14 @@ class MemoryQueryEngine:
 
     def _analyze_activity_cycles(self, memories: List[MemoryItem]) -> Dict[str, Any]:
         """Analyzes activity cycles in a list of memories."""
-        hourly_activity = defaultdict(int)
+        hourly_activity: Dict[int, int] = defaultdict(int)
         for mem in memories:
             hourly_activity[mem.timestamp.hour] += 1
         return {"hourly_activity": dict(hourly_activity)}
 
     def _analyze_general_patterns(self, memories: List[MemoryItem]) -> Dict[str, Any]:
         """Analyzes general patterns in a list of memories."""
-        type_counts = defaultdict(int)
+        type_counts: Dict[str, int] = defaultdict(int)
         for mem in memories:
             type_counts[mem.memory_type.value] += 1
         return {"memory_type_distribution": dict(type_counts)}
@@ -580,7 +602,7 @@ class MemoryQueryEngine:
         }
 
 
-async def test_memory_query_engine():
+async def test_memory_query_engine() -> None:
     """Tests the MemoryQueryEngine."""
     logger.info("Testing Memory Query Engine...")
 
@@ -601,11 +623,13 @@ async def test_memory_query_engine():
     result = await query_engine.execute_query(query)
 
     if result.success:
-        query_result = result.data["query_result"]
-        logger.info(f"Query '{query}' found {len(query_result.memories)} results.")
-        assert len(query_result.memories) > 0
+        query_result = result.data.get("query_result") if result.data else None
+        if query_result:
+            logger.info(f"Query '{query}' found {len(query_result.memories)} results.")
+            assert len(query_result.memories) > 0
     else:
-        logger.error(f"Query failed: {result.error.message}")
+        if result.error:
+            logger.error(f"Query failed: {result.error.message}")
         assert False
 
     stats = query_engine.get_query_statistics()

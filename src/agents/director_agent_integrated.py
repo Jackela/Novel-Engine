@@ -86,8 +86,8 @@ except ImportError:
     def get_config() -> Optional[Any]:  # type: ignore[misc]
         return None
 
-    CampaignBrief = None  # type: ignore[misc,assignment,unused-ignore]
-    CampaignBriefLoader = None  # type: ignore[misc,assignment,unused-ignore]
+    CampaignBrief = None
+    CampaignBriefLoader = None
 
     class NarrativeActionResolver:  # type: ignore[no-redef]
         def __init__(self) -> None:
@@ -264,15 +264,13 @@ class DirectorAgent:
             bool: True if registration successful, False otherwise
         """
         if agent is None:
-            return self._handle_invalid_agent("Agent cannot be None")
+            return self._handle_invalid_agent("Agent cannot be None")  # type: ignore[unreachable]
         success = self.base.register_agent(agent)
         if success:
             logger.info(
                 "agent_registered", agent_id=getattr(agent, "agent_id", "unknown")
             )
             return True
-
-        return False  # type: ignore[unreachable]
 
         # Fallback for legacy mock agents used in test suites
         if not self._is_legacy_agent_compatible(agent):
@@ -891,8 +889,12 @@ class DirectorAgent:
         # Extract character_id from agent
         character_id = getattr(agent, "agent_id", "unknown")
 
-        if isinstance(action, dict):
-            action_id = action.get("action_id", str(uuid4()))
+        action_id: str
+        raw_action_type: str
+        reasoning: str
+        target: Any
+        if isinstance(action, dict):  # type: ignore
+            action_id = action.get("action_id", str(uuid4()))  # type: ignore[unreachable]
             raw_action_type = action.get("action_type", "wait")
             reasoning = action.get("reasoning", "")
             target = action.get("target")

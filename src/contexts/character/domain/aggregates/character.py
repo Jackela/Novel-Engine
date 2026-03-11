@@ -1070,7 +1070,7 @@ class Character:
         Returns:
             Dictionary mapping category names to tag lists, or empty dict if none.
         """
-        return self.metadata.get("smart_tags", {})
+        return self.metadata.get("smart_tags") or {}
 
     # ==================== Manual Smart Tags Override ====================
 
@@ -1110,7 +1110,7 @@ class Character:
         Returns:
             Dictionary mapping category names to manual tag lists.
         """
-        return self.metadata.get("manual_smart_tags", {})
+        return self.metadata.get("manual_smart_tags") or {}
 
     def get_manual_smart_tags_for_category(self, category: str) -> List[str]:
         """Get manual tags for a specific category.

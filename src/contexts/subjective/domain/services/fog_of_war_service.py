@@ -358,8 +358,8 @@ class FogOfWarService:
         source_turn_brief: TurnBrief,
         target_turn_brief: TurnBrief,
         knowledge_types: Optional[List[KnowledgeType]] = None,
-        _max_propagation_distance: float = 10.0,
-        _source_reliability_modifier: float = 0.9,
+        max_propagation_distance: float = 10.0,
+        source_reliability_modifier: float = 0.9,
     ) -> List[KnowledgeItem]:
         """
         Propagate knowledge from one entity to another.
@@ -517,7 +517,7 @@ class FogOfWarService:
             return "unknown", 0.0
 
         # Analyze knowledge to determine threat level
-        threat_indicators = 0
+        threat_indicators = 0.0
         total_confidence = 0.0
         knowledge_count = 0
 

@@ -15,6 +15,7 @@ from typing import Tuple
 import structlog
 
 from src.contexts.world.domain.errors import TimeError, TimeValidationError
+from src.core.result import Error
 from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 from src.contexts.world.domain.ports.calendar_repository import CalendarRepository
 from src.contexts.world.domain.value_objects.world_calendar import WorldCalendar
@@ -101,8 +102,9 @@ class TimeService:
                 error=str(e),
             )
             return Err(
-                TimeError(
-                    f"Failed to get time: {e}",
+                Error(
+                    message=f"Failed to get time: {e}",
+                    code="TIME_ERROR",
                     details={"world_id": world_id},
                 )
             )
@@ -134,12 +136,12 @@ class TimeService:
         if days < 1:
             error_msg = f"Days to advance must be >= 1, got {days}"
             logger.warning("advance_time_validation_failed", error=error_msg)
-            return Err(TimeValidationError(error_msg, details={"days": days}))
+            return Err(Error(message=error_msg, code="VALIDATION_ERROR", details={"days": days}))
 
         # Get current calendar
         current = self._repository.get_or_create(world_id)
         if current is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 TimeError(
                     f"Failed to get or create calendar for world {world_id}",
                     details={"world_id": world_id},
@@ -217,8 +219,9 @@ class TimeService:
             return Ok(list(self._events))
         except Exception as e:
             return Err(
-                TimeError(
-                    f"Failed to get pending events: {e}",
+                Error(
+                    message=f"Failed to get pending events: {e}",
+                    code="TIME_ERROR",
                 )
             )
 
@@ -236,8 +239,9 @@ class TimeService:
             return Ok(None)
         except Exception as e:
             return Err(
-                TimeError(
-                    f"Failed to clear pending events: {e}",
+                Error(
+                    message=f"Failed to clear pending events: {e}",
+                    code="TIME_ERROR",
                 )
             )
 
@@ -270,7 +274,7 @@ class TimeService:
             or not isinstance(month, int)
             or not isinstance(day, int)
         ):
-            error_msg = f"Invalid date types: year={type(year).__name__}, month={type(month).__name__}, day={type(day).__name__}. All must be integers."
+            error_msg = f"Invalid date types: year={type(year).__name__}, month={type(month).__name__}, day={type(day).__name__}. All must be integers."  # type: ignore[unreachable]
             logger.error(
                 "set_time_type_validation_failed",
                 world_id=world_id,
@@ -279,8 +283,9 @@ class TimeService:
                 day_type=type(day).__name__,
             )
             return Err(
-                TimeValidationError(
-                    error_msg,
+                Error(
+                    message=error_msg,
+                    code="VALIDATION_ERROR",
                     details={
                         "world_id": world_id,
                         "year": year,
@@ -291,7 +296,7 @@ class TimeService:
             )
 
         if not isinstance(era_name, str):
-            error_msg = (
+            error_msg = (  # type: ignore[unreachable]
                 f"Invalid era_name type: {type(era_name).__name__}. Must be string."
             )
             logger.error(
@@ -300,8 +305,9 @@ class TimeService:
                 era_name_type=type(era_name).__name__,
             )
             return Err(
-                TimeValidationError(
-                    error_msg,
+                Error(
+                    message=error_msg,
+                    code="VALIDATION_ERROR",
                     details={"world_id": world_id, "era_name": era_name},
                 )
             )
@@ -322,8 +328,9 @@ class TimeService:
             error_msg = f"Invalid date: {e}"
             logger.error("set_time_failed", error=error_msg, world_id=world_id)
             return Err(
-                TimeValidationError(
-                    error_msg,
+                Error(
+                    message=error_msg,
+                    code="VALIDATION_ERROR",
                     details={
                         "world_id": world_id,
                         "year": year,

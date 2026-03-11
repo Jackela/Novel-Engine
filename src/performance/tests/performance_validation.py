@@ -12,7 +12,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 import aiohttp
 import structlog
@@ -35,7 +35,7 @@ except ImportError as e:
     performance_engine = None
 
 
-async def test_performance_engine():
+async def test_performance_engine() -> bool:
     """Test the performance engine directly."""
     logger.info("Testing Performance Engine...")
 
@@ -66,11 +66,11 @@ async def test_performance_engine():
         assert cached_result["test"] == "data", "Cache data integrity failed"
 
         # Test concurrent operations
-        async def test_operation():
+        async def test_operation() -> str:
             await asyncio.sleep(0.01)
             return "success"
 
-        operations = [(test_operation, (), {}) for _ in range(10)]
+        operations: list[tuple[Callable[..., Any], tuple[Any, ...], dict[str, Any]]] = [(test_operation, (), {}) for _ in range(10)]
         results = await performance_engine.optimize_batch_operations(
             operations, "io_bound"
         )
@@ -90,7 +90,7 @@ async def test_performance_engine():
         return False
 
 
-async def test_api_endpoints(base_url: str = "http://localhost:8000"):
+async def test_api_endpoints(base_url: str = "http://localhost:8000") -> list[dict[str, Any]]:
     """Test API endpoints for performance."""
     logger.info(f"Testing API endpoints at {base_url}...")
 
@@ -150,13 +150,13 @@ async def run_quick_load_test(
     base_url: str = "http://localhost:8000",
     concurrent_users: int = 50,
     requests_per_user: int = 5,
-):
+) -> dict[str, Any]:
     """Run a quick load test."""
     logger.info(
         f"Running quick load test: {concurrent_users} users, {requests_per_user} requests each..."
     )
 
-    async def user_session(user_id: int):
+    async def user_session(user_id: int) -> dict[str, Any]:
         """Single user session."""
         async with aiohttp.ClientSession() as session:
             response_times: list[Any] = []
@@ -198,15 +198,17 @@ async def run_quick_load_test(
     total_errors = 0
     successful_users = 0
 
-    for result in user_results:
-        if isinstance(result, Exception):
-            logger.error(f"User session failed: {result}")
+    for res in user_results:
+        if isinstance(res, Exception):
+            logger.error(f"User session failed: {res}")
             continue
 
         successful_users += 1
-        total_requests += result["requests"]
-        total_errors += result["errors"]
-        all_response_times.extend(result["response_times"])
+        result_dict = res if not isinstance(res, Exception) else {}
+        if isinstance(result_dict, dict):
+            total_requests += result_dict.get("requests", 0)
+            total_errors += result_dict.get("errors", 0)
+            all_response_times.extend(result_dict.get("response_times", []))
 
     if all_response_times:
         avg_response_time = sum(all_response_times) / len(all_response_times)
@@ -253,11 +255,11 @@ async def run_quick_load_test(
     return load_test_results
 
 
-async def validate_performance():
+async def validate_performance() -> dict[str, Any]:
     """Run comprehensive performance validation."""
     logger.info("Starting Performance Validation...")
 
-    validation_results = {
+    validation_results: dict[str, Any] = {
         "timestamp": datetime.now().isoformat(),
         "performance_engine_test": None,
         "api_endpoint_tests": None,
@@ -309,7 +311,7 @@ async def validate_performance():
     return validation_results
 
 
-def print_validation_summary(results: Dict[str, Any]) -> None:
+def print_validation_summary(results: dict[str, Any]) -> None:
     """Print validation summary."""
     logger.info("\n" + "=" * 60)
     logger.info("PERFORMANCE VALIDATION SUMMARY")
@@ -374,7 +376,7 @@ def print_validation_summary(results: Dict[str, Any]) -> None:
     logger.info("=" * 60)
 
 
-def save_validation_results(results: Dict[str, Any]) -> None:
+def save_validation_results(results: dict[str, Any]) -> str | None:
     """Save validation results to file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"performance_validation_{timestamp}.json"
@@ -389,7 +391,9 @@ def save_validation_results(results: Dict[str, Any]) -> None:
         return None
 
 
-async def main():
+async def main() -> None:
+
+
     """Main validation function."""
     try:
         results = await validate_performance()

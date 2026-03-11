@@ -17,6 +17,10 @@ logger = structlog.get_logger(__name__)
 class ContentAnalyzer:
     """Analyzes content to detect archetypes and extract traits."""
 
+    def __init__(self) -> None:
+        """Initialize the content analyzer."""
+        pass
+
     def _detect_archetype_from_template(
         self, template_content: str
     ) -> Optional[CharacterArchetype]:
@@ -97,7 +101,8 @@ class ContentAnalyzer:
                 archetype_scores[archetype] = score
 
         if archetype_scores:
-            return max(archetype_scores, key=archetype_scores.get)
+            result: Optional[CharacterArchetype] = max(archetype_scores.items(), key=lambda item: item[1])[0]
+            return result
 
         return None
 

@@ -552,7 +552,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
                     .filter(TurnBriefORM.updated_at > cutoff_time)
                     .scalar()
                 )
-                return result  # type: ignore[return-value]
+                return result
 
         except SQLAlchemyError as e:
             self.logger.error(f"Database error counting active TurnBriefs: {e}")
@@ -701,7 +701,7 @@ class SQLAlchemyTurnBriefRepository(ITurnBriefRepository):
         orm_entity.base_alertness = turn_brief.awareness_state.base_alertness.value  # type: ignore[assignment]
         orm_entity.current_alertness = (
             turn_brief.awareness_state.current_alertness.value
-        )  # type: ignore[assignment]
+        )
         orm_entity.attention_focus = turn_brief.awareness_state.attention_focus.value  # type: ignore[assignment]
         orm_entity.focus_target = turn_brief.awareness_state.focus_target  # type: ignore[assignment]
         orm_entity.awareness_modifiers = self._serialize_awareness_modifiers(

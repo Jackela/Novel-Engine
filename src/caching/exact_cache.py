@@ -130,7 +130,7 @@ class ExactCache:
             keys_to_remove = [
                 key
                 for key, entry in self._store.items()
-                if entry.meta.match_tags(tags_set)
+                if entry.meta.match_tags(list(tags_set))
             ]
             for key in keys_to_remove:
                 self._store.pop(key, None)

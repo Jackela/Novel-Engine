@@ -304,6 +304,8 @@ class ConfigLoader:
 
             if not needs_reload:
                 logger.debug("Using cached configuration")
+                if self._config is None:
+                    raise ConfigurationError("Configuration not loaded")
                 return self._config
 
             logger.info(f"Loading configuration from: {self.config_file_path}")
@@ -777,7 +779,7 @@ def get_config() -> AppConfig:
     return ConfigLoader.get_instance().get_config()
 
 
-def get_simulation_turns(config=None) -> int:
+def get_simulation_turns(config: Optional[Any] = None) -> int:
     """Global function to get simulation turns."""
     return ConfigLoader.get_instance().get_simulation_turns()
 
@@ -797,7 +799,7 @@ def get_output_directory() -> str:
     return ConfigLoader.get_instance().get_output_directory()
 
 
-def get_default_character_sheets(config=None) -> List[str]:
+def get_default_character_sheets(config: Optional[Any] = None) -> List[str]:
     """Global function to get default character sheets."""
     return ConfigLoader.get_instance().get_default_character_sheets()
 

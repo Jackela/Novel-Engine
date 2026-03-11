@@ -40,7 +40,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("archetype", mode="before")
     @classmethod
-    def normalize_archetype(cls, value) -> None:
+    def normalize_archetype(cls, value: Any) -> Any:
         """
         Normalize archetype input for case-insensitive matching.
 
@@ -57,7 +57,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("agent_id")
     @classmethod
-    def validate_agent_id(cls, v) -> None:
+    def validate_agent_id(cls, v: str) -> str:
         """
         Validate agent ID format.
 
@@ -78,7 +78,7 @@ class CharacterCreationRequest(BaseModel):
 
     @field_validator("skills")
     @classmethod
-    def validate_skills(cls, v) -> None:
+    def validate_skills(cls, v: dict[str, float]) -> dict[str, float]:
         """
         Validate skill values are within acceptable range.
 
@@ -139,7 +139,7 @@ class CharacterAPI:
         """Sets up API routes."""
 
         @app.post("/api/characters", response_model=dict)
-        async def create_character(request: CharacterCreationRequest):
+        async def create_character(request: CharacterCreationRequest) -> dict[str, Any]:
             """Creates a new character."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -208,7 +208,7 @@ class CharacterAPI:
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/characters", response_model=CharacterListResponse)
-        async def list_characters():
+        async def list_characters() -> CharacterListResponse:
             """List all characters."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -238,7 +238,7 @@ class CharacterAPI:
         @app.get("/api/characters/{character_id}", response_model=dict)
         async def get_character(
             character_id: str = Path(..., description="Character ID"),
-        ):
+        ) -> dict[str, Any]:
             """Get detailed character information."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -281,7 +281,7 @@ class CharacterAPI:
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.put("/api/characters/{character_id}", response_model=dict)
-        async def update_character(character_id: str, request: CharacterUpdateRequest):
+        async def update_character(character_id: str, request: CharacterUpdateRequest) -> dict[str, Any]:
             """Update character information."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -321,7 +321,7 @@ class CharacterAPI:
         @app.delete("/api/characters/{character_id}", response_model=dict)
         async def delete_character(
             character_id: str = Path(..., description="Character ID"),
-        ):
+        ) -> dict[str, Any]:
             """Delete a character."""
             if not self.orchestrator:
                 raise HTTPException(

@@ -23,7 +23,7 @@ except ImportError:
 
     EquipmentItem = dict  # type: ignore[misc,assignment]
 
-    class EquipmentCondition(_Enum):
+    class EquipmentCondition(_Enum):  # type: ignore[no-redef]
         EXCELLENT = "excellent"
         GOOD = "good"
         FAIR = "fair"

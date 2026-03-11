@@ -4,7 +4,7 @@ Equipment template management.
 """
 
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -20,6 +20,8 @@ class TemplateManager:
 
     def __init__(self) -> None:
         self.templates: Dict[str, EquipmentItem] = {}
+        self._maintenance_queue: List[Tuple[datetime, str]] = []
+        self._equipment_templates: Dict[str, Any] = {}
 
     def _get_next_maintenance_due(self, equipment_id: str) -> Optional[datetime]:
         """Get enhanced next scheduled maintenance date"""
@@ -38,13 +40,13 @@ class TemplateManager:
 
             if template:
                 # Apply enhanced template properties
-                if "performance_modifiers" in template:
-                    for metric, modifier in template["performance_modifiers"].items():
-                        if metric in equipment.performance_metrics:
-                            equipment.performance_metrics[metric] *= modifier
+                perf_modifiers: Dict[str, float] = template.get("performance_modifiers", {})
+                for metric, modifier in perf_modifiers.items():
+                    if metric in equipment.performance_metrics:
+                        equipment.performance_metrics[metric] *= modifier
 
                 # Apply enhanced template maintenance intervals
-                if "maintenance_interval_override" in template:
+                if template.get("maintenance_interval_override"):
                     # This would override default maintenance scheduling
                     pass
 

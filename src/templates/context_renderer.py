@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -122,7 +122,7 @@ class RenderResult:
     sections_excluded: List[ContextSection] = field(default_factory=list)
     total_character_count: int = 0
     render_time_ms: float = 0.0
-    constraints_applied: RenderingConstraints = None
+    constraints_applied: Optional[RenderingConstraints] = None
     adaptive_decisions: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
 
@@ -175,7 +175,7 @@ class ContextRenderer:
         }
 
         # Sacred rendering statistics
-        self.rendering_stats = {
+        self.rendering_stats: Dict[str, Any] = {
             "total_renders": 0,
             "format_usage": {fmt.value: 0 for fmt in RenderFormat},
             "average_render_time": 0.0,
@@ -304,7 +304,7 @@ class ContextRenderer:
                 custom_sections=context_sections,
             )
 
-            if render_result.success:
+            if render_result.success and render_result.data:
                 result_data = render_result.data["render_result"]
 
                 # Apply enhanced length optimization if needed
@@ -473,7 +473,7 @@ class ContextRenderer:
         optimized_sections: Dict[str, Any],
         render_format: RenderFormat,
         context: TemplateContext,
-        constraints: RenderingConstraints,
+        constraints: Optional[RenderingConstraints],
     ) -> str:
         """ENHANCED FINAL CONTEXT RENDERING SANCTIFIED BY FORMAT OPTIMIZATION"""
         included_sections = optimized_sections["included"]
@@ -497,8 +497,9 @@ class ContextRenderer:
             render_result = await self.template_engine.render_template(
                 template_name, template_context
             )
-            if render_result.success:
-                return render_result.data["render_result"].rendered_content
+            if render_result.success and render_result.data:
+                render_result_data: str = render_result.data["render_result"].rendered_content
+                return render_result_data
 
         # Use enhanced default inline rendering
         return await self._render_inline_context(
@@ -538,10 +539,14 @@ class ContextRenderer:
             template, template_context
         )
 
-        if render_result.success:
-            return render_result.data["render_result"].rendered_content
+        if render_result.success and render_result.data:
+            inline_result_data: str = render_result.data["render_result"].rendered_content
+            return inline_result_data
         else:
-            return f"[Rendering Error: {render_result.error.message}]"
+            error_msg = (
+                render_result.error.message if render_result.error else "Unknown error"
+            )
+            return f"[Rendering Error: {error_msg}]"
 
     async def _process_character_section(
         self,
@@ -550,19 +555,20 @@ class ContextRenderer:
         constraints: RenderingConstraints,
     ) -> ContextSection:
         """Process enhanced character state into context section"""
+        # Access character attributes through base_identity and physical_condition
+        name = character_state.base_identity.name
+        current_location = character_state.current_location or "Unknown"
+        current_mood = character_state.current_mood
+
         content_parts = [
-            f"Character: {character_state.name}",
-            f"Current State: {character_state.current_state.value}",
-            f"Location: {character_state.current_location}",
+            f"Character: {name}",
+            f"Current State: {current_mood.value if current_mood else 'unknown'}",
+            f"Location: {current_location}",
         ]
 
-        if character_state.health_status:
-            content_parts.append(f"Health: {character_state.health_status}")
-
-        if character_state.emotional_state:
-            content_parts.append(
-                f"Emotional State: {character_state.emotional_state.value}"
-            )
+        # Access health through physical_condition
+        health_pct = character_state.physical_condition.health_percentage
+        content_parts.append(f"Health: {health_pct:.0%}")
 
         content = "\n".join(content_parts)
 
@@ -572,7 +578,7 @@ class ContextRenderer:
             content=content,
             priority=ContextPriority.CRITICAL,
             section_type="character",
-            metadata={"character_name": character_state.name},
+            metadata={"character_name": name},
             relevance_score=1.0,
         )
 
@@ -1056,7 +1062,7 @@ Content: {{section.content}}
 # STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
 
-async def test_standard_context_renderer():
+async def test_standard_context_renderer() -> None:
     """STANDARD CONTEXT RENDERER TESTING RITUAL"""
     logger.info("TESTING STANDARD CONTEXT RENDERER ENHANCED BY THE SYSTEM")
 
@@ -1075,11 +1081,12 @@ async def test_standard_context_renderer():
     context_renderer = ContextRenderer(template_engine)
 
     # Create enhanced test context
+    from src.core.data_models import CharacterIdentity
+
     test_character = CharacterState(
-        name="Brother Marcus",
+        base_identity=CharacterIdentity(name="Brother Marcus"),
         current_location="Sacred Shrine",
-        health_status="Healthy",
-        emotional_state=EmotionalState.DETERMINED,
+        current_mood=EmotionalState.ZEALOUS,
     )
 
     test_memories = [
@@ -1127,7 +1134,7 @@ async def test_standard_context_renderer():
     narrative_result = await context_renderer.render_context(
         test_context, RenderFormat.NARRATIVE
     )
-    if narrative_result.success:
+    if narrative_result.success and narrative_result.data:
         result_data = narrative_result.data["render_result"]
         logger.info(
             f"NARRATIVE RENDERED: {result_data.total_character_count} chars, {len(result_data.sections_included)} sections"
@@ -1139,7 +1146,7 @@ async def test_standard_context_renderer():
     conversational_result = await context_renderer.render_context(
         test_context, RenderFormat.CONVERSATIONAL
     )
-    if conversational_result.success:
+    if conversational_result.success and conversational_result.data:
         result_data = conversational_result.data["render_result"]
         logger.info(
             f"CONVERSATIONAL RENDERED: {result_data.total_character_count} chars"
@@ -1149,7 +1156,7 @@ async def test_standard_context_renderer():
     adaptive_result = await context_renderer.render_adaptive_prompt(
         test_context, target_length=500, focus_areas=["battle", "equipment"]
     )
-    if adaptive_result.success:
+    if adaptive_result.success and adaptive_result.data:
         result_data = adaptive_result.data["render_result"]
         logger.info(
             f"ADAPTIVE PROMPT RENDERED: {result_data.total_character_count} chars (target: 500)"
@@ -1170,7 +1177,7 @@ async def test_standard_context_renderer():
     constrained_result = await context_renderer.render_context(
         test_context, RenderFormat.SUMMARY, custom_constraints
     )
-    if constrained_result.success:
+    if constrained_result.success and constrained_result.data:
         result_data = constrained_result.data["render_result"]
         logger.info(
             f"CONSTRAINED RENDERING: {result_data.total_character_count}/300 chars"

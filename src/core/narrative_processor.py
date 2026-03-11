@@ -9,7 +9,7 @@ Extracted from DirectorAgent for better modularity and maintainability.
 
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 from campaign_brief import CampaignBrief, CampaignBriefLoader
@@ -45,7 +45,7 @@ class NarrativeProcessor:
         self.narrative_resolver: Optional[NarrativeActionResolver] = None
 
         # Initialize story state
-        self.story_state = {
+        self.story_state: Dict[str, Any] = {
             "current_phase": "initialization",
             "investigation_count": 0,
             "dialogue_count": 0,
@@ -366,7 +366,7 @@ class NarrativeProcessor:
         agent_name = str(agent.character_data.get("name", agent.agent_id))
         relationships = self.story_state.get("character_relationships", {})
         if isinstance(relationships, dict):
-            return relationships.get(agent_name, {})
+            return cast(Dict[str, float], relationships.get(agent_name, {}))
         return {}
 
     def process_narrative_action(

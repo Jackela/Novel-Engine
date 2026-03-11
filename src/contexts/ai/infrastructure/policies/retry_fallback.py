@@ -13,7 +13,6 @@ from datetime import datetime
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from ...application.ports.retry_policy_port import (
-    CircuitBreakerState,
     IRetryPolicy,
     RetryAttempt,
     RetryConfig,
@@ -200,6 +199,7 @@ class ExponentialBackoffRetry(IRetryPolicy):
                 )
             else:
                 circuit_breaker.attempt_reset()
+        # Note: circuit_breaker is MutableCircuitBreakerState which has the required methods
 
         for attempt_num in range(1, config.max_attempts + 1):
             time.time()
@@ -262,7 +262,7 @@ class ExponentialBackoffRetry(IRetryPolicy):
                     )
 
                 # Calculate delay for retry
-                delay = config.calculate_delay(attempt_num, retry_reason)
+                delay = RetryConfigHelper.calculate_delay(config, attempt_num, retry_reason)
 
                 # Record retry attempt
                 attempt = RetryAttempt(

@@ -201,7 +201,7 @@ class SessionManagementService:
             Result containing operation result or error
         """
         if party is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 SessionError(
                     message="Party is required",
                     recoverable=True,

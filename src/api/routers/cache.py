@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
@@ -16,25 +18,25 @@ router = APIRouter(tags=["Cache"])
 
 
 @router.get("/cache/metrics")
-async def cache_metrics():
+async def cache_metrics() -> Any:
     return get_cache_metrics()
 
 
 @router.post("/cache/invalidate")
-async def cache_invalidate(req: InvalidationRequest):
+async def cache_invalidate(req: InvalidationRequest) -> Any:
     return invalidate_cache(req.all_of)
 
 
 @router.post("/cache/chunk/{key}")
-async def cache_chunk_append(key: str, req: ChunkInRequest):
+async def cache_chunk_append(key: str, req: ChunkInRequest) -> Any:
     return append_chunk(key, req.seq, req.data)
 
 
 @router.post("/cache/chunk/{key}/complete")
-async def cache_chunk_complete(key: str):
+async def cache_chunk_complete(key: str) -> Any:
     return mark_chunk_complete(key)
 
 
 @router.get("/cache/stream/{key}")
-async def cache_stream(key: str):
+async def cache_stream(key: str) -> StreamingResponse:
     return StreamingResponse(stream_chunks(key), media_type="text/event-stream")

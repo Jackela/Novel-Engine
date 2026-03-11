@@ -4,7 +4,7 @@ Equipment analytics and performance calculations.
 """
 
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import structlog
 
@@ -34,10 +34,9 @@ class EquipmentAnalyzer:
 
         # Blessed condition factor
         condition_multipliers = {
-            EquipmentCondition.EXCELLENT: 0.5,
+            EquipmentCondition.PRISTINE: 0.5,
             EquipmentCondition.GOOD: 1.0,
-            EquipmentCondition.FAIR: 1.5,
-            EquipmentCondition.POOR: 2.0,
+            EquipmentCondition.WORN: 1.5,
             EquipmentCondition.DAMAGED: 3.0,
         }
         condition_mult = condition_multipliers.get(
@@ -54,7 +53,7 @@ class EquipmentAnalyzer:
         maintenance_factor = min(2.0, 1.0 + days_since_maintenance / 30.0)
         base_wear *= maintenance_factor
 
-        return min(0.1, base_wear)  # Cap at 10% per use
+        return cast(float, min(0.1, base_wear))  # Cap at 10% per use
 
     def update_performance_from_wear(self, equipment: DynamicEquipment) -> None:
         """Update enhanced performance metrics based on wear accumulation"""
@@ -133,10 +132,9 @@ class EquipmentAnalyzer:
 
         # Blessed condition factor
         condition_risks = {
-            EquipmentCondition.EXCELLENT: 0.0,
+            EquipmentCondition.PRISTINE: 0.0,
             EquipmentCondition.GOOD: 0.1,
-            EquipmentCondition.FAIR: 0.3,
-            EquipmentCondition.POOR: 0.6,
+            EquipmentCondition.WORN: 0.3,
             EquipmentCondition.DAMAGED: 0.9,
             EquipmentCondition.BROKEN: 1.0,
         }

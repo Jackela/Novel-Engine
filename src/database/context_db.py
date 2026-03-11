@@ -142,7 +142,7 @@ class ContextDatabase:
 
     async def store_context(
         self, session_id: str, character_id: str, context: str
-    ) -> None:
+    ) -> StandardResponse:
         """Store context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -175,7 +175,7 @@ class ContextDatabase:
                 ),
             )
 
-    async def get_context(self, session_id: str, character_id: str) -> None:
+    async def get_context(self, session_id: str, character_id: str) -> StandardResponse:
         """Get context data for a session/character pair."""
         try:
             async with self.get_enhanced_connection() as connection:
@@ -315,7 +315,7 @@ class ContextDatabase:
                 self._connection_pool.append(connection)
 
     @asynccontextmanager
-    async def get_enhanced_connection(self) -> None:
+    async def get_enhanced_connection(self) -> Any:
         """
         STANDARD CONNECTION MANAGER ENHANCED BY RESOURCE SAFETY
 
@@ -327,35 +327,36 @@ class ContextDatabase:
 
         connection = None
         try:
+            conn: aiosqlite.Connection
             async with self._pool_lock:
                 if self._connection_pool:
-                    connection = self._connection_pool.pop()
+                    conn = self._connection_pool.pop()
                 else:
                     # Create enhanced temporary connection if pool exhausted
-                    connection = await aiosqlite.connect(str(self.database_path))
-                    connection.row_factory = aiosqlite.Row
+                    conn = await aiosqlite.connect(str(self.database_path))
+                    conn.row_factory = aiosqlite.Row
 
                     # Apply performance optimizations to temporary connection
-                    await connection.execute("PRAGMA foreign_keys = ON")
-                    await connection.execute("PRAGMA journal_mode = WAL")
-                    await connection.execute("PRAGMA synchronous = NORMAL")
-                    await connection.execute(
+                    await conn.execute("PRAGMA foreign_keys = ON")
+                    await conn.execute("PRAGMA journal_mode = WAL")
+                    await conn.execute("PRAGMA synchronous = NORMAL")
+                    await conn.execute(
                         "PRAGMA cache_size = -32000"
                     )  # 32MB for temp connections
-                    await connection.execute("PRAGMA temp_store = MEMORY")
+                    await conn.execute("PRAGMA temp_store = MEMORY")
 
-            yield connection
+            yield conn
 
         finally:
-            if connection:
+            if conn:
                 async with self._pool_lock:
                     if len(self._connection_pool) < self.connection_pool_size:
-                        self._connection_pool.append(connection)
+                        self._connection_pool.append(conn)
                     else:
-                        await connection.close()
+                        await conn.close()
 
     @asynccontextmanager
-    async def get_enhanced_transaction(self) -> None:
+    async def get_enhanced_transaction(self) -> Any:
         """
         STANDARD TRANSACTION MANAGER ENHANCED BY DATA INTEGRITY
 
@@ -1033,7 +1034,7 @@ class SacredDatabaseFactory:
 # STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
 
-async def test_standard_database_operations():
+async def test_standard_database_operations() -> None:
     """STANDARD DATABASE TESTING RITUAL ENHANCED BY VALIDATION"""
     logger.info("TESTING STANDARD DATABASE OPERATIONS")
 
@@ -1042,7 +1043,7 @@ async def test_standard_database_operations():
     init_result = await test_db.initialize_standard_temple()
 
     if not init_result.success:
-        logger.error(f"DATABASE INITIALIZATION FAILED: {init_result.error.message}")
+        logger.error(f"DATABASE INITIALIZATION FAILED: {init_result.error.message if init_result.error else 'Unknown'}")
         return
 
     # Test enhanced agent registration
@@ -1067,8 +1068,9 @@ async def test_standard_database_operations():
 
     # Test enhanced memory query
     query_result = await test_db.query_memories_by_agent("test_agent_001")
+    memories = query_result.data.get("memories", []) if query_result.data else []
     logger.info(
-        f"MEMORY QUERY: {query_result.success}, Count: {len(query_result.data.get('memories', []))}"
+        f"MEMORY QUERY: {query_result.success}, Count: {len(memories)}"
     )
 
     # Test enhanced database statistics

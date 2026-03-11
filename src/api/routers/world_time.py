@@ -11,6 +11,7 @@ Endpoints:
 from __future__ import annotations
 
 import os
+from typing import Any
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -80,7 +81,7 @@ def get_time_service(request: Request) -> TimeService:
     return TimeService(repo)
 
 
-def _get_event_bus(request: Request) -> None:
+def _get_event_bus(request: Request) -> Any | None:
     """Get the EventBus from app.state.
 
     Reads the EventBus from request.app.state.event_bus which is
@@ -95,7 +96,7 @@ def _get_event_bus(request: Request) -> None:
     return getattr(request.app.state, "event_bus", None)
 
 
-def _calendar_to_response(calendar) -> WorldTimeResponse:
+def _calendar_to_response(calendar: Any) -> WorldTimeResponse:
     """Convert WorldCalendar domain object to API response model.
 
     Args:

@@ -180,7 +180,7 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if party is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Party is required",
                     field="party",
@@ -254,7 +254,7 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if proposal is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Proposal is required",
                     field="proposal",
@@ -350,7 +350,7 @@ class InteractionApplicationService:
             Result containing operation result or error
         """
         if response is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Response is required",
                     field="response",

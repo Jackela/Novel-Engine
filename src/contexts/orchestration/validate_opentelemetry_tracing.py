@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = structlog.get_logger(__name__)
 
 
-def test_tracing_infrastructure() -> None:
+def test_tracing_infrastructure() -> bool:
     """Test basic tracing infrastructure components."""
     print("\n🔍 Testing OpenTelemetry Infrastructure...")
 
@@ -76,7 +76,7 @@ def test_tracing_infrastructure() -> None:
         return False
 
 
-def test_span_creation() -> None:
+def test_span_creation() -> bool:
     """Test span creation and management."""
     print("\n🔍 Testing Span Creation and Management...")
 
@@ -187,7 +187,7 @@ def test_span_creation() -> None:
         return False
 
 
-def test_middleware_integration() -> None:
+def test_middleware_integration() -> bool:
     """Test FastAPI middleware integration."""
     print("\n🔍 Testing FastAPI Middleware Integration...")
 
@@ -230,7 +230,7 @@ def test_middleware_integration() -> None:
         return False
 
 
-def test_cross_context_tracing() -> None:
+def test_cross_context_tracing() -> bool:
     """Test cross-context service call tracing."""
     print("\n🔍 Testing Cross-Context Service Call Tracing...")
 
@@ -312,7 +312,7 @@ def test_cross_context_tracing() -> None:
         return False
 
 
-def test_requirements_compliance() -> None:
+def test_requirements_compliance() -> bool:
     """Test compliance with M10 requirements."""
     print("\n🔍 Testing M10 Requirements Compliance...")
 
@@ -426,7 +426,7 @@ def test_requirements_compliance() -> None:
         return False
 
 
-def main() -> None:
+def main() -> bool:
     """Run all OpenTelemetry distributed tracing validation tests."""
     print("=" * 80)
     print("M10 OPENTELEMETRY DISTRIBUTED TRACING VALIDATION")

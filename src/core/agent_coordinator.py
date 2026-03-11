@@ -7,7 +7,7 @@ Handles agent registration, lifecycle management, and coordination.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -46,10 +46,6 @@ class AgentCoordinator:
         Returns:
             True if registration successful, False otherwise
         """
-        if not isinstance(agent, PersonaAgent):
-            logger.error(f"Invalid agent type: {type(agent)}. Expected PersonaAgent")
-            return False
-
         # Check for duplicate agent IDs
         if any(
             existing.agent_id == agent.agent_id for existing in self.registered_agents
@@ -145,7 +141,8 @@ class AgentCoordinator:
             )
 
     def execute_turn(
-        self, world_state_callback=None, action_handler=None
+        self, world_state_callback: Optional[Callable[[PersonaAgent], Dict[str, Any]]] = None, 
+        action_handler: Optional[Callable[[PersonaAgent, Optional[CharacterAction]], None]] = None
     ) -> Dict[str, Any]:
         """
         Execute a single simulation turn for all agents.
@@ -164,7 +161,7 @@ class AgentCoordinator:
             f"🎯 Starting Turn {self.current_turn_number} with {len(self.registered_agents)} agents"
         )
 
-        turn_summary = {
+        turn_summary: Dict[str, Any] = {
             "turn_number": self.current_turn_number,
             "agents_active": len(self.registered_agents),
             "actions_taken": 0,
@@ -183,7 +180,7 @@ class AgentCoordinator:
 
                 # Agent processes their turn
                 logger.debug(f"Processing turn for agent: {agent.agent_id}")
-                action = agent.process_turn(world_state)
+                action = agent.handle_turn_start(world_state)
 
                 # Handle the action
                 if action_handler:

@@ -314,7 +314,7 @@ class RumorService:
             return sorted(rumors, key=lambda r: -r.spread_count)
 
         # Default: return as-is
-        return rumors
+        return rumors  # type: ignore[unreachable]
 
     @staticmethod
     def get_veracity_label(truth_value: int) -> str:
@@ -368,7 +368,7 @@ class RumorService:
         """
         # Validate truth value range
         if not isinstance(truth_value, int):
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 RumorValidationError(
                     message=f"Truth value must be an integer, got {type(truth_value).__name__}",
                     details={"truth_value": truth_value},

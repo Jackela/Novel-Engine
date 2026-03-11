@@ -3,7 +3,7 @@
 Context enhancement for persona-specific rendering.
 """
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 
@@ -26,6 +26,7 @@ class ContextEnhancer:
 
     def __init__(self, memory_system: Optional[LayeredMemorySystem] = None) -> None:
         self.memory_system = memory_system
+        self._character_templates: Dict[str, Any] = {}
 
     async def _enhance_context_for_persona(
         self,
@@ -180,5 +181,7 @@ class ContextEnhancer:
                 format_scores[fmt] = format_scores.get(fmt, 0.5) + bonus
 
         # Select enhanced highest scoring format
-        best_format = max(format_scores, key=format_scores.get)
+        best_format = max(
+            format_scores.items(), key=lambda item: item[1] if item[1] is not None else 0.0
+        )[0]
         return best_format

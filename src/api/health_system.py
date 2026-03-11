@@ -158,7 +158,7 @@ class HealthMonitor:
     def register_database_check(self, database_path: str) -> None:
         """Register database connectivity check."""
 
-        async def check_database():
+        async def check_database() -> dict[str, Any]:
             """
             Check database connectivity and health.
 
@@ -202,10 +202,10 @@ class HealthMonitor:
         )
         self.register_checker(checker)
 
-    def register_orchestrator_check(self, orchestrator) -> None:
+    def register_orchestrator_check(self, orchestrator: Any) -> None:
         """Register system orchestrator check."""
 
-        async def check_orchestrator():
+        async def check_orchestrator() -> dict[str, Any]:
             """
             Check system orchestrator health and status.
 
@@ -249,7 +249,7 @@ class HealthMonitor:
         """Register system resource health checks."""
 
         # Memory check
-        async def check_memory():
+        async def check_memory() -> dict[str, Any]:
             """
             Check system memory usage and availability.
 
@@ -272,7 +272,7 @@ class HealthMonitor:
             }
 
         # CPU check
-        async def check_cpu():
+        async def check_cpu() -> dict[str, Any]:
             """
             Check CPU usage and performance metrics.
 
@@ -298,7 +298,7 @@ class HealthMonitor:
             }
 
         # Disk check
-        async def check_filesystem():
+        async def check_filesystem() -> dict[str, Any]:
             """
             Check filesystem health and disk space availability.
 
@@ -363,7 +363,7 @@ class HealthMonitor:
             persist_dir: ChromaDB persistent storage directory
         """
 
-        async def check_chromadb():
+        async def check_chromadb() -> dict[str, Any]:
             """
             Check ChromaDB vector store health.
 

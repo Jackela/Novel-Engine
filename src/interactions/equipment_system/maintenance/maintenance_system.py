@@ -26,30 +26,29 @@ try:
     from src.core.data_models import EquipmentCondition, ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
-        def __init__(self, success=True, data=None, error=None, metadata=None) -> None:
+    class StandardResponse:  # type: ignore[no-redef]
+        def __init__(self, success: bool = True, data: Any = None, error: Any = None, metadata: Any = None) -> None:
             self.success = success
             self.data = data or {}
             self.error = error
             self.metadata = metadata or {}
 
-        def get(self, key, default=None) -> None:
+        def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-        def __getitem__(self, key) -> None:
+        def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
-        def __init__(self, code="", message="", recoverable=True) -> None:
+    class ErrorInfo:  # type: ignore[no-redef]
+        def __init__(self, code: str = "", message: str = "", recoverable: bool = True) -> None:
             self.code = code
             self.message = message
             self.recoverable = recoverable
 
-    class EquipmentCondition:
-        EXCELLENT = "excellent"
+    class EquipmentCondition:  # type: ignore[no-redef]
+        PRISTINE = "pristine"
         GOOD = "good"
-        FAIR = "fair"
-        POOR = "poor"
+        WORN = "worn"
         DAMAGED = "damaged"
         BROKEN = "broken"
 
@@ -274,14 +273,14 @@ class MaintenanceSystem:
                     equipment, maintenance_type, maintenance_effects
                 )
 
-                new_condition = self._improve_equipment_condition(
-                    condition_before, condition_improvement
+                new_condition_str = self._improve_equipment_condition(
+                    str(condition_before), condition_improvement
                 )
 
                 # Update equipment condition
                 if hasattr(equipment.base_equipment, "condition"):
-                    equipment.base_equipment.condition = new_condition
-                maintenance_record.condition_after = new_condition
+                    setattr(equipment.base_equipment, "condition", new_condition_str)
+                maintenance_record.condition_after = new_condition_str  # type: ignore[assignment]
 
                 # Reduce wear accumulation
                 wear_reduction = self._calculate_wear_reduction(
@@ -321,7 +320,7 @@ class MaintenanceSystem:
                 # Restore operational status
                 equipment.current_status = (
                     EquipmentStatus.READY
-                    if new_condition not in ["broken", "damaged"]
+                    if new_condition_str not in ["broken", "damaged"]
                     else EquipmentStatus.DAMAGED
                 )
 
@@ -337,7 +336,7 @@ class MaintenanceSystem:
                         "performed_by": performed_by,
                         "duration_minutes": duration_minutes,
                         "condition_before": condition_before,
-                        "condition_after": new_condition,
+                        "condition_after": new_condition_str,
                         "wear_reduction": wear_reduction,
                         "system_core_response": spirit_improvement["response"],
                         "next_maintenance_due": (
@@ -595,7 +594,7 @@ class MaintenanceSystem:
         self, maintenance_type: str, maintenance_effects: Dict[str, Any]
     ) -> float:
         """Calculate wear reduction from maintenance."""
-        base_reductions = {
+        base_reductions: Dict[str, float] = {
             "routine": 0.2,
             "repair": 0.4,
             "upgrade": 0.3,
@@ -605,7 +604,7 @@ class MaintenanceSystem:
         base_reduction = base_reductions.get(maintenance_type, 0.2)
         effectiveness = maintenance_effects.get("effectiveness", 0.5)
 
-        return base_reduction * effectiveness
+        return base_reduction * float(effectiveness)
 
     def _apply_maintenance_performance_boost(
         self, equipment: DynamicEquipment, maintenance_type: str

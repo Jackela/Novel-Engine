@@ -23,7 +23,7 @@ try:
     from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -39,7 +39,7 @@ except ImportError:
         def get(self, key: Any, default: Any = None) -> Any:
             return getattr(self, key, default)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:

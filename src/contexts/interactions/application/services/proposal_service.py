@@ -52,7 +52,7 @@ class ProposalService:
             Result containing viability analysis or error
         """
         if proposal is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ProposalError(
                     message="Proposal is required for viability analysis",
                     recoverable=True,
@@ -119,7 +119,7 @@ class ProposalService:
             Result containing optimization results or error
         """
         if proposal is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ProposalError(
                     message="Proposal is required for optimization",
                     recoverable=True,
@@ -272,7 +272,7 @@ class ProposalService:
             Result containing validation results or error
         """
         if proposal is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Proposal is required for validation",
                     field="proposal",
@@ -361,7 +361,7 @@ class ProposalService:
             Result containing acceptance estimate or error
         """
         if proposal is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ProposalError(
                     message="Proposal is required for acceptance estimation",
                     recoverable=True,

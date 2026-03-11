@@ -10,7 +10,7 @@ import logging
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -60,13 +60,13 @@ class NarrativeActionResolver:
     relationships, and current narrative state to create meaningful story progression.
     """
 
-    def __init__(self, campaign_brief=None) -> None:
+    def __init__(self, campaign_brief: Optional[Any] = None) -> None:
         """Initializes the NarrativeActionResolver."""
         self.campaign_brief = campaign_brief
         self.logger = logging.getLogger(f"{__name__}.NarrativeActionResolver")
         self.investigation_counter = 0
-        self.dialogue_history = []
-        self.story_state = {}
+        self.dialogue_history: List[Dict[str, Any]] = []
+        self.story_state: Dict[str, Any] = {}
 
     def resolve_investigate_action(
         self, action: CharacterAction, character_data: Dict, world_state: Dict

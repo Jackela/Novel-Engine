@@ -370,11 +370,8 @@ class CodeQualityAnalyzer:
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef):
                 # Check function length
-                func_lines = (
-                    node.end_lineno - node.lineno + 1
-                    if hasattr(node, "end_lineno")
-                    else 0
-                )
+                end_line: int = node.end_lineno if node.end_lineno is not None else node.lineno
+                func_lines = end_line - node.lineno + 1
                 if func_lines > self.function_length_threshold:
                     issue = QualityIssue(
                         file_path=str(file_path.relative_to(self.project_root)),
@@ -419,11 +416,8 @@ class CodeQualityAnalyzer:
 
             elif isinstance(node, ast.ClassDef):
                 # Check class length
-                class_lines = (
-                    node.end_lineno - node.lineno + 1
-                    if hasattr(node, "end_lineno")
-                    else 0
-                )
+                class_end_line: int = node.end_lineno if node.end_lineno is not None else node.lineno
+                class_lines = class_end_line - node.lineno + 1
                 if class_lines > self.class_length_threshold:
                     issue = QualityIssue(
                         file_path=str(file_path.relative_to(self.project_root)),
@@ -561,11 +555,8 @@ class CodeQualityAnalyzer:
                     and isinstance(node.body[0].value.value, str)
                 ):
                     # Skip very simple functions (less than 3 lines)
-                    func_lines = (
-                        node.end_lineno - node.lineno + 1
-                        if hasattr(node, "end_lineno")
-                        else 0
-                    )
+                    doc_end_line: int = node.end_lineno if node.end_lineno is not None else node.lineno
+                    func_lines = doc_end_line - node.lineno + 1
                     if func_lines > 3 and not node.name.startswith(
                         "_"
                     ):  # Skip private methods for now
@@ -608,8 +599,8 @@ class CodeQualityAnalyzer:
         total_issues = len(self.quality_issues)
 
         # Group issues by severity and category
-        issues_by_severity = {level.value: [] for level in SeverityLevel}
-        issues_by_category = {cat.value: [] for cat in IssueCategory}
+        issues_by_severity: dict[str, list[QualityIssue]] = {level.value: [] for level in SeverityLevel}
+        issues_by_category: dict[str, list[QualityIssue]] = {cat.value: [] for cat in IssueCategory}
 
         for issue in self.quality_issues:
             issues_by_severity[issue.severity.value].append(issue)

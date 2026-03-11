@@ -86,14 +86,14 @@ class Event:
     def __lt__(self, other: "Event") -> bool:
         """Compare events by priority (higher first) then timestamp (older first)."""
         if not isinstance(other, Event):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented  # type: ignore[unreachable]
         if self.priority != other.priority:
             return self.priority > other.priority  # Higher priority first
         return self.timestamp < other.timestamp  # Older events first
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Event):
-            return NotImplemented  # type: ignore[return-value]
+            return NotImplemented
         return self.event_id == other.event_id
 
 

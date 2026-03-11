@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 
-def validate_tracing_files() -> None:
+def validate_tracing_files() -> list[Any]:
     """Validate that all tracing implementation files are present."""
     print("🔍 VALIDATING WAVE 3 IMPLEMENTATION FILES")
     print("=" * 60)
@@ -44,7 +44,7 @@ def validate_tracing_files() -> None:
     return validation_results
 
 
-def validate_implementation_features() -> None:
+def validate_implementation_features() -> list[Any]:
     """Validate key implementation features by checking code content."""
     print("\n🔍 VALIDATING IMPLEMENTATION FEATURES")
     print("=" * 60)
@@ -144,7 +144,7 @@ def validate_implementation_features() -> None:
     return validations
 
 
-def validate_requirements() -> None:
+def validate_requirements() -> bool:
     """Validate OpenTelemetry requirements are specified."""
     print("\n🔍 VALIDATING OPENTELEMETRY REQUIREMENTS")
     print("=" * 60)
@@ -180,7 +180,7 @@ def validate_requirements() -> None:
     return all_found
 
 
-def validate_m10_requirements() -> None:
+def validate_m10_requirements() -> bool:
     """Validate M10 specific requirements are met."""
     print("\n🔍 VALIDATING M10 MILESTONE REQUIREMENTS")
     print("=" * 60)
@@ -239,7 +239,7 @@ def validate_m10_requirements() -> None:
     return True
 
 
-def main() -> None:
+def main() -> bool:
     """Run complete Wave 3 validation."""
     print("M10 WAVE 3: OPENTELEMETRY DISTRIBUTED TRACING - COMPLETION VALIDATION")
     print("=" * 80)

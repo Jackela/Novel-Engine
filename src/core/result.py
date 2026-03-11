@@ -44,7 +44,7 @@ F = TypeVar("F")  # Mapped error type
 
 
 @dataclass(frozen=True)
-class Error:
+class Error(Exception):
     """
     Represents an error in the Result pattern.
 

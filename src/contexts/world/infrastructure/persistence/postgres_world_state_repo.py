@@ -168,7 +168,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 if model:
                     result = model.to_domain_aggregate()
                     if result is None:
-                        return None
+                        return None  # type: ignore[unreachable]
                     return result
                 return None
 
@@ -317,7 +317,7 @@ class PostgresWorldStateRepository(IWorldStateRepository):
                 if model:
                     result = model.to_domain_aggregate()
                     if result is None:
-                        return None
+                        return None  # type: ignore[unreachable]
                     return result
                 return None
 

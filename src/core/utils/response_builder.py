@@ -30,11 +30,13 @@ class ResponseBuilder:
         Returns:
             StandardResponse with success=True
         """
+        response_metadata = metadata or {}
+        if message:
+            response_metadata["message"] = message
         return StandardResponse(
             success=True,
-            message=message,
             data=data,
-            metadata=metadata or {},
+            metadata=response_metadata,
         )
 
     @staticmethod

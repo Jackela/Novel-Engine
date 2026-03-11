@@ -343,7 +343,7 @@ class ExecuteLLMService:
                         result.response = LLMResponse.create_error(
                             request_id=request.request_id,
                             status=LLMResponseStatus.RATE_LIMITED,
-                            error_details=rate_limit_result.reason,
+                            error_details=rate_limit_result.reason or "Rate limit exceeded",
                         )
 
                         result.execution_time_seconds = _elapsed()
@@ -507,7 +507,8 @@ class ExecuteLLMService:
 
         # Stream execution
         try:
-            async for chunk in provider.generate_stream_async(request, budget):
+            stream_result = await provider.generate_stream_async(request, budget)
+            async for chunk in stream_result:
                 yield chunk
         except Exception as e:
             yield f"Error: {str(e)}"

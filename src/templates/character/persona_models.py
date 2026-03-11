@@ -6,7 +6,7 @@ Character persona data models and enums.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from src.templates.dynamic_template_engine import TemplateMetadata, TemplateType
 
@@ -72,14 +72,18 @@ class CharacterTemplate:
     context_requirements: List[str] = field(default_factory=list)
     dynamic_elements: List[str] = field(default_factory=list)
     performance_metrics: Dict[str, float] = field(default_factory=dict)
-    metadata: TemplateMetadata = None
+    metadata: Optional[TemplateMetadata] = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:
-            self.metadata = TemplateMetadata(
-                template_id=self.template_id,
-                template_type=self.template_type,
-                description=f"Character template for {self.persona_id}",
+            object.__setattr__(
+                self,
+                "metadata",
+                TemplateMetadata(
+                    template_id=self.template_id,
+                    template_type=self.template_type,
+                    description=f"Character template for {self.persona_id}",
+                ),
             )
 
 

@@ -303,7 +303,7 @@ class SecurityService:
             )
             temp_db.close()
             self.database_path = temp_db.name
-            self._temp_db_path = temp_db.name
+            self._temp_db_path: Optional[str] = temp_db.name
         else:
             self.database_path = database_path
             self._temp_db_path = None
@@ -411,7 +411,7 @@ class SecurityService:
                 os.remove(self._temp_db_path)
             except OSError:
                 logging.getLogger(__name__).debug("Suppressed exception", exc_info=True)
-            self._temp_db_path = None  # type: ignore[assignment]
+            self._temp_db_path = None
 
     def _hash_password(self, password: str) -> str:
         """STANDARD PASSWORD HASHING ENHANCED BY BCRYPT"""
@@ -920,7 +920,6 @@ class SecurityService:
         def permission_checker(
             current_user: User = Depends(self.get_current_user),
         ) -> User:
-            return current_user  # type: ignore[return-value]
             """
             Check if current user has required permission.
 
@@ -940,7 +939,7 @@ class SecurityService:
                 )
             return current_user
 
-        return permission_checker
+        return permission_checker  # type: ignore[return-value]
 
     def has_permission(
         self, role: Union[UserRole, str], permission: Permission
@@ -970,7 +969,6 @@ class SecurityService:
         def role_checker(
             current_user: User = Depends(self.get_current_user),
         ) -> User:
-            return current_user  # type: ignore[return-value]
             """
             Check if current user has required role level.
 
@@ -1001,7 +999,7 @@ class SecurityService:
                 )
             return current_user
 
-        return role_checker
+        return role_checker  # type: ignore[return-value]
 
     async def generate_api_key(self, user_id: str) -> str:
         """STANDARD API KEY GENERATION"""
@@ -1055,7 +1053,7 @@ def get_security_service() -> SecurityService:
     return security_service
 
 
-def initialize_security_service(database_path: str, secret_key: str) -> None:
+def initialize_security_service(database_path: str, secret_key: str) -> SecurityService:
     """STANDARD SECURITY SERVICE INITIALIZATION"""
     global security_service
     security_service = SecurityService(database_path, secret_key)
@@ -1071,13 +1069,13 @@ async def get_current_user(
     return await service.get_current_user(credentials)
 
 
-def require_permission(permission: Permission) -> None:
+def require_permission(permission: Permission) -> Any:
     """Standalone wrapper for requiring permission"""
     service = get_security_service()
     return service.require_permission(permission)
 
 
-def require_role(required_role: UserRole) -> None:
+def require_role(required_role: UserRole) -> Any:
     """Standalone wrapper for requiring a minimum role level."""
 
     async def role_checker(

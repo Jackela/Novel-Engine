@@ -383,7 +383,7 @@ def create_context7_middleware() -> Callable[..., Any]:
 class APISchemaEnhancer:
     """Enhances OpenAPI schema with Context7 information."""
 
-    def __init__(self, context7_api=None) -> None:
+    def __init__(self, context7_api: Any = None) -> None:
         self.context7_api = context7_api
 
     def enhance_openapi_schema(self, app: FastAPI) -> Dict[str, Any]:

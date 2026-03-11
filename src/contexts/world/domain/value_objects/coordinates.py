@@ -10,6 +10,7 @@ this value object is immutable and encapsulates coordinate-related logic.
 import math
 from dataclasses import dataclass, field
 from typing import Any, Dict, Tuple, Union, overload
+from types import NotImplementedType
 
 
 @dataclass(frozen=True)
@@ -61,7 +62,7 @@ class Coordinates:
                 errors.append(f"{coord_name} coordinate must be numeric")  # type: ignore[unreachable]
                 coords_are_numeric = False
             elif math.isnan(coord_value) or math.isinf(coord_value):
-                errors.append(f"{coord_name} coordinate must be a finite number")  # type: ignore[unreachable]
+                errors.append(f"{coord_name} coordinate must be a finite number")
                 coords_are_numeric = False
 
         # Check precision
@@ -315,7 +316,7 @@ class Coordinates:
             f"precision={self.precision})"
         )
 
-    def __add__(self, other: "Coordinates") -> "Coordinates":
+    def __add__(self, other: "Coordinates") -> Union["Coordinates", NotImplementedType]:
         """
         Add two coordinate values (vector addition).
 
@@ -329,7 +330,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[unreachable]
 
         return Coordinates(
             x=self.x + other.x,
@@ -338,7 +339,7 @@ class Coordinates:
             precision=min(self.precision, other.precision),
         )
 
-    def __sub__(self, other: "Coordinates") -> "Coordinates":
+    def __sub__(self, other: "Coordinates") -> Union["Coordinates", NotImplementedType]:
         """
         Subtract two coordinate values (vector subtraction).
 
@@ -352,7 +353,7 @@ class Coordinates:
             TypeError: If other is not a Coordinates instance
         """
         if not isinstance(other, Coordinates):
-            return NotImplemented
+            return NotImplemented  # type: ignore[unreachable]
 
         return Coordinates(
             x=self.x - other.x,
@@ -365,9 +366,9 @@ class Coordinates:
     def __mul__(self, scalar: Union[int, float]) -> "Coordinates": ...
 
     @overload
-    def __mul__(self, scalar: Any) -> "Coordinates": ...
+    def __mul__(self, scalar: Any) -> Union["Coordinates", NotImplementedType]: ...
 
-    def __mul__(self, scalar: Union[int, float]) -> "Coordinates":
+    def __mul__(self, scalar: Union[int, float]) -> Union["Coordinates", NotImplementedType]:
         """
         Multiply coordinates by a scalar value.
 
@@ -382,7 +383,7 @@ class Coordinates:
             fallback mechanism to try the other operand's __rmul__.
         """
         if not isinstance(scalar, (int, float)):
-            return NotImplemented
+            return NotImplemented  # type: ignore[unreachable]
 
         return Coordinates(
             x=self.x * scalar,

@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
 import structlog
 
-from src.contexts.world.domain.errors import SanityCheckError
+
 from src.core.result import Err, Error, Ok, Result
 
 if TYPE_CHECKING:
@@ -154,8 +154,9 @@ class SimulationSanityChecker:
             return Ok(None)
         except Exception as e:
             return Err(
-                SanityCheckError(
-                    f"Failed to set entities: {e}",
+                Error(
+                    message=f"Failed to set entities: {e}",
+                    code="SANITY_CHECK_ERROR",
                 )
             )
 
@@ -214,8 +215,9 @@ class SimulationSanityChecker:
         except Exception as e:
             logger.error("sanity_check_failed", error=str(e))
             return Err(
-                SanityCheckError(
-                    f"Failed to execute sanity check: {e}",
+                Error(
+                    message=f"Failed to execute sanity check: {e}",
+                    code="SANITY_CHECK_ERROR",
                 )
             )
 
@@ -245,6 +247,8 @@ class SimulationSanityChecker:
             return check_result  # type: ignore
 
         violations = check_result.value
+        if violations is None:
+            return Ok(False)
         errors = [v for v in violations if v.severity == Severity.ERROR]
 
         if errors:
@@ -292,6 +296,8 @@ class SimulationSanityChecker:
             )
 
         violations = check_result.value
+        if violations is None:
+            return Ok(False)
         errors = [v for v in violations if v.severity == Severity.ERROR]
 
         if errors:

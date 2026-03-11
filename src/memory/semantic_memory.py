@@ -408,7 +408,7 @@ class SemanticMemory:
         }
 
 
-async def test_semantic_memory():
+async def test_semantic_memory() -> None:
     """Tests the SemanticMemory system."""
     logger.info("semantic_memory_test_started")
 
@@ -419,7 +419,7 @@ async def test_semantic_memory():
 
     test_memory = MemoryItem(
         agent_id="test_agent",
-        memory_type=MemoryType.EPISODIC,  # Fixed: OBSERVATION doesn't exist
+        memory_type=MemoryType.EPISODIC,
         content="The sky is blue. The AI can learn.",
         relevance_score=0.9,
     )
@@ -428,7 +428,7 @@ async def test_semantic_memory():
     logger.info(
         "knowledge_extraction_test_result",
         success=result.success,
-        facts_extracted=result.data.get("facts_extracted"),
+        facts_extracted=result.data.get("facts_extracted") if result.data else None,
     )
 
     facts_result = await semantic_memory.query_facts_by_subject(
@@ -437,19 +437,19 @@ async def test_semantic_memory():
     logger.info(
         "subject_query_test_result",
         success=facts_result.success,
-        facts=facts_result.data.get("facts"),
+        facts=facts_result.data.get("facts") if facts_result.data else None,
     )
     # Note: regex is greedy and captures "The sky is blue. The AI can learn." as one fact
-    assert any("The sky is" in fact for fact in facts_result.data.get("facts", []))
+    facts_list = facts_result.data.get("facts", []) if facts_result.data else []
+    assert any("The sky is" in fact for fact in facts_list)
 
     concept_result = await semantic_memory.get_concept_knowledge(
         "The sky"
     )  # Concept includes "The"
     logger.info("concept_query_test_result", success=concept_result.success)
     # Note: regex is greedy and captures "The sky is blue. The AI can learn." as one fact
-    assert any(
-        "The sky is" in fact for fact in concept_result.data.get("associated_facts", [])
-    )
+    associated_facts = concept_result.data.get("associated_facts", []) if concept_result.data else []
+    assert any("The sky is" in fact for fact in associated_facts)
 
     stats = semantic_memory.get_memory_statistics()
     logger.info("semantic_memory_statistics", stats=stats)

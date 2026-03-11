@@ -153,7 +153,7 @@ class ApiOrchestrationService:
 
     async def _run_orchestration_loop(
         self, character_names: List[str], total_turns: int
-    ):
+    ) -> None:
         """Main orchestration loop.
 
         Runs the simulation turn-by-turn with pause/stop support.
@@ -239,15 +239,17 @@ class ApiOrchestrationService:
                     break
 
                 # Check for pause - wait while paused
+                paused_stop = False
                 while self._state["status"] == "paused":
                     await asyncio.sleep(0.5)
                     # Allow stopping even when paused
                     if self._stop_flag:
                         logger.info("Orchestration stopped during pause")
+                        paused_stop = True
                         break
 
                 # Resume if we broke out of pause
-                if self._stop_flag:
+                if paused_stop or self._stop_flag:
                     break
 
                 # Resume running status if coming out of pause
@@ -310,7 +312,7 @@ class ApiOrchestrationService:
 
     async def _broadcast_sse(
         self, event_type: str, title: str, description: str, severity: str
-    ):
+    ) -> None:
         """Emit SSE events via EventBus.
 
         Args:
@@ -323,10 +325,12 @@ class ApiOrchestrationService:
             # Publish to the topic that api_server.py's bridge subscribes to
             await self.event_bus.publish(
                 "dashboard_event",
-                type=event_type,
-                title=title,
-                description=description,
-                severity=severity,
+                {
+                    "type": event_type,
+                    "title": title,
+                    "description": description,
+                    "severity": severity,
+                },
             )
         else:
             logger.warning("No EventBus available to broadcast: %s", title)

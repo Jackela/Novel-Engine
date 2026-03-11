@@ -16,6 +16,7 @@ from datetime import datetime
 from enum import Enum
 from typing import (
     Any,
+    AsyncGenerator,
     Callable,
     Dict,
     List,
@@ -191,7 +192,8 @@ class ServiceContainer:
         )
         if result.is_ok:
             return result.value
-        raise DependencyResolutionError(result.error.message)
+        error_msg = result.error.message if result.error else "Unknown error"
+        raise DependencyResolutionError(error_msg)
 
     def register_service_result(
         self,
@@ -308,12 +310,14 @@ class ServiceContainer:
                 )
             )
 
-    def get_service(self, service_type: Type[T], context: Optional[str] = None) -> T:
+    def get_service(self, service_type: Type[T], context: Optional[str] = None) -> Optional[T]:
         """Resolve and return service instance. (Legacy - use get_service_result)"""
         result = self.get_service_result(service_type, context)
         if result.is_ok:
             return result.value
-        raise DependencyResolutionError(result.error.message)
+        if result.error:
+            raise DependencyResolutionError(result.error.message)
+        raise DependencyResolutionError("Unknown error")
 
     def get_service_result(
         self, service_type: Type[T], context: Optional[str] = None
@@ -376,7 +380,7 @@ class ServiceContainer:
                 )
             )
 
-    def get_services_by_tag(self, tag: str) -> List[Any]:
+    def get_services_by_tag(self, tag: str) -> Optional[List[Any]]:
         """Get all services with specified tag. (Legacy - use get_services_by_tag_result)"""
         result = self.get_services_by_tag_result(tag)
         if result.is_ok:
@@ -407,7 +411,7 @@ class ServiceContainer:
                     if service_result.is_ok:
                         services.append(service_result.value)
                     else:
-                        error_msg = f"Failed to resolve {service_type.__name__}: {service_result.error.message}"
+                        error_msg = f"Failed to resolve {service_type.__name__}: {service_result.error.message if service_result.error else 'Unknown error'}"
                         errors.append(error_msg)
                         logger.warning(error_msg)
 
@@ -434,7 +438,9 @@ class ServiceContainer:
         """Initialize all registered services in dependency order. (Legacy - use initialize_all_services_result)"""
         result = await self.initialize_all_services_result()
         if result.is_error:
-            raise RuntimeError(result.error.message)
+            if result.error:
+                raise RuntimeError(result.error.message)
+            raise RuntimeError("Unknown error")
 
     async def initialize_all_services_result(
         self,
@@ -480,7 +486,7 @@ class ServiceContainer:
         """Start all initialized services. (Legacy - use startup_all_services_result)"""
         result = await self.startup_all_services_result()
         if result.is_error:
-            logger.error(f"Failed to start services: {result.error.message}")
+            logger.error(f"Failed to start services: {result.error.message if result.error else 'Unknown error'}")
 
     async def startup_all_services_result(
         self,
@@ -523,7 +529,7 @@ class ServiceContainer:
         """Shutdown all services in reverse order. (Legacy - use shutdown_all_services_result)"""
         result = await self.shutdown_all_services_result()
         if result.is_error:
-            logger.warning(f"Some services failed to shutdown: {result.error.message}")
+            logger.warning(f"Some services failed to shutdown: {result.error.message if result.error else 'Unknown error'}")
 
     async def shutdown_all_services_result(
         self,
@@ -597,7 +603,7 @@ class ServiceContainer:
         self._last_health_check = datetime.now()
         return health_results
 
-    def get_service_registry(self) -> Dict[str, Dict[str, Any]]:
+    def get_service_registry(self) -> Optional[Dict[str, Dict[str, Any]]]:
         """Get complete service registry information. (Legacy - use get_service_registry_result)"""
         result = self.get_service_registry_result()
         if result.is_ok:
@@ -705,8 +711,8 @@ class ServiceContainer:
             return context or "default_request"
         elif scope == ServiceScope.THREAD:
             return f"thread_{threading.current_thread().ident}"
-
-        return "default"
+        else:
+            return "default"
 
     def _create_instance(
         self, service_type: Type, descriptor: ServiceDescriptor, scope_key: str
@@ -998,8 +1004,8 @@ def get_service_container() -> ServiceContainer:
 
 
 def register_service(
-    interface: Type[T], implementation: Type[T], **kwargs
-) -> ServiceContainer:
+    interface: Type[T], implementation: Type[T], **kwargs: Any
+) -> Optional[ServiceContainer]:
     """Register service with global container."""
     return get_service_container().register_service(interface, implementation, **kwargs)
 
@@ -1010,7 +1016,7 @@ def get_service(service_type: Type[T]) -> T:
 
 
 @asynccontextmanager
-async def service_container_context(container: ServiceContainer):
+async def service_container_context(container: ServiceContainer) -> AsyncGenerator[ServiceContainer, None]:
     """Context manager for service container lifecycle."""
     try:
         await container.initialize_all_services()

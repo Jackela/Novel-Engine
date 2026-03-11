@@ -267,6 +267,9 @@ class PostgreSQLConnectionPool:
         if not self._initialized:
             await self.initialize()
 
+        if self.pool is None:
+            raise RuntimeError("PostgreSQL pool not initialized")
+
         async with self.pool.acquire() as conn:
             try:
                 self._metrics["active_connections"] += 1

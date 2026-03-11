@@ -13,7 +13,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import structlog
 
@@ -417,7 +417,7 @@ class LayeredMemorySystem:
 
     async def _create_cross_layer_associations(
         self, memory_id: str, stored_layers: List[str]
-    ):
+    ) -> None:
         """Creates bidirectional associations between layers for a given memory."""
         for i, layer1 in enumerate(stored_layers):
             for layer2 in stored_layers[i + 1 :]:
@@ -488,7 +488,7 @@ class LayeredMemorySystem:
             result = await self.episodic_memory.retrieve_episodes_by_timeframe(
                 start, end, limit=query.max_results
             )
-            if result.success:
+            if result.success and result.data:
                 m = result.data.get("episodes", [])
                 memories.extend(m)
                 scores.extend([self._calculate_relevance(mem, query) for mem in m])
@@ -503,7 +503,7 @@ class LayeredMemorySystem:
         key_terms = self._extract_query_terms(query.query_text)
         for term in key_terms:
             result = await self.semantic_memory.query_facts_by_subject(term)
-            if result.success:
+            if result.success and result.data:
                 facts = result.data.get("facts", [])
                 m = self._convert_facts_to_memories(facts, term)
                 memories.extend(m)
@@ -567,12 +567,12 @@ class LayeredMemorySystem:
             return []
 
         insights: list[Any] = []
-        type_counts = defaultdict(int)
+        type_counts: Dict[MemoryType, int] = defaultdict(int)
         for mem in memories:
             type_counts[mem.memory_type] += 1
 
         if type_counts:
-            dominant_type = max(type_counts, key=type_counts.get)
+            dominant_type = max(type_counts, key=lambda k: type_counts[k])
             insights.append(f"Dominant memory type in results: {dominant_type.value}")
 
         return insights
@@ -582,7 +582,7 @@ class LayeredMemorySystem:
     ) -> None:
         """Updates performance metrics after a query."""
         total = self.total_queries
-        avg_time = self.performance_metrics["average_query_time"]
+        avg_time = cast(float, self.performance_metrics["average_query_time"])
         self.performance_metrics["average_query_time"] = (
             (avg_time * (total - 1) + query_duration_ms) / total
             if total > 0
@@ -597,7 +597,7 @@ class LayeredMemorySystem:
         }
 
 
-async def test_layered_memory():
+async def test_layered_memory() -> None:
     """Tests the LayeredMemorySystem."""
     logger.info("Testing Layered Memory System...")
 
@@ -633,8 +633,9 @@ async def test_layered_memory():
 
     for memory in test_memories:
         storage_result = await layered_memory.store_memory(memory)
+        stored_layers = storage_result.data.get("stored_layers", []) if storage_result.data else []
         logger.info(
-            f"Layered Storage: {storage_result.success}, Layers: {storage_result.data.get('stored_layers', [])}"
+            f"Layered Storage: {storage_result.success}, Layers: {stored_layers}"
         )
 
     query_request = MemoryQueryRequest(
@@ -642,13 +643,14 @@ async def test_layered_memory():
     )
 
     query_result = await layered_memory.query_memories(query_request)
-    if query_result.success:
-        result_data = query_result.data["query_result"]
-        logger.info(
-            f"Unified Query: {len(result_data.memories)} results in {result_data.query_duration_ms:.2f}ms"
-        )
-        if result_data.memory_sources:
-            logger.info(f"Query Sources: {set(result_data.memory_sources)}")
+    if query_result.success and query_result.data:
+        result_data = query_result.data.get("query_result")
+        if result_data:
+            logger.info(
+                f"Unified Query: {len(result_data.memories)} results in {result_data.query_duration_ms:.2f}ms"
+            )
+            if result_data.memory_sources:
+                logger.info(f"Query Sources: {set(result_data.memory_sources)}")
 
     consolidation_result = await layered_memory.consolidate_memories()
     logger.info(f"Consolidation: {consolidation_result.success}")

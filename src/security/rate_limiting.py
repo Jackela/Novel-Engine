@@ -785,11 +785,11 @@ class RateLimitMiddleware:
                 )
 
             # Wrapper to intercept response start and inject headers
-            async def send_wrapper(message):
+            async def send_wrapper(message: Dict[str, Any]) -> None:
                 if message["type"] == "http.response.start":
                     headers = message.setdefault("headers", [])
                     # Remove existing headers if any (to avoid dups, though unlikely for unique keys)
-                    headers = [
+                    filtered_headers = [
                         h
                         for h in headers
                         if h[0].decode("latin-1").lower()
@@ -800,23 +800,23 @@ class RateLimitMiddleware:
                         ]
                     ]
 
-                    headers.append(
+                    filtered_headers.append(
                         (
                             b"x-ratelimit-limit",
                             str(self.config.requests_per_minute).encode(),
                         )
                     )
-                    headers.append(
+                    filtered_headers.append(
                         (
                             b"x-ratelimit-remaining",
                             str(max(limit_result.remaining, 0)).encode(),
                         )
                     )
-                    headers.append(
+                    filtered_headers.append(
                         (b"x-ratelimit-reset", str(int(time.time()) + 60).encode())
                     )
 
-                    message["headers"] = headers
+                    message["headers"] = filtered_headers
 
                 await send(message)
 

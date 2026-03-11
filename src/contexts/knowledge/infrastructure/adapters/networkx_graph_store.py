@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import networkx as nx  # type: ignore[import-untyped]
+import networkx as nx
 import structlog
 
 from src.contexts.knowledge.application.ports.i_graph_store import (

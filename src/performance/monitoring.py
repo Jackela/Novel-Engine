@@ -538,10 +538,14 @@ class PerformanceMonitor:
 
     async def _handle_alert_resolution(self, alert: PerformanceAlert) -> None:
         """Handle resolution of performance alert."""
+        if alert.resolution_timestamp is not None:
+            duration = round(alert.resolution_timestamp - alert.timestamp, 1)
+        else:
+            duration = 0.0
         logger.info(
             "performance_alert_resolved",
             metric_name=alert.metric_name,
-            duration_seconds=round(alert.resolution_timestamp - alert.timestamp, 1),
+            duration_seconds=duration,
         )
 
     def _cleanup_old_metrics(self) -> None:
@@ -573,6 +577,7 @@ class PerformanceMonitor:
             }
 
             # Export recent metrics
+            metrics_dict: dict[str, list[dict[str, Any]]] = {}
             for metric_name, metric_list in self.metrics.items():
                 recent_metrics = [
                     m.to_dict()
@@ -580,7 +585,8 @@ class PerformanceMonitor:
                     if m.timestamp > current_time - 300  # Last 5 minutes
                 ]
                 if recent_metrics:
-                    export_data["metrics"][metric_name] = recent_metrics
+                    metrics_dict[metric_name] = recent_metrics
+            export_data["metrics"] = metrics_dict
 
             # Write to file
             # SECURITY: Filename is auto-generated from timestamp, not user input

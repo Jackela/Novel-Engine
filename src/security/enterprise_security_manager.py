@@ -22,19 +22,19 @@ import ipaddress
 import json
 import os
 import time
-from typing import Any, DefaultDict
+from typing import Any, DefaultDict, cast
+
+from types import ModuleType
 
 try:
-    # from types import ModuleType  # noqa: F401
-
     import aioredis
 except ImportError:
-    aioredis = None  # type: ignore[misc]
+    aioredis = None
 
 try:
     import aiosqlite
 except ImportError:
-    aiosqlite = None
+    aiosqlite = None  # type: ignore
 
 try:
     import geoip2.database
@@ -56,7 +56,7 @@ except ImportError:
 
     geoip2 = type(
         "", (), {"database": type("", (), {"Reader": MockGeoIP2Database})()}
-    )()  # type: ignore[misc]
+    )()
 import logging
 import re
 import secrets
@@ -224,8 +224,8 @@ class EnterpriseSecurityManager:
         self.redis_client: Optional[Any] = None
         self.geoip_reader: Optional[Any] = None
         self.metrics = SecurityMetrics()
-        self.behavioral_profiles = {}
-        self.threat_intelligence_cache = {}
+        self.behavioral_profiles: Dict[str, Any] = {}
+        self.threat_intelligence_cache: Dict[str, Any] = {}
 
         # Rate limiting stores
         self.rate_limits: DefaultDict[str, DefaultDict[str, deque[float]]] = defaultdict(lambda: defaultdict(deque))
@@ -566,8 +566,9 @@ class EnterpriseSecurityManager:
         # Check local cache first
         if ip_address in self.ip_reputation_cache:
             cached = self.ip_reputation_cache[ip_address]
-            if (datetime.now(timezone.utc) - cached["timestamp"]).hours < 24:
-                return cached["data"]
+            cache_age = datetime.now(timezone.utc) - cached["timestamp"]
+            if cache_age.total_seconds() < 86400:  # 24 hours
+                return cast(Dict[str, Any], cached["data"])
 
         # Check Redis cache
         if self.redis_client is not None:
@@ -1122,7 +1123,10 @@ class EnterpriseSecurityManager:
                 """,
                     (last_24h,),
                 )
-                threat_counts = dict(await cursor.fetchall())
+                threat_counts: Dict[str, int] = {}
+                async for row in cursor:
+                    if row[0] is not None:
+                        threat_counts[str(row[0])] = row[1]
 
                 # Get blocked IPs
                 cursor = await conn.execute(
@@ -1131,7 +1135,8 @@ class EnterpriseSecurityManager:
                     WHERE list_type = 'blacklist' AND is_active = TRUE
                 """
                 )
-                blocked_ips_count = (await cursor.fetchone())[0]
+                count_row = await cursor.fetchone()
+                blocked_ips_count = count_row[0] if count_row else 0
 
                 # Get top threat indicators
                 cursor = await conn.execute(
@@ -1145,13 +1150,15 @@ class EnterpriseSecurityManager:
                 """,
                     (last_24h,),
                 )
-                threat_indicators = await cursor.fetchall()
+                threat_indicators: List[Any] = []
+                async for row in cursor:
+                    threat_indicators.append(row)
 
         except Exception as e:
             logger.error("Error retrieving security metrics: %s", e)
-            threat_counts: dict[Any, Any] = {}
+            threat_counts = {}
             blocked_ips_count = 0
-            threat_indicators: list[Any] = []
+            threat_indicators = []
         return {
             "threat_events_24h": threat_counts,
             "blocked_ips": blocked_ips_count,

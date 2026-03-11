@@ -362,7 +362,7 @@ class ConfigurationManager:
             value: Value to set
         """
         result = self.set_result(key_path, value)
-        if result.is_error:
+        if result.is_error and result.error:
             logger.warning("configuration_set_failed", error=result.error.message)
 
     def set_result(self, key_path: str, value: Any) -> Result[bool, ConfigError]:
@@ -469,7 +469,7 @@ class ConfigurationManager:
     ) -> None:
         """Save current configuration to file. (Legacy - use save_to_file_result)"""
         result = self.save_to_file_result(file_path, format)
-        if result.is_error:
+        if result.is_error and result.error:
             raise ValueError(f"Failed to save configuration: {result.error.message}")
 
     def save_to_file_result(

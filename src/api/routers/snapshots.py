@@ -13,7 +13,7 @@ Endpoints:
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
 
@@ -78,7 +78,7 @@ def _calendar_to_data(calendar: Optional[WorldCalendar]) -> Optional[CalendarDat
     )
 
 
-def _snapshot_to_response(snapshot) -> SnapshotResponse:
+def _snapshot_to_response(snapshot: Any) -> SnapshotResponse:
     """Convert WorldSnapshot to response model."""
     return SnapshotResponse(
         snapshot_id=snapshot.snapshot_id,
@@ -91,7 +91,7 @@ def _snapshot_to_response(snapshot) -> SnapshotResponse:
     )
 
 
-def _snapshot_to_summary(snapshot) -> SnapshotSummary:
+def _snapshot_to_summary(snapshot: Any) -> SnapshotSummary:
     """Convert WorldSnapshot to summary model."""
     return SnapshotSummary(
         snapshot_id=snapshot.snapshot_id,

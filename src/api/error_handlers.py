@@ -209,7 +209,7 @@ class ErrorHandler:
 
     def _map_http_status_to_error_type(self, status_code: int) -> APIErrorType:
         """Map HTTP status codes to API error types."""
-        mapping = {
+        mapping: dict[int, APIErrorType] = {
             400: APIErrorType.BAD_REQUEST,
             401: APIErrorType.UNAUTHORIZED,
             403: APIErrorType.FORBIDDEN,
@@ -241,7 +241,7 @@ class ErrorHandler:
             log_level = logging.INFO
 
         # Create log message
-        error_context = {
+        error_context: dict[str, Any] = {
             "error_type": api_error.type.value,
             "status_code": status_code,
             "error_message": api_error.message,

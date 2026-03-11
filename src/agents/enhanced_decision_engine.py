@@ -466,7 +466,7 @@ class EnhancedDecisionEngine(DecisionEngine):
                 objective_modifier = self._get_objective_alignment_modifier(
                     action, character_data["active_objectives"]
                 )
-            summary["modifiers_applied"]["objective_alignment"] = objective_modifier  # type: ignore[index]
+            summary["modifiers_applied"]["objective_alignment"] = objective_modifier
 
             modifiers: Dict[str, Any] = summary.get("modifiers_applied", {})
             if "behavioral_triggers" in character_data:

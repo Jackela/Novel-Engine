@@ -13,10 +13,12 @@ import pickle
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Union, cast
 
 import structlog
 from redis import asyncio as aioredis
+from redis.asyncio.client import Redis
+from redis.asyncio.cluster import RedisCluster, ClusterNode
 
 logger = structlog.get_logger(__name__)
 
@@ -129,7 +131,7 @@ class RedisConnectionPool:
         """Initialize Redis connection pool."""
         self.config = config
         self.pool: Optional[aioredis.ConnectionPool] = None
-        self.redis: Optional[aioredis.Redis] = None
+        self.redis: Optional[Union[Redis, RedisCluster]] = None
         self._initialized = False
 
         # Metrics tracking
@@ -155,11 +157,12 @@ class RedisConnectionPool:
         try:
             if self.config.cluster_enabled:
                 # Redis Cluster support
+                startup_nodes: List[ClusterNode] = [
+                    ClusterNode(host=node.split(":")[0], port=int(node.split(":")[1]))
+                    for node in self.config.cluster_nodes
+                ]
                 self.redis = aioredis.RedisCluster(
-                    startup_nodes=[
-                        {"host": node.split(":")[0], "port": int(node.split(":")[1])}
-                        for node in self.config.cluster_nodes
-                    ],
+                    startup_nodes=startup_nodes,
                     password=self.config.password,
                     decode_responses=self.config.decode_responses,
                     socket_timeout=self.config.socket_timeout,
@@ -184,7 +187,8 @@ class RedisConnectionPool:
                 self.redis = aioredis.Redis(connection_pool=self.pool)
 
             # Test connection
-            await self.redis.ping()
+            assert self.redis is not None, "Redis not initialized"
+            await self.redis.ping()  # type: ignore[misc]
 
             # Configure Redis settings
             await self._configure_redis()
@@ -199,6 +203,7 @@ class RedisConnectionPool:
 
         except Exception as e:
             logger.error("Failed to initialize Redis pool: %s", e)
+            self._initialized = False
             raise
 
     async def _configure_redis(self) -> None:
@@ -216,7 +221,7 @@ class RedisConnectionPool:
 
     async def _health_check_loop(self) -> None:
         """Background health check loop."""
-        while self._initialized:
+        while True:
             try:
                 await asyncio.sleep(self.config.health_check_interval)
 
@@ -224,9 +229,10 @@ class RedisConnectionPool:
                     break
 
                 # Health check
-                assert self.redis is not None, "Redis not initialized"
+                if self.redis is None:
+                    continue
                 start_time = asyncio.get_running_loop().time()
-                await self.redis.ping()
+                await self.redis.ping()  # type: ignore[misc]
                 response_time = asyncio.get_running_loop().time() - start_time
 
                 # Update metrics
@@ -368,6 +374,7 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             result = await self.redis.exists(key)
             self._metrics["total_commands"] += 1
             return bool(result)
@@ -383,6 +390,7 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             result = await self.redis.expire(key, ttl)
             self._metrics["total_commands"] += 1
             return bool(result)
@@ -402,8 +410,9 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             serialized_value = self._serialize_value(value)
-            result = await self.redis.hset(key, field, serialized_value)
+            result = await self.redis.hset(key, field, serialized_value)  # type: ignore[misc]
 
             if ttl:
                 await self.redis.expire(key, ttl)
@@ -422,7 +431,8 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
-            value = await self.redis.hget(key, field)
+            assert self.redis is not None, "Redis not initialized"
+            value = await self.redis.hget(key, field)  # type: ignore[misc]
             self._metrics["total_commands"] += 1
 
             if value is not None:
@@ -440,7 +450,8 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
-            result = await self.redis.hgetall(key)
+            assert self.redis is not None, "Redis not initialized"
+            result = await self.redis.hgetall(key)  # type: ignore[misc]
             self._metrics["total_commands"] += 1
 
             # Deserialize all values and decode field names from bytes if needed
@@ -464,14 +475,15 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             serialized_values = [self._serialize_value(v) for v in values]
-            result = await self.redis.lpush(key, *serialized_values)
+            result = await self.redis.lpush(key, *serialized_values)  # type: ignore[misc]
 
             if ttl:
                 await self.redis.expire(key, ttl)
 
             self._metrics["total_commands"] += 1
-            return result
+            return int(result)
 
         except Exception as e:
             self._metrics["errors"] += 1
@@ -484,7 +496,8 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
-            result = await self.redis.lrange(key, start, stop)
+            assert self.redis is not None, "Redis not initialized"
+            result = await self.redis.lrange(key, start, stop)  # type: ignore[misc]
             self._metrics["total_commands"] += 1
 
             return [self._deserialize_value(v) for v in result]
@@ -502,14 +515,15 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
+            assert self.redis is not None, "Redis not initialized"
             serialized_values = [self._serialize_value(v) for v in values]
-            result = await self.redis.sadd(key, *serialized_values)
+            result = await self.redis.sadd(key, *serialized_values)  # type: ignore[misc]
 
             if ttl:
                 await self.redis.expire(key, ttl)
 
             self._metrics["total_commands"] += 1
-            return result
+            return int(result)
 
         except Exception as e:
             self._metrics["errors"] += 1
@@ -522,7 +536,8 @@ class RedisConnectionPool:
             await self.initialize()
 
         try:
-            result = await self.redis.smembers(key)
+            assert self.redis is not None, "Redis not initialized"
+            result = await self.redis.smembers(key)  # type: ignore[misc]
             self._metrics["total_commands"] += 1
 
             return {self._deserialize_value(v) for v in result}
@@ -544,7 +559,8 @@ class RedisConnectionPool:
     async def get_cached_character(self, character_id: str) -> Optional[Dict[str, Any]]:
         """Get cached character data."""
         cache_key = CacheKey("novel_engine", "character", character_id).build()
-        return await self.get(cache_key)
+        result: Optional[Dict[str, Any]] = await self.get(cache_key)
+        return result
 
     async def cache_interaction_result(
         self,
@@ -559,20 +575,26 @@ class RedisConnectionPool:
         ).build()
         return await self.set(cache_key, result_data, ttl)
 
+    async def _store_session_with_pipeline(
+        self, session_key: str, session_data: Dict[str, Any], ttl: int
+    ) -> bool:
+        """Store session using Redis pipeline."""
+        assert self.redis is not None, "Redis not initialized"
+        pipe = self.redis.pipeline()
+        for session_field, value in session_data.items():
+            await pipe.hset(
+                session_key, session_field, self._serialize_value(value)
+            )  # type: ignore[misc]
+        await pipe.expire(session_key, ttl)
+        await pipe.execute()
+        return True
+
     async def store_session(
         self, session_id: str, session_data: Dict[str, Any], ttl: int = 7200
     ) -> bool:
         """Store session data."""
         session_key = CacheKey("novel_engine", "session", session_id).build()
-
-        # Store as hash for efficient partial updates
-        pipe = self.redis.pipeline()
-        for session_field, value in session_data.items():
-            await pipe.hset(session_key, session_field, self._serialize_value(value))  # type: ignore[misc]
-        await pipe.expire(session_key, ttl)  # type: ignore[misc]
-
-        await pipe.execute()  # type: ignore[misc]
-        return True
+        return await self._store_session_with_pipeline(session_key, session_data, ttl)
 
     async def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get session data."""
@@ -596,7 +618,8 @@ class RedisConnectionPool:
     async def get_agent_context(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """Get agent context."""
         context_key = CacheKey("novel_engine", "agent_context", agent_id).build()
-        return await self.get(context_key)
+        result: Optional[Dict[str, Any]] = await self.get(context_key)
+        return result
 
     async def add_to_narrative_stream(
         self, narrative_id: str, event_data: Dict[str, Any]
@@ -609,7 +632,8 @@ class RedisConnectionPool:
         await self.lpush(stream_key, event_data, ttl=86400)  # 24 hours
 
         # Keep only last 1000 events
-        await self.redis.ltrim(stream_key, 0, 999)
+        assert self.redis is not None, "Redis not initialized"
+        await self.redis.ltrim(stream_key, 0, 999)  # type: ignore[misc]
 
         return True
 
@@ -688,7 +712,8 @@ class RedisManager:
     async def health_check(self) -> Dict[str, Any]:
         """Perform comprehensive health check."""
         try:
-            await self.connection_pool.redis.ping()
+            assert self.connection_pool.redis is not None, "Redis not initialized"
+            await self.connection_pool.redis.ping()  # type: ignore[misc]
 
             info = await self.connection_pool.redis.info()
             metrics = self.connection_pool.get_metrics()

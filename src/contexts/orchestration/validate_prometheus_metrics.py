@@ -29,7 +29,7 @@ logging.basicConfig(
 logger = structlog.get_logger(__name__)
 
 
-def test_prometheus_metrics_collector() -> None:
+def test_prometheus_metrics_collector() -> bool:
     """Test basic Prometheus metrics collector functionality."""
     print("\n🔍 Testing PrometheusMetricsCollector...")
 
@@ -170,7 +170,7 @@ def test_prometheus_metrics_collector() -> None:
         return False
 
 
-def test_enhanced_performance_tracker() -> None:
+def test_enhanced_performance_tracker() -> bool:
     """Test enhanced performance tracker integration."""
     print("\n🔍 Testing EnhancedPerformanceTracker...")
 
@@ -240,7 +240,7 @@ def test_enhanced_performance_tracker() -> None:
         return False
 
 
-def test_fastapi_integration() -> None:
+def test_fastapi_integration() -> bool:
     """Test FastAPI integration (basic import test)."""
     print("\n🔍 Testing FastAPI Integration...")
 
@@ -285,7 +285,7 @@ def test_fastapi_integration() -> None:
         return False
 
 
-def main() -> None:
+def main() -> bool:
     """Run all validation tests."""
     print("=" * 80)
     print("M10 PROMETHEUS METRICS VALIDATION")

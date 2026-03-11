@@ -65,19 +65,21 @@ class S3StateStore(StateStore):
                 if error_code == "NoCredentialsError":
                     logger.warning("s3_credentials_not_configured")
                     self._connected = False
+                    return
                 else:
+                    self._connected = False
                     raise
 
         except Exception as e:
             logger.error("s3_connection_failed", error=str(e))
+            self._connected = False
             raise
 
     async def _ensure_bucket_exists(self) -> None:
         """Ensure S3 bucket exists."""
         if not self.s3_client:
             return
-
-        try:
+        try:  # type: ignore[unreachable]
             self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "404")
@@ -94,10 +96,11 @@ class S3StateStore(StateStore):
                             },
                         )
                     logger.info("s3_bucket_created", bucket=self.config.s3_bucket)
-                except Exception as e:
-                    logger.error("s3_bucket_creation_failed", error=str(e))
+                except Exception:
+                    logger.error("s3_bucket_creation_failed")
                     raise
             else:
+                self._connected = False
                 raise
 
     def _get_s3_key(self, key: StateKey) -> str:
@@ -123,36 +126,37 @@ class S3StateStore(StateStore):
         if not self._connected:
             await self.connect()
 
-        if not self.s3_client:
-            return None
+        if self.s3_client:
+            try:  # type: ignore[unreachable]
+                s3_key = self._get_s3_key(key)
+                response = self.s3_client.get_object(
+                    Bucket=self.config.s3_bucket, Key=s3_key
+                )
+                data = response["Body"].read()
 
-        try:
-            s3_key = self._get_s3_key(key)
-            response = self.s3_client.get_object(
-                Bucket=self.config.s3_bucket, Key=s3_key
-            )
-            data = response["Body"].read()
-
-            # Try to deserialize
-            try:
-                return json.loads(data)
-            except (json.JSONDecodeError, TypeError):
+                # Try to deserialize
                 try:
-                    # nosec B301 - pickle used for internal S3 cache data only
-                    # Data is stored by trusted application code with proper access controls
-                    return pickle.loads(data)  # nosec B301
-                except Exception:
-                    return data.decode("utf-8") if isinstance(data, bytes) else data
+                    return json.loads(data)
+                except (json.JSONDecodeError, TypeError):
+                    try:
+                        # nosec B301 - pickle used for internal S3 cache data only
+                        # Data is stored by trusted application code with proper access controls
+                        return pickle.loads(data)  # nosec B301
+                    except Exception:
+                        return (
+                            data.decode("utf-8") if isinstance(data, bytes) else data
+                        )
 
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "Unknown")
-            if error_code == "NoSuchKey":
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "Unknown")
+                if error_code == "NoSuchKey":
+                    return None
+                logger.error("s3_get_failed", key=key.to_string(), error=str(e))
                 return None
-            logger.error("s3_get_failed", key=key.to_string(), error=str(e))
-            return None
-        except Exception as e:
-            logger.error("s3_get_failed", key=key.to_string(), error=str(e))
-            return None
+            except Exception as e:
+                logger.error("s3_get_failed", key=key.to_string(), error=str(e))
+                return None
+        return None
 
     async def set(self, key: StateKey, value: Any, ttl: Optional[int] = None) -> bool:
         """Store value in S3.
@@ -168,34 +172,33 @@ class S3StateStore(StateStore):
         if not self._connected:
             await self.connect()
 
-        if not self.s3_client:
-            return False
+        if self.s3_client:
+            try:  # type: ignore[unreachable]
+                s3_key = self._get_s3_key(key)
 
-        try:
-            s3_key = self._get_s3_key(key)
+                # Serialize value
+                if isinstance(value, (dict, list)):
+                    data = json.dumps(value, default=str).encode("utf-8")
+                    content_type = "application/json"
+                elif isinstance(value, str):
+                    data = value.encode("utf-8")
+                    content_type = "text/plain"
+                else:
+                    data = pickle.dumps(value)
+                    content_type = "application/octet-stream"
 
-            # Serialize value
-            if isinstance(value, (dict, list)):
-                data = json.dumps(value, default=str).encode("utf-8")
-                content_type = "application/json"
-            elif isinstance(value, str):
-                data = value.encode("utf-8")
-                content_type = "text/plain"
-            else:
-                data = pickle.dumps(value)
-                content_type = "application/octet-stream"
+                self.s3_client.put_object(
+                    Bucket=self.config.s3_bucket,
+                    Key=s3_key,
+                    Body=data,
+                    ContentType=content_type,
+                )
+                return True
 
-            self.s3_client.put_object(
-                Bucket=self.config.s3_bucket,
-                Key=s3_key,
-                Body=data,
-                ContentType=content_type,
-            )
-            return True
-
-        except Exception as e:
-            logger.error("s3_set_failed", key=key.to_string(), error=str(e))
-            return False
+            except Exception as e:
+                logger.error("s3_set_failed", key=key.to_string(), error=str(e))
+                return False
+        return False
 
     async def delete(self, key: StateKey) -> bool:
         """Delete value from S3.
@@ -209,17 +212,18 @@ class S3StateStore(StateStore):
         if not self._connected:
             await self.connect()
 
-        if not self.s3_client:
-            return False
+        if self.s3_client:
+            try:  # type: ignore[unreachable]
+                s3_key = self._get_s3_key(key)
+                self.s3_client.delete_object(
+                    Bucket=self.config.s3_bucket, Key=s3_key
+                )
+                return True
 
-        try:
-            s3_key = self._get_s3_key(key)
-            self.s3_client.delete_object(Bucket=self.config.s3_bucket, Key=s3_key)
-            return True
-
-        except Exception as e:
-            logger.error("s3_delete_failed", key=key.to_string(), error=str(e))
-            return False
+            except Exception as e:
+                logger.error("s3_delete_failed", key=key.to_string(), error=str(e))
+                return False
+        return False
 
     async def exists(self, key: StateKey) -> bool:
         """Check if key exists in S3.
@@ -233,23 +237,28 @@ class S3StateStore(StateStore):
         if not self._connected:
             await self.connect()
 
-        if not self.s3_client:
-            return False
+        if self.s3_client:
+            try:  # type: ignore[unreachable]
+                s3_key = self._get_s3_key(key)
+                self.s3_client.head_object(
+                    Bucket=self.config.s3_bucket, Key=s3_key
+                )
+                return True
 
-        try:
-            s3_key = self._get_s3_key(key)
-            self.s3_client.head_object(Bucket=self.config.s3_bucket, Key=s3_key)
-            return True
-
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "Unknown")
-            if error_code == "404":
+            except ClientError as e:
+                error_code = e.response.get("Error", {}).get("Code", "Unknown")
+                if error_code == "404":
+                    return False
+                logger.error(
+                    "s3_exists_check_failed", key=key.to_string(), error=str(e)
+                )
                 return False
-            logger.error("s3_exists_check_failed", key=key.to_string(), error=str(e))
-            return False
-        except Exception as e:
-            logger.error("s3_exists_check_failed", key=key.to_string(), error=str(e))
-            return False
+            except Exception as e:
+                logger.error(
+                    "s3_exists_check_failed", key=key.to_string(), error=str(e)
+                )
+                return False
+        return False
 
     async def list_keys(self, pattern: str) -> List[StateKey]:
         """List keys matching prefix.
@@ -263,36 +272,35 @@ class S3StateStore(StateStore):
         if not self._connected:
             await self.connect()
 
-        if not self.s3_client:
-            return []
+        if self.s3_client:
+            try:  # type: ignore[unreachable]
+                # Convert pattern to prefix (S3 only supports prefixes)
+                prefix = pattern.replace("*", "").replace("?", "")
 
-        try:
-            # Convert pattern to prefix (S3 only supports prefixes)
-            prefix = pattern.replace("*", "").replace("?", "")
+                response = self.s3_client.list_objects_v2(
+                    Bucket=self.config.s3_bucket, Prefix=prefix
+                )
 
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.config.s3_bucket, Prefix=prefix
-            )
-
-            keys = []
-            for obj in response.get("Contents", []):
-                key_str = obj["Key"]
-                # Convert S3 key back to StateKey format
-                parts = key_str.split("/")
-                if len(parts) >= 3:
-                    keys.append(
-                        StateKey(
-                            namespace=parts[0],
-                            entity_type=parts[1],
-                            entity_id="/".join(parts[2:]),
+                keys = []
+                for obj in response.get("Contents", []):
+                    key_str = obj["Key"]
+                    # Convert S3 key back to StateKey format
+                    parts = key_str.split("/")
+                    if len(parts) >= 3:
+                        keys.append(
+                            StateKey(
+                                namespace=parts[0],
+                                entity_type=parts[1],
+                                entity_id="/".join(parts[2:]),
+                            )
                         )
-                    )
 
-            return keys
+                return keys
 
-        except Exception as e:
-            logger.error("s3_list_keys_failed", pattern=pattern, error=str(e))
-            return []
+            except Exception as e:
+                logger.error("s3_list_keys_failed", pattern=pattern, error=str(e))
+                return []
+        return []
 
     async def increment(self, key: StateKey, amount: int = 1) -> Optional[int]:
         """Increment counter value (not atomically supported in S3).
@@ -342,19 +350,17 @@ class S3StateStore(StateStore):
             if not self._connected:
                 await self.connect()
 
-            if not self.s3_client:
-                return False
-
-            self.s3_client.head_bucket(Bucket=self.config.s3_bucket)
-            return True
+            if self.s3_client:
+                self.s3_client.head_bucket(Bucket=self.config.s3_bucket)  # type: ignore[unreachable]
+                return True
 
         except Exception as e:
             logger.error("s3_health_check_failed", error=str(e))
-            return False
+        return False
 
     async def close(self) -> None:
         """Close S3 client."""
         if self.s3_client:
             # boto3 client doesn't need explicit close
-            self._connected = False
+            self._connected = False  # type: ignore[unreachable]
             logger.info("s3_connection_closed")

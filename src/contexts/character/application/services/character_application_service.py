@@ -775,7 +775,7 @@ class CharacterApplicationService:
         """
         try:
             if not isinstance(criteria, dict):
-                return Err(
+                return Err(  # type: ignore[unreachable]
                     ValidationError(
                         message="Criteria must be a dictionary",
                         field="criteria",

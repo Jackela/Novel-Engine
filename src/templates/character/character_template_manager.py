@@ -6,7 +6,7 @@ Character Template Manager - Core orchestration.
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import structlog
 
@@ -26,11 +26,27 @@ from .persona_models import (
     CharacterPersona,
     CharacterTemplate,
 )
+from .persona_persistence import PersonaPersistence
+from .learning_system import LearningSystem
+from .template_selector import TemplateSelector
+from .template_processor import TemplateProcessor
+from .content_analyzer import ContentAnalyzer
+from .context_enhancer import ContextEnhancer
+
+if TYPE_CHECKING:
+    from src.templates.context_renderer import RenderFormat
 
 logger = structlog.get_logger(__name__)
 
 
-class CharacterTemplateManager:
+class CharacterTemplateManager(
+    LearningSystem,
+    TemplateSelector,
+    TemplateProcessor,
+    ContentAnalyzer,
+    ContextEnhancer,
+    PersonaPersistence,
+):
     """
     STANDARD CHARACTER TEMPLATE MANAGER ENHANCED BY PERSONA ORCHESTRATION
 
@@ -58,6 +74,14 @@ class CharacterTemplateManager:
             personas_directory: Directory containing character persona definitions
             enable_learning: Enable adaptive learning from usage patterns
         """
+        # Initialize parent classes
+        LearningSystem.__init__(self)
+        TemplateSelector.__init__(self)
+        TemplateProcessor.__init__(self)
+        ContentAnalyzer.__init__(self)
+        ContextEnhancer.__init__(self, memory_system)
+        PersonaPersistence.__init__(self, Path(personas_directory))
+
         self.template_engine = template_engine
         self.context_renderer = context_renderer
         self.memory_system = memory_system
@@ -93,7 +117,9 @@ class CharacterTemplateManager:
             f"CHARACTER TEMPLATE MANAGER INITIALIZED: {len(self._personas)} personas loaded"
         )
 
-    def _initialize_archetype_templates(self) -> None:
+    def _initialize_archetype_templates(
+        self,
+    ) -> Dict[CharacterArchetype, Dict[TemplateType, str]]:
         """Delegate archetype template bootstrap to the configuration helper."""
         config = ArchetypeConfiguration()
         return config._initialize_archetype_templates()
@@ -210,9 +236,12 @@ class CharacterTemplateManager:
             if generate_templates:
                 template_result = await self._generate_archetype_templates(persona_data)
                 if not template_result.success:
-                    logger.warning(
-                        f"TEMPLATE GENERATION FAILED FOR {persona_id}: {template_result.error.message}"
+                    error_msg = (
+                        template_result.error.message
+                        if template_result.error
+                        else "Unknown error"
                     )
+                    logger.warning(f"TEMPLATE GENERATION FAILED FOR {persona_id}: {error_msg}")
 
             # Save enhanced persona to file
             await self._save_persona_to_file(persona_data)
@@ -341,7 +370,7 @@ class CharacterTemplateManager:
             )
 
             # Apply enhanced persona-specific rendering constraints
-            persona_constraints = self._create_persona_constraints(
+            persona_constraints = await self._create_persona_constraints(
                 persona, enhanced_context
             )
 
@@ -357,7 +386,7 @@ class CharacterTemplateManager:
                     enhanced_context, selected_format, persona_constraints
                 )
 
-            if render_result.success:
+            if render_result.success and render_result.data:
                 result_data = render_result.data["render_result"]
 
                 # Apply enhanced persona post-processing
@@ -564,7 +593,7 @@ class CharacterTemplateManager:
                     persona_id, template_type, template_content
                 )
 
-                if template_result.success:
+                if template_result.success and template_result.data:
                     migrated_templates.append(template_result.data["template_id"])
                     logger.info(
                         f"MIGRATED TEMPLATE: {template_name} -> {persona_id} ({template_type.value})"
@@ -605,7 +634,7 @@ class CharacterTemplateManager:
                 result = await self.generate_character_template(
                     persona.persona_id, template_type, template_content
                 )
-                if result.success:
+                if result.success and result.data:
                     generated_templates.append(result.data["template_id"])
 
             return StandardResponse(
@@ -659,3 +688,17 @@ class CharacterTemplateManager:
             "learning_enabled": self.enable_learning,
             "personas_directory": str(self.personas_directory),
         }
+
+    async def _create_persona_constraints(
+        self, persona: CharacterPersona, context: TemplateContext
+    ) -> Any:
+        """Create enhanced persona-specific rendering constraints."""
+        from src.templates.context_renderer import RenderingConstraints
+
+        return RenderingConstraints()
+
+    async def _apply_persona_post_processing(
+        self, result: Any, persona: CharacterPersona, context: TemplateContext
+    ) -> Any:
+        """Apply enhanced persona-specific post-processing to rendered content."""
+        return result

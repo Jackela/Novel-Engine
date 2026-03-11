@@ -372,7 +372,7 @@ class LevelUpCharacterCommand:
         # Validate skill improvements
         for skill_data in self.skill_improvements:
             if not isinstance(skill_data, dict):
-                errors.append("Skill improvements must be dictionaries")
+                errors.append("Skill improvements must be dictionaries")  # type: ignore[unreachable]
                 continue
 
             if "skill_name" not in skill_data or not skill_data["skill_name"]:

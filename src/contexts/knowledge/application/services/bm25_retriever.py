@@ -223,8 +223,8 @@ class BM25Retriever:
             ...         print(f"Indexing failed: {error.message}")
         """
         if not isinstance(documents, list):
-            return Err(
-                ValidationError(  # type: ignore[unreachable]
+            return Err(  # type: ignore[unreachable]
+                ValidationError(
                     message="documents must be a list",
                     field="documents",
                 )
@@ -238,7 +238,7 @@ class BM25Retriever:
         # Import rank_bm25 lazily
         # Use BM25Plus for better performance with small corpora and rare terms
         try:
-            from rank_bm25 import BM25Plus as RankBM25  # type: ignore[import-not-found]
+            from rank_bm25 import BM25Plus as RankBM25
         except ImportError:
             logger.error(
                 "bm25_library_not_found",

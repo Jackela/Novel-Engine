@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Union
 
 import aioboto3
-import aiofiles
+import aiofiles  # type: ignore[import-untyped]
 import structlog
 
 logger = structlog.get_logger(__name__)

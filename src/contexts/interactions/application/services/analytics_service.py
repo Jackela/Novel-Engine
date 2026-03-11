@@ -42,7 +42,7 @@ class AnalyticsService:
             Result containing metrics or error
         """
         if session is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Session is required",
                     field="session",
@@ -170,7 +170,7 @@ class AnalyticsService:
             Result containing report or error
         """
         if session is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 ValidationError(
                     message="Session is required",
                     field="session",

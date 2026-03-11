@@ -24,7 +24,7 @@ try:
     from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -43,7 +43,7 @@ except ImportError:
         def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:
@@ -416,12 +416,13 @@ class CombatProcessor(BaseInteractionProcessor):
             }
 
             for participant in context.participants:
-                combat_state["participants"][participant] = {
+                participant_state: Dict[str, Any] = {
                     "health": 100,
                     "status_effects": [],
                     "actions_remaining": 1,
                     "position": "combat_ready",
                 }
+                combat_state["participants"][participant] = participant_state  # type: ignore[index]
 
             return combat_state
         except Exception as e:
@@ -437,14 +438,15 @@ class CombatProcessor(BaseInteractionProcessor):
             max_rounds = 5  # Prevent infinite combat
 
             for round_num in range(1, max_rounds + 1):
-                round_result = {
+                actions_list: List[Dict[str, Any]] = []
+                round_result: Dict[str, Any] = {
                     "round": round_num,
-                    "actions": [],
+                    "actions": actions_list,
                     "round_outcome": "completed",
                 }
 
                 for participant in combat_state["initiative_order"]:
-                    action = {
+                    action: Dict[str, Any] = {
                         "actor": participant,
                         "action_type": "attack",
                         "target": next(
@@ -453,7 +455,7 @@ class CombatProcessor(BaseInteractionProcessor):
                         "success": True,
                         "damage": 10,
                     }
-                    round_result["actions"].append(action)
+                    actions_list.append(action)
 
                 rounds.append(round_result)
 

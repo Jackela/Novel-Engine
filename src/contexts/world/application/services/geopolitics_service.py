@@ -45,7 +45,7 @@ class GeopoliticsService:
         """Initialize the geopolitics service."""
         self._event_bus = event_bus or EventBus()
 
-    def _emit_event(self, event) -> None:
+    def _emit_event(self, event: Any) -> None:
         """Emit a domain event."""
         self._event_bus.publish(event)
         logger.info(
@@ -184,7 +184,8 @@ class GeopoliticsService:
 
         # Use the location's transfer_control method if available
         if hasattr(location, "transfer_control"):
-            location.transfer_control(new_controller_id)
+            if new_controller_id is not None:
+                location.transfer_control(new_controller_id)
         else:
             location.controlling_faction_id = new_controller_id
             location.touch()

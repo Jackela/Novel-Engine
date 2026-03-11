@@ -111,7 +111,7 @@ class EnterpriseSecuritySuite:
             initialize_security_service(
                 database_path=self.database_path, secret_key=self.secret_key
             )
-            self.auth_service = get_security_service()  # type: ignore[assignment]
+            self.auth_service = get_security_service()
             await self.auth_service.initialize_database()
             logger.info("✅ Authentication Service initialized")
 
@@ -170,12 +170,16 @@ class EnterpriseSecuritySuite:
     async def _ensure_admin_user(self) -> None:
         """Ensure default admin user exists"""
         try:
+            if self.auth_service is None:
+                logger.error("Auth service not initialized")
+                return
             # Check if any admin users exist
-            async with self.auth_service._SecurityService__conn_manager() as conn:
+            async with self.auth_service._connection() as conn:
                 cursor = await conn.execute(
                     "SELECT COUNT(*) FROM users WHERE role = ?", (UserRole.ADMIN.value,)
                 )
-                admin_count = (await cursor.fetchone())[0]
+                row = await cursor.fetchone()
+                admin_count = row[0] if row else 0
 
             if admin_count == 0:
                 # Create default admin user - password MUST be set via environment variable
@@ -196,11 +200,12 @@ class EnterpriseSecuritySuite:
                     role=UserRole.ADMIN,
                 )
 
-                await self.auth_service.register_user(
-                    registration=default_admin,
-                    ip_address="127.0.0.1",
-                    user_agent="system_initialization",
-                )
+                if self.auth_service is not None:
+                    await self.auth_service.register_user(
+                        registration=default_admin,
+                        ip_address="127.0.0.1",
+                        user_agent="system_initialization",
+                    )
 
                 logger.warning("DEFAULT ADMIN USER CREATED")
                 logger.warning("   Username: admin")
@@ -265,7 +270,7 @@ class EnterpriseSecuritySuite:
         logger.info("🔧 Configuring FastAPI with Enterprise Security...")
 
         # 1. Add security middleware
-        app.add_middleware(SecurityMiddleware, config=self.security_config)
+        app.add_middleware(SecurityMiddleware, config=self.security_config)  # type: ignore[arg-type]
 
         # 2. Add CORS middleware (configured securely)
         app.add_middleware(
@@ -305,6 +310,8 @@ class EnterpriseSecuritySuite:
                         )
 
                 # Evaluate request security
+                if self.security_manager is None:
+                    return await call_next(request)
                 (
                     is_allowed,
                     security_actions,
@@ -365,6 +372,10 @@ class EnterpriseSecuritySuite:
             registration: UserRegistration, request: Request
         ) -> dict:
             try:
+                if self.security_manager is None:
+                    raise HTTPException(status_code=500, detail="Security manager not initialized")
+                if self.auth_service is None:
+                    raise HTTPException(status_code=500, detail="Auth service not initialized")
                 client_ip = self.security_manager._extract_client_ip(request)
                 user_agent = request.headers.get("user-agent", "unknown")
 
@@ -380,13 +391,19 @@ class EnterpriseSecuritySuite:
                     "user_id": user.id,
                 }
 
+            except HTTPException:
+                raise
             except Exception as e:
                 logger.error(f"Registration error: {e}")
                 raise HTTPException(status_code=400, detail=str(e))
 
         @app.post("/api/auth/login", response_model=TokenPair)
-        async def login_user(login_data: UserLogin, request: Request):
+        async def login_user(login_data: UserLogin, request: Request) -> TokenPair:
             try:
+                if self.security_manager is None:
+                    raise HTTPException(status_code=500, detail="Security manager not initialized")
+                if self.auth_service is None:
+                    raise HTTPException(status_code=500, detail="Auth service not initialized")
                 client_ip = self.security_manager._extract_client_ip(request)
                 user_agent = request.headers.get("user-agent", "unknown")
 
@@ -407,9 +424,13 @@ class EnterpriseSecuritySuite:
                 raise HTTPException(status_code=500, detail="Login failed")
 
         @app.post("/api/auth/refresh", response_model=TokenPair)
-        async def refresh_token(refresh_token: str):
+        async def refresh_token(refresh_token: str) -> TokenPair:
             try:
+                if self.auth_service is None:
+                    raise HTTPException(status_code=500, detail="Auth service not initialized")
                 return await self.auth_service.refresh_access_token(refresh_token)
+            except HTTPException:
+                raise
             except Exception:
                 raise HTTPException(status_code=401, detail="Token refresh failed")
 
@@ -417,9 +438,11 @@ class EnterpriseSecuritySuite:
         @app.get("/api/security/metrics")
         async def get_security_metrics(
             current_user: User = Depends(
-                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)
+                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)  # type: ignore[union-attr]
             ),
-        ):
+        ) -> dict:
+            if self.security_manager is None:
+                raise HTTPException(status_code=500, detail="Security manager not initialized")
             return await self.security_manager.get_security_metrics()
 
         @app.post("/api/security/ip/{ip_address}/block")
@@ -429,9 +452,11 @@ class EnterpriseSecuritySuite:
             severity: ThreatLevel,
             expires_hours: Optional[int] = None,
             current_user: User = Depends(
-                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)
+                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)  # type: ignore[union-attr]
             ),
-        ):
+        ) -> dict:
+            if self.security_manager is None:
+                raise HTTPException(status_code=500, detail="Security manager not initialized")
             await self.security_manager.add_ip_to_reputation_list(
                 ip_address=ip_address,
                 list_type="blacklist",
@@ -445,9 +470,11 @@ class EnterpriseSecuritySuite:
         @app.get("/api/security/compliance/summary")
         async def get_compliance_summary(
             current_user: User = Depends(
-                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)
+                self.auth_service.require_permission(Permission.SYSTEM_ADMIN)  # type: ignore[union-attr]
             ),
-        ):
+        ) -> dict:
+            if self.security_dashboard is None:
+                raise HTTPException(status_code=500, detail="Security dashboard not initialized")
             return await self.security_dashboard.get_compliance_summary()
 
     def _add_dashboard_endpoints(self, app: FastAPI) -> None:
@@ -456,13 +483,18 @@ class EnterpriseSecuritySuite:
         @app.get("/api/dashboard/overview")
         async def get_dashboard_overview(
             current_user: User = Depends(
-                self.auth_service.require_permission(Permission.SYSTEM_HEALTH)
+                self.auth_service.require_permission(Permission.SYSTEM_HEALTH)  # type: ignore[union-attr]
             ),
-        ):
+        ) -> dict:
+            if self.security_dashboard is None:
+                raise HTTPException(status_code=500, detail="Security dashboard not initialized")
             return await self.security_dashboard.get_dashboard_overview()
 
         @app.websocket("/ws/security-dashboard")
-        async def websocket_security_dashboard(websocket: WebSocket):
+        async def websocket_security_dashboard(websocket: WebSocket) -> None:
+            if self.security_dashboard is None:
+                await websocket.close(code=1011, reason="Security dashboard not initialized")
+                return
             await self.security_dashboard.websocket_endpoint(websocket)
 
     async def get_security_status(self) -> Dict[str, Any]:
@@ -476,6 +508,16 @@ class EnterpriseSecuritySuite:
         try:
             # Get metrics from all components
             auth_metrics = {"status": "active", "service": "authentication"}
+            if self.security_manager is None:
+                return {
+                    "status": "error",
+                    "error": "Security manager not initialized",
+                }
+            if self.security_dashboard is None:
+                return {
+                    "status": "error",
+                    "error": "Security dashboard not initialized",
+                }
             security_metrics = await self.security_manager.get_security_metrics()
             dashboard_overview = await self.security_dashboard.get_dashboard_overview()
             compliance_summary = await self.security_dashboard.get_compliance_summary()
@@ -530,7 +572,7 @@ def get_security_suite() -> EnterpriseSecuritySuite:
     return security_suite
 
 
-async def initialize_security_suite(**kwargs) -> EnterpriseSecuritySuite:
+async def initialize_security_suite(**kwargs: Any) -> EnterpriseSecuritySuite:
     """Initialize the global security suite"""
     global security_suite
     security_suite = EnterpriseSecuritySuite(**kwargs)
@@ -548,28 +590,27 @@ def create_secure_app(
     security_config: Optional[Dict[str, Any]] = None,
 ) -> FastAPI:
     """Create a FastAPI app with enterprise security pre-configured"""
+    config = security_config or {}
 
     app = FastAPI(
         title=title,
         version=version,
-        docs_url="/docs" if security_config.get("enable_docs", False) else None,
-        redoc_url="/redoc" if security_config.get("enable_docs", False) else None,
+        docs_url="/docs" if config.get("enable_docs", False) else None,
+        redoc_url="/redoc" if config.get("enable_docs", False) else None,
         openapi_url=(
-            "/openapi.json" if security_config.get("enable_docs", False) else None
+            "/openapi.json" if config.get("enable_docs", False) else None
         ),
     )
 
     # Add security health check endpoint
     @app.get("/security/health")
-    async def security_health_check():
+    async def security_health_check() -> dict:
         try:
             suite = get_security_suite()
             return await suite.get_security_status()
         except Exception:
             logger.exception("Security health check failed.")
-            return JSONResponse(
-                status_code=503, content={"status": "error", "error": "unavailable"}
-            )
+            return {"status": "error", "error": "unavailable"}
 
     return app
 

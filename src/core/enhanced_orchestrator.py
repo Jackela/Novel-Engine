@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional, Type, cast
 
 import structlog
 
@@ -530,11 +530,12 @@ class EnhancedSystemOrchestrator:
         )
 
         # Initialize legacy orchestrator with shared database
+        from src.core.system_orchestrator.types import DatabaseInterface
         self.legacy_orchestrator = SystemOrchestrator(
             database_path=self.config.database_connection_string,
             config=legacy_config,
             event_bus=self.event_bus,
-            database=self.database_manager,
+            database=cast(DatabaseInterface, self.database_manager),
         )
 
         # Start legacy orchestrator
@@ -601,10 +602,10 @@ class EnhancedSystemOrchestrator:
                 mode=self.config.mode.value,
                 timestamp=datetime.now(),
             ),
-            metadata={
+            metadata=cast(Dict[str, Any], {
                 "priority": EventPriority.SYSTEM,
                 "source": "enhanced_orchestrator",
-            },
+            }),
         )
 
         await self.event_bus.publish(startup_event)
@@ -619,10 +620,10 @@ class EnhancedSystemOrchestrator:
                 uptime_seconds=uptime_seconds,
                 timestamp=datetime.now(),
             ),
-            metadata={
+            metadata=cast(Dict[str, Any], {
                 "priority": EventPriority.SYSTEM,
                 "source": "enhanced_orchestrator",
-            },
+            }),
         )
 
         await self.event_bus.publish(shutdown_event)
@@ -672,15 +673,13 @@ class EnhancedSystemOrchestrator:
             try:
                 await asyncio.sleep(self.config.health_check_interval)
 
-                if self.shutdown_requested:
-                    break
-
                 # Perform health checks
                 previous_health = self.current_health
                 await self._check_system_health()
 
                 # Publish health change event if status changed
                 if self.current_health != previous_health:
+                    assert self.event_bus is not None, "Event bus not initialized"
                     health_event = Event(
                         event_type="system.health.changed",
                         payload=SystemHealthEvent(
@@ -702,9 +701,6 @@ class EnhancedSystemOrchestrator:
             try:
                 await asyncio.sleep(self.config.metrics_collection_interval)
 
-                if self.shutdown_requested:
-                    break
-
                 # Collect performance metrics
                 await self._collect_performance_metrics()
 
@@ -719,10 +715,8 @@ class EnhancedSystemOrchestrator:
             try:
                 await asyncio.sleep(30)  # Check every 30 seconds
 
-                if self.shutdown_requested:
-                    break
-
                 # Perform service health checks
+                assert self.service_container is not None, "Service container not initialized"
                 health_results = await self.service_container.perform_health_checks()
 
                 # Log any unhealthy services

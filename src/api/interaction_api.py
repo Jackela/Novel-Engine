@@ -35,7 +35,7 @@ class InteractionRequest(BaseModel):
 
     @field_validator("participants")
     @classmethod
-    def validate_participants(cls, v) -> None:
+    def validate_participants(cls, v: list[str]) -> list[str]:
         """
         Validate that all participants are unique.
 
@@ -113,7 +113,7 @@ class InteractionAPI:
         """Sets up API routes for interaction management."""
 
         @app.post("/api/interactions", response_model=InteractionResponse)
-        async def create_interaction(request: InteractionRequest):
+        async def create_interaction(request: InteractionRequest) -> InteractionResponse:
             """Initiates a new character interaction."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -162,7 +162,7 @@ class InteractionAPI:
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions", response_model=dict)
-        async def list_interactions():
+        async def list_interactions() -> dict[str, Any]:
             """List all active interactions."""
             if not self.orchestrator:
                 raise HTTPException(
@@ -190,7 +190,7 @@ class InteractionAPI:
                 raise HTTPException(status_code=500, detail="Internal server error.")
 
         @app.get("/api/interactions/{interaction_id}", response_model=dict)
-        async def get_interaction(interaction_id: str):
+        async def get_interaction(interaction_id: str) -> dict[str, Any]:
             """Get detailed interaction information."""
             if not self.orchestrator:
                 raise HTTPException(

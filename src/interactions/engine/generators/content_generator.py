@@ -3,7 +3,7 @@
 Content generation for interactions.
 """
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 
@@ -25,6 +25,8 @@ class ContentGenerator:
 
     def __init__(self, context_renderer: Optional[ContextRenderer] = None) -> None:
         self.context_renderer = context_renderer
+        self.template_manager: Any = None
+        self.performance_metrics: Dict[str, Any] = {}
 
     async def _generate_initial_context(
         self, context: InteractionContext
@@ -51,7 +53,7 @@ class ContentGenerator:
                 )
 
                 # Generate enhanced contextual information using template manager
-                if participant in self.template_manager._active_personas:
+                if self.template_manager and participant in getattr(self.template_manager, '_active_personas', {}):
                     context_result = (
                         await self.template_manager.render_character_context(
                             participant, template_context, TemplateType.CONTEXT_SUMMARY
@@ -59,25 +61,37 @@ class ContentGenerator:
                     )
 
                     if context_result.success:
+                        data = context_result.data or {}
+                        render_result = data.get("render_result")
                         participant_contexts[participant] = {
-                            "rendered_context": context_result.data[
-                                "render_result"
-                            ].rendered_content,
-                            "persona_id": context_result.data["persona_id"],
-                            "archetype": context_result.data["archetype"],
+                            "rendered_context": (
+                                render_result.rendered_content if render_result else ""
+                            ),
+                            "persona_id": data.get("persona_id"),
+                            "archetype": data.get("archetype"),
                         }
                     else:
+                        error_msg = context_result.error.message if context_result.error else "Unknown error"
                         participant_contexts[participant] = {
-                            "error": context_result.error.message,
+                            "error": error_msg,
                             "fallback_context": f"Participant {participant} in {context.interaction_type.value} interaction",
                         }
                 else:
                     # Use enhanced basic context rendering
                     basic_result = await self.context_renderer.render_context(
                         template_context
-                    )
-                    participant_contexts[participant] = {
-                        "rendered_context": (
+                    ) if self.context_renderer else None
+                    if basic_result:
+                        participant_contexts[participant] = {
+                            "rendered_context": (
+                                basic_result.rendered_content
+                                if hasattr(basic_result, 'rendered_content')
+                                else str(basic_result)
+                            ),
+                        }
+                    else:
+                        participant_contexts[participant] = {
+                            "rendered_context": (
                             basic_result.data["render_result"].rendered_content
                             if basic_result.success
                             else "Basic context unavailable"
@@ -116,24 +130,25 @@ class ContentGenerator:
                     "interaction_id": context.interaction_id,
                     "interaction_type": context.interaction_type.value,
                     "success": outcome.success,
-                    "phases_completed": outcome.phases_completed,
-                    "duration_ms": outcome.duration_ms,
+                    "phases_completed": outcome.completed_phases,
+                    "duration_ms": outcome.processing_duration * 1000,  # Convert to ms
                 },
             )
 
             summary_result = await self.context_renderer.render_context(
                 summary_template_context, RenderFormat.SUMMARY
-            )
+            ) if self.context_renderer else None
 
-            if summary_result.success:
-                generated_content.append(
-                    summary_result.data["render_result"].rendered_content
-                )
+            if summary_result and summary_result.success:
+                data = summary_result.data or {}
+                render_result = data.get("render_result")
+                if render_result:
+                    generated_content.append(render_result.rendered_content)
 
             # Add type-specific content
-            generated_content.extend(outcome.generated_content)
+            generated_content.extend(outcome.interaction_content.get("generated_content", []))
 
-            self.performance_metrics["content_generation_count"] += len(
+            self.performance_metrics["content_generation_count"] = self.performance_metrics.get("content_generation_count", 0) + len(
                 generated_content
             )
 

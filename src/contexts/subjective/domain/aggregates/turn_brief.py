@@ -222,7 +222,7 @@ class TurnBrief:
 
         # Raise alertness change event if needed
         if old_alertness != new_awareness.current_alertness:
-            event = AlertnessChanged(
+            alertness_event = AlertnessChanged(
                 event_id=str(uuid4()),
                 occurred_at=self.updated_at,
                 entity_id=self.entity_id,
@@ -231,14 +231,14 @@ class TurnBrief:
                 new_alertness=new_awareness.current_alertness,
                 change_trigger="awareness_update",
             )
-            self._add_event(event)
+            self._add_event(alertness_event)
 
         # Raise attention focus change event if needed
         if (
             old_focus != new_awareness.attention_focus
             or old_target != new_awareness.focus_target
         ):
-            event = AttentionFocusChanged(
+            focus_event = AttentionFocusChanged(
                 event_id=str(uuid4()),
                 occurred_at=self.updated_at,
                 entity_id=self.entity_id,
@@ -249,7 +249,7 @@ class TurnBrief:
                 new_target=new_awareness.focus_target,
                 focus_reason="awareness_update",
             )
-            self._add_event(event)
+            self._add_event(focus_event)
 
         self._add_update_event("awareness_state", ["alertness_change", "focus_change"])
 
@@ -332,7 +332,7 @@ class TurnBrief:
         # Determine if this is new knowledge or an update
         if existing_knowledge:
             # This is an update to existing knowledge
-            event = KnowledgeUpdated(
+            knowledge_event = KnowledgeUpdated(
                 event_id=str(uuid4()),
                 occurred_at=self.updated_at,
                 entity_id=self.entity_id,
@@ -344,7 +344,7 @@ class TurnBrief:
             )
         else:
             # This is new knowledge
-            event = KnowledgeRevealed(
+            revealed_event = KnowledgeRevealed(
                 event_id=str(uuid4()),
                 occurred_at=self.updated_at,
                 entity_id=self.entity_id,
@@ -353,7 +353,7 @@ class TurnBrief:
                 revelation_method=revelation_method,
             )
 
-        self._add_event(event)
+            self._add_event(revealed_event)
         self._add_update_event("knowledge", [knowledge_item.subject])
 
     def detect_threat(

@@ -108,10 +108,9 @@ class MaintenanceEngine:
         conditions = [
             EquipmentCondition.BROKEN,
             EquipmentCondition.DAMAGED,
-            EquipmentCondition.POOR,
-            EquipmentCondition.FAIR,
+            EquipmentCondition.WORN,
             EquipmentCondition.GOOD,
-            EquipmentCondition.EXCELLENT,
+            EquipmentCondition.PRISTINE,
         ]
 
         current_index = conditions.index(current_condition)

@@ -30,7 +30,7 @@ try:
     from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -49,7 +49,7 @@ except ImportError:
         def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:
@@ -161,7 +161,7 @@ class QueueManager:
         }
 
         # Queue processing task
-        self.queue_processor_task = None
+        self.queue_processor_task: Optional[asyncio.Task[None]] = None
         self.processing_active = False
 
         # Thread pool for concurrent processing
@@ -321,6 +321,7 @@ class QueueManager:
                 data={"status": "stopped"},
                 metadata={"blessing": "queue_processing_stopped"},
             )
+            # Note: Unreachable code warning expected here due to try/except structure
 
         except Exception as e:
             self.logger.error(f"Failed to stop queue processing: {e}")
@@ -667,10 +668,10 @@ class QueueManager:
         base_score += len(context.participants) * 10
 
         # Add time decay for older interactions
-        age_bonus = min(100, (datetime.now() - datetime.now()).total_seconds() * 0.1)
-        base_score += age_bonus
+        age_bonus: float = 0.0  # Simplified - would use actual interaction creation time
+        base_score_float: float = float(base_score) + age_bonus
 
-        return base_score
+        return base_score_float
 
     def _estimate_wait_time(self, priority_score: float) -> float:
         """

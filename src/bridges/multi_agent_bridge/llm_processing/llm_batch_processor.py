@@ -21,17 +21,19 @@ from ..performance.performance_budget import PerformanceBudget
 
 # Import unified LLM service
 try:
-    from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service
+    from src.core.llm_service import LLMRequest, ResponseFormat, get_llm_service as _get_llm_service
+    get_llm_service = _get_llm_service
 except ImportError:
-    # Fallback for testing
-    def get_llm_service() -> None:
+    # Fallback for testing - define stub classes with matching interface
+    def get_llm_service(cost_control: Any = None) -> Any:
         return None
 
-    class LLMRequest:
-        pass
+    class LLMRequest:  # type: ignore[no-redef]
+        def __init__(self, **kwargs: Any) -> None:
+            pass
 
-    class ResponseFormat:
-        pass
+    class ResponseFormat:  # type: ignore[no-redef]
+        TEXT: str = "text"
 
 
 __all__ = ["LLMBatchProcessor"]
@@ -73,7 +75,7 @@ class LLMBatchProcessor:
         self._batch_processor_task: Optional[asyncio.Task] = None
 
         # LLM service
-        self._llm_service = None
+        self._llm_service: Optional[Any] = None
 
         # Statistics
         self._stats = {
@@ -230,7 +232,7 @@ class LLMBatchProcessor:
             # Create LLM request
             llm_request = LLMRequest(
                 prompt=batch_request.prompt,
-                response_format=ResponseFormat.TEXT,
+                response_format=ResponseFormat.TEXT,  # type: ignore[attr-defined]
                 max_tokens=2000,
                 temperature=0.7,
             )
@@ -331,7 +333,7 @@ class LLMBatchProcessor:
             # Create LLM request
             llm_request = LLMRequest(
                 prompt=batch_prompt,
-                response_format=ResponseFormat.TEXT,
+                response_format=ResponseFormat.TEXT,  # type: ignore[attr-defined]
                 max_tokens=4000,
                 temperature=0.7,
             )

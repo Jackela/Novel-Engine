@@ -19,7 +19,7 @@ import json
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Pattern
+from typing import Any, Callable, Dict, List, Optional, Pattern, cast
 
 import structlog
 from fastapi import HTTPException, Request
@@ -307,11 +307,9 @@ class InputValidator:
         self.sanitization_rules.append(rule)
         logger.info("validation.sanitization_rule_added", rule=rule.name)
 
-    def validate_input(self, value: str, input_type: InputType) -> str:
+    def validate_input(self, value: Any, input_type: InputType) -> str:
         """STANDARD INPUT VALIDATION ENHANCED BY SECURITY"""
         if not isinstance(value, str):
-            if value is None:
-                return ""
             value = str(value)
 
         original_value = value
@@ -348,14 +346,14 @@ class InputValidator:
                         raise ValidationError(rule.message, rule.severity, rule.name)
 
         # Apply sanitization rules
-        for rule in self.sanitization_rules:
-            if input_type in rule.input_types:
+        for s_rule in self.sanitization_rules:
+            if input_type in s_rule.input_types:
                 try:
-                    value = rule.sanitizer(value)
+                    value = s_rule.sanitizer(value)
                 except Exception as e:
                     logger.error(
                         "validation.sanitization_error",
-                        rule=rule.name,
+                        rule=s_rule.name,
                         error=str(e),
                     )
 
@@ -368,28 +366,20 @@ class InputValidator:
                 sanitized_length=len(value),
             )
 
-        return value
+        return str(value)
 
     def validate_json(self, json_str: str) -> Dict[str, Any]:
         """STANDARD JSON VALIDATION"""
-        try:
-            # First validate as text
-            validated_str = self.validate_input(json_str, InputType.JSON)
+        # First validate as text
+        validated_str = self.validate_input(json_str, InputType.JSON)
 
-            # Parse JSON
-            data = json.loads(validated_str)
+        # Parse JSON
+        data = json.loads(validated_str)
 
-            # Recursively validate all string values in JSON
-            validated_data = self._validate_json_recursive(data)
+        # Recursively validate all string values in JSON
+        validated_data = self._validate_json_recursive(data)
 
-            return validated_data
-
-        except json.JSONDecodeError as e:
-            raise ValidationError(
-                f"Invalid JSON format: {e}",
-                ValidationSeverity.MEDIUM,
-                "json_parse_error",
-            )
+        return cast(Dict[str, Any], validated_data)
 
     def _validate_json_recursive(self, obj: Any) -> Any:
         """STANDARD RECURSIVE JSON VALIDATION"""

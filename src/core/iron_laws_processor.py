@@ -102,7 +102,7 @@ class IronLawsProcessor:
         proposed_action: "ProposedAction",
         agent: "PersonaAgent",
         world_context: Dict[str, Any],
-    ) -> "IronLawsReport":
+    ) -> "_ReportWrapper":
         """
         Validate proposed action against all 5 Iron Laws of the Novel Engine.
 
@@ -452,7 +452,7 @@ class IronLawsProcessor:
                         law_name="Narrative_Law",
                         severity="error",
                         description="Attacking allies without justification breaks narrative coherence",
-                        affected_entities=[agent.character_id],
+                        affected_entities=[agent.agent_id],
                         suggested_repair="Coordinate with allies instead of attacking them",
                     )
                 )
@@ -464,7 +464,7 @@ class IronLawsProcessor:
                     law_name="Narrative_Law",
                     severity="warning",
                     description="Action lacks narrative intent or motivation",
-                    affected_entities=[agent.character_id],
+                    affected_entities=[agent.agent_id],
                     suggested_repair="Describe the narrative purpose of the action",
                 )
             )
@@ -497,7 +497,7 @@ class IronLawsProcessor:
                     law_name="Social_Law",
                     severity="warning",
                     description="Communication violates command hierarchy expectations",
-                    affected_entities=[agent.character_id],
+                    affected_entities=[agent.agent_id],
                     suggested_repair="Reduce communication intensity with superiors",
                 )
             )
@@ -619,7 +619,7 @@ class IronLawsProcessor:
     ) -> bool:
         """Check if character has required equipment."""
         items = getattr(character_data, "equipment", None)
-        if items is None and isinstance(character_data, dict):
+        if items is None and isinstance(character_data, dict):  # type: ignore[unreachable]
             items = character_data.get("equipment")
         if items is None:
             return False
@@ -634,7 +634,7 @@ class IronLawsProcessor:
             (pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2 + (pos1.z - pos2.z) ** 2
         )
 
-    def _calculate_max_movement_distance(self, character_data) -> float:
+    def _calculate_max_movement_distance(self, character_data: Any) -> float:
         """Calculate maximum movement distance for character."""
         stats = getattr(character_data, "stats", None)
         if stats is None and isinstance(character_data, dict):
@@ -653,7 +653,7 @@ class IronLawsProcessor:
         return grouped
 
     def _repair_causality_violations(
-        self, action, violations, character_data
+        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair causality law violations."""
         repaired = self._clone_action(action)
@@ -675,7 +675,7 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Causality repair not required"]
 
     def _repair_resource_violations(
-        self, action, violations, character_data
+        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair resource law violations."""
         repaired = self._clone_action(action)
@@ -714,7 +714,7 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Resource repair not required"]
 
     def _repair_physics_violations(
-        self, action, violations, character_data
+        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair physics law violations."""
         repaired = self._clone_action(action)
@@ -748,7 +748,7 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Physics repair not required"]
 
     def _repair_narrative_violations(
-        self, action, violations, character_data
+        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair narrative law violations."""
         repaired = self._clone_action(action)
@@ -768,7 +768,7 @@ class IronLawsProcessor:
         return repaired, repair_log or ["Narrative repair not required"]
 
     def _repair_social_violations(
-        self, action, violations, character_data
+        self, action: "ProposedAction", violations: List["IronLawsViolation"], character_data: Optional["CharacterData"]
     ) -> Tuple["ProposedAction", List[str]]:
         """Repair social law violations."""
         repaired = self._clone_action(action)
@@ -822,9 +822,9 @@ class IronLawsProcessor:
     ) -> Optional["CharacterData"]:
         """Extract character data from agent for validation purposes."""
         if hasattr(agent, "character_data"):
-            return agent.character_data
+            return agent.character_data  # type: ignore[no-any-return]
         if hasattr(agent, "model_dump"):
-            return agent.model_dump()
+            return agent.model_dump()  # type: ignore[no-any-return]
         return None
 
     @staticmethod

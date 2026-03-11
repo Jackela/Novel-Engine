@@ -386,15 +386,17 @@ class ConnectionPool:
             # Create new connection if under max limit
             async with self.pool_lock:
                 if len(self.pool) < self.config.max_db_connections:
-                    return await self._create_connection()
+                    new_conn: aiosqlite.Connection = await self._create_connection()
+                    self.active_connections += 1
+                    return new_conn
 
             # Wait longer for available connection
-            conn = await asyncio.wait_for(
+            conn2: aiosqlite.Connection = await asyncio.wait_for(
                 self.available.get(), timeout=self.config.connection_pool_timeout
             )
 
             self.active_connections += 1
-            return conn
+            return conn2
 
     async def return_connection(self, conn: aiosqlite.Connection) -> None:
         """Return a connection to the pool."""
@@ -599,9 +601,9 @@ class PerformanceOptimizationEngine:
 
             return wrapper
 
-        return decorator
+        return decorator  # type: ignore[return-value]
 
-    async def get_connection_pool(self, database_path: str) -> ConnectionPool:
+    async def get_connection_pool(self, database_path: str) -> "ConnectionPool":
         """Get or create a connection pool for a database."""
         if database_path not in self.connection_pools:
             pool = ConnectionPool(database_path, self.config)

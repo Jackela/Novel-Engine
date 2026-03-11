@@ -54,7 +54,7 @@ class NegotiationApplicationService:
         """
         # Validation
         if party1 is None or party2 is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 CompatibilityError(
                     message="Both parties must be provided for compatibility assessment",
                     recoverable=True,

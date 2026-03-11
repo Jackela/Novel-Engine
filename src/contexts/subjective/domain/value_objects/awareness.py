@@ -71,15 +71,18 @@ class AwarenessState:
     def __post_init__(self) -> None:
         """Validate awareness state parameters."""
         # Initialize empty dict for modifiers if None
+        modifiers: Dict[AwarenessModifier, float]
         if self.awareness_modifiers is None:
-            object.__setattr__(self, "awareness_modifiers", {})
+            modifiers = {}
+            object.__setattr__(self, "awareness_modifiers", modifiers)
         elif not isinstance(self.awareness_modifiers, dict):
-            object.__setattr__(
-                self, "awareness_modifiers", dict(self.awareness_modifiers)
-            )
+            modifiers = dict(self.awareness_modifiers)  # type: ignore[unreachable]
+            object.__setattr__(self, "awareness_modifiers", modifiers)
+        else:
+            modifiers = self.awareness_modifiers
 
         # Validate modifier values
-        for modifier, value in self.awareness_modifiers.items():
+        for modifier, value in modifiers.items():
             if not isinstance(modifier, AwarenessModifier):
                 raise ValueError(f"Invalid awareness modifier: {modifier}")
             if not isinstance(value, (int, float)):
@@ -122,33 +125,34 @@ class AwarenessState:
         modified_value = float(base_value)
 
         # Apply awareness modifiers
-        for modifier, strength in self.awareness_modifiers.items():
-            if modifier in [
-                AwarenessModifier.FATIGUE,
-                AwarenessModifier.INJURY,
-                AwarenessModifier.DISTRACTION,
-                AwarenessModifier.DRUG_EFFECT,
-            ]:
-                # Negative modifiers reduce alertness (reduced penalty to balance with training)
-                modified_value -= abs(strength) * 1.5  # Reduced from 2 to 1.5
-            elif modifier in [
-                AwarenessModifier.CONFIDENCE,
-                AwarenessModifier.TRAINING,
-                AwarenessModifier.EXPERIENCE,
-                AwarenessModifier.MAGICAL_ENHANCEMENT,
-            ]:
-                # Positive modifiers increase alertness (increased benefit for complex scenarios)
-                modified_value += (
-                    abs(strength) * 1.8
-                )  # Increased from 1.5 to 1.8 (compromise)
-            elif modifier == AwarenessModifier.FEAR:
-                # Fear can increase or decrease alertness depending on strength
-                if strength > 0:
-                    modified_value += strength * 1.5  # Fear increases alertness
-                else:
+        if self.awareness_modifiers:
+            for modifier, strength in self.awareness_modifiers.items():
+                if modifier in [
+                    AwarenessModifier.FATIGUE,
+                    AwarenessModifier.INJURY,
+                    AwarenessModifier.DISTRACTION,
+                    AwarenessModifier.DRUG_EFFECT,
+                ]:
+                    # Negative modifiers reduce alertness (reduced penalty to balance with training)
+                    modified_value -= abs(strength) * 1.5  # Reduced from 2 to 1.5
+                elif modifier in [
+                    AwarenessModifier.CONFIDENCE,
+                    AwarenessModifier.TRAINING,
+                    AwarenessModifier.EXPERIENCE,
+                    AwarenessModifier.MAGICAL_ENHANCEMENT,
+                ]:
+                    # Positive modifiers increase alertness (increased benefit for complex scenarios)
                     modified_value += (
-                        strength * 2
-                    )  # Overwhelming fear decreases alertness
+                        abs(strength) * 1.8
+                    )  # Increased from 1.5 to 1.8 (compromise)
+                elif modifier == AwarenessModifier.FEAR:
+                    # Fear can increase or decrease alertness depending on strength
+                    if strength > 0:
+                        modified_value += strength * 1.5  # Fear increases alertness
+                    else:
+                        modified_value += (
+                            strength * 2
+                        )  # Overwhelming fear decreases alertness
 
         # Apply fatigue penalty
         modified_value -= self.fatigue_level * 2
@@ -300,7 +304,7 @@ class AwarenessState:
         self, modifier: AwarenessModifier, strength: float
     ) -> "AwarenessState":
         """Create a new awareness state with an added modifier."""
-        new_modifiers = dict(self.awareness_modifiers)
+        new_modifiers = dict(self.awareness_modifiers) if self.awareness_modifiers else {}
         new_modifiers[modifier] = strength
 
         return AwarenessState(

@@ -29,7 +29,7 @@ import structlog
 # Import enhanced Jinja2 for template processing
 try:
     import jinja2
-    from jinja2 import FileSystemLoader, meta, select_autoescape
+    from jinja2 import FileSystemLoader, Template, meta, select_autoescape
     from jinja2.exceptions import TemplateError, UndefinedError
     from jinja2.sandbox import SandboxedEnvironment
 except ImportError:
@@ -484,7 +484,7 @@ class DynamicTemplateEngine:
                 query_text, context=query_context
             )
 
-            if query_result.success:
+            if query_result.success and query_result.data:
                 result_data = query_result.data["query_result"]
 
                 # Format enhanced memories for template context
@@ -555,7 +555,7 @@ class DynamicTemplateEngine:
                         ref_result = await self.render_template(
                             ref_path, context, enable_cross_references=False
                         )
-                        if ref_result.success:
+                        if ref_result.success and ref_result.data:
                             cross_references[ref_path] = ref_result.data[
                                 "render_result"
                             ].rendered_content
@@ -628,7 +628,7 @@ class DynamicTemplateEngine:
         }
 
         # Add enhanced memory queries count tracking
-        enhanced_context["_memory_queries_count"] = 0
+        enhanced_context["_memory_queries_count"] = 0  # type: ignore
 
         return enhanced_context
 
@@ -651,7 +651,7 @@ class DynamicTemplateEngine:
 
             try:
                 query_result = await self.query_engine.execute_query(query_text)
-                if query_result.success:
+                if query_result.success and query_result.data:
                     result_data = query_result.data["query_result"]
                     formatted_memories: list[Any] = []
                     for memory in result_data.memories[:limit]:
@@ -687,8 +687,8 @@ class DynamicTemplateEngine:
                 f"(Emotion: {memory.get('emotional_weight', 0)}, "
                 f"Participants: {', '.join(memory.get('participants', []))})"
             )
-        else:  # standard
-            return memory.get("content", "")
+        # standard
+        return str(memory.get("content", ""))
 
     def _create_reference_function(self, context: TemplateContext) -> Callable:
         """Create enhanced reference resolution function for templates"""
@@ -726,12 +726,15 @@ class DynamicTemplateEngine:
                 Formatted timestamp string
             """
             try:
+                timestamp: datetime
                 if isinstance(timestamp_str, str):
                     timestamp = datetime.fromisoformat(
                         timestamp_str.replace("Z", "+00:00")
                     )
-                else:
+                elif isinstance(timestamp_str, datetime):  # type: ignore
                     timestamp = timestamp_str
+                else:
+                    return str(timestamp_str)
                 return timestamp.strftime(format_str)
             except Exception:
                 return str(timestamp_str)
@@ -858,11 +861,15 @@ class DynamicTemplateEngine:
             logger.info("DISCOVERED TEMPLATE: %s", template_id)
 
     def _analyze_template_variables(
-        self, template, context: Dict[str, Any]
+        self, template: Template, context: Dict[str, Any]
     ) -> List[str]:
         """Analyze enhanced template variables actually used during rendering"""
         # Get enhanced template source
-        template_source = template.environment.get_template(template.name or "").source
+        if template.environment.loader is None:
+            return []
+        template_source = template.environment.loader.get_source(
+            template.environment, template.name or ""
+        )[0]
 
         # Find enhanced undefined variables
         ast = template.environment.parse(template_source)
@@ -902,7 +909,11 @@ class DynamicTemplateEngine:
             context.current_situation,
             context.current_location,
             str(hash(tuple(context.active_participants))),
-            str(context.character_state.name if context.character_state else ""),
+            str(
+                context.character_state.base_identity.name
+                if context.character_state
+                else ""
+            ),
             str(len(context.memory_context)),
         ]
 
@@ -948,8 +959,9 @@ class DynamicTemplateEngine:
             "jinja_environment_info": {
                 "auto_reload": self.enable_auto_reload,
                 "cache_size": (
-                    self.jinja_env.cache.capacity
+                    getattr(self.jinja_env.cache, "capacity", 0)
                     if hasattr(self.jinja_env, "cache")
+                    and self.jinja_env.cache is not None
                     else 0
                 ),
             },
@@ -959,7 +971,7 @@ class DynamicTemplateEngine:
 # STANDARD TESTING RITUALS ENHANCED BY VALIDATION
 
 
-async def test_standard_dynamic_template_engine():
+async def test_standard_dynamic_template_engine() -> None:
     """STANDARD DYNAMIC TEMPLATE ENGINE TESTING RITUAL"""
     logger.info("TESTING STANDARD DYNAMIC TEMPLATE ENGINE ENHANCED BY THE SYSTEM")
 
@@ -1021,7 +1033,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     render_result = await template_engine.render_template(
         "test_character_prompt", test_context
     )
-    if render_result.success:
+    if render_result.success and render_result.data:
         result_data = render_result.data["render_result"]
         logger.info(
             f"TEMPLATE RENDERED SUCCESSFULLY ({result_data.render_time_ms:.2f}ms)"
@@ -1030,7 +1042,8 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
         logger.info("Rendered content preview:")
         logger.info(result_data.rendered_content[:200] + "...")
     else:
-        logger.error("TEMPLATE RENDERING FAILED: %s", render_result.error.message)
+        error_msg = render_result.error.message if render_result.error else "Unknown error"
+        logger.error("TEMPLATE RENDERING FAILED: %s", error_msg)
 
     # Test enhanced inline template rendering
     inline_template = (
@@ -1039,7 +1052,7 @@ MAY THE SYSTEM GUIDE YOUR ACTIONS
     inline_result = await template_engine.render_template_string(
         inline_template, test_context
     )
-    if inline_result.success:
+    if inline_result.success and inline_result.data:
         logger.info(
             f"INLINE TEMPLATE RENDERED: {inline_result.data['render_result'].rendered_content}"
         )

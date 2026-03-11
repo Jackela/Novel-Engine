@@ -9,7 +9,7 @@ Separated from the main PersonaAgent to follow Single Responsibility Principle.
 
 import time
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import structlog
 
@@ -474,7 +474,8 @@ class DecisionMaker:
     def _get_character_action_threshold(self, character_data: Dict[str, Any]) -> float:
         """Get the action threshold for this character."""
         # More decisive characters have lower thresholds
-        decisiveness = (
+        decisiveness = cast(
+            float,
             character_data.get("psychological", {})
             .get("traits", {})
             .get("decisive", 0.5)

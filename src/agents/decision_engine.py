@@ -307,7 +307,7 @@ class DecisionEngine:
             threat_level = threat_value
         elif hasattr(threat_value, "value"):
             try:
-                threat_level = ThreatLevel(str(threat_value.value).lower())  # type: ignore[union-attr]
+                threat_level = ThreatLevel(str(threat_value.value).lower())
             except ValueError:
                 threat_level = ThreatLevel.NEGLIGIBLE
         elif isinstance(threat_value, str):

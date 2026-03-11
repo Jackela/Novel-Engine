@@ -124,7 +124,7 @@ class PersonaAgent:
             )
             logger.info("enhanced_decision_engine_initialized")
         else:
-            self.decision_engine = DecisionEngine(self.core)
+            self.decision_engine = DecisionEngine(self.core)  # type: ignore[arg-type]
             logger.info("standard_decision_engine_initialized")
 
         # Initialize memory interface
@@ -195,8 +195,8 @@ class PersonaAgent:
         """Set up coordination between components."""
         try:
             # Ensure all components have access to the same core data
-            self.decision_engine.core = self.core  # type: ignore[assignment]
-            self.memory_interface.agent_core = self.core  # type: ignore[assignment]
+            self.decision_engine.core = self.core
+            self.memory_interface.agent_core = self.core
 
             logger.debug("component_coordination_established")
 
@@ -658,7 +658,8 @@ class PersonaAgent:
     ) -> Dict[str, Any]:
         """Get summary of context-driven decision factors."""
         if hasattr(self.decision_engine, "get_context_decision_summary"):
-            return self.decision_engine.get_context_decision_summary(action, situation)
+            result: Dict[str, Any] = self.decision_engine.get_context_decision_summary(action, situation)
+            return result
         else:
             return {"context_available": False, "decision_engine": "standard"}
 

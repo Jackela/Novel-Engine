@@ -51,7 +51,6 @@ class WorldEvent:
             from datetime import datetime
 
             self.timestamp = datetime.now().timestamp()
-        return None  # type: ignore[unreachable]
 
 
 @dataclass
@@ -73,7 +72,7 @@ class SubjectiveInterpretation:
 
     def __post_init__(self) -> None:
         if self.belief_impact is None:
-            self.belief_impact = {}
+            self.belief_impact = {}  # type: ignore[unreachable]
         if self.relationship_changes is None:
             self.relationship_changes = {}
 

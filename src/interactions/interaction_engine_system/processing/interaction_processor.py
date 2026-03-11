@@ -27,7 +27,7 @@ try:
     from src.core.data_models import ErrorInfo, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -46,7 +46,7 @@ except ImportError:
         def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:
@@ -92,8 +92,8 @@ class InteractionProcessor:
         self.logger = logger or structlog.get_logger(__name__)
 
         # Processing state
-        self.active_interactions = {}
-        self.phase_processors = {}
+        self.active_interactions: Dict[str, Dict[str, Any]] = {}
+        self.phase_processors: Dict[str, Any] = {}
         self.processing_stats = {
             "total_processed": 0,
             "successful_interactions": 0,
@@ -374,12 +374,13 @@ class InteractionProcessor:
                 ):
                     continue
 
+            timeout_value: float = phase_info.get("timeout", 60.0)  # type: ignore[assignment]
             phase = InteractionPhase(
                 phase_id=f"{context.interaction_id}_{phase_name}",
                 phase_name=phase_name,
-                description=phase_info["description"],
+                description=str(phase_info.get("description", "")),
                 sequence_order=sequence_order,
-                expected_duration=phase_info["timeout"],
+                expected_duration=float(timeout_value),
                 completion_status="pending",
             )
 
@@ -600,7 +601,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "INIT_FAILED", f"Initialization failed: {str(e)}", True
+                    code="INIT_FAILED", message=f"Initialization failed: {str(e)}", recoverable=True
                 ),
             )
 
@@ -618,7 +619,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "VALIDATION_FAILED", f"Validation failed: {str(e)}", True
+                    code="VALIDATION_FAILED", message=f"Validation failed: {str(e)}", recoverable=True
                 ),
             )
 
@@ -635,7 +636,7 @@ class InteractionProcessor:
         except Exception as e:
             return StandardResponse(
                 success=False,
-                error=ErrorInfo("PREP_FAILED", f"Preparation failed: {str(e)}", True),
+                error=ErrorInfo(code="PREP_FAILED", message=f"Preparation failed: {str(e)}", recoverable=True),
             )
 
     async def _process_execution_phase(
@@ -660,7 +661,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "EXECUTION_FAILED", f"Execution failed: {str(e)}", True
+                    code="EXECUTION_FAILED", message=f"Execution failed: {str(e)}", recoverable=True
                 ),
             )
 
@@ -678,7 +679,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "STATE_UPDATE_FAILED", f"State update failed: {str(e)}", True
+                    code="STATE_UPDATE_FAILED", message=f"State update failed: {str(e)}", recoverable=True
                 ),
             )
 
@@ -696,7 +697,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "MEMORY_FAILED", f"Memory processing failed: {str(e)}", True
+                    code="MEMORY_FAILED", message=f"Memory processing failed: {str(e)}", recoverable=True
                 ),
             )
 
@@ -714,7 +715,7 @@ class InteractionProcessor:
             return StandardResponse(
                 success=False,
                 error=ErrorInfo(
-                    "FINALIZATION_FAILED", f"Finalization failed: {str(e)}", True
+                    code="FINALIZATION_FAILED", message=f"Finalization failed: {str(e)}", recoverable=True
                 ),
             )
 

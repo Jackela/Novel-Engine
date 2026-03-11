@@ -152,7 +152,8 @@ def _make_gemini_api_request(prompt: str) -> Optional[str]:
         tokens_used=response.tokens_used,
         cost_estimate=response.cost_estimate,
     )
-    return response.content
+    content: str = response.content
+    return content
 
 
 def _generate_fallback_response(
@@ -289,7 +290,7 @@ class PersonaAgent(_PersonaAgentImpl):
         """Best-effort cleanup for tests and short-lived agents."""
         memory_interface = getattr(self, "memory_interface", None)
         if memory_interface is not None and hasattr(memory_interface, "close"):
-            memory_interface.close()  # type: ignore[union-attr]
+            memory_interface.close()
 
     def get_character_state(self) -> Dict[str, Any]:
         """Return a legacy-friendly snapshot of the agent state."""
@@ -466,13 +467,14 @@ class PersonaAgent(_PersonaAgentImpl):
             action_type = best_action.get("action_type") or best_action.get(
                 "type", "unknown"
             )
-            return CharacterAction(
+            result: CharacterAction = CharacterAction(
                 action_type=action_type,
                 target=best_action.get("target"),
                 reasoning=best_action.get("reasoning"),
                 priority=ActionPriority.NORMAL,
                 parameters=best_action.get("parameters", {}),
-            )  # type: ignore[unreachable]
+            )
+            return result
 
         selector = getattr(self.decision_engine, "_select_best_action", None)  # type: ignore[unreachable]
         if callable(selector):
@@ -696,7 +698,7 @@ class PersonaAgent(_PersonaAgentImpl):
 
     def _interpret_event_description(self, event_payload: Dict[str, Any]) -> str:
         if not isinstance(event_payload, dict):
-            return "No event details available."
+            return "No event details available."  # type: ignore[unreachable]
         event_type_val: str = _sanitize_text(
             str(event_payload.get("event_type", "event"))
         )
@@ -750,24 +752,19 @@ class PersonaAgent(_PersonaAgentImpl):
     # ------------------------------------------------------------------
 
     def _extract_core_identity(self) -> Any:
-        result: Any = self.character_interpreter._extract_core_identity()
-        return result
+        self.character_interpreter._extract_core_identity()
 
-    def _extract_personality_traits(self) -> Any:
-        result: Any = self.character_interpreter._extract_personality_traits()
-        return result
+    def _extract_personality_traits(self) -> None:
+        self.character_interpreter._extract_personality_traits()
 
-    def _extract_decision_weights(self) -> Any:
-        result: Any = self.character_interpreter._extract_decision_weights()
-        return result
+    def _extract_decision_weights(self) -> None:
+        self.character_interpreter._extract_decision_weights()
 
-    def _extract_relationships(self) -> Any:
-        result: Any = self.character_interpreter._extract_relationships()
-        return result
+    def _extract_relationships(self) -> None:
+        self.character_interpreter._extract_relationships()
 
-    def _extract_knowledge_domains(self) -> Any:
-        result: Any = self.character_interpreter._extract_knowledge_domains()
-        return result
+    def _extract_knowledge_domains(self) -> None:
+        self.character_interpreter._extract_knowledge_domains()
 
     def _initialize_subjective_worldview(self) -> None:
         if hasattr(super(), "_initialize_subjective_worldview"):

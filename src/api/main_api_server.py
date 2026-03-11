@@ -581,7 +581,7 @@ def create_app() -> FastAPI:
             server_time=0.001,  # Root endpoint is very fast
         )
 
-        response_data = SuccessResponse(data=content, metadata=metadata)
+        response_data: SuccessResponse = SuccessResponse(data=content, metadata=metadata)
         return JSONResponse(
             content=response_data.model_dump(),
             headers={"Cache-Control": "public, max-age=60"},

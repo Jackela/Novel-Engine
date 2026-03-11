@@ -133,14 +133,14 @@ class RedisStateStore(StateStore):
             elif isinstance(value, str):
                 serialized_value = value
             else:
-                serialized_value = pickle.dumps(value)
+                serialized_value = pickle.dumps(value).decode("latin-1")
 
             # Set with TTL
             ttl_seconds = ttl or self.config.cache_ttl
             result = await self.redis.setex(
                 key.to_string(), ttl_seconds, serialized_value
             )
-            return result is True
+            return bool(result)
 
         except Exception as e:
             logger.error("redis_set_failed", key=key.to_string(), error=str(e))
@@ -163,7 +163,7 @@ class RedisStateStore(StateStore):
 
         try:
             result = await self.redis.delete(key.to_string())
-            return result > 0
+            return bool(result > 0)
 
         except Exception as e:
             logger.error("redis_delete_failed", key=key.to_string(), error=str(e))
@@ -186,7 +186,7 @@ class RedisStateStore(StateStore):
 
         try:
             result = await self.redis.exists(key.to_string())
-            return result > 0
+            return bool(result > 0)
 
         except Exception as e:
             logger.error("redis_exists_check_failed", key=key.to_string(), error=str(e))
@@ -236,7 +236,7 @@ class RedisStateStore(StateStore):
 
         try:
             result = await self.redis.incrby(key.to_string(), amount)
-            return result
+            return int(result) if result is not None else None
 
         except Exception as e:
             logger.error("redis_increment_failed", key=key.to_string(), error=str(e))
@@ -260,7 +260,7 @@ class RedisStateStore(StateStore):
 
         try:
             result = await self.redis.expire(key.to_string(), ttl)
-            return result is True
+            return bool(result)
 
         except Exception as e:
             logger.error("redis_expire_failed", key=key.to_string(), error=str(e))

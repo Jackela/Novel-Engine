@@ -317,9 +317,9 @@ class IntelligentCacheManager:
 
                 # Decompress if needed
                 if isinstance(entry.value, bytes) and entry.compressed:
-                    return self._decompress_value(entry.value, True)
+                    return self._decompress_value(entry.value, True)  # type: ignore[no-any-return]
 
-                return entry.value
+                return entry.value  # type: ignore[no-any-return]
 
             # Check disk cache if enabled
             if self.config.persist_to_disk:
@@ -329,7 +329,7 @@ class IntelligentCacheManager:
                     await self.set(key, disk_value, ttl=self.config.default_ttl)
                     self.stats.hits += 1
                     self._record_access_time(key, time.time() - start_time)
-                    return disk_value
+                    return disk_value  # type: ignore[no-any-return]
 
             # Cache miss
             self.stats.misses += 1
@@ -353,15 +353,16 @@ class IntelligentCacheManager:
 
             # Compress if needed
             compressed = False
+            final_value: Any = value
             if size_bytes > self.config.compression_threshold:
-                value = self._compress_value(value)
+                final_value = self._compress_value(value)
                 compressed = True
-                size_bytes = len(value) if isinstance(value, bytes) else size_bytes
+                size_bytes = len(final_value) if isinstance(final_value, bytes) else size_bytes
 
             # Create cache entry
             entry = CacheEntry(
                 key=key,
-                value=value,
+                value=final_value,
                 created_at=time.time(),
                 accessed_at=time.time(),
                 ttl=ttl,
@@ -516,7 +517,7 @@ class IntelligentCacheManager:
         current_time = time.time()
 
         for key, entry in self.cache.items():
-            score = 0
+            score: float = 0.0
 
             # Factor 1: Access frequency (higher is better)
             score += entry.access_count * 0.3
@@ -776,10 +777,10 @@ def cached(ttl: Optional[float] = None, key_prefix: str = "func") -> Callable[..
 
             # Try to get from cache
             manager = get_cache_manager()
-            result = await manager.get(cache_key)
+            cached_result: Any = await manager.get(cache_key)
 
-            if result is not None:
-                return result
+            if cached_result is not None:
+                return cached_result
 
             # Execute function and cache result
             if asyncio.iscoroutinefunction(func):

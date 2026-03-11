@@ -92,10 +92,10 @@ class MemoryInterface:
 
             # Validate input format
             if not isinstance(new_log, dict):
-                logger.warning(
+                logger.warning(  # type: ignore[unreachable]
                     "invalid_memory_log_format", agent_id=self.agent_core.agent_id
                 )
-                return  # type: ignore[unreachable]
+                return
 
             # Extract key information from the log
             event_type = new_log.get("event_type", "unknown")

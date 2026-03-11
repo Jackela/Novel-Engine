@@ -22,7 +22,7 @@ class TrustLevel(BaseModel):
 
     @field_validator("category", mode="before")
     @classmethod
-    def categorize_trust(cls, v, info) -> None:
+    def categorize_trust(cls, v: Any, info: Any) -> str:
         # Access other fields through info.data in Pydantic V2
         data = info.data if hasattr(info, "data") else {}
         score = data.get("score", 0)

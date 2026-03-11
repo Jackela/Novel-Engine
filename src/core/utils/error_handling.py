@@ -6,6 +6,7 @@ Centralized error handling patterns for consistent error responses.
 """
 
 import functools
+import inspect
 from typing import Any, Callable, Optional
 
 import structlog
@@ -76,7 +77,7 @@ def handle_standard_errors(
                 )
 
         # Return appropriate wrapper based on function type
-        if functools.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper

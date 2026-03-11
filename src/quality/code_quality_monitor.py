@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import structlog
 
@@ -156,15 +156,15 @@ class ComplexityAnalyzer(ast.NodeVisitor):
     """AST-based complexity analyzer"""
 
     def __init__(self) -> None:
-        self.complexity = 0
-        self.functions = []
-        self.classes = []
-        self.current_function = None
-        self.current_class = None
+        self.complexity: int = 0
+        self.functions: list[dict[str, Any]] = []
+        self.classes: list[dict[str, Any]] = []
+        self.current_function: Optional[dict[str, Any]] = None
+        self.current_class: Optional[dict[str, Any]] = None
 
-    def visit_FunctionDef(self, node) -> None:
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Analyze function complexity"""
-        self.current_function = {
+        func_info: dict[str, Any] = {
             "name": node.name,
             "line": node.lineno,
             "complexity": 1,  # Base complexity
@@ -175,17 +175,18 @@ class ComplexityAnalyzer(ast.NodeVisitor):
         # Count complexity contributors
         for child in ast.walk(node):
             if isinstance(child, (ast.If, ast.While, ast.For, ast.ExceptHandler)):
-                self.current_function["complexity"] += 1
+                func_info["complexity"] += 1
             elif isinstance(child, ast.BoolOp):
-                self.current_function["complexity"] += len(child.values) - 1
+                func_info["complexity"] += len(child.values) - 1
 
-        self.functions.append(self.current_function)
-        self.complexity += self.current_function["complexity"]
+        self.functions.append(func_info)
+        self.complexity += func_info["complexity"]
+        self.current_function = func_info
         self.generic_visit(node)
 
-    def visit_ClassDef(self, node) -> None:
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Analyze class complexity"""
-        self.current_class = {
+        class_info: dict[str, Any] = {
             "name": node.name,
             "line": node.lineno,
             "methods": 0,
@@ -194,22 +195,23 @@ class ComplexityAnalyzer(ast.NodeVisitor):
 
         for child in node.body:
             if isinstance(child, ast.FunctionDef):
-                self.current_class["methods"] += 1
+                class_info["methods"] += 1
 
-        self.classes.append(self.current_class)
+        self.classes.append(class_info)
+        self.current_class = class_info
         self.generic_visit(node)
 
-    def visit_If(self, node) -> None:
+    def visit_If(self, node: ast.If) -> None:
         """Count conditional complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_While(self, node) -> None:
+    def visit_While(self, node: ast.While) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
 
-    def visit_For(self, node) -> None:
+    def visit_For(self, node: ast.For) -> None:
         """Count loop complexity"""
         self.complexity += 1
         self.generic_visit(node)
@@ -220,8 +222,8 @@ class DuplicationDetector:
 
     def __init__(self, min_lines: int = 6) -> None:
         self.min_lines = min_lines
-        self.code_blocks = {}
-        self.duplications = []
+        self.code_blocks: dict[str, list[tuple[str, int]]] = {}
+        self.duplications: list[dict[str, Any]] = []
 
     def analyze_file(self, file_path: str, content: str) -> float:
         """Analyze file for code duplication"""
@@ -270,7 +272,7 @@ class TechnicalDebtCalculator:
 
     def calculate_debt(self, quality_report: FileQualityReport) -> int:
         """Calculate technical debt for a file in minutes"""
-        total_debt = 0
+        total_debt: float = 0.0
 
         # Complexity debt
         if (
@@ -323,7 +325,7 @@ class QualityMonitor:
         self.complexity_analyzer = ComplexityAnalyzer()
         self.duplication_detector = DuplicationDetector()
         self.debt_calculator = TechnicalDebtCalculator()
-        self.quality_history = []
+        self.quality_history: list[dict[str, Any]] = []
 
         # Quality thresholds
         self.thresholds = {
@@ -359,8 +361,8 @@ class QualityMonitor:
         # Analyze each file
         file_reports: dict[Any, Any] = {}
         total_loc = 0
-        total_complexity = 0
-        total_debt_minutes = 0
+        total_complexity: float = 0.0
+        total_debt_minutes: float = 0.0
 
         for file_path in source_files:
             try:
@@ -699,7 +701,7 @@ class QualityMonitor:
 
     def _generate_json_report(self, report: ProjectQualityReport) -> str:
         """Generate JSON report"""
-        data = {
+        data: dict[str, Any] = {
             "project_name": report.project_name,
             "generated_at": report.generated_at.isoformat(),
             "summary": {
@@ -771,7 +773,7 @@ class QualityMonitor:
 
 
 # Example usage and testing
-async def main():
+async def main() -> None:
     """Demonstrate code quality monitoring system"""
     logger.info("Starting Novel Engine Code Quality Monitoring Demo")
 

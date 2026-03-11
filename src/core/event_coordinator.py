@@ -70,7 +70,7 @@ class EventCoordinator:
         character_state_handler: Optional[Callable] = None,
         story_generation_handler: Optional[Callable] = None,
         user_interaction_handler: Optional[Callable] = None,
-    ):
+    ) -> None:
         """
         Set up event coordination between traditional and AI systems.
 

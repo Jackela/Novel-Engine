@@ -52,7 +52,7 @@ class CompatibilityService:
             Result containing detailed compatibility assessment or error
         """
         if party1 is None or party2 is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 CompatibilityError(
                     message="Both parties must be provided",
                     recoverable=True,
@@ -255,7 +255,7 @@ class CompatibilityService:
             Result containing compatible parties or error
         """
         if reference_party is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 CompatibilityError(
                     message="Reference party is required",
                     recoverable=True,

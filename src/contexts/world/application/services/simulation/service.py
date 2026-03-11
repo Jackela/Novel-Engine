@@ -190,9 +190,11 @@ class WorldSimulationService:
             if intents_result.is_error:
                 error = intents_result.error
                 if error is not None:
-                    return Err(error)
+                    return Err(Exception(error.message))
                 return Err(IntentGenerationError("Unknown intent generation error"))
-            all_intents.extend(intents_result.value)
+            intent_values = intents_result.value
+            if intent_values is not None:
+                all_intents.extend(intent_values)
 
         # Step 8: Create SimulationTick with results
         tick = SimulationTick(
@@ -726,9 +728,11 @@ class WorldSimulationService:
             if intents_result.is_error:
                 error = intents_result.error
                 if error is not None:
-                    return Err(error)
+                    return Err(Exception(error.message))
                 return Err(IntentGenerationError("Unknown intent generation error"))
-            all_intents.extend(intents_result.value)
+            intent_values = intents_result.value
+            if intent_values is not None:
+                all_intents.extend(intent_values)
 
         resolution = self._resolve_intents(all_intents, world, factions, diplomacy)
 
@@ -751,9 +755,9 @@ class WorldSimulationService:
         # Step 9: Run sanity checker (warnings logged, not blocking)
         if self._sanity_checker is not None:
             try:
-                violations = self._sanity_checker.check(world)
-                if violations:
-                    for violation in violations:
+                check_result = self._sanity_checker.check(world)
+                if check_result.is_ok and check_result.value:
+                    for violation in check_result.value:
                         logger.warning(
                             "simulation_sanity_violation",
                             world_id=world_id,

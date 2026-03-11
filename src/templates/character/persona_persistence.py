@@ -5,6 +5,7 @@ Persona persistence and file I/O.
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict
 
 import structlog
 
@@ -24,10 +25,14 @@ class PersonaPersistence:
 
     def __init__(self, personas_dir: Path) -> None:
         self.personas_dir = personas_dir
+        # Initialize storage for personas and profiles
+        self._personas: Dict[str, "CharacterPersona"] = {}
+        self._context_profiles: Dict[str, "CharacterContextProfile"] = {}
+        self._character_templates: Dict[str, Dict[str, Any]] = {}
 
     def _discover_personas(self) -> None:
         """Discover enhanced existing personas from files"""
-        for persona_file in self.personas_directory.glob("*.json"):
+        for persona_file in self.personas_dir.glob("*.json"):
             try:
                 with open(persona_file, "r", encoding="utf-8") as f:
                     persona_data = json.load(f)
@@ -53,15 +58,8 @@ class PersonaPersistence:
                 self._personas[persona.persona_id] = persona
                 self._character_templates[persona.persona_id] = {}
 
-                # Create enhanced context profile
-                context_profile = CharacterContextProfile(
-                    persona_id=persona.persona_id,
-                    preferred_formats={fmt: 0.5 for fmt in RenderFormat},
-                    context_emphasis=self._determine_archetype_emphasis(
-                        persona.archetype
-                    ),
-                )
-                self._context_profiles[persona.persona_id] = context_profile
+                # Create enhanced context profile - will be initialized by manager
+                self._context_profiles[persona.persona_id] = {}  # type: ignore
 
                 logger.info(
                     f"DISCOVERED PERSONA: {persona.persona_id} ({persona.archetype.value})"
@@ -70,9 +68,9 @@ class PersonaPersistence:
             except Exception as e:
                 logger.error(f"FAILED TO LOAD PERSONA FROM {persona_file}: {e}")
 
-    async def _save_persona_to_file(self, persona: CharacterPersona) -> None:
+    async def _save_persona_to_file(self, persona: "CharacterPersona") -> None:
         """Save enhanced persona to file"""
-        persona_file = self.personas_directory / f"{persona.persona_id}.json"
+        persona_file = self.personas_dir / f"{persona.persona_id}.json"
 
         persona_data = {
             "persona_id": persona.persona_id,

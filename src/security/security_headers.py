@@ -467,7 +467,7 @@ class SecurityHeadersMiddleware:
                 return
 
             # Wrapper to intercept response start and inject headers
-            async def send_wrapper(message):
+            async def send_wrapper(message: Dict[str, Any]) -> None:
                 if message["type"] == "http.response.start":
                     # Create a dummy response to calculate security headers
                     from starlette.responses import Response
@@ -491,7 +491,7 @@ class SecurityHeadersMiddleware:
                         existing_keys = set(
                             k.lower() for k in secure_headers_dict.keys()
                         )
-                        headers = [
+                        filtered_headers = [
                             h
                             for h in headers
                             if h[0].decode("latin-1").lower() not in existing_keys
@@ -499,9 +499,9 @@ class SecurityHeadersMiddleware:
 
                         # Add new security headers
                         for k, v in secure_headers_dict.items():
-                            headers.append((k.encode("latin-1"), v.encode("latin-1")))
+                            filtered_headers.append((k.encode("latin-1"), v.encode("latin-1")))
 
-                        message["headers"] = headers
+                        message["headers"] = filtered_headers
 
                     except Exception as e:
                         logger.error(f"Error applying security headers: {e}")

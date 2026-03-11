@@ -904,12 +904,12 @@ class CharacterInteractionProcessor:
                         if len(outcome.narrative_summary) > 500
                         else outcome.narrative_summary
                     ),
-                    emotional_intensity=outcome.satisfaction_levels.get(
+                    emotional_weight=outcome.satisfaction_levels.get(
                         participant, 0.5
                     ),
                     relevance_score=0.7 + (outcome.success_level * 0.3),
-                    created_at=outcome.timestamp,
-                    context_tags=[
+                    timestamp=outcome.timestamp,
+                    tags=[
                         "interaction",
                         "character_social",
                         outcome.interaction_id,
@@ -934,10 +934,10 @@ class CharacterInteractionProcessor:
                         agent_id=participant,
                         memory_type=MemoryType.SEMANTIC,
                         content=f"Relationship dynamics updated through interaction {outcome.interaction_id}",
-                        emotional_intensity=abs(participant_satisfaction - 0.5) * 2,
+                        emotional_weight=abs(participant_satisfaction - 0.5) * 2,
                         relevance_score=0.6,
-                        created_at=outcome.timestamp,
-                        context_tags=["relationship", "social_dynamics"]
+                        timestamp=outcome.timestamp,
+                        tags=["relationship", "social_dynamics"]
                         + [p for p in participants if p != participant],
                     )
 

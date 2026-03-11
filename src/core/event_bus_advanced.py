@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import (
     Any,
+    AsyncIterator,
+    Callable,
     Dict,
     Generic,
     List,
@@ -68,6 +70,7 @@ class EventMetadata:
     max_retries: int = 3
     expires_at: Optional[datetime] = None
     tags: Set[str] = field(default_factory=set)
+    event_type: Optional[str] = None  # Set dynamically based on Event
 
 
 @dataclass
@@ -788,7 +791,7 @@ def get_event_bus() -> EventBus:
 
 
 async def publish_event(
-    event_type: str, payload: Any, **metadata
+    event_type: str, payload: Any, **metadata: Any
 ) -> EventProcessingResult:
     """Convenience function to publish event."""
     event_metadata = EventMetadata(**metadata)
@@ -796,10 +799,13 @@ async def publish_event(
     return await get_event_bus().publish(event)
 
 
-def subscribe_to_event(event_type: str, priority: int = 0) -> None:
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def subscribe_to_event(event_type: str, priority: int = 0) -> Callable[[F], F]:
     """Decorator for subscribing to events."""
 
-    def decorator(handler_class) -> None:
+    def decorator(handler_class: F) -> F:
         # Register the handler
         handler = handler_class()
         get_event_bus().subscribe(event_type, handler, priority)
@@ -809,7 +815,7 @@ def subscribe_to_event(event_type: str, priority: int = 0) -> None:
 
 
 @asynccontextmanager
-async def event_bus_context(event_bus: EventBus):
+async def event_bus_context(event_bus: EventBus) -> AsyncIterator[EventBus]:
     """Context manager for event bus lifecycle."""
     try:
         await event_bus.start()

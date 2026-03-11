@@ -90,7 +90,7 @@ class ProviderId:
 
     provider_name: str
     provider_type: ProviderType
-    provider_key: Union[UUID, str] = None
+    provider_key: Optional[Union[UUID, str]] = None
     api_version: str = "1.0.0"
     region: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
@@ -230,7 +230,7 @@ class ModelId:
 
     model_name: str
     provider_id: ProviderId
-    capabilities: Set[ModelCapability] = None
+    capabilities: Optional[Set[ModelCapability]] = None
     max_context_tokens: int = 4096
     max_output_tokens: int = 1024
     cost_per_input_token: Optional[Decimal] = None
@@ -333,7 +333,7 @@ class ModelId:
         }
 
         # Model-specific configurations
-        configs = {
+        configs: dict[str, dict[str, Any]] = {
             "claude-3-sonnet": {
                 "max_context": 200000,
                 "max_output": 4096,
@@ -354,8 +354,8 @@ class ModelId:
             model_name=variant,
             provider_id=provider_id,
             capabilities=capabilities,
-            max_context_tokens=config["max_context"],
-            max_output_tokens=config["max_output"],
+            max_context_tokens=int(config["max_context"]),
+            max_output_tokens=int(config["max_output"]),
             cost_per_input_token=config["input_cost"],
             cost_per_output_token=config["output_cost"],
             model_version="2024-02",
@@ -364,12 +364,14 @@ class ModelId:
 
     def supports_capability(self, capability: ModelCapability) -> bool:
         """Check if model supports specific capability."""
-        return capability in self.capabilities
+        return self.capabilities is not None and capability in self.capabilities
 
     def estimate_cost(self, input_tokens: int, output_tokens: int) -> Decimal:
         """Estimate total cost for token usage."""
-        input_cost = Decimal(str(input_tokens)) * self.cost_per_input_token
-        output_cost = Decimal(str(output_tokens)) * self.cost_per_output_token
+        input_rate = self.cost_per_input_token or Decimal("0")
+        output_rate = self.cost_per_output_token or Decimal("0")
+        input_cost = Decimal(str(input_tokens)) * input_rate
+        output_cost = Decimal(str(output_tokens)) * output_rate
         return input_cost + output_cost
 
     def can_handle_context(self, token_count: int) -> bool:
@@ -527,7 +529,11 @@ class TokenBudget:
         if self.cost_limit == 0:
             return Decimal("0.00")
 
-        return (self.accumulated_cost / self.cost_limit) * Decimal("100")
+        acc_cost = self.accumulated_cost or Decimal("0")
+        cost_lim = self.cost_limit or Decimal("0")
+        if cost_lim == 0:
+            return Decimal("0.00")
+        return (acc_cost / cost_lim) * Decimal("100")
 
     def can_reserve_tokens(self, token_count: int) -> bool:
         """Check if tokens can be reserved without exceeding budget."""
@@ -535,7 +541,9 @@ class TokenBudget:
 
     def can_afford_cost(self, additional_cost: Decimal) -> bool:
         """Check if additional cost can be accommodated."""
-        return (self.accumulated_cost + additional_cost) <= self.cost_limit
+        acc_cost = self.accumulated_cost or Decimal("0")
+        cost_lim = self.cost_limit or Decimal("0")
+        return (acc_cost + additional_cost) <= cost_lim
 
     def reserve_tokens(self, token_count: int) -> "TokenBudget":
         """Create new budget with reserved tokens (immutable operation)."""
@@ -555,7 +563,7 @@ class TokenBudget:
             period_end=self.period_end,
             rollover_enabled=self.rollover_enabled,
             priority=self.priority,
-            metadata=self.metadata.copy(),
+            metadata=(self.metadata or {}).copy(),
         )
 
     def consume_tokens(self, token_count: int, cost: Decimal) -> "TokenBudget":
@@ -584,18 +592,20 @@ class TokenBudget:
             + (self.reserved_tokens - new_reserved),
             reserved_tokens=new_reserved,
             cost_limit=self.cost_limit,
-            accumulated_cost=self.accumulated_cost + cost,
+            accumulated_cost=(self.accumulated_cost or Decimal("0")) + cost,
             period_start=self.period_start,
             period_end=self.period_end,
             rollover_enabled=self.rollover_enabled,
             priority=self.priority,
-            metadata=self.metadata.copy(),
+            metadata=(self.metadata or {}).copy(),
         )
 
     def is_exhausted(self) -> bool:
         """Check if budget is exhausted (no available tokens or cost limit reached)."""
+        acc_cost = self.accumulated_cost or Decimal("0")
+        cost_lim = self.cost_limit or Decimal("0")
         return (
-            self.get_available_tokens() == 0 or self.accumulated_cost >= self.cost_limit
+            self.get_available_tokens() == 0 or acc_cost >= cost_lim
         )
 
     def is_near_exhaustion(
@@ -618,9 +628,9 @@ class TokenBudget:
                 "utilization_percent": float(self.get_utilization_percentage()),
             },
             "cost": {
-                "limit": float(self.cost_limit),
-                "accumulated": float(self.accumulated_cost),
-                "available": float(self.cost_limit - self.accumulated_cost),
+                "limit": float(self.cost_limit or Decimal("0")),
+                "accumulated": float(self.accumulated_cost or Decimal("0")),
+                "available": float((self.cost_limit or Decimal("0")) - (self.accumulated_cost or Decimal("0"))),
                 "utilization_percent": float(self.get_cost_utilization_percentage()),
             },
             "status": {

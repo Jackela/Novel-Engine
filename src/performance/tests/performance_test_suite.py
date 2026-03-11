@@ -112,7 +112,7 @@ class ResourceMonitor:
         self.monitoring = False
         self.metrics: List[ResourceMetrics] = []
         self.process = None
-        self._start_time = None
+        self._start_time: float | None = None
 
     def start_monitoring(self, target_process_name: str = "python") -> None:
         """Start monitoring system resources."""
@@ -154,28 +154,24 @@ class ResourceMonitor:
         """Monitor resources in background thread."""
         while self.monitoring:
             try:
-                if self.process and self.process.is_running():
-                    # Monitor specific process
-                    cpu_percent = self.process.cpu_percent()
-                    memory_info = self.process.memory_info()
-                    memory_percent = self.process.memory_percent()
-
-                    # Get I/O stats if available
+                # Monitor specific process or system-wide
+                process: Any = self.process
+                if process is not None and process.is_running():
+                    cpu_percent = process.cpu_percent()
+                    memory_percent = process.memory_percent()
+                    memory_info = process.memory_info()
+                    memory_mb = memory_info.rss / 1024 / 1024
                     try:
-                        io_stats = self.process.io_counters()
+                        io_stats = process.io_counters()
                         disk_read = io_stats.read_bytes
                         disk_write = io_stats.write_bytes
                     except (psutil.AccessDenied, AttributeError):
                         disk_read = disk_write = 0
-
                 else:
-                    # Monitor system-wide
                     cpu_percent = psutil.cpu_percent()
                     memory = psutil.virtual_memory()
                     memory_percent = memory.percent
                     memory_mb = memory.used / 1024 / 1024
-
-                    # Get disk I/O
                     disk_io = psutil.disk_io_counters()
                     disk_read = disk_io.read_bytes if disk_io else 0
                     disk_write = disk_io.write_bytes if disk_io else 0
@@ -190,9 +186,7 @@ class ResourceMonitor:
                     timestamp=time.time(),
                     cpu_percent=cpu_percent,
                     memory_percent=memory_percent,
-                    memory_mb=(
-                        memory_info.rss / 1024 / 1024 if self.process else memory_mb
-                    ),
+                    memory_mb=memory_mb,
                     disk_io_read=disk_read,
                     disk_io_write=disk_write,
                     network_sent=network_sent,
@@ -242,9 +236,9 @@ class PerformanceTestSuite:
     def __init__(self, config: LoadTestConfig) -> None:
         self.config = config
         self.monitor = ResourceMonitor()
-        self.session = None
+        self.session: aiohttp.ClientSession | None = None
 
-    async def __aenter__(self) -> None:
+    async def __aenter__(self) -> "PerformanceTestSuite":
         """Async context manager entry."""
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=30),
@@ -252,7 +246,7 @@ class PerformanceTestSuite:
         )
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: Any) -> None:
         """Async context manager exit."""
         if self.session:
             await self.session.close()
@@ -263,6 +257,8 @@ class PerformanceTestSuite:
         start_time = time.time()
 
         try:
+            if self.session is None:
+                return 0.0, False, "Session not initialized"
             async with self.session.get(url) as response:
                 await response.text()  # Read response body
                 end_time = time.time()
@@ -310,7 +306,7 @@ class PerformanceTestSuite:
         start_time = time.time()
         end_time = start_time + duration_seconds
 
-        async def user_session():
+        async def user_session() -> PerformanceMetrics:
             """Single user session making requests."""
             session_metrics = PerformanceMetrics()
             while time.time() < end_time:
@@ -355,7 +351,7 @@ class PerformanceTestSuite:
         max_users: int = 100,
         step_size: int = 10,
         step_duration: int = 30,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Progressive stress test to find breaking point."""
         logger.info(f"Running stress test for {endpoint}: 0 to {max_users} users")
 
@@ -380,9 +376,11 @@ class PerformanceTestSuite:
             results.append(result)
 
             # Stop if error rate exceeds 50%
-            if result["error_rate"] > 0.5:
+            error_rate_val = result.get("error_rate", 0.0)
+            result_error_rate = float(error_rate_val) if isinstance(error_rate_val, (int, float)) else 0.0
+            if result_error_rate > 0.5:
                 logger.warning(
-                    f"High error rate ({result['error_rate']:.2%}) at {current_users} users"
+                    f"High error rate ({result_error_rate:.2%}) at {current_users} users"
                 )
                 break
 
@@ -424,7 +422,7 @@ class PerformanceTestSuite:
             f"Running simulation load test with {concurrent_simulations} concurrent simulations"
         )
 
-        def run_single_simulation() -> None:
+        def run_single_simulation() -> dict[str, Any]:
             """Run a single story simulation."""
             import httpx
 
@@ -509,13 +507,18 @@ class PerformanceTestSuite:
         self.monitor.start_monitoring()
         test_start_time = time.time()
 
+        baseline_tests: dict[str, Any] = {}
+        load_tests: dict[str, Any] = {}
+        stress_tests: dict[str, Any] = {}
+        simulation_tests: dict[str, Any] = {}
+
         results = {
             "test_start_time": datetime.now().isoformat(),
             "config": asdict(self.config),
-            "baseline_tests": {},
-            "load_tests": {},
-            "stress_tests": {},
-            "simulation_tests": {},
+            "baseline_tests": baseline_tests,
+            "load_tests": load_tests,
+            "stress_tests": stress_tests,
+            "simulation_tests": simulation_tests,
             "resource_metrics": {},
         }
 
@@ -525,7 +528,7 @@ class PerformanceTestSuite:
             for endpoint in self.config.endpoints:
                 try:
                     metrics = await self.single_user_test(endpoint, 20)
-                    results["baseline_tests"][endpoint] = asdict(metrics)
+                    baseline_tests[endpoint] = asdict(metrics)
 
                     # Log key metrics
                     logger.info(
@@ -535,7 +538,7 @@ class PerformanceTestSuite:
 
                 except Exception as e:
                     logger.error(f"Baseline test failed for {endpoint}: {e}")
-                    results["baseline_tests"][endpoint] = {"error": str(e)}
+                    baseline_tests[endpoint] = {"error": str(e)}
 
             # 2. Concurrent User Load Tests
             logger.info("=== Running Concurrent User Load Tests ===")
@@ -545,7 +548,7 @@ class PerformanceTestSuite:
                     load_results = await self.endpoint_load_test(
                         self.config.endpoints[:3], users
                     )
-                    results["load_tests"][f"{users}_users"] = load_results
+                    load_tests[f"{users}_users"] = load_results
 
                     # Log summary
                     for endpoint, metrics in load_results.items():
@@ -558,7 +561,7 @@ class PerformanceTestSuite:
 
                 except Exception as e:
                     logger.error(f"Load test failed for {users} users: {e}")
-                    results["load_tests"][f"{users}_users"] = {"error": str(e)}
+                    load_tests[f"{users}_users"] = {"error": str(e)}
 
             # 3. Stress Testing (Find Breaking Point)
             logger.info("=== Running Stress Tests ===")
@@ -568,7 +571,7 @@ class PerformanceTestSuite:
                     stress_results = await self.stress_test(
                         endpoint, max_users=75, step_size=15
                     )
-                    results["stress_tests"][endpoint] = stress_results
+                    stress_tests[endpoint] = stress_results
 
                     # Find maximum stable load
                     max_stable = 0
@@ -582,16 +585,14 @@ class PerformanceTestSuite:
 
                 except Exception as e:
                     logger.error(f"Stress test failed for {endpoint}: {e}")
-                    results["stress_tests"][endpoint] = {"error": str(e)}
+                    stress_tests[endpoint] = {"error": str(e)}
 
             # 4. Story Generation Simulation Tests
             logger.info("=== Running Story Generation Load Tests ===")
             for sim_count in [3, 5, 8]:
                 try:
                     sim_results = self.run_simulation_load_test(sim_count)
-                    results["simulation_tests"][f"{sim_count}_simulations"] = (
-                        sim_results
-                    )
+                    simulation_tests[f"{sim_count}_simulations"] = sim_results
 
                     logger.info(
                         f"{sim_count} simulations: "
@@ -601,15 +602,13 @@ class PerformanceTestSuite:
 
                 except Exception as e:
                     logger.error(f"Simulation test failed for {sim_count}: {e}")
-                    results["simulation_tests"][f"{sim_count}_simulations"] = {
-                        "error": str(e)
-                    }
+                    simulation_tests[f"{sim_count}_simulations"] = {"error": str(e)}
 
         finally:
             # Stop monitoring and collect resource metrics
             self.monitor.stop_monitoring()
             results["resource_metrics"] = self.monitor.get_summary_stats()
-            results["total_test_duration"] = time.time() - test_start_time
+            results["total_test_duration"] = time.time() - test_start_time  # type: ignore[assignment]
 
         logger.info("Comprehensive performance test suite completed")
         return results
@@ -986,7 +985,7 @@ class PerformanceTestSuite:
         return "\n".join(report)
 
 
-async def main():
+async def main() -> None:
     """Main function to run performance tests."""
     # Check if server is running
     try:
@@ -1017,7 +1016,9 @@ async def main():
     )
 
     # Run comprehensive test suite
-    async with PerformanceTestSuite(config) as test_suite:
+    test_suite: PerformanceTestSuite
+    async with PerformanceTestSuite(config) as suite:
+        test_suite = suite
         results = await test_suite.run_comprehensive_test_suite()
 
         # Generate report

@@ -159,9 +159,9 @@ class JSONEventParser:
             if "events" in data:
                 events_data = data.get("events", [])
                 if not isinstance(events_data, list):
-                    result.errors.append(
+                    result.errors.append(  # type: ignore[unreachable]
                         {"row": 0, "message": "'events' field must be an array"}
-                    )  # type: ignore[unreachable]
+                    )
                     return result
             else:
                 # Single event object
@@ -177,12 +177,12 @@ class JSONEventParser:
         # Parse each event
         for idx, event_data in enumerate(events_data, start=1):
             if not isinstance(event_data, dict):
-                result.errors.append(
+                result.errors.append(  # type: ignore[unreachable]
                     {
                         "row": idx,
                         "message": f"Event must be an object, got {type(event_data).__name__}",
                     }
-                )  # type: ignore[unreachable]
+                )
                 continue
 
             event, errors = self._parse_event(event_data, idx)

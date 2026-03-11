@@ -3,6 +3,8 @@
 Interaction persistence and metrics tracking.
 """
 
+from typing import Any
+
 import structlog
 
 from src.core.data_models import CharacterInteraction
@@ -20,6 +22,13 @@ class InteractionPersistence:
 
     def __init__(self, db: ContextDatabase) -> None:
         self.db = db
+        self.performance_metrics: dict[str, Any] = {
+            "total_interactions_processed": 0,
+            "successful_interactions": 0,
+            "failed_interactions": 0,
+            "average_processing_time": 0.0,
+            "interaction_type_counts": {},
+        }
 
     async def _store_interaction_outcome(self, outcome: InteractionOutcome) -> None:
         """Store enhanced interaction outcome in database"""
@@ -40,14 +49,14 @@ class InteractionPersistence:
                     else ""
                 ),
                 description=f"Interaction completed {'successfully' if outcome.success else 'with errors'}",
-                participants=list(outcome.participant_outcomes.keys()),
-                outcomes=outcome.generated_content,
+                participants=list(outcome.participant_state_changes.keys()),
+                outcomes=outcome.interaction_content,
                 emotional_impact={},  # Would be populated with actual emotional data
                 world_state_changes=outcome.state_changes,
                 timestamp=outcome.completion_time,
             )
 
-            await self.database.store_enhanced_interaction(interaction_record)
+            await self.db.store_enhanced_interaction(interaction_record)
 
         except Exception as e:
             logger.error(f"INTERACTION STORAGE FAILED: {e}")

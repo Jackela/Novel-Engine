@@ -10,7 +10,7 @@ Provides additional security layers beyond basic headers.
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -89,7 +89,7 @@ class EnhancedSecurityMiddleware(BaseHTTPMiddleware):
                 {"processing_time": processing_time},
             )
 
-        return response
+        return cast(Response, response)
 
     def _get_client_ip(self, request: Request) -> str:
         """Extract client IP with proxy support"""

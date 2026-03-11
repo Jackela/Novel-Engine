@@ -13,6 +13,7 @@ import structlog
 from src.contexts.world.application.services.faction_tick_service import (
     FactionTickService,
 )
+from src.contexts.world.domain.events.time_events import TimeAdvancedEvent
 from src.events.event_bus import Event, EventHandler
 
 logger = structlog.get_logger()
@@ -58,39 +59,51 @@ class TimeAdvancedHandler(EventHandler):
         Returns:
             True if handled successfully, False otherwise
         """
+        # Cast event to TimeAdvancedEvent for type safety
+        time_event = event if isinstance(event, TimeAdvancedEvent) else None
+        if time_event is None:
+            logger.error(
+                "invalid_event_type",
+                expected="TimeAdvancedEvent",
+                received=type(event).__name__,
+            )
+            return False
+
         logger.info(
             "time_advanced_event_received",
-            event_id=event.event_id,
-            world_id=event.payload.get("world_id"),
-            days_advanced=event.days_advanced,
+            event_id=time_event.event_id,
+            world_id=time_event.payload.get("world_id"),
+            days_advanced=time_event.days_advanced,
         )
 
-        world_id = event.payload.get("world_id", "default")
+        world_id = time_event.payload.get("world_id", "default")
 
         try:
             result = self._tick_service.process_tick(
                 world_id=world_id,
-                days_advanced=event.days_advanced,
+                days_advanced=time_event.days_advanced,
             )
 
             if result.is_ok:
                 tick_result = result.unwrap()
-                logger.info(
-                    "time_advanced_event_processed",
-                    event_id=event.event_id,
-                    world_id=world_id,
-                    success=tick_result.success,
-                    resources_updated=tick_result.resources_updated,
-                    diplomatic_changes=tick_result.diplomatic_changes,
-                )
-                return tick_result.success
+                if tick_result is not None:
+                    logger.info(
+                        "time_advanced_event_processed",
+                        event_id=time_event.event_id,
+                        world_id=world_id,
+                        success=tick_result.success,
+                        resources_updated=tick_result.resources_updated,
+                        diplomatic_changes=tick_result.diplomatic_changes,
+                    )
+                    return tick_result.success
+                return True
             else:
-                error = result.unwrap_err()
+                error = result.error
                 logger.error(
                     "time_advanced_event_failed",
-                    event_id=event.event_id,
+                    event_id=time_event.event_id,
                     world_id=world_id,
-                    error=error.message,
+                    error=str(error) if error else "Unknown error",
                 )
                 return False
 

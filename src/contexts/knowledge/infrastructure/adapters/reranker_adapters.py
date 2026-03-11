@@ -474,7 +474,7 @@ class LocalReranker:
             pairs = [[query, doc] for doc in doc_contents]
 
             # Run cross-encoder scoring
-            import torch  # type: ignore[import-not-found]
+            import torch
 
             with torch.no_grad():
                 scores = model.predict(pairs, convert_to_tensor=True)
@@ -569,7 +569,7 @@ class LocalReranker:
 
         try:
             from sentence_transformers import (
-                CrossEncoder,  # type: ignore[import-not-found]
+                CrossEncoder,
             )
 
             logger.info(

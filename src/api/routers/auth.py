@@ -41,7 +41,7 @@ async def login(
     response: Response,
     request: Request,
     settings: APISettings = Depends(get_settings),
-):
+) -> AuthResponse:
     try:
         _reject_query_credentials(request)
 
@@ -137,7 +137,7 @@ async def refresh_token(
     response: Response,
     request: Request,
     settings: APISettings = Depends(get_settings),
-):
+) -> AuthResponse:
     try:
         refresh_token_value = (
             request.cookies.get(settings.refresh_cookie_name) or payload.refresh_token
@@ -221,7 +221,7 @@ async def refresh_token(
 async def get_csrf_token(
     response: Response,
     settings: APISettings = Depends(get_settings),
-):
+) -> CSRFTokenResponse:
     try:
         csrf_token = secrets.token_urlsafe(32)
 
@@ -250,7 +250,7 @@ async def logout(
     response: Response,
     body: Optional[LogoutRequest] = None,
     settings: APISettings = Depends(get_settings),
-):
+) -> LogoutResponse:
     try:
         auth_header = request.headers.get("Authorization", "")
         token: Optional[str] = None
@@ -299,7 +299,7 @@ async def logout(
 async def validate_token(
     request: Request,
     settings: APISettings = Depends(get_settings),
-):
+) -> TokenValidationResponse | JSONResponse:
     try:
         auth_header = request.headers.get("Authorization", "")
 

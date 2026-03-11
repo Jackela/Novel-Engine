@@ -41,7 +41,7 @@ class HealthMonitoringService:
             Result containing health assessment or error
         """
         if session is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 SessionError(
                     message="Session is required for health assessment",
                     recoverable=True,
@@ -153,7 +153,7 @@ class HealthMonitoringService:
             Result containing detected issues or error
         """
         if session is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 SessionError(
                     message="Session is required",
                     recoverable=True,
@@ -261,7 +261,7 @@ class HealthMonitoringService:
             Result containing recommendations or error
         """
         if session is None:
-            return Err(
+            return Err(  # type: ignore[unreachable]
                 SessionError(
                     message="Session is required",
                     recoverable=True,

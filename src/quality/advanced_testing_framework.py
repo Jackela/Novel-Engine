@@ -496,7 +496,7 @@ class TestFramework:
                 with open(coverage_file, "r") as f:
                     coverage_data = json.load(f)
 
-                return coverage_data.get("totals", {}).get("percent_covered", 0.0)
+                return float(coverage_data.get("totals", {}).get("percent_covered", 0.0))
 
         except Exception as e:
             logger.error(f"Coverage analysis error: {e}")
@@ -641,7 +641,7 @@ class TestFramework:
             await asyncio.sleep(0.001)
             times.append(time.time() - start_time)
 
-        return statistics.mean(times)
+        return float(statistics.mean(times))
 
     async def _benchmark_api_response(self) -> float:
         """Benchmark API response performance"""
@@ -653,7 +653,7 @@ class TestFramework:
             await asyncio.sleep(0.002)
             times.append(time.time() - start_time)
 
-        return statistics.mean(times)
+        return float(statistics.mean(times))
 
     async def _benchmark_database_query(self) -> float:
         """Benchmark database query performance"""
@@ -665,7 +665,7 @@ class TestFramework:
             await asyncio.sleep(0.005)
             times.append(time.time() - start_time)
 
-        return statistics.mean(times)
+        return float(statistics.mean(times))
 
     async def _benchmark_memory_allocation(self) -> float:
         """Benchmark memory allocation performance"""
@@ -677,7 +677,7 @@ class TestFramework:
             list(range(1000))
             times.append(time.time() - start_time)
 
-        return statistics.mean(times)
+        return float(statistics.mean(times))
 
 
 class QualityGates:
@@ -718,7 +718,7 @@ class QualityGates:
 
 
 # Example usage and testing
-async def main():
+async def main() -> None:
     """Demonstrate advanced testing framework"""
     logger.info("Starting Novel Engine Advanced Testing Framework Demo")
 

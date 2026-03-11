@@ -102,9 +102,10 @@ class PerformanceStressTester:
         finally:
             # Stop system monitoring
             self.monitoring_active = False
-            monitoring_result = await monitoring_task
-            if monitoring_result is not None:
-                logger.debug("Monitoring task returned: %s", monitoring_result)
+            try:
+                await monitoring_task
+            except Exception as e:
+                logger.debug("Monitoring task returned error: %s", e)
 
         return self._generate_stress_test_report()
 
@@ -156,7 +157,7 @@ class PerformanceStressTester:
         success_count = 0
         error_count = 0
 
-        async def simulate_api_request():
+        async def simulate_api_request() -> bool:
             """Simulate API request"""
             request_start = time.time()
             try:
@@ -242,7 +243,7 @@ class PerformanceStressTester:
         success_count = 0
         error_count = 0
 
-        async def cache_operation():
+        async def cache_operation() -> bool:
             """Perform cache operations"""
             operation_start = time.time()
             try:
@@ -329,7 +330,7 @@ class PerformanceStressTester:
         success_count = 0
         error_count = 0
 
-        async def worker_operations(worker_id: int):
+        async def worker_operations(worker_id: int) -> dict[str, Any]:
             """Simulate worker operations"""
             worker_times: list[Any] = []
             worker_successes = 0
@@ -354,7 +355,7 @@ class PerformanceStressTester:
                 except Exception:
                     worker_errors += 1
 
-            return worker_times, worker_successes, worker_errors
+            return {"times": worker_times, "successes": worker_successes, "errors": worker_errors}
 
         # Create concurrent workers
         tasks: list[Any] = []
@@ -474,7 +475,7 @@ class PerformanceStressTester:
         success_count = 0
         error_count = 0
 
-        async def database_operations(connection_id: int):
+        async def database_operations(connection_id: int) -> dict[str, Any]:
             """Simulate database operations"""
             connection_times: list[Any] = []
             connection_successes = 0
@@ -497,7 +498,7 @@ class PerformanceStressTester:
                 except Exception:
                     connection_errors += 1
 
-            return connection_times, connection_successes, connection_errors
+            return {"times": connection_times, "successes": connection_successes, "errors": connection_errors}
 
         # Create concurrent database connections
         tasks: list[Any] = []
@@ -713,7 +714,7 @@ class PerformanceStressTester:
 
 
 # Main execution
-async def main():
+async def main() -> None:
     """Run comprehensive stress testing"""
     logger.info("Starting Novel Engine Performance Stress Testing")
 

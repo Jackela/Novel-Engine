@@ -165,6 +165,8 @@ class NegotiationEngine:
             )
 
             # Call LLM
+            if self._llm_client is None:
+                return self._evaluate_with_rules(user_input, decision_point)
             response = await self._llm_client.generate(prompt)
 
             # Parse response

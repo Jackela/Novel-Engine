@@ -9,7 +9,7 @@ Provides foundational types used across all interaction engine components.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 # Import enhanced systems
 try:
@@ -102,6 +102,12 @@ class InteractionPhase:
     risk_assessment: float = 0.0  # 0.0-1.0
     completion_status: str = "pending"  # pending, active, completed, failed
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # Extended attributes for enhanced processing
+    participant_requirements: Dict[str, Any] = field(default_factory=dict)
+    processing_rules: List[str] = field(default_factory=list)
+    success_conditions: List[str] = field(default_factory=list)
+    outputs: List[str] = field(default_factory=list)
+    side_effects: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -148,6 +154,9 @@ class InteractionOutcome:
     quality_score: float = 1.0
     template_usage: Dict[str, str] = field(default_factory=dict)
     processing_stats: Dict[str, Any] = field(default_factory=dict)
+    # Extended attributes for enhanced processing
+    memory_updates: List[Any] = field(default_factory=list)
+    state_changes: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

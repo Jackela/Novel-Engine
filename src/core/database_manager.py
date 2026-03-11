@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, AsyncContextManager, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncContextManager, AsyncGenerator, AsyncIterator, Dict, List, Optional
 
 import aiosqlite
 import structlog
@@ -669,9 +669,6 @@ class DatabaseConnectionPool:
             try:
                 await asyncio.sleep(60)  # Run every minute
 
-                if self._closed:
-                    break
-
                 await self._perform_maintenance()
 
             except asyncio.CancelledError:
@@ -911,7 +908,9 @@ class DatabaseManager:
         """Initialize database manager. (Legacy - use initialize_result)"""
         result = await self.initialize_result()
         if result.is_error:
-            raise RuntimeError(result.error.message)
+            if result.error:
+                raise RuntimeError(result.error.message)
+            raise RuntimeError("Unknown error")
 
     async def initialize_result(self) -> Result[bool, DatabaseError]:
         """
@@ -943,16 +942,16 @@ class DatabaseManager:
         """Create default database pool from configuration."""
         # Get database configuration
         if self.config_manager:
-            database_config_dict = self.config_manager.get_section("database")
+            database_config: dict[Any, Any] = self.config_manager.get_section("database")
         else:
-            database_config_dict: dict[Any, Any] = {}
+            database_config = {}
         # Create database config
         config = DatabaseConfig(
             database_type=DatabaseType.SQLITE,
-            connection_string=database_config_dict.get("url", "data/novel_engine.db"),
-            min_pool_size=database_config_dict.get("min_pool_size", 2),
-            max_pool_size=database_config_dict.get("max_pool_size", 20),
-            connection_timeout=database_config_dict.get("timeout", 30.0),
+            connection_string=database_config.get("url", "data/novel_engine.db"),
+            min_pool_size=database_config.get("min_pool_size", 2),
+            max_pool_size=database_config.get("max_pool_size", 20),
+            connection_timeout=database_config.get("timeout", 30.0),
         )
 
         # Create and initialize pool
@@ -966,7 +965,9 @@ class DatabaseManager:
         """Add named database pool. (Legacy - use add_pool_result)"""
         result = await self.add_pool_result(name, config)
         if result.is_error:
-            raise ValueError(result.error.message)
+            if result.error:
+                raise ValueError(result.error.message)
+            raise ValueError("Unknown error")
 
     async def add_pool_result(
         self, name: str, config: DatabaseConfig
@@ -1027,12 +1028,14 @@ class DatabaseManager:
         query: str,
         parameters: Optional[tuple] = None,
         pool_name: Optional[str] = None,
-    ) -> aiosqlite.Cursor:
+    ) -> Optional[aiosqlite.Cursor]:
         """Execute query on specified or default pool. (Legacy - use execute_query_result)"""
         result = await self.execute_query_result(query, parameters, pool_name)
         if result.is_ok:
             return result.value
-        raise RuntimeError(result.error.message)
+        if result.error:
+            raise RuntimeError(result.error.message)
+        raise RuntimeError("Unknown error")
 
     async def execute_query_result(
         self,
@@ -1069,12 +1072,14 @@ class DatabaseManager:
         self,
         queries: List[tuple],  # List of (query, parameters) tuples
         pool_name: Optional[str] = None,
-    ) -> bool:
+    ) -> Optional[bool]:
         """Execute multiple queries in a transaction. (Legacy - use execute_transaction_result)"""
         result = await self.execute_transaction_result(queries, pool_name)
         if result.is_ok:
             return result.value
-        raise RuntimeError(result.error.message)
+        if result.error:
+            raise RuntimeError(result.error.message)
+        raise RuntimeError("Unknown error")
 
     async def execute_transaction_result(
         self,
@@ -1148,12 +1153,13 @@ class DatabaseManager:
         # Return all pool metrics
         return {name: pool.get_pool_metrics() for name, pool in self._pools.items()}
 
-    async def health_check(self) -> Dict[str, Dict[str, Any]]:
+    async def health_check(self) -> Optional[Dict[str, Dict[str, Any]]]:
         """Perform health check on all pools. (Legacy - use health_check_result)"""
         result = await self.health_check_result()
         if result.is_ok:
             return result.value
-        return {"error": {"healthy": False, "message": result.error.message}}
+        error_msg = result.error.message if result.error else "Unknown error"
+        return {"error": {"healthy": False, "message": error_msg}}
 
     async def health_check_result(
         self,
@@ -1215,7 +1221,7 @@ async def get_database_connection(
 
 
 @asynccontextmanager
-async def database_manager_context(db_manager: DatabaseManager):
+async def database_manager_context(db_manager: DatabaseManager) -> AsyncIterator[DatabaseManager]:
     """Context manager for database manager lifecycle."""
     try:
         await db_manager.initialize()

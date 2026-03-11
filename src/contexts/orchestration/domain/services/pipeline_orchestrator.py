@@ -412,7 +412,7 @@ class PipelineOrchestrator:
     ) -> bool:
         """Validate phase execution results."""
         if not isinstance(results, dict):
-            return False
+            return False  # type: ignore[unreachable]
 
         # Check for required result fields
         required_fields = {"success", "events_processed"}

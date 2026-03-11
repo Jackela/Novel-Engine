@@ -44,7 +44,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import requests  # type: ignore[import-untyped]
 import structlog
@@ -432,7 +432,7 @@ class UnifiedLLMService:
 
         try:
             response_json = response.json()
-            content = response_json["candidates"][0]["content"]["parts"][0]["text"]
+            content = cast(str, response_json["candidates"][0]["content"]["parts"][0]["text"])
             return content
         except (KeyError, IndexError, TypeError) as e:
             raise Exception(f"Failed to parse Gemini response: {e}")
@@ -506,7 +506,7 @@ class UnifiedLLMService:
             if (
                 datetime.now() - cache_time
             ).total_seconds() < self.cost_control.cache_ttl:
-                cached_response = cached_data["response"]
+                cached_response = cast(LLMResponse, cached_data["response"])
                 cached_response.cached = True
                 cached_response.timestamp = datetime.now()
                 return cached_response
@@ -569,7 +569,7 @@ class UnifiedLLMService:
 
     def _calculate_cost(self, tokens: int, provider_config: Dict[str, Any]) -> float:
         """Calculate cost estimate for token usage."""
-        cost_per_1k = provider_config.get("cost_per_1k_tokens", 0.001)
+        cost_per_1k = cast(float, provider_config.get("cost_per_1k_tokens", 0.001))
         return (tokens / 1000) * cost_per_1k
 
     def _update_metrics(self, response: LLMResponse, success: bool) -> None:
@@ -1044,6 +1044,6 @@ def create_llm_service_for_testing(
                     return response
             return await original_call(request, provider_config)
 
-        service._call_gemini = mock_call
+        service._call_gemini = mock_call  # type: ignore[method-assign]
 
     return service

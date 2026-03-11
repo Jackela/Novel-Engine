@@ -87,6 +87,14 @@ class MetricRecord:
     timestamp: datetime = field(default_factory=datetime.now)
     help_text: str = ""
 
+    def __post_init__(self) -> None:
+        """Ensure value is stored as float for numeric operations."""
+        if isinstance(self.value, str):
+            try:
+                self.value = float(self.value)
+            except (ValueError, TypeError):
+                pass  # Keep as string if can't convert
+
 
 @dataclass
 class TraceSpan:
@@ -241,7 +249,9 @@ class MetricsCollector:
             # Fallback storage
             key = f"{name}:{json.dumps(labels, sort_keys=True)}"
             if key in self.fallback_metrics:
-                self.fallback_metrics[key].value += value
+                current = self.fallback_metrics[key].value
+                if isinstance(current, (int, float)):
+                    self.fallback_metrics[key].value = current + value
             else:
                 self.fallback_metrics[key] = MetricRecord(
                     name=name, metric_type="counter", value=value, labels=labels
@@ -332,7 +342,10 @@ class MetricsCollector:
 
     def get_metrics_summary(self) -> Dict[str, Any]:
         """Get metrics summary as JSON"""
-        summary = {"timestamp": datetime.now().isoformat(), "metrics": {}}
+        summary: Dict[str, Any] = {
+            "timestamp": datetime.now().isoformat(),
+            "metrics": {},
+        }
 
         if PROMETHEUS_AVAILABLE:
             # Convert Prometheus metrics to JSON
@@ -344,7 +357,7 @@ class MetricsCollector:
                 }
         else:
             # Use fallback metrics
-            grouped_metrics = defaultdict(list)
+            grouped_metrics: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
             for record in self.fallback_metrics.values():
                 grouped_metrics[record.name].append(
                     {
@@ -468,11 +481,11 @@ class TracingManager:
     """Distributed tracing manager"""
 
     def __init__(
-        self, service_name: str = "novel-engine", jaeger_endpoint: str = None
+        self, service_name: str = "novel-engine", jaeger_endpoint: Optional[str] = None
     ) -> None:
         self.service_name = service_name
         self.active_spans: Dict[str, TraceSpan] = {}
-        self.span_history = deque(maxlen=1000)  # Keep recent spans
+        self.span_history: Deque[TraceSpan] = deque(maxlen=1000)  # Keep recent spans
 
         if OTEL_AVAILABLE and jaeger_endpoint:
             self._setup_jaeger(jaeger_endpoint)
@@ -501,7 +514,7 @@ class TracingManager:
             self.tracer = None
 
     def start_span(
-        self, operation_name: str, parent_span_id: str = None, **labels: Any
+        self, operation_name: str, parent_span_id: Optional[str] = None, **labels: Any
     ) -> str:
         """Start a new trace span"""
         span_id = str(uuid.uuid4())
@@ -525,7 +538,7 @@ class TracingManager:
 
         return span_id
 
-    def finish_span(self, span_id: str, status: str = "OK", error: str = None) -> None:
+    def finish_span(self, span_id: str, status: str = "OK", error: Optional[str] = None) -> None:
         """Finish a trace span"""
         if span_id not in self.active_spans:
             logger.warning("Attempted to finish unknown span: %s", span_id)
@@ -575,9 +588,11 @@ class PerformanceProfiler:
 
     def __init__(self, window_size: int = 100) -> None:
         self.window_size = window_size
-        self.operation_times = defaultdict(lambda: deque(maxlen=window_size))
-        self.operation_counts = defaultdict(int)
-        self.error_counts = defaultdict(int)
+        self.operation_times: Dict[str, Deque[float]] = defaultdict(
+            lambda: deque(maxlen=window_size)
+        )
+        self.operation_counts: Dict[str, int] = defaultdict(int)
+        self.error_counts: Dict[str, int] = defaultdict(int)
         self.start_times: Dict[str, datetime] = {}
 
     def start_operation(self, operation_id: str) -> None:
@@ -651,8 +666,8 @@ class SecurityAuditor:
 
     def __init__(self, logger: StructuredLogger) -> None:
         self.logger = logger
-        self.security_events = deque(maxlen=1000)
-        self.threat_counts = defaultdict(int)
+        self.security_events: Deque[Dict[str, Any]] = deque(maxlen=1000)
+        self.threat_counts: Dict[str, int] = defaultdict(int)
 
     def log_authentication_event(
         self,
@@ -662,7 +677,7 @@ class SecurityAuditor:
         details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Log authentication event"""
-        event_data = {
+        event_data: Dict[str, Any] = {
             "event_category": "authentication",
             "user_id": user_id,
             "event_type": event_type,
@@ -675,9 +690,9 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if success:
-            self.logger.info("Authentication %s successful", event_type, **event_data)
+            self.logger.info(f"Authentication {event_type} successful", **event_data)
         else:
-            self.logger.warning("Authentication %s failed", event_type, **event_data)
+            self.logger.warning(f"Authentication {event_type} failed", **event_data)
             self.threat_counts[f"auth_failure_{event_type}"] += 1
 
     def log_authorization_event(
@@ -689,7 +704,7 @@ class SecurityAuditor:
         details: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Log authorization event"""
-        event_data = {
+        event_data: Dict[str, Any] = {
             "event_category": "authorization",
             "user_id": user_id,
             "resource": resource,
@@ -702,9 +717,9 @@ class SecurityAuditor:
         self.security_events.append(event_data)
 
         if granted:
-            self.logger.debug("Access granted to %s", resource, **event_data)
+            self.logger.debug(f"Access granted to {resource}", **event_data)
         else:
-            self.logger.warning("Access denied to %s", resource, **event_data)
+            self.logger.warning(f"Access denied to {resource}", **event_data)
             self.threat_counts[f"access_denied_{action}"] += 1
 
     def log_security_threat(
@@ -1062,7 +1077,7 @@ class ObservabilityManager:
 
         return router
 
-    def instrument_function(self, operation_name: str = None) -> Any:
+    def instrument_function(self, operation_name: Optional[str] = None) -> Any:
         """Decorator to instrument functions with observability"""
 
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -1142,7 +1157,7 @@ if __name__ == "__main__":
         obs_manager = create_observability_manager("novel-engine-example")
 
         # Example function instrumentation
-        @obs_manager.instrument_function("example_operation")
+        @obs_manager.instrument_function("example_operation")  # type: ignore[misc]
         async def example_operation(name: str) -> str:
             obs_manager.logger.info(f"Processing {name}")
             await asyncio.sleep(0.1)  # Simulate work

@@ -8,10 +8,8 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.infrastructure.state_store.base import StateStore
-from src.infrastructure.state_store.config import (
-    StateKey,
-    StateStoreConfig,
-)
+from src.infrastructure.state_store.config import StateKey, StateStoreConfig
+from src.infrastructure.state_store.redis import RedisStateStore
 
 logger = structlog.get_logger(__name__)
 
@@ -231,22 +229,26 @@ class StateStoreManager:
         """
         return self._store
 
-    async def get(self, key):
+    async def get(self, key: StateKey) -> Optional[Any]:
         """Get value from store."""
         if self._store:
             return await self._store.get(key)
         return None
 
-    async def set(self, key, value, ttl=None):
+    async def set(
+        self, key: StateKey, value: Any, ttl: Optional[int] = None
+    ) -> bool:
         """Set value in store."""
         if self._store:
-            return await self._store.set(key, value, ttl)
+            result: bool = await self._store.set(key, value, ttl)
+            return result
         return False
 
-    async def delete(self, key):
+    async def delete(self, key: StateKey) -> bool:
         """Delete value from store."""
         if self._store:
-            return await self._store.delete(key)
+            result: bool = await self._store.delete(key)
+            return result
         return False
 
 

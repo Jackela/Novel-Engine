@@ -150,11 +150,11 @@ class AuthenticationManager:
                 token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM]
             )
             return payload
-        except jwt.ExpiredSignatureError:
+        except jwt.exceptions.ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired"
             )
-        except jwt.JWTError:
+        except jwt.exceptions.PyJWTError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
@@ -345,14 +345,14 @@ def _reject_query_credentials(request: Request) -> None:
 
 
 @app.get("/")
-@limiter.limit("10/minute")  # type: ignore[misc]
+@limiter.limit("10/minute")
 async def root(request: Request) -> Dict[str, str]:
     """Health check endpoint with rate limiting."""
     return {"message": "Novel Engine API is running securely!"}
 
 
 @app.get("/health")
-@limiter.limit("30/minute")  # type: ignore[misc]
+@limiter.limit("30/minute")
 async def health_check(request: Request) -> Dict[str, Any]:
     """Comprehensive health check endpoint."""
     return {
@@ -364,7 +364,7 @@ async def health_check(request: Request) -> Dict[str, Any]:
 
 
 @app.post("/auth/token")
-@limiter.limit("5/minute")  # type: ignore[misc]
+@limiter.limit("5/minute")
 async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
     """
     Authentication endpoint.
@@ -401,7 +401,7 @@ async def login(request: Request, credentials: TokenRequest) -> Dict[str, str]:
 
 
 @app.get("/characters")
-@limiter.limit("20/minute")  # type: ignore[misc]
+@limiter.limit("20/minute")
 async def get_characters(
     request: Request, current_user: str = Depends(get_current_user)
 ) -> Dict[str, list[str]]:
@@ -428,7 +428,7 @@ async def get_characters(
 
 
 @app.get("/api/characters")
-@limiter.limit("20/minute")  # type: ignore[misc]
+@limiter.limit("20/minute")
 async def get_characters_unversioned(
     request: Request, current_user: str = Depends(get_current_user)
 ) -> Dict[str, list[str]]:
@@ -438,7 +438,7 @@ async def get_characters_unversioned(
 
 
 @app.post("/simulations")
-@limiter.limit("5/minute")  # type: ignore[misc]
+@limiter.limit("5/minute")
 async def run_simulation(
     request: Request,
     simulation_request: SimulationRequest,

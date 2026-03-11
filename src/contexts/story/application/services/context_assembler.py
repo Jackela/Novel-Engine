@@ -348,7 +348,7 @@ class ContextAssembler:
             type_order = type_priority.get(node.node_type, 10)
 
             # Recency (if available in metadata)
-            recency = 0
+            recency: float = 0.0
             if prioritize_recent:
                 updated_at = node.metadata.get("updated_at")
                 if updated_at:

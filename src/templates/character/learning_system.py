@@ -4,7 +4,7 @@ Usage learning and optimization system.
 """
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, Optional
 
 import structlog
 
@@ -16,6 +16,12 @@ logger = structlog.get_logger(__name__)
 
 class LearningSystem:
     """Learns from usage patterns and optimizes template selection."""
+
+    def __init__(self) -> None:
+        """Initialize the learning system."""
+        self.enable_learning: bool = True
+        self._context_profiles: Dict[str, Any] = {}
+        self.usage_statistics: Dict[str, int] = {}
 
     async def _learn_from_context(
         self, persona_id: str, context: TemplateContext
@@ -53,7 +59,7 @@ class LearningSystem:
 
     async def _learn_from_rendering(
         self, persona_id: str, render_result: Any, context: TemplateContext
-    ):
+    ) -> None:
         """Learn enhanced patterns from rendering performance"""
         if not self.enable_learning or not hasattr(render_result, "render_time_ms"):
             return

@@ -8,7 +8,7 @@ Extracted from DirectorAgent for better modularity and maintainability.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -47,7 +47,7 @@ class TurnManager:
         self,
         registered_agents: List[PersonaAgent],
         world_state_data: Dict[str, Any],
-        log_event_callback,
+        log_event_callback: Callable[[str], None],
     ) -> Dict[str, Any]:
         """
         Execute a single simulation turn by emitting a 'TURN_START' event.
@@ -110,7 +110,7 @@ class TurnManager:
         }
 
     def handle_agent_action(
-        self, agent: PersonaAgent, action: Optional[CharacterAction], log_event_callback
+        self, agent: PersonaAgent, action: Optional[CharacterAction], log_event_callback: Callable[[str], None]
     ) -> None:
         """
         Callback to handle an agent's action after they process a turn.

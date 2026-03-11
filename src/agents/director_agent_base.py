@@ -33,13 +33,13 @@ except ImportError:
 
 # Import narrative components
 try:
-    from campaign_brief import CampaignBrief  # type: ignore[import-not-found]
+    from campaign_brief import CampaignBrief  # type: ignore[import-not-found,unused-ignore]
 
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
-    CampaignBrief = None  # type: ignore[misc,assignment]
+    CampaignBrief = None
 
-    class NarrativeActionResolver:  # type: ignore[no-redef,misc]
+    class NarrativeActionResolver:  # type: ignore[no-redef]
         def __init__(self) -> None:
             pass
 
@@ -95,7 +95,7 @@ class DirectorAgentBase:
             self._config = config
         except Exception as e:
             logger.warning("failed_to_load_configuration", error=str(e))
-            self._config = None
+            self._config = None  # type: ignore[assignment]
 
         # Core agent management system
         self.registered_agents: List[PersonaAgent] = []
@@ -217,7 +217,6 @@ class DirectorAgentBase:
             "investigation_history": [],  # chronological list of all investigations
         }
         """Dynamic world state tracker."""
-        return None  # type: ignore[return-value,unreachable]
 
     def register_agent(self, agent: PersonaAgent) -> bool:
         """
@@ -238,7 +237,9 @@ class DirectorAgentBase:
 
             # Validate the agent instance
             if not isinstance(agent, PersonaAgent):
-                logger.error("invalid_agent_type", agent_type=str(type(agent)))
+                logger.error(  # type: ignore[unreachable]
+                    "invalid_agent_type", agent_type=str(type(agent))
+                )
                 return False
 
             # Validate required methods

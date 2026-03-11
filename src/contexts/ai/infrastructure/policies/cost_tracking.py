@@ -73,7 +73,7 @@ class BudgetStatusHelper:
         Returns:
             Current budget status with analysis
         """
-        current_cost = sum(entry.total_cost for entry in entries)
+        current_cost = sum(Decimal(str(entry.total_cost)) for entry in entries)
         projected_cost = current_cost * Decimal(str(projection_factor))
 
         cost_limit = budget.cost_limit or Decimal("0")
@@ -189,9 +189,9 @@ class DefaultCostTracker(ICostTracker):
             input_tokens = sum(entry.input_tokens for entry in filtered_entries)
             output_tokens = sum(entry.output_tokens for entry in filtered_entries)
 
-            total_cost = sum(entry.total_cost for entry in filtered_entries)
-            input_cost = sum(entry.input_cost for entry in filtered_entries)
-            output_cost = sum(entry.output_cost for entry in filtered_entries)
+            total_cost = sum(Decimal(str(entry.total_cost)) for entry in filtered_entries)
+            input_cost = sum(Decimal(str(entry.input_cost)) for entry in filtered_entries)
+            output_cost = sum(Decimal(str(entry.output_cost)) for entry in filtered_entries)
 
             # Provider breakdown
             provider_breakdown: dict[Any, Any] = {}
@@ -206,7 +206,7 @@ class DefaultCostTracker(ICostTracker):
 
                 provider_breakdown[provider_name]["requests"] += 1
                 provider_breakdown[provider_name]["tokens"] += entry.total_tokens
-                provider_breakdown[provider_name]["cost"] += entry.total_cost
+                provider_breakdown[provider_name]["cost"] += Decimal(str(entry.total_cost))
 
             # Model breakdown
             model_breakdown: dict[Any, Any] = {}
@@ -221,7 +221,7 @@ class DefaultCostTracker(ICostTracker):
 
                 model_breakdown[model_name]["requests"] += 1
                 model_breakdown[model_name]["tokens"] += entry.total_tokens
-                model_breakdown[model_name]["cost"] += entry.total_cost
+                model_breakdown[model_name]["cost"] += Decimal(str(entry.total_cost))
 
             return UsageSummary(
                 period_start=start_time,
@@ -289,7 +289,7 @@ class DefaultCostTracker(ICostTracker):
                 }
 
             # Calculate daily averages
-            total_cost = sum(entry.total_cost for entry in recent_entries)
+            total_cost = sum(Decimal(str(entry.total_cost)) for entry in recent_entries)
             days_with_data = len(
                 set(entry.timestamp.date() for entry in recent_entries)
             )
@@ -311,12 +311,12 @@ class DefaultCostTracker(ICostTracker):
             mid_point = len(recent_entries) // 2
             if mid_point > 0:
                 first_half_avg = (
-                    sum(entry.total_cost for entry in recent_entries[:mid_point])
-                    / mid_point
+                    sum(Decimal(str(entry.total_cost)) for entry in recent_entries[:mid_point])
+                    / Decimal(mid_point)
                 )
                 second_half_avg = sum(
-                    entry.total_cost for entry in recent_entries[mid_point:]
-                ) / (len(recent_entries) - mid_point)
+                    Decimal(str(entry.total_cost)) for entry in recent_entries[mid_point:]
+                ) / Decimal(len(recent_entries) - mid_point)
 
                 if second_half_avg > first_half_avg * 1.1:
                     trend = "increasing"

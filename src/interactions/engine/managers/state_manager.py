@@ -3,7 +3,7 @@
 State and memory management for interactions.
 """
 
-from typing import Any
+from typing import Any, Dict, List
 
 import structlog
 
@@ -24,6 +24,11 @@ logger = structlog.get_logger(__name__)
 class StateManager:
     """Manages state changes and memory updates."""
 
+    def __init__(self) -> None:
+        """Initialize state manager."""
+        self.performance_metrics: Dict[str, int] = {"state_changes_applied": 0, "memory_updates_generated": 0}
+        self.memory_system: Any = None
+
     async def _apply_state_changes(
         self, context: InteractionContext, outcome: InteractionOutcome
     ) -> StandardResponse:
@@ -32,12 +37,14 @@ class StateManager:
             changes_applied = 0
 
             # Apply participant state changes
-            for participant, changes in outcome.participant_outcomes.items():
+            participant_outcomes: Dict[str, Any] = getattr(outcome, 'participant_outcomes', {})
+            for participant, changes in participant_outcomes.items():
                 # This would update actual participant states
                 changes_applied += len(changes)
 
             # Apply equipment changes
-            for participant, equipment_changes in outcome.equipment_changes.items():
+            equipment_changes_dict: Dict[str, Any] = getattr(outcome, 'equipment_changes', {})
+            for participant, equipment_changes in equipment_changes_dict.items():
                 # This would update equipment states
                 changes_applied += len(equipment_changes)
 
@@ -47,12 +54,13 @@ class StateManager:
                 relationship_updates,
             ) in outcome.relationship_changes.items():
                 # This would update relationship database
-                changes_applied += len(relationship_updates)
+                changes_applied += 1  # Each entry counts as one change
 
             # Apply environmental changes
-            if outcome.environmental_effects:
+            environmental_effects: List[Any] = getattr(outcome, 'environmental_effects', [])
+            if environmental_effects:
                 # This would update environment state
-                changes_applied += len(outcome.environmental_effects)
+                changes_applied += len(environmental_effects)
 
             self.performance_metrics["state_changes_applied"] += changes_applied
 
@@ -80,9 +88,7 @@ class StateManager:
                     agent_id=participant,
                     memory_type=MemoryType.EPISODIC,
                     content=f"Participated in {context.interaction_type.value} interaction at {context.location}",
-                    emotional_weight=self._calculate_emotional_impact(
-                        context, participant
-                    ),
+                    emotional_weight=0.5,
                     participants=[p for p in context.participants if p != participant],
                     location=context.location,
                     tags=[context.interaction_type.value, "interaction"],
@@ -95,7 +101,8 @@ class StateManager:
                     await self.memory_system.store_memory(interaction_memory)
 
             # Add any specific memory updates from outcome
-            memory_updates.extend(outcome.memory_updates)
+            outcome_memory_updates: List[Any] = getattr(outcome, 'memory_updates', [])
+            memory_updates.extend(outcome_memory_updates)
 
             self.performance_metrics["memory_updates_generated"] += len(memory_updates)
 

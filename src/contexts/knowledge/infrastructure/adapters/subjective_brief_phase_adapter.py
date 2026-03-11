@@ -12,7 +12,7 @@ Constitution Compliance:
 from datetime import datetime, timezone
 from typing import List
 
-from opentelemetry import trace  # type: ignore[import-not-found]
+from opentelemetry import trace
 
 from src.core.types.shared_types import CharacterId
 

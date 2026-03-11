@@ -292,7 +292,7 @@ class ChroniclerAgent:
             self._config = config
         except Exception as e:
             logger.warning("failed_to_load_configuration", error=str(e))
-            self._config = None
+            self._config = None  # type: ignore[assignment]
 
         self.output_directory = output_directory or (
             self._config.chronicler.output_directory if self._config else None

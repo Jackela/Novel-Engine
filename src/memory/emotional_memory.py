@@ -125,11 +125,22 @@ class EmotionalMemory:
     def _update_emotional_indices(self, emotional_memory: EmotionalMemoryItem) -> None:
         """Updates internal indices for efficient querying."""
         # This is a simplified placeholder for a more complex indexing system.
-        category = emotional_memory._derive_emotional_tags()[0]
-        self._valence_index[category].append(emotional_memory.memory_item.memory_id)
+        tags = emotional_memory._derive_emotional_tags()
+        if tags:
+            category = tags[0]
+            # Map string category to EmotionalValence enum
+            valence_map = {
+                "very_negative": EmotionalValence.VERY_NEGATIVE,
+                "negative": EmotionalValence.NEGATIVE,
+                "neutral": EmotionalValence.NEUTRAL,
+                "positive": EmotionalValence.POSITIVE,
+                "very_positive": EmotionalValence.VERY_POSITIVE,
+            }
+            valence = valence_map.get(category, EmotionalValence.NEUTRAL)
+            self._valence_index[valence].append(emotional_memory.memory_item.memory_id)
 
 
-async def test_emotional_memory():
+async def test_emotional_memory() -> None:
     """Tests the emotional memory system."""
     logger.info("Testing Emotional Memory System...")
     db = ContextDatabase(":memory:")
@@ -139,7 +150,7 @@ async def test_emotional_memory():
 
     test_memory = MemoryItem(
         agent_id="test_agent",
-        memory_type=MemoryType.OBSERVATION,
+        memory_type=MemoryType.EPISODIC,  # OBSERVATION does not exist
         content="A beautiful sunset.",
     )
     await memory_system.store_emotional_experience(test_memory, 0.8, 0.4)

@@ -50,7 +50,7 @@ class VersionInfo:
 
     def __post_init__(self) -> None:
         if self.breaking_changes is None:
-            self.breaking_changes = []
+            self.breaking_changes: list[str] = []
 
 
 class APIVersionRegistry:

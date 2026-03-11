@@ -193,7 +193,7 @@ class NegotiationResponse(BaseModel):
 class EmergentNarrativeAPI:
     """API endpoints for EmergentNarrativeEngine functionality."""
 
-    def __init__(self, orchestrator=None) -> None:
+    def __init__(self, orchestrator: Any = None) -> None:
         self.orchestrator = orchestrator
         self.emergent_narrative_engine = None
 
@@ -210,7 +210,7 @@ class EmergentNarrativeAPI:
             request: EmergentNarrativeRequest,
             current_user: Dict = Depends(get_current_user),
             _: Any = Depends(require_permission(Permission.NARRATIVE_GENERATE)),
-        ):
+        ) -> StandardResponse[EmergentNarrativeData]:
             try:
                 if (
                     not self.orchestrator
@@ -274,7 +274,7 @@ class EmergentNarrativeAPI:
             request: NarrativeBuildRequest,
             current_user: Dict = Depends(get_current_user),
             _: Any = Depends(require_permission(Permission.NARRATIVE_BUILD)),
-        ):
+        ) -> StandardResponse[EmergentNarrativeData]:
             try:
                 if (
                     not self.orchestrator
@@ -338,7 +338,7 @@ class EmergentNarrativeAPI:
             request_params: CausalGraphRequest = Depends(),
             current_user: Dict = Depends(get_current_user),
             _: Any = Depends(require_permission(Permission.CAUSALITY_READ)),
-        ):
+        ) -> StandardResponse[CausalGraphData]:
             try:
                 if not self.orchestrator or not hasattr(self.orchestrator, "director"):
                     raise HTTPException(
@@ -395,7 +395,7 @@ class EmergentNarrativeAPI:
             ),
             current_user: Dict = Depends(get_current_user),
             _: Any = Depends(require_permission(Permission.NARRATIVE_READ)),
-        ):
+        ) -> StandardResponse[EmergentNarrativeData]:
             try:
                 if (
                     not self.orchestrator
@@ -445,6 +445,6 @@ class EmergentNarrativeAPI:
                 raise HTTPException(status_code=500, detail="Internal server error")
 
 
-def create_emergent_narrative_api(orchestrator=None) -> EmergentNarrativeAPI:
+def create_emergent_narrative_api(orchestrator: Any = None) -> EmergentNarrativeAPI:
     """Factory function to create EmergentNarrativeAPI instance."""
     return EmergentNarrativeAPI(orchestrator)

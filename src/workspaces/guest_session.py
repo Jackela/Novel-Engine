@@ -10,7 +10,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Union
 
 import jwt
 
@@ -172,11 +172,12 @@ class GuestSessionManager:
             "iat": int(now.timestamp()),
             "exp": int((now + timedelta(seconds=_ttl_seconds())).timestamp()),
         }
-        raw_token = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
+        raw_token: Union[str, bytes] = jwt.encode(payload, self._secret_key, algorithm=self._algorithm)
         # Handle both bytes and str return types from jwt.encode (version dependent)
-        token_str: str = (
-            raw_token.decode("utf-8") if isinstance(raw_token, bytes) else raw_token
-        )  # type: ignore[union-attr]
+        if isinstance(raw_token, bytes):
+            token_str = raw_token.decode("utf-8")
+        else:
+            token_str = raw_token
         return _assert_safe_cookie_value(token_str)
 
     def resolve_or_create(self, token: Optional[str]) -> GuestSessionResult:

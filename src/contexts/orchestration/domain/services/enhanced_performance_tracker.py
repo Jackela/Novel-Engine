@@ -435,7 +435,7 @@ class EnhancedPerformanceTracker(PerformanceTracker):
             Business KPI summary with core metrics
         """
         if time_window is None:
-            time_window = timedelta(hours=1)
+            time_window = timedelta(hours=1)  # type: ignore[unreachable]
 
         cutoff_time = datetime.now() - time_window
 

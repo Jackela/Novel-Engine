@@ -24,7 +24,7 @@ from threading import RLock
 from typing import Callable, Generic, Hashable, Optional, TypeVar
 
 import structlog
-from cachetools import TTLCache
+from cachetools import TTLCache  # type: ignore[import-untyped]
 
 logger = structlog.get_logger(__name__)
 

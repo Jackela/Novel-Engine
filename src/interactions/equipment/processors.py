@@ -3,7 +3,7 @@
 Equipment category processors for usage tracking.
 """
 
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 import structlog
 
@@ -18,13 +18,13 @@ class EquipmentProcessorRegistry:
     """Registry for category-specific equipment processors."""
 
     def __init__(self) -> None:
-        self.processors = {}
+        self.processors: Dict[EquipmentCategory, Callable[..., Any]] = {}
 
-    def register_processor(self, category: EquipmentCategory, processor_func) -> None:
+    def register_processor(self, category: EquipmentCategory, processor_func: Callable[..., Any]) -> None:
         """Register a processor for a specific category."""
         self.processors[category] = processor_func
 
-    def get_processor(self, category: EquipmentCategory) -> None:
+    def get_processor(self, category: EquipmentCategory) -> Optional[Callable[..., Any]]:
         """Get the processor for a category."""
         return self.processors.get(category)
 
@@ -34,7 +34,7 @@ class EquipmentProcessorRegistry:
         """Process enhanced weapon usage with combat effectiveness analysis"""
         effects: list[Any] = []
         # Simulate enhanced weapon effects
-        weapon_type = equipment.base_equipment.properties.get("weapon_type", "melee")
+        weapon_type = getattr(equipment.base_equipment, 'properties', {}).get("weapon_type", "melee")
         if weapon_type == "ranged":
             ammo_used = usage_context.get("shots_fired", 10)
             effects.append(f"Ammunition consumed: {ammo_used} rounds")
@@ -131,15 +131,15 @@ class EquipmentProcessorRegistry:
 
     # Placeholder implementations for other categories
     async def _process_consumable_usage(
-        self, equipment, usage_context, duration
-    ) -> None:
+        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+    ) -> StandardResponse:
         """Process enhanced consumable usage with depletion tracking"""
         quantity_used = usage_context.get("quantity_used", 1)
-        effects = [f"Consumable used: {quantity_used} units"]
+        effects: list[Any] = [f"Consumable used: {quantity_used} units"]
 
         # Blessed consumable depletion
         remaining = (
-            equipment.base_equipment.properties.get("quantity", 1) - quantity_used
+            getattr(equipment.base_equipment, 'properties', {}).get("quantity", 1) - quantity_used
         )
         if remaining <= 0:
             equipment.current_status = EquipmentStatus.DESTROYED  # Consumed
@@ -147,37 +147,37 @@ class EquipmentProcessorRegistry:
 
         return StandardResponse(success=True, data={"effects": effects})
 
-    async def _process_augmetic_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_augmetic_usage(self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int) -> StandardResponse:
         return StandardResponse(
             success=True, data={"effects": ["Augmetic function optimal"]}
         )
 
-    async def _process_relic_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_relic_usage(self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int) -> StandardResponse:
         return StandardResponse(
             success=True,
             data={"effects": ["Sacred relic activated", "system core pleased"]},
         )
 
     async def _process_transport_usage(
-        self, equipment, usage_context, duration
-    ) -> None:
+        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+    ) -> StandardResponse:
         return StandardResponse(
             success=True, data={"effects": ["Transport operational"]}
         )
 
     async def _process_communication_usage(
-        self, equipment, usage_context, duration
-    ) -> None:
+        self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int
+    ) -> StandardResponse:
         return StandardResponse(
             success=True, data={"effects": ["Communication established"]}
         )
 
-    async def _process_medical_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_medical_usage(self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int) -> StandardResponse:
         return StandardResponse(
             success=True, data={"effects": ["Medical assistance provided"]}
         )
 
-    async def _process_sensor_usage(self, equipment, usage_context, duration) -> None:
+    async def _process_sensor_usage(self, equipment: DynamicEquipment, usage_context: Dict[str, Any], duration: int) -> StandardResponse:
         return StandardResponse(
             success=True, data={"effects": ["Sensor data acquired"]}
         )

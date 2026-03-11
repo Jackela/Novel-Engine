@@ -155,11 +155,13 @@ class LLMCoordinator:
                     self._waiters_count.get(cache_key, 0) + 1
                 )
 
-                async def _await_and_callback():
+                async def _await_and_callback(
+                    _fut: asyncio.Future = fut, _cb: Optional[Callable[..., Any]] = callback
+                ) -> None:
                     try:
-                        res = await fut
-                        if callback:
-                            await callback(res)
+                        res = await _fut
+                        if _cb:
+                            await _cb(res)
                     except Exception:
                         self.logger.debug(
                             "Single-flight callback failed", exc_info=True
@@ -306,22 +308,6 @@ class LLMCoordinator:
 
             llm_service = get_llm_service()
 
-            # Convert to LLM service request format
-            llm_request = LLMRequest(
-                prompt=str(request.content.get("prompt", "")),
-                response_format=(
-                    ResponseFormat.JSON
-                    if request.content.get("json_mode")
-                    else ResponseFormat.TEXT
-                ),
-                max_tokens=request.content.get("max_tokens", 150),
-                temperature=request.content.get("temperature", 0.7),
-                metadata={
-                    "agent_id": request.agent_id,
-                    "request_type": request.request_type,
-                },
-            )
-
             # Single-flight key setup
             cache_key = self._generate_cache_key(request)
             fut: Optional[asyncio.Future] = None
@@ -331,13 +317,19 @@ class LLMCoordinator:
                 self._waiters_count[cache_key] = self._waiters_count.get(cache_key, 0)
 
             # Make request
-            response = await llm_service.generate_response(llm_request)
+            from src.core.llm_service import LLMRequest
+
+            llm_req = LLMRequest(prompt=str(request.content.get("prompt", "")))
+            response_result = llm_service.generate(llm_req)
+            response = await response_result
+            if not hasattr(response, 'content'):
+                raise RuntimeError("LLM request failed")
 
             result = {
                 "request_id": request.request_id,
                 "agent_id": request.agent_id,
                 "response": response.content,
-                "usage": response.usage,
+                "usage": getattr(response, 'usage', {}),
                 "success": True,
             }
 

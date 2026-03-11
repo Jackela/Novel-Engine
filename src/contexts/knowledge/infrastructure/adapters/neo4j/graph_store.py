@@ -444,7 +444,7 @@ class Neo4jGraphStore(IGraphStore):
     ) -> CliqueResult:
         """Find all cliques in the graph."""
         try:
-            import networkx as nx  # type: ignore[import-untyped]
+            import networkx as nx
         except ImportError:
             raise GraphStoreError(
                 "networkx package is required for clique detection",

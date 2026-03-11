@@ -21,7 +21,7 @@ logger = structlog.get_logger(__name__)
 class EnhancedDocumentationSystem:
     """Enhanced documentation system with Context7 integration."""
 
-    def __init__(self, app: FastAPI, context7_api=None) -> None:
+    def __init__(self, app: FastAPI, context7_api: Any = None) -> None:
         self.app = app
         self.context7_api = context7_api
         self.template_env = self._setup_templates()
@@ -618,7 +618,7 @@ console.log(data);"""
                 enhanced_endpoints.append(endpoint_with_examples)
 
             template = self.template_env.get_template("enhanced_docs.html")
-            return template.render(
+            result: str = template.render(
                 title="Novel Engine API Documentation",
                 description="Comprehensive API documentation with Context7-powered examples",
                 version="1.1.0",
@@ -626,6 +626,7 @@ console.log(data);"""
                 endpoints=enhanced_endpoints,
                 features=self._api_inventory["features"],
             )
+            return result
 
         except Exception as e:
             logger.error("Failed to generate enhanced documentation: %s", e)
@@ -661,21 +662,21 @@ console.log(data);"""
         """Setup enhanced documentation routes."""
 
         @app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
-        async def enhanced_docs():
+        async def enhanced_docs() -> str:
             """Enhanced interactive documentation."""
             return await self.generate_enhanced_documentation()
 
         @app.get(
             "/api/documentation", response_class=HTMLResponse, include_in_schema=False
         )
-        async def api_documentation():
+        async def api_documentation() -> str:
             """API documentation endpoint."""
             return await self.generate_enhanced_documentation()
 
         @app.get("/api/postman/collection")
-        async def get_postman_collection():
+        async def get_postman_collection() -> JSONResponse:
             """Get Postman collection for API testing."""
-            collection = {
+            collection: dict[str, Any] = {
                 "info": {
                     "name": "Novel Engine API",
                     "version": "1.1.0",

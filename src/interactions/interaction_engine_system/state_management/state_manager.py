@@ -25,7 +25,7 @@ try:
     from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 except ImportError:
     # Fallback for testing
-    class StandardResponse:
+    class StandardResponse:  # type: ignore[no-redef]
         def __init__(
             self,
             success: bool = True,
@@ -44,7 +44,7 @@ except ImportError:
         def __getitem__(self, key: Any) -> Any:
             return getattr(self, key)
 
-    class ErrorInfo:
+    class ErrorInfo:  # type: ignore[no-redef]
         def __init__(
             self, code: str = "", message: str = "", recoverable: bool = True
         ) -> None:
@@ -52,9 +52,10 @@ except ImportError:
             self.message = message
             self.recoverable = recoverable
 
-    MemoryItem = dict
+    # MemoryItem is a fallback type alias for when src.core.data_models is not available
+    MemoryItem = dict  # type: ignore[misc,assignment]
 
-    class MemoryType:
+    class MemoryType:  # type: ignore[no-redef]
         EPISODIC = "episodic"
         SEMANTIC = "semantic"
         PROCEDURAL = "procedural"
@@ -170,7 +171,7 @@ class StateManager:
                 f"Updating states for interaction: {context.interaction_id}"
             )
 
-            update_results = {
+            update_results: Dict[str, List[Any]] = {
                 "character_states": [],
                 "memory_updates": [],
                 "relationship_changes": [],
@@ -181,9 +182,8 @@ class StateManager:
             character_updates = await self._update_character_states(
                 context, interaction_data
             )
-            update_results["character_states"] = character_updates.get("data", {}).get(
-                "state_updates", []
-            )
+            char_data = getattr(character_updates, 'data', None) or {}
+            update_results["character_states"] = char_data.get("state_updates", [])
 
             # Generate and store memories
             if (
@@ -193,25 +193,22 @@ class StateManager:
                 memory_updates = await self._generate_interaction_memories(
                     context, interaction_data
                 )
-                update_results["memory_updates"] = memory_updates.get("data", {}).get(
-                    "memory_updates", []
-                )
+                mem_data = getattr(memory_updates, 'data', None) or {}
+                update_results["memory_updates"] = mem_data.get("memory_updates", [])
 
             # Update relationships
             relationship_updates = await self._update_relationships(
                 context, interaction_data
             )
-            update_results["relationship_changes"] = relationship_updates.get(
-                "data", {}
-            ).get("relationship_changes", [])
+            rel_data = getattr(relationship_updates, 'data', None) or {}
+            update_results["relationship_changes"] = rel_data.get("relationship_changes", [])
 
             # Process emotional changes
             emotional_updates = await self._process_emotional_changes(
                 context, interaction_data
             )
-            update_results["emotional_changes"] = emotional_updates.get("data", {}).get(
-                "emotional_changes", []
-            )
+            emo_data = getattr(emotional_updates, 'data', None) or {}
+            update_results["emotional_changes"] = emo_data.get("emotional_changes", [])
 
             # Apply all updates
             application_result = await self._apply_pending_updates(
@@ -527,13 +524,14 @@ class StateManager:
                     },
                 }
 
+                associated_agents: List[str] = memory_item.get("associated_agents", []) or []  # type: ignore[assignment]
                 update = MemoryUpdate(
                     agent_id=participant,
-                    memory_item=memory_item,
-                    memory_type=MemoryType.EPISODIC,
-                    significance=memory_item["significance"],
-                    associated_agents=memory_item["associated_agents"],
-                    emotional_weight=memory_item["emotional_weight"],
+                    memory_item=memory_item,  # type: ignore[arg-type]
+                    memory_type=MemoryType.EPISODIC,  # type: ignore[arg-type]
+                    significance=float(memory_item.get("significance", 0.5) or 0.5),  # type: ignore[arg-type]
+                    associated_agents=list(associated_agents),
+                    emotional_weight=float(memory_item.get("emotional_weight", 0.0) or 0.0),  # type: ignore[arg-type]
                 )
 
                 memory_updates.append(update)
@@ -759,11 +757,9 @@ class StateManager:
         self, agent_id: str, interaction_data: Dict[str, Any]
     ) -> float:
         """Calculate emotional weight for memory."""
-        return (
-            interaction_data.get("emotional_impacts", {})
-            .get(agent_id, {})
-            .get("mood_change", 0.0)
-        )
+        emotional_impacts: Dict[str, Any] = interaction_data.get("emotional_impacts", {})
+        agent_impacts: Dict[str, Any] = emotional_impacts.get(agent_id, {})
+        return float(agent_impacts.get("mood_change", 0.0) or 0.0)
 
     def _calculate_memory_significance(
         self,
@@ -782,7 +778,7 @@ class StateManager:
     ) -> Optional[MemoryItem]:
         """Create episodic memory item."""
         try:
-            return {
+            result: Dict[str, Any] = {
                 "memory_id": f"{context.interaction_id}_{agent_id}_episodic",
                 "agent_id": agent_id,
                 "memory_type": MemoryType.EPISODIC,
@@ -794,6 +790,7 @@ class StateManager:
                     agent_id, context, interaction_data
                 ),
             }
+            return result  # type: ignore[return-value]
         except Exception as e:
             self.logger.error(f"Episodic memory creation failed: {e}")
             return None
@@ -803,7 +800,7 @@ class StateManager:
     ) -> Optional[MemoryItem]:
         """Create semantic memory item."""
         try:
-            return {
+            result: Dict[str, Any] = {
                 "memory_id": f"{context.interaction_id}_semantic",
                 "memory_type": MemoryType.SEMANTIC,
                 "content": f"Knowledge about {context.interaction_type.value} interactions",
@@ -813,6 +810,7 @@ class StateManager:
                     context, interaction_data
                 ),
             }
+            return result  # type: ignore[return-value]
         except Exception as e:
             self.logger.error(f"Semantic memory creation failed: {e}")
             return None
@@ -825,16 +823,17 @@ class StateManager:
     ) -> Optional[MemoryItem]:
         """Create procedural memory item."""
         try:
-            return {
+            result: Dict[str, Any] = {
                 "memory_id": f"{context.interaction_id}_{agent_id}_procedural",
                 "agent_id": agent_id,
-                "memory_type": MemoryType.PROCEDURAL,
+                "memory_type": MemoryType.PROCEDURAL,  # type: ignore[attr-defined]
                 "content": f"Skills used in {context.interaction_type.value}",
                 "timestamp": datetime.now(),
                 "significance": self._calculate_memory_significance(
                     agent_id, context, interaction_data
                 ),
             }
+            return result  # type: ignore[return-value]
         except Exception as e:
             self.logger.error(f"Procedural memory creation failed: {e}")
             return None

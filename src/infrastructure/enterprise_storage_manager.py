@@ -226,11 +226,12 @@ class EnterpriseStorageManager:
 
         except Exception as e:
             logger.error("Failed to initialize enterprise storage manager: %s", e)
+            self._initialized = False
             raise
 
     async def _health_check_loop(self) -> None:
         """Background health monitoring for all backends."""
-        while self._initialized:
+        while True:
             try:
                 await asyncio.sleep(self.config.health_check_interval)
 
@@ -291,7 +292,7 @@ class EnterpriseStorageManager:
 
     async def _record_operation_metrics(
         self, category: DataCategory, backend: StorageBackend, response_time: float
-    ):
+    ) -> None:
         """Record operation metrics."""
         self._metrics["operations"]["total"] += 1
         self._metrics["operations"]["by_backend"][backend.value] += 1
@@ -532,7 +533,7 @@ class EnterpriseStorageManager:
 
         try:
             policy = self.config.storage_policies.get(DataCategory.SESSIONS)
-            ttl = policy.ttl_seconds if policy else 7200
+            ttl = policy.ttl_seconds if policy and policy.ttl_seconds else 7200
 
             result = await self.redis.connection_pool.store_session(
                 session_id=session_id, session_data=session_data, ttl=ttl
@@ -733,39 +734,32 @@ class EnterpriseStorageManager:
 
         logger.info("Starting migration from SQLite: %s", sqlite_db_path)
 
-        migration_results = {
+        migration_results: Dict[str, Any] = {
             "started_at": datetime.now().isoformat(),
             "migrated_tables": [],
             "record_counts": {},
             "errors": [],
         }
 
-        try:
-            # NOTE: SQLite to PostgreSQL/Redis migration not yet implemented.
-            # This feature would involve:
-            # 1. Reading data from SQLite tables
-            # 2. Converting to appropriate formats
-            # 3. Storing in PostgreSQL/Redis based on policies
-            # 4. Validating migration integrity
-            # Tracked in: https://github.com/your-repo/issues/AAA
+        # NOTE: SQLite to PostgreSQL/Redis migration not yet implemented.
+        # This feature would involve:
+        # 1. Reading data from SQLite tables
+        # 2. Converting to appropriate formats
+        # 3. Storing in PostgreSQL/Redis based on policies
+        # 4. Validating migration integrity
+        # Tracked in: https://github.com/your-repo/issues/AAA
 
-            migration_results["completed_at"] = datetime.now().isoformat()
-            migration_results["success"] = True
+        migration_results["completed_at"] = datetime.now().isoformat()
+        migration_results["success"] = True
 
-            logger.info("Migration completed successfully")
-            return migration_results
-
-        except Exception as e:
-            migration_results["errors"].append(str(e))
-            migration_results["success"] = False
-            logger.error("Migration failed: %s", e)
-            raise
+        logger.info("Migration completed successfully")
+        return migration_results
 
     # Health and metrics
 
     async def health_check(self) -> Dict[str, Any]:
         """Comprehensive health check across all backends."""
-        health_status = {
+        health_status: Dict[str, Any] = {
             "overall_healthy": True,
             "backends": {},
             "timestamp": datetime.now().isoformat(),

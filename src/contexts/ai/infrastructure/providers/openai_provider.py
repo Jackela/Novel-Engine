@@ -125,9 +125,9 @@ class OpenAIProvider(ILLMProvider):
                 estimated_tokens, request.max_tokens or 100
             )
 
-            if budget.cost_limit and estimated_cost > (
-                budget.cost_limit - budget.accumulated_cost
-            ):
+            acc_cost = budget.accumulated_cost or Decimal("0")
+            cost_lim = budget.cost_limit or Decimal("0")
+            if cost_lim > 0 and estimated_cost > (cost_lim - acc_cost):
                 return LLMResponse.create_error(
                     request_id=request.request_id,
                     status=LLMResponseStatus.QUOTA_EXCEEDED,
@@ -176,7 +176,7 @@ class OpenAIProvider(ILLMProvider):
                 error_details=f"Unexpected error: {str(e)}",
             )
 
-    async def generate_stream_async(
+    def generate_stream_async(
         self, request: LLMRequest, budget: Optional[TokenBudget] = None
     ) -> AsyncIterator[str]:
         """

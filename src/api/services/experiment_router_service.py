@@ -61,7 +61,7 @@ def _sanitize_dict_for_json(data: dict[str, Any]) -> dict[str, Any]:
     Returns:
         Sanitized dictionary safe for JSON encoding
     """
-    result: dict[Any, Any] = {}
+    result: dict[str, Any] = {}
     for key, value in data.items():
         if isinstance(value, dict):
             result[key] = _sanitize_dict_for_json(value)

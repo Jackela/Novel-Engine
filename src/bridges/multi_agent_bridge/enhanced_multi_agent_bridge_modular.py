@@ -7,8 +7,9 @@ Maintains full backward compatibility while providing enterprise-grade modularit
 """
 
 import logging
+import asyncio
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 
 import structlog
 
@@ -76,8 +77,8 @@ class EnhancedMultiAgentBridge:
 
         # Integration state
         self._is_initialized = False
-        self._integration_stats = {
-            "initialization_time": None,
+        self._integration_stats: Dict[str, Any] = {
+            "initialization_time": 0.0,
             "component_status": {},
             "total_turns_processed": 0,
             "successful_coordinations": 0,
@@ -105,18 +106,20 @@ class EnhancedMultiAgentBridge:
             )
 
             # LLM batch processor
+            llm_logger = getattr(self.logger, "bind", lambda **kwargs: self.logger)(component="llm_processor")
             self.llm_processor = LLMBatchProcessor(
                 cost_tracker=self.cost_tracker,
                 performance_budget=self.performance_budget,
                 max_batch_size=self.config.max_batch_size,
                 batch_timeout_ms=self.config.batch_timeout_ms,
-                logger=self.logger.bind(component="llm_processor"),
+                logger=llm_logger,
             )
 
             # Dialogue manager
+            dialogue_logger = getattr(self.logger, "bind", lambda **kwargs: self.logger)(component="dialogue")
             self.dialogue_manager = DialogueManager(
                 llm_processor=self.llm_processor,
-                logger=self.logger.bind(component="dialogue"),
+                logger=dialogue_logger,
             )
 
             # Performance metrics
@@ -154,9 +157,9 @@ class EnhancedMultiAgentBridge:
             # Initialize AI orchestrator if available
 
             self._is_initialized = True
-            self._integration_stats["initialization_time"] = (
-                datetime.now() - start_time
-            ).total_seconds()
+            self._integration_stats["initialization_time"] = float(
+                (datetime.now() - start_time).total_seconds()
+            )
 
             self.logger.info("AI systems initialization completed successfully")
 
@@ -228,10 +231,14 @@ class EnhancedMultiAgentBridge:
                 dialogue_results.append(dialogue_result)
 
             # Run base simulation turn if director agent is available
-            base_turn_result: dict[Any, Any] = {}
+            base_turn_result: Dict[str, Any] = {}
             if self.director_agent and hasattr(self.director_agent, "run_turn"):
                 try:
-                    base_turn_result = await self.director_agent.run_turn(turn_data)
+                    result = self.director_agent.run_turn(turn_data)  # type: ignore[call-arg]
+                    if asyncio.iscoroutine(result):
+                        base_turn_result = await result
+                    else:
+                        base_turn_result = result
                 except Exception as e:
                     self.logger.warning(f"Base turn execution failed: {e}")
                     base_turn_result = {"error": str(e)}
@@ -267,8 +274,8 @@ class EnhancedMultiAgentBridge:
             )
 
             # Update integration stats
-            self._integration_stats["total_turns_processed"] += 1
-            self._integration_stats["successful_coordinations"] += coordination_count
+            self._integration_stats["total_turns_processed"] = self._integration_stats.get("total_turns_processed", 0) + 1
+            self._integration_stats["successful_coordinations"] = self._integration_stats.get("successful_coordinations", 0) + coordination_count
 
             total_time = (datetime.now() - turn_start).total_seconds()
             self.logger.info(
@@ -298,7 +305,7 @@ class EnhancedMultiAgentBridge:
             return {
                 "success": False,
                 "error": str(e),
-                "turn_number": turn_number if "turn_number" in locals() else 0,
+                "turn_number": turn_data.get("turn_number", 0) if turn_data else 0,
             }
 
     async def initiate_agent_dialogue(
@@ -422,11 +429,36 @@ class EnhancedMultiAgentBridge:
     ) -> EnhancedWorldState:
         """Prepare enhanced world state with coordination data."""
         try:
+            # Get active dialogues as list of AgentDialogue objects
+            active_dialogues_data = self.dialogue_manager.get_active_dialogues()
+            # Convert dict representations to AgentDialogue objects if needed
+            active_dialogues: list[Any] = []
+            for d in active_dialogues_data:
+                if isinstance(d, dict):
+                    from ..core.types import AgentDialogue, DialogueState, CommunicationType
+                    from datetime import datetime as dt
+                    dialogue = AgentDialogue(
+                        dialogue_id=d.get("dialogue_id", ""),
+                        communication_type=CommunicationType(d.get("communication_type", "dialogue")),
+                        participants=d.get("participants", []),
+                        initiator=d.get("initiator", ""),
+                        state=DialogueState(d.get("state", "initiating")),
+                        created_at=dt.fromisoformat(d["created_at"]) if isinstance(d.get("created_at"), str) else d.get("created_at", dt.now()),
+                        max_exchanges=d.get("max_exchanges", 3),
+                        current_exchange=d.get("current_exchange", 0),
+                        context=d.get("context", {}),
+                        messages=d.get("messages", []),
+                        resolution=d.get("resolution"),
+                    )
+                    active_dialogues.append(dialogue)
+                else:
+                    active_dialogues.append(d)  # type: ignore[unreachable]
+
             return EnhancedWorldState(
                 turn_number=turn_number,
                 base_world_state={},  # Would be populated from director agent
                 agent_positions={agent_id: {} for agent_id in self._agents.keys()},
-                active_dialogues=self.dialogue_manager.get_active_dialogues(),
+                active_dialogues=active_dialogues,
                 performance_metrics=self.performance_metrics.get_comprehensive_metrics(),
             )
         except Exception as e:
@@ -542,9 +574,10 @@ class EnhancedMultiAgentBridge:
         """Calculate coordination score for an agent."""
         try:
             # Simple coordination score based on participation
-            interactions = self.performance_metrics._coordination_stats[
+            interactions_raw = self.performance_metrics._coordination_stats[
                 "agent_interactions"
             ]
+            interactions = cast(Dict[str, int], interactions_raw)
             agent_interactions = interactions.get(agent_id, 0)
             total_interactions = sum(interactions.values())
 
@@ -570,7 +603,7 @@ class EnhancedMultiAgentBridge:
 
     # Backward compatibility methods
 
-    def __getattr__(self, name: str) -> None:
+    def __getattr__(self, name: str) -> Any:
         """Provide backward compatibility for legacy method calls."""
         # Common legacy method mappings
         legacy_mappings = {

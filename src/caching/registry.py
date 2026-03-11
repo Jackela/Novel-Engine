@@ -7,7 +7,7 @@ invalidation operations without preventing garbage collection.
 from __future__ import annotations
 
 import weakref
-from typing import Sequence
+from typing import Any, Sequence
 
 from src.metrics.global_metrics import metrics as global_metrics
 
@@ -15,6 +15,7 @@ from .exact_cache import ExactCache
 from .semantic_cache_adapter import SemanticCacheBucketed
 
 _exact_caches: "weakref.WeakSet[ExactCache]" = weakref.WeakSet()
+
 _semantic_caches: "weakref.WeakSet[SemanticCacheBucketed]" = weakref.WeakSet()
 
 
@@ -27,7 +28,7 @@ def register_exact(cache: ExactCache) -> None:
     _exact_caches.add(cache)
 
 
-def register_semantic(cache: SemanticCacheBucketed) -> None:
+def register_semantic(cache: "SemanticCacheBucketed") -> None:
     """Register a semantic cache for global invalidation.
 
     Args:

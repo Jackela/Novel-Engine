@@ -98,7 +98,7 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
         serializable_errors = []
         for error in exc.errors():
             # Convert each error dict, handling non-serializable values
-            serializable_error = {}
+            serializable_error: dict[str, Any] = {}
             for key, value in error.items():
                 if isinstance(value, Exception):
                     # Convert exception to string
@@ -116,12 +116,13 @@ def install_error_handlers(app: FastAPI, *, debug: bool = False) -> None:
                     serializable_error[key] = value
             serializable_errors.append(serializable_error)
 
+        extra: dict[str, Any] = {"fields": serializable_errors}
         return JSONResponse(
             status_code=422,
             content=_envelope(
                 status_code=422,
                 detail="Request validation failed.",
-                extra={"fields": serializable_errors},
+                extra=extra,
             ),
         )
 
