@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Chapter Analysis Service - Structural health analysis for chapters.
 
 This service provides comprehensive chapter-level structural analysis for

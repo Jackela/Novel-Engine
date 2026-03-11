@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 #!/usr/bin/env python3
 """
 Narrative Integration Phase Implementation

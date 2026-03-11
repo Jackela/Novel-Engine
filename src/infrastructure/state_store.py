@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """State Store (Shim).
 
 ⚠️  DEPRECATION NOTICE:

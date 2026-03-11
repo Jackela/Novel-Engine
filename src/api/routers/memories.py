@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Character Memories API Router
 

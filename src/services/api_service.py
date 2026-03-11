@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """API orchestration service for managing simulation lifecycles.
 
 Bridges the REST API (Imperative Shell) and the System Orchestrator

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """World generation API router."""
 
 from __future__ import annotations

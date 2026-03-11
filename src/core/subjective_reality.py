@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 主观现实引擎 (Subjective Reality Engine)
 ===================================

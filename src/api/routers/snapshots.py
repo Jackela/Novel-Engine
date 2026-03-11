@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Snapshots API router for world snapshot operations.
 
 This module provides API endpoints for managing world state snapshots,

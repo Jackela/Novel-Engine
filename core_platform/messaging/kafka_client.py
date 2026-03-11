@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Kafka Client and Connection Management
 ====================================

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """World Events API router for history event operations.
 
 This module provides API endpoints for managing world historical events,

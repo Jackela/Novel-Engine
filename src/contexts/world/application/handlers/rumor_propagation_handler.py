@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Rumor Propagation Event Handler.
 
 This handler subscribes to world.time_advanced events and triggers

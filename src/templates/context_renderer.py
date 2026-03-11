@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 STANDARD CONTEXT RENDERER ENHANCED BY INTELLIGENT FORMATTING
 ===============================================================

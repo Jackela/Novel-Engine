@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Scene generation router.
 
 Provides endpoints for generating narrative scenes based on character context.

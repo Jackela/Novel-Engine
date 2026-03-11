@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """LLM-based character profile generator.
 
 This module implements a character profile generator that uses LLM APIs

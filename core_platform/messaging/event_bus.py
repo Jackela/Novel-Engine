@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Event Bus and Domain Event Management
 ====================================

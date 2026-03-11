@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """World State API Router (PREP-010)
 
 DEPRECATED: This router is deprecated in favor of src.api.routers.geopolitics

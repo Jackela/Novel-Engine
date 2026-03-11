@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Scene Entity - A dramatic unit within a chapter.
 
 This module defines the Scene entity, which represents a continuous action

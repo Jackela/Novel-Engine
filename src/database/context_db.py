@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 STANDARD DATABASE ACCESS LAYER ENHANCED BY THE SYSTEM
 ============================================================

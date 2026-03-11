@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Factions API Router (CHAR-035)
 

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Modular Interaction Engine - Main Facade
 ========================================

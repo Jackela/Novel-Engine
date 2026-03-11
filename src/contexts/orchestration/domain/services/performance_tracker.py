@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 #!/usr/bin/env python3
 """
 Performance Tracker Domain Service

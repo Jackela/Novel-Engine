@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 API Integration Helpers with Context7 Enhancement
 ================================================

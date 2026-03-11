@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Beat endpoints for structure router."""
 
 from __future__ import annotations

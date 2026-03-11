@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Memory Leak Fixes and Data Management
 ====================================

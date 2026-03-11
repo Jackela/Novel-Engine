@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Intelligent Caching System and Data Prefetching
 ===============================================

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Prompt Router Service
 

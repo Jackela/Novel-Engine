@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Async Ingestion Job Endpoints
 

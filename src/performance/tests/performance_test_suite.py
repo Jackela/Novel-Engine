@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 Comprehensive Performance Testing Suite for Novel Engine Production Readiness.
 

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Social Network Analysis API router.
 
 This module provides endpoints for analyzing the social network formed

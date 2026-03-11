@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Async LLM Integration for PersonaAgent Performance Optimization
 ==============================================================

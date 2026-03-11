@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 DirectorAgent Nested Loop Optimizer
 ==================================

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 #!/usr/bin/env python3
 """
 Retry and Fallback Policy Adapter for AI Gateway

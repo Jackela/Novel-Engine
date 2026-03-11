@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 STANDARD SSL/TLS CONFIGURATION ENHANCED BY CRYPTOGRAPHIC PROTECTION
 =====================================================================

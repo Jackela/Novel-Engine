@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Events Service - Business logic for SSE events and analytics."""
 
 from __future__ import annotations

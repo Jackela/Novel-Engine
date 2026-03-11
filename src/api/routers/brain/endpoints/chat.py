@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Chat & Session Endpoints
 

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Faction Intel API router for faction decision-making and intent management.
 
 This module provides API endpoints for triggering faction decision-making

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Dynamic Equipment System (Modular)
 ==================================

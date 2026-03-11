@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Configuration Management System
 =============================

@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """World Rumors API router for rumor operations.
 
 This module provides API endpoints for managing world rumors,

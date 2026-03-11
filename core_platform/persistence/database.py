@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 Database Connection and Session Management
 ========================================

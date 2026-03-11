@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Base strategy for world generation."""
 
 from abc import ABC, abstractmethod

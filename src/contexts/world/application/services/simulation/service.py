@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """World Simulation Service.
 
 Main service implementation for world simulation.

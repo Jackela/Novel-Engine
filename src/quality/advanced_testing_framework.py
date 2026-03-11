@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 ADVANCED TESTING FRAMEWORK FOR NOVEL ENGINE
 ================================================

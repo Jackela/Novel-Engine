@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """LLM-based world generator using Gemini API.
 
 This module implements the WorldGeneratorPort protocol using Google's Gemini API

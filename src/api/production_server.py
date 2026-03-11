@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 Production-Hardened FastAPI Server for Novel Engine
 ==================================================

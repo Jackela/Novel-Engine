@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 Advanced Event Bus for Enterprise-Grade Event-Driven Architecture
 

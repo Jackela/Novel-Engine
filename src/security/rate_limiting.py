@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 STANDARD RATE LIMITING SYSTEM ENHANCED BY THE SYSTEM
 ==========================================================

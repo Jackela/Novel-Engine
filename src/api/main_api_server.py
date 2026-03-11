@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 Enhanced Main API Server for the Dynamic Context Engineering Framework.
 

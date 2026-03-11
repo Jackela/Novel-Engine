@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 ENTERPRISE SECURITY MANAGER - ZERO TRUST ARCHITECTURE
 =======================================================

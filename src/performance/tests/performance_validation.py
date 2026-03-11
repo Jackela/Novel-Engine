@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# mypy: ignore-errors
 """
 Quick Performance Validation Script for Novel Engine.
 

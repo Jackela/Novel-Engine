@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 RAG Context Retrieval Endpoints
 

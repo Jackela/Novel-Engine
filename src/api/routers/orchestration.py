@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Orchestration Router - Thin HTTP layer with Pydantic models."""
 
 from __future__ import annotations

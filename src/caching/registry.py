@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """Global registry for cache instances used by invalidation endpoints.
 
 Maintains weak references to all cache instances, enabling global

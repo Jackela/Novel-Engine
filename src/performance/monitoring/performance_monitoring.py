@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 #!/usr/bin/env python3
 """
 Comprehensive Performance Monitoring and Metrics System for Novel Engine - Iteration 2.

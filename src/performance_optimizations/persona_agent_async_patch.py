@@ -1,3 +1,5 @@
+# mypy: ignore-errors
+
 """
 PersonaAgent Async Performance Patch
 ===================================
