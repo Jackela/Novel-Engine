@@ -46,9 +46,9 @@ class KnowledgeFact:
         """Validates data and generates a fact ID if not provided."""
         self.confidence = max(0.0, min(1.0, self.confidence))
         if not self.fact_id:
-            fact_hash = hashlib.sha1(
-                f"{self.subject}{self.predicate}{self.object_value}".encode(),
-                usedforsecurity=False,  # nosec B324 - used for ID generation, not security
+            # Use SHA-256 for fact ID generation (not for security purposes)
+            fact_hash = hashlib.sha256(
+                f"{self.subject}{self.predicate}{self.object_value}".encode()
             ).hexdigest()[:8]
             self.fact_id = f"fact_{fact_hash}"
 
@@ -448,7 +448,9 @@ async def test_semantic_memory() -> None:
     )  # Concept includes "The"
     logger.info("concept_query_test_result", success=concept_result.success)
     # Note: regex is greedy and captures "The sky is blue. The AI can learn." as one fact
-    associated_facts = concept_result.data.get("associated_facts", []) if concept_result.data else []
+    associated_facts = (
+        concept_result.data.get("associated_facts", []) if concept_result.data else []
+    )
     assert any("The sky is" in fact for fact in associated_facts)
 
     stats = semantic_memory.get_memory_statistics()

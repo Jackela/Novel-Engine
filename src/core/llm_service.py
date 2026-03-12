@@ -432,7 +432,9 @@ class UnifiedLLMService:
 
         try:
             response_json = response.json()
-            content = cast(str, response_json["candidates"][0]["content"]["parts"][0]["text"])
+            content = cast(
+                str, response_json["candidates"][0]["content"]["parts"][0]["text"]
+            )
             return content
         except (KeyError, IndexError, TypeError) as e:
             raise Exception(f"Failed to parse Gemini response: {e}")
@@ -489,9 +491,8 @@ class UnifiedLLMService:
 
     def _generate_request_id(self, request: LLMRequest) -> str:
         """Generate unique request ID."""
-        prompt_hash = hashlib.md5(
-            request.prompt.encode(), usedforsecurity=False
-        ).hexdigest()[:8]  # nosec B324
+        # Use SHA-256 for hash generation (not for security purposes)
+        prompt_hash = hashlib.sha256(request.prompt.encode()).hexdigest()[:8]
         timestamp = int(time.time() * 1000) % 10000
         return f"{request.requester}_{prompt_hash}_{timestamp}"
 

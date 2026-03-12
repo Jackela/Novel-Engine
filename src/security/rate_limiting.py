@@ -283,9 +283,8 @@ class RateLimiter:
 
         # Include user agent for better fingerprinting
         user_agent = request.headers.get("user-agent", "")
-        user_agent_hash = hashlib.md5(
-            user_agent.encode(), usedforsecurity=False
-        ).hexdigest()[:8]  # nosec B324
+        # Use SHA-256 for user agent hashing (not for security purposes)
+        user_agent_hash = hashlib.sha256(user_agent.encode()).hexdigest()[:8]
 
         return f"{client_ip}:{user_agent_hash}"
 
