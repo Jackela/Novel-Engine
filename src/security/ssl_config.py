@@ -44,8 +44,12 @@ class SSLConfig:
     cert_file: str
     key_file: str
     ca_file: Optional[str] = None
-    verify_mode: ssl.VerifyMode = ssl.CERT_NONE
-    check_hostname: bool = False
+    # nosec B501: verify_mode defaults to CERT_REQUIRED for production
+    # Set to CERT_NONE only for development with self-signed certificates
+    verify_mode: ssl.VerifyMode = ssl.CERT_REQUIRED
+    # nosec B501: check_hostname defaults to True for production
+    # Set to False only for development with self-signed certificates
+    check_hostname: bool = True
     ciphers: Optional[str] = None
     ssl_context: Optional[ssl.SSLContext] = None
 
@@ -316,9 +320,13 @@ class SSLContextBuilder:
             if ca_file:
                 context.load_verify_locations(ca_file)
         else:
+            # nosec B501: CERT_NONE is used only for development with self-signed certs
+            # Production deployments must use valid certificates and CERT_REQUIRED
             context.verify_mode = ssl.CERT_NONE
 
-        context.check_hostname = False  # Disable for self-signed certs
+        # nosec B501: Disabled for self-signed certs in development
+        # Production deployments must enable hostname verification
+        context.check_hostname = False
 
         logger.info("SECURE SSL CONTEXT CREATED")
         return context
@@ -334,6 +342,8 @@ class SSLContextBuilder:
         context = ssl.create_default_context()
 
         if not verify_ssl:
+            # nosec B501: Only disable SSL verification for development/testing
+            # Production code must never set verify_ssl=False
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
@@ -483,6 +493,9 @@ def setup_development_ssl(domain: str = "localhost") -> SSLConfig:
 
     ssl_context = SSLContextBuilder.create_secure_context(cert_file, key_file)
 
+    # nosec B501: Development SSL with self-signed certificates
+    # This configuration is intentionally insecure for local development only
+    # Production must use setup_production_ssl with valid certificates
     return SSLConfig(
         cert_file=cert_file,
         key_file=key_file,

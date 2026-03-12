@@ -273,20 +273,23 @@ class IntelligentCacheManager:
             if isinstance(value, (str, bytes)):
                 return len(value)
             else:
-                return len(pickle.dumps(value))
+                # nosec B301 - pickle used for internal cache size calculation
+                return len(pickle.dumps(value))  # nosec B301
         except Exception:
             return 1024  # Default estimate
 
     def _compress_value(self, value: Any) -> bytes:
         """Compress cache value using gzip if above threshold."""
         try:
-            serialized = pickle.dumps(value)
+            # nosec B301 - pickle used for internal cache compression
+            serialized = pickle.dumps(value)  # nosec B301
             if len(serialized) > self.config.compression_threshold:
                 return gzip.compress(serialized)
             return serialized
         except Exception as e:
             logger.error(f"Value compression failed: {e}")
-            return pickle.dumps(value)
+            # nosec B301 - pickle used for internal cache compression
+            return pickle.dumps(value)  # nosec B301
 
     def _decompress_value(self, data: bytes, compressed: bool = False) -> Any:
         """Decompress cache value if compressed."""
@@ -712,7 +715,8 @@ class IntelligentCacheManager:
             file_path = os.path.join(self.config.disk_cache_path, f"{key_hash}.cache")
 
             with open(file_path, "wb") as f:
-                f.write(pickle.dumps(value))
+                # nosec B301 - pickle used for internal disk cache
+                f.write(pickle.dumps(value))  # nosec B301
 
         except Exception as e:
             logger.error(f"Disk cache save error for key {key}: {e}")

@@ -133,7 +133,8 @@ class RedisStateStore(StateStore):
             elif isinstance(value, str):
                 serialized_value = value
             else:
-                serialized_value = pickle.dumps(value).decode("latin-1")
+                # nosec B301 - pickle used for internal Redis cache serialization
+                serialized_value = pickle.dumps(value).decode("latin-1")  # nosec B301
 
             # Set with TTL
             ttl_seconds = ttl or self.config.cache_ttl

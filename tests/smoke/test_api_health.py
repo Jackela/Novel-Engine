@@ -1,17 +1,21 @@
 import pytest
 from fastapi.testclient import TestClient
 
-import api_server
-
 pytestmark = pytest.mark.integration
 
-client = TestClient(api_server.app)
+
+@pytest.fixture(scope="module")
+def client():
+    """延迟导入 api_server 以避免测试收集阶段初始化开销"""
+    import api_server
+
+    return TestClient(api_server.app)
 
 
 @pytest.mark.smoke
 @pytest.mark.timeout(30)
 @pytest.mark.integration
-def test_health_endpoint_reports_healthy():
+def test_health_endpoint_reports_healthy(client):
     response = client.get("/api/health")
     assert response.status_code == 200
     data = response.json()
@@ -22,7 +26,7 @@ def test_health_endpoint_reports_healthy():
 @pytest.mark.smoke
 @pytest.mark.timeout(30)
 @pytest.mark.integration
-def test_cache_metrics_endpoint_available():
+def test_cache_metrics_endpoint_available(client):
     response = client.get("/api/cache/metrics")
     assert response.status_code == 200
     payload = response.json()
@@ -33,7 +37,7 @@ def test_cache_metrics_endpoint_available():
 @pytest.mark.smoke
 @pytest.mark.timeout(30)
 @pytest.mark.integration
-def test_cache_invalidate_noops_without_tags():
+def test_cache_invalidate_noops_without_tags(client):
     response = client.post("/api/cache/invalidate", json={"all_of": []})
     assert response.status_code == 200
     assert response.json()["removed"] == 0

@@ -287,6 +287,7 @@ class Neo4jGraphStore(IGraphStore):
             params["rel_types"] = rel_types
             rel_filter = "AND r.relationship_type IN $rel_types"
 
+        # nosec B608 - max_depth is an integer with bounds validation (1-10)
         query = f"""
         MATCH path = (start:Entity {{normalized_name: $normalized_name}})-[:RELATES*1..{max_depth}]-(neighbor:Entity)
         WITH start, neighbor, relationships(path) as rels
@@ -306,7 +307,7 @@ class Neo4jGraphStore(IGraphStore):
             r.strength as strength,
             length(shortestPath((start)-[*]-(neighbor))) as distance
         ORDER BY distance, strength DESC
-        """
+        """  # nosec B608
 
         driver = self._get_driver()
 

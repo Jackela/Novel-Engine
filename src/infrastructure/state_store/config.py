@@ -96,7 +96,9 @@ class StateStoreConfig:
     postgres_host: str = "localhost"
     postgres_port: int = 5432
     postgres_user: str = "user"
-    postgres_password: str = "password"
+    # nosec B105: Default value is for development only
+    # Production must set POSTGRES_PASSWORD environment variable
+    postgres_password: str = ""
     postgres_database: str = "novel_engine"
 
     # S3 configuration
@@ -138,7 +140,9 @@ class StateStoreConfig:
             postgres_host=os.getenv("POSTGRES_HOST", "localhost"),
             postgres_port=int(os.getenv("POSTGRES_PORT", "5432")),
             postgres_user=os.getenv("POSTGRES_USER", "user"),
-            postgres_password=os.getenv("POSTGRES_PASSWORD", "password"),
+            # nosec B105: Empty default requires explicit password configuration
+            # Production deployments must set POSTGRES_PASSWORD environment variable
+            postgres_password=os.getenv("POSTGRES_PASSWORD", ""),
             postgres_database=os.getenv("POSTGRES_DB", "novel_engine"),
             aws_access_key=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_key=os.getenv("AWS_SECRET_ACCESS_KEY"),

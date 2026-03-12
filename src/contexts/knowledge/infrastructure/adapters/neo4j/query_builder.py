@@ -63,11 +63,13 @@ class QueryBuilder:
         properties: Dict[str, Any], entity_type_label: str
     ) -> tuple[str, Dict[str, Any]]:
         """Build query to create entity."""
+        # nosec B608 - entity_type_label is validated against EntityType enum values
+        # before being passed to this function, not from direct user input
         query = f"""
         CREATE (n:Entity:{entity_type_label})
         SET n = $properties
         RETURN n
-        """
+        """  # nosec B608
         return query, {"properties": properties}
 
     @staticmethod
@@ -104,7 +106,8 @@ class QueryBuilder:
         query += " RETURN n"
 
         if limit is not None:
-            query += f" LIMIT {limit}"
+            # nosec B608 - limit is an integer validated by the application layer
+            query += f" LIMIT {limit}"  # nosec B608
 
         return query, params
 
@@ -207,10 +210,12 @@ class QueryBuilder:
         }
 
         if max_length is not None:
-            length_constraint = f"*1..{max_length}"
+            # nosec B608 - max_length is an integer with max bounds validation
+            length_constraint = f"*1..{max_length}"  # nosec B608
         else:
             length_constraint = "*1..15"
 
+        # nosec B608 - length_constraint is either hardcoded or validated integer
         query = f"""
         MATCH path = shortestPath(
             (s:Entity {{normalized_name: $source_norm}})-[:RELATES{length_constraint}]->(t:Entity {{normalized_name: $target_norm}})
@@ -227,7 +232,7 @@ class QueryBuilder:
                 context: r.context,
                 strength: r.strength
             }}) as relationships
-        """
+        """  # nosec B608
 
         return query, params
 

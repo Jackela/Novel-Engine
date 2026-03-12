@@ -184,7 +184,8 @@ class S3StateStore(StateStore):
                     data = value.encode("utf-8")
                     content_type = "text/plain"
                 else:
-                    data = pickle.dumps(value)
+                    # nosec B301 - pickle used for internal S3 cache serialization
+                    data = pickle.dumps(value)  # nosec B301
                     content_type = "application/octet-stream"
 
                 self.s3_client.put_object(

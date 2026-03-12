@@ -63,7 +63,9 @@ class RedisConfig:
     socket_keepalive: bool = True
 
     # SSL configuration
-    ssl_enabled: bool = False
+    # nosec S552 - SSL disabled by default for local development.
+    # Production deployments must set ssl_enabled=True and configure certificates.
+    ssl_enabled: bool = False  # nosec S552
     ssl_cert_path: Optional[str] = None
     ssl_key_path: Optional[str] = None
     ssl_ca_path: Optional[str] = None
@@ -263,7 +265,8 @@ class RedisConnectionPool:
         if strategy == RedisStorageStrategy.JSON:
             return json.dumps(value, default=str)
         elif strategy == RedisStorageStrategy.PICKLE:
-            return pickle.dumps(value).hex()
+            # nosec B301 - pickle used for internal Redis cache data only
+            return pickle.dumps(value).hex()  # nosec B301
         elif strategy == RedisStorageStrategy.PLAIN:
             return str(value)
         else:

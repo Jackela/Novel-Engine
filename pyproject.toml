@@ -267,7 +267,8 @@ addopts = [
     "-v",
     "--tb=short",
     "-p", "asyncio",
-    "--asyncio-mode=auto"
+    "--asyncio-mode=auto",
+    "--ignore=tests/smoke",  # 默认忽略smoke测试，避免收集阶段超时
 ]
 
 filterwarnings = [

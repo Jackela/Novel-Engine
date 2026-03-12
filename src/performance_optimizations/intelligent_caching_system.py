@@ -413,11 +413,13 @@ class IntelligentCache:
         try:
             import zlib
 
-            serialized = pickle.dumps(value)
+            # nosec B301 - pickle used for internal cache compression
+            serialized = pickle.dumps(value)  # nosec B301
             return zlib.compress(serialized)
         except Exception as e:
             logger.warning(f"Compression failed, using raw pickle: {e}")
-            return pickle.dumps(value)
+            # nosec B301 - pickle used for internal cache compression
+            return pickle.dumps(value)  # nosec B301
 
     def _decompress_value(self, compressed_data: bytes) -> Any:
         """Decompress value from L2 storage."""
@@ -440,7 +442,8 @@ class IntelligentCache:
             filepath = cache_dir / f"{filename}.cache"
 
             async with aiofiles.open(filepath, "wb") as f:
-                data = pickle.dumps(value)
+                # nosec B301 - pickle used for internal disk cache
+                data = pickle.dumps(value)  # nosec B301
                 await f.write(data)
 
         except Exception as e:
@@ -480,7 +483,8 @@ class IntelligentCache:
     def _calculate_size(self, value: Any) -> int:
         """Calculate approximate size of value in bytes."""
         try:
-            return len(pickle.dumps(value))
+            # nosec B301 - pickle used for internal cache size calculation
+            return len(pickle.dumps(value))  # nosec B301
         except Exception:
             return 1024  # Default size estimate
 

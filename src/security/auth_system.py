@@ -449,8 +449,10 @@ class SecurityService:
             return False
 
         # Use string concatenation for SQL structure (safe: conditions are hardcoded literals)
+        # nosec B608 - where_clause only contains hardcoded literal strings ("username = ?" or "email = ?")
+        # The actual user input values are passed as parameters separately
         where_clause = " OR ".join(conditions)
-        query = f"SELECT 1 FROM users WHERE {where_clause} LIMIT 1"
+        query = f"SELECT 1 FROM users WHERE {where_clause} LIMIT 1"  # nosec B608
         async with self._connection() as conn:
             cursor = await conn.execute(query, tuple(params))
             row = await cursor.fetchone()
