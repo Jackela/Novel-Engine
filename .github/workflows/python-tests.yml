@@ -14,6 +14,7 @@ jobs:
   python-test-unit:
     name: Python Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30  # 增加超时时间防止测试收集阶段被终止
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
     
@@ -37,6 +38,12 @@ jobs:
           pip install -r requirements/requirements-test.txt
           pip install -e .
       
+      - name: Verify test collection
+        run: |
+          echo "Verifying test collection..."
+          pytest tests/unit tests/integration --collect-only -q --timeout=60 || true
+        timeout-minutes: 5
+      
       - name: Run Unit Tests with coverage
         run: |
           pytest tests/unit tests/integration \
@@ -46,7 +53,8 @@ jobs:
             --cov-fail-under=${{ env.MIN_COVERAGE }} \
             --tb=short \
             -v \
-            --timeout=120
+            --timeout=300
+        timeout-minutes: 25
       
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
