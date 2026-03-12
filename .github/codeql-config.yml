@@ -52,52 +52,52 @@ query-filters:
     - exclude:
           tags contain:
               - "py/ineffectual-statement"
-          path regexp: ".*/ports/.*\.py$"
+          path regexp: '.*/ports/.*\.py$'
     - exclude:
           tags contain:
               - "py/ineffectual-statement"
-          path regexp: ".*/services/narrative_stream_service\.py$"
+          path regexp: '.*/services/narrative_stream_service\.py$'
     - exclude:
           tags contain:
               - "py/ineffectual-statement"
-          path regexp: ".*/generators/character_profile_generator\.py$"
+          path regexp: '.*/generators/character_profile_generator\.py$'
     # Exclude common false positives in test files
     - exclude:
           id: py/unused-import
-          path regexp: ".*/tests/.*\.py$"
+          path regexp: '.*/tests/.*\.py$'
     - exclude:
           id: js/unused-local-variable
-          path regexp: ".*/tests/.*\.(ts|tsx|js|jsx)$"
+          path regexp: '.*/tests/.*\.(ts|tsx|js|jsx)$'
     # Exclude pickle usage in internal caching (marked with nosec)
     - exclude:
           tags contain:
               - "py/insecure-deserialization"
-          path regexp: ".*/(infrastructure|performance|performance_optimizations)/.*\.py$"
+          path regexp: '.*/(infrastructure|performance|performance_optimizations)/.*\.py$'
     # Exclude SHA1 usage where usedforsecurity=False is set
     - exclude:
           tags contain:
               - "py/weak-cryptographic-algorithm"
-          path regexp: ".*/memory/semantic_memory\.py$"
+          path regexp: '.*/memory/semantic_memory\.py$'
     # Exclude false positive SQL injection in SQLAlchemy ORM usage
     - exclude:
           tags contain:
               - "py/sql-injection"
-          path regexp: ".*/repositories/.*\.py$"
+          path regexp: '.*/repositories/.*\.py$'
     # Exclude path traversal in routers with validation
     - exclude:
           tags contain:
               - "py/path-injection"
-          path regexp: ".*/routers/(campaigns|characters)\.py$"
+          path regexp: '.*/routers/(campaigns|characters)\.py$'
     # Exclude unused imports in contexts - often used by __init__.py exports
     - exclude:
           id: py/unused-import
-          path regexp: ".*/contexts/.*\.py$"
+          path regexp: '.*/contexts/.*\.py$'
     # Exclude import errors from known type-debt files
     - exclude:
           id: py/import-own-module
-          path regexp: ".*/src/.*\.py$"
+          path regexp: '.*/src/.*\.py$'
     # Exclude incomplete parity import warnings
     - exclude:
           tags contain:
               - "py/incomplete-parity-import"
-          path regexp: ".*/src/.*\.py$"
+          path regexp: '.*/src/.*\.py$'
