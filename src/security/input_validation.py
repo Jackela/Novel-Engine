@@ -43,7 +43,7 @@ class InputType(str, Enum):
     TEXT = "text"
     USERNAME = "username"
     EMAIL = "email"
-    PASSWORD = "password"
+    PASSWORD = "password"  # nosec: B105
     URL = "url"
     FILENAME = "filename"
     JSON = "json"

@@ -10,6 +10,7 @@ and production-ready configuration for high-scale novel engine deployments.
 import asyncio
 import json
 import logging
+import re
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -18,6 +19,11 @@ from typing import Any, Dict, List, Optional
 
 import asyncpg
 import structlog
+
+
+# Valid PostgreSQL extension name pattern
+# Extension names must start with letter/underscore, contain only letters, digits, underscores, hyphens
+VALID_EXTENSION_NAME_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_-]*$')
 
 logger = structlog.get_logger(__name__)
 
@@ -144,6 +150,17 @@ class PostgreSQLConnectionPool:
             )
             raise
 
+    def _validate_extension_name(self, extension: str) -> bool:
+        """Validate PostgreSQL extension name to prevent SQL injection.
+        
+        Extension names must follow PostgreSQL identifier rules:
+        - Start with letter or underscore
+        - Contain only letters, digits, underscores, and hyphens
+        """
+        if not extension or len(extension) > 64:
+            return False
+        return bool(VALID_EXTENSION_NAME_PATTERN.match(extension))
+
     async def _initialize_extensions(self) -> None:
         """Initialize PostgreSQL extensions."""
         if not self.config.enable_extensions:
@@ -152,7 +169,17 @@ class PostgreSQLConnectionPool:
         assert self.pool is not None, "Pool not initialized"
         async with self.pool.acquire() as conn:
             for extension in self.config.enable_extensions:
+                # Validate extension name to prevent SQL injection
+                if not self._validate_extension_name(extension):
+                    logger.error(
+                        "invalid_extension_name_skipped",
+                        extension=extension,
+                        reason="Extension name contains invalid characters",
+                    )
+                    continue
+                
                 try:
+                    # Safe to use f-string after validation
                     await conn.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}"')
                     logger.debug("postgresql_extension_enabled", extension=extension)
                 except Exception as e:

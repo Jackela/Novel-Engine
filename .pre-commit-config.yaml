@@ -65,10 +65,10 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 5. CodeQL Security Quick Check (Fast - local)
-      - id: codeql-quick
-        name: 🔒 CodeQL Quick Check (Fast - Local)
-        entry: python scripts/ci-codeql-check.py
+      # 5. Full Security Analysis (Bandit + Pattern check + Dependency audit)
+      - id: security-full
+        name: 🔒 Full Security Analysis (Local - BLOCKING)
+        entry: python scripts/ci-security-full.py
         language: system
         pass_filenames: false
         stages: [pre-push]
