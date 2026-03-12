@@ -12,64 +12,57 @@ Tests cover:
 - SacredTypeValidator
 """
 
-from enum import Enum, IntEnum
-from typing import Any
+from enum import IntEnum
+
 import pytest
 
 pytestmark = pytest.mark.unit
 
 from src.core.types import (
-    # Protocols
-    BlessedSerializable,
-    ContextProvider,
-    MemoryStorable,
-    # Enums
-    SystemPriority,
-    ContextType,
-    ProcessingStage,
-    ValidationLevel,
-    CacheStrategy,
-    LogLevel,
-    DatabaseOperation,
-    TemplateType,
-    AIProvider,
-    InteractionScope,
-    EventTrigger,
     # Type aliases
     AgentID,
-    MemoryID,
-    InteractionID,
-    ContextID,
-    TemplateID,
-    EntityID,
-    TrustLevel,
-    EmotionalWeight,
-    RelevanceScore,
-    EffectivenessRating,
-    NumericValue,
-    TextValue,
-    BlessedValue,
-    ProcessingResult,
-    ValidationResult,
-    ContextResult,
-    SacredMapping,
+    AIProvider,
     BlessedList,
-    ContextData,
+    # Protocols
+    BlessedSerializable,
     BlessedTimestamp,
-    SacredDateTime,
-    ThreatLevel,
-    MoodState,
+    CacheStrategy,
+    ContextData,
+    ContextID,
+    ContextProvider,
+    ContextType,
+    DatabaseOperation,
+    EffectivenessRating,
+    EmotionalWeight,
     EquipmentState,
+    EventTrigger,
+    InteractionID,
+    InteractionScope,
+    LogLevel,
+    MemoryID,
+    MemoryStorable,
+    MoodState,
+    ProcessingStage,
     RelationshipType,
+    RelevanceScore,
     # Constants
     SacredConstants,
-    # Validation functions
-    is_valid_agent_id,
-    is_valid_trust_level,
-    is_valid_emotional_weight,
-    is_valid_relevance_score,
+    SacredDateTime,
+    SacredMapping,
     # Validator
     SacredTypeValidator,
+    # Enums
+    SystemPriority,
+    TemplateID,
+    TemplateType,
+    ThreatLevel,
+    TrustLevel,
+    ValidationLevel,
+    # Validation functions
+    is_valid_agent_id,
+    is_valid_emotional_weight,
+    is_valid_relevance_score,
+    is_valid_trust_level,
 )
 
 
@@ -300,15 +293,15 @@ class TestValidationFunctions:
         "value,expected",
         [
             ("valid_agent", True),
-            ("a" * 100, True),  # Max length
-            ("ab", True),  # Min length
-            ("a", False),  # Too short
-            ("a" * 101, False),  # Too long
-            ("", False),  # Empty
-            ("  ", False),  # Whitespace only
-            (" valid ", True),  # Valid with whitespace
-            (123, False),  # Not a string
-            (None, False),  # None
+            ("a" * 100, True),
+            ("ab", True),
+            ("a", False),
+            ("a" * 101, False),
+            ("", False),
+            ("  ", False),
+            (" valid ", True),
+            (123, False),
+            (None, False),
         ],
     )
     def test_is_valid_agent_id(self, value, expected):
@@ -323,8 +316,8 @@ class TestValidationFunctions:
             (10, True),
             (-1, False),
             (11, False),
-            (5.5, False),  # Float not accepted
-            ("5", False),  # String not accepted
+            (5.5, False),
+            ("5", False),
             (None, False),
         ],
     )
@@ -341,8 +334,8 @@ class TestValidationFunctions:
             (7.5, True),
             (-10.1, False),
             (10.1, False),
-            (5, True),  # Int accepted
-            ("5", False),  # String not accepted
+            (5, True),
+            ("5", False),
             (None, False),
         ],
     )
@@ -358,9 +351,9 @@ class TestValidationFunctions:
             (1.0, True),
             (-0.1, False),
             (1.1, False),
-            (0, True),  # Int accepted
-            (1, True),  # Int accepted
-            ("0.5", False),  # String not accepted
+            (0, True),
+            (1, True),
+            ("0.5", False),
             (None, False),
         ],
     )
@@ -403,10 +396,7 @@ class TestSacredTypeValidator:
 
     def test_validate_enum_with_invalid_enum_class(self):
         """Test validate_enum with non-enum class."""
-        # str is a special case - it has iterable members, so the validation might pass or fail
-        # depending on implementation. Just verify it doesn't crash.
         result = SacredTypeValidator.validate_enum("test", str)
-        # The result depends on implementation details, just ensure no exception
         assert isinstance(result, bool)
 
     def test_validate_protocol_with_implementation(self):
@@ -433,8 +423,6 @@ class TestLiteralTypes:
 
     def test_threat_level_values(self):
         """Test ThreatLevel literal values."""
-        # Literal types are checked by type checkers at compile time
-        # Here we just verify the variable exists
         assert ThreatLevel is not None
 
     def test_mood_state_values(self):
