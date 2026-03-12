@@ -164,7 +164,7 @@ class OllamaProvider(ILLMProvider):
                 error_details=f"Unexpected error: {str(e)}",
             )
 
-    def generate_stream_async(
+    async def generate_stream_async(
         self, request: LLMRequest, budget: Optional[TokenBudget] = None
     ) -> AsyncIterator[str]:
         """
