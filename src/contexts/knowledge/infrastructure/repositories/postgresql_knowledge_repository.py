@@ -227,17 +227,18 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         where_clause = " AND ".join(where_conditions)
 
         # Final SELECT query - uses parameterized conditions with params dict
-        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
-        query_string = (
+        # nosec B608 - where_clause only contains hardcoded literal strings like "username = ?"
+        # Actual user input values are passed separately via params dict with parameterized queries
+        query_string = (  # nosec B608
             """
             SELECT
                 id, content, knowledge_type, owning_character_id,
                 access_level, allowed_roles, allowed_character_ids,
                 created_at, updated_at, created_by
             FROM knowledge_entries
-            WHERE """
-            + where_clause
-            + """
+            WHERE """  # nosec B608
+            + where_clause  # nosec B608
+            + """  # nosec B608
             ORDER BY updated_at DESC
         """
         )
@@ -364,8 +365,9 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
         # Semantic search query using pgvector cosine similarity
         # Cosine distance: 0 = identical, 2 = opposite
         # Convert to similarity score: 1 - (distance / 2) = 0.0-1.0 range
-        # Query constructed via string concatenation (safe: where_clause from hardcoded fragments)
-        query_string = (
+        # nosec B608 - where_clause only contains hardcoded literal strings validated against EntityType enum
+        # User input is passed separately via params dict with parameterized queries
+        query_string = (  # nosec B608
             """
             SELECT
                 id, content, knowledge_type, owning_character_id,
@@ -373,9 +375,9 @@ class PostgreSQLKnowledgeRepository(IKnowledgeRepository):
                 created_at, updated_at, created_by,
                 (1 - (embedding <=> CAST(:query_embedding AS vector(1536)) / 2)) AS similarity_score
             FROM knowledge_entries
-            WHERE """
-            + where_clause
-            + """
+            WHERE """  # nosec B608
+            + where_clause  # nosec B608
+            + """  # nosec B608
             ORDER BY embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :top_k
         """

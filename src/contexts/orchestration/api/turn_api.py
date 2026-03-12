@@ -963,7 +963,7 @@ async def general_exception_handler(request: Any, exc: Exception) -> JSONRespons
 if __name__ == "__main__":
     uvicorn.run(
         "turn_api:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec B104 - dev server bind
         port=8000,
         log_level="info",
         reload=True,  # nosec B104 - dev server

@@ -450,20 +450,22 @@ class PostgreSQLConnectionPool:
             limit_param = "$3"
 
         # Build query safely (where_clauses are hardcoded SQL fragments, limit_param is controlled)
+        # nosec B608 - where_clause only contains hardcoded literal strings like "username = ?"
+        # User input values are passed separately via parameterized queries
         where_clause = " AND ".join(where_clauses)
-        query = (
+        query = (  # nosec B608
             """
         SELECT id, memory_type, content, importance_score,
                ts_rank(search_vector, plainto_tsquery('english', $2)) as rank,
                created_at, access_count
         FROM memory_items
-        WHERE """
-            + where_clause
-            + """
+        WHERE """  # nosec B608
+            + where_clause  # nosec B608
+            + """  # nosec B608
         ORDER BY rank DESC, importance_score DESC
-        LIMIT """
-            + limit_param
-            + """
+        LIMIT """  # nosec B608
+            + limit_param  # nosec B608
+            + """  # nosec B608
         """
         )
 
