@@ -25,6 +25,7 @@ import heapq
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from functools import total_ordering
 from threading import Lock
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -55,6 +56,7 @@ class OutboxStatus(Enum):
     FAILED = "failed"
 
 
+@total_ordering
 @dataclass
 class OutboxEvent:
     """

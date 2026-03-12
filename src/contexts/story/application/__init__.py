@@ -1,1 +1,0 @@
-"""Story application layer."""
