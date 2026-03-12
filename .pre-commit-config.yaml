@@ -16,11 +16,14 @@
 # TIMEOUT CONFIGURATION:
 #   export PRE_COMMIT_TIMEOUT=600  # 10 minutes for large test suites
 #
-# ⚠️ CI-ONLY CHECKS (Cannot run locally):
-#   The following checks are GitHub Actions exclusive and cannot be run in pre-push hooks:
-#   - CodeQL Security Analysis (requires GitHub's codeql-action and security-events permission)
-#   - Full Integration Test Suite (requires CI environment setup)
-#   These checks will only run in GitHub Actions after push.
+# ⚠️ LOCAL + CI CHECKS:
+#   Most checks run both locally (pre-push) and in GitHub Actions:
+#   - CodeQL Quick Check: Fast heuristic scan (local) + Full analysis (CI)
+#   - Coverage Check: Local quick check + Full CI validation
+#   - Full Integration/E2E Tests: CI only (requires environment setup)
+#
+#   Install CodeQL CLI for local security scanning:
+#   https://github.com/github/codeql-cli-binaries
 
 repos:
   # === PRE-COMMIT: Fast Checks (Every Commit) ===
@@ -62,7 +65,15 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 5. Bandit Security (High Severity)
+      # 5. CodeQL Security Quick Check (Fast - local)
+      - id: codeql-quick
+        name: 🔒 CodeQL Quick Check (Fast - Local)
+        entry: python scripts/ci-codeql-check.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # 6. Bandit Security (High Severity)
       - id: bandit-high
         name: 🔒 Bandit Security (High Severity - BLOCKING)
         entry: bandit -r src/ -ll
