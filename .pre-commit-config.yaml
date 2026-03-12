@@ -15,6 +15,12 @@
 #
 # TIMEOUT CONFIGURATION:
 #   export PRE_COMMIT_TIMEOUT=600  # 10 minutes for large test suites
+#
+# ⚠️ CI-ONLY CHECKS (Cannot run locally):
+#   The following checks are GitHub Actions exclusive and cannot be run in pre-push hooks:
+#   - CodeQL Security Analysis (requires GitHub's codeql-action and security-events permission)
+#   - Full Integration Test Suite (requires CI environment setup)
+#   These checks will only run in GitHub Actions after push.
 
 repos:
   # === PRE-COMMIT: Fast Checks (Every Commit) ===
@@ -76,6 +82,14 @@ repos:
       - id: pytest-unit
         name: 🔒 Core Unit Tests (BLOCKING)
         entry: python -m pytest tests/unit/api/ tests/unit/core/ tests/unit/contexts/ tests/contexts/ -x -q --tb=line --maxfail=5
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # 7b. Coverage Check (fast - checks core modules only)
+      - id: pytest-coverage
+        name: 🔒 Coverage Check (Fast - Core Modules)
+        entry: python -m pytest tests/unit/core/ tests/unit/api/ --cov=src/core --cov=src/api --cov-fail-under=65 -q --no-cov-on-fail --cov-report=term-missing:skip-covered
         language: system
         pass_filenames: false
         stages: [pre-push]
