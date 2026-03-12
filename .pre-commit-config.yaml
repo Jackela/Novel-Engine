@@ -64,7 +64,7 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 5. Full Smoke Tests
+      # 6. Full Smoke Tests
       - id: pytest-smoke
         name: 🔒 Smoke Tests (BLOCKING)
         entry: python -m pytest tests/smoke/ -x -q --tb=line
@@ -72,7 +72,7 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 6. Core Unit Tests
+      # 7. Core Unit Tests (matching CI)
       - id: pytest-unit
         name: 🔒 Core Unit Tests (BLOCKING)
         entry: python -m pytest tests/unit/api/ tests/unit/core/ tests/unit/contexts/ tests/contexts/ -x -q --tb=line --maxfail=5
@@ -80,7 +80,7 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 6b. Quick Test Import Check (catches SyntaxError in all test files)
+      # 8. Quick Test Import Check (catches SyntaxError in all test files)
       - id: test-import-check
         name: 🔒 Test Import Check (Fast - catches SyntaxError)
         entry: python scripts/ci-test-import-check.py
@@ -88,7 +88,7 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 7. Frontend Type Check
+      # 9. Frontend Type Check
       - id: frontend-type
         name: 🔒 Frontend Type Check (BLOCKING)
         entry: bash -c 'cd frontend && npm run typecheck'
@@ -96,7 +96,15 @@ repos:
         pass_filenames: false
         stages: [pre-push]
 
-      # 8. MyPy (WARNING only - until we reach 0)
+      # 10. Frontend Unit Tests (matching CI)
+      - id: frontend-unit
+        name: 🔒 Frontend Unit Tests (BLOCKING)
+        entry: bash -c 'cd frontend && npm run test:unit'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # 11. MyPy (WARNING only - until we reach 0)
       - id: mypy-warning
         name: ⚠️  MyPy Type Check (WARNING - NOT BLOCKING)
         entry: python scripts/ci-mypy-warning.py
@@ -130,6 +138,8 @@ fail_fast: true
 # Note: Hooks with explicit 'stages' will only run in those stages
 default_stages: [pre-commit, pre-push]
 
-# CI configuration
+# CI configuration - DO NOT SKIP hooks that are required for CI validation
+# Removed: bandit-high, pytest-smoke, pytest-unit, frontend-type
+# These hooks validate what CI checks - skipping them defeats the purpose!
 ci:
-  skip: [bandit-high, pytest-smoke, pytest-unit, frontend-type, mypy-warning]
+  skip: [mypy-warning]  # Only skip non-blocking warning hooks
