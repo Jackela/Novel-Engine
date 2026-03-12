@@ -48,7 +48,15 @@ repos:
   # === PRE-PUSH: Comprehensive Checks (Blocking) ===
   - repo: local
     hooks:
-      # 4. Bandit Security (High Severity)
+      # 4. Syntax Check (Fast - catches import/SyntaxError before tests)
+      - id: syntax-check
+        name: 🔒 Syntax Check (BLOCKING - Fast)
+        entry: python scripts/ci-syntax-check.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # 5. Bandit Security (High Severity)
       - id: bandit-high
         name: 🔒 Bandit Security (High Severity - BLOCKING)
         entry: bandit -r src/ -ll
