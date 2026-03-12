@@ -75,7 +75,15 @@ repos:
       # 6. Core Unit Tests
       - id: pytest-unit
         name: 🔒 Core Unit Tests (BLOCKING)
-        entry: python -m pytest tests/unit/api/ tests/unit/core/ tests/unit/contexts/ -x -q --tb=line --maxfail=5
+        entry: python -m pytest tests/unit/api/ tests/unit/core/ tests/unit/contexts/ tests/contexts/ -x -q --tb=line --maxfail=5
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+
+      # 6b. Quick Test Import Check (catches SyntaxError in all test files)
+      - id: test-import-check
+        name: 🔒 Test Import Check (Fast - catches SyntaxError)
+        entry: python scripts/ci-test-import-check.py
         language: system
         pass_filenames: false
         stages: [pre-push]
@@ -118,8 +126,9 @@ default_language_version:
 # Fail fast - stop on first blocking failure
 fail_fast: true
 
-# Default stages
-default_stages: [pre-commit]
+# Default stages - run on both pre-commit and pre-push
+# Note: Hooks with explicit 'stages' will only run in those stages
+default_stages: [pre-commit, pre-push]
 
 # CI configuration
 ci:
