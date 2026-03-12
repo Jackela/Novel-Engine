@@ -20,7 +20,6 @@ from typing import Any, Dict, List, Optional
 import asyncpg
 import structlog
 
-
 # Valid PostgreSQL extension name pattern
 # Extension names must start with letter/underscore, contain only letters, digits, underscores, hyphens
 VALID_EXTENSION_NAME_PATTERN = re.compile(r'^[a-zA-Z_][a-zA-Z0-9_-]*$')
