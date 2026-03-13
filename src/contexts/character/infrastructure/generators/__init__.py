@@ -1,1 +1,0 @@
-"""Generators for character infrastructure."""

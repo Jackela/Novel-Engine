@@ -3,7 +3,9 @@
 Type-specific interaction processors.
 """
 
-import logging
+from typing import Any
+
+import structlog
 
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
@@ -12,11 +14,15 @@ from src.interactions.interaction_engine_system.core.types import (
 )
 from src.templates.dynamic_template_engine import TemplateContext, TemplateType
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class TypeProcessors:
     """Handles type-specific interaction processing."""
+
+    def __init__(self) -> None:
+        """Initialize type processors."""
+        self.template_manager: Any = None
 
     async def _process_dialogue_interaction(
         self, context: InteractionContext, outcome: InteractionOutcome
@@ -24,8 +30,7 @@ class TypeProcessors:
         """Process enhanced dialogue interaction"""
         try:
             # Generate dialogue content for each participant
-            dialogue_content = []
-
+            dialogue_content: list[Any] = []
             for participant in context.participants:
                 # Generate character-specific dialogue
                 template_context = TemplateContext(
@@ -41,7 +46,7 @@ class TypeProcessors:
                     },
                 )
 
-                if participant in self.template_manager._active_personas:
+                if self.template_manager and participant in self.template_manager._active_personas:
                     dialogue_result = (
                         await self.template_manager.render_character_context(
                             participant, template_context, TemplateType.DIALOGUE
@@ -59,18 +64,15 @@ class TypeProcessors:
                             }
                         )
 
-            outcome.generated_content.extend(
+            outcome.interaction_content.setdefault("generated_content", []).extend(
                 [f"{d['speaker']}: {d['content']}" for d in dialogue_content]
             )
 
             # Update relationship dynamics
             for i, participant1 in enumerate(context.participants):
-                for participant2 in context.participants[i + 1 :]:
-                    if participant1 not in outcome.relationship_changes:
-                        outcome.relationship_changes[participant1] = {}
-                    outcome.relationship_changes[participant1][
-                        participant2
-                    ] = 0.1  # Small positive change
+                for _ in context.participants[i + 1 :]:
+                    rc = outcome.relationship_changes.get(participant1, 0.0)
+                    outcome.relationship_changes[participant1] = rc + 0.1  # Small positive change
 
             return StandardResponse(
                 success=True, metadata={"blessing": "dialogue_processed"}
@@ -99,9 +101,7 @@ class TypeProcessors:
             # Apply combat effects
             for participant in combatants:
                 # Simulate equipment usage and status changes
-                if participant not in outcome.equipment_changes:
-                    outcome.equipment_changes[participant] = []
-                outcome.equipment_changes[participant].append("weapon_usage")
+                outcome.interaction_content.setdefault("equipment_changes", {}).setdefault(participant, []).append("weapon_usage")
 
                 # Generate combat memory
                 combat_memory = MemoryItem(
@@ -115,7 +115,7 @@ class TypeProcessors:
                 )
                 outcome.memory_updates.append(combat_memory)
 
-            outcome.generated_content.extend(combat_narrative)
+            outcome.interaction_content.setdefault("generated_content", []).extend(combat_narrative)
 
             return StandardResponse(
                 success=True, metadata={"blessing": "combat_processed"}
@@ -141,14 +141,11 @@ class TypeProcessors:
 
             # Boost relationships between all participants
             for i, participant1 in enumerate(context.participants):
-                for participant2 in context.participants[i + 1 :]:
-                    if participant1 not in outcome.relationship_changes:
-                        outcome.relationship_changes[participant1] = {}
-                    outcome.relationship_changes[participant1][
-                        participant2
-                    ] = 0.2  # Positive cooperation boost
+                for _ in context.participants[i + 1 :]:
+                    rc = outcome.relationship_changes.get(participant1, 0.0)
+                    outcome.relationship_changes[participant1] = rc + 0.2  # Positive cooperation boost
 
-            outcome.generated_content.extend(cooperation_results)
+            outcome.interaction_content.setdefault("generated_content", []).extend(cooperation_results)
 
             return StandardResponse(
                 success=True, metadata={"blessing": "cooperation_processed"}
@@ -161,30 +158,30 @@ class TypeProcessors:
             )
 
     # Placeholder implementations for other interaction types
-    async def _process_negotiation_interaction(self, context, outcome):
+    async def _process_negotiation_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(
             success=True, metadata={"blessing": "negotiation_processed"}
         )
 
-    async def _process_instruction_interaction(self, context, outcome):
+    async def _process_instruction_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(
             success=True, metadata={"blessing": "instruction_processed"}
         )
 
-    async def _process_ritual_interaction(self, context, outcome):
+    async def _process_ritual_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(success=True, metadata={"blessing": "ritual_processed"})
 
-    async def _process_exploration_interaction(self, context, outcome):
+    async def _process_exploration_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(
             success=True, metadata={"blessing": "exploration_processed"}
         )
 
-    async def _process_maintenance_interaction(self, context, outcome):
+    async def _process_maintenance_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(
             success=True, metadata={"blessing": "maintenance_processed"}
         )
 
-    async def _process_emergency_interaction(self, context, outcome):
+    async def _process_emergency_interaction(self, context: InteractionContext, outcome: InteractionOutcome) -> StandardResponse:
         return StandardResponse(
             success=True, metadata={"blessing": "emergency_processed"}
         )

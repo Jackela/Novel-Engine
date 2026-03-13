@@ -1,1 +1,0 @@
-"""Enhanced Multi-Agent Bridge component package."""

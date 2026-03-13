@@ -1,1 +1,0 @@
-"""Director component package."""
