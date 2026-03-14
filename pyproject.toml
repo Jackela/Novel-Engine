@@ -1,0 +1,288 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "novel-engine"
+version = "0.1.1"
+description = "AI-Enhanced Interactive Novel Engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Jackela"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    # Core framework
+    "fastapi>=0.116.1,<1.0.0",
+    "pydantic>=2.11.7,<3.0.0",
+    "pydantic-settings>=2.0.0,<3.0.0",
+    "uvicorn>=0.35.0,<1.0.0",
+    "httpx>=0.28.1,<1.0.0",
+    "email-validator>=2.0.0,<3.0.0",
+    "python-multipart>=0.0.6,<1.0.0",
+    # Template and configuration
+    "jinja2>=3.0.0,<4.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    # Async utilities
+    "aiosqlite>=0.17.0,<1.0.0",
+    "aiofiles>=24.0.0,<25.0.0",
+    "aiohttp>=3.9.0,<4.0.0",
+    "asyncio-mqtt>=0.16.0,<1.0.0",
+    "asyncio-throttle>=1.0.2,<2.0.0",
+    "redis[asyncio]>=5.0.0,<6.0.0",
+    # Database
+    "asyncpg>=0.29.0,<1.0.0",  # PostgreSQL async driver
+    "sqlalchemy>=2.0.0,<3.0.0",
+    "aiokafka>=0.10.0,<1.0.0",  # Kafka async client
+    # Monitoring and telemetry
+    "prometheus-client>=0.19.0,<1.0.0",
+    "opentelemetry-api>=1.21.0,<2.0.0",
+    "opentelemetry-sdk>=1.21.0,<2.0.0",
+    # Structured Logging (ARCH-003)
+    "structlog>=24.0.0,<26.0.0",
+    # Security
+    "PyJWT>=2.8.0,<3.0.0",
+    "cryptography>=46.0.5,<47.0.0",  # Security fix for CVE-2026-26007
+    "bcrypt>=5.0.0,<6.0.0",  # Security update - BREAKING: max password length 72 bytes
+    "bleach>=6.0.0,<7.0.0",
+    "slowapi>=0.1.9,<1.0.0",
+    # Data processing
+    "pandas>=1.5.0,<2.0.0",
+    "numpy>=1.24.0,<2.0.0",
+    "scipy>=1.10.0,<2.0.0",
+    "Pillow>=10.0.0,<11.0.0",
+    "python-dateutil>=2.8.2,<3.0.0",
+    "pytz>=2023.3,<2025.0",
+    "uuid>=1.30,<2.0",
+    # Validation and schema
+    "jsonschema>=4.19.0,<5.0.0",
+    # Caching
+    "cachetools>=5.3.0,<6.0.0",
+    # S3 Storage
+    "aioboto3>=12.0.0,<13.0.0",
+    # HTTP client
+    "requests>=2.31.0,<3.0.0",
+    # System monitoring
+    "psutil>=5.9.0,<6.0.0",
+    # Warzone 4: AI Brain - RAG Engine (BRAIN-001)
+    "chromadb>=0.5.0,<1.0.0",
+    "tiktoken>=0.7.0,<1.0.0",
+    # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
+    "openai>=1.0.0,<2.0.0",
+    # Warzone 4: AI Brain - Hybrid Search (BRAIN-008A)
+    "rank-bm25>=0.2.2,<1.0.0",
+    # Warzone 4: AI Brain - Re-ranking (BRAIN-010B)
+    "cohere>=5.0.0,<6.0.0",
+    "sentence-transformers>=2.2.0,<4.0.0",
+    # Warzone 4: AI Brain - Knowledge Graph (BRAIN-031A)
+    "networkx>=3.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "coverage[toml]>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0",
+    "pre-commit>=3.0.0",
+    "import-linter>=2.0.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0", 
+    "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.2.0",
+    "coverage[toml]>=7.0.0",
+    "httpx>=0.28.1",
+]
+docs = [
+    "mkdocs>=1.4.0",
+    "mkdocs-material>=8.0.0",
+    "mkdocstrings[python]>=0.19.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*", "build*", "dist*"]
+
+# Black code formatting
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort import sorting
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+src_paths = ["src", "tests"]
+
+# Ruff linter configuration
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = ["E402"]  # Module level import not at top of file (needed for scripts)
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/*" = ["E402"]  # Scripts need sys.path modification before imports
+"src/api/main_api_server.py" = ["E402"]  # Needs dotenv load before imports
+
+# MyPy type checking
+[tool.mypy]
+python_version = "3.11"
+plugins = ["pydantic.mypy"]
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+follow_imports = "normal"
+
+# files = [...]  # Removed to enable global type checking
+
+
+[[tool.mypy.overrides]]
+module = [
+    "aiosqlite.*",
+    "jinja2.*",
+    "yaml.*",
+]
+ignore_missing_imports = true
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+    "*/migrations/*",
+    "*/templates/*",
+    "*/static/*",
+    "setup.py",
+    "demo_*.py",
+    "example_*.py",
+    "*_demo.py",
+    "fix_*.py",
+    "run_*.py",
+    "simple_*.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+title = "Novel Engine Test Coverage"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+timeout = 300  # Global timeout to prevent external process termination
+addopts = [
+    "-v",
+    "--tb=short",
+    "-p", "asyncio",
+    "--asyncio-mode=auto"
+]
+
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::UserWarning:pydantic.*",
+    "ignore::pytest.PytestReturnNotNoneWarning",
+]
+markers = [
+    "unit: Unit tests for individual components",
+    "integration: Integration tests between components",
+    "system: Full system end-to-end tests",
+    "e2e: End-to-end workflow tests",
+    "api: API endpoint tests",
+    "character: Character system tests",
+    "story: Story generation tests",
+    "narrative: Narrative and content tests",
+    "performance: Performance and load tests",
+    "security: Security and validation tests",
+    "slow: Tests that take significant time to run (> 1000ms / 1s)",
+    "medium: Medium speed tests (100ms - 1000ms)",
+    "fast: Fast tests that complete in <100ms",
+    "requires_services: Tests requiring external services to be running",
+    "knowledge: Knowledge Management context tests (Feature 001)",
+    "smoke: Lightweight smoke tests",
+    "asyncio: Async tests",
+]
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "build", "dist"]
+skips = ["B101", "B601"]
