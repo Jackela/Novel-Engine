@@ -28,9 +28,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-asyncio pytest-cov pytest-timeout
-          pip install pandas chromadb redis sqlalchemy asyncpg python-jose passlib bcrypt python-multipart fastapi uvicorn
+          python -m pip install --upgrade pip setuptools wheel
+          pip install .
 
       - name: Run Unit Tests with coverage
         run: |
