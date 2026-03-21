@@ -1,0 +1,88 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main, develop, week1/** ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.12'
+  MIN_COVERAGE: '50'
+
+jobs:
+  python-test-unit:
+    name: Python Unit Tests
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras --dev
+
+      - name: Run Unit Tests with coverage
+        run: |
+          uv run pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term \
+            --cov-fail-under=${{ env.MIN_COVERAGE }} \
+            --tb=short \
+            --timeout=120 \
+            -x \
+            --ignore=tests/evaluation/ \
+            --ignore=tests/contexts/character/infrastructure/adapters/
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
+  python-quality:
+    name: Python Quality Checks
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras --dev
+
+      - name: Run Ruff linter
+        run: uv run ruff check src/ tests/ --output-format=github
+
+      - name: Run MyPy type checker
+        run: uv run mypy src/ --no-error-summary --show-column-numbers
+        continue-on-error: true
