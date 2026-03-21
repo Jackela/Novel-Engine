@@ -22,7 +22,7 @@ from src.shared.infrastructure.persistence.database import Database, DatabaseCon
 
 
 @dataclass
-class TestAggregate(AggregateRoot):
+class SampleAggregate(AggregateRoot):
     """Test aggregate for repository testing."""
 
     name: str = ""
@@ -34,10 +34,10 @@ class TestAggregate(AggregateRoot):
             raise ValueError("Name is required")
 
 
-class TestRepository(BaseRepository[TestAggregate, UUID]):
+class SampleRepository(BaseRepository[SampleAggregate, UUID]):
     """Test repository implementation."""
 
-    async def get(self, id: UUID) -> TestAggregate | None:
+    async def get(self, id: UUID) -> SampleAggregate | None:
         """Get aggregate by ID."""
         row = await self.connection.fetchrow(
             "SELECT * FROM test_aggregates WHERE id = $1", id
@@ -73,7 +73,7 @@ class TestRepository(BaseRepository[TestAggregate, UUID]):
 
     def _to_aggregate(self, row: dict[str, Any]) -> TestAggregate:
         """Convert row to aggregate."""
-        return TestAggregate(
+        return SampleAggregate(
             id=row["id"],
             name=row["name"],
             email=row["email"],
@@ -105,38 +105,38 @@ class TestBaseRepository:
         return conn
 
     @pytest.fixture
-    def repo(self, mock_db: MagicMock) -> TestRepository:
+    def repo(self, mock_db: MagicMock) -> SampleRepository:
         """Create a test repository."""
-        return TestRepository(mock_db)
+        return SampleRepository(mock_db)
 
-    def test_initialization(self, repo: TestRepository, mock_db: MagicMock) -> None:
+    def test_initialization(self, repo: SampleRepository, mock_db: MagicMock) -> None:
         """Test repository initialization."""
         assert repo._db == mock_db
         assert repo._connection is None
 
     def test_connection_property_raises_without_connection(
-        self, repo: TestRepository
+        self, repo: SampleRepository
     ) -> None:
         """Test connection property raises when no connection set."""
         with pytest.raises(RuntimeError, match="No connection available"):
             _ = repo.connection
 
     def test_connection_property_returns_connection(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test connection property returns set connection."""
         repo.set_connection(mock_conn)
 
         assert repo.connection == mock_conn
 
-    def test_set_connection(self, repo: TestRepository, mock_conn: AsyncMock) -> None:
+    def test_set_connection(self, repo: SampleRepository, mock_conn: AsyncMock) -> None:
         """Test setting connection."""
         repo.set_connection(mock_conn)
 
         assert repo._connection == mock_conn
 
     def test_set_connection_to_none(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test clearing connection."""
         repo.set_connection(mock_conn)
@@ -146,7 +146,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_get_returns_aggregate(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test get returns aggregate when found."""
         aggregate_id = uuid4()
@@ -169,7 +169,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_get_returns_none_when_not_found(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test get returns None when aggregate not found."""
         aggregate_id = uuid4()
@@ -182,7 +182,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_exists_returns_true_when_found(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test exists returns True when aggregate found."""
         aggregate_id = uuid4()
@@ -202,7 +202,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_exists_returns_false_when_not_found(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test exists returns False when aggregate not found."""
         aggregate_id = uuid4()
@@ -215,10 +215,10 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_add_inserts_aggregate(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test add inserts aggregate."""
-        aggregate = TestAggregate(name="Test", email="test@example.com")
+        aggregate = SampleAggregate(name="Test", email="test@example.com")
         repo.set_connection(mock_conn)
 
         await repo.add(aggregate)
@@ -229,10 +229,10 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_update_updates_aggregate(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test update modifies aggregate."""
-        aggregate = TestAggregate(name="Updated", email="updated@example.com")
+        aggregate = SampleAggregate(name="Updated", email="updated@example.com")
         repo.set_connection(mock_conn)
 
         await repo.update(aggregate)
@@ -243,7 +243,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_delete_returns_true_when_deleted(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test delete returns True when aggregate deleted."""
         aggregate_id = uuid4()
@@ -256,7 +256,7 @@ class TestBaseRepository:
 
     @pytest.mark.asyncio
     async def test_delete_returns_false_when_not_found(
-        self, repo: TestRepository, mock_conn: AsyncMock
+        self, repo: SampleRepository, mock_conn: AsyncMock
     ) -> None:
         """Test delete returns False when aggregate not found."""
         aggregate_id = uuid4()
@@ -272,14 +272,14 @@ class TestInMemoryRepository:
     """Test cases for InMemoryRepository."""
 
     @pytest.fixture
-    def repo(self) -> InMemoryRepository[TestAggregate, UUID]:
+    def repo(self) -> InMemoryRepository[SampleAggregate, UUID]:
         """Create an in-memory repository."""
-        return InMemoryRepository[TestAggregate, UUID]()
+        return InMemoryRepository[SampleAggregate, UUID]()
 
     @pytest.fixture
     def aggregate(self) -> TestAggregate:
         """Create a test aggregate."""
-        return TestAggregate(name="Test", email="test@example.com")
+        return SampleAggregate(name="Test", email="test@example.com")
 
     @pytest.mark.asyncio
     async def test_add_stores_aggregate(
@@ -367,8 +367,8 @@ class TestInMemoryRepository:
         self, repo: InMemoryRepository
     ) -> None:
         """Test get_all returns all stored aggregates."""
-        agg1 = TestAggregate(name="Test1")
-        agg2 = TestAggregate(name="Test2")
+        agg1 = SampleAggregate(name="Test1")
+        agg2 = SampleAggregate(name="Test2")
         await repo.add(agg1)
         await repo.add(agg2)
 
@@ -391,7 +391,7 @@ class TestInMemoryRepository:
 
     def test_no_database_required(self) -> None:
         """Test InMemoryRepository doesn't require database."""
-        repo = InMemoryRepository[TestAggregate, UUID]()
+        repo = InMemoryRepository[SampleAggregate, UUID]()
 
         # Should not raise
         assert repo._connection is None
@@ -408,7 +408,7 @@ class TestInMemoryRepository:
         assert aggregate.id not in repo._data
 
 
-class TestRepositoryExceptions:
+class SampleRepositoryExceptions:
     """Test cases for repository exceptions."""
 
     def test_repository_exception_base(self) -> None:
@@ -444,7 +444,7 @@ class TestRepositoryExceptions:
         assert issubclass(ConcurrentModificationException, RepositoryException)
 
 
-class TestRepositoryProtocol:
+class SampleRepositoryProtocol:
     """Test cases for Repository protocol."""
 
     def test_repository_protocol_is_runtime_checkable(self) -> None:
@@ -457,7 +457,7 @@ class TestRepositoryProtocol:
     @pytest.mark.asyncio
     async def test_inmemory_repository_implements_protocol(self) -> None:
         """Test InMemoryRepository implements Repository protocol."""
-        repo = InMemoryRepository[TestAggregate, UUID]()
+        repo = InMemoryRepository[SampleAggregate, UUID]()
 
         # Should satisfy the protocol
         assert hasattr(repo, "get")

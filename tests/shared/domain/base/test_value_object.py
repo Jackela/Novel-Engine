@@ -6,7 +6,7 @@ ensuring proper attribute-based equality, immutability, and validation.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import FrozenInstanceError, dataclass
 from decimal import Decimal
 from typing import override
 from uuid import uuid4

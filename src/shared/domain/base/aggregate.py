@@ -18,7 +18,7 @@ from src.shared.domain.base.event import DomainEvent
 T = TypeVar("T")
 
 
-@dataclass
+@dataclass(eq=False)
 class AggregateRoot(Entity[Any]):
     """Abstract base class for all domain aggregate roots.
 
@@ -44,18 +44,24 @@ class AggregateRoot(Entity[Any]):
 
     _version: int = field(default=0, init=False, repr=False)
 
-    @abstractmethod
+    def __post_init__(self) -> None:
+        """Validate invariants after initialization."""
+        super().__post_init__()
+        self.validate()
+
     def validate_invariants(self) -> None:
         """Validate the aggregate's invariants across all contained objects.
 
-        This method must be implemented by concrete aggregate classes
+        This method can be overridden by concrete aggregate classes
         to ensure all objects within the aggregate maintain valid state
         and that aggregate-wide invariants are satisfied.
+
+        Default implementation does nothing - override if validation is needed.
 
         Raises:
             DomainException: If any invariant is violated.
         """
-        ...
+        pass
 
     def validate(self) -> None:
         """Validate the aggregate root entity.

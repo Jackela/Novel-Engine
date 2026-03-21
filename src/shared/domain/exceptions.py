@@ -26,24 +26,24 @@ class DomainException(Exception):
         ...     logger.error(f"Domain error {e.code}: {e.message}")
     """
 
-    def __init__(self, message: str, code: str = "DOMAIN_ERROR") -> None:
+    def __init__(self, message: str, code: str | None = None) -> None:
         """Initialize the exception.
 
         Args:
             message: Human-readable error message.
-            code: Error code for programmatic handling.
+            code: Error code for programmatic handling. Defaults to None (no prefix in str).
         """
         self.message = message
-        self.code = code
+        self.code = code if code is not None else "DOMAIN_ERROR"
         super().__init__(self.message)
 
     def __str__(self) -> str:
         """Return string representation.
 
         Returns:
-            String with message and code if present.
+            String with message and code if explicitly provided.
         """
-        if self.code:
+        if self.code and self.code != "DOMAIN_ERROR":
             return f"[{self.code}] {self.message}"
         return self.message
 

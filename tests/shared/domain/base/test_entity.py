@@ -19,7 +19,7 @@ from src.shared.domain.base.entity import Entity
 from src.shared.domain.base.event import DomainEvent
 
 
-@dataclass
+@dataclass(eq=False)
 class MockEntity(Entity[UUID]):
     """Concrete entity implementation for testing."""
 

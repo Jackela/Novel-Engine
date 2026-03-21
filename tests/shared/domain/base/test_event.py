@@ -6,7 +6,7 @@ ensuring proper event creation, serialization, and immutability.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import FrozenInstanceError, dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from typing import ClassVar

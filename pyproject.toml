@@ -74,8 +74,7 @@ dependencies = [
     "requests>=2.31.0,<3.0.0",
     # System monitoring
     "psutil>=5.9.0,<6.0.0",
-    # Warzone 4: AI Brain - RAG Engine (BRAIN-001)
-    "chromadb>=0.5.0,<1.0.0",
+    # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
     "tiktoken>=0.7.0,<1.0.0",
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
     "openai>=1.0.0,<2.0.0",
@@ -86,6 +85,8 @@ dependencies = [
     "sentence-transformers>=2.2.0,<4.0.0",
     # Warzone 4: AI Brain - Knowledge Graph (BRAIN-031A)
     "networkx>=3.0,<4.0.0",
+    # Honcho Memory System (HONCHO-001)
+    "honcho-ai>=0.3.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -192,6 +193,8 @@ module = [
     "aiosqlite.*",
     "jinja2.*",
     "yaml.*",
+    "honcho.*",
+    "honcho_ai.*",
 ]
 ignore_missing_imports = true
 

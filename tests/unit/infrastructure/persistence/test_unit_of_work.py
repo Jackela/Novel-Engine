@@ -27,7 +27,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class TestAggregate(AggregateRoot):
+class SampleAggregate(AggregateRoot):
     """Test aggregate for UoW testing."""
 
     name: str = ""
@@ -37,7 +37,7 @@ class TestAggregate(AggregateRoot):
         pass
 
 
-class TestRepository(BaseRepository[TestAggregate, UUID]):
+class SampleRepository(BaseRepository[SampleAggregate, UUID]):
     """Test repository."""
 
     async def get(self, id: UUID) -> TestAggregate | None:
@@ -53,7 +53,7 @@ class TestRepository(BaseRepository[TestAggregate, UUID]):
         return True
 
     def _to_aggregate(self, row: dict[str, Any]) -> TestAggregate:
-        return TestAggregate()
+        return SampleAggregate()
 
     def _from_aggregate(self, aggregate: TestAggregate) -> dict[str, Any]:
         return {}
@@ -95,7 +95,7 @@ class TestDatabaseUnitOfWork:
         self, uow: DatabaseUnitOfWork, mock_db: MagicMock
     ) -> None:
         """Test registering a repository."""
-        repo = TestRepository(mock_db)
+        repo = SampleRepository(mock_db)
 
         uow.register_repository(repo)
 
@@ -106,8 +106,8 @@ class TestDatabaseUnitOfWork:
         self, uow: DatabaseUnitOfWork, mock_db: MagicMock
     ) -> None:
         """Test registering multiple repositories."""
-        repo1 = TestRepository(mock_db)
-        repo2 = TestRepository(mock_db)
+        repo1 = SampleRepository(mock_db)
+        repo2 = SampleRepository(mock_db)
 
         uow.register_repositories(repo1, repo2)
 
@@ -157,7 +157,7 @@ class TestDatabaseUnitOfWork:
         self, uow: DatabaseUnitOfWork, mock_db: MagicMock, mock_conn: AsyncMock
     ) -> None:
         """Test commit sets connection on repositories."""
-        repo = TestRepository(mock_db)
+        repo = SampleRepository(mock_db)
         uow.register_repository(repo)
         uow._db.connection.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         uow._db.connection.return_value.__aexit__ = AsyncMock(return_value=None)

@@ -12,7 +12,7 @@ from dataclasses import dataclass, fields
 from typing import Any, final
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class ValueObject(ABC):
     """Abstract base class for all domain value objects.
 
@@ -37,6 +37,11 @@ class ValueObject(ABC):
         Value objects must be decorated with @dataclass(frozen=True)
         or equivalent to ensure immutability.
     """
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+        if cls is ValueObject:
+            raise TypeError("Cannot instantiate abstract class ValueObject")
+        return super().__new__(cls)
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on attributes.
@@ -66,13 +71,13 @@ class ValueObject(ABC):
     def validate(self) -> None:
         """Validate the value object's invariants.
 
-        This method must be implemented by concrete value object classes
+        This method must be overridden by concrete value object classes
         to ensure the value object maintains valid state upon creation.
 
         Raises:
             DomainException: If the value object is in an invalid state.
         """
-        ...
+        pass
 
     def __post_init__(self) -> None:
         """Post-initialization hook to validate the value object.

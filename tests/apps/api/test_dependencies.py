@@ -159,12 +159,14 @@ class TestPermissionDependencies:
         dep = require_permissions("items:read")
         # require_permissions returns a coroutine (async function)
         assert asyncio.iscoroutine(dep)
+        dep.close()  # Discard without awaiting to avoid RuntimeWarning
 
     def test_require_permissions_creates_dependency(self):
         """Test permission check creates dependency function."""
         result = require_permissions("admin:delete")
         # Result is the inner async function wrapped in coroutine
         assert result is not None
+        result.close()  # Discard without awaiting to avoid RuntimeWarning
 
 
 class TestRoleDependencies:
@@ -176,8 +178,10 @@ class TestRoleDependencies:
 
         dep = require_roles("user")
         assert asyncio.iscoroutine(dep)
+        dep.close()  # Discard without awaiting to avoid RuntimeWarning
 
     def test_require_roles_creates_dependency(self):
         """Test role check creates dependency."""
         result = require_roles("admin")
         assert result is not None
+        result.close()  # Discard without awaiting to avoid RuntimeWarning

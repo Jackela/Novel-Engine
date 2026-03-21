@@ -53,6 +53,15 @@ class Success(Generic[T]):
         """
         return False
 
+    @property
+    def is_error(self) -> bool:
+        """Property alias for is_err().
+
+        Returns:
+            Always False for Success.
+        """
+        return False
+
     def unwrap(self) -> T:
         """Get the success value.
 
@@ -135,6 +144,15 @@ class Failure:
     code: str
     details: dict[str, Any] | None = None
 
+    @property
+    def value(self) -> Any:
+        """Property to access error details (for compatibility).
+
+        Returns:
+            The error message as 'value' for uniform access pattern.
+        """
+        return {"error": self.error, "code": self.code, "details": self.details}
+
     def is_ok(self) -> bool:
         """Check if result is success.
 
@@ -145,6 +163,15 @@ class Failure:
 
     def is_err(self) -> bool:
         """Check if result is error.
+
+        Returns:
+            Always True for Failure.
+        """
+        return True
+
+    @property
+    def is_error(self) -> bool:
+        """Property alias for is_err().
 
         Returns:
             Always True for Failure.

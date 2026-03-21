@@ -14,7 +14,7 @@ from typing import Any, ClassVar, final
 from uuid import UUID, uuid4
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class DomainEvent(ABC):
     """Abstract base class for all domain events.
 
@@ -38,6 +38,11 @@ class DomainEvent(ABC):
         ...
         >>> event = OrderCreated(aggregate_id=order_id, customer_id=cid, total_amount=amt)
     """
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+        if cls is DomainEvent:
+            raise TypeError("Cannot instantiate abstract class DomainEvent")
+        return super().__new__(cls)
 
     event_id: UUID = field(default_factory=uuid4)
     event_type: str = field(default="DomainEvent")
@@ -101,7 +106,7 @@ class DomainEvent(ABC):
         )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class IntegrationEvent(DomainEvent):
     """Base class for integration events between bounded contexts.
 

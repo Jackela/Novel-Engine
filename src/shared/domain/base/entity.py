@@ -50,9 +50,11 @@ class Entity(ABC, Generic[T]):
     _domain_events: list[DomainEvent] = field(default_factory=list, repr=False)
 
     def __post_init__(self) -> None:
-        """Post-initialization hook - currently a no-op since field has default_factory."""
-        # Note: _domain_events is always initialized by dataclass with default_factory
-        pass
+        """Post-initialization hook - validates entity invariants and ensures fields."""
+        # Ensure _domain_events is always initialized (defensive, handles object.__new__ bypass)
+        if self._domain_events is None:
+            self._domain_events = []
+        self.validate()
 
     @abstractmethod
     def validate(self) -> None:
