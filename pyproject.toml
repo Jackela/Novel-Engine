@@ -57,7 +57,7 @@ dependencies = [
     "bleach>=6.0.0,<7.0.0",
     "slowapi>=0.1.9,<1.0.0",
     # Data processing
-    "pandas>=1.5.0,<2.0.0",
+    "pandas>=2.0.0",
     "numpy>=1.24.0,<2.0.0",
     "scipy>=1.10.0,<2.0.0",
     "Pillow>=10.0.0,<11.0.0",
