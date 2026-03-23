@@ -6,22 +6,19 @@ It manages attributes, skills, inventory, and relationships.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from src.shared.domain.base.aggregate import AggregateRoot
 from src.contexts.character.domain.types import (
-    CharacterId,
-    CharacterStatus,
-    RelationshipType,
-    SkillCategory,
-    ItemType,
     AttributeName,
     Attributes,
-    Skills,
-    Inventory,
+    CharacterStatus,
+    ItemType,
+    RelationshipType,
+    SkillCategory,
 )
+from src.shared.domain.base.aggregate import AggregateRoot
 
 
 @dataclass(kw_only=True, eq=False)
@@ -193,7 +190,7 @@ class Character(AggregateRoot):
     def set_attribute(self, name: AttributeName, value: int) -> None:
         """Set attribute value."""
         if not (1 <= value <= 100):
-            raise ValueError(f"Attribute value must be between 1 and 100")
+            raise ValueError("Attribute value must be between 1 and 100")
         self.attributes[name] = value
         self.updated_at = datetime.utcnow()
         self.increment_version()
