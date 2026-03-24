@@ -9,15 +9,23 @@ from __future__ import annotations
 from .memory_port import (
     CharacterMemoryPort,
     MemoryEntry,
-    MemoryQueryResult,
-    MemoryStorageError,
     MemoryQueryError,
+    MemoryQueryPort,
+    MemoryQueryResult,
+    MemoryReasoningPort,
+    MemoryStorageError,
+    MemoryStoragePort,
+    ScopeManagementPort,
 )
 
 __all__ = [
     "CharacterMemoryPort",
     "MemoryEntry",
+    "MemoryQueryPort",
     "MemoryQueryResult",
+    "MemoryReasoningPort",
     "MemoryStorageError",
+    "MemoryStoragePort",
     "MemoryQueryError",
+    "ScopeManagementPort",
 ]

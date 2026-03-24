@@ -6,12 +6,18 @@ memory management across all bounded contexts.
 
 from __future__ import annotations
 
-from .client import HonchoClient, HonchoClientError, get_honcho_client
+from .client import (
+    HonchoClient,
+    HonchoClientError,
+    HonchoErrorDetails,
+    create_honcho_client,
+)
 from .config import HonchoSettings
 
 __all__ = [
     "HonchoClient",
     "HonchoClientError",
+    "HonchoErrorDetails",
     "HonchoSettings",
-    "get_honcho_client",
+    "create_honcho_client",
 ]

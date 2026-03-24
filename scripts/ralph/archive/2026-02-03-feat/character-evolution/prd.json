@@ -1,0 +1,342 @@
+{
+  "project": "Novel-Engine-Warzone-3",
+  "branchName": "feat/director-mode",
+  "description": "WARZONE 3: Implementing the Director Mode - Beats, Pacing, Conflict, and Plotlines. Making AI the co-director.",
+  "techContext": {
+    "stack": "FastAPI + React + Recharts + Tiptap + dnd-kit",
+    "testCommand": "pytest",
+    "e2eCommand": "npm run test:e2e",
+    "typecheckCommand": "npm run typecheck",
+    "conventions": "READ CONVENTIONS.md AND DESIGN_SYSTEM.md BEFORE CODING",
+    "domainContext": "New entities go in src/contexts/narrative/domain/"
+  },
+  "userStories": [
+    {
+      "id": "DIR-041",
+      "title": "Domain: Scene Beats Architecture",
+      "description": "Scenes are too big. Break them down into Beats (ACTION/REACTION micro-units).",
+      "acceptanceCriteria": [
+        "Create `src/contexts/narrative/domain/value_objects/beat.py`",
+        "Beat value object: id, content, beat_type (ACTION/REACTION), mood_shift (-5 to +5), order_index",
+        "Update Scene entity to contain list of Beats",
+        "Add beat CRUD methods to Scene: add_beat(), remove_beat(), reorder_beats()",
+        "Test: `pytest tests/unit/contexts/narrative/domain/test_beat.py`"
+      ],
+      "priority": 1,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "DIR-042",
+      "title": "Frontend: Beat Editor UI",
+      "description": "A micro-editor inside the Scene detail view for managing beats.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/BeatList.tsx`",
+        "Use dnd-kit for drag-and-drop reordering",
+        "Visual distinction: ACTION beats = blue border, REACTION beats = amber border",
+        "Add/Edit/Delete beat functionality with inline editing",
+        "API integration: beats persist to backend",
+        "Verify: Changes persist after page refresh"
+      ],
+      "priority": 2,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-041"]
+    },
+    {
+      "id": "DIR-043",
+      "title": "Domain: Pacing Metrics",
+      "description": "Quantify the tension and energy of each scene.",
+      "acceptanceCriteria": [
+        "Update Scene entity with `tension_level` (1-10) and `energy_level` (1-10)",
+        "Create `PacingService` in `src/contexts/narrative/application/services/`",
+        "Implement `calculate_chapter_pacing(chapter_id)` returning scene-by-scene metrics",
+        "Implement `analyze_pacing_issues()` detecting monotony (same level 3+ scenes)",
+        "Test: `pytest` calculation and analysis logic"
+      ],
+      "priority": 3,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "DIR-044",
+      "title": "Frontend: Pacing Graph Visualizer",
+      "description": "See the rhythm of the story as a tension/energy curve.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/PacingGraph.tsx`",
+        "Use Recharts AreaChart with dual Y-axis (tension + energy)",
+        "X-Axis: Scene sequence, Y-Axis: Tension (0-10) and Energy (0-10)",
+        "Add tooltips showing scene title on hover",
+        "Integrate into Chapter Dashboard view",
+        "Verify: Graph renders correctly with mock/real data"
+      ],
+      "priority": 4,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-043"]
+    },
+    {
+      "id": "DIR-045",
+      "title": "Domain: Conflict System",
+      "description": "No conflict, no story. Track conflicts per scene.",
+      "acceptanceCriteria": [
+        "Create `src/contexts/narrative/domain/entities/conflict.py`",
+        "Conflict entity: id, conflict_type (INTERNAL/EXTERNAL/INTERPERSONAL), stakes (LOW/MEDIUM/HIGH/CRITICAL), description, resolution_status (UNRESOLVED/ESCALATING/RESOLVED)",
+        "Link Conflicts to Scenes via scene_id",
+        "Add API endpoints for conflict CRUD",
+        "Test: `pytest` conflict creation and linking"
+      ],
+      "priority": 5,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "DIR-046",
+      "title": "Frontend: Conflict Manager",
+      "description": "Manage stakes and track conflict resolution.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/ConflictPanel.tsx`",
+        "Add to Director Sidebar with collapsible sections by conflict type",
+        "Allow tagging a Scene with existing or new Conflict",
+        "Visual cue: Scenes with CRITICAL stakes show fire/red indicator",
+        "Badge showing unresolved conflict count",
+        "Verify: Tagging and untagging works"
+      ],
+      "priority": 6,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-045"]
+    },
+    {
+      "id": "DIR-047",
+      "title": "AI: Beat Suggester",
+      "description": "Writer's block breaker - AI suggests next beats.",
+      "acceptanceCriteria": [
+        "Add `suggest_next_beats(current_beats, scene_context, mood_target)` to LLMWorldGenerator",
+        "Create `beat_suggester.yaml` prompt template",
+        "Prompt should consider: current beat sequence, desired mood shift, action/reaction balance",
+        "Return 3 suggestions with beat_type and content",
+        "Test: Mock LLM response parsing"
+      ],
+      "priority": 7,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["DIR-041"]
+    },
+    {
+      "id": "DIR-048",
+      "title": "Frontend: AI Beat Suggestions UI",
+      "description": "One-click inspiration for beat creation.",
+      "acceptanceCriteria": [
+        "Add 'Spark' button (Sparkles icon) to Beat Editor",
+        "Display suggestions in Popover with 3 beat cards",
+        "Each card shows: beat_type badge, content preview",
+        "Clicking a suggestion inserts it into the beat list",
+        "Loading state while AI generates",
+        "Verify: Mock data flows through UI correctly"
+      ],
+      "priority": 8,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-047"]
+    },
+    {
+      "id": "DIR-049",
+      "title": "Domain: Plotlines (Threads)",
+      "description": "Track multiple storylines weaving through the narrative.",
+      "acceptanceCriteria": [
+        "Create `src/contexts/narrative/domain/entities/plotline.py`",
+        "Plotline entity: id, name, color (hex), description, status (ACTIVE/RESOLVED/ABANDONED)",
+        "Many-to-many: Scenes can belong to multiple Plotlines",
+        "Add plotline_ids to Scene entity",
+        "API: CRUD for plotlines + scene linking",
+        "Test: `pytest` plotline management"
+      ],
+      "priority": 9,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "DIR-050",
+      "title": "Frontend: Plotline Manager",
+      "description": "The strings of the puppet master.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/PlotlineManager.tsx`",
+        "Color picker for each plotline (predefined palette)",
+        "CRUD operations: Create, rename, change status, delete",
+        "Visual tags on Scene Cards showing attached plotlines (colored dots)",
+        "Plotline sidebar with scene count per line",
+        "Verify: Creating/editing plotline updates across UI"
+      ],
+      "priority": 10,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-049"]
+    },
+    {
+      "id": "DIR-051",
+      "title": "Integration: Plotline Filtering",
+      "description": "Focus on one narrative thread at a time.",
+      "acceptanceCriteria": [
+        "Add 'Filter by Plotline' dropdown to Weaver toolbar",
+        "When filtering: dim (opacity 30%) scenes not in the plotline",
+        "Edges between filtered scenes remain visible, others dim",
+        "Clear filter button to reset view",
+        "Keyboard shortcut: Ctrl+L to toggle filter menu",
+        "Verify: Filtering state persists during session"
+      ],
+      "priority": 11,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-050"]
+    },
+    {
+      "id": "DIR-052",
+      "title": "Domain: Foreshadowing Tracker",
+      "description": "Chekhov's Gun enforcement - track setups and payoffs.",
+      "acceptanceCriteria": [
+        "Create `src/contexts/narrative/domain/entities/foreshadowing.py`",
+        "Foreshadowing entity: id, setup_scene_id, payoff_scene_id (nullable), description, status (PLANTED/PAID_OFF/ABANDONED)",
+        "Validation: payoff_scene must come after setup_scene in story order",
+        "API: CRUD + link payoff to setup",
+        "Test: `pytest` validation and linking logic"
+      ],
+      "priority": 12,
+      "passes": false,
+      "effort": "low"
+    },
+    {
+      "id": "DIR-053",
+      "title": "Frontend: Foreshadowing UI",
+      "description": "Connecting the dots visually in Weaver.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/ForeshadowingConnector.tsx`",
+        "Draw dashed curved lines between setup and payoff scenes in Weaver",
+        "Line color: gold for PLANTED, green for PAID_OFF, red for ABANDONED",
+        "Hover on line shows foreshadowing description tooltip",
+        "Panel listing all foreshadowing items with status filters",
+        "Verify: Visual connection appears correctly"
+      ],
+      "priority": 13,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["DIR-052"]
+    },
+    {
+      "id": "DIR-054",
+      "title": "UX: Chapter Board View",
+      "description": "Kanban-style scene organization by story beats.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/ChapterBoard.tsx`",
+        "Columns: Setup, Inciting Incident, Rising Action, Climax, Resolution",
+        "Scene cards can be dragged between columns (dnd-kit)",
+        "Scene.story_phase field updated on drop",
+        "Toggle between Board and List view",
+        "Verify: Dnd works, changes persist"
+      ],
+      "priority": 14,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["DIR-041"]
+    },
+    {
+      "id": "DIR-055",
+      "title": "Domain: Chapter Structural Analysis",
+      "description": "Is this chapter balanced? Automated health check.",
+      "acceptanceCriteria": [
+        "Create `ChapterAnalysisService` in application layer",
+        "Analyze: scene count per phase, estimated word count, tension arc shape",
+        "Generate warnings: 'Too much action, no rest', 'Missing climax', 'Unresolved conflicts'",
+        "Return ChapterHealthReport with scores and recommendations",
+        "Test: `pytest` analysis rules"
+      ],
+      "priority": 15,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-043"]
+    },
+    {
+      "id": "DIR-056",
+      "title": "Frontend: Chapter Health Dashboard",
+      "description": "Stats and health indicators for the chapter.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/ChapterHealth.tsx`",
+        "Display: Word count target vs actual (progress bar)",
+        "Display: Phase distribution pie chart",
+        "Display: Health warnings as colored badges",
+        "Expandable recommendations section",
+        "Verify: Mock data renders correctly"
+      ],
+      "priority": 16,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-055"]
+    },
+    {
+      "id": "DIR-057",
+      "title": "AI: Scene Critique Agent",
+      "description": "The harsh editor - AI analyzes scene quality.",
+      "acceptanceCriteria": [
+        "Add `critique_scene(scene_text, scene_goals)` to LLMWorldGenerator",
+        "Create `scene_critique.yaml` prompt template",
+        "Analyze: show-don't-tell ratio, pacing, character voice consistency, dialogue naturalism",
+        "Return CritiqueResult with category scores and specific suggestions",
+        "Test: Mock critique response parsing"
+      ],
+      "priority": 17,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["DIR-041"]
+    },
+    {
+      "id": "DIR-058",
+      "title": "Frontend: Critique Sidebar",
+      "description": "AI feedback loop in the editor.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/features/director/components/CritiqueSidebar.tsx`",
+        "Add 'Critique' panel toggle to Editor toolbar",
+        "Display feedback points as checklist items with severity icons",
+        "Group by category: Pacing, Voice, Showing, Dialogue",
+        "'Critique Scene' button triggers analysis (loading state)",
+        "Verify: Mock critique renders in panel"
+      ],
+      "priority": 18,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-057"]
+    },
+    {
+      "id": "DIR-059",
+      "title": "Data: Export Outline Report",
+      "description": "The synopsis package for external sharing.",
+      "acceptanceCriteria": [
+        "Create `frontend/src/lib/api/outlineExportApi.ts`",
+        "Generate Markdown report: Logline, Character Arcs, Chapter Summaries, Plotline Status",
+        "Include scene-by-scene beat breakdown (optional toggle)",
+        "Download as .md file",
+        "Future: PDF generation (out of scope for now)",
+        "Verify: Download produces valid markdown"
+      ],
+      "priority": 19,
+      "passes": false,
+      "effort": "medium",
+      "dependencies": ["DIR-049"]
+    },
+    {
+      "id": "DIR-060",
+      "title": "E2E: Director Workflow Test",
+      "description": "Full loop verification of director mode features.",
+      "acceptanceCriteria": [
+        "Create `frontend/tests/e2e/director-mode.spec.ts`",
+        "Flow: Create Plotline -> Add Scene -> Add Beats -> Set Pacing -> Check Graph",
+        "Verify: Foreshadowing connection visible",
+        "Verify: Chapter Health shows correct stats",
+        "Run `npm run test:e2e` passes"
+      ],
+      "priority": 20,
+      "passes": false,
+      "effort": "high",
+      "dependencies": ["DIR-044", "DIR-050"]
+    }
+  ]
+}

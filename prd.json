@@ -1,0 +1,52 @@
+{
+  "project": "NovelEngine-Fortification",
+  "branchName": "feat/arch-fortification",
+  "description": "Phase 1: Architecture Fortification & Contract Hardening. Establish strict boundaries and strict types.",
+  "userStories": [
+    {
+      "id": "ARCH-001",
+      "title": "Architecture Guardrails (Hexagonal)",
+      "description": "Enforce strict Hexagonal Architecture layers using `import-linter`. Domain layer must be pure.",
+      "acceptanceCriteria": [
+        "Add `import-linter` to `pyproject.toml` dev dependencies",
+        "Refine `.importlinter` to enforce `domain` does not import `application` or `infrastructure` within `src/contexts/*`",
+        "Refine `.importlinter` to enforce `application` does not import `infrastructure`",
+        "Run linter and fix violations",
+        "Ensure linter runs in CI/pre-commit"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Current config forbids core->infra, but we need deeper intra-context layer protection."
+    },
+    {
+      "id": "ARCH-002",
+      "title": "Automated Type Sync (SSOT)",
+      "description": "Replace manual Zod schemas in Frontend with auto-generated clients from Backend OpenAPI spec.",
+      "acceptanceCriteria": [
+        "Create `scripts/generate_openapi.py` to dump `openapi.json` from FastAPI app",
+        "Add `openapi-typescript` and `openapi-fetch` (or similar) to `frontend/package.json`",
+        "Implement `npm run api:sync` in `frontend/package.json` that calls the generation script and type generator",
+        "Refactor `frontend/src/lib/api` to use generated types for at least one major feature (e.g. Character)",
+        "Remove manual Zod schemas for that feature"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Frontend currently has manual Zod definitions. We want strict automated contract."
+    },
+    {
+      "id": "ARCH-003",
+      "title": "Standardized Structured Logging",
+      "description": "Migrate from custom `StructuredLogger` to industry-standard `structlog` for better observability integration.",
+      "acceptanceCriteria": [
+        "Add `structlog` to `pyproject.toml`",
+        "Replace `src/core/logging_system.py` logic with `structlog` configuration",
+        "Implement ASGI Middleware to capture `X-Request-ID` and bind it to structlog context",
+        "Ensure logs output JSON in production and colored text in development",
+        "Verify `correlation_id` propagates through async tasks"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Current custom logger is good but `structlog` is the Python standard for modern observability."
+    }
+  ]
+}

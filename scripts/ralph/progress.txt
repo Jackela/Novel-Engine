@@ -1,0 +1,59 @@
+## Codebase Patterns
+- **Architecture**: We follow strictly Hexagonal Architecture (Ports & Adapters).
+- **Contract-First**: Always define Pydantic models in `src/api/schemas.py` BEFORE writing logic.
+- **Frontend**: Frontend types must be synced from OpenAPI via `npm run api:sync` (or equivalent command).
+- **Testing**: Use `pytest` for backend and `npm run test` for frontend.
+- **Domain Value Objects**: Place in `src/contexts/{domain}/domain/value_objects/` with validation in `__post_init__`.
+- **Ports**: Define interfaces in `src/contexts/{domain}/application/ports/` using Protocol.
+- **Type Aliases**: Use aliases for backwards compatibility when refactoring (e.g., `CharacterGenerationResult = CharacterCard`).
+
+## 2026-01-29 - US-001 to US-005
+- **What was implemented**: Complete M2 Character Generation Refactor
+  - US-001: Verified API schemas already centralized in src/api/schemas.py
+  - US-002: Created CharacterCard value object in domain layer with validation
+  - US-003: Implemented CharacterGeneratorPort interface in application/ports
+  - US-004: Verified generation router uses new service pattern, regenerated OpenAPI
+  - US-005: Verified frontend types already synchronized
+- **Files changed**:
+  - `src/contexts/character/domain/value_objects/character_card.py` (new)
+  - `src/contexts/character/domain/value_objects/__init__.py` (updated exports)
+  - `src/contexts/character/application/ports/__init__.py` (new)
+  - `src/contexts/character/application/ports/character_generator_port.py` (new)
+  - `src/contexts/character/application/services/generation_service.py` (refactored)
+  - `src/contexts/character/infrastructure/generators/llm_character_generator.py` (updated imports)
+  - `docs/api/openapi.json` (regenerated)
+  - `prd.json` (all stories marked passes: true)
+- **Learnings for future iterations:**
+  - Most of the work was already done in previous iterations - always check first before implementing
+  - Port interfaces should use TYPE_CHECKING to avoid circular imports when referencing domain types
+  - Keep backwards compatibility aliases when refactoring to avoid breaking existing code
+  - OpenAPI spec regeneration: use `python scripts/generate_openapi.py` then copy `openapi.current.json` to `openapi.json`
+---
+
+## [2026-01-29 16:06:42] - US-001
+- Confirmed centralization of API Schemas in \src/api/schemas\.py\.
+- \CharacterGenerationRequest\ and \CharacterGenerationResponse\ are defined in the central schema file.
+- Confirmed legacy local models in \src/api/story_generation_api.py\ are gone (file deleted).
+- Typecheck for \src/api/schemas.py\ passes.
+- **Learnings for future iterations:**
+  - The project is already in a state of refactoring towards a Modular Monolith with Hexagonal Architecture.
+  - LLM generation is enabled by default in \.env\, which causes non-deterministic test failures in some suites.
+
+---
+# Ralph Progress Log
+Started: Tue Feb  3 15:41:06     2026
+---
+
+## [2026-01-29 16:06:42] - US-001
+- Confirmed centralization of API Schemas in \src/api/schemas.py\.
+- \CharacterGenerationRequest\ and \CharacterGenerationResponse\ are defined in the central schema file.
+- Confirmed legacy local models in \src/api/story_generation_api.py\ are gone (file deleted).
+- Typecheck for \src/api/schemas.py\ passes.
+- **Learnings for future iterations:**
+  - The project is already in a state of refactoring towards a Modular Monolith with Hexagonal Architecture.
+  - LLM generation is enabled by default in \.env\, which causes non-deterministic test failures in some suites.
+=======
+# Ralph Progress Log
+Started: Tue Feb  3 15:41:06     2026
+>>>>>>> Stashed changes
+---

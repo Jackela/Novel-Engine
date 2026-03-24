@@ -12,7 +12,10 @@ from src.contexts.character.domain.ports.memory_port import (
 from src.contexts.character.infrastructure.adapters.honcho_memory_adapter import (
     HonchoMemoryAdapter,
 )
-from src.shared.infrastructure.honcho import HonchoClient, HonchoSettings
+from src.shared.infrastructure.honcho import (
+    HonchoSettings,
+    create_honcho_client,
+)
 
 
 async def create_honcho_memory_adapter(
@@ -33,8 +36,8 @@ async def create_honcho_memory_adapter(
         >>> adapter = await create_honcho_memory_adapter()
         >>> await adapter.initialize()
     """
-    # Get or create Honcho client
-    client = await HonchoClient.get_instance(settings)
+    # Create Honcho client with dependency injection
+    client = create_honcho_client(settings)
 
     # Create adapter with injected client
     adapter = HonchoMemoryAdapter(honcho_client=client)
