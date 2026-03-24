@@ -105,6 +105,7 @@ class TestRememberCharacterEventUseCase:
             character_id=character_id,
             content="Character fought the dragon",
             story_id="story-123",
+            scope_id="session-456",
             importance="critical",
             chapter=5,
             tags=["combat", "boss"],

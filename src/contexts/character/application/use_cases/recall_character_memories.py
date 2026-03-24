@@ -25,8 +25,7 @@ class RecallCharacterMemoriesRequest:
         character_id: The character whose memories to search.
         query: Search query (natural language).
         story_id: Optional story/workspace filter.
-        session_id: Optional specific session to search.
-        honcho_session_id: Optional Honcho session ID (overrides session_id).
+        scope_id: Optional specific scope to search (e.g., session, chapter).
         top_k: Maximum number of memories to return.
         min_relevance: Minimum relevance score threshold (0.0-1.0).
     """
@@ -34,8 +33,7 @@ class RecallCharacterMemoriesRequest:
     character_id: UUID
     query: str
     story_id: str | None = None
-    session_id: str | None = None
-    honcho_session_id: str | None = None
+    scope_id: str | None = None
     top_k: int = 5
     min_relevance: float = 0.0
 
@@ -180,15 +178,12 @@ class RecallCharacterMemoriesUseCase:
             MemoryQueryError: If query operation fails.
         """
         try:
-            # Use honcho_session_id if provided, otherwise use session_id
-            effective_session_id = request.honcho_session_id or request.session_id
-
             # Perform recall
             result: MemoryQueryResult = await self._memory_port.recall(
                 character_id=request.character_id,
                 query=request.query,
                 story_id=request.story_id,
-                session_id=effective_session_id,
+                session_id=request.scope_id,
                 top_k=request.top_k,
             )
 

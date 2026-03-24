@@ -5,13 +5,12 @@ Manages document collections and vector search capabilities.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Protocol
 from datetime import datetime
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional, Protocol
+from uuid import UUID
 
-from src.shared.domain.base.aggregate import AggregateRoot
 from src.contexts.knowledge.domain.entities.document import Document
-
+from src.shared.domain.base.aggregate import AggregateRoot
 
 # Type alias for Document ID
 DocumentId = UUID

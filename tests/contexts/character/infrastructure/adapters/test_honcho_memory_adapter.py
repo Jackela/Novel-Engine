@@ -119,7 +119,7 @@ class TestHonchoMemoryAdapterRemember:
         character_id = uuid4()
 
         mock_honcho_client.get_or_create_workspace = AsyncMock(
-            side_effect=Exception("Connection failed")
+            side_effect=ConnectionError("Connection failed")
         )
 
         with pytest.raises(MemoryStorageError) as exc_info:
@@ -178,7 +178,7 @@ class TestHonchoMemoryAdapterRecall:
         character_id = uuid4()
 
         mock_honcho_client.search_memories = AsyncMock(
-            side_effect=Exception("Search failed")
+            side_effect=ConnectionError("Search failed")
         )
 
         with pytest.raises(MemoryQueryError) as exc_info:
@@ -349,7 +349,7 @@ class TestHonchoMemoryAdapterGetSessionContext:
         session_id = "session-123"
 
         mock_honcho_client.get_session_context = AsyncMock(
-            side_effect=Exception("Connection failed")
+            side_effect=ConnectionError("Connection failed")
         )
 
         with pytest.raises(MemoryQueryError) as exc_info:
@@ -426,17 +426,14 @@ class TestHonchoMemoryAdapterInitialize:
     """Tests for adapter initialization."""
 
     @pytest.mark.asyncio
-    async def test_initialize_creates_client(self) -> None:
-        """Test that initialize creates Honcho client if not provided."""
+    async def test_initialize_raises_error_when_no_client(self) -> None:
+        """Test that initialize raises error when client is not provided."""
         adapter = HonchoMemoryAdapter(honcho_client=None)
 
-        # Mock the get_instance method
-        mock_client = MagicMock(spec=HonchoClient)
-        with patch.object(
-            HonchoClient, "get_instance", AsyncMock(return_value=mock_client)
-        ):
+        with pytest.raises(MemoryStorageError) as exc_info:
             await adapter.initialize()
-            assert adapter._honcho == mock_client
+
+        assert "Honcho client not provided" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_initialize_uses_existing_client(

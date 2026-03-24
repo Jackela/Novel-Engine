@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 T = TypeVar("T")
 
@@ -172,7 +172,7 @@ class Database(ABC):
             async with self.connection() as conn:
                 await conn.execute("SELECT 1")
             return True
-        except Exception:
+        except (ConnectionError, TimeoutError, OSError):
             return False
 
 

@@ -25,8 +25,7 @@ class RememberCharacterEventRequest:
         character_id: The character's unique identifier.
         content: The memory content to store.
         story_id: Optional story identifier for workspace isolation.
-        session_id: Optional specific session for organization.
-        honcho_session_id: Optional Honcho session ID (overrides session_id).
+        scope_id: Optional specific scope for organization (e.g., session, chapter).
         importance: Memory importance level (low, medium, high, critical).
         chapter: Optional chapter/story point reference.
         tags: Optional list of tags for categorization.
@@ -36,8 +35,7 @@ class RememberCharacterEventRequest:
     character_id: UUID
     content: str
     story_id: str | None = None
-    session_id: str | None = None
-    honcho_session_id: str | None = None
+    scope_id: str | None = None
     importance: str = "medium"  # low, medium, high, critical
     chapter: int | None = None
     tags: list[str] | None = None
@@ -138,15 +136,12 @@ class RememberCharacterEventUseCase:
             if request.metadata:
                 metadata.update(request.metadata)
 
-            # Use honcho_session_id if provided, otherwise use session_id
-            effective_session_id = request.honcho_session_id or request.session_id
-
             # Store the memory
             entry = await self._memory_port.remember(
                 character_id=request.character_id,
                 content=request.content,
                 story_id=request.story_id,
-                session_id=effective_session_id,
+                session_id=request.scope_id,
                 metadata=metadata,
             )
 

@@ -11,11 +11,11 @@ from typing import Any
 from uuid import UUID
 
 from src.contexts.character.domain.ports.memory_port import (
-    CharacterMemoryPort,
     MemoryEntry,
+    MemoryErrorDetails,
+    MemoryQueryError,
     MemoryQueryResult,
     MemoryStorageError,
-    MemoryQueryError,
 )
 from src.shared.infrastructure.honcho import HonchoClient, HonchoClientError
 
@@ -52,10 +52,36 @@ class HonchoMemoryAdapter:
             tuple[str, str], str
         ] = {}  # (char_id, workspace) -> session_id
 
+    def _classify_error(self, error: Exception) -> str:
+        """Classify an exception into a standardized error code.
+
+        Args:
+            error: The exception to classify.
+
+        Returns:
+            Standardized error code string.
+        """
+        if isinstance(error, ConnectionError):
+            return "CONNECTION_ERROR"
+        elif isinstance(error, TimeoutError):
+            return "TIMEOUT_ERROR"
+        elif isinstance(error, HonchoClientError):
+            return "HONCHO_CLIENT_ERROR"
+        else:
+            return "UNKNOWN_ERROR"
+
     async def initialize(self) -> None:
         """Initialize the adapter by ensuring Honcho client is ready."""
+        # Client is now injected via constructor, no need for singleton
         if self._honcho is None:
-            self._honcho = await HonchoClient.get_instance()
+            raise MemoryStorageError(
+                "Honcho client not provided",
+                details=MemoryErrorDetails(
+                    operation="initialize",
+                    entity_id="adapter",
+                    error_code="CLIENT_NOT_INITIALIZED",
+                ),
+            )
 
     async def close(self) -> None:
         """Clean up resources."""
@@ -189,13 +215,27 @@ class HonchoMemoryAdapter:
                 character_id=character_id,
                 created_at=message.created_at or datetime.utcnow(),
                 metadata=metadata or {},
-                session_id=resolved_session,
+                scope_id=resolved_session,
             )
 
             return entry
 
-        except Exception as e:
-            raise MemoryStorageError(f"Failed to store memory: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryStorageError(
+                f"Failed to store memory for character {character_id}",
+                details=MemoryErrorDetails(
+                    operation="store",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                        "content_length": len(content),
+                    },
+                ),
+            ) from e
 
     async def recall(
         self,
@@ -235,7 +275,7 @@ class HonchoMemoryAdapter:
                     character_id=character_id,
                     created_at=msg.created_at or datetime.utcnow(),
                     metadata=msg.metadata or {},
-                    session_id=session_id,
+                    scope_id=session_id,
                 )
                 entries.append(entry)
 
@@ -245,8 +285,23 @@ class HonchoMemoryAdapter:
                 total_found=len(entries),
             )
 
-        except Exception as e:
-            raise MemoryQueryError(f"Failed to recall memories: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryQueryError(
+                f"Failed to recall memories for character {character_id}",
+                details=MemoryErrorDetails(
+                    operation="recall",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                        "query": query,
+                        "top_k": top_k,
+                    },
+                ),
+            ) from e
 
     async def forget(
         self,
@@ -295,14 +350,28 @@ class HonchoMemoryAdapter:
                     character_id=character_id,
                     created_at=msg.created_at or datetime.utcnow(),
                     metadata=msg.metadata or {},
-                    session_id=session_id,
+                    scope_id=session_id,
                 )
                 entries.append(entry)
 
             return entries
 
-        except Exception as e:
-            raise MemoryQueryError(f"Failed to get character memories: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryQueryError(
+                f"Failed to get character memories for {character_id}",
+                details=MemoryErrorDetails(
+                    operation="get_all",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                        "limit": limit,
+                    },
+                ),
+            ) from e
 
     async def create_session(
         self,
@@ -341,8 +410,21 @@ class HonchoMemoryAdapter:
 
             return session.id
 
-        except Exception as e:
-            raise MemoryStorageError(f"Failed to create session: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryStorageError(
+                f"Failed to create session for character {character_id}",
+                details=MemoryErrorDetails(
+                    operation="create_scope",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_name": session_name,
+                    },
+                ),
+            ) from e
 
     async def get_character_summary(
         self,
@@ -367,8 +449,21 @@ class HonchoMemoryAdapter:
 
             return representation
 
-        except Exception as e:
-            raise MemoryQueryError(f"Failed to get character summary: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryQueryError(
+                f"Failed to get character summary for {character_id}",
+                details=MemoryErrorDetails(
+                    operation="summarize",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                    },
+                ),
+            ) from e
 
     async def query_character(
         self,
@@ -394,8 +489,22 @@ class HonchoMemoryAdapter:
 
             return response
 
-        except Exception as e:
-            raise MemoryQueryError(f"Failed to query character: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryQueryError(
+                f"Failed to query character {character_id}",
+                details=MemoryErrorDetails(
+                    operation="query",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                        "question": question,
+                    },
+                ),
+            ) from e
 
     async def get_session_context(
         self,
@@ -420,5 +529,19 @@ class HonchoMemoryAdapter:
 
             return context
 
-        except Exception as e:
-            raise MemoryQueryError(f"Failed to get session context: {e}")
+        except (HonchoClientError, ConnectionError, TimeoutError) as e:
+            error_code = self._classify_error(e)
+            raise MemoryQueryError(
+                f"Failed to get session context for character {character_id}",
+                details=MemoryErrorDetails(
+                    operation="get_context_for_llm",
+                    entity_id=str(character_id),
+                    error_code=error_code,
+                    original_exception=e,
+                    context={
+                        "story_id": story_id,
+                        "session_id": session_id,
+                        "tokens": tokens,
+                    },
+                ),
+            ) from e

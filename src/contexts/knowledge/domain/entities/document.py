@@ -5,12 +5,11 @@ Represents a searchable document within a knowledge base.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 from src.shared.domain.base.entity import Entity
-
 
 # Type alias for Document ID
 DocumentId = UUID

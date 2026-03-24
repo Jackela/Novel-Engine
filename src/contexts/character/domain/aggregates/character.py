@@ -133,11 +133,6 @@ class Character(AggregateRoot):
     # Relationships with other characters
     relationships: List[Relationship] = field(default_factory=list)
 
-    # Honcho memory system integration
-    honcho_workspace_id: Optional[str] = field(default=None)
-    honcho_peer_id: Optional[str] = field(default=None)
-    active_session_id: Optional[str] = field(default=None)
-
     # Additional metadata
     level: int = field(default=1)
     experience: int = field(default=0)
@@ -360,33 +355,6 @@ class Character(AggregateRoot):
         self.updated_at = datetime.utcnow()
         self.increment_version()
 
-    def set_honcho_session(
-        self,
-        workspace_id: str,
-        peer_id: str,
-        session_id: str,
-    ) -> None:
-        """Set Honcho session information for this character.
-
-        Args:
-            workspace_id: The Honcho workspace ID for the story.
-            peer_id: The Honcho peer ID for this character.
-            session_id: The active session ID within the workspace.
-        """
-        self.honcho_workspace_id = workspace_id
-        self.honcho_peer_id = peer_id
-        self.active_session_id = session_id
-        self.updated_at = datetime.utcnow()
-        self.increment_version()
-
-    def clear_honcho_session(self) -> None:
-        """Clear Honcho session information."""
-        self.honcho_workspace_id = None
-        self.honcho_peer_id = None
-        self.active_session_id = None
-        self.updated_at = datetime.utcnow()
-        self.increment_version()
-
     def to_dict(self) -> Dict[str, Any]:
         """Convert character to dictionary for serialization."""
         return {
@@ -400,9 +368,6 @@ class Character(AggregateRoot):
             "skills": [s.to_dict() for s in self.skills],
             "inventory": [i.to_dict() for i in self.inventory],
             "relationships": [r.to_dict() for r in self.relationships],
-            "honcho_workspace_id": self.honcho_workspace_id,
-            "honcho_peer_id": self.honcho_peer_id,
-            "active_session_id": self.active_session_id,
             "metadata": self.metadata,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

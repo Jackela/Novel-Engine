@@ -1,179 +1,204 @@
-"""
-Tests for health check endpoints.
+"""Tests for health check endpoints.
+
+Tests the API health endpoints.
 """
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.apps.api.health import (
+    _get_health_checker,
     health_router,
-    HealthStatus,
-    DetailedHealthStatus,
-    ComponentStatus,
-    _get_uptime,
+    set_connection_pool,
+    set_honcho_client,
 )
+from src.shared.infrastructure.health.health_checker import HealthChecker
 
 
 @pytest.fixture
-def client():
-    """Create test client with health router."""
+def app():
+    """Create test FastAPI app."""
     app = FastAPI()
     app.include_router(health_router)
+    return app
+
+
+@pytest.fixture
+def client(app):
+    """Create test client."""
     return TestClient(app)
 
 
-class TestHealthCheck:
-    """Test basic health check endpoint."""
+class TestHealthEndpoint:
+    """Test /health endpoint."""
 
-    def test_health_status_model(self):
-        """Test HealthStatus model."""
-        status = HealthStatus(
-            status="healthy",
-            version="2.0.0",
-            timestamp="2024-01-01T00:00:00",
-            environment="test",
-            uptime_seconds=100.0,
-        )
-        assert status.status == "healthy"
-        assert status.version == "2.0.0"
+    def test_health_returns_200_when_empty(self, client):
+        """Test health endpoint returns 200 when no components registered."""
+        # Reset health checker to ensure clean state
+        import src.apps.api.health as health_module
 
-    def test_health_endpoint(self, client):
-        """Test health check endpoint."""
+        health_module._health_checker = None
+
         response = client.get("/health")
+
         assert response.status_code == 200
-
         data = response.json()
-        assert data["status"] == "healthy"
-        assert data["version"] == "2.0.0"
+        assert data["overall_status"] == "healthy"
         assert "timestamp" in data
-        assert "environment" in data
-        assert "uptime_seconds" in data
+        assert "components" in data
 
-    def test_health_response_content_type(self, client):
-        """Test health check returns JSON."""
+    def test_health_returns_json(self, client):
+        """Test health endpoint returns JSON."""
+        import src.apps.api.health as health_module
+
+        health_module._health_checker = None
+
         response = client.get("/health")
+
         assert response.headers["content-type"] == "application/json"
 
 
-class TestLivenessProbe:
-    """Test Kubernetes liveness probe."""
+class TestLivenessEndpoint:
+    """Test /health/live endpoint."""
 
-    def test_liveness_probe(self, client):
-        """Test liveness probe endpoint."""
+    def test_liveness_returns_alive(self, client):
+        """Test liveness probe returns 'alive'."""
         response = client.get("/health/live")
+
         assert response.status_code == 200
-
         data = response.json()
-        assert data["status"] == "healthy"
-        assert "version" in data
+        assert data["status"] == "alive"
 
 
-class TestReadinessProbe:
-    """Test Kubernetes readiness probe."""
+class TestReadinessEndpoint:
+    """Test /health/ready endpoint."""
 
-    def test_readiness_probe(self, client):
-        """Test readiness probe endpoint."""
+    def test_readiness_without_database(self, client):
+        """Test readiness returns not_ready when no database."""
+        import src.apps.api.health as health_module
+
+        health_module._health_checker = None
+        health_module._connection_pool = None
+
         response = client.get("/health/ready")
+
+        assert response.status_code == 503
+        data = response.json()
+        assert data["status"] == "not_ready"
+        assert "Database" in data["reason"]
+
+    def test_readiness_with_mock_database(self, client):
+        """Test readiness with mocked database."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        import src.apps.api.health as health_module
+
+        # Reset state
+        health_module._health_checker = None
+
+        # Create mock pool
+        mock_pool = MagicMock()
+        mock_pool.is_initialized = True
+        mock_conn = AsyncMock()
+        mock_conn.fetchval.return_value = 1
+        mock_pool.acquire.return_value = AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn),
+            __aexit__=AsyncMock(return_value=False),
+        )
+
+        # Set the pool
+        health_module._connection_pool = mock_pool
+
+        # Make request and verify readiness
+        response = client.get("/health/ready")
+
+        # Database is healthy, so should be ready
         assert response.status_code == 200
-
         data = response.json()
-        assert "status" in data
-        assert "components" in data
-        assert isinstance(data["components"], list)
+        assert data["status"] == "ready"
 
-    def test_readiness_components(self, client):
-        """Test readiness probe includes component checks."""
+    def test_readiness_returns_503_when_not_ready(self, client):
+        """Test readiness returns 503 when not ready."""
+        import src.apps.api.health as health_module
+
+        health_module._health_checker = None
+        health_module._connection_pool = None
+
         response = client.get("/health/ready")
-        data = response.json()
 
-        # Check for expected components
-        component_names = [c["name"] for c in data["components"]]
-        assert "database" in component_names
-        assert "cache" in component_names
+        assert response.status_code == 503
 
 
-class TestDetailedHealth:
-    """Test detailed health check."""
+class TestDetailedHealthEndpoint:
+    """Test /health/detailed endpoint."""
 
-    def test_detailed_health_endpoint(self, client):
-        """Test detailed health check endpoint."""
+    def test_detailed_health_alias(self, client):
+        """Test detailed health is alias for health."""
+        import src.apps.api.health as health_module
+
+        health_module._health_checker = None
+
         response = client.get("/health/detailed")
+
         assert response.status_code == 200
-
         data = response.json()
-        assert "status" in data
+        assert "overall_status" in data
+        assert "timestamp" in data
         assert "components" in data
-        assert "version" in data
-
-    def test_detailed_health_status_model(self):
-        """Test DetailedHealthStatus model."""
-        status = DetailedHealthStatus(
-            status="healthy",
-            version="2.0.0",
-            timestamp="2024-01-01T00:00:00",
-            environment="test",
-            uptime_seconds=100.0,
-            components=[],
-        )
-        assert status.status == "healthy"
-
-
-class TestComponentStatus:
-    """Test ComponentStatus model."""
-
-    def test_component_status_creation(self):
-        """Test creating component status."""
-        component = ComponentStatus(
-            name="database",
-            status="healthy",
-            healthy=True,
-            response_time_ms=10.5,
-            details={"type": "postgresql"},
-        )
-        assert component.name == "database"
-        assert component.healthy is True
-        assert component.details["type"] == "postgresql"
-
-    def test_component_status_default_details(self):
-        """Test component status with default details."""
-        component = ComponentStatus(
-            name="cache",
-            status="healthy",
-            healthy=True,
-            response_time_ms=5.0,
-        )
-        assert component.details == {}
 
 
 class TestVersionEndpoint:
-    """Test version endpoint."""
+    """Test /version endpoint."""
 
     def test_version_endpoint(self, client):
         """Test version endpoint."""
         response = client.get("/version")
+
         assert response.status_code == 200
-
         data = response.json()
-        assert data["version"] == "2.0.0"
-        assert data["name"] == "Novel Engine API"
-        assert "python_version" in data
+        assert "version" in data
+        assert "name" in data
         assert "environment" in data
+        assert "python_version" in data
 
 
-class TestUptime:
-    """Test uptime calculation."""
+class TestHealthCheckerIntegration:
+    """Integration tests for health checker."""
 
-    def test_get_uptime(self):
-        """Test uptime calculation is positive."""
-        uptime = _get_uptime()
-        assert uptime >= 0
+    @pytest.mark.asyncio
+    async def test_get_health_checker_creates_new_instance(self):
+        """Test that _get_health_checker creates a new instance."""
+        import src.apps.api.health as health_module
 
-    def test_uptime_increases(self):
-        """Test uptime increases over time."""
-        import time
+        # Reset
+        health_module._health_checker = None
 
-        uptime1 = _get_uptime()
-        time.sleep(0.01)
-        uptime2 = _get_uptime()
-        assert uptime2 > uptime1
+        checker = await _get_health_checker()
+
+        assert isinstance(checker, HealthChecker)
+        assert health_module._health_checker is checker
+
+    def test_set_connection_pool(self):
+        """Test setting connection pool."""
+        from unittest.mock import MagicMock
+
+        import src.apps.api.health as health_module
+
+        mock_pool = MagicMock()
+
+        set_connection_pool(mock_pool)
+
+        assert health_module._connection_pool is mock_pool
+
+    def test_set_honcho_client(self):
+        """Test setting Honcho client."""
+        from unittest.mock import MagicMock
+
+        import src.apps.api.health as health_module
+
+        mock_client = MagicMock()
+
+        set_honcho_client(mock_client)
+
+        assert health_module._honcho_client is mock_client

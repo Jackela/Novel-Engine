@@ -23,8 +23,7 @@ class SummarizeCharacterArcRequest:
     Attributes:
         character_id: The character to summarize.
         story_id: Optional story/workspace context.
-        session_id: Optional specific session to focus on.
-        honcho_session_id: Optional Honcho session ID (overrides session_id).
+        scope_id: Optional specific scope to focus on (e.g., session, chapter).
         focus: Optional specific aspect to emphasize.
             Options: "personality", "relationships", "growth", "motivations", "all"
         format_style: Output format preference.
@@ -33,8 +32,7 @@ class SummarizeCharacterArcRequest:
 
     character_id: UUID
     story_id: str | None = None
-    session_id: str | None = None
-    honcho_session_id: str | None = None
+    scope_id: str | None = None
     focus: str = "all"
     format_style: str = "narrative"
 
@@ -197,14 +195,11 @@ class SummarizeCharacterArcUseCase:
             MemoryQueryError: If query operation fails.
         """
         try:
-            # Use honcho_session_id if provided, otherwise use session_id
-            effective_session_id = request.honcho_session_id or request.session_id
-
             # Get the character summary from memory port
             summary = await self._memory_port.get_character_summary(
                 character_id=request.character_id,
                 story_id=request.story_id,
-                session_id=effective_session_id,
+                session_id=request.scope_id,
             )
 
             # Optionally query for specific focus areas
@@ -225,7 +220,7 @@ class SummarizeCharacterArcUseCase:
                     character_id=request.character_id,
                     question=focus_queries[request.focus],
                     story_id=request.story_id,
-                    session_id=effective_session_id,
+                    session_id=request.scope_id,
                 )
 
                 if request.focus == "personality":
@@ -244,7 +239,7 @@ class SummarizeCharacterArcUseCase:
                     character_id=request.character_id,
                     question=focus_queries["personality"],
                     story_id=request.story_id,
-                    session_id=effective_session_id,
+                    session_id=request.scope_id,
                 )
                 personality_traits = self._extract_list_items(personality_answer)
 
@@ -253,7 +248,7 @@ class SummarizeCharacterArcUseCase:
                     character_id=request.character_id,
                     question=focus_queries["relationships"],
                     story_id=request.story_id,
-                    session_id=effective_session_id,
+                    session_id=request.scope_id,
                 )
                 relationships = self._extract_list_items(rel_answer)
 
@@ -262,7 +257,7 @@ class SummarizeCharacterArcUseCase:
                     character_id=request.character_id,
                     question=focus_queries["growth"],
                     story_id=request.story_id,
-                    session_id=effective_session_id,
+                    session_id=request.scope_id,
                 )
                 growth_arc = growth_answer
 
@@ -271,7 +266,7 @@ class SummarizeCharacterArcUseCase:
                     character_id=request.character_id,
                     question=focus_queries["motivations"],
                     story_id=request.story_id,
-                    session_id=effective_session_id,
+                    session_id=request.scope_id,
                 )
                 motivations = mot_answer
 
@@ -279,7 +274,7 @@ class SummarizeCharacterArcUseCase:
             memories = await self._memory_port.get_character_memories(
                 character_id=request.character_id,
                 story_id=request.story_id,
-                session_id=effective_session_id,
+                session_id=request.scope_id,
                 limit=20,
             )
 

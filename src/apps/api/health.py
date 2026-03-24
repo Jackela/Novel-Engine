@@ -4,50 +4,72 @@ Health Check Endpoints
 Application health monitoring and readiness probes.
 """
 
-import time
 import os
+import time
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.health.checks.database_health_check import (
+    DatabaseHealthCheck,
+)
+from src.shared.infrastructure.health.checks.honcho_health_check import (
+    HonchoHealthCheck,
+)
+from src.shared.infrastructure.health.health_checker import HealthChecker
+from src.shared.infrastructure.honcho.client import HonchoClient
+from src.shared.infrastructure.persistence import DatabaseConnectionPool
 
 health_router = APIRouter()
 
-
-class HealthStatus(BaseModel):
-    """Health check response model."""
-
-    status: str
-    version: str
-    timestamp: str
-    environment: str
-    uptime_seconds: float
-
-
-class ComponentStatus(BaseModel):
-    """Individual component health status."""
-
-    name: str
-    status: str
-    healthy: bool
-    response_time_ms: float
-    details: Dict[str, Any] = {}
-
-
-class DetailedHealthStatus(BaseModel):
-    """Detailed health check with component statuses."""
-
-    status: str
-    version: str
-    timestamp: str
-    environment: str
-    uptime_seconds: float
-    components: list[ComponentStatus]
-
-
 # Track application start time
 _START_TIME = time.time()
+
+# Global health checker instance
+_health_checker: HealthChecker | None = None
+# Global connection pool reference
+_connection_pool: DatabaseConnectionPool | None = None
+# Global Honcho client reference
+_honcho_client: HonchoClient | None = None
+
+
+class HealthStatusResponse(BaseModel):
+    """Basic health check response model."""
+
+    status: str
+    version: str
+    timestamp: str
+    environment: str
+    uptime_seconds: float
+
+
+class ComponentStatusResponse(BaseModel):
+    """Individual component health status."""
+
+    status: str
+    response_time_ms: float
+    message: str
+    metadata: Dict[str, Any] = {}
+    checked_at: str
+
+
+class DetailedHealthResponse(BaseModel):
+    """Detailed health check with component statuses."""
+
+    overall_status: str
+    timestamp: str
+    components: Dict[str, ComponentStatusResponse]
+
+
+class SimpleHealthResponse(BaseModel):
+    """Simple health response for liveness/readiness."""
+
+    status: str
+    reason: str | None = None
 
 
 def _get_uptime() -> float:
@@ -55,105 +77,116 @@ def _get_uptime() -> float:
     return time.time() - _START_TIME
 
 
-async def _check_database() -> ComponentStatus:
-    """Check database connectivity."""
-    start = time.perf_counter()
+async def _get_health_checker() -> HealthChecker:
+    """Get or initialize the global health checker.
 
-    try:
-        # TODO: Implement actual database health check
-        # from src.infrastructure.database import check_connection
-        # await check_connection()
+    Returns:
+        HealthChecker: The global health checker instance.
+    """
+    global _health_checker, _connection_pool, _honcho_client
 
-        return ComponentStatus(
-            name="database",
-            status="healthy",
-            healthy=True,
-            response_time_ms=(time.perf_counter() - start) * 1000,
-            details={"type": "postgresql"},
-        )
-    except Exception as exc:
-        return ComponentStatus(
-            name="database",
-            status="unhealthy",
-            healthy=False,
-            response_time_ms=(time.perf_counter() - start) * 1000,
-            details={"error": str(exc)},
-        )
+    if _health_checker is None:
+        _health_checker = HealthChecker()
+
+        # Register database health check if pool is available
+        if _connection_pool is not None:
+            _health_checker.register(DatabaseHealthCheck(_connection_pool))
+
+        # Register Honcho health check if client is available
+        if _honcho_client is not None:
+            _health_checker.register(HonchoHealthCheck(_honcho_client))
+
+    return _health_checker
 
 
-async def _check_cache() -> ComponentStatus:
-    """Check cache connectivity."""
-    start = time.perf_counter()
+def set_connection_pool(pool: DatabaseConnectionPool) -> None:
+    """Set the database connection pool for health checks.
 
-    try:
-        # TODO: Implement actual cache health check
-        # from src.infrastructure.cache import check_connection
-        # await check_connection()
+    Args:
+        pool: The database connection pool.
+    """
+    global _connection_pool
+    _connection_pool = pool
 
-        return ComponentStatus(
-            name="cache",
-            status="healthy",
-            healthy=True,
-            response_time_ms=(time.perf_counter() - start) * 1000,
-            details={"type": "redis"},
-        )
-    except Exception as exc:
-        return ComponentStatus(
-            name="cache",
-            status="unhealthy",
-            healthy=False,
-            response_time_ms=(time.perf_counter() - start) * 1000,
-            details={"error": str(exc)},
-        )
+
+def set_honcho_client(client: HonchoClient) -> None:
+    """Set the Honcho client for health checks.
+
+    Args:
+        client: The Honcho client.
+    """
+    global _honcho_client
+    _honcho_client = client
 
 
 @health_router.get(
     "/health",
-    response_model=HealthStatus,
+    response_model=DetailedHealthResponse,
     status_code=status.HTTP_200_OK,
-    summary="Basic health check",
-    description="Returns basic health status of the application. Suitable for load balancer health checks.",
+    summary="Comprehensive health check",
+    description="Returns detailed health status including all component checks.",
     responses={
-        200: {"description": "Application is healthy"},
+        200: {"description": "Application is healthy or degraded"},
         503: {"description": "Application is unhealthy"},
     },
 )
-async def health_check() -> HealthStatus:
+async def health_check() -> JSONResponse:
     """
-    Basic health check endpoint.
+    Comprehensive health check endpoint.
+
+    Checks all registered components (database, cache, external services)
+    and returns detailed status information.
 
     Returns:
-        HealthStatus: Basic health information including status and version.
+        JSONResponse: Detailed health status with appropriate HTTP status code.
     """
-    return HealthStatus(
-        status="healthy",
-        version="2.0.0",
-        timestamp=datetime.utcnow().isoformat(),
-        environment=os.getenv("ENVIRONMENT", "development"),
-        uptime_seconds=round(_get_uptime(), 2),
-    )
+    try:
+        checker = await _get_health_checker()
+        result = await checker.check_all()
+
+        # Determine HTTP status code based on overall status
+        http_status = status.HTTP_200_OK
+        if result["overall_status"] == "unhealthy":
+            http_status = status.HTTP_503_SERVICE_UNAVAILABLE
+
+        return JSONResponse(content=result, status_code=http_status)
+    except Exception as e:
+        # If health checker itself fails, return unhealthy
+        return JSONResponse(
+            content={
+                "overall_status": "unhealthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "components": {},
+                "error": f"Health check failed: {str(e)}",
+            },
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
 
 @health_router.get(
     "/health/live",
-    response_model=HealthStatus,
+    response_model=SimpleHealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Liveness probe",
-    description="Kubernetes liveness probe - indicates if the application is running.",
+    description="Kubernetes liveness probe - indicates if the application process is running.",
 )
-async def liveness_probe() -> HealthStatus:
+async def liveness_probe() -> SimpleHealthResponse:
     """
     Liveness probe for Kubernetes.
 
+    This endpoint checks if the application process is running.
+    It does not check dependencies and should always return 200
+    as long as the application is alive.
+
     Returns:
-        HealthStatus: Liveness status. Returns 200 if application is running.
+        SimpleHealthResponse: Liveness status.
     """
-    return await health_check()
+    return {"status": "alive"}
 
 
 @health_router.get(
     "/health/ready",
-    response_model=DetailedHealthStatus,
+    response_model=SimpleHealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Readiness probe",
     description="Kubernetes readiness probe - indicates if the application is ready to serve requests.",
@@ -162,51 +195,80 @@ async def liveness_probe() -> HealthStatus:
         503: {"description": "Application is not ready"},
     },
 )
-async def readiness_probe() -> DetailedHealthStatus:
+async def readiness_probe() -> JSONResponse:
     """
-    Readiness probe with component checks.
+    Readiness probe for Kubernetes.
 
-    Checks database, cache, and other dependencies.
+    Checks if critical dependencies (database) are ready to serve requests.
+    Returns 503 if critical components are not ready.
 
     Returns:
-        DetailedHealthStatus: Detailed health information with component statuses.
+        JSONResponse: Readiness status with appropriate HTTP status code.
     """
-    # Check all components
-    components = [
-        await _check_database(),
-        await _check_cache(),
-    ]
+    try:
+        checker = await _get_health_checker()
+        result = await checker.check_all()
 
-    # Overall status is healthy only if all components are healthy
-    all_healthy = all(comp.healthy for comp in components)
+        # Check critical components (database is always critical)
+        critical_components = ["database"]
+        missing_critical = []
 
-    return DetailedHealthStatus(
-        status="healthy" if all_healthy else "degraded",
-        version="2.0.0",
-        timestamp=datetime.utcnow().isoformat(),
-        environment=os.getenv("ENVIRONMENT", "development"),
-        uptime_seconds=round(_get_uptime(), 2),
-        components=components,
-    )
+        for comp_name in critical_components:
+            if comp_name in result["components"]:
+                comp_status = result["components"][comp_name]["status"]
+                if comp_status != "healthy":
+                    missing_critical.append(f"{comp_name} ({comp_status})")
+            else:
+                # Database not registered means not initialized yet
+                if comp_name == "database":
+                    return JSONResponse(
+                        content={
+                            "status": "not_ready",
+                            "reason": "Database connection pool not initialized",
+                        },
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    )
+
+        if missing_critical:
+            return JSONResponse(
+                content={
+                    "status": "not_ready",
+                    "reason": f"Critical components not ready: {', '.join(missing_critical)}",
+                },
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return {"status": "ready"}
+
+    except Exception as e:
+        return JSONResponse(
+            content={"status": "not_ready", "reason": str(e)},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
 
 @health_router.get(
     "/health/detailed",
-    response_model=DetailedHealthStatus,
+    response_model=DetailedHealthResponse,
     status_code=status.HTTP_200_OK,
     summary="Detailed health check",
-    description="Returns detailed health information including all component statuses.",
+    description="Alias for /health - returns comprehensive health information.",
+    responses={
+        200: {"description": "Application is healthy or degraded"},
+        503: {"description": "Application is unhealthy"},
+    },
 )
-async def detailed_health_check() -> DetailedHealthStatus:
+async def detailed_health_check() -> JSONResponse:
     """
-    Detailed health check with all components.
+    Detailed health check endpoint.
 
-    Same as readiness probe, returns comprehensive health information.
+    This is an alias for the /health endpoint that returns the same
+    comprehensive health information.
 
     Returns:
-        DetailedHealthStatus: Complete health status information.
+        JSONResponse: Complete health status information.
     """
-    return await readiness_probe()
+    return await health_check()
 
 
 @health_router.get(
@@ -223,10 +285,11 @@ async def version() -> Dict[str, str]:
     Returns:
         Dictionary with version details.
     """
+    settings = get_settings()
     return {
-        "version": "2.0.0",
-        "name": "Novel Engine API",
+        "version": settings.project_version,
+        "name": settings.project_name,
         "python_version": os.sys.version.split()[0],
-        "environment": os.getenv("ENVIRONMENT", "development"),
+        "environment": settings.environment.value,
         "build": os.getenv("BUILD_SHA", "unknown"),
     }

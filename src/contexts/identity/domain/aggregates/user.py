@@ -5,12 +5,11 @@ Manages user accounts, authentication state, and profile information.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
 
+from src.contexts.identity.domain.types import UserStatus
 from src.shared.domain.base.aggregate import AggregateRoot
-from src.contexts.identity.domain.types import UserId, UserStatus
 
 
 @dataclass(kw_only=True, eq=False)

@@ -278,6 +278,26 @@ class MonitoringSettings(BaseSettings):
     service_version: str = Field(default="0.1.0", description="Service version")
 
 
+class HealthCheckSettings(BaseSettings):
+    """Health check configuration settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="HEALTH_",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+    timeout_seconds: int = Field(
+        default=5, ge=1, le=60, description="Health check timeout in seconds"
+    )
+    cache_check_enabled: bool = Field(
+        default=True, description="Enable cache health check"
+    )
+    external_services_check_enabled: bool = Field(
+        default=True, description="Enable external services health check"
+    )
+
+
 class NovelEngineSettings(BaseSettings):
     """Main application settings using pydantic-settings v2.
 
@@ -336,6 +356,7 @@ class NovelEngineSettings(BaseSettings):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
+    health: HealthCheckSettings = Field(default_factory=HealthCheckSettings)
 
     @property
     def is_development(self) -> bool:

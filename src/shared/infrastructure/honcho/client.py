@@ -1,13 +1,17 @@
-"""Honcho client singleton.
+"""Honcho client wrapper.
 
-Provides a singleton Honcho client instance for the entire application,
+Provides a Honcho client instance for the application,
 supporting both cloud and self-hosted deployments.
+
+This module uses dependency injection pattern instead of singleton
+to avoid concurrency issues and enable better testability.
 """
 
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Optional
 
 from honcho import Honcho
 
@@ -22,37 +26,61 @@ if TYPE_CHECKING:
     )
 
 
-class HonchoClientError(Exception):
-    """Exception raised by HonchoClient operations."""
+@dataclass
+class HonchoErrorDetails:
+    """Structured error details for Honcho operations.
 
-    pass
+    Attributes:
+        operation: The operation being performed (e.g., "create_workspace").
+        entity_id: The ID of the entity being operated on.
+        error_code: Standardized error code (e.g., "CONNECTION_ERROR").
+        original_exception: The original exception that was raised.
+        context: Additional context information.
+    """
+
+    operation: str
+    entity_id: str
+    error_code: str
+    original_exception: Optional[Exception] = None
+    context: Optional[dict[str, Any]] = None
+
+
+class HonchoClientError(Exception):
+    """Exception raised by HonchoClient operations.
+
+    Attributes:
+        message: Human-readable error message.
+        details: Structured error details.
+        error_code: Standardized error code.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        details: Optional[HonchoErrorDetails] = None,
+    ) -> None:
+        super().__init__(message)
+        self.details = details
+        self.error_code = details.error_code if details else "UNKNOWN_ERROR"
 
 
 class HonchoClient:
-    """Singleton Honcho client wrapper.
+    """Honcho client wrapper with dependency injection.
 
     This class provides a unified interface for interacting with Honcho,
     abstracting away cloud vs self-hosted differences.
 
+    Uses instance-level locking for thread-safe lazy initialization.
+
     Attributes:
         settings: Honcho configuration settings.
-        client: The underlying Honcho client instance.
+        client: The underlying Honcho client instance (lazily initialized).
 
     Example:
         >>> from src.shared.infrastructure.honcho import HonchoClient
-        >>> client = HonchoClient()
+        >>> client = HonchoClient(settings)
         >>> workspace = await client.get_or_create_workspace("my-story")
     """
-
-    _instance: HonchoClient | None = None
-    _lock: asyncio.Lock = asyncio.Lock()
-
-    def __new__(cls, *args: Any, **kwargs: Any) -> HonchoClient:
-        """Implement singleton pattern."""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
 
     def __init__(self, settings: HonchoSettings | None = None) -> None:
         """Initialize the Honcho client.
@@ -60,26 +88,62 @@ class HonchoClient:
         Args:
             settings: Honcho settings. If None, creates default settings.
         """
-        if getattr(self, "_initialized", False):
-            return
-
         self._settings = settings or HonchoSettings()
+        self._client: Honcho | None = None
+        self._lock = asyncio.Lock()  # Instance-level lock for lazy initialization
 
-        # Initialize Honcho client
-        client_kwargs: dict[str, Any] = {
-            "base_url": self._settings.base_url,
-            "timeout": self._settings.timeout,
-        }
+    def _classify_error(self, error: Exception) -> str:
+        """Classify an exception into a standardized error code.
 
-        if self._settings.api_key:
-            client_kwargs["api_key"] = self._settings.api_key
+        Args:
+            error: The exception to classify.
 
-        self._client = Honcho(**client_kwargs)
-        self._initialized = True
+        Returns:
+            Standardized error code string.
+        """
+        if isinstance(error, ConnectionError):
+            return "CONNECTION_ERROR"
+        elif isinstance(error, TimeoutError):
+            return "TIMEOUT_ERROR"
+        elif isinstance(error, HonchoClientError):
+            return "HONCHO_CLIENT_ERROR"
+        else:
+            return "UNKNOWN_ERROR"
 
-    @property
-    def client(self) -> Honcho:
-        """Get the underlying Honcho client."""
+    async def _get_client(self) -> Honcho:
+        """Get or create the Honcho client instance (lazy initialization).
+
+        This method is thread-safe and uses double-checked locking pattern.
+
+        Returns:
+            The initialized Honcho client.
+
+        Raises:
+            HonchoClientError: If client initialization fails.
+        """
+        if self._client is None:
+            async with self._lock:
+                if self._client is None:
+                    try:
+                        client_kwargs: dict[str, Any] = {
+                            "base_url": self._settings.base_url,
+                            "timeout": self._settings.timeout,
+                        }
+
+                        if self._settings.api_key:
+                            client_kwargs["api_key"] = self._settings.api_key
+
+                        self._client = Honcho(**client_kwargs)
+                    except (ConnectionError, TimeoutError) as e:
+                        raise HonchoClientError(
+                            f"Failed to initialize Honcho client: {e}",
+                            details=HonchoErrorDetails(
+                                operation="initialize",
+                                entity_id="honcho_client",
+                                error_code=self._classify_error(e),
+                                original_exception=e,
+                            ),
+                        ) from e
         return self._client
 
     @property
@@ -131,23 +195,34 @@ class HonchoClient:
         Raises:
             HonchoClientError: If workspace operations fail.
         """
+        client = await self._get_client()
+
         try:
             # Try to get existing workspace
-            workspace = await self._client.workspaces.get(workspace_id)
+            workspace = await client.workspaces.get(workspace_id)
             if workspace:
                 return workspace
-        except Exception:
+        except (ConnectionError, TimeoutError, HonchoClientError):
+            # Workspace doesn't exist or connection issue, continue to create
             pass
 
         # Create new workspace
         try:
-            workspace = await self._client.workspaces.create(
+            workspace = await client.workspaces.create(
                 workspace_id=workspace_id,
                 name=name or workspace_id,
             )
             return workspace
-        except Exception as e:
-            raise HonchoClientError(f"Failed to create workspace {workspace_id}: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to create workspace {workspace_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="create_workspace",
+                    entity_id=workspace_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                ),
+            ) from e
 
     async def get_or_create_peer(
         self,
@@ -168,22 +243,33 @@ class HonchoClient:
         Raises:
             HonchoClientError: If peer operations fail.
         """
+        client = await self._get_client()
+
         try:
-            peer = await self._client.peers.get(workspace_id, peer_id)
+            peer = await client.peers.get(workspace_id, peer_id)
             if peer:
                 return peer
-        except Exception:
+        except (ConnectionError, TimeoutError, HonchoClientError):
+            # Peer doesn't exist or connection issue, continue to create
             pass
 
         try:
-            peer = await self._client.peers.create(
+            peer = await client.peers.create(
                 workspace_id=workspace_id,
                 peer_id=peer_id,
                 name=name or peer_id,
             )
             return peer
-        except Exception as e:
-            raise HonchoClientError(f"Failed to create peer {peer_id}: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to create peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="create_peer",
+                    entity_id=peer_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                ),
+            ) from e
 
     async def create_session(
         self,
@@ -202,17 +288,31 @@ class HonchoClient:
 
         Returns:
             Session instance.
+
+        Raises:
+            HonchoClientError: If session creation fails.
         """
+        client = await self._get_client()
+
         try:
-            session = await self._client.sessions.create(
+            session = await client.sessions.create(
                 workspace_id=workspace_id,
                 peer_id=peer_id,
                 session_id=session_id,
                 metadata=metadata or {},
             )
             return session
-        except Exception as e:
-            raise HonchoClientError(f"Failed to create session: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to create session for peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="create_session",
+                    entity_id=session_id or "auto-generated",
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={"workspace_id": workspace_id, "peer_id": peer_id},
+                ),
+            ) from e
 
     async def add_message(
         self,
@@ -235,9 +335,14 @@ class HonchoClient:
 
         Returns:
             Message instance.
+
+        Raises:
+            HonchoClientError: If message creation fails.
         """
+        client = await self._get_client()
+
         try:
-            message = await self._client.messages.create(
+            message = await client.messages.create(
                 workspace_id=workspace_id,
                 session_id=session_id,
                 content=content,
@@ -245,8 +350,20 @@ class HonchoClient:
                 metadata=metadata or {},
             )
             return message
-        except Exception as e:
-            raise HonchoClientError(f"Failed to add message: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to add message to session {session_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="add_message",
+                    entity_id=session_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={
+                        "workspace_id": workspace_id,
+                        "content_length": len(content),
+                    },
+                ),
+            ) from e
 
     async def search_memories(
         self,
@@ -269,13 +386,17 @@ class HonchoClient:
 
         Returns:
             List of matching messages/memories.
+
+        Raises:
+            HonchoClientError: If search operation fails.
         """
+        client = await self._get_client()
         top_k = top_k or self._settings.max_memories_per_query
 
         try:
             if session_id:
                 # Search within specific session
-                results = await self._client.sessions.search(
+                results = await client.sessions.search(
                     workspace_id=workspace_id,
                     session_id=session_id,
                     query=query,
@@ -283,15 +404,29 @@ class HonchoClient:
                 )
             else:
                 # Search across all sessions for this peer
-                results = await self._client.peers.search(
+                results = await client.peers.search(
                     workspace_id=workspace_id,
                     peer_id=peer_id,
                     query=query,
                     top_k=top_k,
                 )
             return results
-        except Exception as e:
-            raise HonchoClientError(f"Failed to search memories: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to search memories for peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="search_memories",
+                    entity_id=peer_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={
+                        "workspace_id": workspace_id,
+                        "query": query,
+                        "top_k": top_k,
+                        "session_id": session_id,
+                    },
+                ),
+            ) from e
 
     async def get_peer_representation(
         self,
@@ -311,22 +446,36 @@ class HonchoClient:
 
         Returns:
             Representation text.
+
+        Raises:
+            HonchoClientError: If getting representation fails.
         """
+        client = await self._get_client()
+
         try:
             if session_id:
-                representation = await self._client.sessions.representation(
+                representation = await client.sessions.representation(
                     workspace_id=workspace_id,
                     session_id=session_id,
                     peer_id=peer_id,
                 )
             else:
-                representation = await self._client.peers.representation(
+                representation = await client.peers.representation(
                     workspace_id=workspace_id,
                     peer_id=peer_id,
                 )
             return representation.content if representation else ""
-        except Exception as e:
-            raise HonchoClientError(f"Failed to get representation: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to get representation for peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="get_peer_representation",
+                    entity_id=peer_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={"workspace_id": workspace_id, "session_id": session_id},
+                ),
+            ) from e
 
     async def chat_with_peer(
         self,
@@ -348,24 +497,42 @@ class HonchoClient:
 
         Returns:
             Chat response.
+
+        Raises:
+            HonchoClientError: If chat operation fails.
         """
+        client = await self._get_client()
+
         try:
             if session_id:
-                response = await self._client.sessions.chat(
+                response = await client.sessions.chat(
                     workspace_id=workspace_id,
                     session_id=session_id,
                     peer_id=peer_id,
                     query=query,
                 )
             else:
-                response = await self._client.peers.chat(
+                response = await client.peers.chat(
                     workspace_id=workspace_id,
                     peer_id=peer_id,
                     query=query,
                 )
             return response.content if response else ""
-        except Exception as e:
-            raise HonchoClientError(f"Failed to chat with peer: {e}")
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to chat with peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="chat_with_peer",
+                    entity_id=peer_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={
+                        "workspace_id": workspace_id,
+                        "session_id": session_id,
+                        "query": query,
+                    },
+                ),
+            ) from e
 
     async def get_session_context(
         self,
@@ -386,53 +553,50 @@ class HonchoClient:
 
         Returns:
             List of context messages suitable for LLM prompt.
+
+        Raises:
+            HonchoClientError: If getting session context fails.
         """
+        client = await self._get_client()
+
         try:
-            context = await self._client.sessions.context(
+            context = await client.sessions.context(
                 workspace_id=workspace_id,
                 session_id=session_id,
                 tokens=tokens,
                 summarize=summarize,
             )
             return context.to_openai() if hasattr(context, "to_openai") else []
-        except Exception as e:
-            raise HonchoClientError(f"Failed to get session context: {e}")
-
-    @classmethod
-    async def get_instance(
-        cls,
-        settings: HonchoSettings | None = None,
-    ) -> HonchoClient:
-        """Get or create the singleton instance asynchronously.
-
-        Args:
-            settings: Optional settings to use.
-
-        Returns:
-            HonchoClient singleton instance.
-        """
-        if cls._instance is None:
-            async with cls._lock:
-                if cls._instance is None:
-                    cls._instance = cls(settings)
-        return cls._instance
-
-    @classmethod
-    def reset_instance(cls) -> None:
-        """Reset the singleton instance (useful for testing)."""
-        cls._instance = None
+        except (ConnectionError, TimeoutError) as e:
+            raise HonchoClientError(
+                f"Failed to get session context for {session_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="get_session_context",
+                    entity_id=session_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={
+                        "workspace_id": workspace_id,
+                        "tokens": tokens,
+                        "summarize": summarize,
+                    },
+                ),
+            ) from e
 
 
-# Convenience function
-async def get_honcho_client(
+# Convenience function for creating a new client instance
+def create_honcho_client(
     settings: HonchoSettings | None = None,
 ) -> HonchoClient:
-    """Get the global Honcho client instance.
+    """Create a new Honcho client instance.
+
+    This function creates a new client instance with the provided settings.
+    Use dependency injection to share client instances across the application.
 
     Args:
         settings: Optional settings to override defaults.
 
     Returns:
-        HonchoClient instance.
+        New HonchoClient instance.
     """
-    return await HonchoClient.get_instance(settings)
+    return HonchoClient(settings)
