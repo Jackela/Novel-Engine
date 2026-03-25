@@ -1,7 +1,7 @@
-"""Error handlers for narrative HTTP interface."""
+"""HTTP Error Handlers for Narrative Context."""
 
 from functools import wraps
-from typing import Callable, Optional, TypeVar
+from typing import Any, Callable, TypeVar
 
 from fastapi import HTTPException, status
 
@@ -10,99 +10,68 @@ from src.contexts.narrative.application.exceptions import (
     InvalidStoryStateError,
     NarrativeError,
     NarrativeValidationError,
+    SceneGenerationError,
     SceneNotFoundError,
     StoryAlreadyExistsError,
     StoryNotFoundError,
 )
-from src.shared.application.result import Result
+from src.shared.interface.http.error_handlers import (
+    BaseErrorConverter,
+)
+from src.shared.interface.http.error_handlers import (
+    ResultErrorHandler as BaseResultErrorHandler,
+)
+from src.shared.interface.http.error_handlers import (
+    handle_result_error as base_handle_result_error,
+)
 
-F = TypeVar("F", bound=Callable)
-
-ERROR_CODE_TO_HTTP_STATUS = {
-    "NOT_FOUND": status.HTTP_404_NOT_FOUND,
-    "ALREADY_EXISTS": status.HTTP_409_CONFLICT,
-    "VALIDATION_ERROR": status.HTTP_400_BAD_REQUEST,
-    "INVALID_STATE": status.HTTP_400_BAD_REQUEST,
-}
-
-
-class ResultErrorHandler:
-    """Handle Result errors and convert to HTTPException."""
-
-    @staticmethod
-    def handle(result: Result, operation: Optional[str] = None):
-        """Handle result error or return value."""
-        if result.is_error:
-            error_code = (
-                result.error.code if hasattr(result.error, "code") else "UNKNOWN"
-            )
-            status_code = ERROR_CODE_TO_HTTP_STATUS.get(
-                error_code, status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            raise HTTPException(status_code=status_code, detail=str(result.error))
-        return result.value
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-class ErrorConverter:
-    """Convert narrative errors to HTTP exceptions."""
+class ResultErrorHandler(BaseResultErrorHandler):
+    """Narrative-specific result error handler."""
+    pass
+
+
+class ErrorConverter(BaseErrorConverter):
+    """Convert NarrativeError exceptions to HTTPException."""
 
     @staticmethod
-    def convert(error: NarrativeError) -> HTTPException:
-        """Convert narrative error to HTTP exception."""
+    def convert(error: Exception) -> HTTPException:
+        """Convert NarrativeError to HTTPException."""
         if isinstance(error, StoryNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
-            )
-        elif isinstance(error, ChapterNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
-            )
-        elif isinstance(error, SceneNotFoundError):
-            return HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
-            )
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Story not found")
         elif isinstance(error, StoryAlreadyExistsError):
-            return HTTPException(
-                status_code=status.HTTP_409_CONFLICT, detail=str(error)
-            )
+            return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Story already exists")
+        elif isinstance(error, ChapterNotFoundError):
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chapter not found")
+        elif isinstance(error, SceneNotFoundError):
+            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scene not found")
         elif isinstance(error, (NarrativeValidationError, InvalidStoryStateError)):
-            return HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
-            )
-        else:
-            return HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
-            )
+            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+        elif isinstance(error, SceneGenerationError):
+            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Scene generation failed")
+        elif isinstance(error, NarrativeError):
+            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error))
+
+        return BaseErrorConverter.convert(error)
 
 
-def handle_narrative_errors(operation: Optional[str] = None) -> Callable[[F], F]:
-    """Decorator to handle narrative errors and convert to HTTPException."""
+def handle_narrative_errors(func: F) -> F:
+    """Narrative error handling decorator."""
 
-    def decorator(func: F) -> F:
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                return await func(*args, **kwargs)
-            except (
-                StoryNotFoundError,
-                ChapterNotFoundError,
-                SceneNotFoundError,
-            ) as e:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-                )
-            except StoryAlreadyExistsError as e:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
-            except (NarrativeValidationError, InvalidStoryStateError) as e:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-                )
-            except Exception as e:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Internal error: {str(e)}",
-                )
+    @wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return await func(*args, **kwargs)
+        except NarrativeError as e:
+            raise ErrorConverter.convert(e) from e
+        except Exception:
+            raise
 
-        return wrapper
+    return wrapper  # type: ignore
 
-    return decorator
+
+def handle_result_error(operation: str | None = None) -> Callable[[F], F]:
+    """Result error handling decorator with operation name."""
+    return base_handle_result_error(operation)

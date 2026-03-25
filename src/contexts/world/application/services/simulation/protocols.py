@@ -8,7 +8,7 @@ from typing import List, Optional, Protocol, runtime_checkable
 from src.contexts.world.domain.aggregates.world_state import WorldState
 from src.contexts.world.domain.entities.faction import Faction
 from src.contexts.world.domain.entities.world_snapshot import WorldSnapshot
-from src.core.result import Error, Result
+from src.shared.application.result import Failure, Result
 
 
 @runtime_checkable
@@ -70,7 +70,7 @@ class ISnapshotService(Protocol):
 
     def create_snapshot(
         self, world_id: str, tick_number: int, description: str = ""
-    ) -> Result[WorldSnapshot, Error]:
+    ) -> Result[WorldSnapshot, Failure]:
         # Create a snapshot of the current world state.
         #
         # Args:
@@ -82,7 +82,7 @@ class ISnapshotService(Protocol):
         #     Result containing created WorldSnapshot or error
         ...
 
-    def restore_snapshot(self, snapshot_id: str) -> Result[WorldSnapshot, Error]:
+    def restore_snapshot(self, snapshot_id: str) -> Result[WorldSnapshot, Failure]:
         # Restore world state from a snapshot.
         #
         # Args:
@@ -94,7 +94,7 @@ class ISnapshotService(Protocol):
 
     def get_latest_snapshot(
         self, world_id: str
-    ) -> Result[Optional[WorldSnapshot], Error]:
+    ) -> Result[Optional[WorldSnapshot], Failure]:
         # Get the latest snapshot for a world.
         #
         # Args:

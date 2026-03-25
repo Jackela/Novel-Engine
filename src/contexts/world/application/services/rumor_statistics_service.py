@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from src.contexts.world.domain.entities.rumor import Rumor
-from src.core.result import Err, Error, Ok, Result
+from src.shared.application.result import Failure, Result, Success
 
 
 @dataclass
@@ -44,12 +44,12 @@ class RumorStatisticsService:
 
         Returns:
             Result containing:
-            - Ok: RumorStatistics with calculated values
-            - Err: Error if calculation fails
+            - Success: RumorStatistics with calculated values
+            - Failure: Failure if calculation fails
         """
         try:
             if not rumors:
-                return Ok(RumorStatistics())
+                return Success(RumorStatistics())
 
             active_rumors = [r for r in rumors if not r.is_dead]
             dead_rumors = [r for r in rumors if r.is_dead]
@@ -64,7 +64,7 @@ class RumorStatisticsService:
             if rumors:
                 most_spread = max(rumors, key=lambda r: r.spread_count)
 
-            return Ok(
+            return Success(
                 RumorStatistics(
                     total_rumors=len(rumors),
                     active_rumors=len(active_rumors),
@@ -74,8 +74,8 @@ class RumorStatisticsService:
                 )
             )
         except Exception as e:
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to calculate rumor statistics: {e}",
                     code="STATISTICS_CALCULATION_ERROR",
                     recoverable=True,

@@ -1,6 +1,6 @@
 """World state and rumor propagation HTTP router."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -11,35 +11,10 @@ from src.contexts.world.application.services.rumor_propagation_service import (
 )
 from src.contexts.world.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_result_error,
+    handle_world_errors,
 )
 
 router = APIRouter(prefix="/world", tags=["world"])
-
-
-# ============ Request/Response Models ============
-
-
-class WorldStateUpdateRequest(BaseModel):
-    """Request model for updating world state."""
-
-    story_id: Optional[UUID] = Field(default=None, description="Associated story ID")
-    current_time: Optional[str] = Field(default=None, description="Current world time")
-    state_data: Optional[Dict[str, Any]] = Field(
-        default=None, description="World state data"
-    )
-
-
-class WorldStateResponse(BaseModel):
-    """Response model for world state."""
-
-    id: str
-    story_id: Optional[str]
-    current_time: str
-    state_data: Dict[str, Any]
-    version: int
-    created_at: str
-    updated_at: str
 
 
 class RumorPropagationRequest(BaseModel):
@@ -70,52 +45,12 @@ class RumorListResponse(BaseModel):
     active_count: int
 
 
-# ============ Routes ============
-
-
-@router.get(
-    "/state/{world_id}",
-    response_model=WorldStateResponse,
-    summary="Get world state",
-)
-@handle_result_error("get_world_state")
-async def get_world_state(
-    world_id: UUID,
-    # service: WorldStateService = Depends(),  # TODO: Add when service exists
-):
-    """Get world state by ID."""
-    # TODO: Implement when WorldStateService exists
-    # result = await service.get_world_state(world_id)
-    # world_state = ResultErrorHandler.handle_or_return(result, "get_world_state")
-    # return WorldStateResponse(...)
-    raise NotImplementedError("WorldStateService not yet implemented")
-
-
-@router.post(
-    "/state/{world_id}/update",
-    response_model=WorldStateResponse,
-    summary="Update world state",
-)
-@handle_result_error("update_world_state")
-async def update_world_state(
-    world_id: UUID,
-    update: WorldStateUpdateRequest,
-    # service: WorldStateService = Depends(),  # TODO: Add when service exists
-):
-    """Update world state."""
-    # TODO: Implement when WorldStateService exists
-    # result = await service.update_world_state(world_id, update)
-    # world_state = ResultErrorHandler.handle_or_return(result, "update_world_state")
-    # return WorldStateResponse(...)
-    raise NotImplementedError("WorldStateService not yet implemented")
-
-
 @router.post(
     "/rumors/propagate",
     response_model=Dict[str, Any],
     summary="Propagate rumors",
 )
-@handle_result_error("propagate_rumors")
+@handle_world_errors
 async def propagate_rumors(
     propagation: RumorPropagationRequest,
     service: RumorPropagationService = Depends(),
@@ -132,7 +67,7 @@ async def propagate_rumors(
     else:
         result = await service.propagate_rumors(world)
 
-    rumors = ResultErrorHandler.handle_or_return(result, "propagate_rumors")
+    rumors = ResultErrorHandler.handle(result, "propagate_rumors")
 
     return {
         "world_id": str(propagation.world_id),
@@ -154,7 +89,7 @@ async def propagate_rumors(
     response_model=RumorListResponse,
     summary="Get active rumors",
 )
-@handle_result_error("get_active_rumors")
+@handle_world_errors
 async def get_active_rumors(
     world_id: UUID,
     service: RumorPropagationService = Depends(),

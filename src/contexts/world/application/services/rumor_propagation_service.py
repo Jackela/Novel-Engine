@@ -32,7 +32,7 @@ from src.contexts.world.domain.entities.history_event import (
     ImpactScope,
 )
 from src.contexts.world.domain.entities.rumor import Rumor, RumorOrigin
-from src.core.result import Err, Error, Ok, Result
+from src.shared.application.result import Failure, Result, Success
 
 logger = structlog.get_logger()
 
@@ -69,7 +69,7 @@ class RumorPropagationService:
 
             if not active_rumors:
                 logger.debug("rumor_propagation_no_active_rumors", world_id=world.id)
-                return Ok([])
+                return Success([])
 
             logger.info(
                 "rumor_propagation_started",
@@ -97,12 +97,12 @@ class RumorPropagationService:
                 cache_size=self._cache.size,
             )
 
-            return Ok(updated_rumors)
+            return Success(updated_rumors)
 
         except Exception as e:
             logger.error("rumor_propagation_error", world_id=world.id, error=str(e))
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to propagate rumors: {e}",
                     code="RUMOR_PROPAGATION_ERROR",
                     details={"world_id": world.id},
@@ -120,7 +120,7 @@ class RumorPropagationService:
             active_rumors = await self._rumor_repo.get_active_rumors(world.id)
 
             if not active_rumors:
-                return Ok([])
+                return Success([])
 
             all_updated: List[Rumor] = []
             all_to_delete: List[str] = []
@@ -153,14 +153,14 @@ class RumorPropagationService:
                 total_deleted=len(all_to_delete),
             )
 
-            return Ok(all_updated)
+            return Success(all_updated)
 
         except Exception as e:
             logger.error(
                 "rumor_propagation_batch_error", world_id=world.id, error=str(e)
             )
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to propagate rumors in batches: {e}",
                     code="RUMOR_PROPAGATION_ERROR",
                     details={"world_id": world.id, "batch_size": batch_size},
@@ -176,8 +176,8 @@ class RumorPropagationService:
         """Create a new rumor from a historical event."""
         try:
             if not event.location_ids and not event.affected_location_ids:
-                return Err(
-                    Error(
+                return Failure(
+                    Failure(
                         message="Cannot create rumor from event without location information",
                         code="RUMOR_CREATION_ERROR",
                         details={"event_id": event.id, "event_name": event.name},
@@ -209,11 +209,11 @@ class RumorPropagationService:
                 initial_truth=initial_truth,
             )
 
-            return Ok(rumor)
+            return Success(rumor)
 
         except Exception as e:
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to create rumor from event: {e}",
                     code="RUMOR_CREATION_ERROR",
                     details={"event_id": event.id},
@@ -237,10 +237,10 @@ class RumorPropagationService:
         """Clear the adjacency cache."""
         try:
             self._cache.invalidate()
-            return Ok(None)
+            return Success(None)
         except Exception as e:
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to clear adjacency cache: {e}",
                     code="CACHE_CLEAR_ERROR",
                     recoverable=True,
@@ -250,10 +250,10 @@ class RumorPropagationService:
     def get_cache_stats(self) -> Result[Dict[str, int]]:
         """Get statistics about the adjacency cache."""
         try:
-            return Ok(self._cache.get_stats())
+            return Success(self._cache.get_stats())
         except Exception as e:
-            return Err(
-                Error(
+            return Failure(
+                Failure(
                     message=f"Failed to get cache stats: {e}",
                     code="CACHE_STATS_ERROR",
                     recoverable=True,
