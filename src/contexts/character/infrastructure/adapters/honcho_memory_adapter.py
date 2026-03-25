@@ -6,18 +6,20 @@ to Honcho's semantic memory system.
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 from uuid import UUID
 
 from src.contexts.character.domain.ports.memory_port import (
     MemoryEntry,
     MemoryErrorDetails,
-    MemoryQueryError,
     MemoryQueryResult,
     MemoryStorageError,
 )
 from src.shared.infrastructure.honcho import HonchoClient, HonchoClientError
+
+from .memory_query_handler import MemoryQueryHandler
+from .memory_session_handler import MemorySessionHandler
+from .memory_storage_handler import MemoryStorageHandler
 
 
 class HonchoMemoryAdapter:
@@ -48,9 +50,11 @@ class HonchoMemoryAdapter:
         """
         self._honcho = honcho_client
         self._workspace_cache: dict[str, str] = {}
-        self._session_cache: dict[
-            tuple[str, str], str
-        ] = {}  # (char_id, workspace) -> session_id
+
+        # Initialize handlers
+        self._storage_handler = MemoryStorageHandler(honcho_client)
+        self._query_handler = MemoryQueryHandler(honcho_client)
+        self._session_handler = MemorySessionHandler(honcho_client)
 
     def _classify_error(self, error: Exception) -> str:
         """Classify an exception into a standardized error code.
@@ -86,7 +90,8 @@ class HonchoMemoryAdapter:
     async def close(self) -> None:
         """Clean up resources."""
         self._workspace_cache.clear()
-        self._session_cache.clear()
+        self._storage_handler.clear_cache()
+        self._session_handler.clear_cache()
 
     def _get_workspace_id(
         self,
@@ -122,29 +127,10 @@ class HonchoMemoryAdapter:
         """
         workspace_id = self._get_workspace_id(story_id, character_id)
         peer_id = str(character_id)
-        resolved_session_id = self._get_or_create_session_id(
+        resolved_session_id = self._session_handler._get_or_create_session_id(
             character_id, workspace_id, session_id
         )
         return workspace_id, peer_id, resolved_session_id
-
-    def _get_or_create_session_id(
-        self,
-        character_id: UUID,
-        workspace_id: str,
-        session_id: str | None,
-    ) -> str:
-        """Get cached session ID or use provided one."""
-        if session_id:
-            return session_id
-
-        cache_key = (str(character_id), workspace_id)
-        if cache_key in self._session_cache:
-            return self._session_cache[cache_key]
-
-        # Generate default session ID
-        default_session = f"default-{character_id}"
-        self._session_cache[cache_key] = default_session
-        return default_session
 
     async def remember(
         self,
@@ -161,81 +147,18 @@ class HonchoMemoryAdapter:
         Raises:
             MemoryStorageError: If storage operation fails.
         """
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            # Resolve workspace from story_id
-            workspace_id = self._get_workspace_id(story_id, character_id)
+        # Resolve workspace from story_id
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            # Ensure workspace exists
-            await self._honcho.get_or_create_workspace(
-                workspace_id=workspace_id,
-                name=f"Story: {workspace_id}",
-            )
-
-            # Ensure peer exists (character as peer)
-            peer_id = str(character_id)
-            await self._honcho.get_or_create_peer(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                name=f"Character {character_id}",
-            )
-
-            # Resolve or create session
-            resolved_session = self._get_or_create_session_id(
-                character_id, workspace_id, session_id
-            )
-
-            # Ensure session exists (may fail if already exists, that's ok)
-            try:
-                await self._honcho.create_session(
-                    workspace_id=workspace_id,
-                    peer_id=peer_id,
-                    session_id=resolved_session,
-                    metadata={"character_id": str(character_id)},
-                )
-            except HonchoClientError:
-                # Session might already exist, continue
-                pass
-
-            # Add memory as message
-            message = await self._honcho.add_message(
-                workspace_id=workspace_id,
-                session_id=resolved_session,
-                content=content,
-                is_user=True,  # Character's experiences are "user" messages
-                metadata=metadata or {},
-            )
-
-            # Create memory entry
-            entry = MemoryEntry(
-                memory_id=message.id,
-                content=message.content,
-                character_id=character_id,
-                created_at=message.created_at or datetime.utcnow(),
-                metadata=metadata or {},
-                scope_id=resolved_session,
-            )
-
-            return entry
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryStorageError(
-                f"Failed to store memory for character {character_id}",
-                details=MemoryErrorDetails(
-                    operation="store",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                        "content_length": len(content),
-                    },
-                ),
-            ) from e
+        return await self._storage_handler.store_memory(
+            character_id=character_id,
+            content=content,
+            workspace_id=workspace_id,
+            session_id=session_id,
+            metadata=metadata,
+        )
 
     async def recall(
         self,
@@ -250,58 +173,17 @@ class HonchoMemoryAdapter:
         Raises:
             MemoryQueryError: If query operation fails.
         """
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
-            peer_id = str(character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            # Search for memories
-            messages = await self._honcho.search_memories(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                query=query,
-                top_k=top_k,
-                session_id=session_id,
-            )
-
-            # Convert to MemoryEntry objects
-            entries = []
-            for msg in messages:
-                entry = MemoryEntry(
-                    memory_id=msg.id,
-                    content=msg.content,
-                    character_id=character_id,
-                    created_at=msg.created_at or datetime.utcnow(),
-                    metadata=msg.metadata or {},
-                    scope_id=session_id,
-                )
-                entries.append(entry)
-
-            return MemoryQueryResult(
-                memories=entries,
-                query=query,
-                total_found=len(entries),
-            )
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryQueryError(
-                f"Failed to recall memories for character {character_id}",
-                details=MemoryErrorDetails(
-                    operation="recall",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                        "query": query,
-                        "top_k": top_k,
-                    },
-                ),
-            ) from e
+        return await self._query_handler.recall(
+            character_id=character_id,
+            query=query,
+            workspace_id=workspace_id,
+            session_id=session_id,
+            top_k=top_k,
+        )
 
     async def forget(
         self,
@@ -326,52 +208,16 @@ class HonchoMemoryAdapter:
         limit: int = 100,
     ) -> list[MemoryEntry]:
         """Get all memories for a character."""
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
-            peer_id = str(character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            # Use a broad search query to get all memories
-            messages = await self._honcho.search_memories(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                query="*",  # Broad search
-                top_k=limit,
-                session_id=session_id,
-            )
-
-            entries = []
-            for msg in messages:
-                entry = MemoryEntry(
-                    memory_id=msg.id,
-                    content=msg.content,
-                    character_id=character_id,
-                    created_at=msg.created_at or datetime.utcnow(),
-                    metadata=msg.metadata or {},
-                    scope_id=session_id,
-                )
-                entries.append(entry)
-
-            return entries
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryQueryError(
-                f"Failed to get character memories for {character_id}",
-                details=MemoryErrorDetails(
-                    operation="get_all",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                        "limit": limit,
-                    },
-                ),
-            ) from e
+        return await self._query_handler.get_character_memories(
+            character_id=character_id,
+            workspace_id=workspace_id,
+            session_id=session_id,
+            limit=limit,
+        )
 
     async def create_session(
         self,
@@ -380,51 +226,16 @@ class HonchoMemoryAdapter:
         session_name: str | None = None,
     ) -> str:
         """Create a new memory session for a character."""
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
-            peer_id = str(character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            # Ensure workspace and peer exist
-            await self._honcho.get_or_create_workspace(workspace_id)
-            await self._honcho.get_or_create_peer(workspace_id, peer_id)
-
-            # Generate session ID
-            session_id = (
-                session_name
-                or f"session-{character_id}-{datetime.utcnow().timestamp()}"
-            )
-
-            session = await self._honcho.create_session(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                session_id=session_id,
-                metadata={},
-            )
-
-            # Cache the session
-            cache_key = (str(character_id), workspace_id)
-            self._session_cache[cache_key] = session.id
-
-            return session.id
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryStorageError(
-                f"Failed to create session for character {character_id}",
-                details=MemoryErrorDetails(
-                    operation="create_scope",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_name": session_name,
-                    },
-                ),
-            ) from e
+        return await self._session_handler.create_session(
+            character_id=character_id,
+            story_id=story_id,
+            workspace_id=workspace_id,
+            session_name=session_name,
+        )
 
     async def get_character_summary(
         self,
@@ -433,37 +244,15 @@ class HonchoMemoryAdapter:
         session_id: str | None = None,
     ) -> str:
         """Get a summary of character's experiences."""
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
-            peer_id = str(character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            # Get representation from Honcho
-            representation = await self._honcho.get_peer_representation(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                session_id=session_id,
-            )
-
-            return representation
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryQueryError(
-                f"Failed to get character summary for {character_id}",
-                details=MemoryErrorDetails(
-                    operation="summarize",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                    },
-                ),
-            ) from e
+        return await self._query_handler.get_character_summary(
+            character_id=character_id,
+            workspace_id=workspace_id,
+            session_id=session_id,
+        )
 
     async def query_character(
         self,
@@ -473,38 +262,16 @@ class HonchoMemoryAdapter:
         session_id: str | None = None,
     ) -> str:
         """Ask a natural language question about character's memories."""
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
-            peer_id = str(character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            response = await self._honcho.chat_with_peer(
-                workspace_id=workspace_id,
-                peer_id=peer_id,
-                query=question,
-                session_id=session_id,
-            )
-
-            return response
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryQueryError(
-                f"Failed to query character {character_id}",
-                details=MemoryErrorDetails(
-                    operation="query",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                        "question": question,
-                    },
-                ),
-            ) from e
+        return await self._query_handler.query_character(
+            character_id=character_id,
+            question=question,
+            workspace_id=workspace_id,
+            session_id=session_id,
+        )
 
     async def get_session_context(
         self,
@@ -514,34 +281,13 @@ class HonchoMemoryAdapter:
         tokens: int = 4000,
     ) -> list[dict[str, Any]]:
         """Get session context formatted for LLM consumption."""
-        try:
-            await self.initialize()
-            assert self._honcho is not None
+        await self.initialize()
 
-            workspace_id = self._get_workspace_id(story_id, character_id)
+        workspace_id = self._get_workspace_id(story_id, character_id)
 
-            context = await self._honcho.get_session_context(
-                workspace_id=workspace_id,
-                session_id=session_id,
-                tokens=tokens,
-                summarize=True,
-            )
-
-            return context
-
-        except (HonchoClientError, ConnectionError, TimeoutError) as e:
-            error_code = self._classify_error(e)
-            raise MemoryQueryError(
-                f"Failed to get session context for character {character_id}",
-                details=MemoryErrorDetails(
-                    operation="get_context_for_llm",
-                    entity_id=str(character_id),
-                    error_code=error_code,
-                    original_exception=e,
-                    context={
-                        "story_id": story_id,
-                        "session_id": session_id,
-                        "tokens": tokens,
-                    },
-                ),
-            ) from e
+        return await self._session_handler.get_session_context(
+            character_id=character_id,
+            session_id=session_id,
+            workspace_id=workspace_id,
+            tokens=tokens,
+        )

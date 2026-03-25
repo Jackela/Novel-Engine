@@ -3,21 +3,21 @@
 Tests the HonchoMemoryAdapter implementation.
 """
 
-import pytest
 from datetime import datetime
-from uuid import UUID, uuid4
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest
 
 from src.contexts.character.domain.ports.memory_port import (
-    MemoryEntry,
+    MemoryQueryError,
     MemoryQueryResult,
     MemoryStorageError,
-    MemoryQueryError,
 )
 from src.contexts.character.infrastructure.adapters.honcho_memory_adapter import (
     HonchoMemoryAdapter,
 )
-from src.shared.infrastructure.honcho import HonchoClient, HonchoClientError
+from src.shared.infrastructure.honcho import HonchoClient
 
 
 @pytest.fixture
@@ -453,9 +453,11 @@ class TestHonchoMemoryAdapterClose:
         """Test that close clears workspace and session caches."""
         # Add some items to caches
         adapter._workspace_cache["test"] = "workspace"
-        adapter._session_cache[("char", "ws")] = "session"
+        adapter._session_handler._session_cache[("char", "ws")] = "session"
+        adapter._storage_handler._session_cache[("char", "ws")] = "session"
 
         await adapter.close()
 
         assert len(adapter._workspace_cache) == 0
-        assert len(adapter._session_cache) == 0
+        assert len(adapter._session_handler._session_cache) == 0
+        assert len(adapter._storage_handler._session_cache) == 0

@@ -9,7 +9,6 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError, dataclass
 from decimal import Decimal
 from typing import override
-from uuid import uuid4
 
 import pytest
 
@@ -57,7 +56,7 @@ class TestValueObject:
         assert money1 == money2
         assert money1 != money3
         assert money1 != "not a value object"
-        assert money1 != None
+        assert money1 is not None
 
     def test_value_object_inequality_with_different_types(self) -> None:
         """Test that different types are never equal."""

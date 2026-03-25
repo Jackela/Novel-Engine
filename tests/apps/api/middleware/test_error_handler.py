@@ -3,26 +3,20 @@ Tests for error handler middleware.
 """
 
 import pytest
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from pydantic import ValidationError as PydanticValidationError
 
 from src.apps.api.middleware.error_handler import (
     APIError,
-    NotFoundError,
-    ConflictError,
-    ValidationAPIError,
     AuthenticationError,
     AuthorizationError,
+    ConflictError,
+    NotFoundError,
+    ValidationAPIError,
+    error_handler_middleware,
     format_validation_errors,
-    api_error_handler,
-    http_exception_handler,
-    validation_exception_handler,
-    pydantic_validation_handler,
     general_exception_handler,
     setup_exception_handlers,
-    error_handler_middleware,
 )
 
 
@@ -168,7 +162,6 @@ class TestExceptionHandlers:
     @pytest.mark.asyncio
     async def test_general_exception_handler(self):
         """Test general exception handler."""
-        from fastapi import Request
         import json
 
         class MockRequest:

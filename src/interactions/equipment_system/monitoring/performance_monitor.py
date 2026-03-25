@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 
 from ..core.types import DynamicEquipment, EquipmentSystemConfig
 
-
 __all__ = ["PerformanceMonitor"]
 
 

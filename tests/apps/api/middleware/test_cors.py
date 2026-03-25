@@ -3,7 +3,6 @@ Tests for CORS configuration.
 """
 
 import os
-import pytest
 from unittest.mock import patch
 
 from src.apps.api.middleware.cors import (

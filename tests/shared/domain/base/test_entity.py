@@ -10,7 +10,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 from typing import override
-from unittest.mock import Mock
 from uuid import UUID, uuid4
 
 import pytest
@@ -70,7 +69,7 @@ class TestEntity:
         assert entity1 == entity2  # Same ID
         assert entity1 != entity3  # Different ID
         assert entity1 != "not an entity"
-        assert entity1 != None
+        assert entity1 is not None
 
     def test_entity_hash_based_on_id(self) -> None:
         """Test that entity hash is based on ID and type."""

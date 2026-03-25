@@ -7,8 +7,7 @@ enabling data access abstraction with full type safety.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Protocol, runtime_checkable
-from uuid import UUID
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
 
 from src.shared.domain.base.aggregate import AggregateRoot
 from src.shared.infrastructure.persistence.database import Database, DatabaseConnection

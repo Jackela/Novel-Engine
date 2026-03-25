@@ -2,14 +2,14 @@
 Tests for logging middleware.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
-import time
 
 from src.apps.api.middleware.logging import (
     LoggingMiddleware,
-    logging_middleware,
     RequestContext,
+    logging_middleware,
 )
 
 
@@ -19,7 +19,6 @@ class TestLoggingMiddleware:
     @pytest.mark.asyncio
     async def test_successful_request(self):
         """Test logging successful request."""
-        from starlette.middleware.base import BaseHTTPMiddleware
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
 

@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Any
+from unittest.mock import AsyncMock
+
+import pytest
 
 from src.shared.infrastructure.persistence.database import (
+    DEFAULT_COMMAND_TIMEOUT,
+    DEFAULT_POOL_MAX_SIZE,
+    DEFAULT_POOL_MIN_SIZE,
     Database,
     DatabaseFactory,
-    DEFAULT_POOL_MIN_SIZE,
-    DEFAULT_POOL_MAX_SIZE,
-    DEFAULT_COMMAND_TIMEOUT,
 )
 
 

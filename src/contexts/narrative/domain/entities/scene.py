@@ -6,13 +6,12 @@ and present choices to the user.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
 
-from src.shared.domain.base.entity import Entity
-from src.contexts.narrative.domain.types import SceneId, SceneType
 from src.contexts.narrative.domain.entities.choice import Choice
+from src.contexts.narrative.domain.types import SceneId, SceneType
+from src.shared.domain.base.entity import Entity
 
 
 @dataclass(kw_only=True, eq=False)
@@ -35,10 +34,11 @@ class Scene(Entity[SceneId]):
     choices: List[Choice] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        """Validate scene invariants."""
-        super().__post_init__()
+    def validate(self) -> None:
+        """Validate scene invariants.
 
+        Required by Entity base class.
+        """
         if not self.chapter_id:
             raise ValueError("Scene must belong to a chapter")
 

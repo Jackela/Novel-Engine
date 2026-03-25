@@ -10,7 +10,7 @@ from __future__ import annotations
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, ClassVar, final
+from typing import Any, final
 from uuid import UUID, uuid4
 
 

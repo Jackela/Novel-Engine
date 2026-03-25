@@ -121,7 +121,7 @@ def set_honcho_client(client: HonchoClient) -> None:
 
 @health_router.get(
     "/health",
-    response_model=DetailedHealthResponse,
+    response_model=HealthStatusResponse,
     status_code=status.HTTP_200_OK,
     summary="Comprehensive health check",
     description="Returns detailed health status including all component checks.",
@@ -142,22 +142,41 @@ async def health_check() -> JSONResponse:
     """
     try:
         checker = await _get_health_checker()
+
+        # If no components registered, return healthy
+        if not checker.checks:
+            return JSONResponse(
+                content={
+                    "overall_status": "healthy",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "components": {},
+                },
+                status_code=status.HTTP_200_OK,
+            )
+
         result = await checker.check_all()
 
         # Determine HTTP status code based on overall status
         http_status = status.HTTP_200_OK
-        if result["overall_status"] == "unhealthy":
+        overall_status = result.get("overall_status", "healthy")
+        if overall_status == "unhealthy":
             http_status = status.HTTP_503_SERVICE_UNAVAILABLE
 
-        return JSONResponse(content=result, status_code=http_status)
-    except Exception as e:
+        # Return in DetailedHealthResponse format
+        response_content = {
+            "overall_status": overall_status,
+            "timestamp": datetime.utcnow().isoformat(),
+            "components": result.get("components", {}),
+        }
+
+        return JSONResponse(content=response_content, status_code=http_status)
+    except Exception:
         # If health checker itself fails, return unhealthy
         return JSONResponse(
             content={
                 "overall_status": "unhealthy",
                 "timestamp": datetime.utcnow().isoformat(),
                 "components": {},
-                "error": f"Health check failed: {str(e)}",
             },
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
@@ -207,6 +226,17 @@ async def readiness_probe() -> JSONResponse:
     """
     try:
         checker = await _get_health_checker()
+
+        # If no components registered, database is not initialized
+        if not checker.checks:
+            return JSONResponse(
+                content={
+                    "status": "not_ready",
+                    "reason": "Database connection pool not initialized",
+                },
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
         result = await checker.check_all()
 
         # Check critical components (database is always critical)
@@ -214,8 +244,8 @@ async def readiness_probe() -> JSONResponse:
         missing_critical = []
 
         for comp_name in critical_components:
-            if comp_name in result["components"]:
-                comp_status = result["components"][comp_name]["status"]
+            if comp_name in result.get("components", {}):
+                comp_status = result["components"][comp_name].get("status", "unknown")
                 if comp_status != "healthy":
                     missing_critical.append(f"{comp_name} ({comp_status})")
             else:
@@ -224,7 +254,7 @@ async def readiness_probe() -> JSONResponse:
                     return JSONResponse(
                         content={
                             "status": "not_ready",
-                            "reason": "Database connection pool not initialized",
+                            "reason": "Database not initialized",
                         },
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     )
@@ -268,7 +298,46 @@ async def detailed_health_check() -> JSONResponse:
     Returns:
         JSONResponse: Complete health status information.
     """
-    return await health_check()
+    try:
+        checker = await _get_health_checker()
+
+        # If no components registered, return healthy with empty components
+        if not checker.checks:
+            return JSONResponse(
+                content={
+                    "overall_status": "healthy",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "components": {},
+                },
+                status_code=status.HTTP_200_OK,
+            )
+
+        result = await checker.check_all()
+
+        # Determine HTTP status code based on overall status
+        http_status = status.HTTP_200_OK
+        overall_status = result.get("overall_status", "healthy")
+        if overall_status == "unhealthy":
+            http_status = status.HTTP_503_SERVICE_UNAVAILABLE
+
+        # Return detailed response with overall_status
+        response_content = {
+            "overall_status": overall_status,
+            "timestamp": result.get("timestamp", datetime.utcnow().isoformat()),
+            "components": result.get("components", {}),
+        }
+
+        return JSONResponse(content=response_content, status_code=http_status)
+    except Exception:
+        # If health checker itself fails, return unhealthy
+        return JSONResponse(
+            content={
+                "status": "unhealthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "components": {},
+            },
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
 
 
 @health_router.get(

@@ -7,15 +7,12 @@ using PostgreSQL as the underlying storage mechanism.
 from __future__ import annotations
 
 import json
-from datetime import datetime
-from typing import Any
 from uuid import UUID
 
 import asyncpg
 
 from src.contexts.identity.domain.aggregates.user import User
 from src.contexts.identity.domain.repositories.user_repository import UserRepository
-from src.contexts.identity.domain.types import UserStatus
 
 
 class PostgresUserRepository(UserRepository):

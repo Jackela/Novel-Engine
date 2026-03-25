@@ -1,8 +1,9 @@
 """Tests for event store implementation."""
 
-import pytest
 from datetime import datetime
 from uuid import uuid4
+
+import pytest
 
 from src.shared.infrastructure.messaging.event_bus import DomainEvent
 from src.shared.infrastructure.messaging.event_store import (

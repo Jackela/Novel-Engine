@@ -7,7 +7,6 @@ Service for retrieving relevant knowledge.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
     IEmbeddingService,

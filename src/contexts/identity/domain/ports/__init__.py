@@ -6,8 +6,8 @@ domain layer defines and infrastructure implements.
 
 from __future__ import annotations
 
-from .user_repository_port import UserRepositoryPort
 from .authentication_port import AuthenticationPort
+from .user_repository_port import UserRepositoryPort
 
 __all__ = [
     "UserRepositoryPort",

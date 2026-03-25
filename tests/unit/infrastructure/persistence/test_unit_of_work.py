@@ -2,28 +2,28 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from dataclasses import dataclass
 from typing import Any
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
+import pytest
+
+from src.shared.domain.base.aggregate import AggregateRoot
+from src.shared.infrastructure.persistence.database import Database, DatabaseConnection
+from src.shared.infrastructure.persistence.repository import (
+    BaseRepository,
+)
 from src.shared.infrastructure.persistence.unit_of_work import (
     DatabaseUnitOfWork,
     TransactionalUnitOfWork,
     TransactionRollbackException,
-    UnitOfWorkResult,
     UnitOfWorkFactory,
-    set_unit_of_work_factory,
+    UnitOfWorkResult,
     get_unit_of_work_factory,
     get_uow,
+    set_unit_of_work_factory,
 )
-from src.shared.infrastructure.persistence.database import Database, DatabaseConnection
-from src.shared.infrastructure.persistence.repository import (
-    BaseRepository,
-    InMemoryRepository,
-)
-from src.shared.domain.base.aggregate import AggregateRoot
-from dataclasses import dataclass
 
 
 @dataclass
@@ -40,22 +40,22 @@ class SampleAggregate(AggregateRoot):
 class SampleRepository(BaseRepository[SampleAggregate, UUID]):
     """Test repository."""
 
-    async def get(self, id: UUID) -> TestAggregate | None:
+    async def get(self, id: UUID) -> SampleAggregate | None:
         return None
 
-    async def add(self, aggregate: TestAggregate) -> None:
+    async def add(self, aggregate: SampleAggregate) -> None:
         pass
 
-    async def update(self, aggregate: TestAggregate) -> None:
+    async def update(self, aggregate: SampleAggregate) -> None:
         pass
 
     async def delete(self, id: UUID) -> bool:
         return True
 
-    def _to_aggregate(self, row: dict[str, Any]) -> TestAggregate:
+    def _to_aggregate(self, row: dict[str, Any]) -> SampleAggregate:
         return SampleAggregate()
 
-    def _from_aggregate(self, aggregate: TestAggregate) -> dict[str, Any]:
+    def _from_aggregate(self, aggregate: SampleAggregate) -> dict[str, Any]:
         return {}
 
 

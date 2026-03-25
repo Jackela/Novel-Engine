@@ -6,10 +6,9 @@ across multiple repositories and ensure data consistency.
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import Any, AsyncGenerator, Protocol, TypeVar, runtime_checkable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Protocol, runtime_checkable
 
 from src.shared.infrastructure.persistence.database import Database, DatabaseConnection
 from src.shared.infrastructure.persistence.repository import BaseRepository

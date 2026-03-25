@@ -1,14 +1,12 @@
 """Tests for the config loader module."""
 
-import os
 from pathlib import Path
 
 import pytest
-import yaml
 
 from src.shared.infrastructure.config.loader import (
-    ConfigLoadError,
     ConfigLoader,
+    ConfigLoadError,
     load_yaml_config,
     merge_configs,
 )

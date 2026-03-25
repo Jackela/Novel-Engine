@@ -1,7 +1,6 @@
 """Tests for the config manager module."""
 
 import os
-from pathlib import Path
 
 import pytest
 import yaml
@@ -15,7 +14,6 @@ from src.shared.infrastructure.config.config_manager import (
 from src.shared.infrastructure.config.settings import (
     Environment,
     NovelEngineSettings,
-    reset_settings,
 )
 
 
@@ -404,7 +402,7 @@ class TestGetConfigValue:
         # Use temp config dir to avoid YAML overrides
         config_dir = tmp_path / "config"
         config_dir.mkdir()
-        config = get_config(config_dir=config_dir)
+        get_config(config_dir=config_dir)
         result = get_config_value("project_name")
         assert result == "Novel Engine"
 

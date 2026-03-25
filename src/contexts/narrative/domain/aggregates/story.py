@@ -6,19 +6,18 @@ It contains chapters, manages the narrative flow, and enforces business rules.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
 
-from src.shared.domain.base.aggregate import AggregateRoot
-from src.contexts.narrative.domain.types import StoryId, StoryStatus, StoryGenre
 from src.contexts.narrative.domain.entities.chapter import Chapter
 from src.contexts.narrative.domain.events.story_events import (
+    ChapterAdded,
+    StoryCompleted,
     StoryCreated,
     StoryPublished,
-    StoryCompleted,
-    ChapterAdded,
 )
+from src.contexts.narrative.domain.types import StoryStatus
+from src.shared.domain.base.aggregate import AggregateRoot
 
 
 @dataclass(kw_only=True, eq=False)
@@ -241,6 +240,7 @@ class Story(AggregateRoot):
             "author_id": self.author_id,
             "status": self.status,
             "chapters": [c.to_dict() for c in self.chapters],
+            "chapter_count": self.chapter_count,
             "current_chapter_id": self.current_chapter_id,
             "target_audience": self.target_audience,
             "themes": self.themes,

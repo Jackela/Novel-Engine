@@ -20,16 +20,14 @@ import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse, StreamingResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-
+from fastapi.responses import JSONResponse, StreamingResponse
 from src.api.character_api import create_character_api
 
 # Import Context7 integration and enhanced documentation
@@ -58,8 +56,9 @@ from src.api.response_models import (
     HealthCheckResponse,
     SuccessResponse,
 )
-from src.api.story_generation_api import create_story_generation_api
 from src.api.subjective_reality_api import create_subjective_reality_api
+
+from src.api.story_generation_api import create_story_generation_api
 from src.api.versioning import setup_versioning
 from src.core.system_orchestrator import (
     OrchestratorConfig,

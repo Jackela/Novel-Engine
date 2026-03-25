@@ -11,11 +11,10 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .loader import ConfigLoader, ConfigLoadError, load_yaml_config
+from .loader import ConfigLoader, ConfigLoadError
 from .settings import (
     Environment,
     NovelEngineSettings,
-    get_settings,
     reload_settings,
     reset_settings,
 )

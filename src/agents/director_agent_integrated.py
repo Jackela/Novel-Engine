@@ -23,18 +23,19 @@ from types import SimpleNamespace
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from src.agent_lifecycle_manager import AgentLifecycleManager
 from src.core.iron_laws_processor import IronLawsProcessor
 from src.core.types.shared_types import CharacterAction
-
-# Import extracted components
-from src.director_agent_base import DirectorAgentBase
 from src.event_bus import EventBus
 
 # Import agent and shared types
 from src.persona_agent import PersonaAgent
 from src.turn_orchestrator import TurnOrchestrator
 from src.world_state_coordinator import WorldStateCoordinator
+
+from src.agent_lifecycle_manager import AgentLifecycleManager
+
+# Import extracted components
+from src.director_agent_base import DirectorAgentBase
 
 # Try to import Iron Laws types
 try:
@@ -52,20 +53,13 @@ try:
     IRON_LAWS_AVAILABLE = True
 except ImportError:
     IRON_LAWS_AVAILABLE = False
-    ActionTarget = (
-        ActionType
-    ) = (
-        CharacterData
-    ) = (
-        EntityType
-    ) = (
-        ProposedAction
-    ) = IronLawsViolation = ValidatedAction = ValidationResult = Any  # type: ignore
+    ActionTarget = ActionType = CharacterData = EntityType = ProposedAction = (
+        IronLawsViolation
+    ) = ValidatedAction = ValidationResult = Any  # type: ignore
 
 # Import configuration and narrative components
 try:
     from campaign_brief import CampaignBrief, CampaignBriefLoader, NarrativeEvent
-
     from src.core.config.config_loader import get_campaign_log_filename
     from src.core.narrative.narrative_actions import NarrativeActionResolver
 except ImportError:
@@ -212,7 +206,7 @@ class DirectorAgent:
                 f"""
                 # Campaign Log
 
-                **Simulation Started:** {self.base.simulation_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+                **Simulation Started:** {self.base.simulation_start_time.strftime("%Y-%m-%d %H:%M:%S")}
                 **Director Agent:** DirectorAgent Integrated v1.0
                 **Architecture:** Modular Components
 
@@ -226,7 +220,7 @@ class DirectorAgent:
                 ## Campaign Events
 
                 ### Simulation Initialization
-                **Time:** {self.base.simulation_start_time.strftime('%Y-%m-%d %H:%M:%S')}
+                **Time:** {self.base.simulation_start_time.strftime("%Y-%m-%d %H:%M:%S")}
                 **Event:** DirectorAgent initialized with modular component architecture
                 **Participants:** System
                 **Details:** Integrated DirectorAgent successfully started with base, orchestrator, world state, and lifecycle components
@@ -271,7 +265,7 @@ class DirectorAgent:
 
         agent_id = getattr(agent, "agent_id", getattr(agent, "character_name", None))
         if not agent_id:
-            agent_id = f"mock_agent_{len(self._legacy_agents)+1}"
+            agent_id = f"mock_agent_{len(self._legacy_agents) + 1}"
 
         if any(existing["agent_id"] == agent_id for existing in self._legacy_agents):
             return False
@@ -992,7 +986,7 @@ class DirectorAgent:
 
     def _adjudicate_action(
         self, proposed_action: "ProposedAction", agent: PersonaAgent
-    ) -> "IronLawsReport":
+    ) -> "ValidatedAction":
         """Expose Iron Laws adjudication for regression tests."""
         world_context = self._get_current_world_context()
         return self.iron_laws_processor.adjudicate_action(
@@ -1185,8 +1179,8 @@ class DirectorAgent:
                 f"""
                 ## Campaign Summary
 
-                **Simulation End Time:** {end_time.strftime('%Y-%m-%d %H:%M:%S')}
-                **Total Duration:** {simulation_duration:.2f} seconds ({simulation_duration/60:.1f} minutes)
+                **Simulation End Time:** {end_time.strftime("%Y-%m-%d %H:%M:%S")}
+                **Total Duration:** {simulation_duration:.2f} seconds ({simulation_duration / 60:.1f} minutes)
                 **Total Turns:** {self.current_turn_number}
                 **Total Actions:** {self.total_actions_processed}
                 **Registered Agents:** {len(self.registered_agents)}
@@ -1196,7 +1190,7 @@ class DirectorAgent:
                 ### Component Performance
                 - **Turn Orchestrator:** {self.turn_orchestrator.get_performance_metrics()}
                 - **World State Coordinator:** {len(self.world_state_coordinator.world_state_data)} world state entries
-                - **Agent Lifecycle Manager:** {self.agent_lifecycle_manager.get_lifecycle_metrics().get('total_validations', 0)} validations performed
+                - **Agent Lifecycle Manager:** {self.agent_lifecycle_manager.get_lifecycle_metrics().get("total_validations", 0)} validations performed
 
                 **Status:** Campaign completed successfully with modular component architecture
                 """

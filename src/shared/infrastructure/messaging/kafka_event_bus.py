@@ -12,19 +12,17 @@ import json
 import logging
 import ssl
 from contextlib import suppress
-from dataclasses import asdict
-from typing import Any, Dict, List, Optional, Set, Callable
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID
 
 try:
     from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-    from aiokafka.helpers import create_ssl_context
 
     AIOKAFKA_AVAILABLE = True
 except ImportError:
     AIOKAFKA_AVAILABLE = False
-    AIOKafkaConsumer = None  # type: ignore
-    AIOKafkaProducer = None  # type: ignore
+    AIOKafkaConsumer = None
+    AIOKafkaProducer = None
 
 from .event_bus import (
     DomainEvent,
@@ -35,7 +33,6 @@ from .event_bus import (
     EventPublishError,
     EventSubscribeError,
 )
-
 
 if not AIOKAFKA_AVAILABLE:
     raise ImportError(
@@ -333,7 +330,6 @@ class KafkaEventBus(EventBus):
         event_type: str,
     ) -> None:
         """Consume messages from Kafka and dispatch to handlers."""
-        import asyncio
 
         try:
             async for msg in consumer:

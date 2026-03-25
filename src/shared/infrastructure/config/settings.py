@@ -128,7 +128,7 @@ class SecuritySettings(BaseSettings):
     )
 
     secret_key: str = Field(
-        default="change-me-in-production",
+        default="change-me-in-production-32-char-long",
         min_length=16,
         description="Secret key for JWT signing",
     )
@@ -298,6 +298,40 @@ class HealthCheckSettings(BaseSettings):
     )
 
 
+class VectorStoreSettings(BaseSettings):
+    """Vector store configuration settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="VECTOR_",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+    host: str = Field(default="localhost", description="Vector store host")
+    port: int = Field(default=8000, ge=1, le=65535, description="Vector store port")
+    collection_name: str = Field(
+        default="knowledge", description="Default collection name"
+    )
+
+
+class KnowledgeSettings(BaseSettings):
+    """Knowledge management configuration settings."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="KNOWLEDGE_",
+        extra="ignore",
+        case_sensitive=False,
+    )
+
+    chunk_size: int = Field(default=500, ge=100, le=5000, description="Text chunk size")
+    chunk_overlap: int = Field(
+        default=50, ge=0, le=500, description="Chunk overlap size"
+    )
+    max_document_size: int = Field(
+        default=10_000_000, description="Maximum document size in bytes (10MB)"
+    )
+
+
 class NovelEngineSettings(BaseSettings):
     """Main application settings using pydantic-settings v2.
 
@@ -320,8 +354,8 @@ class NovelEngineSettings(BaseSettings):
         description="Application environment",
     )
     debug: bool = Field(default=False, description="Enable debug mode")
-    project_name: str = Field(default="Novel Engine", description="Project name")
-    project_version: str = Field(default="0.1.0", description="Project version")
+    project_name: str = Field(default="Novel Engine API", description="Project name")
+    project_version: str = Field(default="2.0.0", description="Project version")
     project_description: str = Field(
         default="AI-Enhanced Interactive Novel Engine",
         description="Project description",
@@ -357,6 +391,8 @@ class NovelEngineSettings(BaseSettings):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     health: HealthCheckSettings = Field(default_factory=HealthCheckSettings)
+    vector_store: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
+    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
 
     @property
     def is_development(self) -> bool:

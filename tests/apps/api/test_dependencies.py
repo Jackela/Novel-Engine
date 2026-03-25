@@ -9,12 +9,14 @@ from fastapi.security import HTTPAuthorizationCredentials
 from src.apps.api.dependencies import (
     CurrentUser,
     PaginationParams,
-    get_pagination,
-    get_current_user_optional,
     get_current_user,
+    get_current_user_optional,
+    get_pagination,
     require_permissions,
     require_roles,
+    reset_jwt_manager,
 )
+from src.shared.infrastructure.config.settings import reset_settings
 
 
 class TestCurrentUser:
@@ -120,6 +122,27 @@ class TestGetPagination:
 class TestAuthenticationDependencies:
     """Test authentication dependencies."""
 
+    @pytest.fixture(autouse=True)
+    def setup_jwt_manager(self):
+        """Reset JWT manager and settings to use updated secret key."""
+        reset_settings()
+        reset_jwt_manager()
+        yield
+        # Cleanup after tests
+        reset_jwt_manager()
+
+    def _create_valid_token(self) -> str:
+        """Create a valid JWT token for testing."""
+        from src.apps.api.dependencies import get_jwt_manager
+
+        jwt_manager = get_jwt_manager()
+        return jwt_manager.create_access_token(
+            user_id="test-user-123",
+            username="testuser",
+            email="test@example.com",
+            roles=["user"],
+        )
+
     async def test_get_current_user_optional_no_credentials(self):
         """Test optional auth without credentials."""
         user = await get_current_user_optional(None)
@@ -127,9 +150,8 @@ class TestAuthenticationDependencies:
 
     async def test_get_current_user_optional_with_credentials(self):
         """Test optional auth with credentials."""
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer", credentials="fake-token"
-        )
+        token = self._create_valid_token()
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
         user = await get_current_user_optional(credentials)
         assert user is not None
         assert user.user_id is not None
@@ -142,9 +164,8 @@ class TestAuthenticationDependencies:
 
     async def test_get_current_user_required_with_credentials(self):
         """Test required auth with credentials."""
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer", credentials="fake-token"
-        )
+        token = self._create_valid_token()
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
         user = await get_current_user(credentials)
         assert user is not None
 

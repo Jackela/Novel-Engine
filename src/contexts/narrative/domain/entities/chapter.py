@@ -5,13 +5,12 @@ Represents a chapter within a story. Chapters contain multiple scenes.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Optional
 
-from src.shared.domain.base.entity import Entity
-from src.contexts.narrative.domain.types import ChapterId
 from src.contexts.narrative.domain.entities.scene import Scene
+from src.contexts.narrative.domain.types import ChapterId
+from src.shared.domain.base.entity import Entity
 
 
 @dataclass(kw_only=True, eq=False)
@@ -32,10 +31,11 @@ class Chapter(Entity[ChapterId]):
     scenes: List[Scene] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        """Validate chapter invariants."""
-        super().__post_init__()
+    def validate(self) -> None:
+        """Validate chapter invariants.
 
+        Required by Entity base class.
+        """
         if not self.story_id:
             raise ValueError("Chapter must belong to a story")
 

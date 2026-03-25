@@ -12,17 +12,17 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import StreamingResponse
-
 from src.api.deps import (
     get_guest_session_manager,
     get_settings,
     get_workspace_store,
     require_workspace_id,
 )
-from src.api.schemas import GuestSessionResponse
 from src.api.settings import APISettings
-from src.workspaces import FilesystemWorkspaceStore, GuestSessionManager
 from src.workspaces.filesystem import _safe_extract_zip_bytes, _validate_workspace_id
+
+from src.api.schemas import GuestSessionResponse
+from src.workspaces import FilesystemWorkspaceStore, GuestSessionManager
 
 router = APIRouter(tags=["Guest"])
 

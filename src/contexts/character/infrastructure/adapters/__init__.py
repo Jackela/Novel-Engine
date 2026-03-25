@@ -12,10 +12,28 @@ from src.contexts.character.domain.ports.memory_port import (
 from src.contexts.character.infrastructure.adapters.honcho_memory_adapter import (
     HonchoMemoryAdapter,
 )
+from src.contexts.character.infrastructure.adapters.memory_query_handler import (
+    MemoryQueryHandler,
+)
+from src.contexts.character.infrastructure.adapters.memory_session_handler import (
+    MemorySessionHandler,
+)
+from src.contexts.character.infrastructure.adapters.memory_storage_handler import (
+    MemoryStorageHandler,
+)
 from src.shared.infrastructure.honcho import (
     HonchoSettings,
     create_honcho_client,
 )
+
+__all__ = [
+    "HonchoMemoryAdapter",
+    "MemoryQueryHandler",
+    "MemorySessionHandler",
+    "MemoryStorageHandler",
+    "create_honcho_memory_adapter",
+    "create_memory_adapter",
+]
 
 
 async def create_honcho_memory_adapter(

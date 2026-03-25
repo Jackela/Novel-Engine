@@ -7,10 +7,8 @@ for data changes, with one entity designated as the aggregate root.
 
 from __future__ import annotations
 
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, TypeVar, final
-from uuid import UUID
 
 from src.shared.domain.base.entity import Entity
 from src.shared.domain.base.event import DomainEvent

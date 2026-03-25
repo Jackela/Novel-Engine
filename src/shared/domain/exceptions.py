@@ -7,8 +7,6 @@ catching all domain-specific errors.
 
 from __future__ import annotations
 
-from typing import Any
-
 
 class DomainException(Exception):
     """Base exception for all domain-related errors.

@@ -6,8 +6,6 @@ ensuring proper success/failure handling and monadic operations.
 
 from __future__ import annotations
 
-from typing import Any
-
 import pytest
 
 from src.shared.application.result import (

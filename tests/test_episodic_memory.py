@@ -12,7 +12,6 @@ Testing Coverage:
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 
 import pytest
 import pytest_asyncio

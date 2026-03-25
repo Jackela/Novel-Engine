@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, call, AsyncMock as _AsyncMock
-from typing import Any
-import asyncpg
+
+from src.shared.infrastructure.persistence.database import DatabaseFactory
 
 # Import postgresql module to register with factory
 from src.shared.infrastructure.persistence.postgresql import (
     AsyncpgConnection,
     PostgreSQLDatabase,
 )
-from src.shared.infrastructure.persistence.database import DatabaseFactory
 
 
 class TestAsyncpgConnection:

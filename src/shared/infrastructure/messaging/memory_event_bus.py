@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Set
-from weakref import WeakMethod
 
 from .event_bus import (
     DomainEvent,

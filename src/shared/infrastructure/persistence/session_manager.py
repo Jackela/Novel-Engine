@@ -37,11 +37,8 @@ class DatabaseSessionManager:
         Yields:
             A database connection.
         """
-        conn = await self._pool.acquire()
-        try:
+        async with self._pool.acquire() as conn:
             yield conn
-        finally:
-            await self._pool.release(conn)
 
     @asynccontextmanager
     async def transaction(self) -> AsyncGenerator[asyncpg.Connection, None]:
@@ -50,14 +47,6 @@ class DatabaseSessionManager:
         Yields:
             A database connection within a transaction.
         """
-        conn = await self._pool.acquire()
-        transaction = conn.transaction()
-        await transaction.start()
-        try:
-            yield conn
-            await transaction.commit()
-        except Exception:
-            await transaction.rollback()
-            raise
-        finally:
-            await self._pool.release(conn)
+        async with self._pool.acquire() as conn:
+            async with conn.transaction():
+                yield conn

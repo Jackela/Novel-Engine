@@ -1,8 +1,9 @@
 """Tests for event bus abstraction."""
 
-import pytest
 from datetime import datetime
 from uuid import UUID, uuid4
+
+import pytest
 
 from src.shared.infrastructure.messaging.event_bus import (
     DomainEvent,

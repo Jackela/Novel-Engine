@@ -2,23 +2,24 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from typing import Any
-from dataclasses import dataclass, field
-from uuid import UUID, uuid4
+from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID, uuid4
+
+import pytest
 
 from src.shared.domain.base.aggregate import AggregateRoot
+from src.shared.infrastructure.persistence.database import Database, DatabaseConnection
 from src.shared.infrastructure.persistence.repository import (
+    AggregateNotFoundException,
     BaseRepository,
+    ConcurrentModificationException,
     InMemoryRepository,
     Repository,
-    AggregateNotFoundException,
-    ConcurrentModificationException,
     RepositoryException,
 )
-from src.shared.infrastructure.persistence.database import Database, DatabaseConnection
 
 
 @dataclass
@@ -44,7 +45,7 @@ class SampleRepository(BaseRepository[SampleAggregate, UUID]):
         )
         return self._to_aggregate(row) if row else None
 
-    async def add(self, aggregate: TestAggregate) -> None:
+    async def add(self, aggregate: SampleAggregate) -> None:
         """Add aggregate."""
         row = self._from_aggregate(aggregate)
         await self.connection.execute(
@@ -54,7 +55,7 @@ class SampleRepository(BaseRepository[SampleAggregate, UUID]):
             row["email"],
         )
 
-    async def update(self, aggregate: TestAggregate) -> None:
+    async def update(self, aggregate: SampleAggregate) -> None:
         """Update aggregate."""
         row = self._from_aggregate(aggregate)
         await self.connection.execute(
@@ -71,7 +72,7 @@ class SampleRepository(BaseRepository[SampleAggregate, UUID]):
         )
         return "DELETE 1" in result
 
-    def _to_aggregate(self, row: dict[str, Any]) -> TestAggregate:
+    def _to_aggregate(self, row: dict[str, Any]) -> SampleAggregate:
         """Convert row to aggregate."""
         return SampleAggregate(
             id=row["id"],
@@ -81,7 +82,7 @@ class SampleRepository(BaseRepository[SampleAggregate, UUID]):
             updated_at=row.get("updated_at", datetime.utcnow()),
         )
 
-    def _from_aggregate(self, aggregate: TestAggregate) -> dict[str, Any]:
+    def _from_aggregate(self, aggregate: SampleAggregate) -> dict[str, Any]:
         """Convert aggregate to row."""
         return {
             "id": aggregate.id,
@@ -277,13 +278,13 @@ class TestInMemoryRepository:
         return InMemoryRepository[SampleAggregate, UUID]()
 
     @pytest.fixture
-    def aggregate(self) -> TestAggregate:
+    def aggregate(self) -> SampleAggregate:
         """Create a test aggregate."""
         return SampleAggregate(name="Test", email="test@example.com")
 
     @pytest.mark.asyncio
     async def test_add_stores_aggregate(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test add stores aggregate in memory."""
         await repo.add(aggregate)
@@ -292,7 +293,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_get_retrieves_aggregate(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test get retrieves stored aggregate."""
         await repo.add(aggregate)
@@ -310,7 +311,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_update_modifies_aggregate(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test update modifies stored aggregate."""
         await repo.add(aggregate)
@@ -323,7 +324,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_delete_removes_aggregate(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test delete removes aggregate."""
         await repo.add(aggregate)
@@ -344,7 +345,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_exists_returns_true_for_existing(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test exists returns True for existing aggregate."""
         await repo.add(aggregate)
@@ -380,7 +381,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_clear_removes_all_aggregates(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test clear removes all aggregates."""
         await repo.add(aggregate)
@@ -399,7 +400,7 @@ class TestInMemoryRepository:
 
     @pytest.mark.asyncio
     async def test_update_nonexistent_aggregate(
-        self, repo: InMemoryRepository, aggregate: TestAggregate
+        self, repo: InMemoryRepository, aggregate: SampleAggregate
     ) -> None:
         """Test update doesn't fail for non-existent aggregate."""
         # Should not raise, just does nothing
@@ -449,7 +450,6 @@ class SampleRepositoryProtocol:
 
     def test_repository_protocol_is_runtime_checkable(self) -> None:
         """Test that Repository protocol can be used with isinstance."""
-        from typing import runtime_checkable
 
         # Repository should be runtime checkable
         assert hasattr(Repository, "__subclasshook__")

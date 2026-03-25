@@ -2,12 +2,12 @@
 Tests for FastAPI main application.
 """
 
+
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
-import asyncio
 
-from src.apps.api.main import create_application, app
+from src.apps.api.main import app, create_application
 
 
 @pytest.fixture
@@ -160,7 +160,8 @@ class TestAsyncOperations:
 
     async def test_async_health(self):
         """Test async health check using httpx.AsyncClient."""
-        from httpx import AsyncClient, ASGITransport
+        from httpx import ASGITransport, AsyncClient
+
         from src.apps.api.main import app
 
         transport = ASGITransport(app=app)

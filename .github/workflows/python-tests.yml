@@ -78,3 +78,10 @@ jobs:
       - name: Run MyPy type checker
         run: mypy src/ --no-error-summary --show-column-numbers
         continue-on-error: true
+
+      - name: Check migrations
+        run: |
+          # Check if migrations are up to date
+          alembic current
+          alembic check
+        continue-on-error: true

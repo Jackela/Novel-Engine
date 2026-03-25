@@ -13,7 +13,6 @@ from fastapi import HTTPException, status
 
 from src.contexts.identity.application.exceptions import (
     AccountLockedError,
-    AuthenticationError,
     IdentityError,
     IdentityForbiddenError,
     IdentityInternalError,

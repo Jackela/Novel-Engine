@@ -149,7 +149,7 @@ class JWTManager:
             InvalidTokenError: If the token is invalid.
         """
         try:
-            payload = jwt.decode(
+            payload: dict[str, Any] = jwt.decode(
                 token,
                 self._secret_key,
                 algorithms=[self._algorithm],

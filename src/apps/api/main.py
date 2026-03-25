@@ -5,20 +5,39 @@ FastAPI 0.116+ application with OpenAPI documentation,
 comprehensive middleware, and Clean Architecture.
 """
 
-import time
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
 
-from src.apps.api.router import api_router
-from src.apps.api.middleware.error_handler import setup_exception_handlers
 from src.apps.api.middleware.cors import get_cors_config
+from src.apps.api.middleware.error_handler import setup_exception_handlers
+from src.apps.api.router import api_router
+from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.logging.config import configure_logging, get_logger
+from src.shared.infrastructure.middleware import (
+    CORRELATION_ID_HEADER,
+    REQUEST_ID_HEADER,
+    CorrelationIdMiddleware,
+    LoggingMiddleware,
+    MetricsMiddleware,
+    start_prometheus_server,
+)
+
+# Configure logging at startup
+settings = get_settings()
+configure_logging(
+    log_level=settings.logging.level.value,
+    json_format=settings.logging.json_format,
+    service_name=settings.monitoring.service_name,
+    service_version=settings.monitoring.service_version,
+)
+
+logger = get_logger(__name__)
 
 
 def custom_openapi(app: FastAPI) -> dict:
@@ -65,15 +84,26 @@ def custom_openapi(app: FastAPI) -> dict:
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     """Application lifespan events."""
     # Startup
-    import structlog
+    logger.info(
+        "api_startup",
+        message="Starting Novel Engine API",
+        version=settings.project_version,
+        environment=settings.environment.value,
+    )
 
-    logger = structlog.get_logger()
-    await logger.ainfo("api_startup", message="Starting Novel Engine API")
+    # Start Prometheus metrics server if enabled
+    if settings.monitoring.metrics_enabled:
+        start_prometheus_server(port=settings.monitoring.metrics_port)
+        logger.info(
+            "prometheus_started",
+            port=settings.monitoring.metrics_port,
+            path=settings.monitoring.metrics_path,
+        )
 
     yield
 
     # Shutdown
-    await logger.ainfo("api_shutdown", message="Shutting down Novel Engine API")
+    logger.info("api_shutdown", message="Shutting down Novel Engine API")
 
 
 def create_application() -> FastAPI:
@@ -82,17 +112,23 @@ def create_application() -> FastAPI:
         title="Novel Engine API",
         description="""
         AI-powered narrative engine with Clean Architecture.
-        
+
         ## Features
-        
+
         - **Character Management**: Create and manage story characters
         - **Narrative Generation**: AI-powered story generation
         - **Knowledge Management**: Context-aware knowledge system
         - **Real-time Updates**: WebSocket support for live interactions
-        
+
         ## Authentication
-        
+
         Most endpoints require authentication via JWT Bearer token or API key.
+
+        ## Distributed Tracing
+
+        All requests include correlation ID tracking via headers:
+        - X-Correlation-ID: Tracks requests across services
+        - X-Request-ID: Unique ID for each request
         """,
         version="2.0.0",
         docs_url=None,  # Custom docs endpoint
@@ -111,10 +147,11 @@ def create_application() -> FastAPI:
     # Override OpenAPI schema
     app.openapi = lambda: custom_openapi(app)
 
-    # Add middleware (order matters - last added is executed first)
+    # Add middleware (order matters - first added is outermost, last is innermost)
+    # 1. GZip compression (innermost - processes response last)
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # CORS
+    # 2. CORS
     cors_config = get_cors_config()
     app.add_middleware(
         CORSMiddleware,
@@ -122,9 +159,20 @@ def create_application() -> FastAPI:
         allow_credentials=cors_config["allow_credentials"],
         allow_methods=cors_config["allow_methods"],
         allow_headers=cors_config["allow_headers"],
-        expose_headers=cors_config["expose_headers"],
+        expose_headers=cors_config["expose_headers"]
+        + [CORRELATION_ID_HEADER, REQUEST_ID_HEADER],
         max_age=cors_config["max_age"],
     )
+
+    # 3. Logging (captures request/response details)
+    app.add_middleware(LoggingMiddleware)
+
+    # 4. Metrics (collects Prometheus metrics)
+    if settings.monitoring.metrics_enabled:
+        app.add_middleware(MetricsMiddleware)
+
+    # 5. Correlation ID (outermost - sets up tracing context first)
+    app.add_middleware(CorrelationIdMiddleware)
 
     # Setup exception handlers
     setup_exception_handlers(app)
@@ -153,6 +201,7 @@ def create_application() -> FastAPI:
             "version": "2.0.0",
             "documentation": "/docs",
             "health": "/health",
+            "metrics": settings.monitoring.metrics_path,
         }
 
     return app

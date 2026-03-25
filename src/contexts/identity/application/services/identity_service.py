@@ -7,12 +7,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from src.shared.application.result import Failure, Result, Success
 from src.contexts.identity.domain.aggregates.user import User
 from src.contexts.identity.domain.repositories.user_repository import (
-    UserRepository,
     AuthenticationService,
+    UserRepository,
 )
+from src.shared.application.result import Failure, Result, Success
 
 
 class IdentityApplicationService:

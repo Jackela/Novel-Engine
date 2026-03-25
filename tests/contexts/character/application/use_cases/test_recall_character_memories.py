@@ -3,10 +3,11 @@
 Tests the RecallCharacterMemories use case.
 """
 
-import pytest
 from datetime import datetime
-from uuid import UUID, uuid4
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest
 
 from src.contexts.character.application.use_cases.recall_character_memories import (
     MemoryRecallDTO,

@@ -12,7 +12,6 @@ Testing Coverage:
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import List
 
 import pytest
 import pytest_asyncio
@@ -406,7 +405,9 @@ class TestLayeredMemorySystem:
         layered_memory.total_queries = 1
         layered_memory._update_performance_metrics(100.0, 5)
 
-        assert layered_memory.performance_metrics["average_query_time"] > 0
+        new_avg = layered_memory.performance_metrics["average_query_time"]
+        assert new_avg > 0
+        assert new_avg != initial_avg  # Should have changed
 
     async def test_cross_layer_associations(self, layered_memory):
         """Test cross-layer association creation."""

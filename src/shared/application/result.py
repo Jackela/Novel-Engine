@@ -8,7 +8,7 @@ functional approach to error handling.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, TypeVar, Union
+from typing import Any, Callable, Generic, TypeVar
 
 T = TypeVar("T")
 """Type variable for successful result value."""

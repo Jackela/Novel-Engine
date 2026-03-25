@@ -3,14 +3,14 @@
 Tests the RememberCharacterEvent use case.
 """
 
-import pytest
 from datetime import datetime
-from uuid import UUID, uuid4
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
+
+import pytest
 
 from src.contexts.character.application.use_cases.remember_character_event import (
     RememberCharacterEventRequest,
-    RememberCharacterEventResponse,
     RememberCharacterEventUseCase,
 )
 from src.contexts.character.domain.ports.memory_port import (

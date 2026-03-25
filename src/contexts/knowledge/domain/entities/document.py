@@ -41,10 +41,11 @@ class Document(Entity[DocumentId]):
     word_count: int = field(default=0)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
-        """Validate document invariants."""
-        super().__post_init__()
+    def validate(self) -> None:
+        """Validate document invariants.
 
+        Required by Entity base class. Called during __post_init__.
+        """
         if not self.knowledge_base_id:
             raise ValueError("Document must belong to a knowledge base")
 
@@ -56,6 +57,10 @@ class Document(Entity[DocumentId]):
 
         if not self.content:
             raise ValueError("Document content cannot be empty")
+
+    def __post_init__(self) -> None:
+        """Post-initialization processing."""
+        super().__post_init__()
 
         # Calculate word count
         self.word_count = len(self.content.split())
@@ -78,6 +83,7 @@ class Document(Entity[DocumentId]):
         self.word_count = len(new_content.split())
         self.is_indexed = False
         self.indexed_at = None
+        self.embedding = None
         self.chunks = []
         self.chunk_count = 0
         self.updated_at = datetime.utcnow()

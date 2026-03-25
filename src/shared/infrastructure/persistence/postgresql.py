@@ -10,17 +10,17 @@ from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
 import asyncpg
-from asyncpg import Pool, Connection
+from asyncpg import Connection, Pool
 
 from src.shared.infrastructure.persistence.database import (
-    Database,
-    DatabaseConnection,
-    DatabaseFactory,
-    DEFAULT_POOL_MIN_SIZE,
-    DEFAULT_POOL_MAX_SIZE,
     DEFAULT_COMMAND_TIMEOUT,
     DEFAULT_MAX_INACTIVE_TIME,
     DEFAULT_MAX_QUERIES,
+    DEFAULT_POOL_MAX_SIZE,
+    DEFAULT_POOL_MIN_SIZE,
+    Database,
+    DatabaseConnection,
+    DatabaseFactory,
 )
 
 

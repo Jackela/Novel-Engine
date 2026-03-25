@@ -5,6 +5,9 @@ This module provides connection pool management for database connections.
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
 import asyncpg
 
 
@@ -60,18 +63,15 @@ class DatabaseConnectionPool:
             await self._pool.close()
             self._pool = None
 
-    async def acquire(self) -> asyncpg.Connection:
+    @asynccontextmanager
+    async def acquire(self) -> AsyncGenerator[asyncpg.Connection, None]:
         """Acquire a connection from the pool.
 
-        Returns:
+        Yields:
             A database connection.
         """
-        return await self.pool.acquire()
-
-    async def release(self, connection: asyncpg.Connection) -> None:
-        """Release a connection back to the pool.
-
-        Args:
-            connection: The connection to release.
-        """
-        await self.pool.release(connection)
+        conn = await self.pool.acquire()
+        try:
+            yield conn
+        finally:
+            await self.pool.release(conn)

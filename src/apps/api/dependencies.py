@@ -60,6 +60,15 @@ def get_jwt_manager() -> JWTManager:
     return _jwt_manager
 
 
+def reset_jwt_manager() -> None:
+    """Reset the global JWT manager instance.
+
+    This is useful for testing to ensure a fresh JWT manager is created.
+    """
+    global _jwt_manager
+    _jwt_manager = None
+
+
 async def get_connection_pool() -> DatabaseConnectionPool:
     """Get or create the global connection pool.
 

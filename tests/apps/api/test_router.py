@@ -2,7 +2,6 @@
 Tests for API router configuration.
 """
 
-import pytest
 from fastapi import APIRouter
 
 from src.apps.api.router import api_router, register_context_routers

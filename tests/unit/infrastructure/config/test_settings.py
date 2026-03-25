@@ -1,6 +1,5 @@
 """Tests for the settings module."""
 
-import os
 from pathlib import Path
 
 import pytest
@@ -11,8 +10,8 @@ from src.shared.infrastructure.config.settings import (
     DatabaseSettings,
     Environment,
     LLMSettings,
-    LogLevel,
     LoggingSettings,
+    LogLevel,
     MonitoringSettings,
     NovelEngineSettings,
     RedisSettings,

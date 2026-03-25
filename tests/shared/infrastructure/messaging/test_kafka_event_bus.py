@@ -1,16 +1,16 @@
 """Tests for Kafka event bus implementation."""
 
 import json
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from uuid import UUID, uuid4
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
+
+import pytest
 
 from src.shared.infrastructure.messaging.event_bus import (
     DomainEvent,
     EventBusNotStartedError,
     EventPublishError,
-    EventSubscribeError,
 )
 
 # Skip all tests if aiokafka is not installed

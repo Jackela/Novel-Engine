@@ -6,6 +6,7 @@ Tests the HonchoSettings configuration class with various scenarios.
 from typing import Literal, cast
 
 import pytest
+
 from src.shared.infrastructure.honcho.config import HonchoSettings
 
 

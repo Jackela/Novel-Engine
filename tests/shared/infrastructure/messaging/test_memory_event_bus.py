@@ -1,14 +1,13 @@
 """Tests for in-memory event bus implementation."""
 
 import asyncio
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from src.shared.infrastructure.messaging.event_bus import (
     DomainEvent,
     EventBusNotStartedError,
-    EventPublishError,
-    EventSubscribeError,
 )
 from src.shared.infrastructure.messaging.memory_event_bus import MemoryEventBus
 
