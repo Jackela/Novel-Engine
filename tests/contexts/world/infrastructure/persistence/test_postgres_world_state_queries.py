@@ -6,9 +6,9 @@ Tests the query operations for world state persistence.
 from unittest.mock import MagicMock, patch
 
 import pytest
-from src.contexts.world.domain.value_objects.coordinates import Coordinates
 
 from src.contexts.world.domain.aggregates.world_state import WorldState
+from src.contexts.world.domain.value_objects.coordinates import Coordinates
 from src.contexts.world.infrastructure.persistence.postgres_world_state_queries import (
     PostgresWorldStateQueries,
 )
