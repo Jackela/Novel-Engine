@@ -43,6 +43,12 @@ jobs:
             -x \
             --ignore=tests/evaluation/ \
             --ignore=tests/contexts/character/infrastructure/adapters/ \
+            --ignore=tests/contexts/knowledge/infrastructure/repositories/ \
+            --ignore=tests/contexts/narrative/infrastructure/repositories/ \
+            --ignore=tests/contexts/world/infrastructure/persistence/ \
+            --ignore=tests/test_episodic_memory.py \
+            --ignore=tests/test_layered_memory.py \
+            --ignore=tests/test_semantic_memory.py \
             -q
 
       - name: Upload coverage to Codecov

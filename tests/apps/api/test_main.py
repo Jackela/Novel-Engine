@@ -2,7 +2,6 @@
 Tests for FastAPI main application.
 """
 
-
 import pytest
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
@@ -72,33 +71,37 @@ class TestHealthEndpoints:
         response = client.get("/health")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
-        assert data["version"] == "2.0.0"
+        assert data["overall_status"] == "healthy"
         assert "timestamp" in data
-        assert "uptime_seconds" in data
+        assert "components" in data
 
     def test_liveness_probe(self, client):
         """Test Kubernetes liveness probe."""
         response = client.get("/health/live")
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "healthy"
+        assert data["status"] == "alive"
 
     def test_readiness_probe(self, client):
         """Test Kubernetes readiness probe."""
+        import src.apps.api.health as health_module
+
+        health_module._health_checker = None
+        health_module._connection_pool = None
+
         response = client.get("/health/ready")
-        assert response.status_code == 200
+        # Without database, should return 503 not_ready
+        assert response.status_code == 503
         data = response.json()
-        assert "status" in data
-        assert "components" in data
-        assert isinstance(data["components"], list)
+        assert data["status"] == "not_ready"
+        assert "Database" in data["reason"]
 
     def test_detailed_health(self, client):
         """Test detailed health check."""
         response = client.get("/health/detailed")
         assert response.status_code == 200
         data = response.json()
-        assert "status" in data
+        assert "overall_status" in data
         assert "components" in data
 
     def test_version_endpoint(self, client):
@@ -168,4 +171,4 @@ class TestAsyncOperations:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
             response = await ac.get("/health")
             assert response.status_code == 200
-            assert response.json()["status"] == "healthy"
+            assert response.json()["overall_status"] == "healthy"

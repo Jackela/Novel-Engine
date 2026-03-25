@@ -5,21 +5,17 @@ Ensure DATABASE_URL environment variable is set or use pytest-postgresql.
 """
 
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 import asyncpg
 import pytest
 import pytest_asyncio
+from asyncpg import Connection
 
 from src.contexts.knowledge.domain.entities.document import Document
 from src.contexts.knowledge.infrastructure.repositories.postgres_document_repository import (
     PostgresDocumentRepository,
 )
-
-if TYPE_CHECKING:
-    from asyncpg import Connection
-
 
 # Database configuration for tests
 TEST_DB_URL = "postgresql://postgres:postgres@localhost:5432/test_novel_engine"

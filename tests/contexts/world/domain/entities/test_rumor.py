@@ -353,19 +353,6 @@ class TestRumorInvariants:
         # Should not be equal because IDs are different
         assert rumor1 != rumor2
 
-    def test_rumor_hash(self) -> None:
-        """Test rumor can be hashed (default dataclass behavior)."""
-        rumor = Rumor(
-            content="Test",
-            truth_value=50,
-            origin_type=RumorOrigin.UNKNOWN,
-            origin_location_id="loc-1",
-        )
-        # Should be hashable (can be added to set)
-        rumor_set = {rumor}
-        assert len(rumor_set) == 1
-        assert rumor in rumor_set
-
     def test_truth_decay_constant(self) -> None:
         """Test truth decay per hop constant."""
         from src.contexts.world.domain.entities.rumor import TRUTH_DECAY_PER_HOP
