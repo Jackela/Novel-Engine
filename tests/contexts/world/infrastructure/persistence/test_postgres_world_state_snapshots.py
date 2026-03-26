@@ -4,7 +4,7 @@ Tests the snapshot operations for world state persistence.
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -91,8 +91,12 @@ class TestPostgresWorldStateSnapshots:
     @pytest.mark.asyncio
     async def test_restore_from_snapshot_success(self, snapshots, sample_world_state):
         """Test successful restoration from snapshot."""
-        current_state = WorldState(id="test-world-123", story_id="test-story-123", version=10)
-        restored_state = WorldState(id="test-world-123", story_id="test-story-123", version=11)
+        current_state = WorldState(
+            id="test-world-123", story_id="test-story-123", version=10
+        )
+        restored_state = WorldState(
+            id="test-world-123", story_id="test-story-123", version=11
+        )
 
         with patch(
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"

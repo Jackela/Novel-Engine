@@ -3,7 +3,7 @@
 Tests the query operations for world state persistence.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
