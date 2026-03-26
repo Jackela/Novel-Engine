@@ -37,8 +37,8 @@ jobs:
           cache: pip
 
       - name: Install backend dependencies
-        working-directory: ${{ github.workspace }}
         run: |
+          cd "$GITHUB_WORKSPACE"
           python -m pip install --upgrade pip
           pip install -e ".[dev,test]"
 

@@ -18,10 +18,18 @@ from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+repo_root = Path(__file__).resolve().parents[2]
+scripts_root = repo_root / "scripts"
+sys.path.insert(0, str(scripts_root))
+sys.path.insert(0, str(repo_root))
+
+# Keep local script imports deterministic even if another `scripts` package
+# exists on the runner.
+sys.modules.pop("scripts", None)
+sys.modules.pop("scripts.evaluation", None)
 
 # Import the evaluation module
-from scripts.evaluation.run_golden_dataset import (
+from evaluation.run_golden_dataset import (
     DeterministicEmbeddingService,
     EvaluationReport,
     EvaluationResult,
