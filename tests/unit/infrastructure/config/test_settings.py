@@ -198,7 +198,7 @@ class TestSecuritySettings:
     def test_default_values(self):
         """Test default security settings."""
         settings = SecuritySettings()
-        assert settings.secret_key == "change-me-in-production"
+        assert settings.secret_key == "change-me-in-production-32-char-long"
         assert settings.algorithm == "HS256"
         assert settings.access_token_expire_minutes == 30
         assert settings.refresh_token_expire_days == 7
@@ -350,7 +350,7 @@ class TestNovelEngineSettings:
         settings = NovelEngineSettings()
         assert settings.environment == Environment.DEVELOPMENT
         assert settings.debug is False
-        assert settings.project_name == "Novel Engine"
+        assert settings.project_name == "Novel Engine API"
         assert settings.is_development is True
         assert settings.is_testing is False
         assert settings.is_production is False

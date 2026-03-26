@@ -155,7 +155,7 @@ class TestConfigManagerGet:
         """Test getting simple value."""
         config = ConfigManager()
         result = config.get("project_name")
-        assert result == "Novel Engine"
+        assert result == "Novel Engine (Development)"
 
     def test_get_nested_value(self, tmp_path):
         """Test getting nested value with dot notation."""
@@ -404,7 +404,7 @@ class TestGetConfigValue:
         config_dir.mkdir()
         get_config(config_dir=config_dir)
         result = get_config_value("project_name")
-        assert result == "Novel Engine"
+        assert result == "Novel Engine (Development)"
 
     def test_get_config_value_with_default(self):
         """Test get_config_value with default."""

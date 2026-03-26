@@ -37,8 +37,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # First world exists (update), second and third don't (create)
@@ -101,8 +101,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing model with different version
@@ -122,8 +122,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock two existing models and one not found
@@ -159,8 +159,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_model = MagicMock()
@@ -196,8 +196,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing models
@@ -230,8 +230,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # First found, second not found
@@ -259,8 +259,8 @@ class TestPostgresWorldStateBatch:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_batch.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing model with different version

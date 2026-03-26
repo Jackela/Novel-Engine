@@ -27,7 +27,7 @@ class TestPostgresWorldStateVersioning:
         """Create a sample world state for testing."""
         return WorldState(
             id="test-world-123",
-            name="Test World",
+            story_id="test-story-123",
             version=3,
         )
 
@@ -40,8 +40,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock version model with serialized data
@@ -72,8 +72,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.first.return_value = (
@@ -91,8 +91,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock version models
@@ -136,10 +136,10 @@ class TestPostgresWorldStateVersioning:
     async def test_rollback_to_version_success(self, versioning, sample_world_state):
         """Test successful rollback to a previous version."""
         target_version_state = WorldState(
-            id="test-world-123", name="Test World", version=2
+            id="test-world-123", story_id="test-story-123", version=2
         )
         current_version_state = WorldState(
-            id="test-world-123", name="Test World", version=5
+            id="test-world-123", story_id="test-story-123", version=5
         )
 
         with patch.object(versioning, "get_version", return_value=target_version_state):
@@ -150,7 +150,7 @@ class TestPostgresWorldStateVersioning:
                 mock_crud.get_by_id_or_raise.return_value = current_version_state
                 # Mock save to return the saved state
                 saved_state = WorldState(
-                    id="test-world-123", name="Test World", version=6
+                    id="test-world-123", story_id="test-story-123", version=6
                 )
                 mock_crud.save.return_value = saved_state
                 mock_crud_class.return_value = mock_crud
@@ -184,8 +184,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock version models as events
@@ -254,8 +254,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock count to indicate many versions
@@ -287,8 +287,8 @@ class TestPostgresWorldStateVersioning:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_versioning.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock count to indicate few versions

@@ -40,8 +40,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock models
@@ -59,14 +59,14 @@ class TestPostgresWorldStateQueries:
     @pytest.mark.asyncio
     async def test_find_by_name_returns_world_state(self, queries):
         """Test that find_by_name returns the world state when found."""
-        world_state = WorldState(id="world-1", name="Test World", version=1)
+        world_state = WorldState(id="world-1", story_id="test-story-123", version=1)
 
         with patch(
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_model = MagicMock()
@@ -87,8 +87,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.first.return_value = (
@@ -102,14 +102,14 @@ class TestPostgresWorldStateQueries:
     @pytest.mark.asyncio
     async def test_find_by_criteria_with_name_filter(self, queries):
         """Test that find_by_criteria filters by name."""
-        world_state = WorldState(id="world-1", name="Test World", version=1)
+        world_state = WorldState(id="world-1", story_id="test-story-123", version=1)
 
         with patch(
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_model = MagicMock()
@@ -136,8 +136,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.count.return_value = 42
@@ -153,8 +153,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_query = MagicMock()
@@ -170,7 +170,7 @@ class TestPostgresWorldStateQueries:
     async def test_find_entities_by_type_returns_matching_entities(self, queries):
         """Test that find_entities_by_type returns entities of the specified type."""
 
-        world_state = WorldState(id="world-1", name="Test World", version=1)
+        world_state = WorldState(id="world-1", story_id="test-story-123", version=1)
 
         # Create mock entities
         entity1 = MagicMock()
@@ -200,7 +200,7 @@ class TestPostgresWorldStateQueries:
     @pytest.mark.asyncio
     async def test_find_entities_in_area_returns_entities_within_radius(self, queries):
         """Test that find_entities_in_area returns entities within the specified radius."""
-        world_state = WorldState(id="world-1", name="Test World", version=1)
+        world_state = WorldState(id="world-1", story_id="test-story-123", version=1)
 
         # Create mock entities with coordinates
         entity1 = MagicMock()
@@ -236,7 +236,7 @@ class TestPostgresWorldStateQueries:
     @pytest.mark.asyncio
     async def test_find_entities_by_coordinates_returns_close_entities(self, queries):
         """Test that find_entities_by_coordinates returns entities near coordinates."""
-        world_state = WorldState(id="world-1", name="Test World", version=1)
+        world_state = WorldState(id="world-1", story_id="test-story-123", version=1)
 
         entity1 = MagicMock()
         entity1.coordinates = MagicMock()
@@ -273,8 +273,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock world state model
@@ -317,8 +317,8 @@ class TestPostgresWorldStateQueries:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_queries.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock world states

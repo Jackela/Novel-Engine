@@ -27,7 +27,7 @@ class TestPostgresWorldStateSnapshots:
         """Create a sample world state for testing."""
         world_state = WorldState(
             id="test-world-123",
-            name="Test World",
+            story_id="test-story-123",
             version=5,
         )
         world_state.entities = {}  # Empty entities dict
@@ -47,8 +47,8 @@ class TestPostgresWorldStateSnapshots:
                 "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
             ) as mock_get_session:
                 mock_session = MagicMock()
-                mock_session.__enter__ = MagicMock(return_value=mock_session)
-                mock_session.__exit__ = MagicMock(return_value=False)
+                mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+                mock_session.__aexit__ = AsyncMock(return_value=False)
                 mock_get_session.return_value = mock_session
 
                 # Mock snapshot model
@@ -91,15 +91,15 @@ class TestPostgresWorldStateSnapshots:
     @pytest.mark.asyncio
     async def test_restore_from_snapshot_success(self, snapshots, sample_world_state):
         """Test successful restoration from snapshot."""
-        current_state = WorldState(id="test-world-123", name="Test World", version=10)
-        restored_state = WorldState(id="test-world-123", name="Test World", version=11)
+        current_state = WorldState(id="test-world-123", story_id="test-story-123", version=10)
+        restored_state = WorldState(id="test-world-123", story_id="test-story-123", version=11)
 
         with patch(
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock snapshot model
@@ -160,8 +160,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.first.return_value = (
@@ -178,8 +178,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock snapshot models
@@ -220,8 +220,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_snapshot = MagicMock()
@@ -242,8 +242,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.first.return_value = (
@@ -261,8 +261,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_snapshot = MagicMock()
@@ -295,8 +295,8 @@ class TestPostgresWorldStateSnapshots:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_snapshots.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             mock_session.query.return_value.filter.return_value.first.return_value = (

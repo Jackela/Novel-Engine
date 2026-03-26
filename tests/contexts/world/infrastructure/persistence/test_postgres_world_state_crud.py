@@ -3,7 +3,7 @@
 Tests the basic CRUD operations for world state persistence.
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -26,7 +26,7 @@ class TestPostgresWorldStateCrud:
         """Create a sample world state for testing."""
         return WorldState(
             id="test-world-123",
-            name="Test World",
+            story_id="test-story-123",
             version=1,
         )
 
@@ -37,8 +37,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock query to return None (not found)
@@ -68,8 +68,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing model
@@ -99,8 +99,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing model with different version
@@ -122,8 +122,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock model
@@ -145,8 +145,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock query to return None
@@ -186,8 +186,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock existing model
@@ -209,8 +209,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock query to return None
@@ -229,8 +229,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock count to return 1
@@ -247,8 +247,8 @@ class TestPostgresWorldStateCrud:
             "src.contexts.world.infrastructure.persistence.postgres_world_state_crud.get_db_session"
         ) as mock_get_session:
             mock_session = MagicMock()
-            mock_session.__enter__ = MagicMock(return_value=mock_session)
-            mock_session.__exit__ = MagicMock(return_value=False)
+            mock_session.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_session.__aexit__ = AsyncMock(return_value=False)
             mock_get_session.return_value = mock_session
 
             # Mock count to return 0
