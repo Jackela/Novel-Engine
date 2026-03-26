@@ -69,7 +69,7 @@ dependencies = [
     # Caching
     "cachetools>=5.3.0,<6.0.0",
     # S3 Storage
-    "aioboto3>=12.0.0,<13.0.0",
+    "aioboto3>=12.0.0,<16.0.0",
     # HTTP client
     "requests>=2.31.0,<3.0.0",
     # System monitoring
