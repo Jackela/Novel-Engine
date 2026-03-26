@@ -18,30 +18,6 @@ router.include_router(kb_router)
 router.include_router(document_router)
 router.include_router(search_router)
 
-# Re-export for backward compatibility
-from .document_routes import (
-    DocumentResponse,
-    DocumentUploadRequest,
-)
-from .knowledge_base_routes import (
-    DocumentListResponse,
-    KnowledgeBaseCreateRequest,
-    KnowledgeBaseResponse,
-)
-from .search_routes import (
-    SearchRequest,
-    SearchResponse,
-    SearchResult,
-)
-
 __all__ = [
     "router",
-    "DocumentResponse",
-    "DocumentUploadRequest",
-    "DocumentListResponse",
-    "KnowledgeBaseCreateRequest",
-    "KnowledgeBaseResponse",
-    "SearchRequest",
-    "SearchResponse",
-    "SearchResult",
 ]

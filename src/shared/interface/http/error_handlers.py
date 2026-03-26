@@ -1,23 +1,19 @@
-"""Shared HTTP Error Handlers.
-
-Provides common error handling utilities for all contexts.
-Each context can extend these with their specific exception mappings.
-"""
+"""Shared HTTP error handling utilities."""
 
 from __future__ import annotations
 
-import logging
 from functools import wraps
-from typing import Any, Callable, Coroutine, Dict, Optional, TypeVar
+from typing import Any, Callable, Coroutine, TypeVar, cast
 
+import structlog
 from fastapi import HTTPException, status
 
-from src.shared.application.result import Result
+from src.shared.application.result import Failure, Result
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Standard error code to HTTP status mapping
-ERROR_CODE_TO_HTTP_STATUS: Dict[str, int] = {
+ERROR_CODE_TO_HTTP_STATUS: dict[str, int] = {
     # Client errors (4xx)
     "VALIDATION_ERROR": status.HTTP_400_BAD_REQUEST,
     "BAD_REQUEST": status.HTTP_400_BAD_REQUEST,
@@ -34,7 +30,7 @@ ERROR_CODE_TO_HTTP_STATUS: Dict[str, int] = {
 }
 
 # Standard error messages
-ERROR_CODE_TO_MESSAGE: Dict[str, str] = {
+ERROR_CODE_TO_MESSAGE: dict[str, str] = {
     "VALIDATION_ERROR": "Validation failed",
     "BAD_REQUEST": "Bad request",
     "UNAUTHORIZED": "Unauthorized",
@@ -56,7 +52,7 @@ class ResultErrorHandler:
     """Handle Result-type errors and convert to HTTPException."""
 
     @staticmethod
-    def handle(result: Result[T], operation: Optional[str] = None) -> T:
+    def handle(result: Result[T], operation: str | None = None) -> T:
         """Handle Result error.
 
         If result contains an error, raises appropriate HTTPException.
@@ -72,18 +68,19 @@ class ResultErrorHandler:
         Raises:
             HTTPException: If result contains an error
         """
-        if result.is_error:
-            error = result.error
+        if isinstance(result, Failure):
+            error = result
             status_code = ERROR_CODE_TO_HTTP_STATUS.get(
                 error.code, status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            message = ERROR_CODE_TO_MESSAGE.get(error.code, str(error))
+            message = ERROR_CODE_TO_MESSAGE.get(error.code, error.error)
 
             if operation:
                 logger.error(
-                    f"Operation '{operation}' failed",
+                    "result_operation_failed",
+                    operation=operation,
                     error_code=error.code,
-                    error_message=str(error),
+                    error_message=error.error,
                 )
 
             raise HTTPException(status_code=status_code, detail=message)
@@ -92,10 +89,10 @@ class ResultErrorHandler:
 
     @staticmethod
     def handle_or_return(
-        result: Result[T], operation: Optional[str] = None
+        result: Result[T], operation: str | None = None
     ) -> T | None:
         """Handle result or return None on error (for optional operations)."""
-        if result.is_error:
+        if isinstance(result, Failure):
             return None
         return result.value
 
@@ -122,7 +119,7 @@ class BaseErrorConverter:
         )
 
 
-def handle_result_error(operation: Optional[str] = None) -> Callable[[F], F]:
+def handle_result_error(operation: str | None = None) -> Callable[[F], F]:
     """Decorator to handle Result errors in route handlers.
 
     Usage:
@@ -151,6 +148,6 @@ def handle_result_error(operation: Optional[str] = None) -> Callable[[F], F]:
                     detail="Internal server error",
                 ) from e
 
-        return wrapper  # type: ignore
+        return cast(F, wrapper)
 
     return decorator

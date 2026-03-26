@@ -95,8 +95,12 @@ class IdentityApplicationService:
             Result containing user data and tokens or error
         """
         try:
-            # Find user by email
-            user = await self.user_repo.get_by_email(email)
+            identifier = email.strip()
+
+            # Find user by email or username
+            user = await self.user_repo.get_by_email(identifier)
+            if not user:
+                user = await self.user_repo.get_by_username(identifier)
 
             if not user:
                 return Failure("Invalid credentials", "INVALID_CREDENTIALS")

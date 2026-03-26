@@ -17,6 +17,8 @@ from src.contexts.knowledge.infrastructure.repositories.postgres_document_reposi
     PostgresDocumentRepository,
 )
 
+pytestmark = pytest.mark.postgres_integration
+
 # Database configuration for tests
 TEST_DB_URL = "postgresql://postgres:postgres@localhost:5432/test_novel_engine"
 

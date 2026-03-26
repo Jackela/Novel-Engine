@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, cast
 
 import structlog
 
@@ -33,6 +33,25 @@ class HealthStatus:
     error: str | None = None
     details: dict[str, Any] = field(default_factory=dict)
     response_time_ms: float = 0.0
+
+    def __getitem__(self, key: str) -> Any:
+        data = self.to_dict()
+        if key in data:
+            return data[key]
+        if key in self.details:
+            return self.details[key]
+        raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        if not isinstance(key, str):
+            return False
+        return key in self.to_dict() or key in self.details
+
+    def get(self, key: str, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def to_dict(self) -> dict[str, Any]:
         """Convert HealthStatus to dictionary for serialization."""
@@ -131,7 +150,7 @@ class HealthChecker:
         )
 
         # Process results
-        components = {}
+        components: dict[str, dict[str, Any]] = {}
         overall_status = "healthy"
 
         for (name, _), result in zip(check_items, results):
@@ -150,12 +169,13 @@ class HealthChecker:
                     error_type=type(result).__name__,
                 )
             else:
-                components[name] = result.to_dict()
+                health_result = cast(HealthStatus, result)
+                components[name] = health_result.to_dict()
                 # Determine overall status based on individual status
-                if result.status in ("unhealthy", "error"):
+                if health_result.status in ("unhealthy", "error"):
                     overall_status = "unhealthy"
                 elif (
-                    result.status in ("timeout", "degraded")
+                    health_result.status in ("timeout", "degraded")
                     and overall_status == "healthy"
                 ):
                     overall_status = "degraded"

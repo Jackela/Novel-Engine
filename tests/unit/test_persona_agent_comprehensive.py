@@ -15,6 +15,7 @@ import pytest
 # Import the modules under test
 try:
     from shared_types import CharacterAction
+
     from src.event_bus import EventBus
     from src.persona_agent import (
         PersonaAgent,

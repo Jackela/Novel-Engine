@@ -52,7 +52,7 @@ class Entity(ABC, Generic[T]):
     def __post_init__(self) -> None:
         """Post-initialization hook - validates entity invariants and ensures fields."""
         # Ensure _domain_events is always initialized (defensive, handles object.__new__ bypass)
-        if self._domain_events is None:
+        if getattr(self, "_domain_events", None) is None:
             self._domain_events = []
         self.validate()
 
@@ -66,7 +66,7 @@ class Entity(ABC, Generic[T]):
         Raises:
             DomainException: If the entity is in an invalid state.
         """
-        ...
+        pass
 
     @final
     def __eq__(self, other: object) -> bool:

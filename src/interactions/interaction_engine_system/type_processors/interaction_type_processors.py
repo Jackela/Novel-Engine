@@ -27,7 +27,6 @@ try:
         StandardResponse,
     )
     from src.core.equipment_manager import EquipmentManager
-
     from src.core.types import AgentID
 except ImportError:
     # Fallback for testing

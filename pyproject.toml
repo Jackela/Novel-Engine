@@ -165,7 +165,6 @@ ignore = ["E402"]  # Module level import not at top of file (needed for scripts)
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E402"]  # Scripts need sys.path modification before imports
-"src/api/main_api_server.py" = ["E402"]  # Needs dotenv load before imports
 
 # MyPy type checking
 [tool.mypy]
@@ -293,6 +292,9 @@ markers = [
     "knowledge: Knowledge Management context tests (Feature 001)",
     "smoke: Lightweight smoke tests",
     "asyncio: Async tests",
+    "requires_openai: Tests requiring OpenAI API access and an API key",
+    "requires_chroma: Tests requiring Chroma vector store support",
+    "postgres_integration: Tests requiring a live PostgreSQL database",
 ]
 
 # Bandit security linting

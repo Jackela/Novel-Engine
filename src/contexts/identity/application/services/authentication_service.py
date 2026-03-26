@@ -126,8 +126,12 @@ class AuthenticationService(AuthenticationServicePort):
         Returns:
             Result containing tokens on success, or Failure with error details.
         """
-        # Try to find user by username
-        user = await self._user_repository.get_by_username(username)
+        identifier = username.strip()
+
+        # Try both username and email so the UI can stay email-first.
+        user = await self._user_repository.get_by_username(identifier)
+        if not user:
+            user = await self._user_repository.get_by_email(identifier)
 
         if not user:
             return Failure(

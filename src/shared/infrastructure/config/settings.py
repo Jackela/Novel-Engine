@@ -6,12 +6,15 @@ for the Novel Engine application.
 
 from __future__ import annotations
 
+import secrets
 from enum import Enum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"
 
 
 class Environment(str, Enum):
@@ -128,7 +131,7 @@ class SecuritySettings(BaseSettings):
     )
 
     secret_key: str = Field(
-        default="change-me-in-production-32-char-long",
+        default=DEFAULT_SECRET_KEY,
         min_length=16,
         description="Secret key for JWT signing",
     )
@@ -414,6 +417,19 @@ class NovelEngineSettings(BaseSettings):
         """Check if running in production environment."""
         return self.environment == Environment.PRODUCTION
 
+    @model_validator(mode="after")
+    def apply_runtime_security_defaults(self) -> Self:
+        """Apply safe runtime defaults for local and testing environments."""
+        if not self.security.secret_key or self.security.secret_key == DEFAULT_SECRET_KEY:
+            if self.is_testing:
+                self.security.secret_key = (
+                    self.security.secret_key
+                    or "test-secret-key-for-novel-engine-32-chars"
+                )
+            else:
+                self.security.secret_key = secrets.token_urlsafe(32)
+        return self
+
     def model_dump_safe(self) -> dict[str, Any]:
         """Dump settings with sensitive fields masked."""
         import typing
@@ -458,19 +474,7 @@ class NovelEngineSettings(BaseSettings):
         if isinstance(env, str):
             env = Environment(env.lower())
 
-        # Set the environment and create settings
-        import os
-
-        original_env = os.environ.get("APP_ENVIRONMENT")
-        os.environ["APP_ENVIRONMENT"] = env.value
-
-        try:
-            return cls()
-        finally:
-            if original_env is None:
-                os.environ.pop("APP_ENVIRONMENT", None)
-            else:
-                os.environ["APP_ENVIRONMENT"] = original_env
+        return cls(environment=env)
 
 
 # Global settings instance (lazy-loaded)

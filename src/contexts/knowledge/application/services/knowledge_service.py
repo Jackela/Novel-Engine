@@ -66,15 +66,39 @@ class KnowledgeApplicationService:
 
     def __init__(
         self,
-        knowledge_repo=None,
-        vector_store=None,
-        embedding_service=None,
-        chunking_service=None,
-    ):
+        knowledge_repo: Any | None = None,
+        vector_store: Any | None = None,
+        embedding_service: EmbeddingService | None = None,
+        chunking_service: ChunkingService | None = None,
+    ) -> None:
         self.knowledge_repo = knowledge_repo
         self.vector_store = vector_store
         self.embedding = embedding_service
         self.chunking = chunking_service
+
+    def _require_knowledge_repo(self) -> Any:
+        """Return the configured knowledge repository."""
+        if self.knowledge_repo is None:
+            raise RuntimeError("Knowledge repository is not configured")
+        return self.knowledge_repo
+
+    def _require_vector_store(self) -> Any:
+        """Return the configured vector store."""
+        if self.vector_store is None:
+            raise RuntimeError("Vector store is not configured")
+        return self.vector_store
+
+    def _require_embedding_service(self) -> EmbeddingService:
+        """Return the configured embedding service."""
+        if self.embedding is None:
+            raise RuntimeError("Embedding service is not configured")
+        return self.embedding
+
+    def _require_chunking_service(self) -> ChunkingService:
+        """Return the configured chunking service."""
+        if self.chunking is None:
+            raise RuntimeError("Chunking service is not configured")
+        return self.chunking
 
     async def create_knowledge_base(
         self,
@@ -106,7 +130,8 @@ class KnowledgeApplicationService:
                 is_public=is_public,
             )
 
-            await self.knowledge_repo.save(kb)
+            knowledge_repo = self._require_knowledge_repo()
+            await knowledge_repo.save(kb)
 
             return Success(kb)
 
@@ -141,7 +166,8 @@ class KnowledgeApplicationService:
             Result containing uploaded document
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -153,7 +179,7 @@ class KnowledgeApplicationService:
                 tags=tags,
             )
 
-            await self.knowledge_repo.save(kb)
+            await knowledge_repo.save(kb)
 
             # Auto-index if requested
             if auto_index:
@@ -187,7 +213,8 @@ class KnowledgeApplicationService:
             Result containing document
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -216,7 +243,8 @@ class KnowledgeApplicationService:
             Result containing success status
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -225,9 +253,10 @@ class KnowledgeApplicationService:
                 return Failure("Document not found", "NOT_FOUND")
 
             # Remove from vector store
-            await self.vector_store.delete_document(document_id)
+            vector_store = self._require_vector_store()
+            await vector_store.delete_document(document_id)
 
-            await self.knowledge_repo.save(kb)
+            await knowledge_repo.save(kb)
 
             return Success(True)
 
@@ -250,7 +279,8 @@ class KnowledgeApplicationService:
             Result containing indexed document
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -259,15 +289,18 @@ class KnowledgeApplicationService:
                 return Failure("Document not found", "NOT_FOUND")
 
             # Chunk the document
-            chunks = self.chunking.chunk_document(document.content)
+            chunking = self._require_chunking_service()
+            chunks = chunking.chunk_document(document.content)
             document.add_chunks(chunks)
 
             # Generate embedding for full document
-            embedding = await self.embedding.embed_text(document.content)
+            embedding_service = self._require_embedding_service()
+            embedding = await embedding_service.embed_text(document.content)
             document.set_indexed(embedding)
 
             # Store in vector store
-            await self.vector_store.store_embedding(
+            vector_store = self._require_vector_store()
+            await vector_store.store_embedding(
                 document_id=str(document.id),
                 content=document.content,
                 embedding=embedding,
@@ -279,7 +312,7 @@ class KnowledgeApplicationService:
                 },
             )
 
-            await self.knowledge_repo.save(kb)
+            await knowledge_repo.save(kb)
 
             return Success(document)
 
@@ -306,15 +339,18 @@ class KnowledgeApplicationService:
             Result containing list of search results
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
             # Generate query embedding
-            query_embedding = await self.embedding.embed_text(query)
+            embedding_service = self._require_embedding_service()
+            query_embedding = await embedding_service.embed_text(query)
 
             # Search vector store
-            results = await self.vector_store.search_similar(
+            vector_store = self._require_vector_store()
+            results = await vector_store.search_similar(
                 query_embedding=query_embedding,
                 top_k=top_k,
                 filters=filters,
@@ -357,7 +393,8 @@ class KnowledgeApplicationService:
             Result containing matching documents
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -407,7 +444,8 @@ class KnowledgeApplicationService:
             Result containing list of documents
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 
@@ -439,7 +477,8 @@ class KnowledgeApplicationService:
             Result containing statistics
         """
         try:
-            kb = await self.knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
             if not kb:
                 return Failure("Knowledge base not found", "NOT_FOUND")
 

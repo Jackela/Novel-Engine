@@ -19,10 +19,16 @@ def get_cors_config() -> dict:
     origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "")
 
     if origins_env:
-        allow_origins = [origin.strip() for origin in origins_env.split(",")]
+        allow_origins: list[str] = [
+            origin.strip() for origin in origins_env.split(",") if origin.strip()
+        ]
     else:
         # Default origins for development
         allow_origins = [
+            "http://localhost:4173",
+            "http://127.0.0.1:4173",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
             "http://localhost:3000",  # React development
             "http://localhost:8000",  # FastAPI development
             "http://localhost:8080",  # Vue.js development
@@ -32,7 +38,7 @@ def get_cors_config() -> dict:
         ]
 
     # In production, restrict origins
-    if os.getenv("ENVIRONMENT") == "production":
+    if os.getenv("APP_ENVIRONMENT", os.getenv("ENVIRONMENT", "")).lower() == "production":
         # Remove wildcard origins in production
         allow_origins = [
             origin
@@ -64,7 +70,7 @@ def get_cors_config() -> dict:
 
 def get_cors_origins() -> List[str]:
     """Get list of allowed CORS origins."""
-    return get_cors_config()["allow_origins"]
+    return list(get_cors_config()["allow_origins"])
 
 
 def is_origin_allowed(origin: str) -> bool:

@@ -4,7 +4,7 @@ This module provides middleware for collecting Prometheus metrics
 for all HTTP requests including request counts and duration histograms.
 """
 
-from typing import Any
+from typing import Awaitable, Callable
 
 from fastapi import Request
 from prometheus_client import Counter, Gauge, Histogram
@@ -45,7 +45,9 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     using start_prometheus_server() function.
     """
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Process the request and collect metrics.
 
         Args:

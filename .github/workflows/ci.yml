@@ -1,0 +1,151 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "codex/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-quality:
+    name: Backend Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run Ruff
+        run: ruff check src tests
+
+      - name: Run MyPy
+        run: >
+          mypy
+          src/apps/api
+          src/contexts/identity
+          src/contexts/identity/infrastructure/repositories/in_memory_user_repository.py
+          src/contexts/knowledge/interface/http
+          src/contexts/knowledge/infrastructure/runtime.py
+          src/contexts/knowledge/infrastructure/vectorStores/chroma_knowledge_vector_store.py
+          src/contexts/world/interface/http
+          src/shared/infrastructure/config
+          src/shared/infrastructure/health
+          src/shared/infrastructure/logging
+          src/shared/infrastructure/middleware
+          src/shared/infrastructure/honcho
+          src/shared/interface/http
+          src/contexts/knowledge/application/services
+          --no-error-summary
+          --show-column-numbers
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      APP_ENVIRONMENT: testing
+      SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
+      MONITORING_METRICS_ENABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run pytest
+        run: pytest -q
+
+  frontend:
+    name: Frontend Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      APP_ENVIRONMENT: testing
+      SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
+      MONITORING_METRICS_ENABLED: "false"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install frontend dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run TypeScript checks
+        run: npm run type-check
+
+      - name: Run frontend unit tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run frontend smoke tests
+        run: npm run test:e2e:smoke

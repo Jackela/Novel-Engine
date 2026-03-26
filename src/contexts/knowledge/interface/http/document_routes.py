@@ -9,10 +9,10 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, Field
 
+from src.apps.api.dependencies import get_knowledge_service
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
 )
-from src.contexts.knowledge.domain.entities.document import Document
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
     handle_knowledge_errors,
@@ -63,8 +63,8 @@ async def upload_document(
     knowledge_base_id: str,
     request: DocumentUploadRequest,
     auto_index: bool = Query(default=True, description="Auto-index after upload"),
-    service: KnowledgeApplicationService = Depends(),
-):
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> DocumentResponse:
     """Upload a document to a knowledge base."""
     result = await service.upload_document(
         knowledge_base_id=knowledge_base_id,
@@ -76,7 +76,7 @@ async def upload_document(
         auto_index=auto_index,
     )
 
-    doc: Document = ResultErrorHandler.handle_or_return(result)
+    doc = ResultErrorHandler.handle(result)
     return DocumentResponse(
         id=str(doc.id),
         knowledge_base_id=doc.knowledge_base_id,
@@ -104,15 +104,15 @@ async def upload_document(
 async def get_document(
     knowledge_base_id: str,
     document_id: str,
-    service: KnowledgeApplicationService = Depends(),
-):
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> DocumentResponse:
     """Get a document by ID."""
     result = await service.get_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
     )
 
-    doc: Document = ResultErrorHandler.handle_or_return(result)
+    doc = ResultErrorHandler.handle(result)
     return DocumentResponse(
         id=str(doc.id),
         knowledge_base_id=doc.knowledge_base_id,
@@ -140,15 +140,15 @@ async def get_document(
 async def delete_document(
     knowledge_base_id: str,
     document_id: str,
-    service: KnowledgeApplicationService = Depends(),
-):
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> None:
     """Delete a document from a knowledge base."""
     result = await service.delete_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
     )
 
-    ResultErrorHandler.handle_or_return(result)
+    ResultErrorHandler.handle(result)
     return None
 
 
@@ -161,15 +161,15 @@ async def delete_document(
 async def index_document(
     knowledge_base_id: str,
     document_id: str,
-    service: KnowledgeApplicationService = Depends(),
-):
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> DocumentResponse:
     """Manually index a document for semantic search."""
     result = await service.index_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
     )
 
-    doc: Document = ResultErrorHandler.handle_or_return(result)
+    doc = ResultErrorHandler.handle(result)
     return DocumentResponse(
         id=str(doc.id),
         knowledge_base_id=doc.knowledge_base_id,

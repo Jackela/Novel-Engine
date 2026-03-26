@@ -1,8 +1,4 @@
-"""
-Honcho Health Check
-
-Health check implementation for Honcho service connectivity using the unified HealthStatus model.
-"""
+"""Health check implementation for the optional Honcho runtime."""
 
 from __future__ import annotations
 
@@ -11,40 +7,48 @@ from src.shared.infrastructure.honcho.client import HonchoClient
 
 
 class HonchoHealthCheck:
-    """Health check for Honcho service connectivity."""
+    """Probe the optional Honcho client without making startup depend on it."""
 
-    def __init__(self, client: HonchoClient | None = None):
+    def __init__(self, client: HonchoClient | None = None) -> None:
         self.client = client
 
     async def check(self) -> HealthStatus:
-        """Check Honcho service health and return standardized HealthStatus.
+        """Return a health status for the configured Honcho client."""
+        if self.client is None:
+            return HealthStatus(
+                status="unknown",
+                message="Honcho client not configured",
+            )
 
-        Returns:
-            HealthStatus with status, message, and any error details.
-        """
         try:
-            if self.client:
-                # Try to check if client is healthy
-                is_healthy = await self.client.health_check()
-                if is_healthy:
-                    return HealthStatus(
-                        status="healthy",
-                        message="Honcho service connection successful",
-                    )
-                else:
-                    return HealthStatus(
-                        status="unhealthy",
-                        message="Honcho service health check failed",
-                    )
-            else:
+            health_check = getattr(self.client, "health_check", None)
+            if callable(health_check):
+                is_healthy = await health_check()
                 return HealthStatus(
-                    status="unknown",
-                    message="Honcho client not configured",
+                    status="healthy" if is_healthy else "unhealthy",
+                    message=(
+                        "Honcho service connection successful"
+                        if is_healthy
+                        else "Honcho service health check failed"
+                    ),
                 )
-        except Exception as e:
+
+            get_client = getattr(self.client, "_get_client", None)
+            if callable(get_client):
+                await get_client()
+                return HealthStatus(
+                    status="healthy",
+                    message="Honcho client initialized successfully",
+                )
+
+            return HealthStatus(
+                status="unknown",
+                message="Honcho client does not expose a health probe",
+            )
+        except Exception as exc:
             return HealthStatus(
                 status="unhealthy",
-                message=f"Honcho health check failed: {str(e)}",
-                error=str(e),
-                details={"error_type": type(e).__name__},
+                message=f"Honcho health check failed: {exc}",
+                error=str(exc),
+                details={"error_type": type(exc).__name__},
             )

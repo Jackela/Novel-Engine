@@ -5,7 +5,7 @@ enabling distributed tracing and request tracking across services.
 """
 
 import uuid
-from typing import Any
+from typing import Awaitable, Callable
 
 import structlog
 from fastapi import Request
@@ -25,7 +25,9 @@ class CorrelationIdMiddleware(BaseHTTPMiddleware):
     the logging context and the response headers.
     """
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Process the request and add correlation ID.
 
         Args:

@@ -123,7 +123,7 @@ class User(AggregateRoot):
         self.status = "active"
         self.updated_at = datetime.utcnow()
 
-    def update_profile(self, **kwargs) -> None:
+    def update_profile(self, **kwargs: Any) -> None:
         """Update user profile fields."""
         self.profile.update(kwargs)
         self.updated_at = datetime.utcnow()

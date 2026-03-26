@@ -68,7 +68,8 @@ class ErrorConverter(BaseErrorConverter):
 
 
 def handle_knowledge_errors(func: F) -> F:
-    """Knowledge error handling decorator."""
+    """Knowledge error handling decorator that preserves function signature for FastAPI."""
+    import inspect
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -79,6 +80,10 @@ def handle_knowledge_errors(func: F) -> F:
         except Exception:
             raise
 
+    # FastAPI uses inspect.signature to analyze endpoints.
+    # By assigning __signature__, we ensure FastAPI sees the original
+    # function's parameters, not the wrapper's *args, **kwargs.
+    wrapper.__signature__ = inspect.signature(func)
     return wrapper  # type: ignore
 
 

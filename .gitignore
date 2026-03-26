@@ -47,6 +47,11 @@ pytest-report.xml
 test-results.xml
 pyramid-report.json
 speed-report.json
+playwright-report/
+test-results/
+frontend/playwright-report/
+frontend/test-results/
+frontend/coverage/
 
 # Temporary files
 *_world_state.json
@@ -520,3 +525,17 @@ undefined:*/
 /.trunk
 .worktrees/
 nul
+
+# SSOT cleanup targets
+/coverage.xml
+/pytest_collection.txt
+/htmlcov/
+/htmlcov_new/
+/test-results/
+/tmp/
+/frontend/reports/
+/frontend/tmp/
+/frontend/junit-results.xml
+/frontend/test-results.json
+**/__pycache__/
+*.pyc

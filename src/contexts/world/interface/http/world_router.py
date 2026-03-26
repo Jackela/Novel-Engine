@@ -54,7 +54,7 @@ class RumorListResponse(BaseModel):
 async def propagate_rumors(
     propagation: RumorPropagationRequest,
     service: RumorPropagationService = Depends(),
-):
+) -> dict[str, Any]:
     """Propagate rumors in the world."""
     from src.contexts.world.domain.aggregates.world_state import WorldState
 
@@ -93,7 +93,7 @@ async def propagate_rumors(
 async def get_active_rumors(
     world_id: UUID,
     service: RumorPropagationService = Depends(),
-):
+) -> RumorListResponse:
     """Get active rumors in world."""
     active_rumors = await service._rumor_repo.get_active_rumors(str(world_id))
 

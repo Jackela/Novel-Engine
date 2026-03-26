@@ -70,8 +70,10 @@ class ConfigLoader:
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                content = yaml.safe_load(f)
-                return content if content is not None else {}
+                content: Any = yaml.safe_load(f)
+                if isinstance(content, dict):
+                    return content
+                return {}
         except yaml.YAMLError as e:
             raise ConfigLoadError(f"Failed to parse YAML file {file_path}: {e}")
         except Exception as e:
