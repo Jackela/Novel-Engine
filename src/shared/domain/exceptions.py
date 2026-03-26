@@ -44,7 +44,7 @@ class DomainException(Exception):
             **context: Additional context for error bubbling.
         """
         self.message = message
-        self.code = code if code is not None else self.__class__.__name__.upper()
+        self.code = code if code is not None else "DOMAIN_ERROR"
         self.context = context
         super().__init__(self.message)
 

@@ -74,12 +74,9 @@ class RumorStatisticsService:
                 )
             )
         except Exception as e:
-            return Failure(
-                Failure(
-                    message=f"Failed to calculate rumor statistics: {e}",
-                    code="STATISTICS_CALCULATION_ERROR",
-                    recoverable=True,
-                )
+            return Failure.from_message(
+                f"Failed to calculate rumor statistics: {e}",
+                code="STATISTICS_CALCULATION_ERROR",
             )
 
     def get_most_spread(self, rumors: List[Rumor]) -> Optional[Rumor]:

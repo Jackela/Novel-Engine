@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from .errors import HonchoClientError, HonchoErrorDetails
 
@@ -181,7 +181,7 @@ class HonchoMessageHandler:
                     workspace_id=workspace_id,
                     peer_id=peer_id,
                 )
-            return representation.content if representation else ""
+            return cast(str, representation.content if representation else "")
         except (ConnectionError, TimeoutError) as e:
             raise HonchoClientError(
                 f"Failed to get representation for peer {peer_id}: {e}",
@@ -234,7 +234,7 @@ class HonchoMessageHandler:
                     peer_id=peer_id,
                     query=query,
                 )
-            return response.content if response else ""
+            return cast(str, response.content if response else "")
         except (ConnectionError, TimeoutError) as e:
             raise HonchoClientError(
                 f"Failed to chat with peer {peer_id}: {e}",

@@ -1,7 +1,6 @@
 """HTTP Error Handlers for World Context."""
 
-from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from fastapi import HTTPException, status
 
@@ -29,6 +28,7 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 class ResultErrorHandler(BaseResultErrorHandler):
     """World-specific result error handler."""
+
     pass
 
 
@@ -39,23 +39,39 @@ class ErrorConverter(BaseErrorConverter):
     def convert(error: Exception) -> HTTPException:
         """Convert WorldError to HTTPException."""
         if isinstance(error, WorldStateNotFoundError):
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="World state not found")
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="World state not found"
+            )
         elif isinstance(error, WorldStateAlreadyExistsError):
-            return HTTPException(status_code=status.HTTP_409_CONFLICT, detail="World state already exists")
+            return HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="World state already exists",
+            )
         elif isinstance(error, RumorNotFoundError):
-            return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rumor not found")
+            return HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Rumor not found"
+            )
         elif isinstance(error, (WorldValidationError, InvalidWorldStateError)):
-            return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error))
+            return HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+            )
         elif isinstance(error, PropagationError):
-            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Rumor propagation failed")
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Rumor propagation failed",
+            )
         elif isinstance(error, WorldError):
-            return HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error))
+            return HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(error)
+            )
 
         return BaseErrorConverter.convert(error)
 
 
 def handle_world_errors(func: F) -> F:
-    """World error handling decorator."""
+    """World error handling decorator that preserves function signature for FastAPI."""
+    import inspect
+    from functools import wraps
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -66,7 +82,10 @@ def handle_world_errors(func: F) -> F:
         except Exception:
             raise
 
-    return wrapper  # type: ignore
+    # FastAPI uses inspect.signature to analyze endpoints.
+    # Preserve the original call signature for dependency analysis.
+    setattr(wrapper, "__signature__", inspect.signature(func))
+    return cast(F, wrapper)
 
 
 def handle_result_error(operation: str | None = None) -> Callable[[F], F]:

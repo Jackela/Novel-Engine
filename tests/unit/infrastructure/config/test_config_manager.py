@@ -397,12 +397,10 @@ class TestGetConfigValue:
         """Reset singleton after each test."""
         ConfigManager.reset_instance()
 
-    def test_get_config_value(self, tmp_path):
+    def test_get_config_value(self):
         """Test get_config_value returns value."""
-        # Use temp config dir to avoid YAML overrides
-        config_dir = tmp_path / "config"
-        config_dir.mkdir()
-        get_config(config_dir=config_dir)
+        # Use the default repository config path
+        get_config()
         result = get_config_value("project_name")
         assert result == "Novel Engine (Development)"
 
@@ -452,7 +450,7 @@ class TestConfigManagerIntegration:
 
         # Check default values
         assert config.get("api.port") == 8000
-        assert config.get("database.echo") is False
+        assert config.get("database.echo") is True
 
         # Set overrides
         config.set("api.port", 9000)

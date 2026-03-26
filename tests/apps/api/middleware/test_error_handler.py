@@ -13,7 +13,6 @@ from src.apps.api.middleware.error_handler import (
     ConflictError,
     NotFoundError,
     ValidationAPIError,
-    error_handler_middleware,
     format_validation_errors,
     general_exception_handler,
     setup_exception_handlers,
@@ -187,35 +186,3 @@ class TestSetupExceptionHandlers:
 
         # Handlers are registered - app should work
         assert len(app.exception_handlers) > 0
-
-
-class TestErrorHandlerMiddleware:
-    """Test error handler middleware."""
-
-    @pytest.mark.asyncio
-    async def test_error_handler_middleware_success(self):
-        """Test middleware with successful request."""
-
-        class MockRequest:
-            url = type("URL", (), {"path": "/test"})()
-            method = "GET"
-
-        async def mock_next(request):
-            return type("Response", (), {"status_code": 200})()
-
-        response = await error_handler_middleware(MockRequest(), mock_next)
-        assert response.status_code == 200
-
-    @pytest.mark.asyncio
-    async def test_error_handler_middleware_error(self):
-        """Test middleware with error."""
-
-        class MockRequest:
-            url = type("URL", (), {"path": "/test"})()
-            method = "GET"
-
-        async def mock_next(request):
-            raise ValueError("Test error")
-
-        response = await error_handler_middleware(MockRequest(), mock_next)
-        assert response.status_code == 500

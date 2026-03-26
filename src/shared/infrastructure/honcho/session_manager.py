@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from .errors import HonchoClientError, HonchoErrorDetails
 
@@ -101,7 +101,8 @@ class HonchoSessionManager:
                 tokens=tokens,
                 summarize=summarize,
             )
-            return context.to_openai() if hasattr(context, "to_openai") else []
+            context_data = context.to_openai() if hasattr(context, "to_openai") else []
+            return cast(list[dict[str, Any]], context_data)
         except (ConnectionError, TimeoutError) as e:
             raise HonchoClientError(
                 f"Failed to get session context for {session_id}: {e}",

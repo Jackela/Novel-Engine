@@ -1,7 +1,7 @@
 """HTTP Error Handlers for Knowledge Context."""
 
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from fastapi import HTTPException, status
 
@@ -68,7 +68,8 @@ class ErrorConverter(BaseErrorConverter):
 
 
 def handle_knowledge_errors(func: F) -> F:
-    """Knowledge error handling decorator."""
+    """Knowledge error handling decorator that preserves function signature for FastAPI."""
+    import inspect
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -79,7 +80,10 @@ def handle_knowledge_errors(func: F) -> F:
         except Exception:
             raise
 
-    return wrapper  # type: ignore
+    # FastAPI uses inspect.signature to analyze endpoints.
+    # Preserve the original call signature for dependency analysis.
+    setattr(wrapper, "__signature__", inspect.signature(func))
+    return cast(F, wrapper)
 
 
 def handle_result_error(operation: str | None = None) -> Callable[[F], F]:

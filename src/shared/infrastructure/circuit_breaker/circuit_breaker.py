@@ -6,7 +6,7 @@ import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Optional, TypeVar
 
 import structlog
 
@@ -81,7 +81,9 @@ class CircuitBreaker:
             else None,
         }
 
-    async def call(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+    async def call(
+        self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any
+    ) -> T:
         """Call function with circuit breaker protection."""
         await self._check_state()
 

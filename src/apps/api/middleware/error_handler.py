@@ -5,7 +5,11 @@ Comprehensive error handling for FastAPI application.
 Implements structured error responses and logging.
 """
 
+from __future__ import annotations
+
 import traceback
+from collections.abc import Sequence
+from typing import Any, cast
 
 import structlog
 from fastapi import FastAPI, Request, status
@@ -24,8 +28,8 @@ class APIError(Exception):
         message: str,
         status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
         error_code: str = "INTERNAL_ERROR",
-        details: dict = None,
-    ):
+        details: dict[str, Any] | None = None,
+    ) -> None:
         self.message = message
         self.status_code = status_code
         self.error_code = error_code
@@ -36,7 +40,7 @@ class APIError(Exception):
 class NotFoundError(APIError):
     """Resource not found error."""
 
-    def __init__(self, resource: str, resource_id: str = None):
+    def __init__(self, resource: str, resource_id: str | None = None) -> None:
         message = f"{resource} not found"
         if resource_id:
             message = f"{resource} with id '{resource_id}' not found"
@@ -61,7 +65,7 @@ class ConflictError(APIError):
 class ValidationAPIError(APIError):
     """Validation error."""
 
-    def __init__(self, message: str, details: dict = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(
             message=message,
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -92,7 +96,9 @@ class AuthorizationError(APIError):
         )
 
 
-def format_validation_errors(errors: list) -> list:
+def format_validation_errors(
+    errors: Sequence[Any],
+) -> list[dict[str, Any]]:
     """Format Pydantic validation errors for API response."""
     formatted = []
     for error in errors:
@@ -234,42 +240,16 @@ def setup_exception_handlers(app: FastAPI) -> None:
         app: FastAPI application instance.
     """
     # Custom API errors
-    app.add_exception_handler(APIError, api_error_handler)
+    app.add_exception_handler(APIError, cast(Any, api_error_handler))
 
     # FastAPI HTTP exceptions
-    app.add_exception_handler(HTTPException, http_exception_handler)
+    app.add_exception_handler(HTTPException, cast(Any, http_exception_handler))
 
     # Validation errors
-    app.add_exception_handler(RequestValidationError, validation_exception_handler)
-    app.add_exception_handler(ValidationError, pydantic_validation_handler)
+    app.add_exception_handler(
+        RequestValidationError, cast(Any, validation_exception_handler)
+    )
+    app.add_exception_handler(ValidationError, cast(Any, pydantic_validation_handler))
 
     # Catch-all for unhandled exceptions
-    app.add_exception_handler(Exception, general_exception_handler)
-
-
-# Legacy middleware for backward compatibility
-async def error_handler_middleware(request: Request, call_next):
-    """
-    Legacy error handling middleware.
-
-    Note: Prefer using exception handlers via setup_exception_handlers().
-    This middleware is kept for backward compatibility.
-    """
-    try:
-        return await call_next(request)
-    except Exception as exc:
-        await logger.aerror(
-            "middleware_error",
-            exception_type=type(exc).__name__,
-            exception_message=str(exc),
-            path=request.url.path,
-        )
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "error": {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Internal Server Error",
-                }
-            },
-        )
+    app.add_exception_handler(Exception, cast(Any, general_exception_handler))

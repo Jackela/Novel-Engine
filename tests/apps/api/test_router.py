@@ -1,45 +1,45 @@
-"""
-Tests for API router configuration.
-"""
+"""Tests for canonical route mounting."""
 
-from fastapi import APIRouter
-
-from src.apps.api.router import api_router, register_context_routers
+from __future__ import annotations
 
 
-class TestRouterConfiguration:
-    """Test router configuration."""
+def test_canonical_source_backed_routes_are_mounted(canonical_app) -> None:
+    mounted_paths = {
+        route.path for route in canonical_app.routes if hasattr(route, "path")
+    }
 
-    def test_api_router_exists(self):
-        """Test API router is created."""
-        assert api_router is not None
-        assert isinstance(api_router, APIRouter)
+    expected_paths = {
+        "/health",
+        "/health/live",
+        "/health/ready",
+        "/version",
+        "/api/versions",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/me",
+        "/api/v1/auth/register",
+        "/api/v1/guest/session",
+        "/api/v1/dashboard/status",
+        "/api/v1/dashboard/orchestration",
+        "/api/v1/dashboard/orchestration/start",
+        "/api/v1/dashboard/orchestration/pause",
+        "/api/v1/dashboard/orchestration/stop",
+        "/api/v1/dashboard/events/stream",
+        "/api/v1/world/rumors/propagate",
+        "/api/v1/world/rumors/{world_id}",
+    }
 
-    def test_register_context_routers(self):
-        """Test context router registration."""
-        # Should not raise any errors even if contexts don't exist
-        register_context_routers()
-
-    def test_router_is_configurable(self):
-        """Test router can include sub-routers."""
-        test_router = APIRouter()
-
-        @test_router.get("/test")
-        def test_endpoint():
-            return {"test": True}
-
-        # Should be able to include without errors
-        api_router.include_router(test_router, prefix="/test-prefix")
-
-        # Check route was added
-        routes = [r for r in api_router.routes if hasattr(r, "path")]
-        assert any("/test-prefix" in str(r.path) for r in routes)
+    missing_paths = expected_paths.difference(mounted_paths)
+    assert not missing_paths, f"Missing mounted paths: {sorted(missing_paths)}"
+    assert any(path.startswith("/api/v1/knowledge") for path in mounted_paths)
 
 
-class TestRouterErrorHandling:
-    """Test router error handling."""
+def test_legacy_or_missing_context_routes_are_not_mounted(canonical_app) -> None:
+    mounted_paths = {
+        route.path for route in canonical_app.routes if hasattr(route, "path")
+    }
 
-    def test_invalid_router_import(self):
-        """Test graceful handling of missing routers."""
-        # register_context_routers handles ImportError gracefully
-        register_context_routers()
+    assert "/health/detailed" not in mounted_paths
+    assert "/api/v1/stories" not in mounted_paths
+    assert "/api/v1/characters" not in mounted_paths

@@ -8,11 +8,21 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.security import HTTPBearer
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field
 
-from src.apps.api.dependencies import CurrentUser, get_current_user
+from src.apps.api.dependencies import (
+    CurrentUser,
+    get_authentication_service,
+    get_current_user,
+    get_identity_service,
+)
+from src.apps.api.routes.guest import (
+    GUEST_SESSION_COOKIE,
+    GUEST_SESSION_MAX_AGE_SECONDS,
+)
+from src.apps.api.services import runtime_store
 from src.contexts.identity.application.services.authentication_service import (
     AuthenticationService,
 )
@@ -21,8 +31,8 @@ from src.contexts.identity.application.services.identity_service import (
 )
 from src.contexts.identity.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_identity_errors,
 )
+from src.shared.infrastructure.config.settings import get_settings
 
 security = HTTPBearer(auto_error=False)
 
@@ -39,8 +49,22 @@ router = APIRouter(
 class LoginRequest(BaseModel):
     """Login request model."""
 
-    username: str = Field(..., description="Username or email", min_length=1)
+    email: str = Field(
+        ...,
+        description="Username or email",
+        min_length=1,
+        validation_alias=AliasChoices("email", "username"),
+    )
     password: str = Field(..., description="Password", min_length=1)
+
+
+class LoginUserResponse(BaseModel):
+    """User information returned alongside login tokens."""
+
+    id: str = Field(..., description="User ID")
+    name: str = Field(..., description="Display name")
+    email: str = Field(..., description="Email address")
+    roles: list[str] = Field(default_factory=list, description="User roles")
 
 
 class TokenResponse(BaseModel):
@@ -49,6 +73,8 @@ class TokenResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field(default="bearer", description="Token type")
+    workspace_id: str = Field(..., description="Active workspace identifier")
+    user: LoginUserResponse = Field(..., description="Authenticated user profile")
     expires_in: Optional[int] = Field(
         None, description="Access token expiration in seconds"
     )
@@ -87,22 +113,17 @@ class RegisterRequest(BaseModel):
     password: str = Field(..., description="Password", min_length=8)
 
 
-def get_auth_service() -> AuthenticationService:
-    """Get authentication service from dependencies."""
-    from src.apps.api.dependencies import (
-        get_authentication_service as _get_auth_service,
+def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
+    settings = get_settings()
+    response.set_cookie(
+        key=GUEST_SESSION_COOKIE,
+        value=workspace_id,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=GUEST_SESSION_MAX_AGE_SECONDS,
+        path="/",
     )
-
-    return _get_auth_service()
-
-
-def get_identity_service() -> IdentityApplicationService:
-    """Get identity service from dependencies."""
-    from src.apps.api.dependencies import (
-        get_identity_service as _get_identity_service,
-    )
-
-    return _get_identity_service()
 
 
 @router.post(
@@ -112,10 +133,11 @@ def get_identity_service() -> IdentityApplicationService:
     summary="User login",
     description="Authenticate user and return access and refresh tokens.",
 )
-@handle_identity_errors
 async def login(
+    request: Request,
+    response: Response,
     credentials: LoginRequest,
-    auth_service: AuthenticationService = Depends(get_auth_service),
+    auth_service: AuthenticationService = Depends(get_authentication_service),
 ) -> TokenResponse:
     """Authenticate user with username and password.
 
@@ -130,17 +152,30 @@ async def login(
         HTTPException: If authentication fails.
     """
     result = await auth_service.authenticate_user(
-        credentials.username,
+        credentials.email,
         credentials.password,
     )
 
-    ResultErrorHandler.handle(result, "login")
+    data = ResultErrorHandler.handle(result, "login")
+    user = data["user"]
+    workspace_id = request.cookies.get(GUEST_SESSION_COOKIE)
+    if not workspace_id:
+        workspace_id = f"user-{user['username']}"
 
-    data = result.value  # type: ignore
+    session = await runtime_store.create_or_resume_guest_session(workspace_id)
+    _set_workspace_cookie(response, session.workspace_id)
+
     return TokenResponse(
         access_token=data["access_token"],
         refresh_token=data["refresh_token"],
         token_type="bearer",
+        workspace_id=session.workspace_id,
+        user=LoginUserResponse(
+            id=user["id"],
+            name=user["username"],
+            email=user["email"],
+            roles=list(user.get("roles", [])),
+        ),
     )
 
 
@@ -151,10 +186,9 @@ async def login(
     summary="Refresh access token",
     description="Generate a new access token using a valid refresh token.",
 )
-@handle_identity_errors
 async def refresh_token(
     request: TokenRefreshRequest,
-    auth_service: AuthenticationService = Depends(get_auth_service),
+    auth_service: AuthenticationService = Depends(get_authentication_service),
 ) -> TokenRefreshResponse:
     """Refresh access token.
 
@@ -170,9 +204,7 @@ async def refresh_token(
     """
     result = await auth_service.refresh_access_token(request.refresh_token)
 
-    ResultErrorHandler.handle(result, "refresh_token")
-
-    data = result.value  # type: ignore
+    data = ResultErrorHandler.handle(result, "refresh_token")
     return TokenRefreshResponse(
         access_token=data["access_token"],
         token_type="bearer",
@@ -185,7 +217,6 @@ async def refresh_token(
     summary="User logout",
     description="Invalidate user tokens (client-side only in JWT implementation).",
 )
-@handle_identity_errors
 async def logout(user: CurrentUser = Depends(get_current_user)) -> dict:
     """User logout.
 
@@ -209,7 +240,6 @@ async def logout(user: CurrentUser = Depends(get_current_user)) -> dict:
     summary="Get current user",
     description="Get information about the currently authenticated user.",
 )
-@handle_identity_errors
 async def get_current_user_info(
     user: CurrentUser = Depends(get_current_user),
 ) -> UserResponse:
@@ -236,7 +266,6 @@ async def get_current_user_info(
     summary="Register new user",
     description="Create a new user account.",
 )
-@handle_identity_errors
 async def register(
     request: RegisterRequest,
     identity_service: IdentityApplicationService = Depends(get_identity_service),
@@ -259,9 +288,7 @@ async def register(
         password=request.password,
     )
 
-    ResultErrorHandler.handle(result, "register")
-
-    user = result.value  # type: ignore
+    user = ResultErrorHandler.handle(result, "register")
     return UserResponse(
         id=str(user.id),
         username=user.username,

@@ -10,9 +10,13 @@ to avoid concurrency issues and enable better testability.
 from __future__ import annotations
 
 import asyncio
+import inspect
 from typing import TYPE_CHECKING, Any
 
-from honcho import Honcho
+try:  # pragma: no cover - optional dependency
+    from honcho import Honcho as _Honcho
+except ImportError:  # pragma: no cover - optional dependency
+    _Honcho = None
 
 from .config import HonchoSettings
 from .errors import HonchoClientError, HonchoErrorDetails
@@ -49,7 +53,7 @@ class HonchoClient:
             settings: Honcho settings. If None, creates default settings.
         """
         self._settings = settings or HonchoSettings()
-        self._client: Honcho | None = None
+        self._client: Any | None = None
         self._lock = asyncio.Lock()  # Instance-level lock for lazy initialization
 
         # Initialize managers
@@ -81,7 +85,7 @@ class HonchoClient:
         else:
             return "UNKNOWN_ERROR"
 
-    async def _get_client(self) -> Honcho:
+    async def _get_client(self) -> Any:
         """Get or create the Honcho client instance (lazy initialization).
 
         This method is thread-safe and uses double-checked locking pattern.
@@ -95,6 +99,19 @@ class HonchoClient:
         if self._client is None:
             async with self._lock:
                 if self._client is None:
+                    if _Honcho is None:
+                        raise HonchoClientError(
+                            "Honcho package is not installed",
+                            details=HonchoErrorDetails(
+                                operation="initialize",
+                                entity_id="honcho_client",
+                                error_code="HONCHO_CLIENT_ERROR",
+                                original_exception=ImportError(
+                                    "honcho package is not installed"
+                                ),
+                            ),
+                        )
+
                     try:
                         client_kwargs: dict[str, Any] = {
                             "base_url": self._settings.base_url,
@@ -104,7 +121,7 @@ class HonchoClient:
                         if self._settings.api_key:
                             client_kwargs["api_key"] = self._settings.api_key
 
-                        self._client = Honcho(**client_kwargs)
+                        self._client = _Honcho(**client_kwargs)
                     except (ConnectionError, TimeoutError) as e:
                         raise HonchoClientError(
                             f"Failed to initialize Honcho client: {e}",
@@ -243,6 +260,32 @@ class HonchoClient:
         return await self._message_handler.chat_with_peer(
             workspace_id, peer_id, query, session_id
         )
+
+    async def health_check(self) -> bool:
+        """Check whether the Honcho client can be initialized and probed."""
+        try:
+            client = await self._get_client()
+        except HonchoClientError:
+            return False
+
+        for probe_name in ("health", "ping", "status"):
+            probe = getattr(client, probe_name, None)
+            if not callable(probe):
+                continue
+
+            try:
+                result = probe()
+                if inspect.isawaitable(result):
+                    result = await result
+                if isinstance(result, bool):
+                    return result
+                if hasattr(result, "ok"):
+                    return bool(getattr(result, "ok"))
+                return True
+            except Exception:
+                continue
+
+        return True
 
 
 # Convenience function for creating a new client instance

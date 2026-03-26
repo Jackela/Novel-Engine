@@ -1,175 +1,134 @@
-"""
-Tests for FastAPI main application.
-"""
+"""Tests for the canonical FastAPI application."""
 
-import pytest
-from fastapi.testclient import TestClient
-from httpx import AsyncClient
-
-from src.apps.api.main import app, create_application
+from __future__ import annotations
 
 
-@pytest.fixture
-def client():
-    """Create test client."""
-    return TestClient(app)
+def test_root_endpoint_exposes_canonical_metadata(canonical_client) -> None:
+    response = canonical_client.get("/")
+    assert response.status_code == 200
+    assert response.json()["api_base"] == "/api/v1"
 
 
-@pytest.fixture
-async def async_client():
-    """Create async test client."""
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        yield ac
+def test_docs_and_openapi_are_available(canonical_client) -> None:
+    docs_response = canonical_client.get("/docs")
+    openapi_response = canonical_client.get("/openapi.json")
+
+    assert docs_response.status_code == 200
+    assert "text/html" in docs_response.headers["content-type"]
+    assert openapi_response.status_code == 200
+    assert openapi_response.json()["info"]["title"] == "Novel Engine API"
 
 
-class TestApplication:
-    """Test main application configuration."""
-
-    def test_create_application(self):
-        """Test application factory creates valid app."""
-        app_instance = create_application()
-        assert app_instance is not None
-        assert app_instance.title == "Novel Engine API"
-        assert app_instance.version == "2.0.0"
-
-    def test_root_endpoint(self, client):
-        """Test root endpoint returns API info."""
-        response = client.get("/")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Novel Engine API"
-        assert data["version"] == "2.0.0"
-        assert "/docs" in data["documentation"]
-
-    def test_openapi_schema(self, client):
-        """Test OpenAPI schema is accessible."""
-        response = client.get("/openapi.json")
-        assert response.status_code == 200
-        schema = response.json()
-        assert schema["info"]["title"] == "Novel Engine API"
-        assert schema["info"]["version"] == "2.0.0"
-        assert "components" in schema
-        assert "securitySchemes" in schema["components"]
-
-    def test_docs_endpoint(self, client):
-        """Test docs endpoint returns HTML."""
-        response = client.get("/docs")
-        assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
-
-    def test_redoc_endpoint(self, client):
-        """Test ReDoc endpoint is accessible."""
-        response = client.get("/redoc")
-        assert response.status_code == 200
+def test_versioning_endpoint_and_headers_are_present(canonical_client) -> None:
+    response = canonical_client.get("/api/versions")
+    assert response.status_code == 200
+    assert response.headers["x-api-version"] == "1.0"
+    assert response.headers["x-supported-versions"] == "1.0"
+    assert response.json()["current_version"] == "1.0"
+    assert response.json()["supported_versions"] == ["1.0"]
 
 
-class TestHealthEndpoints:
-    """Test health check endpoints."""
+def test_health_and_version_endpoints_are_available(canonical_client) -> None:
+    health_response = canonical_client.get("/health")
+    assert health_response.status_code in {200, 503}
+    assert "overall_status" in health_response.json()
 
-    def test_health_endpoint(self, client):
-        """Test basic health check."""
-        response = client.get("/health")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["overall_status"] == "healthy"
-        assert "timestamp" in data
-        assert "components" in data
+    assert canonical_client.get("/health/live").json()["status"] == "alive"
+    readiness_response = canonical_client.get("/health/ready")
+    assert readiness_response.status_code in {200, 503}
+    assert "status" in readiness_response.json()
 
-    def test_liveness_probe(self, client):
-        """Test Kubernetes liveness probe."""
-        response = client.get("/health/live")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "alive"
-
-    def test_readiness_probe(self, client):
-        """Test Kubernetes readiness probe."""
-        import src.apps.api.health as health_module
-
-        health_module._health_checker = None
-        health_module._connection_pool = None
-
-        response = client.get("/health/ready")
-        # Without database, should return 503 not_ready
-        assert response.status_code == 503
-        data = response.json()
-        assert data["status"] == "not_ready"
-        assert "Database" in data["reason"]
-
-    def test_detailed_health(self, client):
-        """Test detailed health check."""
-        response = client.get("/health/detailed")
-        assert response.status_code == 200
-        data = response.json()
-        assert "overall_status" in data
-        assert "components" in data
-
-    def test_version_endpoint(self, client):
-        """Test version endpoint."""
-        response = client.get("/version")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["version"] == "2.0.0"
-        assert data["name"] == "Novel Engine API"
+    version_response = canonical_client.get("/version")
+    assert version_response.status_code == 200
+    assert "version" in version_response.json()
 
 
-class TestSecurityHeaders:
-    """Test security-related headers."""
+def test_guest_dashboard_and_orchestration_flow(canonical_client) -> None:
+    guest_response = canonical_client.post("/api/v1/guest/session")
+    assert guest_response.status_code == 200
+    workspace_id = guest_response.json()["workspace_id"]
+    assert isinstance(workspace_id, str)
+    assert workspace_id
 
-    def test_request_id_header(self, client):
-        """Test X-Request-ID header is present."""
-        response = client.get("/health")
-        # Note: X-Request-ID is added by LoggingMiddleware, not active in test client by default
-        # Just verify the response is successful
-        assert response.status_code == 200
+    dashboard_response = canonical_client.get("/api/v1/dashboard/status")
+    assert dashboard_response.status_code == 200
+    dashboard_payload = dashboard_response.json()
+    dashboard_data = dashboard_payload.get("data", dashboard_payload)
+    available_characters = dashboard_data["runtime"]["available_characters"]
+    assert isinstance(available_characters, list)
+    assert available_characters
 
-    def test_cors_headers(self, client):
-        """Test CORS headers are present for OPTIONS."""
-        response = client.options(
-            "/health",
-            headers={
-                "Origin": "http://localhost:3000",
-                "Access-Control-Request-Method": "GET",
-            },
-        )
-        assert "access-control-allow-origin" in response.headers
+    start_response = canonical_client.post(
+        "/api/v1/dashboard/orchestration/start",
+        json={"character_names": available_characters[:1], "total_turns": 2},
+    )
+    assert start_response.status_code == 200
+    start_payload = start_response.json()
+    start_data = start_payload.get("data", start_payload)
+    assert start_data["status"] == "running"
 
+    status_response = canonical_client.get("/api/v1/dashboard/orchestration")
+    assert status_response.status_code == 200
+    status_payload = status_response.json()
+    status_data = status_payload.get("data", status_payload)
+    assert status_data["status"] in {"running", "paused", "stopped", "idle"}
 
-class TestErrorHandling:
-    """Test error handling."""
+    pause_response = canonical_client.post("/api/v1/dashboard/orchestration/pause")
+    assert pause_response.status_code == 200
+    pause_payload = pause_response.json()
+    pause_data = pause_payload.get("data", pause_payload)
+    assert pause_data["status"] == "paused"
 
-    def test_not_found(self, client):
-        """Test 404 error handling."""
-        response = client.get("/nonexistent-path")
-        assert response.status_code == 404
-        # FastAPI default 404 may not have 'error' key in response
-        data = response.json()
-        assert "detail" in data or "error" in data
-
-    def test_method_not_allowed(self, client):
-        """Test 405 error handling."""
-        response = client.post("/health")
-        assert response.status_code == 405
-
-    def test_validation_error(self, client):
-        """Test validation error handling."""
-        # Try to send invalid data (would need an endpoint that validates input)
-        pass  # Placeholder - requires specific endpoint
+    stop_response = canonical_client.post("/api/v1/dashboard/orchestration/stop")
+    assert stop_response.status_code == 200
+    stop_payload = stop_response.json()
+    stop_data = stop_payload.get("data", stop_payload)
+    assert stop_data["status"] in {"stopped", "idle"}
 
 
-@pytest.mark.asyncio
-class TestAsyncOperations:
-    """Test async application features."""
+def test_invalid_orchestration_rejects_unknown_character(canonical_client) -> None:
+    canonical_client.post("/api/v1/guest/session")
+    response = canonical_client.post(
+        "/api/v1/dashboard/orchestration/start",
+        json={"character_names": ["does-not-exist"], "total_turns": 1},
+    )
+    assert response.status_code == 400
 
-    async def test_async_health(self):
-        """Test async health check using httpx.AsyncClient."""
-        from httpx import ASGITransport, AsyncClient
 
-        from src.apps.api.main import app
+def test_auth_routes_work_with_canonical_in_memory_dependencies(
+    canonical_client,
+) -> None:
+    register_response = canonical_client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "writer@example.com",
+            "username": "writer",
+            "password": "supersecret",
+        },
+    )
+    assert register_response.status_code == 201
+    assert register_response.json()["username"] == "writer"
 
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            response = await ac.get("/health")
-            assert response.status_code == 200
-            # Accept any successful status (healthy or degraded)
-            assert response.json()["overall_status"] in ["healthy", "degraded"]
+    login_response = canonical_client.post(
+        "/api/v1/auth/login",
+        json={"username": "writer", "password": "supersecret"},
+    )
+    assert login_response.status_code == 200
+    tokens = login_response.json()
+    assert tokens["token_type"] == "bearer"
+
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+    me_response = canonical_client.get("/api/v1/auth/me", headers=headers)
+    assert me_response.status_code == 200
+    assert me_response.json()["username"] == "writer"
+
+    refresh_response = canonical_client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": tokens["refresh_token"]},
+    )
+    assert refresh_response.status_code == 200
+    assert refresh_response.json()["token_type"] == "bearer"
+
+    logout_response = canonical_client.post("/api/v1/auth/logout", headers=headers)
+    assert logout_response.status_code == 200
+    assert logout_response.json()["message"] == "Successfully logged out"

@@ -1,20 +1,18 @@
-"""
-Search Routes
+"""Routes for semantic search operations."""
 
-Routes for semantic search operations.
-"""
+from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from src.apps.api.dependencies import get_knowledge_service
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_knowledge_errors,
 )
 
 router = APIRouter()
@@ -26,7 +24,7 @@ router = APIRouter()
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=2000)
     top_k: int = Field(default=5, ge=1, le=20)
-    filters: Optional[Dict[str, Any]] = None
+    filters: dict[str, Any] | None = None
 
 
 class SearchResult(BaseModel):
@@ -34,13 +32,31 @@ class SearchResult(BaseModel):
     title: str
     content_preview: str
     relevance_score: float
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class SearchResponse(BaseModel):
     query: str
-    results: List[SearchResult]
+    results: list[SearchResult]
     total_results: int
+
+
+def _build_search_response(query: str, results: list[dict[str, Any]]) -> SearchResponse:
+    search_results = [
+        SearchResult(
+            document_id=result.get("document", {}).get("id", ""),
+            title=result.get("document", {}).get("title", ""),
+            content_preview=result.get("document", {}).get("content_preview", ""),
+            relevance_score=result.get("relevance_score", 0.0),
+            metadata=result.get("document", {}).get("metadata", {}),
+        )
+        for result in results
+    ]
+    return SearchResponse(
+        query=query,
+        results=search_results,
+        total_results=len(search_results),
+    )
 
 
 # Routes
@@ -51,12 +67,11 @@ class SearchResponse(BaseModel):
     response_model=SearchResponse,
     summary="Semantic search",
 )
-@handle_knowledge_errors
 async def semantic_search(
     knowledge_base_id: str,
     request: SearchRequest,
-    service: KnowledgeApplicationService = Depends(),
-):
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> SearchResponse:
     """Perform semantic search on a knowledge base."""
     result = await service.semantic_search(
         knowledge_base_id=knowledge_base_id,
@@ -65,81 +80,54 @@ async def semantic_search(
         filters=request.filters,
     )
 
-    results = ResultErrorHandler.handle_or_return(result)
-    search_results = []
-
-    for r in results:
-        doc = r.get("document", {})
-        search_results.append(
-            SearchResult(
-                document_id=doc.get("id", ""),
-                title=doc.get("title", ""),
-                content_preview=doc.get("content_preview", ""),
-                relevance_score=r.get("relevance_score", 0.0),
-                metadata=doc.get("metadata", {}),
-            )
-        )
-
-    return SearchResponse(
-        query=request.query,
-        results=search_results,
-        total_results=len(search_results),
-    )
+    return _build_search_response(request.query, ResultErrorHandler.handle(result))
 
 
 @router.post(
     "/search",
     response_model=SearchResponse,
-    summary="Global semantic search",
+    summary="Semantic search across selected knowledge bases",
 )
-@handle_knowledge_errors
 async def global_search(
     request: SearchRequest,
-    knowledge_base_ids: Optional[List[str]] = Query(default=None),
-    service: KnowledgeApplicationService = Depends(),
-):
+    knowledge_base_ids: list[str] | None = Query(default=None),
+    service: KnowledgeApplicationService = Depends(get_knowledge_service),
+) -> SearchResponse:
     """
-    Perform semantic search across multiple knowledge bases.
-
-    If no knowledge_base_ids are provided, searches across all
-    accessible knowledge bases.
+    Perform semantic search across the provided knowledge bases.
     """
-    # For now, only support single KB search
-    # TODO: Implement multi-KB search aggregation
-
     if not knowledge_base_ids:
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one knowledge_base_id is required",
         )
 
-    # Use first KB for now
-    result = await service.semantic_search(
-        knowledge_base_id=knowledge_base_ids[0],
-        query=request.query,
-        top_k=request.top_k,
-        filters=request.filters,
-    )
-
-    results = ResultErrorHandler.handle_or_return(result)
-    search_results = []
-
-    for r in results:
-        doc = r.get("document", {})
-        search_results.append(
-            SearchResult(
-                document_id=doc.get("id", ""),
-                title=doc.get("title", ""),
-                content_preview=doc.get("content_preview", ""),
-                relevance_score=r.get("relevance_score", 0.0),
-                metadata=doc.get("metadata", {}),
-            )
+    candidate_limit = request.top_k * len(knowledge_base_ids)
+    best_results_by_document_id: dict[str, dict[str, Any]] = {}
+    for knowledge_base_id in knowledge_base_ids:
+        result = await service.semantic_search(
+            knowledge_base_id=knowledge_base_id,
+            query=request.query,
+            top_k=candidate_limit,
+            filters=request.filters,
         )
+        for search_result in ResultErrorHandler.handle(result):
+            document = search_result.get("document", {})
+            document_id = document.get("id", "")
+            if not document_id:
+                continue
 
-    return SearchResponse(
-        query=request.query,
-        results=search_results,
-        total_results=len(search_results),
+            current_best = best_results_by_document_id.get(document_id)
+            if (
+                current_best is None
+                or search_result.get("relevance_score", 0.0)
+                > current_best.get("relevance_score", 0.0)
+            ):
+                best_results_by_document_id[document_id] = search_result
+
+    aggregated_results = sorted(
+        best_results_by_document_id.values(),
+        key=lambda result: result.get("relevance_score", 0.0),
+        reverse=True,
     )
+    return _build_search_response(request.query, aggregated_results[: request.top_k])

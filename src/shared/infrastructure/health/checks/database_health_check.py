@@ -6,8 +6,14 @@ Health check implementation for database connectivity using the unified HealthSt
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
 from src.shared.infrastructure.health.health_checker import HealthStatus
-from src.shared.infrastructure.persistence import DatabaseConnectionPool
+
+if TYPE_CHECKING:
+    from src.shared.infrastructure.persistence import DatabaseConnectionPool
+else:  # pragma: no cover - used in environments without asyncpg
+    DatabaseConnectionPool = Any  # type: ignore[misc,assignment]
 
 
 class DatabaseHealthCheck:

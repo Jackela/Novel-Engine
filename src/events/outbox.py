@@ -94,14 +94,32 @@ class OutboxEvent:
         if not self.event_type:
             raise ValueError("event_type is required")
 
+    def _sort_key(self) -> tuple[int, datetime]:
+        """Return a comparable key for queue ordering.
+
+        Higher-priority events should sort ahead of lower-priority ones,
+        and older events should win ties within the same priority level.
+        """
+        return (-self.priority.value, self.created_at)
+
     def __lt__(self, other: "OutboxEvent") -> bool:
         """Compare events by priority (for heap-based priority queue).
 
         Higher priority values come first, then earlier creation times.
         """
-        if self.priority.value != other.priority.value:
-            return self.priority.value > other.priority.value
-        return self.created_at < other.created_at
+        return self._sort_key() < other._sort_key()
+
+    def __le__(self, other: "OutboxEvent") -> bool:
+        """Compare events by priority and creation time."""
+        return self._sort_key() <= other._sort_key()
+
+    def __gt__(self, other: "OutboxEvent") -> bool:
+        """Compare events by priority and creation time."""
+        return self._sort_key() > other._sort_key()
+
+    def __ge__(self, other: "OutboxEvent") -> bool:
+        """Compare events by priority and creation time."""
+        return self._sort_key() >= other._sort_key()
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize event to dictionary."""

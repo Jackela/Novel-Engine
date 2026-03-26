@@ -85,8 +85,6 @@ dependencies = [
     "sentence-transformers>=2.2.0,<4.0.0",
     # Warzone 4: AI Brain - Knowledge Graph (BRAIN-031A)
     "networkx>=3.0,<4.0.0",
-    # Honcho Memory System (HONCHO-001)
-    "honcho-ai>=0.3.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -95,6 +93,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "coverage[toml]>=7.0.0",
+    "ruff==0.11.0",
     "black>=23.0.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",
@@ -118,10 +117,14 @@ docs = [
     "mkdocs-material>=8.0.0",
     "mkdocstrings[python]>=0.19.0",
 ]
+honcho = [
+    # Honcho Memory System (HONCHO-001)
+    "honcho-ai>=2.0.0,<3.0.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "scripts*"]
 exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*", "build*", "dist*"]
 
 # Black code formatting
@@ -165,7 +168,6 @@ ignore = ["E402"]  # Module level import not at top of file (needed for scripts)
 
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E402"]  # Scripts need sys.path modification before imports
-"src/api/main_api_server.py" = ["E402"]  # Needs dotenv load before imports
 
 # MyPy type checking
 [tool.mypy]
@@ -293,6 +295,9 @@ markers = [
     "knowledge: Knowledge Management context tests (Feature 001)",
     "smoke: Lightweight smoke tests",
     "asyncio: Async tests",
+    "requires_openai: Tests requiring OpenAI API access and an API key",
+    "requires_chroma: Tests requiring Chroma vector store support",
+    "postgres_integration: Tests requiring a live PostgreSQL database",
 ]
 
 # Bandit security linting

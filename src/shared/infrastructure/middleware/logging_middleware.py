@@ -5,7 +5,7 @@ with detailed information including timing, status codes, and error details.
 """
 
 import time
-from typing import Any
+from typing import Awaitable, Callable
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -24,7 +24,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     and processing duration. It also captures and logs any errors that occur.
     """
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         """Process the request and log details.
 
         Args:

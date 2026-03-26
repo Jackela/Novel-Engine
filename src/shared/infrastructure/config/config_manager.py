@@ -15,7 +15,6 @@ from .loader import ConfigLoader, ConfigLoadError
 from .settings import (
     Environment,
     NovelEngineSettings,
-    reload_settings,
     reset_settings,
 )
 
@@ -89,14 +88,11 @@ class ConfigManager:
         else:
             self._environment = environment  # type: ignore[unreachable]
 
-        # Set environment variable for pydantic-settings
-        os.environ["APP_ENVIRONMENT"] = self._environment.value
-
         # Initialize loader
         self._loader = ConfigLoader(config_dir)
 
         # Initialize settings
-        self._settings = NovelEngineSettings()
+        self._settings = NovelEngineSettings(environment=self._environment)
 
         # Load and apply YAML overrides
         self._load_yaml_overrides()
@@ -270,8 +266,7 @@ class ConfigManager:
         This re-reads environment variables and YAML configs,
         then rebuilds the settings object.
         """
-        reset_settings()
-        self._settings = reload_settings()
+        self._settings = NovelEngineSettings(environment=self._environment)
         self._overrides.clear()
         self._load_yaml_overrides()
 

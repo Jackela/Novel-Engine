@@ -13,14 +13,10 @@ OPT-007: Test - Golden Dataset Evaluation Harness
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-# Import the evaluation module
 from scripts.evaluation.run_golden_dataset import (
     DeterministicEmbeddingService,
     EvaluationReport,

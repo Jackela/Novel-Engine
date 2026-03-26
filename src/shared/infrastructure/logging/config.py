@@ -6,7 +6,7 @@ with support for structured logging, distributed tracing, and flexible output fo
 
 import logging
 import sys
-from typing import Any
+from typing import Any, MutableMapping, cast
 
 import structlog
 
@@ -44,7 +44,6 @@ def configure_logging(
         structlog.stdlib.PositionalArgumentsFormatter(),
         structlog.processors.TimeStamper(fmt="iso"),
         structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
     ]
 
@@ -52,8 +51,8 @@ def configure_logging(
     def add_service_context(
         logger: structlog.typing.WrappedLogger,
         method_name: str,
-        event_dict: dict[str, Any],
-    ) -> dict[str, Any]:
+        event_dict: MutableMapping[str, Any],
+    ) -> MutableMapping[str, Any]:
         """Add service context for distributed tracing."""
         event_dict["service_name"] = service_name
         event_dict["service_version"] = service_version
@@ -89,7 +88,7 @@ def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:
     Returns:
         A configured structlog BoundLogger instance.
     """
-    return structlog.get_logger(name)
+    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))
 
 
 def bind_context(**kwargs: Any) -> None:

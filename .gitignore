@@ -47,6 +47,11 @@ pytest-report.xml
 test-results.xml
 pyramid-report.json
 speed-report.json
+playwright-report/
+test-results/
+frontend/playwright-report/
+frontend/test-results/
+frontend/coverage/
 
 # Temporary files
 *_world_state.json
@@ -474,7 +479,7 @@ frontend/reports/
 .specify/
 
 # Evaluation artifacts
-evaluation/
+/evaluation/
 
 # Temporary package.json in root (if not a real Node.js project)
 # package.json
@@ -490,6 +495,7 @@ coverage.json
 # Runtime artifacts
 data/
 .playwright-mcp/
+.playwright-cli/
 chrome-devtools-mcp-*.tgz
 frontend/test-results.json
 
@@ -520,3 +526,17 @@ undefined:*/
 /.trunk
 .worktrees/
 nul
+
+# SSOT cleanup targets
+/coverage.xml
+/pytest_collection.txt
+/htmlcov/
+/htmlcov_new/
+/test-results/
+/tmp/
+/frontend/reports/
+/frontend/tmp/
+/frontend/junit-results.xml
+/frontend/test-results.json
+**/__pycache__/
+*.pyc

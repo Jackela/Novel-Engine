@@ -20,6 +20,35 @@ U = TypeVar("U")
 """Type variable for transformed value in map operations."""
 
 
+class _CallableBool:
+    """Boolean-like compatibility wrapper that is also callable."""
+
+    __slots__ = ("_value",)
+
+    def __init__(self, value: bool) -> None:
+        self._value = value
+
+    def __call__(self) -> bool:
+        return self._value
+
+    def __bool__(self) -> bool:
+        return self._value
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, _CallableBool):
+            return self._value == other._value
+        if isinstance(other, bool):
+            return self._value == other
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return "True" if self._value else "False"
+
+
+_TRUE_FLAG = _CallableBool(True)
+_FALSE_FLAG = _CallableBool(False)
+
+
 @dataclass(frozen=True)
 class Success(Generic[T]):
     """Represents a successful result with a value.
@@ -38,31 +67,31 @@ class Success(Generic[T]):
     value: T
 
     @property
-    def is_ok(self) -> bool:
+    def is_ok(self) -> _CallableBool:
         """Check if result is success.
 
         Returns:
             Always True for Success.
         """
-        return True
+        return _TRUE_FLAG
 
     @property
-    def is_err(self) -> bool:
+    def is_err(self) -> _CallableBool:
         """Check if result is error.
 
         Returns:
             Always False for Success.
         """
-        return False
+        return _FALSE_FLAG
 
     @property
-    def is_error(self) -> bool:
+    def is_error(self) -> _CallableBool:
         """Property alias for is_err().
 
         Returns:
             Always False for Success.
         """
-        return False
+        return _FALSE_FLAG
 
     def unwrap(self) -> T:
         """Get the success value.
@@ -201,31 +230,31 @@ class Failure:
         return {"error": self.error, "code": self.code, "details": self.details}
 
     @property
-    def is_ok(self) -> bool:
+    def is_ok(self) -> _CallableBool:
         """Check if result is success.
 
         Returns:
             Always False for Failure.
         """
-        return False
+        return _FALSE_FLAG
 
     @property
-    def is_err(self) -> bool:
+    def is_err(self) -> _CallableBool:
         """Check if result is error.
 
         Returns:
             Always True for Failure.
         """
-        return True
+        return _TRUE_FLAG
 
     @property
-    def is_error(self) -> bool:
+    def is_error(self) -> _CallableBool:
         """Property alias for is_err().
 
         Returns:
             Always True for Failure.
         """
-        return True
+        return _TRUE_FLAG
 
     def unwrap(self) -> Any:
         """Get the success value.

@@ -6,7 +6,7 @@ port interface for semantic search operations.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from src.contexts.knowledge.application.ports.i_vector_store import (
     IVectorStore,
@@ -99,8 +99,8 @@ class ChromaVectorStore(IVectorStore):
             coll = client.get_or_create_collection(collection)
             coll.upsert(
                 documents=documents,
-                embeddings=embeddings,
-                metadatas=metadatas,
+                embeddings=cast(Any, embeddings),
+                metadatas=cast(Any, metadatas),
                 ids=ids,
             )
         except Exception as e:
@@ -131,7 +131,7 @@ class ChromaVectorStore(IVectorStore):
             client = self._get_client()
             coll = client.get_or_create_collection(collection)
             results = coll.query(
-                query_embeddings=[query_embedding],
+                query_embeddings=cast(Any, [query_embedding]),
                 n_results=n_results,
                 where=where,
             )
@@ -149,9 +149,11 @@ class ChromaVectorStore(IVectorStore):
                             score=float(results["distances"][0][i])
                             if results["distances"]
                             else 0.0,
-                            metadata=results["metadatas"][0][i]
-                            if results["metadatas"]
-                            else {},
+                            metadata=(
+                                dict(results["metadatas"][0][i])
+                                if results["metadatas"]
+                                else {}
+                            ),
                         )
                     )
             return query_results

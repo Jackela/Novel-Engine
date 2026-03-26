@@ -7,7 +7,7 @@ Captures request/response details and performance metrics.
 
 import time
 import uuid
-from typing import Callable
+from typing import Any, Awaitable, Callable
 
 import structlog
 from fastapi import Request, Response
@@ -27,7 +27,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     - Request ID for tracing
     """
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         # Generate request ID for tracing
         request_id = str(uuid.uuid4())[:8]
         request.state.request_id = request_id
@@ -82,7 +84,9 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 
 # Convenience function for FastAPI middleware system
-async def logging_middleware(request: Request, call_next: Callable) -> Response:
+async def logging_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     """
     ASGI-style logging middleware function.
 
@@ -140,13 +144,13 @@ class RequestContext:
             logger.info("processing")
     """
 
-    def __init__(self, **context_vars):
+    def __init__(self, **context_vars: Any) -> None:
         self.context_vars = context_vars
-        self.bound_logger = None
+        self.bound_logger: Any = None
 
-    def __enter__(self):
+    def __enter__(self) -> Any:
         self.bound_logger = logger.bind(**self.context_vars)
         return self.bound_logger
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         pass

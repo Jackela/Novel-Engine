@@ -23,6 +23,10 @@ logger = structlog.get_logger()
 class IRumorRepository(Protocol):
     """Protocol for rumor repository."""
 
+    async def get_active_rumors(self, world_id: str) -> List[Rumor]:
+        """Get active rumors by world ID."""
+        ...
+
     async def save_all(self, rumors: List[Rumor]) -> List[Rumor]:
         """Save multiple rumors.
 
@@ -76,7 +80,7 @@ class RumorPropagator:
 
     def __init__(
         self,
-        adjacency_cache: "AdjacencyCache",  # type: ignore  # Forward reference
+        adjacency_cache: "AdjacencyCache",
     ) -> None:
         """Initialize the propagator.
 
