@@ -479,7 +479,7 @@ frontend/reports/
 .specify/
 
 # Evaluation artifacts
-evaluation/
+/evaluation/
 
 # Temporary package.json in root (if not a real Node.js project)
 # package.json
