@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import time
@@ -17,6 +18,8 @@ from src.shared.infrastructure.health.checks.database_health_check import (
     DatabaseHealthCheck,
 )
 from src.shared.infrastructure.health.health_checker import HealthChecker
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from src.shared.infrastructure.persistence import DatabaseConnectionPool
@@ -138,6 +141,7 @@ async def health_check() -> JSONResponse:
             ),
         )
     except Exception:
+        logger.exception("Health check failed")
         return JSONResponse(
             content={
                 "overall_status": "unhealthy",
@@ -175,9 +179,10 @@ async def readiness_probe() -> JSONResponse:
             )
 
         return JSONResponse(content={"status": "ready"}, status_code=status.HTTP_200_OK)
-    except Exception as exc:
+    except Exception:
+        logger.exception("Readiness probe failed")
         return JSONResponse(
-            content={"status": "not_ready", "reason": str(exc)},
+            content={"status": "not_ready", "reason": "Readiness check failed"},
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from unittest.mock import MagicMock
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -54,6 +55,28 @@ def test_readiness_succeeds_with_healthy_database_pool() -> None:
     response = client.get("/health/ready")
     assert response.status_code == 200
     assert response.json()["status"] == "ready"
+
+
+def test_readiness_hides_internal_exception_details(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    async def _boom() -> None:
+        raise RuntimeError("database password leaked")
+
+    monkeypatch.setattr(health_module, "_get_health_checker", _boom)
+
+    client = _build_client()
+    with caplog.at_level("ERROR"):
+        response = client.get("/health/ready")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "status": "not_ready",
+        "reason": "Readiness check failed",
+    }
+    assert "database password leaked" not in response.text
+    assert any("Readiness probe failed" in message for message in caplog.messages)
 
 
 def test_honcho_is_optional_for_health_registration() -> None:
