@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
 
+import { render, screen, waitFor } from '../../../tests/test-utils';
 import { useDashboard } from './useDashboard';
 
 type Deferred<T> = {
@@ -74,22 +75,24 @@ describe('useDashboard', () => {
 
     rerender(<DashboardProbe workspaceId="workspace-two" />);
 
-    secondStatus.resolve({
-      status: 'healthy',
-      mode: 'remote',
-      workspaceId: 'workspace-two',
-      headline: 'Second workspace',
-      summary: 'Current workspace snapshot.',
-      activeCharacters: 2,
-      activeSignals: 1,
-    });
-    secondOrchestration.resolve({
-      status: 'running',
-      current_turn: 2,
-      total_turns: 3,
-      queue_length: 0,
-      average_processing_time: 1.2,
-      steps: [],
+    await act(async () => {
+      secondStatus.resolve({
+        status: 'healthy',
+        mode: 'remote',
+        workspaceId: 'workspace-two',
+        headline: 'Second workspace',
+        summary: 'Current workspace snapshot.',
+        activeCharacters: 2,
+        activeSignals: 1,
+      });
+      secondOrchestration.resolve({
+        status: 'running',
+        current_turn: 2,
+        total_turns: 3,
+        queue_length: 0,
+        average_processing_time: 1.2,
+        steps: [],
+      });
     });
 
     await waitFor(() => {
@@ -98,22 +101,24 @@ describe('useDashboard', () => {
       expect(screen.getByTestId('turn')).toHaveTextContent('2');
     });
 
-    firstStatus.resolve({
-      status: 'healthy',
-      mode: 'remote',
-      workspaceId: 'workspace-one',
-      headline: 'Stale workspace',
-      summary: 'This response should be ignored.',
-      activeCharacters: 1,
-      activeSignals: 0,
-    });
-    firstOrchestration.resolve({
-      status: 'idle',
-      current_turn: 0,
-      total_turns: 0,
-      queue_length: 0,
-      average_processing_time: 0,
-      steps: [],
+    await act(async () => {
+      firstStatus.resolve({
+        status: 'healthy',
+        mode: 'remote',
+        workspaceId: 'workspace-one',
+        headline: 'Stale workspace',
+        summary: 'This response should be ignored.',
+        activeCharacters: 1,
+        activeSignals: 0,
+      });
+      firstOrchestration.resolve({
+        status: 'idle',
+        current_turn: 0,
+        total_turns: 0,
+        queue_length: 0,
+        average_processing_time: 0,
+        steps: [],
+      });
     });
 
     await waitFor(() => {

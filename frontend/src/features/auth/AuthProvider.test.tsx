@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
 import { sessionStorageKey } from '@/shared/storage';
 
+import { render, screen, waitFor } from '../../../tests/test-utils';
 import { AuthProvider } from './AuthProvider';
 import { useAuth } from './useAuth';
 

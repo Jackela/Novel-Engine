@@ -3,7 +3,6 @@
 Extends shared error handlers with identity-specific exception mappings.
 """
 
-from functools import wraps
 from typing import Any, Callable, TypeVar
 
 from fastapi import HTTPException, status
@@ -93,6 +92,7 @@ class ErrorConverter(BaseErrorConverter):
 
 def handle_identity_errors(func: F) -> F:
     """Identity error handling decorator."""
+    from functools import wraps
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
