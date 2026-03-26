@@ -1,0 +1,45 @@
+# Honcho Memory System Configuration
+# 
+# This file configures the Honcho semantic memory integration.
+# Honcho provides automatic embedding, reasoning, and retrieval
+# for character memories.
+#
+# For detailed documentation: https://docs.honcho.dev
+
+# Development environment settings
+development:
+  deployment: self_hosted
+  base_url: "http://localhost:8000"
+  timeout: 30
+  max_retries: 3
+  max_memories_per_query: 10
+  default_session_ttl_days: 365
+  workspace_strategy: "story"
+
+# Testing environment (uses mock/memory)
+testing:
+  deployment: self_hosted
+  base_url: "http://localhost:8000"
+  timeout: 5
+  max_retries: 1
+  max_memories_per_query: 5
+  workspace_strategy: "story"
+
+# Staging environment (cloud or self-hosted)
+staging:
+  deployment: cloud
+  base_url: "https://api.honcho.dev"
+  timeout: 30
+  max_retries: 3
+  max_memories_per_query: 10
+  workspace_strategy: "story"
+
+# Production environment
+production:
+  deployment: cloud
+  base_url: "https://api.honcho.dev"
+  timeout: 60
+  max_retries: 5
+  max_memories_per_query: 20
+  default_session_ttl_days: 730
+  workspace_strategy: "story"

@@ -1,0 +1,76 @@
+# ========================================
+# Novel Engine - Testing Configuration
+# ========================================
+
+# Application settings
+project_name: "Novel Engine (Test)"
+debug: false
+
+# Database configuration
+database:
+  url: "sqlite:///./data/test_novel_engine.db"  # In-memory option: "sqlite:///:memory:"
+  pool_size: 1  # Minimal pool for tests
+  max_overflow: 0
+  pool_timeout: 5
+  echo: false  # Disable SQL logging during tests
+
+# Redis configuration (use mock/fake for testing)
+redis:
+  host: "localhost"
+  port: 6379
+  db: 15  # Use highest DB number for isolation
+  socket_timeout: 2
+  socket_connect_timeout: 2
+
+# API configuration
+api:
+  host: "127.0.0.1"
+  port: 8001  # Use different port for tests
+  workers: 1
+  reload: false
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+
+# Security configuration
+security:
+  secret_key: "test-secret-key-not-for-production-use-only-in-tests"
+  algorithm: "HS256"
+  access_token_expire_minutes: 5  # Short expiration for tests
+  refresh_token_expire_days: 1
+  cors_origins:
+    - "*"
+  cors_allow_credentials: false
+  rate_limit: "10000/minute"  # Disable rate limiting for tests
+
+# LLM configuration (use mock provider for tests)
+llm:
+  provider: "mock"  # Use mock provider to avoid API costs during tests
+  model: "mock-model"
+  timeout: 5  # Short timeout for faster tests
+  max_tokens: 100
+  temperature: 0.0
+  top_p: 1.0
+  top_k: 1
+  retry_attempts: 1
+  retry_delay: 0.1
+  max_monthly_cost: 1000.0  # No limit for tests
+
+# Logging configuration
+logging:
+  level: "WARNING"  # Reduce noise during tests
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  json_format: false
+  file_path: "./logs/test.log"
+  max_bytes: 1048576  # 1MB
+  backup_count: 2
+  console_output: false  # Reduce console output during tests
+  structured: false
+
+# Monitoring configuration
+monitoring:
+  enabled: false  # Disable monitoring during tests
+  metrics_enabled: false
+  metrics_port: 9091
+  metrics_path: "/metrics"
+  tracing_enabled: false
+  service_name: "novel-engine-test"

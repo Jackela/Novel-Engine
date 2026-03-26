@@ -1,0 +1,87 @@
+# ========================================
+# Novel Engine - Production Configuration
+# ========================================
+
+# Application settings
+project_name: "Novel Engine"
+debug: false
+
+# Database configuration
+database:
+  url: "postgresql+asyncpg://user:password@localhost:5432/novel_engine"
+  pool_size: 20
+  max_overflow: 30
+  pool_timeout: 30
+  echo: false  # Disable SQL logging in production
+
+# Redis configuration
+redis:
+  host: "${REDIS_HOST}"  # Use environment variable
+  port: 6379
+  db: 0
+  ssl: true  # Enable SSL in production
+  socket_timeout: 10
+  socket_connect_timeout: 10
+  health_check_interval: 30
+
+# API configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4  # Multiple workers for production
+  reload: false  # Never enable auto-reload in production
+  docs_url: null  # Disable Swagger UI in production (or set to "/internal/docs")
+  redoc_url: null  # Disable ReDoc in production
+  openapi_url: null  # Disable OpenAPI schema in production
+
+# Security configuration
+security:
+  # NOTE: SECRET_KEY must be set via environment variable!
+  # Generate with: openssl rand -hex 32
+  secret_key: "${SECURITY_SECRET_KEY}"
+  algorithm: "HS256"
+  access_token_expire_minutes: 30
+  refresh_token_expire_days: 7
+  encryption_key: "${SECURITY_ENCRYPTION_KEY}"  # Fernet key for API encryption
+  cors_origins: "${CORS_ORIGINS}"  # Comma-separated, set via env var
+  cors_allow_credentials: true
+  cors_allow_methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+  cors_allow_headers: "Authorization,Content-Type,X-Request-ID"
+  rate_limit: "100/minute"
+  rate_limit_burst: 10
+
+# LLM configuration
+llm:
+  provider: "gemini"
+  model: "gemini-pro"
+  api_key: "${LLM_API_KEY}"  # Must be set via environment variable
+  timeout: 30
+  max_tokens: 2048
+  temperature: 0.5  # Lower temperature for more consistent outputs
+  top_p: 0.95
+  top_k: 40
+  retry_attempts: 5
+  retry_delay: 2.0
+  max_monthly_cost: 100.0  # Strict cost control in production
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  json_format: true  # Use JSON format for structured logging
+  file_path: "/var/log/novel-engine/app.log"
+  max_bytes: 104857600  # 100MB
+  backup_count: 10
+  console_output: false  # Log to file only in production
+  structured: true
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  metrics_enabled: true
+  metrics_port: 9090
+  metrics_path: "/metrics"
+  tracing_enabled: true
+  jaeger_endpoint: "${JAEGER_ENDPOINT}"  # Set via environment variable
+  service_name: "novel-engine"
+  service_version: "0.1.1"

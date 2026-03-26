@@ -6,7 +6,6 @@ Type-specific interaction processors.
 from typing import Any
 
 import structlog
-
 from src.core.data_models import ErrorInfo, MemoryItem, MemoryType, StandardResponse
 from src.interactions.interaction_engine_system.core.types import (
     InteractionContext,

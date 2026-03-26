@@ -1,0 +1,110 @@
+# Ralph Progress - Warzone 3: Director Mode
+
+## Codebase Patterns
+(Inherited from previous sprints + Director Mode specific patterns)
+
+### Architecture
+- **Domain Context**: New entities go in `src/contexts/narrative/domain/`
+- **Value Objects**: Use frozen dataclass with Tuple for immutable collections
+- **Application Services**: `src/contexts/{context}/application/services/`
+- **API Routers**: `src/api/routers/{feature}.py`, register in `main_api_server.py`
+
+### Frontend Organization
+- **Feature Components**: `frontend/src/features/director/components/`
+- **Director API Client**: `frontend/src/lib/api/directorApi.ts`
+- **Composed Components**: `frontend/src/components/composed/` (AppShell, EditorLayout)
+- **shadcn/ui**: `frontend/src/components/ui/` (DO NOT MODIFY)
+
+### Three Rendering Domains
+- **App Shell**: Tailwind + shadcn/ui, font-sans, bg-background
+- **Editor Canvas**: Custom CSS (.prose-editor), font-serif in literary mode, bg-paper
+- **Graph Canvas**: Weaver colors, .weaver-node + status classes
+
+### Orthogonal Theming
+- Color mode: `class="dark"` on `<html>` (light/dark)
+- Typography mode: `data-typography="literary"` on `<html>` (default/literary)
+
+### State Management
+- Server state → TanStack Query (useQuery, useMutation)
+- Global UI state → Zustand stores
+- Form state → React Hook Form + Zod validation
+
+### Visualization Patterns
+- **Recharts**: Already installed, use for PacingGraph (AreaChart), ChapterHealth (PieChart)
+- **Radar Chart**: Used in PsychologyChart (CHAR-022)
+- **Tooltips**: Custom tooltip requires null check for payload[0]
+- **Theming**: Use `hsl(var(--css-variable))` pattern for Recharts components
+
+### Drag-and-Drop Patterns
+- **dnd-kit**: Already installed, used for scene reordering in NarrativeEditorLayout
+- **DndContext**: Wrap draggable areas with sensors and event handlers
+- **useSensors**: PointerSensor with distance constraint (10px) to avoid accidental drags
+- **DragOverlay**: Custom overlay component for visual feedback
+
+### LLM Generation Patterns
+- **LLMWorldGenerator**: Main AI service in `src/contexts/world/infrastructure/generators/`
+- **Prompt Templates**: YAML files in `src/contexts/world/infrastructure/prompts/`
+- **Pattern**: _load_*_prompt + _build_*_user_prompt + _parse_*_response
+- **Result Dataclasses**: to_dict() method that omits null optional fields
+
+### Testing Patterns
+- E2E tests: `frontend/tests/e2e/`
+- Unit tests: `tests/unit/contexts/{context}/domain/`
+- Run `npm run type-check && npm run lint:all` before commit
+- Playwright: test.describe.configure({ mode: 'serial' }) for ordered tests
+
+### API Patterns
+- Zod schemas in `frontend/src/types/schemas.ts` must match backend `src/api/schemas.py`
+- Use frozen dataclasses for immutable value objects
+- TanStack Router uses `$paramName` for dynamic route segments
+
+---
+
+## Director Mode Domain Models
+
+### Beat (Value Object)
+```python
+@dataclass(frozen=True)
+class Beat:
+    id: str
+    content: str
+    beat_type: BeatType  # ACTION | REACTION
+    mood_shift: int  # -5 to +5
+    order_index: int
+```
+
+### Plotline (Entity)
+```python
+@dataclass
+class Plotline:
+    id: str
+    name: str
+    color: str  # hex color
+    description: str
+    status: PlotlineStatus  # ACTIVE | RESOLVED | ABANDONED
+```
+
+### Conflict (Entity)
+```python
+@dataclass
+class Conflict:
+    id: str
+    conflict_type: ConflictType  # INTERNAL | EXTERNAL | INTERPERSONAL
+    stakes: StakesLevel  # LOW | MEDIUM | HIGH | CRITICAL
+    description: str
+    resolution_status: ResolutionStatus  # UNRESOLVED | ESCALATING | RESOLVED
+    scene_id: str
+```
+
+### Foreshadowing (Entity)
+```python
+@dataclass
+class Foreshadowing:
+    id: str
+    setup_scene_id: str
+    payoff_scene_id: str | None
+    description: str
+    status: ForeshadowingStatus  # PLANTED | PAID_OFF | ABANDONED
+```
+
+---
