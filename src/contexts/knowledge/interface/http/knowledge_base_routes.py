@@ -17,7 +17,6 @@ from src.contexts.knowledge.application.services.knowledge_service import (
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_knowledge_errors,
 )
 
 router = APIRouter()
@@ -60,7 +59,6 @@ class DocumentListResponse(BaseModel):
     status_code=status.HTTP_201_CREATED,
     summary="Create a new knowledge base",
 )
-@handle_knowledge_errors
 async def create_knowledge_base(
     request: KnowledgeBaseCreateRequest,
     current_user: CurrentUser = Depends(get_current_user),
@@ -95,7 +93,6 @@ async def create_knowledge_base(
     response_model=DocumentListResponse,
     summary="List documents",
 )
-@handle_knowledge_errors
 async def list_documents(
     knowledge_base_id: str,
     tags: list[str] | None = Query(default=None),
@@ -123,7 +120,6 @@ async def list_documents(
     response_model=dict[str, Any],
     summary="Get knowledge base statistics",
 )
-@handle_knowledge_errors
 async def get_knowledge_base_stats(
     knowledge_base_id: str,
     service: KnowledgeApplicationService = Depends(get_knowledge_service),

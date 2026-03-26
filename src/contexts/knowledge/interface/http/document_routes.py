@@ -15,7 +15,6 @@ from src.contexts.knowledge.application.services.knowledge_service import (
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_knowledge_errors,
 )
 
 router = APIRouter()
@@ -58,7 +57,6 @@ class DocumentResponse(BaseModel):
     status_code=status.HTTP_201_CREATED,
     summary="Upload a document",
 )
-@handle_knowledge_errors
 async def upload_document(
     knowledge_base_id: str,
     request: DocumentUploadRequest,
@@ -100,7 +98,6 @@ async def upload_document(
     response_model=DocumentResponse,
     summary="Get a document",
 )
-@handle_knowledge_errors
 async def get_document(
     knowledge_base_id: str,
     document_id: str,
@@ -136,7 +133,6 @@ async def get_document(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a document",
 )
-@handle_knowledge_errors
 async def delete_document(
     knowledge_base_id: str,
     document_id: str,
@@ -157,7 +153,6 @@ async def delete_document(
     response_model=DocumentResponse,
     summary="Index a document",
 )
-@handle_knowledge_errors
 async def index_document(
     knowledge_base_id: str,
     document_id: str,

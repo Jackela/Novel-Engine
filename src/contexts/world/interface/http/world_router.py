@@ -11,7 +11,6 @@ from src.contexts.world.application.services.rumor_propagation_service import (
 )
 from src.contexts.world.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_world_errors,
 )
 
 router = APIRouter(prefix="/world", tags=["world"])
@@ -50,7 +49,6 @@ class RumorListResponse(BaseModel):
     response_model=Dict[str, Any],
     summary="Propagate rumors",
 )
-@handle_world_errors
 async def propagate_rumors(
     propagation: RumorPropagationRequest,
     service: RumorPropagationService = Depends(),
@@ -89,7 +87,6 @@ async def propagate_rumors(
     response_model=RumorListResponse,
     summary="Get active rumors",
 )
-@handle_world_errors
 async def get_active_rumors(
     world_id: UUID,
     service: RumorPropagationService = Depends(),

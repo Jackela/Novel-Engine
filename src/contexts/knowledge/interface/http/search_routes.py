@@ -13,7 +13,6 @@ from src.contexts.knowledge.application.services.knowledge_service import (
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_knowledge_errors,
 )
 
 router = APIRouter()
@@ -68,7 +67,6 @@ def _build_search_response(query: str, results: list[dict[str, Any]]) -> SearchR
     response_model=SearchResponse,
     summary="Semantic search",
 )
-@handle_knowledge_errors
 async def semantic_search(
     knowledge_base_id: str,
     request: SearchRequest,
@@ -90,7 +88,6 @@ async def semantic_search(
     response_model=SearchResponse,
     summary="Semantic search across selected knowledge bases",
 )
-@handle_knowledge_errors
 async def global_search(
     request: SearchRequest,
     knowledge_base_ids: list[str] | None = Query(default=None),

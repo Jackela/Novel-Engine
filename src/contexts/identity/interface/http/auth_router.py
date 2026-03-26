@@ -31,7 +31,6 @@ from src.contexts.identity.application.services.identity_service import (
 )
 from src.contexts.identity.interface.http.error_handlers import (
     ResultErrorHandler,
-    handle_identity_errors,
 )
 from src.shared.infrastructure.config.settings import get_settings
 
@@ -134,7 +133,6 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     summary="User login",
     description="Authenticate user and return access and refresh tokens.",
 )
-@handle_identity_errors
 async def login(
     request: Request,
     response: Response,
@@ -188,7 +186,6 @@ async def login(
     summary="Refresh access token",
     description="Generate a new access token using a valid refresh token.",
 )
-@handle_identity_errors
 async def refresh_token(
     request: TokenRefreshRequest,
     auth_service: AuthenticationService = Depends(get_authentication_service),
@@ -220,7 +217,6 @@ async def refresh_token(
     summary="User logout",
     description="Invalidate user tokens (client-side only in JWT implementation).",
 )
-@handle_identity_errors
 async def logout(user: CurrentUser = Depends(get_current_user)) -> dict:
     """User logout.
 
@@ -244,7 +240,6 @@ async def logout(user: CurrentUser = Depends(get_current_user)) -> dict:
     summary="Get current user",
     description="Get information about the currently authenticated user.",
 )
-@handle_identity_errors
 async def get_current_user_info(
     user: CurrentUser = Depends(get_current_user),
 ) -> UserResponse:
@@ -271,7 +266,6 @@ async def get_current_user_info(
     summary="Register new user",
     description="Create a new user account.",
 )
-@handle_identity_errors
 async def register(
     request: RegisterRequest,
     identity_service: IdentityApplicationService = Depends(get_identity_service),

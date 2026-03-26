@@ -30,6 +30,22 @@ export function useDashboardEvents(workspaceId: string) {
         setEvents((current) => [...nextEvents, ...current].slice(0, 10));
       });
     };
+    const streamEventTypes: DashboardEvent['type'][] = [
+      'orchestration',
+      'signal',
+      'system',
+    ];
+    const listeners = new Map<
+      DashboardEvent['type'],
+      (event: Event) => void
+    >();
+
+    const handleStreamEvent = (event: Event) => {
+      const payload = parseEventPayload((event as MessageEvent<string>).data);
+      if (payload) {
+        appendEvents([payload]);
+      }
+    };
 
     try {
       setEvents([]);
@@ -38,12 +54,10 @@ export function useDashboardEvents(workspaceId: string) {
       eventSource.onopen = () => {
         setConnectionState('connected');
       };
-      eventSource.onmessage = (event) => {
-        const payload = parseEventPayload(event.data);
-        if (payload) {
-          appendEvents([payload]);
-        }
-      };
+      for (const eventType of streamEventTypes) {
+        listeners.set(eventType, handleStreamEvent);
+        eventSource.addEventListener(eventType, handleStreamEvent);
+      }
       eventSource.onerror = () => {
         setConnectionState('disconnected');
       };
@@ -52,6 +66,11 @@ export function useDashboardEvents(workspaceId: string) {
     }
 
     return () => {
+      if (eventSource) {
+        for (const [eventType, listener] of listeners) {
+          eventSource.removeEventListener(eventType, listener);
+        }
+      }
       eventSource?.close();
     };
   }, [workspaceId]);

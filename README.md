@@ -32,6 +32,12 @@ mypy \
   --show-column-numbers
 ```
 
+If you want the optional Honcho integration installed locally, use:
+
+```bash
+python -m pip install -e ".[dev,test,honcho]"
+```
+
 ### Frontend
 
 ```bash
