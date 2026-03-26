@@ -70,9 +70,6 @@ jobs:
     timeout-minutes: 25
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      APP_ENVIRONMENT: testing
-      SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
-      MONITORING_METRICS_ENABLED: "false"
 
     steps:
       - name: Checkout
