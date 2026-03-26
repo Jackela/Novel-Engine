@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -177,15 +176,13 @@ async def stream_events(request: Request) -> StreamingResponse:
                 try:
                     event = await asyncio.wait_for(subscriber.get(), timeout=15)
                 except asyncio.TimeoutError:
-                    event = {
-                        "id": "heartbeat",
-                        "type": "system",
-                        "title": "Heartbeat",
-                        "timestamp": datetime.now(UTC).isoformat(),
-                        "description": "Dashboard connection is alive",
-                        "workspace_id": workspace_id,
-                        "data": await runtime_service.get_snapshot(workspace_id),
-                    }
+                    event = runtime_service._build_event(
+                        workspace_id=workspace_id,
+                        event_type="system",
+                        title="Heartbeat",
+                        description="Dashboard connection is alive",
+                        data=await runtime_service.get_snapshot(workspace_id),
+                    )
 
                 yield f"event: {event['type']}\n"
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"

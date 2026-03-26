@@ -495,6 +495,7 @@ coverage.json
 # Runtime artifacts
 data/
 .playwright-mcp/
+.playwright-cli/
 chrome-devtools-mcp-*.tgz
 frontend/test-results.json
 

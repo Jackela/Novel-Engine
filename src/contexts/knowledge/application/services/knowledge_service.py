@@ -7,21 +7,12 @@ Application service for RAG (Retrieval-Augmented Generation) operations.
 from typing import Any, Dict, List, Optional, Protocol
 from uuid import UUID
 
+from src.contexts.knowledge.application.ports.i_embedding_service import (
+    IEmbeddingService,
+)
 from src.contexts.knowledge.domain.aggregates.knowledge_base import KnowledgeBase
 from src.contexts.knowledge.domain.entities.document import Document
 from src.shared.application.result import Failure, Result, Success
-
-
-class EmbeddingService(Protocol):
-    """Protocol for text embedding generation."""
-
-    async def embed_text(self, text: str) -> List[float]:
-        """Generate embedding for text."""
-        ...
-
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for batch of texts."""
-        ...
 
 
 class ChunkingService(Protocol):
@@ -68,7 +59,7 @@ class KnowledgeApplicationService:
         self,
         knowledge_repo: Any | None = None,
         vector_store: Any | None = None,
-        embedding_service: EmbeddingService | None = None,
+        embedding_service: IEmbeddingService | None = None,
         chunking_service: ChunkingService | None = None,
     ) -> None:
         self.knowledge_repo = knowledge_repo
@@ -88,7 +79,7 @@ class KnowledgeApplicationService:
             raise RuntimeError("Vector store is not configured")
         return self.vector_store
 
-    def _require_embedding_service(self) -> EmbeddingService:
+    def _require_embedding_service(self) -> IEmbeddingService:
         """Return the configured embedding service."""
         if self.embedding is None:
             raise RuntimeError("Embedding service is not configured")
@@ -295,7 +286,7 @@ class KnowledgeApplicationService:
 
             # Generate embedding for full document
             embedding_service = self._require_embedding_service()
-            embedding = await embedding_service.embed_text(document.content)
+            embedding = await embedding_service.embed(document.content)
             document.set_indexed(embedding)
 
             # Store in vector store
@@ -346,7 +337,7 @@ class KnowledgeApplicationService:
 
             # Generate query embedding
             embedding_service = self._require_embedding_service()
-            query_embedding = await embedding_service.embed_text(query)
+            query_embedding = await embedding_service.embed(query)
 
             # Search vector store
             vector_store = self._require_vector_store()

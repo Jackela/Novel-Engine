@@ -26,8 +26,9 @@ class MockEmbeddingService:
     """Mock embedding service for testing."""
 
     def __init__(self):
-        self.embed_text = AsyncMock(return_value=[0.1, 0.2, 0.3])
+        self.embed = AsyncMock(return_value=[0.1, 0.2, 0.3])
         self.embed_batch = AsyncMock(return_value=[[0.1, 0.2], [0.3, 0.4]])
+        self.get_dimension = MagicMock(return_value=3)
 
 
 class MockChunkingService:
@@ -339,7 +340,7 @@ class TestKnowledgeService:
         # Assert
         assert result.is_ok()
         mock_chunking_service.chunk_document.assert_called_once()
-        mock_embedding_service.embed_text.assert_called_once()
+        mock_embedding_service.embed.assert_called_once()
         mock_vector_store.store_embedding.assert_called_once()
 
     @pytest.mark.asyncio
@@ -396,7 +397,7 @@ class TestKnowledgeService:
         # Assert
         assert result.is_ok()
         assert len(result.value) == 1
-        mock_embedding_service.embed_text.assert_called_once_with("test query")
+        mock_embedding_service.embed.assert_called_once_with("test query")
         mock_vector_store.search_similar.assert_called_once()
 
     @pytest.mark.asyncio
@@ -641,7 +642,7 @@ class TestKnowledgeServiceEdgeCases:
         """Test handling embedding service error."""
         # Arrange
         await mock_repo._save(sample_kb)
-        mock_embedding_service.embed_text.side_effect = Exception("Embedding failed")
+        mock_embedding_service.embed.side_effect = Exception("Embedding failed")
 
         # Act
         result = await service.semantic_search(

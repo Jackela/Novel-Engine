@@ -50,7 +50,6 @@ jobs:
           mypy
           src/apps/api
           src/contexts/identity
-          src/contexts/identity/infrastructure/repositories/in_memory_user_repository.py
           src/contexts/knowledge/interface/http
           src/contexts/knowledge/infrastructure/runtime.py
           src/contexts/knowledge/infrastructure/vectorStores/chroma_knowledge_vector_store.py

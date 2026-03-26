@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
+from src.contexts.knowledge.application.ports.i_embedding_service import (
+    IEmbeddingService,
+)
 from src.contexts.knowledge.application.services.knowledge_service import (
-    EmbeddingService,
     KnowledgeApplicationService,
 )
 from src.contexts.knowledge.domain.aggregates.knowledge_base import KnowledgeBase
@@ -104,7 +106,7 @@ class InMemoryVectorStore:
         return dot_product / (left_norm * right_norm)
 
 
-class DeterministicEmbeddingService(EmbeddingService):
+class DeterministicEmbeddingService(IEmbeddingService):
     """Simple deterministic embedding service for local use."""
 
     def __init__(self, dimensions: int = 16) -> None:
@@ -112,11 +114,14 @@ class DeterministicEmbeddingService(EmbeddingService):
             raise ValueError("dimensions must be positive")
         self._dimensions = dimensions
 
-    async def embed_text(self, text: str) -> list[float]:
+    async def embed(self, text: str) -> list[float]:
         return self._embed(text)
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         return [self._embed(text) for text in texts]
+
+    def get_dimension(self) -> int:
+        return self._dimensions
 
     def _embed(self, text: str) -> list[float]:
         vector = [0.0] * self._dimensions

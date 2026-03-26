@@ -70,3 +70,31 @@ async def test_subscribers_receive_only_their_workspace_events(
     runtime.unregister_subscriber("workspace-a", subscriber_a)
     runtime.unregister_subscriber("workspace-b", subscriber_b)
     await runtime.shutdown()
+
+
+@pytest.mark.asyncio
+async def test_runtime_events_use_unique_ids(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = _build_runtime_service(tmp_path, monkeypatch)
+
+    event_a = runtime._build_event(
+        workspace_id="workspace-a",
+        event_type="system",
+        title="Heartbeat",
+        description="Dashboard connection is alive",
+        data={},
+    )
+    event_b = runtime._build_event(
+        workspace_id="workspace-a",
+        event_type="system",
+        title="Heartbeat",
+        description="Dashboard connection is alive",
+        data={},
+    )
+
+    assert event_a["id"].startswith("event-")
+    assert event_a["id"] != event_b["id"]
+
+    await runtime.shutdown()
