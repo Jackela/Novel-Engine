@@ -73,7 +73,7 @@ dependencies = [
     # HTTP client
     "requests>=2.31.0,<3.0.0",
     # System monitoring
-    "psutil>=5.9.0,<6.0.0",
+    "psutil>=5.9.0,<8.0.0",
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
     "tiktoken>=0.7.0,<1.0.0",
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
