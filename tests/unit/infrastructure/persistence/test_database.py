@@ -102,15 +102,39 @@ class TestDatabase:
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_health_check_failure(self) -> None:
-        """Test health check when database is unhealthy."""
+    @pytest.mark.parametrize(
+        "exception",
+        [
+            ConnectionError("Connection refused"),
+            TimeoutError("Operation timed out"),
+            OSError("Network unreachable"),
+            Exception("Unexpected error"),
+            RuntimeError("Runtime failure"),
+        ],
+    )
+    async def test_health_check_failure(self, exception: Exception) -> None:
+        """Test health check handles various failure scenarios."""
         db = MockDatabase("postgresql://localhost/test")
         await db.connect()
-        db._connection.execute.side_effect = Exception("Connection failed")
+        db._connection.execute.side_effect = exception
 
         result = await db.health_check()
 
         assert result is False
+
+    def test_safe_dsn_masks_password(self) -> None:
+        """Test that DSN password is masked for logging."""
+        db = MockDatabase("postgresql://user:secret123@localhost:5432/mydb")
+        safe_dsn = db._safe_dsn
+        assert "secret123" not in safe_dsn
+        assert "***" in safe_dsn
+        assert "postgresql://user:" in safe_dsn
+
+    def test_safe_dsn_without_password(self) -> None:
+        """Test safe_dsn with DSN that has no password."""
+        db = MockDatabase("postgresql://user@localhost:5432/mydb")
+        safe_dsn = db._safe_dsn
+        assert safe_dsn == "postgresql://user@localhost:5432/mydb"
 
 
 class TestDatabaseFactory:

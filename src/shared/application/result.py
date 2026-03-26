@@ -37,6 +37,7 @@ class Success(Generic[T]):
 
     value: T
 
+    @property
     def is_ok(self) -> bool:
         """Check if result is success.
 
@@ -45,6 +46,7 @@ class Success(Generic[T]):
         """
         return True
 
+    @property
     def is_err(self) -> bool:
         """Check if result is error.
 
@@ -141,8 +143,53 @@ class Failure:
     """
 
     error: str
-    code: str
+    code: str = "ERROR"
     details: dict[str, Any] | None = None
+
+    def __post_init__(self) -> None:
+        """Prevent nested Failure objects."""
+        if isinstance(self.error, Failure):
+            raise ValueError("Cannot nest Failure objects")
+
+    @staticmethod
+    def from_exception(exc: Exception, code: str | None = None) -> "Failure":
+        """Create Failure from an exception.
+
+        Args:
+            exc: The exception to convert.
+            code: Optional error code. Defaults to exception class name.
+
+        Returns:
+            Failure instance with error details from exception.
+
+        Example:
+            >>> try:
+            ...     1 / 0
+            ... except Exception as e:
+            ...     failure = Failure.from_exception(e)
+        """
+        return Failure(
+            error=str(exc),
+            code=code or exc.__class__.__name__.upper(),
+            details={"exception_type": exc.__class__.__name__},
+        )
+
+    @staticmethod
+    def from_message(message: str, code: str = "ERROR", **details: Any) -> "Failure":
+        """Create Failure from a message.
+
+        Args:
+            message: The error message.
+            code: Error code for programmatic handling.
+            **details: Additional error details as keyword arguments.
+
+        Returns:
+            Failure instance with the given message and details.
+
+        Example:
+            >>> failure = Failure.from_message("Invalid input", "VALIDATION_ERROR", field="name")
+        """
+        return Failure(error=message, code=code, details=details or None)
 
     @property
     def value(self) -> Any:
@@ -153,6 +200,7 @@ class Failure:
         """
         return {"error": self.error, "code": self.code, "details": self.details}
 
+    @property
     def is_ok(self) -> bool:
         """Check if result is success.
 
@@ -161,6 +209,7 @@ class Failure:
         """
         return False
 
+    @property
     def is_err(self) -> bool:
         """Check if result is error.
 

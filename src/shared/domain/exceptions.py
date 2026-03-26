@@ -3,9 +3,14 @@
 This module defines the exception hierarchy for the domain layer.
 All domain exceptions inherit from DomainException to allow
 catching all domain-specific errors.
+
+Implements Error Bubbling pattern from DDD - exceptions carry context
+for propagation from Domain to Application to Interface layers.
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 
 class DomainException(Exception):
@@ -14,6 +19,7 @@ class DomainException(Exception):
     Attributes:
         message: Human-readable error message.
         code: Error code for programmatic handling.
+        context: Additional context for error bubbling.
 
     Example:
         >>> raise DomainException("Invalid operation", code="DOMAIN_001")
@@ -24,15 +30,22 @@ class DomainException(Exception):
         ...     logger.error(f"Domain error {e.code}: {e.message}")
     """
 
-    def __init__(self, message: str, code: str | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        code: str | None = None,
+        **context: Any,
+    ) -> None:
         """Initialize the exception.
 
         Args:
             message: Human-readable error message.
-            code: Error code for programmatic handling. Defaults to None (no prefix in str).
+            code: Error code for programmatic handling. Defaults to None.
+            **context: Additional context for error bubbling.
         """
         self.message = message
-        self.code = code if code is not None else "DOMAIN_ERROR"
+        self.code = code if code is not None else self.__class__.__name__.upper()
+        self.context = context
         super().__init__(self.message)
 
     def __str__(self) -> str:
@@ -55,6 +68,19 @@ class DomainException(Exception):
             f"{self.__class__.__name__}(message={self.message!r}, code={self.code!r})"
         )
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert exception to dictionary for serialization.
+
+        Returns:
+            Dictionary with error details for JSON serialization.
+        """
+        return {
+            "message": self.message,
+            "code": self.code,
+            "context": self.context,
+            "exception_type": self.__class__.__name__,
+        }
+
 
 class ValidationException(DomainException):
     """Exception raised when domain validation fails.
@@ -74,7 +100,11 @@ class ValidationException(DomainException):
     """
 
     def __init__(
-        self, message: str, field: str | None = None, code: str = "VALIDATION_ERROR"
+        self,
+        message: str,
+        field: str | None = None,
+        code: str = "VALIDATION_ERROR",
+        **context: Any,
     ) -> None:
         """Initialize the validation exception.
 
@@ -82,9 +112,10 @@ class ValidationException(DomainException):
             message: Human-readable error message.
             field: Optional field name that failed validation.
             code: Error code for programmatic handling.
+            **context: Additional context for error bubbling.
         """
         self.field = field
-        super().__init__(message, code)
+        super().__init__(message, code, **context)
 
     def __str__(self) -> str:
         """Return string representation with field if present."""
@@ -116,6 +147,7 @@ class BusinessRuleException(DomainException):
         message: str,
         rule_name: str | None = None,
         code: str = "BUSINESS_RULE_VIOLATION",
+        **context: Any,
     ) -> None:
         """Initialize the business rule exception.
 
@@ -123,9 +155,10 @@ class BusinessRuleException(DomainException):
             message: Human-readable error message.
             rule_name: Optional name of the violated rule.
             code: Error code for programmatic handling.
+            **context: Additional context for error bubbling.
         """
         self.rule_name = rule_name
-        super().__init__(message, code)
+        super().__init__(message, code, **context)
 
     def __str__(self) -> str:
         """Return string representation with rule name if present."""
@@ -151,7 +184,11 @@ class EntityNotFoundException(DomainException):
     """
 
     def __init__(
-        self, entity_type: str, entity_id: str, code: str = "ENTITY_NOT_FOUND"
+        self,
+        entity_type: str,
+        entity_id: str,
+        code: str = "ENTITY_NOT_FOUND",
+        **context: Any,
     ) -> None:
         """Initialize the not found exception.
 
@@ -159,11 +196,12 @@ class EntityNotFoundException(DomainException):
             entity_type: Type name of entity that was not found.
             entity_id: ID of the entity that was not found.
             code: Error code for programmatic handling.
+            **context: Additional context for error bubbling.
         """
         self.entity_type = entity_type
         self.entity_id = entity_id
         message = f"{entity_type} with id {entity_id} not found"
-        super().__init__(message, code)
+        super().__init__(message, code, **context)
 
 
 class ConcurrencyException(DomainException):
@@ -195,6 +233,7 @@ class ConcurrencyException(DomainException):
         expected_version: int,
         actual_version: int,
         code: str = "CONCURRENCY_CONFLICT",
+        **context: Any,
     ) -> None:
         """Initialize the concurrency exception.
 
@@ -204,6 +243,7 @@ class ConcurrencyException(DomainException):
             expected_version: Version that was expected.
             actual_version: Actual version in the database.
             code: Error code for programmatic handling.
+            **context: Additional context for error bubbling.
         """
         self.entity_type = entity_type
         self.entity_id = entity_id
@@ -213,7 +253,7 @@ class ConcurrencyException(DomainException):
             f"{entity_type} with id {entity_id} was modified. "
             f"Expected version {expected_version}, but found {actual_version}"
         )
-        super().__init__(message, code)
+        super().__init__(message, code, **context)
 
 
 class DuplicateEntityException(DomainException):
@@ -232,7 +272,11 @@ class DuplicateEntityException(DomainException):
     """
 
     def __init__(
-        self, entity_type: str, identifier: str, code: str = "DUPLICATE_ENTITY"
+        self,
+        entity_type: str,
+        identifier: str,
+        code: str = "DUPLICATE_ENTITY",
+        **context: Any,
     ) -> None:
         """Initialize the duplicate entity exception.
 
@@ -240,8 +284,9 @@ class DuplicateEntityException(DomainException):
             entity_type: Type name of entity that already exists.
             identifier: The unique identifier causing conflict.
             code: Error code for programmatic handling.
+            **context: Additional context for error bubbling.
         """
         self.entity_type = entity_type
         self.identifier = identifier
         message = f"{entity_type} with identifier '{identifier}' already exists"
-        super().__init__(message, code)
+        super().__init__(message, code, **context)

@@ -90,11 +90,13 @@ async def _get_health_checker() -> HealthChecker:
 
         # Register database health check if pool is available
         if _connection_pool is not None:
-            _health_checker.register(DatabaseHealthCheck(_connection_pool))
+            db_check = DatabaseHealthCheck(_connection_pool)
+            _health_checker.register("database", db_check.check)
 
         # Register Honcho health check if client is available
         if _honcho_client is not None:
-            _health_checker.register(HonchoHealthCheck(_honcho_client))
+            honcho_check = HonchoHealthCheck(_honcho_client)
+            _health_checker.register("honcho", honcho_check.check)
 
     return _health_checker
 
@@ -144,7 +146,7 @@ async def health_check() -> JSONResponse:
         checker = await _get_health_checker()
 
         # If no components registered, return healthy
-        if not checker.checks:
+        if len(checker.checks) == 0:
             return JSONResponse(
                 content={
                     "overall_status": "healthy",
@@ -228,7 +230,7 @@ async def readiness_probe() -> JSONResponse:
         checker = await _get_health_checker()
 
         # If no components registered, database is not initialized
-        if not checker.checks:
+        if len(checker.checks) == 0:
             return JSONResponse(
                 content={
                     "status": "not_ready",
@@ -302,7 +304,7 @@ async def detailed_health_check() -> JSONResponse:
         checker = await _get_health_checker()
 
         # If no components registered, return healthy with empty components
-        if not checker.checks:
+        if len(checker.checks) == 0:
             return JSONResponse(
                 content={
                     "overall_status": "healthy",

@@ -1,13 +1,12 @@
 """
 Database Health Check
 
-Health check implementation for database connectivity.
+Health check implementation for database connectivity using the unified HealthStatus model.
 """
 
 from __future__ import annotations
 
-from typing import Any
-
+from src.shared.infrastructure.health.health_checker import HealthStatus
 from src.shared.infrastructure.persistence import DatabaseConnectionPool
 
 
@@ -17,8 +16,12 @@ class DatabaseHealthCheck:
     def __init__(self, connection_pool: DatabaseConnectionPool | None = None):
         self.connection_pool = connection_pool
 
-    async def check(self) -> dict[str, Any]:
-        """Check database health."""
+    async def check(self) -> HealthStatus:
+        """Check database health and return standardized HealthStatus.
+
+        Returns:
+            HealthStatus with status, message, and any error details.
+        """
         try:
             if self.connection_pool:
                 # Try to get a connection
@@ -26,22 +29,25 @@ class DatabaseHealthCheck:
                     # Execute simple query
                     result = await conn.fetchval("SELECT 1")
                     if result == 1:
-                        return {
-                            "status": "healthy",
-                            "message": "Database connection successful",
-                        }
+                        return HealthStatus(
+                            status="healthy",
+                            message="Database connection successful",
+                        )
                     else:
-                        return {
-                            "status": "unhealthy",
-                            "message": "Database query returned unexpected result",
-                        }
+                        return HealthStatus(
+                            status="unhealthy",
+                            message="Database query returned unexpected result",
+                            details={"expected": 1, "actual": result},
+                        )
             else:
-                return {
-                    "status": "unknown",
-                    "message": "Connection pool not configured",
-                }
+                return HealthStatus(
+                    status="unknown",
+                    message="Connection pool not configured",
+                )
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "message": f"Database health check failed: {str(e)}",
-            }
+            return HealthStatus(
+                status="unhealthy",
+                message=f"Database health check failed: {str(e)}",
+                error=str(e),
+                details={"error_type": type(e).__name__},
+            )

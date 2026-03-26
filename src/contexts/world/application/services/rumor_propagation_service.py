@@ -101,13 +101,10 @@ class RumorPropagationService:
 
         except Exception as e:
             logger.error("rumor_propagation_error", world_id=world.id, error=str(e))
-            return Failure(
-                Failure(
-                    message=f"Failed to propagate rumors: {e}",
-                    code="RUMOR_PROPAGATION_ERROR",
-                    details={"world_id": world.id},
-                    recoverable=False,
-                )
+            return Failure.from_message(
+                f"Failed to propagate rumors: {e}",
+                code="RUMOR_PROPAGATION_ERROR",
+                world_id=world.id,
             )
 
     async def propagate_rumors_batch(
@@ -159,13 +156,11 @@ class RumorPropagationService:
             logger.error(
                 "rumor_propagation_batch_error", world_id=world.id, error=str(e)
             )
-            return Failure(
-                Failure(
-                    message=f"Failed to propagate rumors in batches: {e}",
-                    code="RUMOR_PROPAGATION_ERROR",
-                    details={"world_id": world.id, "batch_size": batch_size},
-                    recoverable=False,
-                )
+            return Failure.from_message(
+                f"Failed to propagate rumors in batches: {e}",
+                code="RUMOR_PROPAGATION_ERROR",
+                world_id=world.id,
+                batch_size=batch_size,
             )
 
     def create_rumor_from_event(
@@ -176,13 +171,11 @@ class RumorPropagationService:
         """Create a new rumor from a historical event."""
         try:
             if not event.location_ids and not event.affected_location_ids:
-                return Failure(
-                    Failure(
-                        message="Cannot create rumor from event without location information",
-                        code="RUMOR_CREATION_ERROR",
-                        details={"event_id": event.id, "event_name": event.name},
-                        recoverable=False,
-                    )
+                return Failure.from_message(
+                    "Cannot create rumor from event without location information",
+                    code="RUMOR_CREATION_ERROR",
+                    event_id=event.id,
+                    event_name=event.name,
                 )
 
             origin_location = self._get_origin_location(event)
@@ -212,13 +205,10 @@ class RumorPropagationService:
             return Success(rumor)
 
         except Exception as e:
-            return Failure(
-                Failure(
-                    message=f"Failed to create rumor from event: {e}",
-                    code="RUMOR_CREATION_ERROR",
-                    details={"event_id": event.id},
-                    recoverable=False,
-                )
+            return Failure.from_message(
+                f"Failed to create rumor from event: {e}",
+                code="RUMOR_CREATION_ERROR",
+                event_id=event.id,
             )
 
     def _get_origin_location(self, event: HistoryEvent) -> str:
@@ -239,12 +229,9 @@ class RumorPropagationService:
             self._cache.invalidate()
             return Success(None)
         except Exception as e:
-            return Failure(
-                Failure(
-                    message=f"Failed to clear adjacency cache: {e}",
-                    code="CACHE_CLEAR_ERROR",
-                    recoverable=True,
-                )
+            return Failure.from_message(
+                f"Failed to clear adjacency cache: {e}",
+                code="CACHE_CLEAR_ERROR",
             )
 
     def get_cache_stats(self) -> Result[Dict[str, int]]:
@@ -252,12 +239,9 @@ class RumorPropagationService:
         try:
             return Success(self._cache.get_stats())
         except Exception as e:
-            return Failure(
-                Failure(
-                    message=f"Failed to get cache stats: {e}",
-                    code="CACHE_STATS_ERROR",
-                    recoverable=True,
-                )
+            return Failure.from_message(
+                f"Failed to get cache stats: {e}",
+                code="CACHE_STATS_ERROR",
             )
 
     @property

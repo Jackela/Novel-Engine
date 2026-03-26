@@ -6,9 +6,14 @@ enabling different database backends while maintaining type safety.
 
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager
 from typing import Any, Protocol, TypeVar
+
+import structlog
+
+logger = structlog.get_logger(__name__)
 
 T = TypeVar("T")
 
@@ -163,17 +168,38 @@ class Database(ABC):
         ...
 
     async def health_check(self) -> bool:
-        """Check database health.
+        """Check database health with comprehensive error handling.
 
         Returns:
             True if database is healthy, False otherwise.
+
+        Note:
+            Catches all exceptions to ensure health check never raises.
+            Detailed error information is logged for debugging.
         """
         try:
             async with self.connection() as conn:
                 await conn.execute("SELECT 1")
+            logger.debug("Database health check passed", dsn=self._safe_dsn)
             return True
-        except (ConnectionError, TimeoutError, OSError):
+        except Exception as e:
+            logger.warning(
+                "Database health check failed",
+                error=str(e),
+                error_type=type(e).__name__,
+                dsn=self._safe_dsn,
+            )
             return False
+
+    @property
+    def _safe_dsn(self) -> str:
+        """DSN with password masked for logging."""
+        if not self._dsn:
+            return ""
+        # Use regex to replace password in DSN
+        # Matches patterns like: postgresql://user:password@host/db
+        masked_dsn = re.sub(r"(://[^:]+:)([^@]+)(@)", r"\1***\3", self._dsn)
+        return masked_dsn
 
 
 class DatabaseFactory:
