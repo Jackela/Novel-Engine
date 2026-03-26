@@ -104,10 +104,6 @@ jobs:
       MONITORING_METRICS_ENABLED: "false"
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
 
-    defaults:
-      run:
-        working-directory: frontend
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -124,6 +120,7 @@ jobs:
           cache: pip
 
       - name: Install frontend dependencies
+        working-directory: frontend
         run: |
           if [ -f package-lock.json ]; then
             npm ci
@@ -132,21 +129,28 @@ jobs:
           fi
 
       - name: Install backend dependencies
+        working-directory: ${{ github.workspace }}
         run: |
+          cd "$GITHUB_WORKSPACE"
           python -m pip install --upgrade pip
           pip install -e ".[dev,test]"
 
       - name: Install Playwright browsers
+        working-directory: frontend
         run: npx playwright install --with-deps chromium
 
       - name: Run TypeScript checks
+        working-directory: frontend
         run: npm run type-check
 
       - name: Run frontend unit tests
+        working-directory: frontend
         run: npm test
 
       - name: Build frontend
+        working-directory: frontend
         run: npm run build
 
       - name: Run frontend smoke tests
+        working-directory: frontend
         run: npm run test:e2e:smoke

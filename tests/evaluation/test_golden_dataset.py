@@ -27,6 +27,7 @@ sys.path.insert(0, str(repo_root))
 # exists on the runner.
 sys.modules.pop("scripts", None)
 sys.modules.pop("scripts.evaluation", None)
+sys.modules.pop("evaluation", None)
 
 # Import the evaluation module
 from evaluation.run_golden_dataset import (
