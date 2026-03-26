@@ -93,6 +93,7 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "coverage[toml]>=7.0.0",
+    "ruff>=0.9.0,<1.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
     "flake8>=6.0.0",
@@ -123,7 +124,7 @@ honcho = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["src*", "scripts*"]
 exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*", "build*", "dist*"]
 
 # Black code formatting
