@@ -24,6 +24,7 @@ from src.contexts.narrative.domain.entities.scene import Scene
 from src.contexts.narrative.domain.ports.story_repository_port import (
     StoryRepositoryPort,
 )
+from src.contexts.narrative.domain.types import SceneType
 from src.shared.application.result import Failure, Result, Success
 
 ReviewSeverity = Literal["info", "warning", "blocker"]
@@ -376,10 +377,15 @@ class StoryWorkflowService:
             for chapter_number in range(start_number, target_count + 1):
                 chapter_spec = self._outline_chapter_for_number(chapters, chapter_number)
                 focus_character = self._select_focus_character(story, chapter_number)
+                focus_motivation = self._focus_character_motivation(
+                    story,
+                    focus_character,
+                )
                 scene_result = await self._generate_chapter_scenes(
                     story=story,
                     chapter_spec=chapter_spec,
                     focus_character=focus_character,
+                    focus_motivation=focus_motivation,
                 )
                 scenes = self._extract_scenes(scene_result, chapter_spec)
                 chapter = story.add_chapter(
@@ -390,6 +396,7 @@ class StoryWorkflowService:
                     {
                         "chapter_number": chapter_number,
                         "focus_character": focus_character,
+                        "focus_motivation": focus_motivation,
                         "timeline_day": chapter_number,
                         "outline_hook": chapter_spec.get("hook", ""),
                         "drafted_at": self._now(),
@@ -399,9 +406,16 @@ class StoryWorkflowService:
                     chapter=chapter,
                     scenes=scenes,
                     focus_character=focus_character,
+                    focus_motivation=focus_motivation,
                     hook=chapter_spec.get("hook", ""),
                 )
-                self._record_chapter_memory(story, chapter, chapter_spec, focus_character)
+                self._record_chapter_memory(
+                    story,
+                    chapter,
+                    chapter_spec,
+                    focus_character,
+                    focus_motivation,
+                )
                 self._record_generation_trace(workflow, scene_result)
                 self._touch(story)
                 await self._story_repository.save(story)
@@ -443,6 +457,10 @@ class StoryWorkflowService:
             "outline_present": isinstance(outline, dict),
             "chapters_present": story.chapter_count > 0,
             "chapter_count_complete": story.chapter_count >= target_chapters,
+            "character_alignment": True,
+            "motivation_alignment": True,
+            "timeline_alignment": True,
+            "hook_alignment": True,
         }
 
         if not continuity_checks["blueprint_present"]:
@@ -547,14 +565,14 @@ class StoryWorkflowService:
         if not isinstance(workflow, dict):
             workflow = {}
             story.metadata["workflow"] = workflow
-        return workflow
+        return cast(dict[str, Any], workflow)
 
     def _memory(self, story: Story) -> dict[str, Any]:
         memory = story.metadata.get("story_memory")
         if not isinstance(memory, dict):
             memory = {}
             story.metadata["story_memory"] = memory
-        return memory
+        return cast(dict[str, Any], memory)
 
     def _touch(self, story: Story) -> None:
         story.updated_at = datetime.utcnow()
@@ -676,6 +694,86 @@ class StoryWorkflowService:
                     names.append(name)
         return names
 
+    @staticmethod
+    def _normalize_scene_type(scene_type: Any) -> str:
+        value = str(scene_type).strip().lower() or "narrative"
+        valid_types = {
+            "opening",
+            "narrative",
+            "dialogue",
+            "action",
+            "decision",
+            "climax",
+            "ending",
+        }
+        if value in valid_types:
+            return value
+
+        aliases: dict[str, str] = {
+            "establishment": "opening",
+            "setup": "opening",
+            "introduction": "opening",
+            "intro": "opening",
+            "conversation": "dialogue",
+            "interaction": "dialogue",
+            "conflict": "action",
+            "pressure": "action",
+            "build-up": "narrative",
+            "build": "narrative",
+            "reveal": "climax",
+            "twist": "climax",
+            "resolution": "ending",
+            "finale": "ending",
+            "wrapup": "ending",
+        }
+        return str(aliases.get(value, "narrative"))
+
+    def _character_profile(
+        self,
+        character_bible: dict[str, Any],
+        focus_character: str,
+    ) -> dict[str, Any]:
+        characters = character_bible.get("characters", [])
+        if not isinstance(characters, list):
+            return {}
+
+        for character in characters:
+            if not isinstance(character, dict):
+                continue
+            name = str(character.get("name", "")).strip()
+            if name == focus_character:
+                return character
+        return {}
+
+    def _focus_character_motivation(
+        self,
+        story: Story,
+        focus_character: str,
+        chapter: Chapter | None = None,
+    ) -> str:
+        if chapter is not None:
+            motivation = str(chapter.metadata.get("focus_motivation", "")).strip()
+            if motivation:
+                return motivation
+
+        workflow = self._workflow(story)
+        blueprint = workflow.get("blueprint")
+        if isinstance(blueprint, dict):
+            character_bible = blueprint.get("character_bible", {})
+            if isinstance(character_bible, dict):
+                profile = self._character_profile(character_bible, focus_character)
+                motivation = str(profile.get("motivation", "")).strip()
+                if motivation:
+                    return motivation
+        return ""
+
+    @staticmethod
+    def _issues_for_location(
+        issues: list[StoryReviewIssue],
+        location: str,
+    ) -> list[StoryReviewIssue]:
+        return [issue for issue in issues if issue.location == location]
+
     def _select_focus_character(self, story: Story, chapter_number: int) -> str:
         workflow = self._workflow(story)
         blueprint = workflow.get("blueprint")
@@ -691,13 +789,16 @@ class StoryWorkflowService:
         story: Story,
         chapter_spec: dict[str, Any],
         focus_character: str,
+        focus_motivation: str,
     ) -> TextGenerationResult:
         workflow = self._workflow(story)
         task = TextGenerationTask(
             step="chapter_scenes",
             system_prompt=(
                 "You write coherent chapter scenes for a long-form web novel. "
-                "Keep the pacing commercial, the continuity stable, and the hook strong."
+                "Keep the pacing commercial, the continuity stable, and the hook strong. "
+                "Use scene_type values from: opening, narrative, dialogue, action, "
+                "decision, climax, ending."
             ),
             user_prompt=(
                 f"Story title: {story.title}\n"
@@ -706,6 +807,7 @@ class StoryWorkflowService:
                 f"Chapter summary: {chapter_spec['summary']}\n"
                 f"Chapter hook: {chapter_spec.get('hook', '')}\n"
                 f"Focus character: {focus_character}\n"
+                f"Focus motivation: {focus_motivation}\n"
                 f"Premise: {workflow.get('premise', '')}"
             ),
             response_schema={
@@ -727,6 +829,7 @@ class StoryWorkflowService:
                 "chapter_number": chapter_spec["chapter_number"],
                 "chapter_title": chapter_spec["title"],
                 "focus_character": focus_character,
+                "focus_motivation": focus_motivation,
                 "outline_hook": chapter_spec.get("hook", ""),
                 "previous_summary": self._previous_chapter_summary(story),
             },
@@ -749,7 +852,9 @@ class StoryWorkflowService:
             if not isinstance(scene, dict):
                 raise ValueError("Scene payload must be an object")
             content = str(scene.get("content", "")).strip()
-            scene_type = str(scene.get("scene_type", "narrative")).strip() or "narrative"
+            scene_type = self._normalize_scene_type(
+                scene.get("scene_type", "narrative")
+            )
             title = str(scene.get("title", "")).strip() or (
                 f"{chapter_spec['title']} - Scene {index}"
             )
@@ -770,23 +875,31 @@ class StoryWorkflowService:
         chapter: Chapter,
         scenes: list[dict[str, Any]],
         focus_character: str,
+        focus_motivation: str,
         hook: str,
     ) -> None:
         for index, scene_payload in enumerate(scenes, start=1):
             content = scene_payload["content"].strip()
             if index == 1 and focus_character:
                 content = self._ensure_character_anchor(content, focus_character)
+            if index == 1 and focus_motivation:
+                content = self._ensure_motivation_anchor(content, focus_motivation)
             if index == len(scenes):
                 content = self._ensure_hook(content, hook)
+            scene_type = cast(
+                SceneType,
+                self._normalize_scene_type(scene_payload["scene_type"]),
+            )
 
             scene: Scene = chapter.add_scene(
                 content=content,
-                scene_type=scene_payload["scene_type"],
+                scene_type=scene_type,
                 title=scene_payload["title"],
             )
             scene.metadata.update(
                 {
                     "focus_character": focus_character,
+                    "focus_motivation": focus_motivation,
                     "timeline_day": chapter.chapter_number,
                     "outline_hook": hook,
                     "scene_index": index,
@@ -797,6 +910,11 @@ class StoryWorkflowService:
         if focus_character.lower() in content.lower():
             return content
         return f"{content} {focus_character} anchors the chapter."
+
+    def _ensure_motivation_anchor(self, content: str, focus_motivation: str) -> str:
+        if focus_motivation.lower() in content.lower():
+            return content
+        return f"{content} Their driving motive is to {focus_motivation}."
 
     def _ensure_hook(self, content: str, hook: str) -> str:
         if not hook:
@@ -813,6 +931,7 @@ class StoryWorkflowService:
         chapter: Chapter,
         chapter_spec: dict[str, Any],
         focus_character: str,
+        focus_motivation: str,
     ) -> None:
         memory = self._memory(story)
         chapter_memory = memory.setdefault("chapter_summaries", [])
@@ -823,6 +942,7 @@ class StoryWorkflowService:
                     "title": chapter.title,
                     "summary": chapter.summary,
                     "focus_character": focus_character,
+                    "focus_motivation": focus_motivation,
                     "hook": chapter_spec.get("hook", ""),
                 }
             )
@@ -832,6 +952,7 @@ class StoryWorkflowService:
                 "chapter_number": chapter.chapter_number,
                 "title": chapter.title,
                 "focus_character": focus_character,
+                "focus_motivation": focus_motivation,
                 "scene_count": chapter.scene_count,
             }
         )
@@ -941,10 +1062,11 @@ class StoryWorkflowService:
                 focus_character.lower() in scene.content.lower()
                 for scene in chapter.scenes
             ):
+                continuity_checks["character_alignment"] = False
                 issues.append(
                     StoryReviewIssue(
                         code="character_drift",
-                        severity="warning",
+                        severity="blocker",
                         message=(
                             f"The focus character '{focus_character}' does not appear "
                             "in the chapter scenes."
@@ -964,12 +1086,36 @@ class StoryWorkflowService:
                 )
             )
 
+        focus_motivation = self._focus_character_motivation(
+            story,
+            focus_character,
+            chapter,
+        )
+        if focus_motivation and not any(
+            focus_motivation.lower() in scene.content.lower()
+            for scene in chapter.scenes
+        ):
+            continuity_checks["motivation_alignment"] = False
+            issues.append(
+                StoryReviewIssue(
+                    code="motivation_drift",
+                    severity="blocker",
+                    message=(
+                        f"The focus character '{focus_character}' no longer reflects "
+                        f"the motivation '{focus_motivation}'."
+                    ),
+                    location=location,
+                    suggestion="Rebuild the chapter around the character's driving motive.",
+                )
+            )
+
         timeline_day = chapter.metadata.get("timeline_day")
         if timeline_day != chapter.chapter_number:
+            continuity_checks["timeline_alignment"] = False
             issues.append(
                 StoryReviewIssue(
                     code="timeline_regression",
-                    severity="warning",
+                    severity="blocker",
                     message="The chapter timeline metadata is out of sequence.",
                     location=location,
                     suggestion="Reset the chapter timeline marker to match the chapter number.",
@@ -982,6 +1128,7 @@ class StoryWorkflowService:
             current_scene = chapter.current_scene
             current_content = current_scene.content if current_scene else ""
             if hook and not current_content.rstrip().endswith("?") and "hook" not in current_content.lower():
+                continuity_checks["hook_alignment"] = False
                 issues.append(
                     StoryReviewIssue(
                         code="missing_hook",
@@ -1096,7 +1243,7 @@ class StoryWorkflowService:
         except Exception as exc:
             return Failure(str(exc), "INTERNAL_ERROR")
 
-        repair_notes = await self._repair_story(story, outline_chapters)
+        repair_notes = await self._repair_story(story, outline_chapters, issues)
         revision_notes.extend(repair_notes)
 
         workflow["revision_notes"] = revision_notes
@@ -1123,6 +1270,7 @@ class StoryWorkflowService:
         self,
         story: Story,
         outline_chapters: list[dict[str, Any]],
+        issues: list[StoryReviewIssue],
     ) -> list[str]:
         repair_notes: list[str] = []
         outline_map = {
@@ -1132,6 +1280,13 @@ class StoryWorkflowService:
         for chapter in story.chapters:
             chapter_spec = outline_map.get(chapter.chapter_number, {})
             focus_character = self._select_focus_character(story, chapter.chapter_number)
+            focus_motivation = self._focus_character_motivation(
+                story,
+                focus_character,
+                chapter,
+            )
+            location = f"chapter-{chapter.chapter_number}"
+            chapter_issues = self._issues_for_location(issues, location)
             if chapter.summary is None or not chapter.summary.strip():
                 summary = str(chapter_spec.get("summary", "")).strip()
                 if summary:
@@ -1142,6 +1297,9 @@ class StoryWorkflowService:
 
             if chapter.scene_count == 0 or any(
                 not scene.content.strip() for scene in chapter.scenes
+            ) or any(
+                issue.code in {"character_drift", "motivation_drift"}
+                for issue in chapter_issues
             ):
                 scene_result = await self._generate_chapter_scenes(
                     story=story,
@@ -1152,6 +1310,7 @@ class StoryWorkflowService:
                         "hook": chapter_spec.get("hook", ""),
                     },
                     focus_character=focus_character,
+                    focus_motivation=focus_motivation,
                 )
                 scenes = self._extract_scenes(
                     scene_result,
@@ -1165,6 +1324,7 @@ class StoryWorkflowService:
                     chapter=chapter,
                     scenes=scenes,
                     focus_character=focus_character,
+                    focus_motivation=focus_motivation,
                     hook=str(chapter_spec.get("hook", "")),
                 )
                 repair_notes.append(

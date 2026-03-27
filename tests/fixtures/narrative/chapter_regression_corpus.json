@@ -1,0 +1,58 @@
+[
+  {
+    "name": "timeline regression blocks publish",
+    "chapter_number": 2,
+    "expected_issue_code": "timeline_regression",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "timeline_day",
+      "timeline_day": 99
+    }
+  },
+  {
+    "name": "character drift blocks publish",
+    "chapter_number": 1,
+    "expected_issue_code": "character_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "all_scenes",
+      "scene_text": "The driving motive to protect family is visible, but no named protagonist is on the page.",
+      "current_scene_text": "The driving motive to protect family is visible, and the chapter closes on a hard question?"
+    }
+  },
+  {
+    "name": "motivation drift blocks publish",
+    "chapter_number": 1,
+    "expected_issue_code": "motivation_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "all_scenes",
+      "scene_text": "Ari moves through the negotiation with no explicit motive stated.",
+      "current_scene_text": "Ari reaches the final beat with a withheld decision?"
+    }
+  },
+  {
+    "name": "hook regression is detected",
+    "chapter_number": 1,
+    "expected_issue_code": "missing_hook",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "current_scene",
+      "current_scene_text": "Ari closes the chapter with a practical update that does not tease the next turn."
+    }
+  },
+  {
+    "name": "empty chapter blocks publish",
+    "chapter_number": 3,
+    "expected_issue_code": "empty_chapter",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "clear_scenes"
+    }
+  }
+]
