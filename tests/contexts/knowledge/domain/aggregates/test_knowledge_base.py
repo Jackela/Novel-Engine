@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc"
 """Tests for the KnowledgeBase aggregate root.
 
 This module contains comprehensive tests for the KnowledgeBase domain aggregate,

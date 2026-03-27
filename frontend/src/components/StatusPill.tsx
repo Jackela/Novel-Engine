@@ -1,5 +1,13 @@
 interface StatusPillProps {
-  tone: 'healthy' | 'degraded' | 'offline' | 'running' | 'paused' | 'idle' | 'completed';
+  tone:
+    | 'healthy'
+    | 'degraded'
+    | 'offline'
+    | 'running'
+    | 'paused'
+    | 'idle'
+    | 'draft'
+    | 'completed';
   children: string;
 }
 

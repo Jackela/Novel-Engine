@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from unittest.mock import MagicMock
 
@@ -17,6 +18,7 @@ from src.apps.api.health import (
     set_honcho_client,
 )
 from src.shared.infrastructure.health.health_checker import HealthChecker
+from src.shared.infrastructure.persistence import DatabaseConnectionPool
 
 
 def _build_client() -> TestClient:
@@ -45,12 +47,15 @@ def test_readiness_succeeds_with_healthy_database_pool() -> None:
             assert query == "SELECT 1"
             return 1
 
-    class HealthyPool:
+    class HealthyPool(DatabaseConnectionPool):
+        def __init__(self) -> None:
+            pass
+
         @asynccontextmanager
-        async def acquire(self):
+        async def acquire(self) -> AsyncIterator[HealthyConnection]:
             yield HealthyConnection()
 
-    set_connection_pool(HealthyPool())  # type: ignore[arg-type]
+    set_connection_pool(HealthyPool())
     client = _build_client()
     response = client.get("/health/ready")
     assert response.status_code == 200

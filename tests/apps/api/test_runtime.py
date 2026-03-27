@@ -1,5 +1,7 @@
 """Tests for workspace-scoped canonical runtime behavior."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import asyncio

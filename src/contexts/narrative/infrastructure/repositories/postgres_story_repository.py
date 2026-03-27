@@ -332,7 +332,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
         for row in rows:
             chapter_id = row.get("chapter_id")
             if chapter_id and str(chapter_id) not in chapters:
-                chapter = Chapter(  # type: ignore[abstract]
+                chapter = Chapter(
                     id=chapter_id,
                     story_id=str(first_row["story_id"]),
                     chapter_number=row["chapter_number"],
@@ -361,7 +361,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
                         choices_data = row["choices"] or []
                         choices = [self._dict_to_choice(c) for c in choices_data]
 
-                        scene = Scene(  # type: ignore[abstract]
+                        scene = Scene(
                             id=scene_id,
                             chapter_id=str(chapter_id),
                             scene_number=row["scene_number"],

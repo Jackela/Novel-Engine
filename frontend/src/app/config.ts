@@ -9,11 +9,7 @@ export const appConfig = {
   endpoints: {
     guestSession: '/api/v1/guest/session',
     login: '/api/v1/auth/login',
-    dashboardStatus: '/api/v1/dashboard/status',
-    orchestrationStatus: '/api/v1/dashboard/orchestration',
-    orchestrationStart: '/api/v1/dashboard/orchestration/start',
-    orchestrationPause: '/api/v1/dashboard/orchestration/pause',
-    orchestrationStop: '/api/v1/dashboard/orchestration/stop',
-    eventsStream: '/api/v1/dashboard/events/stream',
+    story: '/api/v1/story',
+    storyPipeline: '/api/v1/story/pipeline',
   },
 } as const;

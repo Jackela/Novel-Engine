@@ -1,5 +1,7 @@
 """Health and readiness endpoints for the canonical API."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import logging
@@ -24,17 +26,17 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from src.shared.infrastructure.persistence import DatabaseConnectionPool
 else:  # pragma: no cover - exercised when asyncpg is absent
-    DatabaseConnectionPool = Any  # type: ignore[misc,assignment]
+    DatabaseConnectionPool = Any  # type: ignore[assignment]
 
-honcho_health_check_module: Any | None
+honcho_health_check_module: Any | None = None
 try:  # pragma: no cover - optional runtime integration
     from src.shared.infrastructure.health.checks import (
-        honcho_health_check as honcho_health_check_module,
+        honcho_health_check as _honcho_health_check_module,
     )
 
     HONCHO_RUNTIME_AVAILABLE = True
+    honcho_health_check_module = _honcho_health_check_module
 except Exception:  # pragma: no cover - depends on optional package availability
-    honcho_health_check_module = None
     HONCHO_RUNTIME_AVAILABLE = False
 
 health_router = APIRouter()

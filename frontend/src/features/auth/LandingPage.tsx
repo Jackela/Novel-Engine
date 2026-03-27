@@ -16,7 +16,7 @@ export function LandingPage() {
 
     try {
       await signInAsGuest();
-      navigate('/dashboard');
+      navigate('/story');
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to create guest session.');
     } finally {
@@ -27,18 +27,18 @@ export function LandingPage() {
   return (
     <main className="landing" data-testid="landing-page">
       <section className="landing__hero">
-        <p className="landing__eyebrow">Novel Engine / Session Control</p>
+        <p className="landing__eyebrow">Novel Engine / Story Workshop</p>
         <h1 className="landing__title" data-testid="landing-title">
-          Launch a living narrative room with guest access, orchestration control, and live event telemetry.
+          Launch a long-form novel workspace with guest access, story generation, and continuity review.
         </h1>
         <p className="landing__copy">
-          The frontend is a source-first shell: one session model, one dashboard model, one
-          service layer, and a direct path from entry to orchestration.
+          The frontend is a source-first author shell: one session model, one story pipeline, one
+          continuity loop, and a direct path from inspiration to publishable chapters.
         </p>
 
         <div className="landing__actions">
           <Button onClick={handleLaunch} disabled={isLaunching} data-testid="launch-guest">
-            {isLaunching ? 'Opening session...' : 'Launch guest session'}
+            {isLaunching ? 'Opening workspace...' : 'Launch author workspace'}
           </Button>
           <Link className="button button--secondary" to="/login">
             Sign in
@@ -55,11 +55,11 @@ export function LandingPage() {
         </article>
         <article className="landing-card">
           <h2>Directly testable routes</h2>
-          <p>`/` and `/dashboard` are stable entry points for Playwright and for users.</p>
+          <p>`/` and `/story` are stable entry points for Playwright and for writers.</p>
         </article>
         <article className="landing-card">
           <h2>Canonical backend only</h2>
-          <p>Guest sessions, orchestration status, and event flow are driven by the real API.</p>
+          <p>Guest sessions, story generation, and continuity review are driven by the real API.</p>
         </article>
       </section>
     </main>

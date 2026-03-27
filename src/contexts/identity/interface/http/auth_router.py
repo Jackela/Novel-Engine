@@ -4,6 +4,8 @@ This module provides REST API endpoints for user authentication,
 including login, token refresh, and logout functionality.
 """
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 from typing import Optional

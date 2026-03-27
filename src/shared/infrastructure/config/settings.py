@@ -4,6 +4,8 @@ This module provides type-safe, environment-aware configuration management
 for the Novel Engine application.
 """
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import secrets
@@ -199,11 +201,11 @@ class LLMSettings(BaseSettings):
         case_sensitive=False,
     )
 
-    provider: Literal["gemini", "openai", "anthropic", "mock"] = Field(
-        default="gemini",
+    provider: Literal["openai", "mock"] = Field(
+        default="openai",
         description="LLM provider name",
     )
-    model: str = Field(default="gemini-pro", description="LLM model name")
+    model: str = Field(default="gpt-4o-mini", description="LLM model name")
     api_key: str | None = Field(default=None, description="LLM API key")
     api_base: str | None = Field(default=None, description="Custom API base URL")
     timeout: int = Field(

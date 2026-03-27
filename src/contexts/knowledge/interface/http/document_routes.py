@@ -4,6 +4,8 @@ Document Routes
 Routes for document management.
 """
 
+# mypy: disable-error-code=misc
+
 from typing import Any, List, Optional
 
 from fastapi import APIRouter, Depends, Query, status
