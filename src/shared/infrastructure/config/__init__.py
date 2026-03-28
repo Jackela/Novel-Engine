@@ -1,23 +1,14 @@
 """Infrastructure configuration package.
 
 This package provides configuration management for the Novel Engine,
-supporting multiple sources: YAML files, environment variables, and
-programmatic overrides.
+supporting YAML files and environment-backed settings.
 
 Example:
-    >>> from src.shared.infrastructure.config import ConfigManager, get_settings
-    >>> config = ConfigManager()
-    >>> db_url = config.get("database.url")
+    >>> from src.shared.infrastructure.config import get_settings
     >>> settings = get_settings()
     >>> print(settings.environment)
 """
 
-from .config_manager import (
-    ConfigManager,
-    ConfigManagerError,
-    get_config,
-    get_config_value,
-)
 from .loader import ConfigLoader, ConfigLoadError, load_yaml_config, merge_configs
 from .settings import (
     APISettings,
@@ -37,7 +28,6 @@ from .settings import (
 
 __all__ = [
     # Main classes
-    "ConfigManager",
     "ConfigLoader",
     "NovelEngineSettings",
     # Settings classes
@@ -51,8 +41,6 @@ __all__ = [
     "RedisSettings",
     "SecuritySettings",
     # Functions
-    "get_config",
-    "get_config_value",
     "get_settings",
     "load_yaml_config",
     "merge_configs",
@@ -60,5 +48,4 @@ __all__ = [
     "reset_settings",
     # Exceptions
     "ConfigLoadError",
-    "ConfigManagerError",
 ]

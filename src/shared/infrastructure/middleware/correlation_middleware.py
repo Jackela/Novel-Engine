@@ -5,7 +5,7 @@ enabling distributed tracing and request tracking across services.
 """
 
 import uuid
-from typing import Awaitable, Callable
+from typing import Awaitable, Callable, cast
 
 import structlog
 from fastapi import Request
@@ -99,7 +99,7 @@ def get_correlation_id_from_context() -> str | None:
         The correlation ID if bound in context, None otherwise.
     """
     ctx = structlog.contextvars.get_contextvars()
-    return ctx.get("correlation_id")
+    return cast(str | None, ctx.get("correlation_id"))
 
 
 __all__ = [

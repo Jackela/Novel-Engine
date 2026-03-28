@@ -19,7 +19,6 @@ import logging
 import sys
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 # Setup logging
 logging.basicConfig(
@@ -59,7 +58,7 @@ async def migrate_memories(
 
     try:
         # Initialize Honcho adapter
-        adapter = await create_honcho_memory_adapter()
+        await create_honcho_memory_adapter()
         logger.info("Honcho adapter initialized")
 
         # This is a template - in real migration you would:

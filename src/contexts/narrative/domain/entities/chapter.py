@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from src.contexts.narrative.domain.entities.scene import Scene
-from src.contexts.narrative.domain.types import ChapterId
+from src.contexts.narrative.domain.types import ChapterId, SceneType
 from src.shared.domain.base.entity import Entity
 
 
@@ -67,7 +67,10 @@ class Chapter(Entity[ChapterId]):
         return self.scenes[-1]
 
     def add_scene(
-        self, content: str, scene_type: str = "narrative", title: Optional[str] = None
+        self,
+        content: str,
+        scene_type: SceneType = "narrative",
+        title: Optional[str] = None,
     ) -> Scene:
         """
         Add a new scene to this chapter.

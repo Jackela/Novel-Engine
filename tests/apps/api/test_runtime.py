@@ -1,5 +1,7 @@
 """Tests for workspace-scoped canonical runtime behavior."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import asyncio
@@ -18,6 +20,7 @@ def _build_runtime_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> C
         "test-secret-key-for-runtime-scoping-1234567890",
     )
     monkeypatch.setenv("MONITORING_METRICS_ENABLED", "false")
+    monkeypatch.setenv("LLM_PROVIDER", "mock")
     settings_module.reset_settings()
     return CanonicalRuntimeService(base_dir=tmp_path)
 

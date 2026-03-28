@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc"
 """Tests for the Scene entity.
 
 This module contains comprehensive tests for the Scene domain entity,
@@ -6,7 +7,7 @@ covering choice management, content updates, and decision logic.
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 from uuid import UUID
 
 import pytest
@@ -102,12 +103,20 @@ class TestScene:
                 chapter_id="chapter-123",
                 scene_number=1,
                 content="Test",
-                scene_type="invalid-type",
+                scene_type="invalid-type",  # type: ignore[arg-type]
             )
 
     def test_create_with_valid_scene_types(self) -> None:
         """Test creating scenes with all valid scene types."""
-        valid_types = [
+        valid_types: list[
+            Literal["opening"]
+            | Literal["narrative"]
+            | Literal["dialogue"]
+            | Literal["action"]
+            | Literal["decision"]
+            | Literal["climax"]
+            | Literal["ending"]
+        ] = [
             "opening",
             "narrative",
             "dialogue",

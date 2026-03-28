@@ -81,7 +81,7 @@ class TestSuccess:
         """Test Success.bind can return Failure."""
         result: Success[int] = Success(10)
 
-        chained = result.bind(lambda x: Failure("error", "ERR_001"))
+        chained: Result[int] = result.bind(lambda x: Failure("error", "ERR_001"))
 
         assert chained.is_err()
 
@@ -142,6 +142,7 @@ class TestFailure:
 
         mapped = result.map(lambda x: x * 2)
 
+        assert isinstance(mapped, Failure)
         assert mapped.is_err()
         assert mapped.error == "error"
 
@@ -151,6 +152,7 @@ class TestFailure:
 
         mapped = result.map_err(lambda e: f"transformed: {e}")
 
+        assert isinstance(mapped, Failure)
         assert "transformed" in mapped.error
 
     def test_failure_bind_noop(self) -> None:
@@ -287,4 +289,5 @@ class TestResultChaining:
         )
 
         assert final.is_err()
+        assert isinstance(final, Failure)
         assert "Middle error" in final.error

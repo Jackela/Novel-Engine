@@ -48,19 +48,8 @@ jobs:
       - name: Run MyPy
         run: >
           mypy
-          src/apps/api
-          src/contexts/identity
-          src/contexts/knowledge/interface/http
-          src/contexts/knowledge/infrastructure/runtime.py
-          src/contexts/knowledge/infrastructure/vectorStores/chroma_knowledge_vector_store.py
-          src/contexts/world/interface/http
-          src/shared/infrastructure/config
-          src/shared/infrastructure/health
-          src/shared/infrastructure/logging
-          src/shared/infrastructure/middleware
-          src/shared/infrastructure/honcho
-          src/shared/interface/http
-          src/contexts/knowledge/application/services
+          src
+          tests
           --no-error-summary
           --show-column-numbers
 
@@ -150,3 +139,38 @@ jobs:
       - name: Run frontend smoke tests
         working-directory: frontend
         run: npm run test:e2e:smoke
+
+  dashscope-live-smoke:
+    name: DashScope Live Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ secrets.DASHSCOPE_API_KEY != '' }}
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_DASHSCOPE_TESTS: "1"
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run DashScope live smoke
+        run: >
+          pytest -q
+          -m requires_dashscope
+          tests/contract/test_text_generation_provider_contract.py
+          tests/contexts/narrative/application/test_qwen_provider_smoke.py

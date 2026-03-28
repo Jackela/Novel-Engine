@@ -1,0 +1,318 @@
+[
+  {
+    "name": "timeline regression blocks publish in early arc",
+    "chapter_number": 2,
+    "expected_issue_code": "timeline_regression",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "timeline_day",
+      "timeline_day": 99
+    }
+  },
+  {
+    "name": "character drift blocks publish in opening chapter",
+    "chapter_number": 1,
+    "expected_issue_code": "character_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "all_scenes",
+      "scene_text": "The driving motive to protect family is visible, but no named protagonist is on the page.",
+      "current_scene_text": "The driving motive to protect family is visible, and the chapter closes on a hard question?"
+    }
+  },
+  {
+    "name": "motivation drift blocks publish in opening chapter",
+    "chapter_number": 1,
+    "expected_issue_code": "motivation_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "all_scenes",
+      "scene_text": "Ari moves through the negotiation with no explicit motive stated.",
+      "current_scene_text": "Ari reaches the final beat with a withheld decision?"
+    }
+  },
+  {
+    "name": "hook regression is detected in early arc",
+    "chapter_number": 2,
+    "expected_issue_code": "missing_hook",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "current_scene",
+      "current_scene_text": "Ari closes the chapter with a practical update that does not tease the next turn."
+    }
+  },
+  {
+    "name": "empty chapter blocks publish in early arc",
+    "chapter_number": 3,
+    "expected_issue_code": "empty_chapter",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "clear_scenes"
+    }
+  },
+  {
+    "name": "thin chapter is flagged in mid arc",
+    "chapter_number": 4,
+    "expected_issue_code": "thin_chapter",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "trim_scenes",
+      "keep": 1
+    }
+  },
+  {
+    "name": "flat scene stack is flagged in mid arc",
+    "chapter_number": 5,
+    "expected_issue_code": "flat_scene_stack",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "flatten_scene_types",
+      "scene_type": "narrative"
+    }
+  },
+  {
+    "name": "unknown focus character blocks publish in mid arc",
+    "chapter_number": 6,
+    "expected_issue_code": "unknown_focus_character",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "focus_character",
+      "focus_character": "Ghost Hero"
+    }
+  },
+  {
+    "name": "timeline regression blocks publish in mid arc",
+    "chapter_number": 7,
+    "expected_issue_code": "timeline_regression",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "timeline_day",
+      "timeline_day": 2
+    }
+  },
+  {
+    "name": "missing focus character is flagged in late arc",
+    "chapter_number": 8,
+    "expected_issue_code": "missing_focus_character",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "clear_focus_character"
+    }
+  },
+  {
+    "name": "hook regression is detected in late arc",
+    "chapter_number": 9,
+    "expected_issue_code": "missing_hook",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "current_scene",
+      "current_scene_text": "The chapter ends with a clean report and no cliffhanger."
+    }
+  },
+  {
+    "name": "missing hook payoff is flagged in late arc",
+    "chapter_number": 10,
+    "expected_issue_code": "missing_hook_payoff",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "opening_scene",
+      "content": "Ari starts the new chapter with logistics chatter and refuses to address the previous cliffhanger."
+    }
+  },
+  {
+    "name": "relationship drift blocks publish in late arc",
+    "chapter_number": 10,
+    "expected_issue_code": "relationship_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "relationship_status",
+      "relationship_status": "betrayed allies"
+    }
+  },
+  {
+    "name": "missing relationship state is flagged in late arc",
+    "chapter_number": 10,
+    "expected_issue_code": "missing_relationship_state",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutations": [
+      {
+        "chapter_number": 10,
+        "kind": "relationship_target",
+        "relationship_target": ""
+      },
+      {
+        "chapter_number": 10,
+        "kind": "relationship_status",
+        "relationship_status": ""
+      }
+    ]
+  },
+  {
+    "name": "empty chapter blocks publish in late arc",
+    "chapter_number": 11,
+    "expected_issue_code": "empty_chapter",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "clear_scenes"
+    }
+  },
+  {
+    "name": "hook debt is flagged across a multi-chapter stretch",
+    "expected_issue_code": "hook_debt",
+    "expected_severity": "warning",
+    "block_publish_before_revision": true,
+    "mutations": [
+      {
+        "chapter_number": 12,
+        "kind": "current_scene",
+        "current_scene_text": "Ari ends the chapter on routine cleanup without a question."
+      },
+      {
+        "chapter_number": 13,
+        "kind": "current_scene",
+        "current_scene_text": "Ari closes the beat with a status note and no cliffhanger."
+      },
+      {
+        "chapter_number": 14,
+        "kind": "current_scene",
+        "current_scene_text": "Ari files the report and leaves the room with no teaser."
+      }
+    ]
+  },
+  {
+    "name": "world rule conflict blocks publish in the final arc",
+    "chapter_number": 15,
+    "expected_issue_code": "world_rule_conflict",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "all_scenes",
+      "scene_text": "Ari protects family while power comes free and no one pays any cost.",
+      "current_scene_text": "Ari protects family while power comes free and wonders who changed the rules?"
+    }
+  },
+  {
+    "name": "consecutive low-tension chapters are surfaced in the final arc",
+    "expected_issue_code": "consecutive_low_tension_chapters",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutations": [
+      {
+        "chapter_number": 15,
+        "kind": "current_scene",
+        "current_scene_text": "Ari leaves the scene after a calm debrief without teasing the next crisis."
+      },
+      {
+        "chapter_number": 16,
+        "kind": "trim_scenes",
+        "keep": 1
+      },
+      {
+        "chapter_number": 17,
+        "kind": "flatten_scene_types",
+        "scene_type": "narrative"
+      }
+    ]
+  },
+  {
+    "name": "hook regression is detected in the extended final arc",
+    "chapter_number": 18,
+    "expected_issue_code": "missing_hook",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "current_scene",
+      "current_scene_text": "Ari closes the chapter with a solved report and no lingering question."
+    }
+  },
+  {
+    "name": "thin chapter is flagged in the extended final arc",
+    "chapter_number": 19,
+    "expected_issue_code": "thin_chapter",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutation": {
+      "kind": "trim_scenes",
+      "keep": 1
+    }
+  },
+  {
+    "name": "relationship drift blocks publish in the extended final arc",
+    "chapter_number": 20,
+    "expected_issue_code": "relationship_drift",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "relationship_status",
+      "relationship_status": "blood enemies"
+    }
+  },
+  {
+    "name": "missing relationship state is flagged in the extended final arc",
+    "chapter_number": 21,
+    "expected_issue_code": "missing_relationship_state",
+    "expected_severity": "warning",
+    "block_publish_before_revision": false,
+    "mutations": [
+      {
+        "chapter_number": 21,
+        "kind": "relationship_target",
+        "relationship_target": ""
+      },
+      {
+        "chapter_number": 21,
+        "kind": "relationship_status",
+        "relationship_status": ""
+      }
+    ]
+  },
+  {
+    "name": "timeline regression blocks publish in the epilogue runway",
+    "chapter_number": 22,
+    "expected_issue_code": "timeline_regression",
+    "expected_severity": "blocker",
+    "block_publish_before_revision": true,
+    "mutation": {
+      "kind": "timeline_day",
+      "timeline_day": 5
+    }
+  },
+  {
+    "name": "hook debt is flagged across the ending runway",
+    "expected_issue_code": "hook_debt",
+    "expected_severity": "warning",
+    "block_publish_before_revision": true,
+    "mutations": [
+      {
+        "chapter_number": 22,
+        "kind": "current_scene",
+        "current_scene_text": "Ari files the result and leaves without a trailing risk."
+      },
+      {
+        "chapter_number": 23,
+        "kind": "current_scene",
+        "current_scene_text": "The chapter closes on a clean handoff and no question."
+      },
+      {
+        "chapter_number": 24,
+        "kind": "current_scene",
+        "current_scene_text": "Ari ends on routine cleanup with no hint of a next beat."
+      }
+    ]
+  }
+]

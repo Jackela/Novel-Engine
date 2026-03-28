@@ -1,5 +1,7 @@
 """Canonical FastAPI application for Novel Engine."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import os
@@ -39,14 +41,17 @@ from src.shared.infrastructure.middleware import (
 def custom_openapi(app: FastAPI) -> dict:
     """Generate the canonical OpenAPI schema."""
     if app.openapi_schema:
-        return app.openapi_schema
+        return cast(dict[str, Any], app.openapi_schema)
 
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        description=app.description,
-        routes=app.routes,
-        tags=app.openapi_tags,
+    openapi_schema = cast(
+        dict[str, Any],
+        get_openapi(
+            title=app.title,
+            version=app.version,
+            description=app.description,
+            routes=app.routes,
+            tags=app.openapi_tags,
+        ),
     )
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
@@ -61,7 +66,7 @@ def custom_openapi(app: FastAPI) -> dict:
         {"url": "http://localhost:8000/api/v1", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
-    return app.openapi_schema
+    return cast(dict[str, Any], app.openapi_schema)
 
 
 def _configure_optional_honcho() -> None:
@@ -140,8 +145,8 @@ def create_application(
     app = FastAPI(
         title=resolved_settings.project_name,
         description=(
-            "Canonical Novel Engine API with source-backed auth, knowledge, world, "
-            "guest, dashboard, orchestration, health, and versioning routes."
+            "Canonical Novel Engine API with source-backed auth, story workflow, "
+            "knowledge, guest, health, and versioning routes."
         ),
         version=resolved_settings.project_version,
         docs_url=None,
@@ -152,10 +157,8 @@ def create_application(
             {"name": "health", "description": "Health and readiness endpoints"},
             {"name": "authentication", "description": "Authentication operations"},
             {"name": "knowledge", "description": "Knowledge management"},
-            {"name": "world", "description": "World state operations"},
             {"name": "guest", "description": "Guest session management"},
-            {"name": "dashboard", "description": "Dashboard summary and events"},
-            {"name": "orchestration", "description": "Canonical orchestration control"},
+            {"name": "story", "description": "Long-form story generation workflow"},
         ],
     )
     app.state.settings = resolved_settings
@@ -209,7 +212,8 @@ def create_application(
             "health": "/health",
             "api_base": "/api/v1",
             "guest_session": "/api/v1/guest/session",
-            "dashboard": "/api/v1/dashboard/status",
+            "story": "/api/v1/story",
+            "story_pipeline": "/api/v1/story/pipeline",
             "versioning": "/api/versions",
         }
 

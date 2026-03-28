@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc, unreachable"
 """Tests for the Story aggregate root.
 
 This module contains comprehensive tests for the Story domain aggregate,
@@ -166,15 +167,18 @@ class TestStoryChapters:
         assert valid_story.current_chapter_id == str(chapter2.id)
 
     def test_add_chapter_beyond_maximum_raises_error(self, valid_story: Story) -> None:
-        """Test that adding more than 10 chapters raises ValueError."""
-        # Add 10 chapters
-        for i in range(10):
+        """Test that adding beyond the long-form chapter cap raises ValueError."""
+        # Add up to the configured chapter cap.
+        for i in range(Story.MAX_CHAPTERS):
             valid_story.add_chapter(f"Chapter {i + 1}", f"Summary {i + 1}")
 
-        assert valid_story.chapter_count == 10
+        assert valid_story.chapter_count == Story.MAX_CHAPTERS
 
-        # 11th chapter should fail
-        with pytest.raises(ValueError, match="cannot have more than 10 chapters"):
+        # One more chapter should fail.
+        with pytest.raises(
+            ValueError,
+            match=f"cannot have more than {Story.MAX_CHAPTERS} chapters",
+        ):
             valid_story.add_chapter("Chapter 11", "Should fail")
 
     def test_add_chapter_to_completed_story_raises_error(

@@ -1,11 +1,27 @@
 import { appConfig } from '@/app/config';
 import type {
-  DashboardStatus,
+  StoryBlueprintResponse,
+  StoryCreateRequest,
+  StoryCreateResponse,
+  StoryDraftResponse,
+  StoryExportResponse,
   GuestSessionResponse,
   LoginRequest,
   LoginResponse,
-  OrchestrationStatus,
+  StoryListResponse,
+  StoryOutlineResponse,
+  StoryPipelineRequest,
+  StoryPipelineResult,
+  StoryPublishResponse,
+  StoryReviewResponse,
+  StoryReviseResponse,
+  StoryRunDetailResponse,
+  StoryRunRequest,
+  StoryRunsResponse,
+  StoryArtifactsResponse,
   SessionState,
+  StorySnapshot,
+  StoryWorkspaceResponse,
 } from '@/app/types';
 import { sessionStorageKey, safeStorage } from '@/shared/storage';
 
@@ -20,6 +36,21 @@ class HttpError extends Error {
 
 const buildUrl = (path: string) =>
   appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${path}` : path;
+
+function buildStoryQuery(params: Record<string, string | number | undefined>): string {
+  const searchParams = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) {
+      continue;
+    }
+
+    searchParams.set(key, String(value));
+  }
+
+  const query = searchParams.toString();
+  return query ? `?${query}` : '';
+}
 
 function getAuthorizationHeaders(): Record<string, string> {
   const session = safeStorage.read<SessionState>(sessionStorageKey);
@@ -66,31 +97,87 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  getDashboardStatus: (workspaceId: string) =>
-    requestJson<DashboardStatus>(
-      `${appConfig.endpoints.dashboardStatus}?workspace_id=${encodeURIComponent(workspaceId)}`,
+  listStories: (authorId: string, limit = 20, offset = 0) =>
+    requestJson<StoryListResponse>(
+      `${appConfig.endpoints.story}${buildStoryQuery({
+        author_id: authorId,
+        limit,
+        offset,
+      })}`,
     ),
 
-  getOrchestrationStatus: (workspaceId: string) =>
-    requestJson<OrchestrationStatus>(
-      `${appConfig.endpoints.orchestrationStatus}?workspace_id=${encodeURIComponent(workspaceId)}`,
+  getStory: (storyId: string) =>
+    requestJson<{ story: StorySnapshot; workspace: StoryWorkspaceResponse['workspace'] }>(
+      `${appConfig.endpoints.story}/${storyId}`,
     ),
 
-  startOrchestration: (workspaceId: string) =>
-    requestJson<OrchestrationStatus>(appConfig.endpoints.orchestrationStart, {
+  getStoryWorkspace: (storyId: string) =>
+    requestJson<StoryWorkspaceResponse>(
+      `${appConfig.endpoints.story}/${storyId}/workspace`,
+    ),
+
+  getStoryRuns: (storyId: string) =>
+    requestJson<StoryRunsResponse>(`${appConfig.endpoints.story}/${storyId}/runs`),
+
+  getStoryRun: (storyId: string, runId: string) =>
+    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs/${runId}`),
+
+  getStoryArtifacts: (storyId: string) =>
+    requestJson<StoryArtifactsResponse>(`${appConfig.endpoints.story}/${storyId}/artifacts`),
+
+  createStoryRun: (storyId: string, payload: StoryRunRequest) =>
+    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs`, {
       method: 'POST',
-      body: JSON.stringify({ workspace_id: workspaceId }),
+      body: JSON.stringify(payload),
     }),
 
-  pauseOrchestration: (workspaceId: string) =>
-    requestJson<OrchestrationStatus>(appConfig.endpoints.orchestrationPause, {
+  createStory: (payload: StoryCreateRequest) =>
+    requestJson<StoryCreateResponse>(appConfig.endpoints.story, {
       method: 'POST',
-      body: JSON.stringify({ workspace_id: workspaceId }),
+      body: JSON.stringify(payload),
     }),
 
-  stopOrchestration: (workspaceId: string) =>
-    requestJson<OrchestrationStatus>(appConfig.endpoints.orchestrationStop, {
+  generateBlueprint: (storyId: string) =>
+    requestJson<StoryBlueprintResponse>(`${appConfig.endpoints.story}/${storyId}/blueprint`, {
       method: 'POST',
-      body: JSON.stringify({ workspace_id: workspaceId }),
+    }),
+
+  generateOutline: (storyId: string) =>
+    requestJson<StoryOutlineResponse>(`${appConfig.endpoints.story}/${storyId}/outline`, {
+      method: 'POST',
+    }),
+
+  draftStory: (storyId: string, targetChapters?: number | null) =>
+    requestJson<StoryDraftResponse>(`${appConfig.endpoints.story}/${storyId}/draft`, {
+      method: 'POST',
+      body: JSON.stringify(
+        targetChapters == null ? {} : { target_chapters: targetChapters },
+      ),
+    }),
+
+  reviewStory: (storyId: string) =>
+    requestJson<StoryReviewResponse>(`${appConfig.endpoints.story}/${storyId}/review`, {
+      method: 'POST',
+    }),
+
+  reviseStory: (storyId: string) =>
+    requestJson<StoryReviseResponse>(`${appConfig.endpoints.story}/${storyId}/revise`, {
+      method: 'POST',
+    }),
+
+  exportStory: (storyId: string) =>
+    requestJson<StoryExportResponse>(`${appConfig.endpoints.story}/${storyId}/export`, {
+      method: 'POST',
+    }),
+
+  publishStory: (storyId: string) =>
+    requestJson<StoryPublishResponse>(`${appConfig.endpoints.story}/${storyId}/publish`, {
+      method: 'POST',
+    }),
+
+  runPipeline: (payload: StoryPipelineRequest) =>
+    requestJson<StoryPipelineResult>(appConfig.endpoints.storyPipeline, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 };
