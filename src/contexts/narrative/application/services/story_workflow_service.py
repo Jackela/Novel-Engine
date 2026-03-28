@@ -1,102 +1,124 @@
-"""Story workflow application service.
-
-This service owns the canonical long-form novel generation pipeline:
-inspiration -> blueprint -> outline -> chapters -> review -> revision ->
-export -> publish.
-"""
+"""Story workflow facade for the canonical long-form novel pipeline."""
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Any, Literal, cast
+from typing import Any, Literal
 from uuid import UUID
 
 from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationProvider,
-    TextGenerationProviderError,
-    TextGenerationResult,
-    TextGenerationTask,
+)
+from src.contexts.narrative.application.ports.generation_run_repository_port import (
+    GenerationRunRepositoryPort,
+)
+from src.contexts.narrative.application.ports.story_artifact_repository_port import (
+    StoryArtifactRepositoryPort,
+)
+from src.contexts.narrative.application.ports.story_generation_state_repository_port import (
+    StoryGenerationStateRepositoryPort,
+)
+from src.contexts.narrative.application.services.chapter_drafting_service import (
+    ChapterDraftingService,
+    DraftChapterFailure,
+)
+from src.contexts.narrative.application.services.continuity_review_service import (
+    ContinuityReviewService,
+)
+from src.contexts.narrative.application.services.hybrid_publication_gate import (
+    HybridPublicationGate,
+)
+from src.contexts.narrative.application.services.semantic_review_service import (
+    SemanticReviewService,
+)
+from src.contexts.narrative.application.services.story_export_service import (
+    StoryExportService,
+)
+from src.contexts.narrative.application.services.story_pipeline_context import (
+    StoryWorkflowContext,
+)
+from src.contexts.narrative.application.services.story_planning_service import (
+    StoryPlanningService,
+)
+from src.contexts.narrative.application.services.story_publication_service import (
+    StoryPublicationService,
+)
+from src.contexts.narrative.application.services.story_revision_service import (
+    StoryRevisionService,
+)
+from src.contexts.narrative.application.services.story_workflow_types import (
+    GenerationRun,
+    GenerationRunResourceState,
+    HybridReviewReport,
+    StoryArtifactResourceState,
+    StoryGenerationState,
+    StoryMemoryState,
+    StoryWorkflowState,
 )
 from src.contexts.narrative.domain.aggregates.story import Story
-from src.contexts.narrative.domain.entities.chapter import Chapter
-from src.contexts.narrative.domain.entities.scene import Scene
 from src.contexts.narrative.domain.ports.story_repository_port import (
     StoryRepositoryPort,
 )
-from src.contexts.narrative.domain.types import SceneType
 from src.shared.application.result import Failure, Result, Success
 
-ReviewSeverity = Literal["info", "warning", "blocker"]
+StoryReviewReport = HybridReviewReport
+StoryRunOperation = Literal[
+    "blueprint",
+    "outline",
+    "draft",
+    "review",
+    "revise",
+    "export",
+    "publish",
+    "pipeline",
+]
 
 
 @dataclass(slots=True)
-class StoryReviewIssue:
-    """A single quality gate issue discovered during review."""
+class WorkflowStageError(Exception):
+    """Typed stage failure used to keep result mapping explicit."""
 
-    code: str
-    severity: ReviewSeverity
+    stage_name: str
+    failure_code: str
     message: str
-    location: str | None = None
-    suggestion: str | None = None
     details: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "code": self.code,
-            "severity": self.severity,
-            "message": self.message,
-            "location": self.location,
-            "suggestion": self.suggestion,
-            "details": self.details,
-        }
-
-
-@dataclass(slots=True)
-class StoryReviewReport:
-    """Structured story review result."""
-
-    story_id: str
-    quality_score: int
-    ready_for_publish: bool
-    summary: str
-    issues: list[StoryReviewIssue] = field(default_factory=list)
-    revision_notes: list[str] = field(default_factory=list)
-    chapter_count: int = 0
-    scene_count: int = 0
-    continuity_checks: dict[str, bool] = field(default_factory=dict)
-    checked_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "story_id": self.story_id,
-            "quality_score": self.quality_score,
-            "ready_for_publish": self.ready_for_publish,
-            "summary": self.summary,
-            "issues": [issue.to_dict() for issue in self.issues],
-            "revision_notes": self.revision_notes,
-            "chapter_count": self.chapter_count,
-            "scene_count": self.scene_count,
-            "continuity_checks": self.continuity_checks,
-            "checked_at": self.checked_at,
-        }
+    def __str__(self) -> str:
+        return self.message
 
 
 class StoryWorkflowService:
-    """Application service for the canonical novel-generation workflow."""
+    """Facade for the canonical long-form story generation workflow."""
 
     def __init__(
         self,
         story_repository: StoryRepositoryPort,
+        generation_state_repository: StoryGenerationStateRepositoryPort,
+        generation_run_repository: GenerationRunRepositoryPort,
+        story_artifact_repository: StoryArtifactRepositoryPort,
         text_generation_provider: TextGenerationProvider,
+        review_generation_provider: TextGenerationProvider | None = None,
         default_target_chapters: int = 12,
     ) -> None:
         if default_target_chapters < 1:
             raise ValueError("default_target_chapters must be positive")
 
         self._story_repository = story_repository
+        self._generation_state_repository = generation_state_repository
+        self._generation_run_repository = generation_run_repository
+        self._story_artifact_repository = story_artifact_repository
         self._provider = text_generation_provider
+        self._review_provider = review_generation_provider or text_generation_provider
         self._default_target_chapters = default_target_chapters
+        self._planning_service = StoryPlanningService()
+        self._drafting_service = ChapterDraftingService()
+        self._review_service = ContinuityReviewService()
+        self._semantic_review_service = SemanticReviewService(self._review_provider)
+        self._hybrid_publication_gate = HybridPublicationGate()
+        self._revision_service = StoryRevisionService(self._drafting_service)
+        self._export_service = StoryExportService()
+        self._publication_service = StoryPublicationService()
 
     async def create_story(
         self,
@@ -110,7 +132,6 @@ class StoryWorkflowService:
         themes: list[str] | None = None,
         tone: str | None = None,
     ) -> Result[dict[str, Any]]:
-        """Create a new draft story and seed its workflow memory."""
         try:
             resolved_target_chapters = self._resolve_target_chapters(target_chapters)
             theme_list = [theme.strip() for theme in themes or [] if theme.strip()]
@@ -121,45 +142,142 @@ class StoryWorkflowService:
                 target_audience=target_audience.strip() if target_audience else None,
                 themes=theme_list,
             )
-            self._workflow(story).update(
-                {
-                    "status": "created",
-                    "premise": premise.strip(),
-                    "tone": (tone or "commercial web fiction").strip(),
-                    "target_chapters": resolved_target_chapters,
-                    "generation_trace": [],
-                    "chapter_memory": [],
-                    "revision_notes": [],
-                }
+            workflow = StoryWorkflowState(
+                status="created",
+                premise=premise.strip(),
+                tone=(tone or "commercial web fiction").strip(),
+                target_chapters=resolved_target_chapters,
             )
-            self._memory(story).update(
-                {
-                    "premise": premise.strip(),
-                    "tone": (tone or "commercial web fiction").strip(),
-                    "target_chapters": resolved_target_chapters,
-                    "themes": theme_list,
-                    "chapter_summaries": [],
-                }
+            memory = StoryMemoryState(
+                premise=premise.strip(),
+                tone=(tone or "commercial web fiction").strip(),
+                target_chapters=resolved_target_chapters,
+                themes=theme_list,
+            )
+            ctx = StoryWorkflowContext(
+                story=story,
+                repository=self._story_repository,
+                state_repository=self._generation_state_repository,
+                run_repository=self._generation_run_repository,
+                artifact_repository=self._story_artifact_repository,
+                provider=self._provider,
+                default_target_chapters=self._default_target_chapters,
+                workflow=workflow,
+                memory=memory,
+                run_history=[],
+                run_events=[],
+                run_snapshots=[],
+                artifact_history=[],
             )
             story.metadata["narrative_seed"] = {
                 "premise": premise.strip(),
-                "tone": (tone or "commercial web fiction").strip(),
+                "tone": workflow.tone,
                 "target_chapters": resolved_target_chapters,
             }
-            self._touch(story)
-            await self._story_repository.save(story)
-            return Success({"story": story.to_dict()})
+            ctx.touch()
+            await ctx.save()
+            return Success(
+                {
+                    "story": self._story_payload(story),
+                    "workspace": self._workspace_payload(ctx),
+                }
+            )
         except ValueError as exc:
             return Failure(str(exc), "VALIDATION_ERROR")
         except Exception as exc:
             return Failure(str(exc), "INTERNAL_ERROR")
 
     async def get_story(self, story_id: str) -> Result[dict[str, Any]]:
-        """Return a serialisable story snapshot."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-        return Success({"story": story_or_error.to_dict()})
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        return Success(
+            {
+                "story": self._story_payload(ctx.story),
+                "workspace": self._workspace_payload(ctx),
+            }
+        )
+
+    async def get_story_workspace(self, story_id: str) -> Result[dict[str, Any]]:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        return Success({"workspace": self._workspace_payload(ctx)})
+
+    async def get_story_runs(self, story_id: str) -> Result[dict[str, Any]]:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        return Success(self._run_payload(ctx))
+
+    async def get_story_run(
+        self,
+        story_id: str,
+        run_id: str,
+    ) -> Result[dict[str, Any]]:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        if self._find_run(ctx, run_id) is None:
+            return Failure("Run not found", "NOT_FOUND")
+        return Success(self._single_run_payload(ctx, run_id))
+
+    async def get_story_artifacts(self, story_id: str) -> Result[dict[str, Any]]:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        return Success(self._artifact_payload(ctx))
+
+    async def execute_story_run(
+        self,
+        story_id: str,
+        *,
+        operation: StoryRunOperation,
+        target_chapters: int | None = None,
+        publish: bool = False,
+    ) -> Result[dict[str, Any]]:
+        if operation == "pipeline":
+            result = await self.run_story_pipeline(
+                story_id,
+                target_chapters=target_chapters,
+                publish=publish,
+            )
+        elif operation == "blueprint":
+            result = await self.generate_blueprint(story_id)
+        elif operation == "outline":
+            result = await self.generate_outline(story_id)
+        elif operation == "draft":
+            result = await self.draft_story(story_id, target_chapters=target_chapters)
+        elif operation == "review":
+            result = await self.review_story(story_id)
+        elif operation == "revise":
+            result = await self.revise_story(story_id)
+        elif operation == "export":
+            result = await self.export_story(story_id)
+        else:
+            result = await self.publish_story(story_id)
+
+        if isinstance(result, Failure):
+            return result
+
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        run = ctx.workflow.run_state
+        if run is None:
+            return Failure(
+                "Run execution completed without a recorded run state",
+                "INTERNAL_ERROR",
+            )
+        payload = self._single_run_payload(ctx, run.run_id)
+        payload["operation"] = operation
+        return Success(payload)
 
     async def list_stories(
         self,
@@ -168,7 +286,6 @@ class StoryWorkflowService:
         offset: int = 0,
         author_id: str | None = None,
     ) -> Result[dict[str, Any]]:
-        """List stories, optionally filtered by author."""
         try:
             if limit < 0:
                 raise ValueError("limit must be non-negative")
@@ -188,7 +305,7 @@ class StoryWorkflowService:
 
             return Success(
                 {
-                    "stories": [story.to_dict() for story in stories],
+                    "stories": [self._story_payload(story) for story in stories],
                     "count": len(stories),
                     "limit": limit,
                     "offset": offset,
@@ -200,1218 +317,157 @@ class StoryWorkflowService:
             return Failure(str(exc), "INTERNAL_ERROR")
 
     async def generate_blueprint(self, story_id: str) -> Result[dict[str, Any]]:
-        """Generate or refresh the world and character bible."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        workflow = self._workflow(story)
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            task = TextGenerationTask(
-                step="bible",
-                system_prompt=(
-                    "You design durable long-form web novels. Return a compact "
-                    "world bible and character bible that can support many chapters."
-                ),
-                user_prompt=(
-                    f"Story title: {story.title}\n"
-                    f"Genre: {story.genre}\n"
-                    f"Premise: {workflow.get('premise', '')}\n"
-                    f"Target chapters: {workflow.get('target_chapters', self._default_target_chapters)}\n"
-                    f"Tone: {workflow.get('tone', 'commercial web fiction')}"
-                ),
-                response_schema={
-                    "world_bible": {"type": "object"},
-                    "character_bible": {"type": "object"},
-                    "premise_summary": {"type": "string"},
-                },
-                temperature=0.35,
-                metadata={
-                    "story_id": str(story.id),
-                    "title": story.title,
-                    "genre": story.genre,
-                    "author_id": story.author_id,
-                    "target_chapters": workflow.get(
-                        "target_chapters", self._default_target_chapters
-                    ),
-                },
+            blueprint = await self._generate_blueprint_with_context(
+                ctx,
+                finalize_run=True,
             )
-            result = await self._provider.generate_structured(task)
-            blueprint = self._extract_blueprint(result, story)
-            workflow["blueprint"] = blueprint
-            workflow["blueprint_generated_at"] = self._now()
-            self._record_generation_trace(workflow, result)
-            story.metadata["world_bible"] = blueprint["world_bible"]
-            story.metadata["character_bible"] = blueprint["character_bible"]
-            story.metadata["premise_summary"] = blueprint["premise_summary"]
-            self._memory(story)["active_characters"] = self._character_names(
-                blueprint["character_bible"]
+            return Success(
+                {
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "blueprint": blueprint.to_dict(),
+                }
             )
-            self._touch(story)
-            await self._story_repository.save(story)
-            return Success({"story": story.to_dict(), "blueprint": blueprint})
-        except TextGenerationProviderError as exc:
-            return Failure(str(exc), "GENERATION_ERROR")
-        except ValueError as exc:
-            return Failure(str(exc), "VALIDATION_ERROR")
-        except Exception as exc:
-            return Failure(str(exc), "INTERNAL_ERROR")
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def generate_outline(self, story_id: str) -> Result[dict[str, Any]]:
-        """Generate or refresh the chapter outline."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        workflow = self._workflow(story)
-        blueprint = workflow.get("blueprint")
-        if not isinstance(blueprint, dict):
-            return Failure(
-                "Blueprint must be generated before the outline",
-                "MISSING_BLUEPRINT",
-            )
-
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            target_chapters = self._resolve_target_chapters(
-                int(workflow.get("target_chapters", self._default_target_chapters))
+            outline = await self._generate_outline_with_context(
+                ctx,
+                finalize_run=True,
             )
-            task = TextGenerationTask(
-                step="outline",
-                system_prompt=(
-                    "You design long-form web fiction outlines. Return a chapter "
-                    "list with stable hooks, rising tension, and coherent pacing."
-                ),
-                user_prompt=(
-                    f"Story title: {story.title}\n"
-                    f"Premise: {workflow.get('premise', '')}\n"
-                    f"World bible: {blueprint.get('world_bible', {})}\n"
-                    f"Character bible: {blueprint.get('character_bible', {})}\n"
-                    f"Target chapters: {target_chapters}\n"
-                    f"Tone: {workflow.get('tone', 'commercial web fiction')}"
-                ),
-                response_schema={
-                    "chapters": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "chapter_number": {"type": "integer"},
-                                "title": {"type": "string"},
-                                "summary": {"type": "string"},
-                                "hook": {"type": "string"},
-                            },
-                        },
-                    }
-                },
-                temperature=0.4,
-                metadata={
-                    "story_id": str(story.id),
-                    "target_chapters": target_chapters,
-                    "chapter_count": story.chapter_count,
-                    "character_names": self._character_names(
-                        blueprint.get("character_bible", {})
-                    ),
-                },
+            return Success(
+                {
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "outline": outline.to_dict(),
+                }
             )
-            result = await self._provider.generate_structured(task)
-            outline = self._extract_outline(result, target_chapters)
-            workflow["outline"] = outline
-            workflow["outline_generated_at"] = self._now()
-            self._record_generation_trace(workflow, result)
-            memory = self._memory(story)
-            memory["outline_titles"] = [
-                chapter["title"] for chapter in outline["chapters"]
-            ]
-            self._touch(story)
-            await self._story_repository.save(story)
-            return Success({"story": story.to_dict(), "outline": outline})
-        except TextGenerationProviderError as exc:
-            return Failure(str(exc), "GENERATION_ERROR")
-        except ValueError as exc:
-            return Failure(str(exc), "VALIDATION_ERROR")
-        except Exception as exc:
-            return Failure(str(exc), "INTERNAL_ERROR")
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def draft_story(
         self,
         story_id: str,
         target_chapters: int | None = None,
     ) -> Result[dict[str, Any]]:
-        """Draft missing chapters and scenes from the outline."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        workflow = self._workflow(story)
-        outline = workflow.get("outline")
-        if not isinstance(outline, dict):
-            return Failure(
-                "Outline must be generated before drafting chapters",
-                "MISSING_OUTLINE",
-            )
-
-        chapters = outline.get("chapters")
-        if not isinstance(chapters, list) or not chapters:
-            return Failure("Outline does not contain chapters", "GENERATION_ERROR")
-
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            target_count = self._resolve_target_chapters(
-                target_chapters
-                if target_chapters is not None
-                else int(workflow.get("target_chapters", self._default_target_chapters))
+            drafted_chapters, skipped = await self._draft_story_with_context(
+                ctx,
+                target_chapters=target_chapters,
+                finalize_run=True,
             )
-            target_count = min(target_count, len(chapters))
-            start_number = story.chapter_count + 1
-            if start_number > target_count:
-                return Success(
-                    {
-                        "story": story.to_dict(),
-                        "drafted_chapters": story.chapter_count,
-                        "skipped": True,
-                    }
-                )
-
-            for chapter_number in range(start_number, target_count + 1):
-                chapter_spec = self._outline_chapter_for_number(chapters, chapter_number)
-                focus_character = self._select_focus_character(story, chapter_number)
-                focus_motivation = self._focus_character_motivation(
-                    story,
-                    focus_character,
-                )
-                scene_result = await self._generate_chapter_scenes(
-                    story=story,
-                    chapter_spec=chapter_spec,
-                    focus_character=focus_character,
-                    focus_motivation=focus_motivation,
-                )
-                scenes = self._extract_scenes(scene_result, chapter_spec)
-                chapter = story.add_chapter(
-                    title=chapter_spec["title"],
-                    summary=chapter_spec["summary"],
-                )
-                chapter.metadata.update(
-                    {
-                        "chapter_number": chapter_number,
-                        "focus_character": focus_character,
-                        "focus_motivation": focus_motivation,
-                        "timeline_day": chapter_number,
-                        "outline_hook": chapter_spec.get("hook", ""),
-                        "drafted_at": self._now(),
-                    }
-                )
-                self._apply_scene_payload(
-                    chapter=chapter,
-                    scenes=scenes,
-                    focus_character=focus_character,
-                    focus_motivation=focus_motivation,
-                    hook=chapter_spec.get("hook", ""),
-                )
-                self._record_chapter_memory(
-                    story,
-                    chapter,
-                    chapter_spec,
-                    focus_character,
-                    focus_motivation,
-                )
-                self._record_generation_trace(workflow, scene_result)
-                self._touch(story)
-                await self._story_repository.save(story)
-
-            workflow["drafted_chapters"] = story.chapter_count
-            workflow["status"] = "drafted"
-            self._touch(story)
-            await self._story_repository.save(story)
             return Success(
                 {
-                    "story": story.to_dict(),
-                    "drafted_chapters": story.chapter_count,
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "drafted_chapters": drafted_chapters,
+                    "skipped": skipped,
                 }
             )
-        except TextGenerationProviderError as exc:
-            return Failure(str(exc), "GENERATION_ERROR")
-        except ValueError as exc:
-            return Failure(str(exc), "VALIDATION_ERROR")
-        except Exception as exc:
-            return Failure(str(exc), "INTERNAL_ERROR")
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def review_story(self, story_id: str) -> Result[dict[str, Any]]:
-        """Run structural and continuity checks over the story."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        workflow = self._workflow(story)
-        blueprint = workflow.get("blueprint")
-        outline = workflow.get("outline")
-        target_chapters = self._resolve_target_chapters(
-            int(workflow.get("target_chapters", self._default_target_chapters))
-        )
-
-        issues: list[StoryReviewIssue] = []
-        continuity_checks: dict[str, bool] = {
-            "blueprint_present": isinstance(blueprint, dict),
-            "outline_present": isinstance(outline, dict),
-            "chapters_present": story.chapter_count > 0,
-            "chapter_count_complete": story.chapter_count >= target_chapters,
-            "character_alignment": True,
-            "motivation_alignment": True,
-            "timeline_alignment": True,
-            "hook_alignment": True,
-        }
-
-        if not continuity_checks["blueprint_present"]:
-            issues.append(
-                StoryReviewIssue(
-                    code="missing_blueprint",
-                    severity="blocker",
-                    message="The world and character bible has not been generated.",
-                    location="story",
-                    suggestion="Generate the blueprint before reviewing or publishing.",
-                )
-            )
-        if not continuity_checks["outline_present"]:
-            issues.append(
-                StoryReviewIssue(
-                    code="missing_outline",
-                    severity="blocker",
-                    message="The chapter outline has not been generated.",
-                    location="story",
-                    suggestion="Generate the outline before drafting or publishing.",
-                )
-            )
-        if story.chapter_count == 0:
-            issues.append(
-                StoryReviewIssue(
-                    code="no_chapters",
-                    severity="blocker",
-                    message="The story does not contain any chapters yet.",
-                    location="story",
-                    suggestion="Draft chapters before attempting to publish.",
-                )
-            )
-        if story.chapter_count < target_chapters:
-            issues.append(
-                StoryReviewIssue(
-                    code="incomplete_story",
-                    severity="blocker",
-                    message=(
-                        f"The story has {story.chapter_count} chapters but needs "
-                        f"{target_chapters} to match the configured target."
-                    ),
-                    location="story",
-                    suggestion="Draft the remaining chapters before publishing.",
-                    details={
-                        "actual_chapters": story.chapter_count,
-                        "target_chapters": target_chapters,
-                    },
-                )
-            )
-
-        outline_chapters = self._outline_chapters(outline)
-        for index, chapter in enumerate(story.chapters, start=1):
-            self._review_chapter(
-                story=story,
-                chapter=chapter,
-                index=index,
-                outline_chapters=outline_chapters,
-                issues=issues,
-                continuity_checks=continuity_checks,
-            )
-
-        blocker_count = sum(1 for issue in issues if issue.severity == "blocker")
-        warning_count = sum(1 for issue in issues if issue.severity == "warning")
-        quality_score = max(0, 100 - blocker_count * 20 - warning_count * 5)
-        ready_for_publish = blocker_count == 0 and quality_score >= 80
-        summary = (
-            "Story passes the publication gate."
-            if ready_for_publish
-            else f"Story needs {blocker_count} blocker(s) and {warning_count} warning(s) addressed."
-        )
-        report = StoryReviewReport(
-            story_id=str(story.id),
-            quality_score=quality_score,
-            ready_for_publish=ready_for_publish,
-            summary=summary,
-            issues=issues,
-            revision_notes=list(workflow.get("revision_notes", [])),
-            chapter_count=story.chapter_count,
-            scene_count=sum(chapter.scene_count for chapter in story.chapters),
-            continuity_checks=continuity_checks,
-        )
-
-        workflow["last_review"] = report.to_dict()
-        workflow["status"] = "reviewed"
-        self._touch(story)
-        await self._story_repository.save(story)
-        return Success({"story": story.to_dict(), "report": report.to_dict()})
-
-    async def _load_story(self, story_id: str) -> Story | Failure:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            story_uuid = UUID(story_id)
-        except ValueError:
-            return Failure("Story ID must be a valid UUID", "VALIDATION_ERROR")
-
-        story = await self._story_repository.get_by_id(story_uuid)
-        if story is None:
-            return Failure("Story not found", "NOT_FOUND")
-        return story
-
-    def _workflow(self, story: Story) -> dict[str, Any]:
-        workflow = story.metadata.get("workflow")
-        if not isinstance(workflow, dict):
-            workflow = {}
-            story.metadata["workflow"] = workflow
-        return cast(dict[str, Any], workflow)
-
-    def _memory(self, story: Story) -> dict[str, Any]:
-        memory = story.metadata.get("story_memory")
-        if not isinstance(memory, dict):
-            memory = {}
-            story.metadata["story_memory"] = memory
-        return cast(dict[str, Any], memory)
-
-    def _touch(self, story: Story) -> None:
-        story.updated_at = datetime.utcnow()
-        self._workflow(story)["last_updated_at"] = self._now()
-
-    def _resolve_target_chapters(self, target_chapters: int | None) -> int:
-        resolved = target_chapters or self._default_target_chapters
-        if resolved < 1:
-            raise ValueError("target_chapters must be positive")
-        if resolved > Story.MAX_CHAPTERS:
-            raise ValueError(
-                f"target_chapters cannot exceed {Story.MAX_CHAPTERS}"
-            )
-        return resolved
-
-    def _extract_blueprint(
-        self,
-        result: TextGenerationResult,
-        story: Story,
-    ) -> dict[str, Any]:
-        world_bible = result.content.get("world_bible")
-        character_bible = result.content.get("character_bible")
-        premise_summary = str(result.content.get("premise_summary", "")).strip()
-        if not isinstance(world_bible, dict):
-            raise ValueError("Blueprint payload missing world_bible")
-        if not isinstance(character_bible, dict):
-            raise ValueError("Blueprint payload missing character_bible")
-
-        return {
-            "step": result.step,
-            "provider": result.provider,
-            "model": result.model,
-            "generated_at": self._now(),
-            "story_id": str(story.id),
-            "world_bible": world_bible,
-            "character_bible": character_bible,
-            "premise_summary": premise_summary,
-        }
-
-    def _extract_outline(
-        self,
-        result: TextGenerationResult,
-        target_chapters: int,
-    ) -> dict[str, Any]:
-        chapters = result.content.get("chapters")
-        if not isinstance(chapters, list) or not chapters:
-            raise ValueError("Outline payload missing chapters")
-
-        normalized_chapters: list[dict[str, Any]] = []
-        for index, chapter in enumerate(chapters, start=1):
-            if not isinstance(chapter, dict):
-                raise ValueError("Outline chapter must be an object")
-            chapter_number = self._chapter_number(chapter, index)
-            title = str(chapter.get("title", "")).strip() or f"Chapter {index}"
-            summary = str(chapter.get("summary", "")).strip()
-            hook = str(chapter.get("hook", "")).strip()
-            if not summary:
-                raise ValueError("Outline chapter summary cannot be empty")
-            normalized_chapters.append(
+            report = await self._review_story_with_context(ctx, finalize_run=True)
+            return Success(
                 {
-                    "chapter_number": chapter_number,
-                    "title": title,
-                    "summary": summary,
-                    "hook": hook,
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "report": report.to_dict(),
                 }
             )
-
-        normalized_chapters.sort(key=lambda chapter: chapter["chapter_number"])
-        return {
-            "step": result.step,
-            "provider": result.provider,
-            "model": result.model,
-            "generated_at": self._now(),
-            "target_chapters": target_chapters,
-            "chapters": normalized_chapters[:target_chapters],
-        }
-
-    @staticmethod
-    def _chapter_number(chapter: dict[str, Any], fallback: int) -> int:
-        value = chapter.get("chapter_number", fallback)
-        try:
-            chapter_number = int(value)
-        except (TypeError, ValueError) as exc:
-            raise ValueError("Chapter number must be an integer") from exc
-        if chapter_number < 1:
-            raise ValueError("Chapter number must be positive")
-        return chapter_number
-
-    def _outline_chapters(
-        self,
-        outline: Any,
-    ) -> list[dict[str, Any]]:
-        if not isinstance(outline, dict):
-            return []
-        chapters = outline.get("chapters")
-        if not isinstance(chapters, list):
-            return []
-        return [chapter for chapter in chapters if isinstance(chapter, dict)]
-
-    def _outline_chapter_for_number(
-        self,
-        chapters: list[dict[str, Any]],
-        chapter_number: int,
-    ) -> dict[str, Any]:
-        for chapter in chapters:
-            if int(chapter.get("chapter_number", 0)) == chapter_number:
-                return chapter
-        raise ValueError(f"Outline chapter {chapter_number} not found")
-
-    def _character_names(self, character_bible: dict[str, Any]) -> list[str]:
-        characters = character_bible.get("characters", [])
-        if not isinstance(characters, list):
-            return []
-        names: list[str] = []
-        for character in characters:
-            if isinstance(character, dict):
-                name = str(character.get("name", "")).strip()
-                if name:
-                    names.append(name)
-        return names
-
-    @staticmethod
-    def _normalize_scene_type(scene_type: Any) -> str:
-        value = str(scene_type).strip().lower() or "narrative"
-        valid_types = {
-            "opening",
-            "narrative",
-            "dialogue",
-            "action",
-            "decision",
-            "climax",
-            "ending",
-        }
-        if value in valid_types:
-            return value
-
-        aliases: dict[str, str] = {
-            "establishment": "opening",
-            "setup": "opening",
-            "introduction": "opening",
-            "intro": "opening",
-            "conversation": "dialogue",
-            "interaction": "dialogue",
-            "conflict": "action",
-            "pressure": "action",
-            "build-up": "narrative",
-            "build": "narrative",
-            "reveal": "climax",
-            "twist": "climax",
-            "resolution": "ending",
-            "finale": "ending",
-            "wrapup": "ending",
-        }
-        return str(aliases.get(value, "narrative"))
-
-    def _character_profile(
-        self,
-        character_bible: dict[str, Any],
-        focus_character: str,
-    ) -> dict[str, Any]:
-        characters = character_bible.get("characters", [])
-        if not isinstance(characters, list):
-            return {}
-
-        for character in characters:
-            if not isinstance(character, dict):
-                continue
-            name = str(character.get("name", "")).strip()
-            if name == focus_character:
-                return character
-        return {}
-
-    def _focus_character_motivation(
-        self,
-        story: Story,
-        focus_character: str,
-        chapter: Chapter | None = None,
-    ) -> str:
-        if chapter is not None:
-            motivation = str(chapter.metadata.get("focus_motivation", "")).strip()
-            if motivation:
-                return motivation
-
-        workflow = self._workflow(story)
-        blueprint = workflow.get("blueprint")
-        if isinstance(blueprint, dict):
-            character_bible = blueprint.get("character_bible", {})
-            if isinstance(character_bible, dict):
-                profile = self._character_profile(character_bible, focus_character)
-                motivation = str(profile.get("motivation", "")).strip()
-                if motivation:
-                    return motivation
-        return ""
-
-    @staticmethod
-    def _issues_for_location(
-        issues: list[StoryReviewIssue],
-        location: str,
-    ) -> list[StoryReviewIssue]:
-        return [issue for issue in issues if issue.location == location]
-
-    def _select_focus_character(self, story: Story, chapter_number: int) -> str:
-        workflow = self._workflow(story)
-        blueprint = workflow.get("blueprint")
-        if isinstance(blueprint, dict):
-            names = self._character_names(blueprint.get("character_bible", {}))
-            if names:
-                return names[(chapter_number - 1) % len(names)]
-        return story.author_id
-
-    async def _generate_chapter_scenes(
-        self,
-        *,
-        story: Story,
-        chapter_spec: dict[str, Any],
-        focus_character: str,
-        focus_motivation: str,
-    ) -> TextGenerationResult:
-        workflow = self._workflow(story)
-        task = TextGenerationTask(
-            step="chapter_scenes",
-            system_prompt=(
-                "You write coherent chapter scenes for a long-form web novel. "
-                "Keep the pacing commercial, the continuity stable, and the hook strong. "
-                "Use scene_type values from: opening, narrative, dialogue, action, "
-                "decision, climax, ending."
-            ),
-            user_prompt=(
-                f"Story title: {story.title}\n"
-                f"Chapter number: {chapter_spec['chapter_number']}\n"
-                f"Chapter title: {chapter_spec['title']}\n"
-                f"Chapter summary: {chapter_spec['summary']}\n"
-                f"Chapter hook: {chapter_spec.get('hook', '')}\n"
-                f"Focus character: {focus_character}\n"
-                f"Focus motivation: {focus_motivation}\n"
-                f"Premise: {workflow.get('premise', '')}"
-            ),
-            response_schema={
-                "scenes": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "scene_type": {"type": "string"},
-                            "title": {"type": "string"},
-                            "content": {"type": "string"},
-                        },
-                    },
-                }
-            },
-            temperature=0.5,
-            metadata={
-                "story_id": str(story.id),
-                "chapter_number": chapter_spec["chapter_number"],
-                "chapter_title": chapter_spec["title"],
-                "focus_character": focus_character,
-                "focus_motivation": focus_motivation,
-                "outline_hook": chapter_spec.get("hook", ""),
-                "previous_summary": self._previous_chapter_summary(story),
-            },
-        )
-        return await self._provider.generate_structured(task)
-
-    def _extract_scenes(
-        self,
-        result: TextGenerationResult,
-        chapter_spec: dict[str, Any],
-    ) -> list[dict[str, Any]]:
-        scenes = result.content.get("scenes")
-        if not isinstance(scenes, list) or not scenes:
-            raise ValueError(
-                f"Chapter {chapter_spec['chapter_number']} did not contain scenes"
-            )
-
-        normalized: list[dict[str, Any]] = []
-        for index, scene in enumerate(scenes, start=1):
-            if not isinstance(scene, dict):
-                raise ValueError("Scene payload must be an object")
-            content = str(scene.get("content", "")).strip()
-            scene_type = self._normalize_scene_type(
-                scene.get("scene_type", "narrative")
-            )
-            title = str(scene.get("title", "")).strip() or (
-                f"{chapter_spec['title']} - Scene {index}"
-            )
-            if not content:
-                raise ValueError("Scene content cannot be empty")
-            normalized.append(
-                {
-                    "scene_type": scene_type,
-                    "title": title,
-                    "content": content,
-                }
-            )
-        return normalized
-
-    def _apply_scene_payload(
-        self,
-        *,
-        chapter: Chapter,
-        scenes: list[dict[str, Any]],
-        focus_character: str,
-        focus_motivation: str,
-        hook: str,
-    ) -> None:
-        for index, scene_payload in enumerate(scenes, start=1):
-            content = scene_payload["content"].strip()
-            if index == 1 and focus_character:
-                content = self._ensure_character_anchor(content, focus_character)
-            if index == 1 and focus_motivation:
-                content = self._ensure_motivation_anchor(content, focus_motivation)
-            if index == len(scenes):
-                content = self._ensure_hook(content, hook)
-            scene_type = cast(
-                SceneType,
-                self._normalize_scene_type(scene_payload["scene_type"]),
-            )
-
-            scene: Scene = chapter.add_scene(
-                content=content,
-                scene_type=scene_type,
-                title=scene_payload["title"],
-            )
-            scene.metadata.update(
-                {
-                    "focus_character": focus_character,
-                    "focus_motivation": focus_motivation,
-                    "timeline_day": chapter.chapter_number,
-                    "outline_hook": hook,
-                    "scene_index": index,
-                }
-            )
-
-    def _ensure_character_anchor(self, content: str, focus_character: str) -> str:
-        if focus_character.lower() in content.lower():
-            return content
-        return f"{content} {focus_character} anchors the chapter."
-
-    def _ensure_motivation_anchor(self, content: str, focus_motivation: str) -> str:
-        if focus_motivation.lower() in content.lower():
-            return content
-        return f"{content} Their driving motive is to {focus_motivation}."
-
-    def _ensure_hook(self, content: str, hook: str) -> str:
-        if not hook:
-            return content
-        if hook.lower() in content.lower():
-            return content
-        if content.endswith("?"):
-            return content
-        return f"{content} {hook}"
-
-    def _record_chapter_memory(
-        self,
-        story: Story,
-        chapter: Chapter,
-        chapter_spec: dict[str, Any],
-        focus_character: str,
-        focus_motivation: str,
-    ) -> None:
-        memory = self._memory(story)
-        chapter_memory = memory.setdefault("chapter_summaries", [])
-        if isinstance(chapter_memory, list):
-            chapter_memory.append(
-                {
-                    "chapter_number": chapter.chapter_number,
-                    "title": chapter.title,
-                    "summary": chapter.summary,
-                    "focus_character": focus_character,
-                    "focus_motivation": focus_motivation,
-                    "hook": chapter_spec.get("hook", ""),
-                }
-            )
-        workflow = self._workflow(story)
-        workflow.setdefault("chapter_memory", []).append(
-            {
-                "chapter_number": chapter.chapter_number,
-                "title": chapter.title,
-                "focus_character": focus_character,
-                "focus_motivation": focus_motivation,
-                "scene_count": chapter.scene_count,
-            }
-        )
-
-    def _previous_chapter_summary(self, story: Story) -> str:
-        if not story.chapters:
-            return ""
-        previous = story.chapters[-1]
-        return previous.summary or ""
-
-    def _record_generation_trace(
-        self,
-        workflow: dict[str, Any],
-        result: TextGenerationResult,
-    ) -> None:
-        trace = workflow.setdefault("generation_trace", [])
-        if isinstance(trace, list):
-            trace.append(
-                {
-                    "timestamp": self._now(),
-                    "step": result.step,
-                    "provider": result.provider,
-                    "model": result.model,
-                    "content_keys": sorted(result.content.keys()),
-                }
-            )
-
-    def _review_chapter(
-        self,
-        *,
-        story: Story,
-        chapter: Chapter,
-        index: int,
-        outline_chapters: list[dict[str, Any]],
-        issues: list[StoryReviewIssue],
-        continuity_checks: dict[str, bool],
-    ) -> None:
-        expected_chapter = (
-            outline_chapters[index - 1] if index <= len(outline_chapters) else {}
-        )
-        location = f"chapter-{chapter.chapter_number}"
-        if chapter.chapter_number != index:
-            continuity_checks["sequential_chapters"] = False
-            issues.append(
-                StoryReviewIssue(
-                    code="non_sequential_chapter",
-                    severity="blocker",
-                    message=(
-                        f"Chapter {chapter.chapter_number} is out of order; expected "
-                        f"chapter {index}."
-                    ),
-                    location=location,
-                    suggestion="Renumber or reorder chapters to restore continuity.",
-                )
-            )
-        else:
-            continuity_checks.setdefault("sequential_chapters", True)
-
-        if not chapter.summary or not chapter.summary.strip():
-            issues.append(
-                StoryReviewIssue(
-                    code="missing_summary",
-                    severity="blocker",
-                    message="The chapter summary is missing.",
-                    location=location,
-                    suggestion="Add a concise summary to keep the outline coherent.",
-                )
-            )
-
-        if chapter.scene_count == 0:
-            issues.append(
-                StoryReviewIssue(
-                    code="empty_chapter",
-                    severity="blocker",
-                    message="The chapter does not contain any scenes.",
-                    location=location,
-                    suggestion="Draft or repair the chapter scenes before publishing.",
-                )
-            )
-            return
-
-        if any(not scene.content.strip() for scene in chapter.scenes):
-            issues.append(
-                StoryReviewIssue(
-                    code="empty_scene",
-                    severity="blocker",
-                    message="At least one scene is empty.",
-                    location=location,
-                    suggestion="Regenerate or rewrite the empty scene.",
-                )
-            )
-
-        if len({scene.title for scene in chapter.scenes}) != len(chapter.scenes):
-            issues.append(
-                StoryReviewIssue(
-                    code="duplicate_scene_title",
-                    severity="warning",
-                    message="Two or more scenes share the same title.",
-                    location=location,
-                    suggestion="Give each scene a distinct beat label.",
-                )
-            )
-
-        focus_character = str(chapter.metadata.get("focus_character", "")).strip()
-        if focus_character:
-            if not any(
-                focus_character.lower() in scene.content.lower()
-                for scene in chapter.scenes
-            ):
-                continuity_checks["character_alignment"] = False
-                issues.append(
-                    StoryReviewIssue(
-                        code="character_drift",
-                        severity="blocker",
-                        message=(
-                            f"The focus character '{focus_character}' does not appear "
-                            "in the chapter scenes."
-                        ),
-                        location=location,
-                        suggestion="Re-anchor the chapter around the intended focal character.",
-                    )
-                )
-        else:
-            issues.append(
-                StoryReviewIssue(
-                    code="missing_focus_character",
-                    severity="warning",
-                    message="The chapter has no focus character metadata.",
-                    location=location,
-                    suggestion="Store the focus character in chapter metadata during drafting.",
-                )
-            )
-
-        focus_motivation = self._focus_character_motivation(
-            story,
-            focus_character,
-            chapter,
-        )
-        if focus_motivation and not any(
-            focus_motivation.lower() in scene.content.lower()
-            for scene in chapter.scenes
-        ):
-            continuity_checks["motivation_alignment"] = False
-            issues.append(
-                StoryReviewIssue(
-                    code="motivation_drift",
-                    severity="blocker",
-                    message=(
-                        f"The focus character '{focus_character}' no longer reflects "
-                        f"the motivation '{focus_motivation}'."
-                    ),
-                    location=location,
-                    suggestion="Rebuild the chapter around the character's driving motive.",
-                )
-            )
-
-        timeline_day = chapter.metadata.get("timeline_day")
-        if timeline_day != chapter.chapter_number:
-            continuity_checks["timeline_alignment"] = False
-            issues.append(
-                StoryReviewIssue(
-                    code="timeline_regression",
-                    severity="blocker",
-                    message="The chapter timeline metadata is out of sequence.",
-                    location=location,
-                    suggestion="Reset the chapter timeline marker to match the chapter number.",
-                    details={"timeline_day": timeline_day},
-                )
-            )
-
-        if index < len(story.chapters):
-            hook = str(expected_chapter.get("hook", "")).strip()
-            current_scene = chapter.current_scene
-            current_content = current_scene.content if current_scene else ""
-            if hook and not current_content.rstrip().endswith("?") and "hook" not in current_content.lower():
-                continuity_checks["hook_alignment"] = False
-                issues.append(
-                    StoryReviewIssue(
-                        code="missing_hook",
-                        severity="warning",
-                        message="The chapter does not surface its outline hook clearly.",
-                        location=location,
-                        suggestion="Close the chapter with a stronger cliffhanger or reveal.",
-                    )
-                )
-
-        if expected_chapter:
-            expected_title = str(expected_chapter.get("title", "")).strip()
-            if expected_title and expected_title != chapter.title:
-                issues.append(
-                    StoryReviewIssue(
-                        code="outline_mismatch",
-                        severity="warning",
-                        message="The chapter title diverges from the outline.",
-                        location=location,
-                        suggestion="Align the drafted chapter title with the outline.",
-                    )
-                )
-
-    def _issues_from_payload(self, payload: dict[str, Any]) -> list[StoryReviewIssue]:
-        issues: list[StoryReviewIssue] = []
-        for issue_payload in payload.get("issues", []):
-            if not isinstance(issue_payload, dict):
-                continue
-            severity = issue_payload.get("severity", "warning")
-            if severity not in {"info", "warning", "blocker"}:
-                severity = "warning"
-            issues.append(
-                StoryReviewIssue(
-                    code=str(issue_payload.get("code", "unknown")),
-                    severity=cast(ReviewSeverity, severity),
-                    message=str(issue_payload.get("message", "")),
-                    location=issue_payload.get("location"),
-                    suggestion=issue_payload.get("suggestion"),
-                    details=issue_payload.get("details", {})
-                    if isinstance(issue_payload.get("details"), dict)
-                    else {},
-                )
-            )
-        return issues
-
-    def _extract_revision_notes(
-        self,
-        result: TextGenerationResult,
-    ) -> list[str]:
-        revision_notes = result.content.get("revision_notes")
-        if not isinstance(revision_notes, list) or not revision_notes:
-            raise ValueError("Revision payload missing revision_notes")
-        notes: list[str] = []
-        for note in revision_notes:
-            text = str(note).strip()
-            if text:
-                notes.append(text)
-        if not notes:
-            raise ValueError("Revision notes cannot be empty")
-        return notes
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def revise_story(self, story_id: str) -> Result[dict[str, Any]]:
-        """Apply a revision pass to repair obvious continuity issues."""
-        review_result = await self.review_story(story_id)
-        if isinstance(review_result, Failure):
-            return review_result
-
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        review_payload = review_result.value["report"]
-        workflow = self._workflow(story)
-        outline = workflow.get("outline")
-        outline_chapters = self._outline_chapters(outline)
-        issues = self._issues_from_payload(review_payload)
-        revision_notes: list[str] = []
-
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            task = TextGenerationTask(
-                step="revision",
-                system_prompt=(
-                    "You repair story structure, continuity, pacing, and hooks. "
-                    "Return concise revision notes."
-                ),
-                user_prompt=(
-                    f"Story title: {story.title}\n"
-                    f"Review issues: {review_payload['issues']}\n"
-                    f"Revision target: strengthen continuity and hooks."
-                ),
-                response_schema={
-                    "revision_notes": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    }
-                },
-                temperature=0.2,
-                metadata={
-                    "story_id": str(story.id),
-                    "issue_count": len(issues),
-                    "chapter_count": story.chapter_count,
-                },
+            _review_before = await self._review_story_with_context(
+                ctx,
+                finalize_run=False,
+                mode="manual",
             )
-            result = await self._provider.generate_structured(task)
-            revision_notes = self._extract_revision_notes(result)
-            self._record_generation_trace(workflow, result)
-        except TextGenerationProviderError as exc:
-            return Failure(str(exc), "GENERATION_ERROR")
-        except ValueError as exc:
-            return Failure(str(exc), "VALIDATION_ERROR")
-        except Exception as exc:
-            return Failure(str(exc), "INTERNAL_ERROR")
-
-        repair_notes = await self._repair_story(story, outline_chapters, issues)
-        revision_notes.extend(repair_notes)
-
-        workflow["revision_notes"] = revision_notes
-        workflow["revision_history"] = workflow.get("revision_history", []) + [
-            {
-                "timestamp": self._now(),
-                "notes": revision_notes,
-                "issue_count": len(issues),
-            }
-        ]
-        workflow["status"] = "revised"
-        self._memory(story)["revision_notes"] = revision_notes
-        self._touch(story)
-        await self._story_repository.save(story)
-        return Success(
-            {
-                "story": story.to_dict(),
-                "report": review_payload,
-                "revision_notes": revision_notes,
-            }
-        )
-
-    async def _repair_story(
-        self,
-        story: Story,
-        outline_chapters: list[dict[str, Any]],
-        issues: list[StoryReviewIssue],
-    ) -> list[str]:
-        repair_notes: list[str] = []
-        outline_map = {
-            int(chapter["chapter_number"]): chapter for chapter in outline_chapters
-        }
-
-        for chapter in story.chapters:
-            chapter_spec = outline_map.get(chapter.chapter_number, {})
-            focus_character = self._select_focus_character(story, chapter.chapter_number)
-            focus_motivation = self._focus_character_motivation(
-                story,
-                focus_character,
-                chapter,
+            revision_notes = await self._revise_story_with_context(
+                ctx,
+                finalize_run=False,
             )
-            location = f"chapter-{chapter.chapter_number}"
-            chapter_issues = self._issues_for_location(issues, location)
-            if chapter.summary is None or not chapter.summary.strip():
-                summary = str(chapter_spec.get("summary", "")).strip()
-                if summary:
-                    chapter.summary = summary
-                    repair_notes.append(
-                        f"Restored the summary for chapter {chapter.chapter_number}."
-                    )
-
-            if chapter.scene_count == 0 or any(
-                not scene.content.strip() for scene in chapter.scenes
-            ) or any(
-                issue.code in {"character_drift", "motivation_drift"}
-                for issue in chapter_issues
-            ):
-                scene_result = await self._generate_chapter_scenes(
-                    story=story,
-                    chapter_spec={
-                        "chapter_number": chapter.chapter_number,
-                        "title": chapter.title,
-                        "summary": chapter.summary or str(chapter_spec.get("summary", "")),
-                        "hook": chapter_spec.get("hook", ""),
-                    },
-                    focus_character=focus_character,
-                    focus_motivation=focus_motivation,
-                )
-                scenes = self._extract_scenes(
-                    scene_result,
-                    {
-                        "chapter_number": chapter.chapter_number,
-                        "title": chapter.title,
-                    },
-                )
-                chapter.scenes.clear()
-                self._apply_scene_payload(
-                    chapter=chapter,
-                    scenes=scenes,
-                    focus_character=focus_character,
-                    focus_motivation=focus_motivation,
-                    hook=str(chapter_spec.get("hook", "")),
-                )
-                repair_notes.append(
-                    f"Rebuilt the scene stack for chapter {chapter.chapter_number}."
-                )
-
-            if chapter.metadata.get("timeline_day") != chapter.chapter_number:
-                chapter.metadata["timeline_day"] = chapter.chapter_number
-                repair_notes.append(
-                    f"Realigned the timeline marker for chapter {chapter.chapter_number}."
-                )
-
-            if not chapter.metadata.get("focus_character"):
-                chapter.metadata["focus_character"] = focus_character
-                repair_notes.append(
-                    f"Restored the focus character for chapter {chapter.chapter_number}."
-                )
-
-            if chapter.current_scene:
-                hook = str(chapter_spec.get("hook", "")).strip()
-                if hook and hook.lower() not in chapter.current_scene.content.lower():
-                    chapter.current_scene.update_content(
-                        self._ensure_hook(chapter.current_scene.content, hook)
-                    )
-                    repair_notes.append(
-                        f"Strengthened the hook for chapter {chapter.chapter_number}."
-                    )
-
-        if repair_notes:
-            self._touch(story)
-            await self._story_repository.save(story)
-        return repair_notes
+            final_report = await self._review_story_with_context(ctx, finalize_run=True)
+            return Success(
+                {
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "report": final_report.to_dict(),
+                    "revision_notes": revision_notes,
+                }
+            )
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def export_story(self, story_id: str) -> Result[dict[str, Any]]:
-        """Export a serialisable story snapshot."""
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        workflow = self._workflow(story)
-        export_payload = {
-            "story": story.to_dict(),
-            "workflow": workflow,
-            "memory": self._memory(story),
-            "blueprint": workflow.get("blueprint"),
-            "outline": workflow.get("outline"),
-            "last_review": workflow.get("last_review"),
-            "revision_notes": workflow.get("revision_notes", []),
-        }
-        workflow["last_exported_at"] = self._now()
-        workflow["status"] = "exported"
-        self._touch(story)
-        await self._story_repository.save(story)
-        return Success({"story": story.to_dict(), "export": export_payload})
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        try:
+            export = await self._export_story_with_context(ctx, finalize_run=True)
+            return Success(
+                {
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "export": export.to_dict(),
+                }
+            )
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def publish_story(self, story_id: str) -> Result[dict[str, Any]]:
-        """Publish a story when the quality gate passes."""
-        review_result = await self.review_story(story_id)
-        if isinstance(review_result, Failure):
-            return review_result
-
-        story_or_error = await self._load_story(story_id)
-        if isinstance(story_or_error, Failure):
-            return story_or_error
-
-        story = story_or_error
-        report = review_result.value["report"]
-        if not report["ready_for_publish"]:
-            return Failure(
-                "Story does not pass the publication quality gate",
-                "QUALITY_GATE_FAILED",
-                details={"report": report},
-            )
-
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
         try:
-            story.publish()
-            workflow = self._workflow(story)
-            workflow["status"] = "published"
-            workflow["published_at"] = self._now()
-            self._touch(story)
-            await self._story_repository.save(story)
-            return Success({"story": story.to_dict(), "report": report})
-        except ValueError as exc:
-            return Failure(str(exc), "VALIDATION_ERROR")
-        except Exception as exc:
-            return Failure(str(exc), "INTERNAL_ERROR")
+            report = await self._review_story_with_context(
+                ctx,
+                finalize_run=False,
+                mode="manual",
+            )
+            await self._publish_story_with_context(
+                ctx,
+                report=report,
+                finalize_run=True,
+            )
+            return Success(
+                {
+                    "story": self._story_payload(ctx.story),
+                    "workspace": self._workspace_payload(ctx),
+                    "report": report.to_dict(),
+                }
+            )
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
     async def run_pipeline(
         self,
@@ -1426,7 +482,6 @@ class StoryWorkflowService:
         tone: str | None = None,
         publish: bool = True,
     ) -> Result[dict[str, Any]]:
-        """Run the full novel generation pipeline end to end."""
         create_result = await self.create_story(
             title=title,
             genre=genre,
@@ -1440,66 +495,546 @@ class StoryWorkflowService:
         if isinstance(create_result, Failure):
             return create_result
 
-        story_id = create_result.value["story"]["id"]
-        blueprint_result = await self.generate_blueprint(story_id)
-        if isinstance(blueprint_result, Failure):
-            return blueprint_result
+        story_id = str(create_result.value["story"]["id"])
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
 
-        outline_result = await self.generate_outline(story_id)
-        if isinstance(outline_result, Failure):
-            return outline_result
+        try:
+            return Success(
+                await self._execute_pipeline_with_context(
+                    ctx,
+                    target_chapters=target_chapters,
+                    publish=publish,
+                )
+            )
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
 
-        draft_result = await self.draft_story(
-            story_id,
-            target_chapters=target_chapters,
+    async def run_story_pipeline(
+        self,
+        story_id: str,
+        *,
+        target_chapters: int | None = None,
+        publish: bool = False,
+    ) -> Result[dict[str, Any]]:
+        ctx_or_error = await self._load_context(story_id)
+        if isinstance(ctx_or_error, Failure):
+            return ctx_or_error
+        ctx = ctx_or_error
+        try:
+            return Success(
+                await self._execute_pipeline_with_context(
+                    ctx,
+                    target_chapters=target_chapters,
+                    publish=publish,
+                )
+            )
+        except WorkflowStageError as exc:
+            return await self._handle_stage_error(ctx, exc)
+
+    async def _execute_pipeline_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        target_chapters: int | None,
+        publish: bool,
+    ) -> dict[str, Any]:
+        ctx.start_run("pipeline")
+        ctx.touch()
+        await ctx.save()
+
+        blueprint = await self._generate_blueprint_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
         )
-        if isinstance(draft_result, Failure):
-            return draft_result
-
-        initial_review = await self.review_story(story_id)
-        if isinstance(initial_review, Failure):
-            return initial_review
-
-        revision_result = await self.revise_story(story_id)
-        if isinstance(revision_result, Failure):
-            return revision_result
-
-        final_review = await self.review_story(story_id)
-        if isinstance(final_review, Failure):
-            return final_review
-
-        export_result = await self.export_story(story_id)
-        if isinstance(export_result, Failure):
-            return export_result
-
-        publish_result: Result[dict[str, Any]] | None = None
+        outline = await self._generate_outline_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
+        )
+        drafted_chapters, _ = await self._draft_story_with_context(
+            ctx,
+            target_chapters=target_chapters,
+            mode="pipeline",
+            finalize_run=False,
+        )
+        initial_review = await self._review_story_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
+        )
+        revision_notes = await self._revise_story_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
+        )
+        final_review = await self._review_story_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
+        )
+        export = await self._export_story_with_context(
+            ctx,
+            mode="pipeline",
+            finalize_run=False,
+        )
         if publish:
-            publish_result = await self.publish_story(story_id)
-            if isinstance(publish_result, Failure):
-                return publish_result
+            await self._publish_story_with_context(
+                ctx,
+                report=final_review,
+                mode="pipeline",
+                finalize_run=False,
+            )
+        ctx.complete_run(published=publish)
+        ctx.touch()
+        await ctx.save()
+        return {
+            "story": self._story_payload(ctx.story),
+            "workspace": self._workspace_payload(ctx),
+            "blueprint": blueprint.to_dict(),
+            "outline": outline.to_dict(),
+            "drafted_chapters": drafted_chapters,
+            "initial_review": initial_review.to_dict(),
+            "revision_notes": revision_notes,
+            "final_review": final_review.to_dict(),
+            "export": export.to_dict(),
+            "published": publish,
+        }
 
-        final_story_result = await self.get_story(story_id)
-        if isinstance(final_story_result, Failure):
-            return final_story_result
+    async def _load_context(
+        self,
+        story_id: str,
+    ) -> StoryWorkflowContext | Failure:
+        story_or_error = await self._load_story(story_id)
+        if isinstance(story_or_error, Failure):
+            return story_or_error
+        generation_state = await self._generation_state_repository.get_by_story_id(story_id)
+        run_resource_state = await self._generation_run_repository.get_by_story_id(story_id)
+        artifact_resource_state = await self._story_artifact_repository.get_by_story_id(
+            story_id
+        )
+        return self._context_from_story(
+            story_or_error,
+            generation_state=generation_state,
+            run_resource_state=run_resource_state,
+            artifact_resource_state=artifact_resource_state,
+        )
 
-        artifact = {
-            "story": final_story_result.value["story"],
-            "blueprint": blueprint_result.value["blueprint"],
-            "outline": outline_result.value["outline"],
-            "drafted_chapters": draft_result.value["drafted_chapters"],
-            "initial_review": initial_review.value["report"],
-            "revision_notes": revision_result.value["revision_notes"],
-            "final_review": final_review.value["report"],
-            "export": export_result.value["export"],
-            "published": bool(
-                publish_result and not isinstance(publish_result, Failure)
+    async def _load_story(self, story_id: str) -> Story | Failure:
+        try:
+            story_uuid = UUID(story_id)
+        except ValueError:
+            return Failure("Story ID must be a valid UUID", "VALIDATION_ERROR")
+
+        story = await self._story_repository.get_by_id(story_uuid)
+        if story is None:
+            return Failure("Story not found", "NOT_FOUND")
+        return story
+
+    def _context_from_story(
+        self,
+        story: Story,
+        *,
+        generation_state: StoryGenerationState | None = None,
+        run_resource_state: GenerationRunResourceState | None = None,
+        artifact_resource_state: StoryArtifactResourceState | None = None,
+    ) -> StoryWorkflowContext:
+        return StoryWorkflowContext.from_story(
+            story=story,
+            repository=self._story_repository,
+            state_repository=self._generation_state_repository,
+            run_repository=self._generation_run_repository,
+            artifact_repository=self._story_artifact_repository,
+            provider=self._provider,
+            default_target_chapters=self._default_target_chapters,
+            generation_state=generation_state,
+            run_resource_state=run_resource_state,
+            artifact_resource_state=artifact_resource_state,
+        )
+
+    def _resolve_target_chapters(self, target_chapters: int | None) -> int:
+        resolved = target_chapters or self._default_target_chapters
+        if resolved < 1:
+            raise ValueError("target_chapters must be positive")
+        if resolved > Story.MAX_CHAPTERS:
+            raise ValueError(f"target_chapters cannot exceed {Story.MAX_CHAPTERS}")
+        return resolved
+
+    def _workspace_payload(self, ctx: StoryWorkflowContext) -> dict[str, Any]:
+        payload = ctx.workspace_payload()
+        story_payload = payload.get("story")
+        if isinstance(story_payload, dict):
+            story_payload.setdefault("metadata", {})
+            metadata = story_payload.get("metadata")
+            if isinstance(metadata, dict):
+                metadata.pop("last_export", None)
+        return payload
+
+    def _run_payload(self, ctx: StoryWorkflowContext) -> dict[str, Any]:
+        return {
+            "current_run": ctx.workflow.run_state.to_dict()
+            if ctx.workflow.run_state
+            else None,
+            "runs": [run.to_dict() for run in ctx.run_history],
+        }
+
+    def _artifact_payload(self, ctx: StoryWorkflowContext) -> dict[str, Any]:
+        export_artifact = ctx.last_export()
+        return {
+            "current": {
+                "blueprint": ctx.workflow.blueprint.to_dict()
+                if ctx.workflow.blueprint
+                else None,
+                "outline": ctx.workflow.outline.to_dict()
+                if ctx.workflow.outline
+                else None,
+                "structural_review": ctx.workflow.last_structural_review.to_dict()
+                if ctx.workflow.last_structural_review
+                else None,
+                "semantic_review": ctx.workflow.last_semantic_review.to_dict()
+                if ctx.workflow.last_semantic_review
+                else None,
+                "review": ctx.workflow.last_review.to_dict()
+                if ctx.workflow.last_review
+                else None,
+                "export": export_artifact.to_dict() if export_artifact else None,
+            },
+            "history": [artifact.to_dict() for artifact in ctx.artifact_history],
+        }
+
+    def _single_run_payload(
+        self,
+        ctx: StoryWorkflowContext,
+        run_id: str,
+    ) -> dict[str, Any]:
+        run = self._find_run(ctx, run_id)
+        if run is None:
+            raise ValueError(f"Unknown run_id: {run_id}")
+        latest_snapshot = ctx.latest_snapshot_for_run(run_id)
+        failure_snapshot = next(
+            (
+                snapshot
+                for snapshot in reversed(ctx.run_snapshots)
+                if snapshot.run_id == run_id and snapshot.snapshot_type == "run_failed"
+            ),
+            None,
+        )
+        failure_details = (
+            deepcopy(failure_snapshot.failure_details) if failure_snapshot else {}
+        )
+        return {
+            "run": run.to_dict(),
+            "events": [
+                event.to_dict() for event in ctx.run_events if event.run_id == run_id
+            ],
+            "artifacts": [
+                artifact.to_dict()
+                for artifact in ctx.artifact_history
+                if artifact.source_run_id == run_id
+            ],
+            "failure_artifacts": [
+                artifact.to_dict()
+                for artifact in ctx.artifact_history
+                if artifact.source_run_id == run_id and artifact.kind == "draft_failure"
+            ],
+            "latest_snapshot": latest_snapshot.to_dict() if latest_snapshot else None,
+            "failure_snapshot": failure_snapshot.to_dict() if failure_snapshot else None,
+            "stage_snapshots": [
+                snapshot.to_dict()
+                for snapshot in ctx.stage_snapshots_for_run(run_id)
+            ],
+            "failed_stage": failure_snapshot.failed_stage if failure_snapshot else None,
+            "failure_code": failure_snapshot.failure_code if failure_snapshot else None,
+            "failure_message": (
+                failure_snapshot.failure_message if failure_snapshot else None
+            ),
+            "manuscript_preserved": (
+                bool(failure_details.get("manuscript_preserved", True))
+                if failure_snapshot
+                else None
             ),
         }
-        return Success(artifact)
 
-    @staticmethod
-    def _now() -> str:
-        return datetime.utcnow().isoformat()
+    def _find_run(
+        self,
+        ctx: StoryWorkflowContext,
+        run_id: str,
+    ) -> GenerationRun | None:
+        for run in ctx.run_history:
+            if run.run_id == run_id:
+                return run
+        if ctx.workflow.run_state is not None and ctx.workflow.run_state.run_id == run_id:
+            return ctx.workflow.run_state
+        return None
+
+    def _story_payload(self, story: Story) -> dict[str, Any]:
+        payload = deepcopy(story.to_dict())
+        metadata = payload.get("metadata")
+        if isinstance(metadata, dict):
+            metadata.pop("last_export", None)
+        return payload
+
+    async def _handle_stage_error(
+        self,
+        ctx: StoryWorkflowContext,
+        exc: WorkflowStageError,
+    ) -> Failure:
+        details = deepcopy(exc.details) if exc.details else {}
+        details.setdefault("manuscript_preserved", True)
+        ctx.fail_run(exc.stage_name, exc.failure_code, exc.message, details)
+        ctx.touch()
+        await ctx.save()
+        return Failure(exc.message, exc.failure_code, details=details or None)
+
+    async def _generate_blueprint_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> Any:
+        ctx.start_stage("blueprint", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            blueprint = await self._planning_service.generate_blueprint(ctx)
+            ctx.complete_stage(
+                "blueprint",
+                details={"provider": blueprint.provider, "model": blueprint.model},
+            )
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return blueprint
+        except ValueError as exc:
+            raise WorkflowStageError("blueprint", "VALIDATION_ERROR", str(exc)) from exc
+        except Exception as exc:
+            code = "GENERATION_ERROR" if "generation" in exc.__class__.__name__.lower() else "INTERNAL_ERROR"
+            raise WorkflowStageError("blueprint", code, str(exc)) from exc
+
+    async def _generate_outline_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> Any:
+        ctx.start_stage("outline", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            outline = await self._planning_service.generate_outline(ctx)
+            ctx.complete_stage(
+                "outline",
+                details={"provider": outline.provider, "chapters": len(outline.chapters)},
+            )
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return outline
+        except ValueError as exc:
+            code = "MISSING_BLUEPRINT" if "Blueprint must" in str(exc) else "VALIDATION_ERROR"
+            raise WorkflowStageError("outline", code, str(exc)) from exc
+        except Exception as exc:
+            code = "GENERATION_ERROR" if "generation" in exc.__class__.__name__.lower() else "INTERNAL_ERROR"
+            raise WorkflowStageError("outline", code, str(exc)) from exc
+
+    async def _draft_story_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        target_chapters: int | None,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> tuple[int, bool]:
+        ctx.start_stage("draft", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            drafted_chapters, skipped = await self._drafting_service.draft(
+                ctx,
+                target_chapters=target_chapters,
+            )
+            ctx.complete_stage(
+                "draft",
+                details={"drafted_chapters": drafted_chapters, "skipped": skipped},
+            )
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return drafted_chapters, skipped
+        except DraftChapterFailure as exc:
+            raise WorkflowStageError(
+                "draft",
+                exc.failure_code,
+                exc.message,
+                details=deepcopy(exc.details),
+            ) from exc
+        except ValueError as exc:
+            code = (
+                "MISSING_OUTLINE"
+                if "Outline must be generated" in str(exc)
+                else "VALIDATION_ERROR"
+            )
+            raise WorkflowStageError("draft", code, str(exc)) from exc
+        except Exception as exc:
+            code = "GENERATION_ERROR" if "generation" in exc.__class__.__name__.lower() else "INTERNAL_ERROR"
+            raise WorkflowStageError("draft", code, str(exc)) from exc
+
+    async def _review_story_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> HybridReviewReport:
+        ctx.start_stage("review", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            structural_review = self._review_service.review(ctx)
+            semantic_review = await self._semantic_review_service.review(
+                ctx,
+                pack=ctx.context_pack(),
+            )
+            hybrid_review = self._hybrid_publication_gate.evaluate(
+                story_id=str(ctx.story.id),
+                run_id=ctx.workflow.current_run_id,
+                structural_review=structural_review,
+                semantic_review=semantic_review,
+                version=ctx.artifact_version("hybrid_review"),
+            )
+            ctx.workflow.last_structural_review = structural_review
+            ctx.workflow.last_semantic_review = semantic_review
+            ctx.workflow.last_review = hybrid_review
+            structural_entry = ctx.latest_artifact_entry("review")
+            parent_artifact_ids = (
+                [structural_entry.artifact_id] if structural_entry is not None else []
+            )
+            semantic_entry = ctx.record_artifact(
+                kind="semantic_review",
+                payload=semantic_review.to_dict(),
+                version=semantic_review.version,
+                generated_at=semantic_review.checked_at,
+                source_stage="review",
+                source_provider=semantic_review.source_provider,
+                source_model=semantic_review.source_model,
+                parent_artifact_ids=parent_artifact_ids,
+                artifact_id=semantic_review.artifact_id,
+            )
+            ctx.record_artifact(
+                kind="hybrid_review",
+                payload=hybrid_review.to_dict(),
+                version=hybrid_review.version,
+                generated_at=hybrid_review.checked_at,
+                source_stage="review",
+                source_provider=hybrid_review.source_provider,
+                source_model=hybrid_review.source_model,
+                parent_artifact_ids=[
+                    structural_review.artifact_id,
+                    semantic_entry.artifact_id,
+                ],
+                artifact_id=hybrid_review.artifact_id,
+            )
+            ctx.complete_stage(
+                "review",
+                details={
+                    "quality_score": hybrid_review.quality_score,
+                    "ready_for_publish": hybrid_review.ready_for_publish,
+                    "structural_quality_score": structural_review.quality_score,
+                    "semantic_score": semantic_review.semantic_score,
+                },
+            )
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return hybrid_review
+        except ValueError as exc:
+            raise WorkflowStageError("review", "VALIDATION_ERROR", str(exc)) from exc
+        except Exception as exc:
+            code = (
+                "GENERATION_ERROR"
+                if "generation" in exc.__class__.__name__.lower()
+                else "INTERNAL_ERROR"
+            )
+            raise WorkflowStageError("review", code, str(exc)) from exc
+
+    async def _revise_story_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> list[str]:
+        ctx.start_stage("revise", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            current_review = (
+                ctx.workflow.last_structural_review or self._review_service.review(ctx)
+            )
+            revision_notes = await self._revision_service.revise(ctx, current_review)
+            ctx.complete_stage(
+                "revise",
+                details={"revision_notes": len(revision_notes)},
+            )
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return revision_notes
+        except ValueError as exc:
+            raise WorkflowStageError("revise", "VALIDATION_ERROR", str(exc)) from exc
+        except Exception as exc:
+            code = "GENERATION_ERROR" if "generation" in exc.__class__.__name__.lower() else "INTERNAL_ERROR"
+            raise WorkflowStageError("revise", code, str(exc)) from exc
+
+    async def _export_story_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> Any:
+        ctx.start_stage("export", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            export = self._export_service.export(ctx)
+            ctx.complete_stage("export", details={"exported_at": export.exported_at})
+            if finalize_run:
+                ctx.complete_run()
+            ctx.touch()
+            await ctx.save()
+            return export
+        except ValueError as exc:
+            raise WorkflowStageError("export", "VALIDATION_ERROR", str(exc)) from exc
+        except Exception as exc:
+            raise WorkflowStageError("export", "INTERNAL_ERROR", str(exc)) from exc
+
+    async def _publish_story_with_context(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        report: HybridReviewReport,
+        mode: Literal["manual", "pipeline"] = "manual",
+        finalize_run: bool,
+    ) -> None:
+        ctx.start_stage("publish", mode=mode, details={"story_id": str(ctx.story.id)})
+        try:
+            self._publication_service.publish(ctx, report)
+            ctx.complete_stage("publish", details={"published": True})
+            if finalize_run:
+                ctx.complete_run(published=True)
+            ctx.touch()
+            await ctx.save()
+        except ValueError as exc:
+            raise WorkflowStageError(
+                "publish",
+                "QUALITY_GATE_FAILED",
+                str(exc),
+                details={"report": report.to_dict()},
+            ) from exc
+        except Exception as exc:
+            raise WorkflowStageError("publish", "INTERNAL_ERROR", str(exc)) from exc
 
 
-__all__ = ["StoryReviewIssue", "StoryReviewReport", "StoryWorkflowService"]
+__all__ = [
+    "StoryReviewReport",
+    "StoryWorkflowService",
+]

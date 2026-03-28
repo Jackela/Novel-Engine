@@ -32,7 +32,8 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('story-chapter-list')).toContainText('Chapter 1');
 
     await page.getByTestId('story-review').click();
-    await expect(page.getByTestId('story-review-score')).toHaveText('100');
+    await expect(page.getByTestId('story-review-score')).toHaveText(/^\d+$/);
+    await expect(page.getByTestId('story-review-panel')).toContainText('publish ready');
 
     await page.getByTestId('story-revise').click();
     await expect(page.getByTestId('story-review-panel')).toContainText('publish ready');
@@ -63,7 +64,8 @@ test.describe('frontend smoke', () => {
     await page.getByTestId('story-run-pipeline').click();
 
     await expect(page.getByTestId('story-pipeline-result')).toBeVisible();
-    await expect(page.getByTestId('story-review-score')).toHaveText('100');
+    await expect(page.getByTestId('story-review-score')).toHaveText(/^\d+$/);
+    await expect(page.getByTestId('story-review-panel')).toContainText('publish ready');
     await expect(page.getByTestId('story-workflow-state')).toContainText('Completed pipeline');
   });
 

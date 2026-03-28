@@ -25,7 +25,6 @@ import heapq
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from functools import total_ordering
 from threading import Lock
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -56,7 +55,6 @@ class OutboxStatus(Enum):
     FAILED = "failed"
 
 
-@total_ordering
 @dataclass
 class OutboxEvent:
     """
@@ -94,13 +92,15 @@ class OutboxEvent:
         if not self.event_type:
             raise ValueError("event_type is required")
 
-    def _sort_key(self) -> tuple[int, datetime]:
+    def _sort_key(self) -> tuple[int, datetime, str]:
         """Return a comparable key for queue ordering.
 
         Higher-priority events should sort ahead of lower-priority ones,
-        and older events should win ties within the same priority level.
+        older events should win ties within the same priority level, and
+        event IDs keep ordering deterministic when two events share the same
+        priority and timestamp.
         """
-        return (-self.priority.value, self.created_at)
+        return (-self.priority.value, self.created_at, self.event_id)
 
     def __lt__(self, other: "OutboxEvent") -> bool:
         """Compare events by priority (for heap-based priority queue).
@@ -109,17 +109,11 @@ class OutboxEvent:
         """
         return self._sort_key() < other._sort_key()
 
-    def __le__(self, other: "OutboxEvent") -> bool:
-        """Compare events by priority and creation time."""
-        return self._sort_key() <= other._sort_key()
-
-    def __gt__(self, other: "OutboxEvent") -> bool:
-        """Compare events by priority and creation time."""
-        return self._sort_key() > other._sort_key()
-
-    def __ge__(self, other: "OutboxEvent") -> bool:
-        """Compare events by priority and creation time."""
-        return self._sort_key() >= other._sort_key()
+    def __eq__(self, other: object) -> bool:
+        """Compare events by their deterministic queue identity."""
+        if not isinstance(other, OutboxEvent):
+            return NotImplemented
+        return self._sort_key() == other._sort_key()
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize event to dictionary."""

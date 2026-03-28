@@ -44,6 +44,7 @@ export type StoryGenre =
   | 'drama';
 
 export type StoryStatus = 'draft' | 'active' | 'completed';
+export type StoryProviderName = 'mock' | 'dashscope' | 'openai_compatible';
 export type StorySceneType =
   | 'opening'
   | 'narrative'
@@ -53,6 +54,39 @@ export type StorySceneType =
   | 'climax'
   | 'ending';
 export type StoryReviewSeverity = 'info' | 'warning' | 'blocker';
+export type StoryRunMode = 'manual' | 'pipeline';
+export type StoryRunStatus = 'running' | 'completed' | 'failed';
+export type StoryRunStageStatus = 'running' | 'completed' | 'failed';
+export type StoryRunEventType =
+  | 'run_started'
+  | 'stage_started'
+  | 'stage_completed'
+  | 'stage_failed'
+  | 'run_completed'
+  | 'run_failed';
+export type StoryRunSnapshotType =
+  | 'run_started'
+  | 'stage_completed'
+  | 'run_completed'
+  | 'run_failed';
+export type StoryRunOperation =
+  | 'blueprint'
+  | 'outline'
+  | 'draft'
+  | 'review'
+  | 'revise'
+  | 'export'
+  | 'publish'
+  | 'pipeline';
+export type StoryArtifactKind =
+  | 'blueprint'
+  | 'outline'
+  | 'review'
+  | 'semantic_review'
+  | 'hybrid_review'
+  | 'draft_failure'
+  | 'export';
+export type StoryNarrativeStrand = 'quest' | 'fire' | 'constellation';
 
 export interface StoryScene {
   id: string;
@@ -82,23 +116,115 @@ export interface StoryChapter {
 export interface StoryMemoryChapterSummary {
   chapter_number: number;
   title: string;
-  summary?: string;
-  focus_character?: string;
-  hook?: string;
+  summary: string;
+  focus_character: string;
+  focus_motivation: string;
+  hook: string;
 }
 
-export interface StoryMemory extends Record<string, unknown> {
-  chapter_summaries?: StoryMemoryChapterSummary[];
-  active_characters?: string[];
-  outline_titles?: string[];
+export interface StoryTimelineLedgerEntry {
+  chapter_number: number;
+  timeline_day: number;
+  summary: string;
+}
+
+export interface StoryHookLedgerEntry {
+  chapter_number: number;
+  hook: string;
+  surfaced: boolean;
+}
+
+export interface StoryPromise {
+  promise_id: string;
+  chapter_number: number;
+  text: string;
+  strand: string;
+  chapter_objective: string;
+  due_by_chapter: number | null;
+}
+
+export interface StoryPromiseLedgerEntry {
+  chapter_number: number;
+  promise: string;
+  surfaced: boolean;
+  promise_id: string;
+  strand: string;
+  chapter_objective: string;
+  payoff_chapter: number | null;
+  due_by_chapter: number | null;
+  status: string;
+}
+
+export interface StoryPayoffBeat {
+  promise_id: string;
+  chapter_number: number;
+  payoff_text: string;
+  strength: number;
+}
+
+export interface StoryPacingLedgerEntry {
+  chapter_number: number;
+  phase: string;
+  signature: string;
+  tension: number;
+  hook_strength: number;
+  chapter_objective: string;
+}
+
+export interface StoryStrandLedgerEntry {
+  chapter_number: number;
+  strand: string;
+  status: string;
+}
+
+export interface StoryCharacterStateSnapshot {
+  chapter_number: number;
+  name: string;
+  motivation: string;
+  role: string;
+}
+
+export interface StoryRelationshipSnapshot {
+  chapter_number: number;
+  source: string;
+  target: string;
+  status: string;
+}
+
+export interface StoryWorldRuleLedgerEntry {
+  rule: string;
+  source: string;
+}
+
+export interface StoryMemory {
+  schema_version?: number;
+  premise: string;
+  tone: string;
+  target_chapters: number;
+  themes: string[];
+  chapter_summaries: StoryMemoryChapterSummary[];
+  active_characters: string[];
+  outline_titles: string[];
+  story_promises: StoryPromise[];
+  timeline_ledger: StoryTimelineLedgerEntry[];
+  hook_ledger: StoryHookLedgerEntry[];
+  promise_ledger: StoryPromiseLedgerEntry[];
+  payoff_beats: StoryPayoffBeat[];
+  pacing_ledger: StoryPacingLedgerEntry[];
+  strand_ledger: StoryStrandLedgerEntry[];
+  character_states: StoryCharacterStateSnapshot[];
+  relationship_states: StoryRelationshipSnapshot[];
+  world_rules: StoryWorldRuleLedgerEntry[];
+  revision_notes: string[];
 }
 
 export interface StoryBlueprint {
   step: string;
-  provider: string;
+  provider: StoryProviderName;
   model: string;
   generated_at: string;
   story_id: string;
+  version: number;
   world_bible: Record<string, unknown>;
   character_bible: Record<string, unknown>;
   premise_summary: string;
@@ -109,14 +235,23 @@ export interface StoryOutlineChapter {
   title: string;
   summary: string;
   hook: string;
+  promise: string;
+  pacing_phase: string;
+  narrative_strand: string;
+  chapter_objective: string;
+  primary_strand: string;
+  secondary_strand: string | null;
+  promised_payoff: string;
+  hook_strength: number;
 }
 
 export interface StoryOutline {
   step: string;
-  provider: string;
+  provider: StoryProviderName;
   model: string;
   generated_at: string;
   target_chapters: number;
+  version: number;
   chapters: StoryOutlineChapter[];
 }
 
@@ -130,6 +265,11 @@ export interface StoryReviewIssue {
 }
 
 export interface StoryReviewReport {
+  artifact_id: string;
+  version: number;
+  source_run_id: string | null;
+  source_provider: string;
+  source_model: string;
   story_id: string;
   quality_score: number;
   ready_for_publish: boolean;
@@ -140,34 +280,177 @@ export interface StoryReviewReport {
   scene_count: number;
   continuity_checks: Record<string, boolean>;
   checked_at: string;
+  metrics: {
+    continuity_score: number;
+    pacing_score: number;
+    hook_score: number;
+    character_consistency_score: number;
+    timeline_consistency_score: number;
+  };
+}
+
+export interface StorySemanticReviewReport {
+  artifact_id: string;
+  version: number;
+  source_run_id: string | null;
+  source_provider: StoryProviderName;
+  source_model: string;
+  story_id: string;
+  semantic_score: number;
+  ready_for_publish: boolean;
+  summary: string;
+  issues: StoryReviewIssue[];
+  repair_suggestions: string[];
+  checked_at: string;
+  metrics: {
+    semantic_score: number;
+    reader_pull_score: number;
+    plot_clarity_score: number;
+    ooc_risk_score: number;
+  };
+}
+
+export interface DraftFailureArtifact {
+  story_id: string;
+  stage_name: string;
+  chapter_number: number;
+  failure_code: string;
+  failure_message: string;
+  raw_text: string;
+  raw_payload: Record<string, unknown>;
+  normalized_payload: Record<string, unknown>;
+  validation_errors: string[];
+  artifact_id: string;
+  version: number;
+  generated_at: string;
+  source_run_id: string | null;
+  source_provider: string;
+  source_model: string;
+}
+
+export interface StoryHybridReviewReport {
+  artifact_id: string;
+  version: number;
+  source_run_id: string | null;
+  source_provider: string;
+  source_model: string;
+  story_id: string;
+  quality_score: number;
+  ready_for_publish: boolean;
+  summary: string;
+  structural_review: StoryReviewReport | null;
+  semantic_review: StorySemanticReviewReport | null;
+  issues: StoryReviewIssue[];
+  blocked_by: string[];
+  structural_gate_passed?: boolean;
+  semantic_gate_passed?: boolean;
+  publish_gate_passed?: boolean;
+  checked_at: string;
 }
 
 export interface StoryExportPayload {
+  artifact_id: string;
+  version: number;
+  source_run_id: string | null;
+  source_provider: string;
+  source_model: string;
   story: StorySnapshot;
-  workflow: Record<string, unknown>;
+  workflow: StoryWorkflowState;
   memory: StoryMemory;
   blueprint: StoryBlueprint | null;
   outline: StoryOutline | null;
   last_review: StoryReviewReport | null;
   revision_notes: string[];
+  exported_at: string;
 }
 
-export interface StoryWorkflowState extends Record<string, unknown> {
-  status?: string;
-  premise?: string;
-  tone?: string;
-  target_chapters?: number;
-  generation_trace?: Array<Record<string, unknown>>;
-  chapter_memory?: Array<Record<string, unknown>>;
-  revision_notes?: string[];
-  blueprint?: StoryBlueprint;
-  blueprint_generated_at?: string;
-  outline?: StoryOutline;
-  outline_generated_at?: string;
-  drafted_chapters?: number;
-  last_review?: StoryReviewReport;
-  last_exported_at?: string;
-  last_updated_at?: string;
+export interface StoryGenerationTraceEntry {
+  timestamp: string;
+  step: string;
+  provider: StoryProviderName;
+  model: string;
+  content_keys: string[];
+}
+
+export interface StoryRunStageExecution {
+  name: string;
+  status: StoryRunStageStatus;
+  started_at: string;
+  completed_at: string | null;
+  failure_code: string | null;
+  failure_message: string | null;
+  details: Record<string, unknown>;
+}
+
+export interface StoryRunState {
+  run_id: string;
+  mode: StoryRunMode;
+  status: StoryRunStatus;
+  started_at: string;
+  completed_at: string | null;
+  published: boolean;
+  stages: StoryRunStageExecution[];
+}
+
+export interface StoryRunEvent {
+  event_id: string;
+  run_id: string;
+  event_type: StoryRunEventType;
+  timestamp: string;
+  stage_name: string | null;
+  details: Record<string, unknown>;
+}
+
+export interface StoryRunSnapshot {
+  snapshot_id: string;
+  story_id: string;
+  run_id: string;
+  snapshot_type: StoryRunSnapshotType;
+  captured_at: string;
+  stage_name: string | null;
+  failed_stage?: string | null;
+  failure_code?: string | null;
+  failure_message?: string | null;
+  failure_details?: Record<string, unknown>;
+  workspace: StoryWorkspace;
+}
+
+export interface StoryArtifactHistoryEntry {
+  artifact_id: string;
+  kind: StoryArtifactKind;
+  version: number;
+  generated_at: string;
+  source_run_id: string | null;
+  source_stage: string;
+  source_provider: string;
+  source_model: string;
+  parent_artifact_ids: string[];
+  payload: Record<string, unknown>;
+}
+
+export interface StoryWorkflowState {
+  schema_version?: number;
+  status: string;
+  premise: string;
+  tone: string;
+  target_chapters: number;
+  generation_trace: StoryGenerationTraceEntry[];
+  chapter_memory: StoryMemoryChapterSummary[];
+  revision_notes: string[];
+  blueprint: StoryBlueprint | null;
+  blueprint_generated_at: string | null;
+  outline: StoryOutline | null;
+  outline_generated_at: string | null;
+  drafted_chapters: number;
+  last_structural_review: StoryReviewReport | null;
+  last_semantic_review: StorySemanticReviewReport | null;
+  last_review: StoryHybridReviewReport | null;
+  last_exported_at: string | null;
+  last_updated_at: string | null;
+  published_at: string | null;
+  revision_history: Array<Record<string, unknown>>;
+  run_state: StoryRunState | null;
+  current_run_id?: string | null;
 }
 
 export interface StoryMetadata extends Record<string, unknown> {
@@ -194,6 +477,24 @@ export interface StorySnapshot {
   updated_at: string;
 }
 
+export interface StoryWorkspace {
+  story: StorySnapshot;
+  workflow: StoryWorkflowState;
+  memory: StoryMemory;
+  blueprint: StoryBlueprint | null;
+  outline: StoryOutline | null;
+  structural_review: StoryReviewReport | null;
+  semantic_review: StorySemanticReviewReport | null;
+  hybrid_review: StoryHybridReviewReport | null;
+  review: StoryHybridReviewReport | null;
+  export: StoryExportPayload | null;
+  revision_notes: string[];
+  run: StoryRunState | null;
+  run_history: StoryRunState[];
+  run_events: StoryRunEvent[];
+  artifact_history: StoryArtifactHistoryEntry[];
+}
+
 export interface StoryListResponse {
   stories: StorySnapshot[];
   count: number;
@@ -216,55 +517,105 @@ export interface StoryPipelineRequest extends StoryCreateRequest {
   publish: boolean;
 }
 
+export interface StoryRunRequest {
+  operation: StoryRunOperation;
+  target_chapters?: number | null;
+  publish?: boolean;
+}
+
 export interface StoryCreateResponse {
   story: StorySnapshot;
 }
 
 export interface StoryBlueprintResponse {
   story: StorySnapshot;
+  workspace: StoryWorkspace;
   blueprint: StoryBlueprint;
 }
 
 export interface StoryOutlineResponse {
   story: StorySnapshot;
+  workspace: StoryWorkspace;
   outline: StoryOutline;
 }
 
 export interface StoryDraftResponse {
   story: StorySnapshot;
+  workspace: StoryWorkspace;
   drafted_chapters: number;
   skipped?: boolean;
 }
 
 export interface StoryReviewResponse {
   story: StorySnapshot;
-  report: StoryReviewReport;
+  workspace: StoryWorkspace;
+  report: StoryHybridReviewReport;
 }
 
 export interface StoryReviseResponse {
   story: StorySnapshot;
-  report: StoryReviewReport;
+  workspace: StoryWorkspace;
+  report: StoryHybridReviewReport;
   revision_notes: string[];
 }
 
 export interface StoryExportResponse {
   story: StorySnapshot;
+  workspace: StoryWorkspace;
   export: StoryExportPayload;
 }
 
 export interface StoryPublishResponse {
   story: StorySnapshot;
-  report: StoryReviewReport;
+  workspace: StoryWorkspace;
+  report: StoryHybridReviewReport;
 }
 
 export interface StoryPipelineResult {
   story: StorySnapshot;
+  workspace: StoryWorkspace;
   blueprint: StoryBlueprint;
   outline: StoryOutline;
   drafted_chapters: number;
-  initial_review: StoryReviewReport;
+  initial_review: StoryHybridReviewReport;
   revision_notes: string[];
-  final_review: StoryReviewReport;
+  final_review: StoryHybridReviewReport;
   export: StoryExportPayload;
   published: boolean;
+}
+
+export interface StoryWorkspaceResponse {
+  workspace: StoryWorkspace;
+}
+
+export interface StoryRunsResponse {
+  current_run: StoryRunState | null;
+  runs: StoryRunState[];
+}
+
+export interface StoryRunDetailResponse {
+  operation?: StoryRunOperation;
+  run: StoryRunState;
+  events: StoryRunEvent[];
+  artifacts: StoryArtifactHistoryEntry[];
+  latest_snapshot: StoryRunSnapshot | null;
+  stage_snapshots: StoryRunSnapshot[];
+  failed_stage?: string | null;
+  failure_code?: string | null;
+  failure_message?: string | null;
+  failure_snapshot?: StoryRunSnapshot | null;
+  failure_artifacts?: StoryArtifactHistoryEntry[];
+  manuscript_preserved?: boolean | null;
+}
+
+export interface StoryArtifactsResponse {
+  current: {
+    blueprint: StoryBlueprint | null;
+    outline: StoryOutline | null;
+    structural_review: StoryReviewReport | null;
+    semantic_review: StorySemanticReviewReport | null;
+    review: StoryHybridReviewReport | null;
+    export: StoryExportPayload | null;
+  };
+  history: StoryArtifactHistoryEntry[];
 }

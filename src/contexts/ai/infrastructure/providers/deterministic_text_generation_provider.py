@@ -8,6 +8,7 @@ from typing import Any
 
 from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationProvider,
+    TextGenerationProviderName,
     TextGenerationResult,
     TextGenerationTask,
 )
@@ -18,7 +19,7 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
 
     def __init__(
         self,
-        provider_name: str = "mock",
+        provider_name: TextGenerationProviderName = "mock",
         model: str = "deterministic-story-v1",
     ) -> None:
         self._provider_name = provider_name
@@ -45,6 +46,8 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             return self._build_outline_payload(task)
         if step == "chapter_scenes":
             return self._build_scene_payload(task)
+        if step == "semantic_review":
+            return self._build_semantic_review_payload(task)
         if step == "revision":
             return self._build_revision_payload(task)
         return {"result": "ok", "step": task.step, "echo": task.metadata}
@@ -103,6 +106,36 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
                         f"Who triggered the hidden trap at the end of chapter "
                         f"{chapter_number}?"
                     ),
+                    "promise": f"Chapter {chapter_number} promises a sharper reveal.",
+                    "pacing_phase": (
+                        "setup"
+                        if chapter_number <= 3
+                        else "escalation"
+                        if chapter_number <= max(4, chapters_target - 2)
+                        else "payoff"
+                    ),
+                    "narrative_strand": (
+                        "quest"
+                        if chapter_number % 3 == 1
+                        else "fire"
+                        if chapter_number % 3 == 2
+                        else "constellation"
+                    ),
+                    "chapter_objective": "force a costly decision",
+                    "primary_strand": (
+                        "quest"
+                        if chapter_number % 3 == 1
+                        else "fire"
+                        if chapter_number % 3 == 2
+                        else "constellation"
+                    ),
+                    "secondary_strand": (
+                        "fire" if chapter_number % 2 == 0 else "constellation"
+                    ),
+                    "promised_payoff": (
+                        f"Reveal the hidden cost seeded in chapter {chapter_number}."
+                    ),
+                    "hook_strength": 82 if chapter_number < chapters_target else 60,
                 }
             )
         return {"chapters": chapters}
@@ -145,6 +178,48 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             notes = ["No critical revisions required."]
         return {"revision_notes": notes}
 
+    def _build_semantic_review_payload(self, task: TextGenerationTask) -> dict[str, Any]:
+        overdue_promise_count = int(task.metadata.get("overdue_promise_count", 0))
+        unresolved_hook_count = int(task.metadata.get("unresolved_hook_count", 0))
+        blocker = overdue_promise_count >= 4
+        issues: list[dict[str, str]] = []
+        if blocker:
+            issues.append(
+                {
+                    "code": "promise_break",
+                    "severity": "blocker",
+                    "message": "Too many chapter promises remain unpaid.",
+                    "location": "story",
+                    "suggestion": "Resolve or escalate the oldest promise thread.",
+                }
+            )
+        elif unresolved_hook_count >= 3:
+            issues.append(
+                {
+                    "code": "weak_serial_pull",
+                    "severity": "warning",
+                    "message": "Recent hooks are not converting into enough forward pull.",
+                    "location": "story",
+                    "suggestion": "Sharpen the next chapter cliffhanger and payoff rhythm.",
+                }
+            )
+        return {
+            "semantic_score": 72 if blocker else 90,
+            "reader_pull_score": 68 if unresolved_hook_count >= 3 else 88,
+            "plot_clarity_score": 84,
+            "ooc_risk_score": 18,
+            "summary": (
+                "Serial pull is under pressure from overdue promises."
+                if blocker
+                else "Semantic review sees stable reader pull and coherent progression."
+            ),
+            "repair_suggestions": [
+                "兑现最老的一条承诺，避免章节债务继续堆积。",
+                "下一章结尾给出更明确的追读钩子。",
+            ],
+            "issues": issues,
+        }
+
     @staticmethod
     def _fingerprint(*parts: str) -> str:
         value = "|".join(part.strip().lower() for part in parts)
@@ -165,4 +240,3 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
         ]
         start = int(fingerprint[:2], 16) % len(pool)
         return [pool[(start + offset) % len(pool)] for offset in range(3)]
-

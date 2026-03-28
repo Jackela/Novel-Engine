@@ -295,7 +295,7 @@ markers = [
     "knowledge: Knowledge Management context tests (Feature 001)",
     "smoke: Lightweight smoke tests",
     "asyncio: Async tests",
-    "requires_openai: Tests requiring OpenAI API access and an API key",
+    "requires_dashscope: Tests requiring DashScope API access and an API key",
     "requires_chroma: Tests requiring Chroma vector store support",
     "postgres_integration: Tests requiring a live PostgreSQL database",
 ]

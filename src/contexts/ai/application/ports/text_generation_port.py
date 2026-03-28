@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
+
+TextGenerationProviderName = Literal["mock", "dashscope", "openai_compatible"]
 
 
 class TextGenerationProviderError(RuntimeError):
@@ -27,7 +29,7 @@ class TextGenerationResult:
     """Structured response produced by a generation provider."""
 
     step: str
-    provider: str
+    provider: TextGenerationProviderName
     model: str
     raw_text: str
     content: dict[str, Any]
@@ -42,4 +44,3 @@ class TextGenerationProvider(Protocol):
     ) -> TextGenerationResult:
         """Generate structured JSON-like output for a task."""
         ...
-

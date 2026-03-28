@@ -22,6 +22,10 @@ def test_canonical_app_mounts_core_routes(canonical_app: Any) -> None:
     assert any(path.startswith("/api/v1/auth/") for path in api_v1_paths)
     assert any(path.startswith("/api/v1/knowledge") for path in api_v1_paths)
     assert any(path.startswith("/api/v1/story") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/workspace") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/runs") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/runs/{run_id}") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/artifacts") for path in api_v1_paths)
     assert "/api/v1/dashboard/status" not in api_v1_paths
     assert "/api/v1/world/rumors/propagate" not in api_v1_paths
 
@@ -83,4 +87,13 @@ def test_story_pipeline_contract_shape_when_mounted(
     assert story_payload["published"] is True
     assert story_payload["story"]["title"] == "Contract Story"
     assert story_payload["story"]["chapter_count"] == 3
+    assert (
+        story_payload["workspace"]["review"]["structural_review"]["metrics"][
+            "continuity_score"
+        ]
+        >= 85
+    )
+    assert story_payload["workspace"]["review"]["semantic_review"]["metrics"][
+        "reader_pull_score"
+    ] >= 78
     assert story_payload["final_review"]["ready_for_publish"] is True

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -52,6 +52,27 @@ class StoryDraftRequest(BaseModel):
         ge=1,
         le=Story.MAX_CHAPTERS,
     )
+
+
+class StoryRunRequest(BaseModel):
+    """Request payload for executing a run against an existing story."""
+
+    operation: Literal[
+        "blueprint",
+        "outline",
+        "draft",
+        "review",
+        "revise",
+        "export",
+        "publish",
+        "pipeline",
+    ] = Field(default="pipeline")
+    target_chapters: int | None = Field(
+        default=None,
+        ge=1,
+        le=Story.MAX_CHAPTERS,
+    )
+    publish: bool = Field(default=False)
 
 
 def _failure_status(code: str) -> int:
@@ -131,6 +152,43 @@ async def get_story(
 ) -> dict[str, Any]:
     """Return a single story snapshot."""
     return _unwrap(await service.get_story(story_id))
+
+
+@router.get("/{story_id}/workspace")
+async def get_story_workspace(
+    story_id: str,
+    service: StoryWorkflowService = Depends(get_story_workflow_service),
+) -> dict[str, Any]:
+    """Return the aggregated author workspace payload for a story."""
+    return _unwrap(await service.get_story_workspace(story_id))
+
+
+@router.get("/{story_id}/runs")
+async def get_story_runs(
+    story_id: str,
+    service: StoryWorkflowService = Depends(get_story_workflow_service),
+) -> dict[str, Any]:
+    """Return run history and append-only events for a story."""
+    return _unwrap(await service.get_story_runs(story_id))
+
+
+@router.get("/{story_id}/runs/{run_id}")
+async def get_story_run(
+    story_id: str,
+    run_id: str,
+    service: StoryWorkflowService = Depends(get_story_workflow_service),
+) -> dict[str, Any]:
+    """Return a single run with its scoped events and artifacts."""
+    return _unwrap(await service.get_story_run(story_id, run_id))
+
+
+@router.get("/{story_id}/artifacts")
+async def get_story_artifacts(
+    story_id: str,
+    service: StoryWorkflowService = Depends(get_story_workflow_service),
+) -> dict[str, Any]:
+    """Return current artifacts and append-only artifact history for a story."""
+    return _unwrap(await service.get_story_artifacts(story_id))
 
 
 @router.post("")
@@ -222,6 +280,23 @@ async def publish_story(
 ) -> dict[str, Any]:
     """Publish the story if it passes the quality gate."""
     return _unwrap(await service.publish_story(story_id))
+
+
+@router.post("/{story_id}/runs")
+async def execute_story_run(
+    story_id: str,
+    payload: StoryRunRequest,
+    service: StoryWorkflowService = Depends(get_story_workflow_service),
+) -> dict[str, Any]:
+    """Execute a workflow run against an existing story."""
+    return _unwrap(
+        await service.execute_story_run(
+            story_id,
+            operation=payload.operation,
+            target_chapters=payload.target_chapters,
+            publish=payload.publish,
+        )
+    )
 
 
 @router.post("/pipeline")

@@ -15,8 +15,13 @@ import type {
   StoryPublishResponse,
   StoryReviewResponse,
   StoryReviseResponse,
+  StoryRunDetailResponse,
+  StoryRunRequest,
+  StoryRunsResponse,
+  StoryArtifactsResponse,
   SessionState,
   StorySnapshot,
+  StoryWorkspaceResponse,
 } from '@/app/types';
 import { sessionStorageKey, safeStorage } from '@/shared/storage';
 
@@ -102,7 +107,29 @@ export const api = {
     ),
 
   getStory: (storyId: string) =>
-    requestJson<{ story: StorySnapshot }>(`${appConfig.endpoints.story}/${storyId}`),
+    requestJson<{ story: StorySnapshot; workspace: StoryWorkspaceResponse['workspace'] }>(
+      `${appConfig.endpoints.story}/${storyId}`,
+    ),
+
+  getStoryWorkspace: (storyId: string) =>
+    requestJson<StoryWorkspaceResponse>(
+      `${appConfig.endpoints.story}/${storyId}/workspace`,
+    ),
+
+  getStoryRuns: (storyId: string) =>
+    requestJson<StoryRunsResponse>(`${appConfig.endpoints.story}/${storyId}/runs`),
+
+  getStoryRun: (storyId: string, runId: string) =>
+    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs/${runId}`),
+
+  getStoryArtifacts: (storyId: string) =>
+    requestJson<StoryArtifactsResponse>(`${appConfig.endpoints.story}/${storyId}/artifacts`),
+
+  createStoryRun: (storyId: string, payload: StoryRunRequest) =>
+    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   createStory: (payload: StoryCreateRequest) =>
     requestJson<StoryCreateResponse>(appConfig.endpoints.story, {

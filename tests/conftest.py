@@ -65,14 +65,14 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     del config
 
     enabled_markers = {
-        "requires_openai": os.getenv("ENABLE_OPENAI_TESTS") == "1",
+        "requires_dashscope": os.getenv("ENABLE_DASHSCOPE_TESTS") == "1",
         "requires_chroma": os.getenv("ENABLE_CHROMA_TESTS") == "1",
         "postgres_integration": os.getenv("ENABLE_POSTGRES_TESTS") == "1",
         "evaluation": os.getenv("ENABLE_EVALUATION_TESTS") == "1",
     }
     skip_messages = {
-        "requires_openai": (
-            "OpenAI integration tests are opt-in; set ENABLE_OPENAI_TESTS=1 to run them."
+        "requires_dashscope": (
+            "DashScope integration tests are opt-in; set ENABLE_DASHSCOPE_TESTS=1 to run them."
         ),
         "requires_chroma": (
             "Chroma integration tests are opt-in; set ENABLE_CHROMA_TESTS=1 to run them."
@@ -110,6 +110,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
         "test-secret-key-for-contract-checks-1234567890",
     )
     monkeypatch.setenv("MONITORING_METRICS_ENABLED", "false")
+    monkeypatch.setenv("LLM_PROVIDER", "mock")
 
     from src.apps.api.dependencies import reset_knowledge_service
     from src.apps.api.health import reset_health_state
