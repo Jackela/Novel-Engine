@@ -1,6 +1,8 @@
 # CodeQL Alert Review
 
-This repository keeps CodeQL focused on canonical source under `src/`, `tests/`, `scripts/`, and `frontend/`.
+This repository keeps CodeQL focused on the active product surface under `src/apps/`, `src/contexts/ai/`, `src/contexts/narrative/`, `src/shared/`, `frontend/src/`, and the non-evaluation scripts used by the current engine.
+
+Legacy subsystems under `src/contexts/world/`, `src/contexts/character/`, `src/contexts/knowledge/`, `src/api/`, `src/caching/`, `src/events/`, and the older test/evaluation trees are treated as historical support code and are excluded from the canonical scan scope.
 
 Current review outcomes:
 
