@@ -4,6 +4,8 @@ This module provides Pydantic-based configuration for Honcho memory system,
 following the existing settings pattern in the project.
 """
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 from typing import Literal

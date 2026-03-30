@@ -295,7 +295,7 @@ class PostgresChapterRepository(ChapterRepositoryPort):
                 choices_data = row["choices"] or []
                 choices = [self._dict_to_choice(c) for c in choices_data]
 
-                scene = Scene(  # type: ignore[abstract]
+                scene = Scene(
                     id=scene_id,
                     chapter_id=str(first_row["chapter_id"]),
                     scene_number=row["scene_number"],
@@ -311,7 +311,7 @@ class PostgresChapterRepository(ChapterRepositoryPort):
                 )
                 scenes.append(scene)
 
-        return Chapter(  # type: ignore[abstract]
+        return Chapter(
             id=first_row["chapter_id"],
             story_id=str(first_row["story_id"]),
             chapter_number=first_row["chapter_number"],

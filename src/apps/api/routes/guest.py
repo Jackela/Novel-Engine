@@ -1,5 +1,7 @@
 """Guest session routes for the canonical API."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Request, Response

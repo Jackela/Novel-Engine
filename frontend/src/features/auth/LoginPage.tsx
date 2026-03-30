@@ -19,7 +19,7 @@ export function LoginPage() {
 
     try {
       await signIn({ email, password });
-      navigate('/dashboard');
+      navigate('/story');
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to sign in.');
     } finally {
@@ -33,7 +33,7 @@ export function LoginPage() {
 
     try {
       await signInAsGuest();
-      navigate('/dashboard');
+      navigate('/story');
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to create guest session.');
     } finally {
@@ -44,10 +44,10 @@ export function LoginPage() {
   return (
     <main className="auth-page" data-testid="login-page">
       <form className="auth-card" onSubmit={handleSubmit}>
-        <p className="panel__eyebrow">Operator access</p>
-        <h1 className="auth-card__title">Return to the control room</h1>
+        <p className="panel__eyebrow">Writer access</p>
+        <h1 className="auth-card__title">Return to the story workshop</h1>
         <p className="auth-card__copy">
-          Sign in against the backend contract or continue as a guest session.
+          Sign in against the backend contract or continue as a guest author session.
         </p>
 
         <label className="field">
@@ -84,7 +84,7 @@ export function LoginPage() {
             onClick={handleGuest}
             disabled={isSubmitting}
           >
-            Continue as guest
+            Continue as guest writer
           </Button>
         </div>
 

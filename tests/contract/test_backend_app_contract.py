@@ -4,28 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-import pytest
 from fastapi.routing import APIRoute
 
 
-def _route_paths(app) -> set[str]:
+def _route_paths(app: Any) -> set[str]:
     return {route.path for route in app.routes if isinstance(route, APIRoute)}
 
 
-def _find_route(paths: set[str], suffix: str) -> str | None:
-    for path in sorted(paths):
-        if path.endswith(suffix):
-            return path
-    return None
-
-
-def _find_orchestration_status_path(paths: set[str]) -> str | None:
-    return _find_route(paths, "/orchestration/status") or _find_route(
-        paths, "/dashboard/orchestration"
-    )
-
-
-def test_canonical_app_mounts_core_routes(canonical_app) -> None:
+def test_canonical_app_mounts_core_routes(canonical_app: Any) -> None:
     paths = _route_paths(canonical_app)
 
     assert "/health" in paths
@@ -35,14 +21,21 @@ def test_canonical_app_mounts_core_routes(canonical_app) -> None:
     assert api_v1_paths, "canonical app must expose versioned API routes"
     assert any(path.startswith("/api/v1/auth/") for path in api_v1_paths)
     assert any(path.startswith("/api/v1/knowledge") for path in api_v1_paths)
-    assert any(path.startswith("/api/v1/world/") for path in api_v1_paths)
+    assert any(path.startswith("/api/v1/story") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/workspace") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/runs") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/runs/{run_id}") for path in api_v1_paths)
+    assert any(path.endswith("/story/{story_id}/artifacts") for path in api_v1_paths)
+    assert "/api/v1/dashboard/status" not in api_v1_paths
+    assert "/api/v1/world/rumors/propagate" not in api_v1_paths
 
 
-def test_guest_session_contract(canonical_app, canonical_client) -> None:
+def test_guest_session_contract(
+    canonical_app: Any,
+    canonical_client: Any,
+) -> None:
     paths = _route_paths(canonical_app)
-    guest_path = _find_route(paths, "/guest/session")
-
-    assert guest_path is not None, "guest session endpoint must be mounted"
+    guest_path = next(path for path in paths if path.endswith("/guest/session"))
 
     first_response = canonical_client.post(guest_path)
     assert first_response.status_code == 200
@@ -62,35 +55,45 @@ def test_guest_session_contract(canonical_app, canonical_client) -> None:
     assert second_payload["created"] is False
 
 
-def test_orchestration_contract_shape_when_mounted(
-    canonical_app,
-    canonical_client,
+def test_story_pipeline_contract_shape_when_mounted(
+    canonical_app: Any,
+    canonical_client: Any,
 ) -> None:
     paths = _route_paths(canonical_app)
-
-    start_path = _find_route(paths, "/orchestration/start")
-    status_path = _find_orchestration_status_path(paths)
-    stop_path = _find_route(paths, "/orchestration/stop")
-
-    if not any((start_path, status_path, stop_path)):
-        pytest.skip("canonical app does not expose orchestration routes yet")
-
-    assert start_path is not None
-    assert status_path is not None
-    assert stop_path is not None
+    pipeline_path = next(path for path in paths if path.endswith("/story/pipeline"))
 
     openapi = canonical_client.get("/openapi.json")
     assert openapi.status_code == 200
 
     schema = openapi.json()["paths"]
+    pipeline_operation = schema[pipeline_path]["post"]
+    responses: dict[str, Any] = pipeline_operation["responses"]
+    assert "200" in responses
+    assert "content" in responses["200"]
+    assert "application/json" in responses["200"]["content"]
+    assert "schema" in responses["200"]["content"]["application/json"]
 
-    start_operation = schema[start_path]["post"]
-    status_operation = schema[status_path]["get"]
-    stop_operation = schema[stop_path]["post"]
-
-    for operation in (start_operation, status_operation, stop_operation):
-        responses: dict[str, Any] = operation["responses"]
-        assert "200" in responses
-        assert "content" in responses["200"]
-        assert "application/json" in responses["200"]["content"]
-        assert "schema" in responses["200"]["content"]["application/json"]
+    canonical_client.post("/api/v1/guest/session")
+    payload = {
+        "title": "Contract Story",
+        "genre": "fantasy",
+        "premise": "A recovered relic forces three rivals into the same lost city.",
+        "target_chapters": 3,
+        "publish": True,
+    }
+    response = canonical_client.post(pipeline_path, json=payload)
+    assert response.status_code == 200
+    story_payload = response.json()
+    assert story_payload["published"] is True
+    assert story_payload["story"]["title"] == "Contract Story"
+    assert story_payload["story"]["chapter_count"] == 3
+    assert (
+        story_payload["workspace"]["review"]["structural_review"]["metrics"][
+            "continuity_score"
+        ]
+        >= 85
+    )
+    assert story_payload["workspace"]["review"]["semantic_review"]["metrics"][
+        "reader_pull_score"
+    ] >= 78
+    assert story_payload["final_review"]["ready_for_publish"] is True

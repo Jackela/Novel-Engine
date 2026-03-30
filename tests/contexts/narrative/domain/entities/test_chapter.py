@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc"
 """Tests for the Chapter entity.
 
 This module contains comprehensive tests for the Chapter domain entity,

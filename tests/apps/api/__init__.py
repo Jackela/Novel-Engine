@@ -3,7 +3,7 @@ Tests for API apps __init__.
 """
 
 
-def test_api_imports():
+def test_api_imports() -> None:
     """Test that all API modules can be imported."""
     from src.apps.api import dependencies, main, router
 

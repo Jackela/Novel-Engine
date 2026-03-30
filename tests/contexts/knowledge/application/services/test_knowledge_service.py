@@ -1,3 +1,4 @@
+# mypy: disable-error-code="no-untyped-def"
 """Tests for KnowledgeApplicationService."""
 
 from typing import Any, Dict

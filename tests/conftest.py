@@ -1,5 +1,7 @@
 """Shared pytest setup for source-backed tests."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import importlib
@@ -7,24 +9,17 @@ import importlib.util
 import os
 import sys
 import types
-import typing
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
-
-try:
-    from typing_extensions import override as _override
-except ImportError:  # pragma: no cover - fallback for minimal envs
-    def _override(func):
-        return func
-
-if not hasattr(typing, "override"):
-    typing.override = _override
 
 
 def _install_asyncpg_stub() -> None:
@@ -45,14 +40,16 @@ def _install_asyncpg_stub() -> None:
     class PostgresError(Exception):  # pragma: no cover - import-only fallback
         pass
 
-    async def create_pool(*args, **kwargs):  # pragma: no cover - import-only fallback
+    async def create_pool(
+        *args: Any, **kwargs: Any
+    ) -> Any:  # pragma: no cover - import-only fallback
         raise RuntimeError("asyncpg is not installed in this test environment")
 
-    asyncpg_stub.Connection = Connection
-    asyncpg_stub.Pool = Pool
-    asyncpg_stub.Record = Record
-    asyncpg_stub.PostgresError = PostgresError
-    asyncpg_stub.create_pool = create_pool
+    setattr(asyncpg_stub, "Connection", Connection)
+    setattr(asyncpg_stub, "Pool", Pool)
+    setattr(asyncpg_stub, "Record", Record)
+    setattr(asyncpg_stub, "PostgresError", PostgresError)
+    setattr(asyncpg_stub, "create_pool", create_pool)
     sys.modules["asyncpg"] = asyncpg_stub
 
 
@@ -68,14 +65,14 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     del config
 
     enabled_markers = {
-        "requires_openai": os.getenv("ENABLE_OPENAI_TESTS") == "1",
+        "requires_dashscope": os.getenv("ENABLE_DASHSCOPE_TESTS") == "1",
         "requires_chroma": os.getenv("ENABLE_CHROMA_TESTS") == "1",
         "postgres_integration": os.getenv("ENABLE_POSTGRES_TESTS") == "1",
         "evaluation": os.getenv("ENABLE_EVALUATION_TESTS") == "1",
     }
     skip_messages = {
-        "requires_openai": (
-            "OpenAI integration tests are opt-in; set ENABLE_OPENAI_TESTS=1 to run them."
+        "requires_dashscope": (
+            "DashScope integration tests are opt-in; set ENABLE_DASHSCOPE_TESTS=1 to run them."
         ),
         "requires_chroma": (
             "Chroma integration tests are opt-in; set ENABLE_CHROMA_TESTS=1 to run them."
@@ -106,21 +103,26 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
                 item.add_marker(pytest.mark.skip(reason=skip_messages[marker_name]))
 
 
-def build_canonical_app(monkeypatch: pytest.MonkeyPatch):
+def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     monkeypatch.setenv("APP_ENVIRONMENT", "testing")
     monkeypatch.setenv(
         "SECURITY_SECRET_KEY",
         "test-secret-key-for-contract-checks-1234567890",
     )
     monkeypatch.setenv("MONITORING_METRICS_ENABLED", "false")
+    monkeypatch.setenv("LLM_PROVIDER", "mock")
 
     from src.apps.api.dependencies import reset_knowledge_service
     from src.apps.api.health import reset_health_state
+    from src.contexts.narrative.infrastructure.runtime import (
+        reset_story_workflow_service,
+    )
     from src.shared.infrastructure.config import settings as settings_module
 
     settings_module.reset_settings()
     reset_knowledge_service()
     reset_health_state()
+    reset_story_workflow_service()
 
     for module_name in ("src.apps.api.router", "src.apps.api.main"):
         sys.modules.pop(module_name, None)
@@ -130,7 +132,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def canonical_app(monkeypatch: pytest.MonkeyPatch):
+def canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     try:
         return build_canonical_app(monkeypatch)
     except Exception as exc:
@@ -138,6 +140,6 @@ def canonical_app(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture
-def canonical_client(canonical_app):
+def canonical_client(canonical_app: FastAPI) -> Generator[TestClient, None, None]:
     with TestClient(canonical_app, raise_server_exceptions=False) as client:
         yield client

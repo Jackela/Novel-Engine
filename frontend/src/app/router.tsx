@@ -4,7 +4,7 @@ import { AppLayout } from '@/app/AppLayout';
 import { RequireSession } from '@/features/auth/RequireSession';
 import { LandingPage } from '@/features/auth/LandingPage';
 import { LoginPage } from '@/features/auth/LoginPage';
-import { DashboardPage } from '@/features/dashboard/DashboardPage';
+import { StoryWorkbenchPage } from '@/features/story/StoryWorkbenchPage';
 
 export const routerFuture = {
   v7_relativeSplatPath: true,
@@ -20,10 +20,10 @@ export const router = createBrowserRouter(
         { index: true, element: <LandingPage /> },
         { path: 'login', element: <LoginPage /> },
         {
-          path: 'dashboard',
+          path: 'story',
           element: (
             <RequireSession>
-              <DashboardPage />
+              <StoryWorkbenchPage />
             </RequireSession>
           ),
         },

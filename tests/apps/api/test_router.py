@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+from typing import Any
 
-def test_canonical_source_backed_routes_are_mounted(canonical_app) -> None:
+
+def test_canonical_source_backed_routes_are_mounted(
+    canonical_app: Any,
+) -> None:
     mounted_paths = {
         route.path for route in canonical_app.routes if hasattr(route, "path")
     }
@@ -20,14 +24,16 @@ def test_canonical_source_backed_routes_are_mounted(canonical_app) -> None:
         "/api/v1/auth/me",
         "/api/v1/auth/register",
         "/api/v1/guest/session",
-        "/api/v1/dashboard/status",
-        "/api/v1/dashboard/orchestration",
-        "/api/v1/dashboard/orchestration/start",
-        "/api/v1/dashboard/orchestration/pause",
-        "/api/v1/dashboard/orchestration/stop",
-        "/api/v1/dashboard/events/stream",
-        "/api/v1/world/rumors/propagate",
-        "/api/v1/world/rumors/{world_id}",
+        "/api/v1/story",
+        "/api/v1/story/pipeline",
+        "/api/v1/story/{story_id}",
+        "/api/v1/story/{story_id}/blueprint",
+        "/api/v1/story/{story_id}/outline",
+        "/api/v1/story/{story_id}/draft",
+        "/api/v1/story/{story_id}/review",
+        "/api/v1/story/{story_id}/revise",
+        "/api/v1/story/{story_id}/export",
+        "/api/v1/story/{story_id}/publish",
     }
 
     missing_paths = expected_paths.difference(mounted_paths)
@@ -35,11 +41,15 @@ def test_canonical_source_backed_routes_are_mounted(canonical_app) -> None:
     assert any(path.startswith("/api/v1/knowledge") for path in mounted_paths)
 
 
-def test_legacy_or_missing_context_routes_are_not_mounted(canonical_app) -> None:
+def test_legacy_or_missing_context_routes_are_not_mounted(
+    canonical_app: Any,
+) -> None:
     mounted_paths = {
         route.path for route in canonical_app.routes if hasattr(route, "path")
     }
 
     assert "/health/detailed" not in mounted_paths
+    assert "/api/v1/dashboard" not in mounted_paths
+    assert "/api/v1/world" not in mounted_paths
     assert "/api/v1/stories" not in mounted_paths
     assert "/api/v1/characters" not in mounted_paths

@@ -68,12 +68,20 @@ async function waitForUrl(url, label) {
   throw lastError ?? new Error(`${label} did not become ready`);
 }
 
+const e2eProvider = process.env.E2E_LLM_PROVIDER ?? 'mock';
+
 const backendEnv = {
   ...process.env,
   APP_ENVIRONMENT: process.env.APP_ENVIRONMENT ?? 'testing',
   SECURITY_SECRET_KEY:
     process.env.SECURITY_SECRET_KEY ?? 'test-secret-key-for-playwright-1234567890',
   MONITORING_METRICS_ENABLED: process.env.MONITORING_METRICS_ENABLED ?? 'false',
+  // Ordinary Playwright smoke should be deterministic. Use E2E_LLM_PROVIDER
+  // when a live provider is explicitly desired.
+  LLM_PROVIDER: e2eProvider,
+  CORS_ALLOWED_ORIGINS:
+    process.env.CORS_ALLOWED_ORIGINS ??
+    'http://127.0.0.1:4273,http://localhost:4273',
 };
 
 const backendPort = await getFreePort();
@@ -117,7 +125,8 @@ frontend = spawnProcess(
   frontendDir,
   {
     ...process.env,
-    VITE_API_BASE_URL: '',
+    VITE_API_BASE_URL: backendUrl,
+    VITE_API_TIMEOUT: process.env.VITE_API_TIMEOUT ?? '300000',
     VITE_API_PROXY_TARGET: backendUrl,
   },
 );

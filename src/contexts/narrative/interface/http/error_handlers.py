@@ -1,6 +1,6 @@
 """HTTP Error Handlers for Narrative Context."""
 
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from fastapi import HTTPException, status
 
@@ -89,10 +89,10 @@ def handle_narrative_errors(func: F) -> F:
     # FastAPI uses inspect.signature to analyze endpoints.
     # By assigning __signature__, we ensure FastAPI sees the original
     # function's parameters, not the wrapper's *args, **kwargs.
-    wrapper.__signature__ = inspect.signature(func)
-    return wrapper  # type: ignore
+    setattr(wrapper, "__signature__", inspect.signature(func))
+    return cast(F, wrapper)
 
 
 def handle_result_error(operation: str | None = None) -> Callable[[F], F]:
     """Result error handling decorator with operation name."""
-    return base_handle_result_error(operation)
+    return cast(Callable[[F], F], base_handle_result_error(operation))
