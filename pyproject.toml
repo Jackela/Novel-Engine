@@ -77,7 +77,7 @@ dependencies = [
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
     "tiktoken>=0.7.0,<1.0.0",
     # Warzone 4: AI Brain - Embedding Service (BRAIN-002)
-    "openai>=1.0.0,<2.0.0",
+    "openai>=1.0.0,<3.0.0",
     # Warzone 4: AI Brain - Hybrid Search (BRAIN-008A)
     "rank-bm25>=0.2.2,<1.0.0",
     # Warzone 4: AI Brain - Re-ranking (BRAIN-010B)
