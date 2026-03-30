@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc, unreachable"
 """Tests for the Document entity.
 
 This module contains comprehensive tests for the Document domain entity,

@@ -4,7 +4,7 @@ This module provides JWT token management for the Novel Engine authentication sy
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import jwt
 from jwt import PyJWTError
@@ -104,7 +104,10 @@ class JWTManager:
         if additional_claims:
             to_encode.update(additional_claims)
 
-        return jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm)
+        return cast(
+            str,
+            jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm),
+        )
 
     def create_refresh_token(
         self,
@@ -133,7 +136,10 @@ class JWTManager:
         if additional_claims:
             to_encode.update(additional_claims)
 
-        return jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm)
+        return cast(
+            str,
+            jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm),
+        )
 
     def verify_token(self, token: str) -> dict[str, Any]:
         """Verify and decode a JWT token.
@@ -251,7 +257,7 @@ class JWTManager:
             InvalidTokenError: If the refresh token is invalid.
         """
         payload = self.verify_refresh_token(refresh_token)
-        user_id = payload["sub"]
+        user_id = cast(str, payload["sub"])
 
         return self.create_access_token(
             user_id=user_id,

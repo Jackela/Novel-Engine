@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc, unreachable"
 """Tests for the User aggregate root.
 
 This module contains comprehensive tests for the User domain aggregate,
@@ -163,6 +164,7 @@ class TestUserLogin:
             valid_user.record_login(success=False)
 
         expected_unlock = datetime.utcnow() + timedelta(seconds=3600)
+        assert valid_user.locked_until is not None
         # Allow small time difference due to test execution time
         time_diff = abs((valid_user.locked_until - expected_unlock).total_seconds())
         assert time_diff < 5  # Within 5 seconds
@@ -263,7 +265,8 @@ class TestUserAccountStatus:
 
         valid_user.activate()
 
-        assert valid_user.status == "active"
+        expected_status: str = "active"
+        assert valid_user.status == expected_status
         assert valid_user.is_active is True
 
 

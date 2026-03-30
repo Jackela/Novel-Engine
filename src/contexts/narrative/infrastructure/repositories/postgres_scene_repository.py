@@ -259,7 +259,7 @@ class PostgresSceneRepository(SceneRepositoryPort):
         choices_data = row["choices"] or []
         choices = [self._dict_to_choice(c) for c in choices_data]
 
-        return Scene(  # type: ignore[abstract]
+        return Scene(
             id=row["id"],
             chapter_id=str(row["chapter_id"]),
             scene_number=row["scene_number"],

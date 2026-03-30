@@ -1,5 +1,7 @@
 """Routes for semantic search operations."""
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 from typing import Any

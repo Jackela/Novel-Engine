@@ -56,6 +56,7 @@ npm --prefix frontend run test:e2e:smoke
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
 - Frontend smoke coverage is exercised with Playwright against the canonical backend and frontend stack.
 - CI runs backend quality on the canonical backend surface, backend tests, frontend validation, and CodeQL.
+- CodeQL scans the canonical source surface only; generated caches and build outputs are excluded, and default-branch merges must keep the scan clean or use documented suppressions for confirmed false positives. See [docs/security/codeql-alerts.md](docs/security/codeql-alerts.md).
 
 ## Repository hygiene rules
 
@@ -63,3 +64,4 @@ npm --prefix frontend run test:e2e:smoke
 - Checked-in tests must validate live source-backed behavior. Stale fixtures, dead mocks, and tests for removed modules should be deleted or rewritten.
 - Implemented product capabilities, including Honcho-related integration, are part of the supported surface and should be validated instead of removed.
 - Changes should converge the repo toward SSOT. Do not add a second entrypoint, hidden compatibility shim, or silent fallback path.
+- Dependabot updates should be merged promptly once green; keep bot branches disposable by closing stale or superseded PRs and deleting merged branches automatically.

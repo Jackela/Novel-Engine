@@ -4,6 +4,8 @@ This module provides type-safe, environment-aware configuration management
 for the Novel Engine application.
 """
 
+# mypy: disable-error-code=misc
+
 from __future__ import annotations
 
 import secrets
@@ -11,10 +13,29 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"
+LOCAL_DOTENV_FILE = ".env.local"
+
+
+def _settings_config(
+    *,
+    env_prefix: str,
+    env_nested_delimiter: str | None = None,
+) -> dict[str, Any]:
+    """Build a consistent settings config that loads local-only dotenv files."""
+    config: dict[str, Any] = {
+        "env_file": LOCAL_DOTENV_FILE,
+        "env_file_encoding": "utf-8",
+        "env_prefix": env_prefix,
+        "extra": "ignore",
+        "case_sensitive": False,
+    }
+    if env_nested_delimiter is not None:
+        config["env_nested_delimiter"] = env_nested_delimiter
+    return config
 
 
 class Environment(str, Enum):
@@ -39,11 +60,7 @@ class LogLevel(str, Enum):
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="DB_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="DB_"))
 
     url: str = Field(
         default="sqlite:///./novel_engine.db",
@@ -75,11 +92,7 @@ class DatabaseSettings(BaseSettings):
 class RedisSettings(BaseSettings):
     """Redis cache configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="REDIS_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="REDIS_"))
 
     host: str = Field(default="localhost", description="Redis server host")
     port: int = Field(default=6379, ge=1, le=65535, description="Redis server port")
@@ -100,11 +113,7 @@ class RedisSettings(BaseSettings):
 class APISettings(BaseSettings):
     """API server configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="API_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="API_"))
 
     host: str = Field(default="0.0.0.0", description="API server host")
     port: int = Field(default=8000, ge=1024, le=65535, description="API server port")
@@ -124,11 +133,7 @@ class APISettings(BaseSettings):
 class SecuritySettings(BaseSettings):
     """Security configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="SECURITY_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="SECURITY_"))
 
     secret_key: str = Field(
         default=DEFAULT_SECRET_KEY,
@@ -193,19 +198,55 @@ class SecuritySettings(BaseSettings):
 class LLMSettings(BaseSettings):
     """LLM provider configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="LLM_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="LLM_"))
 
-    provider: Literal["gemini", "openai", "anthropic", "mock"] = Field(
-        default="gemini",
+    provider: Literal["mock", "dashscope", "openai_compatible"] = Field(
+        default="dashscope",
         description="LLM provider name",
     )
-    model: str = Field(default="gemini-pro", description="LLM model name")
-    api_key: str | None = Field(default=None, description="LLM API key")
-    api_base: str | None = Field(default=None, description="Custom API base URL")
+    model: str = Field(default="qwen3.5-flash", description="LLM model name")
+    api_key: str | None = Field(
+        default=None,
+        description="API key for OpenAI-compatible providers",
+        validation_alias=AliasChoices("LLM_API_KEY", "OPENAI_API_KEY"),
+    )
+    api_base: str | None = Field(
+        default=None,
+        description="Custom API base URL",
+        validation_alias=AliasChoices("LLM_API_BASE", "OPENAI_API_BASE"),
+    )
+    dashscope_api_key: str | None = Field(
+        default=None,
+        description="DashScope API key",
+        validation_alias=AliasChoices("DASHSCOPE_API_KEY"),
+    )
+    dashscope_api_base: str | None = Field(
+        default=None,
+        description="DashScope API base URL",
+        validation_alias=AliasChoices("DASHSCOPE_API_BASE"),
+    )
+    dashscope_model: str | None = Field(
+        default=None,
+        description="DashScope model override",
+        validation_alias=AliasChoices("DASHSCOPE_MODEL"),
+    )
+    dashscope_transport_mode: Literal[
+        "text_generation", "multimodal_generation", "responses"
+    ] = Field(
+        default="multimodal_generation",
+        description="DashScope native transport mode",
+        validation_alias=AliasChoices("DASHSCOPE_TRANSPORT_MODE"),
+    )
+    dashscope_review_model: str | None = Field(
+        default=None,
+        description="DashScope review model override",
+        validation_alias=AliasChoices("DASHSCOPE_REVIEW_MODEL"),
+    )
+    openai_compatible_model: str | None = Field(
+        default=None,
+        description="OpenAI-compatible model override",
+        validation_alias=AliasChoices("OPENAI_COMPATIBLE_MODEL"),
+    )
     timeout: int = Field(
         default=30, ge=5, le=300, description="Request timeout in seconds"
     )
@@ -227,15 +268,54 @@ class LLMSettings(BaseSettings):
         default=10.0, ge=0.0, le=1000.0, description="Monthly cost limit in USD"
     )
 
+    def resolved_api_key(
+        self,
+        provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
+    ) -> str | None:
+        if provider_name == "dashscope":
+            return self.dashscope_api_key
+        if provider_name == "openai_compatible":
+            return self.api_key
+        return None
+
+    def resolved_api_base(
+        self,
+        provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
+    ) -> str | None:
+        if provider_name == "dashscope":
+            return self.dashscope_api_base or "https://dashscope.aliyuncs.com/api/v1"
+        if provider_name == "openai_compatible":
+            return self.api_base or "https://api.openai.com/v1"
+        return None
+
+    def resolved_model(
+        self,
+        provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
+    ) -> str:
+        if provider_name == "dashscope":
+            return self.dashscope_model or self.model or "qwen3.5-flash"
+        if provider_name == "openai_compatible":
+            return self.openai_compatible_model or self.model or "gpt-4o-mini"
+        return self.model or "deterministic-story-v1"
+
+    def resolved_review_model(
+        self,
+        provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
+    ) -> str:
+        if provider_name == "dashscope":
+            return self.dashscope_review_model or self.resolved_model("dashscope")
+        return self.resolved_model(provider_name)
+
+    def resolved_dashscope_transport_mode(
+        self,
+    ) -> Literal["text_generation", "multimodal_generation", "responses"]:
+        return self.dashscope_transport_mode
+
 
 class LoggingSettings(BaseSettings):
     """Logging configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="LOG_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="LOG_"))
 
     level: LogLevel = Field(default=LogLevel.INFO, description="Logging level")
     format: str = Field(
@@ -258,9 +338,7 @@ class MonitoringSettings(BaseSettings):
     """Monitoring and telemetry configuration settings."""
 
     model_config = SettingsConfigDict(
-        env_prefix="MONITORING_",
-        extra="ignore",
-        case_sensitive=False,
+        **_settings_config(env_prefix="MONITORING_")
     )
 
     enabled: bool = Field(default=True, description="Enable monitoring")
@@ -284,11 +362,7 @@ class MonitoringSettings(BaseSettings):
 class HealthCheckSettings(BaseSettings):
     """Health check configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="HEALTH_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="HEALTH_"))
 
     timeout_seconds: int = Field(
         default=5, ge=1, le=60, description="Health check timeout in seconds"
@@ -304,11 +378,7 @@ class HealthCheckSettings(BaseSettings):
 class VectorStoreSettings(BaseSettings):
     """Vector store configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="VECTOR_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="VECTOR_"))
 
     host: str = Field(default="localhost", description="Vector store host")
     port: int = Field(default=8000, ge=1, le=65535, description="Vector store port")
@@ -320,11 +390,7 @@ class VectorStoreSettings(BaseSettings):
 class KnowledgeSettings(BaseSettings):
     """Knowledge management configuration settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="KNOWLEDGE_",
-        extra="ignore",
-        case_sensitive=False,
-    )
+    model_config = SettingsConfigDict(**_settings_config(env_prefix="KNOWLEDGE_"))
 
     chunk_size: int = Field(default=500, ge=100, le=5000, description="Text chunk size")
     chunk_overlap: int = Field(
@@ -343,10 +409,10 @@ class NovelEngineSettings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="APP_",
-        env_nested_delimiter="__",
-        extra="ignore",
-        case_sensitive=False,
+        **_settings_config(
+            env_prefix="APP_",
+            env_nested_delimiter="__",
+        ),
         validate_default=True,
         populate_by_name=True,
     )

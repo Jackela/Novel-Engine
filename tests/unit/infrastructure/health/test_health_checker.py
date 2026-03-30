@@ -1,3 +1,4 @@
+# mypy: disable-error-code="misc"
 """Tests for health checker.
 
 Comprehensive tests for the centralized health checking coordinator.

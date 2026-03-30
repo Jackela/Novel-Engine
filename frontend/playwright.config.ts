@@ -11,7 +11,7 @@ export default defineConfig({
   webServer: {
     command: 'node ./scripts/start-e2e-stack.mjs',
     url: 'http://127.0.0.1:4273',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 120_000,
   },
   projects: [

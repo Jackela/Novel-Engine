@@ -7,7 +7,7 @@ It contains chapters, manages the narrative flow, and enforces business rules.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional, cast
 
 from src.contexts.narrative.domain.entities.chapter import Chapter
 from src.contexts.narrative.domain.events.story_events import (
@@ -28,9 +28,11 @@ class Story(AggregateRoot):
     AI注意:
     - Stories contain chapters, which contain scenes
     - Stories have a lifecycle: draft -> active -> completed
-    - Maximum 10 chapters per story
+    - Long-form stories need a materially higher chapter cap than the old demo
     - Only one chapter can be active at a time
     """
+
+    MAX_CHAPTERS: ClassVar[int] = 120
 
     title: str
     genre: str
@@ -104,12 +106,13 @@ class Story(AggregateRoot):
     @property
     def is_published(self) -> bool:
         """Check if the story is published (active or completed)."""
-        return self.status in ("active", "completed")
+        status_value = cast(str, self.status)
+        return status_value == "active" or status_value == "completed"
 
     @property
     def is_completed(self) -> bool:
         """Check if the story is completed."""
-        return self.status == "completed"
+        return cast(str, self.status) == "completed"
 
     def add_chapter(self, title: str, summary: Optional[str] = None) -> Chapter:
         """
@@ -128,8 +131,8 @@ class Story(AggregateRoot):
         if self.is_completed:
             raise ValueError("Cannot add chapters to a completed story")
 
-        if len(self.chapters) >= 10:
-            raise ValueError("Story cannot have more than 10 chapters")
+        if len(self.chapters) >= self.MAX_CHAPTERS:
+            raise ValueError(f"Story cannot have more than {self.MAX_CHAPTERS} chapters")
 
         chapter = Chapter(
             story_id=str(self.id),
@@ -171,6 +174,11 @@ class Story(AggregateRoot):
         first_chapter = self.chapters[0]
         if first_chapter.scene_count == 0:
             raise ValueError("First chapter must have at least one scene")
+
+        if any(chapter.scene_count == 0 for chapter in self.chapters):
+            raise ValueError(
+                "Every chapter must have at least one scene before publishing"
+            )
 
         self.status = "active"
         self.updated_at = datetime.utcnow()

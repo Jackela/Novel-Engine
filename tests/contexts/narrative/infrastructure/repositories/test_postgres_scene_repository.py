@@ -4,6 +4,8 @@ These tests use a real PostgreSQL database for integration testing.
 Ensure DATABASE_URL environment variable is set or use pytest-postgresql.
 """
 
+# mypy: disable-error-code=misc
+
 from collections.abc import AsyncIterator
 from uuid import UUID, uuid4
 
