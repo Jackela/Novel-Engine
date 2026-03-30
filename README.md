@@ -64,3 +64,4 @@ npm --prefix frontend run test:e2e:smoke
 - Checked-in tests must validate live source-backed behavior. Stale fixtures, dead mocks, and tests for removed modules should be deleted or rewritten.
 - Implemented product capabilities, including Honcho-related integration, are part of the supported surface and should be validated instead of removed.
 - Changes should converge the repo toward SSOT. Do not add a second entrypoint, hidden compatibility shim, or silent fallback path.
+- Dependabot updates should be merged promptly once green; keep bot branches disposable by closing stale or superseded PRs and deleting merged branches automatically.
