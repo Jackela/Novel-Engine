@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.security import HTTPBearer
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -136,7 +136,6 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     description="Authenticate user and return access and refresh tokens.",
 )
 async def login(
-    request: Request,
     response: Response,
     credentials: LoginRequest,
     auth_service: AuthenticationService = Depends(get_authentication_service),
@@ -160,10 +159,7 @@ async def login(
 
     data = ResultErrorHandler.handle(result, "login")
     user = data["user"]
-    workspace_id = request.cookies.get(GUEST_SESSION_COOKIE)
-    if not workspace_id:
-        workspace_id = f"user-{user['username']}"
-
+    workspace_id = f"user-{user['username']}"
     session = await runtime_store.create_or_resume_guest_session(workspace_id)
     _set_workspace_cookie(response, session.workspace_id)
 

@@ -67,6 +67,27 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('story-review-score')).toHaveText(/^\d+$/);
     await expect(page.getByTestId('story-review-panel')).toContainText('publish ready');
     await expect(page.getByTestId('story-workflow-state')).toContainText('Completed pipeline');
+    await expect(page.getByTestId('workspace-badge')).toHaveText('user-operator');
+  });
+
+  test('login replaces a guest workspace with the user workspace', async ({ page }) => {
+    await page.goto('/');
+    await page.getByTestId('launch-guest').click();
+
+    await expect(page).toHaveURL(/\/story$/);
+    await expect(page.getByTestId('workspace-badge')).toContainText('guest-');
+
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page).toHaveURL(/\/$/);
+
+    await page.getByRole('link', { name: 'Sign in' }).click();
+    await page.getByTestId('login-email').fill('operator@novel.engine');
+    await page.getByTestId('login-password').fill('demo-password');
+    await page.getByTestId('login-submit').click();
+
+    await expect(page).toHaveURL(/\/story$/);
+    await expect(page.getByTestId('story-workbench-page')).toBeVisible();
+    await expect(page.getByTestId('workspace-badge')).toHaveText('user-operator');
   });
 
   test('direct story access restores the session shell', async ({ page }) => {

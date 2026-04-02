@@ -41,7 +41,7 @@ def test_login_accepts_email_and_returns_workspace_profile(
     assert story_response.json()["story"]["author_id"] == payload["workspace_id"]
 
 
-def test_login_reuses_existing_guest_workspace_cookie(
+def test_login_promotes_guest_cookie_to_user_workspace(
     canonical_client: Any,
 ) -> None:
     guest_response = canonical_client.post("/api/v1/guest/session")
@@ -59,6 +59,7 @@ def test_login_reuses_existing_guest_workspace_cookie(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["workspace_id"] == guest_workspace_id
+    assert payload["workspace_id"] == "user-operator"
+    assert payload["workspace_id"] != guest_workspace_id
     assert payload["user"]["name"] == "operator"
     assert payload["user"]["email"] == "operator@novel.engine"
