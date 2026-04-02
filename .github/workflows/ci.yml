@@ -45,6 +45,9 @@ jobs:
       - name: Run Ruff
         run: ruff check src tests
 
+      - name: Run import-linter
+        run: lint-imports
+
       - name: Run MyPy
         run: >
           mypy
@@ -174,3 +177,145 @@ jobs:
           -m requires_dashscope
           tests/contract/test_text_generation_provider_contract.py
           tests/contexts/narrative/application/test_qwen_provider_smoke.py
+
+  postgres-live-smoke:
+    name: PostgreSQL Live Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test_novel_engine
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d test_novel_engine"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_POSTGRES_TESTS: "1"
+      POSTGRES_TEST_URL: postgresql://postgres:postgres@localhost:5432/test_novel_engine
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run PostgreSQL live smoke
+        run: >
+          pytest -q
+          -m postgres_integration
+          tests/contexts/narrative/infrastructure/repositories
+
+  honcho-live-smoke:
+    name: Honcho Live Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: ${{ secrets.HONCHO_BASE_URL != '' }}
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_HONCHO_TESTS: "1"
+      HONCHO_BASE_URL: ${{ secrets.HONCHO_BASE_URL }}
+      HONCHO_API_KEY: ${{ secrets.HONCHO_API_KEY }}
+      HONCHO_DEPLOYMENT: self_hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test,honcho]"
+
+      - name: Run Honcho live smoke
+        run: >
+          pytest -q
+          -m requires_honcho
+          tests/shared/infrastructure/honcho/test_honcho_live_smoke.py
+
+  chroma-live-smoke:
+    name: Chroma Live Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      chroma:
+        image: chromadb/chroma
+        ports:
+          - 8000:8000
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_CHROMA_TESTS: "1"
+      CHROMA_HOST: localhost
+      CHROMA_PORT: "8000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Wait for Chroma
+        run: |
+          python - <<'PY'
+          import time
+          from urllib.request import urlopen
+
+          deadline = time.time() + 60
+          last_error: Exception | None = None
+
+          while time.time() < deadline:
+              try:
+                  with urlopen("http://localhost:8000/api/v1/heartbeat", timeout=5) as response:
+                      if response.status == 200:
+                          break
+              except Exception as exc:  # pragma: no cover - CI readiness helper
+                  last_error = exc
+              time.sleep(2)
+          else:
+              raise SystemExit(f"Chroma did not become ready: {last_error}")
+          PY
+
+      - name: Run Chroma live smoke
+        run: >
+          pytest -q
+          -m requires_chroma
+          tests/contexts/knowledge/infrastructure/vectorStores/test_chroma_vector_store_live.py

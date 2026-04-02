@@ -43,6 +43,12 @@ from src.contexts.knowledge.infrastructure.vectorStores.chroma_vector_store impo
 from src.shared.infrastructure.auth.jwt_utils import JWTManager
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging.config import get_logger
+from src.shared.infrastructure.persistence.pool_manager import (
+    close_connection_pool as close_shared_connection_pool,
+)
+from src.shared.infrastructure.persistence.pool_manager import (
+    get_connection_pool as get_shared_connection_pool,
+)
 
 if TYPE_CHECKING:
     import asyncpg
@@ -97,31 +103,20 @@ def reset_jwt_manager() -> None:
 
 async def get_connection_pool() -> DatabaseConnectionPool:
     """Get or create the shared database connection pool."""
+    pool = await get_shared_connection_pool()
     global _connection_pool
-    if _connection_pool is None:
-        from src.shared.infrastructure.persistence.connection_pool import (
-            DatabaseConnectionPool,
-        )
+    _connection_pool = pool
+    from src.apps.api.health import set_connection_pool
 
-        settings = get_settings()
-        _connection_pool = DatabaseConnectionPool(
-            database_url=settings.database.url,
-            max_connections=settings.database.pool_size
-            + settings.database.max_overflow,
-        )
-        await _connection_pool.initialize()
-        from src.apps.api.health import set_connection_pool
-
-        set_connection_pool(_connection_pool)
-    return _connection_pool
+    set_connection_pool(pool)
+    return pool
 
 
 async def close_connection_pool() -> None:
     """Close the shared database connection pool."""
     global _connection_pool
-    if _connection_pool is not None:
-        await _connection_pool.close()
-        _connection_pool = None
+    _connection_pool = None
+    await close_shared_connection_pool()
 
 
 @asynccontextmanager

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+from typing import Any
 from uuid import UUID
 
 import pytest
@@ -48,7 +49,7 @@ class DraftFailureAndSemanticWarningProvider(DeterministicTextGenerationProvider
 
     async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
         if task.step == "chapter_scenes" and int(task.metadata.get("chapter_number", 0)) == 2:
-            payload = {
+            draft_payload: dict[str, Any] = {
                 "scenes": [
                     {
                         "scene_type": "narrative",
@@ -61,12 +62,12 @@ class DraftFailureAndSemanticWarningProvider(DeterministicTextGenerationProvider
                 step=task.step,
                 provider="mock",
                 model="draft-failure-v1",
-                raw_text=json.dumps(payload, ensure_ascii=False),
-                content=payload,
+                raw_text=json.dumps(draft_payload, ensure_ascii=False),
+                content=draft_payload,
             )
 
         if task.step == "semantic_review":
-            payload = {
+            semantic_payload: dict[str, Any] = {
                 "semantic_score": 92,
                 "reader_pull_score": 91,
                 "plot_clarity_score": 90,
@@ -90,8 +91,8 @@ class DraftFailureAndSemanticWarningProvider(DeterministicTextGenerationProvider
                 step=task.step,
                 provider="mock",
                 model="semantic-warning-v1",
-                raw_text=json.dumps(payload, ensure_ascii=False),
-                content=payload,
+                raw_text=json.dumps(semantic_payload, ensure_ascii=False),
+                content=semantic_payload,
             )
 
         return await super().generate_structured(task)

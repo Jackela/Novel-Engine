@@ -7,7 +7,8 @@
 
 - [ ] `pytest -q`
 - [ ] `ruff check src tests`
-- [ ] `mypy src --no-error-summary --show-column-numbers`
+- [ ] `mypy src tests --no-error-summary --show-column-numbers`
+- [ ] `lint-imports`
 - [ ] `npm --prefix frontend run type-check`
 - [ ] `npm --prefix frontend run test`
 - [ ] `npm --prefix frontend run build`

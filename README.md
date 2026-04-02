@@ -17,19 +17,11 @@ python -m pip install -e ".[dev,test]"
 pytest -q
 ruff check src tests
 mypy \
-  src/apps/api \
-  src/contexts/identity \
-  src/contexts/knowledge/interface/http \
-  src/contexts/world/interface/http \
-  src/shared/infrastructure/config \
-  src/shared/infrastructure/health \
-  src/shared/infrastructure/logging \
-  src/shared/infrastructure/middleware \
-  src/shared/infrastructure/honcho \
-  src/shared/interface/http \
-  src/contexts/knowledge/application/services \
+  src \
+  tests \
   --no-error-summary \
   --show-column-numbers
+lint-imports
 ```
 
 If you want the optional Honcho integration installed locally, use:
@@ -55,7 +47,7 @@ npm --prefix frontend run test:e2e:smoke
 - `pytest -q` is the default backend gate.
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
 - Frontend smoke coverage is exercised with Playwright against the canonical backend and frontend stack.
-- CI runs backend quality on the canonical backend surface, backend tests, frontend validation, and CodeQL.
+- CI runs backend quality on the canonical backend surface, backend tests, frontend validation, import-linter, and CodeQL.
 - CodeQL scans the canonical source surface only; generated caches and build outputs are excluded, and default-branch merges must keep the scan clean or use documented suppressions for confirmed false positives. See [docs/security/codeql-alerts.md](docs/security/codeql-alerts.md).
 
 ## Repository hygiene rules

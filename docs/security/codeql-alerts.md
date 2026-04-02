@@ -1,17 +1,31 @@
 # CodeQL Alert Review
 
-This repository keeps CodeQL focused on the active product surface under `src/apps/`, `src/contexts/ai/`, `src/contexts/narrative/`, `src/shared/`, `frontend/src/`, and the non-evaluation scripts used by the current engine.
+The active CodeQL policy is defined in [.github/codeql/codeql-config.yml](../../.github/codeql/codeql-config.yml).
 
-Legacy subsystems under `src/contexts/world/`, `src/contexts/character/`, `src/contexts/knowledge/`, `src/api/`, `src/caching/`, `src/events/`, and the older test/evaluation trees are treated as historical support code and are excluded from the canonical scan scope.
+Effective scan scope:
 
-Current review outcomes:
+- `src/`
+- `scripts/`
+- `frontend/`
 
-- Alerts on deleted or renamed paths from earlier scans are treated as stale history, not live findings in the current tree.
-- The only source-level issue that needed a fix in this pass was `src/events/outbox.py`, where ordering now has an explicit equality method and deterministic sort key.
-- Generated output, build artifacts, and dependency caches are excluded through `.github/codeql/codeql-config.yml`.
+Effective exclusions:
+
+- `tests/**`
+- `src/api/**`
+- `src/caching/**`
+- `src/contexts/character/**`
+- `src/contexts/knowledge/**`
+- `src/contexts/world/**`
+- `src/events/**`
+- `scripts/evaluation/**`
+- generated output, caches, and build artifacts
+
+Review notes:
+
+- Alerts on deleted or renamed paths from earlier scans are stale history unless they reappear on a live path in the current tree.
+- Confirmed false positives should be documented here before any suppression is added or any scope exclusion is changed.
+- Fix the code first whenever a real source-level issue is found.
 
 Policy:
 
-- Confirmed false positives are documented here before any suppression is added or any scope exclusion is changed.
-- If a future scan surfaces a real source-level finding, fix the code first.
 - Only use code scanning suppressions when the finding is reviewed and confirmed to be a false positive.
