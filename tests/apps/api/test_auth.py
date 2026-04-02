@@ -63,3 +63,23 @@ def test_login_promotes_guest_cookie_to_user_workspace(
     assert payload["workspace_id"] != guest_workspace_id
     assert payload["user"]["name"] == "operator"
     assert payload["user"]["email"] == "operator@novel.engine"
+
+
+def test_login_with_invalid_credentials_returns_401(
+    canonical_client: Any,
+) -> None:
+    response = canonical_client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "operator@novel.engine",
+            "password": "wrong-password",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "error": {
+            "code": "HTTP_ERROR",
+            "message": "Invalid credentials",
+        }
+    }

@@ -61,6 +61,41 @@ function getAuthorizationHeaders(): Record<string, string> {
   return {};
 }
 
+function pickErrorMessage(payload: unknown): string | null {
+  if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const detail = record.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+
+  const error = record.error;
+  if (typeof error === 'string' && error.trim()) {
+    return error;
+  }
+  if (error != null && typeof error === 'object' && !Array.isArray(error)) {
+    const nestedMessage = (error as Record<string, unknown>).message;
+    if (typeof nestedMessage === 'string' && nestedMessage.trim()) {
+      return nestedMessage;
+    }
+
+    const nestedDetail = (error as Record<string, unknown>).detail;
+    if (typeof nestedDetail === 'string' && nestedDetail.trim()) {
+      return nestedDetail;
+    }
+  }
+
+  const message = record.message;
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return null;
+}
+
 async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
@@ -78,7 +113,28 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     });
 
     if (!response.ok) {
-      throw new HttpError(`Request failed with status ${response.status}`, response.status);
+      let message = `Request failed with status ${response.status}`;
+      const contentType = response.headers.get('Content-Type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        try {
+          const payload = (await response.json()) as unknown;
+          message = pickErrorMessage(payload) ?? message;
+        } catch {
+          // Fall back to the generic HTTP status message.
+        }
+      } else {
+        try {
+          const detail = (await response.text()).trim();
+          if (detail) {
+            message = detail;
+          }
+        } catch {
+          // Fall back to the generic HTTP status message.
+        }
+      }
+
+      throw new HttpError(message, response.status);
     }
 
     return (await response.json()) as T;

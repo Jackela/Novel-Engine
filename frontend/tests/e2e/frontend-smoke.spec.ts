@@ -70,6 +70,22 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('workspace-badge')).toHaveText('user-operator');
   });
 
+  test('login page reports invalid credentials and can still launch a guest workspace', async ({ page }) => {
+    await page.goto('/login');
+
+    await page.getByTestId('login-password').fill('wrong-password');
+    await page.getByTestId('login-submit').click();
+
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByText('Invalid credentials')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Continue as guest writer' }).click();
+
+    await expect(page).toHaveURL(/\/story$/);
+    await expect(page.getByTestId('story-workbench-page')).toBeVisible();
+    await expect(page.getByTestId('workspace-badge')).toContainText('guest-');
+  });
+
   test('login replaces a guest workspace with the user workspace', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('launch-guest').click();
