@@ -879,7 +879,9 @@ export function StoryWorkbenchPage() {
                 disabled={!activeStory || isBusy}
                 data-testid="story-run-current-pipeline"
               >
-                Run current pipeline
+                {formState.publish
+                  ? 'Run current pipeline and publish'
+                  : 'Run current pipeline'}
               </Button>
               <Button
                 type="button"
