@@ -42,12 +42,28 @@ npm --prefix frontend run test:e2e:smoke
 
 `test:e2e:smoke` launches the canonical backend and frontend stack through Playwright.
 
+### Manual long-form live gate
+
+The release-grade long-form validation path is intentionally manual because it uses a paid external model and runs materially longer than the deterministic suite.
+
+```bash
+python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20
+```
+
+This command starts a clean local backend, uses the real HTTP API with DashScope, and writes:
+
+- `docs/reports/uat/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md`
+- `docs/reports/uat/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json`
+
+See [docs/reports/uat/INDEX.md](docs/reports/uat/INDEX.md) and [docs/reports/uat/VERIFICATION_MATRIX.md](docs/reports/uat/VERIFICATION_MATRIX.md) for the full acceptance model.
+
 ## Testing model
 
 - `pytest -q` is the default backend gate.
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
 - Frontend smoke coverage is exercised with Playwright against the canonical backend and frontend stack.
 - CI runs backend quality on the canonical backend surface, backend tests, frontend validation, import-linter, and CodeQL.
+- The 20-chapter DashScope run is a manual release gate, not a default PR gate.
 - CodeQL scans the canonical source surface only; generated caches and build outputs are excluded, and default-branch merges must keep the scan clean or use documented suppressions for confirmed false positives. See [docs/security/codeql-alerts.md](docs/security/codeql-alerts.md).
 
 ## Repository hygiene rules

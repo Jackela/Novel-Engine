@@ -53,6 +53,85 @@ textarea {
   overflow: hidden;
 }
 
+.app-shell__chrome {
+  position: relative;
+  z-index: 1;
+  width: min(1280px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1rem 0 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: center;
+}
+
+.app-shell__brand,
+.app-shell__session {
+  padding: 1rem 1.2rem;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(2, 6, 23, 0.42);
+  backdrop-filter: blur(18px);
+}
+
+.app-shell__brand {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.app-shell__brand strong,
+.app-shell__session strong {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.app-shell__brand p,
+.app-shell__session span {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.app-shell__brand-mark {
+  margin: 0;
+  color: var(--accent-cool);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.app-shell__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.app-shell__nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.8rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(159, 179, 200, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.app-shell__nav-link:hover {
+  transform: translateY(-1px);
+  color: var(--text);
+}
+
+.app-shell__nav-link--active {
+  color: var(--text);
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(56, 189, 248, 0.12);
+}
+
 .app-shell__aurora {
   position: absolute;
   width: 24rem;
@@ -88,7 +167,7 @@ textarea {
 .landing {
   display: grid;
   gap: 2rem;
-  padding-top: 5rem;
+  padding-top: 3rem;
 }
 
 .landing__hero,
@@ -156,6 +235,7 @@ textarea {
   gap: 1rem;
 }
 
+.landing__journey,
 .landing__grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -220,13 +300,40 @@ textarea {
 
 .auth-page {
   display: grid;
-  place-items: center;
-  min-height: 100vh;
+  min-height: calc(100vh - 7rem);
+  align-items: center;
+}
+
+.auth-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 28rem) minmax(0, 24rem);
+  gap: 1rem;
+  align-items: start;
 }
 
 .auth-card {
   width: min(28rem, 100%);
   padding: 2rem;
+}
+
+.auth-note {
+  padding: 1.5rem;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.74);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(24px);
+}
+
+.auth-note p,
+.auth-note li {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.auth-note ul {
+  margin: 1rem 0 0;
+  padding-left: 1.15rem;
 }
 
 .field {
@@ -281,6 +388,12 @@ textarea {
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.panel__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
 .panel__body {
@@ -438,6 +551,44 @@ textarea {
   color: var(--muted);
 }
 
+.story-toggle--panel {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(159, 179, 200, 0.12);
+  background: rgba(2, 6, 23, 0.4);
+}
+
+.story-session-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.story-session-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.story-session-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.story-library-summary,
+.story-panel-note {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.story-library-summary {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.story-library-summary strong {
+  color: var(--text);
+}
+
 .story-list {
   display: grid;
   gap: 0.8rem;
@@ -537,6 +688,10 @@ textarea {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.8rem;
   margin: 0;
+}
+
+.story-stats--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .story-stats div {
@@ -737,6 +892,10 @@ textarea {
 }
 
 @media (max-width: 1180px) {
+  .app-shell__chrome {
+    grid-template-columns: 1fr;
+  }
+
   .story-workbench__layout {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -747,6 +906,8 @@ textarea {
 }
 
 @media (max-width: 900px) {
+  .auth-page__layout,
+  .landing__journey,
   .landing__grid,
   .story-workbench__hero,
   .story-workbench__layout,
@@ -778,8 +939,13 @@ textarea {
     width: min(100% - 1rem, 1120px);
   }
 
+  .app-shell__chrome {
+    width: min(100% - 1rem, 1280px);
+  }
+
   .landing__hero,
   .auth-card,
+  .auth-note,
   .story-workbench__hero,
   .panel {
     padding: 1.25rem;

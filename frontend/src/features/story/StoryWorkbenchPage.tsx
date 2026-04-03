@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/Button';
 import { Panel } from '@/components/Panel';
@@ -234,9 +235,22 @@ function stageStatusLabel(stage: StoryRunStageExecution): string {
   return `${stage.name}: ${stage.status}`;
 }
 
+function providerLabel(provider: string | null | undefined, model: string | null | undefined) {
+  if (!provider && !model) {
+    return 'Not recorded';
+  }
+
+  if (!provider) {
+    return model ?? 'Not recorded';
+  }
+
+  return model ? `${provider} / ${model}` : provider;
+}
+
 export function StoryWorkbenchPage() {
   const { session, signOut } = useAuth();
   const [formState, setFormState] = useState<ComposerState>(initialComposerState);
+  const [rerunPublishes, setRerunPublishes] = useState(false);
 
   if (!session) {
     return null;
@@ -370,8 +384,8 @@ export function StoryWorkbenchPage() {
   const launchActivePipeline = async () => {
     try {
       await runStoryPipeline({
-        publish: formState.publish,
-        targetChapters: workflow?.target_chapters ?? formState.targetChapters,
+        publish: rerunPublishes,
+        targetChapters: rerunTargetChapters,
       });
     } catch {
       // The hook owns error presentation.
@@ -381,10 +395,33 @@ export function StoryWorkbenchPage() {
   const selectedCharacterCount = memory?.active_characters?.length ?? 0;
   const chapterSummaryCount = memory?.chapter_summaries?.length ?? 0;
   const targetChapters = workflow?.target_chapters ?? formState.targetChapters;
+  const rerunTargetChapters =
+    workflow?.target_chapters ?? activeStory?.chapter_count ?? formState.targetChapters;
   const canOutline = Boolean(workspace?.blueprint);
   const canDraft = Boolean(workspace?.outline);
   const canReview = Boolean(activeStory && activeStory.chapter_count > 0);
   const canPublish = Boolean(publishGatePassed);
+  const sessionTitle =
+    session.kind === 'user'
+      ? session.user?.name ?? 'Signed in author'
+      : 'Guest author workspace';
+  const sessionSummary =
+    session.kind === 'user'
+      ? session.user?.email ?? 'Profile email missing'
+      : 'Guest sessions are disposable and useful for zero-state flow validation.';
+  const activeRunLabel = runState ? `${runState.mode} / ${runState.status}` : 'No active run';
+  const blueprintSource = workspace?.blueprint
+    ? providerLabel(workspace.blueprint.provider, workspace.blueprint.model)
+    : 'Not generated';
+  const outlineSource = workspace?.outline
+    ? providerLabel(workspace.outline.provider, workspace.outline.model)
+    : 'Not generated';
+  const semanticSource = semanticReview
+    ? providerLabel(semanticReview.source_provider, semanticReview.source_model)
+    : 'Not reviewed';
+  const selectedPlaybackSource = playbackReview
+    ? providerLabel(playbackReview.source_provider, playbackReview.source_model)
+    : 'No playback selected';
 
   return (
     <main className="story-workbench" data-testid="story-workbench-page">
@@ -396,8 +433,8 @@ export function StoryWorkbenchPage() {
           </h1>
           <p className="story-workbench__summary">
             {activeStory
-              ? `当前工作区围绕 ${activeStory.chapter_count}/${targetChapters} 章推进。蓝图、大纲、章节记忆、连续性审查与发布门现在都收敛到同一份 workspace。`
-              : '先建立设定，再逐阶段确认蓝图、大纲、章节、连续性与发布门。全自动 pipeline 仍保留为快捷入口，但不再是唯一主流程。'}
+              ? `当前稿件已完成 ${activeStory.chapter_count}/${targetChapters} 章。稿件库、mutable workspace 和 immutable run playback 现在分层展示，避免用户在当前稿件和历史 run 之间迷路。`
+              : '从入口页进入后，先建立稿件，再在同一工作台里管理 library、当前稿件状态和 run playback。全自动 pipeline 是快捷入口，但不再复用别的面板状态。'}
           </p>
         </div>
 
@@ -414,9 +451,6 @@ export function StoryWorkbenchPage() {
           <span className="story-workbench__workspace" data-testid="workspace-badge">
             {session.workspaceId}
           </span>
-          <Button variant="ghost" onClick={signOut}>
-            Sign out
-          </Button>
         </div>
       </header>
 
@@ -424,9 +458,42 @@ export function StoryWorkbenchPage() {
 
       <section className="story-workbench__layout">
         <div className="story-workbench__column">
+          <Panel title="Session / Entry" eyebrow="Surface 1" testId="story-session-panel">
+            <div className="story-session-card" data-testid="story-session-summary">
+              <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
+                {session.kind === 'guest' ? 'guest session' : 'signed in'}
+              </StatusPill>
+              <h3>{sessionTitle}</h3>
+              <p>{sessionSummary}</p>
+              <dl className="story-stats story-stats--compact">
+                <div>
+                  <dt>Workspace</dt>
+                  <dd>{session.workspaceId}</dd>
+                </div>
+                <div>
+                  <dt>Active story</dt>
+                  <dd>{activeStory?.title ?? 'No manuscript selected'}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="story-workflow__actions">
+              <Link
+                className="button button--secondary"
+                to="/"
+                data-testid="story-back-to-landing"
+              >
+                Back to landing
+              </Link>
+              <Button variant="ghost" onClick={signOut}>
+                Sign out
+              </Button>
+            </div>
+          </Panel>
+
           <Panel
             title="Create manuscript"
-            eyebrow="Project seed"
+            eyebrow="New project"
             testId="story-create-panel"
           >
             <form className="story-form" onSubmit={createDraft} data-testid="story-create-form">
@@ -548,7 +615,7 @@ export function StoryWorkbenchPage() {
                     }))
                   }
                 />
-                <span>Publish after running the pipeline</span>
+                <span>Publish after the initial full pipeline</span>
               </label>
 
               <div className="story-form__actions">
@@ -570,7 +637,7 @@ export function StoryWorkbenchPage() {
 
           <Panel
             title="Project library"
-            eyebrow="Manuscripts"
+            eyebrow="Current manuscripts"
             actions={
               <Button variant="ghost" onClick={() => void refreshLibrary()} disabled={isLoading}>
                 {isLoading ? 'Refreshing...' : 'Refresh library'}
@@ -578,6 +645,14 @@ export function StoryWorkbenchPage() {
             }
             testId="story-library-panel"
           >
+            <div className="story-library-summary" data-testid="story-library-summary">
+              <strong>{stories.length} manuscript(s)</strong>
+              <span>
+                {activeStory
+                  ? `Viewing ${activeStory.title}`
+                  : 'Select a manuscript or create a new one.'}
+              </span>
+            </div>
             <ul className="story-list" data-testid="story-list">
               {stories.length === 0 ? (
                 <li className="story-empty">No manuscripts yet. Create the first draft above.</li>
@@ -617,8 +692,8 @@ export function StoryWorkbenchPage() {
 
         <div className="story-workbench__column story-workbench__column--wide">
           <Panel
-            title="Setting / Blueprint"
-            eyebrow="Stage 1"
+            title="Current manuscript"
+            eyebrow="Surface 2"
             testId="story-manuscript-panel"
           >
             {activeStory && workspace ? (
@@ -642,6 +717,11 @@ export function StoryWorkbenchPage() {
                   </div>
                 </div>
 
+                <p className="story-panel-note">
+                  The center surface stays mutable: blueprint, outline, drafting progress, and the
+                  current manuscript snapshot update here. Historical runs stay in the release desk.
+                </p>
+
                 <dl className="story-stats">
                   <div>
                     <dt>Target chapters</dt>
@@ -658,6 +738,25 @@ export function StoryWorkbenchPage() {
                   <div>
                     <dt>Chapter summaries</dt>
                     <dd>{chapterSummaryCount}</dd>
+                  </div>
+                </dl>
+
+                <dl className="story-stats story-stats--compact">
+                  <div>
+                    <dt>Blueprint source</dt>
+                    <dd>{blueprintSource}</dd>
+                  </div>
+                  <div>
+                    <dt>Outline source</dt>
+                    <dd>{outlineSource}</dd>
+                  </div>
+                  <div>
+                    <dt>Semantic source</dt>
+                    <dd>{semanticSource}</dd>
+                  </div>
+                  <div>
+                    <dt>Mutable run</dt>
+                    <dd>{activeRunLabel}</dd>
                   </div>
                 </dl>
 
@@ -862,8 +961,8 @@ export function StoryWorkbenchPage() {
 
         <div className="story-workbench__column">
           <Panel
-            title="Publish / Export"
-            eyebrow="Stage 5"
+            title="Run desk / release"
+            eyebrow="Surface 3"
             testId="story-workflow-panel"
             actions={
               <Button variant="ghost" onClick={() => void refreshLibrary()} disabled={isLoading}>
@@ -871,6 +970,47 @@ export function StoryWorkbenchPage() {
               </Button>
             }
           >
+            <div className="story-notes" data-testid="story-run-provenance">
+              <h3>Run provenance</h3>
+              <p>
+                Keep the mutable manuscript and the selected immutable run separate. This panel is
+                the release desk: rerun the active manuscript, inspect evidence, then export or
+                publish with intent.
+              </p>
+              <dl className="story-stats story-stats--compact">
+                <div>
+                  <dt>Selected run</dt>
+                  <dd>{selectedRunDetail?.run.run_id ?? 'None selected'}</dd>
+                </div>
+                <div>
+                  <dt>Playback source</dt>
+                  <dd>{selectedPlaybackSource}</dd>
+                </div>
+                <div>
+                  <dt>Snapshot</dt>
+                  <dd>{formatDate(selectedRunDetail?.latest_snapshot?.captured_at ?? null)}</dd>
+                </div>
+                <div>
+                  <dt>Mutable run</dt>
+                  <dd>{runState?.run_id ?? 'No active run'}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <label className="story-toggle story-toggle--panel">
+              <input
+                data-testid="story-current-publish-toggle"
+                type="checkbox"
+                checked={rerunPublishes}
+                onChange={(event) => setRerunPublishes(event.target.checked)}
+                disabled={!activeStory || isBusy}
+              />
+              <span>
+                Publish when rerunning the current manuscript ({rerunTargetChapters} target
+                chapters)
+              </span>
+            </label>
+
             <div className="story-workflow__actions">
               <Button
                 type="button"
@@ -879,7 +1019,7 @@ export function StoryWorkbenchPage() {
                 disabled={!activeStory || isBusy}
                 data-testid="story-run-current-pipeline"
               >
-                {formState.publish
+                {rerunPublishes
                   ? 'Run current pipeline and publish'
                   : 'Run current pipeline'}
               </Button>
@@ -992,7 +1132,7 @@ export function StoryWorkbenchPage() {
             ) : null}
 
             {runHistory.length ? (
-              <div className="story-notes">
+              <div className="story-notes" data-testid="story-run-history">
                 <h3>Run history</h3>
                 <ul>
                   {runHistory.slice(-4).reverse().map((run) => (
@@ -1026,7 +1166,7 @@ export function StoryWorkbenchPage() {
                   {selectedRunDetail.run.mode} / {selectedRunDetail.run.status} / snapshot{' '}
                   {formatDate(selectedRunDetail.latest_snapshot?.captured_at ?? null)}
                 </p>
-                <dl className="story-stats">
+                <dl className="story-stats" data-testid="story-run-playback-stats">
                   <div>
                     <dt>Artifacts</dt>
                     <dd>{selectedRunDetail.artifacts.length}</dd>
@@ -1145,7 +1285,7 @@ export function StoryWorkbenchPage() {
             ) : null}
 
             {artifactHistory.length ? (
-              <div className="story-notes">
+              <div className="story-notes" data-testid="story-artifact-history">
                 <h3>Artifact history</h3>
                 <ul>
                   {artifactHistory.slice(-4).reverse().map((entry) => (
@@ -1160,8 +1300,8 @@ export function StoryWorkbenchPage() {
           </Panel>
 
           <Panel
-            title="Continuity / Pacing"
-            eyebrow="Stage 4"
+            title="Quality / publish gate"
+            eyebrow="Review surface"
             testId="story-review-panel"
           >
             {workspace ? (

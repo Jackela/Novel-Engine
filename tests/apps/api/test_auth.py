@@ -65,6 +65,28 @@ def test_login_promotes_guest_cookie_to_user_workspace(
     assert payload["user"]["email"] == "operator@novel.engine"
 
 
+def test_guest_launch_does_not_reuse_user_workspace_cookie(
+    canonical_client: Any,
+) -> None:
+    login_response = canonical_client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "operator@novel.engine",
+            "password": "demo-password",
+        },
+    )
+
+    assert login_response.status_code == 200
+    assert login_response.json()["workspace_id"] == "user-operator"
+
+    guest_response = canonical_client.post("/api/v1/guest/session")
+
+    assert guest_response.status_code == 200
+    payload = guest_response.json()
+    assert payload["workspace_id"].startswith("guest-")
+    assert payload["workspace_id"] != "user-operator"
+
+
 def test_login_with_invalid_credentials_returns_401(
     canonical_client: Any,
 ) -> None:
