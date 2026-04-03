@@ -113,6 +113,58 @@ def test_validate_report_rejects_missing_chapter_coverage() -> None:
         raise AssertionError("validate_report should reject missing chapter coverage")
 
 
+def test_validate_report_rejects_blocked_publish_outcome() -> None:
+    report = LongformUatReport(
+        started_at="2026-01-01T00:00:00+00:00",
+        completed_at="2026-01-01T00:10:00+00:00",
+        base_url="http://127.0.0.1:8000",
+        story_id="story-1",
+        workspace_id="user-operator",
+        story_title="Story",
+        provider="dashscope",
+        model="qwen3.5-flash",
+        review_provider="dashscope",
+        review_model="qwen3.5-flash",
+        target_chapters=20,
+        drafted_chapters=20,
+        published=False,
+        publish_outcome="blocked",
+        publish_failure_code="QUALITY_GATE_FAILED",
+        quality_score=86,
+        continuity_score=88,
+        pacing_score=83,
+        reader_pull_score=82,
+        plot_clarity_score=80,
+        ooc_risk_score=12,
+        structural_gate_passed=False,
+        semantic_gate_passed=True,
+        publish_gate_passed=False,
+        issue_codes=["quality_gate_failed"],
+        run_ids=[],
+        artifact_kinds=[],
+        revision_notes=[],
+        request_trace=[],
+        chapter_audit=[
+            ChapterAudit(
+                chapter_number=chapter_number,
+                title=f"Chapter {chapter_number}",
+                scenes=3,
+                word_count=900,
+                hook=f"Hook {chapter_number}",
+            )
+            for chapter_number in range(1, 21)
+        ],
+        editorial_findings=[],
+    )
+
+    try:
+        validate_report(report)
+    except ValueError as exc:
+        assert "did not reach a successful publish outcome" in str(exc)
+    else:
+        raise AssertionError("validate_report should reject blocked publish outcomes")
+
+
 def test_render_markdown_report_includes_editorial_findings_and_trace() -> None:
     report = LongformUatReport(
         started_at="2026-01-01T00:00:00+00:00",

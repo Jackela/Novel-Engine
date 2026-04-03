@@ -17,6 +17,7 @@ from src.contexts.narrative.application.services.story_pipeline_context import (
     StoryWorkflowContext,
 )
 from src.contexts.narrative.application.services.story_workflow_support import (
+    antagonist_names,
     character_names,
     character_profile,
     ensure_character_anchor,
@@ -26,6 +27,8 @@ from src.contexts.narrative.application.services.story_workflow_support import (
     ensure_relationship_anchor,
     normalize_scene_type,
     outline_chapter_for_number,
+    pov_character_names,
+    protagonist_name,
 )
 from src.contexts.narrative.application.services.story_workflow_types import (
     CharacterStateSnapshot,
@@ -125,7 +128,10 @@ class ChapterDraftingService:
             relationship_target = self._select_relationship_target(
                 ctx, chapter_number, focus_character
             )
-            relationship_status = self._relationship_status(chapter_number)
+            relationship_status = self._relationship_status(
+                chapter_number=chapter_number,
+                target_chapters=target_count,
+            )
             scene_result = await self._generate_chapter_scenes(
                 ctx=ctx,
                 chapter_spec=chapter_spec,
@@ -343,6 +349,7 @@ class ChapterDraftingService:
                 source_model=result.model,
             )
 
+        scenes = self._normalize_scene_payloads(scenes)
         normalized: list[dict[str, Any]] = []
         for index, scene in enumerate(scenes, start=1):
             if not isinstance(scene, dict):
@@ -382,6 +389,39 @@ class ChapterDraftingService:
                 }
             )
         return normalized
+
+    @staticmethod
+    def _normalize_scene_payloads(
+        scenes: list[Any],
+    ) -> list[Any]:
+        if (
+            len(scenes) == 1
+            and isinstance(scenes[0], dict)
+            and isinstance(scenes[0].get("type"), list)
+        ):
+            nested_scenes = scenes[0]["type"]
+            if all(isinstance(item, dict) for item in nested_scenes):
+                scenes = nested_scenes
+
+        normalized_scenes: list[Any] = []
+        for scene in scenes:
+            if not isinstance(scene, dict):
+                normalized_scenes.append(scene)
+                continue
+
+            nested_scene = scene.get("scene")
+            if isinstance(nested_scene, dict):
+                scene = nested_scene
+
+            if "scene_type" not in scene and isinstance(scene.get("type"), str):
+                scene = {
+                    **scene,
+                    "scene_type": scene["type"],
+                }
+
+            normalized_scenes.append(scene)
+
+        return normalized_scenes
 
     def _record_draft_failure_artifact(
         self,
@@ -603,7 +643,9 @@ class ChapterDraftingService:
     ) -> str:
         blueprint = ctx.workflow.blueprint
         if blueprint is not None:
-            names = character_names(blueprint.character_bible)
+            names = pov_character_names(blueprint.character_bible)
+            if not names:
+                names = character_names(blueprint.character_bible)
             if names:
                 return str(names[(chapter_number - 1) % len(names)])
         return str(ctx.story.author_id)
@@ -632,17 +674,50 @@ class ChapterDraftingService:
         chapter_number: int,
         focus_character: str,
     ) -> str:
+        blueprint = ctx.workflow.blueprint
+        if blueprint is not None:
+            character_bible = blueprint.character_bible
+            protagonist = protagonist_name(character_bible)
+            antagonists = set(antagonist_names(character_bible))
+            pov_names = [
+                name
+                for name in pov_character_names(character_bible)
+                if name and name != focus_character and name not in antagonists
+            ]
+            if focus_character and protagonist and focus_character != protagonist:
+                return protagonist
+            if pov_names:
+                return str(pov_names[(chapter_number - 1) % len(pov_names)])
+
         candidates = [
-            name for name in ctx.memory.active_characters if name and name != focus_character
+            name
+            for name in ctx.memory.active_characters
+            if name and name != focus_character
         ]
         if not candidates:
             return ""
         return str(candidates[(chapter_number - 1) % len(candidates)])
 
     @staticmethod
-    def _relationship_status(chapter_number: int) -> str:
-        statuses = ["allies", "tense allies", "rivals"]
-        return str(statuses[(chapter_number - 1) % len(statuses)])
+    def _relationship_status(
+        *,
+        chapter_number: int,
+        target_chapters: int,
+    ) -> str:
+        progression = [
+            "mutual suspicion",
+            "tense cooperation",
+            "reluctant allies",
+            "earned trust",
+            "strained trust",
+            "oath-bound allies",
+        ]
+        if target_chapters <= 1:
+            return progression[-1]
+
+        ratio = (chapter_number - 1) / max(target_chapters - 1, 1)
+        index = min(len(progression) - 1, int(ratio * len(progression)))
+        return progression[index]
 
     def _previous_chapter_summary(self, ctx: StoryWorkflowContext) -> str:
         if not ctx.story.chapters:

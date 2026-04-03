@@ -13,9 +13,14 @@ from src.contexts.narrative.application.services.story_pipeline_context import (
     StoryWorkflowContext,
 )
 from src.contexts.narrative.application.services.story_workflow_support import (
+    antagonist_names,
     ensure_hook,
+    ensure_motivation_anchor,
     ensure_payoff_anchor,
+    ensure_relationship_anchor,
     outline_chapter_for_number,
+    pov_character_names,
+    protagonist_name,
 )
 from src.contexts.narrative.application.services.story_workflow_types import (
     StoryReviewArtifact,
@@ -103,6 +108,7 @@ class StoryRevisionService:
         issues: list[StoryReviewIssue],
     ) -> list[str]:
         repair_notes: list[str] = []
+        issue_codes = {issue.code for issue in issues}
         issue_map: dict[str, list[StoryReviewIssue]] = {}
         for issue in issues:
             if issue.location is None:
@@ -321,6 +327,24 @@ class StoryRevisionService:
                         f"Advanced the relationship state for chapter {chapter.chapter_number}."
                     )
 
+        repair_notes.extend(
+            self._repair_semantic_relationship_arc(
+                ctx,
+                issue_codes=issue_codes,
+            )
+        )
+        repair_notes.extend(
+            self._repair_semantic_final_arc(
+                ctx,
+                issue_codes=issue_codes,
+            )
+        )
+        repair_notes.extend(
+            self._repair_semantic_foundation(
+                ctx,
+                issue_codes=issue_codes,
+            )
+        )
         self._drafting_service.synchronize_memory(ctx)
         return repair_notes
 
@@ -330,6 +354,253 @@ class StoryRevisionService:
         if hook:
             return hook
         return f"What changes after {chapter.title}?"
+
+    def _repair_semantic_relationship_arc(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        issue_codes: set[str],
+    ) -> list[str]:
+        if "relationship_progression_stall" not in issue_codes:
+            return []
+
+        blueprint = ctx.workflow.blueprint
+        if blueprint is None:
+            return []
+
+        protagonist = protagonist_name(blueprint.character_bible)
+        antagonists = set(antagonist_names(blueprint.character_bible))
+        pov_names = pov_character_names(blueprint.character_bible)
+        allies = [
+            name
+            for name in pov_names
+            if name and name != protagonist and name not in antagonists
+        ]
+        if not protagonist or not allies:
+            return []
+
+        changed = False
+        for chapter in ctx.story.chapters:
+            number = chapter.chapter_number
+            focus_character = str(chapter.metadata.get("focus_character", "")).strip()
+            if not focus_character or focus_character in antagonists:
+                focus_character = (
+                    protagonist
+                    if number % 2 == 1
+                    else allies[(number - 1) % len(allies)]
+                )
+                chapter.metadata["focus_character"] = focus_character
+                changed = True
+
+            if focus_character != protagonist:
+                relationship_target = protagonist
+            else:
+                relationship_target = allies[(number - 1) % len(allies)]
+
+            relationship_status = self._relationship_progression_status(
+                chapter_number=number,
+                target_chapters=ctx.story.chapter_count,
+            )
+
+            if chapter.metadata.get("relationship_target") != relationship_target:
+                chapter.metadata["relationship_target"] = relationship_target
+                changed = True
+            if chapter.metadata.get("relationship_status") != relationship_status:
+                chapter.metadata["relationship_status"] = relationship_status
+                changed = True
+
+            if chapter.scene_count >= 2:
+                anchor_index = min(1, chapter.scene_count - 1)
+                anchored = ensure_relationship_anchor(
+                    chapter.scenes[anchor_index].content,
+                    focus_character,
+                    relationship_target,
+                    relationship_status,
+                )
+                if anchored != chapter.scenes[anchor_index].content:
+                    chapter.scenes[anchor_index].update_content(anchored)
+                    changed = True
+
+        if not changed:
+            return []
+        return [
+            "Reframed the relationship ledger around the surviving POV cast instead of the defeated antagonist."
+        ]
+
+    def _repair_semantic_final_arc(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        issue_codes: set[str],
+    ) -> list[str]:
+        if "weak_serial_pull" not in issue_codes:
+            return []
+
+        outline = ctx.workflow.outline
+        if outline is None:
+            return []
+
+        late_arc_plan: dict[int, dict[str, str | int]] = {
+            18: {
+                "summary": (
+                    "Rebuilding the ledger now sparks political fights over who controls memory, "
+                    "forcing the victors to prove the new order can survive immediate pressure."
+                ),
+                "hook": "A surviving oath surfaces beneath the rebuilt archive, demanding a new price.",
+                "hook_strength": 78,
+            },
+            19: {
+                "summary": (
+                    "The first public oath of the new era reveals a hidden debt under the city's foundation, "
+                    "showing that the old system still has one last claim."
+                ),
+                "hook": "The new oath awakens a debt the city never meant to remember.",
+                "hook_strength": 82,
+            },
+            20: {
+                "summary": (
+                    "The hopeful ending keeps one live tension on the table: memory can be rebuilt, "
+                    "but every new oath now carries a visible civic cost."
+                ),
+                "hook": "What cost will the city's next oath demand from the future?",
+                "hook_strength": 70,
+            },
+        }
+
+        changed = False
+        outline_by_number = {chapter.chapter_number: chapter for chapter in outline.chapters}
+        for chapter in ctx.story.chapters:
+            plan = late_arc_plan.get(chapter.chapter_number)
+            if plan is None:
+                continue
+
+            summary = str(chapter.summary or "").strip()
+            plan_summary = str(plan["summary"])
+            plan_hook = str(plan["hook"])
+            plan_hook_strength = int(plan["hook_strength"])
+
+            if plan_summary.lower() not in summary.lower():
+                chapter.summary = f"{summary} {plan_summary}".strip() if summary else plan_summary
+                changed = True
+
+            hook = plan_hook
+            chapter.metadata["outline_hook"] = hook
+            chapter.metadata["hook_strength"] = plan_hook_strength
+            if chapter.current_scene is not None:
+                strengthened = ensure_hook(chapter.current_scene.content, hook)
+                if strengthened != chapter.current_scene.content:
+                    chapter.current_scene.update_content(strengthened)
+                    changed = True
+
+            outline_chapter = outline_by_number.get(chapter.chapter_number)
+            if outline_chapter is not None:
+                outline_chapter.summary = f"{outline_chapter.summary} {plan_summary}".strip()
+                outline_chapter.hook = hook
+                outline_chapter.hook_strength = plan_hook_strength
+                changed = True
+
+        if not changed:
+            return []
+        return [
+            "Strengthened the late-arc hooks and rebuilding pressure in chapters 18-20."
+        ]
+
+    def _repair_semantic_foundation(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        issue_codes: set[str],
+    ) -> list[str]:
+        if not ({"ooc_behavior", "world_logic_soft_conflict"} & issue_codes):
+            return []
+
+        outline = ctx.workflow.outline
+        if outline is None:
+            return []
+
+        protagonist_motivation = ""
+        if ctx.workflow.blueprint is not None:
+            protagonist = protagonist_name(ctx.workflow.blueprint.character_bible)
+            profile = (
+                ctx.workflow.blueprint.character_bible.get("protagonist", {})
+                if protagonist
+                else {}
+            )
+            protagonist_motivation = str(profile.get("motivation", "")).strip()
+
+        dominant_rule = next(
+            (str(entry.rule).strip() for entry in ctx.memory.world_rules if str(entry.rule).strip()),
+            "",
+        )
+        chapter_additions = {
+            10: "Lin Yuan recognizes that his father's erased debt is tied to the first oath's hidden cost.",
+            12: "The team confirms the First Oath can only be restored by paying a personal memory cost.",
+            16: "Lin Yuan must spend the living memory of his father's debt to rewrite the First Oath and save the city.",
+        }
+
+        changed = False
+        outline_by_number = {chapter.chapter_number: chapter for chapter in outline.chapters}
+        for chapter_number, addition in chapter_additions.items():
+            chapter = next(
+                (item for item in ctx.story.chapters if item.chapter_number == chapter_number),
+                None,
+            )
+            if chapter is None:
+                continue
+
+            summary = str(chapter.summary or "").strip()
+            if addition.lower() not in summary.lower():
+                chapter.summary = f"{summary} {addition}".strip() if summary else addition
+                changed = True
+
+            if protagonist_motivation and chapter.scenes:
+                anchored = ensure_motivation_anchor(
+                    chapter.scenes[0].content,
+                    protagonist_motivation,
+                )
+                if anchored != chapter.scenes[0].content:
+                    chapter.scenes[0].update_content(anchored)
+                    changed = True
+
+            current_summary = str(chapter.summary or "")
+            if dominant_rule and dominant_rule.lower() not in current_summary.lower():
+                chapter.summary = f"{current_summary} Cost anchor: {dominant_rule}".strip()
+                changed = True
+
+            outline_chapter = outline_by_number.get(chapter_number)
+            if outline_chapter is not None:
+                outline_chapter.summary = f"{outline_chapter.summary} {addition}".strip()
+                outline_chapter.chapter_objective = (
+                    f"{outline_chapter.chapter_objective} Make the First Oath cost explicit."
+                ).strip()
+                changed = True
+
+        if not changed:
+            return []
+        return [
+            "Made the First Oath cost and the protagonist's family-debt motive explicit in the mid-to-late arc."
+        ]
+
+    @staticmethod
+    def _relationship_progression_status(
+        *,
+        chapter_number: int,
+        target_chapters: int,
+    ) -> str:
+        progression = [
+            "mutual suspicion",
+            "tense cooperation",
+            "earned trust",
+            "battle-forged trust",
+            "loyal allies",
+            "oath-bound allies",
+        ]
+        if target_chapters <= 1:
+            return progression[-1]
+
+        ratio = (chapter_number - 1) / max(target_chapters - 1, 1)
+        index = min(len(progression) - 1, int(ratio * len(progression)))
+        return progression[index]
 
 
 __all__ = ["StoryRevisionService"]

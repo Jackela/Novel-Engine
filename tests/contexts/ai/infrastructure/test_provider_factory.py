@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
+from typing import Any, cast
 
+import httpx
 import pytest
 
 from src.contexts.ai.application.ports.text_generation_port import (
@@ -26,6 +29,15 @@ from src.contexts.ai.infrastructure.providers.unconfigured_text_generation_provi
     UnconfiguredTextGenerationProvider,
 )
 from src.shared.infrastructure.config.settings import NovelEngineSettings
+
+
+@pytest.fixture(autouse=True)
+def isolate_provider_factory_tests_from_repo_dotenv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Keep provider factory tests deterministic even when the repo has a local .env.local."""
+    monkeypatch.chdir(tmp_path)
 
 
 def test_factory_honors_explicit_mock_provider_in_testing(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -160,3 +172,39 @@ def test_dashscope_provider_extracts_json_from_code_fence() -> None:
     )
 
     assert parsed == {"ok": True}
+
+
+def test_dashscope_provider_uses_extended_timeout_for_longform_outline_steps() -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    task = TextGenerationTask(
+        step="outline",
+        system_prompt="system",
+        user_prompt="user",
+        response_schema={"chapters": {"type": "array"}},
+    )
+
+    assert provider._timeout_for_step(task) == 180.0
+
+
+def test_dashscope_provider_reports_timeout_with_step_specific_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    task = TextGenerationTask(
+        step="outline",
+        system_prompt="system",
+        user_prompt="user",
+        response_schema={"chapters": {"type": "array"}},
+    )
+
+    class _TimeoutClient:
+        async def post(self, *args: object, **kwargs: object) -> object:
+            raise httpx.ReadTimeout("outline timed out")
+
+    monkeypatch.setattr(provider, "_get_client", cast(Any, lambda: _TimeoutClient()))
+
+    with pytest.raises(
+        TextGenerationProviderError,
+        match="timed out after 180s",
+    ):
+        asyncio.run(provider.generate_structured(task))

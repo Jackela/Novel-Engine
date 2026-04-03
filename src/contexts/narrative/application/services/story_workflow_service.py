@@ -54,6 +54,8 @@ from src.contexts.narrative.application.services.story_workflow_types import (
     StoryArtifactResourceState,
     StoryGenerationState,
     StoryMemoryState,
+    StoryReviewArtifact,
+    StoryReviewIssue,
     StoryWorkflowState,
 )
 from src.contexts.narrative.domain.aggregates.story import Story
@@ -967,9 +969,7 @@ class StoryWorkflowService:
     ) -> list[str]:
         ctx.start_stage("revise", mode=mode, details={"story_id": str(ctx.story.id)})
         try:
-            current_review = (
-                ctx.workflow.last_structural_review or self._review_service.review(ctx)
-            )
+            current_review = self._revision_review(ctx)
             revision_notes = await self._revision_service.revise(ctx, current_review)
             ctx.complete_stage(
                 "revise",
@@ -985,6 +985,57 @@ class StoryWorkflowService:
         except Exception as exc:
             code = "GENERATION_ERROR" if "generation" in exc.__class__.__name__.lower() else "INTERNAL_ERROR"
             raise WorkflowStageError("revise", code, str(exc)) from exc
+
+    def _revision_review(self, ctx: StoryWorkflowContext) -> StoryReviewArtifact:
+        structural_review = (
+            ctx.workflow.last_structural_review or self._review_service.review(ctx)
+        )
+        hybrid_review = ctx.workflow.last_review
+        semantic_review = hybrid_review.semantic_review if hybrid_review is not None else None
+        if semantic_review is None:
+            return structural_review
+
+        merged_issues = self._dedupe_revision_issues(
+            list(structural_review.issues) + list(semantic_review.issues)
+        )
+        revision_notes = list(structural_review.revision_notes) + list(
+            semantic_review.repair_suggestions
+        )
+        hybrid_summary = (
+            hybrid_review.summary if hybrid_review is not None else structural_review.summary
+        )
+        return StoryReviewArtifact(
+            artifact_id=structural_review.artifact_id,
+            version=structural_review.version,
+            source_run_id=structural_review.source_run_id,
+            source_provider=structural_review.source_provider,
+            source_model=structural_review.source_model,
+            story_id=structural_review.story_id,
+            quality_score=structural_review.quality_score,
+            ready_for_publish=structural_review.ready_for_publish,
+            summary=hybrid_summary,
+            issues=merged_issues,
+            revision_notes=revision_notes,
+            chapter_count=structural_review.chapter_count,
+            scene_count=structural_review.scene_count,
+            continuity_checks=dict(structural_review.continuity_checks),
+            checked_at=structural_review.checked_at,
+            metrics=structural_review.metrics,
+        )
+
+    @staticmethod
+    def _dedupe_revision_issues(
+        issues: list[StoryReviewIssue],
+    ) -> list[StoryReviewIssue]:
+        seen: set[tuple[str, str | None, str]] = set()
+        deduped: list[StoryReviewIssue] = []
+        for issue in issues:
+            key = (issue.code, issue.location, issue.message)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(issue)
+        return deduped
 
     async def _export_story_with_context(
         self,

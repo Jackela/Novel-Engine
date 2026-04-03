@@ -237,8 +237,10 @@ def validate_report(report: LongformUatReport) -> None:
     if report.quality_score <= 0 or report.review_provider == "":
         raise ValueError("Missing review evidence from the final manuscript review.")
 
-    if report.publish_outcome not in {"published", "blocked"}:
-        raise ValueError(f"Unexpected publish outcome: {report.publish_outcome}")
+    if not report.published or report.publish_outcome != "published":
+        raise ValueError(
+            "Long-form UAT did not reach a successful publish outcome."
+        )
 
 
 def render_markdown_report(report: LongformUatReport) -> str:
@@ -396,6 +398,7 @@ def _managed_backend(settings: NovelEngineSettings) -> Iterator[str]:
                 "SECURITY_SECRET_KEY": "test-secret-key-for-longform-uat-1234567890",
                 "MONITORING_METRICS_ENABLED": "false",
                 "LLM_PROVIDER": "dashscope",
+                "LLM_TIMEOUT": "180",
                 "DB_URL": f"sqlite:///{db_path.as_posix()}",
             }
         )

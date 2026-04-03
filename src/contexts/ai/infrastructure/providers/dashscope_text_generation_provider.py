@@ -309,6 +309,16 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
     def _endpoint_path(self) -> str:
         return self._transport.endpoint_path()
 
+    def _timeout_for_step(self, task: TextGenerationTask) -> float:
+        timeout_floors = {
+            "bible": 60.0,
+            "outline": 180.0,
+            "chapter_scenes": 180.0,
+            "semantic_review": 180.0,
+            "revision": 180.0,
+        }
+        return max(float(self._timeout), timeout_floors.get(task.step, float(self._timeout)))
+
     @staticmethod
     def _extract_content_text(message: dict[str, Any]) -> str:
         content = message.get("content", "")
@@ -415,12 +425,14 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         task: TextGenerationTask,
     ) -> TextGenerationResult:
         client = self._get_client()
+        effective_timeout = self._timeout_for_step(task)
         last_error: Exception | None = None
         for attempt in range(1, self._retry_attempts + 1):
             try:
                 response = await client.post(
                     self._endpoint_path(),
                     json=self._build_request_payload(task),
+                    timeout=effective_timeout,
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -441,6 +453,11 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
                 last_error = TextGenerationProviderError(
                     f"DashScope generation failed for step '{task.step}': "
                     f"{exc.response.status_code} {response_text}"
+                )
+            except httpx.TimeoutException:
+                last_error = TextGenerationProviderError(
+                    f"DashScope generation failed for step '{task.step}': "
+                    f"timed out after {int(effective_timeout)}s"
                 )
             except json.JSONDecodeError:
                 last_error = TextGenerationProviderError(
@@ -469,6 +486,8 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         if isinstance(error, TextGenerationProviderError):
             message = str(error).lower()
             if "invalid json" in message or "not a json object" in message:
+                return True
+            if "timed out after" in message:
                 return True
             if " 429 " in message or " 500 " in message or " 502 " in message:
                 return True

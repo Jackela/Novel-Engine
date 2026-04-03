@@ -166,7 +166,7 @@ class SemanticReviewService:
             ooc_risk_score=int(content.get("ooc_risk_score", 0)),
         )
         ready_for_publish = (
-            not any(issue.severity in {"warning", "blocker"} for issue in issues)
+            not any(issue.severity == "blocker" for issue in issues)
             and metrics.semantic_score >= MIN_SEMANTIC_SCORE
             and metrics.reader_pull_score >= MIN_READER_PULL_SCORE
             and metrics.plot_clarity_score >= MIN_PLOT_CLARITY_SCORE

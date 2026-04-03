@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from src.contexts.narrative.application.services.story_workflow_types import (
@@ -9,20 +10,112 @@ from src.contexts.narrative.application.services.story_workflow_types import (
 )
 
 
-def character_names(character_bible: dict[str, Any]) -> list[str]:
-    """Return normalized character names from a character bible."""
-    characters = character_bible.get("characters", [])
-    if not isinstance(characters, list):
-        return []
+def _iter_character_entries(character_bible: dict[str, Any]) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
 
+    def append_entry(candidate: Any) -> None:
+        if not isinstance(candidate, dict):
+            return
+        name = str(candidate.get("name", "")).strip()
+        if not name or name in seen_names:
+            return
+        seen_names.add(name)
+        entries.append(candidate)
+
+    def append_entries(candidate: Any) -> None:
+        if isinstance(candidate, dict):
+            append_entry(candidate)
+            return
+        if isinstance(candidate, list):
+            for item in candidate:
+                append_entry(item)
+
+    append_entries(character_bible.get("characters"))
+    for key in (
+        "protagonist",
+        "antagonist",
+        "deuteragonist",
+        "love_interest",
+        "mentor",
+        "supporting",
+        "key_supporting",
+        "supporting_cast",
+        "allies",
+        "villains",
+        "cast",
+    ):
+        append_entries(character_bible.get(key))
+
+    if entries:
+        return entries
+
+    for value in character_bible.values():
+        append_entries(value)
+    return entries
+
+
+def _character_names_from_keys(
+    character_bible: dict[str, Any],
+    *keys: str,
+) -> list[str]:
     names: list[str] = []
-    for character in characters:
-        if not isinstance(character, dict):
-            continue
-        name = str(character.get("name", "")).strip()
-        if name:
+    seen_names: set[str] = set()
+
+    for key in keys:
+        value = character_bible.get(key)
+        candidates = value if isinstance(value, list) else [value]
+        for candidate in candidates:
+            if not isinstance(candidate, dict):
+                continue
+            name = str(candidate.get("name", "")).strip()
+            if not name or name in seen_names:
+                continue
+            seen_names.add(name)
             names.append(name)
     return names
+
+
+def character_names(character_bible: dict[str, Any]) -> list[str]:
+    """Return normalized character names from a character bible."""
+    return [
+        str(character.get("name", "")).strip()
+        for character in _iter_character_entries(character_bible)
+    ]
+
+
+def protagonist_name(character_bible: dict[str, Any]) -> str:
+    """Return the canonical protagonist name if one is explicitly present."""
+    protagonists = _character_names_from_keys(character_bible, "protagonist")
+    return protagonists[0] if protagonists else ""
+
+
+def antagonist_names(character_bible: dict[str, Any]) -> list[str]:
+    """Return explicitly marked antagonists to avoid using them as ally targets."""
+    return _character_names_from_keys(character_bible, "antagonist", "villains")
+
+
+def pov_character_names(character_bible: dict[str, Any]) -> list[str]:
+    """Return the preferred POV cast, excluding pure antagonist slots when possible."""
+    pov_names = _character_names_from_keys(
+        character_bible,
+        "protagonist",
+        "deuteragonist",
+        "love_interest",
+        "mentor",
+        "supporting",
+        "key_supporting",
+        "supporting_cast",
+        "allies",
+        "cast",
+    )
+    if pov_names:
+        return pov_names
+
+    blocked = set(antagonist_names(character_bible))
+    fallback_names = character_names(character_bible)
+    filtered = [name for name in fallback_names if name not in blocked]
+    return filtered or fallback_names
 
 
 def character_profile(
@@ -30,16 +123,97 @@ def character_profile(
     focus_character: str,
 ) -> dict[str, Any]:
     """Return the character profile for a named focus character."""
-    characters = character_bible.get("characters", [])
-    if not isinstance(characters, list):
+    normalized_focus = focus_character.strip()
+    if not normalized_focus:
         return {}
 
-    for character in characters:
-        if not isinstance(character, dict):
-            continue
-        if str(character.get("name", "")).strip() == focus_character:
+    for character in _iter_character_entries(character_bible):
+        if str(character.get("name", "")).strip() == normalized_focus:
             return character
     return {}
+
+
+def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
+    """Return normalized world-rule strings from varied provider payload shapes."""
+    rules: list[str] = []
+    seen_rules: set[str] = set()
+
+    def add_rule(rule: str) -> None:
+        normalized = " ".join(rule.split())
+        if not normalized:
+            return
+        if normalized in seen_rules:
+            return
+        seen_rules.add(normalized)
+        rules.append(normalized)
+
+    def add_from_value(value: Any) -> None:
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return
+            numbered_parts = [
+                " ".join(part.split())
+                for part in re.split(r"(?:^|\s)(?:\d+\.)\s*", text)
+                if part and part.strip()
+            ]
+            if len(numbered_parts) > 1:
+                for part in numbered_parts:
+                    add_rule(part)
+                return
+            line_parts = [
+                " ".join(part.split())
+                for part in re.split(r"[\r\n]+|(?:\s*[;-]\s+)", text)
+                if part and part.strip()
+            ]
+            if len(line_parts) > 1:
+                for part in line_parts:
+                    add_rule(part)
+                return
+            add_rule(text)
+            return
+
+        if isinstance(value, list):
+            for item in value:
+                add_from_value(item)
+            return
+
+        if not isinstance(value, dict):
+            return
+
+        for key in ("core_rules", "rules", "limitations", "constraints"):
+            if key in value:
+                add_from_value(value[key])
+        for key, nested_value in value.items():
+            normalized_key = str(key).strip().lower()
+            if any(
+                token in normalized_key
+                for token in ("rule", "law", "constraint", "limit")
+            ):
+                add_from_value(nested_value)
+        cost = value.get("cost")
+        if isinstance(cost, str) and cost.strip():
+            add_rule(f"Cost: {cost.strip()}")
+
+    for key in (
+        "core_rules",
+        "rules_of_magic",
+        "rules",
+        "limitations",
+        "constraints",
+    ):
+        if key in world_bible:
+            add_from_value(world_bible[key])
+    for key, value in world_bible.items():
+        normalized_key = str(key).strip().lower()
+        if any(token in normalized_key for token in ("rule", "law", "constraint", "limit")):
+            add_from_value(value)
+
+    magic_system = world_bible.get("magic_system")
+    if isinstance(magic_system, dict):
+        add_from_value(magic_system)
+
+    return rules
 
 
 def normalize_scene_type(scene_type: Any) -> str:

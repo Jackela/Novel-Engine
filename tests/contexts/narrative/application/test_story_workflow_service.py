@@ -98,6 +98,249 @@ class DraftFailureAndSemanticWarningProvider(DeterministicTextGenerationProvider
         return await super().generate_structured(task)
 
 
+class NestedSceneShapeProvider(DeterministicTextGenerationProvider):
+    """Return a real-provider-shaped draft payload that nests scenes under `type`."""
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        if task.step == "chapter_scenes" and int(task.metadata.get("chapter_number", 0)) == 2:
+            nested_scene_payload: dict[str, Any] = {
+                "scenes": [
+                    {
+                        "type": [
+                            {
+                                "scene_type": "opening",
+                                "title": "Recovered opening",
+                                "content": "The archivist opens the sealed ledger and finds the first clue.",
+                            },
+                            {
+                                "type": "ending",
+                                "title": "Recovered ending",
+                                "content": "A new oath is written into the margin before the door closes.",
+                            },
+                        ]
+                    }
+                ]
+            }
+            return TextGenerationResult(
+                step=task.step,
+                provider="dashscope",
+                model="nested-scene-shape-v1",
+                raw_text=json.dumps(nested_scene_payload, ensure_ascii=False),
+                content=nested_scene_payload,
+            )
+
+        return await super().generate_structured(task)
+
+
+class AlternateBlueprintShapeProvider(DeterministicTextGenerationProvider):
+    """Return a real-provider-shaped blueprint payload with nested character sections."""
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        if task.step == "bible":
+            alternate_blueprint_payload: dict[str, Any] = {
+                "world_bible": {
+                    "setting_name": "The City of Mnemosyne",
+                    "magic_system": {
+                        "name": "Ink-Blood Resonance",
+                        "cost": "Using memory magic requires blood-ink or rare memory ink.",
+                    },
+                    "rules_of_magic": (
+                        "1. An erased oath creates a ghost proportional to its weight. "
+                        "2. A ghost can only be exorcised by rewriting its original truth. "
+                        "3. If a ruler is fully erased, their districts begin to dissolve."
+                    ),
+                },
+                "character_bible": {
+                    "protagonist": {
+                        "name": "Lin Yuan",
+                        "motivation": "save his sister from erasure",
+                    },
+                    "antagonist": {
+                        "name": "High Scribe Vane",
+                        "motivation": "purge the city of debt and memory",
+                    },
+                    "key_supporting": [
+                        {
+                            "name": "Echo",
+                            "motivation": "recover the truth of his death",
+                        },
+                        {
+                            "name": "Madam Qiao",
+                            "motivation": "profit from memory ink without losing control",
+                        },
+                    ],
+                },
+                "premise_summary": "A debt archivist fights erasure ghosts to recover the city's memory.",
+            }
+            return TextGenerationResult(
+                step=task.step,
+                provider="dashscope",
+                model="alternate-blueprint-shape-v1",
+                raw_text=json.dumps(alternate_blueprint_payload, ensure_ascii=False),
+                content=alternate_blueprint_payload,
+            )
+
+        return await super().generate_structured(task)
+
+
+class SingleDigitHookStrengthProvider(DeterministicTextGenerationProvider):
+    """Return outline hook strengths in a 0-10 scale to verify normalization."""
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        if task.step == "outline":
+            outline_payload: dict[str, Any] = {
+                "chapters": [
+                    {
+                        "chapter_number": 1,
+                        "title": "Chapter One",
+                        "summary": "A courier finds the living map.",
+                        "hook": "The border moves while she watches.",
+                        "promise": "Explain the living map.",
+                        "pacing_phase": "opening",
+                        "narrative_strand": "quest",
+                        "chapter_objective": "Start the quest.",
+                        "primary_strand": "quest",
+                        "secondary_strand": "mystery",
+                        "promised_payoff": "The map responds to blood.",
+                        "hook_strength": 6,
+                    },
+                    {
+                        "chapter_number": 2,
+                        "title": "Chapter Two",
+                        "summary": "The map reveals the first betrayal.",
+                        "hook": "A trusted name vanishes from the page.",
+                        "promise": "Raise the cost of the map.",
+                        "pacing_phase": "rising",
+                        "narrative_strand": "quest",
+                        "chapter_objective": "Escalate the threat.",
+                        "primary_strand": "quest",
+                        "secondary_strand": "betrayal",
+                        "promised_payoff": "The betrayal reaches the capital.",
+                        "hook_strength": 7,
+                    },
+                    {
+                        "chapter_number": 3,
+                        "title": "Chapter Three",
+                        "summary": "The courier chooses who to save.",
+                        "hook": "The city gate opens to the wrong army.",
+                        "promise": "Force a hard choice.",
+                        "pacing_phase": "climax",
+                        "narrative_strand": "quest",
+                        "chapter_objective": "Close the first arc.",
+                        "primary_strand": "quest",
+                        "secondary_strand": "sacrifice",
+                        "promised_payoff": "The map costs a future.",
+                        "hook_strength": 8,
+                    },
+                ]
+            }
+            return TextGenerationResult(
+                step=task.step,
+                provider="dashscope",
+                model="single-digit-hook-strength-v1",
+                raw_text=json.dumps(outline_payload, ensure_ascii=False),
+                content=outline_payload,
+            )
+
+        return await super().generate_structured(task)
+
+
+class RevisionIssueRecordingProvider(DeterministicTextGenerationProvider):
+    """Capture which issue codes reach the revision step."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.revision_issue_codes: list[str] = []
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        if task.step == "revision":
+            raw_issues = task.metadata.get("issues", [])
+            if isinstance(raw_issues, list):
+                self.revision_issue_codes = [
+                    str(item.get("code", ""))
+                    for item in raw_issues
+                    if isinstance(item, dict) and str(item.get("code", "")).strip()
+                ]
+            revision_payload = {
+                "revision_notes": [
+                    "Repair the semantic issue that blocks publication.",
+                ]
+            }
+            return TextGenerationResult(
+                step=task.step,
+                provider="mock",
+                model="revision-issue-recorder-v1",
+                raw_text=json.dumps(revision_payload, ensure_ascii=False),
+                content=revision_payload,
+            )
+
+        return await super().generate_structured(task)
+
+
+class SemanticWarningOnlyProvider:
+    """Return a semantic warning payload that should flow into revision."""
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        semantic_payload: dict[str, Any] = {
+            "semantic_score": 88,
+            "reader_pull_score": 70,
+            "plot_clarity_score": 76,
+            "ooc_risk_score": 12,
+            "summary": "The relationship arc needs explicit repair before release.",
+            "repair_suggestions": [
+                "Resolve the stalled relationship arc.",
+            ],
+            "issues": [
+                {
+                    "code": "relationship_progression_stall",
+                    "severity": "warning",
+                    "message": "Relationship progression stalls in the back half.",
+                    "location": "story",
+                    "suggestion": "Advance the relationship state before publishing.",
+                }
+            ],
+        }
+        return TextGenerationResult(
+            step=task.step,
+            provider="mock",
+            model="semantic-warning-only-v1",
+            raw_text=json.dumps(semantic_payload, ensure_ascii=False),
+            content=semantic_payload,
+        )
+
+
+class SemanticBlockerProvider:
+    """Return a blocker-level semantic payload that must still block publish."""
+
+    async def generate_structured(self, task: TextGenerationTask) -> TextGenerationResult:
+        semantic_payload: dict[str, Any] = {
+            "semantic_score": 90,
+            "reader_pull_score": 88,
+            "plot_clarity_score": 86,
+            "ooc_risk_score": 10,
+            "summary": "A blocker remains in the serial promise chain.",
+            "repair_suggestions": [
+                "Resolve the broken serial promise before release.",
+            ],
+            "issues": [
+                {
+                    "code": "promise_break",
+                    "severity": "blocker",
+                    "message": "The central promise is broken.",
+                    "location": "story",
+                    "suggestion": "Pay off the promised reveal before publishing.",
+                }
+            ],
+        }
+        return TextGenerationResult(
+            step=task.step,
+            provider="mock",
+            model="semantic-blocker-v1",
+            raw_text=json.dumps(semantic_payload, ensure_ascii=False),
+            content=semantic_payload,
+        )
+
+
 def build_story_service(
     *,
     text_generation_provider: DeterministicTextGenerationProvider | None = None,
@@ -174,6 +417,99 @@ async def test_full_pipeline_generates_publishable_story(
     stored_story = await repository.get_by_id(UUID(artifact["story"]["id"]))
     assert stored_story is not None
     assert stored_story.chapter_count == 3
+
+
+@pytest.mark.asyncio
+async def test_alternate_blueprint_shape_populates_memory_and_relationship_metadata() -> None:
+    service, repository = build_story_service(
+        text_generation_provider=AlternateBlueprintShapeProvider()
+    )
+
+    create_result = await service.create_story(
+        title="Alternate Blueprint Shape Story",
+        genre="fantasy",
+        author_id="author-shape",
+        premise="A debt archivist discovers erased oaths become ghosts.",
+        target_chapters=3,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    blueprint_result = await service.generate_blueprint(story_id)
+    assert blueprint_result.is_ok
+    workspace_memory = blueprint_result.value["workspace"]["memory"]
+    assert workspace_memory["active_characters"] == [
+        "Lin Yuan",
+        "High Scribe Vane",
+        "Echo",
+        "Madam Qiao",
+    ]
+    assert workspace_memory["world_rules"]
+    assert any(
+        "erased oath creates a ghost" in str(rule.get("rule", "")).lower()
+        for rule in workspace_memory["world_rules"]
+    )
+
+    await service.generate_outline(story_id)
+    draft_result = await service.draft_story(story_id, target_chapters=3)
+    assert draft_result.is_ok
+
+    stored_story = await repository.get_by_id(UUID(story_id))
+    assert stored_story is not None
+    assert stored_story.chapters[0].metadata["focus_character"] == "Lin Yuan"
+    assert stored_story.chapters[0].metadata["relationship_target"] == "Echo"
+    assert stored_story.chapters[0].metadata["relationship_status"]
+
+
+@pytest.mark.asyncio
+async def test_single_digit_hook_strength_is_normalized_to_percentage_scale() -> None:
+    service, _repository = build_story_service(
+        text_generation_provider=SingleDigitHookStrengthProvider()
+    )
+
+    create_result = await service.create_story(
+        title="Hook Strength Story",
+        genre="fantasy",
+        author_id="author-hook",
+        premise="A courier follows a living border.",
+        target_chapters=3,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    outline_result = await service.generate_outline(story_id)
+    assert outline_result.is_ok
+    assert outline_result.value["outline"]["chapters"][0]["hook_strength"] == 60
+    assert outline_result.value["outline"]["chapters"][1]["hook_strength"] == 70
+
+
+@pytest.mark.asyncio
+async def test_revise_story_includes_semantic_issues_in_revision_input() -> None:
+    provider = RevisionIssueRecordingProvider()
+    service, _repository = build_story_service(
+        text_generation_provider=provider,
+        review_generation_provider=SemanticWarningOnlyProvider(),
+    )
+
+    create_result = await service.create_story(
+        title="Semantic Revision Story",
+        genre="fantasy",
+        author_id="author-semantic-revise",
+        premise="A city map redraws every promise at midnight.",
+        target_chapters=3,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    await service.generate_outline(story_id)
+    await service.draft_story(story_id, target_chapters=3)
+
+    review_result = await service.review_story(story_id)
+    assert review_result.is_ok
+    assert review_result.value["report"]["semantic_gate_passed"] is False
+
+    revise_result = await service.revise_story(story_id)
+    assert revise_result.is_ok
+    assert "relationship_progression_stall" in provider.revision_issue_codes
 
 
 @pytest.mark.asyncio
@@ -311,7 +647,7 @@ async def test_draft_failure_preserves_previous_chapters_and_records_failure_art
 
 
 @pytest.mark.asyncio
-async def test_semantic_warning_blocks_publish() -> None:
+async def test_semantic_warning_with_passing_metrics_does_not_block_publish() -> None:
     service, _repository = build_story_service(
         review_generation_provider=DraftFailureAndSemanticWarningProvider(),
     )
@@ -333,16 +669,47 @@ async def test_semantic_warning_blocks_publish() -> None:
     assert review_result.is_ok
     report = review_result.value["report"]
     assert report["structural_gate_passed"] is True
+    assert report["semantic_gate_passed"] is True
+    assert report["publish_gate_passed"] is True
+    assert any(issue["severity"] == "warning" for issue in report["issues"])
+
+    publish_result = await service.publish_story(story_id)
+    assert publish_result.is_ok
+    assert publish_result.value["story"]["status"] == "active"
+    assert publish_result.value["report"]["publish_gate_passed"] is True
+    assert publish_result.value["report"]["semantic_gate_passed"] is True
+
+
+@pytest.mark.asyncio
+async def test_semantic_blocker_still_blocks_publish() -> None:
+    service, _repository = build_story_service(
+        review_generation_provider=SemanticBlockerProvider(),
+    )
+
+    create_result = await service.create_story(
+        title="Semantic Blocker Story",
+        genre="romance",
+        author_id="author-blocker",
+        premise="Two correspondents trade notes across a city that reorders itself.",
+        target_chapters=3,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    await service.generate_outline(story_id)
+    await service.draft_story(story_id, target_chapters=3)
+
+    review_result = await service.review_story(story_id)
+    assert review_result.is_ok
+    report = review_result.value["report"]
     assert report["semantic_gate_passed"] is False
     assert report["publish_gate_passed"] is False
-    assert any(issue["severity"] == "warning" for issue in report["issues"])
 
     publish_result = await service.publish_story(story_id)
     assert publish_result.is_err
     assert isinstance(publish_result, Failure)
     assert publish_result.code == "QUALITY_GATE_FAILED"
     assert publish_result.details is not None
-    assert publish_result.details["report"]["publish_gate_passed"] is False
     assert publish_result.details["report"]["semantic_gate_passed"] is False
 
 
@@ -407,6 +774,39 @@ async def test_publish_rejects_incomplete_story(
     assert publish_result.details is not None
     assert publish_result.details["report"]["ready_for_publish"] is False
     assert publish_result.details["report"]["publish_gate_passed"] is False
+
+
+@pytest.mark.asyncio
+async def test_draft_story_normalizes_nested_scene_shape_from_provider() -> None:
+    service, repository = build_story_service(
+        text_generation_provider=NestedSceneShapeProvider()
+    )
+
+    create_result = await service.create_story(
+        title="Nested Scene Story",
+        genre="fantasy",
+        author_id="author-nested-shape",
+        premise="An archivist finds that oaths can hide inside malformed records.",
+        target_chapters=3,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    await service.generate_outline(story_id)
+
+    draft_result = await service.draft_story(story_id, target_chapters=3)
+
+    assert draft_result.is_ok
+    drafted_story = draft_result.value["story"]
+    assert drafted_story["chapter_count"] == 3
+
+    stored_story = await repository.get_by_id(UUID(story_id))
+    assert stored_story is not None
+    second_chapter = stored_story.chapters[1]
+    assert second_chapter.scenes[0].scene_type == "opening"
+    assert second_chapter.scenes[0].content
+    assert second_chapter.scenes[-1].scene_type == "ending"
+    assert second_chapter.scenes[-1].content
 
 
 @pytest.mark.asyncio
