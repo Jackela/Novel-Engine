@@ -17,6 +17,11 @@ from src.contexts.narrative.domain.entities.scene import Scene
 from src.contexts.narrative.domain.ports.story_repository_port import (
     StoryRepositoryPort,
 )
+from src.contexts.narrative.infrastructure.repositories.postgres_json import (
+    dump_json,
+    load_json_array,
+    load_json_object,
+)
 
 
 class PostgresStoryRepository(StoryRepositoryPort):
@@ -154,7 +159,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
                 story.themes,
                 story.created_at,
                 story.updated_at,
-                story.metadata,
+                dump_json(story.metadata),
             )
 
             # Save chapters
@@ -184,7 +189,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
             chapter.summary,
             chapter.created_at,
             chapter.updated_at,
-            chapter.metadata,
+            dump_json(chapter.metadata),
         )
 
         # Save scenes
@@ -215,10 +220,10 @@ class PostgresStoryRepository(StoryRepositoryPort):
             scene.title,
             scene.content,
             scene.scene_type,
-            [c.to_dict() for c in scene.choices],
+            dump_json([c.to_dict() for c in scene.choices]),
             scene.created_at,
             scene.updated_at,
-            scene.metadata,
+            dump_json(scene.metadata),
         )
 
     async def delete(self, story_id: UUID) -> bool:
@@ -339,9 +344,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
                     title=row["chapter_title"],
                     summary=row["chapter_summary"],
                     scenes=[],
-                    metadata=dict(row["chapter_metadata"])
-                    if row["chapter_metadata"]
-                    else {},
+                    metadata=load_json_object(row["chapter_metadata"]),
                     created_at=row["chapter_created_at"],
                     updated_at=row["chapter_updated_at"],
                 )
@@ -358,8 +361,10 @@ class PostgresStoryRepository(StoryRepositoryPort):
                         None,
                     )
                     if not existing_scene:
-                        choices_data = row["choices"] or []
-                        choices = [self._dict_to_choice(c) for c in choices_data]
+                        choices = [
+                            self._dict_to_choice(c)
+                            for c in load_json_array(row["choices"])
+                        ]
 
                         scene = Scene(
                             id=scene_id,
@@ -369,9 +374,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
                             content=row["scene_content"],
                             scene_type=row["scene_type"],
                             choices=choices,
-                            metadata=dict(row["scene_metadata"])
-                            if row["scene_metadata"]
-                            else {},
+                            metadata=load_json_object(row["scene_metadata"]),
                             created_at=row["scene_created_at"],
                             updated_at=row["scene_updated_at"],
                         )
@@ -387,9 +390,7 @@ class PostgresStoryRepository(StoryRepositoryPort):
             target_audience=first_row["target_audience"],
             themes=list(first_row["themes"]) if first_row["themes"] else [],
             chapters=list(chapters.values()),
-            metadata=dict(first_row["story_metadata"])
-            if first_row["story_metadata"]
-            else {},
+            metadata=load_json_object(first_row["story_metadata"]),
             created_at=first_row["story_created_at"],
             updated_at=first_row["story_updated_at"],
         )
