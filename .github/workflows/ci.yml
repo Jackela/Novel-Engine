@@ -152,7 +152,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
       DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
       DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
-      ENABLE_DASHSCOPE_TESTS: "1"
+      ENABLE_DASHSCOPE_TESTS: ${{ secrets.DASHSCOPE_API_KEY != '' && '1' || '0' }}
 
     steps:
       - name: Checkout
@@ -234,7 +234,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
       HONCHO_BASE_URL: ${{ secrets.HONCHO_BASE_URL }}
       HONCHO_API_KEY: ${{ secrets.HONCHO_API_KEY }}
-      ENABLE_HONCHO_TESTS: "1"
+      ENABLE_HONCHO_TESTS: ${{ secrets.HONCHO_BASE_URL != '' && secrets.HONCHO_API_KEY != '' && '1' || '0' }}
       HONCHO_DEPLOYMENT: self_hosted
 
     steps:
