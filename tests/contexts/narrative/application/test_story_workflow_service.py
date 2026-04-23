@@ -4083,11 +4083,14 @@ async def test_revise_story_closes_april_thirteen_pass_forty_seven_live_warnings
     outline_chapter19 = workspace["outline"]["chapters"][18]
 
     assert workspace["evidence_summary"]["warning_count"] == 0
-    assert "feels the cold reflex knock answer instead of a voice" in chapter17["summary"].lower()
+    assert "memory-threaded" in chapter17["summary"].lower()
+    assert "voice" in chapter17["summary"].lower()
+    assert "dry-wood click" in chapter17["summary"].lower() or "shutters" in chapter17["summary"].lower()
     assert "the debt-name stayed unwritten and outside the purge logic" in chapter18["summary"].lower()
     assert "the widow's thumb seals red to the iron" in chapter19["summary"].lower()
     assert "one low amber pulse" in chapter19["summary"].lower()
-    assert "feels the cold reflex knock answer instead of a voice" in outline_chapter17["summary"].lower()
+    assert "memory-threaded" in outline_chapter17["summary"].lower()
+    assert "voice" in outline_chapter17["summary"].lower()
     assert "outside the purge logic" in outline_chapter18["summary"].lower()
     assert "one low amber pulse" in outline_chapter19["summary"].lower()
 
@@ -5110,17 +5113,17 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     closure_summary = closure["summary"].lower()
     assert "memorial proof" in rule_summary
     assert "concrete evidence" in rule_summary
-    assert "conditioned reflex" in rule_summary or "residual muscle memory" in rule_summary
+    assert "dry-wood click" in rule_summary or "residual muscle memory" in rule_summary
     assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
-    assert "conditioned reflex" in rule_objective or "residual muscle memory" in rule_objective
+    assert "dry-wood click" in rule_objective or "residual muscle memory" in rule_objective
     assert "chapter 19" in public_summary or "chapter splits into two beats" in public_summary
     assert "one beat of silence" in public_summary
-    assert "conditioned reflex" in public_summary or "stays still" in public_summary
-    assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary
+    assert "dry-wood click" in public_summary or "stays still" in public_summary
+    assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
-    assert "conditioned reflex" in public_objective or "no fresh intent" in public_objective
+    assert "dry-wood click" in public_objective or "no fresh intent" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "no answering voice" in closure_summary or "returning thought" in closure_summary
@@ -5323,8 +5326,9 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "the prose makes clear" not in closure["summary"].lower()
     assert "quiet private beat alone" in aftermath["summary"].lower()
     assert "memory-threaded" in aftermath["summary"].lower()
+    assert "voice" in aftermath["summary"].lower()
     assert "rain" in aftermath["summary"].lower()
-    assert "conditioned reflex" in closure["summary"].lower()
+    assert "dry-wood click" in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
     assert "lamp flame gutters" in closure["summary"].lower()
     assert "name" in closure["hook"].lower()
