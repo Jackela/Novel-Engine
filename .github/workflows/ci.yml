@@ -147,13 +147,12 @@ jobs:
     name: DashScope Live Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: ${{ secrets.DASHSCOPE_API_KEY != '' }}
 
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      ENABLE_DASHSCOPE_TESTS: "1"
       DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
       DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
+      ENABLE_DASHSCOPE_TESTS: "1"
 
     steps:
       - name: Checkout
@@ -230,13 +229,12 @@ jobs:
     name: Honcho Live Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: ${{ secrets.HONCHO_BASE_URL != '' }}
 
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      ENABLE_HONCHO_TESTS: "1"
       HONCHO_BASE_URL: ${{ secrets.HONCHO_BASE_URL }}
       HONCHO_API_KEY: ${{ secrets.HONCHO_API_KEY }}
+      ENABLE_HONCHO_TESTS: "1"
       HONCHO_DEPLOYMENT: self_hosted
 
     steps:
