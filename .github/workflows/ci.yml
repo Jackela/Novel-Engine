@@ -303,7 +303,7 @@ jobs:
 
           while time.time() < deadline:
               try:
-                  with urlopen("http://localhost:8000/api/v1/heartbeat", timeout=5) as response:
+                  with urlopen("http://localhost:8000/api/v2/heartbeat", timeout=5) as response:
                       if response.status == 200:
                           break
               except Exception as exc:  # pragma: no cover - CI readiness helper
