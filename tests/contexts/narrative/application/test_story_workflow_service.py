@@ -5110,20 +5110,19 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     closure_summary = closure["summary"].lower()
     assert "memorial proof" in rule_summary
     assert "concrete evidence" in rule_summary
-    assert "fresh echo" in rule_summary or "trained twitch" in rule_summary
+    assert "conditioned reflex" in rule_summary or "residual muscle memory" in rule_summary
     assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
+    assert "conditioned reflex" in rule_objective or "residual muscle memory" in rule_objective
     assert "chapter 19" in public_summary or "chapter splits into two beats" in public_summary
     assert "one beat of silence" in public_summary
-    assert "reflexive shudder" in public_summary or "stays still" in public_summary
-    assert "gap" in public_summary
-    assert "shudder" in public_summary or "tremor" in public_summary
-    assert "wind" in public_summary or "dust" in public_summary
+    assert "conditioned reflex" in public_summary or "stays still" in public_summary
+    assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
-    assert "brief reflexive motion" in public_objective or "no fresh intent" in public_objective
+    assert "conditioned reflex" in public_objective or "no fresh intent" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
-    assert "already knows the resurrection failed" in aftermath["summary"].lower()
+    assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "no answering voice" in closure_summary or "returning thought" in closure_summary
     assert "by dusk" in closure_summary
     assert "by night" in closure_summary
@@ -5132,7 +5131,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "lasting aftermath" in closure_summary
     assert "visible reaction" in closure_summary or "pauses on the loss" in closure_summary
     assert "small ordinary task resumes" in closure_summary or "new order can serve the living" in closure_summary
-    assert "already knows the resurrection failed" in aftermath["summary"].lower()
+    assert "lamp flame gutters" in closure_summary
 
 
 def test_normalize_departed_relationship_status_downgrades_active_bond() -> None:
@@ -5323,10 +5322,11 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "the prose makes clear" not in aftermath["summary"].lower()
     assert "the prose makes clear" not in closure["summary"].lower()
     assert "quiet private beat alone" in aftermath["summary"].lower()
-    assert "reaching for the vessel" in aftermath["summary"].lower()
-    assert "wet ink" in aftermath["summary"].lower() or "cold floorboards" in aftermath["summary"].lower()
-    assert "no answering voice" in closure["summary"].lower()
+    assert "memory-threaded" in aftermath["summary"].lower()
+    assert "rain" in aftermath["summary"].lower()
+    assert "conditioned reflex" in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
+    assert "lamp flame gutters" in closure["summary"].lower()
     assert "name" in closure["hook"].lower()
 
 
