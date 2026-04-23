@@ -372,11 +372,11 @@ def _inject_terminal_arc_publish_ready(
     }
     repaired_summaries = {
         16: (
-            f"Turning point: {case.protagonist} makes the final public choice at the rail, stays conscious as the silent witness to the change, and hands the active line to {case.keeper}. "
-            "The rail answers with one irreversible flare that changes who can lead the confession."
+            f"Turning point: {case.protagonist} makes the final public choice at the rail, speaks the handoff aloud, and places the active line in {case.keeper}'s hands. "
+            "The rail answers with one irreversible flare that changes who can lead the confession, and everyone in the room sees the transfer happen."
         ),
         17: (
-            f"Aftermath phase: {case.keeper} stands by the rail while a witness straightens the cloth over the record, and Captain Sora gives the first command before the hush settles. "
+            f"Aftermath phase: {case.keeper} stands by the rail and gives the first command while a witness straightens the cloth over the record. "
             "The line stays in place, and the room understands that the public turn has already happened."
         ),
         18: (
@@ -388,8 +388,8 @@ def _inject_terminal_arc_publish_ready(
             "The Salt Regent claws for the ledger in a last desperate denial, and the crowd hesitates before the collective realization hits; only after that does the Regent's own mouth falter on a familiar name before the crowd closes in."
         ),
         20: (
-            f"Closure phase: Jun names an ordinary harbor habit from the earlier life that ended in the binding, and the dock clerk forgets the name of their first ship for one breath before recovering. "
-            f"The dock clerk pays the memory tax directly when a cold spot opens in the chest and the first-ship name slips away during the confession, while Jun blinks at the missing line and the sudden loss finally makes the earlier strain between Jun and {case.protagonist} feel acknowledged instead of avoided. "
+            f"Closure phase: Jun names an ordinary harbor habit from the earlier life that ended in the binding, then turns to {case.protagonist} and says the strain between them is over. "
+            f"{case.protagonist} answers with a single nod and remains the silent witness while the dock clerk's first-ship name slips away for good during the confession. "
             f"Captain Sora keeps the loss private for one breath, then names {case.protagonist} aloud before the public confession lands in daylight, a dock child bumps a lantern and a clerk catches it without looking away, two witnesses carry the record away, and only after that pause does {case.antagonist}'s order fail openly when the Regent falters on a familiar name."
         ),
     }
