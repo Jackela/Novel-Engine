@@ -176,6 +176,7 @@ jobs:
           pytest -q
           -m requires_dashscope
           tests/contract/test_text_generation_provider_contract.py
+          tests/contexts/narrative/application/test_semantic_review_judge_contract.py
           tests/contexts/narrative/application/test_qwen_provider_smoke.py
 
   postgres-live-smoke:

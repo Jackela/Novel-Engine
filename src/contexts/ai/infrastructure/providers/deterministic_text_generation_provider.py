@@ -50,6 +50,8 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             return self._build_semantic_review_payload(task)
         if step == "revision":
             return self._build_revision_payload(task)
+        if step == "terminal_arc_revision":
+            return self._build_terminal_arc_revision_payload(task)
         return {"result": "ok", "step": task.step, "echo": task.metadata}
 
     def _build_bible_payload(self, task: TextGenerationTask) -> dict[str, Any]:
@@ -218,6 +220,134 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
                 "下一章结尾给出更明确的追读钩子。",
             ],
             "issues": issues,
+        }
+
+    def _build_terminal_arc_revision_payload(
+        self,
+        task: TextGenerationTask,
+    ) -> dict[str, Any]:
+        target_chapters = int(task.metadata.get("target_chapters", 20))
+        protagonist = str(task.metadata.get("protagonist", "the protagonist")).strip() or "the protagonist"
+        primary_keeper = str(task.metadata.get("primary_keeper", "the keeper")).strip() or "the keeper"
+        supporting_witness = (
+            str(task.metadata.get("supporting_witness", "the witness")).strip()
+            or "the witness"
+        )
+        public_witness = (
+            str(task.metadata.get("public_witness", supporting_witness)).strip()
+            or supporting_witness
+        )
+        continuity_anchor = (
+            str(task.metadata.get("continuity_anchor", supporting_witness)).strip()
+            or supporting_witness
+        )
+        vessel_label = (
+            str(task.metadata.get("vessel_label", "the vessel")).strip() or "the vessel"
+        )
+        confirmation_trigger = (
+            str(
+                task.metadata.get(
+                    "confirmation_trigger",
+                    "the first physical confirmation from the old rule",
+                )
+            ).strip()
+            or "the first physical confirmation from the old rule"
+        )
+        phases = {
+            "sacrifice": max(1, target_chapters - 4),
+            "aftermath": max(1, target_chapters - 3),
+            "rule_revelation": max(1, target_chapters - 2),
+            "public_reckoning": max(1, target_chapters - 1),
+            "closure": max(1, target_chapters),
+        }
+
+        return {
+            "revision_notes": [
+                "Rebuilt the terminal arc around keeper-led agency, passive vessel logic, and clearer public cost.",
+            ],
+            "chapters": [
+                {
+                    "chapter_number": phases["sacrifice"],
+                    "phase": "sacrifice",
+                    "summary": (
+                        f"{protagonist} makes a visible final choice while {continuity_anchor} witnesses the handoff that keeps the wider order alive, "
+                        "knowing the decision closes every path back to ordinary agency."
+                    ),
+                    "objective": (
+                        f"{protagonist} must choose the sacrifice in full view of {continuity_anchor} so the ending reads as a deliberate cost."
+                    ),
+                    "hook": (
+                        f"{confirmation_trigger.capitalize()} proves the survivors now have to carry the new order without waiting for a miracle return."
+                    ),
+                    "focus_character": protagonist,
+                    "relationship_target": continuity_anchor or primary_keeper,
+                    "relationship_status": "last living handoff before the sacrifice closes",
+                    "scene_brief": "Make the protagonist's final choice explicit and irreversible.",
+                },
+                {
+                    "chapter_number": phases["aftermath"],
+                    "phase": "aftermath",
+                    "summary": (
+                        f"{primary_keeper} tries once to draw an answer from {vessel_label}, fails in public as {continuity_anchor} watches, "
+                        "and realizes the body is moving only through threaded memory rather than recovered feeling."
+                    ),
+                    "objective": (
+                        f"{primary_keeper} must move from grief to duty through one failed action, while {vessel_label} remains passive and any motion reads as borrowed direction rather than instinct."
+                    ),
+                    "hook": "The first unanswered silence points toward a buried rule the living still do not understand.",
+                    "focus_character": primary_keeper,
+                    "relationship_target": vessel_label,
+                    "relationship_status": "guardian of the irreversible cost",
+                    "scene_brief": "Show grief breaking into duty without giving the vessel intentional action.",
+                },
+                {
+                    "chapter_number": phases["rule_revelation"],
+                    "phase": "rule_revelation",
+                    "summary": (
+                        f"A first public attempt fails in view before {primary_keeper}, {supporting_witness or continuity_anchor}, and {continuity_anchor} uncover proof that the old order hid its price in public records, "
+                        f"while {vessel_label} only echoes the discovery through passive reaction."
+                    ),
+                    "objective": "Make the world rule legible through concrete evidence instead of explanation alone, and show why the first public response was not enough.",
+                    "hook": "The proof shows that the final confession will cost the whole city, not only one household.",
+                    "focus_character": primary_keeper,
+                    "relationship_target": vessel_label,
+                    "relationship_status": "keeper interpreting a passive remnant",
+                    "scene_brief": "Keep the revelation physical and evidence-driven.",
+                },
+                {
+                    "chapter_number": phases["public_reckoning"],
+                    "phase": "public_reckoning",
+                    "summary": (
+                        f"The first public attempt nearly breaks under pressure, {public_witness} and {continuity_anchor} have to close the gap before the line scatters, "
+                        "and the room learns through that near-break that the new cost can no longer stay abstract while the farewell finishes inside the same reckoning."
+                    ),
+                    "objective": (
+                        f"Let living witnesses act before {primary_keeper} explains anything, give the line one near-break beat before it stabilizes, and turn the public cost into a visible danger."
+                    ),
+                    "hook": "If the line cannot carry the confession into daylight, the old silence will close over the city again.",
+                    "focus_character": primary_keeper,
+                    "relationship_target": vessel_label,
+                    "relationship_status": "living line carrying borrowed cadence",
+                    "scene_brief": "Keep two non-keeper witnesses active and let the vessel stay passive.",
+                },
+                {
+                    "chapter_number": phases["closure"],
+                    "phase": "closure",
+                    "summary": (
+                        f"{supporting_witness or continuity_anchor} names one concrete remembered detail from the life now gone, {public_witness} makes the first public move, "
+                        f"and {primary_keeper} confirms the new order while {vessel_label} offers no answering voice or returning thought, a visible mark flashes, vanishes from sight, "
+                        "and leaves a bodily aftereffect that proves the cost will continue."
+                    ),
+                    "objective": (
+                        "Split the ending into private closure, public confession, and tangible aftermath without compressing them together or repeating the farewell beat, and make the vessel's silence explicit."
+                    ),
+                    "hook": "The city survives, but the daily public cost now belongs to the living.",
+                    "focus_character": primary_keeper,
+                    "relationship_target": vessel_label,
+                    "relationship_status": "living keeper of a public debt",
+                    "scene_brief": "Show a concrete public consequence and keep the vessel passive.",
+                },
+            ],
         }
 
     @staticmethod

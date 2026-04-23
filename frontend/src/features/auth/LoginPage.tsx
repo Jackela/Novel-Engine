@@ -3,14 +3,29 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/Button';
 import { useAuth } from '@/features/auth/useAuth';
+import type { SessionState } from '@/app/types';
+
+function storyLocation(session: SessionState) {
+  const searchParams = new URLSearchParams();
+  if (session.lastStoryId) {
+    searchParams.set('story', session.lastStoryId);
+  }
+  if (session.lastRunId) {
+    searchParams.set('run', session.lastRunId);
+  }
+  searchParams.set('view', session.lastView ?? 'workspace');
+  const query = searchParams.toString();
+  return query ? `/story?${query}` : '/story';
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, signInAsGuest } = useAuth();
+  const { sessions, signIn, signInAsGuest, switchSession } = useAuth();
   const [email, setEmail] = useState('operator@novel.engine');
   const [password, setPassword] = useState('demo-password');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const resumableSessions = sessions.slice(0, 4);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -18,8 +33,8 @@ export function LoginPage() {
     setError(null);
 
     try {
-      await signIn({ email, password });
-      navigate('/story');
+      const session = await signIn({ email, password });
+      navigate(storyLocation(session));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to sign in.');
     } finally {
@@ -32,10 +47,24 @@ export function LoginPage() {
     setError(null);
 
     try {
-      await signInAsGuest();
-      navigate('/story');
+      const session = await signInAsGuest();
+      navigate(storyLocation(session));
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to create guest session.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResume = async (sessionId: string) => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const session = await switchSession(sessionId);
+      navigate(storyLocation(session));
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to resume the saved workspace.');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,6 +138,35 @@ export function LoginPage() {
           </ul>
         </section>
       </div>
+
+      {resumableSessions.length ? (
+        <section className="landing__grid" data-testid="login-session-catalog">
+          <article className="landing-card landing-card--wide">
+            <h2>Resume a saved session</h2>
+            <p>Use a previously validated guest or user workspace without re-entering the route manually.</p>
+            <ul className="story-list">
+              {resumableSessions.map((session) => (
+                <li key={session.id} className="story-card">
+                  <button
+                    className="story-card__button"
+                    type="button"
+                    onClick={() => void handleResume(session.id)}
+                    data-testid={`login-resume-session-${session.id}`}
+                  >
+                    <div className="story-card__header">
+                      <strong>{session.activeWorkspace?.label ?? session.workspaceId}</strong>
+                      <span>{session.kind}</span>
+                    </div>
+                    <p className="story-card__meta">
+                      {session.user?.email ?? session.activeWorkspace?.summary ?? session.workspaceId}
+                    </p>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </article>
+        </section>
+      ) : null}
     </main>
   );
 }

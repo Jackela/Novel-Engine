@@ -9,6 +9,7 @@ export const appConfig = {
   endpoints: {
     guestSession: '/api/v1/guest/session',
     login: '/api/v1/auth/login',
+    currentUser: '/api/v1/auth/me',
     story: '/api/v1/story',
     storyPipeline: '/api/v1/story/pipeline',
   },

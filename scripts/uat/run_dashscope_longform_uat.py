@@ -24,9 +24,17 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.shared.infrastructure.config.settings import NovelEngineSettings
 
-DEFAULT_REPORT_PATH = REPO_ROOT / "docs" / "reports" / "uat" / "LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md"
-DEFAULT_JSON_PATH = REPO_ROOT / "docs" / "reports" / "uat" / "LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json"
+DEFAULT_REPORT_PATH = (
+    REPO_ROOT / "docs" / "reports" / "uat" / "LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md"
+)
+DEFAULT_JSON_PATH = (
+    REPO_ROOT / "docs" / "reports" / "uat" / "LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json"
+)
+DEFAULT_ARTIFACTS_DIR = REPO_ROOT / "artifacts" / "longform-uat"
 DEFAULT_TIMEOUT_SECONDS = 900
+DEFAULT_RETRY_DELAY_SECONDS = 3
+MAX_EDITORIAL_REVIEW_PASSES = 3
+MAX_EDITORIAL_REVISION_PASSES = 2
 DEFAULT_STORY_TITLE = "DashScope Longform UAT"
 DEFAULT_PREMISE = (
     "A debt archivist discovers that every erased oath becomes a living ghost, "
@@ -84,6 +92,10 @@ class LongformUatReport:
     published: bool
     publish_outcome: str
     publish_failure_code: str | None
+    warning_count: int
+    blocker_count: int
+    review_rounds: int
+    revision_rounds: int
     quality_score: int
     continuity_score: int
     pacing_score: int
@@ -100,6 +112,27 @@ class LongformUatReport:
     request_trace: list[RequestTrace]
     chapter_audit: list[ChapterAudit]
     editorial_findings: list[EditorialFinding]
+
+
+@dataclass
+class LongformUatFailureReport:
+    started_at: str
+    completed_at: str
+    base_url: str
+    target_chapters: int
+    story_title_seed: str
+    story_id: str | None
+    workspace_id: str | None
+    story_title: str | None
+    failed_step: str
+    error_message: str
+    request_trace: list[RequestTrace]
+
+
+class LongformUatExecutionError(RuntimeError):
+    def __init__(self, report: LongformUatFailureReport):
+        super().__init__(report.error_message)
+        self.report = report
 
 
 def _utc_now() -> str:
@@ -242,6 +275,11 @@ def validate_report(report: LongformUatReport) -> None:
             "Long-form UAT did not reach a successful publish outcome."
         )
 
+    if report.warning_count > 0 or report.blocker_count > 0:
+        raise ValueError(
+            "Long-form UAT finished with unresolved review warnings or blockers."
+        )
+
 
 def render_markdown_report(report: LongformUatReport) -> str:
     request_rows = "\n".join(
@@ -276,9 +314,13 @@ def render_markdown_report(report: LongformUatReport) -> str:
 - drafted chapters: `{report.drafted_chapters}`
 - publish outcome: `{report.publish_outcome}`
 - publish failure code: `{report.publish_failure_code or 'n/a'}`
+- review rounds: `{report.review_rounds}`
+- revision rounds: `{report.revision_rounds}`
 
 ## Machine Evidence
 
+- warnings: `{report.warning_count}`
+- blockers: `{report.blocker_count}`
 - quality score: `{report.quality_score}`
 - continuity: `{report.continuity_score}`
 - pacing: `{report.pacing_score}`
@@ -319,6 +361,38 @@ Strict review was generated from the exported manuscript, outline hooks, and fin
 """
 
 
+def render_failure_markdown_report(report: LongformUatFailureReport) -> str:
+    request_rows = "\n".join(
+        f"| {entry.step} | `{entry.method} {entry.path}` | {entry.status_code} | {entry.duration_ms} |"
+        for entry in report.request_trace
+    ) or "| none | `n/a` | 0 | 0 |"
+    story_title = report.story_title or "n/a"
+    story_id = report.story_id or "n/a"
+    workspace_id = report.workspace_id or "n/a"
+
+    return f"""# DashScope 20-Chapter Live Evidence
+
+## Failure Summary
+
+- started: `{report.started_at}`
+- completed: `{report.completed_at}`
+- base URL: `{report.base_url}`
+- target chapters: `{report.target_chapters}`
+- story title seed: `{report.story_title_seed}`
+- story title: `{story_title}`
+- story: `{story_id}`
+- workspace: `{workspace_id}`
+- failed step: `{report.failed_step}`
+- error: `{report.error_message}`
+
+## Request Trace
+
+| Step | Request | Status | Duration (ms) |
+| --- | --- | --- | --- |
+{request_rows}
+"""
+
+
 def _request_json(
     session: requests.Session,
     traces: list[RequestTrace],
@@ -332,36 +406,63 @@ def _request_json(
     allowed_status_codes: tuple[int, ...] = (200,),
     timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
 ) -> tuple[int, dict[str, Any]]:
-    started = time.perf_counter()
-    response = session.request(
-        method=method,
-        url=f"{base_url}{path}",
-        headers=headers,
-        json=payload,
-        timeout=timeout_seconds,
-    )
-    duration_ms = int((time.perf_counter() - started) * 1000)
-    traces.append(
-        RequestTrace(
-            step=step,
-            method=method,
-            path=path,
-            status_code=response.status_code,
-            duration_ms=duration_ms,
-        )
-    )
+    last_error: RuntimeError | requests.RequestException | None = None
+    for attempt in range(2):
+        try:
+            started = time.perf_counter()
+            response = session.request(
+                method=method,
+                url=f"{base_url}{path}",
+                headers=headers,
+                json=payload,
+                timeout=timeout_seconds,
+            )
+            duration_ms = int((time.perf_counter() - started) * 1000)
+            traces.append(
+                RequestTrace(
+                    step=step,
+                    method=method,
+                    path=path,
+                    status_code=response.status_code,
+                    duration_ms=duration_ms,
+                )
+            )
 
-    try:
-        body = response.json()
-    except ValueError:
-        body = {"raw_text": response.text}
+            try:
+                body = response.json()
+            except ValueError:
+                body = {"raw_text": response.text}
 
-    if response.status_code not in allowed_status_codes:
-        raise RuntimeError(
-            f"{step} failed with status {response.status_code}: {json.dumps(body, ensure_ascii=False)}"
-        )
+            if response.status_code in allowed_status_codes:
+                return response.status_code, body
 
-    return response.status_code, body
+            last_error = RuntimeError(
+                f"{step} failed with status {response.status_code}: {json.dumps(body, ensure_ascii=False)}"
+            )
+            if attempt == 0 and _is_transient_status(response.status_code, body):
+                time.sleep(DEFAULT_RETRY_DELAY_SECONDS)
+                continue
+            raise last_error
+        except requests.RequestException as exc:
+            duration_ms = int((time.perf_counter() - started) * 1000)
+            traces.append(
+                RequestTrace(
+                    step=step,
+                    method=method,
+                    path=path,
+                    status_code=0,
+                    duration_ms=duration_ms,
+                )
+            )
+            last_error = exc
+            if attempt == 0 and _is_transient_request_exception(exc):
+                time.sleep(DEFAULT_RETRY_DELAY_SECONDS)
+                continue
+            raise
+
+    if last_error is None:
+        raise RuntimeError(f"{step} failed without a recorded response")
+    raise last_error
 
 
 def _wait_for_health(base_url: str, timeout_seconds: int = 90) -> None:
@@ -435,6 +536,74 @@ def _story_title(seed: str) -> str:
     return f"{seed} {timestamp}"
 
 
+def _is_transient_status(status_code: int, body: dict[str, Any]) -> bool:
+    if status_code in {408, 429, 500, 502, 503, 504}:
+        return True
+    text = json.dumps(body, ensure_ascii=False).lower()
+    return any(
+        marker in text
+        for marker in (
+            "timeout",
+            "timed out",
+            "temporarily unavailable",
+            "temporary failure",
+            "transient",
+            "try again",
+        )
+    )
+
+
+def _is_transient_request_exception(exc: requests.RequestException) -> bool:
+    if isinstance(exc, (requests.Timeout, requests.ConnectionError)):
+        return True
+    text = str(exc).lower()
+    return any(
+        marker in text
+        for marker in ("timeout", "timed out", "temporary", "transient", "try again")
+    )
+
+
+def _issue_counts(review_payload: dict[str, Any]) -> tuple[int, int]:
+    warning_count = 0
+    blocker_count = 0
+    for issue in review_payload.get("issues", []):
+        if not isinstance(issue, dict):
+            continue
+        severity = str(issue.get("severity", "")).strip().lower()
+        if severity == "warning":
+            warning_count += 1
+        elif severity == "blocker":
+            blocker_count += 1
+    return warning_count, blocker_count
+
+
+def _requires_editorial_closure(review_payload: dict[str, Any]) -> bool:
+    warning_count, blocker_count = _issue_counts(review_payload)
+    return (
+        warning_count > 0
+        or blocker_count > 0
+        or not bool(review_payload.get("ready_for_publish", False))
+        or not bool(review_payload.get("publish_gate_passed", False))
+    )
+
+
+def _resolve_output_paths(
+    *,
+    output_dir: Path,
+    report_path: Path | None,
+    json_path: Path | None,
+    write_canonical_reports: bool,
+) -> tuple[Path, Path]:
+    if write_canonical_reports:
+        return report_path or DEFAULT_REPORT_PATH, json_path or DEFAULT_JSON_PATH
+
+    base_dir = output_dir
+    return (
+        report_path or base_dir / DEFAULT_REPORT_PATH.name,
+        json_path or base_dir / DEFAULT_JSON_PATH.name,
+    )
+
+
 def run_longform_uat(
     *,
     base_url: str,
@@ -445,237 +614,291 @@ def run_longform_uat(
     session = requests.Session()
     traces: list[RequestTrace] = []
     started_at = _utc_now()
+    workspace_id: str | None = None
+    story_id: str | None = None
+    title: str | None = None
 
-    login_status, login_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="login",
-        method="POST",
-        path="/api/v1/auth/login",
-        payload={
-            "email": DEFAULT_LOGIN_EMAIL,
-            "password": DEFAULT_LOGIN_PASSWORD,
-        },
-        timeout_seconds=timeout_seconds,
-    )
-    del login_status
-    access_token = str(login_payload["access_token"])
-    workspace_id = str(login_payload["workspace_id"])
-    auth_headers = {"Authorization": f"Bearer {access_token}"}
+    try:
+        login_status, login_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="login",
+            method="POST",
+            path="/api/v1/auth/login",
+            payload={
+                "email": DEFAULT_LOGIN_EMAIL,
+                "password": DEFAULT_LOGIN_PASSWORD,
+            },
+            timeout_seconds=timeout_seconds,
+        )
+        del login_status
+        access_token = str(login_payload["access_token"])
+        workspace_id = str(login_payload["workspace_id"])
+        auth_headers = {"Authorization": f"Bearer {access_token}"}
 
-    title = _story_title(story_title_seed)
-    _, create_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="create_story",
-        method="POST",
-        path="/api/v1/story",
-        headers=auth_headers,
-        payload={
-            "title": title,
-            "genre": DEFAULT_GENRE,
-            "premise": DEFAULT_PREMISE,
-            "target_chapters": target_chapters,
-            "target_audience": DEFAULT_AUDIENCE,
-            "themes": DEFAULT_THEMES,
-            "tone": DEFAULT_TONE,
-            "author_id": workspace_id,
-        },
-        timeout_seconds=timeout_seconds,
-    )
-    story_id = str(create_payload["story"]["id"])
+        title = _story_title(story_title_seed)
+        _, create_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="create_story",
+            method="POST",
+            path="/api/v1/story",
+            headers=auth_headers,
+            payload={
+                "title": title,
+                "genre": DEFAULT_GENRE,
+                "premise": DEFAULT_PREMISE,
+                "target_chapters": target_chapters,
+                "target_audience": DEFAULT_AUDIENCE,
+                "themes": DEFAULT_THEMES,
+                "tone": DEFAULT_TONE,
+                "author_id": workspace_id,
+            },
+            timeout_seconds=timeout_seconds,
+        )
+        story_id = str(create_payload["story"]["id"])
 
-    _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="generate_blueprint",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/blueprint",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, outline_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="generate_outline",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/outline",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, draft_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="draft_story",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/draft",
-        headers=auth_headers,
-        payload={"target_chapters": target_chapters},
-        timeout_seconds=timeout_seconds,
-    )
-    _, review_before = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="review_story_before_revision",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/review",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, revise_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="revise_story",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/revise",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, review_after = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="review_story_after_revision",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/review",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, export_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="export_story",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/export",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    publish_status, publish_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="publish_story",
-        method="POST",
-        path=f"/api/v1/story/{story_id}/publish",
-        headers=auth_headers,
-        allowed_status_codes=(200, 422),
-        timeout_seconds=timeout_seconds,
-    )
-    _, runs_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="get_runs",
-        method="GET",
-        path=f"/api/v1/story/{story_id}/runs",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, artifacts_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="get_artifacts",
-        method="GET",
-        path=f"/api/v1/story/{story_id}/artifacts",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
-    _, workspace_payload = _request_json(
-        session,
-        traces,
-        base_url=base_url,
-        step="get_workspace",
-        method="GET",
-        path=f"/api/v1/story/{story_id}/workspace",
-        headers=auth_headers,
-        timeout_seconds=timeout_seconds,
-    )
+        _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="generate_blueprint",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/blueprint",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        _, outline_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="generate_outline",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/outline",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        _, draft_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="draft_story",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/draft",
+            headers=auth_headers,
+            payload={"target_chapters": target_chapters},
+            timeout_seconds=timeout_seconds,
+        )
+        _, review_response = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="review_story_round_1",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/review",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        final_review = dict(review_response["report"])
+        review_rounds = 1
+        revision_rounds = 0
+        revision_notes: list[str] = []
 
-    final_report = review_after["report"]
-    exported_bundle = export_payload["export"]
-    chapter_audit, editorial_findings = build_editorial_findings(
-        exported_bundle,
-        final_report,
-        target_chapters=target_chapters,
-    )
+        while _requires_editorial_closure(final_review):
+            if (
+                revision_rounds >= MAX_EDITORIAL_REVISION_PASSES
+                or review_rounds >= MAX_EDITORIAL_REVIEW_PASSES
+            ):
+                raise ValueError(
+                    "Long-form UAT exhausted the editorial closure loop before reaching zero-warning publish readiness."
+                )
 
-    publish_outcome = "published" if publish_status == 200 else "blocked"
-    publish_failure_code: str | None = None
-    if publish_status != 200:
-        detail = publish_payload.get("detail")
-        if isinstance(detail, dict):
-            publish_failure_code = str(detail.get("code", "QUALITY_GATE_FAILED"))
-        else:
-            publish_failure_code = "QUALITY_GATE_FAILED"
+            _, revise_payload = _request_json(
+                session,
+                traces,
+                base_url=base_url,
+                step=f"revise_story_round_{revision_rounds + 1}",
+                method="POST",
+                path=f"/api/v1/story/{story_id}/revise",
+                headers=auth_headers,
+                timeout_seconds=timeout_seconds,
+            )
+            revision_rounds += 1
+            revision_notes.extend(
+                note
+                for note in revise_payload.get("revision_notes", [])
+                if isinstance(note, str) and note.strip()
+            )
+            _, next_review_payload = _request_json(
+                session,
+                traces,
+                base_url=base_url,
+                step=f"review_story_round_{review_rounds + 1}",
+                method="POST",
+                path=f"/api/v1/story/{story_id}/review",
+                headers=auth_headers,
+                timeout_seconds=timeout_seconds,
+            )
+            final_review = dict(next_review_payload["report"])
+            review_rounds += 1
 
-    report = LongformUatReport(
-        started_at=started_at,
-        completed_at=_utc_now(),
-        base_url=base_url,
-        story_id=story_id,
-        workspace_id=workspace_id,
-        story_title=title,
-        provider=str(outline_payload["outline"]["provider"]),
-        model=str(outline_payload["outline"]["model"]),
-        review_provider=str(final_report["semantic_review"]["source_provider"]),
-        review_model=str(final_report["semantic_review"]["source_model"]),
-        target_chapters=target_chapters,
-        drafted_chapters=int(draft_payload["story"]["chapter_count"]),
-        published=publish_status == 200,
-        publish_outcome=publish_outcome,
-        publish_failure_code=publish_failure_code,
-        quality_score=int(final_report["quality_score"]),
-        continuity_score=int(final_report["structural_review"]["metrics"]["continuity_score"]),
-        pacing_score=int(final_report["structural_review"]["metrics"]["pacing_score"]),
-        reader_pull_score=int(final_report["semantic_review"]["metrics"]["reader_pull_score"]),
-        plot_clarity_score=int(final_report["semantic_review"]["metrics"]["plot_clarity_score"]),
-        ooc_risk_score=int(final_report["semantic_review"]["metrics"]["ooc_risk_score"]),
-        structural_gate_passed=bool(final_report.get("structural_gate_passed", False)),
-        semantic_gate_passed=bool(final_report.get("semantic_gate_passed", False)),
-        publish_gate_passed=bool(final_report.get("publish_gate_passed", False)),
-        issue_codes=[
-            str(issue.get("code", "issue"))
-            for issue in final_report.get("issues", [])
-            if isinstance(issue, dict)
-        ],
-        run_ids=[
-            str(run.get("run_id"))
-            for run in runs_payload.get("runs", [])
-            if isinstance(run, dict) and run.get("run_id")
-        ],
-        artifact_kinds=[
-            str(entry.get("kind"))
-            for entry in artifacts_payload.get("history", [])
-            if isinstance(entry, dict) and entry.get("kind")
-        ],
-        revision_notes=[
-            str(note)
-            for note in revise_payload.get("revision_notes", [])
-            if isinstance(note, str)
-        ],
-        request_trace=traces,
-        chapter_audit=chapter_audit,
-        editorial_findings=editorial_findings,
-    )
-    validate_report(report)
-    del review_before
-    del workspace_payload
-    return report
+        _, export_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="export_story",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/export",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        publish_status, publish_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="publish_story",
+            method="POST",
+            path=f"/api/v1/story/{story_id}/publish",
+            headers=auth_headers,
+            allowed_status_codes=(200, 422),
+            timeout_seconds=timeout_seconds,
+        )
+        _, runs_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="get_runs",
+            method="GET",
+            path=f"/api/v1/story/{story_id}/runs",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        _, artifacts_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="get_artifacts",
+            method="GET",
+            path=f"/api/v1/story/{story_id}/artifacts",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+        _, workspace_payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="get_workspace",
+            method="GET",
+            path=f"/api/v1/story/{story_id}/workspace",
+            headers=auth_headers,
+            timeout_seconds=timeout_seconds,
+        )
+
+        warning_count, blocker_count = _issue_counts(final_review)
+        exported_bundle = export_payload["export"]
+        chapter_audit, editorial_findings = build_editorial_findings(
+            exported_bundle,
+            final_review,
+            target_chapters=target_chapters,
+        )
+
+        publish_outcome = "published" if publish_status == 200 else "blocked"
+        publish_failure_code: str | None = None
+        if publish_status != 200:
+            detail = publish_payload.get("detail")
+            if isinstance(detail, dict):
+                publish_failure_code = str(detail.get("code", "QUALITY_GATE_FAILED"))
+            else:
+                publish_failure_code = "QUALITY_GATE_FAILED"
+
+        report = LongformUatReport(
+            started_at=started_at,
+            completed_at=_utc_now(),
+            base_url=base_url,
+            story_id=story_id,
+            workspace_id=workspace_id,
+            story_title=title,
+            provider=str(outline_payload["outline"]["provider"]),
+            model=str(outline_payload["outline"]["model"]),
+            review_provider=str(final_review["semantic_review"]["source_provider"]),
+            review_model=str(final_review["semantic_review"]["source_model"]),
+            target_chapters=target_chapters,
+            drafted_chapters=int(draft_payload["story"]["chapter_count"]),
+            published=publish_status == 200,
+            publish_outcome=publish_outcome,
+            publish_failure_code=publish_failure_code,
+            warning_count=warning_count,
+            blocker_count=blocker_count,
+            review_rounds=review_rounds,
+            revision_rounds=revision_rounds,
+            quality_score=int(final_review["quality_score"]),
+            continuity_score=int(final_review["structural_review"]["metrics"]["continuity_score"]),
+            pacing_score=int(final_review["structural_review"]["metrics"]["pacing_score"]),
+            reader_pull_score=int(final_review["semantic_review"]["metrics"]["reader_pull_score"]),
+            plot_clarity_score=int(final_review["semantic_review"]["metrics"]["plot_clarity_score"]),
+            ooc_risk_score=int(final_review["semantic_review"]["metrics"]["ooc_risk_score"]),
+            structural_gate_passed=bool(final_review.get("structural_gate_passed", False)),
+            semantic_gate_passed=bool(final_review.get("semantic_gate_passed", False)),
+            publish_gate_passed=bool(final_review.get("publish_gate_passed", False)),
+            issue_codes=[
+                str(issue.get("code", "issue"))
+                for issue in final_review.get("issues", [])
+                if isinstance(issue, dict)
+            ],
+            run_ids=[
+                str(run.get("run_id"))
+                for run in runs_payload.get("runs", [])
+                if isinstance(run, dict) and run.get("run_id")
+            ],
+            artifact_kinds=[
+                str(entry.get("kind"))
+                for entry in artifacts_payload.get("history", [])
+                if isinstance(entry, dict) and entry.get("kind")
+            ],
+            revision_notes=revision_notes,
+            request_trace=traces,
+            chapter_audit=chapter_audit,
+            editorial_findings=editorial_findings,
+        )
+        validate_report(report)
+        del workspace_payload
+        return report
+    except (RuntimeError, ValueError, requests.RequestException) as exc:
+        failed_step = traces[-1].step if traces else "startup"
+        raise LongformUatExecutionError(
+            LongformUatFailureReport(
+                started_at=started_at,
+                completed_at=_utc_now(),
+                base_url=base_url,
+                target_chapters=target_chapters,
+                story_title_seed=story_title_seed,
+                story_id=story_id,
+                workspace_id=workspace_id,
+                story_title=title,
+                failed_step=failed_step,
+                error_message=str(exc),
+                request_trace=traces,
+            )
+        ) from exc
 
 
 def _write_reports(report: LongformUatReport, markdown_path: Path, json_path: Path) -> None:
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(render_markdown_report(report), encoding="utf-8")
+    json_path.write_text(json.dumps(asdict(report), indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def _write_failure_reports(
+    report: LongformUatFailureReport,
+    markdown_path: Path,
+    json_path: Path,
+) -> None:
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_failure_markdown_report(report), encoding="utf-8")
     json_path.write_text(json.dumps(asdict(report), indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -686,15 +909,27 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=None, help="Reuse an existing backend instead of starting one.")
     parser.add_argument("--target-chapters", type=int, default=20)
     parser.add_argument("--story-title-seed", default=DEFAULT_STORY_TITLE)
-    parser.add_argument("--report-path", type=Path, default=DEFAULT_REPORT_PATH)
-    parser.add_argument("--json-path", type=Path, default=DEFAULT_JSON_PATH)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_ARTIFACTS_DIR)
+    parser.add_argument("--report-path", type=Path, default=None)
+    parser.add_argument("--json-path", type=Path, default=None)
+    parser.add_argument(
+        "--write-canonical-reports",
+        action="store_true",
+        help="Write evidence to docs/reports/uat instead of an artifact directory.",
+    )
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     return parser.parse_args()
 
 
 def main() -> int:
+    args = parse_args()
+    markdown_path, json_path = _resolve_output_paths(
+        output_dir=args.output_dir,
+        report_path=args.report_path,
+        json_path=args.json_path,
+        write_canonical_reports=args.write_canonical_reports,
+    )
     try:
-        args = parse_args()
         settings = NovelEngineSettings()
 
         if args.target_chapters < 20:
@@ -716,10 +951,16 @@ def main() -> int:
                     timeout_seconds=args.timeout_seconds,
                 )
 
-        _write_reports(report, args.report_path, args.json_path)
-        print(f"Wrote {args.report_path}")
-        print(f"Wrote {args.json_path}")
+        _write_reports(report, markdown_path, json_path)
+        print(f"Wrote {markdown_path}")
+        print(f"Wrote {json_path}")
         return 0
+    except LongformUatExecutionError as exc:
+        _write_failure_reports(exc.report, markdown_path, json_path)
+        print(f"Wrote {markdown_path}")
+        print(f"Wrote {json_path}")
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     except (RuntimeError, ValueError, requests.RequestException) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from copy import deepcopy
 from datetime import datetime
 from typing import Any, cast
@@ -29,6 +31,7 @@ from src.contexts.narrative.application.services.story_workflow_support import (
     outline_chapter_for_number,
     pov_character_names,
     protagonist_name,
+    relationship_progression_status,
 )
 from src.contexts.narrative.application.services.story_workflow_types import (
     CharacterStateSnapshot,
@@ -295,6 +298,7 @@ class ChapterDraftingService:
                 f"Chapter number: {chapter_spec['chapter_number']}\n"
                 f"Chapter title: {chapter_spec['title']}\n"
                 f"Chapter summary: {chapter_spec['summary']}\n"
+                f"Chapter objective: {chapter_spec.get('chapter_objective', '')}\n"
                 f"Chapter hook: {chapter_spec.get('hook', '')}\n"
                 f"Previous hook to resolve: {previous_hook}\n"
                 f"Focus character: {focus_character}\n"
@@ -322,6 +326,7 @@ class ChapterDraftingService:
                 "focus_character": focus_character,
                 "focus_motivation": focus_motivation,
                 "previous_hook": previous_hook,
+                "chapter_objective": chapter_spec.get("chapter_objective", ""),
                 "outline_hook": chapter_spec.get("hook", ""),
                 "previous_summary": self._previous_chapter_summary(ctx),
             },
@@ -332,9 +337,17 @@ class ChapterDraftingService:
         self,
         result: TextGenerationResult,
         chapter_spec: dict[str, Any],
+        *,
+        allow_empty_scene_salvage: bool = False,
     ) -> list[dict[str, Any]]:
         scenes = result.content.get("scenes")
+        fallback_scene = self._top_level_scene_payload(result.content)
         if not isinstance(scenes, list) or not scenes:
+            if self._looks_like_single_scene_payload(result.content):
+                scenes = [deepcopy(result.content)]
+            else:
+                scenes = []
+        if not scenes:
             raise DraftChapterFailure(
                 chapter_number=int(chapter_spec["chapter_number"]),
                 failure_code="DRAFT_VALIDATION_ERROR",
@@ -350,6 +363,20 @@ class ChapterDraftingService:
             )
 
         scenes = self._normalize_scene_payloads(scenes)
+        if (
+            fallback_scene is not None
+            and not any(
+                isinstance(item, dict)
+                and str(item.get("scene_type", "")).strip().lower()
+                == str(fallback_scene.get("scene_type", "")).strip().lower()
+                and str(item.get("title", "")).strip()
+                == str(fallback_scene.get("title", "")).strip()
+                and str(item.get("content", "")).strip()
+                == str(fallback_scene.get("content", "")).strip()
+                for item in scenes
+            )
+        ):
+            scenes.append(fallback_scene)
         normalized: list[dict[str, Any]] = []
         for index, scene in enumerate(scenes, start=1):
             if not isinstance(scene, dict):
@@ -370,17 +397,32 @@ class ChapterDraftingService:
                 f"{chapter_spec['title']} - Scene {index}"
             )
             if not content:
-                raise DraftChapterFailure(
-                    chapter_number=int(chapter_spec["chapter_number"]),
-                    failure_code="DRAFT_VALIDATION_ERROR",
-                    message="Scene content cannot be empty",
-                    raw_text=result.raw_text,
-                    raw_payload=deepcopy(result.content),
-                    normalized_payload={"scenes": normalized},
-                    validation_errors=[f"Scene {index} content cannot be empty"],
-                    source_provider=result.provider,
-                    source_model=result.model,
-                )
+                if allow_empty_scene_salvage:
+                    fallback_content = ""
+                    if fallback_scene is not None:
+                        fallback_content = str(fallback_scene.get("content", "")).strip()
+                    if not fallback_content:
+                        for key in ("summary", "chapter_objective", "hook"):
+                            fallback_content = str(chapter_spec.get(key, "")).strip()
+                            if fallback_content:
+                                break
+                    if not fallback_content:
+                        fallback_content = (
+                            f"{chapter_spec['title']} carries the intended chapter beat."
+                        )
+                    content = fallback_content
+                if not content:
+                    raise DraftChapterFailure(
+                        chapter_number=int(chapter_spec["chapter_number"]),
+                        failure_code="DRAFT_VALIDATION_ERROR",
+                        message="Scene content cannot be empty",
+                        raw_text=result.raw_text,
+                        raw_payload=deepcopy(result.content),
+                        normalized_payload={"scenes": normalized},
+                        validation_errors=[f"Scene {index} content cannot be empty"],
+                        source_provider=result.provider,
+                        source_model=result.model,
+                    )
             normalized.append(
                 {
                     "scene_type": scene_type,
@@ -389,6 +431,16 @@ class ChapterDraftingService:
                 }
             )
         return normalized
+
+    @staticmethod
+    def _looks_like_single_scene_payload(payload: Any) -> bool:
+        if not isinstance(payload, dict):
+            return False
+
+        content = str(payload.get("content", "")).strip()
+        title = str(payload.get("title", "")).strip()
+        has_scene_type = "scene_type" in payload or isinstance(payload.get("type"), str)
+        return bool(content and title and has_scene_type)
 
     @staticmethod
     def _normalize_scene_payloads(
@@ -402,11 +454,62 @@ class ChapterDraftingService:
             nested_scenes = scenes[0]["type"]
             if all(isinstance(item, dict) for item in nested_scenes):
                 scenes = nested_scenes
+        elif (
+            len(scenes) == 1
+            and isinstance(scenes[0], dict)
+            and isinstance(scenes[0].get("items"), list)
+            and all(isinstance(item, dict) for item in scenes[0]["items"])
+        ):
+            scenes = scenes[0]["items"]
 
         normalized_scenes: list[Any] = []
+        pending_inline_scene: dict[str, str] = {}
+        trailing_fragment_mode = False
         for scene in scenes:
+            if isinstance(scene, str):
+                stripped_scene = scene.strip()
+                if stripped_scene.lower() in {"decision", "scene_type", "type", "title", "content"}:
+                    if normalized_scenes:
+                        trailing_fragment_mode = True
+                    if stripped_scene.lower() == "decision":
+                        trailing_fragment_mode = True
+                    trailing_fragment_mode = True
+                    continue
+                parsed_inline_field = ChapterDraftingService._parse_inline_scene_field(scene)
+                if parsed_inline_field is not None:
+                    field_name, field_value = parsed_inline_field
+                    pending_inline_scene[field_name] = field_value
+                    if (
+                        {"scene_type", "title", "content"}
+                        <= set(pending_inline_scene.keys())
+                        and pending_inline_scene["content"].strip()
+                    ):
+                        normalized_scenes.append(dict(pending_inline_scene))
+                        pending_inline_scene = {}
+                    continue
+                salvaged_scene = ChapterDraftingService._salvage_embedded_scene_payload(scene)
+                if salvaged_scene is not None:
+                    normalized_scenes.append(salvaged_scene)
+                    continue
+                if stripped_scene.lower() in {"scene_type", "type", "title", "content"}:
+                    continue
+                if trailing_fragment_mode:
+                    continue
+                if stripped_scene:
+                    normalized_scenes.append(scene)
+                continue
+
             if not isinstance(scene, dict):
                 normalized_scenes.append(scene)
+                continue
+
+            nested_items = scene.get("items")
+            if isinstance(nested_items, list) and all(
+                isinstance(item, dict) for item in nested_items
+            ):
+                normalized_scenes.extend(
+                    ChapterDraftingService._normalize_scene_payloads(nested_items)
+                )
                 continue
 
             nested_scene = scene.get("scene")
@@ -421,7 +524,95 @@ class ChapterDraftingService:
 
             normalized_scenes.append(scene)
 
+        if (
+            {"scene_type", "title", "content"} <= set(pending_inline_scene.keys())
+            and pending_inline_scene["content"].strip()
+        ):
+            normalized_scenes.append(dict(pending_inline_scene))
+
         return normalized_scenes
+
+    @staticmethod
+    def _parse_inline_scene_field(scene: str) -> tuple[str, str] | None:
+        match = re.match(r"^\s*(scene_type|type|title|content)\s*:\s*(.*)\s*$", scene)
+        if match is None:
+            return None
+        field_name = "scene_type" if match.group(1) == "type" else match.group(1)
+        field_value = match.group(2).strip().strip('"').strip("'")
+        return field_name, field_value
+
+    @staticmethod
+    def _salvage_embedded_scene_payload(scene: str) -> dict[str, str] | None:
+        candidate = scene.strip().strip(",")
+        if not candidate:
+            return None
+
+        normalized_candidate = candidate.replace('\\"', '"')
+        if (
+            not any(token in normalized_candidate for token in ('"title"', '"content"'))
+            and not any(token in normalized_candidate for token in ("title:", "content:"))
+        ):
+            return None
+
+        json_like_candidate = normalized_candidate
+        if not json_like_candidate.startswith('"') and re.match(
+            r"^(scene_type|type|title|content)\"?\s*:",
+            json_like_candidate,
+        ):
+            json_like_candidate = f'"{json_like_candidate}'
+        if not json_like_candidate.startswith("{"):
+            json_like_candidate = f"{{{json_like_candidate}"
+        if not json_like_candidate.endswith("}"):
+            json_like_candidate = f"{json_like_candidate}}}"
+
+        json_like_candidate = re.sub(
+            r'"(?:scene_type|type)"\s*:\s*".*?(?=,\s*"title"\s*:)',
+            '"scene_type": "narrative"',
+            json_like_candidate,
+            count=1,
+            flags=re.DOTALL,
+        )
+
+        try:
+            payload = json.loads(json_like_candidate)
+        except json.JSONDecodeError:
+            return None
+
+        if not isinstance(payload, dict):
+            return None
+
+        title = str(payload.get("title", "")).strip()
+        content = str(payload.get("content", "")).strip()
+        if not title or not content:
+            return None
+
+        scene_type_value = str(payload.get("scene_type", payload.get("type", ""))).strip()
+        scene_type = normalize_scene_type(scene_type_value or "narrative")
+        return {
+            "scene_type": scene_type,
+            "title": title,
+            "content": content,
+        }
+
+    @staticmethod
+    def _top_level_scene_payload(payload: Any) -> dict[str, Any] | None:
+        if not isinstance(payload, dict):
+            return None
+        scene_type_value = payload.get("scene_type", payload.get("type"))
+        title_value = payload.get("title")
+        content_value = payload.get("content")
+        if not (isinstance(title_value, str) and isinstance(content_value, str)):
+            return None
+        scene_type = str(scene_type_value or "narrative").strip() or "narrative"
+        title = title_value.strip()
+        content = content_value.strip()
+        if not (scene_type and title and content):
+            return None
+        return {
+            "scene_type": scene_type,
+            "title": title,
+            "content": content,
+        }
 
     def _record_draft_failure_artifact(
         self,
@@ -704,20 +895,10 @@ class ChapterDraftingService:
         chapter_number: int,
         target_chapters: int,
     ) -> str:
-        progression = [
-            "mutual suspicion",
-            "tense cooperation",
-            "reluctant allies",
-            "earned trust",
-            "strained trust",
-            "oath-bound allies",
-        ]
-        if target_chapters <= 1:
-            return progression[-1]
-
-        ratio = (chapter_number - 1) / max(target_chapters - 1, 1)
-        index = min(len(progression) - 1, int(ratio * len(progression)))
-        return progression[index]
+        return relationship_progression_status(
+            chapter_number=chapter_number,
+            target_chapters=target_chapters,
+        )
 
     def _previous_chapter_summary(self, ctx: StoryWorkflowContext) -> str:
         if not ctx.story.chapters:

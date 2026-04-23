@@ -137,6 +137,42 @@ def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
     """Return normalized world-rule strings from varied provider payload shapes."""
     rules: list[str] = []
     seen_rules: set[str] = set()
+    force_all_key_tokens = {
+        "magic_system",
+        "ritual",
+        "rituals",
+        "mechanic",
+        "mechanics",
+        "seal",
+        "ledger",
+        "memory",
+        "oath",
+        "quill",
+        "public_ledger",
+        "debt",
+        "ghost",
+    }
+    structural_key_tokens = (
+        "rule",
+        "law",
+        "constraint",
+        "limit",
+        "cost",
+        "price",
+        "consequence",
+        "ritual",
+        "mechanic",
+        "procedure",
+        "anchor",
+        "seal",
+        "ledger",
+        "memory",
+        "oath",
+        "quill",
+        "debt",
+        "ghost",
+    )
+    skipped_string_keys = {"name", "setting_name", "title", "label", "archetype"}
 
     def add_rule(rule: str) -> None:
         normalized = " ".join(rule.split())
@@ -147,7 +183,11 @@ def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
         seen_rules.add(normalized)
         rules.append(normalized)
 
-    def add_from_value(value: Any) -> None:
+    def add_from_value(
+        value: Any,
+        *,
+        force_all_strings: bool = False,
+    ) -> None:
         if isinstance(value, str):
             text = value.strip()
             if not text:
@@ -175,7 +215,7 @@ def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
 
         if isinstance(value, list):
             for item in value:
-                add_from_value(item)
+                add_from_value(item, force_all_strings=force_all_strings)
             return
 
         if not isinstance(value, dict):
@@ -183,14 +223,23 @@ def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
 
         for key in ("core_rules", "rules", "limitations", "constraints"):
             if key in value:
-                add_from_value(value[key])
+                add_from_value(value[key], force_all_strings=True)
         for key, nested_value in value.items():
             normalized_key = str(key).strip().lower()
-            if any(
-                token in normalized_key
-                for token in ("rule", "law", "constraint", "limit")
+            key_is_structural = any(
+                token in normalized_key for token in structural_key_tokens
+            )
+            nested_force_all_strings = (
+                force_all_strings or key_is_structural or normalized_key in force_all_key_tokens
+            )
+            if (
+                nested_force_all_strings
+                and normalized_key not in skipped_string_keys
             ):
-                add_from_value(nested_value)
+                add_from_value(
+                    nested_value,
+                    force_all_strings=nested_force_all_strings,
+                )
         cost = value.get("cost")
         if isinstance(cost, str) and cost.strip():
             add_rule(f"Cost: {cost.strip()}")
@@ -203,15 +252,18 @@ def extract_world_rules(world_bible: dict[str, Any]) -> list[str]:
         "constraints",
     ):
         if key in world_bible:
-            add_from_value(world_bible[key])
+            add_from_value(world_bible[key], force_all_strings=True)
     for key, value in world_bible.items():
         normalized_key = str(key).strip().lower()
-        if any(token in normalized_key for token in ("rule", "law", "constraint", "limit")):
-            add_from_value(value)
+        if any(token in normalized_key for token in structural_key_tokens):
+            add_from_value(
+                value,
+                force_all_strings=normalized_key in force_all_key_tokens,
+            )
 
     magic_system = world_bible.get("magic_system")
     if isinstance(magic_system, dict):
-        add_from_value(magic_system)
+        add_from_value(magic_system, force_all_strings=True)
 
     return rules
 
@@ -306,7 +358,43 @@ def ensure_payoff_anchor(content: str, previous_hook: str) -> str:
         return content
     if previous_hook.lower() in content.lower():
         return content
-    return f"{content} The chapter directly answers the previous hook: {previous_hook}"
+    return f"The chapter directly answers the previous hook: {previous_hook} {content}"
+
+
+def relationship_progression_status(
+    *,
+    chapter_number: int,
+    target_chapters: int,
+) -> str:
+    """Return a granular relationship progression label for long-form stories.
+
+    The semantic review flags the story when the trailing relationship ledger
+    repeats the exact same status across four consecutive chapters. A coarse
+    six-step ladder makes that inevitable in a 20-24 chapter manuscript, so the
+    canonical ladder needs finer granularity for late-arc chapters.
+    """
+
+    progression = [
+        "mutual suspicion",
+        "guarded cooperation",
+        "tense cooperation",
+        "hostile confrontation",
+        "enemy surveillance",
+        "forced alliance under duress",
+        "uneasy coordination",
+        "reluctant allies",
+        "tested trust",
+        "strained trust",
+        "battle-forged trust",
+        "civic interdependence",
+        "oath-bound allies",
+    ]
+    if target_chapters <= 1:
+        return progression[-1]
+
+    ratio = (chapter_number - 1) / max(target_chapters - 1, 1)
+    index = min(len(progression) - 1, int(ratio * len(progression)))
+    return progression[index]
 
 
 def outline_chapter_for_number(

@@ -49,6 +49,7 @@ jobs:
           python scripts/uat/run_dashscope_longform_uat.py
           --target-chapters ${{ inputs.target_chapters }}
           --story-title-seed "${{ inputs.story_title_seed }}"
+          --write-canonical-reports
 
       - name: Upload longform UAT evidence
         uses: actions/upload-artifact@v4

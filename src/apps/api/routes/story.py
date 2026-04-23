@@ -110,8 +110,8 @@ def _resolve_author_id(
 ) -> str:
     if requested_author_id:
         return requested_author_id.strip()
-    if current_user and current_user.user_id:
-        return str(current_user.user_id)
+    if current_user and current_user.username:
+        return f"user-{current_user.username.strip()}"
     guest_workspace = request.cookies.get(GUEST_SESSION_COOKIE)
     if isinstance(guest_workspace, str) and guest_workspace:
         return guest_workspace
@@ -133,7 +133,11 @@ async def list_stories(
     """List stories, optionally filtered by the current author."""
     resolved_author_id = author_id
     if resolved_author_id is None:
-        resolved_author_id = current_user.user_id if current_user else None
+        resolved_author_id = (
+            f"user-{current_user.username.strip()}"
+            if current_user and current_user.username
+            else None
+        )
         if resolved_author_id is None:
             resolved_author_id = request.cookies.get(GUEST_SESSION_COOKIE)
 

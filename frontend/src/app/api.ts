@@ -1,10 +1,12 @@
 import { appConfig } from '@/app/config';
 import type {
+  CurrentUserResponse,
   StoryBlueprintResponse,
   StoryCreateRequest,
   StoryCreateResponse,
   StoryDraftResponse,
   StoryExportResponse,
+  GuestSessionRequest,
   GuestSessionResponse,
   LoginRequest,
   LoginResponse,
@@ -23,7 +25,10 @@ import type {
   StorySnapshot,
   StoryWorkspaceResponse,
 } from '@/app/types';
-import { sessionStorageKey, safeStorage } from '@/shared/storage';
+import {
+  getActiveSession,
+  readSessionCatalog,
+} from '@/shared/storage';
 
 class HttpError extends Error {
   readonly status: number;
@@ -52,8 +57,12 @@ function buildStoryQuery(params: Record<string, string | number | undefined>): s
   return query ? `?${query}` : '';
 }
 
-function getAuthorizationHeaders(): Record<string, string> {
-  const session = safeStorage.read<SessionState>(sessionStorageKey);
+function getAuthorizationHeaders(token?: string): Record<string, string> {
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  const session = getActiveSession(readSessionCatalog());
   if (session?.kind === 'user' && session.token) {
     return { Authorization: `Bearer ${session.token}` };
   }
@@ -96,7 +105,11 @@ function pickErrorMessage(payload: unknown): string | null {
   return null;
 }
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+async function requestJson<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { token?: string },
+): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
 
@@ -105,7 +118,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthorizationHeaders(),
+        ...getAuthorizationHeaders(options?.token),
         ...(init?.headers ?? {}),
       },
       ...init,
@@ -144,14 +157,24 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  createGuestSession: () =>
-    requestJson<GuestSessionResponse>(appConfig.endpoints.guestSession, { method: 'POST' }),
+  createGuestSession: (payload?: GuestSessionRequest) =>
+    requestJson<GuestSessionResponse>(appConfig.endpoints.guestSession, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+    }),
 
   login: (payload: LoginRequest) =>
     requestJson<LoginResponse>(appConfig.endpoints.login, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  getCurrentUser: (token?: string) =>
+    requestJson<CurrentUserResponse>(
+      appConfig.endpoints.currentUser,
+      undefined,
+      token ? { token } : undefined,
+    ),
 
   listStories: (authorId: string, limit = 20, offset = 0) =>
     requestJson<StoryListResponse>(

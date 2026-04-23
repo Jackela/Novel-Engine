@@ -37,6 +37,20 @@ function renderWorkbench() {
   );
 }
 
+function buildAuthValue(session: SessionState) {
+  return {
+    session,
+    sessions: [session],
+    activeSessionId: session.id,
+    isLoading: false,
+    signInAsGuest: vi.fn(),
+    signIn: vi.fn(),
+    switchSession: vi.fn(),
+    signOut: vi.fn(),
+    updateSessionSelection: vi.fn(),
+  };
+}
+
 function makeStoryWorkspace(): StoryWorkspace {
   const structuralReview: StoryReviewReport = {
     artifact_id: 'review-1',
@@ -650,6 +664,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('surfaces relationship and hook debt in the workbench', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -657,13 +672,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -703,8 +712,8 @@ describe('StoryWorkbenchPage', () => {
 
     renderWorkbench();
 
-    expect(screen.getByTestId('story-relationship-debt-count')).toHaveTextContent('2');
-    expect(screen.getByTestId('story-hook-debt-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('story-relationship-debt-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('story-hook-debt-count')).toHaveTextContent('3');
     expect(screen.getByTestId('story-chapter-debt-2')).toHaveTextContent(
       'relationship debt',
     );
@@ -716,6 +725,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('keeps mutable workspace metrics separate from run playback', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -724,13 +734,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -780,6 +784,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('keeps the current manuscript rerun publish toggle separate from the create form toggle', () => {
     const session: SessionState = {
+      id: 'user:user-operator',
       kind: 'user',
       workspaceId: 'user-operator',
       user: {
@@ -792,13 +797,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -855,6 +854,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('renders failed run playback details and failure artifacts', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -863,13 +863,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,

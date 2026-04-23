@@ -76,6 +76,12 @@ class TokenResponse(BaseModel):
     refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field(default="bearer", description="Token type")
     workspace_id: str = Field(..., description="Active workspace identifier")
+    identity_kind: str = Field(default="user", description="Resolved session identity kind")
+    workspace_kind: str = Field(default="user", description="Resolved workspace kind")
+    active_workspace: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved active workspace summary",
+    )
     user: LoginUserResponse = Field(..., description="Authenticated user profile")
     expires_in: Optional[int] = Field(
         None, description="Access token expiration in seconds"
@@ -128,6 +134,16 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     )
 
 
+def _active_workspace_payload(workspace_id: str) -> dict[str, str]:
+    return {
+        "workspace_id": workspace_id,
+        "workspace_kind": "user",
+        "label": "Signed-in workspace",
+        "persistence": "persistent",
+        "summary": "Stable author workspace bound to the authenticated identity.",
+    }
+
+
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -168,6 +184,7 @@ async def login(
         refresh_token=data["refresh_token"],
         token_type="bearer",
         workspace_id=session.workspace_id,
+        active_workspace=_active_workspace_payload(session.workspace_id),
         user=LoginUserResponse(
             id=user["id"],
             name=user["username"],

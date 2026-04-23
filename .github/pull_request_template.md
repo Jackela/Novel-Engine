@@ -13,11 +13,13 @@
 - [ ] `npm --prefix frontend run test`
 - [ ] `npm --prefix frontend run build`
 - [ ] `npm --prefix frontend run test:e2e:smoke`
-- [ ] If author-flow behavior changed: `python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20` or document why the manual live gate was not run
+- [ ] `DashScope Longform Gate` passed on the PR
+- [ ] If this PR refreshes the canonical UAT evidence: `python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports`
 
 ## Risk Review
 
 - [ ] No legacy compatibility layer or silent fallback was introduced
+- [ ] Publish semantics still require `publish=success` with `warning=0` and `blocker=0`
 - [ ] Public contracts changed intentionally and are covered by tests
 - [ ] Generated artifacts, caches, and temporary reports are not committed
 - [ ] README and repo-level docs remain accurate

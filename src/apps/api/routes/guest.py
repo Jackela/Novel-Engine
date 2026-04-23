@@ -33,19 +33,42 @@ class GuestSessionResponse(BaseModel):
 
     workspace_id: str
     created: bool = Field(default=True)
+    identity_kind: str = Field(default="guest")
+    workspace_kind: str = Field(default="guest")
+    active_workspace: dict[str, str] = Field(default_factory=dict)
+
+
+class GuestSessionRequest(BaseModel):
+    """Optional request payload for explicitly resuming a guest workspace."""
+
+    workspace_id: str | None = Field(default=None)
+
+
+def _active_workspace_payload(workspace_id: str) -> dict[str, str]:
+    return {
+        "workspace_id": workspace_id,
+        "workspace_kind": "guest",
+        "label": "Guest workspace",
+        "persistence": "ephemeral",
+        "summary": "Disposable workspace for drafting and flow verification.",
+    }
 
 
 @router.post("/session", response_model=GuestSessionResponse)
 async def create_or_resume_guest_session(
     request: Request,
     response: Response,
+    payload: GuestSessionRequest | None = None,
 ) -> GuestSessionResponse:
     """Create or resume a guest workspace session."""
     settings = get_settings()
-    cookie_workspace = _guest_workspace_from_cookie(
-        request.cookies.get(GUEST_SESSION_COOKIE)
+    requested_workspace = _guest_workspace_from_cookie(
+        payload.workspace_id if payload is not None else None
     )
-    session = await runtime_store.create_or_resume_guest_session(cookie_workspace)
+    cookie_workspace = _guest_workspace_from_cookie(request.cookies.get(GUEST_SESSION_COOKIE))
+    session = await runtime_store.create_or_resume_guest_session(
+        requested_workspace or cookie_workspace
+    )
 
     response.set_cookie(
         key=GUEST_SESSION_COOKIE,
@@ -60,4 +83,5 @@ async def create_or_resume_guest_session(
     return GuestSessionResponse(
         workspace_id=session.workspace_id,
         created=session.is_new_session,
+        active_workspace=_active_workspace_payload(session.workspace_id),
     )

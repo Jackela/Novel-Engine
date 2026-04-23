@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import json
 from dataclasses import dataclass
@@ -178,6 +179,7 @@ class _DashScopeGenerationTransport:
                 "temperature": task.temperature,
                 "enable_thinking": False,
                 "result_format": "message",
+                "response_format": {"type": "json_object"},
             },
         }
 
@@ -218,6 +220,8 @@ class _DashScopeMultimodalGenerationTransport:
             "parameters": {
                 "temperature": task.temperature,
                 "enable_thinking": False,
+                "result_format": "message",
+                "response_format": {"type": "json_object"},
             },
         }
 
@@ -401,24 +405,104 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             if len(lines) >= 3:
                 candidates.append("\n".join(lines[1:-1]).strip())
 
-        object_start = stripped.find("{")
-        object_end = stripped.rfind("}")
-        if object_start != -1 and object_end > object_start:
-            candidates.append(stripped[object_start : object_end + 1].strip())
+        candidates.extend(
+            DashScopeTextGenerationProvider._extract_balanced_fragments(
+                stripped,
+                opening="{",
+                closing="}",
+            )
+        )
+        candidates.extend(
+            DashScopeTextGenerationProvider._extract_balanced_fragments(
+                stripped,
+                opening="[",
+                closing="]",
+            )
+        )
 
         seen: set[str] = set()
         for candidate in candidates:
             if not candidate or candidate in seen:
                 continue
             seen.add(candidate)
-            try:
-                parsed = json.loads(candidate)
-            except json.JSONDecodeError:
+            parsed = DashScopeTextGenerationProvider._parse_json_like_value(candidate)
+            if parsed is None:
                 continue
-            if isinstance(parsed, dict):
-                return parsed
+            normalized = DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed)
+            if normalized is not None:
+                return normalized
 
         raise TextGenerationProviderError("DashScope response is not a JSON object")
+
+    @staticmethod
+    def _extract_balanced_fragments(
+        text: str,
+        *,
+        opening: str,
+        closing: str,
+    ) -> list[str]:
+        fragments: list[str] = []
+        depth = 0
+        start = -1
+        in_string = False
+        string_delimiter = ""
+        escaped = False
+
+        for index, character in enumerate(text):
+            if in_string:
+                if escaped:
+                    escaped = False
+                    continue
+                if character == "\\":
+                    escaped = True
+                    continue
+                if character == string_delimiter:
+                    in_string = False
+                continue
+
+            if character in {'"', "'"}:
+                in_string = True
+                string_delimiter = character
+                continue
+
+            if character == opening:
+                if depth == 0:
+                    start = index
+                depth += 1
+                continue
+
+            if character == closing and depth:
+                depth -= 1
+                if depth == 0 and start != -1:
+                    fragments.append(text[start : index + 1].strip())
+                    start = -1
+
+        return fragments
+
+    @staticmethod
+    def _parse_json_like_value(candidate: str) -> Any | None:
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+        try:
+            return ast.literal_eval(candidate)
+        except (SyntaxError, ValueError):
+            pass
+        return None
+
+    @staticmethod
+    def _coerce_parsed_object_candidate(parsed: Any) -> dict[str, Any] | None:
+        if isinstance(parsed, dict):
+            return parsed
+        if isinstance(parsed, str):
+            nested = DashScopeTextGenerationProvider._parse_json_like_value(parsed.strip())
+            if nested is None or nested == parsed:
+                return None
+            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(nested)
+        if isinstance(parsed, list) and len(parsed) == 1:
+            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed[0])
+        return None
 
     async def generate_structured(
         self,

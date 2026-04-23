@@ -14,6 +14,7 @@ import type {
   StoryRunsResponse,
   StoryRunState,
   StorySnapshot,
+  StorySurfaceView,
   StoryWorkspace,
   StoryWorkflowState,
 } from '@/app/types';
@@ -58,6 +59,17 @@ export interface UseStoryWorkbenchResult {
     publish?: boolean;
     targetChapters?: number | null;
   }) => Promise<StoryRunDetailResponse>;
+}
+
+interface UseStoryWorkbenchOptions {
+  authorId: string;
+  preferredStoryId?: string | null;
+  preferredRunId?: string | null;
+  onSelectionChange?: (selection: {
+    storyId: string | null;
+    runId: string | null;
+    view: StorySurfaceView;
+  }) => void;
 }
 
 const emptyArtifact: StoryWorkbenchArtifact = {
@@ -181,7 +193,18 @@ function formatError(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
+export function useStoryWorkbench(
+  authorIdOrOptions: string | UseStoryWorkbenchOptions,
+): UseStoryWorkbenchResult {
+  const {
+    authorId,
+    preferredStoryId,
+    preferredRunId,
+    onSelectionChange,
+  } =
+    typeof authorIdOrOptions === 'string'
+      ? { authorId: authorIdOrOptions }
+      : authorIdOrOptions;
   const [stories, setStories] = useState<StorySnapshot[]>([]);
   const [activeStoryId, setActiveStoryId] = useState<string | null>(null);
   const [workspace, setWorkspace] = useState<StoryWorkspace | null>(null);
@@ -197,6 +220,8 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
   const [error, setError] = useState<string | null>(null);
   const activeStoryIdRef = useRef<string | null>(null);
   const selectedRunIdRef = useRef<string | null>(null);
+  const preferredStoryIdRef = useRef<string | null>(preferredStoryId ?? null);
+  const preferredRunIdRef = useRef<string | null>(preferredRunId ?? null);
 
   useEffect(() => {
     activeStoryIdRef.current = activeStoryId;
@@ -205,6 +230,26 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
   useEffect(() => {
     selectedRunIdRef.current = selectedRunId;
   }, [selectedRunId]);
+
+  useEffect(() => {
+    preferredStoryIdRef.current = preferredStoryId ?? null;
+  }, [preferredStoryId]);
+
+  useEffect(() => {
+    preferredRunIdRef.current = preferredRunId ?? null;
+  }, [preferredRunId]);
+
+  const notifySelection = (
+    storyId: string | null,
+    runId: string | null,
+    view: StorySurfaceView,
+  ) => {
+    onSelectionChange?.({
+      storyId,
+      runId,
+      view,
+    });
+  };
 
   const syncWorkspace = (
     nextWorkspace: StoryWorkspace,
@@ -240,6 +285,7 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
     activeStoryIdRef.current = null;
     selectedRunIdRef.current = null;
     setArtifact(emptyArtifact);
+    notifySelection(null, null, 'workspace');
   };
 
   const syncRunSummaries = (response: StoryRunsResponse) => {
@@ -252,6 +298,7 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
     setSelectedRunId(null);
     setSelectedRunDetail(null);
     selectedRunIdRef.current = null;
+    notifySelection(activeStoryIdRef.current, null, 'workspace');
   };
 
   const syncWorkspaceAndRuns = async (
@@ -266,11 +313,15 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
     const runsResponse = await api.getStoryRuns(nextWorkspace.story.id);
     const runs = syncRunSummaries(runsResponse);
     const requestedRunId =
-      options?.selectedRunId !== undefined ? options.selectedRunId : selectedRunIdRef.current;
+      options?.selectedRunId !== undefined
+        ? options.selectedRunId
+        : selectedRunIdRef.current ?? preferredRunIdRef.current;
 
     if (!requestedRunId) {
       if (options?.selectedRunDetail === null) {
         clearSelectedRun();
+      } else {
+        notifySelection(nextWorkspace.story.id, null, 'workspace');
       }
       return;
     }
@@ -288,6 +339,7 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
     setSelectedRunId(requestedRunId);
     selectedRunIdRef.current = requestedRunId;
     setSelectedRunDetail(runDetail);
+    notifySelection(nextWorkspace.story.id, requestedRunId, 'playback');
   };
 
   const refreshLibrary = async () => {
@@ -304,7 +356,11 @@ export function useStoryWorkbench(authorId: string): UseStoryWorkbenchResult {
       }
 
       const selectedStory =
-        response.stories.find((story) => story.id === activeStoryIdRef.current) ??
+        response.stories.find(
+          (story) =>
+            story.id === preferredStoryIdRef.current ||
+            story.id === activeStoryIdRef.current,
+        ) ??
         response.stories[0];
       const workspaceResponse = await api.getStoryWorkspace(selectedStory.id);
       await syncWorkspaceAndRuns(
