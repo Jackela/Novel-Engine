@@ -5135,7 +5135,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "one beat of silence" in public_summary
     assert "dry-wood click" not in public_summary
-    assert "stays inert" in public_summary or "stays still" in public_summary
+    assert "mute shape" in public_summary or "cold presence" in public_summary
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
@@ -5148,7 +5148,8 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "blank page" in closure_summary
     assert "lamp flame gutters" in closure_summary
     assert "visible leak" in closure_summary or "winter-blue" in closure_summary
-    assert "by dusk" in closure_summary
+    assert "names one ordinary detail" in closure_summary
+    assert "ledger line" in closure_summary
     assert "by night" in closure_summary
     assert "by dawn" in closure_summary
     assert "public confession" in closure_summary
@@ -5408,7 +5409,8 @@ async def test_default_terminal_arc_phase_plan_avoids_placeholder_collective_fal
     closure_summary = closure["summary"].lower()
     assert "a witness" not in closure_summary
     assert "the witness line" not in closure_summary
-    assert "by dusk" in closure_summary
+    assert "names one ordinary detail" in closure_summary
+    assert "ledger line" in closure_summary
     assert "by night" in closure_summary
     assert "by dawn" in closure_summary
     assert "blank page" in closure_summary or "blank page" in closure["hook"].lower()
