@@ -917,13 +917,13 @@ class StoryRevisionService:
             return {
                 "summary": (
                     f"{protagonist} makes an explicit final choice while {sacrifice_witness} witnesses the handoff, "
-                    "so the cost reads as deliberate rather than accidental."
+                    f"and {primary_keeper} is already prepared for the burden from earlier quiet practice, so the cost reads as deliberate rather than sudden."
                 ),
                 "objective": (
-                    f"{protagonist} must choose the sacrifice in full view of {sacrifice_witness} and leave the next duty with the living."
+                    f"{protagonist} must choose the sacrifice in full view of {sacrifice_witness} and leave the next duty with the living, while {primary_keeper}'s earlier preparation keeps the transition earned instead of abrupt."
                 ),
                 "hook": (
-                    f"The first physical confirmation from {confirmation_trigger} proves the old life will not return unchanged."
+                    f"The first physical confirmation from {confirmation_trigger} proves the old life will not return unchanged, and the prepared handoff keeps the next burden from feeling abrupt."
                 ),
                 "focus_character": protagonist,
                 "relationship_target": living_anchor or primary_keeper,
@@ -932,15 +932,14 @@ class StoryRevisionService:
         if phase == "aftermath":
             return {
                 "summary": (
-                    f"After the sacrifice, {primary_keeper} gets one quiet private beat alone while rain taps the eaves, the rail stays cold in the palm, and the confirming knock holds the room in place, then the seal in the frame cracks one line wider and a draft slams the shutters once so the room has to react before {primary_keeper} can move again. "
+                    f"After the sacrifice, {primary_keeper} gets one quiet private beat alone while rain taps the eaves and the rail stays cold in the palm. The confirming knock holds the room still, the seal in the frame cracks one line wider, and a draft slams the shutters before {primary_keeper} can move again. "
                     f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. A brief memory-threaded echo of {protagonist}'s voice guides {primary_keeper} to the next choice, and {visible_witness} steadies the ledger while the line chooses the city's debt over private grief. "
                     f"{confirmation_trigger} then proves the old life is gone for good."
                 ),
                 "objective": (
-                    f"{primary_keeper} must move from grief to duty through one failed action, let a still beat land before command returns, keep {vessel_label} fully passive, and frame any late movement as a dry-wood click, residual twitch, or residue rather than instinct or recovery. "
+                    f"{primary_keeper} must move from grief to duty through one failed action and one quiet breath, keep {vessel_label} fully passive, and frame any late movement as a dry-wood click, residual twitch, or residue rather than instinct or recovery. "
                     f"Let the keeper's next choice remain visibly shaped by a brief memory-threaded echo of {protagonist}'s voice so the earlier life stays present as influence, not as a returned voice. "
-                    f"Make it explicit that the keeper knows the return has already failed before the farewell touch lands. "
-                    f"Let the witness interruption trigger a specific choice between private grief and the city's debt so the keeper turn feels earned rather than procedural, and make the private solitude beat sensory enough that the chapter does not read like a checklist of actions. Let the silence stretch long enough for the room to feel the loss before the interruption lands."
+                    f"Make it explicit that the keeper knows the return has already failed before the farewell touch lands, and let the witness interruption tip the scene from private grief toward the city's debt without turning the beat into a checklist."
                 ),
                 "hook": f"The accepted cost points away from private mourning and toward the buried rule tied to {motif_anchor}, while the rail gives one cold physical answer in the keeper's hand.",
                 "focus_character": primary_keeper,
@@ -963,8 +962,8 @@ class StoryRevisionService:
         if phase == "public_reckoning":
             return {
                 "summary": (
-                    f"The first half of Chapter 19 tracks a fresh surge from the broken seal before the explanation ends, while wind drives rain across the square, a loose banner snaps overhead, and the crowd keeps shifting around the still vessel: one beat of silence opens while {visible_witness} tastes metal and moves first and {second_witness} closes the gap. The crowd feels the break as a real loss, not a procedural delay. "
-                    f"Then {primary_keeper} names the mechanism out loud and the living keeper writes the final entry once while {supporting_witness or visible_witness} reacts to the chalk mark or lost name with a visible flinch, a tear, or a collapse before the ritual seal lands. "
+                    f"Wind drives rain across the square, a loose banner snaps overhead, and the crowd keeps shifting around the still vessel while one beat of silence opens and {visible_witness} tastes metal and moves first as {second_witness} closes the gap. The crowd feels the break as a real loss, not a procedural delay. "
+                    f"{primary_keeper} names the mechanism out loud and the living keeper writes the final entry once while {supporting_witness or visible_witness} reacts to the chalk mark or lost name with a visible flinch, a tear, or a collapse before the ritual seal lands. "
                     f"{vessel_label} gives one brief dry-wood click from the surge and then stays inert while the burned names darken on the ledger and the lantern glass cracks once. "
                     f"By the end of the scene, one living hand is still on the record and the new order has a human shape instead of only a ritual one."
                 ),
@@ -976,15 +975,15 @@ class StoryRevisionService:
             }
         return {
             "summary": (
-                f"By dusk, after the room has settled and the procession turns toward the side hall, {primary_keeper} holds the silence of {vessel_label} in mind while one living witness names an ordinary detail from the life now gone, pauses on the loss with a visible reaction, and lets that silence stand while the corridor window shudders under a fresh gust. "
+                f"By dusk, after the room has settled and the procession turns toward the side hall, {primary_keeper} holds the silence of {vessel_label} in mind while one living witness names an ordinary detail from the life now gone and pauses on the loss with a visible reaction while the corridor window shudders under a fresh gust. "
                 f"By night, as the crowd shifts back from the square and the first hands lower from the seal, {visible_witness} and {second_witness} make the first public move without waiting for the dead, and a small ordinary task resumes to show the city still belongs to the living. "
                 f"By dawn, after the walk to the ledger room and the last bell in the hall, {primary_keeper} writes the final entry once before passing the record forward, and {public_cost_clause} while {vessel_label} stays silent and offers no answering voice except a dry-wood click from a residual joint. "
-                f"Before the page dries, {primary_keeper} sees a blank page take a new name without any witness speaking it aloud, the lamp flame gutters, and the paper edge curls under the sudden chill so the room has to admit the leak before the ink dries. {closure_sequence}."
+                f"Before the page dries, {primary_keeper} sees a blank page take a name in winter-blue ink without any witness speaking it aloud, the lamp flame gutters, the paper edge curls under the sudden chill so the room has to admit the leak before the ink dries. {closure_sequence}."
             ),
             "objective": (
                 "Split the ending into three separate scenes: private closure, public confession in the square, and a final ledger or record-room interaction. Start the private scene with a quiet inward reflection on the vessel's silence, let a rain, chalk, or lantern motif recur only as a soft thread rather than a repeated phrase, and place explicit time markers such as By dusk, By night, and By dawn between the beats so they land separately. Let the private walk, the crowd shift, and the ledger-room door create movement so the time markers feel earned rather than mechanical. Then let one witness name a concrete remembered detail from the earlier life that is now gone, keep the keeper's recognition of the loss on the page, and make the silence of the vessel explicit without compressing the beats together. Give the supporting witness one visible emotional beat in the public scene so the ending carries grief as well as procedure. Split the public scene with one concrete act of renewal so the ending carries grief and a visible sign that the new order can still serve the living. Make the living keeper perform one small but real action in the ledger scene so the closing choice still belongs to the story's central agent. End on a concrete anomaly, such as a name appearing on a blank page without a witness, followed by a physical reaction in the room, so the hook is visible instead of abstract; the physical reaction should include a window or door shudder so the ending cannot be mistaken for stillness."
             ),
-            "hook": "At dawn, the primary_keeper sees a blank page take a name without a witness, the lamp flame gutters, and the room has to admit the rewritten rule still leaks into the living record.",
+            "hook": "At dawn, the blank page takes a name in winter-blue ink, the lamp flame gutters, and the colder room proves the rewritten rule is permanent instead of ghostly.",
             "focus_character": primary_keeper,
             "relationship_target": living_anchor or visible_witness or vessel_label,
             "relationship_status": "living line confirming the lasting public debt",
@@ -6269,17 +6268,17 @@ class StoryRevisionService:
         concrete_memory = memory_detail or "one ordinary habit from the earlier life"
         phase_scene_additions = {
             chapter_numbers["aftermath"]: (
-                f"In the first private break, {frame.primary_keeper} gets one quiet beat alone while rain taps the eaves, rough wood stays under the palm, and the same confirming knock holds the room in place, then the seal in the frame cracks one line wider and a draft slams the shutters once before {frame.primary_keeper} can move again. Only after that pause does {frame.primary_keeper} try once to wake {frame.vessel_label} and get only cold weight and silence back. A brief memory-threaded echo of {frame.protagonist}'s voice guides {frame.primary_keeper} to the next choice, a witness cuts in with one blunt question, and {frame.primary_keeper} chooses the city's debt over private grief before the room settles."
+                f"In the first private break, {frame.primary_keeper} gets one quiet beat alone while rain taps the eaves and rough wood stays under the palm. The same confirming knock holds the room in place, the seal in the frame cracks one line wider, and a draft slams the shutters before {frame.primary_keeper} can move again. Only after that pause does {frame.primary_keeper} try once to wake {frame.vessel_label} and get only cold weight and silence back. A brief memory-threaded echo of {frame.protagonist}'s voice guides {frame.primary_keeper} to the next choice, a witness cuts in with one blunt question, and {frame.primary_keeper} chooses the city's debt over private grief before the room settles."
             ),
             chapter_numbers["discovery"]: (
                 f"Testing the proof at {anchor_label}, {frame.supporting_witness or frame.primary_keeper} finds a visible consequence instead of an explanation, and {frame.vessel_label} stays unchanged while chalk dust and lamp heat press against the wall so the room learns the rule through evidence as a loose frame sheds plaster. The keeper and witness exchange one sharp look before the proof is touched, and the witness's reaction keeps the scene human instead of technical."
             ),
             chapter_numbers["attempt"]: (
-                f"At {civic_target}, the first surge hits before the explanation ends and the chapter splits into two beats. First, {frame.public_witness} moves while {heroic_witness or second_witness} drags the line closed and the crowd feels the break while boots and wind keep moving around the still vessel and a loose banner snaps in the gale. Then, after a clear pause, {frame.primary_keeper} says the needed name out loud and {frame.supporting_witness or frame.public_witness} reacts to the chalk mark with a visible flinch before the ritual seal lands. "
+                f"At {civic_target}, the first surge hits before the explanation ends and the chapter splits into two beats. {frame.public_witness} moves while {heroic_witness or second_witness} drags the line closed and the crowd feels the break while boots and wind keep moving around the still vessel and a loose banner snaps in the gale. After one clear silence, {frame.primary_keeper} says the needed name out loud and {frame.supporting_witness or frame.public_witness} reacts to the chalk mark with a visible flinch before the ritual seal lands. "
                 f"{frame.vessel_label} gives one brief dry-wood click from the surge and then stays still while the burned names darken on the ledger and the lantern glass cracks once. One living hand stays on the record long enough for the new order to look human instead of merely ritual."
             ),
             chapter_numbers["resolution"]: (
-                f"As noon gives way to dusk and then to night, the ending moves through three scenes rather than headers, and the same scratch of ink drying threads through each one. In the private scene, a witness speaks {concrete_memory} into the silence with no answer from {frame.vessel_label} and pauses on the loss before moving on; in the public square, the city adopts the rule in daylight and one ordinary task resumes to show the new order can still serve the living; in the ledger scene, {frame.primary_keeper} writes the final entry once before the record passes forward, and {frame.public_cost_example}. Before the page dries, {frame.primary_keeper} sees a blank line take a new name without any witness speaking it aloud, the lamp flame gutters, and the room has to admit the leak instead of treating it like a whisper while a window shudders in the draft."
+                f"As noon gives way to dusk and then to night, the ending passes through private grief, public confession, and a final ledger handoff instead of collapsing into one block of explanation. In the private scene, a witness speaks {concrete_memory} into silence with no answer from {frame.vessel_label} and pauses on the loss before moving on; in the public square, the city adopts the rule in daylight and one ordinary task resumes to show the new order can still serve the living; in the ledger scene, {frame.primary_keeper} writes the final entry once before the record passes forward, and {frame.public_cost_example}. Before the page dries, {frame.primary_keeper} sees a blank line take a new name in winter-blue ink, the lamp flame gutters, the room cools, and the window shudders in the draft while the new rule stays visible instead of ghosting out."
             ),
         }
 

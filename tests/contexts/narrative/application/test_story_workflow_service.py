@@ -5072,6 +5072,17 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         continuity_anchor="Captain Vale",
         confirmation_trigger="the confirming knock from the old rule",
     )
+    sacrifice = revision_service._default_terminal_arc_phase_plan(
+        phase="sacrifice",
+        chapter_number=16,
+        protagonist="Ari",
+        primary_keeper="Sera",
+        supporting_witness="Milo",
+        public_witness="Captain Vale",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="Captain Vale",
+        confirmation_trigger="the confirming knock from the old rule",
+    )
     aftermath = revision_service._default_terminal_arc_phase_plan(
         phase="aftermath",
         chapter_number=17,
@@ -5111,13 +5122,15 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     rule_objective = rule_revelation["objective"].lower()
     public_objective = public_reckoning["objective"].lower()
     closure_summary = closure["summary"].lower()
+    sacrifice_summary = sacrifice["summary"].lower()
+    sacrifice_objective = sacrifice["objective"].lower()
     assert "memorial proof" in rule_summary
     assert "concrete evidence" in rule_summary
     assert "dry-wood click" in rule_summary or "residual muscle memory" in rule_summary
     assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
     assert "dry-wood click" in rule_objective or "residual muscle memory" in rule_objective
-    assert "chapter 19" in public_summary or "chapter splits into two beats" in public_summary
+    assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "one beat of silence" in public_summary
     assert "dry-wood click" in public_summary or "stays still" in public_summary
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
@@ -5125,6 +5138,8 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "human shape" in public_summary or "new order" in public_summary
     assert "dry-wood click" in public_objective or "no fresh intent" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
+    assert "prepared for the burden" in sacrifice_summary
+    assert "earlier preparation" in sacrifice_objective or "prepared for the burden" in sacrifice_objective
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "no answering voice" in closure_summary or "returning thought" in closure_summary
     assert "by dusk" in closure_summary
@@ -5331,6 +5346,7 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "dry-wood click" in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
     assert "lamp flame gutters" in closure["summary"].lower()
+    assert "winter-blue" in closure["hook"].lower()
     assert "name" in closure["hook"].lower()
 
 
