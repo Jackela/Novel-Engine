@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from types import SimpleNamespace
+from typing import Any, cast
 from uuid import UUID
 
 import pytest
@@ -5133,17 +5134,21 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "dry-wood click" not in rule_objective
     assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
-    assert "one beat of silence" in public_summary
+    assert "guarded figure" in public_summary or "watch" in public_summary
     assert "dry-wood click" not in public_summary
     assert "mute shape" in public_summary or "cold presence" in public_summary
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
-    assert "bodily rather than procedural" in public_objective
+    assert "faces the square" in public_objective
+    assert "ledger edge" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
-    assert "explicit final choice" in sacrifice_summary
-    assert "receives the burden through earlier preparation" in sacrifice_summary
-    assert "visible preparation" in sacrifice_objective or "earlier preparation" in sacrifice_objective
+    assert "final choice" in sacrifice_summary
+    assert "marked token" in sacrifice_summary
+    assert "into ari's hand" not in sacrifice_summary
+    assert "into ari's hand" not in sacrifice_objective
+    assert "visible preparation" in sacrifice_objective
+    assert sacrifice["relationship_target"] != "Ari"
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "blank page" in closure_summary
     assert "lamp flame gutters" in closure_summary
@@ -5162,6 +5167,24 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         for field in ("summary", "objective", "hook"):
             assert "{" not in plan[field]
             assert "}" not in plan[field]
+
+
+def test_primary_antagonist_label_uses_blueprint_antagonist_name() -> None:
+    revision_service = StoryRevisionService(ChapterDraftingService())
+    ctx = SimpleNamespace(
+        workflow=SimpleNamespace(
+            blueprint=SimpleNamespace(
+                character_bible={
+                    "antagonist": [
+                        {"name": "Grand Scribe Vane"},
+                        {"name": "Ledger Clerk"},
+                    ]
+                }
+            )
+        )
+    )
+
+    assert revision_service._resolve_primary_antagonist_label(cast(Any, ctx), "Lin Yuan") == "Grand Scribe Vane"
 
 
 def test_normalize_departed_relationship_status_downgrades_active_bond() -> None:
