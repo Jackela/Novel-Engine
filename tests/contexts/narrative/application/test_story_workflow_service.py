@@ -1221,7 +1221,7 @@ class LiveAprilFiveLongformProvider:
         has_canonical_world_rules = (
             "world rules: [" in prompt
             and "physical knock before the hidden debt surfaces" in prompt
-            and "public ledger of witnesses must stand in one line" in prompt
+            and "public ledger of named witnesses stands in order and speaks the burned names aloud before the city can pay an erased debt" in prompt
             and "memory-threading lets a living witness carry trapped guidance" in prompt
         )
         required_fragments = (
@@ -1340,7 +1340,7 @@ class LiveAprilSixLongformProvider:
             and "ledger anomalies" not in prompt
             and "memetic resonance" not in prompt
             and "'status': 'tactical reliance'" in prompt
-            and "'status': 'accepted voice of the witness line'" in prompt
+            and "'status': 'accepted voice of the public record'" in prompt
             and "'status': 'living voice of the confession line'" in prompt
             and "'source': 'grand scribe kael'" not in prompt
             and "'target': 'grand scribe kael'" not in prompt
@@ -3156,7 +3156,7 @@ async def test_revise_story_closes_april_five_live_longform_warnings() -> None:
 
     assert workspace["evidence_summary"]["warning_count"] == 0
     assert any("physical knock before the hidden debt surfaces" in entry["rule"].lower() for entry in world_rules)
-    assert any("public ledger of witnesses must stand in one line" in entry["rule"].lower() for entry in world_rules)
+    assert any("public ledger of named witnesses stands in order and speaks the burned names aloud before the city can pay an erased debt" in entry["rule"].lower() for entry in world_rules)
     assert any("memory-threading lets a living witness carry trapped guidance" in entry["rule"].lower() for entry in world_rules)
     keeper = chapter17["metadata"]["focus_character"]
     assert keeper
@@ -3169,7 +3169,7 @@ async def test_revise_story_closes_april_five_live_longform_warnings() -> None:
     assert chapter19["metadata"]["relationship_target"] == "Lin Mo (Vessel)"
     assert chapter20["metadata"]["relationship_target"] == "Lin Mo (Vessel)"
     assert chapter17["metadata"]["relationship_status"] == "guardian of the empty shell"
-    assert chapter19["metadata"]["relationship_status"] == "accepted voice of the witness line"
+    assert chapter19["metadata"]["relationship_status"] == "accepted voice of the public record"
     assert chapter20["metadata"]["relationship_status"] == "living voice of the confession line"
     assert not any(
         "vespera" in str(state.get("source", "")).lower()
@@ -3422,7 +3422,7 @@ async def test_revise_story_closes_april_six_live_longform_warnings() -> None:
     assert chapter20["metadata"]["relationship_target"] == vessel_target
     assert chapter17["metadata"]["relationship_status"] == "guardian of the empty shell"
     assert chapter18["metadata"]["relationship_status"] == "keeper of the vessel"
-    assert chapter19["metadata"]["relationship_status"] == "accepted voice of the witness line"
+    assert chapter19["metadata"]["relationship_status"] == "accepted voice of the public record"
     assert chapter20["metadata"]["relationship_status"] == "living voice of the confession line"
     assert not any(
         "kael" in str(state.get("source", "")).lower()
@@ -5136,10 +5136,11 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
-    assert "dry-wood click" in public_objective or "no fresh intent" in public_objective
+    assert "bodily rather than procedural" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
-    assert "prepared for the burden" in sacrifice_summary
-    assert "earlier preparation" in sacrifice_objective or "prepared for the burden" in sacrifice_objective
+    assert "explicit final choice" in sacrifice_summary
+    assert "receives the burden through earlier preparation" in sacrifice_summary
+    assert "visible preparation" in sacrifice_objective or "earlier preparation" in sacrifice_objective
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "no answering voice" in closure_summary or "returning thought" in closure_summary
     assert "by dusk" in closure_summary
@@ -5355,7 +5356,7 @@ def test_terminal_arc_public_witness_falls_back_to_a_canonical_role() -> None:
         protagonist="Ari",
         primary_keeper="Sera",
         vessel_label="The Vessel",
-        supporting_witnesses=("the witness line",),
+        supporting_witnesses=("a witness",),
         continuity_anchor="Ari",
         confirmation_trigger="the seal knock",
         phase_map={
@@ -5370,6 +5371,7 @@ def test_terminal_arc_public_witness_falls_back_to_a_canonical_role() -> None:
         public_cost_example="a fresh black mark lands on the ledger",
     )
 
+    assert frame.supporting_witness == "Ari"
     assert frame.public_witness == "Sera"
 
 
@@ -5382,14 +5384,15 @@ async def test_default_terminal_arc_phase_plan_avoids_placeholder_collective_fal
         chapter_number=20,
         protagonist="Ari",
         primary_keeper="Sera",
-        supporting_witness="the witness line",
-        public_witness="the witness line",
+        supporting_witness="a witness",
+        public_witness="a witness",
         vessel_label="Ari (Vessel)",
-        continuity_anchor="the witness line",
+        continuity_anchor="a witness",
         confirmation_trigger="the confirming knock from the old rule",
     )
 
     closure_summary = closure["summary"].lower()
+    assert "a witness" not in closure_summary
     assert "the witness line" not in closure_summary
     assert "by dusk" in closure_summary
     assert "by night" in closure_summary
@@ -5434,8 +5437,8 @@ async def test_late_arc_metadata_candidates_ignore_placeholder_public_witness_la
     assert late_arc_numbers
     for chapter in ctx_or_error.story.chapters:
         if chapter.chapter_number in late_arc_numbers:
-            chapter.metadata["focus_character"] = "the public witness"
-            chapter.metadata["relationship_target"] = "the public witness"
+            chapter.metadata["focus_character"] = "a witness"
+            chapter.metadata["relationship_target"] = "a witness"
 
     departed_characters: dict[str, int] = {}
     candidates = service._revision_service._late_arc_metadata_candidates(
@@ -5445,6 +5448,7 @@ async def test_late_arc_metadata_candidates_ignore_placeholder_public_witness_la
     )
 
     assert candidates
+    assert "a witness" not in {candidate.lower() for candidate in candidates}
     assert "the public witness" not in {candidate.lower() for candidate in candidates}
 
 
