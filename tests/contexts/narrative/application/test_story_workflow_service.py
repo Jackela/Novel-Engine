@@ -5126,13 +5126,16 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     sacrifice_objective = sacrifice["objective"].lower()
     assert "memorial proof" in rule_summary
     assert "concrete evidence" in rule_summary
-    assert "dry-wood click" in rule_summary or "residual muscle memory" in rule_summary
+    assert "dry-wood click" not in rule_summary
+    assert "residual shiver" in rule_summary or "lamp flicker" in rule_summary
     assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
-    assert "dry-wood click" in rule_objective or "residual muscle memory" in rule_objective
+    assert "dry-wood click" not in rule_objective
+    assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "one beat of silence" in public_summary
-    assert "dry-wood click" in public_summary or "stays still" in public_summary
+    assert "dry-wood click" not in public_summary
+    assert "stays inert" in public_summary or "stays still" in public_summary
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
@@ -5142,7 +5145,9 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "receives the burden through earlier preparation" in sacrifice_summary
     assert "visible preparation" in sacrifice_objective or "earlier preparation" in sacrifice_objective
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
-    assert "no answering voice" in closure_summary or "returning thought" in closure_summary
+    assert "blank page" in closure_summary
+    assert "lamp flame gutters" in closure_summary
+    assert "visible leak" in closure_summary or "winter-blue" in closure_summary
     assert "by dusk" in closure_summary
     assert "by night" in closure_summary
     assert "by dawn" in closure_summary
@@ -5349,7 +5354,7 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "memory-threaded" in aftermath["summary"].lower()
     assert "voice" in aftermath["summary"].lower()
     assert "rain" in aftermath["summary"].lower()
-    assert "dry-wood click" in closure["summary"].lower()
+    assert "dry-wood click" not in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
     assert "lamp flame gutters" in closure["summary"].lower()
     assert "winter-blue" in closure["hook"].lower()
