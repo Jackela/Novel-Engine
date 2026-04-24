@@ -974,7 +974,7 @@ class StoryRevisionService:
             return {
                 "summary": (
                     f"After the sacrifice, {primary_keeper} gets one quiet private beat alone while rain taps the eaves and the rail stays cold in the palm. The confirming knock holds the room still, the seal in the frame cracks one line wider, and a draft slams the shutters before {primary_keeper} can move again. "
-                    f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. A brief memory-threaded echo of {protagonist}'s voice guides {primary_keeper} to the next choice, and {visible_witness} cuts in with one blunt question while the line chooses the city's debt over private grief. "
+                    f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. A brief memory-threaded echo of {protagonist}'s voice guides {primary_keeper} to the next choice, and {visible_witness} cuts in with one blunt question while the public record keeps the city's debt ahead of private grief. "
                     f"{confirmation_trigger} then proves the old life is gone for good."
                 ),
                 "objective": (
@@ -1007,7 +1007,7 @@ class StoryRevisionService:
                     f"{vessel_label} gives one brief dry-wood click from the surge and then stays inert while the burned names darken on the ledger and the lantern glass cracks once. "
                     f"By the end of the scene, one living hand is still on the record and the new order has a human shape instead of only a ritual one."
                 ),
-                "objective": "The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. {visible_witness} moves before the first action, {second_witness} closes the gap, and the silence between the beats lets the crowd feel the loss before the keeper acts. Keep the active choice with {primary_keeper}, keep {vessel_label} inert, and let the witness reaction stay bodily rather than procedural.",
+                "objective": f"The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. {visible_witness} moves before the first action, {second_witness} closes the gap, and the silence between the beats lets the crowd feel the loss before {primary_keeper} names the mechanism. {vessel_label} stays inert, and the witness reaction stays bodily rather than procedural.",
                 "hook": "A fresh black seal on the ledger gives the conflict a visible shape before the city can confess what it owes in daylight, and the square feels the cost in its teeth.",
                 "focus_character": primary_keeper,
                 "relationship_target": visible_witness or living_anchor or vessel_label,
@@ -1015,7 +1015,7 @@ class StoryRevisionService:
             }
         return {
             "summary": (
-                f"By dusk, after the room has settled and the procession turns toward the side hall, {primary_keeper} holds the silence of {vessel_label} in mind while {visible_witness} names an ordinary detail from the life now gone and pauses on the loss with a visible reaction as the corridor window shudders under a fresh gust. "
+                f"By dusk, after the room settles and the procession turns toward the side hall, {visible_witness} names one ordinary detail from the life now gone while the corridor window shudders in a fresh gust and {primary_keeper} keeps the silence of {vessel_label} in view. "
                 f"By night, as the crowd shifts back from the square and the first hands lower from the seal, {visible_witness} and {second_witness} make the first public move without waiting for the dead, and a small ordinary task resumes to show the city still belongs to the living. "
                 f"By dawn, after the walk to the ledger room and the last bell in the hall, {primary_keeper} writes the final entry once before passing the record forward, and {public_cost_clause} while {vessel_label} stays silent and offers no answering voice except a dry-wood click from a residual joint. "
                 f"Before the page dries, {visible_witness} speaks the new name aloud into winter-blue ink, the blank page takes it, the lamp flame gutters, and the room admits the leak before the ink dries. {closure_sequence}."

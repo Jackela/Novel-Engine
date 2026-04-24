@@ -5148,9 +5148,14 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "by dawn" in closure_summary
     assert "public confession" in closure_summary
     assert "lasting aftermath" in closure_summary
-    assert "visible reaction" in closure_summary or "pauses on the loss" in closure_summary
+    assert "ordinary detail" in closure_summary
+    assert "shudders" in closure_summary or "gust" in closure_summary
     assert "small ordinary task resumes" in closure_summary or "new order can serve the living" in closure_summary
     assert "lamp flame gutters" in closure_summary
+    for plan in (rule_revelation, sacrifice, aftermath, public_reckoning, closure):
+        for field in ("summary", "objective", "hook"):
+            assert "{" not in plan[field]
+            assert "}" not in plan[field]
 
 
 def test_normalize_departed_relationship_status_downgrades_active_bond() -> None:
@@ -5349,6 +5354,10 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "lamp flame gutters" in closure["summary"].lower()
     assert "winter-blue" in closure["hook"].lower()
     assert "name" in closure["hook"].lower()
+    for plan in (aftermath, closure):
+        for field in ("summary", "objective", "hook"):
+            assert "{" not in plan[field]
+            assert "}" not in plan[field]
 
 
 def test_terminal_arc_public_witness_falls_back_to_a_canonical_role() -> None:
