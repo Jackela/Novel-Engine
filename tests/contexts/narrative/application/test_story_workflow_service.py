@@ -5038,7 +5038,7 @@ def test_extract_terminal_arc_rewrite_plan_rejects_unknown_focus_labels() -> Non
         public_witness="Dock Porter",
         vessel_label="Elara (Vessel)",
         continuity_anchor="Madame Qian",
-        confirmation_trigger="the confirming knock from the seal",
+        confirmation_trigger="the first hard answer from the seal",
         cast_names={"Lin Yuan", "Elara", "Madame Qian", "Echo", "Dock Porter"},
     )
 
@@ -5077,7 +5077,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         public_witness="Captain Vale",
         vessel_label="Ari (Vessel)",
         continuity_anchor="Captain Vale",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the seal",
     )
     sacrifice = revision_service._default_terminal_arc_phase_plan(
         phase="sacrifice",
@@ -5088,7 +5088,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         public_witness="Captain Vale",
         vessel_label="Ari (Vessel)",
         continuity_anchor="Captain Vale",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the seal",
     )
     aftermath = revision_service._default_terminal_arc_phase_plan(
         phase="aftermath",
@@ -5099,7 +5099,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         public_witness="Captain Vale",
         vessel_label="Ari (Vessel)",
         continuity_anchor="Captain Vale",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the seal",
     )
     public_reckoning = revision_service._default_terminal_arc_phase_plan(
         phase="public_reckoning",
@@ -5110,7 +5110,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         public_witness="Captain Vale",
         vessel_label="Ari (Vessel)",
         continuity_anchor="Captain Vale",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the seal",
     )
     closure = revision_service._default_terminal_arc_phase_plan(
         phase="closure",
@@ -5121,27 +5121,30 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
         public_witness="Captain Vale",
         vessel_label="Ari (Vessel)",
         continuity_anchor="Captain Vale",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the seal",
     )
 
     rule_summary = rule_revelation["summary"].lower()
     public_summary = public_reckoning["summary"].lower()
     rule_objective = rule_revelation["objective"].lower()
+    aftermath_summary = aftermath["summary"].lower()
+    aftermath_objective = aftermath["objective"].lower()
     public_objective = public_reckoning["objective"].lower()
     closure_summary = closure["summary"].lower()
     sacrifice_summary = sacrifice["summary"].lower()
     sacrifice_objective = sacrifice["objective"].lower()
-    assert "memorial proof" in rule_summary
     assert "concrete evidence" in rule_summary
-    assert "dry-wood click" not in rule_summary
+    assert "concrete evidence" in rule_summary
+    assert "confirming knock" not in rule_summary
     assert "residual shiver" in rule_summary or "lamp flicker" in rule_summary
     assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
-    assert "dry-wood click" not in rule_objective
+    assert "winter-blue ink" in aftermath_objective
+    assert "hard answer" in aftermath["hook"].lower()
+    assert "confirming knock" not in aftermath_summary
     assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "guarded figure" in public_summary or "watch" in public_summary
-    assert "dry-wood click" not in public_summary
     assert "mute shape" in public_summary or "cold presence" in public_summary
     assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
@@ -5169,6 +5172,8 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "shudders" in closure_summary or "gust" in closure_summary
     assert "small ordinary task resumes" in closure_summary or "new order can serve the living" in closure_summary
     assert "lamp flame gutters" in closure_summary
+    assert "collaboration stays physical" not in public_summary
+    assert "physically touches" in public_objective or "takes the still hand of" in public_summary
     for plan in (rule_revelation, sacrifice, aftermath, public_reckoning, closure):
         for field in ("summary", "objective", "hook"):
             assert "{" not in plan[field]
@@ -5187,7 +5192,7 @@ def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_a
         public_witness="the witness line",
         vessel_label="Ari (Vessel)",
         continuity_anchor="The Witness Line",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the old rule",
     )
     aftermath = revision_service._default_terminal_arc_phase_plan(
         phase="aftermath",
@@ -5198,7 +5203,7 @@ def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_a
         public_witness="the witness line",
         vessel_label="Ari (Vessel)",
         continuity_anchor="The Witness Line",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the old rule",
     )
     public_reckoning = revision_service._default_terminal_arc_phase_plan(
         phase="public_reckoning",
@@ -5209,7 +5214,7 @@ def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_a
         public_witness="the witness line",
         vessel_label="Ari (Vessel)",
         continuity_anchor="The Witness Line",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the old rule",
     )
 
     sacrifice_summary = sacrifice["summary"].lower()
@@ -5233,9 +5238,33 @@ def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_a
         assert "in full view of ," not in text
 
     assert "marked token" in sacrifice_summary
-    assert "half-step back" in aftermath_objective or "visible retreat" in aftermath["hook"].lower()
-    assert "takes ari (vessel) by the still hand and presses it to the ledger" in public_summary or "presses it to the ledger" in public_summary
-    assert "collaboration stays physical" in public_summary or "physically touch" in public_objective
+    assert "cold weight" in aftermath_objective
+    assert "grief tighten into duty" in aftermath_objective
+    assert "hard answer" in aftermath["hook"].lower()
+    assert "takes ari (vessel) by the still hand and presses it to the ledger" in public_summary or "takes the still hand of ari (vessel)" in public_summary or "presses it to the ledger" in public_summary
+    assert "collaboration stays physical" not in public_summary
+    assert "physically touches" in public_objective or "presses it to the ledger" in public_summary
+
+
+def test_default_terminal_arc_phase_plan_deduplicates_public_witness_names() -> None:
+    revision_service = StoryRevisionService(ChapterDraftingService())
+
+    closure = revision_service._default_terminal_arc_phase_plan(
+        phase="closure",
+        chapter_number=20,
+        protagonist="Lin Mo",
+        primary_keeper="Yara",
+        supporting_witness="Yara",
+        public_witness="Master Chen",
+        vessel_label="The Vessel",
+        continuity_anchor="Master Chen",
+        confirmation_trigger="the first hard answer from the seal",
+        closure_beats=("private closure", "public confession", "lasting aftermath"),
+    )
+
+    closure_summary = closure["summary"].lower()
+    assert "yara and yara" not in closure_summary
+    assert "master chen" in closure_summary
 
 
 def test_primary_antagonist_label_uses_blueprint_antagonist_name() -> None:
@@ -5365,6 +5394,59 @@ def test_late_arc_vessel_label_uses_generic_slot() -> None:
     ) == "The Vessel"
 
 
+def test_resolve_terminal_vessel_label_ignores_protagonist_named_vessel() -> None:
+    revision_service = StoryRevisionService(ChapterDraftingService())
+    ctx = SimpleNamespace(
+        story=SimpleNamespace(
+            chapter_count=20,
+            chapters=[
+                SimpleNamespace(
+                    chapter_number=17,
+                    metadata={
+                        "focus_character": "Lin Mo (Vessel)",
+                        "relationship_target": "Lin Mo (Vessel)",
+                    },
+                ),
+                SimpleNamespace(
+                    chapter_number=18,
+                    metadata={
+                        "focus_character": "Lin Mo (Vessel)",
+                        "relationship_target": "Lin Mo (Vessel)",
+                    },
+                ),
+                SimpleNamespace(
+                    chapter_number=19,
+                    metadata={
+                        "focus_character": "Lin Mo (Vessel)",
+                        "relationship_target": "Lin Mo (Vessel)",
+                    },
+                ),
+                SimpleNamespace(
+                    chapter_number=20,
+                    metadata={
+                        "focus_character": "Lin Mo (Vessel)",
+                        "relationship_target": "Lin Mo (Vessel)",
+                    },
+                ),
+            ],
+        ),
+        workflow=SimpleNamespace(
+            blueprint=SimpleNamespace(
+                character_bible={
+                    "protagonist": [{"name": "Lin Mo"}],
+                    "support": [{"name": "Yara"}, {"name": "Master Chen"}],
+                }
+            )
+        ),
+    )
+
+    assert revision_service._resolve_terminal_vessel_label(
+        cast(Any, ctx),
+        "Lin Mo",
+        primary_keeper="Yara",
+    ) == "The Vessel"
+
+
 def test_replace_abstract_terminal_memory_reference_concretizes_small_truth() -> None:
     revision_service = StoryRevisionService(ChapterDraftingService())
 
@@ -5445,8 +5527,8 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "the prose makes clear" not in closure["summary"].lower()
     assert "marked token reaches" in aftermath["summary"].lower()
     assert "jars" in aftermath["summary"].lower()
-    assert "memory-threaded" in aftermath["summary"].lower()
-    assert "voice" in aftermath["summary"].lower()
+    assert "first private break" in aftermath["summary"].lower()
+    assert "hard answer" in aftermath["summary"].lower()
     assert "rain" in aftermath["summary"].lower()
     assert "dry-wood click" not in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
@@ -5496,7 +5578,7 @@ async def test_default_terminal_arc_phase_plan_avoids_placeholder_collective_fal
         public_witness="a witness",
         vessel_label="Ari (Vessel)",
         continuity_anchor="a witness",
-        confirmation_trigger="the confirming knock from the old rule",
+        confirmation_trigger="the first hard answer from the old rule",
     )
 
     closure_summary = closure["summary"].lower()
