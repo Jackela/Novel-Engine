@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.security import HTTPBearer
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -76,6 +76,12 @@ class TokenResponse(BaseModel):
     refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field(default="bearer", description="Token type")
     workspace_id: str = Field(..., description="Active workspace identifier")
+    identity_kind: str = Field(default="user", description="Resolved session identity kind")
+    workspace_kind: str = Field(default="user", description="Resolved workspace kind")
+    active_workspace: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved active workspace summary",
+    )
     user: LoginUserResponse = Field(..., description="Authenticated user profile")
     expires_in: Optional[int] = Field(
         None, description="Access token expiration in seconds"
@@ -128,6 +134,16 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     )
 
 
+def _active_workspace_payload(workspace_id: str) -> dict[str, str]:
+    return {
+        "workspace_id": workspace_id,
+        "workspace_kind": "user",
+        "label": "Signed-in workspace",
+        "persistence": "persistent",
+        "summary": "Stable author workspace bound to the authenticated identity.",
+    }
+
+
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -136,7 +152,6 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     description="Authenticate user and return access and refresh tokens.",
 )
 async def login(
-    request: Request,
     response: Response,
     credentials: LoginRequest,
     auth_service: AuthenticationService = Depends(get_authentication_service),
@@ -160,10 +175,7 @@ async def login(
 
     data = ResultErrorHandler.handle(result, "login")
     user = data["user"]
-    workspace_id = request.cookies.get(GUEST_SESSION_COOKIE)
-    if not workspace_id:
-        workspace_id = f"user-{user['username']}"
-
+    workspace_id = f"user-{user['username']}"
     session = await runtime_store.create_or_resume_guest_session(workspace_id)
     _set_workspace_cookie(response, session.workspace_id)
 
@@ -172,6 +184,7 @@ async def login(
         refresh_token=data["refresh_token"],
         token_type="bearer",
         workspace_id=session.workspace_id,
+        active_workspace=_active_workspace_payload(session.workspace_id),
         user=LoginUserResponse(
             id=user["id"],
             name=user["username"],

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Final, cast
+from typing import Any, Final
 
 import pytest
 
@@ -197,7 +197,7 @@ def resolve_dashscope_credentials() -> tuple[str, str]:
         )
 
     api_base = settings.llm.resolved_api_base("dashscope") or DASHSCOPE_DEFAULT_BASE
-    return cast(str, api_key), api_base
+    return api_key, api_base
 
 
 def assert_structured_contract_result(

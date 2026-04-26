@@ -1,10 +1,8 @@
-"""HTTP Error Handlers for Identity Context.
-
-Extends shared error handlers with identity-specific exception mappings.
-"""
+"""HTTP error handlers for the identity context."""
 
 from typing import Any, Callable, TypeVar
 
+import structlog
 from fastapi import HTTPException, status
 
 from src.contexts.identity.application.exceptions import (
@@ -20,6 +18,7 @@ from src.contexts.identity.application.exceptions import (
     UserAlreadyExistsError,
     UserNotFoundError,
 )
+from src.shared.application.result import Failure, Result
 from src.shared.interface.http.error_handlers import (
     BaseErrorConverter,
 )
@@ -31,12 +30,52 @@ from src.shared.interface.http.error_handlers import (
 )
 
 F = TypeVar("F", bound=Callable[..., Any])
+T = TypeVar("T")
+
+logger = structlog.get_logger(__name__)
+
+IDENTITY_RESULT_CODE_TO_HTTP_STATUS: dict[str, int] = {
+    "INVALID_CREDENTIALS": status.HTTP_401_UNAUTHORIZED,
+    "INVALID_TOKEN": status.HTTP_401_UNAUTHORIZED,
+    "ACCOUNT_LOCKED": status.HTTP_403_FORBIDDEN,
+}
+
+IDENTITY_RESULT_CODE_TO_MESSAGE: dict[str, str] = {
+    "INVALID_CREDENTIALS": "Invalid credentials",
+    "INVALID_TOKEN": "Invalid or expired token",
+}
 
 
 class ResultErrorHandler(BaseResultErrorHandler):
     """Identity-specific result error handler."""
 
-    pass
+    @staticmethod
+    def handle(result: Result[T], operation: str | None = None) -> T:
+        if isinstance(result, Failure):
+            status_code = IDENTITY_RESULT_CODE_TO_HTTP_STATUS.get(result.code)
+            if status_code is not None:
+                message = IDENTITY_RESULT_CODE_TO_MESSAGE.get(result.code, result.error)
+
+                if operation:
+                    logger.error(
+                        "result_operation_failed",
+                        operation=operation,
+                        error_code=result.code,
+                        error_message=result.error,
+                    )
+
+                headers = (
+                    {"WWW-Authenticate": "Bearer"}
+                    if status_code == status.HTTP_401_UNAUTHORIZED
+                    else None
+                )
+                raise HTTPException(
+                    status_code=status_code,
+                    detail=message,
+                    headers=headers,
+                )
+
+        return BaseResultErrorHandler.handle(result, operation)
 
 
 class ErrorConverter(BaseErrorConverter):

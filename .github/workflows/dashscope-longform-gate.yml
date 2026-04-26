@@ -1,0 +1,77 @@
+name: DashScope Longform Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashscope-longform-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dashscope-longform-gate:
+    name: DashScope Longform Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
+      DASHSCOPE_MODEL: ${{ secrets.DASHSCOPE_MODEL }}
+      DASHSCOPE_REVIEW_MODEL: ${{ secrets.DASHSCOPE_REVIEW_MODEL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run DashScope judge contracts
+        run: >
+          pytest -q
+          -m requires_dashscope
+          tests/contract/test_text_generation_provider_contract.py
+          tests/contexts/narrative/application/test_semantic_review_judge_contract.py
+
+      - name: Run DashScope longform gate
+        run: >
+          python scripts/uat/run_dashscope_longform_uat.py
+          --target-chapters 20
+          --story-title-seed "DashScope PR Gate"
+          --output-dir "${{ runner.temp }}/dashscope-longform-gate"
+
+      - name: Publish step summary
+        if: always()
+        shell: bash
+        run: |
+          report="${{ runner.temp }}/dashscope-longform-gate/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md"
+          if [ -f "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '%s\n' "# DashScope 20-Chapter Live Evidence" "Report missing. The longform gate failed before evidence was written." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload longform gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashscope-longform-gate
+          path: |
+            ${{ runner.temp }}/dashscope-longform-gate/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md
+            ${{ runner.temp }}/dashscope-longform-gate/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json

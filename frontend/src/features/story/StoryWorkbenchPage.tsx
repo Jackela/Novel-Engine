@@ -1,14 +1,18 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { Button } from '@/components/Button';
 import { Panel } from '@/components/Panel';
 import { StatusPill } from '@/components/StatusPill';
 import type {
-  StoryReviewIssue,
+  SessionState,
   StoryCreateRequest,
   StoryGenre,
-  StoryPipelineRequest,
+  StoryHybridReviewReport,
+  StoryReviewIssue,
+  StoryRunDetailResponse,
   StoryRunStageExecution,
+  StorySurfaceView,
   StoryWorkspace,
 } from '@/app/types';
 import { useAuth } from '@/features/auth/useAuth';
@@ -27,6 +31,21 @@ const STORY_GENRES: StoryGenre[] = [
   'comedy',
   'drama',
 ];
+
+const RELATIONSHIP_DEBT_CODES = new Set([
+  'relationship_drift',
+  'missing_relationship_state',
+  'relationship_ledger_gap',
+  'relationship_progression_stall',
+]);
+
+const HOOK_DEBT_CODES = new Set([
+  'missing_hook_payoff',
+  'missing_outline_hook',
+  'missing_hook',
+  'hook_debt',
+  'weak_serial_pull',
+]);
 
 interface ComposerState {
   title: string;
@@ -50,66 +69,27 @@ const initialComposerState: ComposerState = {
   publish: true,
 };
 
-const RELATIONSHIP_DEBT_CODES = new Set([
-  'relationship_drift',
-  'missing_relationship_state',
-  'relationship_ledger_gap',
-]);
-
-const HOOK_DEBT_CODES = new Set([
-  'missing_hook_payoff',
-  'missing_outline_hook',
-  'missing_hook',
-  'hook_debt',
-]);
-
-function storyTone(status: string | null | undefined): 'draft' | 'running' | 'completed' {
-  if (status === 'active') {
-    return 'running';
-  }
-
-  if (status === 'completed') {
-    return 'completed';
-  }
-
-  return 'draft';
+function normalizeView(value: string | null | undefined): StorySurfaceView {
+  return value === 'playback' ? 'playback' : 'workspace';
 }
 
-function reviewTone(readyForPublish: boolean | undefined): 'healthy' | 'degraded' {
-  return readyForPublish ? 'healthy' : 'degraded';
-}
-
-function stageTone(
-  isReady: boolean,
-  isLocked: boolean,
-): 'healthy' | 'degraded' | 'idle' {
-  if (isLocked) {
-    return 'idle';
-  }
-
-  return isReady ? 'healthy' : 'degraded';
+function parseThemes(rawThemes: string): string[] {
+  return rawThemes.split(',').map((theme) => theme.trim()).filter(Boolean);
 }
 
 function formatDate(value: string | undefined | null): string {
-  if (!value) {
-    return 'Unknown';
-  }
-
+  if (!value) return 'Unknown';
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
-function parseThemes(rawThemes: string): string[] {
-  return rawThemes
-    .split(',')
-    .map((theme) => theme.trim())
-    .filter(Boolean);
+function providerLabel(provider: string | null | undefined, model: string | null | undefined) {
+  if (!provider && !model) return 'Not recorded';
+  if (!provider) return model ?? 'Not recorded';
+  return model ? `${provider} / ${model}` : provider;
 }
 
-function buildPayload(
-  authorId: string,
-  formState: ComposerState,
-): StoryCreateRequest {
+function buildPayload(authorId: string, formState: ComposerState): StoryCreateRequest {
   return {
     title: formState.title.trim(),
     genre: formState.genre,
@@ -122,282 +102,231 @@ function buildPayload(
   };
 }
 
-function storyStatusLabel(status: string | null | undefined): string {
-  if (!status) {
-    return 'draft';
-  }
-
-  return status;
-}
-
-function unresolvedHooks(workspace: StoryWorkspace | null) {
-  return workspace?.memory.hook_ledger.filter((entry) => !entry.surfaced) ?? [];
-}
-
-function unresolvedPromises(workspace: StoryWorkspace | null) {
-  return (
-    workspace?.memory.promise_ledger.filter(
-      (entry) => entry.status !== 'paid_off' && Boolean(entry.promise),
-    ) ?? []
-  );
-}
-
-function overduePayoffs(workspace: StoryWorkspace | null) {
-  const chapterCount = workspace?.story.chapter_count ?? 0;
-  return unresolvedPromises(workspace).filter(
-    (entry) => entry.due_by_chapter !== null && entry.due_by_chapter <= chapterCount,
-  );
-}
-
-function semanticBlockers(workspace: StoryWorkspace | null) {
-  return (
-    workspace?.semantic_review?.issues.filter((issue) => issue.severity === 'blocker') ??
-    []
-  );
-}
-
-function strandGapCount(workspace: StoryWorkspace | null) {
-  if (!workspace) {
-    return 0;
-  }
-
-  const thresholds = {
-    quest: 5,
-    fire: 10,
-    constellation: 15,
-  } as const;
-  const chapterCount = workspace.story.chapter_count;
-  const latestByStrand = new Map<string, number>();
-
-  workspace.memory.strand_ledger.forEach((entry) => {
-    if (!entry.strand) {
-      return;
-    }
-    latestByStrand.set(entry.strand, entry.chapter_number);
-  });
-
-  return Object.entries(thresholds).filter(([strand, limit]) => {
-    const latest = latestByStrand.get(strand) ?? 0;
-    return chapterCount - latest > limit;
-  }).length;
-}
-
-function blockingIssues(workspace: StoryWorkspace | null) {
-  return workspace?.review?.issues.filter((issue) => issue.severity === 'blocker') ?? [];
-}
-
-function debtIssues(
-  workspace: StoryWorkspace | null,
-  codes: ReadonlySet<string>,
-): StoryReviewIssue[] {
-  return workspace?.review?.issues.filter((issue) => codes.has(issue.code)) ?? [];
+function buildStoryLocation(session: SessionState) {
+  const params = new URLSearchParams();
+  if (session.lastStoryId) params.set('story', session.lastStoryId);
+  if (session.lastRunId) params.set('run', session.lastRunId);
+  params.set('view', session.lastView ?? 'workspace');
+  const query = params.toString();
+  return query ? `/story?${query}` : '/story';
 }
 
 function chapterNumberFromLocation(location: string | null): number | null {
-  if (!location) {
-    return null;
-  }
-
+  if (!location) return null;
   const match = location.match(/chapter-(\d+)/i);
-  if (!match) {
-    return null;
-  }
-
-  const chapterNumber = Number(match[1]);
-  return Number.isFinite(chapterNumber) ? chapterNumber : null;
+  return match ? Number(match[1]) : null;
 }
 
-function chapterNumbersFromDetails(issue: StoryReviewIssue): number[] {
-  const chapters = issue.details.chapters;
-  if (!Array.isArray(chapters)) {
-    return [];
-  }
-
-  return chapters
-    .map((chapter) => Number(chapter))
-    .filter((chapter) => Number.isFinite(chapter));
+function debtIssues(review: StoryHybridReviewReport | null, codes: ReadonlySet<string>) {
+  return review?.issues.filter((issue) => codes.has(issue.code)) ?? [];
 }
 
-function issueTargetsChapter(issue: StoryReviewIssue, chapterNumber: number): boolean {
-  if (chapterNumberFromLocation(issue.location) === chapterNumber) {
-    return true;
-  }
-
-  return chapterNumbersFromDetails(issue).includes(chapterNumber);
+function stageTone(stage: StoryRunStageExecution) {
+  if (stage.status === 'completed') return 'healthy' as const;
+  if (stage.status === 'failed') return 'offline' as const;
+  return 'running' as const;
 }
 
-function stageStatusLabel(stage: StoryRunStageExecution): string {
-  if (stage.failure_code) {
-    return `${stage.name}: ${stage.failure_code}`;
-  }
+function reviewTone(zeroWarning: boolean) {
+  return zeroWarning ? 'healthy' : 'degraded';
+}
 
-  return `${stage.name}: ${stage.status}`;
+function renderSessionSummary(session: SessionState, workspaceSummary: string) {
+  const sessionTitle =
+    session.kind === 'user'
+      ? session.user?.name ?? 'Signed-in author'
+      : session.activeWorkspace?.label ?? 'Guest workspace';
+  const sessionMeta =
+    session.kind === 'user' ? session.user?.email ?? session.workspaceId : session.workspaceId;
+
+  return (
+    <div className="story-session-card" data-testid="story-session-summary">
+      <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
+        {session.kind === 'guest' ? 'guest session' : 'signed in'}
+      </StatusPill>
+      <h3>{sessionTitle}</h3>
+      <p>{workspaceSummary}</p>
+      <dl className="story-stats story-stats--compact" data-testid="workspace-switcher">
+        <div>
+          <dt>Workspace</dt>
+          <dd>{session.workspaceId}</dd>
+        </div>
+        <div>
+          <dt>Identity</dt>
+          <dd>{sessionMeta}</dd>
+        </div>
+      </dl>
+    </div>
+  );
 }
 
 export function StoryWorkbenchPage() {
-  const { session, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState<ComposerState>(initialComposerState);
+  const [rerunPublishes, setRerunPublishes] = useState(false);
+  const auth = useAuth();
+  const session = auth.session;
+  const sessions = auth.sessions ?? [];
+  const activeSessionId = auth.activeSessionId ?? null;
+  const signOut = auth.signOut;
+  const switchSession = auth.switchSession;
+  const updateSessionSelection = auth.updateSessionSelection;
 
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
-  const {
-    stories,
-    activeStoryId,
-    activeStory,
-    workspace,
-    currentRun,
-    runSummaries,
-    selectedRunId,
-    selectedRunDetail,
-    artifact,
-    isLoading,
-    isBusy,
-    error,
-    refreshLibrary,
-    selectStory,
-    selectRun,
-    createStory,
-    generateBlueprint,
-    generateOutline,
-    draftStory,
-    reviewStory,
-    reviseStory,
-    exportStory,
-    publishStory,
-    runPipeline,
-    runStoryPipeline,
-  } = useStoryWorkbench(session.workspaceId);
+  const preferredStoryId = searchParams.get('story') ?? session.lastStoryId ?? null;
+  const preferredRunId = searchParams.get('run') ?? session.lastRunId ?? null;
+  const preferredView = normalizeView(searchParams.get('view') ?? session.lastView ?? 'workspace');
 
-  const workflow = workspace?.workflow ?? null;
-  const memory = workspace?.memory ?? null;
-  const review = workspace?.review ?? artifact.review;
-  const structuralReview = workspace?.structural_review ?? review?.structural_review ?? null;
-  const semanticReview = workspace?.semantic_review ?? review?.semantic_review ?? null;
-  const structuralGatePassed =
-    review?.structural_gate_passed ?? structuralReview?.ready_for_publish ?? false;
-  const semanticGatePassed =
-    review?.semantic_gate_passed ?? semanticReview?.ready_for_publish ?? false;
-  const publishGatePassed = review?.publish_gate_passed ?? review?.ready_for_publish ?? false;
-  const runState = currentRun ?? workspace?.run ?? artifact.run;
-  const exportPayload = workspace?.export ?? artifact.exportPayload;
-  const runHistory = runSummaries;
-  const runEvents = workspace?.run_events ?? [];
-  const artifactHistory = workspace?.artifact_history ?? [];
-  const latestRunEvent = runEvents.length > 0 ? runEvents[runEvents.length - 1] : null;
-  const unresolvedHookEntries = unresolvedHooks(workspace);
-  const unresolvedPromiseEntries = unresolvedPromises(workspace);
-  const overduePayoffEntries = overduePayoffs(workspace);
-  const semanticBlockingIssues = semanticBlockers(workspace);
-  const activeStrandGaps = strandGapCount(workspace);
-  const blockingReviewIssues = blockingIssues(workspace);
-  const relationshipDebtIssues = debtIssues(workspace, RELATIONSHIP_DEBT_CODES);
-  const hookDebtIssues = debtIssues(workspace, HOOK_DEBT_CODES);
-  const highlightedDebtIssues = (review?.issues ?? []).filter(
-    (issue) =>
-      RELATIONSHIP_DEBT_CODES.has(issue.code) || HOOK_DEBT_CODES.has(issue.code),
+  const workbench = useStoryWorkbench({
+    authorId: session.workspaceId,
+    preferredStoryId,
+    preferredRunId,
+    onSelectionChange: ({ storyId, runId, view }) => {
+      updateSessionSelection({ lastStoryId: storyId, lastRunId: runId, lastView: view });
+      const params = new URLSearchParams(searchParams);
+      if (storyId) params.set('story', storyId);
+      else params.delete('story');
+      if (runId) params.set('run', runId);
+      else params.delete('run');
+      params.set('view', view);
+      setSearchParams(params, { replace: true });
+    },
+  });
+
+  const availableSessions = useMemo(
+    () => sessions.filter((entry) => entry.id !== activeSessionId).slice(0, 4),
+    [activeSessionId, sessions],
   );
-  const playbackWorkspace = selectedRunDetail?.latest_snapshot?.workspace ?? null;
-  const playbackReview = playbackWorkspace?.review ?? null;
-  const playbackStructuralReview =
-    playbackWorkspace?.structural_review ?? playbackReview?.structural_review ?? null;
-  const playbackSemanticReview =
-    playbackWorkspace?.semantic_review ?? playbackReview?.semantic_review ?? null;
-  const playbackStructuralGatePassed =
-    playbackReview?.structural_gate_passed ?? playbackStructuralReview?.ready_for_publish ?? false;
-  const playbackSemanticGatePassed =
-    playbackReview?.semantic_gate_passed ?? playbackSemanticReview?.ready_for_publish ?? false;
-  const playbackPublishGatePassed =
-    playbackReview?.publish_gate_passed ?? playbackReview?.ready_for_publish ?? false;
-  const playbackFailureSnapshot = selectedRunDetail?.failure_snapshot ?? null;
-  const playbackFailureArtifacts = selectedRunDetail?.failure_artifacts ?? [];
-  const playbackFailureMessage =
-    selectedRunDetail?.failure_message ?? playbackFailureSnapshot?.failure_message ?? null;
-  const playbackFailedStage =
-    selectedRunDetail?.failed_stage ?? playbackFailureSnapshot?.failed_stage ?? null;
-  const playbackManuscriptPreserved =
-    selectedRunDetail?.manuscript_preserved ??
-    playbackFailureSnapshot?.failure_details?.manuscript_preserved ??
-    null;
-  const playbackRunEvent =
-    selectedRunDetail && selectedRunDetail.events.length > 0
-      ? selectedRunDetail.events[selectedRunDetail.events.length - 1]
-      : null;
-  const playbackRelationshipDebtIssues = debtIssues(
-    playbackWorkspace,
-    RELATIONSHIP_DEBT_CODES,
-  );
-  const playbackHookDebtIssues = debtIssues(playbackWorkspace, HOOK_DEBT_CODES);
-  const playbackBlockingIssues = blockingIssues(playbackWorkspace);
-  const playbackUnresolvedHooks = unresolvedHooks(playbackWorkspace);
-  const playbackUnresolvedPromises = unresolvedPromises(playbackWorkspace);
-  const playbackOverduePayoffs = overduePayoffs(playbackWorkspace);
-  const playbackSemanticBlockingIssues = semanticBlockers(playbackWorkspace);
-  const playbackStrandGaps = strandGapCount(playbackWorkspace);
+  const review = workbench.workspace?.review ?? workbench.workspace?.hybrid_review ?? workbench.artifact.review;
+  const relationshipDebtIssues = debtIssues(review, RELATIONSHIP_DEBT_CODES);
+  const hookDebtIssues = debtIssues(review, HOOK_DEBT_CODES);
+  const zeroWarning =
+    workbench.workspace?.evidence_summary?.zero_warning ??
+    ((review?.issues.filter((issue) => issue.severity !== 'info').length ?? 0) === 0);
+  const workspaceSummary =
+    workbench.workspace?.workspace_context?.summary ??
+    session.activeWorkspace?.summary ??
+    'Server-validated workspace context with resumable story selection.';
+  const rerunTargetChapters =
+    workbench.workspace?.workflow.target_chapters ??
+    workbench.activeStory?.chapter_count ??
+    formState.targetChapters;
+  const currentView = workbench.selectedRunDetail ? 'playback' : preferredView;
+
+  const setQuerySelection = (storyId: string | null, runId: string | null, view: StorySurfaceView) => {
+    const params = new URLSearchParams(searchParams);
+    if (storyId) params.set('story', storyId);
+    else params.delete('story');
+    if (runId) params.set('run', runId);
+    else params.delete('run');
+    params.set('view', view);
+    setSearchParams(params, { replace: true });
+  };
 
   const createDraft = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     try {
-      await createStory(buildPayload(session.workspaceId, formState));
-    } catch {
-      // The hook owns error presentation.
-    }
+      const story = await workbench.createStory(buildPayload(session.workspaceId, formState));
+      setQuerySelection(story.id, null, 'workspace');
+    } catch {}
   };
 
-  const launchPipeline = async () => {
-    const payload: StoryPipelineRequest = {
-      ...buildPayload(session.workspaceId, formState),
-      publish: formState.publish,
-    };
-
+  const runInitialPipeline = async () => {
     try {
-      await runPipeline(payload);
-    } catch {
-      // The hook owns error presentation.
-    }
-  };
-
-  const handleStorySelect = async (storyId: string) => {
-    try {
-      await selectStory(storyId);
-    } catch {
-      // The hook owns error presentation.
-    }
-  };
-
-  const launchActivePipeline = async () => {
-    try {
-      await runStoryPipeline({
+      const result = await workbench.runPipeline({
+        ...buildPayload(session.workspaceId, formState),
         publish: formState.publish,
-        targetChapters: workflow?.target_chapters ?? formState.targetChapters,
       });
-    } catch {
-      // The hook owns error presentation.
+      setQuerySelection(result.story.id, null, 'workspace');
+    } catch {}
+  };
+
+  const rerunCurrentPipeline = async () => {
+    try {
+      const result = await workbench.runStoryPipeline({
+        publish: rerunPublishes,
+        targetChapters: rerunTargetChapters,
+      });
+      setQuerySelection(workbench.activeStoryId, result.run.run_id, 'playback');
+    } catch {}
+  };
+
+  const switchToSavedSession = async (sessionId: string) => {
+    try {
+      const nextSession = await switchSession(sessionId);
+      navigate(buildStoryLocation(nextSession));
+    } catch {}
+  };
+
+  const leaveCurrentSession = () => {
+    signOut();
+    navigate('/');
+  };
+
+  const handleGuidedAction = async () => {
+    const action = workbench.workspace?.recommended_next_action?.action;
+    if (!action) return;
+    switch (action) {
+      case 'generate_blueprint':
+        await workbench.generateBlueprint();
+        break;
+      case 'generate_outline':
+        await workbench.generateOutline();
+        break;
+      case 'draft':
+        await workbench.draftStory();
+        break;
+      case 'review':
+        await workbench.reviewStory();
+        break;
+      case 'revise':
+        await workbench.reviseStory();
+        break;
+      case 'export':
+        await workbench.exportStory();
+        break;
+      case 'publish':
+        await workbench.publishStory();
+        break;
+      case 'view_playback':
+        if (workbench.runSummaries[0]) {
+          await workbench.selectRun(workbench.runSummaries[0].run_id);
+        }
+        break;
+      default:
+        break;
     }
   };
 
-  const selectedCharacterCount = memory?.active_characters?.length ?? 0;
-  const chapterSummaryCount = memory?.chapter_summaries?.length ?? 0;
-  const targetChapters = workflow?.target_chapters ?? formState.targetChapters;
-  const canOutline = Boolean(workspace?.blueprint);
-  const canDraft = Boolean(workspace?.outline);
-  const canReview = Boolean(activeStory && activeStory.chapter_count > 0);
-  const canPublish = Boolean(publishGatePassed);
+  const openStory = async (storyId: string) => {
+    try {
+      await workbench.selectStory(storyId);
+    } catch {}
+  };
+
+  const toggleRun = async (runId: string) => {
+    try {
+      await workbench.selectRun(workbench.selectedRunId === runId ? null : runId);
+    } catch {}
+  };
+
+  const playbackWorkspace = workbench.selectedRunDetail?.latest_snapshot?.workspace ?? null;
+  const playbackReview =
+    playbackWorkspace?.review ?? playbackWorkspace?.hybrid_review ?? null;
 
   return (
     <main className="story-workbench" data-testid="story-workbench-page">
-      <header className="story-workbench__hero" data-testid="story-workbench-hero">
+      <header className="story-workbench__hero">
         <div className="story-workbench__hero-copy">
-          <p className="story-workbench__eyebrow">Novel Engine / Story Workshop</p>
+          <p className="story-workbench__eyebrow">Novel Engine / Guided Author Shell</p>
           <h1 className="story-workbench__title">
-            {activeStory ? activeStory.title : 'Compose a living manuscript'}
+            {workbench.activeStory ? workbench.activeStory.title : 'Create or resume a manuscript'}
           </h1>
           <p className="story-workbench__summary">
-            {activeStory
-              ? `当前工作区围绕 ${activeStory.chapter_count}/${targetChapters} 章推进。蓝图、大纲、章节记忆、连续性审查与发布门现在都收敛到同一份 workspace。`
-              : '先建立设定，再逐阶段确认蓝图、大纲、章节、连续性与发布门。全自动 pipeline 仍保留为快捷入口，但不再是唯一主流程。'}
+            Session context, manuscript selection, and playback selection are now addressable.
+            Mutable workspace and immutable playback stay visually and semantically separate.
           </p>
         </div>
 
@@ -405,611 +334,352 @@ export function StoryWorkbenchPage() {
           <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
             {session.kind === 'guest' ? 'guest session' : 'signed in'}
           </StatusPill>
-          <StatusPill tone={storyTone(activeStory?.status)}>
-            {storyStatusLabel(activeStory?.status)}
-          </StatusPill>
-          <StatusPill tone={reviewTone(publishGatePassed)}>
-            {publishGatePassed ? 'publish ready' : 'review pending'}
-          </StatusPill>
+          <span data-testid="zero-warning-badge">
+            <StatusPill tone={reviewTone(zeroWarning)}>
+              {zeroWarning ? 'zero warning' : 'warnings open'}
+            </StatusPill>
+          </span>
           <span className="story-workbench__workspace" data-testid="workspace-badge">
             {session.workspaceId}
           </span>
-          <Button variant="ghost" onClick={signOut}>
-            Sign out
-          </Button>
         </div>
       </header>
 
-      {error ? <p className="form-error">{error}</p> : null}
+      {workbench.error ? <p className="form-error">{workbench.error}</p> : null}
 
-      <section className="story-workbench__layout">
+      <section className="story-workbench__layout story-workbench__layout--guided">
         <div className="story-workbench__column">
-          <Panel
-            title="Create manuscript"
-            eyebrow="Project seed"
-            testId="story-create-panel"
-          >
-            <form className="story-form" onSubmit={createDraft} data-testid="story-create-form">
-              <label className="field">
-                <span>Title</span>
-                <input
-                  data-testid="story-title-input"
-                  value={formState.title}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, title: event.target.value }))
-                  }
-                  maxLength={200}
-                  required
-                />
-              </label>
+          <Panel title="Session / Entry" eyebrow="Rail" testId="story-session-panel">
+            {renderSessionSummary(session, workspaceSummary)}
+            <div className="story-workflow__actions">
+              <Link className="button button--secondary" to="/" data-testid="story-back-to-landing">
+                Back to landing
+              </Link>
+              <Button variant="ghost" onClick={leaveCurrentSession}>
+                Sign out
+              </Button>
+            </div>
 
-              <label className="field">
-                <span>Genre</span>
-                <select
-                  data-testid="story-genre-select"
-                  value={formState.genre}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      genre: event.target.value as StoryGenre,
-                    }))
-                  }
-                >
-                  {STORY_GENRES.map((genre) => (
-                    <option key={genre} value={genre}>
-                      {genre}
-                    </option>
+            {availableSessions.length ? (
+              <div className="story-notes" data-testid="session-switcher">
+                <h3>Switch session</h3>
+                <ul className="story-list">
+                  {availableSessions.map((entry) => (
+                    <li key={entry.id} className="story-card">
+                      <button
+                        className="story-card__button"
+                        type="button"
+                        onClick={() => void switchToSavedSession(entry.id)}
+                      >
+                        <div className="story-card__header">
+                          <strong>{entry.activeWorkspace?.label ?? entry.workspaceId}</strong>
+                          <span>{entry.kind}</span>
+                        </div>
+                        <p className="story-card__meta">
+                          {entry.user?.email ?? entry.workspaceId}
+                        </p>
+                      </button>
+                    </li>
                   ))}
-                </select>
-              </label>
-
-              <label className="field">
-                <span>Premise</span>
-                <textarea
-                  data-testid="story-premise-input"
-                  value={formState.premise}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, premise: event.target.value }))
-                  }
-                  minLength={10}
-                  rows={5}
-                  required
-                />
-              </label>
-
-              <div className="story-form__grid">
-                <label className="field">
-                  <span>Target chapters</span>
-                  <input
-                    data-testid="story-target-chapters-input"
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={formState.targetChapters}
-                    onChange={(event) =>
-                      setFormState((current) => ({
-                        ...current,
-                        targetChapters: Number(event.target.value),
-                      }))
-                    }
-                    required
-                  />
-                </label>
-
-                <label className="field">
-                  <span>Audience</span>
-                  <input
-                    data-testid="story-audience-input"
-                    value={formState.targetAudience}
-                    onChange={(event) =>
-                      setFormState((current) => ({
-                        ...current,
-                        targetAudience: event.target.value,
-                      }))
-                    }
-                    maxLength={120}
-                  />
-                </label>
+                </ul>
               </div>
-
-              <label className="field">
-                <span>Themes</span>
-                <input
-                  data-testid="story-themes-input"
-                  value={formState.themes}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, themes: event.target.value }))
-                  }
-                  placeholder="betrayal, inheritance, grief"
-                />
-              </label>
-
-              <label className="field">
-                <span>Tone</span>
-                <input
-                  data-testid="story-tone-input"
-                  value={formState.tone}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, tone: event.target.value }))
-                  }
-                  maxLength={200}
-                />
-              </label>
-
-              <label className="story-toggle">
-                <input
-                  data-testid="story-publish-toggle"
-                  type="checkbox"
-                  checked={formState.publish}
-                  onChange={(event) =>
-                    setFormState((current) => ({
-                      ...current,
-                      publish: event.target.checked,
-                    }))
-                  }
-                />
-                <span>Publish after running the pipeline</span>
-              </label>
-
-              <div className="story-form__actions">
-                <Button type="submit" disabled={isBusy} data-testid="story-create-draft">
-                  Create draft
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isBusy}
-                  onClick={() => void launchPipeline()}
-                  data-testid="story-run-pipeline"
-                >
-                  Run full pipeline
-                </Button>
-              </div>
-            </form>
+            ) : null}
           </Panel>
 
           <Panel
-            title="Project library"
+            title="Library"
             eyebrow="Manuscripts"
             actions={
-              <Button variant="ghost" onClick={() => void refreshLibrary()} disabled={isLoading}>
-                {isLoading ? 'Refreshing...' : 'Refresh library'}
+              <Button variant="ghost" onClick={() => void workbench.refreshLibrary()} disabled={workbench.isLoading}>
+                {workbench.isLoading ? 'Refreshing...' : 'Refresh library'}
               </Button>
             }
             testId="story-library-panel"
           >
-            <ul className="story-list" data-testid="story-list">
-              {stories.length === 0 ? (
-                <li className="story-empty">No manuscripts yet. Create the first draft above.</li>
-              ) : (
-                stories.map((story) => {
-                  const isActive = story.id === activeStoryId;
-
-                  return (
+            <div className="story-library-summary" data-testid="story-library-summary">
+              <strong>{workbench.stories.length} manuscript(s)</strong>
+              <span>
+                {workbench.activeStory
+                  ? `Viewing ${workbench.activeStory.title}`
+                  : 'Select a manuscript or create a new one.'}
+              </span>
+            </div>
+            <div data-testid="library-list">
+              <ul className="story-list" data-testid="story-list">
+                {workbench.stories.length === 0 ? (
+                  <li className="story-empty">No manuscripts yet. Create the first draft below.</li>
+                ) : (
+                  workbench.stories.map((story) => (
                     <li
                       key={story.id}
-                      className={`story-card${isActive ? ' story-card--active' : ''}`}
+                      className={`story-card${story.id === workbench.activeStoryId ? ' story-card--active' : ''}`}
                     >
                       <button
                         className="story-card__button"
                         type="button"
-                        onClick={() => void handleStorySelect(story.id)}
+                        onClick={() => void openStory(story.id)}
                         data-testid={`story-item-${story.id}`}
                       >
                         <div className="story-card__header">
                           <strong>{story.title}</strong>
-                          <StatusPill tone={storyTone(story.status)}>
-                            {storyStatusLabel(story.status)}
-                          </StatusPill>
+                          <span>{story.status}</span>
                         </div>
                         <p className="story-card__meta">
-                          {story.genre} / {story.chapter_count} chapters / updated{' '}
-                          {formatDate(story.updated_at)}
+                          {story.genre} / {story.chapter_count} chapters / updated {formatDate(story.updated_at)}
                         </p>
                       </button>
                     </li>
-                  );
-                })
-              )}
-            </ul>
+                  ))
+                )}
+              </ul>
+            </div>
+          </Panel>
+
+          <Panel title="New manuscript" eyebrow="Create" testId="story-create-panel">
+            <form className="story-form" onSubmit={createDraft} data-testid="story-create-form">
+              <label className="field">
+                <span>Title</span>
+                <input data-testid="story-title-input" value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} required />
+              </label>
+              <label className="field">
+                <span>Genre</span>
+                <select data-testid="story-genre-select" value={formState.genre} onChange={(event) => setFormState((current) => ({ ...current, genre: event.target.value as StoryGenre }))}>
+                  {STORY_GENRES.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>Premise</span>
+                <textarea data-testid="story-premise-input" value={formState.premise} onChange={(event) => setFormState((current) => ({ ...current, premise: event.target.value }))} rows={5} required />
+              </label>
+              <div className="story-form__grid">
+                <label className="field">
+                  <span>Target chapters</span>
+                  <input data-testid="story-target-chapters-input" type="number" min={1} max={120} value={formState.targetChapters} onChange={(event) => setFormState((current) => ({ ...current, targetChapters: Number(event.target.value) }))} required />
+                </label>
+                <label className="field">
+                  <span>Audience</span>
+                  <input data-testid="story-audience-input" value={formState.targetAudience} onChange={(event) => setFormState((current) => ({ ...current, targetAudience: event.target.value }))} />
+                </label>
+              </div>
+              <label className="field">
+                <span>Themes</span>
+                <input data-testid="story-themes-input" value={formState.themes} onChange={(event) => setFormState((current) => ({ ...current, themes: event.target.value }))} />
+              </label>
+              <label className="field">
+                <span>Tone</span>
+                <input data-testid="story-tone-input" value={formState.tone} onChange={(event) => setFormState((current) => ({ ...current, tone: event.target.value }))} />
+              </label>
+              <label className="story-toggle">
+                <input data-testid="story-publish-toggle" type="checkbox" checked={formState.publish} onChange={(event) => setFormState((current) => ({ ...current, publish: event.target.checked }))} />
+                <span>Publish after the initial full pipeline</span>
+              </label>
+              <div className="story-form__actions">
+                <Button type="submit" disabled={workbench.isBusy} data-testid="story-create-draft">Create draft</Button>
+                <Button type="button" variant="secondary" disabled={workbench.isBusy} onClick={() => void runInitialPipeline()} data-testid="story-run-pipeline">Run full pipeline</Button>
+              </div>
+            </form>
           </Panel>
         </div>
 
         <div className="story-workbench__column story-workbench__column--wide">
-          <Panel
-            title="Setting / Blueprint"
-            eyebrow="Stage 1"
-            testId="story-manuscript-panel"
-          >
-            {activeStory && workspace ? (
+          <Panel title="Guided workspace" eyebrow="Mutable surface" testId="workspace-surface">
+            {workbench.activeStory && workbench.workspace ? (
               <div className="story-manuscript">
                 <div className="story-manuscript__summary">
                   <div>
                     <h2 className="story-manuscript__title" data-testid="story-active-title">
-                      {activeStory.title}
+                      {workbench.activeStory.title}
                     </h2>
                     <p className="story-manuscript__copy">
-                      {workflow?.premise ?? activeStory.metadata.premise_summary ?? 'Premise pending'}
+                      {workbench.workspace.workflow.premise || 'Premise pending.'}
                     </p>
                   </div>
-                  <div className="story-manuscript__badges">
-                    <StatusPill tone={storyTone(activeStory.status)}>
-                      {storyStatusLabel(activeStory.status)}
+                  <div className="story-manuscript__badges" data-testid="publish-verdict">
+                    <StatusPill tone={reviewTone(zeroWarning)}>
+                      {zeroWarning ? 'zero warning ready' : 'review debt open'}
                     </StatusPill>
-                    <StatusPill tone={reviewTone(publishGatePassed)}>
-                      {publishGatePassed ? 'publish ready' : 'needs revision'}
+                    <StatusPill tone={reviewTone(currentView === 'workspace')}>
+                      {currentView}
                     </StatusPill>
                   </div>
-                </div>
-
-                <dl className="story-stats">
-                  <div>
-                    <dt>Target chapters</dt>
-                    <dd>{targetChapters}</dd>
-                  </div>
-                  <div>
-                    <dt>Chapters drafted</dt>
-                    <dd>{activeStory.chapter_count}</dd>
-                  </div>
-                  <div>
-                    <dt>Active characters</dt>
-                    <dd>{selectedCharacterCount}</dd>
-                  </div>
-                  <div>
-                    <dt>Chapter summaries</dt>
-                    <dd>{chapterSummaryCount}</dd>
-                  </div>
-                </dl>
-
-                <div className="story-tag-row">
-                  {(activeStory.themes.length > 0 ? activeStory.themes : ['no themes yet']).map(
-                    (theme) => (
-                      <span key={theme} className="story-tag">
-                        {theme}
-                      </span>
-                    ),
-                  )}
                 </div>
 
                 <div className="story-memory-grid">
                   <article className="story-memory-card">
-                    <h3>Run state</h3>
-                    <p>{runState ? `${runState.mode} / ${runState.status}` : 'No active run'}</p>
+                    <h3>Recommended next action</h3>
+                    <p>{workbench.workspace.recommended_next_action?.label ?? 'Create the next manuscript step.'}</p>
+                    <p>{workbench.workspace.recommended_next_action?.reason ?? 'No guided action available yet.'}</p>
+                    <Button type="button" onClick={() => void handleGuidedAction()} disabled={!workbench.workspace.recommended_next_action || workbench.isBusy} data-testid="guided-next-action">
+                      {workbench.workspace.recommended_next_action?.label ?? 'No guided action'}
+                    </Button>
                   </article>
                   <article className="story-memory-card">
-                    <h3>Run history</h3>
-                    <p>{runHistory.length}</p>
+                    <h3>Target chapters</h3>
+                    <p>{workbench.workspace.workflow.target_chapters}</p>
                   </article>
                   <article className="story-memory-card">
-                    <h3>Blueprint</h3>
-                    <p>{workspace.blueprint ? workspace.blueprint.premise_summary : 'Not generated yet'}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Continuity</h3>
-                    <p>
-                      {structuralReview?.metrics
-                        ? `${structuralReview.metrics.continuity_score} / 100`
-                        : 'Not reviewed yet'}
-                    </p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Reader pull</h3>
-                    <p>
-                      {semanticReview?.metrics
-                        ? `${semanticReview.metrics.reader_pull_score} / 100`
-                        : 'Not reviewed yet'}
-                    </p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Unresolved hooks</h3>
-                    <p>{unresolvedHookEntries.length}</p>
+                    <h3>Drafted chapters</h3>
+                    <p>{workbench.activeStory.chapter_count}</p>
                   </article>
                   <article className="story-memory-card">
                     <h3>Artifacts</h3>
-                    <p>{artifactHistory.length}</p>
+                    <p>{workbench.workspace.artifact_history.length}</p>
                   </article>
                 </div>
 
-                <h3 className="story-section-title">Chapter map</h3>
-                <div className="story-tag-row">
-                  {workspace.memory.world_rules.length === 0 ? (
-                    <span className="story-tag">world rules pending</span>
-                  ) : (
-                    workspace.memory.world_rules.slice(0, 4).map((rule) => (
-                      <span key={rule.rule} className="story-tag">
-                        {rule.rule}
-                      </span>
-                    ))
-                  )}
+                <div className="story-notes" data-testid="story-review-panel">
+                  <h3>Quality summary</h3>
+                  <dl className="story-stats story-stats--compact">
+                    <div>
+                      <dt>Review score</dt>
+                      <dd data-testid="story-review-score">{review?.quality_score ?? 0}</dd>
+                    </div>
+                    <div>
+                      <dt>Warnings</dt>
+                      <dd>{workbench.workspace.evidence_summary?.warning_count ?? 0}</dd>
+                    </div>
+                    <div>
+                      <dt>Blockers</dt>
+                      <dd>{workbench.workspace.evidence_summary?.blocker_count ?? 0}</dd>
+                    </div>
+                    <div>
+                      <dt>Publish gate</dt>
+                      <dd>{review?.publish_gate_passed ? 'pass' : 'blocked'}</dd>
+                    </div>
+                  </dl>
                 </div>
 
                 <div className="story-workflow__actions">
-                  <Button
-                    type="button"
-                    onClick={() => void generateBlueprint()}
-                    disabled={!activeStory || isBusy}
-                    data-testid="story-generate-blueprint"
-                  >
-                    Generate blueprint
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <p className="story-empty">
-                Select a manuscript from the library or create a new draft to begin.
-              </p>
-            )}
-          </Panel>
-
-          <Panel title="Outline" eyebrow="Stage 2" testId="story-outline-panel">
-            {workspace ? (
-              <div className="story-review">
-                <div className="story-review__summary">
-                  <StatusPill tone={stageTone(Boolean(workspace.outline), !canOutline)}>
-                    {workspace.outline ? 'ready' : canOutline ? 'pending' : 'locked'}
-                  </StatusPill>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void generateOutline()}
-                    disabled={!activeStory || isBusy || !canOutline}
-                    data-testid="story-generate-outline"
-                  >
-                    Generate outline
-                  </Button>
+                  <Button type="button" onClick={() => void workbench.generateBlueprint()} disabled={workbench.isBusy} data-testid="story-generate-blueprint">Generate blueprint</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.generateOutline()} disabled={workbench.isBusy || !workbench.workspace.blueprint} data-testid="story-generate-outline">Generate outline</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.draftStory()} disabled={workbench.isBusy || !workbench.workspace.outline} data-testid="story-draft-chapters">Draft chapters</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.reviewStory()} disabled={workbench.isBusy || workbench.activeStory.chapter_count === 0} data-testid="story-review">Review</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.reviseStory()} disabled={workbench.isBusy || !review} data-testid="story-revise">Revise</Button>
                 </div>
 
-                <p className="story-review__copy">
-                  {workspace.outline
-                    ? `已产出 ${workspace.outline.chapters.length} 个章节节点，默认节奏面向中文网文连载。`
-                    : '大纲阶段负责章级推进、钩子布局和中长篇节奏分配。'}
-                </p>
+                <details className="story-notes" open={currentView === 'workspace'}>
+                  <summary>Advanced diagnostics</summary>
+                  <dl className="story-stats story-stats--compact">
+                    <div>
+                      <dt>Blueprint source</dt>
+                      <dd>{workbench.workspace.blueprint ? providerLabel(workbench.workspace.blueprint.provider, workbench.workspace.blueprint.model) : 'Not generated'}</dd>
+                    </div>
+                    <div>
+                      <dt>Outline source</dt>
+                      <dd>{workbench.workspace.outline ? providerLabel(workbench.workspace.outline.provider, workbench.workspace.outline.model) : 'Not generated'}</dd>
+                    </div>
+                    <div>
+                      <dt>Review source</dt>
+                      <dd>{review ? providerLabel(review.source_provider, review.source_model) : 'Not reviewed'}</dd>
+                    </div>
+                  </dl>
 
-                <ul className="story-issue-list">
-                  {(workspace.outline?.chapters ?? []).slice(0, 4).map((chapter) => (
-                    <li key={chapter.chapter_number} className="story-chapter-card">
-                      <div className="story-chapter-card__header">
-                        <strong>Chapter {chapter.chapter_number}</strong>
-                        <span>{chapter.hook ? 'hook set' : 'hook pending'}</span>
-                      </div>
-                      <h4>{chapter.title}</h4>
-                      <p>{chapter.summary}</p>
-                    </li>
-                  ))}
-                  {!workspace.outline ? (
-                    <li className="story-empty">Generate the blueprint first to unlock the outline.</li>
-                  ) : null}
-                </ul>
-              </div>
-            ) : (
-              <p className="story-empty">Create or select a manuscript first.</p>
-            )}
-          </Panel>
+                  <div className="story-memory-grid">
+                    <article className="story-memory-card"><h3>Relationship debt</h3><p data-testid="story-relationship-debt-count">{relationshipDebtIssues.length}</p></article>
+                    <article className="story-memory-card"><h3>Hook debt</h3><p data-testid="story-hook-debt-count">{hookDebtIssues.length}</p></article>
+                  </div>
 
-          <Panel title="Chapters / Scenes" eyebrow="Stage 3" testId="story-chapters-panel">
-            {workspace ? (
-              <div className="story-review">
-                <div className="story-review__summary">
-                  <StatusPill tone={stageTone(Boolean(activeStory?.chapter_count), !canDraft)}>
-                    {activeStory?.chapter_count ? 'in progress' : canDraft ? 'pending' : 'locked'}
-                  </StatusPill>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void draftStory()}
-                    disabled={!activeStory || isBusy || !canDraft}
-                    data-testid="story-draft-chapters"
-                  >
-                    Draft chapters
-                  </Button>
-                </div>
+                  <ul className="story-issue-list" data-testid="story-debt-issue-list">
+                    {[...relationshipDebtIssues, ...hookDebtIssues].length === 0 ? (
+                      <li className="story-empty">No highlighted relationship or hook debt.</li>
+                    ) : (
+                      [...relationshipDebtIssues, ...hookDebtIssues].map((issue, index) => (
+                        <li key={`${issue.code}-${issue.location ?? 'story'}-${index}`} className="story-chapter-card">
+                          <div className="story-chapter-card__header">
+                            <strong>{issue.code}</strong>
+                            <span>{issue.severity}</span>
+                          </div>
+                          <p>{issue.message}</p>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </details>
 
+                <h3 className="story-section-title">Chapter map</h3>
                 <ul className="story-chapter-list" data-testid="story-chapter-list">
-                  {activeStory?.chapters.length ? (
-                    activeStory.chapters.map((chapter) => (
-                      (() => {
-                        const chapterIssues = (review?.issues ?? []).filter((issue) =>
-                          issueTargetsChapter(issue, chapter.chapter_number),
-                        );
-                        const hasRelationshipDebt = chapterIssues.some((issue) =>
-                          RELATIONSHIP_DEBT_CODES.has(issue.code),
-                        );
-                        const hasHookDebt = chapterIssues.some((issue) =>
-                          HOOK_DEBT_CODES.has(issue.code),
-                        );
-
-                        return (
-                          <li key={chapter.id} className="story-chapter-card">
-                            <div className="story-chapter-card__header">
-                              <strong>Chapter {chapter.chapter_number}</strong>
-                              <span>{chapter.scenes.length} scenes</span>
+                  {workbench.activeStory.chapters.length ? (
+                    workbench.activeStory.chapters.map((chapter) => {
+                      const chapterIssues = review?.issues.filter((issue) => chapterNumberFromLocation(issue.location) === chapter.chapter_number) ?? [];
+                      const hasRelationshipDebt = chapterIssues.some((issue) => RELATIONSHIP_DEBT_CODES.has(issue.code));
+                      const hasHookDebt = chapterIssues.some((issue) => HOOK_DEBT_CODES.has(issue.code));
+                      return (
+                        <li key={chapter.id} className="story-chapter-card">
+                          <div className="story-chapter-card__header">
+                            <strong>Chapter {chapter.chapter_number}</strong>
+                            <span>{chapter.scenes.length} scenes</span>
+                          </div>
+                          <h4>{chapter.title}</h4>
+                          <p>{chapter.summary ?? 'No summary yet.'}</p>
+                          {hasRelationshipDebt || hasHookDebt ? (
+                            <div className="story-tag-row" data-testid={`story-chapter-debt-${chapter.chapter_number}`}>
+                              {hasRelationshipDebt ? <span className="story-tag">relationship debt</span> : null}
+                              {hasHookDebt ? <span className="story-tag">hook debt</span> : null}
                             </div>
-                            <h4>{chapter.title}</h4>
-                            <p>{chapter.summary ?? 'No summary yet.'}</p>
-                            {hasRelationshipDebt || hasHookDebt ? (
-                              <div
-                                className="story-tag-row"
-                                data-testid={`story-chapter-debt-${chapter.chapter_number}`}
-                              >
-                                {hasRelationshipDebt ? (
-                                  <span className="story-tag">relationship debt</span>
-                                ) : null}
-                                {hasHookDebt ? (
-                                  <span className="story-tag">hook debt</span>
-                                ) : null}
-                              </div>
-                            ) : null}
-                            <div className="story-chapter-card__footer">
-                              <span>{String(chapter.metadata.focus_character ?? 'No focus')}</span>
-                              <span>Updated {formatDate(chapter.updated_at)}</span>
-                            </div>
-                          </li>
-                        );
-                      })()
-                    ))
+                          ) : null}
+                        </li>
+                      );
+                    })
                   ) : (
-                    <li className="story-empty">
-                      Draft chapters to populate the manuscript map.
-                    </li>
+                    <li className="story-empty">Draft chapters to populate the manuscript map.</li>
                   )}
                 </ul>
               </div>
             ) : (
-              <p className="story-empty">Create or select a manuscript first.</p>
+              <div className="story-manuscript">
+                <div className="story-memory-grid">
+                  <article className="story-memory-card">
+                    <h3>Recommended next action</h3>
+                    <p>Start with a new manuscript in the create rail, then the workspace will advance one stage at a time.</p>
+                    <Button type="button" disabled data-testid="guided-next-action">
+                      Create a manuscript in the left rail
+                    </Button>
+                  </article>
+                </div>
+                <p className="story-empty">Select a manuscript from the library or create a new one.</p>
+              </div>
             )}
           </Panel>
         </div>
 
         <div className="story-workbench__column">
-          <Panel
-            title="Publish / Export"
-            eyebrow="Stage 5"
-            testId="story-workflow-panel"
-            actions={
-              <Button variant="ghost" onClick={() => void refreshLibrary()} disabled={isLoading}>
-                {isLoading ? 'Loading...' : 'Reload'}
-              </Button>
-            }
-          >
+          <Panel title="Playback desk" eyebrow="Immutable surface" testId="playback-desk">
+            <div className="story-notes" data-testid="story-run-provenance">
+              <h3>Run provenance</h3>
+              <p>The playback desk shows immutable run evidence, stage snapshots, and publish verdicts.</p>
+              <dl className="story-stats story-stats--compact">
+                <div><dt>Selected run</dt><dd>{workbench.selectedRunDetail?.run.run_id ?? 'None selected'}</dd></div>
+                <div><dt>Playback source</dt><dd>{workbench.selectedRunDetail?.provenance ? providerLabel(workbench.selectedRunDetail.provenance.source_providers[0], workbench.selectedRunDetail.provenance.source_models[0]) : 'No playback selected'}</dd></div>
+                <div><dt>Snapshot</dt><dd>{formatDate(workbench.selectedRunDetail?.provenance?.snapshot_captured_at ?? null)}</dd></div>
+                <div><dt>Mutable run</dt><dd>{workbench.currentRun?.run_id ?? workbench.workspace?.run?.run_id ?? 'No active run'}</dd></div>
+              </dl>
+            </div>
+
+            <label className="story-toggle story-toggle--panel">
+              <input data-testid="story-current-publish-toggle" type="checkbox" checked={rerunPublishes} onChange={(event) => setRerunPublishes(event.target.checked)} disabled={!workbench.activeStory || workbench.isBusy} />
+              <span>Publish when rerunning the current manuscript ({rerunTargetChapters} target chapters)</span>
+            </label>
+
             <div className="story-workflow__actions">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void launchActivePipeline()}
-                disabled={!activeStory || isBusy}
-                data-testid="story-run-current-pipeline"
-              >
-                Run current pipeline
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void exportStory()}
-                disabled={!activeStory || isBusy || !canReview}
-                data-testid="story-export"
-              >
-                Export
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void publishStory()}
-                disabled={!activeStory || isBusy || !canPublish}
-                data-testid="story-publish"
-              >
-                Publish
-              </Button>
+              <Button type="button" variant="secondary" onClick={() => void rerunCurrentPipeline()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="story-run-current-pipeline">{rerunPublishes ? 'Run current pipeline and publish' : 'Run current pipeline'}</Button>
+              <Button type="button" variant="secondary" onClick={() => void workbench.exportStory()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="story-export">Export</Button>
+              <Button type="button" variant="secondary" onClick={() => void workbench.publishStory()} disabled={!workbench.activeStory || workbench.isBusy || !zeroWarning} data-testid="story-publish">Publish</Button>
             </div>
 
             <div className="story-console__state" data-testid="story-workflow-state">
-              <strong>{isBusy ? 'Working...' : artifact.lastAction ?? 'Waiting for an action'}</strong>
-              <span>{stories.length} manuscripts tracked</span>
+              <strong>{workbench.isBusy ? 'Working...' : workbench.artifact.lastAction ?? 'Waiting for an action'}</strong>
+              <span>{workbench.stories.length} manuscripts tracked</span>
             </div>
 
-            {artifact.pipeline ? (
-              <div className="story-pipeline-card" data-testid="story-pipeline-result">
-                <h3>Pipeline result</h3>
-                <dl className="story-stats">
-                  <div>
-                    <dt>Published</dt>
-                    <dd>{artifact.pipeline.published ? 'yes' : 'no'}</dd>
-                  </div>
-                  <div>
-                    <dt>Drafted chapters</dt>
-                    <dd>{artifact.pipeline.drafted_chapters}</dd>
-                  </div>
-                  <div>
-                    <dt>Initial review</dt>
-                    <dd>{artifact.pipeline.initial_review.quality_score}</dd>
-                  </div>
-                  <div>
-                    <dt>Final review</dt>
-                    <dd>{artifact.pipeline.final_review.quality_score}</dd>
-                  </div>
-                </dl>
-              </div>
-            ) : null}
-
-            {exportPayload ? (
-              <div className="story-export-card" data-testid="story-export-summary">
-                <h3>Export bundle</h3>
-                <dl className="story-stats">
-                  <div>
-                    <dt>Workflow status</dt>
-                    <dd>{exportPayload.workflow.status}</dd>
-                  </div>
-                  <div>
-                    <dt>Blueprint</dt>
-                    <dd>{exportPayload.blueprint ? 'included' : 'missing'}</dd>
-                  </div>
-                  <div>
-                    <dt>Outline</dt>
-                    <dd>{exportPayload.outline ? 'included' : 'missing'}</dd>
-                  </div>
-                  <div>
-                    <dt>Exported</dt>
-                    <dd>{formatDate(exportPayload.exported_at)}</dd>
-                  </div>
-                </dl>
-              </div>
-            ) : null}
-
-            {runState?.stages.length ? (
-              <ul className="story-issue-list">
-                {runState.stages.map((stage) => (
-                  <li key={stage.name + stage.started_at} className="story-chapter-card">
-                    <div className="story-chapter-card__header">
-                      <strong>{stage.name}</strong>
-                      <StatusPill
-                        tone={
-                          stage.status === 'completed'
-                            ? 'healthy'
-                            : stage.status === 'failed'
-                              ? 'offline'
-                              : 'running'
-                        }
-                      >
-                        {stage.status}
-                      </StatusPill>
-                    </div>
-                    <p>{stageStatusLabel(stage)}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-
-            {latestRunEvent ? (
-              <div className="story-notes">
-                <h3>Latest run event</h3>
-                <p>
-                  {latestRunEvent.event_type}
-                  {latestRunEvent.stage_name ? ` / ${latestRunEvent.stage_name}` : ''} at{' '}
-                  {formatDate(latestRunEvent.timestamp)}
-                </p>
-              </div>
-            ) : null}
-
-            {runHistory.length ? (
-              <div className="story-notes">
+            {workbench.runSummaries.length ? (
+              <div className="story-notes" data-testid="story-run-history">
                 <h3>Run history</h3>
                 <ul>
-                  {runHistory.slice(-4).reverse().map((run) => (
+                  {workbench.runSummaries.slice(-6).reverse().map((run) => (
                     <li key={run.run_id}>
-                      <button
-                        type="button"
-                        className="story-card__button"
-                        onClick={() =>
-                          void selectRun(selectedRunId === run.run_id ? null : run.run_id)
-                        }
-                        data-testid={`story-run-item-${run.run_id}`}
-                      >
-                        <strong>
-                          {selectedRunId === run.run_id ? 'Viewing' : 'Open'} {run.mode}
-                        </strong>
-                        <span>
-                          {run.status} / {run.stages.length} stages /{' '}
-                          {formatDate(run.completed_at ?? run.started_at)}
-                        </span>
+                      <button type="button" className="story-card__button" onClick={() => void toggleRun(run.run_id)} data-testid={`story-run-item-${run.run_id}`}>
+                        <strong>{workbench.selectedRunId === run.run_id ? 'Viewing' : 'Open'} {run.mode}</strong>
+                        <span>{run.status} / {run.stages.length} stages / {formatDate(run.completed_at ?? run.started_at)}</span>
                       </button>
                     </li>
                   ))}
@@ -1017,343 +687,54 @@ export function StoryWorkbenchPage() {
               </div>
             ) : null}
 
-            {selectedRunDetail ? (
-              <div className="story-notes" data-testid="story-run-playback">
+            {workbench.selectedRunDetail ? (
+              <div className="story-notes story-notes--playback" data-testid="story-run-playback">
                 <h3>Run playback</h3>
-                <p>
-                  {selectedRunDetail.run.mode} / {selectedRunDetail.run.status} / snapshot{' '}
-                  {formatDate(selectedRunDetail.latest_snapshot?.captured_at ?? null)}
-                </p>
-                <dl className="story-stats">
-                  <div>
-                    <dt>Artifacts</dt>
-                    <dd>{selectedRunDetail.artifacts.length}</dd>
-                  </div>
-                  <div>
-                    <dt>Events</dt>
-                    <dd>{selectedRunDetail.events.length}</dd>
-                  </div>
-                  <div>
-                    <dt>Snapshots</dt>
-                    <dd>{selectedRunDetail.stage_snapshots.length}</dd>
-                  </div>
-                  <div>
-                    <dt>Quality</dt>
-                    <dd>{playbackReview?.quality_score ?? 0}</dd>
-                  </div>
-                  <div>
-                    <dt>Reader pull</dt>
-                    <dd>{playbackSemanticReview?.metrics?.reader_pull_score ?? 0}</dd>
-                  </div>
+                <p>{workbench.selectedRunDetail.run.mode} / {workbench.selectedRunDetail.run.status} / snapshot {formatDate(workbench.selectedRunDetail.latest_snapshot?.captured_at ?? null)}</p>
+                <dl className="story-stats" data-testid="story-run-playback-stats">
+                  <div><dt>Artifacts</dt><dd>{workbench.selectedRunDetail.artifacts.length}</dd></div>
+                  <div><dt>Events</dt><dd>{workbench.selectedRunDetail.events.length}</dd></div>
+                  <div><dt>Snapshots</dt><dd>{workbench.selectedRunDetail.stage_snapshots.length}</dd></div>
+                  <div><dt>Quality</dt><dd>{playbackReview?.quality_score ?? 0}</dd></div>
+                  <div><dt>Reader pull</dt><dd>{playbackReview?.semantic_review?.metrics.reader_pull_score ?? 0}</dd></div>
                 </dl>
-                {playbackFailureMessage || selectedRunDetail.run.status === 'failed' ? (
+                <div className="story-tag-row">
+                  <span className="story-tag" data-testid="story-playback-structural-gate">Structural gate: {playbackReview?.structural_gate_passed ? 'pass' : 'blocked'}</span>
+                  <span className="story-tag" data-testid="story-playback-semantic-gate">Semantic gate: {playbackReview?.semantic_gate_passed ? 'pass' : 'blocked'}</span>
+                  <span className="story-tag" data-testid="story-playback-publish-gate">Publish gate: {playbackReview?.publish_gate_passed ? 'pass' : 'blocked'}</span>
+                </div>
+
+                <ul className="story-issue-list" data-testid="playback-stage-timeline">
+                  {workbench.selectedRunDetail.run.stages.map((stage) => (
+                    <li key={`${stage.name}-${stage.started_at}`} className="story-chapter-card">
+                      <div className="story-chapter-card__header">
+                        <strong>{stage.name}</strong>
+                        <StatusPill tone={stageTone(stage)}>{stage.status}</StatusPill>
+                      </div>
+                      <p>{stage.failure_code ? `${stage.name}: ${stage.failure_code}` : `${stage.name}: ${stage.status}`}</p>
+                    </li>
+                  ))}
+                </ul>
+
+                {workbench.selectedRunDetail.failure_message || workbench.selectedRunDetail.run.status === 'failed' ? (
                   <div className="story-notes" data-testid="story-run-failure">
                     <h3>Run failure</h3>
-                    <p>
-                      Failed stage: {playbackFailedStage ?? 'unknown'}
-                      {selectedRunDetail.failure_code ? ` / ${selectedRunDetail.failure_code}` : ''}
-                    </p>
-                    <p>{playbackFailureMessage ?? 'No failure message recorded.'}</p>
-                    <p>
-                      Manuscript preserved:{' '}
-                      {playbackManuscriptPreserved === false ? 'no' : 'yes'}
-                    </p>
-                    <p>Debug artifacts: {playbackFailureArtifacts.length}</p>
-                    {playbackFailureArtifacts.length ? (
+                    <p>Failed stage: {workbench.selectedRunDetail.failed_stage ?? 'unknown'}{workbench.selectedRunDetail.failure_code ? ` / ${workbench.selectedRunDetail.failure_code}` : ''}</p>
+                    <p>{workbench.selectedRunDetail.failure_message ?? 'No failure message recorded.'}</p>
+                    <p>Manuscript preserved: {workbench.selectedRunDetail.manuscript_preserved === false ? 'no' : 'yes'}</p>
+                    <p>Debug artifacts: {workbench.selectedRunDetail.failure_artifacts?.length ?? 0}</p>
+                    {workbench.selectedRunDetail.failure_artifacts?.length ? (
                       <ul>
-                        {playbackFailureArtifacts.slice(-3).map((artifact) => (
-                          <li key={artifact.artifact_id}>
-                            {artifact.kind} v{artifact.version} / {artifact.source_provider}
-                          </li>
+                        {workbench.selectedRunDetail.failure_artifacts.slice(-3).map((artifact) => (
+                          <li key={artifact.artifact_id}>{artifact.kind} v{artifact.version} / {artifact.source_provider}</li>
                         ))}
                       </ul>
                     ) : null}
                   </div>
                 ) : null}
-                {playbackRunEvent ? (
-                  <p>
-                    Latest playback event: {playbackRunEvent.event_type}
-                    {playbackRunEvent.stage_name ? ` / ${playbackRunEvent.stage_name}` : ''}
-                  </p>
-                ) : null}
-                <ul className="story-issue-list">
-                  {selectedRunDetail.run.stages.map((stage) => (
-                    <li key={stage.name + stage.started_at} className="story-chapter-card">
-                      <div className="story-chapter-card__header">
-                        <strong>{stage.name}</strong>
-                        <StatusPill
-                          tone={
-                            stage.status === 'completed'
-                              ? 'healthy'
-                              : stage.status === 'failed'
-                                ? 'offline'
-                                : 'running'
-                          }
-                        >
-                          {stage.status}
-                        </StatusPill>
-                      </div>
-                      <p>{stageStatusLabel(stage)}</p>
-                    </li>
-                  ))}
-                </ul>
-                <div className="story-memory-grid">
-                  <article className="story-memory-card" data-testid="story-playback-structural-gate">
-                    <h3>Structural gate</h3>
-                    <p>{playbackStructuralGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                  <article className="story-memory-card" data-testid="story-playback-semantic-gate">
-                    <h3>Semantic gate</h3>
-                    <p>{playbackSemanticGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                  <article className="story-memory-card" data-testid="story-playback-publish-gate">
-                    <h3>Publish gate</h3>
-                    <p>{playbackPublishGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Blockers</h3>
-                    <p>{playbackBlockingIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Semantic blockers</h3>
-                    <p>{playbackSemanticBlockingIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Relationship debt</h3>
-                    <p>{playbackRelationshipDebtIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Hook debt</h3>
-                    <p>{playbackHookDebtIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Unresolved hooks</h3>
-                    <p>{playbackUnresolvedHooks.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Overdue payoffs</h3>
-                    <p>{playbackOverduePayoffs.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Strand gaps</h3>
-                    <p>{playbackStrandGaps}</p>
-                  </article>
-                </div>
-              </div>
-            ) : null}
-
-            {artifactHistory.length ? (
-              <div className="story-notes">
-                <h3>Artifact history</h3>
-                <ul>
-                  {artifactHistory.slice(-4).reverse().map((entry) => (
-                    <li key={entry.artifact_id}>
-                      {entry.kind} v{entry.version} / {entry.source_provider} /{' '}
-                      {formatDate(entry.generated_at)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </Panel>
-
-          <Panel
-            title="Continuity / Pacing"
-            eyebrow="Stage 4"
-            testId="story-review-panel"
-          >
-            {workspace ? (
-              <div className="story-review" data-testid="story-review-summary">
-                <div className="story-review__summary">
-                  <StatusPill tone={reviewTone(publishGatePassed)}>
-                    {publishGatePassed ? 'publish ready' : canReview ? 'revision needed' : 'locked'}
-                  </StatusPill>
-                  <strong data-testid="story-review-score">{review?.quality_score ?? 0}</strong>
-                </div>
-
-                <div className="story-workflow__actions">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void reviewStory()}
-                    disabled={!activeStory || isBusy || !canReview}
-                    data-testid="story-review"
-                  >
-                    Review story
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => void reviseStory()}
-                    disabled={!activeStory || isBusy || !canReview}
-                    data-testid="story-revise"
-                  >
-                    Revise
-                  </Button>
-                </div>
-
-                <p className="story-review__copy">
-                  {review?.summary ??
-                    'Run the review to score continuity, pacing, hooks, and drift signals.'}
-                </p>
-
-                {selectedRunDetail ? (
-                  <p className="story-review__copy">
-                    当前 Stage 4 展示的是最新 mutable workspace；上方 Run playback 展示的是所选 run 的 immutable snapshot。
-                  </p>
-                ) : null}
-
-                <dl className="story-stats">
-                  <div>
-                    <dt>Continuity</dt>
-                    <dd>{structuralReview?.metrics?.continuity_score ?? 0}</dd>
-                  </div>
-                  <div>
-                    <dt>Pacing</dt>
-                    <dd>{structuralReview?.metrics?.pacing_score ?? 0}</dd>
-                  </div>
-                  <div>
-                    <dt>Reader pull</dt>
-                    <dd>{semanticReview?.metrics?.reader_pull_score ?? 0}</dd>
-                  </div>
-                  <div>
-                    <dt>Blockers</dt>
-                    <dd>{blockingReviewIssues.length}</dd>
-                  </div>
-                </dl>
-
-                <div className="story-memory-grid">
-                  <article className="story-memory-card" data-testid="story-structural-gate">
-                    <h3>Structural gate</h3>
-                    <p>{structuralGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                  <article className="story-memory-card" data-testid="story-semantic-gate">
-                    <h3>Semantic gate</h3>
-                    <p>{semanticGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                  <article className="story-memory-card" data-testid="story-publish-gate">
-                    <h3>Publish gate</h3>
-                    <p>{publishGatePassed ? 'pass' : 'blocked'}</p>
-                  </article>
-                </div>
-
-                <div className="story-memory-grid" data-testid="story-debt-signals">
-                  <article className="story-memory-card">
-                    <h3>Relationship debt</h3>
-                    <p data-testid="story-relationship-debt-count">
-                      {relationshipDebtIssues.length}
-                    </p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Hook payoff debt</h3>
-                    <p data-testid="story-hook-debt-count">{hookDebtIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Unresolved promises</h3>
-                    <p>{unresolvedPromiseEntries.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Overdue payoffs</h3>
-                    <p>{overduePayoffEntries.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Strand gaps</h3>
-                    <p>{activeStrandGaps}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Semantic blockers</h3>
-                    <p>{semanticBlockingIssues.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Relationship states</h3>
-                    <p>{workspace.memory.relationship_states.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Unresolved hooks</h3>
-                    <p>{unresolvedHookEntries.length}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>Plot clarity</h3>
-                    <p>{semanticReview?.metrics?.plot_clarity_score ?? 0}</p>
-                  </article>
-                  <article className="story-memory-card">
-                    <h3>OOC risk</h3>
-                    <p>{semanticReview?.metrics?.ooc_risk_score ?? 0}</p>
-                  </article>
-                </div>
-
-                {highlightedDebtIssues.length > 0 ? (
-                  <div className="story-notes" data-testid="story-debt-issue-list">
-                    <h3>Debt signals</h3>
-                    <ul>
-                      {highlightedDebtIssues.slice(0, 6).map((issue) => (
-                        <li key={issue.code + issue.message}>
-                          {issue.code}: {issue.message}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-
-                {(unresolvedPromiseEntries.length > 0 ||
-                  semanticBlockingIssues.length > 0 ||
-                  activeStrandGaps > 0) ? (
-                  <div className="story-notes" data-testid="story-quality-timeline">
-                    <h3>Quality timeline</h3>
-                    <ul>
-                      {unresolvedPromiseEntries.slice(0, 4).map((entry) => (
-                        <li key={entry.promise_id}>
-                          promise {entry.chapter_number}: {entry.promise}
-                        </li>
-                      ))}
-                      {semanticBlockingIssues.slice(0, 4).map((issue) => (
-                        <li key={issue.code + issue.message}>
-                          semantic {issue.code}: {issue.message}
-                        </li>
-                      ))}
-                      {activeStrandGaps > 0 ? (
-                        <li>strand gap: {activeStrandGaps} line(s) need reactivation.</li>
-                      ) : null}
-                    </ul>
-                  </div>
-                ) : null}
-
-                <ul className="story-issue-list" data-testid="story-issue-list">
-                  {review?.issues.length ? (
-                    review.issues.map((issue) => (
-                      <li key={issue.code + issue.message} className={`story-issue story-issue--${issue.severity}`}>
-                        <div className="story-issue__header">
-                          <strong>{issue.code}</strong>
-                          <StatusPill tone={issue.severity === 'blocker' ? 'offline' : 'degraded'}>
-                            {issue.severity}
-                          </StatusPill>
-                        </div>
-                        <p>{issue.message}</p>
-                        {issue.suggestion ? <small>{issue.suggestion}</small> : null}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="story-empty">
-                      {canReview ? 'No blocking continuity issues.' : 'Draft chapters before review.'}
-                    </li>
-                  )}
-                </ul>
-
-                {workspace.revision_notes.length > 0 ? (
-                  <div className="story-notes">
-                    <h3>Revision notes</h3>
-                    <ul>
-                      {workspace.revision_notes.map((note) => (
-                        <li key={note}>{note}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
               </div>
             ) : (
-              <p className="story-empty">
-                Review the manuscript to surface continuity issues and publish readiness.
-              </p>
+              <div className="story-empty">Select a run from the history to inspect immutable evidence.</div>
             )}
           </Panel>
         </div>

@@ -6,7 +6,7 @@ service port interface for text vectorization.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
     EmbeddingError,
@@ -90,7 +90,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
                 model=self._model,
                 input=text,
             )
-            return cast(list[float], response.data[0].embedding)
+            return response.data[0].embedding
         except Exception as e:
             raise EmbeddingError(f"Failed to generate embedding: {e}") from e
 
@@ -121,7 +121,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
                 model=self._model,
                 input=valid_texts,
             )
-            return [cast(list[float], item.embedding) for item in response.data]
+            return [item.embedding for item in response.data]
         except Exception as e:
             raise EmbeddingError(f"Failed to generate batch embeddings: {e}") from e
 

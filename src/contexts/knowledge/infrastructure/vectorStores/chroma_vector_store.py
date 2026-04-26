@@ -211,7 +211,7 @@ class ChromaVectorStore(IVectorStore):
         try:
             client = self._get_client()
             coll = client.get_or_create_collection(collection)
-            return cast(int, coll.count())
+            return coll.count()
         except Exception as e:
             raise ConnectionError(f"Failed to count documents: {e}") from e
 

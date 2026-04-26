@@ -41,17 +41,14 @@ from src.shared.infrastructure.middleware import (
 def custom_openapi(app: FastAPI) -> dict:
     """Generate the canonical OpenAPI schema."""
     if app.openapi_schema:
-        return cast(dict[str, Any], app.openapi_schema)
+        return app.openapi_schema
 
-    openapi_schema = cast(
-        dict[str, Any],
-        get_openapi(
-            title=app.title,
-            version=app.version,
-            description=app.description,
-            routes=app.routes,
-            tags=app.openapi_tags,
-        ),
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+        tags=app.openapi_tags,
     )
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
@@ -66,7 +63,7 @@ def custom_openapi(app: FastAPI) -> dict:
         {"url": "http://localhost:8000/api/v1", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
-    return cast(dict[str, Any], app.openapi_schema)
+    return app.openapi_schema
 
 
 def _configure_optional_honcho() -> None:

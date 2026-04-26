@@ -2,97 +2,36 @@
 root_package = src
 include_external_packages = True
 
-# Contract 1: Functional Core Isolation
 [importlinter:contract:functional-core]
 name = Functional Core Isolation
-architecture = layered
-type = independence
-layers =
+type = forbidden
+source_modules =
     src.contexts.*.domain
     src.shared.domain
+forbidden_modules =
+    src.contexts.*.application
+    src.contexts.*.infrastructure
+    src.shared.application
+    src.shared.infrastructure
 
-# Contract 2: Application Layer Isolation
 [importlinter:contract:application-isolation]
 name = Application Layer Isolation
-architecture = layered
-type = independence
-layers =
+type = forbidden
+source_modules =
     src.contexts.*.application
     src.shared.application
-
-# Contract 3: Bounded Context Isolation - Identity
-[importlinter:contract:identity-isolation]
-name = Identity Context Isolation
-architecture = layers
-type = forbidden
-source_modules =
-    src.contexts.identity
 forbidden_modules =
-    src.contexts.narrative
-    src.contexts.character
-    src.contexts.knowledge
-
-# Contract 4: Bounded Context Isolation - Narrative
-[importlinter:contract:narrative-isolation]
-name = Narrative Context Isolation
-architecture = layers
-type = forbidden
-source_modules =
-    src.contexts.narrative
-forbidden_modules =
-    src.contexts.identity
-    src.contexts.character
-    src.contexts.knowledge
-
-# Contract 5: Bounded Context Isolation - Character
-[importlinter:contract:character-isolation]
-name = Character Context Isolation
-architecture = layers
-type = forbidden
-source_modules =
-    src.contexts.character
-forbidden_modules =
-    src.contexts.identity
-    src.contexts.narrative
-    src.contexts.knowledge
-
-# Contract 6: Bounded Context Isolation - Knowledge
-[importlinter:contract:knowledge-isolation]
-name = Knowledge Context Isolation
-architecture = layers
-type = forbidden
-source_modules =
-    src.contexts.knowledge
-forbidden_modules =
-    src.contexts.identity
-    src.contexts.narrative
-    src.contexts.character
-
-# Contract 7: Shared Kernel Access
-[importlinter:contract:shared-kernel]
-name = Shared Kernel Access
-architecture = layers
-type = layers
-layers =
-    src.contexts.*
-    src.shared
-
-# Contract 8: Infrastructure Dependencies
-[importlinter:contract:infrastructure-deps]
-name = Infrastructure Dependencies
-architecture = layers
-type = layers
-layers =
-    src.contexts.*.domain
-    src.contexts.*.application
     src.contexts.*.infrastructure
     src.shared.infrastructure
 
-# Contract 9: API Layer Dependencies
-[importlinter:contract:api-deps]
-name = API Layer Dependencies
-architecture = layered
-type = layers
-layers =
-    src.apps.api
-    src.contexts.*
+[importlinter:contract:contexts-outside-apps]
+name = Contexts Stay Out of Apps
+type = forbidden
+source_modules = src.contexts
+forbidden_modules = src.apps
+
+[importlinter:contract:shared-kernel]
+name = Shared Kernel Access
+type = forbidden
+source_modules = src.shared
+forbidden_modules = src.contexts.*

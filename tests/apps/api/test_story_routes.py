@@ -34,6 +34,15 @@ def test_story_route_lifecycle(canonical_client: Any) -> None:
     assert workspace_response.json()["workspace"]["story"]["id"] == story_id
     assert workspace_response.json()["workspace"]["run_history"] == []
     assert workspace_response.json()["workspace"]["artifact_history"] == []
+    assert (
+        workspace_response.json()["workspace"]["workspace_context"]["workspace_kind"]
+        == "unknown"
+    )
+    assert (
+        workspace_response.json()["workspace"]["recommended_next_action"]["action"]
+        == "generate_blueprint"
+    )
+    assert workspace_response.json()["workspace"]["evidence_summary"]["zero_warning"] is True
 
     blueprint_response = canonical_client.post(f"/api/v1/story/{story_id}/blueprint")
     assert blueprint_response.status_code == 200
@@ -63,7 +72,8 @@ def test_story_route_lifecycle(canonical_client: Any) -> None:
 
     revise_response = canonical_client.post(f"/api/v1/story/{story_id}/revise")
     assert revise_response.status_code == 200
-    assert revise_response.json()["revision_notes"]
+    assert isinstance(revise_response.json()["revision_notes"], list)
+    assert revise_response.json()["report"]["publish_gate_passed"] is True
 
     export_response = canonical_client.post(f"/api/v1/story/{story_id}/export")
     assert export_response.status_code == 200
@@ -160,3 +170,6 @@ def test_story_run_resource_executes_pipeline_for_existing_story(
     assert run_payload["latest_snapshot"] is not None
     assert run_payload["stage_snapshots"]
     assert any(artifact["kind"] == "review" for artifact in run_payload["artifacts"])
+    assert run_payload["provenance"]["run_id"] == run_id
+    assert run_payload["publish_verdict"]["warning_count"] == 0
+    assert run_payload["evidence_status"]["zero_warning"] is True

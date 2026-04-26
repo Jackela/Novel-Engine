@@ -95,4 +95,4 @@ def handle_narrative_errors(func: F) -> F:
 
 def handle_result_error(operation: str | None = None) -> Callable[[F], F]:
     """Result error handling decorator with operation name."""
-    return cast(Callable[[F], F], base_handle_result_error(operation))
+    return base_handle_result_error(operation)

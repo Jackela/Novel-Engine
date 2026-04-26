@@ -6,6 +6,7 @@ Ensure DATABASE_URL environment variable is set or use pytest-postgresql.
 
 # mypy: disable-error-code=misc
 
+import os
 from collections.abc import AsyncIterator
 from uuid import UUID, uuid4
 
@@ -21,7 +22,12 @@ from src.contexts.narrative.infrastructure.repositories.postgres_scene_repositor
 )
 
 # Database configuration for tests
-TEST_DB_URL = "postgresql://postgres:postgres@localhost:5432/test_novel_engine"
+TEST_DB_URL = os.getenv(
+    "POSTGRES_TEST_URL",
+    "postgresql://postgres:postgres@localhost:5432/test_novel_engine",
+)
+
+pytestmark = pytest.mark.postgres_integration
 
 
 @pytest_asyncio.fixture
@@ -31,6 +37,7 @@ async def db_connection() -> AsyncIterator[Connection]:
     Yields a connection that can be used for repository tests.
     """
     conn = await asyncpg.connect(TEST_DB_URL)
+    await conn.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
 
     # Ensure tables exist
     await conn.execute(

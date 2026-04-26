@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
+from typing import Any, cast
 
+import httpx
 import pytest
 
 from src.contexts.ai.application.ports.text_generation_port import (
@@ -26,6 +29,15 @@ from src.contexts.ai.infrastructure.providers.unconfigured_text_generation_provi
     UnconfiguredTextGenerationProvider,
 )
 from src.shared.infrastructure.config.settings import NovelEngineSettings
+
+
+@pytest.fixture(autouse=True)
+def isolate_provider_factory_tests_from_repo_dotenv(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Keep provider factory tests deterministic even when the repo has a local .env.local."""
+    monkeypatch.chdir(tmp_path)
 
 
 def test_factory_honors_explicit_mock_provider_in_testing(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -124,7 +136,29 @@ def test_dashscope_qwen35_uses_multimodal_native_payload() -> None:
         {"text": "system\nReturn valid JSON only. Output schema: {\"ok\": {\"type\": \"boolean\"}}"}
     ]
     assert payload["parameters"]["enable_thinking"] is False
-    assert "result_format" not in payload["parameters"]
+    assert payload["parameters"]["result_format"] == "message"
+    assert payload["parameters"]["response_format"] == {"type": "json_object"}
+
+
+def test_dashscope_text_generation_transport_requests_json_object_output() -> None:
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key",
+        model="qwen-plus",
+        transport_mode="text_generation",
+    )
+    task = TextGenerationTask(
+        step="bible",
+        system_prompt="system",
+        user_prompt="user",
+        response_schema={"ok": {"type": "boolean"}},
+        temperature=0.2,
+        metadata={},
+    )
+
+    payload = provider._build_request_payload(task)
+
+    assert payload["parameters"]["result_format"] == "message"
+    assert payload["parameters"]["response_format"] == {"type": "json_object"}
 
 
 def test_dashscope_responses_transport_normalizes_base_and_payload() -> None:
@@ -160,3 +194,59 @@ def test_dashscope_provider_extracts_json_from_code_fence() -> None:
     )
 
     assert parsed == {"ok": True}
+
+
+def test_dashscope_provider_extracts_single_quoted_python_dict() -> None:
+    parsed = DashScopeTextGenerationProvider._parse_json_object("{'ok': True, 'count': 2}")
+
+    assert parsed == {"ok": True, "count": 2}
+
+
+def test_dashscope_provider_extracts_single_dict_from_array_wrapper() -> None:
+    parsed = DashScopeTextGenerationProvider._parse_json_object('[{"ok": true}]')
+
+    assert parsed == {"ok": True}
+
+
+def test_dashscope_provider_extracts_balanced_object_from_prefixed_text() -> None:
+    parsed = DashScopeTextGenerationProvider._parse_json_object(
+        "Here is the payload you asked for:\n{\"ok\": true, \"items\": [1, 2, 3]}\nUse it carefully."
+    )
+
+    assert parsed == {"ok": True, "items": [1, 2, 3]}
+
+
+def test_dashscope_provider_uses_extended_timeout_for_longform_outline_steps() -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    task = TextGenerationTask(
+        step="outline",
+        system_prompt="system",
+        user_prompt="user",
+        response_schema={"chapters": {"type": "array"}},
+    )
+
+    assert provider._timeout_for_step(task) == 180.0
+
+
+def test_dashscope_provider_reports_timeout_with_step_specific_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    task = TextGenerationTask(
+        step="outline",
+        system_prompt="system",
+        user_prompt="user",
+        response_schema={"chapters": {"type": "array"}},
+    )
+
+    class _TimeoutClient:
+        async def post(self, *args: object, **kwargs: object) -> object:
+            raise httpx.ReadTimeout("outline timed out")
+
+    monkeypatch.setattr(provider, "_get_client", cast(Any, lambda: _TimeoutClient()))
+
+    with pytest.raises(
+        TextGenerationProviderError,
+        match="timed out after 180s",
+    ):
+        asyncio.run(provider.generate_structured(task))

@@ -37,24 +37,26 @@ class HybridPublicationGate:
             blocked_by.append("semantic")
 
         issues = list(structural_review.issues) + list(semantic_review.issues)
+        warning_count = sum(1 for issue in issues if issue.severity == "warning")
         quality_score = round(
             (structural_review.quality_score + semantic_review.semantic_score) / 2
         )
         publish_gate_passed = (
             structural_gate_passed
             and semantic_gate_passed
+            and warning_count == 0
             and not any(issue.severity == "blocker" for issue in issues)
             and semantic_review.metrics.semantic_score >= MIN_SEMANTIC_SCORE
             and semantic_review.metrics.reader_pull_score >= MIN_READER_PULL_SCORE
             and semantic_review.metrics.plot_clarity_score >= MIN_PLOT_CLARITY_SCORE
         )
         if publish_gate_passed:
-            summary = "Story passes the hybrid publication gate."
+            summary = "Story passes the hybrid publication gate with zero unresolved warnings."
         else:
             summary = (
                 "Story is blocked by "
                 + ", ".join(blocked_by or ["hybrid quality checks"])
-                + "."
+                + (" and unresolved warnings." if warning_count else ".")
             )
 
         return HybridReviewReport(
