@@ -4548,7 +4548,7 @@ async def test_late_arc_keeper_pool_excludes_titled_antagonist_variants() -> Non
     active_characters = story_memory.get("active_characters", [])
     if not isinstance(active_characters, list):
         active_characters = []
-    for candidate in ("Grand Chancellor Vane", "Echo", "Madam Qiao"):
+    for candidate in ("Grand Chancellor Vane", "The Silencer Guard", "Echo", "Madam Qiao"):
         if candidate not in active_characters:
             active_characters.append(candidate)
     story_memory["active_characters"] = active_characters
@@ -4609,7 +4609,13 @@ async def test_late_arc_keeper_pool_excludes_titled_antagonist_variants() -> Non
     )
 
     assert keeper_pool
-    assert keeper_pool[0] not in {"Lin Yuan", "High Scribe Vane", "Grand Chancellor Vane", "Vane"}
+    assert keeper_pool[0] not in {
+        "Lin Yuan",
+        "High Scribe Vane",
+        "Grand Chancellor Vane",
+        "The Silencer Guard",
+        "Vane",
+    }
     assert keeper_pool[0] in {"Echo", "Madam Qiao"}
 
 
@@ -5169,6 +5175,69 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
             assert "}" not in plan[field]
 
 
+def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_actions_explicit() -> None:
+    revision_service = StoryRevisionService(ChapterDraftingService())
+
+    sacrifice = revision_service._default_terminal_arc_phase_plan(
+        phase="sacrifice",
+        chapter_number=16,
+        protagonist="Ari",
+        primary_keeper="The Silencer Guard",
+        supporting_witness="Echo",
+        public_witness="the witness line",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="The Witness Line",
+        confirmation_trigger="the confirming knock from the old rule",
+    )
+    aftermath = revision_service._default_terminal_arc_phase_plan(
+        phase="aftermath",
+        chapter_number=17,
+        protagonist="Ari",
+        primary_keeper="The Silencer Guard",
+        supporting_witness="Echo",
+        public_witness="the witness line",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="The Witness Line",
+        confirmation_trigger="the confirming knock from the old rule",
+    )
+    public_reckoning = revision_service._default_terminal_arc_phase_plan(
+        phase="public_reckoning",
+        chapter_number=19,
+        protagonist="Ari",
+        primary_keeper="The Silencer Guard",
+        supporting_witness="Echo",
+        public_witness="the witness line",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="The Witness Line",
+        confirmation_trigger="the confirming knock from the old rule",
+    )
+
+    sacrifice_summary = sacrifice["summary"].lower()
+    sacrifice_objective = sacrifice["objective"].lower()
+    aftermath_summary = aftermath["summary"].lower()
+    aftermath_objective = aftermath["objective"].lower()
+    public_summary = public_reckoning["summary"].lower()
+    public_objective = public_reckoning["objective"].lower()
+
+    for text in (
+        sacrifice_summary,
+        sacrifice_objective,
+        aftermath_summary,
+        aftermath_objective,
+        public_summary,
+        public_objective,
+    ):
+        assert "the silencer guard" not in text
+        assert "the witness line" not in text
+        assert "a witness" not in text
+        assert "in full view of ," not in text
+
+    assert "marked token" in sacrifice_summary
+    assert "half-step back" in aftermath_objective or "visible retreat" in aftermath["hook"].lower()
+    assert "takes ari (vessel) by the still hand and presses it to the ledger" in public_summary or "presses it to the ledger" in public_summary
+    assert "collaboration stays physical" in public_summary or "physically touch" in public_objective
+
+
 def test_primary_antagonist_label_uses_blueprint_antagonist_name() -> None:
     revision_service = StoryRevisionService(ChapterDraftingService())
     ctx = SimpleNamespace(
@@ -5374,7 +5443,8 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "feels" not in closure["summary"].lower()
     assert "the prose makes clear" not in aftermath["summary"].lower()
     assert "the prose makes clear" not in closure["summary"].lower()
-    assert "quiet private beat alone" in aftermath["summary"].lower()
+    assert "marked token reaches" in aftermath["summary"].lower()
+    assert "jars" in aftermath["summary"].lower()
     assert "memory-threaded" in aftermath["summary"].lower()
     assert "voice" in aftermath["summary"].lower()
     assert "rain" in aftermath["summary"].lower()

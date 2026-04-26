@@ -55,6 +55,36 @@ GENERIC_TERMINAL_PLACEHOLDERS = {
     "witness",
 }
 
+GENERIC_TERMINAL_ROLE_TITLES = {
+    "guard",
+    "keeper",
+    "witness",
+    "silencer",
+    "vessel",
+    "echo",
+    "line",
+    "circle",
+    "clerk",
+    "scribe",
+    "archivist",
+    "warden",
+    "sentinel",
+    "steward",
+    "speaker",
+    "confessor",
+    "record",
+    "ledger",
+    "oath",
+    "rite",
+    "banner",
+    "watch",
+    "herald",
+    "custodian",
+    "seal",
+    "rail",
+    "judge",
+}
+
 
 @dataclass(frozen=True)
 class TerminalArcSemanticFrame:
@@ -77,13 +107,30 @@ class TerminalArcSemanticFrame:
                 normalized
                 and normalized != self.primary_keeper
                 and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
             ):
                 return normalized
         for fallback in (self.continuity_anchor, self.primary_keeper):
             normalized = " ".join(str(fallback).split()).strip()
-            if normalized and not StoryRevisionService._is_generic_terminal_placeholder(normalized):
+            if (
+                normalized
+                and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
+            ):
                 return normalized
-        return ""
+        return next(
+            (
+                normalized
+                for normalized in (
+                    " ".join(str(self.continuity_anchor).split()).strip(),
+                    " ".join(str(self.primary_keeper).split()).strip(),
+                )
+                if normalized
+                and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
+            ),
+            "",
+        )
 
     @property
     def public_witness(self) -> str:
@@ -93,17 +140,33 @@ class TerminalArcSemanticFrame:
                 normalized
                 and normalized not in {self.primary_keeper, self.supporting_witness}
                 and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
             ):
                 return normalized
         for fallback in (self.supporting_witness, self.continuity_anchor, self.primary_keeper):
             normalized = " ".join(str(fallback).split()).strip()
             if (
                 normalized
-                and normalized not in {self.primary_keeper, self.supporting_witness}
+                and normalized != self.supporting_witness
                 and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
             ):
                 return normalized
-        return self.primary_keeper or self.continuity_anchor or ""
+        return next(
+            (
+                normalized
+                for normalized in (
+                    " ".join(str(self.supporting_witness).split()).strip(),
+                    " ".join(str(self.continuity_anchor).split()).strip(),
+                    " ".join(str(self.primary_keeper).split()).strip(),
+                )
+                if normalized
+                and normalized != self.supporting_witness
+                and not StoryRevisionService._is_generic_terminal_placeholder(normalized)
+                and not StoryRevisionService._is_generic_terminal_role_title(normalized)
+            ),
+            "",
+        )
 
 
 class StoryRevisionService:
@@ -904,6 +967,7 @@ class StoryRevisionService:
                     normalized
                     and normalized not in exclusions
                     and not self._is_generic_terminal_placeholder(normalized)
+                    and not self._is_generic_terminal_role_title(normalized)
                 ):
                     return normalized
             fallback_normalized = " ".join(str(fallback).split()).strip()
@@ -911,8 +975,20 @@ class StoryRevisionService:
                 fallback_normalized
                 and fallback_normalized not in exclusions
                 and not self._is_generic_terminal_placeholder(fallback_normalized)
+                and not self._is_generic_terminal_role_title(fallback_normalized)
             ):
                 return fallback_normalized
+            return ""
+
+        def display_terminal_name(*candidates: str) -> str:
+            for candidate in candidates:
+                normalized = " ".join(str(candidate).split()).strip()
+                if (
+                    normalized
+                    and not self._is_generic_terminal_placeholder(normalized)
+                    and not self._is_generic_terminal_role_title(normalized)
+                ):
+                    return normalized
             return ""
 
         living_anchor = distinct_terminal_name(
@@ -1015,17 +1091,70 @@ class StoryRevisionService:
             )
         if not handoff_recipient:
             handoff_recipient = sacrifice_witness or visible_witness or second_witness or living_anchor or primary_keeper
+        living_anchor = display_terminal_name(
+            living_anchor,
+            primary_keeper,
+            continuity_anchor,
+            supporting_witness,
+            public_witness,
+            protagonist,
+        ) or protagonist or primary_keeper or continuity_anchor or supporting_witness or public_witness
+        primary_keeper = display_terminal_name(
+            primary_keeper,
+            living_anchor,
+            continuity_anchor,
+            supporting_witness,
+            public_witness,
+            protagonist,
+        ) or protagonist or living_anchor or continuity_anchor
+        sacrifice_witness = display_terminal_name(
+            sacrifice_witness,
+            handoff_recipient,
+            living_anchor,
+            primary_keeper,
+            continuity_anchor,
+            supporting_witness,
+            public_witness,
+            protagonist,
+        ) or protagonist or primary_keeper or living_anchor
+        visible_witness = display_terminal_name(
+            visible_witness,
+            supporting_witness,
+            continuity_anchor,
+            living_anchor,
+            primary_keeper,
+            public_witness,
+            protagonist,
+        ) or protagonist or primary_keeper or living_anchor
+        second_witness = display_terminal_name(
+            second_witness,
+            visible_witness,
+            supporting_witness,
+            continuity_anchor,
+            living_anchor,
+            primary_keeper,
+            protagonist,
+        ) or protagonist or primary_keeper or visible_witness or living_anchor
+        handoff_recipient = display_terminal_name(
+            handoff_recipient,
+            sacrifice_witness,
+            visible_witness,
+            second_witness,
+            living_anchor,
+            primary_keeper,
+            protagonist,
+        ) or protagonist or primary_keeper or sacrifice_witness or living_anchor
         if phase == "sacrifice":
             return {
                 "summary": (
                     f"{protagonist} makes the final choice in full view of {sacrifice_witness}, "
-                    f"{protagonist} places a marked token into {handoff_recipient or sacrifice_witness}'s hand before stepping away, and the next duty settles on {handoff_recipient or sacrifice_witness} through visible preparation."
+                    f"{protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty settles on {handoff_recipient} through visible preparation."
                 ),
                 "objective": (
-                    f"{protagonist}'s final choice lands in full view of {sacrifice_witness}, {protagonist} places a marked token into {handoff_recipient or sacrifice_witness}'s hand before stepping away, and the next duty moves to {handoff_recipient or sacrifice_witness} through visible preparation."
+                    f"{protagonist}'s final choice lands in full view of {sacrifice_witness}, {protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty moves to {handoff_recipient} through visible preparation."
                 ),
                 "hook": (
-                    f"{confirmation_trigger} confirms the old life cannot return unchanged, and the marked token reaching {handoff_recipient or sacrifice_witness} makes the handoff visible."
+                    f"{confirmation_trigger} confirms the old life cannot return unchanged, and the marked token reaching {handoff_recipient} makes the handoff visible."
                 ),
                 "focus_character": protagonist,
                 "relationship_target": self._resolve_terminal_relationship_target(
@@ -1041,15 +1170,15 @@ class StoryRevisionService:
         if phase == "aftermath":
             return {
                 "summary": (
-                    f"After the sacrifice, {primary_keeper} gets one quiet private beat alone while rain taps the eaves and the rail stays cold in the palm. The confirming knock holds the room still, the seal in the frame cracks one line wider, and a draft slams the shutters before {primary_keeper} can move again. "
+                    f"After the sacrifice, the marked token reaches {primary_keeper} at the first private break while rain taps the eaves and the rail stays cold in the palm. The confirming knock jars {primary_keeper}'s hand off the rail, the seal in the frame cracks one line wider, and a draft slams the shutters before {primary_keeper} can take another step. "
                     f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. A brief memory-threaded echo of {protagonist}'s voice guides {primary_keeper} to the next choice, and {visible_witness} cuts in with one blunt question while the public record keeps the city's debt ahead of private grief. "
                     f"{confirmation_trigger} then proves the old life is gone for good."
                 ),
                 "objective": (
                     f"{primary_keeper} moves from grief to duty through one failed action and one quiet breath, keeps {vessel_label} heavy and unresponsive, and lets any late movement read as a residual shiver, lamp flicker, or settling dust. "
-                    f"The keeper's next choice stays shaped by a brief memory-threaded echo of {protagonist}'s voice, and {visible_witness}'s interruption turns the moment toward the city's debt."
+                    f"The keeper's next choice stays shaped by a brief memory-threaded echo of {protagonist}'s voice, and {visible_witness}'s interruption turns the moment toward the city's debt after the knock forces a visible half-step back."
                 ),
-                "hook": f"The accepted cost points away from private mourning and toward the buried rule tied to {motif_anchor}, while the rail gives one cold physical answer in {primary_keeper}'s hand.",
+                "hook": f"The accepted cost points away from private mourning and toward the buried rule tied to {motif_anchor}, while the rail gives one cold physical answer in {primary_keeper}'s hand and the knock forces a visible retreat.",
                 "focus_character": primary_keeper,
                 "relationship_target": self._resolve_terminal_relationship_target(
                     primary_keeper,
@@ -1083,11 +1212,12 @@ class StoryRevisionService:
             return {
                 "summary": (
                     f"Wind drives rain across the square, a loose banner snaps overhead, and a guarded figure stands under watch while the crowd keeps shifting around the still vessel. {public_sequence_clause}. "
-                    f"{primary_keeper} names the mechanism out loud and writes the final entry once while {supporting_witness or visible_witness} reacts to the chalk mark or lost name with a visible flinch before the ritual seal lands. "
+                    f"{primary_keeper} names the mechanism out loud and writes the final entry once while {supporting_witness or visible_witness} takes {vessel_label} by the still hand and presses it to the ledger before the ritual seal lands. "
+                    f"{supporting_witness or visible_witness} reacts to the chalk mark or lost name with a visible flinch, and the collaboration stays physical rather than interior. "
                     f"{vessel_label} remains a mute shape at the edge of the crowd while the burned names darken on the ledger and the lantern glass cracks once. "
                     f"By the end of the scene, one living hand is still on the record and the new order has a human shape."
                 ),
-                "objective": f"The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. {public_move_clause}, and the guarded figure faces the square while {primary_keeper} names the mechanism. {vessel_label} remains a mute shape, and {supporting_witness or visible_witness} reacts at the ledger edge.",
+                "objective": f"The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. {public_move_clause}, and the guarded figure faces the square while {primary_keeper} names the mechanism. {supporting_witness or visible_witness} must physically touch {vessel_label} before the seal lands, so the collaboration reads as an action rather than a concept. {vessel_label} remains a mute shape, and {supporting_witness or visible_witness} reacts at the ledger edge.",
                 "hook": "A fresh black seal on the ledger gives the conflict a visible shape before the city can confess what it owes in daylight, and the square feels the cost in its teeth.",
                 "focus_character": primary_keeper,
                 "relationship_target": self._resolve_terminal_relationship_target(
@@ -1209,6 +1339,7 @@ class StoryRevisionService:
             if name
             and name != protagonist
             and not self._is_symbolic_late_arc_candidate(name)
+            and not self._is_generic_terminal_role_title(name)
             and self._departure_chapter_for_name(name, departed_characters) is None
             and not self._is_restrained_late_arc_candidate(
                 ctx,
@@ -5007,6 +5138,7 @@ class StoryRevisionService:
                 cast_names=cast_names,
                 excluded_markers=excluded_markers,
             )
+            and not self._is_generic_terminal_role_title(name)
         ]
         if surviving_allies:
             return surviving_allies
@@ -5021,6 +5153,7 @@ class StoryRevisionService:
                 cast_names=cast_names,
                 excluded_markers=excluded_markers,
             )
+            and not self._is_generic_terminal_role_title(name)
         ]
         if memory_candidates:
             return memory_candidates
@@ -5046,6 +5179,7 @@ class StoryRevisionService:
                         cast_names=cast_names,
                         excluded_markers=excluded_markers,
                     )
+                    or self._is_generic_terminal_role_title(candidate)
                 ):
                     continue
                 metadata_candidates.append(candidate)
@@ -5324,9 +5458,12 @@ class StoryRevisionService:
         scores: dict[str, int] = {}
 
         def score(candidate: str, weight: int) -> None:
+            raw_candidate = " ".join(str(candidate).split()).strip()
+            if self._is_symbolic_late_arc_candidate(raw_candidate):
+                return
             normalized = self._canonicalize_character_name(
                 self._normalize_protagonist_name_drift(
-                    str(candidate).strip(),
+                    raw_candidate,
                     protagonist,
                     cast_names,
                 ),
@@ -5335,6 +5472,7 @@ class StoryRevisionService:
             if (
                 not normalized
                 or self._is_generic_terminal_placeholder(normalized)
+                or self._is_generic_terminal_role_title(normalized)
                 or self._is_symbolic_late_arc_candidate(normalized)
                 or self._departure_chapter_for_name(normalized, departed_characters)
                 is not None
@@ -5468,8 +5606,11 @@ class StoryRevisionService:
         tactical_candidates: set[str] = set()
 
         def score_grief(candidate: str, weight: int) -> None:
+            raw_candidate = " ".join(str(candidate).split()).strip()
+            if self._is_symbolic_late_arc_candidate(raw_candidate):
+                return
             normalized = self._canonicalize_character_name(
-                " ".join(str(candidate).split()).strip(),
+                raw_candidate,
                 cast_names,
             )
             if (
@@ -5478,6 +5619,7 @@ class StoryRevisionService:
                 and normalized != primary_keeper
                 and normalized != missing_sibling
                 and not self._is_symbolic_late_arc_candidate(normalized)
+                and not self._is_generic_terminal_role_title(normalized)
                 and self._departure_chapter_for_name(normalized, departed_characters) is None
                 and not self._is_restrained_late_arc_candidate(
                     ctx,
@@ -5543,6 +5685,7 @@ class StoryRevisionService:
                     and candidate != primary_keeper
                     and candidate != missing_sibling
                     and not self._is_symbolic_late_arc_candidate(candidate)
+                    and not self._is_generic_terminal_role_title(candidate)
                     and self._departure_chapter_for_name(candidate, departed_characters) is None
                     and not self._is_restrained_late_arc_candidate(
                         ctx,
@@ -5571,6 +5714,7 @@ class StoryRevisionService:
                 and candidate != missing_sibling
                 and candidate not in tactical_candidates
                 and not self._is_symbolic_late_arc_candidate(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
                 and self._departure_chapter_for_name(candidate, departed_characters) is None
                 and not self._is_restrained_late_arc_candidate(
                     ctx,
@@ -5597,6 +5741,7 @@ class StoryRevisionService:
                 and candidate != primary_keeper
                 and candidate != missing_sibling
                 and not self._is_symbolic_late_arc_candidate(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
                 and self._departure_chapter_for_name(candidate, departed_characters) is None
                 and not self._is_restrained_late_arc_candidate(
                     ctx,
@@ -5622,6 +5767,7 @@ class StoryRevisionService:
                     and candidate != primary_keeper
                     and candidate != missing_sibling
                     and not self._is_symbolic_late_arc_candidate(candidate)
+                    and not self._is_generic_terminal_role_title(candidate)
                     and self._departure_chapter_for_name(candidate, departed_characters) is None
                     and not self._is_restrained_late_arc_candidate(
                         ctx,
@@ -5635,7 +5781,16 @@ class StoryRevisionService:
                     )
                 ):
                     return candidate
-        return primary_keeper
+        return next(
+            (
+                candidate
+                for candidate in (primary_keeper, continuity_anchor, protagonist)
+                if candidate
+                and not self._is_generic_terminal_placeholder(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
+            ),
+            "",
+        )
 
     def _resolve_late_arc_public_witness(
         self,
@@ -5678,8 +5833,9 @@ class StoryRevisionService:
         def is_eligible(candidate: str) -> bool:
             return bool(
                 candidate
-                and candidate not in {protagonist, primary_keeper, supporting_witness, missing_sibling}
+                and candidate not in {protagonist, missing_sibling}
                 and not self._is_symbolic_late_arc_candidate(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
                 and self._departure_chapter_for_name(candidate, departed_characters) is None
                 and not self._is_restrained_late_arc_candidate(
                     ctx,
@@ -5694,8 +5850,11 @@ class StoryRevisionService:
             )
 
         def score(candidate: str, weight: int) -> None:
+            raw_candidate = " ".join(str(candidate).split()).strip()
+            if self._is_symbolic_late_arc_candidate(raw_candidate):
+                return
             normalized = self._canonicalize_character_name(
-                " ".join(str(candidate).split()).strip(),
+                raw_candidate,
                 cast_names,
             )
             if is_eligible(normalized):
@@ -5794,20 +5953,31 @@ class StoryRevisionService:
                 if not isinstance(entry, dict):
                     continue
                 candidate = " ".join(str(entry.get("name", "")).split()).strip()
+                if self._is_symbolic_late_arc_candidate(candidate):
+                    continue
                 if is_eligible(candidate):
                     return candidate
 
         for candidate in ctx.memory.active_characters:
+            raw_candidate = " ".join(str(candidate).split()).strip()
+            if self._is_symbolic_late_arc_candidate(raw_candidate):
+                continue
             normalized = self._canonicalize_character_name(
-                " ".join(str(candidate).split()).strip(),
+                raw_candidate,
                 cast_names,
             )
             if is_eligible(normalized):
                 return normalized
 
-        if primary_keeper and primary_keeper != supporting_witness:
-            return primary_keeper
-        return supporting_witness or primary_keeper
+        for candidate in (primary_keeper, supporting_witness, continuity_anchor, protagonist):
+            if (
+                candidate
+                and candidate != supporting_witness
+                and not self._is_generic_terminal_placeholder(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
+            ):
+                return candidate
+        return ""
 
     def _resolve_terminal_relationship_target(
         self,
@@ -5821,6 +5991,7 @@ class StoryRevisionService:
                 normalized
                 and normalized != normalized_focus
                 and not self._is_generic_terminal_placeholder(normalized)
+                and not self._is_generic_terminal_role_title(normalized)
             ):
                 return normalized
         return ""
@@ -5873,6 +6044,8 @@ class StoryRevisionService:
                 return ""
             if self._is_symbolic_late_arc_candidate(normalized):
                 return ""
+            if self._is_generic_terminal_role_title(normalized):
+                return ""
             if self._departure_chapter_for_name(normalized, departed_characters) is not None:
                 return ""
             if self._is_restrained_late_arc_candidate(
@@ -5923,7 +6096,16 @@ class StoryRevisionService:
                 if resolved:
                     return resolved
 
-        return supporting_witness or public_witness or primary_keeper
+        return next(
+            (
+                candidate
+                for candidate in (supporting_witness, public_witness, primary_keeper)
+                if candidate
+                and not self._is_generic_terminal_placeholder(candidate)
+                and not self._is_generic_terminal_role_title(candidate)
+            ),
+            "",
+        )
 
     def _resolve_late_arc_setup_candidate(
         self,
@@ -5942,15 +6124,20 @@ class StoryRevisionService:
             issue_context=issue_context,
         )
         for candidate in keeper_pool:
-            normalized = self._canonicalize_character_name(candidate, cast_names)
+            raw_candidate = " ".join(str(candidate).split()).strip()
+            if self._is_symbolic_late_arc_candidate(raw_candidate):
+                continue
+            normalized = self._canonicalize_character_name(raw_candidate, cast_names)
             if not normalized or normalized == protagonist:
+                continue
+            if self._is_generic_terminal_role_title(normalized):
                 continue
             if normalized.lower() in normalized_issue_context:
                 return normalized
 
         for candidate in keeper_pool:
             normalized = self._canonicalize_character_name(candidate, cast_names)
-            if normalized and normalized != protagonist:
+            if normalized and normalized != protagonist and not self._is_generic_terminal_role_title(normalized):
                 return normalized
         return ""
 
@@ -6167,6 +6354,21 @@ class StoryRevisionService:
     def _is_generic_terminal_placeholder(text: str) -> bool:
         normalized = " ".join(str(text).split()).strip().lower()
         return normalized in GENERIC_TERMINAL_PLACEHOLDERS
+
+    @staticmethod
+    def _is_generic_terminal_role_title(text: str) -> bool:
+        normalized = " ".join(str(text).split()).strip().lower()
+        if not normalized.startswith("the "):
+            return False
+        remainder = normalized.removeprefix("the ").strip()
+        if not remainder:
+            return True
+        tokens = {
+            token.strip(".,;:!?")
+            for token in remainder.split()
+            if token.strip(".,;:!?")
+        }
+        return bool(tokens) and tokens <= GENERIC_TERMINAL_ROLE_TITLES
 
     @staticmethod
     def _dedupe_terminal_identity_seal_sentences(text: str) -> str:
@@ -6412,13 +6614,13 @@ class StoryRevisionService:
         concrete_memory = memory_detail or "one ordinary habit from the earlier life"
         phase_scene_additions = {
             chapter_numbers["aftermath"]: (
-                f"In the first private break, {frame.primary_keeper} gets one quiet beat alone while rain taps the eaves and rough wood stays under the palm. The confirming knock holds the room in place, the seal in the frame cracks one line wider, and a draft slams the shutters before {frame.primary_keeper} can move again. Only after that pause does {frame.primary_keeper} try once to wake {frame.vessel_label} and get only cold weight and silence back. A brief memory-threaded echo of {frame.protagonist}'s voice guides {frame.primary_keeper} to the next choice, {frame.public_witness} cuts in with one blunt question, and {frame.primary_keeper} chooses the city's debt over private grief before the room settles. {frame.primary_keeper} sets a marked token down before stepping away."
+                f"In the first private break, the marked token reaches {frame.primary_keeper} while rain taps the eaves and rough wood stays under the palm. The confirming knock jars {frame.primary_keeper}'s hand off the rail, the seal in the frame cracks one line wider, and a draft slams the shutters before {frame.primary_keeper} can take another step. Only after that pause does {frame.primary_keeper} try once to wake {frame.vessel_label} and get only cold weight and silence back. A brief memory-threaded echo of {frame.protagonist}'s voice guides {frame.primary_keeper} to the next choice, {frame.public_witness} cuts in with one blunt question, and {frame.primary_keeper} chooses the city's debt over private grief before the room settles. {frame.primary_keeper} sets a marked token down before stepping away."
             ),
             chapter_numbers["discovery"]: (
                 f"Testing the proof at {anchor_label}, {frame.supporting_witness or frame.primary_keeper} finds a visible consequence instead of an explanation, and {frame.vessel_label} gives one brief residual shiver before going still while chalk dust and lamp heat press against the wall. The keeper and {frame.supporting_witness or frame.public_witness} exchange one sharp look before the proof is touched, and the reaction stays with the living line."
             ),
             chapter_numbers["attempt"]: (
-                f"At {civic_target}, the first surge hits before the explanation ends and the chapter splits into two beats. {frame.public_witness} moves while {heroic_witness or second_witness} drags the line closed, and {antagonist_label} stands under guard while boots and wind keep moving around the still vessel and a loose banner snaps in the gale. After one clear silence, {frame.primary_keeper} says the needed name out loud and {frame.supporting_witness or frame.public_witness} reacts to the chalk mark with a visible flinch before the ritual seal lands. "
+                f"At {civic_target}, the first surge hits before the explanation ends and the chapter splits into two beats. {frame.public_witness} moves while {heroic_witness or second_witness} takes {frame.vessel_label} by the still hand and presses it to the ledger, and {antagonist_label} stands under guard while boots and wind keep moving around the still vessel and a loose banner snaps in the gale. After one clear silence, {frame.primary_keeper} says the needed name out loud and {frame.supporting_witness or frame.public_witness} reacts to the chalk mark with a visible flinch before the ritual seal lands. "
                 f"{frame.vessel_label} remains a mute shape while the burned names darken on the ledger and the lantern glass cracks once."
             ),
             chapter_numbers["resolution"]: (
@@ -6946,6 +7148,7 @@ class StoryRevisionService:
             if name
             and name != protagonist
             and not self._is_symbolic_late_arc_candidate(name)
+            and not self._is_generic_terminal_role_title(name)
             and not self._is_late_arc_excluded_candidate(
                 name,
                 cast_names=cast_names,
@@ -6975,6 +7178,7 @@ class StoryRevisionService:
                         candidate
                         and candidate in filtered_surviving_allies
                         and not self._is_symbolic_late_arc_candidate(candidate)
+                        and not self._is_generic_terminal_role_title(candidate)
                         and candidate not in explicit_candidates
                         and not self._is_late_arc_excluded_candidate(
                             candidate,
@@ -7005,6 +7209,7 @@ class StoryRevisionService:
                 for name in character_names(blueprint.character_bible)
                 if name and name != protagonist
                 and not self._is_symbolic_late_arc_candidate(name)
+                and not self._is_generic_terminal_role_title(name)
                 and self._departure_chapter_for_name(name, departed_characters) is None
                 and not self._is_late_arc_excluded_candidate(
                     name,
@@ -7022,6 +7227,7 @@ class StoryRevisionService:
                 if name
                 and name != protagonist
                 and not self._is_symbolic_late_arc_candidate(name)
+                and not self._is_generic_terminal_role_title(name)
                 and self._departure_chapter_for_name(name, departed_characters) is None
                 and not self._is_late_arc_excluded_candidate(
                     name,
@@ -7038,6 +7244,7 @@ class StoryRevisionService:
             if name
             and name != protagonist
             and not self._is_symbolic_late_arc_candidate(name)
+            and not self._is_generic_terminal_role_title(name)
             and self._departure_chapter_for_name(name, departed_characters) is None
             and not self._is_late_arc_excluded_candidate(
                 name,

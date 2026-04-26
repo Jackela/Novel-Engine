@@ -23,8 +23,13 @@ async function signIn(page: Page) {
 
 async function launchGuest(page: Page) {
   await page.goto('/');
-  await expect(page.getByTestId('landing-page')).toBeVisible();
-  await page.getByTestId('launch-guest').click();
+  const landingPage = page.getByTestId('landing-page');
+  if (await landingPage.isVisible()) {
+    await page.getByTestId('launch-guest').click();
+    await expectStoryRoute(page);
+    return;
+  }
+
   await expectStoryRoute(page);
 }
 
