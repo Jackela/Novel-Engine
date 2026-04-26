@@ -279,6 +279,35 @@ def test_extract_scenes_ignores_trailing_bare_tail_tokens_before_top_level_scene
     assert "leaves the archive behind" in scenes[-1]["content"].lower()
 
 
+def test_chapter_drafting_service_skips_generic_collective_terminal_names() -> None:
+    service = ChapterDraftingService()
+    blueprint = SimpleNamespace(
+        character_bible={
+            "protagonist": [{"name": "Lin Yuan"}],
+            "supporting_cast": [
+                {"name": "The Silent Council"},
+                {"name": "Councilor Vane"},
+                {"name": "Councilor Hallow"},
+            ],
+            "allies": [
+                {"name": "The Silent Council"},
+                {"name": "Councilor Vane"},
+                {"name": "Councilor Hallow"},
+            ],
+        }
+    )
+    ctx = SimpleNamespace(
+        workflow=SimpleNamespace(blueprint=blueprint),
+        memory=SimpleNamespace(active_characters=["The Silent Council", "Councilor Vane", "Councilor Hallow"]),
+        story=SimpleNamespace(author_id="Writer", chapter_count=20, chapters=[]),
+    )
+
+    assert service._is_generic_terminal_name("The Silent Council")
+    assert not service._is_generic_terminal_name("Councilor Vane")
+    assert service._select_focus_character(cast(Any, ctx), 17) == "Councilor Vane"
+    assert service._select_relationship_target(cast(Any, ctx), 17, "Lin Yuan") == "Councilor Vane"
+
+
 def test_world_rule_dedupe_collapses_duplicate_cost_entries() -> None:
     entries = [
         WorldRuleLedgerEntry(
@@ -2401,8 +2430,13 @@ async def test_alternate_blueprint_shape_populates_memory_and_relationship_metad
 
     stored_story = await repository.get_by_id(UUID(story_id))
     assert stored_story is not None
+    revision_service = StoryRevisionService(ChapterDraftingService())
     assert stored_story.chapters[0].metadata["focus_character"] == "Lin Yuan"
-    assert stored_story.chapters[0].metadata["relationship_target"] == "Echo"
+    relationship_target = str(stored_story.chapters[0].metadata["relationship_target"])
+    assert relationship_target
+    assert relationship_target != "Lin Yuan"
+    assert not revision_service._is_generic_terminal_placeholder(relationship_target)
+    assert not revision_service._is_generic_terminal_role_title(relationship_target)
     assert stored_story.chapters[0].metadata["relationship_status"]
 
 
@@ -5015,9 +5049,9 @@ def test_extract_terminal_arc_rewrite_plan_rejects_unknown_focus_labels() -> Non
                     "summary": "A living keeper steadies the line while the vessel remains passive.",
                     "objective": "Keep borrowed motion separate from inner consciousness.",
                     "hook": "The first proof of the rule lands in public.",
-                    "focus_character": "Young Witness",
-                    "relationship_target": "Elara (Vessel)",
-                    "relationship_status": "keeper and vessel learning the new public cost",
+                    "focus_character": "The Silent Council",
+                    "relationship_target": "The Silent Council",
+                    "relationship_status": "collective witness line learning the new public cost",
                 }
             ]
         },
@@ -5043,7 +5077,8 @@ def test_extract_terminal_arc_rewrite_plan_rejects_unknown_focus_labels() -> Non
     )
 
     assert plan[17]["focus_character"] == "Madame Qian"
-    assert plan[17]["relationship_target"] == "Elara (Vessel)"
+    assert plan[17]["relationship_target"] == "Dock Porter"
+    assert "silent council" not in " ".join(str(value).lower() for value in plan[17].values())
 
 
 def test_dedupe_terminal_identity_seal_sentences_keeps_single_name_action() -> None:
@@ -5137,20 +5172,20 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "concrete evidence" in rule_summary
     assert "confirming knock" not in rule_summary
     assert "residual shiver" in rule_summary or "lamp flicker" in rule_summary
-    assert "ledger edge" in rule_summary or "breaks visibly" in rule_summary
+    assert "ledger margin" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
-    assert "winter-blue ink" in aftermath_objective
+    assert "blue-black" in aftermath_objective
     assert "hard answer" in aftermath["hook"].lower()
     assert "confirming knock" not in aftermath_summary
     assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "guarded figure" in public_summary or "watch" in public_summary
     assert "mute shape" in public_summary or "cold presence" in public_summary
-    assert "wind" in public_summary or "dust" in public_summary or "chalk" in public_summary or "banner" in public_summary
+    assert "wind" in public_summary or "dust" in public_summary or "seal scar" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
     assert "faces the square" in public_objective
-    assert "ledger edge" in public_objective
+    assert "ledger table" in public_objective or "ledger margin" in public_objective
     assert "restored consciousness" in public_objective or "conscious response" not in public_objective
     assert "final choice" in sacrifice_summary
     assert "marked token" in sacrifice_summary
@@ -5161,7 +5196,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "already knows the return failed" in aftermath["summary"].lower() or "already knows the resurrection failed" in aftermath["summary"].lower()
     assert "blank page" in closure_summary
     assert "lamp flame gutters" in closure_summary
-    assert "visible leak" in closure_summary or "winter-blue" in closure_summary
+    assert "visible leak" in closure_summary or "fresh black ink" in closure_summary
     assert "names one ordinary detail" in closure_summary
     assert "ledger line" in closure_summary
     assert "by night" in closure_summary
@@ -5172,6 +5207,11 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "shudders" in closure_summary or "gust" in closure_summary
     assert "small ordinary task resumes" in closure_summary or "new order can serve the living" in closure_summary
     assert "lamp flame gutters" in closure_summary
+    assert "Ari" in sacrifice["relationship_status"] and "Captain Vale" in sacrifice["relationship_status"]
+    assert "Sera" in aftermath["relationship_status"] and "Captain Vale" in aftermath["relationship_status"]
+    assert "Sera" in rule_revelation["relationship_status"] and "Milo" in rule_revelation["relationship_status"]
+    assert "Sera" in public_reckoning["relationship_status"] and "Captain Vale" in public_reckoning["relationship_status"]
+    assert "Captain Vale" in closure["relationship_status"] and "Milo" in closure["relationship_status"]
     assert "collaboration stays physical" not in public_summary
     assert "physically touches" in public_objective or "takes the still hand of" in public_summary
     for plan in (rule_revelation, sacrifice, aftermath, public_reckoning, closure):
@@ -5533,7 +5573,7 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "dry-wood click" not in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
     assert "lamp flame gutters" in closure["summary"].lower()
-    assert "winter-blue" in closure["hook"].lower()
+    assert "fresh black ink" in closure["hook"].lower()
     assert "name" in closure["hook"].lower()
     for plan in (aftermath, closure):
         for field in ("summary", "objective", "hook"):

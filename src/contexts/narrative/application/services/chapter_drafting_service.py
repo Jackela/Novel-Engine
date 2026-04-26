@@ -837,6 +837,11 @@ class ChapterDraftingService:
             names = pov_character_names(blueprint.character_bible)
             if not names:
                 names = character_names(blueprint.character_bible)
+            names = [
+                name
+                for name in names
+                if name and not self._is_generic_terminal_name(name)
+            ]
             if names:
                 return str(names[(chapter_number - 1) % len(names)])
         return str(ctx.story.author_id)
@@ -873,7 +878,12 @@ class ChapterDraftingService:
             pov_names = [
                 name
                 for name in pov_character_names(character_bible)
-                if name and name != focus_character and name not in antagonists
+                if (
+                    name
+                    and name != focus_character
+                    and name not in antagonists
+                    and not self._is_generic_terminal_name(name)
+                )
             ]
             if focus_character and protagonist and focus_character != protagonist:
                 return protagonist
@@ -883,10 +893,12 @@ class ChapterDraftingService:
         candidates = [
             name
             for name in ctx.memory.active_characters
-            if name and name != focus_character
+            if name
+            and name != focus_character
+            and not self._is_generic_terminal_name(name)
         ]
         if not candidates:
-            return ""
+            return protagonist if protagonist and not self._is_generic_terminal_name(protagonist) else ""
         return str(candidates[(chapter_number - 1) % len(candidates)])
 
     @staticmethod
@@ -899,6 +911,51 @@ class ChapterDraftingService:
             chapter_number=chapter_number,
             target_chapters=target_chapters,
         )
+
+    @staticmethod
+    def _is_generic_terminal_name(candidate: str) -> bool:
+        normalized = " ".join(str(candidate).split()).strip().lower()
+        if not normalized:
+            return False
+        for article in ("the ", "a ", "an "):
+            if normalized.startswith(article):
+                normalized = normalized.removeprefix(article).strip()
+                break
+        tokens = {
+            token.strip(".,;:!?")
+            for token in normalized.split()
+            if token.strip(".,;:!?")
+        }
+        generic_tokens = {
+            "council",
+            "silent",
+            "public",
+            "witness",
+            "line",
+            "record",
+            "ledger",
+            "oath",
+            "vessel",
+            "echo",
+            "keeper",
+            "guard",
+            "speaker",
+            "confessor",
+            "clerk",
+            "scribe",
+            "archivist",
+            "warden",
+            "sentinel",
+            "steward",
+            "herald",
+            "banner",
+            "watch",
+            "custodian",
+            "seal",
+            "rail",
+            "judge",
+        }
+        return bool(tokens) and tokens <= generic_tokens
 
     def _previous_chapter_summary(self, ctx: StoryWorkflowContext) -> str:
         if not ctx.story.chapters:
