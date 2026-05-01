@@ -5180,7 +5180,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
     assert "banner snaps overhead" in public_summary or "still vessel" in public_summary
     assert "guarded figure" in public_summary or "watch" in public_summary
-    assert "mute shape" in public_summary or "cold presence" in public_summary
+    assert "ink-stiff fingers" in public_summary or "fixed jawline" in public_summary or "stays inert" in public_objective
     assert "wind" in public_summary or "dust" in public_summary or "seal scar" in public_summary or "banner" in public_summary
     assert "visible flinch" in public_summary or "grief" in public_objective
     assert "human shape" in public_summary or "new order" in public_summary
