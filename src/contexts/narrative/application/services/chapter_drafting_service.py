@@ -885,8 +885,6 @@ class ChapterDraftingService:
                     and not self._is_generic_terminal_name(name)
                 )
             ]
-            if focus_character and protagonist and focus_character != protagonist:
-                return protagonist
             if pov_names:
                 return str(pov_names[(chapter_number - 1) % len(pov_names)])
 
@@ -897,9 +895,26 @@ class ChapterDraftingService:
             and name != focus_character
             and not self._is_generic_terminal_name(name)
         ]
-        if not candidates:
-            return protagonist if protagonist and not self._is_generic_terminal_name(protagonist) else ""
-        return str(candidates[(chapter_number - 1) % len(candidates)])
+        if candidates:
+            return str(candidates[(chapter_number - 1) % len(candidates)])
+
+        if blueprint is not None:
+            fallback_names = [
+                name
+                for name in character_names(character_bible)
+                if (
+                    name
+                    and name != focus_character
+                    and name != protagonist
+                    and not self._is_generic_terminal_name(name)
+                )
+            ]
+            if fallback_names:
+                return str(fallback_names[(chapter_number - 1) % len(fallback_names)])
+
+        if focus_character and protagonist and focus_character != protagonist:
+            return protagonist
+        return ""
 
     @staticmethod
     def _relationship_status(
@@ -936,7 +951,6 @@ class ChapterDraftingService:
             "ledger",
             "oath",
             "vessel",
-            "echo",
             "keeper",
             "guard",
             "speaker",

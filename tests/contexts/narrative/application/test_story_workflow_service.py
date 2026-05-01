@@ -5631,6 +5631,48 @@ async def test_default_terminal_arc_phase_plan_avoids_placeholder_collective_fal
     assert "blank page" in closure_summary or "blank page" in closure["hook"].lower()
 
 
+def test_named_echo_survives_terminal_arc_selection() -> None:
+    drafting_service = ChapterDraftingService()
+    revision_service = StoryRevisionService(drafting_service)
+
+    assert drafting_service._is_generic_terminal_name("Echo") is False
+    assert StoryRevisionService._is_symbolic_late_arc_candidate("Echo") is False
+
+    sacrifice = revision_service._default_terminal_arc_phase_plan(
+        phase="sacrifice",
+        chapter_number=16,
+        protagonist="Ari",
+        primary_keeper="Sera",
+        supporting_witness="Echo",
+        public_witness="Echo",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="Echo",
+        confirmation_trigger="the first hard answer from the old rule",
+    )
+    aftermath = revision_service._default_terminal_arc_phase_plan(
+        phase="aftermath",
+        chapter_number=17,
+        protagonist="Ari",
+        primary_keeper="Sera",
+        supporting_witness="Echo",
+        public_witness="Echo",
+        vessel_label="Ari (Vessel)",
+        continuity_anchor="Echo",
+        confirmation_trigger="the first hard answer from the old rule",
+    )
+
+    sacrifice_summary = sacrifice["summary"].lower()
+    aftermath_summary = aftermath["summary"].lower()
+
+    assert "echo" in sacrifice_summary
+    assert "echo" in aftermath_summary
+    assert "echo's hand" in sacrifice_summary
+    assert sacrifice["relationship_target"] == "Echo"
+    assert aftermath["relationship_target"] == "Echo"
+    assert "Echo" in sacrifice["relationship_status"]
+    assert "Echo" in aftermath["relationship_status"]
+
+
 @pytest.mark.asyncio
 async def test_late_arc_metadata_candidates_ignore_placeholder_public_witness_labels() -> None:
     repository = InMemoryStoryRepository()

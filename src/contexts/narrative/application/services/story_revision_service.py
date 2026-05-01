@@ -65,7 +65,6 @@ GENERIC_TERMINAL_ROLE_TITLES = {
     "witness",
     "silencer",
     "vessel",
-    "echo",
     "line",
     "circle",
     "clerk",
@@ -1108,6 +1107,38 @@ class StoryRevisionService:
         ) or second_witness or visible_witness or living_anchor or protagonist
         if second_witness == visible_witness:
             second_witness = ""
+        if primary_keeper == protagonist:
+            primary_keeper = distinct_terminal_name(
+                continuity_anchor,
+                supporting_witness,
+                public_witness,
+                living_anchor,
+                fallback="",
+            )
+        if sacrifice_witness == protagonist:
+            sacrifice_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
+        if visible_witness == protagonist:
+            visible_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
+        if second_witness == protagonist:
+            second_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
         motif_anchor = motif_ledger[0] if motif_ledger else "the public record"
         public_cost_clause = (
             public_cost_example
@@ -1193,6 +1224,49 @@ class StoryRevisionService:
             primary_keeper,
             protagonist,
         ) or protagonist or sacrifice_witness or living_anchor or continuity_anchor or supporting_witness or public_witness
+        if primary_keeper == protagonist:
+            primary_keeper = distinct_terminal_name(
+                continuity_anchor,
+                supporting_witness,
+                public_witness,
+                living_anchor,
+                fallback="",
+            )
+        if sacrifice_witness == protagonist:
+            sacrifice_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
+        if visible_witness == protagonist:
+            visible_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
+        if second_witness == protagonist:
+            second_witness = distinct_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                living_anchor,
+                fallback="",
+            )
+        if handoff_recipient == protagonist:
+            handoff_recipient = distinct_terminal_name(
+                sacrifice_witness,
+                visible_witness,
+                second_witness,
+                living_anchor,
+                continuity_anchor,
+                supporting_witness,
+                public_witness,
+                fallback="",
+            )
         if phase == "sacrifice":
             return {
                 "summary": (
@@ -3237,6 +3311,21 @@ class StoryRevisionService:
             )
             if partner:
                 return partner
+        for candidate in sorted(cast_names):
+            normalized_candidate = self._canonicalize_character_name(
+                " ".join(str(candidate).split()).strip(),
+                cast_names,
+            )
+            if (
+                normalized_candidate
+                and normalized_candidate != focus
+                and normalized_candidate != protagonist
+                and not self._is_generic_terminal_placeholder(normalized_candidate)
+                and not self._is_generic_terminal_role_title(normalized_candidate)
+                and not self._is_symbolic_late_arc_candidate(normalized_candidate)
+                and _is_available_partner(normalized_candidate)
+            ):
+                return normalized_candidate
         return target if target and target != focus else ""
 
     @staticmethod
@@ -6325,7 +6414,8 @@ class StoryRevisionService:
                 "confession circle",
                 "oath",
                 "rite",
-                "echo",
+                "echo-leader",
+                "echo leader",
             )
         )
 
