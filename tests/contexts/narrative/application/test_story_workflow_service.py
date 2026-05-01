@@ -5174,7 +5174,7 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     assert "residual shiver" in rule_summary or "lamp flicker" in rule_summary
     assert "ledger margin" in rule_summary or "breaks visibly" in rule_summary
     assert "restore consciousness" in rule_objective or "restored consciousness" in rule_objective
-    assert "blue-black" in aftermath_objective
+    assert "direct challenge" in aftermath_objective or "explicit line of commitment" in aftermath_objective
     assert "hard answer" in aftermath["hook"].lower()
     assert "confirming knock" not in aftermath_summary
     assert "residual shiver" in rule_objective or "lamp flicker" in rule_objective
@@ -5278,7 +5278,7 @@ def test_default_terminal_arc_phase_plan_rejects_generic_role_titles_and_keeps_a
         assert "in full view of ," not in text
 
     assert "marked token" in sacrifice_summary
-    assert "cold weight" in aftermath_objective
+    assert "dead weight" in aftermath_objective or "cold weight" in aftermath_objective
     assert "grief tighten into duty" in aftermath_objective
     assert "hard answer" in aftermath["hook"].lower()
     assert "takes ari (vessel) by the still hand and presses it to the ledger" in public_summary or "takes the still hand of ari (vessel)" in public_summary or "presses it to the ledger" in public_summary
@@ -5566,10 +5566,10 @@ def test_default_terminal_arc_phase_plan_uses_event_language_for_late_summaries(
     assert "the prose makes clear" not in aftermath["summary"].lower()
     assert "the prose makes clear" not in closure["summary"].lower()
     assert "marked token reaches" in aftermath["summary"].lower()
-    assert "jars" in aftermath["summary"].lower()
+    assert "wake attempt fails at once" in aftermath["summary"].lower()
     assert "first private break" in aftermath["summary"].lower()
     assert "hard answer" in aftermath["summary"].lower()
-    assert "rain" in aftermath["summary"].lower()
+    assert "readiness question" in aftermath["summary"].lower() or "asks one blunt readiness question" in aftermath["summary"].lower()
     assert "dry-wood click" not in closure["summary"].lower()
     assert "blank page" in closure["summary"].lower()
     assert "lamp flame gutters" in closure["summary"].lower()
