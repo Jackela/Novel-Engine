@@ -1267,6 +1267,85 @@ class StoryRevisionService:
                 public_witness,
                 fallback="",
             )
+        if not primary_keeper:
+            primary_keeper = (
+                display_terminal_name(
+                    continuity_anchor,
+                    supporting_witness,
+                    public_witness,
+                    living_anchor,
+                    protagonist,
+                )
+                or protagonist
+            )
+        if not visible_witness:
+            visible_witness = (
+                display_terminal_name(
+                    supporting_witness,
+                    public_witness,
+                    continuity_anchor,
+                    living_anchor,
+                    primary_keeper,
+                    protagonist,
+                )
+                or primary_keeper
+                or protagonist
+            )
+        if not second_witness:
+            second_witness = self._resolve_terminal_relationship_target(
+                visible_witness,
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                primary_keeper,
+                protagonist,
+            )
+        if not second_witness:
+            second_witness = (
+                display_terminal_name(
+                    supporting_witness,
+                    public_witness,
+                    continuity_anchor,
+                    primary_keeper,
+                    protagonist,
+                )
+                or visible_witness
+            )
+        if not sacrifice_witness:
+            sacrifice_witness = (
+                display_terminal_name(
+                    supporting_witness,
+                    public_witness,
+                    continuity_anchor,
+                    primary_keeper,
+                    visible_witness,
+                    protagonist,
+                )
+                or protagonist
+            )
+        if not handoff_recipient:
+            handoff_recipient = self._resolve_terminal_relationship_target(
+                protagonist,
+                sacrifice_witness,
+                visible_witness,
+                second_witness,
+                primary_keeper,
+                continuity_anchor,
+            )
+        if not handoff_recipient:
+            handoff_recipient = (
+                display_terminal_name(
+                    sacrifice_witness,
+                    visible_witness,
+                    second_witness,
+                    primary_keeper,
+                    continuity_anchor,
+                    supporting_witness,
+                    public_witness,
+                )
+                or primary_keeper
+                or protagonist
+            )
         closure_partner = self._resolve_terminal_relationship_target(
             visible_witness,
             second_witness,
@@ -6768,6 +6847,18 @@ class StoryRevisionService:
                 else f"{closure_lead} keeps the living record after the seal lands"
             ),
         }
+        fallback_focus = (
+            frame.primary_keeper
+            or frame.supporting_witness
+            or frame.public_witness
+            or frame.protagonist
+        )
+        fallback_target = (
+            frame.public_witness
+            or frame.supporting_witness
+            or frame.continuity_anchor
+            or fallback_focus
+        )
 
         sequence: dict[str, dict[str, str | int]] = {}
         for alias, phase in alias_to_phase.items():
@@ -6792,15 +6883,52 @@ class StoryRevisionService:
             plan["hook_strength"] = hook_strength_by_phase[phase]
             plan["relationship_status"] = relationship_status_by_phase[phase]
             if phase == "sacrifice":
-                plan["focus_character"] = frame.protagonist
-                plan["relationship_target"] = frame.primary_keeper
+                plan["focus_character"] = frame.protagonist or fallback_focus
+                plan["relationship_target"] = (
+                    self._resolve_terminal_relationship_target(
+                        str(plan["focus_character"]),
+                        frame.primary_keeper,
+                        frame.supporting_witness,
+                        frame.public_witness,
+                        frame.continuity_anchor,
+                        fallback_target,
+                    )
+                    or fallback_target
+                )
             else:
-                plan["focus_character"] = frame.primary_keeper
+                plan["focus_character"] = frame.primary_keeper or fallback_focus
                 plan["relationship_target"] = (
                     vessel_target
                     if vessel_target
-                    and vessel_target not in {frame.primary_keeper, frame.protagonist}
-                    else frame.public_witness or frame.supporting_witness
+                    and vessel_target not in {str(plan["focus_character"]), frame.protagonist}
+                    else (
+                        self._resolve_terminal_relationship_target(
+                            str(plan["focus_character"]),
+                            frame.public_witness,
+                            frame.supporting_witness,
+                            frame.continuity_anchor,
+                            fallback_target,
+                        )
+                        or fallback_target
+                    )
+                )
+            if not str(plan.get("focus_character", "")).strip():
+                plan["focus_character"] = fallback_focus
+            if not str(plan.get("relationship_target", "")).strip():
+                plan["relationship_target"] = (
+                    self._resolve_terminal_relationship_target(
+                        str(plan["focus_character"]),
+                        fallback_target,
+                        frame.continuity_anchor,
+                        frame.protagonist,
+                    )
+                    or fallback_target
+                )
+            if not str(plan.get("relationship_status", "")).strip():
+                plan["relationship_status"] = (
+                    f"{plan['focus_character']} and {plan['relationship_target']} hold the record together"
+                    if str(plan["relationship_target"]).strip()
+                    else f"{plan['focus_character']} holds the record together"
                 )
             sequence[alias] = plan
         return sequence
