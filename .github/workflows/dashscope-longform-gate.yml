@@ -5,6 +5,21 @@ on:
     branches:
       - main
       - develop
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: "Run external DashScope longform UAT after deterministic gate"
+        required: true
+        type: boolean
+        default: false
+      target_chapters:
+        description: "Target chapter count for the live DashScope run"
+        required: false
+        default: "20"
+      story_title_seed:
+        description: "Story title prefix for the generated manuscript"
+        required: false
+        default: "DashScope PR Gate"
 
 permissions:
   contents: read
@@ -17,6 +32,53 @@ jobs:
   dashscope-longform-gate:
     name: DashScope Longform Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_DASHSCOPE_TESTS: "0"
+      ENABLE_HONCHO_TESTS: "0"
+      ENABLE_CHROMA_TESTS: "0"
+      ENABLE_POSTGRES_TESTS: "0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run deterministic narrative regression gate
+        run: >
+          pytest -q
+          tests/contexts/narrative/application/test_story_workflow_service.py
+          tests/contexts/narrative/application/test_story_regression_corpus.py
+
+      - name: Publish deterministic gate summary
+        if: always()
+        shell: bash
+        run: |
+          printf '%s\n' \
+            "# DashScope Longform Gate (Deterministic)" \
+            "- External-provider tests are disabled in pull request CI." \
+            "- DashScope live UAT can be triggered manually with \`run_live=true\`." \
+            >> "$GITHUB_STEP_SUMMARY"
+
+  dashscope-longform-live-uat:
+    name: DashScope Longform Live UAT
+    if: github.event_name == 'workflow_dispatch' && (inputs.run_live == true || inputs.run_live == 'true')
+    needs:
+      - dashscope-longform-gate
+    runs-on: ubuntu-latest
     timeout-minutes: 120
 
     env:
@@ -25,13 +87,14 @@ jobs:
       DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
       DASHSCOPE_MODEL: ${{ secrets.DASHSCOPE_MODEL }}
       DASHSCOPE_REVIEW_MODEL: ${{ secrets.DASHSCOPE_REVIEW_MODEL }}
+      ENABLE_DASHSCOPE_TESTS: "1"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -52,8 +115,8 @@ jobs:
       - name: Run DashScope longform gate
         run: >
           python scripts/uat/run_dashscope_longform_uat.py
-          --target-chapters 20
-          --story-title-seed "DashScope PR Gate"
+          --target-chapters ${{ inputs.target_chapters || '20' }}
+          --story-title-seed "${{ inputs.story_title_seed || 'DashScope PR Gate' }}"
           --output-dir "${{ runner.temp }}/dashscope-longform-gate"
 
       - name: Publish step summary

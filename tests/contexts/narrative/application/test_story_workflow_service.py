@@ -279,6 +279,56 @@ def test_extract_scenes_ignores_trailing_bare_tail_tokens_before_top_level_scene
     assert "leaves the archive behind" in scenes[-1]["content"].lower()
 
 
+def test_extract_scenes_ignores_inline_scene_key_fragments_before_top_level_scene_salvage() -> None:
+    service = ChapterDraftingService()
+    result = TextGenerationResult(
+        step="draft",
+        provider="dashscope",
+        model="trailing-inline-fragment-v1",
+        raw_text="malformed inline scene key fragment",
+        content={
+            "scenes": [
+                {
+                    "scene_type": "opening",
+                    "title": "The Archive Threshold",
+                    "content": "The seals cool as the door closes behind the keeper.",
+                },
+                {
+                    "scene_type": "narrative",
+                    "title": "The Public Line Holds",
+                    "content": "The square waits for the next name while rain keeps falling.",
+                },
+                {
+                    "scene_type": "dialogue",
+                    "title": "The Last Question",
+                    "content": "A witness asks who carries the cost after sunrise.",
+                },
+                {
+                    "scene_type": "action",
+                    "title": "The Ledger Answers",
+                    "content": "Fresh ink blooms and locks the chamber into silence.",
+                },
+                'scene_type\\": "],',
+            ],
+            "title": "The Quiet Hand-Off",
+            "content": "The final witness takes the ledger and leaves the room without looking back.",
+        },
+    )
+
+    scenes = service._extract_scenes(
+        result,
+        {
+            "chapter_number": 20,
+            "title": "The Quiet Hand-Off",
+        },
+    )
+
+    assert len(scenes) == 5
+    assert scenes[-1]["scene_type"] == "narrative"
+    assert scenes[-1]["title"] == "The Quiet Hand-Off"
+    assert "leaves the room without looking back" in scenes[-1]["content"].lower()
+
+
 def test_chapter_drafting_service_skips_generic_collective_terminal_names() -> None:
     service = ChapterDraftingService()
     blueprint = SimpleNamespace(
@@ -5168,8 +5218,8 @@ def test_default_terminal_arc_phase_plan_marks_break_and_silence_generically() -
     closure_summary = closure["summary"].lower()
     sacrifice_summary = sacrifice["summary"].lower()
     sacrifice_objective = sacrifice["objective"].lower()
-    assert "concrete evidence" in rule_summary
-    assert "concrete evidence" in rule_summary
+    assert "scorched ledger leaf" in rule_summary
+    assert "matching seal scar" in rule_summary
     assert "confirming knock" not in rule_summary
     assert "residual shiver" in rule_summary or "lamp flicker" in rule_summary
     assert "ledger margin" in rule_summary or "breaks visibly" in rule_summary
@@ -5305,6 +5355,29 @@ def test_default_terminal_arc_phase_plan_deduplicates_public_witness_names() -> 
     closure_summary = closure["summary"].lower()
     assert "yara and yara" not in closure_summary
     assert "master chen" in closure_summary
+
+
+def test_default_terminal_arc_phase_plan_rule_revelation_avoids_duplicate_subjects_and_uses_concrete_evidence() -> None:
+    revision_service = StoryRevisionService(ChapterDraftingService())
+
+    rule_revelation = revision_service._default_terminal_arc_phase_plan(
+        phase="rule_revelation",
+        chapter_number=18,
+        protagonist="Lin Yuan",
+        primary_keeper="Master Chen",
+        supporting_witness="Master Chen",
+        public_witness="Yara",
+        vessel_label="The Vessel",
+        continuity_anchor="Yara",
+        confirmation_trigger="the first hard answer from the old rule",
+    )
+
+    summary = rule_revelation["summary"].lower()
+    objective = rule_revelation["objective"].lower()
+    assert "master chen and master chen" not in summary
+    assert "scorched ledger leaf" in summary
+    assert "matching seal scar" in summary
+    assert "scorched ledger leaf plus a matching seal scar" in objective
 
 
 def test_primary_antagonist_label_uses_blueprint_antagonist_name() -> None:
@@ -5723,6 +5796,128 @@ async def test_late_arc_metadata_candidates_ignore_placeholder_public_witness_la
     assert candidates
     assert "a witness" not in {candidate.lower() for candidate in candidates}
     assert "the public witness" not in {candidate.lower() for candidate in candidates}
+
+
+@pytest.mark.asyncio
+async def test_repair_relationship_metadata_integrity_backfills_late_arc_relationship_fields() -> None:
+    repository = InMemoryStoryRepository()
+    generation_state_repository = InMemoryStoryGenerationStateRepository()
+    generation_run_repository = InMemoryGenerationRunRepository()
+    story_artifact_repository = InMemoryStoryArtifactRepository()
+    provider = DeterministicTextGenerationProvider()
+    service = StoryWorkflowService(
+        story_repository=repository,
+        generation_state_repository=generation_state_repository,
+        generation_run_repository=generation_run_repository,
+        story_artifact_repository=story_artifact_repository,
+        text_generation_provider=provider,
+        review_generation_provider=provider,
+        default_target_chapters=20,
+    )
+
+    create_result = await service.create_story(
+        title="Late Arc Relationship Backfill",
+        genre="fantasy",
+        author_id="author-late-arc-relationship-backfill",
+        premise="A record-keeper must carry the witness line after a one-way sacrifice.",
+        target_chapters=20,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    await service.generate_outline(story_id)
+    await service.draft_story(story_id, target_chapters=20)
+
+    ctx_or_error = await service._load_context(story_id)
+    assert not isinstance(ctx_or_error, Failure)
+
+    late_arc_numbers = set(
+        service._revision_service._late_arc_chapter_numbers(
+            ctx_or_error.story.chapter_count
+        ).values()
+    )
+    assert late_arc_numbers
+
+    for chapter in ctx_or_error.story.chapters:
+        if chapter.chapter_number in late_arc_numbers:
+            chapter.metadata["focus_character"] = ""
+            chapter.metadata["relationship_target"] = ""
+            chapter.metadata["relationship_status"] = ""
+
+    notes = service._revision_service._repair_relationship_metadata_integrity(
+        ctx_or_error,
+        issue_context="terminal arc relationship metadata must be complete",
+    )
+
+    assert notes
+    focus_target_pairs: list[tuple[str, str]] = []
+    for chapter in ctx_or_error.story.chapters:
+        if chapter.chapter_number not in late_arc_numbers:
+            continue
+        focus_character = str(chapter.metadata.get("focus_character", "")).strip()
+        relationship_target = str(chapter.metadata.get("relationship_target", "")).strip()
+        relationship_status = str(chapter.metadata.get("relationship_status", "")).strip()
+        assert focus_character
+        assert relationship_target
+        assert relationship_status
+        focus_target_pairs.append((focus_character, relationship_target))
+    assert any(focus != target for focus, target in focus_target_pairs)
+
+
+@pytest.mark.asyncio
+async def test_repair_departed_character_cleanup_preserves_vessel_relationship_targets() -> None:
+    repository = InMemoryStoryRepository()
+    generation_state_repository = InMemoryStoryGenerationStateRepository()
+    generation_run_repository = InMemoryGenerationRunRepository()
+    story_artifact_repository = InMemoryStoryArtifactRepository()
+    provider = DeterministicTextGenerationProvider()
+    service = StoryWorkflowService(
+        story_repository=repository,
+        generation_state_repository=generation_state_repository,
+        generation_run_repository=generation_run_repository,
+        story_artifact_repository=story_artifact_repository,
+        text_generation_provider=provider,
+        review_generation_provider=provider,
+        default_target_chapters=20,
+    )
+
+    create_result = await service.create_story(
+        title="Departed Cleanup Vessel Guard",
+        genre="fantasy",
+        author_id="author-departed-cleanup-vessel-guard",
+        premise="A keeper must hold the witness line after a one-way terminal sacrifice.",
+        target_chapters=20,
+    )
+    story_id = create_result.value["story"]["id"]
+
+    await service.generate_blueprint(story_id)
+    await service.generate_outline(story_id)
+    await service.draft_story(story_id, target_chapters=20)
+
+    ctx_or_error = await service._load_context(story_id)
+    assert not isinstance(ctx_or_error, Failure)
+
+    late_arc_numbers = set(
+        service._revision_service._late_arc_chapter_numbers(
+            ctx_or_error.story.chapter_count
+        ).values()
+    )
+    assert late_arc_numbers
+
+    for chapter in ctx_or_error.story.chapters:
+        if chapter.chapter_number in late_arc_numbers:
+            chapter.metadata["relationship_target"] = "The Vessel"
+            chapter.metadata["relationship_status"] = "keeper of the vessel"
+
+    service._revision_service._repair_departed_character_cleanup(
+        ctx_or_error,
+        issue_context="the protagonist dies in chapter 16 and cannot return",
+    )
+
+    for chapter in ctx_or_error.story.chapters:
+        if chapter.chapter_number in late_arc_numbers:
+            assert str(chapter.metadata.get("relationship_target", "")).strip() == "The Vessel"
+            assert str(chapter.metadata.get("relationship_status", "")).strip()
 
 
 @pytest.mark.asyncio

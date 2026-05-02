@@ -380,17 +380,24 @@ class ChapterDraftingService:
         normalized: list[dict[str, Any]] = []
         for index, scene in enumerate(scenes, start=1):
             if not isinstance(scene, dict):
-                raise DraftChapterFailure(
-                    chapter_number=int(chapter_spec["chapter_number"]),
-                    failure_code="DRAFT_VALIDATION_ERROR",
-                    message="Scene payload must be an object",
-                    raw_text=result.raw_text,
-                    raw_payload=deepcopy(result.content),
-                    normalized_payload={"scenes": normalized},
-                    validation_errors=[f"Scene {index} payload must be an object"],
-                    source_provider=result.provider,
-                    source_model=result.model,
-                )
+                if isinstance(scene, str):
+                    salvaged_scene = self._salvage_embedded_scene_payload(scene)
+                    if salvaged_scene is not None:
+                        scene = salvaged_scene
+                    elif self._is_inline_scene_key_fragment(scene):
+                        continue
+                if not isinstance(scene, dict):
+                    raise DraftChapterFailure(
+                        chapter_number=int(chapter_spec["chapter_number"]),
+                        failure_code="DRAFT_VALIDATION_ERROR",
+                        message="Scene payload must be an object",
+                        raw_text=result.raw_text,
+                        raw_payload=deepcopy(result.content),
+                        normalized_payload={"scenes": normalized},
+                        validation_errors=[f"Scene {index} payload must be an object"],
+                        source_provider=result.provider,
+                        source_model=result.model,
+                    )
             content = str(scene.get("content", "")).strip()
             scene_type = normalize_scene_type(scene.get("scene_type", "narrative"))
             title = str(scene.get("title", "")).strip() or (
@@ -475,6 +482,9 @@ class ChapterDraftingService:
                         trailing_fragment_mode = True
                     trailing_fragment_mode = True
                     continue
+                if ChapterDraftingService._is_inline_scene_key_fragment(scene):
+                    trailing_fragment_mode = True
+                    continue
                 parsed_inline_field = ChapterDraftingService._parse_inline_scene_field(scene)
                 if parsed_inline_field is not None:
                     field_name, field_value = parsed_inline_field
@@ -531,6 +541,31 @@ class ChapterDraftingService:
             normalized_scenes.append(dict(pending_inline_scene))
 
         return normalized_scenes
+
+    @staticmethod
+    def _is_inline_scene_key_fragment(scene: str) -> bool:
+        stripped_scene = str(scene).strip()
+        if not stripped_scene:
+            return True
+        stripped_scene = stripped_scene.replace('\\"', '"').replace("\\'", "'")
+        match = re.match(
+            r"""^\s*["']?(scene_type|type|title|content)\\?["']?\s*:\s*(.*)\s*$""",
+            stripped_scene,
+            flags=re.IGNORECASE,
+        )
+        if match is None:
+            return False
+        tail = match.group(2).strip().strip(",")
+        if not tail:
+            return True
+        normalized_tail = tail.strip("\"'").strip()
+        if not normalized_tail:
+            return True
+        if normalized_tail in {"]", "[", "}", "{", "null", "none"}:
+            return True
+        if all(char in "[]{}\",'" for char in normalized_tail):
+            return True
+        return False
 
     @staticmethod
     def _parse_inline_scene_field(scene: str) -> tuple[str, str] | None:

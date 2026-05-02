@@ -62,6 +62,10 @@ jobs:
     timeout-minutes: 25
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      ENABLE_DASHSCOPE_TESTS: "0"
+      ENABLE_HONCHO_TESTS: "0"
+      ENABLE_CHROMA_TESTS: "0"
+      ENABLE_POSTGRES_TESTS: "0"
 
     steps:
       - name: Checkout
@@ -143,41 +147,6 @@ jobs:
         working-directory: frontend
         run: npm run test:e2e:smoke
 
-  dashscope-live-smoke:
-    name: DashScope Live Smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
-      DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
-      ENABLE_DASHSCOPE_TESTS: ${{ secrets.DASHSCOPE_API_KEY != '' && '1' || '0' }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install backend dependencies
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,test]"
-
-      - name: Run DashScope live smoke
-        run: >
-          pytest -q
-          -m requires_dashscope
-          tests/contract/test_text_generation_provider_contract.py
-          tests/contexts/narrative/application/test_semantic_review_judge_contract.py
-          tests/contexts/narrative/application/test_qwen_provider_smoke.py
-
   postgres-live-smoke:
     name: PostgreSQL Live Smoke
     runs-on: ubuntu-latest
@@ -224,40 +193,6 @@ jobs:
           pytest -q
           -m postgres_integration
           tests/contexts/narrative/infrastructure/repositories
-
-  honcho-live-smoke:
-    name: Honcho Live Smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      HONCHO_BASE_URL: ${{ secrets.HONCHO_BASE_URL }}
-      HONCHO_API_KEY: ${{ secrets.HONCHO_API_KEY }}
-      ENABLE_HONCHO_TESTS: ${{ secrets.HONCHO_BASE_URL != '' && secrets.HONCHO_API_KEY != '' && '1' || '0' }}
-      HONCHO_DEPLOYMENT: self_hosted
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-
-      - name: Install backend dependencies
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,test,honcho]"
-
-      - name: Run Honcho live smoke
-        run: >
-          pytest -q
-          -m requires_honcho
-          tests/shared/infrastructure/honcho/test_honcho_live_smoke.py
 
   chroma-live-smoke:
     name: Chroma Live Smoke

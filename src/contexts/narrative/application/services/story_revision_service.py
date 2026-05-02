@@ -674,7 +674,17 @@ class StoryRevisionService:
                 primary_keeper=primary_keeper,
                 vessel_label=vessel_label,
             )
+            repair_notes.extend(
+                self._repair_relationship_metadata_integrity(
+                    ctx,
+                    issue_context=issue_context,
+                )
+            )
         self._drafting_service.synchronize_memory(ctx)
+        self._ensure_terminal_antagonist_closure_in_memory(
+            ctx,
+            issue_context=issue_context,
+        )
         return repair_notes
 
     async def _plan_terminal_arc_revision(
@@ -1000,6 +1010,33 @@ class StoryRevisionService:
                     return normalized
             return ""
 
+        def non_protagonist_terminal_name(
+            *candidates: str,
+            fallback: str = "",
+        ) -> str:
+            for candidate in candidates:
+                normalized = " ".join(str(candidate).split()).strip()
+                if (
+                    normalized
+                    and normalized != protagonist
+                    and not self._is_generic_terminal_placeholder(normalized)
+                    and not self._is_generic_terminal_role_title(normalized)
+                    and normalized.lower() not in {"the vessel", "vessel", "silent vessel"}
+                    and not normalized.lower().endswith("(vessel)")
+                ):
+                    return normalized
+            fallback_normalized = " ".join(str(fallback).split()).strip()
+            if (
+                fallback_normalized
+                and fallback_normalized != protagonist
+                and not self._is_generic_terminal_placeholder(fallback_normalized)
+                and not self._is_generic_terminal_role_title(fallback_normalized)
+                and fallback_normalized.lower() not in {"the vessel", "vessel", "silent vessel"}
+                and not fallback_normalized.lower().endswith("(vessel)")
+            ):
+                return fallback_normalized
+            return ""
+
         living_anchor = distinct_terminal_name(
             continuity_anchor,
             supporting_witness,
@@ -1149,10 +1186,20 @@ class StoryRevisionService:
         )
         if second_witness:
             public_sequence_clause = f"{visible_witness} tastes metal and {second_witness} closes the gap"
-            public_move_clause = f"{visible_witness} and {second_witness} make the first public move"
+            public_move_clause = (
+                f"{visible_witness} locks the front rank while {second_witness} drags the broken edge back into line"
+            )
+            closure_public_clause = (
+                f"{visible_witness} keeps the witness roll steady while {second_witness} carries the sealed ledger through the reopened corridor"
+            )
         else:
             public_sequence_clause = f"{visible_witness} tastes metal and the crowd holds the line"
-            public_move_clause = f"{visible_witness} makes the first public move"
+            public_move_clause = (
+                f"{visible_witness} locks the front rank and drags the broken edge back into line"
+            )
+            closure_public_clause = (
+                f"{visible_witness} keeps the witness roll steady while the square opens a narrow path for the sealed ledger"
+            )
         handoff_recipient = distinct_terminal_name(
             continuity_anchor,
             supporting_witness,
@@ -1225,39 +1272,39 @@ class StoryRevisionService:
             protagonist,
         ) or protagonist or sacrifice_witness or living_anchor or continuity_anchor or supporting_witness or public_witness
         if primary_keeper == protagonist:
-            primary_keeper = distinct_terminal_name(
+            primary_keeper = non_protagonist_terminal_name(
                 continuity_anchor,
                 supporting_witness,
                 public_witness,
                 living_anchor,
-                fallback="",
+                fallback="the appointed keeper",
             )
         if sacrifice_witness == protagonist:
-            sacrifice_witness = distinct_terminal_name(
+            sacrifice_witness = non_protagonist_terminal_name(
                 supporting_witness,
                 public_witness,
                 continuity_anchor,
                 living_anchor,
-                fallback="",
+                fallback=primary_keeper,
             )
         if visible_witness == protagonist:
-            visible_witness = distinct_terminal_name(
+            visible_witness = non_protagonist_terminal_name(
                 supporting_witness,
                 public_witness,
                 continuity_anchor,
                 living_anchor,
-                fallback="",
+                fallback=primary_keeper,
             )
         if second_witness == protagonist:
-            second_witness = distinct_terminal_name(
+            second_witness = non_protagonist_terminal_name(
                 supporting_witness,
                 public_witness,
                 continuity_anchor,
                 living_anchor,
-                fallback="",
+                fallback=visible_witness,
             )
         if handoff_recipient == protagonist:
-            handoff_recipient = distinct_terminal_name(
+            handoff_recipient = non_protagonist_terminal_name(
                 sacrifice_witness,
                 visible_witness,
                 second_witness,
@@ -1265,7 +1312,7 @@ class StoryRevisionService:
                 continuity_anchor,
                 supporting_witness,
                 public_witness,
-                fallback="",
+                fallback=primary_keeper,
             )
         if not primary_keeper:
             primary_keeper = (
@@ -1277,6 +1324,20 @@ class StoryRevisionService:
                     protagonist,
                 )
                 or protagonist
+            )
+        if primary_keeper == protagonist:
+            primary_keeper = (
+                non_protagonist_terminal_name(
+                    continuity_anchor,
+                    supporting_witness,
+                    public_witness,
+                    living_anchor,
+                    visible_witness,
+                    second_witness,
+                    sacrifice_witness,
+                    fallback="the appointed keeper",
+                )
+                or "the appointed keeper"
             )
         if not visible_witness:
             visible_witness = (
@@ -1290,6 +1351,18 @@ class StoryRevisionService:
                 )
                 or primary_keeper
                 or protagonist
+            )
+        if visible_witness == protagonist:
+            visible_witness = (
+                non_protagonist_terminal_name(
+                    public_witness,
+                    supporting_witness,
+                    continuity_anchor,
+                    second_witness,
+                    primary_keeper,
+                    fallback=primary_keeper,
+                )
+                or primary_keeper
             )
         if not second_witness:
             second_witness = self._resolve_terminal_relationship_target(
@@ -1311,6 +1384,15 @@ class StoryRevisionService:
                 )
                 or visible_witness
             )
+        if second_witness in {protagonist, visible_witness}:
+            second_witness = non_protagonist_terminal_name(
+                supporting_witness,
+                public_witness,
+                continuity_anchor,
+                primary_keeper,
+                sacrifice_witness,
+                fallback="",
+            )
         if not sacrifice_witness:
             sacrifice_witness = (
                 display_terminal_name(
@@ -1321,7 +1403,22 @@ class StoryRevisionService:
                     visible_witness,
                     protagonist,
                 )
-                or protagonist
+                or visible_witness
+                or primary_keeper
+                or "the gathered city"
+            )
+        if sacrifice_witness == protagonist:
+            sacrifice_witness = (
+                non_protagonist_terminal_name(
+                    supporting_witness,
+                    public_witness,
+                    continuity_anchor,
+                    visible_witness,
+                    second_witness,
+                    primary_keeper,
+                    fallback=primary_keeper,
+                )
+                or primary_keeper
             )
         if not handoff_recipient:
             handoff_recipient = self._resolve_terminal_relationship_target(
@@ -1344,7 +1441,46 @@ class StoryRevisionService:
                     public_witness,
                 )
                 or primary_keeper
-                or protagonist
+                or visible_witness
+                or "the gathered city"
+            )
+        if handoff_recipient == protagonist:
+            handoff_recipient = non_protagonist_terminal_name(
+                sacrifice_witness,
+                primary_keeper,
+                visible_witness,
+                second_witness,
+                continuity_anchor,
+                supporting_witness,
+                public_witness,
+                living_anchor,
+                fallback=primary_keeper,
+            )
+        if not handoff_recipient or handoff_recipient == protagonist:
+            handoff_recipient = (
+                primary_keeper
+                if primary_keeper and primary_keeper != protagonist
+                else (
+                    visible_witness
+                    if visible_witness and visible_witness != protagonist
+                    else "the appointed keeper"
+                )
+            )
+        if second_witness and second_witness != visible_witness:
+            public_sequence_clause = f"{visible_witness} tastes metal and {second_witness} closes the gap"
+            public_move_clause = (
+                f"{visible_witness} locks the front rank while {second_witness} drags the broken edge back into line"
+            )
+            closure_public_clause = (
+                f"{visible_witness} keeps the witness roll steady while {second_witness} carries the sealed ledger through the reopened corridor"
+            )
+        else:
+            public_sequence_clause = f"{visible_witness} tastes metal and the crowd holds the line"
+            public_move_clause = (
+                f"{visible_witness} locks the front rank and drags the broken edge back into line"
+            )
+            closure_public_clause = (
+                f"{visible_witness} keeps the witness roll steady while the square opens a narrow path for the sealed ledger"
             )
         closure_partner = self._resolve_terminal_relationship_target(
             visible_witness,
@@ -1360,14 +1496,32 @@ class StoryRevisionService:
             if closure_partner
             else f"{visible_witness} keeps the living record after the seal lands"
         )
+        legacy_margin_detail = f"the margin line {protagonist} left before the handoff"
+        evidence_partner = distinct_terminal_name(
+            supporting_witness,
+            second_witness,
+            visible_witness,
+            continuity_anchor,
+            fallback="",
+            extra_exclusions={primary_keeper, protagonist},
+        )
+        if evidence_partner and evidence_partner != primary_keeper:
+            evidence_clause = (
+                f"{primary_keeper} and {evidence_partner} uncover a scorched ledger leaf and a matching seal scar tied to {motif_anchor}"
+            )
+        else:
+            evidence_clause = (
+                f"{primary_keeper} uncovers a scorched ledger leaf and a matching seal scar tied to {motif_anchor} while {visible_witness} keeps the line steady"
+            )
         if phase == "sacrifice":
             return {
                 "summary": (
                     f"{protagonist} makes the final choice in full view of {sacrifice_witness}, "
-                    f"{protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty settles on {handoff_recipient} through visible preparation."
+                    f"{protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty settles on {handoff_recipient} through visible preparation. "
+                    f"The cut severs {protagonist}'s lived memory thread before the next order can be spoken, and by the time the token leaves {protagonist}'s hand {protagonist} can no longer name the vow or the faces holding the line, confirming the cost is permanent."
                 ),
                 "objective": (
-                    f"{protagonist}'s final choice lands in full view of {sacrifice_witness}, {protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty moves to {handoff_recipient} through visible preparation."
+                    f"{protagonist}'s final choice lands in full view of {sacrifice_witness}, {protagonist} places a marked token into {handoff_recipient}'s hand before stepping away, and the next duty moves to {handoff_recipient} through visible preparation while the memory cost closes behind the handoff. The aftermath should read as immediate memory erasure, not partial recall."
                 ),
                 "hook": (
                     f"{confirmation_trigger} confirms the old life cannot return unchanged, and the marked token reaching {handoff_recipient} makes the handoff visible."
@@ -1387,11 +1541,11 @@ class StoryRevisionService:
             return {
                 "summary": (
                     f"After the sacrifice, the marked token reaches {primary_keeper} at the first private break and the first wake attempt fails at once when the seal answers and {primary_keeper}'s hand recoils. "
-                    f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. {visible_witness} asks one blunt readiness question out loud, {primary_keeper} answers by setting the token beside the ledger and taking command, and the public record moves ahead of private grief. "
+                    f"{primary_keeper} already knows the return failed before reaching for {vessel_label}, so the touch reads as a final goodbye rather than a rescue. {visible_witness} reads {legacy_margin_detail} aloud, asks one blunt readiness question out loud, and {primary_keeper} answers by crossing out the rescue route on the duty slate, setting the token beside the ledger, and taking command while the public record moves ahead of private grief. "
                     f"The seal's hard answer proves the old life is gone for good."
                 ),
                 "objective": (
-                    f"{primary_keeper} reaches for {vessel_label}, finds only dead weight, and lets grief tighten into duty while the marked token and the seal keep the loss visible. {visible_witness} interrupts the silence with a direct challenge, {primary_keeper} answers in one explicit line of commitment, and the room stays rooted in the city's debt instead of the old return."
+                    f"{primary_keeper} reaches for {vessel_label}, finds only dead weight, and lets grief tighten into duty while the marked token and the seal keep the loss visible. {visible_witness} interrupts the silence with a direct challenge, {primary_keeper} answers in one explicit line of commitment, and the room keeps {legacy_margin_detail} visible so the city's debt stays concrete instead of treating loss as a possible return."
                 ),
                 "hook": f"{confirmation_trigger} points toward the buried rule tied to {motif_anchor}, and one failed wake attempt forces {primary_keeper} to choose duty before the room settles.",
                 "focus_character": primary_keeper,
@@ -1407,12 +1561,12 @@ class StoryRevisionService:
         if phase == "rule_revelation":
             return {
                 "summary": (
-                    f"An early attempt to stabilize the aftermath fails under lamp heat and chalk dust. Then {primary_keeper} and {supporting_witness or living_anchor} uncover concrete evidence tied to {motif_anchor}, and the lost rule cracks through the wall before it can spread. "
+                    f"At daybreak, {evidence_clause}, and the room verifies the rule through sequence rather than argument: lamp heat curls a spare folio edge, chalk fractures along the same scar, and the failed pattern repeats in full view. "
                     f"{vessel_label} gives one brief residual shiver and then goes still without any hint that a mind has returned. "
-                    f"{supporting_witness or living_anchor} reads the reflex as memorial proof rather than a reply, and breaks visibly at the ledger margin. "
+                    f"{supporting_witness or living_anchor} reads the reflex as memorial proof rather than a reply, breaks visibly at the ledger margin, and pins the line beside the charred folio so the room can trace one named debt chain before blame starts. "
                     "The forged authority mark tied to the lie blisters off the page in full view so the antagonist's hold cannot survive as rumor."
                 ),
-                "objective": f"Concrete evidence makes the rule legible through visible sequence and consequence. The first response fails in view of {supporting_witness or living_anchor}, the vessel contact stays proof rather than interior life or restored consciousness, and one sharp look or spoken line interrupts the motion. The proof reads as a residual shiver, lamp flicker, or last trained residue, never as conscious return.",
+                "objective": f"A scorched ledger leaf plus a matching seal scar make the rule legible through visible sequence and consequence. The first response fails in view of {supporting_witness or living_anchor}, the vessel contact stays proof rather than interior life or restored consciousness, and one sharp look or spoken line interrupts the motion. The proof reads as a residual shiver, lamp flicker, or last trained residue, never as conscious return.",
                 "hook": "Once the living understand the rule, the confession has to leave the room and survive public pressure, with the evidence still warm from the lamp.",
                 "focus_character": primary_keeper,
                 "relationship_target": self._resolve_terminal_relationship_target(
@@ -1427,14 +1581,15 @@ class StoryRevisionService:
         if phase == "public_reckoning":
             return {
                 "summary": (
-                    f"Wind drives rain across the square, a loose banner snaps overhead, and a guarded figure stands under watch while the crowd keeps shifting around the still vessel. {public_sequence_clause}. "
+                    f"Wind drives rain across the square, a loose banner snaps overhead, and the first surge hits before the keeper can finish one sentence. Two living witnesses move first: {public_move_clause}. "
+                    f"A loose debt-mark snaps off the rail and whips across the front rank, forcing an improvised correction before the line can settle. "
                     f"Before naming the mechanism, {primary_keeper} repeats one concrete line from {protagonist}'s final choice so the square hears whose cost opened the page. "
-                    f"{primary_keeper} names the mechanism out loud while {supporting_witness or visible_witness} takes the still hand of {vessel_label} and presses it to the ledger before the ritual seal lands. "
-                    f"{supporting_witness or visible_witness} reacts to the seal scar or lost name with a visible flinch, and the living contact stays physical at the ledger table. "
-                    f"{vessel_label} shows only ink-stiff fingers and a fixed jawline at the edge of the crowd, never initiating movement while the burned names darken on the ledger and the lantern glass cracks once. "
+                    f"A guarded figure stands under watch while {primary_keeper} names the mechanism out loud and {supporting_witness or visible_witness} takes the still hand of {vessel_label} and presses it to the ledger before the ritual seal lands. "
+                    f"{supporting_witness or visible_witness} reacts to the seal scar or lost name with a visible flinch, and the living contact stays physical at the ledger table. {public_sequence_clause}. "
+                    f"{vessel_label} shows only ink-stiff fingers and a fixed jawline at the edge of the crowd, never initiating movement; any twitch is only a residual motor reflex triggered by living contact, not a waking mind, while the burned names darken on the ledger and the lantern glass cracks once. "
                     f"By the end of the scene, one living hand is still on the record and the new order has a human shape."
                 ),
-                "objective": f"The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. {public_move_clause}, and the guarded figure faces the square while {primary_keeper} names the mechanism after restating {protagonist}'s final choice. {supporting_witness or visible_witness} physically touches the still hand of {vessel_label} before the seal lands, and {vessel_label} stays inert at the ledger table with no answering movement or independent action.",
+                "objective": f"The reckoning unfolds in two beats with an explicit pause between them: first the surge and line break, then the naming and sealing. A loose debt-mark breaches the front rail before the naming beat, so {public_move_clause} under pressure, and the guarded figure faces the square while {primary_keeper} names the mechanism after restating {protagonist}'s final choice. {supporting_witness or visible_witness} physically touches the still hand of {vessel_label} before the seal lands, and {vessel_label} stays inert at the ledger table with no answering movement or independent action.",
                 "hook": "A fresh black seal on the ledger gives the conflict a visible shape before the city can confess what it owes in daylight, and the square feels the cost in its teeth.",
                 "focus_character": primary_keeper,
                 "relationship_target": self._resolve_terminal_relationship_target(
@@ -1449,8 +1604,9 @@ class StoryRevisionService:
         return {
             "summary": (
                 f"{visible_witness} names one ordinary detail from the life now gone, and the corridor window shudders in a fresh gust while {primary_keeper} keeps the ledger line in view. "
-                f"By night, as the crowd shifts back from the square and the first hands lower from the seal, {public_move_clause}, and a small ordinary task resumes to show the city still belongs to the living. "
+                f"By night, the private closure gives way to public confession in the square; {closure_public_clause}, and a small ordinary task resumes to show the city still belongs to the living. "
                 f"By dawn, after the walk to the ledger room and the last bell in the hall, {primary_keeper} writes the final entry once before passing the record forward, and {public_cost_clause} while {vessel_label} stays an inert silhouette with no answering movement and no independent action. "
+                f"Outside the ledger room, a market clerk loses yesterday's toll count and starts it again from zero, making the civic cost visible beyond the square. "
                 f"Before the page dries, {visible_witness} speaks the new name aloud into fresh black ink, the blank page takes it, the lamp flame gutters, and the room chills around the ledger. {closure_sequence}."
             ),
             "objective": (
@@ -2939,18 +3095,30 @@ class StoryRevisionService:
                     chapter.metadata["focus_character"] = fallback_focus
                     changed = True
 
-            relationship_target = self._canonicalize_character_name(
-                str(chapter.metadata.get("relationship_target", "")).strip(),
+            raw_relationship_target = str(
+                chapter.metadata.get("relationship_target", "")
+            ).strip()
+            relationship_target = self._normalize_vessel_target_label(
+                raw_relationship_target,
                 cast_names,
             )
+            if not relationship_target:
+                relationship_target = self._canonicalize_character_name(
+                    raw_relationship_target,
+                    cast_names,
+                )
             if chapter.metadata.get("relationship_target") != relationship_target:
                 chapter.metadata["relationship_target"] = relationship_target
                 changed = True
+            target_base, target_is_vessel = self._split_vessel_label(relationship_target)
             relationship_departure = self._departure_chapter_for_name(
-                relationship_target,
+                target_base,
                 departed_characters,
             )
-            if (relationship_departure or chapter.chapter_number + 1) < chapter.chapter_number:
+            if (
+                not target_is_vessel
+                and (relationship_departure or chapter.chapter_number + 1) < chapter.chapter_number
+            ):
                 fallback_target = next(
                     (
                         candidate
@@ -2960,7 +3128,13 @@ class StoryRevisionService:
                     "",
                 )
                 current_target = str(chapter.metadata.get("relationship_target", "")).strip()
-                if current_target.lower().endswith("(vessel)"):
+                current_target_base, current_target_is_vessel = self._split_vessel_label(
+                    current_target
+                )
+                if current_target_is_vessel and (
+                    current_target_base
+                    or current_target.lower() in {"the vessel", "vessel", "silent vessel"}
+                ):
                     fallback_target = current_target
                 elif not fallback_target:
                     fallback_target = protagonist if protagonist != focus_character else ""
@@ -3127,6 +3301,14 @@ class StoryRevisionService:
             for chapter in ctx.story.chapters
             if chapter.chapter_number in late_arc_numbers
         }
+        late_arc_defaults = {
+            int(plan["number"]): {
+                "focus_character": str(plan.get("focus_character", "")).strip(),
+                "relationship_target": str(plan.get("relationship_target", "")).strip(),
+                "relationship_status": str(plan.get("relationship_status", "")).strip(),
+            }
+            for plan in self._late_arc_sequence(ctx, issue_context=issue_context).values()
+        }
         late_arc_custom_focus = set(
             self._late_arc_metadata_candidates(ctx, protagonist, departed_characters)
         )
@@ -3150,10 +3332,16 @@ class StoryRevisionService:
                 )
                 if self._is_generic_terminal_placeholder(focus_character):
                     focus_character = protagonist
-                relationship_target = self._canonicalize_character_name(
-                    str(planned_stage["relationship_target"]),
+                planned_target = str(planned_stage["relationship_target"]).strip()
+                relationship_target = self._normalize_vessel_target_label(
+                    planned_target,
                     cast_names,
                 )
+                if not relationship_target:
+                    relationship_target = self._canonicalize_character_name(
+                        planned_target,
+                        cast_names,
+                    )
                 relationship_status = str(planned_stage["relationship_status"]).strip()
             else:
                 focus_character = self._normalize_protagonist_name_drift(
@@ -3176,6 +3364,34 @@ class StoryRevisionService:
                 )
                 relationship_status = str(chapter.metadata.get("relationship_status", "")).strip()
 
+            late_arc_default = late_arc_defaults.get(chapter.chapter_number, {})
+            late_arc_default_focus = self._canonicalize_character_name(
+                str(late_arc_default.get("focus_character", "")).strip(),
+                cast_names,
+            )
+            late_arc_default_target = self._normalize_vessel_target_label(
+                str(late_arc_default.get("relationship_target", "")).strip(),
+                cast_names,
+            )
+            if not late_arc_default_target:
+                late_arc_default_target = self._canonicalize_character_name(
+                    str(late_arc_default.get("relationship_target", "")).strip(),
+                    cast_names,
+                )
+            late_arc_default_status = str(
+                late_arc_default.get("relationship_status", "")
+            ).strip()
+            if chapter.chapter_number in late_arc_numbers:
+                if not focus_character and late_arc_default_focus:
+                    focus_character = late_arc_default_focus
+                    changed = True
+                if not relationship_target and late_arc_default_target:
+                    relationship_target = late_arc_default_target
+                    changed = True
+                if not relationship_status and late_arc_default_status:
+                    relationship_status = late_arc_default_status
+                    changed = True
+
             if (
                 focus_character
                 and (
@@ -3195,6 +3411,12 @@ class StoryRevisionService:
                     and focus_character in late_arc_custom_focus
                 )
             ):
+                focus_character = next(
+                    (name for name in chapter_allies if name and name in cast_names),
+                    protagonist,
+                )
+                changed = True
+            if not focus_character:
                 focus_character = next(
                     (name for name in chapter_allies if name and name in cast_names),
                     protagonist,
@@ -3222,6 +3444,27 @@ class StoryRevisionService:
                     if fallback_target:
                         normalized_target = fallback_target
                         break
+            if not normalized_target and chapter.chapter_number in late_arc_numbers:
+                late_arc_vessel_target = self._normalize_vessel_target_label(
+                    self._late_arc_vessel_label(protagonist),
+                    cast_names,
+                )
+                if late_arc_vessel_target and late_arc_vessel_target != focus_character:
+                    normalized_target = late_arc_vessel_target
+            if (
+                not normalized_target
+                and chapter.chapter_number in late_arc_numbers
+                and late_arc_default_target
+                and late_arc_default_target != focus_character
+            ):
+                normalized_target = late_arc_default_target
+            if not normalized_target:
+                normalized_target = next(
+                    (name for name in chapter_allies if name and name != focus_character),
+                    "",
+                )
+            if not normalized_target and focus_character != protagonist:
+                normalized_target = protagonist
 
             if focus_character and chapter.metadata.get("focus_character") != focus_character:
                 chapter.metadata["focus_character"] = focus_character
@@ -3244,6 +3487,18 @@ class StoryRevisionService:
                 chapter_number=chapter.chapter_number,
                 target_chapters=ctx.story.chapter_count,
             )
+            if (
+                chapter.chapter_number in late_arc_numbers
+                and normalized_target
+                and not relationship_status
+            ):
+                relationship_status = (
+                    late_arc_default_status
+                    or self._relationship_progression_status(
+                        chapter_number=chapter.chapter_number,
+                        target_chapters=ctx.story.chapter_count,
+                    )
+                )
             if chapter.metadata.get("relationship_status") != relationship_status:
                 chapter.metadata["relationship_status"] = relationship_status
                 changed = True
@@ -3299,9 +3554,123 @@ class StoryRevisionService:
                 ctx.memory.relationship_states = synced_states
                 changed = True
 
+        primary_antagonist = self._resolve_primary_antagonist_label(ctx, protagonist)
+        if primary_antagonist:
+            terminal_chapter = ctx.story.chapter_count
+            antagonist_departed_at = self._departure_chapter_for_name(
+                primary_antagonist,
+                departed_characters,
+            )
+            if antagonist_departed_at is not None and antagonist_departed_at <= terminal_chapter:
+                closure_states = list(ctx.memory.relationship_states)
+                has_antagonist_closure = any(
+                    entry.chapter_number == terminal_chapter
+                    and entry.source == primary_antagonist
+                    for entry in closure_states
+                )
+                if not has_antagonist_closure:
+                    closure_target = (
+                        protagonist
+                        if protagonist and protagonist != primary_antagonist
+                        else next(
+                            (
+                                ally
+                                for ally in latest_surviving_allies
+                                if ally and ally != primary_antagonist
+                            ),
+                            "the surviving record line",
+                        )
+                    )
+                    closure_states.append(
+                        RelationshipSnapshot(
+                            chapter_number=terminal_chapter,
+                            source=primary_antagonist,
+                            target=closure_target,
+                            status="defeated and removed from the active line",
+                        )
+                    )
+                    ctx.memory.relationship_states = closure_states
+                    changed = True
+
         if not changed:
             return []
         return ["Normalized relationship targets and statuses before the final review pass."]
+
+    def _ensure_terminal_antagonist_closure_in_memory(
+        self,
+        ctx: StoryWorkflowContext,
+        *,
+        issue_context: str = "",
+    ) -> bool:
+        blueprint = ctx.workflow.blueprint
+        if blueprint is None:
+            return False
+        protagonist, allies = self._resolve_cast_labels(ctx)
+        if not protagonist:
+            protagonist = protagonist_name(blueprint.character_bible).strip()
+        if not protagonist:
+            return False
+
+        primary_antagonist = self._resolve_primary_antagonist_label(ctx, protagonist)
+        if not primary_antagonist:
+            return False
+
+        cast_names = set(character_names(blueprint.character_bible))
+        cast_names.update(antagonist_names(blueprint.character_bible))
+        departed_characters = self._combined_departed_characters(
+            ctx,
+            protagonist,
+            issue_context=issue_context,
+        )
+        terminal_chapter = ctx.story.chapter_count
+        antagonist_departed_at = self._departure_chapter_for_name(
+            primary_antagonist,
+            departed_characters,
+        )
+        if antagonist_departed_at is None or antagonist_departed_at > terminal_chapter:
+            return False
+
+        canonical_antagonist = (
+            self._canonicalize_character_name(primary_antagonist, cast_names)
+            or " ".join(str(primary_antagonist).split()).strip()
+        )
+        for entry in ctx.memory.relationship_states:
+            if entry.chapter_number != terminal_chapter:
+                continue
+            existing_source = (
+                self._canonicalize_character_name(entry.source, cast_names)
+                or " ".join(str(entry.source).split()).strip()
+            )
+            if existing_source.lower() == canonical_antagonist.lower():
+                return False
+
+        surviving_allies = self._resolve_surviving_allies(
+            ctx,
+            protagonist,
+            allies,
+            issue_context=issue_context,
+        )
+        closure_target = (
+            protagonist
+            if protagonist and protagonist.lower() != canonical_antagonist.lower()
+            else next(
+                (
+                    ally
+                    for ally in surviving_allies
+                    if ally and ally.lower() != canonical_antagonist.lower()
+                ),
+                "the surviving record line",
+            )
+        )
+        ctx.memory.relationship_states.append(
+            RelationshipSnapshot(
+                chapter_number=terminal_chapter,
+                source=canonical_antagonist,
+                target=closure_target,
+                status="defeated and removed from the active line",
+            )
+        )
+        return True
 
     def _normalize_relationship_target(
         self,

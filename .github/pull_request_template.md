@@ -13,8 +13,9 @@
 - [ ] `npm --prefix frontend run test`
 - [ ] `npm --prefix frontend run build`
 - [ ] `npm --prefix frontend run test:e2e:smoke`
-- [ ] `DashScope Longform Gate` passed on the PR
-- [ ] If this PR refreshes the canonical UAT evidence: `python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports`
+- [ ] `DashScope Longform Gate` deterministic PR check passed
+- [ ] If this PR requires external-provider validation: manually run workflow `DashScope Longform Gate` with `run_live=true`
+- [ ] If this PR refreshes canonical UAT evidence: `python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports`
 
 ## Risk Review
 
