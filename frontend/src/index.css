@@ -1,0 +1,43 @@
+@import "@fontsource-variable/geist";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 224 38% 16%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 38% 16%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 23%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 23%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 193 95% 68%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 347 77% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 20% 30%;
+    --input: 217 20% 30%;
+    --ring: 193 95% 68%;
+    --chart-1: 24 95% 53%;
+    --chart-2: 193 95% 68%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 44 96% 56%;
+    --chart-5: 160 84% 39%;
+    --radius: 0.9rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    font-family: 'Geist Variable', sans-serif;
+  }
+}

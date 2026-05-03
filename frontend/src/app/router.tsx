@@ -18,9 +18,9 @@ export const router = createBrowserRouter(
       element: <AppLayout />,
       children: [
         { index: true, element: <LandingPage /> },
-        { path: 'login', element: <LoginPage /> },
+        { path: 'auth/login', element: <LoginPage /> },
         {
-          path: 'story',
+          path: 'studio',
           element: (
             <RequireSession>
               <StoryWorkbenchPage />

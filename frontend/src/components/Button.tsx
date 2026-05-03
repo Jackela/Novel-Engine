@@ -1,20 +1,28 @@
-import type { ButtonHTMLAttributes, PropsWithChildren } from 'react';
+import type { ComponentProps, PropsWithChildren } from 'react';
+
+import { Button as UIButton } from '@/components/ui/button';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends Omit<ComponentProps<typeof UIButton>, 'variant'> {
   variant?: ButtonVariant;
 }
 
+const variantMap: Record<ButtonVariant, ComponentProps<typeof UIButton>['variant']> = {
+  primary: 'default',
+  secondary: 'secondary',
+  ghost: 'ghost',
+};
+
 export function Button({
   children,
-  className = '',
+  className,
   variant = 'primary',
   ...props
 }: PropsWithChildren<ButtonProps>) {
   return (
-    <button className={`button button--${variant} ${className}`.trim()} {...props}>
+    <UIButton className={className} variant={variantMap[variant]} {...props}>
       {children}
-    </button>
+    </UIButton>
   );
 }

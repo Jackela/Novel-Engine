@@ -1,3 +1,5 @@
+import { Badge } from '@/components/ui/badge';
+
 interface StatusPillProps {
   tone:
     | 'healthy'
@@ -12,5 +14,16 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ tone, children }: StatusPillProps) {
-  return <span className={`status-pill status-pill--${tone}`}>{children}</span>;
+  const variant =
+    tone === 'offline'
+      ? 'destructive'
+      : tone === 'degraded' || tone === 'paused'
+        ? 'secondary'
+        : 'outline';
+
+  return (
+    <Badge className="uppercase tracking-wide" variant={variant}>
+      {children}
+    </Badge>
+  );
 }
