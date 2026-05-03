@@ -35,6 +35,7 @@ from src.contexts.narrative.infrastructure.repositories.postgres_story_repositor
     PostgresStoryRepositoryAdapter,
 )
 from src.shared.infrastructure.config.settings import NovelEngineSettings, get_settings
+from src.shared.infrastructure.persistence.pool_manager import get_connection_pool
 
 _story_repository: InMemoryStoryRepository | PostgresStoryRepositoryAdapter | None = (
     None
@@ -58,8 +59,6 @@ class _LazyConnectionPoolProxy:
 
     @asynccontextmanager
     async def acquire(self) -> AsyncGenerator[Any, None]:
-        from src.apps.api.dependencies import get_connection_pool
-
         pool = await get_connection_pool()
         async with pool.acquire() as connection:
             yield connection

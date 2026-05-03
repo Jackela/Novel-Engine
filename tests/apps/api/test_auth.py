@@ -41,7 +41,7 @@ def test_login_accepts_email_and_returns_workspace_profile(
     assert story_response.json()["story"]["author_id"] == payload["workspace_id"]
 
 
-def test_login_reuses_existing_guest_workspace_cookie(
+def test_login_promotes_guest_cookie_to_user_workspace(
     canonical_client: Any,
 ) -> None:
     guest_response = canonical_client.post("/api/v1/guest/session")
@@ -59,6 +59,49 @@ def test_login_reuses_existing_guest_workspace_cookie(
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["workspace_id"] == guest_workspace_id
+    assert payload["workspace_id"] == "user-operator"
+    assert payload["workspace_id"] != guest_workspace_id
     assert payload["user"]["name"] == "operator"
     assert payload["user"]["email"] == "operator@novel.engine"
+
+
+def test_guest_launch_does_not_reuse_user_workspace_cookie(
+    canonical_client: Any,
+) -> None:
+    login_response = canonical_client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "operator@novel.engine",
+            "password": "demo-password",
+        },
+    )
+
+    assert login_response.status_code == 200
+    assert login_response.json()["workspace_id"] == "user-operator"
+
+    guest_response = canonical_client.post("/api/v1/guest/session")
+
+    assert guest_response.status_code == 200
+    payload = guest_response.json()
+    assert payload["workspace_id"].startswith("guest-")
+    assert payload["workspace_id"] != "user-operator"
+
+
+def test_login_with_invalid_credentials_returns_401(
+    canonical_client: Any,
+) -> None:
+    response = canonical_client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": "operator@novel.engine",
+            "password": "wrong-password",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "error": {
+            "code": "HTTP_ERROR",
+            "message": "Invalid credentials",
+        }
+    }

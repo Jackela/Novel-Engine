@@ -16,6 +16,11 @@ from src.contexts.narrative.domain.entities.scene import Scene
 from src.contexts.narrative.domain.ports.chapter_repository_port import (
     ChapterRepositoryPort,
 )
+from src.contexts.narrative.infrastructure.repositories.postgres_json import (
+    dump_json,
+    load_json_array,
+    load_json_object,
+)
 
 
 class PostgresChapterRepository(ChapterRepositoryPort):
@@ -142,7 +147,7 @@ class PostgresChapterRepository(ChapterRepositoryPort):
                 chapter.summary,
                 chapter.created_at,
                 chapter.updated_at,
-                chapter.metadata,
+                dump_json(chapter.metadata),
             )
 
             # Save scenes
@@ -173,10 +178,10 @@ class PostgresChapterRepository(ChapterRepositoryPort):
             scene.title,
             scene.content,
             scene.scene_type,
-            [c.to_dict() for c in scene.choices],
+            dump_json([c.to_dict() for c in scene.choices]),
             scene.created_at,
             scene.updated_at,
-            scene.metadata,
+            dump_json(scene.metadata),
         )
 
     async def delete(self, chapter_id: UUID) -> bool:
@@ -292,8 +297,10 @@ class PostgresChapterRepository(ChapterRepositoryPort):
             scene_id = row.get("scene_id")
             if scene_id and str(scene_id) not in seen_scene_ids:
                 seen_scene_ids.add(str(scene_id))
-                choices_data = row["choices"] or []
-                choices = [self._dict_to_choice(c) for c in choices_data]
+                choices = [
+                    self._dict_to_choice(c)
+                    for c in load_json_array(row["choices"])
+                ]
 
                 scene = Scene(
                     id=scene_id,
@@ -303,9 +310,7 @@ class PostgresChapterRepository(ChapterRepositoryPort):
                     content=row["content"],
                     scene_type=row["scene_type"],
                     choices=choices,
-                    metadata=dict(row["scene_metadata"])
-                    if row["scene_metadata"]
-                    else {},
+                    metadata=load_json_object(row["scene_metadata"]),
                     created_at=row["scene_created_at"],
                     updated_at=row["scene_updated_at"],
                 )
@@ -318,9 +323,7 @@ class PostgresChapterRepository(ChapterRepositoryPort):
             title=first_row["chapter_title"],
             summary=first_row["summary"],
             scenes=scenes,
-            metadata=dict(first_row["chapter_metadata"])
-            if first_row["chapter_metadata"]
-            else {},
+            metadata=load_json_object(first_row["chapter_metadata"]),
             created_at=first_row["chapter_created_at"],
             updated_at=first_row["chapter_updated_at"],
         )

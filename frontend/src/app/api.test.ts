@@ -396,4 +396,33 @@ describe('api', () => {
       }),
     );
   });
+
+  it('surfaces API error details for failed login requests', async () => {
+    const response = new Response(
+      JSON.stringify({
+        error: {
+          code: 'HTTP_ERROR',
+          message: 'Invalid credentials',
+        },
+      }),
+      {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(response);
+
+    await expect(
+      api.login({
+        email: 'operator@novel.engine',
+        password: 'wrong-password',
+      }),
+    ).rejects.toMatchObject({
+      status: 401,
+      message: 'Invalid credentials',
+    });
+  });
 });

@@ -31,6 +31,10 @@ class StoryPublicationService:
             raise ValueError("Story does not pass the publication quality gate")
         if report.quality_score < MIN_QUALITY_SCORE:
             raise ValueError("Story quality score is below the publication threshold")
+        if any(issue.severity == "warning" for issue in report.issues):
+            raise ValueError("Story still has unresolved review warnings")
+        if any(issue.severity == "blocker" for issue in report.issues):
+            raise ValueError("Story still has unresolved review blockers")
         structural_review = report.structural_review
         semantic_review = report.semantic_review
         if structural_review is None:

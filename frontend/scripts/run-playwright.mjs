@@ -7,15 +7,17 @@ const args = process.argv.slice(2);
 const env = { ...process.env };
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const frontendDir = path.resolve(scriptDir, '..');
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 delete env.NO_COLOR;
 
 const child = spawn(
-  process.execPath,
-  ['./node_modules/@playwright/test/cli.js', ...args],
+  npmBin,
+  ['exec', '--', 'playwright', ...args],
   {
     cwd: frontendDir,
     env,
+    shell: process.platform === 'win32',
     stdio: 'inherit',
   },
 );

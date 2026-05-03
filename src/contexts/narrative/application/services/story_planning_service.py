@@ -17,6 +17,7 @@ from src.contexts.narrative.application.services.story_pipeline_context import (
 )
 from src.contexts.narrative.application.services.story_workflow_support import (
     character_names,
+    extract_world_rules,
 )
 from src.contexts.narrative.application.services.story_workflow_types import (
     StoryBlueprintArtifact,
@@ -80,7 +81,7 @@ class StoryPlanningService:
         ctx.memory.active_characters = character_names(blueprint.character_bible)
         ctx.memory.world_rules = [
             WorldRuleLedgerEntry(rule=str(rule).strip(), source="blueprint")
-            for rule in blueprint.world_bible.get("core_rules", [])
+            for rule in extract_world_rules(blueprint.world_bible)
             if str(rule).strip()
         ]
         ctx.record_generation_trace(result)
@@ -244,6 +245,8 @@ class StoryPlanningService:
                 chapter.get("promised_payoff", chapter.get("promise", ""))
             ).strip()
             hook_strength = int(chapter.get("hook_strength", 0) or 0)
+            if 0 < hook_strength <= 10:
+                hook_strength *= 10
             if not summary:
                 raise ValueError("Outline chapter summary cannot be empty")
             normalized_chapters.append(

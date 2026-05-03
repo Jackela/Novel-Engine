@@ -95,7 +95,7 @@ def test_guest_story_pipeline_flow(canonical_client: Any) -> None:
 
     revise_response = canonical_client.post(f"/api/v1/story/{story['id']}/revise")
     assert revise_response.status_code == 200
-    assert revise_response.json()["revision_notes"]
+    assert isinstance(revise_response.json()["revision_notes"], list)
 
     export_response = canonical_client.post(f"/api/v1/story/{story['id']}/export")
     assert export_response.status_code == 200

@@ -11,7 +11,9 @@ export default defineConfig({
   webServer: {
     command: 'node ./scripts/start-e2e-stack.mjs',
     url: 'http://127.0.0.1:4273',
-    reuseExistingServer: true,
+    // Always boot a fresh backend/frontend pair so local manual stacks do not
+    // leak stale code or session state into the deterministic smoke suite.
+    reuseExistingServer: false,
     timeout: 120_000,
   },
   projects: [

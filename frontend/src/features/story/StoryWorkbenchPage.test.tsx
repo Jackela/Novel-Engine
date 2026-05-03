@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 
 import type {
   StoryArtifactHistoryEntry,
@@ -13,7 +14,7 @@ import type {
   StoryWorkspace,
   StoryWorkflowState,
 } from '@/app/types';
-import { render, screen } from '../../../tests/test-utils';
+import { fireEvent, render, screen } from '../../../tests/test-utils';
 import { useAuth } from '@/features/auth/useAuth';
 
 import { StoryWorkbenchPage } from './StoryWorkbenchPage';
@@ -27,6 +28,28 @@ vi.mock('@/features/auth/useAuth', () => ({
 vi.mock('./useStoryWorkbench', () => ({
   useStoryWorkbench: vi.fn(),
 }));
+
+function renderWorkbench() {
+  return render(
+    <MemoryRouter>
+      <StoryWorkbenchPage />
+    </MemoryRouter>,
+  );
+}
+
+function buildAuthValue(session: SessionState) {
+  return {
+    session,
+    sessions: [session],
+    activeSessionId: session.id,
+    isLoading: false,
+    signInAsGuest: vi.fn(),
+    signIn: vi.fn(),
+    switchSession: vi.fn(),
+    signOut: vi.fn(),
+    updateSessionSelection: vi.fn(),
+  };
+}
 
 function makeStoryWorkspace(): StoryWorkspace {
   const structuralReview: StoryReviewReport = {
@@ -641,6 +664,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('surfaces relationship and hook debt in the workbench', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -648,13 +672,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -692,10 +710,10 @@ describe('StoryWorkbenchPage', () => {
       runStoryPipeline: vi.fn(),
     } as UseStoryWorkbenchResult);
 
-    render(<StoryWorkbenchPage />);
+    renderWorkbench();
 
-    expect(screen.getByTestId('story-relationship-debt-count')).toHaveTextContent('2');
-    expect(screen.getByTestId('story-hook-debt-count')).toHaveTextContent('2');
+    expect(screen.getByTestId('story-relationship-debt-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('story-hook-debt-count')).toHaveTextContent('3');
     expect(screen.getByTestId('story-chapter-debt-2')).toHaveTextContent(
       'relationship debt',
     );
@@ -707,6 +725,7 @@ describe('StoryWorkbenchPage', () => {
 
   it('keeps mutable workspace metrics separate from run playback', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -715,13 +734,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -759,7 +772,7 @@ describe('StoryWorkbenchPage', () => {
       runStoryPipeline: vi.fn(),
     } as UseStoryWorkbenchResult);
 
-    render(<StoryWorkbenchPage />);
+    renderWorkbench();
 
     expect(screen.getByTestId('story-review-score')).toHaveTextContent('82');
     expect(screen.getByTestId('story-run-playback')).toHaveTextContent('pipeline / completed');
@@ -769,8 +782,79 @@ describe('StoryWorkbenchPage', () => {
     expect(screen.getByTestId('story-run-playback')).toHaveTextContent('1');
   });
 
+  it('keeps the current manuscript rerun publish toggle separate from the create form toggle', () => {
+    const session: SessionState = {
+      id: 'user:user-operator',
+      kind: 'user',
+      workspaceId: 'user-operator',
+      user: {
+        id: 'user-1',
+        name: 'operator',
+        email: 'operator@novel.engine',
+      },
+    };
+    const workspace = makeStoryWorkspace();
+    const mockedUseAuth = vi.mocked(useAuth);
+    const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
+
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
+    mockedUseStoryWorkbench.mockReturnValue({
+      stories: [workspace.story],
+      activeStoryId: workspace.story.id,
+      activeStory: workspace.story,
+      workspace,
+      currentRun: null,
+      runSummaries: [],
+      selectedRunId: null,
+      selectedRunDetail: null,
+      artifact: {
+        blueprint: null,
+        outline: null,
+        review: workspace.review,
+        exportPayload: null,
+        revisionNotes: workspace.revision_notes,
+        pipeline: null,
+        run: null,
+        lastAction: 'Completed quality review',
+      },
+      isLoading: false,
+      isBusy: false,
+      error: null,
+      refreshLibrary: vi.fn(),
+      selectStory: vi.fn(),
+      selectRun: vi.fn(),
+      createStory: vi.fn(),
+      generateBlueprint: vi.fn(),
+      generateOutline: vi.fn(),
+      draftStory: vi.fn(),
+      reviewStory: vi.fn(),
+      reviseStory: vi.fn(),
+      exportStory: vi.fn(),
+      publishStory: vi.fn(),
+      runPipeline: vi.fn(),
+      runStoryPipeline: vi.fn(),
+    } as UseStoryWorkbenchResult);
+
+    renderWorkbench();
+
+    expect(screen.getByTestId('story-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('story-current-publish-toggle')).not.toBeChecked();
+    expect(screen.getByTestId('story-run-current-pipeline')).toHaveTextContent(
+      'Run current pipeline',
+    );
+
+    fireEvent.click(screen.getByTestId('story-current-publish-toggle'));
+
+    expect(screen.getByTestId('story-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('story-current-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('story-run-current-pipeline')).toHaveTextContent(
+      'Run current pipeline and publish',
+    );
+  });
+
   it('renders failed run playback details and failure artifacts', () => {
     const session: SessionState = {
+      id: 'guest:workspace-123',
       kind: 'guest',
       workspaceId: 'workspace-123',
     };
@@ -779,13 +863,7 @@ describe('StoryWorkbenchPage', () => {
     const mockedUseAuth = vi.mocked(useAuth);
     const mockedUseStoryWorkbench = vi.mocked(useStoryWorkbench);
 
-    mockedUseAuth.mockReturnValue({
-      session,
-      isLoading: false,
-      signInAsGuest: vi.fn(),
-      signIn: vi.fn(),
-      signOut: vi.fn(),
-    });
+    mockedUseAuth.mockReturnValue(buildAuthValue(session));
     mockedUseStoryWorkbench.mockReturnValue({
       stories: [workspace.story],
       activeStoryId: workspace.story.id,
@@ -823,7 +901,7 @@ describe('StoryWorkbenchPage', () => {
       runStoryPipeline: vi.fn(),
     } as UseStoryWorkbenchResult);
 
-    render(<StoryWorkbenchPage />);
+    renderWorkbench();
 
     expect(screen.getByTestId('story-run-playback')).toHaveTextContent('pipeline / failed');
     expect(screen.getByTestId('story-run-failure')).toHaveTextContent('Failed stage: draft');

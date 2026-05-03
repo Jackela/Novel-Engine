@@ -10,11 +10,21 @@ const frontendDir = path.resolve(scriptDir, '..');
 const repoRoot = path.resolve(frontendDir, '..');
 
 const pythonBin = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3');
+const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function spawnProcess(command, args, cwd, env) {
   return spawn(command, args, {
     cwd,
     env,
+    stdio: 'inherit',
+  });
+}
+
+function spawnLocalBin(command, args, cwd, env) {
+  return spawn(command, args, {
+    cwd,
+    env,
+    shell: process.platform === 'win32',
     stdio: 'inherit',
   });
 }
@@ -119,9 +129,9 @@ process.on('SIGTERM', () => shutdown(0));
 
 await waitForUrl(`${backendUrl}/health/live`, 'backend health');
 
-frontend = spawnProcess(
-  process.execPath,
-  ['./node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '4273'],
+frontend = spawnLocalBin(
+  npmBin,
+  ['exec', '--', 'vite', '--host', '127.0.0.1', '--port', '4273'],
   frontendDir,
   {
     ...process.env,

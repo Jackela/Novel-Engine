@@ -15,6 +15,11 @@ from src.contexts.narrative.domain.entities.scene import Scene
 from src.contexts.narrative.domain.ports.scene_repository_port import (
     SceneRepositoryPort,
 )
+from src.contexts.narrative.infrastructure.repositories.postgres_json import (
+    dump_json,
+    load_json_array,
+    load_json_object,
+)
 
 
 class PostgresSceneRepository(SceneRepositoryPort):
@@ -118,10 +123,10 @@ class PostgresSceneRepository(SceneRepositoryPort):
             scene.title,
             scene.content,
             scene.scene_type,
-            [c.to_dict() for c in scene.choices],
+            dump_json([c.to_dict() for c in scene.choices]),
             scene.created_at,
             scene.updated_at,
-            scene.metadata,
+            dump_json(scene.metadata),
         )
 
     async def delete(self, scene_id: UUID) -> bool:
@@ -256,8 +261,7 @@ class PostgresSceneRepository(SceneRepositoryPort):
         Returns:
             Scene domain entity
         """
-        choices_data = row["choices"] or []
-        choices = [self._dict_to_choice(c) for c in choices_data]
+        choices = [self._dict_to_choice(c) for c in load_json_array(row["choices"])]
 
         return Scene(
             id=row["id"],
@@ -267,7 +271,7 @@ class PostgresSceneRepository(SceneRepositoryPort):
             content=row["content"],
             scene_type=row["scene_type"],
             choices=choices,
-            metadata=dict(row["metadata"]) if row["metadata"] else {},
+            metadata=load_json_object(row["metadata"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
         )

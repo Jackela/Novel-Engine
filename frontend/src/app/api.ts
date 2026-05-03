@@ -1,10 +1,12 @@
 import { appConfig } from '@/app/config';
 import type {
+  CurrentUserResponse,
   StoryBlueprintResponse,
   StoryCreateRequest,
   StoryCreateResponse,
   StoryDraftResponse,
   StoryExportResponse,
+  GuestSessionRequest,
   GuestSessionResponse,
   LoginRequest,
   LoginResponse,
@@ -23,7 +25,10 @@ import type {
   StorySnapshot,
   StoryWorkspaceResponse,
 } from '@/app/types';
-import { sessionStorageKey, safeStorage } from '@/shared/storage';
+import {
+  getActiveSession,
+  readSessionCatalog,
+} from '@/shared/storage';
 
 class HttpError extends Error {
   readonly status: number;
@@ -52,8 +57,12 @@ function buildStoryQuery(params: Record<string, string | number | undefined>): s
   return query ? `?${query}` : '';
 }
 
-function getAuthorizationHeaders(): Record<string, string> {
-  const session = safeStorage.read<SessionState>(sessionStorageKey);
+function getAuthorizationHeaders(token?: string): Record<string, string> {
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  const session = getActiveSession(readSessionCatalog());
   if (session?.kind === 'user' && session.token) {
     return { Authorization: `Bearer ${session.token}` };
   }
@@ -61,7 +70,46 @@ function getAuthorizationHeaders(): Record<string, string> {
   return {};
 }
 
-async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
+function pickErrorMessage(payload: unknown): string | null {
+  if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return null;
+  }
+
+  const record = payload as Record<string, unknown>;
+  const detail = record.detail;
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+
+  const error = record.error;
+  if (typeof error === 'string' && error.trim()) {
+    return error;
+  }
+  if (error != null && typeof error === 'object' && !Array.isArray(error)) {
+    const nestedMessage = (error as Record<string, unknown>).message;
+    if (typeof nestedMessage === 'string' && nestedMessage.trim()) {
+      return nestedMessage;
+    }
+
+    const nestedDetail = (error as Record<string, unknown>).detail;
+    if (typeof nestedDetail === 'string' && nestedDetail.trim()) {
+      return nestedDetail;
+    }
+  }
+
+  const message = record.message;
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return null;
+}
+
+async function requestJson<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { token?: string },
+): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
 
@@ -70,7 +118,7 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthorizationHeaders(),
+        ...getAuthorizationHeaders(options?.token),
         ...(init?.headers ?? {}),
       },
       ...init,
@@ -78,7 +126,28 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
     });
 
     if (!response.ok) {
-      throw new HttpError(`Request failed with status ${response.status}`, response.status);
+      let message = `Request failed with status ${response.status}`;
+      const contentType = response.headers.get('Content-Type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        try {
+          const payload = (await response.json()) as unknown;
+          message = pickErrorMessage(payload) ?? message;
+        } catch {
+          // Fall back to the generic HTTP status message.
+        }
+      } else {
+        try {
+          const detail = (await response.text()).trim();
+          if (detail) {
+            message = detail;
+          }
+        } catch {
+          // Fall back to the generic HTTP status message.
+        }
+      }
+
+      throw new HttpError(message, response.status);
     }
 
     return (await response.json()) as T;
@@ -88,14 +157,24 @@ async function requestJson<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  createGuestSession: () =>
-    requestJson<GuestSessionResponse>(appConfig.endpoints.guestSession, { method: 'POST' }),
+  createGuestSession: (payload?: GuestSessionRequest) =>
+    requestJson<GuestSessionResponse>(appConfig.endpoints.guestSession, {
+      method: 'POST',
+      body: JSON.stringify(payload ?? {}),
+    }),
 
   login: (payload: LoginRequest) =>
     requestJson<LoginResponse>(appConfig.endpoints.login, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+
+  getCurrentUser: (token?: string) =>
+    requestJson<CurrentUserResponse>(
+      appConfig.endpoints.currentUser,
+      undefined,
+      token ? { token } : undefined,
+    ),
 
   listStories: (authorId: string, limit = 20, offset = 0) =>
     requestJson<StoryListResponse>(

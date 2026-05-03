@@ -1,0 +1,60 @@
+name: Manual Longform UAT
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_chapters:
+        description: "Target chapter count for the live DashScope run"
+        required: true
+        default: "20"
+      story_title_seed:
+        description: "Story title prefix for the generated manuscript"
+        required: true
+        default: "DashScope Longform UAT"
+
+permissions:
+  contents: read
+
+jobs:
+  dashscope-longform-uat:
+    name: DashScope Longform UAT
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+      DASHSCOPE_API_KEY: ${{ secrets.DASHSCOPE_API_KEY }}
+      DASHSCOPE_API_BASE: ${{ secrets.DASHSCOPE_API_BASE }}
+      DASHSCOPE_MODEL: ${{ secrets.DASHSCOPE_MODEL }}
+      DASHSCOPE_REVIEW_MODEL: ${{ secrets.DASHSCOPE_REVIEW_MODEL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,test]"
+
+      - name: Run DashScope longform UAT
+        run: >
+          python scripts/uat/run_dashscope_longform_uat.py
+          --target-chapters ${{ inputs.target_chapters }}
+          --story-title-seed "${{ inputs.story_title_seed }}"
+          --write-canonical-reports
+
+      - name: Upload longform UAT evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashscope-longform-uat
+          path: |
+            docs/reports/uat/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.md
+            docs/reports/uat/LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json

@@ -111,6 +111,7 @@ test = [
     "pytest-timeout>=2.2.0",
     "coverage[toml]>=7.0.0",
     "httpx>=0.28.1",
+    "chromadb>=1.0.0,<2.0.0",
 ]
 docs = [
     "mkdocs>=1.4.0",
@@ -296,6 +297,7 @@ markers = [
     "smoke: Lightweight smoke tests",
     "asyncio: Async tests",
     "requires_dashscope: Tests requiring DashScope API access and an API key",
+    "requires_honcho: Tests requiring a self-hosted Honcho endpoint",
     "requires_chroma: Tests requiring Chroma vector store support",
     "postgres_integration: Tests requiring a live PostgreSQL database",
 ]

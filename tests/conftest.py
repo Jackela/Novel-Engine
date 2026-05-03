@@ -11,7 +11,7 @@ import sys
 import types
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from fastapi import FastAPI
@@ -66,22 +66,22 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 
     enabled_markers = {
         "requires_dashscope": os.getenv("ENABLE_DASHSCOPE_TESTS") == "1",
+        "requires_honcho": os.getenv("ENABLE_HONCHO_TESTS") == "1",
         "requires_chroma": os.getenv("ENABLE_CHROMA_TESTS") == "1",
         "postgres_integration": os.getenv("ENABLE_POSTGRES_TESTS") == "1",
-        "evaluation": os.getenv("ENABLE_EVALUATION_TESTS") == "1",
     }
     skip_messages = {
         "requires_dashscope": (
             "DashScope integration tests are opt-in; set ENABLE_DASHSCOPE_TESTS=1 to run them."
+        ),
+        "requires_honcho": (
+            "Honcho integration tests are opt-in; set ENABLE_HONCHO_TESTS=1 to run them."
         ),
         "requires_chroma": (
             "Chroma integration tests are opt-in; set ENABLE_CHROMA_TESTS=1 to run them."
         ),
         "postgres_integration": (
             "PostgreSQL integration tests are opt-in; set ENABLE_POSTGRES_TESTS=1 to run them."
-        ),
-        "evaluation": (
-            "Evaluation tests are opt-in; set ENABLE_EVALUATION_TESTS=1 to run them."
         ),
     }
 
@@ -92,10 +92,6 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
             and not enabled_markers["postgres_integration"]
         ):
             item.add_marker(pytest.mark.skip(reason=skip_messages["postgres_integration"]))
-            continue
-
-        if "/evaluation/" in nodeid and not enabled_markers["evaluation"]:
-            item.add_marker(pytest.mark.skip(reason=skip_messages["evaluation"]))
             continue
 
         for marker_name, enabled in enabled_markers.items():
@@ -128,7 +124,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
         sys.modules.pop(module_name, None)
 
     main_module = importlib.import_module("src.apps.api.main")
-    return main_module.create_application()
+    return cast(FastAPI, main_module.create_application())
 
 
 @pytest.fixture

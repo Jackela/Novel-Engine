@@ -1,4 +1,7 @@
 export type SessionKind = 'guest' | 'user';
+export type WorkspaceKind = 'guest' | 'user' | 'unknown';
+export type WorkspacePersistence = 'ephemeral' | 'persistent' | 'unknown';
+export type StorySurfaceView = 'workspace' | 'playback';
 
 export interface SessionUser {
   id: string;
@@ -6,16 +9,52 @@ export interface SessionUser {
   email?: string;
 }
 
+export interface ActiveWorkspaceSummary {
+  workspaceId: string;
+  workspaceKind: WorkspaceKind;
+  label: string;
+  persistence: WorkspacePersistence;
+  summary: string;
+}
+
 export interface SessionState {
+  id: string;
   kind: SessionKind;
   workspaceId: string;
   token?: string;
   refreshToken?: string;
   user?: SessionUser;
+  identityKind?: SessionKind;
+  activeWorkspace?: ActiveWorkspaceSummary;
+  lastStoryId?: string | null;
+  lastRunId?: string | null;
+  lastView?: StorySurfaceView;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SessionCatalog {
+  version: number;
+  activeSessionId: string | null;
+  sessions: SessionState[];
+}
+
+export interface GuestSessionRequest {
+  workspace_id?: string | null;
 }
 
 export interface GuestSessionResponse {
   workspace_id: string;
+  created?: boolean;
+  identity_kind?: SessionKind;
+  workspace_kind?: WorkspaceKind;
+  active_workspace?: {
+    workspace_id: string;
+    workspace_kind: WorkspaceKind;
+    label: string;
+    persistence: WorkspacePersistence;
+    summary: string;
+  };
 }
 
 export interface LoginRequest {
@@ -28,7 +67,23 @@ export interface LoginResponse {
   refresh_token: string;
   token_type: 'bearer';
   workspace_id: string;
+  identity_kind?: SessionKind;
+  workspace_kind?: WorkspaceKind;
+  active_workspace?: {
+    workspace_id: string;
+    workspace_kind: WorkspaceKind;
+    label: string;
+    persistence: WorkspacePersistence;
+    summary: string;
+  };
   user: SessionUser;
+}
+
+export interface CurrentUserResponse {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
 }
 
 export type StoryGenre =
@@ -493,6 +548,29 @@ export interface StoryWorkspace {
   run_history: StoryRunState[];
   run_events: StoryRunEvent[];
   artifact_history: StoryArtifactHistoryEntry[];
+  workspace_context?: {
+    workspace_id: string;
+    workspace_kind: WorkspaceKind;
+    author_id: string;
+    label: string;
+    summary: string;
+  };
+  recommended_next_action?: {
+    action: string;
+    label: string;
+    reason: string;
+    target_view: StorySurfaceView;
+  };
+  evidence_summary?: {
+    warning_count: number;
+    blocker_count: number;
+    zero_warning: boolean;
+    published: boolean;
+    publish_gate_passed: boolean;
+    has_export: boolean;
+    latest_run_id: string | null;
+    artifact_count: number;
+  };
 }
 
 export interface StoryListResponse {
@@ -600,6 +678,31 @@ export interface StoryRunDetailResponse {
   artifacts: StoryArtifactHistoryEntry[];
   latest_snapshot: StoryRunSnapshot | null;
   stage_snapshots: StoryRunSnapshot[];
+  provenance?: {
+    run_id: string;
+    mode: StoryRunMode;
+    story_id: string;
+    started_at: string;
+    completed_at: string | null;
+    source_providers: string[];
+    source_models: string[];
+    snapshot_captured_at: string | null;
+  };
+  publish_verdict?: {
+    published: boolean;
+    ready_for_publish: boolean;
+    publish_gate_passed: boolean;
+    warning_count: number;
+    blocker_count: number;
+    checked_at: string | null;
+  };
+  evidence_status?: {
+    has_latest_snapshot: boolean;
+    stage_snapshot_count: number;
+    artifact_count: number;
+    failure_artifact_count: number;
+    zero_warning: boolean;
+  };
   failed_stage?: string | null;
   failure_code?: string | null;
   failure_message?: string | null;

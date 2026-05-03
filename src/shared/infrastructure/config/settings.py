@@ -11,7 +11,7 @@ from __future__ import annotations
 import secrets
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, cast
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -24,7 +24,9 @@ def _settings_config(
     *,
     env_prefix: str,
     env_nested_delimiter: str | None = None,
-) -> dict[str, Any]:
+    validate_default: bool | None = None,
+    populate_by_name: bool | None = None,
+) -> SettingsConfigDict:
     """Build a consistent settings config that loads local-only dotenv files."""
     config: dict[str, Any] = {
         "env_file": LOCAL_DOTENV_FILE,
@@ -35,7 +37,11 @@ def _settings_config(
     }
     if env_nested_delimiter is not None:
         config["env_nested_delimiter"] = env_nested_delimiter
-    return config
+    if validate_default is not None:
+        config["validate_default"] = validate_default
+    if populate_by_name is not None:
+        config["populate_by_name"] = populate_by_name
+    return cast(SettingsConfigDict, config)
 
 
 class Environment(str, Enum):
@@ -60,7 +66,7 @@ class LogLevel(str, Enum):
 class DatabaseSettings(BaseSettings):
     """Database configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="DB_"))
+    model_config = _settings_config(env_prefix="DB_")
 
     url: str = Field(
         default="sqlite:///./novel_engine.db",
@@ -92,7 +98,7 @@ class DatabaseSettings(BaseSettings):
 class RedisSettings(BaseSettings):
     """Redis cache configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="REDIS_"))
+    model_config = _settings_config(env_prefix="REDIS_")
 
     host: str = Field(default="localhost", description="Redis server host")
     port: int = Field(default=6379, ge=1, le=65535, description="Redis server port")
@@ -113,7 +119,7 @@ class RedisSettings(BaseSettings):
 class APISettings(BaseSettings):
     """API server configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="API_"))
+    model_config = _settings_config(env_prefix="API_")
 
     host: str = Field(default="0.0.0.0", description="API server host")
     port: int = Field(default=8000, ge=1024, le=65535, description="API server port")
@@ -133,7 +139,7 @@ class APISettings(BaseSettings):
 class SecuritySettings(BaseSettings):
     """Security configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="SECURITY_"))
+    model_config = _settings_config(env_prefix="SECURITY_")
 
     secret_key: str = Field(
         default=DEFAULT_SECRET_KEY,
@@ -198,7 +204,7 @@ class SecuritySettings(BaseSettings):
 class LLMSettings(BaseSettings):
     """LLM provider configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="LLM_"))
+    model_config = _settings_config(env_prefix="LLM_")
 
     provider: Literal["mock", "dashscope", "openai_compatible"] = Field(
         default="dashscope",
@@ -315,7 +321,7 @@ class LLMSettings(BaseSettings):
 class LoggingSettings(BaseSettings):
     """Logging configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="LOG_"))
+    model_config = _settings_config(env_prefix="LOG_")
 
     level: LogLevel = Field(default=LogLevel.INFO, description="Logging level")
     format: str = Field(
@@ -337,9 +343,7 @@ class LoggingSettings(BaseSettings):
 class MonitoringSettings(BaseSettings):
     """Monitoring and telemetry configuration settings."""
 
-    model_config = SettingsConfigDict(
-        **_settings_config(env_prefix="MONITORING_")
-    )
+    model_config = _settings_config(env_prefix="MONITORING_")
 
     enabled: bool = Field(default=True, description="Enable monitoring")
     metrics_enabled: bool = Field(default=True, description="Enable Prometheus metrics")
@@ -362,7 +366,7 @@ class MonitoringSettings(BaseSettings):
 class HealthCheckSettings(BaseSettings):
     """Health check configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="HEALTH_"))
+    model_config = _settings_config(env_prefix="HEALTH_")
 
     timeout_seconds: int = Field(
         default=5, ge=1, le=60, description="Health check timeout in seconds"
@@ -378,7 +382,7 @@ class HealthCheckSettings(BaseSettings):
 class VectorStoreSettings(BaseSettings):
     """Vector store configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="VECTOR_"))
+    model_config = _settings_config(env_prefix="VECTOR_")
 
     host: str = Field(default="localhost", description="Vector store host")
     port: int = Field(default=8000, ge=1, le=65535, description="Vector store port")
@@ -390,7 +394,7 @@ class VectorStoreSettings(BaseSettings):
 class KnowledgeSettings(BaseSettings):
     """Knowledge management configuration settings."""
 
-    model_config = SettingsConfigDict(**_settings_config(env_prefix="KNOWLEDGE_"))
+    model_config = _settings_config(env_prefix="KNOWLEDGE_")
 
     chunk_size: int = Field(default=500, ge=100, le=5000, description="Text chunk size")
     chunk_overlap: int = Field(
@@ -408,11 +412,9 @@ class NovelEngineSettings(BaseSettings):
     It supports environment-specific overrides via .env files and YAML configs.
     """
 
-    model_config = SettingsConfigDict(
-        **_settings_config(
-            env_prefix="APP_",
-            env_nested_delimiter="__",
-        ),
+    model_config = _settings_config(
+        env_prefix="APP_",
+        env_nested_delimiter="__",
         validate_default=True,
         populate_by_name=True,
     )

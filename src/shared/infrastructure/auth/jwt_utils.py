@@ -104,10 +104,7 @@ class JWTManager:
         if additional_claims:
             to_encode.update(additional_claims)
 
-        return cast(
-            str,
-            jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm),
-        )
+        return jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm)
 
     def create_refresh_token(
         self,
@@ -136,10 +133,7 @@ class JWTManager:
         if additional_claims:
             to_encode.update(additional_claims)
 
-        return cast(
-            str,
-            jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm),
-        )
+        return jwt.encode(to_encode, self._secret_key, algorithm=self._algorithm)
 
     def verify_token(self, token: str) -> dict[str, Any]:
         """Verify and decode a JWT token.
