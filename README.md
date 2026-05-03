@@ -13,21 +13,27 @@ Novel Engine is a narrative simulation platform with a canonical FastAPI backend
 ### Backend
 
 ```bash
-python -m pip install -e ".[dev,test]"
-pytest -q
-ruff check src tests
-mypy \
+uv sync --extra dev --extra test --frozen
+uv run pytest -q
+uv run ruff check src tests
+uv run mypy \
   src \
   tests \
   --no-error-summary \
   --show-column-numbers
-lint-imports
+uv run lint-imports
+```
+
+When `pyproject.toml` dependencies change, refresh and commit `uv.lock` in the same change:
+
+```bash
+uv lock
 ```
 
 If you want the optional Honcho integration installed locally, use:
 
 ```bash
-python -m pip install -e ".[dev,test,honcho]"
+uv sync --extra dev --extra test --extra honcho --frozen
 ```
 
 ### Frontend
@@ -50,7 +56,7 @@ The release-grade long-form validation path now has two modes:
 - Canonical refresh: a manual run updates the checked-in UAT evidence under `docs/reports/uat/` after a human-reviewed baseline is confirmed.
 
 ```bash
-python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports
+uv run python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports
 ```
 
 The canonical refresh command starts a clean local backend, uses the real HTTP API with DashScope, and writes:
@@ -62,7 +68,7 @@ See [docs/reports/uat/INDEX.md](docs/reports/uat/INDEX.md) and [docs/reports/uat
 
 ## Testing model
 
-- `pytest -q` is the default backend gate.
+- `uv run pytest -q` is the default backend gate.
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
 - Frontend smoke coverage is exercised with Playwright against the canonical backend and frontend stack.
 - CI runs backend quality on the canonical backend surface, backend tests, frontend validation, import-linter, and CodeQL.
