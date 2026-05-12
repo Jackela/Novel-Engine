@@ -89,4 +89,4 @@ export function render(
   };
 }
 
-export { fireEvent, screen, waitFor, within };
+export { fireEvent, screen, waitFor };

@@ -90,8 +90,34 @@ jobs:
       - name: Install backend dependencies
         run: uv sync --extra dev --extra test --frozen
 
-      - name: Run pytest
+      - name: Run backend test suite
         run: uv run pytest -q
+
+      - name: Run platform infrastructure coverage gate
+        run: >
+          uv run pytest
+          tests/unit/infrastructure
+          tests/apps/api/test_health.py
+          --cov=src/shared/infrastructure/auth
+          --cov=src/shared/infrastructure/config
+          --cov=src/shared/infrastructure/health
+          --cov=src/shared/infrastructure/persistence
+          --cov-report=term-missing
+          --cov-fail-under=80
+          -q
+
+      - name: Run circuit and middleware coverage gate
+        run: >
+          uv run pytest
+          tests/shared/infrastructure/circuit_breaker
+          tests/shared/infrastructure/middleware
+          tests/apps/api/middleware
+          --cov=src/shared/infrastructure/circuit_breaker
+          --cov=src/shared/infrastructure/middleware
+          --cov=src/apps/api/middleware
+          --cov-report=term-missing
+          --cov-fail-under=80
+          -q
 
   frontend:
     name: Frontend Validation
@@ -147,9 +173,9 @@ jobs:
         working-directory: frontend
         run: npm run type-check
 
-      - name: Run frontend unit tests
+      - name: Run frontend unit tests with platform coverage
         working-directory: frontend
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build frontend
         working-directory: frontend
@@ -158,6 +184,183 @@ jobs:
       - name: Run frontend smoke tests
         working-directory: frontend
         run: npm run test:e2e:smoke
+
+      - name: Run frontend dependency audit
+        working-directory: frontend
+        run: npm run audit:dependencies -- --output ../artifacts/qa/frontend-dependency-audit.json
+
+      - name: Upload frontend validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-validation-artifacts
+          path: |
+            artifacts/qa/frontend-dependency-audit.json
+            frontend/playwright-report/**
+            frontend/test-results/**
+          if-no-files-found: ignore
+
+  frontend-full-audit:
+    name: Frontend Full Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    env:
+      APP_ENVIRONMENT: testing
+      SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
+      MONITORING_METRICS_ENABLED: "false"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run frontend security audit (high+)
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      - name: Validate lockfile
+        run: uv lock --check
+
+      - name: Install backend dependencies
+        run: uv sync --extra dev --extra test --frozen
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run frontend full audit tests
+        working-directory: frontend
+        run: npm run test:e2e:full-audit
+
+      - name: Upload frontend full-audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-full-audit-artifacts
+          path: |
+            frontend/playwright-report/**
+            frontend/test-results/**
+          if-no-files-found: ignore
+
+  frontend-exports-audit:
+    name: Frontend Exports Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Run frontend exports audit
+        working-directory: frontend
+        run: npm run audit:exports
+
+  openapi-snapshot:
+    name: OpenAPI Snapshot Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+
+      - name: Validate lockfile
+        run: uv lock --check
+
+      - name: Install backend dependencies
+        run: uv sync --extra dev --extra test --frozen
+
+      - name: Verify OpenAPI snapshot
+        run: uv run python scripts/qa/check_openapi_snapshot.py
+
+  public-api-audit:
+    name: Public API Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+
+      - name: Validate lockfile
+        run: uv lock --check
+
+      - name: Install backend dependencies
+        run: uv sync --extra dev --extra test --frozen
+
+      - name: Run public API audit
+        run: uv run python scripts/qa/run_api_public_audit.py --output artifacts/qa/api-public-audit.json
+
+      - name: Upload public API audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-public-audit-report
+          path: artifacts/qa/api-public-audit.json
+          if-no-files-found: error
 
   postgres-live-smoke:
     name: PostgreSQL Live Smoke

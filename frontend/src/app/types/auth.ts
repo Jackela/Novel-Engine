@@ -1,0 +1,83 @@
+type SessionKind = 'guest' | 'user';
+export type WorkspaceKind = 'guest' | 'user' | 'unknown';
+type WorkspacePersistence = 'ephemeral' | 'persistent' | 'unknown';
+export type StorySurfaceView = 'workspace' | 'playback';
+
+interface SessionUser {
+  id: string;
+  name: string;
+  email?: string;
+}
+
+export interface ActiveWorkspaceSummary {
+  workspaceId: string;
+  workspaceKind: WorkspaceKind;
+  label: string;
+  persistence: WorkspacePersistence;
+  summary: string;
+}
+
+export interface SessionState {
+  id: string;
+  kind: SessionKind;
+  workspaceId: string;
+  token?: string;
+  refreshToken?: string;
+  user?: SessionUser;
+  identityKind?: SessionKind;
+  activeWorkspace?: ActiveWorkspaceSummary;
+  lastStoryId?: string | null;
+  lastRunId?: string | null;
+  lastView?: StorySurfaceView;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SessionCatalog {
+  version: number;
+  activeSessionId: string | null;
+  sessions: SessionState[];
+}
+
+interface ActiveWorkspaceResponsePayload {
+  workspace_id: string;
+  workspace_kind: WorkspaceKind;
+  label: string;
+  persistence: WorkspacePersistence;
+  summary: string;
+}
+
+export interface GuestSessionRequest {
+  workspace_id?: string | null;
+}
+
+export interface GuestSessionResponse {
+  workspace_id: string;
+  created?: boolean;
+  identity_kind?: SessionKind;
+  workspace_kind?: WorkspaceKind;
+  active_workspace?: ActiveWorkspaceResponsePayload;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: 'bearer';
+  workspace_id: string;
+  identity_kind?: SessionKind;
+  workspace_kind?: WorkspaceKind;
+  active_workspace?: ActiveWorkspaceResponsePayload;
+  user: SessionUser;
+}
+
+export interface CurrentUserResponse {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+}

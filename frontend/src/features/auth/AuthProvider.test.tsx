@@ -9,13 +9,24 @@ import { AuthProvider } from './AuthProvider';
 import { useAuth } from './useAuth';
 
 function SessionProbe() {
-  const { session, sessions, signIn, signInAsGuest, switchSession } = useAuth();
+  const {
+    session,
+    sessions,
+    isLoading,
+    signIn,
+    signInAsGuest,
+    switchSession,
+    signOut,
+    updateSessionSelection,
+  } = useAuth();
   const guestSessionId = sessions.find((entry) => entry.kind === 'guest')?.id ?? null;
 
   return (
     <div>
+      <div data-testid="loading-state">{isLoading ? 'loading' : 'ready'}</div>
       <div data-testid="session-state">{session ? session.kind : 'empty'}</div>
       <div data-testid="workspace-state">{session?.workspaceId ?? 'none'}</div>
+      <div data-testid="story-selection">{session?.lastStoryId ?? 'none'}</div>
       <button
         data-testid="probe-sign-in"
         onClick={() =>
@@ -45,6 +56,22 @@ function SessionProbe() {
         type="button"
       >
         Switch guest
+      </button>
+      <button data-testid="probe-sign-out" onClick={() => signOut()} type="button">
+        Sign out
+      </button>
+      <button
+        data-testid="probe-update-selection"
+        onClick={() =>
+          updateSessionSelection({
+            lastStoryId: 'story-123',
+            lastRunId: 'run-456',
+            lastView: 'playback',
+          })
+        }
+        type="button"
+      >
+        Update selection
       </button>
     </div>
   );
@@ -153,5 +180,78 @@ describe('AuthProvider', () => {
     });
 
     expect(api.createGuestSession).toHaveBeenLastCalledWith({ workspace_id: 'guest-123' });
+  });
+
+  it('restores and validates a saved user session on mount', async () => {
+    window.localStorage.setItem(
+      sessionStorageKey,
+      JSON.stringify({
+        kind: 'user',
+        workspaceId: 'user-operator',
+        token: 'saved-token',
+        refreshToken: 'saved-refresh-token',
+        user: {
+          id: 'stale-user',
+          name: 'stale',
+          email: 'stale@novel.engine',
+        },
+      }),
+    );
+    vi.spyOn(api, 'getCurrentUser').mockResolvedValue({
+      id: 'user-123',
+      username: 'operator',
+      email: 'operator@novel.engine',
+      roles: ['author'],
+    });
+
+    render(
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('session-state')).toHaveTextContent('user');
+      expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-operator');
+    });
+    expect(api.getCurrentUser).toHaveBeenCalledWith('saved-token');
+  });
+
+  it('updates active session selection and signs out the active session', async () => {
+    vi.spyOn(api, 'createGuestSession').mockResolvedValue({
+      workspace_id: 'guest-123',
+      identity_kind: 'guest',
+      workspace_kind: 'guest',
+      active_workspace: {
+        workspace_id: 'guest-123',
+        workspace_kind: 'guest',
+        label: 'Guest workspace',
+        persistence: 'ephemeral',
+        summary: 'Disposable workspace for drafting and flow verification.',
+      },
+    });
+
+    const user = userEvent.setup();
+    render(
+      <AuthProvider>
+        <SessionProbe />
+      </AuthProvider>,
+    );
+
+    await user.click(screen.getByTestId('probe-launch-guest'));
+    await waitFor(() => {
+      expect(screen.getByTestId('session-state')).toHaveTextContent('guest');
+    });
+
+    await user.click(screen.getByTestId('probe-update-selection'));
+    await waitFor(() => {
+      expect(screen.getByTestId('story-selection')).toHaveTextContent('story-123');
+    });
+
+    await user.click(screen.getByTestId('probe-sign-out'));
+    await waitFor(() => {
+      expect(screen.getByTestId('session-state')).toHaveTextContent('empty');
+    });
+    expect(window.localStorage.getItem(sessionStorageKey)).toBeNull();
   });
 });

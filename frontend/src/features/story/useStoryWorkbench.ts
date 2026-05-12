@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { api } from '@/app/api';
 import type {
+  StorySurfaceView,
+} from '@/app/types/auth';
+import type {
   StoryBlueprint,
   StoryCreateRequest,
   StoryExportPayload,
@@ -12,14 +15,13 @@ import type {
   StoryPipelineResult,
   StoryRunDetailResponse,
   StoryRunsResponse,
-  StoryRunState,
   StorySnapshot,
-  StorySurfaceView,
   StoryWorkspace,
   StoryWorkflowState,
-} from '@/app/types';
+} from '@/app/types/story';
+import type { StoryRunState } from '@/app/types/run';
 
-export interface StoryWorkbenchArtifact {
+interface StoryWorkbenchArtifact {
   blueprint: StoryBlueprint | null;
   outline: StoryOutline | null;
   review: StoryHybridReviewReport | null;

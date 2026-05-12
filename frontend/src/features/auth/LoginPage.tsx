@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/useAuth';
-import type { SessionState } from '@/app/types';
+import type { SessionState } from '@/app/types/auth';
 
 function studioLocation(session: SessionState) {
   const searchParams = new URLSearchParams();

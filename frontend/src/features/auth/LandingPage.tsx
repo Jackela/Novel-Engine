@@ -5,7 +5,7 @@ import { Button } from '@/components/Button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/features/auth/useAuth';
-import type { SessionState } from '@/app/types';
+import type { SessionState } from '@/app/types/auth';
 
 function studioLocation(session: SessionState) {
   const searchParams = new URLSearchParams();

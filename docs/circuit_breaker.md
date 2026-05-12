@@ -51,6 +51,11 @@ GET /health
 }
 ```
 
+Operational semantics:
+
+- `GET /health` always returns HTTP `200`; alerting should read `overall_status` and `components.*.status`.
+- `GET /health/ready` preserves HTTP `200/503` semantics and should be used for readiness probes.
+
 ## Usage
 
 ### Using Resilient Embedding Service
@@ -192,7 +197,11 @@ from src.shared.infrastructure.circuit_breaker import CircuitBreakerRegistry
 # Get all circuit breaker states
 states = CircuitBreakerRegistry.get_all_states()
 for name, metrics in states.items():
-    print(f"{name}: {metrics['state']} (failures: {metrics['failure_count']})")
+    print(
+        f"{name}: {metrics['state']} "
+        f"(failures: {metrics['failure_count']}, "
+        f"half-open calls: {metrics['half_open_call_count']})"
+    )
 ```
 
 ### Manual Reset
@@ -216,10 +225,19 @@ Run the circuit breaker tests:
 
 ```bash
 # Run all circuit breaker tests
-pytest tests/shared/infrastructure/circuit_breaker/ -v
+uv run pytest tests/shared/infrastructure/circuit_breaker/ -v
 
-# Run with coverage
-pytest tests/shared/infrastructure/circuit_breaker/ --cov=src.shared.infrastructure.circuit_breaker -v
+# Run the fast circuit breaker and middleware coverage gate
+uv run pytest \
+  tests/shared/infrastructure/circuit_breaker \
+  tests/shared/infrastructure/middleware \
+  tests/apps/api/middleware \
+  --cov=src/shared/infrastructure/circuit_breaker \
+  --cov=src/shared/infrastructure/middleware \
+  --cov=src/apps/api/middleware \
+  --cov-report=term-missing \
+  --cov-fail-under=80 \
+  -q
 ```
 
 ## Architecture
@@ -237,6 +255,7 @@ CLOSED → (threshold failures) → OPEN
 OPEN → (timeout expires) → HALF_OPEN
 HALF_OPEN → (success threshold) → CLOSED
 HALF_OPEN → (any failure) → OPEN
+HALF_OPEN → (half-open call limit reached) → reject without executing call
 ```
 
 ### Fallback Chain

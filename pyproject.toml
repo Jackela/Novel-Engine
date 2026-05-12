@@ -194,12 +194,9 @@ follow_imports = "normal"
 
 [[tool.mypy.overrides]]
 module = [
-    "aiosqlite.*",
     "jinja2.*",
     "yaml.*",
     "honcho.*",
-    "honcho_ai.*",
-    "asyncpg.*",
     "asyncpg",
 ]
 ignore_missing_imports = true

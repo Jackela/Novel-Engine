@@ -1,90 +1,12 @@
-export type SessionKind = 'guest' | 'user';
-export type WorkspaceKind = 'guest' | 'user' | 'unknown';
-export type WorkspacePersistence = 'ephemeral' | 'persistent' | 'unknown';
-export type StorySurfaceView = 'workspace' | 'playback';
-
-export interface SessionUser {
-  id: string;
-  name: string;
-  email?: string;
-}
-
-export interface ActiveWorkspaceSummary {
-  workspaceId: string;
-  workspaceKind: WorkspaceKind;
-  label: string;
-  persistence: WorkspacePersistence;
-  summary: string;
-}
-
-export interface SessionState {
-  id: string;
-  kind: SessionKind;
-  workspaceId: string;
-  token?: string;
-  refreshToken?: string;
-  user?: SessionUser;
-  identityKind?: SessionKind;
-  activeWorkspace?: ActiveWorkspaceSummary;
-  lastStoryId?: string | null;
-  lastRunId?: string | null;
-  lastView?: StorySurfaceView;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface SessionCatalog {
-  version: number;
-  activeSessionId: string | null;
-  sessions: SessionState[];
-}
-
-export interface GuestSessionRequest {
-  workspace_id?: string | null;
-}
-
-export interface GuestSessionResponse {
-  workspace_id: string;
-  created?: boolean;
-  identity_kind?: SessionKind;
-  workspace_kind?: WorkspaceKind;
-  active_workspace?: {
-    workspace_id: string;
-    workspace_kind: WorkspaceKind;
-    label: string;
-    persistence: WorkspacePersistence;
-    summary: string;
-  };
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: 'bearer';
-  workspace_id: string;
-  identity_kind?: SessionKind;
-  workspace_kind?: WorkspaceKind;
-  active_workspace?: {
-    workspace_id: string;
-    workspace_kind: WorkspaceKind;
-    label: string;
-    persistence: WorkspacePersistence;
-    summary: string;
-  };
-  user: SessionUser;
-}
-
-export interface CurrentUserResponse {
-  id: string;
-  username: string;
-  email: string;
-  roles: string[];
-}
+import type { StorySurfaceView, WorkspaceKind } from '@/app/types/auth';
+import type {
+  StoryArtifactHistoryEntry,
+  StoryRunEvent,
+  StoryRunMode,
+  StoryRunOperation,
+  StoryRunSnapshot,
+  StoryRunState,
+} from '@/app/types/run';
 
 export type StoryGenre =
   | 'fantasy'
@@ -98,9 +20,9 @@ export type StoryGenre =
   | 'comedy'
   | 'drama';
 
-export type StoryStatus = 'draft' | 'active' | 'completed';
-export type StoryProviderName = 'mock' | 'dashscope' | 'openai_compatible';
-export type StorySceneType =
+type StoryStatus = 'draft' | 'active' | 'completed';
+type StoryProviderName = 'mock' | 'dashscope' | 'openai_compatible';
+type StorySceneType =
   | 'opening'
   | 'narrative'
   | 'dialogue'
@@ -108,42 +30,10 @@ export type StorySceneType =
   | 'decision'
   | 'climax'
   | 'ending';
-export type StoryReviewSeverity = 'info' | 'warning' | 'blocker';
-export type StoryRunMode = 'manual' | 'pipeline';
-export type StoryRunStatus = 'running' | 'completed' | 'failed';
-export type StoryRunStageStatus = 'running' | 'completed' | 'failed';
-export type StoryRunEventType =
-  | 'run_started'
-  | 'stage_started'
-  | 'stage_completed'
-  | 'stage_failed'
-  | 'run_completed'
-  | 'run_failed';
-export type StoryRunSnapshotType =
-  | 'run_started'
-  | 'stage_completed'
-  | 'run_completed'
-  | 'run_failed';
-export type StoryRunOperation =
-  | 'blueprint'
-  | 'outline'
-  | 'draft'
-  | 'review'
-  | 'revise'
-  | 'export'
-  | 'publish'
-  | 'pipeline';
-export type StoryArtifactKind =
-  | 'blueprint'
-  | 'outline'
-  | 'review'
-  | 'semantic_review'
-  | 'hybrid_review'
-  | 'draft_failure'
-  | 'export';
-export type StoryNarrativeStrand = 'quest' | 'fire' | 'constellation';
+type StoryReviewSeverity = 'info' | 'warning' | 'blocker';
+type StoryNarrativeStrand = 'quest' | 'fire' | 'constellation';
 
-export interface StoryScene {
+interface StoryScene {
   id: string;
   chapter_id: string;
   scene_number: number;
@@ -156,7 +46,7 @@ export interface StoryScene {
   updated_at: string;
 }
 
-export interface StoryChapter {
+interface StoryChapter {
   id: string;
   story_id: string;
   chapter_number: number;
@@ -168,7 +58,7 @@ export interface StoryChapter {
   updated_at: string;
 }
 
-export interface StoryMemoryChapterSummary {
+interface StoryMemoryChapterSummary {
   chapter_number: number;
   title: string;
   summary: string;
@@ -177,19 +67,19 @@ export interface StoryMemoryChapterSummary {
   hook: string;
 }
 
-export interface StoryTimelineLedgerEntry {
+interface StoryTimelineLedgerEntry {
   chapter_number: number;
   timeline_day: number;
   summary: string;
 }
 
-export interface StoryHookLedgerEntry {
+interface StoryHookLedgerEntry {
   chapter_number: number;
   hook: string;
   surfaced: boolean;
 }
 
-export interface StoryPromise {
+interface StoryPromise {
   promise_id: string;
   chapter_number: number;
   text: string;
@@ -198,7 +88,7 @@ export interface StoryPromise {
   due_by_chapter: number | null;
 }
 
-export interface StoryPromiseLedgerEntry {
+interface StoryPromiseLedgerEntry {
   chapter_number: number;
   promise: string;
   surfaced: boolean;
@@ -210,14 +100,14 @@ export interface StoryPromiseLedgerEntry {
   status: string;
 }
 
-export interface StoryPayoffBeat {
+interface StoryPayoffBeat {
   promise_id: string;
   chapter_number: number;
   payoff_text: string;
   strength: number;
 }
 
-export interface StoryPacingLedgerEntry {
+interface StoryPacingLedgerEntry {
   chapter_number: number;
   phase: string;
   signature: string;
@@ -226,32 +116,32 @@ export interface StoryPacingLedgerEntry {
   chapter_objective: string;
 }
 
-export interface StoryStrandLedgerEntry {
+interface StoryStrandLedgerEntry {
   chapter_number: number;
   strand: string;
   status: string;
 }
 
-export interface StoryCharacterStateSnapshot {
+interface StoryCharacterStateSnapshot {
   chapter_number: number;
   name: string;
   motivation: string;
   role: string;
 }
 
-export interface StoryRelationshipSnapshot {
+interface StoryRelationshipSnapshot {
   chapter_number: number;
   source: string;
   target: string;
   status: string;
 }
 
-export interface StoryWorldRuleLedgerEntry {
+interface StoryWorldRuleLedgerEntry {
   rule: string;
   source: string;
 }
 
-export interface StoryMemory {
+interface StoryMemory {
   schema_version?: number;
   premise: string;
   tone: string;
@@ -285,14 +175,14 @@ export interface StoryBlueprint {
   premise_summary: string;
 }
 
-export interface StoryOutlineChapter {
+interface StoryOutlineChapter {
   chapter_number: number;
   title: string;
   summary: string;
   hook: string;
   promise: string;
   pacing_phase: string;
-  narrative_strand: string;
+  narrative_strand: StoryNarrativeStrand | string;
   chapter_objective: string;
   primary_strand: string;
   secondary_strand: string | null;
@@ -365,24 +255,6 @@ export interface StorySemanticReviewReport {
   };
 }
 
-export interface DraftFailureArtifact {
-  story_id: string;
-  stage_name: string;
-  chapter_number: number;
-  failure_code: string;
-  failure_message: string;
-  raw_text: string;
-  raw_payload: Record<string, unknown>;
-  normalized_payload: Record<string, unknown>;
-  validation_errors: string[];
-  artifact_id: string;
-  version: number;
-  generated_at: string;
-  source_run_id: string | null;
-  source_provider: string;
-  source_model: string;
-}
-
 export interface StoryHybridReviewReport {
   artifact_id: string;
   version: number;
@@ -419,68 +291,12 @@ export interface StoryExportPayload {
   exported_at: string;
 }
 
-export interface StoryGenerationTraceEntry {
+interface StoryGenerationTraceEntry {
   timestamp: string;
   step: string;
   provider: StoryProviderName;
   model: string;
   content_keys: string[];
-}
-
-export interface StoryRunStageExecution {
-  name: string;
-  status: StoryRunStageStatus;
-  started_at: string;
-  completed_at: string | null;
-  failure_code: string | null;
-  failure_message: string | null;
-  details: Record<string, unknown>;
-}
-
-export interface StoryRunState {
-  run_id: string;
-  mode: StoryRunMode;
-  status: StoryRunStatus;
-  started_at: string;
-  completed_at: string | null;
-  published: boolean;
-  stages: StoryRunStageExecution[];
-}
-
-export interface StoryRunEvent {
-  event_id: string;
-  run_id: string;
-  event_type: StoryRunEventType;
-  timestamp: string;
-  stage_name: string | null;
-  details: Record<string, unknown>;
-}
-
-export interface StoryRunSnapshot {
-  snapshot_id: string;
-  story_id: string;
-  run_id: string;
-  snapshot_type: StoryRunSnapshotType;
-  captured_at: string;
-  stage_name: string | null;
-  failed_stage?: string | null;
-  failure_code?: string | null;
-  failure_message?: string | null;
-  failure_details?: Record<string, unknown>;
-  workspace: StoryWorkspace;
-}
-
-export interface StoryArtifactHistoryEntry {
-  artifact_id: string;
-  kind: StoryArtifactKind;
-  version: number;
-  generated_at: string;
-  source_run_id: string | null;
-  source_stage: string;
-  source_provider: string;
-  source_model: string;
-  parent_artifact_ids: string[];
-  payload: Record<string, unknown>;
 }
 
 export interface StoryWorkflowState {
@@ -508,7 +324,7 @@ export interface StoryWorkflowState {
   current_run_id?: string | null;
 }
 
-export interface StoryMetadata extends Record<string, unknown> {
+interface StoryMetadata extends Record<string, unknown> {
   workflow?: StoryWorkflowState;
   story_memory?: StoryMemory;
   world_bible?: Record<string, unknown>;
@@ -676,8 +492,8 @@ export interface StoryRunDetailResponse {
   run: StoryRunState;
   events: StoryRunEvent[];
   artifacts: StoryArtifactHistoryEntry[];
-  latest_snapshot: StoryRunSnapshot | null;
-  stage_snapshots: StoryRunSnapshot[];
+  latest_snapshot: StoryRunSnapshot<StoryWorkspace> | null;
+  stage_snapshots: Array<StoryRunSnapshot<StoryWorkspace>>;
   provenance?: {
     run_id: string;
     mode: StoryRunMode;
@@ -706,7 +522,7 @@ export interface StoryRunDetailResponse {
   failed_stage?: string | null;
   failure_code?: string | null;
   failure_message?: string | null;
-  failure_snapshot?: StoryRunSnapshot | null;
+  failure_snapshot?: StoryRunSnapshot<StoryWorkspace> | null;
   failure_artifacts?: StoryArtifactHistoryEntry[];
   manuscript_preserved?: boolean | null;
 }

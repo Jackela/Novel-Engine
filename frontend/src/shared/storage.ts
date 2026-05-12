@@ -1,10 +1,10 @@
-import type { SessionCatalog, SessionState } from '@/app/types';
+import type { SessionCatalog, SessionState } from '@/app/types/auth';
 
 export const sessionStorageKey = 'novel-engine-session';
-export const sessionCatalogStorageKey = 'novel-engine-session-catalog';
+const sessionCatalogStorageKey = 'novel-engine-session-catalog';
 const SESSION_CATALOG_VERSION = 2;
 
-export const safeStorage = {
+const safeStorage = {
   read<T>(key: string): T | null {
     if (typeof window === 'undefined') {
       return null;
@@ -53,7 +53,7 @@ export function buildSessionId(session: Pick<SessionState, 'kind' | 'workspaceId
   return `${session.kind}:${session.workspaceId}`;
 }
 
-export function normalizeSession(session: SessionState): SessionState {
+function normalizeSession(session: SessionState): SessionState {
   const timestamp = nowIso();
   return {
     ...session,
@@ -95,7 +95,7 @@ export function getActiveSession(catalog: SessionCatalog): SessionState | null {
   );
 }
 
-export function findLatestSession(
+function findLatestSession(
   catalog: SessionCatalog,
   kind?: SessionState['kind'],
 ): SessionState | null {
@@ -105,7 +105,7 @@ export function findLatestSession(
   return sortSessionsByRecency(sessions)[0] ?? null;
 }
 
-export function writeSessionCatalog(catalog: SessionCatalog) {
+function writeSessionCatalog(catalog: SessionCatalog) {
   const normalizedSessions = sortSessionsByRecency(
     catalog.sessions.map((session) => normalizeSession(session)),
   );
@@ -139,7 +139,6 @@ export function upsertSession(
   writeSessionCatalog(nextCatalog);
   return nextCatalog;
 }
-
 export function setActiveSessionId(
   catalog: SessionCatalog,
   activeSessionId: string | null,

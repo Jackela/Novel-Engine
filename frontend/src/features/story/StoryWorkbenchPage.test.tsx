@@ -2,18 +2,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 import type {
-  StoryArtifactHistoryEntry,
-  SessionState,
   StoryHybridReviewReport,
   StorySemanticReviewReport,
   StoryReviewReport,
-  StoryRunState,
-  StoryRunSnapshot,
   StoryRunDetailResponse,
   StorySnapshot,
   StoryWorkspace,
   StoryWorkflowState,
-} from '@/app/types';
+} from '@/app/types/story';
+import type { SessionState } from '@/app/types/auth';
+import type {
+  StoryArtifactHistoryEntry,
+  StoryRunSnapshot,
+  StoryRunState,
+} from '@/app/types/run';
 import { fireEvent, render, screen } from '../../../tests/test-utils';
 import { useAuth } from '@/features/auth/useAuth';
 
@@ -31,7 +33,12 @@ vi.mock('./useStoryWorkbench', () => ({
 
 function renderWorkbench() {
   return render(
-    <MemoryRouter>
+    <MemoryRouter
+      future={{
+        v7_relativeSplatPath: true,
+        v7_startTransition: true,
+      }}
+    >
       <StoryWorkbenchPage />
     </MemoryRouter>,
   );
@@ -612,7 +619,7 @@ function makeFailedPlaybackRunDetail(workspace: StoryWorkspace): StoryRunDetailR
     artifact_history: [failureArtifact],
   };
 
-  const failureSnapshot: StoryRunSnapshot = {
+  const failureSnapshot: StoryRunSnapshot<StoryWorkspace> = {
     snapshot_id: 'snapshot-failure-1',
     story_id: workspace.story.id,
     run_id: failedRun.run_id,

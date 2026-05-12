@@ -425,4 +425,204 @@ describe('api', () => {
       message: 'Invalid credentials',
     });
   });
+
+  it('maps gateway failures to a user-facing service unavailable message', async () => {
+    const response = new Response('<html><body>bad gateway</body></html>', {
+      status: 502,
+      headers: {
+        'Content-Type': 'text/html',
+      },
+    });
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(response);
+
+    await expect(api.createGuestSession()).rejects.toMatchObject({
+      status: 502,
+      message: 'Service temporarily unavailable. Start the backend API and retry.',
+    });
+  });
+
+  it('maps aborted requests to a timeout message', async () => {
+    const abortError = new Error('The operation was aborted.');
+    abortError.name = 'AbortError';
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(abortError);
+
+    await expect(api.createGuestSession()).rejects.toThrow(
+      'Request timed out. Please retry.',
+    );
+  });
+
+  it('maps network failures to a service unavailable message', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(api.createGuestSession()).rejects.toThrow(
+      'Service temporarily unavailable. Start the backend API and retry.',
+    );
+  });
+
+  it('supports explicit tokens for current-user requests', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'user-1',
+          username: 'operator',
+          email: 'operator@novel.engine',
+          roles: ['author'],
+          is_active: true,
+          created_at: '2024-01-01T00:00:00.000Z',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    );
+
+    await api.getCurrentUser('explicit-token');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/auth/me',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer explicit-token',
+        }),
+      }),
+    );
+  });
+
+  it('builds story list query parameters with caller-provided pagination', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ stories: [], count: 0 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    await api.listStories('workspace-123', undefined, 10);
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/story?author_id=workspace-123&limit=20&offset=10',
+      expect.any(Object),
+    );
+  });
+
+  it('routes story workspace, run, artifact, and step requests to canonical endpoints', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+
+    await api.getStory('story-1');
+    await api.getStoryWorkspace('story-1');
+    await api.getStoryRuns('story-1');
+    await api.getStoryRun('story-1', 'run-1');
+    await api.getStoryArtifacts('story-1');
+    await api.createStory({
+      title: 'Story',
+      genre: 'fantasy',
+      premise: 'A platform test premise.',
+      target_chapters: 3,
+      author_id: 'author-1',
+    });
+    await api.generateBlueprint('story-1');
+    await api.generateOutline('story-1');
+    await api.draftStory('story-1');
+    await api.draftStory('story-1', 4);
+    await api.reviewStory('story-1');
+    await api.reviseStory('story-1');
+    await api.exportStory('story-1');
+    await api.publishStory('story-1');
+
+    expect(fetchSpy.mock.calls.map(([url]) => url)).toEqual([
+      '/api/v1/story/story-1',
+      '/api/v1/story/story-1/workspace',
+      '/api/v1/story/story-1/runs',
+      '/api/v1/story/story-1/runs/run-1',
+      '/api/v1/story/story-1/artifacts',
+      '/api/v1/story',
+      '/api/v1/story/story-1/blueprint',
+      '/api/v1/story/story-1/outline',
+      '/api/v1/story/story-1/draft',
+      '/api/v1/story/story-1/draft',
+      '/api/v1/story/story-1/review',
+      '/api/v1/story/story-1/revise',
+      '/api/v1/story/story-1/export',
+      '/api/v1/story/story-1/publish',
+    ]);
+    expect(fetchSpy.mock.calls[5]?.[1]).toEqual(
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'Story',
+          genre: 'fantasy',
+          premise: 'A platform test premise.',
+          target_chapters: 3,
+          author_id: 'author-1',
+        }),
+      }),
+    );
+    expect(fetchSpy.mock.calls[8]?.[1]).toEqual(
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({}),
+      }),
+    );
+    expect(fetchSpy.mock.calls[9]?.[1]).toEqual(
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ target_chapters: 4 }),
+      }),
+    );
+  });
+
+  it('surfaces text error responses when they are not HTML', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('plain upstream failure', {
+        status: 500,
+        headers: { 'Content-Type': 'text/plain' },
+      }),
+    );
+
+    await expect(api.createGuestSession()).rejects.toMatchObject({
+      status: 500,
+      message: 'plain upstream failure',
+    });
+  });
+
+  it('uses detail and message fields from JSON error payloads', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: 'Validation detail' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ message: 'Top-level message' }), {
+          status: 409,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: { detail: 'Nested detail' } }), {
+          status: 422,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+    await expect(api.createGuestSession()).rejects.toMatchObject({
+      status: 400,
+      message: 'Validation detail',
+    });
+    await expect(api.createGuestSession()).rejects.toMatchObject({
+      status: 409,
+      message: 'Top-level message',
+    });
+    await expect(api.createGuestSession()).rejects.toMatchObject({
+      status: 422,
+      message: 'Nested detail',
+    });
+  });
 });

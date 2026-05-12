@@ -1,62 +1,12 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-function uniqueTitle(prefix: string) {
-  return `${prefix} ${Math.random().toString(36).slice(2, 8)}`;
-}
-
-async function expectStoryRoute(page: Page, view: 'workspace' | 'playback' = 'workspace') {
-  await expect(page).toHaveURL(
-    view === 'playback' ? /\/studio\?(.+&)?view=playback/ : /\/studio(\?.*)?$/,
-  );
-  await expect(page.getByTestId('studio-workbench-page')).toBeVisible();
-  await expect(page.getByTestId('workspace-surface')).toBeVisible();
-  await expect(page.getByTestId('playback-desk')).toBeVisible();
-}
-
-async function signIn(page: Page) {
-  await page.goto('/auth/login');
-  await page.getByTestId('auth-login-email').fill('operator@novel.engine');
-  await page.getByTestId('auth-login-password').fill('demo-password');
-  await page.getByTestId('auth-login-submit').click();
-  await expectStoryRoute(page);
-}
-
-async function launchGuest(page: Page) {
-  await page.goto('/');
-  const landingPage = page.getByTestId('auth-home-page');
-  if (await landingPage.isVisible()) {
-    await page.getByTestId('auth-home-launch-guest').click();
-    await expectStoryRoute(page);
-    return;
-  }
-
-  await expectStoryRoute(page);
-}
-
-async function seedDraftStory(
-  page: Page,
-  options: {
-    title: string;
-    premise: string;
-    targetChapters?: number;
-    themes?: string;
-  },
-) {
-  await page.getByTestId('studio-title-input').fill(options.title);
-  await page.getByTestId('studio-premise-input').fill(options.premise);
-  await page
-    .getByTestId('studio-target-chapters-input')
-    .fill(String(options.targetChapters ?? 3));
-  await page
-    .getByTestId('studio-themes-input')
-    .fill(options.themes ?? 'serial tension, debt, memory');
-  await page.getByTestId('studio-create-draft').click();
-
-  await expect(page.getByTestId('studio-active-title')).toHaveText(options.title);
-  await expect(page.getByTestId('studio-workflow-state')).toContainText(
-    'Created draft manuscript',
-  );
-}
+import {
+  expectStudioRoute,
+  launchGuest,
+  seedDraftStory,
+  signIn,
+  uniqueTitle,
+} from './helpers/studio-workflow';
 
 test.describe('frontend smoke', () => {
   test.describe.configure({ mode: 'serial' });
@@ -72,6 +22,9 @@ test.describe('frontend smoke', () => {
       premise: 'A courier discovers a map that rewrites the borders of a flooded kingdom.',
       themes: 'survival, memory, river politics',
     });
+    await expect(page.getByTestId('studio-workflow-state')).toContainText(
+      'Created draft manuscript',
+    );
 
     await page.getByTestId('studio-generate-blueprint').click();
     await page.getByTestId('studio-generate-outline').click();
@@ -131,7 +84,7 @@ test.describe('frontend smoke', () => {
     expect(deepLink).toContain('run=');
 
     await page.reload();
-    await expectStoryRoute(page, 'playback');
+    await expectStudioRoute(page, 'playback');
     await expect(page.getByTestId('studio-run-playback')).toBeVisible();
     await expect(page).toHaveURL(deepLink);
     await expect(page.getByTestId('playback-stage-timeline')).toBeVisible();
@@ -150,7 +103,7 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('auth-home-page')).toBeVisible();
     await page.getByTestId('auth-home-go-login').click();
     await page.getByTestId('auth-login-guest').click();
-    await expectStoryRoute(page);
+    await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toContainText('guest-');
   });
 
@@ -165,7 +118,7 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('auth-home-session-catalog')).toBeVisible();
     await page.getByTestId(`auth-home-resume-session-guest:${workspaceId}`).click();
 
-    await expectStoryRoute(page);
+    await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toHaveText(workspaceId ?? '');
   });
 
@@ -222,7 +175,7 @@ test.describe('frontend smoke', () => {
     await expect(page.getByTestId('session-switcher')).toBeVisible();
     await page.getByRole('button', { name: /guest workspace/i }).click();
 
-    await expectStoryRoute(page);
+    await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toHaveText(guestWorkspace ?? '');
   });
 
@@ -248,7 +201,7 @@ test.describe('frontend smoke', () => {
     });
 
     await page.goto('/studio?view=workspace');
-    await expectStoryRoute(page);
+    await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toContainText('guest-direct-test');
     await expect(page.getByTestId('studio-create-form')).toBeVisible();
     await expect(page.getByTestId('studio-session-panel')).toContainText(

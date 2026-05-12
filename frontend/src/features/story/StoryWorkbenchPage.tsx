@@ -6,15 +6,19 @@ import { Panel } from '@/components/Panel';
 import { StatusPill } from '@/components/StatusPill';
 import type {
   SessionState,
+  StorySurfaceView,
+} from '@/app/types/auth';
+import type {
   StoryCreateRequest,
   StoryGenre,
   StoryHybridReviewReport,
   StoryReviewIssue,
   StoryRunDetailResponse,
-  StoryRunStageExecution,
-  StorySurfaceView,
   StoryWorkspace,
-} from '@/app/types';
+} from '@/app/types/story';
+import type {
+  StoryRunStageExecution,
+} from '@/app/types/run';
 import { useAuth } from '@/features/auth/useAuth';
 
 import { useStoryWorkbench } from './useStoryWorkbench';

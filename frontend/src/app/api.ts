@@ -1,15 +1,18 @@
 import { appConfig } from '@/app/config';
 import type {
   CurrentUserResponse,
+  GuestSessionRequest,
+  GuestSessionResponse,
+  LoginRequest,
+  LoginResponse,
+  SessionState,
+} from '@/app/types/auth';
+import type {
   StoryBlueprintResponse,
   StoryCreateRequest,
   StoryCreateResponse,
   StoryDraftResponse,
   StoryExportResponse,
-  GuestSessionRequest,
-  GuestSessionResponse,
-  LoginRequest,
-  LoginResponse,
   StoryListResponse,
   StoryOutlineResponse,
   StoryPipelineRequest,
@@ -21,10 +24,9 @@ import type {
   StoryRunRequest,
   StoryRunsResponse,
   StoryArtifactsResponse,
-  SessionState,
   StorySnapshot,
   StoryWorkspaceResponse,
-} from '@/app/types';
+} from '@/app/types/story';
 import {
   getActiveSession,
   readSessionCatalog,
@@ -41,6 +43,23 @@ class HttpError extends Error {
 
 const buildUrl = (path: string) =>
   appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${path}` : path;
+
+function fallbackErrorMessage(status: number): string {
+  if (status === 502 || status === 503 || status === 504) {
+    return 'Service temporarily unavailable. Start the backend API and retry.';
+  }
+
+  if (status === 408) {
+    return 'Request timed out. Please retry.';
+  }
+
+  return `Request failed with status ${status}`;
+}
+
+function isLikelyHtml(payload: string): boolean {
+  const normalized = payload.trim().toLowerCase();
+  return normalized.startsWith('<!doctype html') || normalized.startsWith('<html');
+}
 
 function buildStoryQuery(params: Record<string, string | number | undefined>): string {
   const searchParams = new URLSearchParams();
@@ -114,19 +133,32 @@ async function requestJson<T>(
   const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
 
   try {
-    const response = await fetch(buildUrl(path), {
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthorizationHeaders(options?.token),
-        ...(init?.headers ?? {}),
-      },
-      ...init,
-      signal: controller.signal,
-    });
+    let response: Response;
+    try {
+      response = await fetch(buildUrl(path), {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthorizationHeaders(options?.token),
+          ...(init?.headers ?? {}),
+        },
+        ...init,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timed out. Please retry.');
+      }
+
+      if (error instanceof TypeError) {
+        throw new Error('Service temporarily unavailable. Start the backend API and retry.');
+      }
+
+      throw error;
+    }
 
     if (!response.ok) {
-      let message = `Request failed with status ${response.status}`;
+      let message = fallbackErrorMessage(response.status);
       const contentType = response.headers.get('Content-Type') ?? '';
 
       if (contentType.includes('application/json')) {
@@ -139,7 +171,7 @@ async function requestJson<T>(
       } else {
         try {
           const detail = (await response.text()).trim();
-          if (detail) {
+          if (detail && !isLikelyHtml(detail)) {
             message = detail;
           }
         } catch {
