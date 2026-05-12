@@ -31,7 +31,11 @@ jobs:
       matrix:
         include:
           - language: python
+            category: .github/workflows/codeql.yml:analyze/language:python
+          - language: python
             category: /language:python
+          - language: javascript-typescript
+            category: .github/workflows/codeql.yml:analyze/language:javascript-typescript
           - language: javascript-typescript
             category: /language:javascript
 
