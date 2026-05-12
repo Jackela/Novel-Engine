@@ -29,9 +29,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language:
-          - python
-          - javascript-typescript
+        include:
+          - language: python
+            category: /language:python
+          - language: javascript-typescript
+            category: /language:javascript
 
     steps:
       - name: Checkout
@@ -84,3 +86,5 @@ jobs:
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
+        with:
+          category: ${{ matrix.category }}
