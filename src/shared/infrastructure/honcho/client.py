@@ -81,7 +81,7 @@ class HonchoClient:
         elif isinstance(error, TimeoutError):
             return "TIMEOUT_ERROR"
         elif isinstance(error, HonchoClientError):
-            return "HONCHO_CLIENT_ERROR"
+            return error.error_code
         else:
             return "UNKNOWN_ERROR"
 
@@ -105,10 +105,21 @@ class HonchoClient:
                             details=HonchoErrorDetails(
                                 operation="initialize",
                                 entity_id="honcho_client",
-                                error_code="HONCHO_CLIENT_ERROR",
+                                error_code="HONCHO_PACKAGE_MISSING",
                                 original_exception=ImportError(
                                     "honcho package is not installed"
                                 ),
+                            ),
+                        )
+
+                    if self._settings.is_cloud and not self._settings.api_key:
+                        raise HonchoClientError(
+                            "HONCHO_API_KEY is required for Honcho cloud deployment",
+                            details=HonchoErrorDetails(
+                                operation="initialize",
+                                entity_id="honcho_client",
+                                error_code="CONFIGURATION_ERROR",
+                                context={"deployment": self._settings.deployment},
                             ),
                         )
 
@@ -122,7 +133,19 @@ class HonchoClient:
                             client_kwargs["api_key"] = self._settings.api_key
 
                         self._client = _Honcho(**client_kwargs)
+                    except HonchoClientError:
+                        raise
                     except (ConnectionError, TimeoutError) as e:
+                        raise HonchoClientError(
+                            f"Failed to initialize Honcho client: {e}",
+                            details=HonchoErrorDetails(
+                                operation="initialize",
+                                entity_id="honcho_client",
+                                error_code=self._classify_error(e),
+                                original_exception=e,
+                            ),
+                        ) from e
+                    except Exception as e:
                         raise HonchoClientError(
                             f"Failed to initialize Honcho client: {e}",
                             details=HonchoErrorDetails(
@@ -284,6 +307,9 @@ class HonchoClient:
                 return True
             except Exception:
                 continue
+
+        if any(callable(getattr(client, probe_name, None)) for probe_name in ("health", "ping", "status")):
+            return False
 
         return True
 

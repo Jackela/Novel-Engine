@@ -57,7 +57,9 @@ class HonchoSessionManager:
                 metadata=metadata or {},
             )
             return session
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to create session for peer {peer_id}: {e}",
                 details=HonchoErrorDetails(
@@ -103,7 +105,9 @@ class HonchoSessionManager:
             )
             context_data = context.to_openai() if hasattr(context, "to_openai") else []
             return cast(list[dict[str, Any]], context_data)
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to get session context for {session_id}: {e}",
                 details=HonchoErrorDetails(
