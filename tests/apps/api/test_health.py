@@ -34,6 +34,41 @@ def test_health_returns_healthy_when_no_components_are_registered() -> None:
     assert response.json()["overall_status"] == "healthy"
 
 
+def test_health_returns_http_200_even_when_runtime_is_unhealthy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class UnhealthyChecker:
+        checks: dict[str, object] = {}
+
+        async def check_all(self) -> dict[str, object]:
+            return {
+                "overall_status": "unhealthy",
+                "timestamp": "2026-05-06T00:00:00+00:00",
+                "components": {
+                    "database": {
+                        "status": "unhealthy",
+                        "message": "connection refused",
+                        "response_time_ms": 1.5,
+                        "error": "dial tcp 127.0.0.1:5432: connect refused",
+                        "details": {},
+                    }
+                },
+            }
+
+    async def _get_unhealthy_checker() -> UnhealthyChecker:
+        return UnhealthyChecker()
+
+    monkeypatch.setattr(health_module, "_get_health_checker", _get_unhealthy_checker)
+
+    client = _build_client()
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["overall_status"] == "unhealthy"
+    assert payload["components"]["database"]["status"] == "unhealthy"
+
+
 def test_readiness_is_ready_without_database_registration() -> None:
     client = _build_client()
     response = client.get("/health/ready")

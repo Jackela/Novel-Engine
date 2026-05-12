@@ -13,21 +13,49 @@ Novel Engine is a narrative simulation platform with a canonical FastAPI backend
 ### Backend
 
 ```bash
-python -m pip install -e ".[dev,test]"
-pytest -q
-ruff check src tests
-mypy \
+uv sync --extra dev --extra test --frozen
+uv run pytest -q
+uv run pytest \
+  tests/unit/infrastructure \
+  tests/apps/api/test_health.py \
+  --cov=src/shared/infrastructure/auth \
+  --cov=src/shared/infrastructure/config \
+  --cov=src/shared/infrastructure/health \
+  --cov=src/shared/infrastructure/persistence \
+  --cov-report=term-missing \
+  --cov-fail-under=80 \
+  -q
+uv run pytest \
+  tests/shared/infrastructure/circuit_breaker \
+  tests/shared/infrastructure/middleware \
+  tests/apps/api/middleware \
+  --cov=src/shared/infrastructure/circuit_breaker \
+  --cov=src/shared/infrastructure/middleware \
+  --cov=src/apps/api/middleware \
+  --cov-report=term-missing \
+  --cov-fail-under=80 \
+  -q
+uv run ruff check src tests
+uv run mypy \
   src \
   tests \
   --no-error-summary \
   --show-column-numbers
-lint-imports
+uv run lint-imports
+uv run python scripts/qa/check_openapi_snapshot.py
+uv run python scripts/qa/run_api_public_audit.py
+```
+
+When `pyproject.toml` dependencies change, refresh and commit `uv.lock` in the same change:
+
+```bash
+uv lock
 ```
 
 If you want the optional Honcho integration installed locally, use:
 
 ```bash
-python -m pip install -e ".[dev,test,honcho]"
+uv sync --extra dev --extra test --extra honcho --frozen
 ```
 
 ### Frontend
@@ -35,12 +63,26 @@ python -m pip install -e ".[dev,test,honcho]"
 ```bash
 npm --prefix frontend install
 npm --prefix frontend run type-check
-npm --prefix frontend run test
+npm --prefix frontend run test:coverage
 npm --prefix frontend run build
 npm --prefix frontend run test:e2e:smoke
+npm --prefix frontend run test:e2e:full-audit
+npm --prefix frontend run audit:dependencies
+npm --prefix frontend run audit:exports
 ```
 
-`test:e2e:smoke` launches the canonical backend and frontend stack through Playwright.
+`test:e2e:smoke` and `test:e2e:full-audit` launch the canonical backend and frontend stack through Playwright.
+
+### Health semantics
+
+- `GET /health` always returns HTTP `200`. Use `overall_status` and `components.*.status` in the response body for observability and alerting.
+- `GET /health/ready` keeps `200/503` readiness semantics and is the probe endpoint for traffic orchestration.
+
+When backend routes or response contracts change, refresh the canonical OpenAPI snapshot:
+
+```bash
+uv run python scripts/qa/check_openapi_snapshot.py --write
+```
 
 ### DashScope long-form gate
 
@@ -50,7 +92,7 @@ The release-grade long-form validation path now has two modes:
 - Canonical refresh: a manual run updates the checked-in UAT evidence under `docs/reports/uat/` after a human-reviewed baseline is confirmed.
 
 ```bash
-python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports
+uv run python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports
 ```
 
 The canonical refresh command starts a clean local backend, uses the real HTTP API with DashScope, and writes:
@@ -62,10 +104,17 @@ See [docs/reports/uat/INDEX.md](docs/reports/uat/INDEX.md) and [docs/reports/uat
 
 ## Testing model
 
-- `pytest -q` is the default backend gate.
+- `uv run pytest -q` is the default backend behavior gate.
+- Platform infrastructure coverage is gated at 80% across auth, config, health, and persistence modules.
+- Circuit breaker and middleware coverage is gated at 80% across shared circuit breaker, shared middleware, and API middleware modules.
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
-- Frontend smoke coverage is exercised with Playwright against the canonical backend and frontend stack.
-- CI runs backend quality on the canonical backend surface, backend tests, frontend validation, import-linter, and CodeQL.
+- Frontend smoke and full-audit coverage are exercised with Playwright against the canonical backend and frontend stack.
+- Frontend dependency drift is gated with `npm --prefix frontend run audit:dependencies` (Knip-based static audit).
+- Frontend export-surface drift is gated with `npm --prefix frontend run audit:exports` (Knip exports audit).
+- Frontend security advisories are gated with `npm --prefix frontend audit --audit-level=high`.
+- OpenAPI snapshot drift is gated with `uv run python scripts/qa/check_openapi_snapshot.py`.
+- Public API audit is enforced via `uv run python scripts/qa/run_api_public_audit.py` and must keep method+path coverage at 100%.
+- CI runs backend quality on the canonical backend surface, backend tests, 80% platform and circuit/middleware coverage floors, frontend platform coverage, frontend validation, frontend full-audit, public API audit, OpenAPI snapshot check, import-linter, and CodeQL.
 - `DashScope Longform Gate` is a required PR check for same-repo pull requests into protected branches.
 - The canonical checked-in UAT evidence is refreshed manually; normal PR gate runs only upload artifacts.
 - The long-form gate is only green when the real run reaches `publish=success` with `warning=0` and `blocker=0`.

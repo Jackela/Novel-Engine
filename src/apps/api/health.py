@@ -136,11 +136,7 @@ async def health_check() -> JSONResponse:
                 "timestamp": result.get("timestamp", _timestamp()),
                 "components": result.get("components", {}),
             },
-            status_code=(
-                status.HTTP_503_SERVICE_UNAVAILABLE
-                if overall_status == "unhealthy"
-                else status.HTTP_200_OK
-            ),
+            status_code=status.HTTP_200_OK,
         )
     except Exception:
         logger.exception("Health check failed")
@@ -150,7 +146,7 @@ async def health_check() -> JSONResponse:
                 "timestamp": _timestamp(),
                 "components": {},
             },
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_200_OK,
         )
 
 

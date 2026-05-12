@@ -17,7 +17,7 @@ import type {
   StorySnapshot,
   StoryWorkflowState,
   StoryWorkspace,
-} from '@/app/types';
+} from '@/app/types/story';
 
 function makeStory(title: string, status: StorySnapshot['status'] = 'draft'): StorySnapshot {
   return {

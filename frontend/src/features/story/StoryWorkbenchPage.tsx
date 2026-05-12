@@ -6,15 +6,19 @@ import { Panel } from '@/components/Panel';
 import { StatusPill } from '@/components/StatusPill';
 import type {
   SessionState,
+  StorySurfaceView,
+} from '@/app/types/auth';
+import type {
   StoryCreateRequest,
   StoryGenre,
   StoryHybridReviewReport,
   StoryReviewIssue,
   StoryRunDetailResponse,
-  StoryRunStageExecution,
-  StorySurfaceView,
   StoryWorkspace,
-} from '@/app/types';
+} from '@/app/types/story';
+import type {
+  StoryRunStageExecution,
+} from '@/app/types/run';
 import { useAuth } from '@/features/auth/useAuth';
 
 import { useStoryWorkbench } from './useStoryWorkbench';
@@ -108,7 +112,7 @@ function buildStoryLocation(session: SessionState) {
   if (session.lastRunId) params.set('run', session.lastRunId);
   params.set('view', session.lastView ?? 'workspace');
   const query = params.toString();
-  return query ? `/story?${query}` : '/story';
+  return query ? `/studio?${query}` : '/studio';
 }
 
 function chapterNumberFromLocation(location: string | null): number | null {
@@ -140,13 +144,13 @@ function renderSessionSummary(session: SessionState, workspaceSummary: string) {
     session.kind === 'user' ? session.user?.email ?? session.workspaceId : session.workspaceId;
 
   return (
-    <div className="story-session-card" data-testid="story-session-summary">
+    <div className="studio-session-card" data-testid="studio-session-summary">
       <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
         {session.kind === 'guest' ? 'guest session' : 'signed in'}
       </StatusPill>
       <h3>{sessionTitle}</h3>
       <p>{workspaceSummary}</p>
-      <dl className="story-stats story-stats--compact" data-testid="workspace-switcher">
+      <dl className="studio-stats studio-stats--compact" data-testid="workspace-switcher">
         <div>
           <dt>Workspace</dt>
           <dd>{session.workspaceId}</dd>
@@ -317,20 +321,20 @@ export function StoryWorkbenchPage() {
     playbackWorkspace?.review ?? playbackWorkspace?.hybrid_review ?? null;
 
   return (
-    <main className="story-workbench" data-testid="story-workbench-page">
-      <header className="story-workbench__hero">
-        <div className="story-workbench__hero-copy">
-          <p className="story-workbench__eyebrow">Novel Engine / Guided Author Shell</p>
-          <h1 className="story-workbench__title">
+    <main className="studio-workbench" data-testid="studio-workbench-page">
+      <header className="studio-workbench__hero">
+        <div className="studio-workbench__hero-copy">
+          <p className="studio-workbench__eyebrow">Novel Engine / Guided Author Shell</p>
+          <h1 className="studio-workbench__title">
             {workbench.activeStory ? workbench.activeStory.title : 'Create or resume a manuscript'}
           </h1>
-          <p className="story-workbench__summary">
+          <p className="studio-workbench__summary">
             Session context, manuscript selection, and playback selection are now addressable.
             Mutable workspace and immutable playback stay visually and semantically separate.
           </p>
         </div>
 
-        <div className="story-workbench__hero-meta">
+        <div className="studio-workbench__hero-meta">
           <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
             {session.kind === 'guest' ? 'guest session' : 'signed in'}
           </StatusPill>
@@ -339,7 +343,7 @@ export function StoryWorkbenchPage() {
               {zeroWarning ? 'zero warning' : 'warnings open'}
             </StatusPill>
           </span>
-          <span className="story-workbench__workspace" data-testid="workspace-badge">
+          <span className="studio-workbench__workspace" data-testid="workspace-badge">
             {session.workspaceId}
           </span>
         </div>
@@ -347,12 +351,12 @@ export function StoryWorkbenchPage() {
 
       {workbench.error ? <p className="form-error">{workbench.error}</p> : null}
 
-      <section className="story-workbench__layout story-workbench__layout--guided">
-        <div className="story-workbench__column">
-          <Panel title="Session / Entry" eyebrow="Rail" testId="story-session-panel">
+      <section className="studio-workbench__layout studio-workbench__layout--guided">
+        <div className="studio-workbench__column">
+          <Panel title="Session / Entry" eyebrow="Rail" testId="studio-session-panel">
             {renderSessionSummary(session, workspaceSummary)}
-            <div className="story-workflow__actions">
-              <Link className="button button--secondary" to="/" data-testid="story-back-to-landing">
+            <div className="studio-workflow__actions">
+              <Link className="button button--secondary" to="/" data-testid="studio-back-to-landing">
                 Back to landing
               </Link>
               <Button variant="ghost" onClick={leaveCurrentSession}>
@@ -361,21 +365,21 @@ export function StoryWorkbenchPage() {
             </div>
 
             {availableSessions.length ? (
-              <div className="story-notes" data-testid="session-switcher">
+              <div className="studio-notes" data-testid="session-switcher">
                 <h3>Switch session</h3>
-                <ul className="story-list">
+                <ul className="studio-list">
                   {availableSessions.map((entry) => (
-                    <li key={entry.id} className="story-card">
+                    <li key={entry.id} className="studio-card">
                       <button
-                        className="story-card__button"
+                        className="studio-card__button"
                         type="button"
                         onClick={() => void switchToSavedSession(entry.id)}
                       >
-                        <div className="story-card__header">
+                        <div className="studio-card__header">
                           <strong>{entry.activeWorkspace?.label ?? entry.workspaceId}</strong>
                           <span>{entry.kind}</span>
                         </div>
-                        <p className="story-card__meta">
+                        <p className="studio-card__meta">
                           {entry.user?.email ?? entry.workspaceId}
                         </p>
                       </button>
@@ -394,9 +398,9 @@ export function StoryWorkbenchPage() {
                 {workbench.isLoading ? 'Refreshing...' : 'Refresh library'}
               </Button>
             }
-            testId="story-library-panel"
+            testId="studio-library-panel"
           >
-            <div className="story-library-summary" data-testid="story-library-summary">
+            <div className="studio-library-summary" data-testid="studio-library-summary">
               <strong>{workbench.stories.length} manuscript(s)</strong>
               <span>
                 {workbench.activeStory
@@ -405,26 +409,26 @@ export function StoryWorkbenchPage() {
               </span>
             </div>
             <div data-testid="library-list">
-              <ul className="story-list" data-testid="story-list">
+              <ul className="studio-list" data-testid="studio-list">
                 {workbench.stories.length === 0 ? (
-                  <li className="story-empty">No manuscripts yet. Create the first draft below.</li>
+                  <li className="studio-empty">No manuscripts yet. Create the first draft below.</li>
                 ) : (
                   workbench.stories.map((story) => (
                     <li
                       key={story.id}
-                      className={`story-card${story.id === workbench.activeStoryId ? ' story-card--active' : ''}`}
+                      className={`studio-card${story.id === workbench.activeStoryId ? ' studio-card--active' : ''}`}
                     >
                       <button
-                        className="story-card__button"
+                        className="studio-card__button"
                         type="button"
                         onClick={() => void openStory(story.id)}
-                        data-testid={`story-item-${story.id}`}
+                        data-testid={`studio-item-${story.id}`}
                       >
-                        <div className="story-card__header">
+                        <div className="studio-card__header">
                           <strong>{story.title}</strong>
                           <span>{story.status}</span>
                         </div>
-                        <p className="story-card__meta">
+                        <p className="studio-card__meta">
                           {story.genre} / {story.chapter_count} chapters / updated {formatDate(story.updated_at)}
                         </p>
                       </button>
@@ -435,66 +439,66 @@ export function StoryWorkbenchPage() {
             </div>
           </Panel>
 
-          <Panel title="New manuscript" eyebrow="Create" testId="story-create-panel">
-            <form className="story-form" onSubmit={createDraft} data-testid="story-create-form">
+          <Panel title="New manuscript" eyebrow="Create" testId="studio-create-panel">
+            <form className="studio-form" onSubmit={createDraft} data-testid="studio-create-form">
               <label className="field">
                 <span>Title</span>
-                <input data-testid="story-title-input" value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} required />
+                <input data-testid="studio-title-input" value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} required />
               </label>
               <label className="field">
                 <span>Genre</span>
-                <select data-testid="story-genre-select" value={formState.genre} onChange={(event) => setFormState((current) => ({ ...current, genre: event.target.value as StoryGenre }))}>
+                <select data-testid="studio-genre-select" value={formState.genre} onChange={(event) => setFormState((current) => ({ ...current, genre: event.target.value as StoryGenre }))}>
                   {STORY_GENRES.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
                 </select>
               </label>
               <label className="field">
                 <span>Premise</span>
-                <textarea data-testid="story-premise-input" value={formState.premise} onChange={(event) => setFormState((current) => ({ ...current, premise: event.target.value }))} rows={5} required />
+                <textarea data-testid="studio-premise-input" value={formState.premise} onChange={(event) => setFormState((current) => ({ ...current, premise: event.target.value }))} rows={5} required />
               </label>
-              <div className="story-form__grid">
+              <div className="studio-form__grid">
                 <label className="field">
                   <span>Target chapters</span>
-                  <input data-testid="story-target-chapters-input" type="number" min={1} max={120} value={formState.targetChapters} onChange={(event) => setFormState((current) => ({ ...current, targetChapters: Number(event.target.value) }))} required />
+                  <input data-testid="studio-target-chapters-input" type="number" min={1} max={120} value={formState.targetChapters} onChange={(event) => setFormState((current) => ({ ...current, targetChapters: Number(event.target.value) }))} required />
                 </label>
                 <label className="field">
                   <span>Audience</span>
-                  <input data-testid="story-audience-input" value={formState.targetAudience} onChange={(event) => setFormState((current) => ({ ...current, targetAudience: event.target.value }))} />
+                  <input data-testid="studio-audience-input" value={formState.targetAudience} onChange={(event) => setFormState((current) => ({ ...current, targetAudience: event.target.value }))} />
                 </label>
               </div>
               <label className="field">
                 <span>Themes</span>
-                <input data-testid="story-themes-input" value={formState.themes} onChange={(event) => setFormState((current) => ({ ...current, themes: event.target.value }))} />
+                <input data-testid="studio-themes-input" value={formState.themes} onChange={(event) => setFormState((current) => ({ ...current, themes: event.target.value }))} />
               </label>
               <label className="field">
                 <span>Tone</span>
-                <input data-testid="story-tone-input" value={formState.tone} onChange={(event) => setFormState((current) => ({ ...current, tone: event.target.value }))} />
+                <input data-testid="studio-tone-input" value={formState.tone} onChange={(event) => setFormState((current) => ({ ...current, tone: event.target.value }))} />
               </label>
-              <label className="story-toggle">
-                <input data-testid="story-publish-toggle" type="checkbox" checked={formState.publish} onChange={(event) => setFormState((current) => ({ ...current, publish: event.target.checked }))} />
+              <label className="studio-toggle">
+                <input data-testid="studio-publish-toggle" type="checkbox" checked={formState.publish} onChange={(event) => setFormState((current) => ({ ...current, publish: event.target.checked }))} />
                 <span>Publish after the initial full pipeline</span>
               </label>
-              <div className="story-form__actions">
-                <Button type="submit" disabled={workbench.isBusy} data-testid="story-create-draft">Create draft</Button>
-                <Button type="button" variant="secondary" disabled={workbench.isBusy} onClick={() => void runInitialPipeline()} data-testid="story-run-pipeline">Run full pipeline</Button>
+              <div className="studio-form__actions">
+                <Button type="submit" disabled={workbench.isBusy} data-testid="studio-create-draft">Create draft</Button>
+                <Button type="button" variant="secondary" disabled={workbench.isBusy} onClick={() => void runInitialPipeline()} data-testid="studio-run-pipeline">Run full pipeline</Button>
               </div>
             </form>
           </Panel>
         </div>
 
-        <div className="story-workbench__column story-workbench__column--wide">
+        <div className="studio-workbench__column studio-workbench__column--wide">
           <Panel title="Guided workspace" eyebrow="Mutable surface" testId="workspace-surface">
             {workbench.activeStory && workbench.workspace ? (
-              <div className="story-manuscript">
-                <div className="story-manuscript__summary">
+              <div className="studio-manuscript">
+                <div className="studio-manuscript__summary">
                   <div>
-                    <h2 className="story-manuscript__title" data-testid="story-active-title">
+                    <h2 className="studio-manuscript__title" data-testid="studio-active-title">
                       {workbench.activeStory.title}
                     </h2>
-                    <p className="story-manuscript__copy">
+                    <p className="studio-manuscript__copy">
                       {workbench.workspace.workflow.premise || 'Premise pending.'}
                     </p>
                   </div>
-                  <div className="story-manuscript__badges" data-testid="publish-verdict">
+                  <div className="studio-manuscript__badges" data-testid="publish-verdict">
                     <StatusPill tone={reviewTone(zeroWarning)}>
                       {zeroWarning ? 'zero warning ready' : 'review debt open'}
                     </StatusPill>
@@ -504,8 +508,8 @@ export function StoryWorkbenchPage() {
                   </div>
                 </div>
 
-                <div className="story-memory-grid">
-                  <article className="story-memory-card">
+                <div className="studio-memory-grid">
+                  <article className="studio-memory-card">
                     <h3>Recommended next action</h3>
                     <p>{workbench.workspace.recommended_next_action?.label ?? 'Create the next manuscript step.'}</p>
                     <p>{workbench.workspace.recommended_next_action?.reason ?? 'No guided action available yet.'}</p>
@@ -513,26 +517,26 @@ export function StoryWorkbenchPage() {
                       {workbench.workspace.recommended_next_action?.label ?? 'No guided action'}
                     </Button>
                   </article>
-                  <article className="story-memory-card">
+                  <article className="studio-memory-card">
                     <h3>Target chapters</h3>
                     <p>{workbench.workspace.workflow.target_chapters}</p>
                   </article>
-                  <article className="story-memory-card">
+                  <article className="studio-memory-card">
                     <h3>Drafted chapters</h3>
                     <p>{workbench.activeStory.chapter_count}</p>
                   </article>
-                  <article className="story-memory-card">
+                  <article className="studio-memory-card">
                     <h3>Artifacts</h3>
                     <p>{workbench.workspace.artifact_history.length}</p>
                   </article>
                 </div>
 
-                <div className="story-notes" data-testid="story-review-panel">
+                <div className="studio-notes" data-testid="studio-review-panel">
                   <h3>Quality summary</h3>
-                  <dl className="story-stats story-stats--compact">
+                  <dl className="studio-stats studio-stats--compact">
                     <div>
                       <dt>Review score</dt>
-                      <dd data-testid="story-review-score">{review?.quality_score ?? 0}</dd>
+                      <dd data-testid="studio-review-score">{review?.quality_score ?? 0}</dd>
                     </div>
                     <div>
                       <dt>Warnings</dt>
@@ -549,17 +553,17 @@ export function StoryWorkbenchPage() {
                   </dl>
                 </div>
 
-                <div className="story-workflow__actions">
-                  <Button type="button" onClick={() => void workbench.generateBlueprint()} disabled={workbench.isBusy} data-testid="story-generate-blueprint">Generate blueprint</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.generateOutline()} disabled={workbench.isBusy || !workbench.workspace.blueprint} data-testid="story-generate-outline">Generate outline</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.draftStory()} disabled={workbench.isBusy || !workbench.workspace.outline} data-testid="story-draft-chapters">Draft chapters</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.reviewStory()} disabled={workbench.isBusy || workbench.activeStory.chapter_count === 0} data-testid="story-review">Review</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.reviseStory()} disabled={workbench.isBusy || !review} data-testid="story-revise">Revise</Button>
+                <div className="studio-workflow__actions">
+                  <Button type="button" onClick={() => void workbench.generateBlueprint()} disabled={workbench.isBusy} data-testid="studio-generate-blueprint">Generate blueprint</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.generateOutline()} disabled={workbench.isBusy || !workbench.workspace.blueprint} data-testid="studio-generate-outline">Generate outline</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.draftStory()} disabled={workbench.isBusy || !workbench.workspace.outline} data-testid="studio-draft-chapters">Draft chapters</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.reviewStory()} disabled={workbench.isBusy || workbench.activeStory.chapter_count === 0} data-testid="studio-review">Review</Button>
+                  <Button type="button" variant="secondary" onClick={() => void workbench.reviseStory()} disabled={workbench.isBusy || !review} data-testid="studio-revise">Revise</Button>
                 </div>
 
-                <details className="story-notes" open={currentView === 'workspace'}>
+                <details className="studio-notes" open={currentView === 'workspace'}>
                   <summary>Advanced diagnostics</summary>
-                  <dl className="story-stats story-stats--compact">
+                  <dl className="studio-stats studio-stats--compact">
                     <div>
                       <dt>Blueprint source</dt>
                       <dd>{workbench.workspace.blueprint ? providerLabel(workbench.workspace.blueprint.provider, workbench.workspace.blueprint.model) : 'Not generated'}</dd>
@@ -574,18 +578,18 @@ export function StoryWorkbenchPage() {
                     </div>
                   </dl>
 
-                  <div className="story-memory-grid">
-                    <article className="story-memory-card"><h3>Relationship debt</h3><p data-testid="story-relationship-debt-count">{relationshipDebtIssues.length}</p></article>
-                    <article className="story-memory-card"><h3>Hook debt</h3><p data-testid="story-hook-debt-count">{hookDebtIssues.length}</p></article>
+                  <div className="studio-memory-grid">
+                    <article className="studio-memory-card"><h3>Relationship debt</h3><p data-testid="studio-relationship-debt-count">{relationshipDebtIssues.length}</p></article>
+                    <article className="studio-memory-card"><h3>Hook debt</h3><p data-testid="studio-hook-debt-count">{hookDebtIssues.length}</p></article>
                   </div>
 
-                  <ul className="story-issue-list" data-testid="story-debt-issue-list">
+                  <ul className="studio-issue-list" data-testid="studio-debt-issue-list">
                     {[...relationshipDebtIssues, ...hookDebtIssues].length === 0 ? (
-                      <li className="story-empty">No highlighted relationship or hook debt.</li>
+                      <li className="studio-empty">No highlighted relationship or hook debt.</li>
                     ) : (
                       [...relationshipDebtIssues, ...hookDebtIssues].map((issue, index) => (
-                        <li key={`${issue.code}-${issue.location ?? 'story'}-${index}`} className="story-chapter-card">
-                          <div className="story-chapter-card__header">
+                        <li key={`${issue.code}-${issue.location ?? 'story'}-${index}`} className="studio-chapter-card">
+                          <div className="studio-chapter-card__header">
                             <strong>{issue.code}</strong>
                             <span>{issue.severity}</span>
                           </div>
@@ -596,39 +600,39 @@ export function StoryWorkbenchPage() {
                   </ul>
                 </details>
 
-                <h3 className="story-section-title">Chapter map</h3>
-                <ul className="story-chapter-list" data-testid="story-chapter-list">
+                <h3 className="studio-section-title">Chapter map</h3>
+                <ul className="studio-chapter-list" data-testid="studio-chapter-list">
                   {workbench.activeStory.chapters.length ? (
                     workbench.activeStory.chapters.map((chapter) => {
                       const chapterIssues = review?.issues.filter((issue) => chapterNumberFromLocation(issue.location) === chapter.chapter_number) ?? [];
                       const hasRelationshipDebt = chapterIssues.some((issue) => RELATIONSHIP_DEBT_CODES.has(issue.code));
                       const hasHookDebt = chapterIssues.some((issue) => HOOK_DEBT_CODES.has(issue.code));
                       return (
-                        <li key={chapter.id} className="story-chapter-card">
-                          <div className="story-chapter-card__header">
+                        <li key={chapter.id} className="studio-chapter-card">
+                          <div className="studio-chapter-card__header">
                             <strong>Chapter {chapter.chapter_number}</strong>
                             <span>{chapter.scenes.length} scenes</span>
                           </div>
                           <h4>{chapter.title}</h4>
                           <p>{chapter.summary ?? 'No summary yet.'}</p>
                           {hasRelationshipDebt || hasHookDebt ? (
-                            <div className="story-tag-row" data-testid={`story-chapter-debt-${chapter.chapter_number}`}>
-                              {hasRelationshipDebt ? <span className="story-tag">relationship debt</span> : null}
-                              {hasHookDebt ? <span className="story-tag">hook debt</span> : null}
+                            <div className="studio-tag-row" data-testid={`studio-chapter-debt-${chapter.chapter_number}`}>
+                              {hasRelationshipDebt ? <span className="studio-tag">relationship debt</span> : null}
+                              {hasHookDebt ? <span className="studio-tag">hook debt</span> : null}
                             </div>
                           ) : null}
                         </li>
                       );
                     })
                   ) : (
-                    <li className="story-empty">Draft chapters to populate the manuscript map.</li>
+                    <li className="studio-empty">Draft chapters to populate the manuscript map.</li>
                   )}
                 </ul>
               </div>
             ) : (
-              <div className="story-manuscript">
-                <div className="story-memory-grid">
-                  <article className="story-memory-card">
+              <div className="studio-manuscript">
+                <div className="studio-memory-grid">
+                  <article className="studio-memory-card">
                     <h3>Recommended next action</h3>
                     <p>Start with a new manuscript in the create rail, then the workspace will advance one stage at a time.</p>
                     <Button type="button" disabled data-testid="guided-next-action">
@@ -636,18 +640,18 @@ export function StoryWorkbenchPage() {
                     </Button>
                   </article>
                 </div>
-                <p className="story-empty">Select a manuscript from the library or create a new one.</p>
+                <p className="studio-empty">Select a manuscript from the library or create a new one.</p>
               </div>
             )}
           </Panel>
         </div>
 
-        <div className="story-workbench__column">
+        <div className="studio-workbench__column">
           <Panel title="Playback desk" eyebrow="Immutable surface" testId="playback-desk">
-            <div className="story-notes" data-testid="story-run-provenance">
+            <div className="studio-notes" data-testid="studio-run-provenance">
               <h3>Run provenance</h3>
               <p>The playback desk shows immutable run evidence, stage snapshots, and publish verdicts.</p>
-              <dl className="story-stats story-stats--compact">
+              <dl className="studio-stats studio-stats--compact">
                 <div><dt>Selected run</dt><dd>{workbench.selectedRunDetail?.run.run_id ?? 'None selected'}</dd></div>
                 <div><dt>Playback source</dt><dd>{workbench.selectedRunDetail?.provenance ? providerLabel(workbench.selectedRunDetail.provenance.source_providers[0], workbench.selectedRunDetail.provenance.source_models[0]) : 'No playback selected'}</dd></div>
                 <div><dt>Snapshot</dt><dd>{formatDate(workbench.selectedRunDetail?.provenance?.snapshot_captured_at ?? null)}</dd></div>
@@ -655,29 +659,29 @@ export function StoryWorkbenchPage() {
               </dl>
             </div>
 
-            <label className="story-toggle story-toggle--panel">
-              <input data-testid="story-current-publish-toggle" type="checkbox" checked={rerunPublishes} onChange={(event) => setRerunPublishes(event.target.checked)} disabled={!workbench.activeStory || workbench.isBusy} />
+            <label className="studio-toggle studio-toggle--panel">
+              <input data-testid="studio-current-publish-toggle" type="checkbox" checked={rerunPublishes} onChange={(event) => setRerunPublishes(event.target.checked)} disabled={!workbench.activeStory || workbench.isBusy} />
               <span>Publish when rerunning the current manuscript ({rerunTargetChapters} target chapters)</span>
             </label>
 
-            <div className="story-workflow__actions">
-              <Button type="button" variant="secondary" onClick={() => void rerunCurrentPipeline()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="story-run-current-pipeline">{rerunPublishes ? 'Run current pipeline and publish' : 'Run current pipeline'}</Button>
-              <Button type="button" variant="secondary" onClick={() => void workbench.exportStory()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="story-export">Export</Button>
-              <Button type="button" variant="secondary" onClick={() => void workbench.publishStory()} disabled={!workbench.activeStory || workbench.isBusy || !zeroWarning} data-testid="story-publish">Publish</Button>
+            <div className="studio-workflow__actions">
+              <Button type="button" variant="secondary" onClick={() => void rerunCurrentPipeline()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="studio-run-current-pipeline">{rerunPublishes ? 'Run current pipeline and publish' : 'Run current pipeline'}</Button>
+              <Button type="button" variant="secondary" onClick={() => void workbench.exportStory()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="studio-export">Export</Button>
+              <Button type="button" variant="secondary" onClick={() => void workbench.publishStory()} disabled={!workbench.activeStory || workbench.isBusy || !zeroWarning} data-testid="studio-publish">Publish</Button>
             </div>
 
-            <div className="story-console__state" data-testid="story-workflow-state">
+            <div className="studio-console__state" data-testid="studio-workflow-state">
               <strong>{workbench.isBusy ? 'Working...' : workbench.artifact.lastAction ?? 'Waiting for an action'}</strong>
               <span>{workbench.stories.length} manuscripts tracked</span>
             </div>
 
             {workbench.runSummaries.length ? (
-              <div className="story-notes" data-testid="story-run-history">
+              <div className="studio-notes" data-testid="studio-run-history">
                 <h3>Run history</h3>
                 <ul>
                   {workbench.runSummaries.slice(-6).reverse().map((run) => (
                     <li key={run.run_id}>
-                      <button type="button" className="story-card__button" onClick={() => void toggleRun(run.run_id)} data-testid={`story-run-item-${run.run_id}`}>
+                      <button type="button" className="studio-card__button" onClick={() => void toggleRun(run.run_id)} data-testid={`studio-run-item-${run.run_id}`}>
                         <strong>{workbench.selectedRunId === run.run_id ? 'Viewing' : 'Open'} {run.mode}</strong>
                         <span>{run.status} / {run.stages.length} stages / {formatDate(run.completed_at ?? run.started_at)}</span>
                       </button>
@@ -688,26 +692,26 @@ export function StoryWorkbenchPage() {
             ) : null}
 
             {workbench.selectedRunDetail ? (
-              <div className="story-notes story-notes--playback" data-testid="story-run-playback">
+              <div className="studio-notes studio-notes--playback" data-testid="studio-run-playback">
                 <h3>Run playback</h3>
                 <p>{workbench.selectedRunDetail.run.mode} / {workbench.selectedRunDetail.run.status} / snapshot {formatDate(workbench.selectedRunDetail.latest_snapshot?.captured_at ?? null)}</p>
-                <dl className="story-stats" data-testid="story-run-playback-stats">
+                <dl className="studio-stats" data-testid="studio-run-playback-stats">
                   <div><dt>Artifacts</dt><dd>{workbench.selectedRunDetail.artifacts.length}</dd></div>
                   <div><dt>Events</dt><dd>{workbench.selectedRunDetail.events.length}</dd></div>
                   <div><dt>Snapshots</dt><dd>{workbench.selectedRunDetail.stage_snapshots.length}</dd></div>
                   <div><dt>Quality</dt><dd>{playbackReview?.quality_score ?? 0}</dd></div>
                   <div><dt>Reader pull</dt><dd>{playbackReview?.semantic_review?.metrics.reader_pull_score ?? 0}</dd></div>
                 </dl>
-                <div className="story-tag-row">
-                  <span className="story-tag" data-testid="story-playback-structural-gate">Structural gate: {playbackReview?.structural_gate_passed ? 'pass' : 'blocked'}</span>
-                  <span className="story-tag" data-testid="story-playback-semantic-gate">Semantic gate: {playbackReview?.semantic_gate_passed ? 'pass' : 'blocked'}</span>
-                  <span className="story-tag" data-testid="story-playback-publish-gate">Publish gate: {playbackReview?.publish_gate_passed ? 'pass' : 'blocked'}</span>
+                <div className="studio-tag-row">
+                  <span className="studio-tag" data-testid="studio-playback-structural-gate">Structural gate: {playbackReview?.structural_gate_passed ? 'pass' : 'blocked'}</span>
+                  <span className="studio-tag" data-testid="studio-playback-semantic-gate">Semantic gate: {playbackReview?.semantic_gate_passed ? 'pass' : 'blocked'}</span>
+                  <span className="studio-tag" data-testid="studio-playback-publish-gate">Publish gate: {playbackReview?.publish_gate_passed ? 'pass' : 'blocked'}</span>
                 </div>
 
-                <ul className="story-issue-list" data-testid="playback-stage-timeline">
+                <ul className="studio-issue-list" data-testid="playback-stage-timeline">
                   {workbench.selectedRunDetail.run.stages.map((stage) => (
-                    <li key={`${stage.name}-${stage.started_at}`} className="story-chapter-card">
-                      <div className="story-chapter-card__header">
+                    <li key={`${stage.name}-${stage.started_at}`} className="studio-chapter-card">
+                      <div className="studio-chapter-card__header">
                         <strong>{stage.name}</strong>
                         <StatusPill tone={stageTone(stage)}>{stage.status}</StatusPill>
                       </div>
@@ -717,7 +721,7 @@ export function StoryWorkbenchPage() {
                 </ul>
 
                 {workbench.selectedRunDetail.failure_message || workbench.selectedRunDetail.run.status === 'failed' ? (
-                  <div className="story-notes" data-testid="story-run-failure">
+                  <div className="studio-notes" data-testid="studio-run-failure">
                     <h3>Run failure</h3>
                     <p>Failed stage: {workbench.selectedRunDetail.failed_stage ?? 'unknown'}{workbench.selectedRunDetail.failure_code ? ` / ${workbench.selectedRunDetail.failure_code}` : ''}</p>
                     <p>{workbench.selectedRunDetail.failure_message ?? 'No failure message recorded.'}</p>
@@ -734,7 +738,7 @@ export function StoryWorkbenchPage() {
                 ) : null}
               </div>
             ) : (
-              <div className="story-empty">Select a run from the history to inspect immutable evidence.</div>
+              <div className="studio-empty">Select a run from the history to inspect immutable evidence.</div>
             )}
           </Panel>
         </div>

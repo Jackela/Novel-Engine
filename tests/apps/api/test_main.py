@@ -41,7 +41,7 @@ def test_health_and_version_endpoints_are_available(
     canonical_client: Any,
 ) -> None:
     health_response = canonical_client.get("/health")
-    assert health_response.status_code in {200, 503}
+    assert health_response.status_code == 200
     assert "overall_status" in health_response.json()
 
     assert canonical_client.get("/health/live").json()["status"] == "alive"

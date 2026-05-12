@@ -16,7 +16,7 @@ import type {
   SessionCatalog,
   SessionState,
   StorySurfaceView,
-} from '@/app/types';
+} from '@/app/types/auth';
 import {
   buildSessionId,
   emptySessionCatalog,

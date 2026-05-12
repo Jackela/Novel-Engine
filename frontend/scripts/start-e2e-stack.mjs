@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -9,22 +10,12 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const frontendDir = path.resolve(scriptDir, '..');
 const repoRoot = path.resolve(frontendDir, '..');
 
-const pythonBin = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3');
-const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const viteCli = path.resolve(frontendDir, 'node_modules', 'vite', 'bin', 'vite.js');
 
 function spawnProcess(command, args, cwd, env) {
   return spawn(command, args, {
     cwd,
     env,
-    stdio: 'inherit',
-  });
-}
-
-function spawnLocalBin(command, args, cwd, env) {
-  return spawn(command, args, {
-    cwd,
-    env,
-    shell: process.platform === 'win32',
     stdio: 'inherit',
   });
 }
@@ -96,9 +87,23 @@ const backendEnv = {
 
 const backendPort = await getFreePort();
 const backendUrl = `http://127.0.0.1:${backendPort}`;
+const backendCommand = process.env.PYTHON_BIN ?? 'uv';
+const backendArgs = process.env.PYTHON_BIN
+  ? ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)]
+  : [
+      'run',
+      'python',
+      '-m',
+      'uvicorn',
+      'src.apps.api.main:app',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(backendPort),
+    ];
 const backend = spawnProcess(
-  pythonBin,
-  ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)],
+  backendCommand,
+  backendArgs,
   repoRoot,
   backendEnv,
 );
@@ -129,9 +134,14 @@ process.on('SIGTERM', () => shutdown(0));
 
 await waitForUrl(`${backendUrl}/health/live`, 'backend health');
 
-frontend = spawnLocalBin(
-  npmBin,
-  ['exec', '--', 'vite', '--host', '127.0.0.1', '--port', '4273'],
+if (!existsSync(viteCli)) {
+  console.error(`Vite CLI not found at ${viteCli}. Run npm --prefix frontend install first.`);
+  shutdown(1);
+}
+
+frontend = spawnProcess(
+  process.execPath,
+  [viteCli, '--host', '127.0.0.1', '--port', '4273'],
   frontendDir,
   {
     ...process.env,

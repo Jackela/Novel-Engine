@@ -12,28 +12,30 @@ help:
 	@echo "  make migrate-history - Show migration history"
 
 install:
-	pip install -e ".[dev]"
+	uv sync --extra dev --extra test --frozen
 
 test:
-	pytest tests/ -v --tb=short
+	uv run pytest -q
+	uv run pytest tests/unit/infrastructure tests/apps/api/test_health.py --cov=src/shared/infrastructure/auth --cov=src/shared/infrastructure/config --cov=src/shared/infrastructure/health --cov=src/shared/infrastructure/persistence --cov-report=term-missing --cov-fail-under=80 -q
+	uv run pytest tests/shared/infrastructure/circuit_breaker tests/shared/infrastructure/middleware tests/apps/api/middleware --cov=src/shared/infrastructure/circuit_breaker --cov=src/shared/infrastructure/middleware --cov=src/apps/api/middleware --cov-report=term-missing --cov-fail-under=80 -q
 
 lint:
-	ruff check src/ tests/
-	mypy src/ --no-error-summary
+	uv run ruff check src/ tests/
+	uv run mypy src/ tests/ --no-error-summary --show-column-numbers
 
 format:
-	black src/ tests/
-	isort src/ tests/
+	uv run black src/ tests/
+	uv run isort src/ tests/
 
 # Database migrations
 migration:
-	alembic revision --autogenerate -m "$(message)"
+	uv run alembic revision --autogenerate -m "$(message)"
 
 migrate:
-	alembic upgrade head
+	uv run alembic upgrade head
 
 migrate-down:
-	alembic downgrade -1
+	uv run alembic downgrade -1
 
 migrate-history:
-	alembic history --verbose
+	uv run alembic history --verbose

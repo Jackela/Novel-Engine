@@ -56,6 +56,7 @@ class CircuitBreaker:
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
+        self._half_open_call_count = 0
         self._last_failure_time: Optional[datetime] = None
         self._lock = asyncio.Lock()
 
@@ -76,6 +77,7 @@ class CircuitBreaker:
             "state": self._state.name.lower(),
             "failure_count": self._failure_count,
             "success_count": self._success_count,
+            "half_open_call_count": self._half_open_call_count,
             "last_failure_time": self._last_failure_time.isoformat()
             if self._last_failure_time
             else None,
@@ -102,15 +104,17 @@ class CircuitBreaker:
                 if self._should_attempt_reset():
                     self._state = CircuitState.HALF_OPEN
                     self._success_count = 0
+                    self._half_open_call_count = 0
                     logger.info(f"Circuit {self.name} entering half-open state")
                 else:
                     raise CircuitBreakerOpenError(f"Circuit {self.name} is OPEN")
 
             if self._state == CircuitState.HALF_OPEN:
-                if self._success_count >= self.config.half_open_max_calls:
+                if self._half_open_call_count >= self.config.half_open_max_calls:
                     raise CircuitBreakerOpenError(
                         f"Circuit {self.name} is OPEN (half-open limit reached)"
                     )
+                self._half_open_call_count += 1
 
     async def _on_success(self) -> None:
         """Handle successful call."""
@@ -120,6 +124,7 @@ class CircuitBreaker:
                 if self._success_count >= self.config.success_threshold:
                     self._state = CircuitState.CLOSED
                     self._failure_count = 0
+                    self._half_open_call_count = 0
                     logger.info(f"Circuit {self.name} closed after recovery")
             else:
                 self._failure_count = max(0, self._failure_count - 1)
@@ -132,6 +137,7 @@ class CircuitBreaker:
 
             if self._state == CircuitState.HALF_OPEN:
                 self._state = CircuitState.OPEN
+                self._half_open_call_count = 0
                 logger.warning(f"Circuit {self.name} opened after half-open failure")
             elif self._failure_count >= self.config.failure_threshold:
                 self._state = CircuitState.OPEN
@@ -151,6 +157,7 @@ class CircuitBreaker:
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
+        self._half_open_call_count = 0
         self._last_failure_time = None
         logger.info(f"Circuit {self.name} manually reset to closed state")
 

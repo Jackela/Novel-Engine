@@ -2,18 +2,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 import type {
-  StoryArtifactHistoryEntry,
-  SessionState,
   StoryHybridReviewReport,
   StorySemanticReviewReport,
   StoryReviewReport,
-  StoryRunState,
-  StoryRunSnapshot,
   StoryRunDetailResponse,
   StorySnapshot,
   StoryWorkspace,
   StoryWorkflowState,
-} from '@/app/types';
+} from '@/app/types/story';
+import type { SessionState } from '@/app/types/auth';
+import type {
+  StoryArtifactHistoryEntry,
+  StoryRunSnapshot,
+  StoryRunState,
+} from '@/app/types/run';
 import { fireEvent, render, screen } from '../../../tests/test-utils';
 import { useAuth } from '@/features/auth/useAuth';
 
@@ -31,7 +33,12 @@ vi.mock('./useStoryWorkbench', () => ({
 
 function renderWorkbench() {
   return render(
-    <MemoryRouter>
+    <MemoryRouter
+      future={{
+        v7_relativeSplatPath: true,
+        v7_startTransition: true,
+      }}
+    >
       <StoryWorkbenchPage />
     </MemoryRouter>,
   );
@@ -58,7 +65,7 @@ function makeStoryWorkspace(): StoryWorkspace {
     source_run_id: 'run-2',
     source_provider: 'system',
     source_model: 'continuity-review-v1',
-    story_id: 'story-1',
+    story_id: 'studio-1',
     quality_score: 82,
     ready_for_publish: false,
     summary: 'Story needs 1 blocker(s) and 3 warning(s) addressed.',
@@ -116,8 +123,8 @@ function makeStoryWorkspace(): StoryWorkspace {
     version: 1,
     source_run_id: 'run-2',
     source_provider: 'mock',
-    source_model: 'deterministic-story-v1',
-    story_id: 'story-1',
+    source_model: 'deterministic-studio-v1',
+    story_id: 'studio-1',
     semantic_score: 79,
     ready_for_publish: false,
     summary: 'Reader pull softens in the late arc and one alliance beat feels unstable.',
@@ -154,7 +161,7 @@ function makeStoryWorkspace(): StoryWorkspace {
     source_run_id: 'run-2',
     source_provider: 'system',
     source_model: 'hybrid-publication-gate-v1',
-    story_id: 'story-1',
+    story_id: 'studio-1',
     quality_score: 82,
     ready_for_publish: false,
     summary: 'Story is blocked by structural and semantic debt.',
@@ -194,7 +201,7 @@ function makeStoryWorkspace(): StoryWorkspace {
   };
 
   const story: StorySnapshot = {
-    id: 'story-1',
+    id: 'studio-1',
     title: 'Debt Signal Story',
     genre: 'fantasy',
     author_id: 'workspace-123',
@@ -202,7 +209,7 @@ function makeStoryWorkspace(): StoryWorkspace {
     chapters: [
       {
         id: 'chapter-1',
-        story_id: 'story-1',
+        story_id: 'studio-1',
         chapter_number: 1,
         title: 'Chapter 1',
         summary: 'The map starts to move.',
@@ -215,7 +222,7 @@ function makeStoryWorkspace(): StoryWorkspace {
       },
       {
         id: 'chapter-2',
-        story_id: 'story-1',
+        story_id: 'studio-1',
         chapter_number: 2,
         title: 'Chapter 2',
         summary: 'An alliance starts to crack.',
@@ -228,7 +235,7 @@ function makeStoryWorkspace(): StoryWorkspace {
       },
       {
         id: 'chapter-3',
-        story_id: 'story-1',
+        story_id: 'studio-1',
         chapter_number: 3,
         title: 'Chapter 3',
         summary: 'The old promise comes due.',
@@ -241,7 +248,7 @@ function makeStoryWorkspace(): StoryWorkspace {
       },
       {
         id: 'chapter-4',
-        story_id: 'story-1',
+        story_id: 'studio-1',
         chapter_number: 4,
         title: 'Chapter 4',
         summary: 'A false victory shakes the crew.',
@@ -399,7 +406,7 @@ function makePlaybackRunDetail(workspace: StoryWorkspace): StoryRunDetailRespons
       version: 1,
       source_run_id: 'run-immutable',
       source_provider: 'mock',
-      source_model: 'deterministic-story-v1',
+      source_model: 'deterministic-studio-v1',
       story_id: workspace.story.id,
       semantic_score: 97,
       ready_for_publish: true,
@@ -612,7 +619,7 @@ function makeFailedPlaybackRunDetail(workspace: StoryWorkspace): StoryRunDetailR
     artifact_history: [failureArtifact],
   };
 
-  const failureSnapshot: StoryRunSnapshot = {
+  const failureSnapshot: StoryRunSnapshot<StoryWorkspace> = {
     snapshot_id: 'snapshot-failure-1',
     story_id: workspace.story.id,
     run_id: failedRun.run_id,
@@ -712,13 +719,13 @@ describe('StoryWorkbenchPage', () => {
 
     renderWorkbench();
 
-    expect(screen.getByTestId('story-relationship-debt-count')).toHaveTextContent('3');
-    expect(screen.getByTestId('story-hook-debt-count')).toHaveTextContent('3');
-    expect(screen.getByTestId('story-chapter-debt-2')).toHaveTextContent(
+    expect(screen.getByTestId('studio-relationship-debt-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('studio-hook-debt-count')).toHaveTextContent('3');
+    expect(screen.getByTestId('studio-chapter-debt-2')).toHaveTextContent(
       'relationship debt',
     );
-    expect(screen.getByTestId('story-chapter-debt-3')).toHaveTextContent('hook debt');
-    expect(screen.getByTestId('story-debt-issue-list')).toHaveTextContent(
+    expect(screen.getByTestId('studio-chapter-debt-3')).toHaveTextContent('hook debt');
+    expect(screen.getByTestId('studio-debt-issue-list')).toHaveTextContent(
       'missing_hook_payoff',
     );
   });
@@ -774,12 +781,12 @@ describe('StoryWorkbenchPage', () => {
 
     renderWorkbench();
 
-    expect(screen.getByTestId('story-review-score')).toHaveTextContent('82');
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('pipeline / completed');
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('Quality');
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('97');
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('Snapshots');
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('1');
+    expect(screen.getByTestId('studio-review-score')).toHaveTextContent('82');
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('pipeline / completed');
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('Quality');
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('97');
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('Snapshots');
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('1');
   });
 
   it('keeps the current manuscript rerun publish toggle separate from the create form toggle', () => {
@@ -837,17 +844,17 @@ describe('StoryWorkbenchPage', () => {
 
     renderWorkbench();
 
-    expect(screen.getByTestId('story-publish-toggle')).toBeChecked();
-    expect(screen.getByTestId('story-current-publish-toggle')).not.toBeChecked();
-    expect(screen.getByTestId('story-run-current-pipeline')).toHaveTextContent(
+    expect(screen.getByTestId('studio-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('studio-current-publish-toggle')).not.toBeChecked();
+    expect(screen.getByTestId('studio-run-current-pipeline')).toHaveTextContent(
       'Run current pipeline',
     );
 
-    fireEvent.click(screen.getByTestId('story-current-publish-toggle'));
+    fireEvent.click(screen.getByTestId('studio-current-publish-toggle'));
 
-    expect(screen.getByTestId('story-publish-toggle')).toBeChecked();
-    expect(screen.getByTestId('story-current-publish-toggle')).toBeChecked();
-    expect(screen.getByTestId('story-run-current-pipeline')).toHaveTextContent(
+    expect(screen.getByTestId('studio-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('studio-current-publish-toggle')).toBeChecked();
+    expect(screen.getByTestId('studio-run-current-pipeline')).toHaveTextContent(
       'Run current pipeline and publish',
     );
   });
@@ -903,16 +910,16 @@ describe('StoryWorkbenchPage', () => {
 
     renderWorkbench();
 
-    expect(screen.getByTestId('story-run-playback')).toHaveTextContent('pipeline / failed');
-    expect(screen.getByTestId('story-run-failure')).toHaveTextContent('Failed stage: draft');
-    expect(screen.getByTestId('story-run-failure')).toHaveTextContent(
+    expect(screen.getByTestId('studio-run-playback')).toHaveTextContent('pipeline / failed');
+    expect(screen.getByTestId('studio-run-failure')).toHaveTextContent('Failed stage: draft');
+    expect(screen.getByTestId('studio-run-failure')).toHaveTextContent(
       'Scene content cannot be empty',
     );
-    expect(screen.getByTestId('story-run-failure')).toHaveTextContent('Manuscript preserved: yes');
-    expect(screen.getByTestId('story-run-failure')).toHaveTextContent('Debug artifacts: 1');
-    expect(screen.getByTestId('story-run-failure')).toHaveTextContent('draft_failure');
-    expect(screen.getByTestId('story-playback-structural-gate')).toHaveTextContent('blocked');
-    expect(screen.getByTestId('story-playback-semantic-gate')).toHaveTextContent('blocked');
-    expect(screen.getByTestId('story-playback-publish-gate')).toHaveTextContent('blocked');
+    expect(screen.getByTestId('studio-run-failure')).toHaveTextContent('Manuscript preserved: yes');
+    expect(screen.getByTestId('studio-run-failure')).toHaveTextContent('Debug artifacts: 1');
+    expect(screen.getByTestId('studio-run-failure')).toHaveTextContent('draft_failure');
+    expect(screen.getByTestId('studio-playback-structural-gate')).toHaveTextContent('blocked');
+    expect(screen.getByTestId('studio-playback-semantic-gate')).toHaveTextContent('blocked');
+    expect(screen.getByTestId('studio-playback-publish-gate')).toHaveTextContent('blocked');
   });
 });

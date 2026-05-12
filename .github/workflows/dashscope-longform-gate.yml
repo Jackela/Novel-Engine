@@ -49,17 +49,21 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-          cache: pip
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Validate lockfile
+        run: uv lock --check
 
       - name: Install backend dependencies
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,test]"
+        run: uv sync --extra dev --extra test --frozen
 
       - name: Run deterministic narrative regression gate
         run: >
-          pytest -q
+          uv run pytest -q
           tests/contexts/narrative/application/test_story_workflow_service.py
           tests/contexts/narrative/application/test_story_regression_corpus.py
 
@@ -97,24 +101,28 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-          cache: pip
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          enable-cache: true
+
+      - name: Validate lockfile
+        run: uv lock --check
 
       - name: Install backend dependencies
-        run: |
-          cd "$GITHUB_WORKSPACE"
-          python -m pip install --upgrade pip
-          pip install -e ".[dev,test]"
+        run: uv sync --extra dev --extra test --frozen
 
       - name: Run DashScope judge contracts
         run: >
-          pytest -q
+          uv run pytest -q
           -m requires_dashscope
           tests/contract/test_text_generation_provider_contract.py
           tests/contexts/narrative/application/test_semantic_review_judge_contract.py
 
       - name: Run DashScope longform gate
         run: >
-          python scripts/uat/run_dashscope_longform_uat.py
+          uv run python scripts/uat/run_dashscope_longform_uat.py
           --target-chapters ${{ inputs.target_chapters || '20' }}
           --story-title-seed "${{ inputs.story_title_seed || 'DashScope PR Gate' }}"
           --output-dir "${{ runner.temp }}/dashscope-longform-gate"
