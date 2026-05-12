@@ -53,6 +53,16 @@ class HonchoWorkspaceManager:
         except (ConnectionError, TimeoutError, HonchoClientError):
             # Workspace doesn't exist or connection issue, continue to create
             pass
+        except Exception as e:
+            raise HonchoClientError(
+                f"Failed to get workspace {workspace_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="get_workspace",
+                    entity_id=workspace_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                ),
+            ) from e
 
         # Create new workspace
         try:
@@ -61,7 +71,9 @@ class HonchoWorkspaceManager:
                 name=name or workspace_id,
             )
             return workspace
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to create workspace {workspace_id}: {e}",
                 details=HonchoErrorDetails(
@@ -100,6 +112,17 @@ class HonchoWorkspaceManager:
         except (ConnectionError, TimeoutError, HonchoClientError):
             # Peer doesn't exist or connection issue, continue to create
             pass
+        except Exception as e:
+            raise HonchoClientError(
+                f"Failed to get peer {peer_id}: {e}",
+                details=HonchoErrorDetails(
+                    operation="get_peer",
+                    entity_id=peer_id,
+                    error_code=self._classify_error(e),
+                    original_exception=e,
+                    context={"workspace_id": workspace_id},
+                ),
+            ) from e
 
         try:
             peer = await client.peers.create(
@@ -108,7 +131,9 @@ class HonchoWorkspaceManager:
                 name=name or peer_id,
             )
             return peer
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to create peer {peer_id}: {e}",
                 details=HonchoErrorDetails(

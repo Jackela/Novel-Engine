@@ -18,6 +18,7 @@ test:
 	uv run pytest -q
 	uv run pytest tests/unit/infrastructure tests/apps/api/test_health.py --cov=src/shared/infrastructure/auth --cov=src/shared/infrastructure/config --cov=src/shared/infrastructure/health --cov=src/shared/infrastructure/persistence --cov-report=term-missing --cov-fail-under=80 -q
 	uv run pytest tests/shared/infrastructure/circuit_breaker tests/shared/infrastructure/middleware tests/apps/api/middleware --cov=src/shared/infrastructure/circuit_breaker --cov=src/shared/infrastructure/middleware --cov=src/apps/api/middleware --cov-report=term-missing --cov-fail-under=80 -q
+	uv run pytest tests/shared/infrastructure/honcho tests/contexts/ai --cov=src/shared/infrastructure/honcho --cov=src.shared.infrastructure.health.checks.honcho_health_check --cov=src/contexts/ai/infrastructure/providers --cov-report=term-missing --cov-fail-under=80 -q
 
 lint:
 	uv run ruff check src/ tests/

@@ -35,6 +35,15 @@ uv run pytest \
   --cov-report=term-missing \
   --cov-fail-under=80 \
   -q
+uv run pytest \
+  tests/shared/infrastructure/honcho \
+  tests/contexts/ai \
+  --cov=src/shared/infrastructure/honcho \
+  --cov=src.shared.infrastructure.health.checks.honcho_health_check \
+  --cov=src/contexts/ai/infrastructure/providers \
+  --cov-report=term-missing \
+  --cov-fail-under=80 \
+  -q
 uv run ruff check src tests
 uv run mypy \
   src \
@@ -57,6 +66,10 @@ If you want the optional Honcho integration installed locally, use:
 ```bash
 uv sync --extra dev --extra test --extra honcho --frozen
 ```
+
+PR CI does not require live Honcho credentials. The default Honcho and AI provider
+tests use mocks and deterministic providers; live Honcho smoke remains opt-in with
+`ENABLE_HONCHO_TESTS=1`.
 
 ### Frontend
 
@@ -107,6 +120,7 @@ See [docs/reports/uat/INDEX.md](docs/reports/uat/INDEX.md) and [docs/reports/uat
 - `uv run pytest -q` is the default backend behavior gate.
 - Platform infrastructure coverage is gated at 80% across auth, config, health, and persistence modules.
 - Circuit breaker and middleware coverage is gated at 80% across shared circuit breaker, shared middleware, and API middleware modules.
+- Honcho and AI provider infrastructure coverage is gated at 80% with mock-based tests; live DashScope and Honcho credentials are not required for PR CI.
 - External-service-heavy tests are opt-in through explicit environment flags in `tests/conftest.py`.
 - Frontend smoke and full-audit coverage are exercised with Playwright against the canonical backend and frontend stack.
 - Frontend dependency drift is gated with `npm --prefix frontend run audit:dependencies` (Knip-based static audit).
@@ -117,6 +131,7 @@ See [docs/reports/uat/INDEX.md](docs/reports/uat/INDEX.md) and [docs/reports/uat
 - CI runs backend quality on the canonical backend surface, backend tests, 80% platform and circuit/middleware coverage floors, frontend platform coverage, frontend validation, frontend full-audit, public API audit, OpenAPI snapshot check, import-linter, and CodeQL.
 - `DashScope Longform Gate` is a required PR check for same-repo pull requests into protected branches.
 - The canonical checked-in UAT evidence is refreshed manually; normal PR gate runs only upload artifacts.
+- DashScope live provider contracts and long-form UAT remain manual or opt-in through `ENABLE_DASHSCOPE_TESTS=1` plus `DASHSCOPE_API_KEY`.
 - The long-form gate is only green when the real run reaches `publish=success` with `warning=0` and `blocker=0`.
 - CodeQL scans the canonical source surface only; generated caches and build outputs are excluded, and default-branch merges must keep the scan clean or use documented suppressions for confirmed false positives. See [docs/security/codeql-alerts.md](docs/security/codeql-alerts.md).
 

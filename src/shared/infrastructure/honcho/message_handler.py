@@ -67,7 +67,9 @@ class HonchoMessageHandler:
                 metadata=metadata or {},
             )
             return message
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to add message to session {session_id}: {e}",
                 details=HonchoErrorDetails(
@@ -128,7 +130,9 @@ class HonchoMessageHandler:
                     top_k=top_k,
                 )
             return results if isinstance(results, list) else []
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to search memories for peer {peer_id}: {e}",
                 details=HonchoErrorDetails(
@@ -182,7 +186,9 @@ class HonchoMessageHandler:
                     peer_id=peer_id,
                 )
             return cast(str, representation.content if representation else "")
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to get representation for peer {peer_id}: {e}",
                 details=HonchoErrorDetails(
@@ -235,7 +241,9 @@ class HonchoMessageHandler:
                     query=query,
                 )
             return cast(str, response.content if response else "")
-        except (ConnectionError, TimeoutError) as e:
+        except HonchoClientError:
+            raise
+        except Exception as e:
             raise HonchoClientError(
                 f"Failed to chat with peer {peer_id}: {e}",
                 details=HonchoErrorDetails(

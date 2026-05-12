@@ -119,6 +119,18 @@ jobs:
           --cov-fail-under=80
           -q
 
+      - name: Run Honcho and AI provider coverage gate
+        run: >
+          uv run pytest
+          tests/shared/infrastructure/honcho
+          tests/contexts/ai
+          --cov=src/shared/infrastructure/honcho
+          --cov=src.shared.infrastructure.health.checks.honcho_health_check
+          --cov=src/contexts/ai/infrastructure/providers
+          --cov-report=term-missing
+          --cov-fail-under=80
+          -q
+
   frontend:
     name: Frontend Validation
     runs-on: ubuntu-latest

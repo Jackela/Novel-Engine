@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+
 from src.shared.infrastructure.health.health_checker import HealthStatus
 from src.shared.infrastructure.honcho.client import HonchoClient
 
@@ -23,7 +25,18 @@ class HonchoHealthCheck:
         try:
             health_check = getattr(self.client, "health_check", None)
             if callable(health_check):
-                is_healthy = await health_check()
+                health_result = health_check()
+                if inspect.isawaitable(health_result):
+                    health_result = await health_result
+                if isinstance(health_result, HealthStatus):
+                    return health_result
+                if health_result in ("healthy", "degraded", "unhealthy"):
+                    return HealthStatus(
+                        status=str(health_result),
+                        message=f"Honcho service reported {health_result}",
+                    )
+
+                is_healthy = bool(health_result)
                 return HealthStatus(
                     status="healthy" if is_healthy else "unhealthy",
                     message=(
