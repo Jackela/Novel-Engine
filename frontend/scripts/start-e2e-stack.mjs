@@ -10,7 +10,6 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const frontendDir = path.resolve(scriptDir, '..');
 const repoRoot = path.resolve(frontendDir, '..');
 
-const pythonBin = process.env.PYTHON_BIN ?? (process.platform === 'win32' ? 'python' : 'python3');
 const viteCli = path.resolve(frontendDir, 'node_modules', 'vite', 'bin', 'vite.js');
 
 function spawnProcess(command, args, cwd, env) {
@@ -88,9 +87,23 @@ const backendEnv = {
 
 const backendPort = await getFreePort();
 const backendUrl = `http://127.0.0.1:${backendPort}`;
+const backendCommand = process.env.PYTHON_BIN ?? 'uv';
+const backendArgs = process.env.PYTHON_BIN
+  ? ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)]
+  : [
+      'run',
+      'python',
+      '-m',
+      'uvicorn',
+      'src.apps.api.main:app',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(backendPort),
+    ];
 const backend = spawnProcess(
-  pythonBin,
-  ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)],
+  backendCommand,
+  backendArgs,
   repoRoot,
   backendEnv,
 );
