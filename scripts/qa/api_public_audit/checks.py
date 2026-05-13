@@ -18,9 +18,11 @@ def execute_checks(runner: AuditRunner) -> None:
     context = AuditContext(suffix=int(time.time()))
     run_platform_checks(runner)
     run_story_pre_auth_checks(runner)
+    run_knowledge_pre_auth_checks(runner)
     run_auth_and_guest_checks(runner, context)
     run_story_checks(runner, context)
     run_knowledge_checks(runner, context)
+    run_logout_checks(runner)
 
 
 def run_platform_checks(runner: AuditRunner) -> None:
@@ -114,7 +116,7 @@ def run_story_pre_auth_checks(runner: AuditRunner) -> None:
         method="POST",
         route_template="/api/v1/story",
         request_path="/api/v1/story",
-        expected_statuses=[400],
+        expected_statuses=[401],
         request_kwargs={
             "json": {
                 "title": "Missing Author Story",
@@ -123,6 +125,18 @@ def run_story_pre_auth_checks(runner: AuditRunner) -> None:
                 "target_chapters": 3,
             }
         },
+    )
+
+
+def run_knowledge_pre_auth_checks(runner: AuditRunner) -> None:
+    runner.check(
+        category="knowledge",
+        name="Create knowledge base unauthorized",
+        method="POST",
+        route_template="/api/v1/knowledge/knowledge-bases",
+        request_path="/api/v1/knowledge/knowledge-bases",
+        expected_statuses=[401],
+        request_kwargs={"json": {"name": "Unauthorized KB"}},
     )
 
 
@@ -158,6 +172,14 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
             }
         },
     )
+    runner.check(
+        category="auth",
+        name="Get current user unauthorized",
+        method="GET",
+        route_template="/api/v1/auth/me",
+        request_path="/api/v1/auth/me",
+        expected_statuses=[401],
+    )
 
     login_response = runner.check(
         category="auth",
@@ -172,7 +194,7 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
                 "password": "demo-password",
             }
         },
-        assertion=assert_json_keys("access_token", "refresh_token", "workspace_id", "user"),
+        assertion=assert_json_keys("workspace_id", "user", "active_workspace"),
     )
     runner.check(
         category="auth",
@@ -191,18 +213,8 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
 
     if login_response is not None and login_response.status_code == 200:
         login_payload = login_response.json()
-        context.access_token = str(login_payload.get("access_token", ""))
-        context.refresh_token = str(login_payload.get("refresh_token", ""))
         context.workspace_id = str(login_payload.get("workspace_id", ""))
 
-    runner.check(
-        category="auth",
-        name="Get current user unauthorized",
-        method="GET",
-        route_template="/api/v1/auth/me",
-        request_path="/api/v1/auth/me",
-        expected_statuses=[401],
-    )
     runner.check(
         category="auth",
         name="Get current user authorized",
@@ -210,7 +222,6 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
         route_template="/api/v1/auth/me",
         request_path="/api/v1/auth/me",
         expected_statuses=[200],
-        request_kwargs={"headers": context.auth_headers},
         assertion=assert_json_keys("id", "username", "email", "roles"),
     )
     runner.check(
@@ -220,8 +231,8 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
         route_template="/api/v1/auth/refresh",
         request_path="/api/v1/auth/refresh",
         expected_statuses=[200],
-        request_kwargs={"json": {"refresh_token": context.refresh_token}},
-        assertion=assert_json_keys("access_token", "token_type"),
+        request_kwargs={"json": {}},
+        assertion=assert_json_keys("workspace_id", "user", "active_workspace"),
     )
     runner.check(
         category="auth",
@@ -231,23 +242,6 @@ def run_auth_and_guest_checks(runner: AuditRunner, context: AuditContext) -> Non
         request_path="/api/v1/auth/refresh",
         expected_statuses=[401],
         request_kwargs={"json": {"refresh_token": "invalid-refresh-token"}},
-    )
-    runner.check(
-        category="auth",
-        name="Logout unauthorized",
-        method="POST",
-        route_template="/api/v1/auth/logout",
-        request_path="/api/v1/auth/logout",
-        expected_statuses=[401],
-    )
-    runner.check(
-        category="auth",
-        name="Logout authorized",
-        method="POST",
-        route_template="/api/v1/auth/logout",
-        request_path="/api/v1/auth/logout",
-        expected_statuses=[200],
-        request_kwargs={"headers": context.auth_headers},
     )
 
     guest_response = runner.check(
@@ -290,7 +284,6 @@ def run_story_checks(runner: AuditRunner, context: AuditContext) -> None:
         "genre": "fantasy",
         "premise": "A border courier finds an atlas that redraws city law each midnight.",
         "target_chapters": 3,
-        "author_id": context.workspace_id or "user-operator",
         "themes": ["memory", "border law", "storm routes"],
         "tone": "commercial web fiction",
     }
@@ -300,7 +293,7 @@ def run_story_checks(runner: AuditRunner, context: AuditContext) -> None:
         name="List stories for author",
         method="GET",
         route_template="/api/v1/story",
-        request_path=f"/api/v1/story?author_id={story_payload['author_id']}&limit=20&offset=0",
+        request_path="/api/v1/story?limit=20&offset=0",
         expected_statuses=[200],
         assertion=assert_json_keys("stories", "count", "limit", "offset"),
     )
@@ -481,7 +474,6 @@ def run_story_checks(runner: AuditRunner, context: AuditContext) -> None:
                     "A flood-gate tribunal archives every oath before dawn and one ledger is forged."
                 ),
                 "target_chapters": 3,
-                "author_id": story_payload["author_id"],
                 "publish": True,
             }
         },
@@ -490,15 +482,6 @@ def run_story_checks(runner: AuditRunner, context: AuditContext) -> None:
 
 
 def run_knowledge_checks(runner: AuditRunner, context: AuditContext) -> None:
-    runner.check(
-        category="knowledge",
-        name="Create knowledge base unauthorized",
-        method="POST",
-        route_template="/api/v1/knowledge/knowledge-bases",
-        request_path="/api/v1/knowledge/knowledge-bases",
-        expected_statuses=[401],
-        request_kwargs={"json": {"name": "Unauthorized KB"}},
-    )
     create_kb_response = runner.check(
         category="knowledge",
         name="Create knowledge base",
@@ -507,7 +490,6 @@ def run_knowledge_checks(runner: AuditRunner, context: AuditContext) -> None:
         request_path="/api/v1/knowledge/knowledge-bases",
         expected_statuses=[201],
         request_kwargs={
-            "headers": context.auth_headers,
             "json": {
                 "name": f"QA Knowledge Base {context.suffix}",
                 "description": "Public API audit corpus",
@@ -644,4 +626,24 @@ def run_knowledge_checks(runner: AuditRunner, context: AuditContext) -> None:
             f"/api/v1/knowledge/knowledge-bases/{context.knowledge_base_id}/documents/{context.document_id}"
         ),
         expected_statuses=[404],
+    )
+
+
+def run_logout_checks(runner: AuditRunner) -> None:
+    runner.check(
+        category="auth",
+        name="Logout current session",
+        method="POST",
+        route_template="/api/v1/auth/logout",
+        request_path="/api/v1/auth/logout",
+        expected_statuses=[200],
+    )
+    runner.check(
+        category="auth",
+        name="Refresh after logout fails",
+        method="POST",
+        route_template="/api/v1/auth/refresh",
+        request_path="/api/v1/auth/refresh",
+        expected_statuses=[401],
+        request_kwargs={"json": {}},
     )

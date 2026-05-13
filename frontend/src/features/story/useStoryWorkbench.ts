@@ -349,7 +349,7 @@ export function useStoryWorkbench(
     setError(null);
 
     try {
-      const response: StoryListResponse = await api.listStories(authorId);
+      const response: StoryListResponse = await api.listStories();
       setStories(response.stories);
 
       if (response.stories.length === 0) {
@@ -411,11 +411,7 @@ export function useStoryWorkbench(
 
   const createStory = async (payload: StoryCreateRequest) => {
     const result = await performAction(
-      async () =>
-        api.createStory({
-          ...payload,
-          author_id: payload.author_id ?? authorId,
-        }),
+      async () => api.createStory(payload),
       async (result) => {
         const workspaceResponse = await api.getStoryWorkspace(result.story.id);
         await syncWorkspaceAndRuns(workspaceResponse.workspace, {
@@ -553,11 +549,7 @@ export function useStoryWorkbench(
 
   const runPipeline = async (payload: StoryPipelineRequest) => {
     const result = await performAction(
-      async () =>
-        api.runPipeline({
-          ...payload,
-          author_id: payload.author_id ?? authorId,
-        }),
+      async () => api.runPipeline(payload),
       async (result) => {
         clearSelectedRun();
         await syncWorkspaceAndRuns(resolveWorkspace(result.workspace, result.story), {

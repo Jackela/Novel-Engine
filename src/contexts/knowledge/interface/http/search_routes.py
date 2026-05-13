@@ -9,9 +9,16 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
-from src.apps.api.dependencies import get_knowledge_service
+from src.apps.api.dependencies import (
+    CurrentUser,
+    get_current_user_optional,
+    get_knowledge_service,
+)
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
+)
+from src.contexts.knowledge.interface.http.access_policy import (
+    authorize_knowledge_base,
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
@@ -72,9 +79,16 @@ def _build_search_response(query: str, results: list[dict[str, Any]]) -> SearchR
 async def semantic_search(
     knowledge_base_id: str,
     request: SearchRequest,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> SearchResponse:
     """Perform semantic search on a knowledge base."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=False,
+    )
     result = await service.semantic_search(
         knowledge_base_id=knowledge_base_id,
         query=request.query,
@@ -93,6 +107,7 @@ async def semantic_search(
 async def global_search(
     request: SearchRequest,
     knowledge_base_ids: list[str] | None = Query(default=None),
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> SearchResponse:
     """
@@ -107,6 +122,12 @@ async def global_search(
     candidate_limit = request.top_k * len(knowledge_base_ids)
     best_results_by_document_id: dict[str, dict[str, Any]] = {}
     for knowledge_base_id in knowledge_base_ids:
+        await authorize_knowledge_base(
+            service=service,
+            knowledge_base_id=knowledge_base_id,
+            current_user=current_user,
+            write=False,
+        )
         result = await service.semantic_search(
             knowledge_base_id=knowledge_base_id,
             query=request.query,

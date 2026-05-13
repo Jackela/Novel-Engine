@@ -34,17 +34,9 @@ class CheckResult:
 @dataclass
 class AuditContext:
     suffix: int
-    access_token: str = ""
-    refresh_token: str = ""
     workspace_id: str = ""
     guest_workspace_id: str = ""
     story_id: str = ""
     run_id: str = ""
     knowledge_base_id: str = ""
     document_id: str = ""
-
-    @property
-    def auth_headers(self) -> dict[str, str]:
-        if not self.access_token:
-            return {}
-        return {"Authorization": f"Bearer {self.access_token}"}

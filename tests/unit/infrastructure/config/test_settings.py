@@ -25,6 +25,12 @@ def _clear_dashscope_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "DASHSCOPE_MODEL",
         "DASHSCOPE_TRANSPORT_MODE",
         "DASHSCOPE_REVIEW_MODEL",
+        "DB_URL",
+        "SECURITY_SECRET_KEY",
+        "CORS_ALLOWED_ORIGINS",
+        "API_DOCS_URL",
+        "API_REDOC_URL",
+        "API_OPENAPI_URL",
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -105,6 +111,59 @@ def test_environment_variables_override_dotenv_local_for_dashscope_settings(
     assert settings.llm.dashscope_review_model == "env-review-model"
     assert settings.llm.resolved_model("dashscope") == "env-dashscope-model"
     assert settings.llm.resolved_review_model("dashscope") == "env-review-model"
+
+
+def test_project_version_defaults_to_package_version(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+
+    settings = NovelEngineSettings()
+
+    assert settings.project_version == "0.1.1"
+    assert settings.api.version == "0.1.1"
+
+
+def test_production_settings_reject_unsafe_defaults(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
+
+    with pytest.raises(ValueError, match="SECURITY_SECRET_KEY"):
+        NovelEngineSettings()
+
+
+def test_production_settings_require_postgres_cors_and_non_default_docs(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "production")
+    monkeypatch.setenv("SECURITY_SECRET_KEY", "production-secret-key-32-characters")
+
+    with pytest.raises(ValueError, match="DB_URL must use PostgreSQL"):
+        NovelEngineSettings()
+
+    monkeypatch.setenv("DB_URL", "postgresql://user:pass@db.example.com/novel")
+    with pytest.raises(ValueError, match="Production CORS origins"):
+        NovelEngineSettings()
+
+    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "https://app.example.com")
+    with pytest.raises(ValueError, match="Production docs_url"):
+        NovelEngineSettings()
+
+    monkeypatch.setenv("API_DOCS_URL", "/internal/docs")
+    monkeypatch.setenv("API_REDOC_URL", "/internal/redoc")
+    monkeypatch.setenv("API_OPENAPI_URL", "/internal/openapi.json")
+    settings = NovelEngineSettings()
+    assert settings.is_production
 
 
 def test_llm_settings_loads_dotenv_local_in_isolation(

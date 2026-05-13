@@ -13,6 +13,9 @@ from src.contexts.ai.application.ports.text_generation_port import (
 from src.contexts.narrative.application.services.chapter_drafting_service import (
     ChapterDraftingService,
 )
+from src.contexts.narrative.application.services.narrative_repair_strategy import (
+    NarrativeRepairStrategy,
+)
 from src.contexts.narrative.application.services.story_pipeline_context import (
     StoryWorkflowContext,
 )
@@ -180,6 +183,7 @@ class StoryRevisionService:
 
     def __init__(self, drafting_service: ChapterDraftingService) -> None:
         self._drafting_service = drafting_service
+        self._repair_strategy = NarrativeRepairStrategy()
 
     async def revise(
         self,
@@ -253,7 +257,21 @@ class StoryRevisionService:
         ctx: StoryWorkflowContext,
         issues: list[StoryReviewIssue],
     ) -> list[str]:
-        repair_notes: list[str] = []
+        repair_plan, generic_repair_notes = self._repair_strategy.repair(ctx, issues)
+        ctx.story.metadata["latest_repair_plan"] = {
+            "summary": repair_plan.summary,
+            "steps": [
+                {
+                    "issue_id": step.issue_id,
+                    "issue_code": step.issue_code,
+                    "chapter_number": step.chapter_number,
+                    "intent": step.intent,
+                    "categories": list(step.categories),
+                }
+                for step in repair_plan.steps
+            ],
+        }
+        repair_notes: list[str] = list(generic_repair_notes)
         global_issue_codes = {issue.code for issue in issues}
         issue_context = self._issue_context(issues)
         issue_verbatim_context = self._issue_verbatim_context(issues)

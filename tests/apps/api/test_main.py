@@ -126,11 +126,12 @@ def test_auth_routes_work_with_canonical_in_memory_dependencies(
         json={"username": "writer", "password": "supersecret"},
     )
     assert login_response.status_code == 200
-    tokens = login_response.json()
-    assert tokens["token_type"] == "bearer"
+    session = login_response.json()
+    assert "access_token" not in session
+    assert "refresh_token" not in session
+    assert "novel_engine_access=" in login_response.headers["set-cookie"]
 
-    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
-    me_response = canonical_client.get("/api/v1/auth/me", headers=headers)
+    me_response = canonical_client.get("/api/v1/auth/me")
     assert me_response.status_code == 200
     assert me_response.json()["username"] == "writer"
 
@@ -141,19 +142,19 @@ def test_auth_routes_work_with_canonical_in_memory_dependencies(
             "genre": "mystery",
             "premise": "A locked room case turns into a conspiracy across the harbor.",
             "target_chapters": 3,
-            "author_id": tokens["workspace_id"],
         },
     )
     assert create_response.status_code == 200
-    assert create_response.json()["story"]["author_id"] == tokens["workspace_id"]
+    assert create_response.json()["story"]["author_id"] == session["workspace_id"]
 
-    refresh_response = canonical_client.post(
-        "/api/v1/auth/refresh",
-        json={"refresh_token": tokens["refresh_token"]},
-    )
+    refresh_response = canonical_client.post("/api/v1/auth/refresh", json={})
     assert refresh_response.status_code == 200
-    assert refresh_response.json()["token_type"] == "bearer"
+    assert refresh_response.json()["workspace_id"] == session["workspace_id"]
+    assert "novel_engine_refresh=" in refresh_response.headers["set-cookie"]
 
-    logout_response = canonical_client.post("/api/v1/auth/logout", headers=headers)
+    logout_response = canonical_client.post("/api/v1/auth/logout")
     assert logout_response.status_code == 200
     assert logout_response.json()["message"] == "Successfully logged out"
+
+    refresh_after_logout = canonical_client.post("/api/v1/auth/refresh", json={})
+    assert refresh_after_logout.status_code == 401

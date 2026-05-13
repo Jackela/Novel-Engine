@@ -5,7 +5,6 @@ import type {
   GuestSessionResponse,
   LoginRequest,
   LoginResponse,
-  SessionState,
 } from '@/app/types/auth';
 import type {
   StoryBlueprintResponse,
@@ -27,10 +26,6 @@ import type {
   StorySnapshot,
   StoryWorkspaceResponse,
 } from '@/app/types/story';
-import {
-  getActiveSession,
-  readSessionCatalog,
-} from '@/shared/storage';
 
 class HttpError extends Error {
   readonly status: number;
@@ -76,19 +71,6 @@ function buildStoryQuery(params: Record<string, string | number | undefined>): s
   return query ? `?${query}` : '';
 }
 
-function getAuthorizationHeaders(token?: string): Record<string, string> {
-  if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-
-  const session = getActiveSession(readSessionCatalog());
-  if (session?.kind === 'user' && session.token) {
-    return { Authorization: `Bearer ${session.token}` };
-  }
-
-  return {};
-}
-
 function pickErrorMessage(payload: unknown): string | null {
   if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) {
     return null;
@@ -127,7 +109,6 @@ function pickErrorMessage(payload: unknown): string | null {
 async function requestJson<T>(
   path: string,
   init?: RequestInit,
-  options?: { token?: string },
 ): Promise<T> {
   const controller = new AbortController();
   const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
@@ -139,7 +120,6 @@ async function requestJson<T>(
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...getAuthorizationHeaders(options?.token),
           ...(init?.headers ?? {}),
         },
         ...init,
@@ -201,17 +181,24 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  getCurrentUser: (token?: string) =>
-    requestJson<CurrentUserResponse>(
-      appConfig.endpoints.currentUser,
-      undefined,
-      token ? { token } : undefined,
-    ),
+  refreshSession: () =>
+    requestJson<LoginResponse>(appConfig.endpoints.refresh, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
 
-  listStories: (authorId: string, limit = 20, offset = 0) =>
+  logout: () =>
+    requestJson<{ message: string }>(appConfig.endpoints.logout, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  getCurrentUser: () =>
+    requestJson<CurrentUserResponse>(appConfig.endpoints.currentUser),
+
+  listStories: (limit = 20, offset = 0) =>
     requestJson<StoryListResponse>(
       `${appConfig.endpoints.story}${buildStoryQuery({
-        author_id: authorId,
         limit,
         offset,
       })}`,

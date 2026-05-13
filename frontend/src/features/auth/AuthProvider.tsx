@@ -103,8 +103,6 @@ function buildUserSessionFromLogin(
     kind: 'user',
     identityKind: response.identity_kind ?? 'user',
     workspaceId,
-    token: response.access_token,
-    refreshToken: response.refresh_token,
     user: response.user,
     activeWorkspace: normalizeWorkspaceSummary(response.active_workspace, {
       workspaceId,
@@ -131,8 +129,6 @@ function buildUserSessionFromCurrentUser(
     kind: 'user',
     identityKind: 'user',
     workspaceId,
-    token: previous.token,
-    refreshToken: previous.refreshToken,
     user: {
       id: user.id,
       name: user.username,
@@ -161,11 +157,7 @@ async function validateStoredSession(session: SessionState): Promise<SessionStat
     return buildGuestSession(response, session);
   }
 
-  if (!session.token) {
-    throw new Error('Stored user session is missing its access token.');
-  }
-
-  const user = await api.getCurrentUser(session.token);
+  const user = await api.getCurrentUser();
   return buildUserSessionFromCurrentUser(user, session);
 }
 
@@ -281,6 +273,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (!activeSession) {
       return;
     }
+    void api.logout();
     const nextCatalog = removeSession(catalogRef.current, activeSession.id);
     setCatalog(nextCatalog);
   };

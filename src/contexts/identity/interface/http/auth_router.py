@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPBearer
 from pydantic import AliasChoices, BaseModel, Field
 
@@ -18,6 +18,7 @@ from src.apps.api.dependencies import (
     CurrentUser,
     get_authentication_service,
     get_current_user,
+    get_current_user_optional,
     get_identity_service,
 )
 from src.apps.api.routes.guest import (
@@ -33,6 +34,12 @@ from src.contexts.identity.application.services.identity_service import (
 )
 from src.contexts.identity.interface.http.error_handlers import (
     ResultErrorHandler,
+)
+from src.shared.infrastructure.auth.refresh_sessions import get_refresh_session_store
+from src.shared.infrastructure.auth.session_cookies import (
+    ACCESS_TOKEN_COOKIE,
+    REFRESH_TOKEN_COOKIE,
+    REFRESH_TOKEN_PATH,
 )
 from src.shared.infrastructure.config.settings import get_settings
 
@@ -69,12 +76,9 @@ class LoginUserResponse(BaseModel):
     roles: list[str] = Field(default_factory=list, description="User roles")
 
 
-class TokenResponse(BaseModel):
-    """Token response model."""
+class SessionResponse(BaseModel):
+    """Browser session summary returned after authentication."""
 
-    access_token: str = Field(..., description="JWT access token")
-    refresh_token: str = Field(..., description="JWT refresh token")
-    token_type: str = Field(default="bearer", description="Token type")
     workspace_id: str = Field(..., description="Active workspace identifier")
     identity_kind: str = Field(default="user", description="Resolved session identity kind")
     workspace_kind: str = Field(default="user", description="Resolved workspace kind")
@@ -91,16 +95,10 @@ class TokenResponse(BaseModel):
 class TokenRefreshRequest(BaseModel):
     """Token refresh request model."""
 
-    refresh_token: str = Field(..., description="Valid refresh token", min_length=1)
-
-
-class TokenRefreshResponse(BaseModel):
-    """Token refresh response model."""
-
-    access_token: str = Field(..., description="New JWT access token")
-    token_type: str = Field(default="bearer", description="Token type")
-    expires_in: Optional[int] = Field(
-        None, description="Access token expiration in seconds"
+    refresh_token: str | None = Field(
+        default=None,
+        description="Legacy API-client refresh token; browsers use HttpOnly cookies.",
+        min_length=1,
     )
 
 
@@ -134,6 +132,39 @@ def _set_workspace_cookie(response: Response, workspace_id: str) -> None:
     )
 
 
+def _set_auth_cookies(
+    response: Response,
+    *,
+    access_token: str,
+    refresh_token: str,
+) -> None:
+    settings = get_settings()
+    response.set_cookie(
+        key=ACCESS_TOKEN_COOKIE,
+        value=access_token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=settings.security.access_token_expire_minutes * 60,
+        path="/",
+    )
+    response.set_cookie(
+        key=REFRESH_TOKEN_COOKIE,
+        value=refresh_token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=settings.security.refresh_token_expire_days * 24 * 60 * 60,
+        path=REFRESH_TOKEN_PATH,
+    )
+
+
+def _clear_session_cookies(response: Response) -> None:
+    response.delete_cookie(key=ACCESS_TOKEN_COOKIE, path="/")
+    response.delete_cookie(key=REFRESH_TOKEN_COOKIE, path=REFRESH_TOKEN_PATH)
+    response.delete_cookie(key=GUEST_SESSION_COOKIE, path="/")
+
+
 def _active_workspace_payload(workspace_id: str) -> dict[str, str]:
     return {
         "workspace_id": workspace_id,
@@ -144,18 +175,41 @@ def _active_workspace_payload(workspace_id: str) -> dict[str, str]:
     }
 
 
+def _roles_from_user(user: dict[str, object]) -> list[str]:
+    roles = user.get("roles", [])
+    if not isinstance(roles, list):
+        return []
+    return [str(role) for role in roles]
+
+
+def _session_response_from_user(
+    user: dict[str, object],
+    workspace_id: str,
+) -> SessionResponse:
+    return SessionResponse(
+        workspace_id=workspace_id,
+        active_workspace=_active_workspace_payload(workspace_id),
+        user=LoginUserResponse(
+            id=str(user["id"]),
+            name=str(user["username"]),
+            email=str(user["email"]),
+            roles=_roles_from_user(user),
+        ),
+    )
+
+
 @router.post(
     "/login",
-    response_model=TokenResponse,
+    response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     summary="User login",
-    description="Authenticate user and return access and refresh tokens.",
+    description="Authenticate user and establish an HttpOnly browser session.",
 )
 async def login(
     response: Response,
     credentials: LoginRequest,
     auth_service: AuthenticationService = Depends(get_authentication_service),
-) -> TokenResponse:
+) -> SessionResponse:
     """Authenticate user with username and password.
 
     Args:
@@ -163,7 +217,7 @@ async def login(
         auth_service: Authentication service dependency.
 
     Returns:
-        TokenResponse containing access and refresh tokens.
+        SessionResponse containing the resolved user workspace.
 
     Raises:
         HTTPException: If authentication fails.
@@ -179,72 +233,110 @@ async def login(
     session = await runtime_store.create_or_resume_guest_session(workspace_id)
     _set_workspace_cookie(response, session.workspace_id)
 
-    return TokenResponse(
-        access_token=data["access_token"],
-        refresh_token=data["refresh_token"],
-        token_type="bearer",
-        workspace_id=session.workspace_id,
-        active_workspace=_active_workspace_payload(session.workspace_id),
-        user=LoginUserResponse(
-            id=user["id"],
-            name=user["username"],
-            email=user["email"],
-            roles=list(user.get("roles", [])),
-        ),
+    refresh_issue = get_refresh_session_store().create(
+        user_id=str(user["id"]),
+        expires_in_days=get_settings().security.refresh_token_expire_days,
+        user_snapshot={
+            "id": str(user["id"]),
+            "username": str(user["username"]),
+            "email": str(user["email"]),
+            "roles": list(user.get("roles", [])),
+        },
     )
+    _set_auth_cookies(
+        response,
+        access_token=str(data["access_token"]),
+        refresh_token=refresh_issue.raw_token,
+    )
+
+    return _session_response_from_user(user, session.workspace_id)
 
 
 @router.post(
     "/refresh",
-    response_model=TokenRefreshResponse,
+    response_model=SessionResponse,
     status_code=status.HTTP_200_OK,
     summary="Refresh access token",
-    description="Generate a new access token using a valid refresh token.",
+    description="Rotate the refresh cookie and issue a new browser session cookie.",
 )
 async def refresh_token(
-    request: TokenRefreshRequest,
+    response: Response,
+    request: Request,
+    payload: TokenRefreshRequest | None = Body(default=None),
     auth_service: AuthenticationService = Depends(get_authentication_service),
-) -> TokenRefreshResponse:
+) -> SessionResponse:
     """Refresh access token.
 
     Args:
-        request: Token refresh request containing the refresh token.
+        request: HTTP request containing the refresh cookie.
         auth_service: Authentication service dependency.
 
     Returns:
-        TokenRefreshResponse containing new access token.
+        SessionResponse containing the current user workspace.
 
     Raises:
         HTTPException: If token refresh fails.
     """
-    result = await auth_service.refresh_access_token(request.refresh_token)
+    raw_refresh_token = payload.refresh_token if payload is not None else None
+    if not raw_refresh_token:
+        raw_refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE)
+    if not raw_refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh session is required",
+        )
 
-    data = ResultErrorHandler.handle(result, "refresh_token")
-    return TokenRefreshResponse(
-        access_token=data["access_token"],
-        token_type="bearer",
+    refresh_issue = get_refresh_session_store().rotate(
+        raw_token=raw_refresh_token,
+        expires_in_days=get_settings().security.refresh_token_expire_days,
     )
+    if refresh_issue is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh session is invalid or expired",
+        )
+
+    access_token = await auth_service.generate_token(
+        refresh_issue.session.user_id,
+        "access",
+    )
+    _set_auth_cookies(
+        response,
+        access_token=access_token,
+        refresh_token=refresh_issue.raw_token,
+    )
+
+    user = refresh_issue.session.user_snapshot
+    workspace_id = f"user-{user['username']}"
+    session = await runtime_store.create_or_resume_guest_session(workspace_id)
+    _set_workspace_cookie(response, session.workspace_id)
+    return _session_response_from_user(user, session.workspace_id)
 
 
 @router.post(
     "/logout",
     status_code=status.HTTP_200_OK,
     summary="User logout",
-    description="Invalidate user tokens (client-side only in JWT implementation).",
+    description="Revoke the current refresh session and clear browser cookies.",
 )
-async def logout(user: CurrentUser = Depends(get_current_user)) -> dict:
+async def logout(
+    request: Request,
+    response: Response,
+    user: CurrentUser | None = Depends(get_current_user_optional),
+) -> dict:
     """User logout.
 
-    Note: JWT tokens are stateless. This endpoint is mainly for
-    client-side token cleanup. Token blacklisting would require
-    additional infrastructure (Redis, database, etc.).
-
     Args:
+        request: HTTP request containing the refresh cookie.
+        response: HTTP response used to clear cookies.
         user: Current authenticated user.
 
     Returns:
         Success message.
     """
+    del user
+    get_refresh_session_store().revoke(request.cookies.get(REFRESH_TOKEN_COOKIE))
+    _clear_session_cookies(response)
     return {"message": "Successfully logged out"}
 
 

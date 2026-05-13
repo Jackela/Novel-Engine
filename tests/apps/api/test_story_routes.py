@@ -4,8 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+
+def _start_guest(canonical_client: Any) -> str:
+    response = canonical_client.post("/api/v1/guest/session")
+    assert response.status_code == 200
+    return str(response.json()["workspace_id"])
+
 
 def test_story_route_lifecycle(canonical_client: Any) -> None:
+    workspace_id = _start_guest(canonical_client)
     create_response = canonical_client.post(
         "/api/v1/story",
         json={
@@ -13,14 +23,15 @@ def test_story_route_lifecycle(canonical_client: Any) -> None:
             "genre": "adventure",
             "premise": "A guild of mapmakers uncovers a path through a living storm.",
             "target_chapters": 3,
-            "author_id": "author-route",
         },
     )
     assert create_response.status_code == 200
     story = create_response.json()["story"]
     story_id = story["id"]
 
-    list_response = canonical_client.get("/api/v1/story", params={"author_id": "author-route"})
+    assert story["author_id"] == workspace_id
+
+    list_response = canonical_client.get("/api/v1/story")
     assert list_response.status_code == 200
     assert list_response.json()["count"] >= 1
 
@@ -36,7 +47,7 @@ def test_story_route_lifecycle(canonical_client: Any) -> None:
     assert workspace_response.json()["workspace"]["artifact_history"] == []
     assert (
         workspace_response.json()["workspace"]["workspace_context"]["workspace_kind"]
-        == "unknown"
+        == "guest"
     )
     assert (
         workspace_response.json()["workspace"]["recommended_next_action"]["action"]
@@ -105,6 +116,7 @@ def test_story_route_lifecycle(canonical_client: Any) -> None:
 def test_story_pipeline_route_builds_complete_story(
     canonical_client: Any,
 ) -> None:
+    _start_guest(canonical_client)
     response = canonical_client.post(
         "/api/v1/story/pipeline",
         json={
@@ -113,7 +125,6 @@ def test_story_pipeline_route_builds_complete_story(
             "premise": "A trapped city must bargain with a sentient archive to survive.",
             "target_chapters": 3,
             "publish": True,
-            "author_id": "pipeline-author",
         },
     )
     assert response.status_code == 200
@@ -131,6 +142,7 @@ def test_story_pipeline_route_builds_complete_story(
 def test_story_run_resource_executes_pipeline_for_existing_story(
     canonical_client: Any,
 ) -> None:
+    _start_guest(canonical_client)
     create_response = canonical_client.post(
         "/api/v1/story",
         json={
@@ -138,7 +150,6 @@ def test_story_run_resource_executes_pipeline_for_existing_story(
             "genre": "fantasy",
             "premise": "A sealed atlas rewrites each district the moment someone reads it.",
             "target_chapters": 3,
-            "author_id": "resource-author",
         },
     )
     assert create_response.status_code == 200
@@ -173,3 +184,77 @@ def test_story_run_resource_executes_pipeline_for_existing_story(
     assert run_payload["provenance"]["run_id"] == run_id
     assert run_payload["publish_verdict"]["warning_count"] == 0
     assert run_payload["evidence_status"]["zero_warning"] is True
+
+
+def test_story_routes_enforce_workspace_ownership(
+    canonical_app: FastAPI,
+) -> None:
+    with (
+        TestClient(canonical_app, raise_server_exceptions=False) as owner_client,
+        TestClient(canonical_app, raise_server_exceptions=False) as other_client,
+        TestClient(canonical_app, raise_server_exceptions=False) as guest_client,
+    ):
+        login_response = owner_client.post(
+            "/api/v1/auth/login",
+            json={
+                "email": "operator@novel.engine",
+                "password": "demo-password",
+            },
+        )
+        assert login_response.status_code == 200
+
+        forged_response = owner_client.post(
+            "/api/v1/story",
+            json={
+                "title": "Forged Story",
+                "genre": "fantasy",
+                "premise": "A false owner tries to cross the author boundary.",
+                "target_chapters": 3,
+                "author_id": "user-writer",
+            },
+        )
+        assert forged_response.status_code == 403
+
+        create_response = owner_client.post(
+            "/api/v1/story",
+            json={
+                "title": "Private Story",
+                "genre": "fantasy",
+                "premise": "A hidden archive follows only its real owner.",
+                "target_chapters": 3,
+            },
+        )
+        assert create_response.status_code == 200
+        story_id = create_response.json()["story"]["id"]
+
+        register_response = other_client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": "writer@example.com",
+                "username": "writer",
+                "password": "supersecret",
+            },
+        )
+        assert register_response.status_code == 201
+        other_login = other_client.post(
+            "/api/v1/auth/login",
+            json={"username": "writer", "password": "supersecret"},
+        )
+        assert other_login.status_code == 200
+
+        assert other_client.get(f"/api/v1/story/{story_id}").status_code == 404
+        assert (
+            other_client.post(f"/api/v1/story/{story_id}/runs", json={}).status_code
+            == 404
+        )
+        assert (
+            other_client.get(
+                "/api/v1/story",
+                params={"author_id": "user-operator"},
+            ).status_code
+            == 403
+        )
+
+        guest_session = guest_client.post("/api/v1/guest/session")
+        assert guest_session.status_code == 200
+        assert guest_client.get(f"/api/v1/story/{story_id}").status_code == 404

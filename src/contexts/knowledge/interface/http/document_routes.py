@@ -11,9 +11,16 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel, Field
 
-from src.apps.api.dependencies import get_knowledge_service
+from src.apps.api.dependencies import (
+    CurrentUser,
+    get_current_user_optional,
+    get_knowledge_service,
+)
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
+)
+from src.contexts.knowledge.interface.http.access_policy import (
+    authorize_knowledge_base,
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
@@ -63,9 +70,16 @@ async def upload_document(
     knowledge_base_id: str,
     request: DocumentUploadRequest,
     auto_index: bool = Query(default=True, description="Auto-index after upload"),
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> DocumentResponse:
     """Upload a document to a knowledge base."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=True,
+    )
     result = await service.upload_document(
         knowledge_base_id=knowledge_base_id,
         title=request.title,
@@ -103,9 +117,16 @@ async def upload_document(
 async def get_document(
     knowledge_base_id: str,
     document_id: str,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> DocumentResponse:
     """Get a document by ID."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=False,
+    )
     result = await service.get_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
@@ -138,9 +159,16 @@ async def get_document(
 async def delete_document(
     knowledge_base_id: str,
     document_id: str,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> None:
     """Delete a document from a knowledge base."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=True,
+    )
     result = await service.delete_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,
@@ -158,9 +186,16 @@ async def delete_document(
 async def index_document(
     knowledge_base_id: str,
     document_id: str,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> DocumentResponse:
     """Manually index a document for semantic search."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=True,
+    )
     result = await service.index_document(
         knowledge_base_id=knowledge_base_id,
         document_id=document_id,

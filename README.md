@@ -55,6 +55,10 @@ uv run python scripts/qa/check_openapi_snapshot.py
 uv run python scripts/qa/run_api_public_audit.py
 ```
 
+Runtime configuration is loaded from `NovelEngineSettings` and environment
+variables. The YAML files under `config/examples/` are examples only; they are
+not loaded as production configuration by the canonical FastAPI app.
+
 When `pyproject.toml` dependencies change, refresh and commit `uv.lock` in the same change:
 
 ```bash

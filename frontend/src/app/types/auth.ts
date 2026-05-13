@@ -21,8 +21,6 @@ export interface SessionState {
   id: string;
   kind: SessionKind;
   workspaceId: string;
-  token?: string;
-  refreshToken?: string;
   user?: SessionUser;
   identityKind?: SessionKind;
   activeWorkspace?: ActiveWorkspaceSummary;
@@ -65,9 +63,6 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: 'bearer';
   workspace_id: string;
   identity_kind?: SessionKind;
   workspace_kind?: WorkspaceKind;

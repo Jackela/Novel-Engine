@@ -20,7 +20,10 @@ def test_login_accepts_email_and_returns_workspace_profile(
     assert "set-cookie" in response.headers
 
     payload = response.json()
-    assert payload["token_type"] == "bearer"
+    assert "access_token" not in payload
+    assert "refresh_token" not in payload
+    assert "novel_engine_access=" in response.headers["set-cookie"]
+    assert "HttpOnly" in response.headers["set-cookie"]
     assert payload["workspace_id"] == "user-operator"
     assert payload["user"]["id"]
     assert payload["user"]["name"] == "operator"
@@ -34,7 +37,6 @@ def test_login_accepts_email_and_returns_workspace_profile(
             "genre": "fantasy",
             "premise": "A stolen crown reveals the hidden architecture of the empire.",
             "target_chapters": 3,
-            "author_id": payload["workspace_id"],
         },
     )
     assert story_response.status_code == 200

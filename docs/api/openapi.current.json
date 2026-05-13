@@ -592,6 +592,58 @@
         "title": "SearchResult",
         "type": "object"
       },
+      "SessionResponse": {
+        "description": "Browser session summary returned after authentication.",
+        "properties": {
+          "active_workspace": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Resolved active workspace summary",
+            "title": "Active Workspace",
+            "type": "object"
+          },
+          "expires_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Access token expiration in seconds",
+            "title": "Expires In"
+          },
+          "identity_kind": {
+            "default": "user",
+            "description": "Resolved session identity kind",
+            "title": "Identity Kind",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/LoginUserResponse",
+            "description": "Authenticated user profile"
+          },
+          "workspace_id": {
+            "description": "Active workspace identifier",
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "workspace_kind": {
+            "default": "user",
+            "description": "Resolved workspace kind",
+            "title": "Workspace Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "user"
+        ],
+        "title": "SessionResponse",
+        "type": "object"
+      },
       "SimpleHealthResponse": {
         "description": "Simple liveness and readiness response.",
         "properties": {
@@ -618,20 +670,9 @@
         "type": "object"
       },
       "StoryCreateRequest": {
+        "additionalProperties": true,
         "description": "Request payload for creating a story draft.",
         "properties": {
-          "author_id": {
-            "anyOf": [
-              {
-                "maxLength": 200,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author Id"
-          },
           "genre": {
             "enum": [
               "fantasy",
@@ -722,20 +763,9 @@
         "type": "object"
       },
       "StoryPipelineRequest": {
+        "additionalProperties": true,
         "description": "Request payload for the full generation pipeline.",
         "properties": {
-          "author_id": {
-            "anyOf": [
-              {
-                "maxLength": 200,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Author Id"
-          },
           "genre": {
             "enum": [
               "fantasy",
@@ -854,119 +884,20 @@
         "description": "Token refresh request model.",
         "properties": {
           "refresh_token": {
-            "description": "Valid refresh token",
-            "minLength": 1,
-            "title": "Refresh Token",
-            "type": "string"
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Legacy API-client refresh token; browsers use HttpOnly cookies.",
+            "title": "Refresh Token"
           }
         },
-        "required": [
-          "refresh_token"
-        ],
         "title": "TokenRefreshRequest",
-        "type": "object"
-      },
-      "TokenRefreshResponse": {
-        "description": "Token refresh response model.",
-        "properties": {
-          "access_token": {
-            "description": "New JWT access token",
-            "title": "Access Token",
-            "type": "string"
-          },
-          "expires_in": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Access token expiration in seconds",
-            "title": "Expires In"
-          },
-          "token_type": {
-            "default": "bearer",
-            "description": "Token type",
-            "title": "Token Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "access_token"
-        ],
-        "title": "TokenRefreshResponse",
-        "type": "object"
-      },
-      "TokenResponse": {
-        "description": "Token response model.",
-        "properties": {
-          "access_token": {
-            "description": "JWT access token",
-            "title": "Access Token",
-            "type": "string"
-          },
-          "active_workspace": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Resolved active workspace summary",
-            "title": "Active Workspace",
-            "type": "object"
-          },
-          "expires_in": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Access token expiration in seconds",
-            "title": "Expires In"
-          },
-          "identity_kind": {
-            "default": "user",
-            "description": "Resolved session identity kind",
-            "title": "Identity Kind",
-            "type": "string"
-          },
-          "refresh_token": {
-            "description": "JWT refresh token",
-            "title": "Refresh Token",
-            "type": "string"
-          },
-          "token_type": {
-            "default": "bearer",
-            "description": "Token type",
-            "title": "Token Type",
-            "type": "string"
-          },
-          "user": {
-            "$ref": "#/components/schemas/LoginUserResponse",
-            "description": "Authenticated user profile"
-          },
-          "workspace_id": {
-            "description": "Active workspace identifier",
-            "title": "Workspace Id",
-            "type": "string"
-          },
-          "workspace_kind": {
-            "default": "user",
-            "description": "Resolved workspace kind",
-            "title": "Workspace Kind",
-            "type": "string"
-          }
-        },
-        "required": [
-          "access_token",
-          "refresh_token",
-          "workspace_id",
-          "user"
-        ],
-        "title": "TokenResponse",
         "type": "object"
       },
       "UserResponse": {
@@ -1050,19 +981,29 @@
         "bearerFormat": "JWT",
         "scheme": "bearer",
         "type": "http"
+      },
+      "cookieAuth": {
+        "in": "cookie",
+        "name": "novel_engine_access",
+        "type": "apiKey"
+      },
+      "refreshCookie": {
+        "in": "cookie",
+        "name": "novel_engine_refresh",
+        "type": "apiKey"
       }
     }
   },
   "info": {
     "description": "Canonical Novel Engine API with source-backed auth, story workflow, knowledge, guest, health, and versioning routes.",
     "title": "Novel Engine API",
-    "version": "2.0.0"
+    "version": "0.1.1"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/auth/login": {
       "post": {
-        "description": "Authenticate user and return access and refresh tokens.",
+        "description": "Authenticate user and establish an HttpOnly browser session.",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
           "content": {
@@ -1079,7 +1020,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/SessionResponse"
                 }
               }
             },
@@ -1110,7 +1051,7 @@
     },
     "/api/v1/auth/logout": {
       "post": {
-        "description": "Invalidate user tokens (client-side only in JWT implementation).",
+        "description": "Revoke the current refresh session and clear browser cookies.",
         "operationId": "logout_api_v1_auth_logout_post",
         "responses": {
           "200": {
@@ -1134,7 +1075,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "User logout",
@@ -1167,7 +1111,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "Get current user",
@@ -1178,24 +1125,31 @@
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "description": "Generate a new access token using a valid refresh token.",
+        "description": "Rotate the refresh cookie and issue a new browser session cookie.",
         "operationId": "refresh_token_api_v1_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TokenRefreshRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/TokenRefreshRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenRefreshResponse"
+                  "$ref": "#/components/schemas/SessionResponse"
                 }
               }
             },
@@ -1218,6 +1172,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "refreshCookie": []
+          }
+        ],
         "summary": "Refresh access token",
         "tags": [
           "authentication"
@@ -1359,7 +1318,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "Create a new knowledge base",
@@ -1447,6 +1409,15 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "List documents",
         "tags": [
           "knowledge"
@@ -1510,6 +1481,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Upload a document",
         "tags": [
           "knowledge"
@@ -1555,6 +1534,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Delete a document",
         "tags": [
           "knowledge"
@@ -1605,6 +1592,15 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get a document",
         "tags": [
           "knowledge"
@@ -1657,6 +1653,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Index a document",
         "tags": [
           "knowledge"
@@ -1710,6 +1714,15 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Semantic search",
         "tags": [
           "knowledge"
@@ -1755,6 +1768,15 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get knowledge base statistics",
         "tags": [
           "knowledge"
@@ -1818,6 +1840,15 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {},
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Semantic search across selected knowledge bases",
         "tags": [
           "knowledge"
@@ -1826,7 +1857,7 @@
     },
     "/api/v1/story": {
       "get": {
-        "description": "List stories, optionally filtered by the current author.",
+        "description": "List stories owned by the current principal.",
         "operationId": "list_stories_api_v1_story_get",
         "parameters": [
           {
@@ -1892,7 +1923,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "List Stories",
@@ -1939,7 +1973,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "Create Story",
@@ -1988,7 +2025,10 @@
         },
         "security": [
           {
-            "HTTPBearer": []
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
           }
         ],
         "summary": "Run Pipeline",
@@ -2036,6 +2076,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Story",
         "tags": [
           "story"
@@ -2081,6 +2129,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Story Artifacts",
         "tags": [
           "story"
@@ -2126,6 +2182,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Generate Blueprint",
         "tags": [
           "story"
@@ -2181,6 +2245,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Draft Story",
         "tags": [
           "story"
@@ -2226,6 +2298,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Export Story",
         "tags": [
           "story"
@@ -2271,6 +2351,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Generate Outline",
         "tags": [
           "story"
@@ -2316,6 +2404,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Publish Story",
         "tags": [
           "story"
@@ -2361,6 +2457,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Review Story",
         "tags": [
           "story"
@@ -2406,6 +2510,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Revise Story",
         "tags": [
           "story"
@@ -2451,6 +2563,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Story Runs",
         "tags": [
           "story"
@@ -2504,6 +2624,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Execute Story Run",
         "tags": [
           "story"
@@ -2558,6 +2686,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Story Run",
         "tags": [
           "story"
@@ -2603,6 +2739,14 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "cookieAuth": []
+          },
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get Story Workspace",
         "tags": [
           "story"

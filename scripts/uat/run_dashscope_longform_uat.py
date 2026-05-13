@@ -633,9 +633,7 @@ def run_longform_uat(
             timeout_seconds=timeout_seconds,
         )
         del login_status
-        access_token = str(login_payload["access_token"])
         workspace_id = str(login_payload["workspace_id"])
-        auth_headers = {"Authorization": f"Bearer {access_token}"}
 
         title = _story_title(story_title_seed)
         _, create_payload = _request_json(
@@ -645,7 +643,6 @@ def run_longform_uat(
             step="create_story",
             method="POST",
             path="/api/v1/story",
-            headers=auth_headers,
             payload={
                 "title": title,
                 "genre": DEFAULT_GENRE,
@@ -654,7 +651,6 @@ def run_longform_uat(
                 "target_audience": DEFAULT_AUDIENCE,
                 "themes": DEFAULT_THEMES,
                 "tone": DEFAULT_TONE,
-                "author_id": workspace_id,
             },
             timeout_seconds=timeout_seconds,
         )
@@ -667,7 +663,6 @@ def run_longform_uat(
             step="generate_blueprint",
             method="POST",
             path=f"/api/v1/story/{story_id}/blueprint",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         _, outline_payload = _request_json(
@@ -677,7 +672,6 @@ def run_longform_uat(
             step="generate_outline",
             method="POST",
             path=f"/api/v1/story/{story_id}/outline",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         _, draft_payload = _request_json(
@@ -687,7 +681,6 @@ def run_longform_uat(
             step="draft_story",
             method="POST",
             path=f"/api/v1/story/{story_id}/draft",
-            headers=auth_headers,
             payload={"target_chapters": target_chapters},
             timeout_seconds=timeout_seconds,
         )
@@ -698,7 +691,6 @@ def run_longform_uat(
             step="review_story_round_1",
             method="POST",
             path=f"/api/v1/story/{story_id}/review",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         final_review = dict(review_response["report"])
@@ -722,7 +714,6 @@ def run_longform_uat(
                 step=f"revise_story_round_{revision_rounds + 1}",
                 method="POST",
                 path=f"/api/v1/story/{story_id}/revise",
-                headers=auth_headers,
                 timeout_seconds=timeout_seconds,
             )
             revision_rounds += 1
@@ -738,7 +729,6 @@ def run_longform_uat(
                 step=f"review_story_round_{review_rounds + 1}",
                 method="POST",
                 path=f"/api/v1/story/{story_id}/review",
-                headers=auth_headers,
                 timeout_seconds=timeout_seconds,
             )
             final_review = dict(next_review_payload["report"])
@@ -751,7 +741,6 @@ def run_longform_uat(
             step="export_story",
             method="POST",
             path=f"/api/v1/story/{story_id}/export",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         publish_status, publish_payload = _request_json(
@@ -761,7 +750,6 @@ def run_longform_uat(
             step="publish_story",
             method="POST",
             path=f"/api/v1/story/{story_id}/publish",
-            headers=auth_headers,
             allowed_status_codes=(200, 422),
             timeout_seconds=timeout_seconds,
         )
@@ -772,7 +760,6 @@ def run_longform_uat(
             step="get_runs",
             method="GET",
             path=f"/api/v1/story/{story_id}/runs",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         _, artifacts_payload = _request_json(
@@ -782,7 +769,6 @@ def run_longform_uat(
             step="get_artifacts",
             method="GET",
             path=f"/api/v1/story/{story_id}/artifacts",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
         _, workspace_payload = _request_json(
@@ -792,7 +778,6 @@ def run_longform_uat(
             step="get_workspace",
             method="GET",
             path=f"/api/v1/story/{story_id}/workspace",
-            headers=auth_headers,
             timeout_seconds=timeout_seconds,
         )
 
