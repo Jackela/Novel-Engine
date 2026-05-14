@@ -90,6 +90,33 @@ npm --prefix frontend run audit:exports
 
 `test:e2e:smoke` and `test:e2e:full-audit` launch the canonical backend and frontend stack through Playwright.
 
+### Git hooks
+
+The repository tracks `.pre-commit-config.yaml` as the local Git hook source of
+truth. Do not rely on `PRE_COMMIT_ALLOW_NO_CONFIG=1` for normal development; it
+is only appropriate when temporarily working on a historical branch that does
+not yet contain the hook configuration.
+
+Install the Python dependencies and hooks after cloning or refreshing the
+workspace:
+
+```bash
+uv sync --extra dev --extra test --frozen
+uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+The `pre-commit` stage runs fast deterministic checks. The `pre-push` stage runs
+the strict local quality gate, including backend tests, OpenAPI/API audits,
+frontend type checks, unit tests, build, Playwright smoke/full-audit tests, and
+frontend dependency/export audits.
+
+Manual hook runs:
+
+```bash
+uv run pre-commit run --all-files
+uv run pre-commit run --hook-stage pre-push --all-files
+```
+
 ### Health semantics
 
 - `GET /health` always returns HTTP `200`. Use `overall_status` and `components.*.status` in the response body for observability and alerting.

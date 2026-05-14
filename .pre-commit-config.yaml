@@ -1,0 +1,128 @@
+minimum_pre_commit_version: "3.0.0"
+fail_fast: true
+default_install_hook_types:
+  - pre-commit
+  - pre-push
+
+repos:
+  - repo: local
+    hooks:
+      - id: git-diff-cached-check
+        name: git diff --cached --check
+        entry: git diff --cached --check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check src tests scripts
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: uv-lock-check
+        name: uv lock --check
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: mypy
+        name: mypy
+        entry: uv run mypy src tests --no-error-summary --show-column-numbers
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: import-linter
+        name: import-linter
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: backend-pytest
+        name: backend pytest
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: openapi-snapshot
+        name: OpenAPI snapshot
+        entry: uv run python scripts/qa/check_openapi_snapshot.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: api-public-audit
+        name: API public audit
+        entry: uv run python scripts/qa/run_api_public_audit.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-type-check
+        name: frontend type-check
+        entry: npm --prefix frontend run type-check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-test
+        name: frontend test
+        entry: npm --prefix frontend run test
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-build
+        name: frontend build
+        entry: npm --prefix frontend run build
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-e2e-smoke
+        name: frontend e2e smoke
+        entry: npm --prefix frontend run test:e2e:smoke
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-e2e-full-audit
+        name: frontend e2e full audit
+        entry: npm --prefix frontend run test:e2e:full-audit
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-dependency-audit
+        name: frontend dependency audit
+        entry: npm --prefix frontend run audit:dependencies
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+      - id: frontend-export-audit
+        name: frontend export audit
+        entry: npm --prefix frontend run audit:exports
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
