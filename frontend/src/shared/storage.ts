@@ -55,13 +55,19 @@ export function buildSessionId(session: Pick<SessionState, 'kind' | 'workspaceId
 
 function normalizeSession(session: SessionState): SessionState {
   const timestamp = nowIso();
-  const sessionWithLegacySecrets = session as SessionState & {
-    token?: string;
-    refreshToken?: string;
+  const catalogSession: SessionState = {
+    id: session.id,
+    kind: session.kind,
+    workspaceId: session.workspaceId,
+    user: session.user,
+    identityKind: session.identityKind,
+    activeWorkspace: session.activeWorkspace,
+    lastStoryId: session.lastStoryId,
+    lastRunId: session.lastRunId,
+    lastView: session.lastView,
+    createdAt: session.createdAt,
+    updatedAt: session.updatedAt,
   };
-  const { token, refreshToken, ...catalogSession } = sessionWithLegacySecrets;
-  void token;
-  void refreshToken;
   return {
     ...catalogSession,
     id: catalogSession.id || buildSessionId(catalogSession),
