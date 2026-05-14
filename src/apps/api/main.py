@@ -52,18 +52,80 @@ def custom_openapi(app: FastAPI) -> dict:
     )
     openapi_schema["components"] = openapi_schema.get("components", {})
     openapi_schema["components"]["securitySchemes"] = {
+        "cookieAuth": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "novel_engine_access",
+        },
+        "refreshCookie": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "novel_engine_refresh",
+        },
         "bearerAuth": {
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
         }
     }
+    _apply_openapi_security(openapi_schema)
     openapi_schema["servers"] = [
         {"url": "/api/v1", "description": "Canonical API"},
         {"url": "http://localhost:8000/api/v1", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
+
+
+def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
+    """Normalize generated auth metadata to browser cookie session schemes."""
+    cookie_or_bearer: list[dict[str, list[Any]]] = [
+        {"cookieAuth": []},
+        {"bearerAuth": []},
+    ]
+    optional_cookie_or_bearer: list[dict[str, list[Any]]] = [
+        {},
+        {"cookieAuth": []},
+        {"bearerAuth": []},
+    ]
+    paths = openapi_schema.get("paths", {})
+    if not isinstance(paths, dict):
+        return
+
+    for path, path_item in paths.items():
+        if not isinstance(path_item, dict):
+            continue
+        for method, operation in path_item.items():
+            if method not in {"get", "post", "put", "patch", "delete"}:
+                continue
+            if not isinstance(operation, dict):
+                continue
+
+            if path == "/api/v1/auth/me":
+                operation["security"] = cookie_or_bearer
+            elif path == "/api/v1/auth/refresh":
+                operation["security"] = [{"refreshCookie": []}]
+            elif path.startswith("/api/v1/story"):
+                operation["security"] = cookie_or_bearer
+            elif path.startswith("/api/v1/knowledge"):
+                operation["security"] = (
+                    cookie_or_bearer
+                    if _knowledge_operation_requires_owner(path, method)
+                    else optional_cookie_or_bearer
+                )
+            elif operation.get("security") == [{"HTTPBearer": []}]:
+                operation["security"] = cookie_or_bearer
+
+
+def _knowledge_operation_requires_owner(path: str, method: str) -> bool:
+    """Return whether a knowledge route is owner-only."""
+    if path == "/api/v1/knowledge/knowledge-bases" and method == "post":
+        return True
+    if path.endswith("/documents") and method == "post":
+        return True
+    if "/documents/" in path and method in {"delete", "post"}:
+        return True
+    return False
 
 
 def _configure_optional_honcho() -> None:
@@ -147,8 +209,8 @@ def create_application(
         ),
         version=resolved_settings.project_version,
         docs_url=None,
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
+        redoc_url=resolved_settings.api.redoc_url,
+        openapi_url=resolved_settings.api.openapi_url,
         lifespan=lifespan,
         openapi_tags=[
             {"name": "health", "description": "Health and readiness endpoints"},
@@ -167,7 +229,7 @@ def create_application(
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    cors_config = get_cors_config()
+    cors_config = get_cors_config(resolved_settings)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_config["allow_origins"],
@@ -190,22 +252,23 @@ def create_application(
     app.include_router(health_router, tags=["health"])
     app.include_router(api_router, prefix="/api/v1")
 
-    @app.get("/docs", include_in_schema=False)
-    async def custom_swagger_ui_html() -> HTMLResponse:
-        return get_swagger_ui_html(
-            openapi_url="/openapi.json",
-            title=f"{app.title} - Swagger UI",
-            oauth2_redirect_url="/docs/oauth2-redirect",
-            swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
-            swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
-        )
+    if resolved_settings.api.docs_url and resolved_settings.api.openapi_url:
+        @app.get(resolved_settings.api.docs_url, include_in_schema=False)
+        async def custom_swagger_ui_html() -> HTMLResponse:
+            return get_swagger_ui_html(
+                openapi_url=resolved_settings.api.openapi_url or "",
+                title=f"{app.title} - Swagger UI",
+                oauth2_redirect_url=f"{resolved_settings.api.docs_url}/oauth2-redirect",
+                swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+                swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+            )
 
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, str]:
         return {
             "name": resolved_settings.project_name,
             "version": resolved_settings.project_version,
-            "documentation": "/docs",
+            "documentation": resolved_settings.api.docs_url or "",
             "health": "/health",
             "api_base": "/api/v1",
             "guest_session": "/api/v1/guest/session",

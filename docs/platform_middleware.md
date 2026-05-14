@@ -51,7 +51,7 @@ The in-progress gauge must decrement in success and failure paths. Exceptions ar
 
 ## CORS
 
-The default CORS behavior remains centralized in `src.apps.api.middleware.cors.get_cors_config`. Production configuration filters wildcard origins unless wildcard mode is explicitly selected by environment configuration.
+The default CORS behavior remains centralized in `NovelEngineSettings.security` and is exposed to FastAPI through `src.apps.api.middleware.cors.get_cors_config`. Production startup fails when CORS origins are missing, wildcarded, or pointed at localhost.
 
 ## Coverage Gate
 

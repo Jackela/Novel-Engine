@@ -131,6 +131,19 @@ class KnowledgeApplicationService:
         except Exception as e:
             return Failure(str(e), "INTERNAL_ERROR")
 
+    async def get_knowledge_base(self, knowledge_base_id: str) -> Result[KnowledgeBase]:
+        """Return a knowledge base aggregate by ID."""
+        try:
+            knowledge_repo = self._require_knowledge_repo()
+            kb = await knowledge_repo.get_by_id(UUID(knowledge_base_id))
+            if not kb:
+                return Failure("Knowledge base not found", "NOT_FOUND")
+            return Success(kb)
+        except ValueError as e:
+            return Failure(str(e), "VALIDATION_ERROR")
+        except Exception as e:
+            return Failure(str(e), "INTERNAL_ERROR")
+
     async def upload_document(
         self,
         knowledge_base_id: str,

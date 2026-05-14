@@ -12,10 +12,14 @@ from pydantic import BaseModel, Field
 from src.apps.api.dependencies import (
     CurrentUser,
     get_current_user,
+    get_current_user_optional,
     get_knowledge_service,
 )
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
+)
+from src.contexts.knowledge.interface.http.access_policy import (
+    authorize_knowledge_base,
 )
 from src.contexts.knowledge.interface.http.error_handlers import (
     ResultErrorHandler,
@@ -100,9 +104,16 @@ async def list_documents(
     tags: list[str] | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> DocumentListResponse:
     """List documents in a knowledge base."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=False,
+    )
     result = await service.list_documents(
         knowledge_base_id=knowledge_base_id,
         tags=tags,
@@ -124,9 +135,16 @@ async def list_documents(
 )
 async def get_knowledge_base_stats(
     knowledge_base_id: str,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
     service: KnowledgeApplicationService = Depends(get_knowledge_service),
 ) -> dict[str, Any]:
     """Get statistics for a knowledge base."""
+    await authorize_knowledge_base(
+        service=service,
+        knowledge_base_id=knowledge_base_id,
+        current_user=current_user,
+        write=False,
+    )
     result = await service.get_knowledge_base_stats(knowledge_base_id)
 
     return ResultErrorHandler.handle(result)

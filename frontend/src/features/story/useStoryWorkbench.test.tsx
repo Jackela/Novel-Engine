@@ -323,7 +323,6 @@ function StoryWorkbenchProbe({ authorId }: { authorId: string }) {
             genre: 'fantasy',
             premise: 'A courier maps a city that keeps moving at dawn.',
             target_chapters: 3,
-            author_id: authorId,
           })
         }
         type="button"
@@ -338,7 +337,6 @@ function StoryWorkbenchProbe({ authorId }: { authorId: string }) {
             genre: 'fantasy',
             premise: 'A courier maps a city that keeps moving at dawn.',
             target_chapters: 3,
-            author_id: authorId,
             publish: true,
           })
         }

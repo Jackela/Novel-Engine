@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import { sessionStorageKey } from '@/shared/storage';
 
 describe('api', () => {
   afterEach(() => {
@@ -9,22 +8,7 @@ describe('api', () => {
     vi.restoreAllMocks();
   });
 
-  it('attaches the stored bearer token to story library requests', async () => {
-    window.localStorage.setItem(
-      sessionStorageKey,
-      JSON.stringify({
-        kind: 'user',
-        workspaceId: 'workspace-123',
-        token: 'access-token-123',
-        refreshToken: 'refresh-token-456',
-        user: {
-          id: 'user-123',
-          name: 'Operator',
-          email: 'operator@novel.engine',
-        },
-      }),
-    );
-
+  it('uses cookie credentials without bearer tokens for story library requests', async () => {
     const response = new Response(
       JSON.stringify({
         stories: [],
@@ -41,18 +25,18 @@ describe('api', () => {
     );
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(response);
 
-    await api.listStories('workspace-123');
+    await api.listStories();
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/v1/story?author_id=workspace-123&limit=20&offset=0',
+      '/api/v1/story?limit=20&offset=0',
       expect.objectContaining({
         credentials: 'include',
         headers: expect.objectContaining({
           'Content-Type': 'application/json',
-          Authorization: 'Bearer access-token-123',
         }),
       }),
     );
+    expect(fetchSpy.mock.calls[0]?.[1]?.headers).not.toHaveProperty('Authorization');
   });
 
   it('posts the full story pipeline payload to the canonical endpoint', async () => {
@@ -252,7 +236,6 @@ describe('api', () => {
       genre: 'fantasy',
       premise: 'A courier finds a map that rewrites the kingdom.',
       target_chapters: 3,
-      author_id: 'workspace-123',
       publish: true,
     });
 
@@ -265,7 +248,6 @@ describe('api', () => {
           genre: 'fantasy',
           premise: 'A courier finds a map that rewrites the kingdom.',
           target_chapters: 3,
-          author_id: 'workspace-123',
           publish: true,
         }),
       }),
@@ -460,7 +442,7 @@ describe('api', () => {
     );
   });
 
-  it('supports explicit tokens for current-user requests', async () => {
+  it('uses browser cookies for current-user requests', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -478,16 +460,15 @@ describe('api', () => {
       ),
     );
 
-    await api.getCurrentUser('explicit-token');
+    await api.getCurrentUser();
 
     expect(fetchSpy).toHaveBeenCalledWith(
       '/api/v1/auth/me',
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: 'Bearer explicit-token',
-        }),
+        credentials: 'include',
       }),
     );
+    expect(fetchSpy.mock.calls[0]?.[1]?.headers).not.toHaveProperty('Authorization');
   });
 
   it('builds story list query parameters with caller-provided pagination', async () => {
@@ -498,10 +479,10 @@ describe('api', () => {
       }),
     );
 
-    await api.listStories('workspace-123', undefined, 10);
+    await api.listStories(20, 10);
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      '/api/v1/story?author_id=workspace-123&limit=20&offset=10',
+      '/api/v1/story?limit=20&offset=10',
       expect.any(Object),
     );
   });
@@ -524,7 +505,6 @@ describe('api', () => {
       genre: 'fantasy',
       premise: 'A platform test premise.',
       target_chapters: 3,
-      author_id: 'author-1',
     });
     await api.generateBlueprint('story-1');
     await api.generateOutline('story-1');
@@ -559,7 +539,6 @@ describe('api', () => {
           genre: 'fantasy',
           premise: 'A platform test premise.',
           target_chapters: 3,
-          author_id: 'author-1',
         }),
       }),
     );

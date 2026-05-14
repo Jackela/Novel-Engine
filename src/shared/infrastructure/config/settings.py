@@ -10,14 +10,32 @@ from __future__ import annotations
 
 import secrets
 from enum import Enum
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Literal, Self, cast
+from typing import Annotated, Any, Literal, Self, cast
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"
 LOCAL_DOTENV_FILE = ".env.local"
+
+
+def _package_version() -> str:
+    try:
+        return version("novel-engine")
+    except PackageNotFoundError:
+        return "0.1.1"
+
+
+def _is_local_cors_origin(origin: str) -> bool:
+    normalized = origin.lower()
+    return (
+        "localhost" in normalized
+        or "127.0.0.1" in normalized
+        or "[::1]" in normalized
+        or normalized.startswith("http://::1")
+    )
 
 
 def _settings_config(
@@ -128,7 +146,7 @@ class APISettings(BaseSettings):
     )
     reload: bool = Field(default=False, description="Enable auto-reload")
     title: str = Field(default="Novel Engine API", description="API title")
-    version: str = Field(default="0.1.0", description="API version")
+    version: str = Field(default_factory=_package_version, description="API version")
     docs_url: str | None = Field(default="/docs", description="Swagger UI URL")
     redoc_url: str | None = Field(default="/redoc", description="ReDoc URL")
     openapi_url: str | None = Field(
@@ -156,19 +174,50 @@ class SecuritySettings(BaseSettings):
     encryption_key: str | None = Field(
         default=None, description="Fernet encryption key for sensitive data"
     )
-    cors_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    cors_origins: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: [
+            "http://localhost:4173",
+            "http://127.0.0.1:4173",
+            "http://localhost:4273",
+            "http://127.0.0.1:4273",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "http://localhost:8080",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:8000",
+            "http://127.0.0.1:8080",
+        ],
         description="Allowed CORS origins",
+        validation_alias=AliasChoices(
+            "SECURITY_CORS_ORIGINS",
+            "CORS_ALLOWED_ORIGINS",
+            "CORS_ORIGINS",
+        ),
     )
     cors_allow_credentials: bool = Field(
-        default=True, description="Allow CORS credentials"
+        default=True,
+        description="Allow CORS credentials",
+        validation_alias=AliasChoices(
+            "SECURITY_CORS_ALLOW_CREDENTIALS",
+            "CORS_ALLOW_CREDENTIALS",
+        ),
     )
-    cors_allow_methods: list[str] = Field(
+    cors_allow_methods: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
         description="Allowed CORS methods",
     )
-    cors_allow_headers: list[str] = Field(
-        default_factory=lambda: ["*"],
+    cors_allow_headers: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: [
+            "Content-Type",
+            "Authorization",
+            "X-API-Key",
+            "X-Request-ID",
+            "Accept",
+            "Origin",
+            "X-Requested-With",
+        ],
         description="Allowed CORS headers",
     )
     rate_limit: str = Field(default="100/minute", description="Rate limit string")
@@ -426,7 +475,10 @@ class NovelEngineSettings(BaseSettings):
     )
     debug: bool = Field(default=False, description="Enable debug mode")
     project_name: str = Field(default="Novel Engine API", description="Project name")
-    project_version: str = Field(default="2.0.0", description="Project version")
+    project_version: str = Field(
+        default_factory=_package_version,
+        description="Project version",
+    )
     project_description: str = Field(
         default="AI-Enhanced Interactive Novel Engine",
         description="Project description",
@@ -488,6 +540,35 @@ class NovelEngineSettings(BaseSettings):
     @model_validator(mode="after")
     def apply_runtime_security_defaults(self) -> Self:
         """Apply safe runtime defaults for local and testing environments."""
+        if self.is_production:
+            if (
+                not self.security.secret_key
+                or self.security.secret_key == DEFAULT_SECRET_KEY
+            ):
+                raise ValueError(
+                    "SECURITY_SECRET_KEY must be set to a non-default value in production"
+                )
+            if not self.database.url.startswith("postgresql"):
+                raise ValueError("DB_URL must use PostgreSQL in production")
+            if not self.security.cors_origins:
+                raise ValueError("CORS_ALLOWED_ORIGINS must be explicit in production")
+            if any(
+                origin == "*" or _is_local_cors_origin(origin)
+                for origin in self.security.cors_origins
+            ):
+                raise ValueError(
+                    "Production CORS origins cannot include wildcards or localhost"
+                )
+            if (
+                self.api.docs_url == "/docs"
+                or self.api.redoc_url == "/redoc"
+                or self.api.openapi_url == "/openapi.json"
+            ):
+                raise ValueError(
+                    "Production docs_url, redoc_url, and openapi_url must be disabled "
+                    "or explicitly moved away from the default public paths"
+                )
+
         if not self.security.secret_key or self.security.secret_key == DEFAULT_SECRET_KEY:
             if self.is_testing:
                 self.security.secret_key = (

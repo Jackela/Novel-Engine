@@ -404,7 +404,6 @@ export interface StoryCreateRequest {
   target_audience?: string | null;
   themes?: string[];
   tone?: string;
-  author_id?: string | null;
 }
 
 export interface StoryPipelineRequest extends StoryCreateRequest {

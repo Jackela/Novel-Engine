@@ -384,7 +384,7 @@ def test_run_longform_uat_wraps_failures_with_partial_context(
                     duration_ms=25,
                 )
             )
-            return 200, {"access_token": "token", "workspace_id": "user-operator"}
+            return 200, {"workspace_id": "user-operator"}
 
         traces.append(
             RequestTrace(

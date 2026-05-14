@@ -93,7 +93,7 @@ function providerLabel(provider: string | null | undefined, model: string | null
   return model ? `${provider} / ${model}` : provider;
 }
 
-function buildPayload(authorId: string, formState: ComposerState): StoryCreateRequest {
+function buildPayload(formState: ComposerState): StoryCreateRequest {
   return {
     title: formState.title.trim(),
     genre: formState.genre,
@@ -102,7 +102,6 @@ function buildPayload(authorId: string, formState: ComposerState): StoryCreateRe
     target_audience: formState.targetAudience.trim() || null,
     themes: parseThemes(formState.themes),
     tone: formState.tone.trim() || 'commercial web fiction',
-    author_id: authorId,
   };
 }
 
@@ -232,7 +231,7 @@ export function StoryWorkbenchPage() {
   const createDraft = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      const story = await workbench.createStory(buildPayload(session.workspaceId, formState));
+      const story = await workbench.createStory(buildPayload(formState));
       setQuerySelection(story.id, null, 'workspace');
     } catch {}
   };
@@ -240,7 +239,7 @@ export function StoryWorkbenchPage() {
   const runInitialPipeline = async () => {
     try {
       const result = await workbench.runPipeline({
-        ...buildPayload(session.workspaceId, formState),
+        ...buildPayload(formState),
         publish: formState.publish,
       });
       setQuerySelection(result.story.id, null, 'workspace');

@@ -88,9 +88,6 @@ describe('AuthProvider', () => {
 
   it('persists the backend login response shape', async () => {
     vi.spyOn(api, 'login').mockResolvedValue({
-      access_token: 'access-token-123',
-      refresh_token: 'refresh-token-456',
-      token_type: 'bearer',
       workspace_id: 'workspace-123',
       user: {
         id: 'user-123',
@@ -119,8 +116,6 @@ describe('AuthProvider', () => {
     expect(storedSession).toMatchObject({
       kind: 'user',
       workspaceId: 'workspace-123',
-      token: 'access-token-123',
-      refreshToken: 'refresh-token-456',
       user: {
         id: 'user-123',
         name: 'Operator',
@@ -146,9 +141,6 @@ describe('AuthProvider', () => {
         }) as Awaited<ReturnType<typeof api.createGuestSession>>,
     );
     vi.spyOn(api, 'login').mockResolvedValue({
-      access_token: 'access-token-123',
-      refresh_token: 'refresh-token-456',
-      token_type: 'bearer',
       workspace_id: 'user-operator',
       user: {
         id: 'user-123',
@@ -188,8 +180,6 @@ describe('AuthProvider', () => {
       JSON.stringify({
         kind: 'user',
         workspaceId: 'user-operator',
-        token: 'saved-token',
-        refreshToken: 'saved-refresh-token',
         user: {
           id: 'stale-user',
           name: 'stale',
@@ -214,10 +204,11 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('session-state')).toHaveTextContent('user');
       expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-operator');
     });
-    expect(api.getCurrentUser).toHaveBeenCalledWith('saved-token');
+    expect(api.getCurrentUser).toHaveBeenCalledWith();
   });
 
   it('updates active session selection and signs out the active session', async () => {
+    vi.spyOn(api, 'logout').mockResolvedValue({ message: 'Successfully logged out' });
     vi.spyOn(api, 'createGuestSession').mockResolvedValue({
       workspace_id: 'guest-123',
       identity_kind: 'guest',

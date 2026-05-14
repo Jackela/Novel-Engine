@@ -22,8 +22,6 @@ function makeSession(
     id: buildSessionId(overrides),
     kind: overrides.kind,
     workspaceId: overrides.workspaceId,
-    token: overrides.token,
-    refreshToken: overrides.refreshToken,
     user: overrides.user,
     lastStoryId: overrides.lastStoryId ?? null,
     lastRunId: overrides.lastRunId ?? null,
@@ -47,7 +45,7 @@ describe('session storage catalog', () => {
 
   it('creates empty catalogs and stable session ids', () => {
     expect(emptySessionCatalog()).toEqual({
-      version: 2,
+      version: 3,
       activeSessionId: null,
       sessions: [],
     });
@@ -61,8 +59,6 @@ describe('session storage catalog', () => {
     const session = makeSession({
       kind: 'user',
       workspaceId: 'user-operator',
-      token: 'access-token',
-      refreshToken: 'refresh-token',
       user: {
         id: 'user-1',
         name: 'operator',
@@ -84,9 +80,8 @@ describe('session storage catalog', () => {
     expect(JSON.parse(window.localStorage.getItem(sessionStorageKey) ?? '{}')).toMatchObject({
       kind: 'user',
       workspaceId: 'user-operator',
-      token: 'access-token',
-      refreshToken: 'refresh-token',
     });
+    expect(window.localStorage.getItem(sessionStorageKey)).not.toContain('token');
   });
 
   it('can keep an existing active session while adding a background session', () => {
@@ -105,7 +100,7 @@ describe('session storage catalog', () => {
 
   it('switches active sessions and clears the legacy slot when no session is active', () => {
     const guest = makeSession({ kind: 'guest', workspaceId: 'guest-1' });
-    const user = makeSession({ kind: 'user', workspaceId: 'user-1', token: 'token' });
+    const user = makeSession({ kind: 'user', workspaceId: 'user-1' });
     const catalog = upsertSession(upsertSession(emptySessionCatalog(), guest), user);
 
     const switched = setActiveSessionId(catalog, guest.id);
@@ -151,7 +146,9 @@ describe('session storage catalog', () => {
   });
 
   it('reads valid catalogs sorted by recency', () => {
-    const stored: SessionCatalog = {
+    const stored: SessionCatalog & {
+      sessions: Array<SessionState & { token?: string; refreshToken?: string }>;
+    } = {
       version: 2,
       activeSessionId: 'guest:new',
       sessions: [
@@ -165,14 +162,28 @@ describe('session storage catalog', () => {
           workspaceId: 'new',
           updatedAt: '2024-01-03T00:00:00.000Z',
         }),
+        {
+          ...makeSession({
+            kind: 'user',
+            workspaceId: 'user-legacy',
+            updatedAt: '2024-01-02T00:00:00.000Z',
+          }),
+          token: 'legacy-token',
+          refreshToken: 'legacy-refresh-token',
+        },
       ],
     };
     window.localStorage.setItem(catalogStorageKey, JSON.stringify(stored));
 
     const catalog = readSessionCatalog();
 
-    expect(catalog.sessions.map((session) => session.workspaceId)).toEqual(['new', 'old']);
+    expect(catalog.sessions.map((session) => session.workspaceId)).toEqual([
+      'new',
+      'user-legacy',
+      'old',
+    ]);
     expect(getActiveSession(catalog)?.workspaceId).toBe('new');
+    expect(window.localStorage.getItem(catalogStorageKey)).not.toContain('legacy-token');
   });
 
   it('migrates the legacy session slot when the catalog is absent', () => {

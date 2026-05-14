@@ -41,6 +41,8 @@ from src.contexts.knowledge.infrastructure.vectorStores.chroma_vector_store impo
     ChromaVectorStore,
 )
 from src.shared.infrastructure.auth.jwt_utils import JWTManager
+from src.shared.infrastructure.auth.refresh_sessions import reset_refresh_session_store
+from src.shared.infrastructure.auth.session_cookies import ACCESS_TOKEN_COOKIE
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging.config import get_logger
 from src.shared.infrastructure.persistence.pool_manager import (
@@ -169,15 +171,36 @@ class CurrentUser:
         return role in self.roles
 
 
-async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> CurrentUser | None:
-    """Return the current user, or ``None`` when authentication is absent/invalid."""
-    if not credentials:
-        return None
+class WorkspacePrincipal:
+    """Resolved browser/API principal bound to a single author workspace."""
 
+    def __init__(
+        self,
+        *,
+        kind: str,
+        workspace_id: str,
+        user_id: str | None = None,
+        username: str | None = None,
+    ) -> None:
+        self.kind = kind
+        self.workspace_id = workspace_id
+        self.user_id = user_id
+        self.username = username
+
+    @property
+    def is_user(self) -> bool:
+        """Return whether this principal is an authenticated user."""
+        return self.kind == "user"
+
+    @property
+    def is_guest(self) -> bool:
+        """Return whether this principal is an isolated guest workspace."""
+        return self.kind == "guest"
+
+
+def _current_user_from_access_token(token: str) -> CurrentUser | None:
     try:
-        payload = get_jwt_manager().verify_access_token(credentials.credentials)
+        payload = get_jwt_manager().verify_access_token(token)
     except Exception:
         return None
 
@@ -190,11 +213,28 @@ async def get_current_user_optional(
     )
 
 
+async def get_current_user_optional(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> CurrentUser | None:
+    """Return the current user, or ``None`` when authentication is absent/invalid."""
+    if credentials:
+        user = _current_user_from_access_token(credentials.credentials)
+        if user is not None:
+            return user
+
+    cookie_token = request.cookies.get(ACCESS_TOKEN_COOKIE)
+    if isinstance(cookie_token, str) and cookie_token:
+        return _current_user_from_access_token(cookie_token)
+    return None
+
+
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> CurrentUser:
     """Return the current user or raise ``401``."""
-    user = await get_current_user_optional(credentials)
+    user = await get_current_user_optional(request, credentials)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -202,6 +242,27 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return user
+
+
+async def get_workspace_principal(
+    request: Request,
+    current_user: CurrentUser | None = Depends(get_current_user_optional),
+) -> WorkspacePrincipal | None:
+    """Resolve the current workspace principal from user auth or guest cookie."""
+    if current_user and current_user.username:
+        return WorkspacePrincipal(
+            kind="user",
+            workspace_id=f"user-{current_user.username.strip()}",
+            user_id=current_user.user_id,
+            username=current_user.username,
+        )
+
+    from src.apps.api.routes.guest import GUEST_SESSION_COOKIE
+
+    guest_workspace = request.cookies.get(GUEST_SESSION_COOKIE)
+    if isinstance(guest_workspace, str) and guest_workspace.startswith("guest-"):
+        return WorkspacePrincipal(kind="guest", workspace_id=guest_workspace)
+    return None
 
 
 def require_permissions(
@@ -390,6 +451,7 @@ def reset_identity_dependencies() -> None:
     _authentication_service = None
     _identity_service = None
     _knowledge_service = None
+    reset_refresh_session_store()
 
 
 def reset_knowledge_service() -> None:
@@ -401,6 +463,7 @@ def reset_knowledge_service() -> None:
 __all__ = [
     "CurrentUser",
     "PaginationParams",
+    "WorkspacePrincipal",
     "close_connection_pool",
     "get_authentication_service",
     "get_connection_pool",
@@ -413,6 +476,7 @@ __all__ = [
     "get_jwt_manager",
     "get_pagination",
     "get_user_repository",
+    "get_workspace_principal",
     "require_permissions",
     "require_roles",
     "reset_identity_dependencies",
