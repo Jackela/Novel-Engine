@@ -64,8 +64,10 @@ jobs:
       - name: Run deterministic narrative regression gate
         run: >
           uv run pytest -q
-          tests/contexts/narrative/application/test_story_workflow_service.py
-          tests/contexts/narrative/application/test_story_regression_corpus.py
+          tests/apps/api/test_workspaces.py
+          tests/apps/cli/test_novel_engine.py
+          tests/scripts/test_run_dashscope_longform_uat.py
+          tests/contract/test_text_generation_provider_contract.py
 
       - name: Publish deterministic gate summary
         if: always()
@@ -118,7 +120,6 @@ jobs:
           uv run pytest -q
           -m requires_dashscope
           tests/contract/test_text_generation_provider_contract.py
-          tests/contexts/narrative/application/test_semantic_review_judge_contract.py
 
       - name: Run DashScope longform gate
         run: >

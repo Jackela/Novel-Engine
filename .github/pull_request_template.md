@@ -25,8 +25,8 @@
 
 ## Risk Review
 
-- [ ] No legacy compatibility layer or silent fallback was introduced
-- [ ] Publish semantics still require `publish=success` with `warning=0` and `blocker=0`
+- [ ] No removed workflow shim or silent fallback was introduced
+- [ ] Export semantics still require `blocker=0`; warnings remain visible editorial advice
 - [ ] Public contracts changed intentionally and are covered by tests
 - [ ] Generated artifacts, caches, and temporary reports are not committed
 - [ ] README and repo-level docs remain accurate

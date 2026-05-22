@@ -15,7 +15,6 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
-from src.api.versioning import setup_versioning
 from src.apps.api.dependencies import close_connection_pool
 from src.apps.api.health import health_router, reset_health_state, set_honcho_client
 from src.apps.api.middleware.cors import get_cors_config
@@ -70,8 +69,8 @@ def custom_openapi(app: FastAPI) -> dict:
     }
     _apply_openapi_security(openapi_schema)
     openapi_schema["servers"] = [
-        {"url": "/api/v1", "description": "Canonical API"},
-        {"url": "http://localhost:8000/api/v1", "description": "Local development"},
+        {"url": "/api", "description": "Canonical API"},
+        {"url": "http://localhost:8000/api", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
@@ -101,13 +100,13 @@ def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
             if not isinstance(operation, dict):
                 continue
 
-            if path == "/api/v1/auth/me":
+            if path == "/api/auth/me":
                 operation["security"] = cookie_or_bearer
-            elif path == "/api/v1/auth/refresh":
+            elif path == "/api/auth/refresh":
                 operation["security"] = [{"refreshCookie": []}]
-            elif path.startswith("/api/v1/story"):
+            elif path.startswith("/api/workspaces"):
                 operation["security"] = cookie_or_bearer
-            elif path.startswith("/api/v1/knowledge"):
+            elif path.startswith("/api/knowledge"):
                 operation["security"] = (
                     cookie_or_bearer
                     if _knowledge_operation_requires_owner(path, method)
@@ -119,7 +118,7 @@ def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
 
 def _knowledge_operation_requires_owner(path: str, method: str) -> bool:
     """Return whether a knowledge route is owner-only."""
-    if path == "/api/v1/knowledge/knowledge-bases" and method == "post":
+    if path == "/api/knowledge/knowledge-bases" and method == "post":
         return True
     if path.endswith("/documents") and method == "post":
         return True
@@ -204,8 +203,8 @@ def create_application(
     app = FastAPI(
         title=resolved_settings.project_name,
         description=(
-            "Canonical Novel Engine API with source-backed auth, story workflow, "
-            "knowledge, guest, health, and versioning routes."
+            "Canonical Novel Engine API with source-backed auth, local "
+            "workspaces, knowledge, guest, and health routes."
         ),
         version=resolved_settings.project_version,
         docs_url=None,
@@ -217,7 +216,8 @@ def create_application(
             {"name": "authentication", "description": "Authentication operations"},
             {"name": "knowledge", "description": "Knowledge management"},
             {"name": "guest", "description": "Guest session management"},
-            {"name": "story", "description": "Long-form story generation workflow"},
+            {"name": "providers", "description": "Text generation provider status"},
+            {"name": "workspaces", "description": "Local-first writing workspaces"},
         ],
     )
     app.state.settings = resolved_settings
@@ -247,10 +247,9 @@ def create_application(
     app.add_middleware(CorrelationIdMiddleware)
 
     setup_exception_handlers(app)
-    setup_versioning(app)
 
     app.include_router(health_router, tags=["health"])
-    app.include_router(api_router, prefix="/api/v1")
+    app.include_router(api_router, prefix="/api")
 
     if resolved_settings.api.docs_url and resolved_settings.api.openapi_url:
         @app.get(resolved_settings.api.docs_url, include_in_schema=False)
@@ -270,11 +269,9 @@ def create_application(
             "version": resolved_settings.project_version,
             "documentation": resolved_settings.api.docs_url or "",
             "health": "/health",
-            "api_base": "/api/v1",
-            "guest_session": "/api/v1/guest/session",
-            "story": "/api/v1/story",
-            "story_pipeline": "/api/v1/story/pipeline",
-            "versioning": "/api/versions",
+            "api_base": "/api",
+            "guest_session": "/api/guest/session",
+            "workspaces": "/api/workspaces",
         }
 
     return app

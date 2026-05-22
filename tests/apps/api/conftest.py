@@ -16,8 +16,8 @@ if str(ROOT) not in sys.path:
 
 from src.apps.api.dependencies import reset_identity_dependencies, reset_jwt_manager
 from src.apps.api.health import reset_health_state
+from src.apps.api.routes.workspaces import reset_workspace_jobs
 from src.apps.api.runtime import runtime_store
-from src.contexts.narrative.infrastructure.runtime import reset_story_workflow_service
 from src.shared.infrastructure.config.settings import reset_settings
 
 
@@ -28,12 +28,12 @@ def reset_canonical_api_state() -> Generator[None, None, None]:
     reset_jwt_manager()
     reset_identity_dependencies()
     reset_health_state()
+    reset_workspace_jobs()
     runtime_store.reset()
-    reset_story_workflow_service()
     yield
     runtime_store.reset()
+    reset_workspace_jobs()
     reset_health_state()
     reset_identity_dependencies()
     reset_jwt_manager()
-    reset_story_workflow_service()
     reset_settings()

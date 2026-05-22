@@ -2,7 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any
+import time
+from typing import Any, cast
+
+
+def _wait_for_job(canonical_client: Any, workspace_id: str, job_id: str) -> dict[str, Any]:
+    for _ in range(100):
+        response = canonical_client.get(
+            f"/api/workspaces/{workspace_id}/jobs/{job_id}"
+        )
+        assert response.status_code == 200
+        payload = cast(dict[str, Any], response.json())
+        if payload["status"] in {"completed", "failed", "interrupted"}:
+            return payload
+        time.sleep(0.01)
+    raise AssertionError(f"job {job_id} did not finish")
 
 
 def test_root_endpoint_exposes_canonical_metadata(
@@ -11,9 +25,10 @@ def test_root_endpoint_exposes_canonical_metadata(
     response = canonical_client.get("/")
     assert response.status_code == 200
     payload = response.json()
-    assert payload["api_base"] == "/api/v1"
-    assert payload["story"] == "/api/v1/story"
-    assert payload["story_pipeline"] == "/api/v1/story/pipeline"
+    assert payload["api_base"] == "/api"
+    assert "story" not in payload
+    assert "version" + "ing" not in payload
+    assert payload["workspaces"] == "/api/workspaces"
 
 
 def test_docs_and_openapi_are_available(canonical_client: Any) -> None:
@@ -26,15 +41,13 @@ def test_docs_and_openapi_are_available(canonical_client: Any) -> None:
     assert openapi_response.json()["info"]["title"] == "Novel Engine API"
 
 
-def test_versioning_endpoint_and_headers_are_present(
+def test_api_version_endpoint_and_headers_are_removed(
     canonical_client: Any,
 ) -> None:
-    response = canonical_client.get("/api/versions")
-    assert response.status_code == 200
-    assert response.headers["x-api-version"] == "1.0"
-    assert response.headers["x-supported-versions"] == "1.0"
-    assert response.json()["current_version"] == "1.0"
-    assert response.json()["supported_versions"] == ["1.0"]
+    response = canonical_client.get("/api/" + "versions")
+    assert response.status_code == 404
+    assert "x-api-" + "version" not in response.headers
+    assert "x-supported-" + "versions" not in response.headers
 
 
 def test_health_and_version_endpoints_are_available(
@@ -54,64 +67,70 @@ def test_health_and_version_endpoints_are_available(
     assert "version" in version_response.json()
 
 
-def test_guest_story_pipeline_flow(canonical_client: Any) -> None:
-    guest_response = canonical_client.post("/api/v1/guest/session")
+def test_guest_workspace_flow(canonical_client: Any) -> None:
+    guest_response = canonical_client.post("/api/guest/session")
     assert guest_response.status_code == 200
     workspace_id = guest_response.json()["workspace_id"]
     assert isinstance(workspace_id, str)
     assert workspace_id
 
     create_response = canonical_client.post(
-        "/api/v1/story",
+        "/api/workspaces",
         json={
+            "workspace_id": "guest-story",
             "title": "Guest Story",
             "genre": "fantasy",
             "premise": "A courier finds a map that rewrites the kingdom's borders.",
             "target_chapters": 3,
         },
     )
-    assert create_response.status_code == 200
-    story = create_response.json()["story"]
-    assert story["author_id"] == workspace_id
+    assert create_response.status_code == 201
+    assert create_response.json()["workspace_id"] == "guest-story"
 
-    blueprint_response = canonical_client.post(f"/api/v1/story/{story['id']}/blueprint")
-    assert blueprint_response.status_code == 200
-
-    outline_response = canonical_client.post(f"/api/v1/story/{story['id']}/outline")
-    assert outline_response.status_code == 200
-
-    draft_response = canonical_client.post(
-        f"/api/v1/story/{story['id']}/draft",
-        json={"target_chapters": 3},
+    run_response = canonical_client.post(
+        "/api/workspaces/guest-story/jobs",
+        json={"operation": "run", "target_chapters": 3, "provider": "mock"},
     )
-    assert draft_response.status_code == 200
-    drafted_story = draft_response.json()["story"]
-    assert drafted_story["chapter_count"] == 3
+    assert run_response.status_code == 202
+    run_job = _wait_for_job(
+        canonical_client,
+        "guest-story",
+        str(run_response.json()["job_id"]),
+    )
+    assert run_job["status"] == "completed"
 
-    review_response = canonical_client.post(f"/api/v1/story/{story['id']}/review")
-    assert review_response.status_code == 200
-    review_report = review_response.json()["report"]
-    assert review_report["ready_for_publish"] is True
+    review_response = canonical_client.post(
+        "/api/workspaces/guest-story/jobs",
+        json={"operation": "review"},
+    )
+    assert review_response.status_code == 202
+    review_job = _wait_for_job(
+        canonical_client,
+        "guest-story",
+        str(review_response.json()["job_id"]),
+    )
+    assert review_job["result"]["result_type"] == "review"
+    assert review_job["result"]["review"]["export_blocked"] is False
 
-    revise_response = canonical_client.post(f"/api/v1/story/{story['id']}/revise")
-    assert revise_response.status_code == 200
-    assert isinstance(revise_response.json()["revision_notes"], list)
-
-    export_response = canonical_client.post(f"/api/v1/story/{story['id']}/export")
-    assert export_response.status_code == 200
-    assert export_response.json()["export"]["story"]["id"] == story["id"]
-
-    publish_response = canonical_client.post(f"/api/v1/story/{story['id']}/publish")
-    assert publish_response.status_code == 200
-    published_story = publish_response.json()["story"]
-    assert published_story["status"] == "active"
+    export_response = canonical_client.post(
+        "/api/workspaces/guest-story/jobs",
+        json={"operation": "export"},
+    )
+    assert export_response.status_code == 202
+    export_job = _wait_for_job(
+        canonical_client,
+        "guest-story",
+        str(export_response.json()["job_id"]),
+    )
+    assert export_job["result"]["result_type"] == "export"
+    assert export_job["result"]["export"]["filename"] == "manuscript.md"
 
 
 def test_auth_routes_work_with_canonical_in_memory_dependencies(
     canonical_client: Any,
 ) -> None:
     register_response = canonical_client.post(
-        "/api/v1/auth/register",
+        "/api/auth/register",
         json={
             "email": "writer@example.com",
             "username": "writer",
@@ -122,7 +141,7 @@ def test_auth_routes_work_with_canonical_in_memory_dependencies(
     assert register_response.json()["username"] == "writer"
 
     login_response = canonical_client.post(
-        "/api/v1/auth/login",
+        "/api/auth/login",
         json={"username": "writer", "password": "supersecret"},
     )
     assert login_response.status_code == 200
@@ -131,30 +150,18 @@ def test_auth_routes_work_with_canonical_in_memory_dependencies(
     assert "refresh_token" not in session
     assert "novel_engine_access=" in login_response.headers["set-cookie"]
 
-    me_response = canonical_client.get("/api/v1/auth/me")
+    me_response = canonical_client.get("/api/auth/me")
     assert me_response.status_code == 200
     assert me_response.json()["username"] == "writer"
 
-    create_response = canonical_client.post(
-        "/api/v1/story",
-        json={
-            "title": "Auth Story",
-            "genre": "mystery",
-            "premise": "A locked room case turns into a conspiracy across the harbor.",
-            "target_chapters": 3,
-        },
-    )
-    assert create_response.status_code == 200
-    assert create_response.json()["story"]["author_id"] == session["workspace_id"]
-
-    refresh_response = canonical_client.post("/api/v1/auth/refresh", json={})
+    refresh_response = canonical_client.post("/api/auth/refresh", json={})
     assert refresh_response.status_code == 200
     assert refresh_response.json()["workspace_id"] == session["workspace_id"]
     assert "novel_engine_refresh=" in refresh_response.headers["set-cookie"]
 
-    logout_response = canonical_client.post("/api/v1/auth/logout")
+    logout_response = canonical_client.post("/api/auth/logout")
     assert logout_response.status_code == 200
     assert logout_response.json()["message"] == "Successfully logged out"
 
-    refresh_after_logout = canonical_client.post("/api/v1/auth/refresh", json={})
+    refresh_after_logout = canonical_client.post("/api/auth/refresh", json={})
     assert refresh_after_logout.status_code == 401

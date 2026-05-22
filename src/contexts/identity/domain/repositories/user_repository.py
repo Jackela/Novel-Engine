@@ -1,8 +1,8 @@
 """User Repository Interface
 
 Repository port for User aggregate persistence.
-This module defines both the abstract class for implementations
-and maintains backward compatibility with the old structure.
+This module defines the abstract base classes used by identity
+repository and authentication implementations.
 """
 
 from abc import ABC, abstractmethod
@@ -79,9 +79,6 @@ class AuthenticationService(ABC):
     """Service for authentication operations.
 
     Handles password hashing and verification.
-
-    Note: This is kept for backward compatibility.
-    New code should use AuthenticationPort from domain.ports.
     """
 
     @abstractmethod

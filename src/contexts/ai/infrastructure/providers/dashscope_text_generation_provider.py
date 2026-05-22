@@ -315,11 +315,8 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
 
     def _timeout_for_step(self, task: TextGenerationTask) -> float:
         timeout_floors = {
-            "bible": 60.0,
-            "outline": 180.0,
-            "chapter_scenes": 180.0,
-            "semantic_review": 180.0,
-            "revision": 180.0,
+            "chapter_draft": 180.0,
+            "chapter_revision": 180.0,
         }
         return max(float(self._timeout), timeout_floors.get(task.step, float(self._timeout)))
 

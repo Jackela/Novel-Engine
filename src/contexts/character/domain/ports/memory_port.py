@@ -300,8 +300,8 @@ class CharacterMemoryPort(
     """Complete port interface for character memory operations.
 
     This protocol combines all memory-related operations into a single
-    interface for backward compatibility. New code should prefer using
-    the specialized ports (MemoryStoragePort, MemoryQueryPort, etc.)
+    interface. New code should prefer using the specialized ports
+    (MemoryStoragePort, MemoryQueryPort, etc.)
     to adhere to the Interface Segregation Principle.
 
     Implementations:

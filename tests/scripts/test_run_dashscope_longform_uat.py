@@ -21,46 +21,77 @@ from scripts.uat.run_dashscope_longform_uat import (
 )
 
 
-def _build_export_payload(chapter_count: int) -> dict[str, Any]:
+def _build_workspace_payload(chapter_count: int) -> dict[str, Any]:
     chapters = []
-    outline_chapters = []
     for chapter_number in range(1, chapter_count + 1):
         chapters.append(
             {
                 "chapter_number": chapter_number,
-                "title": f"Chapter {chapter_number}",
-                "scenes": [
-                    {
-                        "content": " ".join(["serial"] * 320),
-                    }
-                ],
-            }
-        )
-        outline_chapters.append(
-            {
-                "chapter_number": chapter_number,
-                "hook": f"Hook {chapter_number}",
+                "filename": f"chapter-{chapter_number:03d}.md",
+                "word_count": 320,
+                "summary": f"Summary {chapter_number}",
             }
         )
 
     return {
-        "story": {
-            "chapters": chapters,
-        },
-        "outline": {
-            "chapters": outline_chapters,
-        },
+        "chapters": chapters,
     }
 
 
+def _chapter_audit(count: int = 20) -> list[ChapterAudit]:
+    return [
+        ChapterAudit(
+            chapter_number=chapter_number,
+            title=f"chapter-{chapter_number:03d}.md",
+            word_count=900,
+            summary=f"Summary {chapter_number}",
+        )
+        for chapter_number in range(1, count + 1)
+    ]
+
+
+def _uat_report(**overrides: Any) -> LongformUatReport:
+    payload: dict[str, Any] = {
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "completed_at": "2026-01-01T00:10:00+00:00",
+        "base_url": "http://127.0.0.1:8000",
+        "principal_workspace_id": "user-operator",
+        "workspace_id": "story-1",
+        "story_title": "Story",
+        "provider": "dashscope",
+        "model": "qwen3.5-flash",
+        "review_provider": "local",
+        "review_model": "local-reviewer",
+        "target_chapters": 20,
+        "drafted_chapters": 20,
+        "exported": True,
+        "export_outcome": "exported",
+        "export_failure_code": None,
+        "export_path": "exports/manuscript.md",
+        "warning_count": 0,
+        "blocker_count": 0,
+        "suggestion_count": 1,
+        "review_rounds": 1,
+        "export_gate_passed": True,
+        "issue_codes": [],
+        "run_ids": ["run-1"],
+        "artifact_kinds": ["chapter_artifacts", "review", "export"],
+        "editorial_notes": ["Markdown chapters are the manuscript authority."],
+        "request_trace": [],
+        "chapter_audit": _chapter_audit(),
+        "editorial_findings": [],
+    }
+    payload.update(overrides)
+    return LongformUatReport(**payload)
+
+
 def test_build_editorial_findings_surfaces_review_issues_and_underlength_chapters() -> None:
-    payload = _build_export_payload(20)
-    story = cast(dict[str, Any], payload["story"])
-    outline = cast(dict[str, Any], payload["outline"])
-    story["chapters"][2]["scenes"][0]["content"] = "too short"
-    outline["chapters"][3]["hook"] = ""
+    payload = _build_workspace_payload(20)
+    chapters = cast(list[dict[str, Any]], payload["chapters"])
+    chapters[2]["word_count"] = 2
+    chapters[3]["summary"] = ""
     review = {
-        "issues": [
+        "blockers": [
             {
                 "code": "relationship_drift",
                 "severity": "blocker",
@@ -74,48 +105,19 @@ def test_build_editorial_findings_surfaces_review_issues_and_underlength_chapter
     chapter_audit, findings = build_editorial_findings(payload, review, target_chapters=20)
 
     assert len(chapter_audit) == 20
-    assert any(finding.area == "system review" for finding in findings)
+    assert any(finding.area == "workspace review" for finding in findings)
     assert any(finding.area == "chapter density" for finding in findings)
-    assert any(finding.area == "hook architecture" for finding in findings)
+    assert any(finding.area == "sidecar metadata" for finding in findings)
 
 
 def test_validate_report_rejects_missing_chapter_coverage() -> None:
-    report = LongformUatReport(
-        started_at="2026-01-01T00:00:00+00:00",
-        completed_at="2026-01-01T00:10:00+00:00",
-        base_url="http://127.0.0.1:8000",
-        story_id="story-1",
-        workspace_id="user-operator",
-        story_title="Story",
-        provider="dashscope",
-        model="qwen3.5-flash",
-        review_provider="dashscope",
-        review_model="qwen3.5-flash",
-        target_chapters=20,
+    report = _uat_report(
         drafted_chapters=19,
-        published=False,
-        publish_outcome="blocked",
-        publish_failure_code="QUALITY_GATE_FAILED",
-        warning_count=1,
-        blocker_count=0,
-        review_rounds=1,
-        revision_rounds=0,
-        quality_score=86,
-        continuity_score=88,
-        pacing_score=83,
-        reader_pull_score=82,
-        plot_clarity_score=80,
-        ooc_risk_score=12,
-        structural_gate_passed=False,
-        semantic_gate_passed=True,
-        publish_gate_passed=False,
-        issue_codes=["quality_gate_failed"],
-        run_ids=[],
-        artifact_kinds=[],
-        revision_notes=[],
-        request_trace=[],
+        exported=False,
+        export_outcome="blocked",
+        export_failure_code="EXPORT_FAILED",
+        export_gate_passed=False,
         chapter_audit=[],
-        editorial_findings=[],
     )
 
     try:
@@ -126,111 +128,30 @@ def test_validate_report_rejects_missing_chapter_coverage() -> None:
         raise AssertionError("validate_report should reject missing chapter coverage")
 
 
-def test_validate_report_rejects_blocked_publish_outcome() -> None:
-    report = LongformUatReport(
-        started_at="2026-01-01T00:00:00+00:00",
-        completed_at="2026-01-01T00:10:00+00:00",
-        base_url="http://127.0.0.1:8000",
-        story_id="story-1",
-        workspace_id="user-operator",
-        story_title="Story",
-        provider="dashscope",
-        model="qwen3.5-flash",
-        review_provider="dashscope",
-        review_model="qwen3.5-flash",
-        target_chapters=20,
-        drafted_chapters=20,
-        published=False,
-        publish_outcome="blocked",
-        publish_failure_code="QUALITY_GATE_FAILED",
-        warning_count=0,
-        blocker_count=0,
-        review_rounds=2,
-        revision_rounds=1,
-        quality_score=86,
-        continuity_score=88,
-        pacing_score=83,
-        reader_pull_score=82,
-        plot_clarity_score=80,
-        ooc_risk_score=12,
-        structural_gate_passed=False,
-        semantic_gate_passed=True,
-        publish_gate_passed=False,
-        issue_codes=["quality_gate_failed"],
-        run_ids=[],
-        artifact_kinds=[],
-        revision_notes=[],
-        request_trace=[],
-        chapter_audit=[
-            ChapterAudit(
-                chapter_number=chapter_number,
-                title=f"Chapter {chapter_number}",
-                scenes=3,
-                word_count=900,
-                hook=f"Hook {chapter_number}",
-            )
-            for chapter_number in range(1, 21)
-        ],
-        editorial_findings=[],
+def test_validate_report_rejects_blocked_export_outcome() -> None:
+    report = _uat_report(
+        exported=False,
+        export_outcome="blocked",
+        export_failure_code="EXPORT_FAILED",
+        export_gate_passed=False,
     )
 
     try:
         validate_report(report)
     except ValueError as exc:
-        assert "did not reach a successful publish outcome" in str(exc)
+        assert "did not reach a successful export outcome" in str(exc)
     else:
-        raise AssertionError("validate_report should reject blocked publish outcomes")
+        raise AssertionError("validate_report should reject blocked export outcomes")
 
 
 def test_render_markdown_report_includes_editorial_findings_and_trace() -> None:
-    report = LongformUatReport(
-        started_at="2026-01-01T00:00:00+00:00",
-        completed_at="2026-01-01T00:10:00+00:00",
-        base_url="http://127.0.0.1:8000",
-        story_id="story-1",
-        workspace_id="user-operator",
-        story_title="Story",
-        provider="dashscope",
-        model="qwen3.5-flash",
-        review_provider="dashscope",
-        review_model="qwen3.5-flash",
-        target_chapters=20,
-        drafted_chapters=20,
-        published=True,
-        publish_outcome="published",
-        publish_failure_code=None,
-        warning_count=0,
-        blocker_count=0,
-        review_rounds=2,
-        revision_rounds=1,
-        quality_score=86,
-        continuity_score=88,
-        pacing_score=83,
-        reader_pull_score=82,
-        plot_clarity_score=80,
-        ooc_risk_score=12,
-        structural_gate_passed=True,
-        semantic_gate_passed=True,
-        publish_gate_passed=True,
+    report = _uat_report(
         issue_codes=["relationship_drift"],
-        run_ids=["run-1"],
-        artifact_kinds=["outline", "review"],
-        revision_notes=["Repair chapter 7."],
-        request_trace=[],
-        chapter_audit=[
-            ChapterAudit(
-                chapter_number=1,
-                title="Chapter 1",
-                scenes=3,
-                word_count=900,
-                hook="A better hook",
-            )
-        ]
-        * 20,
+        editorial_notes=["Keep a human line edit before release."],
         editorial_findings=[
             EditorialFinding(
                 severity="critical",
-                area="system review",
+                area="workspace review",
                 chapter=7,
                 summary="Alliance break lands without setup.",
                 recommendation="Restore the missing setup beat.",
@@ -252,17 +173,17 @@ def test_render_failure_markdown_report_includes_error_and_trace() -> None:
         base_url="http://127.0.0.1:8000",
         target_chapters=20,
         story_title_seed="DashScope PR Gate",
-        story_id="story-1",
-        workspace_id="user-operator",
+        principal_workspace_id="user-operator",
+        workspace_id="story-1",
         story_title="Story",
-        failed_step="review_story_round_2",
-        error_message="Long-form UAT exhausted the editorial closure loop.",
+        failed_step="run_workspace",
+        error_message="Workspace job failed.",
         request_trace=[
             RequestTrace(
-                step="review_story_round_2",
+                step="run_workspace",
                 method="POST",
-                path="/api/v1/story/story-1/review",
-                status_code=200,
+                path="/api/workspaces/story-1/jobs",
+                status_code=202,
                 duration_ms=4100,
             )
         ],
@@ -271,64 +192,33 @@ def test_render_failure_markdown_report_includes_error_and_trace() -> None:
     markdown = render_failure_markdown_report(report)
 
     assert "Failure Summary" in markdown
-    assert "review_story_round_2" in markdown
-    assert "Long-form UAT exhausted the editorial closure loop." in markdown
+    assert "run_workspace" in markdown
+    assert "Workspace job failed." in markdown
 
 
-def test_validate_report_rejects_unresolved_warnings() -> None:
-    report = LongformUatReport(
-        started_at="2026-01-01T00:00:00+00:00",
-        completed_at="2026-01-01T00:10:00+00:00",
-        base_url="http://127.0.0.1:8000",
-        story_id="story-1",
-        workspace_id="user-operator",
-        story_title="Story",
-        provider="dashscope",
-        model="qwen3.5-flash",
-        review_provider="dashscope",
-        review_model="qwen3.5-flash",
-        target_chapters=20,
-        drafted_chapters=20,
-        published=True,
-        publish_outcome="published",
-        publish_failure_code=None,
+def test_validate_report_allows_unresolved_warnings() -> None:
+    report = _uat_report(
         warning_count=1,
         blocker_count=0,
-        review_rounds=3,
-        revision_rounds=2,
-        quality_score=90,
-        continuity_score=92,
-        pacing_score=90,
-        reader_pull_score=91,
-        plot_clarity_score=88,
-        ooc_risk_score=10,
-        structural_gate_passed=True,
-        semantic_gate_passed=True,
-        publish_gate_passed=False,
-        issue_codes=["late_arc_fallout"],
-        run_ids=["run-1"],
-        artifact_kinds=["outline", "review", "export"],
-        revision_notes=["Expand the political fallout in Chapter 19."],
-        request_trace=[],
-        chapter_audit=[
-            ChapterAudit(
-                chapter_number=chapter_number,
-                title=f"Chapter {chapter_number}",
-                scenes=3,
-                word_count=900,
-                hook=f"Hook {chapter_number}",
-            )
-            for chapter_number in range(1, 21)
-        ],
-        editorial_findings=[],
+        issue_codes=["thin_chapter"],
+    )
+
+    validate_report(report)
+
+
+def test_validate_report_rejects_unresolved_blockers() -> None:
+    report = _uat_report(
+        blocker_count=1,
+        export_gate_passed=False,
+        issue_codes=["empty_chapter"],
     )
 
     try:
         validate_report(report)
     except ValueError as exc:
-        assert "unresolved review warnings or blockers" in str(exc)
+        assert "unresolved review blockers" in str(exc)
     else:
-        raise AssertionError("validate_report should reject zero-warning failures")
+        raise AssertionError("validate_report should reject blockers")
 
 
 def test_resolve_output_paths_uses_artifact_dir_by_default(tmp_path: Path) -> None:
@@ -355,6 +245,124 @@ def test_resolve_output_paths_uses_canonical_defaults_when_requested() -> None:
     assert "docs" in markdown_path.parts
     assert json_path.name == "LONGFORM_DASHSCOPE_LIVE_EVIDENCE.json"
     assert "docs" in json_path.parts
+
+
+def test_run_longform_uat_uses_workspace_jobs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def workspace_payload(workspace_id: str) -> dict[str, Any]:
+        return {
+            "workspace_id": workspace_id,
+            "chapters": [
+                {
+                    "chapter_number": 1,
+                    "filename": "chapter-001.md",
+                    "word_count": 420,
+                    "summary": "Mira receives the ledger page.",
+                },
+                {
+                    "chapter_number": 2,
+                    "filename": "chapter-002.md",
+                    "word_count": 430,
+                    "summary": "The debt becomes public pressure.",
+                },
+            ],
+            "latest_review": {
+                "export_blocked": False,
+                "blockers": [],
+                "warnings": [
+                    {
+                        "code": "thin_chapter",
+                        "severity": "warning",
+                        "location": "chapter-001",
+                        "message": "Chapter 1 is lean.",
+                        "suggestion": "Expand the opening when editing.",
+                    }
+                ],
+                "suggestions": [],
+                "style_notes": ["Markdown chapters are the manuscript authority."],
+            },
+            "runs": [{"run_id": "run-1", "artifact_count": 6}],
+            "exports": [
+                {
+                    "filename": "manuscript.md",
+                    "artifact_id": "manuscript.md",
+                    "relative_path": "exports/manuscript.md",
+                }
+            ],
+        }
+
+    def fake_request_json(
+        session: Any,
+        traces: list[RequestTrace],
+        *,
+        base_url: str,
+        step: str,
+        method: str,
+        path: str,
+        headers: dict[str, str] | None = None,
+        payload: dict[str, Any] | None = None,
+        allowed_status_codes: tuple[int, ...] = (200,),
+        timeout_seconds: int = 900,
+    ) -> tuple[int, dict[str, Any]]:
+        del session, base_url, headers, allowed_status_codes, timeout_seconds
+        status_code = 201 if step == "create_workspace" else 202 if method == "POST" else 200
+        traces.append(
+            RequestTrace(
+                step=step,
+                method=method,
+                path=path,
+                status_code=status_code,
+                duration_ms=25,
+            )
+        )
+        if step == "login":
+            return 200, {"workspace_id": "user-operator"}
+        if step == "create_workspace":
+            assert payload is not None
+            return 201, {"workspace_id": str(payload["workspace_id"])}
+        if step == "run_workspace":
+            return 202, {"job_id": "run-job", "status": "completed"}
+        if step == "poll_run_job":
+            return 200, {"job_id": "run-job", "status": "completed"}
+        if step == "export_workspace":
+            return 202, {"job_id": "export-job", "status": "completed"}
+        if step == "poll_export_job":
+            return 200, {
+                "job_id": "export-job",
+                "status": "completed",
+                "result": {
+                    "result_type": "export",
+                    "export": {
+                        "artifact_id": "manuscript.md",
+                        "filename": "manuscript.md",
+                        "relative_path": "exports/manuscript.md",
+                    }
+                },
+            }
+        if step.startswith("get_workspace"):
+            workspace_id = path.split("/workspaces/")[-1].split("/")[0]
+            return 200, workspace_payload(workspace_id)
+        raise AssertionError(f"Unexpected step: {step}")
+
+    monkeypatch.setattr(longform_uat, "_request_json", fake_request_json)
+
+    report = longform_uat.run_longform_uat(
+        base_url="http://127.0.0.1:8000",
+        target_chapters=2,
+        story_title_seed="DashScope PR Gate",
+        timeout_seconds=10,
+    )
+
+    assert report.exported is True
+    assert report.warning_count == 1
+    assert report.blocker_count == 0
+    assert report.export_outcome == "exported"
+    assert all(not trace.path.startswith("/api/" + "v") for trace in report.request_trace)
+    assert any(
+        trace.path.endswith("/jobs") and trace.step == "run_workspace"
+        for trace in report.request_trace
+    )
 
 
 def test_run_longform_uat_wraps_failures_with_partial_context(
@@ -408,8 +416,10 @@ def test_run_longform_uat_wraps_failures_with_partial_context(
         )
 
     report = exc_info.value.report
-    assert report.workspace_id == "user-operator"
+    assert report.principal_workspace_id == "user-operator"
+    assert report.workspace_id is not None
+    assert report.workspace_id.startswith("dashscope-pr-gate")
     assert report.story_title is not None
     assert report.story_title.startswith("DashScope PR Gate")
-    assert report.failed_step == "create_story"
+    assert report.failed_step == "create_workspace"
     assert report.error_message == "provider timeout"

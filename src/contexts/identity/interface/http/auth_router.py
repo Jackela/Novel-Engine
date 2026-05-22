@@ -20,6 +20,7 @@ from src.apps.api.dependencies import (
     get_current_user,
     get_current_user_optional,
     get_identity_service,
+    user_workspace_id,
 )
 from src.apps.api.routes.guest import (
     GUEST_SESSION_COOKIE,
@@ -109,6 +110,18 @@ class UserResponse(BaseModel):
     username: str = Field(..., description="Username")
     email: str = Field(..., description="Email address")
     roles: list[str] = Field(default_factory=list, description="User roles")
+
+
+class CurrentUserResponse(UserResponse):
+    """Current user plus the server-owned workspace namespace."""
+
+    workspace_id: str = Field(..., description="Active workspace identifier")
+    identity_kind: str = Field(default="user", description="Resolved identity kind")
+    workspace_kind: str = Field(default="user", description="Resolved workspace kind")
+    active_workspace: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved active workspace summary",
+    )
 
 
 class RegisterRequest(BaseModel):
@@ -229,7 +242,10 @@ async def login(
 
     data = ResultErrorHandler.handle(result, "login")
     user = data["user"]
-    workspace_id = f"user-{user['username']}"
+    workspace_id = user_workspace_id(
+        user_id=str(user["id"]),
+        username=str(user["username"]),
+    )
     session = await runtime_store.create_or_resume_guest_session(workspace_id)
     _set_workspace_cookie(response, session.workspace_id)
 
@@ -307,7 +323,10 @@ async def refresh_token(
     )
 
     user = refresh_issue.session.user_snapshot
-    workspace_id = f"user-{user['username']}"
+    workspace_id = user_workspace_id(
+        user_id=str(user["id"]),
+        username=str(user["username"]),
+    )
     session = await runtime_store.create_or_resume_guest_session(workspace_id)
     _set_workspace_cookie(response, session.workspace_id)
     return _session_response_from_user(user, session.workspace_id)
@@ -342,14 +361,14 @@ async def logout(
 
 @router.get(
     "/me",
-    response_model=UserResponse,
+    response_model=CurrentUserResponse,
     status_code=status.HTTP_200_OK,
     summary="Get current user",
     description="Get information about the currently authenticated user.",
 )
 async def get_current_user_info(
     user: CurrentUser = Depends(get_current_user),
-) -> UserResponse:
+) -> CurrentUserResponse:
     """Get current user information.
 
     Args:
@@ -358,11 +377,14 @@ async def get_current_user_info(
     Returns:
         UserResponse containing user information.
     """
-    return UserResponse(
+    workspace_id = user_workspace_id(user_id=user.user_id, username=user.username)
+    return CurrentUserResponse(
         id=user.user_id,
         username=user.username,
         email=user.email,
         roles=user.roles,
+        workspace_id=workspace_id,
+        active_workspace=_active_workspace_payload(workspace_id),
     )
 
 

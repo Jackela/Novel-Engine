@@ -1,8 +1,7 @@
-"""Deterministic text generation provider for local development and tests."""
+"""Deterministic text generation provider for local tests."""
 
 from __future__ import annotations
 
-import hashlib
 import json
 from typing import Any
 
@@ -15,7 +14,7 @@ from src.contexts.ai.application.ports.text_generation_port import (
 
 
 class DeterministicTextGenerationProvider(TextGenerationProvider):
-    """Deterministic provider that returns stable structured outputs."""
+    """Deterministic provider that returns stable local-writing outputs."""
 
     def __init__(
         self,
@@ -40,333 +39,276 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
 
     def _build_payload(self, task: TextGenerationTask) -> dict[str, Any]:
         step = task.step.strip().lower()
-        if step == "bible":
-            return self._build_bible_payload(task)
-        if step == "outline":
-            return self._build_outline_payload(task)
-        if step == "chapter_scenes":
-            return self._build_scene_payload(task)
-        if step == "semantic_review":
-            return self._build_semantic_review_payload(task)
-        if step == "revision":
+        if step == "chapter_draft":
+            return self._build_chapter_payload(task)
+        if step == "chapter_revision":
             return self._build_revision_payload(task)
-        if step == "terminal_arc_revision":
-            return self._build_terminal_arc_revision_payload(task)
+        if step == "editorial_review":
+            return self._build_editorial_review_payload(task)
         return {"result": "ok", "step": task.step, "echo": task.metadata}
 
-    def _build_bible_payload(self, task: TextGenerationTask) -> dict[str, Any]:
-        premise = str(task.metadata.get("premise", ""))
-        genre = str(task.metadata.get("genre", "adventure"))
-        tone = str(task.metadata.get("tone", "commercial web fiction"))
-        fingerprint = self._fingerprint(premise, genre, tone)
-        names = self._character_names(fingerprint)
-        return {
-            "world_bible": {
-                "setting": f"{genre.title()} realm anchored by {fingerprint[:8]}",
-                "core_rules": [
-                    "Power has a measurable cost",
-                    "Faction politics shape every major conflict",
-                    "Public reputation impacts survival odds",
-                ],
-                "timeline_anchor": "Day 1",
-                "tone": tone,
-            },
-            "character_bible": {
-                "characters": [
-                    {
-                        "name": names[0],
-                        "core_trait": "disciplined",
-                        "motivation": "protect family",
-                    },
-                    {
-                        "name": names[1],
-                        "core_trait": "ambitious",
-                        "motivation": "rise in faction rank",
-                    },
-                    {
-                        "name": names[2],
-                        "core_trait": "pragmatic",
-                        "motivation": "uncover hidden truth",
-                    },
-                ]
-            },
-            "premise_summary": premise[:240],
-        }
-
-    def _build_outline_payload(self, task: TextGenerationTask) -> dict[str, Any]:
-        chapters_target = int(task.metadata.get("target_chapters", 12))
-        chapters: list[dict[str, Any]] = []
-        for chapter_number in range(1, max(1, chapters_target) + 1):
-            chapters.append(
-                {
-                    "chapter_number": chapter_number,
-                    "title": f"Chapter {chapter_number}: Escalation",
-                    "summary": (
-                        f"Day {chapter_number}: pressure rises and alliances shift."
-                    ),
-                    "hook": (
-                        f"Who triggered the hidden trap at the end of chapter "
-                        f"{chapter_number}?"
-                    ),
-                    "promise": f"Chapter {chapter_number} promises a sharper reveal.",
-                    "pacing_phase": (
-                        "setup"
-                        if chapter_number <= 3
-                        else "escalation"
-                        if chapter_number <= max(4, chapters_target - 2)
-                        else "payoff"
-                    ),
-                    "narrative_strand": (
-                        "quest"
-                        if chapter_number % 3 == 1
-                        else "fire"
-                        if chapter_number % 3 == 2
-                        else "constellation"
-                    ),
-                    "chapter_objective": "force a costly decision",
-                    "primary_strand": (
-                        "quest"
-                        if chapter_number % 3 == 1
-                        else "fire"
-                        if chapter_number % 3 == 2
-                        else "constellation"
-                    ),
-                    "secondary_strand": (
-                        "fire" if chapter_number % 2 == 0 else "constellation"
-                    ),
-                    "promised_payoff": (
-                        f"Reveal the hidden cost seeded in chapter {chapter_number}."
-                    ),
-                    "hook_strength": 82 if chapter_number < chapters_target else 60,
-                }
-            )
-        return {"chapters": chapters}
-
-    def _build_scene_payload(self, task: TextGenerationTask) -> dict[str, Any]:
+    def _build_chapter_payload(self, task: TextGenerationTask) -> dict[str, Any]:
         chapter_number = int(task.metadata.get("chapter_number", 1))
-        chapter_title = str(task.metadata.get("chapter_title", f"Chapter {chapter_number}"))
-        return {
-            "scenes": [
-                {
-                    "scene_type": "opening",
-                    "title": f"{chapter_title} - Opening Beat",
-                    "content": (
-                        f"Day {chapter_number}: the protagonist enters with a concrete goal."
-                    ),
-                },
-                {
-                    "scene_type": "dialogue",
-                    "title": f"{chapter_title} - Pressure Test",
-                    "content": (
-                        "A tense negotiation exposes conflict and raises stakes."
-                    ),
-                },
-                {
-                    "scene_type": "ending",
-                    "title": f"{chapter_title} - Hook",
-                    "content": "A final twist lands as a cliffhanger?",
-                },
-            ]
-        }
-
-    def _build_revision_payload(self, task: TextGenerationTask) -> dict[str, Any]:
-        issues = task.metadata.get("issues", [])
-        issue_count = len(issues) if isinstance(issues, list) else 0
-        notes = [
-            "Align chapter timeline markers so they never regress.",
-            "Strengthen chapter-end hooks for non-final chapters.",
+        title = str(task.metadata.get("title", "Untitled Story")).strip()
+        genre = str(task.metadata.get("genre", "fantasy")).strip()
+        premise = str(task.metadata.get("premise", "")).strip()
+        tone = str(task.metadata.get("tone", "immersive serial fiction")).strip()
+        previous_summaries = task.metadata.get("previous_summaries", [])
+        unresolved_promises = task.metadata.get("unresolved_promises", [])
+        cast_options = [
+            ("Mira", "Tomas", "station", "ledger page"),
+            ("Ilen", "Rook", "archive stair", "sealed index card"),
+            ("Sera", "Vale", "flood market", "brass token"),
+            ("Niko", "Adra", "observatory roof", "blackout map"),
         ]
-        if issue_count == 0:
-            notes = ["No critical revisions required."]
-        return {"revision_notes": notes}
-
-    def _build_semantic_review_payload(self, task: TextGenerationTask) -> dict[str, Any]:
-        overdue_promise_count = int(task.metadata.get("overdue_promise_count", 0))
-        unresolved_hook_count = int(task.metadata.get("unresolved_hook_count", 0))
-        blocker = overdue_promise_count >= 4
-        issues: list[dict[str, str]] = []
-        if blocker:
-            issues.append(
-                {
-                    "code": "promise_break",
-                    "severity": "blocker",
-                    "message": "Too many chapter promises remain unpaid.",
-                    "location": "story",
-                    "suggestion": "Resolve or escalate the oldest promise thread.",
-                }
-            )
-        elif unresolved_hook_count >= 3:
-            issues.append(
-                {
-                    "code": "weak_serial_pull",
-                    "severity": "warning",
-                    "message": "Recent hooks are not converting into enough forward pull.",
-                    "location": "story",
-                    "suggestion": "Sharpen the next chapter cliffhanger and payoff rhythm.",
-                }
-            )
+        pressure_options = [
+            "a debt that names its collector before the victim",
+            "a record filed tomorrow with today's blood still wet",
+            "a signal that arrives before the machine is built",
+            "a bargain everyone remembers except the person who signed it",
+        ]
+        turn_options = [
+            "chooses to keep the evidence instead of handing it over",
+            "lies once, then has to defend the lie with a true confession",
+            "breaks the safest rule in the room to protect a weaker witness",
+            "refuses the obvious escape because it would abandon the only proof",
+        ]
+        protagonist, confidant, setting, object_name = cast_options[
+            (chapter_number - 1) % len(cast_options)
+        ]
+        pressure = pressure_options[(chapter_number - 1) % len(pressure_options)]
+        turn = turn_options[(chapter_number - 1) % len(turn_options)]
+        continuity_note = (
+            f"What happened before leaves {protagonist} watching for the cost "
+            "inside ordinary gestures."
+            if previous_summaries
+            else f"The first pressure in {title} arrives quietly, before anyone can "
+            "name it as danger."
+        )
+        promise_note = (
+            str(unresolved_promises[-1])
+            if isinstance(unresolved_promises, list) and unresolved_promises
+            else pressure
+        )
+        premise_note = premise or "a rumor nobody wanted to own"
+        chapter_titles = [
+            "The First Cost",
+            "A Record Filed Early",
+            "The Witness Under Glass",
+            "The Door That Answers Back",
+            "Terms Written in Rain",
+        ]
+        chapter_title = chapter_titles[(chapter_number - 1) % len(chapter_titles)]
+        chapter_markdown = (
+            f"# Chapter {chapter_number}: {chapter_title}\n\n"
+            f"The {setting} had a way of making every private fear sound public. "
+            f"{protagonist} noticed it in the scrape of shoes, in the hush after "
+            f"doors opened, and in the way the {genre} city seemed to lean closer "
+            f"whenever someone pretended not to listen.\n\n"
+            f"{continuity_note} The trail began with {premise_note}, but no trail "
+            f"stayed harmless after midnight. Tonight it had narrowed to {object_name}, "
+            f"wrapped in plain paper and left where only a frightened friend would "
+            f"think to look.\n\n"
+            f"\"You should have burned it,\" {confidant} said.\n\n"
+            f"\"You should have warned me before it learned my name,\" {protagonist} "
+            f"answered.\n\n"
+            f"That made {confidant} go still. The silence was useful because it showed "
+            f"where the truth pressed hardest. {protagonist} opened the packet and found "
+            f"one sentence waiting inside it: {promise_note}. The sentence did not behave "
+            f"like a message. It behaved like a door.\n\n"
+            f"A vendor shouted two streets away. A lamp failed above them. For a moment "
+            f"the whole district seemed to inhale through the same narrow crack. "
+            f"{confidant} reached for the packet, but {protagonist} moved first and "
+            f"{turn}.\n\n"
+            f"That choice changed the room more than the evidence did. People who had "
+            f"looked bored now looked careful. The exit behind {confidant} filled with "
+            f"someone's shadow, too patient to be an accident.\n\n"
+            f"{protagonist} folded the {object_name} into an inside pocket. \"If this "
+            f"is a trap, we spring it where we can see the teeth.\"\n\n"
+            f"The shadow at the exit shifted. {confidant} did not run. That was the "
+            f"first honest thing either of them had done all night, and it cost them "
+            f"their last quiet minute."
+        )
         return {
-            "semantic_score": 72 if blocker else 90,
-            "reader_pull_score": 68 if unresolved_hook_count >= 3 else 88,
-            "plot_clarity_score": 84,
-            "ooc_risk_score": 18,
-            "summary": (
-                "Serial pull is under pressure from overdue promises."
-                if blocker
-                else "Semantic review sees stable reader pull and coherent progression."
-            ),
-            "repair_suggestions": [
-                "兑现最老的一条承诺，避免章节债务继续堆积。",
-                "下一章结尾给出更明确的追读钩子。",
-            ],
-            "issues": issues,
+            "chapter_markdown": chapter_markdown,
+            "sidecar_metadata": {
+                "summary": (
+                    f"Chapter {chapter_number} follows {protagonist} and {confidant} "
+                    f"as {object_name} turns a private warning into public pressure."
+                ),
+                "characters": [protagonist, confidant],
+                "promises": [
+                    {
+                        "text": f"The promise around {object_name} must force a visible consequence.",
+                        "status": "open",
+                        "chapter_number": chapter_number,
+                    }
+                ],
+                "continuity_changes": [
+                    f"{protagonist} keeps {object_name} instead of surrendering it.",
+                    f"{confidant} stays after the exit is watched.",
+                ],
+                "style_notes": [
+                    f"Tone target: {tone}",
+                    "Complete chapter prose is authoritative; metadata is sidecar only.",
+                ],
+            },
         }
 
-    def _build_terminal_arc_revision_payload(
+    def _build_editorial_review_payload(
         self,
         task: TextGenerationTask,
     ) -> dict[str, Any]:
-        target_chapters = int(task.metadata.get("target_chapters", 20))
-        protagonist = str(task.metadata.get("protagonist", "the protagonist")).strip() or "the protagonist"
-        primary_keeper = str(task.metadata.get("primary_keeper", "the keeper")).strip() or "the keeper"
-        supporting_witness = (
-            str(task.metadata.get("supporting_witness", "the witness")).strip()
-            or "the witness"
-        )
-        public_witness = (
-            str(task.metadata.get("public_witness", supporting_witness)).strip()
-            or supporting_witness
-        )
-        continuity_anchor = (
-            str(task.metadata.get("continuity_anchor", supporting_witness)).strip()
-            or supporting_witness
-        )
-        vessel_label = (
-            str(task.metadata.get("vessel_label", "the vessel")).strip() or "the vessel"
-        )
-        confirmation_trigger = (
-            str(
-                task.metadata.get(
-                    "confirmation_trigger",
-                    "the first physical confirmation from the old rule",
-                )
-            ).strip()
-            or "the first physical confirmation from the old rule"
-        )
-        phases = {
-            "sacrifice": max(1, target_chapters - 4),
-            "aftermath": max(1, target_chapters - 3),
-            "rule_revelation": max(1, target_chapters - 2),
-            "public_reckoning": max(1, target_chapters - 1),
-            "closure": max(1, target_chapters),
-        }
+        chapters = task.metadata.get("chapters", [])
+        dimensions = task.metadata.get("dimensions", [])
+        title = str(task.metadata.get("title", "Untitled Story")).strip()
+        chapter_items = chapters if isinstance(chapters, list) and chapters else []
 
+        def chapter_at(index: int) -> dict[str, Any]:
+            if not chapter_items:
+                return {
+                    "filename": "manuscript",
+                    "location": "manuscript",
+                    "opening": title,
+                    "middle": title,
+                    "ending": title,
+                }
+            item = chapter_items[min(index, len(chapter_items) - 1)]
+            if isinstance(item, dict):
+                return dict(item)
+            return {
+                "filename": "manuscript",
+                "location": "manuscript",
+                "opening": title,
+                "middle": title,
+                "ending": title,
+            }
+
+        first = chapter_at(0)
+        middle = chapter_at(len(chapter_items) // 2)
+        last = chapter_at(max(0, len(chapter_items) - 1))
+        evidence_by_code = {
+            "agency_attribution": str(first.get("opening", title)),
+            "causal_continuity": str(middle.get("middle", title)),
+            "reader_pull": str(last.get("ending", title)),
+            "closure_spacing": " / ".join(
+                str(dict(item).get("ending", "")).strip()
+                for item in chapter_items[-3:]
+                if isinstance(item, dict)
+            )
+            or str(last.get("ending", title)),
+            "promise_trust": self._first_promise_text(task.metadata)
+            or str(middle.get("opening", title)),
+            "voice_stability": str(first.get("middle", first.get("opening", title))),
+        }
+        location_by_code = {
+            "agency_attribution": str(first.get("location", "manuscript")),
+            "causal_continuity": str(middle.get("location", "manuscript")),
+            "reader_pull": str(last.get("location", "manuscript")),
+            "closure_spacing": "manuscript",
+            "promise_trust": "manuscript",
+            "voice_stability": "manuscript",
+        }
+        labels = {
+            str(item.get("code")): str(item.get("label"))
+            for item in dimensions
+            if isinstance(item, dict)
+        }
+        suggestions = []
+        for code in (
+            "agency_attribution",
+            "causal_continuity",
+            "reader_pull",
+            "closure_spacing",
+            "promise_trust",
+            "voice_stability",
+        ):
+            label = labels.get(code, code.replace("_", " "))
+            evidence = self._shorten(evidence_by_code[code])
+            location = location_by_code[code]
+            suggestions.append(
+                {
+                    "code": code,
+                    "message": (
+                        f"In {title}, the {label} pass should inspect {location} "
+                        f"around: {evidence}"
+                    ),
+                    "location": location,
+                    "suggestion": (
+                        f"Revise {location} so {label} is carried by a visible prose beat."
+                    ),
+                    "evidence": evidence_by_code[code],
+                    "details": {"dimension": label, "source": "deterministic-editorial"},
+                }
+            )
+        return {"suggestions": suggestions}
+
+    def _first_promise_text(self, metadata: dict[str, Any]) -> str:
+        sidecars = metadata.get("sidecars", {})
+        if not isinstance(sidecars, dict):
+            return ""
+        for sidecar in sidecars.values():
+            if not isinstance(sidecar, dict):
+                continue
+            promises = sidecar.get("promises", [])
+            if not isinstance(promises, list):
+                continue
+            for promise in promises:
+                if isinstance(promise, dict):
+                    text = str(promise.get("text", "")).strip()
+                else:
+                    text = str(promise).strip()
+                if text:
+                    return text
+        return ""
+
+    def _shorten(self, text: str, limit: int = 96) -> str:
+        cleaned = " ".join(text.split())
+        if len(cleaned) <= limit:
+            return cleaned
+        return cleaned[: limit - 3].rstrip() + "..."
+
+    def _build_revision_payload(self, task: TextGenerationTask) -> dict[str, Any]:
+        chapter_number = int(task.metadata.get("chapter_number", 1))
+        chapter_markdown = (
+            f"# Chapter {chapter_number}: The Debt in the Rain\n\n"
+            "Mira waited until the platform emptied before she opened the parcel again. "
+            "The danger had sounded tidy in Tomas's mouth, as if fear could be "
+            "catalogued and shelved. It could not. The page trembled whenever she "
+            "breathed on it, and each tremor pulled another memory loose: her "
+            "father's sleeve dark with rain, her mother refusing to answer the door, "
+            "Tomas pretending not to know which name had been crossed out first.\n\n"
+            "\"Say it plainly,\" she told him.\n\n"
+            "Tomas looked at the tunnel instead. \"Plainly gets people killed.\"\n\n"
+            "\"So does ornament.\"\n\n"
+            "That made him face her. Something changed there, not on the page: he "
+            "stopped performing caution and let the old grief show. When the train "
+            "arrived, neither of them boarded. They stayed beside the wet rail until "
+            "the city moved around them, and the ledger page named the next cost in a "
+            "line too sharp to mistake for metaphor.\n\n"
+            "The bell struck again. This time the name it carried was hers, and every "
+            "lamp along the platform leaned toward the sound."
+        )
         return {
-            "revision_notes": [
-                "Rebuilt the terminal arc around keeper-led agency, passive vessel logic, and clearer public cost.",
-            ],
-            "chapters": [
-                {
-                    "chapter_number": phases["sacrifice"],
-                    "phase": "sacrifice",
-                    "summary": (
-                        f"{protagonist} makes a visible final choice while {continuity_anchor} witnesses the handoff that keeps the wider order alive, "
-                        "knowing the decision closes every path back to ordinary agency."
-                    ),
-                    "objective": (
-                        f"{protagonist} must choose the sacrifice in full view of {continuity_anchor} so the ending reads as a deliberate cost."
-                    ),
-                    "hook": (
-                        f"{confirmation_trigger.capitalize()} proves the survivors now have to carry the new order without waiting for a miracle return."
-                    ),
-                    "focus_character": protagonist,
-                    "relationship_target": continuity_anchor or primary_keeper,
-                    "relationship_status": "last living handoff before the sacrifice closes",
-                    "scene_brief": "Make the protagonist's final choice explicit and irreversible.",
-                },
-                {
-                    "chapter_number": phases["aftermath"],
-                    "phase": "aftermath",
-                    "summary": (
-                        f"{primary_keeper} tries once to draw an answer from {vessel_label}, fails in public as {continuity_anchor} watches, "
-                        "and realizes the body is moving only through threaded memory rather than recovered feeling."
-                    ),
-                    "objective": (
-                        f"{primary_keeper} must move from grief to duty through one failed action, while {vessel_label} remains passive and any motion reads as borrowed direction rather than instinct."
-                    ),
-                    "hook": "The first unanswered silence points toward a buried rule the living still do not understand.",
-                    "focus_character": primary_keeper,
-                    "relationship_target": vessel_label,
-                    "relationship_status": "guardian of the irreversible cost",
-                    "scene_brief": "Show grief breaking into duty without giving the vessel intentional action.",
-                },
-                {
-                    "chapter_number": phases["rule_revelation"],
-                    "phase": "rule_revelation",
-                    "summary": (
-                        f"A first public attempt fails in view before {primary_keeper}, {supporting_witness or continuity_anchor}, and {continuity_anchor} uncover proof that the old order hid its price in public records, "
-                        f"while {vessel_label} only echoes the discovery through passive reaction."
-                    ),
-                    "objective": "Make the world rule legible through concrete evidence instead of explanation alone, and show why the first public response was not enough.",
-                    "hook": "The proof shows that the final confession will cost the whole city, not only one household.",
-                    "focus_character": primary_keeper,
-                    "relationship_target": vessel_label,
-                    "relationship_status": "keeper interpreting a passive remnant",
-                    "scene_brief": "Keep the revelation physical and evidence-driven.",
-                },
-                {
-                    "chapter_number": phases["public_reckoning"],
-                    "phase": "public_reckoning",
-                    "summary": (
-                        f"The first public attempt nearly breaks under pressure, {public_witness} and {continuity_anchor} have to close the gap before the line scatters, "
-                        "and the room learns through that near-break that the new cost can no longer stay abstract while the farewell finishes inside the same reckoning."
-                    ),
-                    "objective": (
-                        f"Let living witnesses act before {primary_keeper} explains anything, give the line one near-break beat before it stabilizes, and turn the public cost into a visible danger."
-                    ),
-                    "hook": "If the line cannot carry the confession into daylight, the old silence will close over the city again.",
-                    "focus_character": primary_keeper,
-                    "relationship_target": vessel_label,
-                    "relationship_status": "living line carrying borrowed cadence",
-                    "scene_brief": "Keep two non-keeper witnesses active and let the vessel stay passive.",
-                },
-                {
-                    "chapter_number": phases["closure"],
-                    "phase": "closure",
-                    "summary": (
-                        f"{supporting_witness or continuity_anchor} names one concrete remembered detail from the life now gone, {public_witness} makes the first public move, "
-                        f"and {primary_keeper} confirms the new order while {vessel_label} offers no answering voice or returning thought, a visible mark flashes, vanishes from sight, "
-                        "and leaves a bodily aftereffect that proves the cost will continue."
-                    ),
-                    "objective": (
-                        "Split the ending into private closure, public confession, and tangible aftermath without compressing them together or repeating the farewell beat, and make the vessel's silence explicit."
-                    ),
-                    "hook": "The city survives, but the daily public cost now belongs to the living.",
-                    "focus_character": primary_keeper,
-                    "relationship_target": vessel_label,
-                    "relationship_status": "living keeper of a public debt",
-                    "scene_brief": "Show a concrete public consequence and keep the vessel passive.",
-                },
-            ],
+            "chapter_markdown": chapter_markdown,
+            "sidecar_metadata": {
+                "summary": (
+                    f"Chapter {chapter_number} is rewritten around a clearer emotional "
+                    "choice and a more concrete ledger threat."
+                ),
+                "characters": ["Mira", "Tomas"],
+                "promises": [
+                    {
+                        "text": "The next ledger cost must force a public consequence.",
+                        "status": "open",
+                        "chapter_number": chapter_number,
+                    }
+                ],
+                "continuity_changes": [
+                    "The chapter is handled as a full rewrite, not a patch.",
+                ],
+                "style_notes": [
+                    "Avoids mechanical repair language and metadata exposition.",
+                ],
+            },
         }
-
-    @staticmethod
-    def _fingerprint(*parts: str) -> str:
-        value = "|".join(part.strip().lower() for part in parts)
-        return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
-    def _character_names(self, fingerprint: str) -> list[str]:
-        pool = [
-            "Ari",
-            "Lian",
-            "Kade",
-            "Mira",
-            "Ren",
-            "Sora",
-            "Vale",
-            "Nox",
-            "Tara",
-            "Jin",
-        ]
-        start = int(fingerprint[:2], 16) % len(pool)
-        return [pool[(start + offset) % len(pool)] for offset in range(3)]

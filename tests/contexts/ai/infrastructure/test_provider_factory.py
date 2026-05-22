@@ -216,13 +216,16 @@ def test_dashscope_provider_extracts_balanced_object_from_prefixed_text() -> Non
     assert parsed == {"ok": True, "items": [1, 2, 3]}
 
 
-def test_dashscope_provider_uses_extended_timeout_for_longform_outline_steps() -> None:
+def test_dashscope_provider_uses_extended_timeout_for_chapter_steps() -> None:
     provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
     task = TextGenerationTask(
-        step="outline",
+        step="chapter_draft",
         system_prompt="system",
         user_prompt="user",
-        response_schema={"chapters": {"type": "array"}},
+        response_schema={
+            "chapter_markdown": {"type": "string"},
+            "sidecar_metadata": {"type": "object"},
+        },
     )
 
     assert provider._timeout_for_step(task) == 180.0
@@ -233,15 +236,18 @@ def test_dashscope_provider_reports_timeout_with_step_specific_budget(
 ) -> None:
     provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
     task = TextGenerationTask(
-        step="outline",
+        step="chapter_revision",
         system_prompt="system",
         user_prompt="user",
-        response_schema={"chapters": {"type": "array"}},
+        response_schema={
+            "chapter_markdown": {"type": "string"},
+            "sidecar_metadata": {"type": "object"},
+        },
     )
 
     class _TimeoutClient:
         async def post(self, *args: object, **kwargs: object) -> object:
-            raise httpx.ReadTimeout("outline timed out")
+            raise httpx.ReadTimeout("chapter timed out")
 
     monkeypatch.setattr(provider, "_get_client", cast(Any, lambda: _TimeoutClient()))
 

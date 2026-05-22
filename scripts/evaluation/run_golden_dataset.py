@@ -215,7 +215,7 @@ class InMemoryVectorStore:
             query_embedding: Query vector
             n_results: Maximum number of results
             where: Optional metadata filter
-            collection: Collection name (ignored, for compatibility)
+            collection: Collection name accepted by the evaluation runner.
 
         Returns:
             List of query results sorted by similarity

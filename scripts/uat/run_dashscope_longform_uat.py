@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -33,8 +34,6 @@ DEFAULT_JSON_PATH = (
 DEFAULT_ARTIFACTS_DIR = REPO_ROOT / "artifacts" / "longform-uat"
 DEFAULT_TIMEOUT_SECONDS = 900
 DEFAULT_RETRY_DELAY_SECONDS = 3
-MAX_EDITORIAL_REVIEW_PASSES = 3
-MAX_EDITORIAL_REVISION_PASSES = 2
 DEFAULT_STORY_TITLE = "DashScope Longform UAT"
 DEFAULT_PREMISE = (
     "A debt archivist discovers that every erased oath becomes a living ghost, "
@@ -61,9 +60,8 @@ class RequestTrace:
 class ChapterAudit:
     chapter_number: int
     title: str
-    scenes: int
     word_count: int
-    hook: str
+    summary: str
 
 
 @dataclass
@@ -80,7 +78,7 @@ class LongformUatReport:
     started_at: str
     completed_at: str
     base_url: str
-    story_id: str
+    principal_workspace_id: str
     workspace_id: str
     story_title: str
     provider: str
@@ -89,26 +87,19 @@ class LongformUatReport:
     review_model: str
     target_chapters: int
     drafted_chapters: int
-    published: bool
-    publish_outcome: str
-    publish_failure_code: str | None
+    exported: bool
+    export_outcome: str
+    export_failure_code: str | None
+    export_path: str | None
     warning_count: int
     blocker_count: int
+    suggestion_count: int
     review_rounds: int
-    revision_rounds: int
-    quality_score: int
-    continuity_score: int
-    pacing_score: int
-    reader_pull_score: int
-    plot_clarity_score: int
-    ooc_risk_score: int
-    structural_gate_passed: bool
-    semantic_gate_passed: bool
-    publish_gate_passed: bool
+    export_gate_passed: bool
     issue_codes: list[str]
     run_ids: list[str]
     artifact_kinds: list[str]
-    revision_notes: list[str]
+    editorial_notes: list[str]
     request_trace: list[RequestTrace]
     chapter_audit: list[ChapterAudit]
     editorial_findings: list[EditorialFinding]
@@ -121,7 +112,7 @@ class LongformUatFailureReport:
     base_url: str
     target_chapters: int
     story_title_seed: str
-    story_id: str | None
+    principal_workspace_id: str | None
     workspace_id: str | None
     story_title: str | None
     failed_step: str
@@ -146,62 +137,50 @@ def _find_free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _chapter_word_count(chapter: dict[str, Any]) -> int:
-    words = 0
-    for scene in chapter.get("scenes", []):
-        content = str(scene.get("content", "")).strip()
-        if content:
-            words += len(content.split())
-    return words
-
-
 def build_editorial_findings(
-    export_payload: dict[str, Any],
+    workspace_payload: dict[str, Any],
     review_report: dict[str, Any],
     *,
     target_chapters: int,
 ) -> tuple[list[ChapterAudit], list[EditorialFinding]]:
-    story = export_payload["story"]
-    outline = export_payload.get("outline") or {}
-    outline_by_chapter = {
-        int(chapter.get("chapter_number", 0)): str(chapter.get("hook", "")).strip()
-        for chapter in outline.get("chapters", [])
-        if isinstance(chapter, dict)
-    }
-    chapters = story.get("chapters", [])
+    chapters = workspace_payload.get("chapters", [])
     chapter_audit = [
         ChapterAudit(
             chapter_number=int(chapter.get("chapter_number", 0)),
-            title=str(chapter.get("title", "")),
-            scenes=len(chapter.get("scenes", [])),
-            word_count=_chapter_word_count(chapter),
-            hook=outline_by_chapter.get(int(chapter.get("chapter_number", 0)), ""),
+            title=str(chapter.get("filename", "")),
+            word_count=int(chapter.get("word_count", 0)),
+            summary=str(chapter.get("summary", "")).strip(),
         )
         for chapter in chapters
         if isinstance(chapter, dict)
     ]
 
     findings: list[EditorialFinding] = []
-    for issue in review_report.get("issues", []):
-        if not isinstance(issue, dict):
-            continue
-        severity = "critical" if issue.get("severity") == "blocker" else "warning"
-        location = issue.get("location")
-        issue_chapter: int | None = None
-        if isinstance(location, str) and "chapter-" in location:
-            tail = location.split("chapter-")[-1]
-            if tail.isdigit():
-                issue_chapter = int(tail)
-        findings.append(
-            EditorialFinding(
-                severity=severity,
-                area="system review",
-                chapter=issue_chapter,
-                summary=str(issue.get("message", "")).strip() or str(issue.get("code", "issue")),
-                recommendation=str(issue.get("suggestion", "")).strip()
-                or "Revise the affected chapter before release.",
+    for bucket, severity in (
+        ("blockers", "critical"),
+        ("warnings", "warning"),
+        ("suggestions", "info"),
+    ):
+        for issue in review_report.get(bucket, []):
+            if not isinstance(issue, dict):
+                continue
+            location = issue.get("location")
+            issue_chapter: int | None = None
+            if isinstance(location, str) and "chapter-" in location:
+                tail = location.split("chapter-")[-1]
+                if tail.isdigit():
+                    issue_chapter = int(tail)
+            findings.append(
+                EditorialFinding(
+                    severity=severity,
+                    area="workspace review",
+                    chapter=issue_chapter,
+                    summary=str(issue.get("message", "")).strip()
+                    or str(issue.get("code", "issue")),
+                    recommendation=str(issue.get("suggestion", "")).strip()
+                    or "Use as editorial guidance before external release.",
+                )
             )
-        )
 
     underlength_chapters = [chapter for chapter in chapter_audit if chapter.word_count < 250]
     for chapter in underlength_chapters[:5]:
@@ -218,15 +197,15 @@ def build_editorial_findings(
             )
         )
 
-    chapters_missing_hooks = [chapter for chapter in chapter_audit if not chapter.hook]
-    for chapter in chapters_missing_hooks[:5]:
+    chapters_missing_summaries = [chapter for chapter in chapter_audit if not chapter.summary]
+    for chapter in chapters_missing_summaries[:5]:
         findings.append(
             EditorialFinding(
                 severity="warning",
-                area="hook architecture",
+                area="sidecar metadata",
                 chapter=chapter.chapter_number,
-                summary=f"Chapter {chapter.chapter_number} is missing an explicit outline hook.",
-                recommendation="Add a sharper exit hook to sustain serial pull.",
+                summary=f"Chapter {chapter.chapter_number} is missing a sidecar summary.",
+                recommendation="Regenerate or review sidecar metadata before handoff.",
             )
         )
 
@@ -267,17 +246,17 @@ def validate_report(report: LongformUatReport) -> None:
     if not report.chapter_audit or len(report.chapter_audit) < report.target_chapters:
         raise ValueError("Missing chapter-level evidence for the long-form manuscript.")
 
-    if report.quality_score <= 0 or report.review_provider == "":
+    if report.review_provider == "":
         raise ValueError("Missing review evidence from the final manuscript review.")
 
-    if not report.published or report.publish_outcome != "published":
+    if not report.exported or report.export_outcome != "exported":
         raise ValueError(
-            "Long-form UAT did not reach a successful publish outcome."
+            "Long-form UAT did not reach a successful export outcome."
         )
 
-    if report.warning_count > 0 or report.blocker_count > 0:
+    if report.blocker_count > 0:
         raise ValueError(
-            "Long-form UAT finished with unresolved review warnings or blockers."
+            "Long-form UAT finished with unresolved review blockers."
         )
 
 
@@ -287,7 +266,7 @@ def render_markdown_report(report: LongformUatReport) -> str:
         for entry in report.request_trace
     )
     chapter_rows = "\n".join(
-        f"| {chapter.chapter_number} | {chapter.title or 'Untitled'} | {chapter.scenes} | {chapter.word_count} | {chapter.hook or 'missing'} |"
+        f"| {chapter.chapter_number} | {chapter.title or 'Untitled'} | {chapter.word_count} | {chapter.summary or 'missing'} |"
         for chapter in report.chapter_audit[: report.target_chapters]
     )
     finding_rows = "\n".join(
@@ -297,7 +276,7 @@ def render_markdown_report(report: LongformUatReport) -> str:
     issue_codes = ", ".join(report.issue_codes) if report.issue_codes else "none"
     run_ids = ", ".join(report.run_ids) if report.run_ids else "none"
     artifact_kinds = ", ".join(report.artifact_kinds) if report.artifact_kinds else "none"
-    revision_notes = "\n".join(f"- {note}" for note in report.revision_notes) or "- none"
+    editorial_notes = "\n".join(f"- {note}" for note in report.editorial_notes) or "- none"
 
     return f"""# DashScope 20-Chapter Live Evidence
 
@@ -306,38 +285,32 @@ def render_markdown_report(report: LongformUatReport) -> str:
 - started: `{report.started_at}`
 - completed: `{report.completed_at}`
 - base URL: `{report.base_url}`
-- story: `{report.story_title}` (`{report.story_id}`)
+- story: `{report.story_title}`
+- principal workspace: `{report.principal_workspace_id}`
 - workspace: `{report.workspace_id}`
 - provider/model: `{report.provider}` / `{report.model}`
 - review provider/model: `{report.review_provider}` / `{report.review_model}`
 - target chapters: `{report.target_chapters}`
 - drafted chapters: `{report.drafted_chapters}`
-- publish outcome: `{report.publish_outcome}`
-- publish failure code: `{report.publish_failure_code or 'n/a'}`
+- export outcome: `{report.export_outcome}`
+- export failure code: `{report.export_failure_code or 'n/a'}`
+- export path: `{report.export_path or 'n/a'}`
 - review rounds: `{report.review_rounds}`
-- revision rounds: `{report.revision_rounds}`
 
 ## Machine Evidence
 
 - warnings: `{report.warning_count}`
 - blockers: `{report.blocker_count}`
-- quality score: `{report.quality_score}`
-- continuity: `{report.continuity_score}`
-- pacing: `{report.pacing_score}`
-- reader pull: `{report.reader_pull_score}`
-- plot clarity: `{report.plot_clarity_score}`
-- OOC risk: `{report.ooc_risk_score}`
-- structural gate: `{'pass' if report.structural_gate_passed else 'blocked'}`
-- semantic gate: `{'pass' if report.semantic_gate_passed else 'blocked'}`
-- publish gate: `{'pass' if report.publish_gate_passed else 'blocked'}`
-- published: `{'yes' if report.published else 'no'}`
+- suggestions: `{report.suggestion_count}`
+- export gate: `{'pass' if report.export_gate_passed else 'blocked'}`
+- exported: `{'yes' if report.exported else 'no'}`
 - issue codes: `{issue_codes}`
 - run IDs: `{run_ids}`
 - artifact kinds: `{artifact_kinds}`
 
 ## Editorial Review
 
-Strict review was generated from the exported manuscript, outline hooks, and final system review. This is not a marketing summary; it is a release-readiness critique.
+Workspace review was generated from local chapter Markdown and sidecar metadata. Warnings are editorial advice; only blockers prevent export.
 
 | Severity | Area | Chapter | Finding | Recommendation |
 | --- | --- | --- | --- | --- |
@@ -345,13 +318,13 @@ Strict review was generated from the exported manuscript, outline hooks, and fin
 
 ## Chapter Audit
 
-| Chapter | Title | Scenes | Word count | Hook |
-| --- | --- | --- | --- | --- |
+| Chapter | File | Word count | Sidecar summary |
+| --- | --- | --- | --- |
 {chapter_rows}
 
-## Revision Notes
+## Editorial Notes
 
-{revision_notes}
+{editorial_notes}
 
 ## Request Trace
 
@@ -367,7 +340,7 @@ def render_failure_markdown_report(report: LongformUatFailureReport) -> str:
         for entry in report.request_trace
     ) or "| none | `n/a` | 0 | 0 |"
     story_title = report.story_title or "n/a"
-    story_id = report.story_id or "n/a"
+    principal_workspace_id = report.principal_workspace_id or "n/a"
     workspace_id = report.workspace_id or "n/a"
 
     return f"""# DashScope 20-Chapter Live Evidence
@@ -380,7 +353,7 @@ def render_failure_markdown_report(report: LongformUatFailureReport) -> str:
 - target chapters: `{report.target_chapters}`
 - story title seed: `{report.story_title_seed}`
 - story title: `{story_title}`
-- story: `{story_id}`
+- principal workspace: `{principal_workspace_id}`
 - workspace: `{workspace_id}`
 - failed step: `{report.failed_step}`
 - error: `{report.error_message}`
@@ -500,6 +473,7 @@ def _managed_backend(settings: NovelEngineSettings) -> Iterator[str]:
                 "MONITORING_METRICS_ENABLED": "false",
                 "LLM_PROVIDER": "dashscope",
                 "LLM_TIMEOUT": "180",
+                "APP_DATA_DIR": str(Path(temp_dir) / "data"),
                 "DB_URL": f"sqlite:///{db_path.as_posix()}",
             }
         )
@@ -536,6 +510,11 @@ def _story_title(seed: str) -> str:
     return f"{seed} {timestamp}"
 
 
+def _workspace_slug(title: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", title.strip().lower()).strip("-_")
+    return slug[:64] or "dashscope-longform-uat"
+
+
 def _is_transient_status(status_code: int, body: dict[str, Any]) -> bool:
     if status_code in {408, 429, 500, 502, 503, 504}:
         return True
@@ -563,28 +542,42 @@ def _is_transient_request_exception(exc: requests.RequestException) -> bool:
     )
 
 
-def _issue_counts(review_payload: dict[str, Any]) -> tuple[int, int]:
-    warning_count = 0
-    blocker_count = 0
-    for issue in review_payload.get("issues", []):
-        if not isinstance(issue, dict):
-            continue
-        severity = str(issue.get("severity", "")).strip().lower()
-        if severity == "warning":
-            warning_count += 1
-        elif severity == "blocker":
-            blocker_count += 1
-    return warning_count, blocker_count
-
-
-def _requires_editorial_closure(review_payload: dict[str, Any]) -> bool:
-    warning_count, blocker_count = _issue_counts(review_payload)
+def _issue_counts(review_payload: dict[str, Any]) -> tuple[int, int, int]:
+    warnings = review_payload.get("warnings", [])
+    blockers = review_payload.get("blockers", [])
+    suggestions = review_payload.get("suggestions", [])
     return (
-        warning_count > 0
-        or blocker_count > 0
-        or not bool(review_payload.get("ready_for_publish", False))
-        or not bool(review_payload.get("publish_gate_passed", False))
+        len(warnings) if isinstance(warnings, list) else 0,
+        len(blockers) if isinstance(blockers, list) else 0,
+        len(suggestions) if isinstance(suggestions, list) else 0,
     )
+
+
+def _poll_job_until_terminal(
+    session: requests.Session,
+    traces: list[RequestTrace],
+    *,
+    base_url: str,
+    step: str,
+    path: str,
+    timeout_seconds: int,
+) -> dict[str, Any]:
+    deadline = time.time() + timeout_seconds
+    payload: dict[str, Any] = {}
+    while time.time() < deadline:
+        _, payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step=step,
+            method="GET",
+            path=path,
+            timeout_seconds=min(timeout_seconds, 60),
+        )
+        if payload.get("status") in {"completed", "failed", "interrupted"}:
+            return payload
+        time.sleep(DEFAULT_RETRY_DELAY_SECONDS)
+    raise RuntimeError(f"{step} did not finish within {timeout_seconds} seconds: {payload}")
 
 
 def _resolve_output_paths(
@@ -614,8 +607,8 @@ def run_longform_uat(
     session = requests.Session()
     traces: list[RequestTrace] = []
     started_at = _utc_now()
+    principal_workspace_id: str | None = None
     workspace_id: str | None = None
-    story_id: str | None = None
     title: str | None = None
 
     try:
@@ -625,7 +618,7 @@ def run_longform_uat(
             base_url=base_url,
             step="login",
             method="POST",
-            path="/api/v1/auth/login",
+            path="/api/auth/login",
             payload={
                 "email": DEFAULT_LOGIN_EMAIL,
                 "password": DEFAULT_LOGIN_PASSWORD,
@@ -633,17 +626,20 @@ def run_longform_uat(
             timeout_seconds=timeout_seconds,
         )
         del login_status
-        workspace_id = str(login_payload["workspace_id"])
+        principal_workspace_id = str(login_payload["workspace_id"])
 
         title = _story_title(story_title_seed)
+        workspace_id = _workspace_slug(title)
         _, create_payload = _request_json(
             session,
             traces,
             base_url=base_url,
-            step="create_story",
+            step="create_workspace",
             method="POST",
-            path="/api/v1/story",
+            path="/api/workspaces",
+            allowed_status_codes=(201,),
             payload={
+                "workspace_id": workspace_id,
                 "title": title,
                 "genre": DEFAULT_GENRE,
                 "premise": DEFAULT_PREMISE,
@@ -654,201 +650,161 @@ def run_longform_uat(
             },
             timeout_seconds=timeout_seconds,
         )
-        story_id = str(create_payload["story"]["id"])
+        workspace_id = str(create_payload["workspace_id"])
 
-        _request_json(
+        _, run_job_payload = _request_json(
             session,
             traces,
             base_url=base_url,
-            step="generate_blueprint",
+            step="run_workspace",
             method="POST",
-            path=f"/api/v1/story/{story_id}/blueprint",
+            path=f"/api/workspaces/{workspace_id}/jobs",
+            allowed_status_codes=(202,),
+            payload={
+                "operation": "run",
+                "target_chapters": target_chapters,
+                "provider": "dashscope",
+            },
             timeout_seconds=timeout_seconds,
         )
-        _, outline_payload = _request_json(
+        run_job_id = str(run_job_payload["job_id"])
+        run_job_payload = _poll_job_until_terminal(
             session,
             traces,
             base_url=base_url,
-            step="generate_outline",
-            method="POST",
-            path=f"/api/v1/story/{story_id}/outline",
+            step="poll_run_job",
+            path=f"/api/workspaces/{workspace_id}/jobs/{run_job_id}",
             timeout_seconds=timeout_seconds,
         )
-        _, draft_payload = _request_json(
-            session,
-            traces,
-            base_url=base_url,
-            step="draft_story",
-            method="POST",
-            path=f"/api/v1/story/{story_id}/draft",
-            payload={"target_chapters": target_chapters},
-            timeout_seconds=timeout_seconds,
-        )
-        _, review_response = _request_json(
-            session,
-            traces,
-            base_url=base_url,
-            step="review_story_round_1",
-            method="POST",
-            path=f"/api/v1/story/{story_id}/review",
-            timeout_seconds=timeout_seconds,
-        )
-        final_review = dict(review_response["report"])
-        review_rounds = 1
-        revision_rounds = 0
-        revision_notes: list[str] = []
+        if run_job_payload.get("status") != "completed":
+            raise RuntimeError(f"Run job failed: {run_job_payload.get('error')}")
 
-        while _requires_editorial_closure(final_review):
-            if (
-                revision_rounds >= MAX_EDITORIAL_REVISION_PASSES
-                or review_rounds >= MAX_EDITORIAL_REVIEW_PASSES
-            ):
-                raise ValueError(
-                    "Long-form UAT exhausted the editorial closure loop before reaching zero-warning publish readiness."
-                )
-
-            _, revise_payload = _request_json(
-                session,
-                traces,
-                base_url=base_url,
-                step=f"revise_story_round_{revision_rounds + 1}",
-                method="POST",
-                path=f"/api/v1/story/{story_id}/revise",
-                timeout_seconds=timeout_seconds,
-            )
-            revision_rounds += 1
-            revision_notes.extend(
-                note
-                for note in revise_payload.get("revision_notes", [])
-                if isinstance(note, str) and note.strip()
-            )
-            _, next_review_payload = _request_json(
-                session,
-                traces,
-                base_url=base_url,
-                step=f"review_story_round_{review_rounds + 1}",
-                method="POST",
-                path=f"/api/v1/story/{story_id}/review",
-                timeout_seconds=timeout_seconds,
-            )
-            final_review = dict(next_review_payload["report"])
-            review_rounds += 1
-
-        _, export_payload = _request_json(
+        _, workspace_payload = _request_json(
             session,
             traces,
             base_url=base_url,
-            step="export_story",
-            method="POST",
-            path=f"/api/v1/story/{story_id}/export",
-            timeout_seconds=timeout_seconds,
-        )
-        publish_status, publish_payload = _request_json(
-            session,
-            traces,
-            base_url=base_url,
-            step="publish_story",
-            method="POST",
-            path=f"/api/v1/story/{story_id}/publish",
-            allowed_status_codes=(200, 422),
-            timeout_seconds=timeout_seconds,
-        )
-        _, runs_payload = _request_json(
-            session,
-            traces,
-            base_url=base_url,
-            step="get_runs",
+            step="get_workspace_after_run",
             method="GET",
-            path=f"/api/v1/story/{story_id}/runs",
+            path=f"/api/workspaces/{workspace_id}",
             timeout_seconds=timeout_seconds,
         )
-        _, artifacts_payload = _request_json(
+        final_review = dict(workspace_payload.get("latest_review") or {})
+        review_rounds = 1 if final_review else 0
+
+        _, export_job_payload = _request_json(
             session,
             traces,
             base_url=base_url,
-            step="get_artifacts",
-            method="GET",
-            path=f"/api/v1/story/{story_id}/artifacts",
+            step="export_workspace",
+            method="POST",
+            path=f"/api/workspaces/{workspace_id}/jobs",
+            allowed_status_codes=(202,),
+            payload={"operation": "export", "provider": "dashscope"},
+            timeout_seconds=timeout_seconds,
+        )
+        export_job_id = str(export_job_payload["job_id"])
+        export_job_payload = _poll_job_until_terminal(
+            session,
+            traces,
+            base_url=base_url,
+            step="poll_export_job",
+            path=f"/api/workspaces/{workspace_id}/jobs/{export_job_id}",
             timeout_seconds=timeout_seconds,
         )
         _, workspace_payload = _request_json(
             session,
             traces,
             base_url=base_url,
-            step="get_workspace",
+            step="get_workspace_after_export",
             method="GET",
-            path=f"/api/v1/story/{story_id}/workspace",
+            path=f"/api/workspaces/{workspace_id}",
             timeout_seconds=timeout_seconds,
         )
 
-        warning_count, blocker_count = _issue_counts(final_review)
-        exported_bundle = export_payload["export"]
+        final_review = dict(workspace_payload.get("latest_review") or final_review)
+        warning_count, blocker_count, suggestion_count = _issue_counts(final_review)
         chapter_audit, editorial_findings = build_editorial_findings(
-            exported_bundle,
+            workspace_payload,
             final_review,
             target_chapters=target_chapters,
         )
 
-        publish_outcome = "published" if publish_status == 200 else "blocked"
-        publish_failure_code: str | None = None
-        if publish_status != 200:
-            detail = publish_payload.get("detail")
-            if isinstance(detail, dict):
-                publish_failure_code = str(detail.get("code", "QUALITY_GATE_FAILED"))
-            else:
-                publish_failure_code = "QUALITY_GATE_FAILED"
+        exported = export_job_payload.get("status") == "completed"
+        export_result = export_job_payload.get("result")
+        export_payload = (
+            export_result.get("export", {})
+            if isinstance(export_result, dict)
+            else {}
+        )
+        export_outcome = "exported" if exported else "blocked"
+        export_failure_code = (
+            None if exported else str(export_job_payload.get("error") or "EXPORT_FAILED")
+        )
+        export_path = None
+        if isinstance(export_payload, dict):
+            raw_export_path = (
+                export_payload.get("relative_path")
+                or export_payload.get("filename")
+                or export_payload.get("artifact_id")
+            )
+            export_path = str(raw_export_path) if raw_export_path else None
+        settings = NovelEngineSettings()
+        issue_codes = [
+            str(issue.get("code", "issue"))
+            for bucket in ("blockers", "warnings", "suggestions")
+            for issue in final_review.get(bucket, [])
+            if isinstance(issue, dict)
+        ]
+        run_ids = [
+            str(run.get("run_id"))
+            for run in workspace_payload.get("runs", [])
+            if isinstance(run, dict) and run.get("run_id")
+        ]
+        artifact_kinds = [
+            "chapter_artifacts"
+            for run in workspace_payload.get("runs", [])
+            if isinstance(run, dict) and int(run.get("artifact_count", 0)) > 0
+        ]
+        if final_review:
+            artifact_kinds.append("review")
+        if workspace_payload.get("exports"):
+            artifact_kinds.append("export")
 
         report = LongformUatReport(
             started_at=started_at,
             completed_at=_utc_now(),
             base_url=base_url,
-            story_id=story_id,
+            principal_workspace_id=principal_workspace_id,
             workspace_id=workspace_id,
             story_title=title,
-            provider=str(outline_payload["outline"]["provider"]),
-            model=str(outline_payload["outline"]["model"]),
-            review_provider=str(final_review["semantic_review"]["source_provider"]),
-            review_model=str(final_review["semantic_review"]["source_model"]),
+            provider="dashscope",
+            model=settings.llm.resolved_model("dashscope"),
+            review_provider="local",
+            review_model="local-reviewer",
             target_chapters=target_chapters,
-            drafted_chapters=int(draft_payload["story"]["chapter_count"]),
-            published=publish_status == 200,
-            publish_outcome=publish_outcome,
-            publish_failure_code=publish_failure_code,
+            drafted_chapters=len(workspace_payload.get("chapters", [])),
+            exported=exported,
+            export_outcome=export_outcome,
+            export_failure_code=export_failure_code,
+            export_path=export_path,
             warning_count=warning_count,
             blocker_count=blocker_count,
+            suggestion_count=suggestion_count,
             review_rounds=review_rounds,
-            revision_rounds=revision_rounds,
-            quality_score=int(final_review["quality_score"]),
-            continuity_score=int(final_review["structural_review"]["metrics"]["continuity_score"]),
-            pacing_score=int(final_review["structural_review"]["metrics"]["pacing_score"]),
-            reader_pull_score=int(final_review["semantic_review"]["metrics"]["reader_pull_score"]),
-            plot_clarity_score=int(final_review["semantic_review"]["metrics"]["plot_clarity_score"]),
-            ooc_risk_score=int(final_review["semantic_review"]["metrics"]["ooc_risk_score"]),
-            structural_gate_passed=bool(final_review.get("structural_gate_passed", False)),
-            semantic_gate_passed=bool(final_review.get("semantic_gate_passed", False)),
-            publish_gate_passed=bool(final_review.get("publish_gate_passed", False)),
-            issue_codes=[
-                str(issue.get("code", "issue"))
-                for issue in final_review.get("issues", [])
-                if isinstance(issue, dict)
+            export_gate_passed=not bool(final_review.get("export_blocked", True)),
+            issue_codes=issue_codes,
+            run_ids=run_ids,
+            artifact_kinds=artifact_kinds,
+            editorial_notes=[
+                str(note)
+                for note in final_review.get("style_notes", [])
+                if str(note).strip()
             ],
-            run_ids=[
-                str(run.get("run_id"))
-                for run in runs_payload.get("runs", [])
-                if isinstance(run, dict) and run.get("run_id")
-            ],
-            artifact_kinds=[
-                str(entry.get("kind"))
-                for entry in artifacts_payload.get("history", [])
-                if isinstance(entry, dict) and entry.get("kind")
-            ],
-            revision_notes=revision_notes,
             request_trace=traces,
             chapter_audit=chapter_audit,
             editorial_findings=editorial_findings,
         )
         validate_report(report)
-        del workspace_payload
         return report
     except (RuntimeError, ValueError, requests.RequestException) as exc:
         failed_step = traces[-1].step if traces else "startup"
@@ -859,7 +815,7 @@ def run_longform_uat(
                 base_url=base_url,
                 target_chapters=target_chapters,
                 story_title_seed=story_title_seed,
-                story_id=story_id,
+                principal_workspace_id=principal_workspace_id,
                 workspace_id=workspace_id,
                 story_title=title,
                 failed_step=failed_step,
@@ -889,7 +845,7 @@ def _write_failure_reports(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a DashScope-backed 20-chapter UAT through the canonical HTTP API."
+        description="Run a DashScope-backed 20-chapter UAT through the workspace API."
     )
     parser.add_argument("--base-url", default=None, help="Reuse an existing backend instead of starting one.")
     parser.add_argument("--target-chapters", type=int, default=20)

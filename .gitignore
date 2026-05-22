@@ -10,11 +10,11 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+/dist/
 downloads/
 eggs/
 .eggs/
-lib/
+/lib/
 # Allow frontend-specific libraries
 !frontend/src/lib/
 !frontend/tests/unit/lib/
@@ -399,15 +399,14 @@ CLEANUP_COMPLETION_REPORT.md
 COMPREHENSIVE_STRESS_SCENARIO_TEST_REPORT.md
 DEPENDENCY_AUDIT_REPORT.md
 DOMAIN_PURITY_REPORT.md
-DYNAMIC_UAT_REPORT.md
 FINAL_ACCEPTANCE_RUN_REPORT.md
 FRONTEND_UI_REFACTORING_COMPLETE.md
-PYDANTIC_V2_MIGRATION_STATUS_REPORT.md
 REFACTORING_SUMMARY.md
 VISUAL_DESIGN_REFACTORING_COMPLIANCE_REPORT.md
 PRODUCTION_READINESS_SCORECARD.json
 database_security_assessment.json
 security_assessment_report.json
+!.github/ISSUE_TEMPLATE/bug_report.md
 security_audit_report.json
 security_implementation_report.json
 
@@ -425,14 +424,14 @@ backup_configs_wave3/
 /ai_enhancement_analysis.py
 # /api_server.py  # KEEP: Required by tests
 /campaign_brief.py
-# /character_factory.py  # KEEP: Backward compatibility interface, required by tests
+# /character_factory.py  # KEEP: public facade required by tests
 /chronicler_agent.py
 /component_integration_fix.py
 /component_integration_test.py
 /config_loader.py
 /database_security.py
 /database_security_test.py
-# /director_agent.py  # KEEP: Backward compatibility interface, required by tests
+# /director_agent.py  # KEEP: public facade required by tests
 # /director_agent_integrated.py  # KEEP: Required by director_agent.py
 /emergent_narrative_orchestrator.py
 # /enhanced_multi_agent_bridge.py  # KEEP: Required by tests
@@ -445,7 +444,6 @@ backup_configs_wave3/
 /fix_async_tests.py
 /high_performance_concurrent_processor.py
 /inspect-current-app*.js
-/integration_compatibility_fix.py
 /integration_test.py
 /integration_validation_test.py
 /m45_platform_fix_validation.py
@@ -469,15 +467,15 @@ world_state.json
 nonexistent_world_state.json
 
 # Test results (organized in reports/test-results/)
-reports/
-reports/test-results/*.xml
-reports/test-results/*.html
-reports/test-results/*.json
+/reports/
+/reports/test-results/*.xml
+/reports/test-results/*.html
+/reports/test-results/*.json
 
 # Evidence/screenshots (organized in reports/evidence/)
-reports/evidence/**/*.png
-reports/evidence/**/*.jpg
-reports/evidence/**/*.mp4
+/reports/evidence/**/*.png
+/reports/evidence/**/*.jpg
+/reports/evidence/**/*.mp4
 frontend/reports/
 
 # Third-party tool configurations
@@ -498,7 +496,7 @@ frontend/reports/
 coverage.json
 
 # Runtime artifacts
-data/
+/data/
 .playwright-mcp/
 .playwright-cli/
 chrome-devtools-mcp-*.tgz

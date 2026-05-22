@@ -1,24 +1,17 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
+import type { SessionState, WorkspaceSurfaceView } from '@/app/types/auth';
+import type {
+  StoryGenre,
+  ProviderName,
+  ReviewIssue,
+  WorkspaceCreateRequest,
+  WorkspaceJob,
+} from '@/app/types/story';
 import { Button } from '@/components/Button';
 import { Panel } from '@/components/Panel';
 import { StatusPill } from '@/components/StatusPill';
-import type {
-  SessionState,
-  StorySurfaceView,
-} from '@/app/types/auth';
-import type {
-  StoryCreateRequest,
-  StoryGenre,
-  StoryHybridReviewReport,
-  StoryReviewIssue,
-  StoryRunDetailResponse,
-  StoryWorkspace,
-} from '@/app/types/story';
-import type {
-  StoryRunStageExecution,
-} from '@/app/types/run';
 import { useAuth } from '@/features/auth/useAuth';
 
 import { useStoryWorkbench } from './useStoryWorkbench';
@@ -36,21 +29,6 @@ const STORY_GENRES: StoryGenre[] = [
   'drama',
 ];
 
-const RELATIONSHIP_DEBT_CODES = new Set([
-  'relationship_drift',
-  'missing_relationship_state',
-  'relationship_ledger_gap',
-  'relationship_progression_stall',
-]);
-
-const HOOK_DEBT_CODES = new Set([
-  'missing_hook_payoff',
-  'missing_outline_hook',
-  'missing_hook',
-  'hook_debt',
-  'weak_serial_pull',
-]);
-
 interface ComposerState {
   title: string;
   genre: StoryGenre;
@@ -59,21 +37,19 @@ interface ComposerState {
   targetAudience: string;
   themes: string;
   tone: string;
-  publish: boolean;
 }
 
 const initialComposerState: ComposerState = {
   title: '',
   genre: 'fantasy',
   premise: '',
-  targetChapters: 12,
+  targetChapters: 3,
   targetAudience: '',
   themes: '',
-  tone: 'commercial web fiction',
-  publish: true,
+  tone: 'immersive serial fiction',
 };
 
-function normalizeView(value: string | null | undefined): StorySurfaceView {
+function normalizeView(value: string | null | undefined): WorkspaceSurfaceView {
   return value === 'playback' ? 'playback' : 'workspace';
 }
 
@@ -87,13 +63,7 @@ function formatDate(value: string | undefined | null): string {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
-function providerLabel(provider: string | null | undefined, model: string | null | undefined) {
-  if (!provider && !model) return 'Not recorded';
-  if (!provider) return model ?? 'Not recorded';
-  return model ? `${provider} / ${model}` : provider;
-}
-
-function buildPayload(formState: ComposerState): StoryCreateRequest {
+function buildPayload(formState: ComposerState): WorkspaceCreateRequest {
   return {
     title: formState.title.trim(),
     genre: formState.genre,
@@ -101,37 +71,56 @@ function buildPayload(formState: ComposerState): StoryCreateRequest {
     target_chapters: formState.targetChapters,
     target_audience: formState.targetAudience.trim() || null,
     themes: parseThemes(formState.themes),
-    tone: formState.tone.trim() || 'commercial web fiction',
+    tone: formState.tone.trim() || 'immersive serial fiction',
   };
 }
 
-function buildStoryLocation(session: SessionState) {
+function buildStudioLocation(session: SessionState) {
   const params = new URLSearchParams();
-  if (session.lastStoryId) params.set('story', session.lastStoryId);
-  if (session.lastRunId) params.set('run', session.lastRunId);
+  if (session.lastWorkspaceId) params.set('workspace', session.lastWorkspaceId);
+  if (session.lastJobId) params.set('job', session.lastJobId);
   params.set('view', session.lastView ?? 'workspace');
   const query = params.toString();
   return query ? `/studio?${query}` : '/studio';
 }
 
-function chapterNumberFromLocation(location: string | null): number | null {
-  if (!location) return null;
-  const match = location.match(/chapter-(\d+)/i);
-  return match ? Number(match[1]) : null;
+function jobLabel(job: WorkspaceJob | null): string {
+  if (!job) return 'Waiting for a workspace action';
+  if (job.status === 'failed') return `${job.operation} failed: ${job.error ?? 'unknown error'}`;
+  if (job.status === 'interrupted') return `${job.operation} interrupted`;
+  return `${job.operation} ${job.status}`;
 }
 
-function debtIssues(review: StoryHybridReviewReport | null, codes: ReadonlySet<string>) {
-  return review?.issues.filter((issue) => codes.has(issue.code)) ?? [];
+function formatActionError(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
 }
 
-function stageTone(stage: StoryRunStageExecution) {
-  if (stage.status === 'completed') return 'healthy' as const;
-  if (stage.status === 'failed') return 'offline' as const;
+function jobTone(job: WorkspaceJob | null) {
+  if (!job) return 'idle' as const;
+  if (job.status === 'failed' || job.status === 'interrupted') return 'offline' as const;
+  if (job.status === 'completed') return 'healthy' as const;
   return 'running' as const;
 }
 
-function reviewTone(zeroWarning: boolean) {
-  return zeroWarning ? 'healthy' : 'degraded';
+function reviewTone(blocked: boolean) {
+  return blocked ? 'degraded' : 'healthy';
+}
+
+function issueList(issues: ReviewIssue[]) {
+  if (issues.length === 0) {
+    return <li className="studio-empty">No items recorded.</li>;
+  }
+
+  return issues.map((issue) => (
+    <li key={`${issue.code}-${issue.location}-${issue.message}`} className="studio-chapter-card">
+      <div className="studio-chapter-card__header">
+        <strong>{issue.code}</strong>
+        <span>{issue.severity}</span>
+      </div>
+      <p>{issue.message}</p>
+      <p>{issue.suggestion}</p>
+    </li>
+  ));
 }
 
 function renderSessionSummary(session: SessionState, workspaceSummary: string) {
@@ -164,172 +153,157 @@ function renderSessionSummary(session: SessionState, workspaceSummary: string) {
 }
 
 export function StoryWorkbenchPage() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [formState, setFormState] = useState<ComposerState>(initialComposerState);
-  const [rerunPublishes, setRerunPublishes] = useState(false);
   const auth = useAuth();
   const session = auth.session;
-  const sessions = auth.sessions ?? [];
-  const activeSessionId = auth.activeSessionId ?? null;
-  const signOut = auth.signOut;
-  const switchSession = auth.switchSession;
-  const updateSessionSelection = auth.updateSessionSelection;
 
   if (!session) return null;
 
-  const preferredStoryId = searchParams.get('story') ?? session.lastStoryId ?? null;
-  const preferredRunId = searchParams.get('run') ?? session.lastRunId ?? null;
+  return <StoryWorkbenchContent auth={auth} session={session} />;
+}
+
+interface StoryWorkbenchContentProps {
+  auth: ReturnType<typeof useAuth>;
+  session: SessionState;
+}
+
+function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [formState, setFormState] = useState<ComposerState>(initialComposerState);
+  const [provider, setProvider] = useState<ProviderName>('mock');
+  const [pageError, setPageError] = useState<string | null>(null);
+  const sessions = auth.sessions ?? [];
+  const activeSessionId = auth.activeSessionId ?? null;
+
+  const preferredWorkspaceId =
+    searchParams.get('workspace') ?? session.lastWorkspaceId ?? null;
+  const preferredJobId = searchParams.get('job') ?? session.lastJobId ?? null;
   const preferredView = normalizeView(searchParams.get('view') ?? session.lastView ?? 'workspace');
 
   const workbench = useStoryWorkbench({
     authorId: session.workspaceId,
-    preferredStoryId,
-    preferredRunId,
-    onSelectionChange: ({ storyId, runId, view }) => {
-      updateSessionSelection({ lastStoryId: storyId, lastRunId: runId, lastView: view });
+    enabled: true,
+    preferredWorkspaceId,
+    preferredJobId,
+    onSelectionChange: ({ workspaceId, jobId, view }) => {
+      auth.updateSessionSelection({
+        lastWorkspaceId: workspaceId,
+        lastJobId: jobId,
+        lastView: view,
+      });
       const params = new URLSearchParams(searchParams);
-      if (storyId) params.set('story', storyId);
-      else params.delete('story');
-      if (runId) params.set('run', runId);
-      else params.delete('run');
+      if (workspaceId) params.set('workspace', workspaceId);
+      else params.delete('workspace');
+      if (jobId) params.set('job', jobId);
+      else params.delete('job');
       params.set('view', view);
       setSearchParams(params, { replace: true });
     },
   });
 
+  useEffect(() => {
+    setProvider(workbench.defaultProvider);
+  }, [workbench.defaultProvider]);
+
   const availableSessions = useMemo(
     () => sessions.filter((entry) => entry.id !== activeSessionId).slice(0, 4),
     [activeSessionId, sessions],
   );
-  const review = workbench.workspace?.review ?? workbench.workspace?.hybrid_review ?? workbench.artifact.review;
-  const relationshipDebtIssues = debtIssues(review, RELATIONSHIP_DEBT_CODES);
-  const hookDebtIssues = debtIssues(review, HOOK_DEBT_CODES);
-  const zeroWarning =
-    workbench.workspace?.evidence_summary?.zero_warning ??
-    ((review?.issues.filter((issue) => issue.severity !== 'info').length ?? 0) === 0);
+  const workspace = workbench.workspace;
+  const providerOptions = workbench.providers.length
+    ? workbench.providers
+    : [
+        {
+          provider: 'mock' as const,
+          label: 'mock offline demo',
+          configured: true,
+          is_default: true,
+          model: 'deterministic-story-v1',
+        },
+      ];
+  const review = workspace?.latest_review ?? null;
+  const currentView = workbench.currentJob ? 'playback' : preferredView;
   const workspaceSummary =
-    workbench.workspace?.workspace_context?.summary ??
+    (workspace ? `${workspace.workspace_id} / ${workspace.chapters.length} chapter(s)` : null) ??
     session.activeWorkspace?.summary ??
-    'Server-validated workspace context with resumable story selection.';
-  const rerunTargetChapters =
-    workbench.workspace?.workflow.target_chapters ??
-    workbench.activeStory?.chapter_count ??
-    formState.targetChapters;
-  const currentView = workbench.selectedRunDetail ? 'playback' : preferredView;
+    'Local-first writing workspace with Markdown chapters as the manuscript authority.';
 
-  const setQuerySelection = (storyId: string | null, runId: string | null, view: StorySurfaceView) => {
+  const setQuerySelection = (
+    workspaceId: string | null,
+    jobId: string | null,
+    view: WorkspaceSurfaceView,
+  ) => {
     const params = new URLSearchParams(searchParams);
-    if (storyId) params.set('story', storyId);
-    else params.delete('story');
-    if (runId) params.set('run', runId);
-    else params.delete('run');
+    if (workspaceId) params.set('workspace', workspaceId);
+    else params.delete('workspace');
+    if (jobId) params.set('job', jobId);
+    else params.delete('job');
     params.set('view', view);
     setSearchParams(params, { replace: true });
   };
 
-  const createDraft = async (event: FormEvent<HTMLFormElement>) => {
+  const createWorkspace = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setPageError(null);
     try {
-      const story = await workbench.createStory(buildPayload(formState));
-      setQuerySelection(story.id, null, 'workspace');
-    } catch {}
-  };
-
-  const runInitialPipeline = async () => {
-    try {
-      const result = await workbench.runPipeline({
-        ...buildPayload(formState),
-        publish: formState.publish,
-      });
-      setQuerySelection(result.story.id, null, 'workspace');
-    } catch {}
-  };
-
-  const rerunCurrentPipeline = async () => {
-    try {
-      const result = await workbench.runStoryPipeline({
-        publish: rerunPublishes,
-        targetChapters: rerunTargetChapters,
-      });
-      setQuerySelection(workbench.activeStoryId, result.run.run_id, 'playback');
-    } catch {}
-  };
-
-  const switchToSavedSession = async (sessionId: string) => {
-    try {
-      const nextSession = await switchSession(sessionId);
-      navigate(buildStoryLocation(nextSession));
-    } catch {}
-  };
-
-  const leaveCurrentSession = () => {
-    signOut();
-    navigate('/');
-  };
-
-  const handleGuidedAction = async () => {
-    const action = workbench.workspace?.recommended_next_action?.action;
-    if (!action) return;
-    switch (action) {
-      case 'generate_blueprint':
-        await workbench.generateBlueprint();
-        break;
-      case 'generate_outline':
-        await workbench.generateOutline();
-        break;
-      case 'draft':
-        await workbench.draftStory();
-        break;
-      case 'review':
-        await workbench.reviewStory();
-        break;
-      case 'revise':
-        await workbench.reviseStory();
-        break;
-      case 'export':
-        await workbench.exportStory();
-        break;
-      case 'publish':
-        await workbench.publishStory();
-        break;
-      case 'view_playback':
-        if (workbench.runSummaries[0]) {
-          await workbench.selectRun(workbench.runSummaries[0].run_id);
-        }
-        break;
-      default:
-        break;
+      const nextWorkspace = await workbench.createWorkspace(buildPayload(formState));
+      setQuerySelection(nextWorkspace.workspace_id, null, 'workspace');
+    } catch (error) {
+      setPageError(formatActionError(error, 'Unable to create the workspace.'));
     }
   };
 
-  const openStory = async (storyId: string) => {
+  const runWorkspace = async () => {
+    setPageError(null);
     try {
-      await workbench.selectStory(storyId);
-    } catch {}
+      const job = await workbench.runJob('run', {
+        target_chapters: formState.targetChapters,
+        provider,
+      });
+      setQuerySelection(workbench.activeWorkspaceId, job.job_id, 'playback');
+    } catch (error) {
+      setPageError(formatActionError(error, 'Unable to run the workspace.'));
+    }
   };
 
-  const toggleRun = async (runId: string) => {
+  const runSingleJob = async (
+    operation: 'draft' | 'review' | 'revise' | 'export',
+  ) => {
+    setPageError(null);
     try {
-      await workbench.selectRun(workbench.selectedRunId === runId ? null : runId);
-    } catch {}
+      const job = await workbench.runJob(operation, { provider });
+      setQuerySelection(workbench.activeWorkspaceId, job.job_id, 'playback');
+    } catch (error) {
+      setPageError(formatActionError(error, `Unable to run ${operation}.`));
+    }
   };
 
-  const playbackWorkspace = workbench.selectedRunDetail?.latest_snapshot?.workspace ?? null;
-  const playbackReview =
-    playbackWorkspace?.review ?? playbackWorkspace?.hybrid_review ?? null;
+  const switchToSavedSession = async (sessionId: string) => {
+    setPageError(null);
+    try {
+      const nextSession = await auth.switchSession(sessionId);
+      navigate(buildStudioLocation(nextSession));
+    } catch (error) {
+      setPageError(formatActionError(error, 'Unable to switch session.'));
+    }
+  };
+
+  const leaveCurrentSession = () => {
+    auth.signOut();
+    navigate('/');
+  };
 
   return (
     <main className="studio-workbench" data-testid="studio-workbench-page">
       <header className="studio-workbench__hero">
         <div className="studio-workbench__hero-copy">
-          <p className="studio-workbench__eyebrow">Novel Engine / Guided Author Shell</p>
+          <p className="studio-workbench__eyebrow">Novel Engine / Local Workspace</p>
           <h1 className="studio-workbench__title">
-            {workbench.activeStory ? workbench.activeStory.title : 'Create or resume a manuscript'}
+            {workspace ? workspace.story.title : 'Create or resume a local manuscript'}
           </h1>
           <p className="studio-workbench__summary">
-            Session context, manuscript selection, and playback selection are now addressable.
-            Mutable workspace and immutable playback stay visually and semantically separate.
+            Markdown chapters are the source of truth. Runs, sidecars, reviews, and exports are
+            local artifacts attached to the workspace.
           </p>
         </div>
 
@@ -337,9 +311,9 @@ export function StoryWorkbenchPage() {
           <StatusPill tone={session.kind === 'guest' ? 'idle' : 'running'}>
             {session.kind === 'guest' ? 'guest session' : 'signed in'}
           </StatusPill>
-          <span data-testid="zero-warning-badge">
-            <StatusPill tone={reviewTone(zeroWarning)}>
-              {zeroWarning ? 'zero warning' : 'warnings open'}
+          <span data-testid="export-gate-badge">
+            <StatusPill tone={reviewTone(Boolean(review?.export_blocked))}>
+              {review?.export_blocked ? 'blockers open' : 'export allowed'}
             </StatusPill>
           </span>
           <span className="studio-workbench__workspace" data-testid="workspace-badge">
@@ -348,7 +322,9 @@ export function StoryWorkbenchPage() {
         </div>
       </header>
 
-      {workbench.error ? <p className="form-error">{workbench.error}</p> : null}
+      {workbench.error || pageError ? (
+        <p className="form-error">{workbench.error ?? pageError}</p>
+      ) : null}
 
       <section className="studio-workbench__layout studio-workbench__layout--guided">
         <div className="studio-workbench__column">
@@ -390,118 +366,206 @@ export function StoryWorkbenchPage() {
           </Panel>
 
           <Panel
-            title="Library"
-            eyebrow="Manuscripts"
+            title="Workspaces"
+            eyebrow="Local"
             actions={
-              <Button variant="ghost" onClick={() => void workbench.refreshLibrary()} disabled={workbench.isLoading}>
-                {workbench.isLoading ? 'Refreshing...' : 'Refresh library'}
+              <Button
+                variant="ghost"
+                onClick={() => void workbench.refreshLibrary()}
+                disabled={workbench.isLoading || workbench.isBusy}
+              >
+                {workbench.isLoading ? 'Refreshing...' : 'Refresh'}
               </Button>
             }
             testId="studio-library-panel"
           >
             <div className="studio-library-summary" data-testid="studio-library-summary">
-              <strong>{workbench.stories.length} manuscript(s)</strong>
+              <strong>{workbench.workspaces.length} workspace(s)</strong>
               <span>
-                {workbench.activeStory
-                  ? `Viewing ${workbench.activeStory.title}`
-                  : 'Select a manuscript or create a new one.'}
+                {workspace ? `Viewing ${workspace.story.title}` : 'Create or select a workspace.'}
               </span>
             </div>
-            <div data-testid="library-list">
-              <ul className="studio-list" data-testid="studio-list">
-                {workbench.stories.length === 0 ? (
-                  <li className="studio-empty">No manuscripts yet. Create the first draft below.</li>
-                ) : (
-                  workbench.stories.map((story) => (
-                    <li
-                      key={story.id}
-                      className={`studio-card${story.id === workbench.activeStoryId ? ' studio-card--active' : ''}`}
+            <ul className="studio-list" data-testid="studio-list">
+              {workbench.workspaces.length === 0 ? (
+                <li className="studio-empty">No local workspaces yet.</li>
+              ) : (
+                workbench.workspaces.map((item) => (
+                  <li
+                    key={item.workspace_id}
+                    className={`studio-card${
+                      item.workspace_id === workbench.activeWorkspaceId ? ' studio-card--active' : ''
+                    }`}
+                  >
+                    <button
+                      className="studio-card__button"
+                      type="button"
+                      disabled={workbench.isBusy}
+                      onClick={() => void workbench.selectWorkspace(item.workspace_id)}
+                      data-testid={`studio-item-${item.workspace_id}`}
                     >
-                      <button
-                        className="studio-card__button"
-                        type="button"
-                        onClick={() => void openStory(story.id)}
-                        data-testid={`studio-item-${story.id}`}
-                      >
-                        <div className="studio-card__header">
-                          <strong>{story.title}</strong>
-                          <span>{story.status}</span>
-                        </div>
-                        <p className="studio-card__meta">
-                          {story.genre} / {story.chapter_count} chapters / updated {formatDate(story.updated_at)}
-                        </p>
-                      </button>
-                    </li>
-                  ))
-                )}
-              </ul>
-            </div>
+                      <div className="studio-card__header">
+                        <strong>{item.story.title}</strong>
+                        <span>{item.chapters.length} chapters</span>
+                      </div>
+                      <p className="studio-card__meta">
+                        {item.story.genre} / {item.latest_review?.export_blocked ? 'blocked' : 'reviewable'}
+                      </p>
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
           </Panel>
 
-          <Panel title="New manuscript" eyebrow="Create" testId="studio-create-panel">
-            <form className="studio-form" onSubmit={createDraft} data-testid="studio-create-form">
+          <Panel title="New workspace" eyebrow="Create" testId="studio-create-panel">
+            <form className="studio-form" onSubmit={createWorkspace} data-testid="studio-create-form">
               <label className="field">
                 <span>Title</span>
-                <input data-testid="studio-title-input" value={formState.title} onChange={(event) => setFormState((current) => ({ ...current, title: event.target.value }))} required />
+                <input
+                  data-testid="studio-title-input"
+                  value={formState.title}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, title: event.target.value }))
+                  }
+                  required
+                />
               </label>
               <label className="field">
                 <span>Genre</span>
-                <select data-testid="studio-genre-select" value={formState.genre} onChange={(event) => setFormState((current) => ({ ...current, genre: event.target.value as StoryGenre }))}>
-                  {STORY_GENRES.map((genre) => <option key={genre} value={genre}>{genre}</option>)}
+                <select
+                  data-testid="studio-genre-select"
+                  value={formState.genre}
+                  onChange={(event) =>
+                    setFormState((current) => ({
+                      ...current,
+                      genre: event.target.value as StoryGenre,
+                    }))
+                  }
+                >
+                  {STORY_GENRES.map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
+                  ))}
                 </select>
               </label>
               <label className="field">
                 <span>Premise</span>
-                <textarea data-testid="studio-premise-input" value={formState.premise} onChange={(event) => setFormState((current) => ({ ...current, premise: event.target.value }))} rows={5} required />
+                <textarea
+                  data-testid="studio-premise-input"
+                  value={formState.premise}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, premise: event.target.value }))
+                  }
+                  rows={5}
+                  required
+                />
               </label>
               <div className="studio-form__grid">
                 <label className="field">
                   <span>Target chapters</span>
-                  <input data-testid="studio-target-chapters-input" type="number" min={1} max={120} value={formState.targetChapters} onChange={(event) => setFormState((current) => ({ ...current, targetChapters: Number(event.target.value) }))} required />
+                  <input
+                    data-testid="studio-target-chapters-input"
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={formState.targetChapters}
+                    onChange={(event) =>
+                      setFormState((current) => ({
+                        ...current,
+                        targetChapters: Number(event.target.value),
+                      }))
+                    }
+                    required
+                  />
                 </label>
                 <label className="field">
                   <span>Audience</span>
-                  <input data-testid="studio-audience-input" value={formState.targetAudience} onChange={(event) => setFormState((current) => ({ ...current, targetAudience: event.target.value }))} />
+                  <input
+                    data-testid="studio-audience-input"
+                    value={formState.targetAudience}
+                    onChange={(event) =>
+                      setFormState((current) => ({
+                        ...current,
+                        targetAudience: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
               </div>
               <label className="field">
+                <span>Provider</span>
+                <select
+                  data-testid="studio-provider-select"
+                  value={provider}
+                  onChange={(event) => setProvider(event.target.value as ProviderName)}
+                >
+                  {providerOptions.map((item) => (
+                    <option
+                      key={item.provider}
+                      value={item.provider}
+                      disabled={!item.configured}
+                    >
+                      {item.label}
+                      {item.configured ? '' : ' (not configured)'}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
                 <span>Themes</span>
-                <input data-testid="studio-themes-input" value={formState.themes} onChange={(event) => setFormState((current) => ({ ...current, themes: event.target.value }))} />
+                <input
+                  data-testid="studio-themes-input"
+                  value={formState.themes}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, themes: event.target.value }))
+                  }
+                />
               </label>
               <label className="field">
                 <span>Tone</span>
-                <input data-testid="studio-tone-input" value={formState.tone} onChange={(event) => setFormState((current) => ({ ...current, tone: event.target.value }))} />
-              </label>
-              <label className="studio-toggle">
-                <input data-testid="studio-publish-toggle" type="checkbox" checked={formState.publish} onChange={(event) => setFormState((current) => ({ ...current, publish: event.target.checked }))} />
-                <span>Publish after the initial full pipeline</span>
+                <input
+                  data-testid="studio-tone-input"
+                  value={formState.tone}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, tone: event.target.value }))
+                  }
+                />
               </label>
               <div className="studio-form__actions">
-                <Button type="submit" disabled={workbench.isBusy} data-testid="studio-create-draft">Create draft</Button>
-                <Button type="button" variant="secondary" disabled={workbench.isBusy} onClick={() => void runInitialPipeline()} data-testid="studio-run-pipeline">Run full pipeline</Button>
+                <Button type="submit" disabled={workbench.isBusy} data-testid="studio-create-draft">
+                  Create workspace
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={workbench.isBusy || !workspace}
+                  onClick={() => void runWorkspace()}
+                  data-testid="studio-run"
+                >
+                  Run draft
+                </Button>
               </div>
             </form>
           </Panel>
         </div>
 
         <div className="studio-workbench__column studio-workbench__column--wide">
-          <Panel title="Guided workspace" eyebrow="Mutable surface" testId="workspace-surface">
-            {workbench.activeStory && workbench.workspace ? (
+          <Panel title="Workspace status" eyebrow="Markdown authority" testId="workspace-surface">
+            {workspace ? (
               <div className="studio-manuscript">
                 <div className="studio-manuscript__summary">
                   <div>
                     <h2 className="studio-manuscript__title" data-testid="studio-active-title">
-                      {workbench.activeStory.title}
+                      {workspace.story.title}
                     </h2>
-                    <p className="studio-manuscript__copy">
-                      {workbench.workspace.workflow.premise || 'Premise pending.'}
-                    </p>
+                    <p className="studio-manuscript__copy">{workspace.story.premise}</p>
                   </div>
                   <div className="studio-manuscript__badges" data-testid="publish-verdict">
-                    <StatusPill tone={reviewTone(zeroWarning)}>
-                      {zeroWarning ? 'zero warning ready' : 'review debt open'}
+                    <StatusPill tone={reviewTone(Boolean(review?.export_blocked))}>
+                      {review?.export_blocked ? 'export blocked' : 'export allowed'}
                     </StatusPill>
-                    <StatusPill tone={reviewTone(currentView === 'workspace')}>
+                    <StatusPill tone={currentView === 'workspace' ? 'healthy' : 'running'}>
                       {currentView}
                     </StatusPill>
                   </div>
@@ -509,236 +573,206 @@ export function StoryWorkbenchPage() {
 
                 <div className="studio-memory-grid">
                   <article className="studio-memory-card">
-                    <h3>Recommended next action</h3>
-                    <p>{workbench.workspace.recommended_next_action?.label ?? 'Create the next manuscript step.'}</p>
-                    <p>{workbench.workspace.recommended_next_action?.reason ?? 'No guided action available yet.'}</p>
-                    <Button type="button" onClick={() => void handleGuidedAction()} disabled={!workbench.workspace.recommended_next_action || workbench.isBusy} data-testid="guided-next-action">
-                      {workbench.workspace.recommended_next_action?.label ?? 'No guided action'}
-                    </Button>
+                    <h3>Chapters</h3>
+                    <p>{workspace.chapters.length} / {workspace.story.target_chapters}</p>
                   </article>
                   <article className="studio-memory-card">
-                    <h3>Target chapters</h3>
-                    <p>{workbench.workspace.workflow.target_chapters}</p>
+                    <h3>Review blockers</h3>
+                    <p>{review?.blockers.length ?? 0}</p>
                   </article>
                   <article className="studio-memory-card">
-                    <h3>Drafted chapters</h3>
-                    <p>{workbench.activeStory.chapter_count}</p>
+                    <h3>Warnings</h3>
+                    <p>{review?.warnings.length ?? 0}</p>
                   </article>
                   <article className="studio-memory-card">
-                    <h3>Artifacts</h3>
-                    <p>{workbench.workspace.artifact_history.length}</p>
+                    <h3>Exports</h3>
+                    <p>{workspace.exports.length}</p>
                   </article>
-                </div>
-
-                <div className="studio-notes" data-testid="studio-review-panel">
-                  <h3>Quality summary</h3>
-                  <dl className="studio-stats studio-stats--compact">
-                    <div>
-                      <dt>Review score</dt>
-                      <dd data-testid="studio-review-score">{review?.quality_score ?? 0}</dd>
-                    </div>
-                    <div>
-                      <dt>Warnings</dt>
-                      <dd>{workbench.workspace.evidence_summary?.warning_count ?? 0}</dd>
-                    </div>
-                    <div>
-                      <dt>Blockers</dt>
-                      <dd>{workbench.workspace.evidence_summary?.blocker_count ?? 0}</dd>
-                    </div>
-                    <div>
-                      <dt>Publish gate</dt>
-                      <dd>{review?.publish_gate_passed ? 'pass' : 'blocked'}</dd>
-                    </div>
-                  </dl>
                 </div>
 
                 <div className="studio-workflow__actions">
-                  <Button type="button" onClick={() => void workbench.generateBlueprint()} disabled={workbench.isBusy} data-testid="studio-generate-blueprint">Generate blueprint</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.generateOutline()} disabled={workbench.isBusy || !workbench.workspace.blueprint} data-testid="studio-generate-outline">Generate outline</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.draftStory()} disabled={workbench.isBusy || !workbench.workspace.outline} data-testid="studio-draft-chapters">Draft chapters</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.reviewStory()} disabled={workbench.isBusy || workbench.activeStory.chapter_count === 0} data-testid="studio-review">Review</Button>
-                  <Button type="button" variant="secondary" onClick={() => void workbench.reviseStory()} disabled={workbench.isBusy || !review} data-testid="studio-revise">Revise</Button>
+                  <Button
+                    type="button"
+                    onClick={() => void runSingleJob('draft')}
+                    disabled={workbench.isBusy}
+                    data-testid="studio-draft-chapters"
+                  >
+                    Draft next chapter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void runWorkspace()}
+                    disabled={workbench.isBusy}
+                    data-testid="studio-run-workspace"
+                  >
+                    Run target chapters
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void runSingleJob('review')}
+                    disabled={workbench.isBusy || workspace.chapters.length === 0}
+                    data-testid="studio-review"
+                  >
+                    Review
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void runSingleJob('revise')}
+                    disabled={workbench.isBusy || workspace.chapters.length === 0}
+                    data-testid="studio-revise"
+                  >
+                    Revise latest chapter
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => void runSingleJob('export')}
+                    disabled={workbench.isBusy || workspace.chapters.length === 0}
+                    data-testid="studio-export"
+                  >
+                    Export
+                  </Button>
                 </div>
 
-                <details className="studio-notes" open={currentView === 'workspace'}>
-                  <summary>Advanced diagnostics</summary>
-                  <dl className="studio-stats studio-stats--compact">
-                    <div>
-                      <dt>Blueprint source</dt>
-                      <dd>{workbench.workspace.blueprint ? providerLabel(workbench.workspace.blueprint.provider, workbench.workspace.blueprint.model) : 'Not generated'}</dd>
-                    </div>
-                    <div>
-                      <dt>Outline source</dt>
-                      <dd>{workbench.workspace.outline ? providerLabel(workbench.workspace.outline.provider, workbench.workspace.outline.model) : 'Not generated'}</dd>
-                    </div>
-                    <div>
-                      <dt>Review source</dt>
-                      <dd>{review ? providerLabel(review.source_provider, review.source_model) : 'Not reviewed'}</dd>
-                    </div>
-                  </dl>
-
-                  <div className="studio-memory-grid">
-                    <article className="studio-memory-card"><h3>Relationship debt</h3><p data-testid="studio-relationship-debt-count">{relationshipDebtIssues.length}</p></article>
-                    <article className="studio-memory-card"><h3>Hook debt</h3><p data-testid="studio-hook-debt-count">{hookDebtIssues.length}</p></article>
-                  </div>
-
-                  <ul className="studio-issue-list" data-testid="studio-debt-issue-list">
-                    {[...relationshipDebtIssues, ...hookDebtIssues].length === 0 ? (
-                      <li className="studio-empty">No highlighted relationship or hook debt.</li>
-                    ) : (
-                      [...relationshipDebtIssues, ...hookDebtIssues].map((issue, index) => (
-                        <li key={`${issue.code}-${issue.location ?? 'story'}-${index}`} className="studio-chapter-card">
-                          <div className="studio-chapter-card__header">
-                            <strong>{issue.code}</strong>
-                            <span>{issue.severity}</span>
-                          </div>
-                          <p>{issue.message}</p>
-                        </li>
-                      ))
-                    )}
-                  </ul>
-                </details>
-
-                <h3 className="studio-section-title">Chapter map</h3>
+                <h3 className="studio-section-title">Chapter Markdown</h3>
                 <ul className="studio-chapter-list" data-testid="studio-chapter-list">
-                  {workbench.activeStory.chapters.length ? (
-                    workbench.activeStory.chapters.map((chapter) => {
-                      const chapterIssues = review?.issues.filter((issue) => chapterNumberFromLocation(issue.location) === chapter.chapter_number) ?? [];
-                      const hasRelationshipDebt = chapterIssues.some((issue) => RELATIONSHIP_DEBT_CODES.has(issue.code));
-                      const hasHookDebt = chapterIssues.some((issue) => HOOK_DEBT_CODES.has(issue.code));
-                      return (
-                        <li key={chapter.id} className="studio-chapter-card">
-                          <div className="studio-chapter-card__header">
-                            <strong>Chapter {chapter.chapter_number}</strong>
-                            <span>{chapter.scenes.length} scenes</span>
-                          </div>
-                          <h4>{chapter.title}</h4>
-                          <p>{chapter.summary ?? 'No summary yet.'}</p>
-                          {hasRelationshipDebt || hasHookDebt ? (
-                            <div className="studio-tag-row" data-testid={`studio-chapter-debt-${chapter.chapter_number}`}>
-                              {hasRelationshipDebt ? <span className="studio-tag">relationship debt</span> : null}
-                              {hasHookDebt ? <span className="studio-tag">hook debt</span> : null}
-                            </div>
-                          ) : null}
-                        </li>
-                      );
-                    })
+                  {workspace.chapters.length ? (
+                    workspace.chapters.map((chapter) => (
+                      <li key={chapter.filename} className="studio-chapter-card">
+                        <div className="studio-chapter-card__header">
+                          <strong>Chapter {chapter.chapter_number}</strong>
+                          <span>{chapter.word_count} words</span>
+                        </div>
+                        <h4>{chapter.filename}</h4>
+                        <p>{chapter.summary ?? 'No sidecar summary recorded.'}</p>
+                      </li>
+                    ))
                   ) : (
-                    <li className="studio-empty">Draft chapters to populate the manuscript map.</li>
+                    <li className="studio-empty">Run a draft job to create Markdown chapters.</li>
                   )}
                 </ul>
+
+                <div className="studio-notes" data-testid="studio-review-panel">
+                  <h3>Review</h3>
+                  {review ? (
+                    <>
+                      <dl className="studio-stats studio-stats--compact">
+                        <div>
+                          <dt>Blockers</dt>
+                          <dd>{review.blockers.length}</dd>
+                        </div>
+                        <div>
+                          <dt>Warnings</dt>
+                          <dd>{review.warnings.length}</dd>
+                        </div>
+                        <div>
+                          <dt>Suggestions</dt>
+                          <dd>{review.suggestions.length}</dd>
+                        </div>
+                        <div>
+                          <dt>Checked</dt>
+                          <dd>{formatDate(review.checked_at)}</dd>
+                        </div>
+                      </dl>
+                      <h4>Blockers</h4>
+                      <ul className="studio-issue-list">{issueList(review.blockers)}</ul>
+                      <h4>Warnings</h4>
+                      <ul className="studio-issue-list">{issueList(review.warnings)}</ul>
+                      <h4>Suggestions</h4>
+                      <ul className="studio-issue-list">{issueList(review.suggestions)}</ul>
+                    </>
+                  ) : (
+                    <p className="studio-empty">No review report yet.</p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="studio-manuscript">
-                <div className="studio-memory-grid">
-                  <article className="studio-memory-card">
-                    <h3>Recommended next action</h3>
-                    <p>Start with a new manuscript in the create rail, then the workspace will advance one stage at a time.</p>
-                    <Button type="button" disabled data-testid="guided-next-action">
-                      Create a manuscript in the left rail
-                    </Button>
-                  </article>
-                </div>
-                <p className="studio-empty">Select a manuscript from the library or create a new one.</p>
+                <p className="studio-empty">Create or select a workspace to begin.</p>
               </div>
             )}
           </Panel>
         </div>
 
         <div className="studio-workbench__column">
-          <Panel title="Playback desk" eyebrow="Immutable surface" testId="playback-desk">
-            <div className="studio-notes" data-testid="studio-run-provenance">
-              <h3>Run provenance</h3>
-              <p>The playback desk shows immutable run evidence, stage snapshots, and publish verdicts.</p>
-              <dl className="studio-stats studio-stats--compact">
-                <div><dt>Selected run</dt><dd>{workbench.selectedRunDetail?.run.run_id ?? 'None selected'}</dd></div>
-                <div><dt>Playback source</dt><dd>{workbench.selectedRunDetail?.provenance ? providerLabel(workbench.selectedRunDetail.provenance.source_providers[0], workbench.selectedRunDetail.provenance.source_models[0]) : 'No playback selected'}</dd></div>
-                <div><dt>Snapshot</dt><dd>{formatDate(workbench.selectedRunDetail?.provenance?.snapshot_captured_at ?? null)}</dd></div>
-                <div><dt>Mutable run</dt><dd>{workbench.currentRun?.run_id ?? workbench.workspace?.run?.run_id ?? 'No active run'}</dd></div>
-              </dl>
-            </div>
-
-            <label className="studio-toggle studio-toggle--panel">
-              <input data-testid="studio-current-publish-toggle" type="checkbox" checked={rerunPublishes} onChange={(event) => setRerunPublishes(event.target.checked)} disabled={!workbench.activeStory || workbench.isBusy} />
-              <span>Publish when rerunning the current manuscript ({rerunTargetChapters} target chapters)</span>
-            </label>
-
-            <div className="studio-workflow__actions">
-              <Button type="button" variant="secondary" onClick={() => void rerunCurrentPipeline()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="studio-run-current-pipeline">{rerunPublishes ? 'Run current pipeline and publish' : 'Run current pipeline'}</Button>
-              <Button type="button" variant="secondary" onClick={() => void workbench.exportStory()} disabled={!workbench.activeStory || workbench.isBusy} data-testid="studio-export">Export</Button>
-              <Button type="button" variant="secondary" onClick={() => void workbench.publishStory()} disabled={!workbench.activeStory || workbench.isBusy || !zeroWarning} data-testid="studio-publish">Publish</Button>
-            </div>
-
+          <Panel title="Run journal" eyebrow="Artifacts" testId="playback-desk">
             <div className="studio-console__state" data-testid="studio-workflow-state">
-              <strong>{workbench.isBusy ? 'Working...' : workbench.artifact.lastAction ?? 'Waiting for an action'}</strong>
-              <span>{workbench.stories.length} manuscripts tracked</span>
+              <strong>{workbench.isBusy ? 'Working...' : jobLabel(workbench.currentJob)}</strong>
+              <StatusPill tone={jobTone(workbench.currentJob)}>
+                {workbench.currentJob?.status ?? 'idle'}
+              </StatusPill>
             </div>
 
-            {workbench.runSummaries.length ? (
+            {workbench.currentJob ? (
+              <div className="studio-notes studio-notes--playback" data-testid="studio-run-playback">
+                <h3>Latest job</h3>
+                <dl className="studio-stats studio-stats--compact">
+                  <div>
+                    <dt>Operation</dt>
+                    <dd>{workbench.currentJob.operation}</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd>{workbench.currentJob.status}</dd>
+                  </div>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{formatDate(workbench.currentJob.created_at)}</dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>{formatDate(workbench.currentJob.updated_at)}</dd>
+                  </div>
+                </dl>
+                {workbench.currentJob.error ? (
+                  <p className="form-error">{workbench.currentJob.error}</p>
+                ) : null}
+                {workbench.currentJob.failure_artifact ? (
+                  <p className="studio-muted">
+                    Failure evidence: {workbench.currentJob.failure_artifact.relative_path}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="studio-empty">Run a job to inspect status and results.</div>
+            )}
+
+            {workspace?.runs.length ? (
               <div className="studio-notes" data-testid="studio-run-history">
-                <h3>Run history</h3>
+                <h3>Run artifacts</h3>
                 <ul>
-                  {workbench.runSummaries.slice(-6).reverse().map((run) => (
-                    <li key={run.run_id}>
-                      <button type="button" className="studio-card__button" onClick={() => void toggleRun(run.run_id)} data-testid={`studio-run-item-${run.run_id}`}>
-                        <strong>{workbench.selectedRunId === run.run_id ? 'Viewing' : 'Open'} {run.mode}</strong>
-                        <span>{run.status} / {run.stages.length} stages / {formatDate(run.completed_at ?? run.started_at)}</span>
-                      </button>
+                  {workspace.runs.slice(0, 6).map((run) => (
+                    <li key={run.run_id} className="studio-chapter-card">
+                      <div className="studio-chapter-card__header">
+                        <strong>{run.run_id}</strong>
+                        <span>{run.artifact_count} artifacts</span>
+                      </div>
+                      <p>
+                        {run.last_event
+                          ? `${run.last_event.operation} ${run.last_event.status}`
+                          : 'No events'}
+                      </p>
                     </li>
                   ))}
                 </ul>
               </div>
             ) : null}
 
-            {workbench.selectedRunDetail ? (
-              <div className="studio-notes studio-notes--playback" data-testid="studio-run-playback">
-                <h3>Run playback</h3>
-                <p>{workbench.selectedRunDetail.run.mode} / {workbench.selectedRunDetail.run.status} / snapshot {formatDate(workbench.selectedRunDetail.latest_snapshot?.captured_at ?? null)}</p>
-                <dl className="studio-stats" data-testid="studio-run-playback-stats">
-                  <div><dt>Artifacts</dt><dd>{workbench.selectedRunDetail.artifacts.length}</dd></div>
-                  <div><dt>Events</dt><dd>{workbench.selectedRunDetail.events.length}</dd></div>
-                  <div><dt>Snapshots</dt><dd>{workbench.selectedRunDetail.stage_snapshots.length}</dd></div>
-                  <div><dt>Quality</dt><dd>{playbackReview?.quality_score ?? 0}</dd></div>
-                  <div><dt>Reader pull</dt><dd>{playbackReview?.semantic_review?.metrics.reader_pull_score ?? 0}</dd></div>
-                </dl>
-                <div className="studio-tag-row">
-                  <span className="studio-tag" data-testid="studio-playback-structural-gate">Structural gate: {playbackReview?.structural_gate_passed ? 'pass' : 'blocked'}</span>
-                  <span className="studio-tag" data-testid="studio-playback-semantic-gate">Semantic gate: {playbackReview?.semantic_gate_passed ? 'pass' : 'blocked'}</span>
-                  <span className="studio-tag" data-testid="studio-playback-publish-gate">Publish gate: {playbackReview?.publish_gate_passed ? 'pass' : 'blocked'}</span>
-                </div>
-
-                <ul className="studio-issue-list" data-testid="playback-stage-timeline">
-                  {workbench.selectedRunDetail.run.stages.map((stage) => (
-                    <li key={`${stage.name}-${stage.started_at}`} className="studio-chapter-card">
-                      <div className="studio-chapter-card__header">
-                        <strong>{stage.name}</strong>
-                        <StatusPill tone={stageTone(stage)}>{stage.status}</StatusPill>
-                      </div>
-                      <p>{stage.failure_code ? `${stage.name}: ${stage.failure_code}` : `${stage.name}: ${stage.status}`}</p>
+            {workspace?.exports.length ? (
+              <div className="studio-notes" data-testid="studio-export-list">
+                <h3>Exports</h3>
+                <ul>
+                  {workspace.exports.map((item) => (
+                    <li key={item.relative_path}>
+                      {item.filename} / {item.size} bytes
                     </li>
                   ))}
                 </ul>
-
-                {workbench.selectedRunDetail.failure_message || workbench.selectedRunDetail.run.status === 'failed' ? (
-                  <div className="studio-notes" data-testid="studio-run-failure">
-                    <h3>Run failure</h3>
-                    <p>Failed stage: {workbench.selectedRunDetail.failed_stage ?? 'unknown'}{workbench.selectedRunDetail.failure_code ? ` / ${workbench.selectedRunDetail.failure_code}` : ''}</p>
-                    <p>{workbench.selectedRunDetail.failure_message ?? 'No failure message recorded.'}</p>
-                    <p>Manuscript preserved: {workbench.selectedRunDetail.manuscript_preserved === false ? 'no' : 'yes'}</p>
-                    <p>Debug artifacts: {workbench.selectedRunDetail.failure_artifacts?.length ?? 0}</p>
-                    {workbench.selectedRunDetail.failure_artifacts?.length ? (
-                      <ul>
-                        {workbench.selectedRunDetail.failure_artifacts.slice(-3).map((artifact) => (
-                          <li key={artifact.artifact_id}>{artifact.kind} v{artifact.version} / {artifact.source_provider}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
-                ) : null}
               </div>
-            ) : (
-              <div className="studio-empty">Select a run from the history to inspect immutable evidence.</div>
-            )}
+            ) : null}
           </Panel>
         </div>
       </section>

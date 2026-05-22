@@ -21,7 +21,7 @@ U = TypeVar("U")
 
 
 class _CallableBool:
-    """Boolean-like compatibility wrapper that is also callable."""
+    """Boolean-like value object that is also callable."""
 
     __slots__ = ("_value",)
 
@@ -222,7 +222,7 @@ class Failure:
 
     @property
     def value(self) -> Any:
-        """Property to access error details (for compatibility).
+        """Property to access error details.
 
         Returns:
             The error message as 'value' for uniform access pattern.

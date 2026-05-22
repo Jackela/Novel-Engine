@@ -1,8 +1,9 @@
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import { sessionStorageKey } from '@/shared/storage';
+import { readSessionCatalog } from '@/shared/storage';
 
 import { render, screen, waitFor } from '../../../tests/test-utils';
 import { AuthProvider } from './AuthProvider';
@@ -26,7 +27,7 @@ function SessionProbe() {
       <div data-testid="loading-state">{isLoading ? 'loading' : 'ready'}</div>
       <div data-testid="session-state">{session ? session.kind : 'empty'}</div>
       <div data-testid="workspace-state">{session?.workspaceId ?? 'none'}</div>
-      <div data-testid="story-selection">{session?.lastStoryId ?? 'none'}</div>
+      <div data-testid="workspace-selection">{session?.lastWorkspaceId ?? 'none'}</div>
       <button
         data-testid="probe-sign-in"
         onClick={() =>
@@ -64,8 +65,8 @@ function SessionProbe() {
         data-testid="probe-update-selection"
         onClick={() =>
           updateSessionSelection({
-            lastStoryId: 'story-123',
-            lastRunId: 'run-456',
+            lastWorkspaceId: 'workspace-123',
+            lastJobId: 'job-456',
             lastView: 'playback',
           })
         }
@@ -109,9 +110,7 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('session-state')).toHaveTextContent('user');
     });
 
-    const storedSession = JSON.parse(
-      window.localStorage.getItem(sessionStorageKey) ?? 'null',
-    ) as Record<string, unknown> | null;
+    const storedSession = readSessionCatalog().sessions[0];
 
     expect(storedSession).toMatchObject({
       kind: 'user',
@@ -141,7 +140,7 @@ describe('AuthProvider', () => {
         }) as Awaited<ReturnType<typeof api.createGuestSession>>,
     );
     vi.spyOn(api, 'login').mockResolvedValue({
-      workspace_id: 'user-operator',
+      workspace_id: 'user-123-safe',
       user: {
         id: 'user-123',
         name: 'Operator',
@@ -163,7 +162,7 @@ describe('AuthProvider', () => {
 
     await user.click(screen.getByTestId('probe-sign-in'));
     await waitFor(() => {
-      expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-operator');
+      expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-123-safe');
     });
 
     await user.click(screen.getByTestId('probe-switch-guest'));
@@ -176,15 +175,25 @@ describe('AuthProvider', () => {
 
   it('restores and validates a saved user session on mount', async () => {
     window.localStorage.setItem(
-      sessionStorageKey,
+      'novel-engine-session-catalog',
       JSON.stringify({
-        kind: 'user',
-        workspaceId: 'user-operator',
-        user: {
-          id: 'stale-user',
-          name: 'stale',
-          email: 'stale@novel.engine',
-        },
+        version: 3,
+        activeSessionId: 'user:user-operator',
+        sessions: [
+          {
+            id: 'user:user-operator',
+            kind: 'user',
+            workspaceId: 'user-operator',
+            user: {
+              id: 'stale-user',
+              name: 'stale',
+              email: 'stale@novel.engine',
+            },
+            lastWorkspaceId: null,
+            lastJobId: null,
+            lastView: 'workspace',
+          },
+        ],
       }),
     );
     vi.spyOn(api, 'getCurrentUser').mockResolvedValue({
@@ -192,6 +201,16 @@ describe('AuthProvider', () => {
       username: 'operator',
       email: 'operator@novel.engine',
       roles: ['author'],
+      workspace_id: 'user-123-safe',
+      identity_kind: 'user',
+      workspace_kind: 'user',
+      active_workspace: {
+        workspace_id: 'user-123-safe',
+        workspace_kind: 'user',
+        label: 'Signed-in workspace',
+        persistence: 'persistent',
+        summary: 'Stable author workspace bound to the authenticated identity.',
+      },
     });
 
     render(
@@ -201,10 +220,16 @@ describe('AuthProvider', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('session-state')).toHaveTextContent('user');
-      expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-operator');
+      expect(api.getCurrentUser).toHaveBeenCalledWith();
     });
-    expect(api.getCurrentUser).toHaveBeenCalledWith();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('session-state')).toHaveTextContent('user');
+      expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-123-safe');
+      expect(screen.getByTestId('loading-state')).toHaveTextContent('ready');
+    });
   });
 
   it('updates active session selection and signs out the active session', async () => {
@@ -236,13 +261,15 @@ describe('AuthProvider', () => {
 
     await user.click(screen.getByTestId('probe-update-selection'));
     await waitFor(() => {
-      expect(screen.getByTestId('story-selection')).toHaveTextContent('story-123');
+      expect(screen.getByTestId('workspace-selection')).toHaveTextContent(
+        'workspace-123',
+      );
     });
 
     await user.click(screen.getByTestId('probe-sign-out'));
     await waitFor(() => {
       expect(screen.getByTestId('session-state')).toHaveTextContent('empty');
     });
-    expect(window.localStorage.getItem(sessionStorageKey)).toBeNull();
+    expect(readSessionCatalog().activeSessionId).toBeNull();
   });
 });

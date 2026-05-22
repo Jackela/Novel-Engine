@@ -3,8 +3,10 @@ import { expect, test } from '@playwright/test';
 import {
   attachConsoleGuard,
   expectStudioRoute,
+  expectWorkflowState,
   launchGuest,
   seedDraftStory,
+  selectMockProvider,
   signIn,
   uniqueTitle,
 } from './helpers/studio-workflow';
@@ -12,7 +14,7 @@ import {
 test.describe('frontend full audit', () => {
   test.describe.configure({ mode: 'serial' });
 
-  test('guest workflow covers staged actions and publish verdict', async ({ page }) => {
+  test('guest workflow covers workspace jobs and export verdict', async ({ page }) => {
     const assertConsoleClean = attachConsoleGuard(page);
 
     await launchGuest(page);
@@ -24,20 +26,17 @@ test.describe('frontend full audit', () => {
       premise: 'A canal city records every promise and starts deleting them by district.',
       themes: 'debt, contracts, water law',
     });
+    await selectMockProvider(page);
 
-    await page.getByTestId('studio-generate-blueprint').click();
-    await page.getByTestId('studio-generate-outline').click();
-    await page.getByTestId('studio-draft-chapters').click();
-    await expect(page.getByTestId('studio-chapter-list')).toContainText('Chapter 1');
+    await page.getByTestId('studio-run').click();
+    await expectWorkflowState(page, 'run completed');
+    await expect(page.getByTestId('studio-chapter-list')).toContainText('chapter-001.md');
 
     await page.getByTestId('studio-review').click();
-    await expect(page.getByTestId('studio-review-score')).toHaveText(/^\d+$/);
-    await page.getByTestId('studio-revise').click();
+    await expectWorkflowState(page, 'review completed');
     await page.getByTestId('studio-export').click();
-    await page.getByTestId('studio-publish').click();
-
-    await expect(page.getByTestId('studio-workflow-state')).toContainText('Published story');
-    await expect(page.getByTestId('publish-verdict')).toContainText('zero warning ready');
+    await expectWorkflowState(page, 'export completed');
+    await expect(page.getByTestId('publish-verdict')).toContainText('export allowed');
 
     await assertConsoleClean();
   });
@@ -56,7 +55,7 @@ test.describe('frontend full audit', () => {
     await page.getByTestId('auth-login-email').fill('operator@novel.engine');
     await page.getByTestId('auth-login-password').fill('demo-password');
     await page.getByTestId('auth-login-submit').click();
-    await expect(page.getByTestId('workspace-badge')).toHaveText('user-operator');
+    await expect(page.getByTestId('workspace-badge')).toContainText('user-');
 
     await expect(page.getByTestId('session-switcher')).toBeVisible();
     await page.getByRole('button', { name: /guest workspace/i }).click();
@@ -71,31 +70,28 @@ test.describe('frontend full audit', () => {
     await assertConsoleClean();
   });
 
-  test('playback deep links persist after refresh', async ({ page }) => {
+  test('Workspace playback deep links persist after refresh', async ({ page }) => {
     const assertConsoleClean = attachConsoleGuard(page);
 
     await signIn(page);
-
-    await page.getByTestId('studio-title-input').fill(uniqueTitle('Audit Playback Story'));
-    await page.getByTestId('studio-premise-input').fill(
-      'A debt court discovers its witness ledger has been rewritten by tomorrow.',
-    );
-    await page.getByTestId('studio-target-chapters-input').fill('3');
-    await page.getByTestId('studio-run-pipeline').click();
-
-    await page.getByTestId('studio-run-current-pipeline').click();
+    await seedDraftStory(page, {
+      title: uniqueTitle('Audit Playback Story'),
+      premise: 'A debt court discovers its witness ledger has been rewritten by tomorrow.',
+    });
+    await selectMockProvider(page);
+    await page.getByTestId('studio-run').click();
 
     await expect(page.getByTestId('studio-run-history')).toBeVisible();
     await expect(page.getByTestId('studio-run-playback')).toBeVisible();
     const deepLink = page.url();
     expect(deepLink).toContain('/studio?');
     expect(deepLink).toContain('view=playback');
-    expect(deepLink).toContain('run=');
+    expect(deepLink).toContain('job=');
 
     await page.reload();
     await expectStudioRoute(page, 'playback');
     await expect(page).toHaveURL(deepLink);
-    await expect(page.getByTestId('playback-stage-timeline')).toBeVisible();
+    await expect(page.getByTestId('studio-run-playback')).toBeVisible();
 
     await assertConsoleClean();
   });
@@ -135,7 +131,7 @@ test.describe('frontend full audit', () => {
       extraAllowList: [/Failed to load resource/i, /ERR_FAILED/i],
     });
 
-    await page.route('**/api/v1/auth/login', async (route) => {
+    await page.route('**/api/auth/login', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.continue();
         return;
@@ -156,9 +152,9 @@ test.describe('frontend full audit', () => {
     );
     await expect(page.getByTestId('auth-login-error')).not.toContainText('<html');
 
-    await page.unroute('**/api/v1/auth/login');
+    await page.unroute('**/api/auth/login');
 
-    await page.route('**/api/v1/guest/session', async (route) => {
+    await page.route('**/api/guest/session', async (route) => {
       if (route.request().method() !== 'POST') {
         await route.continue();
         return;

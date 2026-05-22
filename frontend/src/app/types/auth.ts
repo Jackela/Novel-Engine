@@ -1,7 +1,7 @@
 type SessionKind = 'guest' | 'user';
-export type WorkspaceKind = 'guest' | 'user' | 'unknown';
+type WorkspaceKind = 'guest' | 'user' | 'unknown';
 type WorkspacePersistence = 'ephemeral' | 'persistent' | 'unknown';
-export type StorySurfaceView = 'workspace' | 'playback';
+export type WorkspaceSurfaceView = 'workspace' | 'playback';
 
 interface SessionUser {
   id: string;
@@ -24,9 +24,9 @@ export interface SessionState {
   user?: SessionUser;
   identityKind?: SessionKind;
   activeWorkspace?: ActiveWorkspaceSummary;
-  lastStoryId?: string | null;
-  lastRunId?: string | null;
-  lastView?: StorySurfaceView;
+  lastWorkspaceId?: string | null;
+  lastJobId?: string | null;
+  lastView?: WorkspaceSurfaceView;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -75,4 +75,8 @@ export interface CurrentUserResponse {
   username: string;
   email: string;
   roles: string[];
+  workspace_id: string;
+  identity_kind?: SessionKind;
+  workspace_kind?: WorkspaceKind;
+  active_workspace?: ActiveWorkspaceResponsePayload;
 }

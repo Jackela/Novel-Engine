@@ -15,7 +15,7 @@ import type {
   LoginResponse,
   SessionCatalog,
   SessionState,
-  StorySurfaceView,
+  WorkspaceSurfaceView,
 } from '@/app/types/auth';
 import {
   buildSessionId,
@@ -38,9 +38,9 @@ interface AuthContextValue {
   switchSession: (sessionId: string) => Promise<SessionState>;
   signOut: () => void;
   updateSessionSelection: (selection: {
-    lastStoryId?: string | null;
-    lastRunId?: string | null;
-    lastView?: StorySurfaceView;
+    lastWorkspaceId?: string | null;
+    lastJobId?: string | null;
+    lastView?: WorkspaceSurfaceView;
   }) => void;
 }
 
@@ -50,6 +50,7 @@ function normalizeWorkspaceSummary(
   payload:
     | LoginResponse['active_workspace']
     | GuestSessionResponse['active_workspace']
+    | CurrentUserResponse['active_workspace']
     | undefined,
   fallback: {
     workspaceId: string;
@@ -85,8 +86,8 @@ function buildGuestSession(
       persistence: 'ephemeral',
       summary: 'Disposable workspace for drafting and flow verification.',
     }),
-    lastStoryId: previous?.lastStoryId ?? null,
-    lastRunId: previous?.lastRunId ?? null,
+    lastWorkspaceId: previous?.lastWorkspaceId ?? null,
+    lastJobId: previous?.lastJobId ?? null,
     lastView: previous?.lastView ?? 'workspace',
     createdAt: previous?.createdAt,
     updatedAt: new Date().toISOString(),
@@ -111,8 +112,8 @@ function buildUserSessionFromLogin(
       persistence: 'persistent',
       summary: 'Stable author workspace bound to the authenticated identity.',
     }),
-    lastStoryId: previous?.lastStoryId ?? null,
-    lastRunId: previous?.lastRunId ?? null,
+    lastWorkspaceId: previous?.lastWorkspaceId ?? null,
+    lastJobId: previous?.lastJobId ?? null,
     lastView: previous?.lastView ?? 'workspace',
     createdAt: previous?.createdAt,
     updatedAt: new Date().toISOString(),
@@ -123,26 +124,26 @@ function buildUserSessionFromCurrentUser(
   user: CurrentUserResponse,
   previous: SessionState,
 ): SessionState {
-  const workspaceId = `user-${user.username}`;
+  const workspaceId = user.workspace_id;
   return {
     id: buildSessionId({ kind: 'user', workspaceId }),
     kind: 'user',
-    identityKind: 'user',
+    identityKind: user.identity_kind ?? 'user',
     workspaceId,
     user: {
       id: user.id,
       name: user.username,
       email: user.email,
     },
-    activeWorkspace: {
+    activeWorkspace: normalizeWorkspaceSummary(user.active_workspace, {
       workspaceId,
-      workspaceKind: 'user',
+      workspaceKind: user.workspace_kind ?? 'user',
       label: 'Signed-in workspace',
       persistence: 'persistent',
       summary: 'Stable author workspace bound to the authenticated identity.',
-    },
-    lastStoryId: previous.lastStoryId ?? null,
-    lastRunId: previous.lastRunId ?? null,
+    }),
+    lastWorkspaceId: previous.lastWorkspaceId ?? null,
+    lastJobId: previous.lastJobId ?? null,
     lastView: previous.lastView ?? 'workspace',
     createdAt: previous.createdAt,
     updatedAt: new Date().toISOString(),
@@ -279,9 +280,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   };
 
   const updateSessionSelection = (selection: {
-    lastStoryId?: string | null;
-    lastRunId?: string | null;
-    lastView?: StorySurfaceView;
+    lastWorkspaceId?: string | null;
+    lastJobId?: string | null;
+    lastView?: WorkspaceSurfaceView;
   }) => {
     const activeSession = getActiveSession(catalogRef.current);
     if (!activeSession) {
@@ -289,8 +290,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     const nextCatalog = persistSessionSelection(catalogRef.current, activeSession.id, {
-      lastStoryId: selection.lastStoryId ?? activeSession.lastStoryId ?? null,
-      lastRunId: selection.lastRunId ?? activeSession.lastRunId ?? null,
+      lastWorkspaceId:
+        selection.lastWorkspaceId ?? activeSession.lastWorkspaceId ?? null,
+      lastJobId: selection.lastJobId ?? activeSession.lastJobId ?? null,
       lastView: selection.lastView ?? activeSession.lastView ?? 'workspace',
     });
     setCatalog(nextCatalog);

@@ -36,7 +36,6 @@ class AuditContext:
     suffix: int
     workspace_id: str = ""
     guest_workspace_id: str = ""
-    story_id: str = ""
-    run_id: str = ""
+    job_id: str = ""
     knowledge_base_id: str = ""
     document_id: str = ""

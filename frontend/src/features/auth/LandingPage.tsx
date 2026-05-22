@@ -9,8 +9,8 @@ import type { SessionState } from '@/app/types/auth';
 
 function studioLocation(session: SessionState) {
   const searchParams = new URLSearchParams();
-  if (session.lastStoryId) searchParams.set('story', session.lastStoryId);
-  if (session.lastRunId) searchParams.set('run', session.lastRunId);
+  if (session.lastWorkspaceId) searchParams.set('workspace', session.lastWorkspaceId);
+  if (session.lastJobId) searchParams.set('job', session.lastJobId);
   searchParams.set('view', session.lastView ?? 'workspace');
   const query = searchParams.toString();
   return query ? `/studio?${query}` : '/studio';
@@ -62,7 +62,7 @@ export function LandingPage() {
           Novel Engine / Entry Surface
         </Badge>
         <h1 className="max-w-4xl text-4xl leading-tight font-semibold tracking-tight md:text-6xl" data-testid="auth-home-title">
-          Start cold, iterate fast, and keep publication evidence visible from first draft to final gate.
+          Start cold, iterate fast, and keep export evidence visible from opening chapter to final gate.
         </h1>
         <p className="mt-4 max-w-3xl text-base text-muted-foreground md:text-lg">
           The studio keeps session identity, mutable workspace, and immutable playback separate so the same
@@ -105,7 +105,7 @@ export function LandingPage() {
             <CardTitle>2. Compose</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            Create drafts, run pipeline stages, revise, export, and publish in one surface.
+            Create local workspaces, run workspace jobs, review, revise, and export in one surface.
           </CardContent>
         </Card>
         <Card>

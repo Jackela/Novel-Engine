@@ -1,6 +1,6 @@
-"""Canonical runtime re-export.
+"""Canonical guest-session runtime re-export.
 
-The in-memory guest/orchestration implementation lives under
+The in-memory guest session implementation lives under
 ``src.apps.api.services.runtime``. This module keeps a stable import path so the
 application and tests share the same runtime store instance.
 """

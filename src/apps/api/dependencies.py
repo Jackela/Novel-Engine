@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import re
 from collections.abc import Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any, AsyncGenerator
@@ -22,35 +24,17 @@ from src.contexts.identity.infrastructure.repositories.in_memory_user_repository
 from src.contexts.knowledge.application.services.knowledge_service import (
     KnowledgeApplicationService,
 )
-from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
-    PostgresKnowledgeRepository,
-)
 from src.contexts.knowledge.infrastructure.runtime import (
     create_in_memory_knowledge_service,
 )
-from src.contexts.knowledge.infrastructure.services.openai_embedding_service import (
-    OpenAIEmbeddingService,
-)
 from src.contexts.knowledge.infrastructure.services.recursive_chunking_service import (
     RecursiveChunkingService,
-)
-from src.contexts.knowledge.infrastructure.vectorStores.chroma_knowledge_vector_store import (
-    ChromaKnowledgeVectorStore,
-)
-from src.contexts.knowledge.infrastructure.vectorStores.chroma_vector_store import (
-    ChromaVectorStore,
 )
 from src.shared.infrastructure.auth.jwt_utils import JWTManager
 from src.shared.infrastructure.auth.refresh_sessions import reset_refresh_session_store
 from src.shared.infrastructure.auth.session_cookies import ACCESS_TOKEN_COOKIE
 from src.shared.infrastructure.config.settings import get_settings
 from src.shared.infrastructure.logging.config import get_logger
-from src.shared.infrastructure.persistence.pool_manager import (
-    close_connection_pool as close_shared_connection_pool,
-)
-from src.shared.infrastructure.persistence.pool_manager import (
-    get_connection_pool as get_shared_connection_pool,
-)
 
 if TYPE_CHECKING:
     import asyncpg
@@ -105,6 +89,16 @@ def reset_jwt_manager() -> None:
 
 async def get_connection_pool() -> DatabaseConnectionPool:
     """Get or create the shared database connection pool."""
+    try:
+        from src.shared.infrastructure.persistence.pool_manager import (
+            get_connection_pool as get_shared_connection_pool,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "asyncpg":
+            raise RuntimeError(
+                "PostgreSQL connection pools require optional postgres dependencies."
+            ) from exc
+        raise
     pool = await get_shared_connection_pool()
     global _connection_pool
     _connection_pool = pool
@@ -118,6 +112,14 @@ async def close_connection_pool() -> None:
     """Close the shared database connection pool."""
     global _connection_pool
     _connection_pool = None
+    try:
+        from src.shared.infrastructure.persistence.pool_manager import (
+            close_connection_pool as close_shared_connection_pool,
+        )
+    except ModuleNotFoundError as exc:
+        if exc.name == "asyncpg":
+            return
+        raise
     await close_shared_connection_pool()
 
 
@@ -198,6 +200,21 @@ class WorkspacePrincipal:
         return self.kind == "guest"
 
 
+SAFE_PRINCIPAL_ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+
+
+def user_workspace_id(*, user_id: str, username: str) -> str:
+    """Return a stable, path-safe workspace namespace for an authenticated user."""
+    candidate = user_id.strip()
+    if candidate:
+        slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", candidate).strip("-_")
+        if slug and SAFE_PRINCIPAL_ID.fullmatch(f"user-{slug}"[:64]):
+            return f"user-{slug}"[:64]
+
+    digest_source = f"{user_id}:{username}".encode("utf-8")
+    return f"user-{hashlib.sha256(digest_source).hexdigest()[:24]}"
+
+
 def _current_user_from_access_token(token: str) -> CurrentUser | None:
     try:
         payload = get_jwt_manager().verify_access_token(token)
@@ -252,7 +269,10 @@ async def get_workspace_principal(
     if current_user and current_user.username:
         return WorkspacePrincipal(
             kind="user",
-            workspace_id=f"user-{current_user.username.strip()}",
+            workspace_id=user_workspace_id(
+                user_id=current_user.user_id,
+                username=current_user.username,
+            ),
             user_id=current_user.user_id,
             username=current_user.username,
         )
@@ -421,6 +441,24 @@ async def get_knowledge_service() -> KnowledgeApplicationService:
             )
 
         pool = await get_connection_pool()
+        try:
+            from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
+                PostgresKnowledgeRepository,
+            )
+            from src.contexts.knowledge.infrastructure.services.openai_embedding_service import (
+                OpenAIEmbeddingService,
+            )
+            from src.contexts.knowledge.infrastructure.vectorStores.chroma_knowledge_vector_store import (
+                ChromaKnowledgeVectorStore,
+            )
+            from src.contexts.knowledge.infrastructure.vectorStores.chroma_vector_store import (
+                ChromaVectorStore,
+            )
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "Production knowledge services require the optional knowledge, "
+                "postgres, and chroma dependencies to be installed."
+            ) from exc
         chroma_store = ChromaVectorStore(
             host=settings.vector_store.host,
             port=settings.vector_store.port,

@@ -8,6 +8,7 @@ import importlib
 import importlib.util
 import os
 import sys
+import tempfile
 import types
 from collections.abc import Generator
 from pathlib import Path
@@ -102,6 +103,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     monkeypatch.setenv("APP_ENVIRONMENT", "testing")
     monkeypatch.setenv(
+        "APP_DATA_DIR",
+        tempfile.mkdtemp(prefix="novel-engine-api-tests-"),
+    )
+    monkeypatch.setenv(
         "SECURITY_SECRET_KEY",
         "test-secret-key-for-contract-checks-1234567890",
     )
@@ -110,15 +115,11 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
 
     from src.apps.api.dependencies import reset_knowledge_service
     from src.apps.api.health import reset_health_state
-    from src.contexts.narrative.infrastructure.runtime import (
-        reset_story_workflow_service,
-    )
     from src.shared.infrastructure.config import settings as settings_module
 
     settings_module.reset_settings()
     reset_knowledge_service()
     reset_health_state()
-    reset_story_workflow_service()
 
     for module_name in ("src.apps.api.router", "src.apps.api.main"):
         sys.modules.pop(module_name, None)
