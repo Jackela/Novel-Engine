@@ -1,10 +1,11 @@
-.PHONY: help install test lint format migration migrate migrate-down migrate-history
+.PHONY: help install test lint cli-smoke format migration migrate migrate-down migrate-history
 
 help:
 	@echo "Novel Engine - Available commands:"
 	@echo "  make install          - Install dependencies"
 	@echo "  make test            - Run tests"
 	@echo "  make lint            - Run linters"
+	@echo "  make cli-smoke       - Run local-first CLI tests"
 	@echo "  make format          - Format code"
 	@echo "  make migration       - Create new migration (use: make migration message='description')"
 	@echo "  make migrate         - Apply all pending migrations"
@@ -23,6 +24,10 @@ test:
 lint:
 	uv run ruff check src/ tests/
 	uv run mypy src/ tests/ --no-error-summary --show-column-numbers
+	uv run python scripts/qa/check_repo_hygiene.py
+
+cli-smoke:
+	uv run pytest tests/apps/cli/test_novel_engine.py -q
 
 format:
 	uv run black src/ tests/

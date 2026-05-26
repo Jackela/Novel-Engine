@@ -739,7 +739,6 @@ textarea {
 }
 
 .story-memory-card,
-.story-pipeline-card,
 .story-export-card,
 .story-review,
 .story-notes {
@@ -750,7 +749,6 @@ textarea {
 }
 
 .story-memory-card h3,
-.story-pipeline-card h3,
 .story-export-card h3,
 .story-review h3,
 .story-notes h3 {
@@ -759,7 +757,6 @@ textarea {
 }
 
 .story-memory-card p,
-.story-pipeline-card p,
 .story-export-card p,
 .story-review p,
 .story-notes p,

@@ -1,6 +1,152 @@
 {
   "components": {
     "schemas": {
+      "ArtifactJobResult": {
+        "description": "Safe draft/revision result returned to browsers.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactRef"
+          },
+          "chapter_number": {
+            "title": "Chapter Number",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "result_type": {
+            "const": "artifact",
+            "title": "Result Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "sidecar": {
+            "additionalProperties": true,
+            "title": "Sidecar",
+            "type": "object"
+          }
+        },
+        "required": [
+          "result_type",
+          "artifact",
+          "chapter_number",
+          "provider",
+          "model",
+          "run_id"
+        ],
+        "title": "ArtifactJobResult",
+        "type": "object"
+      },
+      "ArtifactRef": {
+        "description": "Browser-safe reference to a workspace artifact.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "relative_path"
+        ],
+        "title": "ArtifactRef",
+        "type": "object"
+      },
+      "ChapterStatusResponse": {
+        "description": "Chapter metadata returned by workspace status.",
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "chapter_number": {
+            "title": "Chapter Number",
+            "type": "integer"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "sidecar": {
+            "additionalProperties": true,
+            "title": "Sidecar",
+            "type": "object"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "word_count": {
+            "title": "Word Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "chapter_number",
+          "filename",
+          "artifact_id",
+          "relative_path",
+          "word_count"
+        ],
+        "title": "ChapterStatusResponse",
+        "type": "object"
+      },
       "ComponentStatusResponse": {
         "description": "Serialized status of an individual runtime dependency.",
         "properties": {
@@ -39,6 +185,67 @@
           "status"
         ],
         "title": "ComponentStatusResponse",
+        "type": "object"
+      },
+      "CurrentUserResponse": {
+        "description": "Current user plus the server-owned workspace namespace.",
+        "properties": {
+          "active_workspace": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Resolved active workspace summary",
+            "title": "Active Workspace",
+            "type": "object"
+          },
+          "email": {
+            "description": "Email address",
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "description": "User ID",
+            "title": "Id",
+            "type": "string"
+          },
+          "identity_kind": {
+            "default": "user",
+            "description": "Resolved identity kind",
+            "title": "Identity Kind",
+            "type": "string"
+          },
+          "roles": {
+            "description": "User roles",
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "username": {
+            "description": "Username",
+            "title": "Username",
+            "type": "string"
+          },
+          "workspace_id": {
+            "description": "Active workspace identifier",
+            "title": "Workspace Id",
+            "type": "string"
+          },
+          "workspace_kind": {
+            "default": "user",
+            "description": "Resolved workspace kind",
+            "title": "Workspace Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "username",
+          "email",
+          "workspace_id"
+        ],
+        "title": "CurrentUserResponse",
         "type": "object"
       },
       "DetailedHealthResponse": {
@@ -230,6 +437,25 @@
         "title": "DocumentUploadRequest",
         "type": "object"
       },
+      "ExportJobResult": {
+        "description": "Safe export result returned to browsers.",
+        "properties": {
+          "export": {
+            "$ref": "#/components/schemas/ArtifactRef"
+          },
+          "result_type": {
+            "const": "export",
+            "title": "Result Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result_type",
+          "export"
+        ],
+        "title": "ExportJobResult",
+        "type": "object"
+      },
       "GuestSessionRequest": {
         "description": "Optional request payload for explicitly resuming a guest workspace.",
         "properties": {
@@ -295,6 +521,37 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobEventResponse": {
+        "description": "Job lifecycle event.",
+        "properties": {
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "status"
+        ],
+        "title": "JobEventResponse",
         "type": "object"
       },
       "KnowledgeBaseCreateRequest": {
@@ -469,6 +726,72 @@
         "title": "LoginUserResponse",
         "type": "object"
       },
+      "ProviderListResponse": {
+        "description": "Available provider options for workspaces.",
+        "properties": {
+          "default_provider": {
+            "enum": [
+              "mock",
+              "dashscope",
+              "openai_compatible"
+            ],
+            "title": "Default Provider",
+            "type": "string"
+          },
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/ProviderStatus"
+            },
+            "title": "Providers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "default_provider",
+          "providers"
+        ],
+        "title": "ProviderListResponse",
+        "type": "object"
+      },
+      "ProviderStatus": {
+        "description": "Text generation provider status exposed to the browser.",
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "is_default": {
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "mock",
+              "dashscope",
+              "openai_compatible"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "configured",
+          "is_default",
+          "model"
+        ],
+        "title": "ProviderStatus",
+        "type": "object"
+      },
       "RegisterRequest": {
         "description": "User registration request model.",
         "properties": {
@@ -496,6 +819,231 @@
           "password"
         ],
         "title": "RegisterRequest",
+        "type": "object"
+      },
+      "ReviewIssueResponse": {
+        "description": "Review issue with optional evidence details.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "blocker",
+              "warning",
+              "suggestion"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "suggestion": {
+            "title": "Suggestion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "message",
+          "location",
+          "suggestion"
+        ],
+        "title": "ReviewIssueResponse",
+        "type": "object"
+      },
+      "ReviewJobResult": {
+        "description": "Safe review result returned to browsers.",
+        "properties": {
+          "result_type": {
+            "const": "review",
+            "title": "Result Type",
+            "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewReportResponse"
+          }
+        },
+        "required": [
+          "result_type",
+          "review"
+        ],
+        "title": "ReviewJobResult",
+        "type": "object"
+      },
+      "ReviewReportResponse": {
+        "description": "Review report returned by status and job results.",
+        "properties": {
+          "blockers": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewIssueResponse"
+            },
+            "title": "Blockers",
+            "type": "array"
+          },
+          "checked_at": {
+            "title": "Checked At",
+            "type": "string"
+          },
+          "export_blocked": {
+            "title": "Export Blocked",
+            "type": "boolean"
+          },
+          "story_title": {
+            "title": "Story Title",
+            "type": "string"
+          },
+          "style_notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Style Notes",
+            "type": "array"
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewIssueResponse"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewIssueResponse"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "story_title",
+          "checked_at",
+          "blockers",
+          "warnings",
+          "suggestions",
+          "style_notes",
+          "export_blocked"
+        ],
+        "title": "ReviewReportResponse",
+        "type": "object"
+      },
+      "RunEventResponse": {
+        "description": "Run journal event.",
+        "properties": {
+          "details": {
+            "additionalProperties": true,
+            "title": "Details",
+            "type": "object"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "status"
+        ],
+        "title": "RunEventResponse",
+        "type": "object"
+      },
+      "RunJobResult": {
+        "description": "Safe run result returned to browsers.",
+        "properties": {
+          "result_type": {
+            "const": "run",
+            "title": "Result Type",
+            "type": "string"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReviewReportResponse"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result_type",
+          "review",
+          "run_id"
+        ],
+        "title": "RunJobResult",
+        "type": "object"
+      },
+      "RunStatusResponse": {
+        "description": "Run artifact summary.",
+        "properties": {
+          "artifact_count": {
+            "title": "Artifact Count",
+            "type": "integer"
+          },
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/RunEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "last_event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunEventResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "artifact_id",
+          "relative_path",
+          "events",
+          "artifact_count"
+        ],
+        "title": "RunStatusResponse",
         "type": "object"
       },
       "SearchRequest": {
@@ -669,36 +1217,30 @@
         "title": "SimpleHealthResponse",
         "type": "object"
       },
-      "StoryCreateRequest": {
-        "additionalProperties": true,
-        "description": "Request payload for creating a story draft.",
+      "StoryConfigResponse": {
+        "description": "Story configuration returned by workspace status.",
         "properties": {
+          "continuity": {
+            "additionalProperties": true,
+            "title": "Continuity",
+            "type": "object"
+          },
           "genre": {
-            "enum": [
-              "fantasy",
-              "sci-fi",
-              "mystery",
-              "romance",
-              "horror",
-              "adventure",
-              "historical",
-              "thriller",
-              "comedy",
-              "drama"
-            ],
             "title": "Genre",
             "type": "string"
           },
           "premise": {
-            "maxLength": 5000,
-            "minLength": 10,
             "title": "Premise",
             "type": "string"
+          },
+          "style_profile": {
+            "additionalProperties": true,
+            "title": "Style Profile",
+            "type": "object"
           },
           "target_audience": {
             "anyOf": [
               {
-                "maxLength": 120,
                 "type": "string"
               },
               {
@@ -708,9 +1250,6 @@
             "title": "Target Audience"
           },
           "target_chapters": {
-            "default": 12,
-            "maximum": 120.0,
-            "minimum": 1.0,
             "title": "Target Chapters",
             "type": "integer"
           },
@@ -722,14 +1261,10 @@
             "type": "array"
           },
           "title": {
-            "maxLength": 200,
-            "minLength": 1,
             "title": "Title",
             "type": "string"
           },
           "tone": {
-            "default": "commercial web fiction",
-            "maxLength": 200,
             "title": "Tone",
             "type": "string"
           }
@@ -737,147 +1272,12 @@
         "required": [
           "title",
           "genre",
-          "premise"
+          "premise",
+          "target_chapters",
+          "tone",
+          "themes"
         ],
-        "title": "StoryCreateRequest",
-        "type": "object"
-      },
-      "StoryDraftRequest": {
-        "description": "Request payload for chapter drafting.",
-        "properties": {
-          "target_chapters": {
-            "anyOf": [
-              {
-                "maximum": 120.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Chapters"
-          }
-        },
-        "title": "StoryDraftRequest",
-        "type": "object"
-      },
-      "StoryPipelineRequest": {
-        "additionalProperties": true,
-        "description": "Request payload for the full generation pipeline.",
-        "properties": {
-          "genre": {
-            "enum": [
-              "fantasy",
-              "sci-fi",
-              "mystery",
-              "romance",
-              "horror",
-              "adventure",
-              "historical",
-              "thriller",
-              "comedy",
-              "drama"
-            ],
-            "title": "Genre",
-            "type": "string"
-          },
-          "premise": {
-            "maxLength": 5000,
-            "minLength": 10,
-            "title": "Premise",
-            "type": "string"
-          },
-          "publish": {
-            "default": true,
-            "title": "Publish",
-            "type": "boolean"
-          },
-          "target_audience": {
-            "anyOf": [
-              {
-                "maxLength": 120,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Audience"
-          },
-          "target_chapters": {
-            "default": 12,
-            "maximum": 120.0,
-            "minimum": 1.0,
-            "title": "Target Chapters",
-            "type": "integer"
-          },
-          "themes": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Themes",
-            "type": "array"
-          },
-          "title": {
-            "maxLength": 200,
-            "minLength": 1,
-            "title": "Title",
-            "type": "string"
-          },
-          "tone": {
-            "default": "commercial web fiction",
-            "maxLength": 200,
-            "title": "Tone",
-            "type": "string"
-          }
-        },
-        "required": [
-          "title",
-          "genre",
-          "premise"
-        ],
-        "title": "StoryPipelineRequest",
-        "type": "object"
-      },
-      "StoryRunRequest": {
-        "description": "Request payload for executing a run against an existing story.",
-        "properties": {
-          "operation": {
-            "default": "pipeline",
-            "enum": [
-              "blueprint",
-              "outline",
-              "draft",
-              "review",
-              "revise",
-              "export",
-              "publish",
-              "pipeline"
-            ],
-            "title": "Operation",
-            "type": "string"
-          },
-          "publish": {
-            "default": false,
-            "title": "Publish",
-            "type": "boolean"
-          },
-          "target_chapters": {
-            "anyOf": [
-              {
-                "maximum": 120.0,
-                "minimum": 1.0,
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Chapters"
-          }
-        },
-        "title": "StoryRunRequest",
+        "title": "StoryConfigResponse",
         "type": "object"
       },
       "TokenRefreshRequest": {
@@ -974,6 +1374,350 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "WorkspaceCreateRequest": {
+        "description": "Request for creating a local writing workspace.",
+        "properties": {
+          "force": {
+            "default": false,
+            "title": "Force",
+            "type": "boolean"
+          },
+          "genre": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Genre",
+            "type": "string"
+          },
+          "premise": {
+            "maxLength": 5000,
+            "minLength": 10,
+            "title": "Premise",
+            "type": "string"
+          },
+          "target_audience": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Audience"
+          },
+          "target_chapters": {
+            "default": 12,
+            "maximum": 120.0,
+            "minimum": 1.0,
+            "title": "Target Chapters",
+            "type": "integer"
+          },
+          "themes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Themes",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "tone": {
+            "default": "immersive serial fiction",
+            "maxLength": 200,
+            "title": "Tone",
+            "type": "string"
+          },
+          "workspace_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          }
+        },
+        "required": [
+          "title",
+          "genre",
+          "premise"
+        ],
+        "title": "WorkspaceCreateRequest",
+        "type": "object"
+      },
+      "WorkspaceJobRequest": {
+        "description": "Request for executing a local workspace job.",
+        "properties": {
+          "chapter": {
+            "anyOf": [
+              {
+                "maximum": 120.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chapter"
+          },
+          "operation": {
+            "enum": [
+              "draft",
+              "run",
+              "review",
+              "revise",
+              "export"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "enum": [
+                  "mock",
+                  "dashscope",
+                  "openai_compatible"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "target_chapters": {
+            "anyOf": [
+              {
+                "maximum": 120.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Chapters"
+          }
+        },
+        "required": [
+          "operation"
+        ],
+        "title": "WorkspaceJobRequest",
+        "type": "object"
+      },
+      "WorkspaceJobResponse": {
+        "description": "Persisted workspace job state.",
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/JobEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "failure_artifact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "draft",
+              "run",
+              "review",
+              "revise",
+              "export"
+            ],
+            "title": "Operation",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "mock",
+              "dashscope",
+              "openai_compatible"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "artifact": "#/components/schemas/ArtifactJobResult",
+                    "export": "#/components/schemas/ExportJobResult",
+                    "review": "#/components/schemas/ReviewJobResult",
+                    "run": "#/components/schemas/RunJobResult"
+                  },
+                  "propertyName": "result_type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/ArtifactJobResult"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ReviewJobResult"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RunJobResult"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExportJobResult"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed",
+              "interrupted"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "workspace_id",
+          "operation",
+          "status",
+          "created_at",
+          "updated_at",
+          "provider",
+          "events"
+        ],
+        "title": "WorkspaceJobResponse",
+        "type": "object"
+      },
+      "WorkspaceListResponse": {
+        "description": "List of workspaces for the active principal.",
+        "properties": {
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceStatusResponse"
+            },
+            "title": "Workspaces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "workspaces"
+        ],
+        "title": "WorkspaceListResponse",
+        "type": "object"
+      },
+      "WorkspaceStatusResponse": {
+        "description": "Complete workspace status.",
+        "properties": {
+          "chapters": {
+            "items": {
+              "$ref": "#/components/schemas/ChapterStatusResponse"
+            },
+            "title": "Chapters",
+            "type": "array"
+          },
+          "exports": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactRef"
+            },
+            "title": "Exports",
+            "type": "array"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceJobResponse"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "latest_review": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewReportResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunStatusResponse"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "story": {
+            "$ref": "#/components/schemas/StoryConfigResponse"
+          },
+          "workspace_id": {
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "story",
+          "chapters",
+          "exports",
+          "runs",
+          "jobs"
+        ],
+        "title": "WorkspaceStatusResponse",
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -995,16 +1739,16 @@
     }
   },
   "info": {
-    "description": "Canonical Novel Engine API with source-backed auth, story workflow, knowledge, guest, health, and versioning routes.",
+    "description": "Canonical Novel Engine API with source-backed auth, local workspaces, knowledge, guest, and health routes.",
     "title": "Novel Engine API",
     "version": "0.1.1"
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/v1/auth/login": {
+    "/api/auth/login": {
       "post": {
         "description": "Authenticate user and establish an HttpOnly browser session.",
-        "operationId": "login_api_v1_auth_login_post",
+        "operationId": "login_api_auth_login_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1049,17 +1793,17 @@
         ]
       }
     },
-    "/api/v1/auth/logout": {
+    "/api/auth/logout": {
       "post": {
         "description": "Revoke the current refresh session and clear browser cookies.",
-        "operationId": "logout_api_v1_auth_logout_post",
+        "operationId": "logout_api_auth_logout_post",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "additionalProperties": true,
-                  "title": "Response Logout Api V1 Auth Logout Post",
+                  "title": "Response Logout Api Auth Logout Post",
                   "type": "object"
                 }
               }
@@ -1087,16 +1831,16 @@
         ]
       }
     },
-    "/api/v1/auth/me": {
+    "/api/auth/me": {
       "get": {
         "description": "Get information about the currently authenticated user.",
-        "operationId": "get_current_user_info_api_v1_auth_me_get",
+        "operationId": "get_current_user_info_api_auth_me_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponse"
+                  "$ref": "#/components/schemas/CurrentUserResponse"
                 }
               }
             },
@@ -1123,10 +1867,10 @@
         ]
       }
     },
-    "/api/v1/auth/refresh": {
+    "/api/auth/refresh": {
       "post": {
         "description": "Rotate the refresh cookie and issue a new browser session cookie.",
-        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "operationId": "refresh_token_api_auth_refresh_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1183,10 +1927,10 @@
         ]
       }
     },
-    "/api/v1/auth/register": {
+    "/api/auth/register": {
       "post": {
         "description": "Create a new user account.",
-        "operationId": "register_api_v1_auth_register_post",
+        "operationId": "register_api_auth_register_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1231,10 +1975,10 @@
         ]
       }
     },
-    "/api/v1/guest/session": {
+    "/api/guest/session": {
       "post": {
         "description": "Create or resume a guest workspace session.",
-        "operationId": "create_or_resume_guest_session_api_v1_guest_session_post",
+        "operationId": "create_or_resume_guest_session_api_guest_session_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1280,10 +2024,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases": {
+    "/api/knowledge/knowledge-bases": {
       "post": {
         "description": "Create a new knowledge base for storing documents.",
-        "operationId": "create_knowledge_base_api_v1_knowledge_knowledge_bases_post",
+        "operationId": "create_knowledge_base_api_knowledge_knowledge_bases_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1330,10 +2074,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases/{knowledge_base_id}/documents": {
+    "/api/knowledge/knowledge-bases/{knowledge_base_id}/documents": {
       "get": {
         "description": "List documents in a knowledge base.",
-        "operationId": "list_documents_api_v1_knowledge_knowledge_bases__knowledge_base_id__documents_get",
+        "operationId": "list_documents_api_knowledge_knowledge_bases__knowledge_base_id__documents_get",
         "parameters": [
           {
             "in": "path",
@@ -1425,7 +2169,7 @@
       },
       "post": {
         "description": "Upload a document to a knowledge base.",
-        "operationId": "upload_document_api_v1_knowledge_knowledge_bases__knowledge_base_id__documents_post",
+        "operationId": "upload_document_api_knowledge_knowledge_bases__knowledge_base_id__documents_post",
         "parameters": [
           {
             "in": "path",
@@ -1495,10 +2239,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases/{knowledge_base_id}/documents/{document_id}": {
+    "/api/knowledge/knowledge-bases/{knowledge_base_id}/documents/{document_id}": {
       "delete": {
         "description": "Delete a document from a knowledge base.",
-        "operationId": "delete_document_api_v1_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__delete",
+        "operationId": "delete_document_api_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__delete",
         "parameters": [
           {
             "in": "path",
@@ -1549,7 +2293,7 @@
       },
       "get": {
         "description": "Get a document by ID.",
-        "operationId": "get_document_api_v1_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__get",
+        "operationId": "get_document_api_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__get",
         "parameters": [
           {
             "in": "path",
@@ -1607,10 +2351,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases/{knowledge_base_id}/documents/{document_id}/index": {
+    "/api/knowledge/knowledge-bases/{knowledge_base_id}/documents/{document_id}/index": {
       "post": {
         "description": "Manually index a document for semantic search.",
-        "operationId": "index_document_api_v1_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__index_post",
+        "operationId": "index_document_api_knowledge_knowledge_bases__knowledge_base_id__documents__document_id__index_post",
         "parameters": [
           {
             "in": "path",
@@ -1667,10 +2411,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases/{knowledge_base_id}/search": {
+    "/api/knowledge/knowledge-bases/{knowledge_base_id}/search": {
       "post": {
         "description": "Perform semantic search on a knowledge base.",
-        "operationId": "semantic_search_api_v1_knowledge_knowledge_bases__knowledge_base_id__search_post",
+        "operationId": "semantic_search_api_knowledge_knowledge_bases__knowledge_base_id__search_post",
         "parameters": [
           {
             "in": "path",
@@ -1729,10 +2473,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/knowledge-bases/{knowledge_base_id}/stats": {
+    "/api/knowledge/knowledge-bases/{knowledge_base_id}/stats": {
       "get": {
         "description": "Get statistics for a knowledge base.",
-        "operationId": "get_knowledge_base_stats_api_v1_knowledge_knowledge_bases__knowledge_base_id__stats_get",
+        "operationId": "get_knowledge_base_stats_api_knowledge_knowledge_bases__knowledge_base_id__stats_get",
         "parameters": [
           {
             "in": "path",
@@ -1750,7 +2494,7 @@
               "application/json": {
                 "schema": {
                   "additionalProperties": true,
-                  "title": "Response Get Knowledge Base Stats Api V1 Knowledge Knowledge Bases  Knowledge Base Id  Stats Get",
+                  "title": "Response Get Knowledge Base Stats Api Knowledge Knowledge Bases  Knowledge Base Id  Stats Get",
                   "type": "object"
                 }
               }
@@ -1783,10 +2527,10 @@
         ]
       }
     },
-    "/api/v1/knowledge/search": {
+    "/api/knowledge/search": {
       "post": {
         "description": "Perform semantic search across the provided knowledge bases.",
-        "operationId": "global_search_api_v1_knowledge_search_post",
+        "operationId": "global_search_api_knowledge_search_post",
         "parameters": [
           {
             "in": "query",
@@ -1855,70 +2599,42 @@
         ]
       }
     },
-    "/api/v1/story": {
+    "/api/providers": {
       "get": {
-        "description": "List stories owned by the current principal.",
-        "operationId": "list_stories_api_v1_story_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "author_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Author Id"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "title": "Limit",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
-          }
-        ],
+        "description": "Return configured provider options for writing jobs.",
+        "operationId": "list_providers_api_providers_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response List Stories Api V1 Story Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ProviderListResponse"
                 }
               }
             },
             "description": "Successful Response"
-          },
-          "422": {
+          }
+        },
+        "summary": "List Providers",
+        "tags": [
+          "providers"
+        ]
+      }
+    },
+    "/api/workspaces": {
+      "get": {
+        "description": "List local-first workspaces for the active principal.",
+        "operationId": "list_workspaces_api_workspaces_get",
+        "responses": {
+          "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/WorkspaceListResponse"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "Successful Response"
           }
         },
         "security": [
@@ -1929,32 +2645,30 @@
             "bearerAuth": []
           }
         ],
-        "summary": "List Stories",
+        "summary": "List Workspaces",
         "tags": [
-          "story"
+          "workspaces"
         ]
       },
       "post": {
-        "description": "Create a new draft story.",
-        "operationId": "create_story_api_v1_story_post",
+        "description": "Create a local-first writing workspace.",
+        "operationId": "create_workspace_api_workspaces_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StoryCreateRequest"
+                "$ref": "#/components/schemas/WorkspaceCreateRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "201": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Create Story Api V1 Story Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/WorkspaceStatusResponse"
                 }
               }
             },
@@ -1979,75 +2693,23 @@
             "bearerAuth": []
           }
         ],
-        "summary": "Create Story",
+        "summary": "Create Workspace",
         "tags": [
-          "story"
+          "workspaces"
         ]
       }
     },
-    "/api/v1/story/pipeline": {
-      "post": {
-        "description": "Run the full long-form story generation pipeline.",
-        "operationId": "run_pipeline_api_v1_story_pipeline_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoryPipelineRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Run Pipeline Api V1 Story Pipeline Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Run Pipeline",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}": {
+    "/api/workspaces/{workspace_id}": {
       "get": {
-        "description": "Return a single story snapshot.",
-        "operationId": "get_story_api_v1_story__story_id__get",
+        "description": "Return workspace status.",
+        "operationId": "get_workspace_api_workspaces__workspace_id__get",
         "parameters": [
           {
             "in": "path",
-            "name": "story_id",
+            "name": "workspace_id",
             "required": true,
             "schema": {
-              "title": "Story Id",
+              "title": "Workspace Id",
               "type": "string"
             }
           }
@@ -2057,9 +2719,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Story Api V1 Story  Story Id  Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/WorkspaceStatusResponse"
                 }
               }
             },
@@ -2084,129 +2744,23 @@
             "bearerAuth": []
           }
         ],
-        "summary": "Get Story",
+        "summary": "Get Workspace",
         "tags": [
-          "story"
+          "workspaces"
         ]
       }
     },
-    "/api/v1/story/{story_id}/artifacts": {
-      "get": {
-        "description": "Return current artifacts and append-only artifact history for a story.",
-        "operationId": "get_story_artifacts_api_v1_story__story_id__artifacts_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Story Artifacts Api V1 Story  Story Id  Artifacts Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Get Story Artifacts",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/blueprint": {
+    "/api/workspaces/{workspace_id}/jobs": {
       "post": {
-        "description": "Generate the world and character bible.",
-        "operationId": "generate_blueprint_api_v1_story__story_id__blueprint_post",
+        "description": "Run a local workspace job and record status.",
+        "operationId": "create_workspace_job_api_workspaces__workspace_id__jobs_post",
         "parameters": [
           {
             "in": "path",
-            "name": "story_id",
+            "name": "workspace_id",
             "required": true,
             "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Generate Blueprint Api V1 Story  Story Id  Blueprint Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Generate Blueprint",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/draft": {
-      "post": {
-        "description": "Draft missing chapters and scenes.",
-        "operationId": "draft_story_api_v1_story__story_id__draft_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
+              "title": "Workspace Id",
               "type": "string"
             }
           }
@@ -2215,20 +2769,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StoryDraftRequest"
+                "$ref": "#/components/schemas/WorkspaceJobRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
+          "202": {
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Draft Story Api V1 Story  Story Id  Draft Post",
-                  "type": "object"
+                  "$ref": "#/components/schemas/WorkspaceJobResponse"
                 }
               }
             },
@@ -2253,288 +2805,32 @@
             "bearerAuth": []
           }
         ],
-        "summary": "Draft Story",
+        "summary": "Create Workspace Job",
         "tags": [
-          "story"
+          "workspaces"
         ]
       }
     },
-    "/api/v1/story/{story_id}/export": {
-      "post": {
-        "description": "Export a serialisable story snapshot.",
-        "operationId": "export_story_api_v1_story__story_id__export_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Export Story Api V1 Story  Story Id  Export Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Export Story",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/outline": {
-      "post": {
-        "description": "Generate the chapter outline.",
-        "operationId": "generate_outline_api_v1_story__story_id__outline_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Generate Outline Api V1 Story  Story Id  Outline Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Generate Outline",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/publish": {
-      "post": {
-        "description": "Publish the story if it passes the quality gate.",
-        "operationId": "publish_story_api_v1_story__story_id__publish_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Publish Story Api V1 Story  Story Id  Publish Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Publish Story",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/review": {
-      "post": {
-        "description": "Run the story quality review.",
-        "operationId": "review_story_api_v1_story__story_id__review_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Review Story Api V1 Story  Story Id  Review Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Review Story",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/revise": {
-      "post": {
-        "description": "Run the revision pass and repair continuity issues.",
-        "operationId": "revise_story_api_v1_story__story_id__revise_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Revise Story Api V1 Story  Story Id  Revise Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Revise Story",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/runs": {
+    "/api/workspaces/{workspace_id}/jobs/{job_id}": {
       "get": {
-        "description": "Return run history and append-only events for a story.",
-        "operationId": "get_story_runs_api_v1_story__story_id__runs_get",
+        "description": "Return process-local job state.",
+        "operationId": "get_workspace_job_api_workspaces__workspace_id__jobs__job_id__get",
         "parameters": [
           {
             "in": "path",
-            "name": "story_id",
+            "name": "workspace_id",
             "required": true,
             "schema": {
-              "title": "Story Id",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "title": "Job Id",
               "type": "string"
             }
           }
@@ -2544,9 +2840,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Story Runs Api V1 Story  Story Id  Runs Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/WorkspaceJobResponse"
                 }
               }
             },
@@ -2571,206 +2865,10 @@
             "bearerAuth": []
           }
         ],
-        "summary": "Get Story Runs",
+        "summary": "Get Workspace Job",
         "tags": [
-          "story"
+          "workspaces"
         ]
-      },
-      "post": {
-        "description": "Execute a workflow run against an existing story.",
-        "operationId": "execute_story_run_api_v1_story__story_id__runs_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StoryRunRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Execute Story Run Api V1 Story  Story Id  Runs Post",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Execute Story Run",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/runs/{run_id}": {
-      "get": {
-        "description": "Return a single run with its scoped events and artifacts.",
-        "operationId": "get_story_run_api_v1_story__story_id__runs__run_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "run_id",
-            "required": true,
-            "schema": {
-              "title": "Run Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Story Run Api V1 Story  Story Id  Runs  Run Id  Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Get Story Run",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/v1/story/{story_id}/workspace": {
-      "get": {
-        "description": "Return the aggregated author workspace payload for a story.",
-        "operationId": "get_story_workspace_api_v1_story__story_id__workspace_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "story_id",
-            "required": true,
-            "schema": {
-              "title": "Story Id",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Story Workspace Api V1 Story  Story Id  Workspace Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          },
-          {
-            "bearerAuth": []
-          }
-        ],
-        "summary": "Get Story Workspace",
-        "tags": [
-          "story"
-        ]
-      }
-    },
-    "/api/versions": {
-      "get": {
-        "operationId": "get_api_versions_api_versions_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Get Api Versions Api Versions Get",
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Get Api Versions"
       }
     },
     "/health": {
@@ -2869,11 +2967,11 @@
   "servers": [
     {
       "description": "Canonical API",
-      "url": "/api/v1"
+      "url": "/api"
     },
     {
       "description": "Local development",
-      "url": "http://localhost:8000/api/v1"
+      "url": "http://localhost:8000/api"
     }
   ],
   "tags": [
@@ -2894,8 +2992,12 @@
       "name": "guest"
     },
     {
-      "description": "Long-form story generation workflow",
-      "name": "story"
+      "description": "Text generation provider status",
+      "name": "providers"
+    },
+    {
+      "description": "Local-first writing workspaces",
+      "name": "workspaces"
     }
   ]
 }

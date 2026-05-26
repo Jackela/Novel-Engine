@@ -7,7 +7,6 @@ import {
   getActiveSession,
   readSessionCatalog,
   removeSession,
-  sessionStorageKey,
   setActiveSessionId,
   updateSessionSelection,
   upsertSession,
@@ -23,8 +22,8 @@ function makeSession(
     kind: overrides.kind,
     workspaceId: overrides.workspaceId,
     user: overrides.user,
-    lastStoryId: overrides.lastStoryId ?? null,
-    lastRunId: overrides.lastRunId ?? null,
+    lastWorkspaceId: overrides.lastWorkspaceId ?? null,
+    lastJobId: overrides.lastJobId ?? null,
     lastView: overrides.lastView ?? 'workspace',
     createdAt: overrides.createdAt,
     updatedAt: overrides.updatedAt,
@@ -54,7 +53,7 @@ describe('session storage catalog', () => {
     );
   });
 
-  it('upserts active sessions, normalizes timestamps, and writes the legacy slot', () => {
+  it('upserts active sessions and normalizes timestamps', () => {
     const catalog = emptySessionCatalog();
     const session = makeSession({
       kind: 'user',
@@ -73,15 +72,12 @@ describe('session storage catalog', () => {
       id: 'user:user-operator',
       createdAt: '2024-01-02T03:04:05.000Z',
       updatedAt: '2024-01-02T03:04:05.000Z',
-      lastStoryId: null,
-      lastRunId: null,
+      lastWorkspaceId: null,
+      lastJobId: null,
       lastView: 'workspace',
     });
-    expect(JSON.parse(window.localStorage.getItem(sessionStorageKey) ?? '{}')).toMatchObject({
-      kind: 'user',
-      workspaceId: 'user-operator',
-    });
-    expect(window.localStorage.getItem(sessionStorageKey)).not.toContain('token');
+    expect(window.localStorage.getItem(catalogStorageKey)).toContain('user-operator');
+    expect(window.localStorage.getItem(catalogStorageKey)).not.toContain('token');
   });
 
   it('can keep an existing active session while adding a background session', () => {
@@ -98,7 +94,7 @@ describe('session storage catalog', () => {
     ]);
   });
 
-  it('switches active sessions and clears the legacy slot when no session is active', () => {
+  it('switches active sessions and clears the active catalog pointer', () => {
     const guest = makeSession({ kind: 'guest', workspaceId: 'guest-1' });
     const user = makeSession({ kind: 'user', workspaceId: 'user-1' });
     const catalog = upsertSession(upsertSession(emptySessionCatalog(), guest), user);
@@ -108,28 +104,28 @@ describe('session storage catalog', () => {
 
     const cleared = setActiveSessionId(switched, null);
     expect(getActiveSession(cleared)).toBeNull();
-    expect(window.localStorage.getItem(sessionStorageKey)).toBeNull();
+    expect(readSessionCatalog().activeSessionId).toBeNull();
   });
 
-  it('updates story selection metadata without losing existing fields', () => {
+  it('updates workspace selection metadata without losing existing fields', () => {
     const session = makeSession({
       kind: 'guest',
       workspaceId: 'guest-1',
-      lastStoryId: 'story-old',
-      lastRunId: 'run-old',
+      lastWorkspaceId: 'workspace-old',
+      lastJobId: 'job-old',
       lastView: 'playback',
     });
     const catalog = upsertSession(emptySessionCatalog(), session);
 
     const nextCatalog = updateSessionSelection(catalog, session.id, {
-      lastStoryId: 'story-new',
-      lastRunId: null,
+      lastWorkspaceId: 'workspace-new',
+      lastJobId: null,
       lastView: 'workspace',
     });
 
     expect(getActiveSession(nextCatalog)).toMatchObject({
-      lastStoryId: 'story-new',
-      lastRunId: null,
+      lastWorkspaceId: 'workspace-new',
+      lastJobId: null,
       lastView: 'workspace',
     });
   });
@@ -142,7 +138,6 @@ describe('session storage catalog', () => {
 
     expect(nextCatalog.sessions).toEqual([]);
     expect(nextCatalog.activeSessionId).toBeNull();
-    expect(window.localStorage.getItem(sessionStorageKey)).toBeNull();
   });
 
   it('reads valid catalogs sorted by recency', () => {
@@ -165,11 +160,11 @@ describe('session storage catalog', () => {
         {
           ...makeSession({
             kind: 'user',
-            workspaceId: 'user-legacy',
+            workspaceId: 'user-saved',
             updatedAt: '2024-01-02T00:00:00.000Z',
           }),
-          token: 'legacy-token',
-          refreshToken: 'legacy-refresh-token',
+          token: 'stale-token',
+          refreshToken: 'stale-refresh-token',
         },
       ],
     };
@@ -179,35 +174,15 @@ describe('session storage catalog', () => {
 
     expect(catalog.sessions.map((session) => session.workspaceId)).toEqual([
       'new',
-      'user-legacy',
+      'user-saved',
       'old',
     ]);
     expect(getActiveSession(catalog)?.workspaceId).toBe('new');
-    expect(window.localStorage.getItem(catalogStorageKey)).not.toContain('legacy-token');
-  });
-
-  it('migrates the legacy session slot when the catalog is absent', () => {
-    window.localStorage.setItem(
-      sessionStorageKey,
-      JSON.stringify({
-        kind: 'guest',
-        workspaceId: 'legacy-guest',
-      }),
-    );
-
-    const catalog = readSessionCatalog();
-
-    expect(catalog.activeSessionId).toBe('guest:legacy-guest');
-    expect(catalog.sessions[0]).toMatchObject({
-      id: 'guest:legacy-guest',
-      workspaceId: 'legacy-guest',
-    });
-    expect(window.localStorage.getItem(catalogStorageKey)).toContain('legacy-guest');
+    expect(window.localStorage.getItem(catalogStorageKey)).not.toContain('stale-token');
   });
 
   it('falls back to an empty catalog for malformed storage', () => {
     window.localStorage.setItem(catalogStorageKey, '{not-json');
-    window.localStorage.setItem(sessionStorageKey, JSON.stringify({ kind: 'guest' }));
 
     expect(readSessionCatalog()).toEqual(emptySessionCatalog());
   });

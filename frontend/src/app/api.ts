@@ -7,24 +7,12 @@ import type {
   LoginResponse,
 } from '@/app/types/auth';
 import type {
-  StoryBlueprintResponse,
-  StoryCreateRequest,
-  StoryCreateResponse,
-  StoryDraftResponse,
-  StoryExportResponse,
-  StoryListResponse,
-  StoryOutlineResponse,
-  StoryPipelineRequest,
-  StoryPipelineResult,
-  StoryPublishResponse,
-  StoryReviewResponse,
-  StoryReviseResponse,
-  StoryRunDetailResponse,
-  StoryRunRequest,
-  StoryRunsResponse,
-  StoryArtifactsResponse,
-  StorySnapshot,
-  StoryWorkspaceResponse,
+  ProviderListResponse,
+  WorkspaceCreateRequest,
+  WorkspaceJob,
+  WorkspaceJobRequest,
+  WorkspaceListResponse,
+  WorkspaceStatus,
 } from '@/app/types/story';
 
 class HttpError extends Error {
@@ -54,21 +42,6 @@ function fallbackErrorMessage(status: number): string {
 function isLikelyHtml(payload: string): boolean {
   const normalized = payload.trim().toLowerCase();
   return normalized.startsWith('<!doctype html') || normalized.startsWith('<html');
-}
-
-function buildStoryQuery(params: Record<string, string | number | undefined>): string {
-  const searchParams = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) {
-      continue;
-    }
-
-    searchParams.set(key, String(value));
-  }
-
-  const query = searchParams.toString();
-  return query ? `?${query}` : '';
 }
 
 function pickErrorMessage(payload: unknown): string | null {
@@ -111,7 +84,18 @@ async function requestJson<T>(
   init?: RequestInit,
 ): Promise<T> {
   const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
+  const externalSignal = init?.signal;
+  let timedOut = false;
+  const abortFromExternal = () => controller.abort();
+  if (externalSignal?.aborted) {
+    controller.abort();
+  } else {
+    externalSignal?.addEventListener('abort', abortFromExternal, { once: true });
+  }
+  const timeoutId = window.setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, appConfig.apiTimeoutMs);
 
   try {
     let response: Response;
@@ -127,7 +111,7 @@ async function requestJson<T>(
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timed out. Please retry.');
+        throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.');
       }
 
       if (error instanceof TypeError) {
@@ -165,6 +149,7 @@ async function requestJson<T>(
     return (await response.json()) as T;
   } finally {
     window.clearTimeout(timeoutId);
+    externalSignal?.removeEventListener('abort', abortFromExternal);
   }
 }
 
@@ -196,86 +181,38 @@ export const api = {
   getCurrentUser: () =>
     requestJson<CurrentUserResponse>(appConfig.endpoints.currentUser),
 
-  listStories: (limit = 20, offset = 0) =>
-    requestJson<StoryListResponse>(
-      `${appConfig.endpoints.story}${buildStoryQuery({
-        limit,
-        offset,
-      })}`,
-    ),
+  listProviders: (init?: RequestInit) =>
+    requestJson<ProviderListResponse>(appConfig.endpoints.providers, init),
 
-  getStory: (storyId: string) =>
-    requestJson<{ story: StorySnapshot; workspace: StoryWorkspaceResponse['workspace'] }>(
-      `${appConfig.endpoints.story}/${storyId}`,
-    ),
+  listWorkspaces: (init?: RequestInit) =>
+    requestJson<WorkspaceListResponse>(appConfig.endpoints.workspaces, init),
 
-  getStoryWorkspace: (storyId: string) =>
-    requestJson<StoryWorkspaceResponse>(
-      `${appConfig.endpoints.story}/${storyId}/workspace`,
-    ),
-
-  getStoryRuns: (storyId: string) =>
-    requestJson<StoryRunsResponse>(`${appConfig.endpoints.story}/${storyId}/runs`),
-
-  getStoryRun: (storyId: string, runId: string) =>
-    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs/${runId}`),
-
-  getStoryArtifacts: (storyId: string) =>
-    requestJson<StoryArtifactsResponse>(`${appConfig.endpoints.story}/${storyId}/artifacts`),
-
-  createStoryRun: (storyId: string, payload: StoryRunRequest) =>
-    requestJson<StoryRunDetailResponse>(`${appConfig.endpoints.story}/${storyId}/runs`, {
+  createWorkspace: (payload: WorkspaceCreateRequest) =>
+    requestJson<WorkspaceStatus>(appConfig.endpoints.workspaces, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
-  createStory: (payload: StoryCreateRequest) =>
-    requestJson<StoryCreateResponse>(appConfig.endpoints.story, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  getWorkspace: (workspaceId: string, init?: RequestInit) =>
+    requestJson<WorkspaceStatus>(
+      `${appConfig.endpoints.workspaces}/${encodeURIComponent(workspaceId)}`,
+      init,
+    ),
 
-  generateBlueprint: (storyId: string) =>
-    requestJson<StoryBlueprintResponse>(`${appConfig.endpoints.story}/${storyId}/blueprint`, {
-      method: 'POST',
-    }),
+  createWorkspaceJob: (workspaceId: string, payload: WorkspaceJobRequest) =>
+    requestJson<WorkspaceJob>(
+      `${appConfig.endpoints.workspaces}/${encodeURIComponent(workspaceId)}/jobs`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    ),
 
-  generateOutline: (storyId: string) =>
-    requestJson<StoryOutlineResponse>(`${appConfig.endpoints.story}/${storyId}/outline`, {
-      method: 'POST',
-    }),
-
-  draftStory: (storyId: string, targetChapters?: number | null) =>
-    requestJson<StoryDraftResponse>(`${appConfig.endpoints.story}/${storyId}/draft`, {
-      method: 'POST',
-      body: JSON.stringify(
-        targetChapters == null ? {} : { target_chapters: targetChapters },
-      ),
-    }),
-
-  reviewStory: (storyId: string) =>
-    requestJson<StoryReviewResponse>(`${appConfig.endpoints.story}/${storyId}/review`, {
-      method: 'POST',
-    }),
-
-  reviseStory: (storyId: string) =>
-    requestJson<StoryReviseResponse>(`${appConfig.endpoints.story}/${storyId}/revise`, {
-      method: 'POST',
-    }),
-
-  exportStory: (storyId: string) =>
-    requestJson<StoryExportResponse>(`${appConfig.endpoints.story}/${storyId}/export`, {
-      method: 'POST',
-    }),
-
-  publishStory: (storyId: string) =>
-    requestJson<StoryPublishResponse>(`${appConfig.endpoints.story}/${storyId}/publish`, {
-      method: 'POST',
-    }),
-
-  runPipeline: (payload: StoryPipelineRequest) =>
-    requestJson<StoryPipelineResult>(appConfig.endpoints.storyPipeline, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
+  getWorkspaceJob: (workspaceId: string, jobId: string, init?: RequestInit) =>
+    requestJson<WorkspaceJob>(
+      `${appConfig.endpoints.workspaces}/${encodeURIComponent(
+        workspaceId,
+      )}/jobs/${encodeURIComponent(jobId)}`,
+      init,
+    ),
 };

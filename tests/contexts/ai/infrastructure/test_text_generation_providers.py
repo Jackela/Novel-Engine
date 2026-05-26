@@ -134,43 +134,32 @@ async def test_deterministic_provider_covers_supported_steps() -> None:
     provider = DeterministicTextGenerationProvider()
     cases = [
         _task(
-            "bible",
+            "chapter_draft",
             metadata={
+                "title": "Contract Story",
                 "premise": "A map changes at dawn.",
                 "genre": "fantasy",
                 "tone": "urgent",
+                "chapter_number": 1,
             },
         ),
-        _task("outline", metadata={"target_chapters": 2}),
-        _task("chapter_scenes", metadata={"chapter_number": 3, "chapter_title": "Turn"}),
-        _task("semantic_review", metadata={"overdue_promise_count": 4}),
-        _task("semantic_review", metadata={"unresolved_hook_count": 3}),
-        _task("revision", metadata={"issues": []}),
-        _task("revision", metadata={"issues": [{"code": "flat"}]}),
-        _task(
-            "terminal_arc_revision",
-            metadata={
-                "target_chapters": 5,
-                "protagonist": "Ari",
-                "primary_keeper": "Lian",
-                "supporting_witness": "Kade",
-            },
-        ),
+        _task("chapter_revision", metadata={"chapter_number": 1}),
         _task("unknown", metadata={"source": "fallback"}),
     ]
 
     results = [await provider.generate_structured(case) for case in cases]
 
     assert all(isinstance(result, TextGenerationResult) for result in results)
-    assert results[0].content["world_bible"]["setting"].startswith("Fantasy")
-    assert len(results[1].content["chapters"]) == 2
-    assert results[2].content["scenes"][0]["scene_type"] == "opening"
-    assert results[3].content["semantic_score"] == 72
-    assert results[4].content["reader_pull_score"] == 68
-    assert results[5].content["revision_notes"] == ["No critical revisions required."]
-    assert "Align chapter timeline markers" in results[6].content["revision_notes"][0]
-    assert len(results[7].content["chapters"]) == 5
-    assert results[8].content == {"result": "ok", "step": "unknown", "echo": {"source": "fallback"}}
+    assert results[0].content["chapter_markdown"].startswith("# Chapter 1")
+    assert results[0].content["sidecar_metadata"]["characters"] == ["Mira", "Tomas"]
+    assert results[1].content["chapter_markdown"].startswith(
+        "# Chapter 1: The Debt in the Rain"
+    )
+    assert results[2].content == {
+        "result": "ok",
+        "step": "unknown",
+        "echo": {"source": "fallback"},
+    }
 
 
 def test_provider_factory_default_dashscope_without_key_is_explicit(
@@ -241,7 +230,7 @@ async def test_dashscope_provider_generates_structured_payload(
     assert result.provider == "dashscope"
     assert result.content == {"items": ["single"], "count": 2}
     assert fake_client.calls[0][0] == (provider._endpoint_path(),)
-    assert fake_client.calls[0][1]["timeout"] == 60.0
+    assert fake_client.calls[0][1]["timeout"] == 30.0
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,14 @@
+{
+  "status": "pending_live_refresh",
+  "reason": "The previous canonical live evidence targeted the removed story workflow. Run the DashScope longform UAT script to replace this placeholder with fresh workspace/job evidence.",
+  "refresh_command": "uv run python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports",
+  "expected_contract": {
+    "workspace_create_path": "/api/workspaces",
+    "workspace_status_path": "/api/workspaces/{workspace_id}",
+    "workspace_jobs_path": "/api/workspaces/{workspace_id}/jobs",
+    "target_chapters_minimum": 20,
+    "required_export_outcome": "exported",
+    "allowed_warning_behavior": "warnings are editorial advice and do not block export",
+    "required_blocker_count": 0
+  }
+}

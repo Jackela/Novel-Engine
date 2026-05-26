@@ -6,15 +6,13 @@ service port interface for text vectorization.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from importlib import import_module
+from typing import Any, cast
 
 from src.contexts.knowledge.application.ports.i_embedding_service import (
     EmbeddingError,
     IEmbeddingService,
 )
-
-if TYPE_CHECKING:
-    import openai
 
 
 class OpenAIEmbeddingService(IEmbeddingService):
@@ -44,10 +42,10 @@ class OpenAIEmbeddingService(IEmbeddingService):
 
         self._api_key = api_key
         self._model = model
-        self._client: openai.AsyncOpenAI | None = None
+        self._client: Any | None = None
         self._dimension: int | None = None
 
-    def _get_client(self) -> "openai.AsyncOpenAI":
+    def _get_client(self) -> Any:
         """Get or create OpenAI client.
 
         Returns:
@@ -58,10 +56,12 @@ class OpenAIEmbeddingService(IEmbeddingService):
         """
         if self._client is None:
             try:
-                import openai
-
-                self._client = openai.AsyncOpenAI(api_key=self._api_key)
-            except ImportError as e:
+                openai_module = import_module("openai")
+                async_openai = getattr(openai_module, "AsyncOpenAI")
+                self._client = async_openai(api_key=self._api_key)
+            except ModuleNotFoundError as e:
+                if e.name != "openai":
+                    raise
                 raise ImportError(
                     "openai is required for OpenAIEmbeddingService. "
                     "Install it with: pip install openai"
@@ -90,7 +90,7 @@ class OpenAIEmbeddingService(IEmbeddingService):
                 model=self._model,
                 input=text,
             )
-            return response.data[0].embedding
+            return list(cast("list[float]", response.data[0].embedding))
         except Exception as e:
             raise EmbeddingError(f"Failed to generate embedding: {e}") from e
 
@@ -121,7 +121,9 @@ class OpenAIEmbeddingService(IEmbeddingService):
                 model=self._model,
                 input=valid_texts,
             )
-            return [item.embedding for item in response.data]
+            return [
+                list(cast("list[float]", item.embedding)) for item in response.data
+            ]
         except Exception as e:
             raise EmbeddingError(f"Failed to generate batch embeddings: {e}") from e
 

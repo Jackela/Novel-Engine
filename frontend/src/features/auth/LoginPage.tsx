@@ -10,8 +10,8 @@ import type { SessionState } from '@/app/types/auth';
 
 function studioLocation(session: SessionState) {
   const searchParams = new URLSearchParams();
-  if (session.lastStoryId) searchParams.set('story', session.lastStoryId);
-  if (session.lastRunId) searchParams.set('run', session.lastRunId);
+  if (session.lastWorkspaceId) searchParams.set('workspace', session.lastWorkspaceId);
+  if (session.lastJobId) searchParams.set('job', session.lastJobId);
   searchParams.set('view', session.lastView ?? 'workspace');
   const query = searchParams.toString();
   return query ? `/studio?${query}` : '/studio';

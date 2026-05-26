@@ -1,103 +1,40 @@
-"""Tests for workspace-scoped canonical runtime behavior."""
-
-# mypy: disable-error-code=misc
+"""Tests for guest-session canonical runtime behavior."""
 
 from __future__ import annotations
-
-import asyncio
-from pathlib import Path
 
 import pytest
 
 from src.apps.api.services.runtime import CanonicalRuntimeService
-from src.shared.infrastructure.config import settings as settings_module
-
-
-def _build_runtime_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> CanonicalRuntimeService:
-    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
-    monkeypatch.setenv(
-        "SECURITY_SECRET_KEY",
-        "test-secret-key-for-runtime-scoping-1234567890",
-    )
-    monkeypatch.setenv("MONITORING_METRICS_ENABLED", "false")
-    monkeypatch.setenv("LLM_PROVIDER", "mock")
-    settings_module.reset_settings()
-    return CanonicalRuntimeService(base_dir=tmp_path)
 
 
 @pytest.mark.asyncio
-async def test_dashboard_status_reports_only_workspace_events(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    runtime = _build_runtime_service(tmp_path, monkeypatch)
+async def test_guest_session_is_created_when_missing() -> None:
+    runtime = CanonicalRuntimeService()
 
-    await runtime.create_or_resume_guest_session("workspace-a")
-    await runtime.start_orchestration(["aria"], total_turns=1, workspace_id="workspace-a")
+    session = await runtime.create_or_resume_guest_session(None)
 
-    workspace_a_status = await runtime.get_dashboard_status("workspace-a")
-    workspace_b_status = await runtime.get_dashboard_status("workspace-b")
-
-    assert workspace_a_status["workspaceId"] == "workspace-a"
-    assert workspace_a_status["activeSignals"] == len(workspace_a_status["recent_events"])
-    assert workspace_a_status["activeSignals"] >= 1
-    assert {event["workspace_id"] for event in workspace_a_status["recent_events"]} == {
-        "workspace-a"
-    }
-
-    assert workspace_b_status["workspaceId"] == "workspace-b"
-    assert workspace_b_status["activeSignals"] == 0
-    assert workspace_b_status["recent_events"] == []
-
-    await runtime.shutdown()
+    assert session.is_new_session is True
+    assert session.workspace_id.startswith("guest-")
 
 
 @pytest.mark.asyncio
-async def test_subscribers_receive_only_their_workspace_events(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    runtime = _build_runtime_service(tmp_path, monkeypatch)
+async def test_guest_session_resume_reuses_known_workspace_id() -> None:
+    runtime = CanonicalRuntimeService()
+    created = await runtime.create_or_resume_guest_session(None)
 
-    subscriber_a = await runtime.register_subscriber("workspace-a")
-    subscriber_b = await runtime.register_subscriber("workspace-b")
+    resumed = await runtime.create_or_resume_guest_session(created.workspace_id)
 
-    await runtime.start_orchestration(["aria"], total_turns=1, workspace_id="workspace-a")
-
-    event_a = await asyncio.wait_for(subscriber_a.get(), timeout=1)
-    assert event_a["workspace_id"] == "workspace-a"
-
-    with pytest.raises(asyncio.TimeoutError):
-        await asyncio.wait_for(subscriber_b.get(), timeout=0.1)
-
-    runtime.unregister_subscriber("workspace-a", subscriber_a)
-    runtime.unregister_subscriber("workspace-b", subscriber_b)
-    await runtime.shutdown()
+    assert resumed.workspace_id == created.workspace_id
+    assert resumed.is_new_session is False
 
 
 @pytest.mark.asyncio
-async def test_runtime_events_use_unique_ids(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    runtime = _build_runtime_service(tmp_path, monkeypatch)
+async def test_guest_session_reset_forgets_known_sessions() -> None:
+    runtime = CanonicalRuntimeService()
+    created = await runtime.create_or_resume_guest_session(None)
 
-    event_a = runtime._build_event(
-        workspace_id="workspace-a",
-        event_type="system",
-        title="Heartbeat",
-        description="Dashboard connection is alive",
-        data={},
-    )
-    event_b = runtime._build_event(
-        workspace_id="workspace-a",
-        event_type="system",
-        title="Heartbeat",
-        description="Dashboard connection is alive",
-        data={},
-    )
+    runtime.reset()
+    resumed = await runtime.create_or_resume_guest_session(created.workspace_id)
 
-    assert event_a["id"].startswith("event-")
-    assert event_a["id"] != event_b["id"]
-
-    await runtime.shutdown()
+    assert resumed.workspace_id == created.workspace_id
+    assert resumed.is_new_session is True

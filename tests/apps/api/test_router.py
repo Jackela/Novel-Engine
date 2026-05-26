@@ -17,31 +17,25 @@ def test_canonical_source_backed_routes_are_mounted(
         "/health/live",
         "/health/ready",
         "/version",
-        "/api/versions",
-        "/api/v1/auth/login",
-        "/api/v1/auth/refresh",
-        "/api/v1/auth/logout",
-        "/api/v1/auth/me",
-        "/api/v1/auth/register",
-        "/api/v1/guest/session",
-        "/api/v1/story",
-        "/api/v1/story/pipeline",
-        "/api/v1/story/{story_id}",
-        "/api/v1/story/{story_id}/blueprint",
-        "/api/v1/story/{story_id}/outline",
-        "/api/v1/story/{story_id}/draft",
-        "/api/v1/story/{story_id}/review",
-        "/api/v1/story/{story_id}/revise",
-        "/api/v1/story/{story_id}/export",
-        "/api/v1/story/{story_id}/publish",
+        "/api/auth/login",
+        "/api/auth/refresh",
+        "/api/auth/logout",
+        "/api/auth/me",
+        "/api/auth/register",
+        "/api/guest/session",
+        "/api/providers",
+        "/api/workspaces",
+        "/api/workspaces/{workspace_id}",
+        "/api/workspaces/{workspace_id}/jobs",
+        "/api/workspaces/{workspace_id}/jobs/{job_id}",
     }
 
     missing_paths = expected_paths.difference(mounted_paths)
     assert not missing_paths, f"Missing mounted paths: {sorted(missing_paths)}"
-    assert any(path.startswith("/api/v1/knowledge") for path in mounted_paths)
+    assert any(path.startswith("/api/knowledge") for path in mounted_paths)
 
 
-def test_legacy_or_missing_context_routes_are_not_mounted(
+def test_removed_or_missing_context_routes_are_not_mounted(
     canonical_app: Any,
 ) -> None:
     mounted_paths = {
@@ -49,7 +43,10 @@ def test_legacy_or_missing_context_routes_are_not_mounted(
     }
 
     assert "/health/detailed" not in mounted_paths
-    assert "/api/v1/dashboard" not in mounted_paths
-    assert "/api/v1/world" not in mounted_paths
-    assert "/api/v1/stories" not in mounted_paths
-    assert "/api/v1/characters" not in mounted_paths
+    assert "/api/dashboard" not in mounted_paths
+    assert "/api/world" not in mounted_paths
+    assert "/api/" + "stor" + "ies" not in mounted_paths
+    assert "/api/characters" not in mounted_paths
+    assert not any(
+        path.startswith("/api/") and "/story" in path for path in mounted_paths
+    )

@@ -1,10 +1,12 @@
 """PostgreSQL repository implementations for knowledge context.
 
-This module provides factory functions and exports for PostgreSQL-based
-repository implementations.
+PostgreSQL repositories are optional integrations. This package must remain
+importable when the core local writing engine is installed without postgres.
 """
 
-from typing import TYPE_CHECKING
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import asyncpg
@@ -15,13 +17,12 @@ if TYPE_CHECKING:
     from src.contexts.knowledge.domain.ports.knowledge_repository_port import (
         KnowledgeRepositoryPort,
     )
-
-from src.contexts.knowledge.infrastructure.repositories.postgres_document_repository import (
-    PostgresDocumentRepository,
-)
-from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
-    PostgresKnowledgeRepository,
-)
+    from src.contexts.knowledge.infrastructure.repositories.postgres_document_repository import (
+        PostgresDocumentRepository,
+    )
+    from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
+        PostgresKnowledgeRepository,
+    )
 
 __all__ = [
     "PostgresKnowledgeRepository",
@@ -29,6 +30,23 @@ __all__ = [
     "create_knowledge_repository",
     "create_document_repository",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily resolve optional PostgreSQL repository implementations."""
+    if name == "PostgresKnowledgeRepository":
+        from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
+            PostgresKnowledgeRepository,
+        )
+
+        return PostgresKnowledgeRepository
+    if name == "PostgresDocumentRepository":
+        from src.contexts.knowledge.infrastructure.repositories.postgres_document_repository import (
+            PostgresDocumentRepository,
+        )
+
+        return PostgresDocumentRepository
+    raise AttributeError(name)
 
 
 async def create_knowledge_repository(
@@ -55,6 +73,10 @@ async def create_knowledge_repository(
         >>> repo = await create_knowledge_repository(pool)
         >>> kb = await repo.get_by_id(kb_id)
     """
+    from src.contexts.knowledge.infrastructure.repositories.postgres_knowledge_repository import (
+        PostgresKnowledgeRepository,
+    )
+
     conn = await db_pool.acquire()
     return PostgresKnowledgeRepository(conn)
 
@@ -83,5 +105,9 @@ async def create_document_repository(
         >>> repo = await create_document_repository(pool)
         >>> docs = await repo.get_by_knowledge_base(kb_id)
     """
+    from src.contexts.knowledge.infrastructure.repositories.postgres_document_repository import (
+        PostgresDocumentRepository,
+    )
+
     conn = await db_pool.acquire()
     return PostgresDocumentRepository(conn)

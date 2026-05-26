@@ -1,4 +1,4 @@
-"""Baseline identity, story, knowledge, and refresh-session tables."""
+"""Baseline identity, knowledge, and refresh-session tables."""
 
 from __future__ import annotations
 
@@ -51,53 +51,6 @@ def upgrade() -> None:
     op.create_index("ix_refresh_sessions_user_id", "refresh_sessions", ["user_id"])
 
     op.create_table(
-        "stories",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("genre", sa.String(length=50), nullable=False),
-        sa.Column("author_id", sa.String(length=255), nullable=False),
-        sa.Column("status", sa.String(length=20), nullable=False, server_default="draft"),
-        sa.Column("current_chapter_id", sa.String(length=36), nullable=True),
-        sa.Column("target_audience", sa.String(length=100), nullable=True),
-        sa.Column("themes", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="[]"),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="{}"),
-    )
-    op.create_index("ix_stories_author_id", "stories", ["author_id"])
-    op.create_index("ix_stories_title", "stories", ["title"])
-
-    op.create_table(
-        "chapters",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("story_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("chapter_number", sa.Integer(), nullable=False),
-        sa.Column("title", sa.String(length=200), nullable=False),
-        sa.Column("summary", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="{}"),
-        sa.ForeignKeyConstraint(["story_id"], ["stories.id"], ondelete="CASCADE"),
-    )
-    op.create_index("ix_chapters_story_id", "chapters", ["story_id"])
-
-    op.create_table(
-        "scenes",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("chapter_id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("scene_number", sa.Integer(), nullable=False),
-        sa.Column("title", sa.String(length=200), nullable=True),
-        sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("scene_type", sa.String(length=50), nullable=False, server_default="narrative"),
-        sa.Column("choices", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="[]"),
-        sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default="{}"),
-        sa.ForeignKeyConstraint(["chapter_id"], ["chapters.id"], ondelete="CASCADE"),
-    )
-    op.create_index("ix_scenes_chapter_id", "scenes", ["chapter_id"])
-
-    op.create_table(
         "knowledge_bases",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("name", sa.String(length=255), nullable=False),
@@ -144,13 +97,6 @@ def downgrade() -> None:
     op.drop_index("ix_knowledge_bases_owner_id", table_name="knowledge_bases")
     op.drop_index("ix_knowledge_bases_name", table_name="knowledge_bases")
     op.drop_table("knowledge_bases")
-    op.drop_index("ix_scenes_chapter_id", table_name="scenes")
-    op.drop_table("scenes")
-    op.drop_index("ix_chapters_story_id", table_name="chapters")
-    op.drop_table("chapters")
-    op.drop_index("ix_stories_title", table_name="stories")
-    op.drop_index("ix_stories_author_id", table_name="stories")
-    op.drop_table("stories")
     op.drop_index("ix_refresh_sessions_user_id", table_name="refresh_sessions")
     op.drop_index("ix_refresh_sessions_token_hash", table_name="refresh_sessions")
     op.drop_table("refresh_sessions")

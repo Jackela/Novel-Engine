@@ -45,18 +45,16 @@ def reset_runtime_singletons() -> None:
         reset_knowledge_service,
     )
     from src.apps.api.health import reset_health_state
+    from src.apps.api.routes.workspaces import reset_workspace_jobs
     from src.apps.api.runtime import runtime_store
-    from src.contexts.narrative.infrastructure.runtime import (
-        reset_story_workflow_service,
-    )
     from src.shared.infrastructure.config.settings import reset_settings
 
     reset_jwt_manager()
     reset_identity_dependencies()
     reset_knowledge_service()
     reset_health_state()
+    reset_workspace_jobs()
     runtime_store.reset()
-    reset_story_workflow_service()
     reset_settings()
 
 

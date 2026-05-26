@@ -1,6 +1,5 @@
 import type { SessionCatalog, SessionState } from '@/app/types/auth';
 
-export const sessionStorageKey = 'novel-engine-session';
 const sessionCatalogStorageKey = 'novel-engine-session-catalog';
 const SESSION_CATALOG_VERSION = 3;
 
@@ -55,6 +54,8 @@ export function buildSessionId(session: Pick<SessionState, 'kind' | 'workspaceId
 
 function normalizeSession(session: SessionState): SessionState {
   const timestamp = nowIso();
+  const lastWorkspaceId = session.lastWorkspaceId ?? null;
+  const lastJobId = session.lastJobId ?? null;
   const catalogSession: SessionState = {
     id: session.id,
     kind: session.kind,
@@ -62,8 +63,8 @@ function normalizeSession(session: SessionState): SessionState {
     user: session.user,
     identityKind: session.identityKind,
     activeWorkspace: session.activeWorkspace,
-    lastStoryId: session.lastStoryId,
-    lastRunId: session.lastRunId,
+    lastWorkspaceId,
+    lastJobId,
     lastView: session.lastView,
     createdAt: session.createdAt,
     updatedAt: session.updatedAt,
@@ -73,23 +74,10 @@ function normalizeSession(session: SessionState): SessionState {
     id: catalogSession.id || buildSessionId(catalogSession),
     createdAt: catalogSession.createdAt ?? timestamp,
     updatedAt: catalogSession.updatedAt ?? timestamp,
-    lastStoryId: catalogSession.lastStoryId ?? null,
-    lastRunId: catalogSession.lastRunId ?? null,
+    lastWorkspaceId: catalogSession.lastWorkspaceId ?? null,
+    lastJobId: catalogSession.lastJobId ?? null,
     lastView: catalogSession.lastView ?? 'workspace',
   };
-}
-
-function writeLegacySession(activeSession: SessionState | null) {
-  if (!activeSession) {
-    safeStorage.remove(sessionStorageKey);
-    return;
-  }
-
-  safeStorage.write(sessionStorageKey, {
-    kind: activeSession.kind,
-    workspaceId: activeSession.workspaceId,
-    user: activeSession.user,
-  });
 }
 
 export function emptySessionCatalog(): SessionCatalog {
@@ -127,7 +115,6 @@ function writeSessionCatalog(catalog: SessionCatalog) {
   };
 
   safeStorage.write(sessionCatalogStorageKey, nextCatalog);
-  writeLegacySession(getActiveSession(nextCatalog));
 }
 
 export function upsertSession(
@@ -181,7 +168,7 @@ export function removeSession(
 export function updateSessionSelection(
   catalog: SessionCatalog,
   sessionId: string,
-  patch: Pick<SessionState, 'lastStoryId' | 'lastRunId' | 'lastView'>,
+  patch: Pick<SessionState, 'lastWorkspaceId' | 'lastJobId' | 'lastView'>,
 ): SessionCatalog {
   const sessions = catalog.sessions.map((session) =>
     session.id === sessionId
@@ -202,7 +189,9 @@ export function updateSessionSelection(
 }
 
 export function readSessionCatalog(): SessionCatalog {
-  const stored = safeStorage.read<SessionCatalog>(sessionCatalogStorageKey);
+  const stored = safeStorage.read<
+    Omit<SessionCatalog, 'sessions'> & { sessions: SessionState[] }
+  >(sessionCatalogStorageKey);
   if (stored && Array.isArray(stored.sessions)) {
     const nextCatalog: SessionCatalog = {
       version: SESSION_CATALOG_VERSION,
@@ -217,29 +206,5 @@ export function readSessionCatalog(): SessionCatalog {
     return nextCatalog;
   }
 
-  const legacySession = safeStorage.read<{
-    kind?: SessionState['kind'];
-    workspaceId?: string;
-    user?: SessionState['user'];
-  }>(sessionStorageKey);
-  if (!legacySession?.kind || !legacySession.workspaceId) {
-    return emptySessionCatalog();
-  }
-
-  const migratedSession = normalizeSession({
-    id: buildSessionId({
-      kind: legacySession.kind,
-      workspaceId: legacySession.workspaceId,
-    }),
-    kind: legacySession.kind,
-    workspaceId: legacySession.workspaceId,
-    user: legacySession.user,
-  });
-  const nextCatalog: SessionCatalog = {
-    version: SESSION_CATALOG_VERSION,
-    activeSessionId: migratedSession.id,
-    sessions: [migratedSession],
-  };
-  writeSessionCatalog(nextCatalog);
-  return nextCatalog;
+  return emptySessionCatalog();
 }

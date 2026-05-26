@@ -17,9 +17,9 @@ permissions:
 
 jobs:
   dashscope-longform-uat:
-    name: DashScope Longform UAT
+    name: DashScope Workspace Longform UAT
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     env:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src

@@ -31,8 +31,24 @@ export async function expectStudioRoute(
   await expect(page.getByTestId('playback-desk')).toBeVisible();
 }
 
+export async function expectWorkflowState(
+  page: Page,
+  expected: string,
+): Promise<void> {
+  await expect(page.getByTestId('studio-workflow-state')).toContainText(expected, {
+    timeout: 20_000,
+  });
+}
+
+export async function selectMockProvider(page: Page): Promise<void> {
+  const providerSelect = page.getByTestId('studio-provider-select');
+  await expect(providerSelect).toBeVisible();
+  await providerSelect.selectOption('mock');
+  await expect(providerSelect).toHaveValue('mock');
+}
+
 export async function signIn(page: Page): Promise<void> {
-  await page.goto('/auth/login');
+  await page.goto('/auth/login', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('auth-login-email').fill('operator@novel.engine');
   await page.getByTestId('auth-login-password').fill('demo-password');
   await page.getByTestId('auth-login-submit').click();
@@ -40,11 +56,10 @@ export async function signIn(page: Page): Promise<void> {
 }
 
 export async function launchGuest(page: Page): Promise<void> {
-  await page.goto('/');
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
   const landingPage = page.getByTestId('auth-home-page');
-  if (await landingPage.isVisible()) {
-    await page.getByTestId('auth-home-launch-guest').click();
-  }
+  await expect(landingPage).toBeVisible();
+  await page.getByTestId('auth-home-launch-guest').click();
   await expectStudioRoute(page);
 }
 
