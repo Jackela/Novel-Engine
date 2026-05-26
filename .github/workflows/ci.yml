@@ -206,7 +206,7 @@ jobs:
 
       - name: Upload frontend validation artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-validation-artifacts
           path: |
@@ -274,7 +274,7 @@ jobs:
 
       - name: Upload frontend full-audit artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-full-audit-artifacts
           path: |
@@ -371,7 +371,7 @@ jobs:
 
       - name: Upload public API audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: api-public-audit-report
           path: artifacts/qa/api-public-audit.json
@@ -396,7 +396,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
