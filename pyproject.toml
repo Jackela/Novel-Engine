@@ -39,7 +39,7 @@ dependencies = [
     "structlog>=24.0.0,<26.0.0",
     # Security
     "PyJWT>=2.8.0,<3.0.0",
-    "cryptography>=46.0.5,<47.0.0",  # Security fix for CVE-2026-26007
+    "cryptography>=46.0.5,<49.0.0",  # Security fix for CVE-2026-26007
     "bcrypt>=5.0.0,<6.0.0",  # Security update - BREAKING: max password length 72 bytes
     # HTTP client
     "requests>=2.31.0,<3.0.0",
