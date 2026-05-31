@@ -89,7 +89,7 @@ postgres = [
     "alembic>=1.12.0",
 ]
 knowledge = [
-    "cohere>=5.0.0,<6.0.0",
+    "cohere>=5.0.0,<8.0.0",
     "networkx>=3.0,<4.0.0",
     "openai>=1.0.0,<3.0.0",
     "rank-bm25>=0.2.2,<1.0.0",
