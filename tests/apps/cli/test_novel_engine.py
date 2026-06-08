@@ -179,6 +179,25 @@ def test_review_warnings_do_not_block_export(tmp_path: Path) -> None:
     assert "# The Salt Ledger" in exported.read_text(encoding="utf-8")
 
 
+def test_review_sanitizes_mechanical_phrases_before_blocker_check(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path)
+    workspace.write_chapter(
+        1,
+        "# Chapter 1: The Bell Debt\n\n"
+        "Here is the first draft of the rewritten chapter.\n\n"
+        "Mira followed the bell through the flooded arcade while every shopkeeper "
+        "pretended not to hear it. The chapter closes with Mira stepping into the "
+        "counting room.",
+    )
+
+    report = LocalReviewer().review(workspace)
+
+    assert report.blockers == []
+    assert_no_mechanical_prose(workspace.read_chapter(1))
+
+
 @pytest.mark.asyncio
 async def test_review_async_falls_back_when_editorial_provider_fails(
     tmp_path: Path,
