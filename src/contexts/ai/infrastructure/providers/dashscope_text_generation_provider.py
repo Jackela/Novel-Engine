@@ -519,9 +519,44 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             if nested is None or nested == parsed:
                 return None
             return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(nested)
-        if isinstance(parsed, list) and len(parsed) == 1:
-            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed[0])
+        if isinstance(parsed, list):
+            objects: list[dict[str, Any]] = []
+            for item in parsed:
+                normalized = (
+                    DashScopeTextGenerationProvider._coerce_parsed_object_candidate(item)
+                )
+                if normalized is not None:
+                    objects.append(normalized)
+            if not objects:
+                return None
+            merged: dict[str, Any] = {}
+            for item in objects:
+                merged.update(item)
+            return merged
         return None
+
+    @staticmethod
+    def _fallback_payload_from_non_object_response(
+        raw_text: str,
+        response_schema: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        chapter_schema = response_schema.get("chapter_markdown")
+        if not isinstance(chapter_schema, dict) or chapter_schema.get("type") != "string":
+            return None
+
+        parsed = DashScopeTextGenerationProvider._parse_json_like_value(raw_text.strip())
+        if isinstance(parsed, str):
+            markdown = parsed.strip()
+        elif isinstance(parsed, list):
+            markdown = "\n\n".join(
+                item.strip() for item in parsed if isinstance(item, str) and item.strip()
+            ).strip()
+        else:
+            markdown = raw_text.strip()
+
+        if not markdown:
+            return None
+        return {"chapter_markdown": markdown}
 
     async def generate_structured(
         self,
@@ -540,10 +575,17 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
                 response.raise_for_status()
                 data = response.json()
                 content_text = self._transport.extract_response_text(data)
-                parsed = _coerce_payload_to_schema(
-                    self._parse_json_object(content_text),
-                    task.response_schema,
-                )
+                try:
+                    payload = self._parse_json_object(content_text)
+                except TextGenerationProviderError as exc:
+                    fallback_payload = self._fallback_payload_from_non_object_response(
+                        content_text,
+                        task.response_schema,
+                    )
+                    if fallback_payload is None:
+                        raise exc
+                    payload = fallback_payload
+                parsed = _coerce_payload_to_schema(payload, task.response_schema)
                 return TextGenerationResult(
                     step=task.step,
                     provider="dashscope",
