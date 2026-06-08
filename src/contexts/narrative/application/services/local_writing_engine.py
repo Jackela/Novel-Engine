@@ -46,6 +46,27 @@ FORBIDDEN_TEMPLATE_PHRASES = (
     "outline_hook",
 )
 
+_FORBIDDEN_TEMPLATE_PATTERN = "|".join(
+    re.escape(phrase) for phrase in FORBIDDEN_TEMPLATE_PHRASES
+)
+_MECHANICAL_PREAMBLE_RE = re.compile(
+    rf"^\s*(?:here(?:'s| is)|below is|sure[,!:]?|certainly[,!:]?|"
+    rf"as requested[,!:]?|draft(?:ed)? chapter)\b.*"
+    rf"(?:{_FORBIDDEN_TEMPLATE_PATTERN}).*$",
+    re.IGNORECASE,
+)
+_FORBIDDEN_TEMPLATE_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"revision anchor:\s*", re.IGNORECASE), ""),
+    (re.compile(r"\bthe chapter closes\b", re.IGNORECASE), "The scene settles"),
+    (re.compile(r"\bthe next scene\b", re.IGNORECASE), "What follows"),
+    (re.compile(r"\bfirst draft\b", re.IGNORECASE), "opening passage"),
+    (re.compile(r"\brewritten chapter\b", re.IGNORECASE), "reworked passage"),
+    (re.compile(r"\bfocus character\b", re.IGNORECASE), "central figure"),
+    (re.compile(r"\bfocus_motivation\b", re.IGNORECASE), "central motivation"),
+    (re.compile(r"\brelationship_status\b", re.IGNORECASE), "relationship state"),
+    (re.compile(r"\boutline_hook\b", re.IGNORECASE), "story hook"),
+)
+
 _active_lock_paths: contextvars.ContextVar[frozenset[Path]] = contextvars.ContextVar(
     "novel_engine_active_lock_paths",
     default=frozenset(),
@@ -752,7 +773,9 @@ class LocalDraftingEngine:
                 "Write natural, varied prose with concrete action, subtext, and momentum. "
                 "The chapter_markdown is the only manuscript authority. "
                 "The sidecar_metadata is only for continuity tracking and must not be "
-                "copied into the prose."
+                "copied into the prose. Begin directly with the chapter heading and stay "
+                "in-world; never introduce the output as a draft, rewrite, scene, outline, "
+                "notes, or template."
             ),
             user_prompt=(
                 f"Title: {config.title}\n"
@@ -766,7 +789,9 @@ class LocalDraftingEngine:
                 f"Unresolved promises: {task.unresolved_promises}\n"
                 f"Character state: {task.character_state}\n"
                 f"Style profile: {task.style_profile}\n"
-                f"Do not include these mechanical phrases: {list(task.forbidden_phrases)}"
+                f"Do not include these mechanical phrases: {list(task.forbidden_phrases)}\n"
+                "If source material contains one of those phrases, rephrase it as "
+                "in-world prose instead of copying it."
             ),
             response_schema={
                 "chapter_markdown": {"type": "string"},
@@ -805,7 +830,9 @@ class LocalDraftingEngine:
         chapter_number: int,
         run_id: str,
     ) -> ChapterDraftArtifact:
-        markdown = str(result.content.get("chapter_markdown", "")).strip()
+        markdown = _sanitize_chapter_markdown(
+            str(result.content.get("chapter_markdown", ""))
+        )
         sidecar = result.content.get("sidecar_metadata", {})
         if not markdown:
             raise ValueError("Provider returned empty chapter_markdown")
@@ -1275,6 +1302,21 @@ class LocalExporter:
                 parts.append("")
             _atomic_write_text(output_path, "\n".join(parts).rstrip() + "\n")
             return output_path
+
+
+def _sanitize_chapter_markdown(markdown: str) -> str:
+    """Remove provider preambles and mechanical labels before manuscript storage."""
+    cleaned_lines: list[str] = []
+    for line in str(markdown).strip().splitlines():
+        if _MECHANICAL_PREAMBLE_RE.search(line):
+            continue
+        cleaned_lines.append(line)
+    cleaned = "\n".join(cleaned_lines)
+    for pattern, replacement in _FORBIDDEN_TEMPLATE_REPLACEMENTS:
+        cleaned = pattern.sub(replacement, cleaned)
+    cleaned = re.sub(r"[ \t]+\n", "\n", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
 
 
 def _summarize(markdown: str, limit: int = 240) -> str:
