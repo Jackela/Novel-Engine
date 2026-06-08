@@ -196,6 +196,67 @@ def test_render_failure_markdown_report_includes_error_and_trace() -> None:
     assert "Workspace job failed." in markdown
 
 
+def test_render_failure_markdown_report_includes_job_context() -> None:
+    report = LongformUatFailureReport(
+        started_at="2026-01-01T00:00:00+00:00",
+        completed_at="2026-01-01T00:02:00+00:00",
+        base_url="http://127.0.0.1:8000",
+        target_chapters=20,
+        story_title_seed="DashScope PR Gate",
+        principal_workspace_id="user-operator",
+        workspace_id="story-1",
+        story_title="Story",
+        failed_step="poll_run_job",
+        error_message="Run job failed: provider returned malformed output.",
+        request_trace=[],
+        job_payload={
+            "status": "failed",
+            "operation": "run",
+            "provider": "dashscope",
+            "error": "provider returned malformed output",
+            "failure_artifact": {
+                "relative_path": "artifacts/jobs/job-1.failure.json"
+            },
+            "events": [
+                {"status": "running", "details": {}},
+                {
+                    "status": "failed",
+                    "details": {
+                        "failure_artifact": {
+                            "relative_path": "artifacts/jobs/job-1.failure.json"
+                        }
+                    },
+                },
+            ],
+        },
+        workspace_snapshot={
+            "chapters": [{"chapter_number": 1}],
+            "runs": [
+                {
+                    "events": [
+                        {
+                            "status": "retrying",
+                            "details": {
+                                "chapter_number": 2,
+                                "attempt": 1,
+                                "error": "not a JSON object",
+                            },
+                        }
+                    ]
+                }
+            ],
+            "jobs": [{"job_id": "job-1"}],
+        },
+    )
+
+    markdown = render_failure_markdown_report(report)
+
+    assert "Failed Job" in markdown
+    assert "artifacts/jobs/job-1.failure.json" in markdown
+    assert "drafted chapters observed: `1`" in markdown
+    assert "chapter_number" in markdown
+
+
 def test_validate_report_allows_unresolved_warnings() -> None:
     report = _uat_report(
         warning_count=1,
@@ -423,3 +484,102 @@ def test_run_longform_uat_wraps_failures_with_partial_context(
     assert report.story_title.startswith("DashScope PR Gate")
     assert report.failed_step == "create_workspace"
     assert report.error_message == "provider timeout"
+
+
+def test_run_longform_uat_captures_failed_job_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_request_json(
+        session: Any,
+        traces: list[RequestTrace],
+        *,
+        base_url: str,
+        step: str,
+        method: str,
+        path: str,
+        headers: dict[str, str] | None = None,
+        payload: dict[str, Any] | None = None,
+        allowed_status_codes: tuple[int, ...] = (200,),
+        timeout_seconds: int = 900,
+    ) -> tuple[int, dict[str, Any]]:
+        del session, base_url, headers, allowed_status_codes, timeout_seconds
+        status_code = 201 if step == "create_workspace" else 202 if method == "POST" else 200
+        traces.append(
+            RequestTrace(
+                step=step,
+                method=method,
+                path=path,
+                status_code=status_code,
+                duration_ms=25,
+            )
+        )
+        if step == "login":
+            return 200, {"workspace_id": "user-operator"}
+        if step == "create_workspace":
+            assert payload is not None
+            return 201, {"workspace_id": str(payload["workspace_id"])}
+        if step == "run_workspace":
+            return 202, {"job_id": "run-job", "status": "queued"}
+        if step == "poll_run_job":
+            return 200, {
+                "job_id": "run-job",
+                "status": "failed",
+                "operation": "run",
+                "provider": "dashscope",
+                "error": "DashScope response is not a JSON object",
+                "failure_artifact": {
+                    "relative_path": "artifacts/jobs/run-job.failure.json"
+                },
+                "events": [
+                    {"status": "running", "details": {}},
+                    {
+                        "status": "failed",
+                        "details": {
+                            "failure_artifact": {
+                                "relative_path": "artifacts/jobs/run-job.failure.json"
+                            }
+                        },
+                    },
+                ],
+            }
+        if step == "get_workspace_after_failed_job":
+            return 200, {
+                "chapters": [{"chapter_number": 1}],
+                "runs": [
+                    {
+                        "run_id": "run-1",
+                        "events": [
+                            {
+                                "status": "retrying",
+                                "details": {
+                                    "chapter_number": 2,
+                                    "attempt": 1,
+                                    "error": "not a JSON object",
+                                },
+                            }
+                        ],
+                    }
+                ],
+                "jobs": [{"job_id": "run-job"}],
+            }
+        raise AssertionError(f"Unexpected step: {step}")
+
+    monkeypatch.setattr(longform_uat, "_request_json", fake_request_json)
+
+    with pytest.raises(LongformUatExecutionError) as exc_info:
+        longform_uat.run_longform_uat(
+            base_url="http://127.0.0.1:8000",
+            target_chapters=20,
+            story_title_seed="DashScope PR Gate",
+            timeout_seconds=10,
+        )
+
+    report = exc_info.value.report
+    assert report.failed_step == "poll_run_job"
+    assert report.error_message == "Run job failed: DashScope response is not a JSON object"
+    assert report.job_payload is not None
+    assert report.job_payload["failure_artifact"]["relative_path"].endswith(
+        "run-job.failure.json"
+    )
+    assert report.workspace_snapshot is not None
+    assert report.workspace_snapshot["runs"][0]["events"][0]["details"]["attempt"] == 1

@@ -70,6 +70,44 @@ class MechanicalPhraseProvider:
         )
 
 
+class FlakyChapterProvider:
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def generate_structured(
+        self,
+        task: TextGenerationTask,
+    ) -> TextGenerationResult:
+        self.calls += 1
+        if self.calls == 1:
+            raise TextGenerationProviderError(
+                f"provider failed for {task.step}: not a JSON object"
+            )
+        payload = {
+            "chapter_markdown": (
+                "# Chapter 1: The Bell Debt\n\n"
+                "Mira followed the bell through the flooded arcade while every "
+                "shopkeeper pretended not to hear it. The sound named a debt before "
+                "the collector arrived, and that made the silence around her feel "
+                "too carefully arranged."
+            ),
+            "sidecar_metadata": {
+                "summary": "Mira follows a bell debt into the arcade.",
+                "characters": ["Mira"],
+                "promises": [],
+                "continuity_changes": [],
+                "style_notes": [],
+            },
+        }
+        return TextGenerationResult(
+            step=task.step,
+            provider="mock",
+            model="flaky-chapter-fixture",
+            raw_text=json.dumps(payload, ensure_ascii=False),
+            content=payload,
+        )
+
+
 class FailingEditorialProvider:
     async def generate_structured(
         self,
@@ -135,6 +173,31 @@ async def test_provider_mechanical_phrases_are_sanitized_before_storage(
     assert "The scene settles with Mira stepping into the counting room." in chapter_text
     assert "first draft" in artifact.raw_model_output.lower()
     assert artifact.chapter_markdown == chapter_text.strip()
+
+
+@pytest.mark.asyncio
+async def test_draft_retries_retryable_provider_errors(tmp_path: Path) -> None:
+    workspace = build_workspace(tmp_path, target_chapters=1)
+    provider = FlakyChapterProvider()
+    engine = LocalDraftingEngine(provider)
+
+    artifact = await engine.draft_chapter(workspace, 1)
+
+    assert provider.calls == 2
+    assert artifact.chapter_markdown.startswith("# Chapter 1:")
+    events_path = workspace.runs_dir / artifact.run_id / "events.jsonl"
+    events = [
+        json.loads(line)
+        for line in events_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert any(
+        event["status"] == "retrying"
+        and event["details"]["chapter_number"] == 1
+        and event["details"]["attempt"] == 1
+        for event in events
+    )
+    assert events[-1]["status"] == "completed"
+    assert events[-1]["details"]["attempt"] == 2
 
 
 @pytest.mark.asyncio

@@ -6,6 +6,7 @@ sidecar evidence for planning, review, and recovery.
 
 from __future__ import annotations
 
+import asyncio
 import contextvars
 import json
 import os
@@ -24,6 +25,7 @@ import yaml
 
 from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationProvider,
+    TextGenerationProviderError,
     TextGenerationResult,
     TextGenerationTask,
 )
@@ -33,6 +35,8 @@ ReviewSeverity = Literal["blocker", "warning", "suggestion"]
 LOCK_STALE_AFTER_SECONDS = 60 * 60
 LOCK_WAIT_SECONDS = 30.0
 LOCK_POLL_SECONDS = 0.05
+CHAPTER_GENERATION_ATTEMPTS = 2
+CHAPTER_GENERATION_RETRY_DELAY_SECONDS = 0.25
 
 FORBIDDEN_TEMPLATE_PHRASES = (
     "Revision anchor:",
@@ -624,38 +628,51 @@ class LocalDraftingEngine:
 
         config = workspace.load_config()
         task = self._build_task(workspace, config, chapter_number)
-        try:
-            result = await self._provider.generate_structured(
-                self._generation_task(task)
-            )
-            artifact = self._extract_artifact(
-                result,
-                chapter_number=chapter_number,
-                run_id=current_run_dir.name,
-            )
-            self._validate_chapter_surface(artifact.chapter_markdown)
-            workspace.write_chapter(chapter_number, artifact.chapter_markdown)
-            workspace.store_artifact(artifact, current_run_dir)
-            workspace.append_event(
-                current_run_dir,
-                "draft",
-                "completed",
-                {
-                    "chapter_number": chapter_number,
-                    "chapter_relative_path": workspace.relative_path(
-                        workspace.chapter_path(chapter_number)
-                    ),
-                },
-            )
-            return artifact
-        except Exception as exc:
-            workspace.append_event(
-                current_run_dir,
-                "draft",
-                "failed",
-                {"chapter_number": chapter_number, "error": str(exc)},
-            )
-            raise
+        generation_task = self._generation_task(task)
+        for attempt in range(1, CHAPTER_GENERATION_ATTEMPTS + 1):
+            try:
+                result = await self._provider.generate_structured(generation_task)
+                artifact = self._extract_artifact(
+                    result,
+                    chapter_number=chapter_number,
+                    run_id=current_run_dir.name,
+                )
+                self._validate_chapter_surface(artifact.chapter_markdown)
+                workspace.write_chapter(chapter_number, artifact.chapter_markdown)
+                workspace.store_artifact(artifact, current_run_dir)
+                workspace.append_event(
+                    current_run_dir,
+                    "draft",
+                    "completed",
+                    {
+                        "chapter_number": chapter_number,
+                        "attempt": attempt,
+                        "chapter_relative_path": workspace.relative_path(
+                            workspace.chapter_path(chapter_number)
+                        ),
+                    },
+                )
+                return artifact
+            except Exception as exc:
+                should_retry = (
+                    attempt < CHAPTER_GENERATION_ATTEMPTS
+                    and self._is_retryable_generation_error(exc)
+                )
+                workspace.append_event(
+                    current_run_dir,
+                    "draft",
+                    "retrying" if should_retry else "failed",
+                    {
+                        "chapter_number": chapter_number,
+                        "attempt": attempt,
+                        "error": str(exc),
+                    },
+                )
+                if not should_retry:
+                    raise
+                await asyncio.sleep(CHAPTER_GENERATION_RETRY_DELAY_SECONDS)
+
+        raise RuntimeError("chapter generation exhausted without a terminal error")
 
     async def revise_chapter(
         self,
@@ -859,6 +876,16 @@ class LocalDraftingEngine:
         for phrase in FORBIDDEN_TEMPLATE_PHRASES:
             if phrase.lower() in lowered:
                 raise ValueError(f"Chapter prose contains forbidden phrase: {phrase}")
+
+    @staticmethod
+    def _is_retryable_generation_error(exc: Exception) -> bool:
+        message = str(exc).lower()
+        if isinstance(exc, TextGenerationProviderError):
+            return "not a json object" in message or "invalid json" in message
+        return (
+            "provider returned empty chapter_markdown" in message
+            or "chapter prose contains forbidden phrase" in message
+        )
 
 
 EDITORIAL_DIMENSIONS: tuple[tuple[str, str], ...] = (
