@@ -234,6 +234,53 @@ async def test_dashscope_provider_generates_structured_payload(
 
 
 @pytest.mark.asyncio
+async def test_dashscope_provider_coerces_nested_sidecar_schema(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    fake_client = _AsyncPostClient(
+        [
+            _dashscope_success_response(
+                json.dumps(
+                    {
+                        "chapter_markdown": "# Chapter 1\n\nA courier waits.",
+                        "sidecar_metadata": {
+                            "summary": ["A courier waits."],
+                            "characters": "Mira",
+                            "promises": None,
+                        },
+                    }
+                )
+            )
+        ]
+    )
+    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
+
+    result = await provider.generate_structured(
+        _task(
+            step="chapter_draft",
+            response_schema={
+                "chapter_markdown": {"type": "string"},
+                "sidecar_metadata": {
+                    "type": "object",
+                    "properties": {
+                        "summary": {"type": "string"},
+                        "characters": {"type": "array"},
+                        "promises": {"type": "array"},
+                    },
+                },
+            },
+        )
+    )
+
+    assert result.content["sidecar_metadata"] == {
+        "summary": "A courier waits.",
+        "characters": ["Mira"],
+        "promises": [],
+    }
+
+
+@pytest.mark.asyncio
 async def test_dashscope_provider_retries_timeout_then_succeeds(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

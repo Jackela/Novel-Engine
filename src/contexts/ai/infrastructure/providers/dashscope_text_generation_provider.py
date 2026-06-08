@@ -88,7 +88,19 @@ def _coerce_value_to_schema(
     expected_type = schema.get("type")
     if expected_type == "object":
         if isinstance(value, dict):
-            return value
+            properties = schema.get("properties")
+            if not isinstance(properties, dict):
+                return value
+            normalized = dict(value)
+            for nested_key, nested_schema in properties.items():
+                if nested_key not in normalized:
+                    continue
+                normalized[nested_key] = _coerce_value_to_schema(
+                    normalized[nested_key],
+                    nested_schema,
+                    key=str(nested_key),
+                )
+            return normalized
         if isinstance(value, list):
             if key == "character_bible":
                 return {"characters": value}
@@ -105,6 +117,16 @@ def _coerce_value_to_schema(
         return [value]
 
     if expected_type == "string":
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, list):
+            return " ".join(
+                str(item).strip() for item in value if str(item).strip()
+            ).strip()
+        if isinstance(value, dict):
+            return json.dumps(value, ensure_ascii=False).strip()
         return str(value).strip()
 
     if expected_type == "integer":
