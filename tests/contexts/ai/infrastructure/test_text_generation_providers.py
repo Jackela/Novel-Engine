@@ -357,6 +357,69 @@ async def test_dashscope_provider_maps_non_json_object_response(
         await provider.generate_structured(_task())
 
 
+@pytest.mark.asyncio
+async def test_dashscope_provider_uses_chapter_text_fallback_for_non_object_response(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    monkeypatch.setattr(
+        provider,
+        "_get_client",
+        lambda: _AsyncPostClient(
+            [
+                _dashscope_success_response(
+                    json.dumps(
+                        [
+                            "# Chapter 1: The Bell Debt",
+                            "Mira follows the sound into the counting room.",
+                        ]
+                    )
+                )
+            ]
+        ),
+    )
+
+    result = await provider.generate_structured(
+        _task(
+            "chapter_draft",
+            response_schema={
+                "chapter_markdown": {"type": "string"},
+                "sidecar_metadata": {"type": "object"},
+            },
+        )
+    )
+
+    assert result.content == {
+        "chapter_markdown": (
+            "# Chapter 1: The Bell Debt\n\n"
+            "Mira follows the sound into the counting room."
+        )
+    }
+
+
+@pytest.mark.asyncio
+async def test_dashscope_provider_rejects_non_text_chapter_array(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    monkeypatch.setattr(
+        provider,
+        "_get_client",
+        lambda: _AsyncPostClient([_dashscope_success_response("[1, 2]")]),
+    )
+
+    with pytest.raises(TextGenerationProviderError, match="not a JSON object"):
+        await provider.generate_structured(
+            _task(
+                "chapter_draft",
+                response_schema={
+                    "chapter_markdown": {"type": "string"},
+                    "sidecar_metadata": {"type": "object"},
+                },
+            )
+        )
+
+
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
@@ -410,6 +473,18 @@ def test_dashscope_parse_json_nested_string_and_invalid_value() -> None:
 
     with pytest.raises(TextGenerationProviderError, match="not a JSON object"):
         DashScopeTextGenerationProvider._parse_json_object("[]")
+
+
+def test_dashscope_parse_json_merges_objects_from_array_wrapper() -> None:
+    parsed = DashScopeTextGenerationProvider._parse_json_object(
+        '["{\\"chapter_markdown\\": \\"# Chapter 1\\"}", '
+        '"{\\"sidecar_metadata\\": {\\"summary\\": \\"A bell rings.\\"}}"]'
+    )
+
+    assert parsed == {
+        "chapter_markdown": "# Chapter 1",
+        "sidecar_metadata": {"summary": "A bell rings."},
+    }
 
 
 def test_dashscope_retry_policy_boundaries() -> None:
