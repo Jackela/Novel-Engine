@@ -371,7 +371,7 @@ def test_explicit_unconfigured_real_provider_is_rejected(
     assert "Provider is not configured" in response.json()["error"]["message"]
 
 
-def test_configured_real_provider_review_failure_fails_job(
+def test_configured_real_provider_review_failure_uses_fallback(
     canonical_client: Any,
     monkeypatch: Any,
 ) -> None:
@@ -412,10 +412,17 @@ def test_configured_real_provider_review_failure_fails_job(
 
     assert response.status_code == 202
     job = _wait_for_job(canonical_client, "salt-ledger", str(response.json()["job_id"]))
-    assert job["status"] == "failed"
-    assert "judge failed under" in job["error"]
-    assert str(get_settings().data_dir).replace("\\", "/") not in job["error"].replace("\\", "/")
-    assert job["failure_artifact"]["relative_path"].startswith("artifacts/jobs/")
+    assert job["status"] == "completed"
+    assert job["error"] is None
+    suggestions = job["result"]["review"]["suggestions"]
+    assert {item["code"] for item in suggestions} == {
+        "agency_attribution",
+        "causal_continuity",
+        "reader_pull",
+        "closure_spacing",
+        "promise_trust",
+        "voice_stability",
+    }
 
 
 def test_export_preserves_existing_editorial_review(canonical_client: Any) -> None:

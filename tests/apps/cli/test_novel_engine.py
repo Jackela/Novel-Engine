@@ -9,6 +9,7 @@ import pytest
 
 from src.apps.cli.novel_engine import main
 from src.contexts.ai.application.ports.text_generation_port import (
+    TextGenerationProviderError,
     TextGenerationResult,
     TextGenerationTask,
 )
@@ -66,6 +67,16 @@ class MechanicalPhraseProvider:
             model="mechanical-phrase-fixture",
             raw_text=json.dumps(payload, ensure_ascii=False),
             content=payload,
+        )
+
+
+class FailingEditorialProvider:
+    async def generate_structured(
+        self,
+        task: TextGenerationTask,
+    ) -> TextGenerationResult:
+        raise TextGenerationProviderError(
+            f"provider failed for {task.step}: not a JSON object"
         )
 
 
@@ -166,6 +177,29 @@ def test_review_warnings_do_not_block_export(tmp_path: Path) -> None:
     exported = LocalExporter().export_markdown(workspace)
     assert exported.exists()
     assert "# The Salt Ledger" in exported.read_text(encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_review_async_falls_back_when_editorial_provider_fails(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path)
+    await LocalDraftingEngine(DeterministicTextGenerationProvider()).draft_chapter(
+        workspace,
+        1,
+    )
+
+    report = await LocalReviewer(FailingEditorialProvider()).review_async(workspace)
+
+    assert report.blockers == []
+    assert {issue.code for issue in report.suggestions} == {
+        "agency_attribution",
+        "causal_continuity",
+        "reader_pull",
+        "closure_spacing",
+        "promise_trust",
+        "voice_stability",
+    }
 
 
 def test_review_blocks_empty_chapter_export(tmp_path: Path) -> None:
