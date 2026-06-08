@@ -8,6 +8,10 @@ from typing import cast
 import pytest
 
 from src.apps.cli.novel_engine import main
+from src.contexts.ai.application.ports.text_generation_port import (
+    TextGenerationResult,
+    TextGenerationTask,
+)
 from src.contexts.ai.infrastructure.providers.deterministic_text_generation_provider import (
     DeterministicTextGenerationProvider,
 )
@@ -31,6 +35,38 @@ def build_workspace(tmp_path: Path, *, target_chapters: int = 3) -> NovelWorkspa
             tone="sharp, atmospheric serial fiction",
         ),
     )
+
+
+class MechanicalPhraseProvider:
+    async def generate_structured(
+        self,
+        task: TextGenerationTask,
+    ) -> TextGenerationResult:
+        payload = {
+            "chapter_markdown": (
+                "# Chapter 1: The Bell Debt\n\n"
+                "Here is the first draft of the rewritten chapter.\n\n"
+                "Mira followed the bell through the flooded arcade while every "
+                "shopkeeper pretended not to hear it. The sound named a debt before "
+                "the collector arrived, and that made the silence around her feel "
+                "too carefully arranged.\n\n"
+                "The chapter closes with Mira stepping into the counting room."
+            ),
+            "sidecar_metadata": {
+                "summary": "Mira follows a bell debt into the counting room.",
+                "characters": ["Mira"],
+                "promises": [],
+                "continuity_changes": [],
+                "style_notes": [],
+            },
+        }
+        return TextGenerationResult(
+            step=task.step,
+            provider="mock",
+            model="mechanical-phrase-fixture",
+            raw_text=json.dumps(payload, ensure_ascii=False),
+            content=payload,
+        )
 
 
 def assert_no_mechanical_prose(markdown: str) -> None:
@@ -71,6 +107,23 @@ async def test_local_workspace_drafts_complete_chapter_artifact(
     )
     assert sidecar_path.exists()
     assert json.loads(sidecar_path.read_text(encoding="utf-8"))["summary"]
+
+
+@pytest.mark.asyncio
+async def test_provider_mechanical_phrases_are_sanitized_before_storage(
+    tmp_path: Path,
+) -> None:
+    workspace = build_workspace(tmp_path, target_chapters=1)
+    engine = LocalDraftingEngine(MechanicalPhraseProvider())
+
+    artifact = await engine.draft_chapter(workspace, 1)
+
+    chapter_text = workspace.read_chapter(1)
+    assert_no_mechanical_prose(chapter_text)
+    assert "Mira followed the bell" in chapter_text
+    assert "The scene settles with Mira stepping into the counting room." in chapter_text
+    assert "first draft" in artifact.raw_model_output.lower()
+    assert artifact.chapter_markdown == chapter_text.strip()
 
 
 @pytest.mark.asyncio
