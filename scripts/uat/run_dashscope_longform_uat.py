@@ -118,6 +118,8 @@ class LongformUatFailureReport:
     failed_step: str
     error_message: str
     request_trace: list[RequestTrace]
+    job_payload: dict[str, Any] | None = None
+    workspace_snapshot: dict[str, Any] | None = None
 
 
 class LongformUatExecutionError(RuntimeError):
@@ -342,6 +344,29 @@ def render_failure_markdown_report(report: LongformUatFailureReport) -> str:
     story_title = report.story_title or "n/a"
     principal_workspace_id = report.principal_workspace_id or "n/a"
     workspace_id = report.workspace_id or "n/a"
+    job_payload = report.job_payload or {}
+    job_status = str(job_payload.get("status", "n/a"))
+    job_operation = str(job_payload.get("operation", "n/a"))
+    job_provider = str(job_payload.get("provider", "n/a"))
+    job_error = str(job_payload.get("error", "n/a"))
+    failure_artifact = job_payload.get("failure_artifact")
+    failure_artifact_path = "n/a"
+    if isinstance(failure_artifact, dict):
+        failure_artifact_path = str(
+            failure_artifact.get("relative_path")
+            or failure_artifact.get("filename")
+            or failure_artifact.get("artifact_id")
+            or "n/a"
+        )
+    event_rows = _render_failure_event_rows(job_payload)
+    snapshot = report.workspace_snapshot or {}
+    chapters = snapshot.get("chapters", [])
+    runs = snapshot.get("runs", [])
+    jobs = snapshot.get("jobs", [])
+    drafted_count = len(chapters) if isinstance(chapters, list) else 0
+    run_count = len(runs) if isinstance(runs, list) else 0
+    job_count = len(jobs) if isinstance(jobs, list) else 0
+    run_event_rows = _render_workspace_run_event_rows(snapshot)
 
     return f"""# DashScope 20-Chapter Live Evidence
 
@@ -358,12 +383,80 @@ def render_failure_markdown_report(report: LongformUatFailureReport) -> str:
 - failed step: `{report.failed_step}`
 - error: `{report.error_message}`
 
+## Failed Job
+
+- status: `{job_status}`
+- operation: `{job_operation}`
+- provider: `{job_provider}`
+- job error: `{job_error}`
+- failure artifact: `{failure_artifact_path}`
+
+| Event status | Details |
+| --- | --- |
+{event_rows}
+
+## Workspace Snapshot
+
+- drafted chapters observed: `{drafted_count}`
+- run count: `{run_count}`
+- job count: `{job_count}`
+
+| Run event status | Details |
+| --- | --- |
+{run_event_rows}
+
 ## Request Trace
 
 | Step | Request | Status | Duration (ms) |
 | --- | --- | --- | --- |
 {request_rows}
 """
+
+
+def _short_json(value: object, *, limit: int = 240) -> str:
+    text = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    text = text.replace("\n", " ").replace("|", "\\|")
+    if len(text) <= limit:
+        return text
+    return text[: limit - 3] + "..."
+
+
+def _render_failure_event_rows(job_payload: dict[str, Any]) -> str:
+    events = job_payload.get("events", [])
+    if not isinstance(events, list) or not events:
+        return "| none | n/a |"
+    rows: list[str] = []
+    for event in events[-6:]:
+        if not isinstance(event, dict):
+            continue
+        rows.append(
+            "| "
+            f"{str(event.get('status', 'n/a'))} | "
+            f"{_short_json(event.get('details', {}))} |"
+        )
+    return "\n".join(rows) or "| none | n/a |"
+
+
+def _render_workspace_run_event_rows(snapshot: dict[str, Any]) -> str:
+    runs = snapshot.get("runs", [])
+    if not isinstance(runs, list) or not runs:
+        return "| none | n/a |"
+    latest_run = runs[0]
+    if not isinstance(latest_run, dict):
+        return "| none | n/a |"
+    events = latest_run.get("events", [])
+    if not isinstance(events, list) or not events:
+        return "| none | n/a |"
+    rows: list[str] = []
+    for event in events[-8:]:
+        if not isinstance(event, dict):
+            continue
+        rows.append(
+            "| "
+            f"{str(event.get('status', 'n/a'))} | "
+            f"{_short_json(event.get('details', {}))} |"
+        )
+    return "\n".join(rows) or "| none | n/a |"
 
 
 def _request_json(
@@ -580,6 +673,29 @@ def _poll_job_until_terminal(
     raise RuntimeError(f"{step} did not finish within {timeout_seconds} seconds: {payload}")
 
 
+def _try_fetch_workspace_snapshot(
+    session: requests.Session,
+    traces: list[RequestTrace],
+    *,
+    base_url: str,
+    workspace_id: str,
+    timeout_seconds: int,
+) -> dict[str, Any] | None:
+    try:
+        _, payload = _request_json(
+            session,
+            traces,
+            base_url=base_url,
+            step="get_workspace_after_failed_job",
+            method="GET",
+            path=f"/api/workspaces/{workspace_id}",
+            timeout_seconds=timeout_seconds,
+        )
+    except (RuntimeError, requests.RequestException):
+        return None
+    return payload
+
+
 def _resolve_output_paths(
     *,
     output_dir: Path,
@@ -610,6 +726,9 @@ def run_longform_uat(
     principal_workspace_id: str | None = None
     workspace_id: str | None = None
     title: str | None = None
+    latest_job_payload: dict[str, Any] | None = None
+    workspace_snapshot: dict[str, Any] | None = None
+    failed_step_override: str | None = None
 
     try:
         login_status, login_payload = _request_json(
@@ -676,7 +795,16 @@ def run_longform_uat(
             path=f"/api/workspaces/{workspace_id}/jobs/{run_job_id}",
             timeout_seconds=timeout_seconds,
         )
+        latest_job_payload = run_job_payload
         if run_job_payload.get("status") != "completed":
+            failed_step_override = "poll_run_job"
+            workspace_snapshot = _try_fetch_workspace_snapshot(
+                session,
+                traces,
+                base_url=base_url,
+                workspace_id=workspace_id,
+                timeout_seconds=timeout_seconds,
+            )
             raise RuntimeError(f"Run job failed: {run_job_payload.get('error')}")
 
         _, workspace_payload = _request_json(
@@ -688,6 +816,7 @@ def run_longform_uat(
             path=f"/api/workspaces/{workspace_id}",
             timeout_seconds=timeout_seconds,
         )
+        workspace_snapshot = workspace_payload
         final_review = dict(workspace_payload.get("latest_review") or {})
         review_rounds = 1 if final_review else 0
 
@@ -711,6 +840,7 @@ def run_longform_uat(
             path=f"/api/workspaces/{workspace_id}/jobs/{export_job_id}",
             timeout_seconds=timeout_seconds,
         )
+        latest_job_payload = export_job_payload
         _, workspace_payload = _request_json(
             session,
             traces,
@@ -720,6 +850,7 @@ def run_longform_uat(
             path=f"/api/workspaces/{workspace_id}",
             timeout_seconds=timeout_seconds,
         )
+        workspace_snapshot = workspace_payload
 
         final_review = dict(workspace_payload.get("latest_review") or final_review)
         warning_count, blocker_count, suggestion_count = _issue_counts(final_review)
@@ -807,7 +938,7 @@ def run_longform_uat(
         validate_report(report)
         return report
     except (RuntimeError, ValueError, requests.RequestException) as exc:
-        failed_step = traces[-1].step if traces else "startup"
+        failed_step = failed_step_override or (traces[-1].step if traces else "startup")
         raise LongformUatExecutionError(
             LongformUatFailureReport(
                 started_at=started_at,
@@ -821,6 +952,8 @@ def run_longform_uat(
                 failed_step=failed_step,
                 error_message=str(exc),
                 request_trace=traces,
+                job_payload=latest_job_payload,
+                workspace_snapshot=workspace_snapshot,
             )
         ) from exc
 
