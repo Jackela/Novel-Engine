@@ -23,6 +23,20 @@ CONTRACT_STORY_PREMISE: Final[str] = (
 TextGenerationContractCase = tuple[str, TextGenerationTask]
 
 
+def _chapter_response_schema() -> dict[str, Any]:
+    return {
+        "chapter_markdown": {"type": "string"},
+        "sidecar_metadata": {
+            "type": "object",
+            "properties": {
+                "summary": {"type": "string"},
+                "characters": {"type": "array"},
+                "promises": {"type": "array"},
+            },
+        },
+    }
+
+
 def build_contract_cases() -> list[TextGenerationContractCase]:
     """Build the canonical structured tasks used across provider tests."""
     draft_task = TextGenerationTask(
@@ -37,10 +51,7 @@ def build_contract_cases() -> list[TextGenerationContractCase]:
             f"Premise: {CONTRACT_STORY_PREMISE}\n"
             "Chapter number: 1"
         ),
-        response_schema={
-            "chapter_markdown": {"type": "string"},
-            "sidecar_metadata": {"type": "object"},
-        },
+        response_schema=_chapter_response_schema(),
         temperature=0.6,
         metadata={
             "title": CONTRACT_STORY_TITLE,
@@ -65,10 +76,7 @@ def build_contract_cases() -> list[TextGenerationContractCase]:
             "Current chapter: A thin scene needs a stronger emotional turn.\n"
             "Brief: rewrite the complete chapter as natural prose."
         ),
-        response_schema={
-            "chapter_markdown": {"type": "string"},
-            "sidecar_metadata": {"type": "object"},
-        },
+        response_schema=_chapter_response_schema(),
         temperature=0.45,
         metadata={
             "title": CONTRACT_STORY_TITLE,
