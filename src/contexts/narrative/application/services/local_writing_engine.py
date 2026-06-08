@@ -887,10 +887,13 @@ class EditorialJudge:
         fallback = self.deterministic_suggestions(chapters, sidecars)
         if self._provider is None or not fallback:
             return fallback
-        result = await self._provider.generate_structured(
-            self._review_task(workspace, chapters, sidecars)
-        )
-        return self._issues_from_provider(result.content, fallback)
+        try:
+            result = await self._provider.generate_structured(
+                self._review_task(workspace, chapters, sidecars)
+            )
+            return self._issues_from_provider(result.content, fallback)
+        except Exception:
+            return fallback
 
     def deterministic_suggestions(
         self,
