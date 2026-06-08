@@ -855,7 +855,7 @@ class LocalDraftingEngine:
         )
 
     def _validate_chapter_surface(self, markdown: str) -> None:
-        lowered = markdown.lower()
+        lowered = _sanitize_chapter_markdown(markdown).lower()
         for phrase in FORBIDDEN_TEMPLATE_PHRASES:
             if phrase.lower() in lowered:
                 raise ValueError(f"Chapter prose contains forbidden phrase: {phrase}")
@@ -1225,6 +1225,10 @@ class LocalReviewer:
 
         for path in chapters:
             text = path.read_text(encoding="utf-8").strip()
+            cleaned_text = _sanitize_chapter_markdown(text)
+            if cleaned_text != text:
+                _atomic_write_text(path, cleaned_text + "\n")
+                text = cleaned_text
             location = path.stem
             word_count = len(text.split())
             if not text:
