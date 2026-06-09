@@ -7,7 +7,11 @@ import type { WorkspaceJob, WorkspaceStatus } from '@/app/types/story';
 import { render, screen, waitFor } from '../../../tests/test-utils';
 import { useStoryWorkbench } from './useStoryWorkbench';
 
-function makeWorkspace(id = 'salt-ledger', chapters = 0): WorkspaceStatus {
+function makeWorkspace(
+  id = 'salt-ledger',
+  chapters = 0,
+  jobs: WorkspaceJob[] = [],
+): WorkspaceStatus {
   return {
     workspace_id: id,
     story: {
@@ -30,16 +34,18 @@ function makeWorkspace(id = 'salt-ledger', chapters = 0): WorkspaceStatus {
     latest_review: null,
     exports: [],
     runs: [],
-    jobs: [],
+    jobs,
   };
 }
 
-function makeJob(status: WorkspaceJob['status'] = 'completed'): WorkspaceJob {
+function makeJob(
+  status: WorkspaceJob['status'] = 'completed',
+  overrides: Partial<WorkspaceJob> = {},
+): WorkspaceJob {
   return {
     job_id: 'job-1',
     workspace_id: 'salt-ledger',
     operation: 'run',
-    status,
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:01Z',
     provider: 'mock',
@@ -59,6 +65,8 @@ function makeJob(status: WorkspaceJob['status'] = 'completed'): WorkspaceJob {
     error: null,
     failure_artifact: null,
     events: [],
+    ...overrides,
+    status,
   };
 }
 
@@ -94,10 +102,25 @@ function mockProviders() {
   });
 }
 
-function Harness() {
+function Harness({
+  onSelectionChange = vi.fn(),
+  preferredWorkspaceId,
+  preferredJobId,
+}: {
+  onSelectionChange?: (selection: {
+    workspaceId: string | null;
+    jobId: string | null;
+    view: 'workspace' | 'playback';
+    workspace?: WorkspaceStatus | null;
+  }) => void;
+  preferredWorkspaceId?: string | null;
+  preferredJobId?: string | null;
+}) {
   const workbench = useStoryWorkbench({
     authorId: 'workspace-123',
-    onSelectionChange: vi.fn(),
+    preferredWorkspaceId,
+    preferredJobId,
+    onSelectionChange,
   });
 
   return (
@@ -105,6 +128,11 @@ function Harness() {
       <p data-testid="count">{workbench.workspaces.length}</p>
       <p data-testid="active">{workbench.activeWorkspaceId ?? 'none'}</p>
       <p data-testid="job">{workbench.currentJob?.status ?? 'none'}</p>
+      <p data-testid="job-label">
+        {workbench.currentJob
+          ? `${workbench.currentJob.operation} ${workbench.currentJob.status}`
+          : 'none'}
+      </p>
       <p data-testid="busy">{workbench.isBusy ? 'busy' : 'idle'}</p>
       <p data-testid="error">{workbench.error ?? 'none'}</p>
       <button
@@ -129,6 +157,15 @@ function Harness() {
         }
       >
         run
+      </button>
+      <button
+        type="button"
+        data-testid="review"
+        onClick={() =>
+          void workbench.runJob('review').catch(() => undefined)
+        }
+      >
+        review
       </button>
       <button
         type="button"
@@ -208,6 +245,213 @@ describe('useStoryWorkbench', () => {
       'job-1',
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it('reconciles quick review completion from refreshed workspace status', async () => {
+    mockProviders();
+    const selectionSpy = vi.fn();
+    const queuedReview = makeJob('queued', {
+      job_id: 'review-1',
+      operation: 'review',
+      result: null,
+    });
+    const completedReview = makeJob('completed', {
+      job_id: 'review-1',
+      operation: 'review',
+      result: {
+        result_type: 'review',
+        review: {
+          story_title: 'The Salt Ledger',
+          checked_at: '2026-01-01T00:00:01Z',
+          blockers: [],
+          warnings: [],
+          suggestions: [],
+          style_notes: [],
+          export_blocked: false,
+        },
+      },
+    });
+    const completedWorkspace = makeWorkspace('salt-ledger', 1, [completedReview]);
+    vi.spyOn(api, 'listWorkspaces').mockResolvedValue({
+      workspaces: [makeWorkspace('salt-ledger', 1)],
+    });
+    vi.spyOn(api, 'createWorkspaceJob').mockResolvedValue(queuedReview);
+    vi.spyOn(api, 'getWorkspaceJob').mockResolvedValue(queuedReview);
+    vi.spyOn(api, 'getWorkspace').mockResolvedValue(completedWorkspace);
+
+    render(<Harness onSelectionChange={selectionSpy} />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(screen.getByTestId('active')).toHaveTextContent('salt-ledger'));
+
+    await act(async () => {
+      screen.getByTestId('review').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('job-label')).toHaveTextContent('review completed'),
+    );
+    expect(selectionSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        workspaceId: 'salt-ledger',
+        jobId: 'review-1',
+        view: 'playback',
+        workspace: completedWorkspace,
+      }),
+    );
+    expect(selectionSpy).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: 'review-1',
+        workspace: undefined,
+      }),
+    );
+    expect(api.getWorkspaceJob).toHaveBeenCalledWith(
+      'salt-ledger',
+      'review-1',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(api.getWorkspace).toHaveBeenCalledWith(
+      'salt-ledger',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
+  it('resumes polling a non-terminal preferred review job from the library', async () => {
+    mockProviders();
+    const selectionSpy = vi.fn();
+    const queuedReview = makeJob('running', {
+      job_id: 'review-resume-1',
+      operation: 'review',
+      result: null,
+    });
+    const completedReview = makeJob('completed', {
+      job_id: 'review-resume-1',
+      operation: 'review',
+      result: {
+        result_type: 'review',
+        review: {
+          story_title: 'The Salt Ledger',
+          checked_at: '2026-01-01T00:00:01Z',
+          blockers: [],
+          warnings: [],
+          suggestions: [],
+          style_notes: [],
+          export_blocked: false,
+        },
+      },
+    });
+    const completedWorkspace = makeWorkspace('salt-ledger', 1, [completedReview]);
+    const listWorkspacesSpy = vi.spyOn(api, 'listWorkspaces').mockResolvedValue({
+      workspaces: [makeWorkspace('salt-ledger', 1, [queuedReview])],
+    });
+    vi.spyOn(api, 'getWorkspaceJob').mockResolvedValue(completedReview);
+    vi.spyOn(api, 'getWorkspace').mockResolvedValue(completedWorkspace);
+
+    render(
+      <Harness
+        onSelectionChange={selectionSpy}
+        preferredWorkspaceId="salt-ledger"
+        preferredJobId="review-resume-1"
+      />,
+    );
+
+    await waitFor(() => expect(listWorkspacesSpy).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(screen.getByTestId('job-label')).toHaveTextContent('review completed'),
+    );
+    expect(api.getWorkspaceJob).toHaveBeenCalledWith(
+      'salt-ledger',
+      'review-resume-1',
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+    expect(selectionSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        workspaceId: 'salt-ledger',
+        jobId: 'review-resume-1',
+        view: 'playback',
+        workspace: completedWorkspace,
+      }),
+    );
+  });
+
+  it('continues polling through a transient workspace refresh failure', async () => {
+    mockProviders();
+    const queuedReview = makeJob('queued', {
+      job_id: 'review-transient-1',
+      operation: 'review',
+      result: null,
+    });
+    const completedReview = makeJob('completed', {
+      job_id: 'review-transient-1',
+      operation: 'review',
+      result: {
+        result_type: 'review',
+        review: {
+          story_title: 'The Salt Ledger',
+          checked_at: '2026-01-01T00:00:01Z',
+          blockers: [],
+          warnings: [],
+          suggestions: [],
+          style_notes: [],
+          export_blocked: false,
+        },
+      },
+    });
+    const completedWorkspace = makeWorkspace('salt-ledger', 1, [completedReview]);
+    vi.spyOn(api, 'listWorkspaces').mockResolvedValue({
+      workspaces: [makeWorkspace('salt-ledger', 1)],
+    });
+    vi.spyOn(api, 'createWorkspaceJob').mockResolvedValue(queuedReview);
+    vi.spyOn(api, 'getWorkspaceJob').mockResolvedValue(queuedReview);
+    vi.spyOn(api, 'getWorkspace')
+      .mockRejectedValueOnce(new Error('Service temporarily unavailable. Start the backend API and retry.'))
+      .mockResolvedValue(completedWorkspace);
+
+    render(<Harness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(screen.getByTestId('active')).toHaveTextContent('salt-ledger'));
+
+    await act(async () => {
+      screen.getByTestId('review').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('job-label')).toHaveTextContent('review completed'),
+    );
+    expect(screen.getByTestId('error')).toHaveTextContent('none');
+  });
+
+  it('does not downgrade a terminal polled job with a stale workspace snapshot', async () => {
+    mockProviders();
+    const queuedRun = makeJob('queued', { job_id: 'run-1' });
+    const completedRun = makeJob('completed', { job_id: 'run-1' });
+    const staleRunningRun = makeJob('running', { job_id: 'run-1' });
+    vi.spyOn(api, 'listWorkspaces').mockResolvedValue({
+      workspaces: [makeWorkspace()],
+    });
+    vi.spyOn(api, 'createWorkspaceJob').mockResolvedValue(queuedRun);
+    vi.spyOn(api, 'getWorkspaceJob').mockResolvedValue(completedRun);
+    vi.spyOn(api, 'getWorkspace').mockResolvedValue(
+      makeWorkspace('salt-ledger', 3, [staleRunningRun]),
+    );
+
+    render(<Harness />);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(screen.getByTestId('active')).toHaveTextContent('salt-ledger'));
+
+    await act(async () => {
+      screen.getByTestId('run').click();
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId('job-label')).toHaveTextContent('run completed'),
+    );
+    expect(screen.getByTestId('busy')).toHaveTextContent('idle');
   });
 
   it('cancels stale polling when switching workspaces', async () => {

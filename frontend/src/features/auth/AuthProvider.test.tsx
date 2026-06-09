@@ -28,6 +28,9 @@ function SessionProbe() {
       <div data-testid="session-state">{session ? session.kind : 'empty'}</div>
       <div data-testid="workspace-state">{session?.workspaceId ?? 'none'}</div>
       <div data-testid="workspace-selection">{session?.lastWorkspaceId ?? 'none'}</div>
+      <div data-testid="active-workspace-label">
+        {session?.activeWorkspace?.label ?? 'none'}
+      </div>
       <button
         data-testid="probe-sign-in"
         onClick={() =>
@@ -68,6 +71,13 @@ function SessionProbe() {
             lastWorkspaceId: 'workspace-123',
             lastJobId: 'job-456',
             lastView: 'playback',
+            activeWorkspace: {
+              workspaceId: 'workspace-123',
+              workspaceKind: 'guest',
+              label: 'The Salt Ledger',
+              persistence: 'ephemeral',
+              summary: 'workspace-123 / 2 chapters',
+            },
           })
         }
         type="button"
@@ -159,6 +169,12 @@ describe('AuthProvider', () => {
     await waitFor(() => {
       expect(screen.getByTestId('workspace-state')).toHaveTextContent('guest-123');
     });
+    await user.click(screen.getByTestId('probe-update-selection'));
+    await waitFor(() => {
+      expect(screen.getByTestId('active-workspace-label')).toHaveTextContent(
+        'The Salt Ledger',
+      );
+    });
 
     await user.click(screen.getByTestId('probe-sign-in'));
     await waitFor(() => {
@@ -169,6 +185,9 @@ describe('AuthProvider', () => {
     await waitFor(() => {
       expect(screen.getByTestId('workspace-state')).toHaveTextContent('guest-123');
     });
+    expect(screen.getByTestId('active-workspace-label')).toHaveTextContent(
+      'The Salt Ledger',
+    );
 
     expect(api.createGuestSession).toHaveBeenLastCalledWith({ workspace_id: 'guest-123' });
   });
@@ -188,6 +207,13 @@ describe('AuthProvider', () => {
               id: 'stale-user',
               name: 'stale',
               email: 'stale@novel.engine',
+            },
+            activeWorkspace: {
+              workspaceId: 'saved-user-story',
+              workspaceKind: 'user',
+              label: 'Saved User Story',
+              persistence: 'persistent',
+              summary: 'saved-user-story / 2 chapters',
             },
             lastWorkspaceId: null,
             lastJobId: null,
@@ -229,6 +255,9 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('session-state')).toHaveTextContent('user');
       expect(screen.getByTestId('workspace-state')).toHaveTextContent('user-123-safe');
       expect(screen.getByTestId('loading-state')).toHaveTextContent('ready');
+      expect(screen.getByTestId('active-workspace-label')).toHaveTextContent(
+        'Saved User Story',
+      );
     });
   });
 
@@ -264,6 +293,14 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('workspace-selection')).toHaveTextContent(
         'workspace-123',
       );
+    });
+    expect(screen.getByTestId('active-workspace-label')).toHaveTextContent(
+      'The Salt Ledger',
+    );
+    expect(readSessionCatalog().sessions[0].activeWorkspace).toMatchObject({
+      workspaceId: 'workspace-123',
+      label: 'The Salt Ledger',
+      summary: 'workspace-123 / 2 chapters',
     });
 
     await user.click(screen.getByTestId('probe-sign-out'));

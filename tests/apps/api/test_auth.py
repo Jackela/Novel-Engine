@@ -139,6 +139,69 @@ def test_guest_launch_does_not_reuse_user_workspace_cookie(
     assert payload["workspace_id"] != user_workspace_id
 
 
+def test_guest_workspace_cookie_selects_guest_then_me_restores_user_workspace(
+    canonical_client: Any,
+) -> None:
+    login_response = canonical_client.post(
+        "/api/auth/login",
+        json={
+            "email": "operator@novel.engine",
+            "password": "demo-password",
+        },
+    )
+    assert login_response.status_code == 200
+    user_workspace_id = login_response.json()["workspace_id"]
+
+    user_workspace_response = canonical_client.post(
+        "/api/workspaces",
+        json={
+            "workspace_id": "user-cookie-story",
+            "title": "User Cookie Story",
+            "genre": "fantasy",
+            "premise": "A signed-in author keeps one manuscript in the persistent library.",
+            "target_chapters": 1,
+        },
+    )
+    assert user_workspace_response.status_code == 201
+
+    guest_response = canonical_client.post("/api/guest/session")
+    assert guest_response.status_code == 200
+    guest_workspace_id = guest_response.json()["workspace_id"]
+    assert guest_workspace_id.startswith("guest-")
+    assert guest_workspace_id != user_workspace_id
+
+    guest_workspace_response = canonical_client.post(
+        "/api/workspaces",
+        json={
+            "workspace_id": "guest-cookie-story",
+            "title": "Guest Cookie Story",
+            "genre": "mystery",
+            "premise": "A guest author keeps a separate disposable manuscript.",
+            "target_chapters": 1,
+        },
+    )
+    assert guest_workspace_response.status_code == 201
+
+    guest_list_response = canonical_client.get("/api/workspaces")
+    assert guest_list_response.status_code == 200
+    assert [
+        workspace["workspace_id"]
+        for workspace in guest_list_response.json()["workspaces"]
+    ] == ["guest-cookie-story"]
+
+    current_response = canonical_client.get("/api/auth/me")
+    assert current_response.status_code == 200
+    assert current_response.json()["workspace_id"] == user_workspace_id
+    assert f"novel_engine_workspace={user_workspace_id}" in current_response.headers["set-cookie"]
+
+    user_list_response = canonical_client.get("/api/workspaces")
+    assert user_list_response.status_code == 200
+    assert [
+        workspace["workspace_id"]
+        for workspace in user_list_response.json()["workspaces"]
+    ] == ["user-cookie-story"]
+
+
 def test_login_with_invalid_credentials_returns_401(
     canonical_client: Any,
 ) -> None:

@@ -47,6 +47,7 @@ interface UseStoryWorkbenchOptions {
     workspaceId: string | null;
     jobId: string | null;
     view: WorkspaceSurfaceView;
+    workspace?: WorkspaceStatus | null;
   }) => void;
 }
 
@@ -99,6 +100,35 @@ function upsertWorkspace(
   return nextWorkspaces;
 }
 
+function findWorkspaceJob(
+  workspace: WorkspaceStatus,
+  jobId: string,
+): WorkspaceJob | null {
+  return workspace.jobs.find((job) => job.job_id === jobId) ?? null;
+}
+
+function resolveWorkspaceJob(
+  workspace: WorkspaceStatus,
+  job: WorkspaceJob | null,
+): WorkspaceJob | null {
+  if (!job) {
+    return workspace.jobs[0] ?? null;
+  }
+
+  const workspaceJob = findWorkspaceJob(workspace, job.job_id);
+  if (!workspaceJob) {
+    return job;
+  }
+  if (isTerminalJob(job) && !isTerminalJob(workspaceJob)) {
+    return job;
+  }
+  return workspaceJob;
+}
+
+function isTerminalJob(job: WorkspaceJob): boolean {
+  return TERMINAL_JOB_STATUSES.has(job.status);
+}
+
 export function useStoryWorkbench(
   authorIdOrOptions: string | UseStoryWorkbenchOptions,
 ): UseStoryWorkbenchResult {
@@ -122,6 +152,7 @@ export function useStoryWorkbench(
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const activeWorkspaceIdRef = useRef<string | null>(null);
+  const workspaceRef = useRef<WorkspaceStatus | null>(null);
   const preferredWorkspaceIdRef = useRef<string | null>(preferredWorkspaceId ?? null);
   const preferredJobIdRef = useRef<string | null>(preferredJobId ?? null);
   const onSelectionChangeRef = useRef(onSelectionChange);
@@ -152,11 +183,17 @@ export function useStoryWorkbench(
   );
 
   const notifySelection = useCallback(
-    (workspaceId: string | null, jobId: string | null, view: WorkspaceSurfaceView) => {
+    (
+      workspaceId: string | null,
+      jobId: string | null,
+      view: WorkspaceSurfaceView,
+      workspace?: WorkspaceStatus | null,
+    ) => {
       onSelectionChangeRef.current?.({
         workspaceId,
         jobId,
         view,
+        workspace,
       });
     },
     [],
@@ -168,18 +205,110 @@ export function useStoryWorkbench(
     runTokenRef.current += 1;
   }, []);
 
+  const pollJobToTerminal = useCallback(
+    async (
+      workspaceId: string,
+      initialJob: WorkspaceJob,
+      pollController: AbortController,
+      isCurrentRun: () => boolean,
+    ) => {
+      let polledJob = initialJob;
+      let terminalWorkspace: WorkspaceStatus | null = null;
+      let lastPollError: unknown = null;
+
+      for (let attempt = 0; attempt < JOB_POLL_MAX_ATTEMPTS; attempt += 1) {
+        if (isTerminalJob(polledJob)) {
+          break;
+        }
+        await delay(attempt === 0 ? 0 : JOB_POLL_INTERVAL_MS, pollController.signal);
+        try {
+          polledJob = await api.getWorkspaceJob(
+            workspaceId,
+            initialJob.job_id,
+            { signal: pollController.signal },
+          );
+          lastPollError = null;
+          if (isCurrentRun()) {
+            setCurrentJob(polledJob);
+          }
+          if (!isTerminalJob(polledJob)) {
+            const refreshedWorkspace = await api.getWorkspace(workspaceId, {
+              signal: pollController.signal,
+            });
+            const workspaceJob = findWorkspaceJob(refreshedWorkspace, initialJob.job_id);
+            if (workspaceJob) {
+              polledJob = workspaceJob;
+              lastPollError = null;
+              if (isCurrentRun()) {
+                setCurrentJob(workspaceJob);
+              }
+              if (isTerminalJob(workspaceJob)) {
+                terminalWorkspace = refreshedWorkspace;
+              }
+            }
+          }
+        } catch (pollError) {
+          if (isCancelledRequest(pollError)) {
+            throw pollError;
+          }
+          lastPollError = pollError;
+          const refreshedWorkspace = await api.getWorkspace(workspaceId, {
+            signal: pollController.signal,
+          }).catch((refreshError: unknown) => {
+            if (isCancelledRequest(refreshError)) {
+              throw refreshError;
+            }
+            lastPollError = refreshError;
+            return null;
+          });
+          const workspaceJob = refreshedWorkspace
+            ? findWorkspaceJob(refreshedWorkspace, initialJob.job_id)
+            : null;
+          if (workspaceJob) {
+            polledJob = workspaceJob;
+            lastPollError = null;
+            if (isCurrentRun()) {
+              setCurrentJob(workspaceJob);
+            }
+            if (isTerminalJob(workspaceJob)) {
+              terminalWorkspace = refreshedWorkspace;
+            }
+          }
+        }
+      }
+
+      if (!isTerminalJob(polledJob)) {
+        if (lastPollError) {
+          throw lastPollError;
+        }
+        throw new Error(`Job ${initialJob.job_id} did not finish before polling timed out.`);
+      }
+
+      const nextWorkspace =
+        terminalWorkspace ??
+        (await api.getWorkspace(workspaceId, {
+          signal: pollController.signal,
+        }));
+      const resolvedJob = resolveWorkspaceJob(nextWorkspace, polledJob);
+      return { nextWorkspace, resolvedJob, polledJob };
+    },
+    [],
+  );
+
   const syncWorkspace = useCallback(
     (nextWorkspace: WorkspaceStatus, job: WorkspaceJob | null = null) => {
       setWorkspaces((current) => upsertWorkspace(current, nextWorkspace));
       setWorkspace(nextWorkspace);
       setActiveWorkspaceId(nextWorkspace.workspace_id);
       activeWorkspaceIdRef.current = nextWorkspace.workspace_id;
-      const nextJob = job ?? nextWorkspace.jobs[0] ?? null;
+      workspaceRef.current = nextWorkspace;
+      const nextJob = resolveWorkspaceJob(nextWorkspace, job);
       setCurrentJob(nextJob);
       notifySelection(
         nextWorkspace.workspace_id,
         nextJob?.job_id ?? null,
         nextJob ? 'playback' : 'workspace',
+        nextWorkspace,
       );
     },
     [notifySelection],
@@ -213,19 +342,17 @@ export function useStoryWorkbench(
       if (!selectedWorkspace) {
         setWorkspace(null);
         setActiveWorkspaceId(null);
+        activeWorkspaceIdRef.current = null;
+        workspaceRef.current = null;
         setCurrentJob(null);
-        notifySelection(null, null, 'workspace');
+        notifySelection(null, null, 'workspace', null);
         return;
       }
 
-      syncWorkspace(selectedWorkspace);
       const preferredJob = preferredJobIdRef.current
         ? selectedWorkspace.jobs.find((job) => job.job_id === preferredJobIdRef.current)
         : null;
-      if (preferredJob) {
-        setCurrentJob(preferredJob);
-        notifySelection(selectedWorkspace.workspace_id, preferredJob.job_id, 'playback');
-      }
+      syncWorkspace(selectedWorkspace, preferredJob);
     } catch (nextError) {
       setError(formatError(nextError, 'Unable to load local workspaces.'));
     } finally {
@@ -300,39 +427,21 @@ export function useStoryWorkbench(
         });
         if (isCurrentRun()) {
           setCurrentJob(createdJob);
-          notifySelection(workspaceId, createdJob.job_id, 'playback');
         }
 
-        let polledJob = createdJob;
-        for (let attempt = 0; attempt < JOB_POLL_MAX_ATTEMPTS; attempt += 1) {
-          if (TERMINAL_JOB_STATUSES.has(polledJob.status)) {
-            break;
-          }
-          await delay(attempt === 0 ? 0 : JOB_POLL_INTERVAL_MS, pollController.signal);
-          polledJob = await api.getWorkspaceJob(
-            workspaceId,
-            createdJob.job_id,
-            { signal: pollController.signal },
-          );
-          if (isCurrentRun()) {
-            setCurrentJob(polledJob);
-          }
-        }
-
-        if (!TERMINAL_JOB_STATUSES.has(polledJob.status)) {
-          throw new Error(`Job ${createdJob.job_id} did not finish before polling timed out.`);
-        }
-
-        const nextWorkspace = await api.getWorkspace(workspaceId, {
-          signal: pollController.signal,
-        });
+        const { nextWorkspace, resolvedJob, polledJob } = await pollJobToTerminal(
+          workspaceId,
+          createdJob,
+          pollController,
+          isCurrentRun,
+        );
         if (
           isCurrentRun() &&
           activeWorkspaceIdRef.current === workspaceId
         ) {
-          syncWorkspace(nextWorkspace, polledJob);
+          syncWorkspace(nextWorkspace, resolvedJob);
         }
-        return polledJob;
+        return resolvedJob ?? polledJob;
       } catch (nextError) {
         if (isCancelledRequest(nextError)) {
           throw nextError;
@@ -346,8 +455,63 @@ export function useStoryWorkbench(
         }
       }
     },
-    [notifySelection, syncWorkspace],
+    [pollJobToTerminal, syncWorkspace],
   );
+
+  useEffect(() => {
+    if (!enabled || !workspace || !currentJob || isTerminalJob(currentJob)) {
+      return undefined;
+    }
+    if (pollControllerRef.current) {
+      return undefined;
+    }
+
+    const workspaceId = workspace.workspace_id;
+    const jobToResume = currentJob;
+    const pollController = new AbortController();
+    const runToken = runTokenRef.current + 1;
+    runTokenRef.current = runToken;
+    pollControllerRef.current = pollController;
+    const isCurrentRun = () =>
+      pollControllerRef.current === pollController && runTokenRef.current === runToken;
+
+    setIsBusy(true);
+    setError(null);
+
+    void pollJobToTerminal(workspaceId, jobToResume, pollController, isCurrentRun)
+      .then(({ nextWorkspace, resolvedJob }) => {
+        if (
+          isCurrentRun() &&
+          activeWorkspaceIdRef.current === workspaceId
+        ) {
+          syncWorkspace(nextWorkspace, resolvedJob);
+        }
+      })
+      .catch((nextError) => {
+        if (isCancelledRequest(nextError)) {
+          return;
+        }
+        setError(formatError(nextError, `Unable to poll ${jobToResume.operation}.`));
+      })
+      .finally(() => {
+        if (isCurrentRun()) {
+          pollControllerRef.current = null;
+          setIsBusy(false);
+        }
+      });
+
+    return () => {
+      if (pollControllerRef.current === pollController) {
+        pollController.abort();
+      }
+    };
+  }, [
+    currentJob?.job_id,
+    enabled,
+    pollJobToTerminal,
+    syncWorkspace,
+    workspace?.workspace_id,
+  ]);
 
   return useMemo(
     () => ({

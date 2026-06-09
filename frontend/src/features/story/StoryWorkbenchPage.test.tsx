@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -127,10 +127,15 @@ function makeJob(): WorkspaceJob {
   };
 }
 
+function LocationProbe() {
+  const location = useLocation();
+  return <p data-testid="location-search">{location.search || 'none'}</p>;
+}
+
 function renderWorkbench(workbench: Partial<UseStoryWorkbenchResult> = {}) {
   const createWorkspace = vi.fn().mockResolvedValue(makeWorkspace());
   const runJob = vi.fn().mockResolvedValue(makeJob());
-  vi.mocked(useAuth).mockReturnValue({
+  const auth = {
     session,
     sessions: [session],
     activeSessionId: session.id,
@@ -140,7 +145,8 @@ function renderWorkbench(workbench: Partial<UseStoryWorkbenchResult> = {}) {
     signOut: vi.fn(),
     switchSession: vi.fn(),
     updateSessionSelection: vi.fn(),
-  });
+  };
+  vi.mocked(useAuth).mockReturnValue(auth);
   vi.mocked(useStoryWorkbench).mockReturnValue({
     workspaces: [],
     activeWorkspaceId: null,
@@ -181,10 +187,11 @@ function renderWorkbench(workbench: Partial<UseStoryWorkbenchResult> = {}) {
       }}
     >
       <StoryWorkbenchPage />
+      <LocationProbe />
     </MemoryRouter>,
   );
 
-  return { createWorkspace, runJob };
+  return { auth, createWorkspace, runJob };
 }
 
 describe('StoryWorkbenchPage', () => {
@@ -279,6 +286,57 @@ describe('StoryWorkbenchPage', () => {
       await Promise.resolve();
     });
     expect(runJob).toHaveBeenCalledWith('run', { target_chapters: 3, provider: 'mock' });
+  });
+
+  it('lets the workbench hook own job URL selection after job actions', async () => {
+    const { runJob } = renderWorkbench({
+      workspaces: [makeWorkspace(3)],
+      activeWorkspaceId: 'salt-ledger',
+      workspace: makeWorkspace(3),
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('studio-review'));
+      await Promise.resolve();
+    });
+
+    expect(runJob).toHaveBeenCalledWith('review', { provider: 'mock' });
+    expect(screen.getByTestId('location-search')).toHaveTextContent('none');
+  });
+
+  it('persists selected workspace metadata from workbench selection changes', () => {
+    const selectedWorkspace = makeWorkspace(2);
+    const { auth } = renderWorkbench({
+      workspaces: [selectedWorkspace],
+      activeWorkspaceId: 'salt-ledger',
+      workspace: selectedWorkspace,
+    });
+    const options = vi.mocked(useStoryWorkbench).mock.calls[0]?.[0];
+    if (typeof options === 'string' || !options?.onSelectionChange) {
+      throw new Error('Expected object options with onSelectionChange.');
+    }
+
+    act(() => {
+      options.onSelectionChange?.({
+        workspaceId: 'salt-ledger',
+        jobId: null,
+        view: 'workspace',
+        workspace: selectedWorkspace,
+      });
+    });
+
+    expect(auth.updateSessionSelection).toHaveBeenCalledWith({
+      lastWorkspaceId: 'salt-ledger',
+      lastJobId: null,
+      lastView: 'workspace',
+      activeWorkspace: {
+        workspaceId: 'salt-ledger',
+        workspaceKind: 'guest',
+        label: 'The Salt Ledger',
+        persistence: 'ephemeral',
+        summary: 'salt-ledger / 2 chapters',
+      },
+    });
   });
 
   it('passes the selected provider to workspace jobs', async () => {

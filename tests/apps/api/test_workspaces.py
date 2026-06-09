@@ -12,6 +12,33 @@ from src.shared.infrastructure.config.settings import get_settings
 TERMINAL_JOB_STATUSES = {"completed", "failed", "interrupted"}
 
 
+def test_atomic_write_json_retries_transient_permission_error(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    import src.apps.api.routes.workspaces as workspace_routes
+
+    target_path = tmp_path / "job.json"
+    replace_calls = 0
+    original_replace = Path.replace
+
+    def flaky_replace(self: Path, target: Path | str) -> Path:
+        nonlocal replace_calls
+        replace_calls += 1
+        if replace_calls == 1:
+            raise PermissionError("target is briefly locked")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", flaky_replace)
+
+    workspace_routes._atomic_write_json(target_path, {"status": "completed"})
+
+    assert replace_calls == 2
+    assert json.loads(target_path.read_text(encoding="utf-8")) == {
+        "status": "completed"
+    }
+
+
 def _start_guest(canonical_client: Any, workspace_id: str | None = None) -> str:
     payload = {"workspace_id": workspace_id} if workspace_id else None
     response = canonical_client.post("/api/guest/session", json=payload)

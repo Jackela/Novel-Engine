@@ -1,17 +1,23 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
-import type { SessionState, WorkspaceSurfaceView } from '@/app/types/auth';
+import type {
+  ActiveWorkspaceSummary,
+  SessionState,
+  WorkspaceSurfaceView,
+} from '@/app/types/auth';
 import type {
   StoryGenre,
   ProviderName,
   ReviewIssue,
   WorkspaceCreateRequest,
   WorkspaceJob,
+  WorkspaceStatus,
 } from '@/app/types/story';
 import { Button } from '@/components/Button';
 import { Panel } from '@/components/Panel';
 import { StatusPill } from '@/components/StatusPill';
+import { sessionDisplayMeta, sessionDisplayTitle } from '@/features/auth/sessionDisplay';
 import { useAuth } from '@/features/auth/useAuth';
 
 import { useStoryWorkbench } from './useStoryWorkbench';
@@ -106,6 +112,33 @@ function reviewTone(blocked: boolean) {
   return blocked ? 'degraded' : 'healthy';
 }
 
+function workspacePersistenceForSession(
+  session: SessionState,
+): ActiveWorkspaceSummary['persistence'] {
+  return session.kind === 'guest' ? 'ephemeral' : 'persistent';
+}
+
+function workspaceKindForSession(
+  session: SessionState,
+): ActiveWorkspaceSummary['workspaceKind'] {
+  return session.kind === 'guest' ? 'guest' : 'user';
+}
+
+function buildActiveWorkspaceSummary(
+  session: SessionState,
+  workspace: WorkspaceStatus,
+): ActiveWorkspaceSummary {
+  const chapterLabel = workspace.chapters.length === 1 ? 'chapter' : 'chapters';
+
+  return {
+    workspaceId: workspace.workspace_id,
+    workspaceKind: workspaceKindForSession(session),
+    label: workspace.story.title,
+    persistence: workspacePersistenceForSession(session),
+    summary: `${workspace.workspace_id} / ${workspace.chapters.length} ${chapterLabel}`,
+  };
+}
+
 function issueList(issues: ReviewIssue[]) {
   if (issues.length === 0) {
     return <li className="studio-empty">No items recorded.</li>;
@@ -124,12 +157,8 @@ function issueList(issues: ReviewIssue[]) {
 }
 
 function renderSessionSummary(session: SessionState, workspaceSummary: string) {
-  const sessionTitle =
-    session.kind === 'user'
-      ? session.user?.name ?? 'Signed-in author'
-      : session.activeWorkspace?.label ?? 'Guest workspace';
-  const sessionMeta =
-    session.kind === 'user' ? session.user?.email ?? session.workspaceId : session.workspaceId;
+  const sessionTitle = sessionDisplayTitle(session);
+  const sessionMeta = sessionDisplayMeta(session);
 
   return (
     <div className="studio-session-card" data-testid="studio-session-summary">
@@ -185,19 +214,26 @@ function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
     enabled: true,
     preferredWorkspaceId,
     preferredJobId,
-    onSelectionChange: ({ workspaceId, jobId, view }) => {
+    onSelectionChange: ({ workspaceId, jobId, view, workspace: selectedWorkspace }) => {
       auth.updateSessionSelection({
         lastWorkspaceId: workspaceId,
         lastJobId: jobId,
         lastView: view,
+        activeWorkspace: selectedWorkspace
+          ? buildActiveWorkspaceSummary(session, selectedWorkspace)
+          : workspaceId
+            ? undefined
+            : null,
       });
-      const params = new URLSearchParams(searchParams);
-      if (workspaceId) params.set('workspace', workspaceId);
-      else params.delete('workspace');
-      if (jobId) params.set('job', jobId);
-      else params.delete('job');
-      params.set('view', view);
-      setSearchParams(params, { replace: true });
+      setSearchParams((currentParams) => {
+        const params = new URLSearchParams(currentParams);
+        if (workspaceId) params.set('workspace', workspaceId);
+        else params.delete('workspace');
+        if (jobId) params.set('job', jobId);
+        else params.delete('job');
+        params.set('view', view);
+        return params;
+      }, { replace: true });
     },
   });
 
@@ -233,13 +269,15 @@ function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
     jobId: string | null,
     view: WorkspaceSurfaceView,
   ) => {
-    const params = new URLSearchParams(searchParams);
-    if (workspaceId) params.set('workspace', workspaceId);
-    else params.delete('workspace');
-    if (jobId) params.set('job', jobId);
-    else params.delete('job');
-    params.set('view', view);
-    setSearchParams(params, { replace: true });
+    setSearchParams((currentParams) => {
+      const params = new URLSearchParams(currentParams);
+      if (workspaceId) params.set('workspace', workspaceId);
+      else params.delete('workspace');
+      if (jobId) params.set('job', jobId);
+      else params.delete('job');
+      params.set('view', view);
+      return params;
+    }, { replace: true });
   };
 
   const createWorkspace = async (event: FormEvent<HTMLFormElement>) => {
@@ -256,11 +294,10 @@ function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
   const runWorkspace = async () => {
     setPageError(null);
     try {
-      const job = await workbench.runJob('run', {
+      await workbench.runJob('run', {
         target_chapters: formState.targetChapters,
         provider,
       });
-      setQuerySelection(workbench.activeWorkspaceId, job.job_id, 'playback');
     } catch (error) {
       setPageError(formatActionError(error, 'Unable to run the workspace.'));
     }
@@ -271,8 +308,7 @@ function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
   ) => {
     setPageError(null);
     try {
-      const job = await workbench.runJob(operation, { provider });
-      setQuerySelection(workbench.activeWorkspaceId, job.job_id, 'playback');
+      await workbench.runJob(operation, { provider });
     } catch (error) {
       setPageError(formatActionError(error, `Unable to run ${operation}.`));
     }
@@ -351,11 +387,11 @@ function StoryWorkbenchContent({ auth, session }: StoryWorkbenchContentProps) {
                         onClick={() => void switchToSavedSession(entry.id)}
                       >
                         <div className="studio-card__header">
-                          <strong>{entry.activeWorkspace?.label ?? entry.workspaceId}</strong>
+                          <strong>{sessionDisplayTitle(entry)}</strong>
                           <span>{entry.kind}</span>
                         </div>
                         <p className="studio-card__meta">
-                          {entry.user?.email ?? entry.workspaceId}
+                          {sessionDisplayMeta(entry)}
                         </p>
                       </button>
                     </li>

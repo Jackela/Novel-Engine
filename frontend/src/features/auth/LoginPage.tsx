@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/features/auth/useAuth';
 import type { SessionState } from '@/app/types/auth';
+import { sessionDisplayMeta, sessionDisplayTitle } from './sessionDisplay';
 
 function studioLocation(session: SessionState) {
   const searchParams = new URLSearchParams();
@@ -159,10 +160,10 @@ export function LoginPage() {
                 type="button"
               >
                 <p className="text-sm font-medium">
-                  {session.activeWorkspace?.label ?? session.workspaceId}
+                  {sessionDisplayTitle(session)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {session.user?.email ?? session.activeWorkspace?.summary ?? session.workspaceId}
+                  {sessionDisplayMeta(session)}
                 </p>
               </button>
             ))}

@@ -1,4 +1,4 @@
-import type { SessionCatalog, SessionState } from '@/app/types/auth';
+import type { SessionCatalog, SessionSelectionUpdate, SessionState } from '@/app/types/auth';
 
 const sessionCatalogStorageKey = 'novel-engine-session-catalog';
 const SESSION_CATALOG_VERSION = 3;
@@ -78,6 +78,13 @@ function normalizeSession(session: SessionState): SessionState {
     lastJobId: catalogSession.lastJobId ?? null,
     lastView: catalogSession.lastView ?? 'workspace',
   };
+}
+
+function hasPatchField<Key extends keyof SessionSelectionUpdate>(
+  patch: SessionSelectionUpdate,
+  key: Key,
+): boolean {
+  return Object.prototype.hasOwnProperty.call(patch, key);
 }
 
 export function emptySessionCatalog(): SessionCatalog {
@@ -168,13 +175,24 @@ export function removeSession(
 export function updateSessionSelection(
   catalog: SessionCatalog,
   sessionId: string,
-  patch: Pick<SessionState, 'lastWorkspaceId' | 'lastJobId' | 'lastView'>,
+  patch: SessionSelectionUpdate,
 ): SessionCatalog {
   const sessions = catalog.sessions.map((session) =>
     session.id === sessionId
       ? normalizeSession({
           ...session,
-          ...patch,
+          lastWorkspaceId: hasPatchField(patch, 'lastWorkspaceId')
+            ? patch.lastWorkspaceId ?? null
+            : session.lastWorkspaceId ?? null,
+          lastJobId: hasPatchField(patch, 'lastJobId')
+            ? patch.lastJobId ?? null
+            : session.lastJobId ?? null,
+          lastView: hasPatchField(patch, 'lastView')
+            ? patch.lastView ?? 'workspace'
+            : session.lastView ?? 'workspace',
+          activeWorkspace: hasPatchField(patch, 'activeWorkspace')
+            ? patch.activeWorkspace ?? undefined
+            : session.activeWorkspace,
           updatedAt: nowIso(),
         })
       : normalizeSession(session),

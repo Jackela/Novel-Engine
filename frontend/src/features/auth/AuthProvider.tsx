@@ -13,9 +13,9 @@ import type {
   GuestSessionResponse,
   LoginRequest,
   LoginResponse,
+  SessionSelectionUpdate,
   SessionCatalog,
   SessionState,
-  WorkspaceSurfaceView,
 } from '@/app/types/auth';
 import {
   buildSessionId,
@@ -23,7 +23,6 @@ import {
   getActiveSession,
   readSessionCatalog,
   removeSession,
-  setActiveSessionId,
   updateSessionSelection as persistSessionSelection,
   upsertSession,
 } from '@/shared/storage';
@@ -37,11 +36,7 @@ interface AuthContextValue {
   signIn: (payload: LoginRequest) => Promise<SessionState>;
   switchSession: (sessionId: string) => Promise<SessionState>;
   signOut: () => void;
-  updateSessionSelection: (selection: {
-    lastWorkspaceId?: string | null;
-    lastJobId?: string | null;
-    lastView?: WorkspaceSurfaceView;
-  }) => void;
+  updateSessionSelection: (selection: SessionSelectionUpdate) => void;
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -69,23 +64,31 @@ function normalizeWorkspaceSummary(
   };
 }
 
+function preserveActiveWorkspace(
+  previous: SessionState | null | undefined,
+  fallback: ActiveWorkspaceSummary,
+): ActiveWorkspaceSummary {
+  return previous?.activeWorkspace ?? fallback;
+}
+
 function buildGuestSession(
   response: GuestSessionResponse,
   previous?: SessionState | null,
 ): SessionState {
   const workspaceId = response.workspace_id;
+  const activeWorkspace = normalizeWorkspaceSummary(response.active_workspace, {
+    workspaceId,
+    workspaceKind: response.workspace_kind ?? 'guest',
+    label: 'Guest workspace',
+    persistence: 'ephemeral',
+    summary: 'Disposable workspace for drafting and flow verification.',
+  });
   return {
     id: buildSessionId({ kind: 'guest', workspaceId }),
     kind: 'guest',
     identityKind: response.identity_kind ?? 'guest',
     workspaceId,
-    activeWorkspace: normalizeWorkspaceSummary(response.active_workspace, {
-      workspaceId,
-      workspaceKind: response.workspace_kind ?? 'guest',
-      label: 'Guest workspace',
-      persistence: 'ephemeral',
-      summary: 'Disposable workspace for drafting and flow verification.',
-    }),
+    activeWorkspace: preserveActiveWorkspace(previous, activeWorkspace),
     lastWorkspaceId: previous?.lastWorkspaceId ?? null,
     lastJobId: previous?.lastJobId ?? null,
     lastView: previous?.lastView ?? 'workspace',
@@ -99,19 +102,20 @@ function buildUserSessionFromLogin(
   previous?: SessionState | null,
 ): SessionState {
   const workspaceId = response.workspace_id;
+  const activeWorkspace = normalizeWorkspaceSummary(response.active_workspace, {
+    workspaceId,
+    workspaceKind: response.workspace_kind ?? 'user',
+    label: 'Signed-in workspace',
+    persistence: 'persistent',
+    summary: 'Stable author workspace bound to the authenticated identity.',
+  });
   return {
     id: buildSessionId({ kind: 'user', workspaceId }),
     kind: 'user',
     identityKind: response.identity_kind ?? 'user',
     workspaceId,
     user: response.user,
-    activeWorkspace: normalizeWorkspaceSummary(response.active_workspace, {
-      workspaceId,
-      workspaceKind: response.workspace_kind ?? 'user',
-      label: 'Signed-in workspace',
-      persistence: 'persistent',
-      summary: 'Stable author workspace bound to the authenticated identity.',
-    }),
+    activeWorkspace: preserveActiveWorkspace(previous, activeWorkspace),
     lastWorkspaceId: previous?.lastWorkspaceId ?? null,
     lastJobId: previous?.lastJobId ?? null,
     lastView: previous?.lastView ?? 'workspace',
@@ -125,6 +129,13 @@ function buildUserSessionFromCurrentUser(
   previous: SessionState,
 ): SessionState {
   const workspaceId = user.workspace_id;
+  const activeWorkspace = normalizeWorkspaceSummary(user.active_workspace, {
+    workspaceId,
+    workspaceKind: user.workspace_kind ?? 'user',
+    label: 'Signed-in workspace',
+    persistence: 'persistent',
+    summary: 'Stable author workspace bound to the authenticated identity.',
+  });
   return {
     id: buildSessionId({ kind: 'user', workspaceId }),
     kind: 'user',
@@ -135,13 +146,7 @@ function buildUserSessionFromCurrentUser(
       name: user.username,
       email: user.email,
     },
-    activeWorkspace: normalizeWorkspaceSummary(user.active_workspace, {
-      workspaceId,
-      workspaceKind: user.workspace_kind ?? 'user',
-      label: 'Signed-in workspace',
-      persistence: 'persistent',
-      summary: 'Stable author workspace bound to the authenticated identity.',
-    }),
+    activeWorkspace: preserveActiveWorkspace(previous, activeWorkspace),
     lastWorkspaceId: previous.lastWorkspaceId ?? null,
     lastJobId: previous.lastJobId ?? null,
     lastView: previous.lastView ?? 'workspace',
@@ -160,6 +165,13 @@ async function validateStoredSession(session: SessionState): Promise<SessionStat
 
   const user = await api.getCurrentUser();
   return buildUserSessionFromCurrentUser(user, session);
+}
+
+function hasSelectionField<Key extends keyof SessionSelectionUpdate>(
+  selection: SessionSelectionUpdate,
+  key: Key,
+): boolean {
+  return Object.prototype.hasOwnProperty.call(selection, key);
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -250,21 +262,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       throw new Error('Saved session not found.');
     }
 
-    const previousCatalog = catalogRef.current;
-    const optimisticCatalog = setActiveSessionId(previousCatalog, targetSession.id);
-    setCatalog(optimisticCatalog);
-
     try {
       const validatedSession = await validateStoredSession(targetSession);
       const nextCatalog = upsertSession(readSessionCatalog(), validatedSession);
       setCatalog(nextCatalog);
       return validatedSession;
     } catch (error) {
-      const rollbackCatalog = setActiveSessionId(
-        readSessionCatalog(),
-        previousCatalog.activeSessionId,
-      );
-      setCatalog(rollbackCatalog);
       throw error;
     }
   };
@@ -279,21 +282,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setCatalog(nextCatalog);
   };
 
-  const updateSessionSelection = (selection: {
-    lastWorkspaceId?: string | null;
-    lastJobId?: string | null;
-    lastView?: WorkspaceSurfaceView;
-  }) => {
+  const updateSessionSelection = (selection: SessionSelectionUpdate) => {
     const activeSession = getActiveSession(catalogRef.current);
     if (!activeSession) {
       return;
     }
 
     const nextCatalog = persistSessionSelection(catalogRef.current, activeSession.id, {
-      lastWorkspaceId:
-        selection.lastWorkspaceId ?? activeSession.lastWorkspaceId ?? null,
-      lastJobId: selection.lastJobId ?? activeSession.lastJobId ?? null,
-      lastView: selection.lastView ?? activeSession.lastView ?? 'workspace',
+      lastWorkspaceId: hasSelectionField(selection, 'lastWorkspaceId')
+        ? selection.lastWorkspaceId ?? null
+        : activeSession.lastWorkspaceId ?? null,
+      lastJobId: hasSelectionField(selection, 'lastJobId')
+        ? selection.lastJobId ?? null
+        : activeSession.lastJobId ?? null,
+      lastView: hasSelectionField(selection, 'lastView')
+        ? selection.lastView ?? 'workspace'
+        : activeSession.lastView ?? 'workspace',
+      activeWorkspace: hasSelectionField(selection, 'activeWorkspace')
+        ? selection.activeWorkspace ?? null
+        : activeSession.activeWorkspace,
     });
     setCatalog(nextCatalog);
   };

@@ -37,6 +37,13 @@ export interface SessionCatalog {
   sessions: SessionState[];
 }
 
+export interface SessionSelectionUpdate {
+  lastWorkspaceId?: string | null;
+  lastJobId?: string | null;
+  lastView?: WorkspaceSurfaceView;
+  activeWorkspace?: ActiveWorkspaceSummary | null;
+}
+
 interface ActiveWorkspaceResponsePayload {
   workspace_id: string;
   workspace_kind: WorkspaceKind;
