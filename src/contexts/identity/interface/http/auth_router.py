@@ -367,6 +367,7 @@ async def logout(
     description="Get information about the currently authenticated user.",
 )
 async def get_current_user_info(
+    response: Response,
     user: CurrentUser = Depends(get_current_user),
 ) -> CurrentUserResponse:
     """Get current user information.
@@ -378,6 +379,7 @@ async def get_current_user_info(
         UserResponse containing user information.
     """
     workspace_id = user_workspace_id(user_id=user.user_id, username=user.username)
+    _set_workspace_cookie(response, workspace_id)
     return CurrentUserResponse(
         id=user.user_id,
         username=user.username,

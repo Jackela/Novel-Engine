@@ -22,6 +22,7 @@ function makeSession(
     kind: overrides.kind,
     workspaceId: overrides.workspaceId,
     user: overrides.user,
+    activeWorkspace: overrides.activeWorkspace,
     lastWorkspaceId: overrides.lastWorkspaceId ?? null,
     lastJobId: overrides.lastJobId ?? null,
     lastView: overrides.lastView ?? 'workspace',
@@ -121,13 +122,57 @@ describe('session storage catalog', () => {
       lastWorkspaceId: 'workspace-new',
       lastJobId: null,
       lastView: 'workspace',
+      activeWorkspace: {
+        workspaceId: 'workspace-new',
+        workspaceKind: 'guest',
+        label: 'The Salt Ledger',
+        persistence: 'ephemeral',
+        summary: 'workspace-new / 1 chapter',
+      },
     });
 
     expect(getActiveSession(nextCatalog)).toMatchObject({
       lastWorkspaceId: 'workspace-new',
       lastJobId: null,
       lastView: 'workspace',
+      activeWorkspace: {
+        workspaceId: 'workspace-new',
+        label: 'The Salt Ledger',
+        summary: 'workspace-new / 1 chapter',
+      },
     });
+  });
+
+  it('clears selection metadata when null patches are explicit', () => {
+    const session = makeSession({
+      kind: 'guest',
+      workspaceId: 'guest-1',
+      activeWorkspace: {
+        workspaceId: 'workspace-old',
+        workspaceKind: 'guest',
+        label: 'Old Story',
+        persistence: 'ephemeral',
+        summary: 'workspace-old / 3 chapters',
+      },
+      lastWorkspaceId: 'workspace-old',
+      lastJobId: 'job-old',
+      lastView: 'playback',
+    });
+    const catalog = upsertSession(emptySessionCatalog(), session);
+
+    const nextCatalog = updateSessionSelection(catalog, session.id, {
+      lastWorkspaceId: null,
+      lastJobId: null,
+      lastView: 'workspace',
+      activeWorkspace: null,
+    });
+
+    expect(getActiveSession(nextCatalog)).toMatchObject({
+      lastWorkspaceId: null,
+      lastJobId: null,
+      lastView: 'workspace',
+    });
+    expect(getActiveSession(nextCatalog)?.activeWorkspace).toBeUndefined();
   });
 
   it('removes sessions and deactivates the removed active session', () => {

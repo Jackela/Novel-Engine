@@ -266,6 +266,12 @@ async def get_workspace_principal(
     current_user: CurrentUser | None = Depends(get_current_user_optional),
 ) -> WorkspacePrincipal | None:
     """Resolve the current workspace principal from user auth or guest cookie."""
+    from src.apps.api.routes.guest import GUEST_SESSION_COOKIE
+
+    guest_workspace = request.cookies.get(GUEST_SESSION_COOKIE)
+    if isinstance(guest_workspace, str) and guest_workspace.startswith("guest-"):
+        return WorkspacePrincipal(kind="guest", workspace_id=guest_workspace)
+
     if current_user and current_user.username:
         return WorkspacePrincipal(
             kind="user",
@@ -276,12 +282,6 @@ async def get_workspace_principal(
             user_id=current_user.user_id,
             username=current_user.username,
         )
-
-    from src.apps.api.routes.guest import GUEST_SESSION_COOKIE
-
-    guest_workspace = request.cookies.get(GUEST_SESSION_COOKIE)
-    if isinstance(guest_workspace, str) and guest_workspace.startswith("guest-"):
-        return WorkspacePrincipal(kind="guest", workspace_id=guest_workspace)
     return None
 
 

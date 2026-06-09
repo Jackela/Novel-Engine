@@ -46,10 +46,17 @@ test.describe('frontend full audit', () => {
 
     await launchGuest(page);
     const guestWorkspace = (await page.getByTestId('workspace-badge').textContent())?.trim() ?? '';
+    const guestTitle = uniqueTitle('Audit Guest Resume Story');
+    await seedDraftStory(page, {
+      title: guestTitle,
+      premise: 'A clockmaker hides a treaty in a public bell before the city forgets its own laws.',
+      targetChapters: 1,
+    });
 
     await page.getByTestId('studio-back-to-landing').click();
     await expect(page.getByTestId('auth-home-page')).toBeVisible();
     await expect(page.getByTestId('auth-home-session-catalog')).toBeVisible();
+    await expect(page.getByTestId('auth-home-session-catalog')).toContainText(guestTitle);
     await page.getByTestId('auth-home-go-login').click();
 
     await page.getByTestId('auth-login-email').fill('operator@novel.engine');
@@ -58,14 +65,18 @@ test.describe('frontend full audit', () => {
     await expect(page.getByTestId('workspace-badge')).toContainText('user-');
 
     await expect(page.getByTestId('session-switcher')).toBeVisible();
-    await page.getByRole('button', { name: /guest workspace/i }).click();
+    await expect(page.getByTestId('session-switcher')).toContainText(guestTitle);
+    await page.getByRole('button', { name: new RegExp(guestTitle, 'i') }).click();
     await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toHaveText(guestWorkspace);
+    await expect(page.getByTestId('studio-active-title')).toHaveText(guestTitle);
 
     await page.getByTestId('studio-back-to-landing').click();
+    await expect(page.getByTestId('auth-home-session-catalog')).toContainText(guestTitle);
     await page.getByTestId(`auth-home-resume-session-guest:${guestWorkspace}`).click();
     await expectStudioRoute(page);
     await expect(page.getByTestId('workspace-badge')).toHaveText(guestWorkspace);
+    await expect(page.getByTestId('studio-active-title')).toHaveText(guestTitle);
 
     await assertConsoleClean();
   });

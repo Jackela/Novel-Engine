@@ -6,6 +6,7 @@ import asyncio
 import json
 import re
 import threading
+import time
 import traceback
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -439,7 +440,14 @@ def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    temp_path.replace(path)
+    for attempt in range(6):
+        try:
+            temp_path.replace(path)
+            return
+        except PermissionError:
+            if attempt == 5:
+                raise
+            time.sleep(0.05 * (attempt + 1))
 
 
 def _job_path(workspace: NovelWorkspace, job_id: str) -> Path:
