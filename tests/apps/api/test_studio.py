@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi.testclient import TestClient
+
+from src.shared.infrastructure.config.settings import get_settings
 
 
 def test_guest_project_revision_conflict_and_export(canonical_client: TestClient) -> None:
@@ -69,3 +73,32 @@ def test_owner_setup_login_and_path_isolation(canonical_client: TestClient) -> N
     with other:
         other.post("/api/session/guest")
         assert other.get(f"/api/projects/{project['id']}").status_code == 404
+
+
+def test_web_import_is_confined_to_data_imports(canonical_client: TestClient) -> None:
+    canonical_client.post(
+        "/api/setup",
+        json={"username": "owner", "password": "owner-password-123"},
+    )
+    canonical_client.post(
+        "/api/session/login",
+        json={"username": "owner", "password": "owner-password-123"},
+    )
+
+    workspace = get_settings().data_dir / "imports" / "safe-workspace"
+    workspace.mkdir(parents=True)
+    (workspace / "story.yaml").write_text("title: Safe import\n", encoding="utf-8")
+
+    preview = canonical_client.post(
+        "/api/imports/preview",
+        json={"source": workspace.name},
+    )
+    assert preview.status_code == 200
+    assert preview.json()["title"] == "Safe import"
+
+    for unsafe_source in ("../safe-workspace", str(Path(workspace).resolve())):
+        blocked = canonical_client.post(
+            "/api/imports/preview",
+            json={"source": unsafe_source},
+        )
+        assert blocked.status_code == 422

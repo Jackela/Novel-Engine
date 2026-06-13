@@ -247,6 +247,8 @@
       "LegacyPathRequest": {
         "properties": {
           "source": {
+            "description": "Workspace directory name under data/imports.",
+            "maxLength": 240,
             "minLength": 1,
             "title": "Source",
             "type": "string"

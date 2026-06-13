@@ -79,7 +79,11 @@ class ExportRequest(BaseModel):
 
 
 class LegacyPathRequest(BaseModel):
-    source: str = Field(min_length=1)
+    source: str = Field(
+        min_length=1,
+        max_length=240,
+        description="Workspace directory name under data/imports.",
+    )
 
 
 class SnapshotRequest(BaseModel):
@@ -143,6 +147,23 @@ def _require_owner(principal: Principal) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="This operation requires the local Owner.",
         )
+
+
+def _web_import_source(source: str) -> Path:
+    if source in {".", ".."} or "/" in source or "\\" in source:
+        raise InvalidOperation(
+            "Web imports must name a workspace directory under data/imports."
+        )
+
+    import_root = (get_settings().data_dir / "imports").resolve()
+    import_root.mkdir(parents=True, exist_ok=True)
+    for candidate in import_root.iterdir():
+        if candidate.name != source or candidate.is_symlink() or not candidate.is_dir():
+            continue
+        resolved = candidate.resolve()
+        if resolved.is_relative_to(import_root):
+            return resolved
+    raise NotFound("Import workspace not found under data/imports.")
 
 
 @router.get("/setup")
@@ -564,7 +585,7 @@ async def preview_import(
 ) -> dict[str, Any]:
     _require_owner(principal)
     try:
-        return studio_store.preview_legacy_workspace(Path(payload.source))
+        return studio_store.preview_legacy_workspace(_web_import_source(payload.source))
     except Exception as exc:
         _raise_http(exc)
         raise
@@ -577,7 +598,10 @@ async def import_workspace(
 ) -> dict[str, Any]:
     _require_owner(principal)
     try:
-        return studio_store.import_legacy_workspace(principal, Path(payload.source))
+        return studio_store.import_legacy_workspace(
+            principal,
+            _web_import_source(payload.source),
+        )
     except Exception as exc:
         _raise_http(exc)
         raise

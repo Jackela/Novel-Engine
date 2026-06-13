@@ -80,7 +80,9 @@ The system MUST support one local owner and 24-hour guest sandboxes.
 
 ### Requirement: Read-only legacy import
 The system MUST preview and idempotently import legacy file workspaces without
-modifying their source directories.
+modifying their source directories. Web imports MUST be confined to real
+directories beneath `data/imports` and MUST reject absolute paths, traversal,
+and symbolic links; the local Owner CLI MAY accept an explicit source path.
 
 #### Scenario: Repeated import
 - **GIVEN** a legacy workspace was previously imported
