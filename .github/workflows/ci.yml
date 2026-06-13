@@ -32,11 +32,13 @@ jobs:
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
         with:
           enable-cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.6.0
       - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: pnpm
-      - run: corepack enable
       - name: Install dependencies
         run: |
           uv sync --extra dev --extra test --frozen
