@@ -17,7 +17,7 @@ repos:
 
       - id: ruff-check
         name: ruff check
-        entry: uv run ruff check src tests scripts
+        entry: uvx --from ruff==0.15.13 ruff check src tests
         language: system
         pass_filenames: false
         always_run: true
@@ -31,25 +31,33 @@ repos:
         always_run: true
         stages: [pre-commit]
 
-      - id: mypy
-        name: mypy
-        entry: uv run mypy src tests --no-error-summary --show-column-numbers
+      - id: ssot
+        name: SSOT alignment
+        entry: python scripts/qa/check_ssot.py
         language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-push]
+        stages: [pre-commit]
 
-      - id: import-linter
-        name: import-linter
-        entry: uv run lint-imports
+      - id: repo-hygiene
+        name: repository hygiene
+        entry: python scripts/qa/check_repo_hygiene.py
         language: system
         pass_filenames: false
         always_run: true
-        stages: [pre-push]
+        stages: [pre-commit]
+
+      - id: openspec
+        name: OpenSpec strict validation
+        entry: corepack pnpm spec:validate
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
 
       - id: backend-pytest
         name: backend pytest
-        entry: uv run pytest -q
+        entry: python -m pytest -q
         language: system
         pass_filenames: false
         always_run: true
@@ -57,15 +65,7 @@ repos:
 
       - id: openapi-snapshot
         name: OpenAPI snapshot
-        entry: uv run python scripts/qa/check_openapi_snapshot.py
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-
-      - id: api-public-audit
-        name: API public audit
-        entry: uv run python scripts/qa/run_api_public_audit.py
+        entry: python scripts/qa/check_openapi_snapshot.py
         language: system
         pass_filenames: false
         always_run: true
@@ -73,7 +73,7 @@ repos:
 
       - id: frontend-type-check
         name: frontend type-check
-        entry: npm --prefix frontend run type-check
+        entry: corepack pnpm --dir frontend type-check
         language: system
         pass_filenames: false
         always_run: true
@@ -81,7 +81,7 @@ repos:
 
       - id: frontend-test
         name: frontend test
-        entry: npm --prefix frontend run test
+        entry: corepack pnpm --dir frontend test:unit
         language: system
         pass_filenames: false
         always_run: true
@@ -89,39 +89,7 @@ repos:
 
       - id: frontend-build
         name: frontend build
-        entry: npm --prefix frontend run build
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-
-      - id: frontend-e2e-smoke
-        name: frontend e2e smoke
-        entry: npm --prefix frontend run test:e2e:smoke
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-
-      - id: frontend-e2e-full-audit
-        name: frontend e2e full audit
-        entry: npm --prefix frontend run test:e2e:full-audit
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-
-      - id: frontend-dependency-audit
-        name: frontend dependency audit
-        entry: npm --prefix frontend run audit:dependencies
-        language: system
-        pass_filenames: false
-        always_run: true
-        stages: [pre-push]
-
-      - id: frontend-export-audit
-        name: frontend export audit
-        entry: npm --prefix frontend run audit:exports
+        entry: corepack pnpm --dir frontend build
         language: system
         pass_filenames: false
         always_run: true

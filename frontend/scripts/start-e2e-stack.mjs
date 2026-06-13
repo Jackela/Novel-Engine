@@ -70,10 +70,16 @@ async function waitForUrl(url, label) {
 }
 
 const e2eProvider = process.env.E2E_LLM_PROVIDER ?? 'mock';
+const dataDir = path.resolve(
+  process.env.APP_DATA_DIR ?? path.join(repoRoot, 'data', 'playwright'),
+);
+const databasePath = path.join(dataDir, 'novel-engine.sqlite3').replaceAll('\\', '/');
 
 const backendEnv = {
   ...process.env,
   APP_ENVIRONMENT: process.env.APP_ENVIRONMENT ?? 'testing',
+  APP_DATA_DIR: dataDir,
+  DB_URL: process.env.DB_URL ?? `sqlite:///${databasePath}`,
   SECURITY_SECRET_KEY:
     process.env.SECURITY_SECRET_KEY ?? 'test-secret-key-for-playwright-1234567890',
   MONITORING_METRICS_ENABLED: process.env.MONITORING_METRICS_ENABLED ?? 'false',
@@ -89,13 +95,21 @@ const backendPort = await getFreePort();
 const backendUrl = `http://127.0.0.1:${backendPort}`;
 const backendCommand = process.env.PYTHON_BIN ?? 'uv';
 const backendArgs = process.env.PYTHON_BIN
-  ? ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)]
+  ? [
+      '-m',
+      'src.apps.cli.novel_engine',
+      'serve',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(backendPort),
+    ]
   : [
       'run',
       'python',
       '-m',
-      'uvicorn',
-      'src.apps.api.main:app',
+      'src.apps.cli.novel_engine',
+      'serve',
       '--host',
       '127.0.0.1',
       '--port',

@@ -1,9 +1,10 @@
-"""Canonical FastAPI application for Novel Engine."""
+"""Canonical FastAPI application for Novel Studio."""
 
 # mypy: disable-error-code=misc
 
 from __future__ import annotations
 
+import asyncio
 import os
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, cast
@@ -13,14 +14,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
-from src.apps.api.dependencies import close_connection_pool
-from src.apps.api.health import health_router, reset_health_state, set_honcho_client
+from src.apps.api.health import health_router
 from src.apps.api.middleware.cors import get_cors_config
 from src.apps.api.middleware.error_handler import setup_exception_handlers
 from src.apps.api.router import api_router
-from src.apps.api.runtime import runtime_store
+from src.contexts.studio.application.services import studio_store
 from src.shared.infrastructure.config.settings import (
     DEFAULT_SECRET_KEY,
     NovelEngineSettings,
@@ -54,23 +55,13 @@ def custom_openapi(app: FastAPI) -> dict:
         "cookieAuth": {
             "type": "apiKey",
             "in": "cookie",
-            "name": "novel_engine_access",
+            "name": "novel_studio_session",
         },
-        "refreshCookie": {
-            "type": "apiKey",
-            "in": "cookie",
-            "name": "novel_engine_refresh",
-        },
-        "bearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-        }
     }
     _apply_openapi_security(openapi_schema)
     openapi_schema["servers"] = [
-        {"url": "/api", "description": "Canonical API"},
-        {"url": "http://localhost:8000/api", "description": "Local development"},
+        {"url": "/", "description": "Same-origin Novel Studio service"},
+        {"url": "http://localhost:8000", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
     return app.openapi_schema
@@ -78,15 +69,7 @@ def custom_openapi(app: FastAPI) -> dict:
 
 def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
     """Normalize generated auth metadata to browser cookie session schemes."""
-    cookie_or_bearer: list[dict[str, list[Any]]] = [
-        {"cookieAuth": []},
-        {"bearerAuth": []},
-    ]
-    optional_cookie_or_bearer: list[dict[str, list[Any]]] = [
-        {},
-        {"cookieAuth": []},
-        {"bearerAuth": []},
-    ]
+    cookie_auth: list[dict[str, list[Any]]] = [{"cookieAuth": []}]
     paths = openapi_schema.get("paths", {})
     if not isinstance(paths, dict):
         return
@@ -100,47 +83,21 @@ def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
             if not isinstance(operation, dict):
                 continue
 
-            if path == "/api/auth/me":
-                operation["security"] = cookie_or_bearer
-            elif path == "/api/auth/refresh":
-                operation["security"] = [{"refreshCookie": []}]
-            elif path.startswith("/api/workspaces"):
-                operation["security"] = cookie_or_bearer
-            elif path.startswith("/api/knowledge"):
-                operation["security"] = (
-                    cookie_or_bearer
-                    if _knowledge_operation_requires_owner(path, method)
-                    else optional_cookie_or_bearer
+            if path in {
+                "/api/setup",
+                "/api/session/login",
+                "/api/session/guest",
+            }:
+                operation["security"] = []
+            elif path.startswith(
+                (
+                    "/api/projects",
+                    "/api/providers",
+                    "/api/imports",
+                    "/api/session",
                 )
-            elif operation.get("security") == [{"HTTPBearer": []}]:
-                operation["security"] = cookie_or_bearer
-
-
-def _knowledge_operation_requires_owner(path: str, method: str) -> bool:
-    """Return whether a knowledge route is owner-only."""
-    if path == "/api/knowledge/knowledge-bases" and method == "post":
-        return True
-    if path.endswith("/documents") and method == "post":
-        return True
-    if "/documents/" in path and method in {"delete", "post"}:
-        return True
-    return False
-
-
-def _configure_optional_honcho() -> None:
-    """Attempt to attach the optional Honcho runtime without blocking startup."""
-    logger = get_logger(__name__)
-    try:
-        from src.shared.infrastructure.honcho import create_honcho_client
-    except Exception as exc:  # pragma: no cover - depends on optional dependency
-        logger.info("honcho_unavailable", reason=str(exc))
-        return
-
-    try:
-        set_honcho_client(create_honcho_client())
-        logger.info("honcho_enabled", message="Optional Honcho client configured")
-    except Exception as exc:  # pragma: no cover - runtime/network dependent
-        logger.warning("honcho_disabled", reason=str(exc))
+            ):
+                operation["security"] = cookie_auth
 
 
 @asynccontextmanager
@@ -171,14 +128,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         except OSError as exc:
             logger.warning("prometheus_start_failed", reason=str(exc))
 
-    reset_health_state()
-    _configure_optional_honcho()
+    await asyncio.to_thread(
+        studio_store.database.initialize,
+        create_backup=False,
+        create_schema=False,
+    )
+    await asyncio.to_thread(studio_store.cleanup_expired_guests)
+
+    async def cleanup_expired_guests() -> None:
+        while True:
+            await asyncio.sleep(60 * 60)
+            await asyncio.to_thread(studio_store.cleanup_expired_guests)
+
+    cleanup_task = asyncio.create_task(cleanup_expired_guests())
 
     yield
 
-    await runtime_store.shutdown()
-    await close_connection_pool()
-    logger.info("api_shutdown", message="Shutting down Novel Engine API")
+    cleanup_task.cancel()
+    try:
+        await cleanup_task
+    except asyncio.CancelledError:
+        pass
+    await asyncio.to_thread(studio_store.database.dispose)
+    logger.info("api_shutdown", message="Shutting down Novel Studio API")
 
 
 def create_application(
@@ -198,13 +170,11 @@ def create_application(
             "SECURITY_SECRET_KEY must be set for staging and production"
         )
 
-    runtime_store.reset()
-
     app = FastAPI(
         title=resolved_settings.project_name,
         description=(
-            "Canonical Novel Engine API with source-backed auth, local "
-            "workspaces, knowledge, guest, and health routes."
+            "Novel Studio API for projects, Markdown revisions, AI proposals, "
+            "reviews, snapshots, exports, sessions, and durable jobs."
         ),
         version=resolved_settings.project_version,
         docs_url=None,
@@ -213,11 +183,7 @@ def create_application(
         lifespan=lifespan,
         openapi_tags=[
             {"name": "health", "description": "Health and readiness endpoints"},
-            {"name": "authentication", "description": "Authentication operations"},
-            {"name": "knowledge", "description": "Knowledge management"},
-            {"name": "guest", "description": "Guest session management"},
-            {"name": "providers", "description": "Text generation provider status"},
-            {"name": "workspaces", "description": "Local-first writing workspaces"},
+            {"name": "studio", "description": "Novel Studio product operations"},
         ],
     )
     app.state.settings = resolved_settings
@@ -262,16 +228,29 @@ def create_application(
                 swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
             )
 
-    @app.get("/", include_in_schema=False)
-    async def root() -> dict[str, str]:
+    frontend_dist = resolved_settings.base_dir / "frontend" / "dist"
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="studio-assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False, response_model=None)
+    async def studio_spa(full_path: str) -> Any:
+        if full_path.startswith(("api/", "health", "metrics", "docs", "openapi")):
+            return {
+                "name": resolved_settings.project_name,
+                "version": resolved_settings.project_version,
+                "api_base": "/api",
+            }
+        candidate = (frontend_dist / full_path).resolve()
+        if frontend_dist.resolve() in {candidate, *candidate.parents} and candidate.is_file():
+            return FileResponse(candidate)
+        index = frontend_dist / "index.html"
+        if index.is_file():
+            return FileResponse(index)
         return {
             "name": resolved_settings.project_name,
             "version": resolved_settings.project_version,
-            "documentation": resolved_settings.api.docs_url or "",
-            "health": "/health",
-            "api_base": "/api",
-            "guest_session": "/api/guest/session",
-            "workspaces": "/api/workspaces",
+            "message": "Build frontend/ to enable the Studio UI.",
         }
 
     return app

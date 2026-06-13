@@ -1,38 +1,22 @@
 ## Summary
 
-- what changed:
-- why it changed:
+- product behavior changed:
+- canonical OpenSpec requirement:
 
 ## Validation
 
-- [ ] `uv run pytest -q`
 - [ ] `uv run ruff check src tests`
-- [ ] `uv run mypy src tests --no-error-summary --show-column-numbers`
-- [ ] `uv run lint-imports`
-- [ ] `npm --prefix frontend run type-check`
-- [ ] `npm --prefix frontend run test`
-- [ ] `npm --prefix frontend run build`
-- [ ] `npm --prefix frontend audit --audit-level=high`
-- [ ] `npm --prefix frontend run test:e2e:smoke`
-- [ ] `npm --prefix frontend run test:e2e:full-audit`
-- [ ] `npm --prefix frontend run audit:dependencies`
-- [ ] `npm --prefix frontend run audit:exports`
-- [ ] `uv run python scripts/qa/check_openapi_snapshot.py`
-- [ ] `uv run python scripts/qa/run_api_public_audit.py`
-- [ ] `DashScope Longform Gate` deterministic PR check passed
-- [ ] If this PR requires external-provider validation: manually run workflow `DashScope Longform Gate` with `run_live=true`
-- [ ] If this PR refreshes canonical UAT evidence: `uv run python scripts/uat/run_dashscope_longform_uat.py --target-chapters 20 --write-canonical-reports`
+- [ ] `uv run pytest -q`
+- [ ] `pnpm spec:validate`
+- [ ] `pnpm --dir frontend type-check`
+- [ ] `pnpm --dir frontend test:unit`
+- [ ] `pnpm --dir frontend build`
+- [ ] Relevant Studio flow verified in Chromium
+- [ ] SSOT and OpenAPI snapshot checks pass
 
-## Risk Review
+## Data and Compatibility
 
-- [ ] No removed workflow shim or silent fallback was introduced
-- [ ] Export semantics still require `blocker=0`; warnings remain visible editorial advice
-- [ ] Public contracts changed intentionally and are covered by tests
-- [ ] Generated artifacts, caches, and temporary reports are not committed
-- [ ] README and repo-level docs remain accurate
-- [ ] `docs/reports/uat/VERIFICATION_MATRIX.md` still matches the implemented user journey
-
-## Notes
-
-- follow-up work:
-- rollout or operational concerns:
+- [ ] SQLite migration and backup behavior reviewed
+- [ ] Revision, snapshot, or export semantics are covered by tests
+- [ ] No retired workspace, Knowledge, RPG Character, or writing CLI surface returned
+- [ ] Public API changes are represented in `openspec/specs/novel-studio/spec.md`

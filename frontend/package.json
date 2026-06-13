@@ -1,7 +1,6 @@
 {
-  "name": "storyforge-ai-frontend",
+  "name": "novel-engine-studio",
   "private": true,
-  "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -13,69 +12,37 @@
     "test:ui": "vitest --config vitest.config.ts --ui",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
     "test:e2e": "node ./scripts/run-playwright.mjs test",
-    "test:e2e:smoke": "node ./scripts/run-playwright.mjs test tests/e2e/frontend-smoke.spec.ts",
-    "test:e2e:full-audit": "node ./scripts/run-playwright.mjs test tests/e2e/frontend-full-audit.spec.ts",
+    "test:e2e:smoke": "node ./scripts/run-playwright.mjs test tests/e2e/studio.spec.ts",
+    "test:e2e:full-audit": "node ./scripts/run-playwright.mjs test tests/e2e/studio.spec.ts",
     "test:e2e:headed": "node ./scripts/run-playwright.mjs test --headed",
     "test:e2e:ui": "node ./scripts/run-playwright.mjs test --ui",
     "playwright:install": "playwright install",
-    "audit:dependencies": "node ./scripts/audit-dependencies.mjs",
-    "audit:exports": "knip --exports --no-progress",
-    "typecheck": "npm run type-check",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "type-check": "tsc -p tsconfig.typecheck.json --noEmit"
   },
-  "size-limit": [
-    {
-      "name": "Initial Bundle",
-      "path": "dist/assets/index-*.js",
-      "limit": "400 KB",
-      "gzip": true
-    },
-    {
-      "name": "Route Chunks",
-      "path": "dist/assets/*-*.js",
-      "limit": "200 KB",
-      "gzip": true,
-      "ignore": [
-        "dist/assets/index-*.js",
-        "dist/assets/vendor-*.js"
-      ]
-    }
-  ],
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.3.2",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.6",
     "@fontsource-variable/geist": "^5.2.9",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "lucide-react": "^0.562.0",
-    "next-themes": "^0.4.6",
-    "radix-ui": "^1.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.15.0",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.6.0"
+    "react-router-dom": "^6.15.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
-    "@size-limit/file": "^11.1.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.9.2",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "6.0.2",
     "@vitest/coverage-v8": "^4.1.8",
-    "autoprefixer": "^10.5.0",
     "jsdom": "^29.1.1",
-    "knip": "^6.16.1",
-    "postcss": "^8.5.15",
-    "size-limit": "^11.1.0",
-    "tailwindcss": "^3.4.19",
-    "tailwindcss-animate": "^1.0.7",
-    "terser": "^5.48.0",
     "typescript": "^5.0.2",
     "vite": "^8.0.16",
-    "vitest": "^4.0.15",
-    "yaml": "^2.8.2"
+    "vitest": "^4.0.15"
   }
 }

@@ -1,11 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
+import fs from 'node:fs';
 
 const apiProxyTimeoutMs = 5 * 60 * 1000;
+const projectToml = fs.readFileSync(path.resolve(__dirname, '..', 'pyproject.toml'), 'utf8');
+const projectVersion =
+  projectToml.match(/^\s*version\s*=\s*"([^"]+)"/m)?.[1] ?? '0.0.0';
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    __APP_VERSION__: JSON.stringify(projectVersion),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),

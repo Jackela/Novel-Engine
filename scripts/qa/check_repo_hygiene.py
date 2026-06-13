@@ -1,4 +1,4 @@
-"""Fail on stale API-versioning and removed narrative-platform residues."""
+"""Fail when removed product surfaces reappear."""
 
 from __future__ import annotations
 
@@ -13,9 +13,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 SKIP_PATHS = {
     "docs/api/openapi.current.json",
-    "frontend/package-lock.json",
+    "pnpm-lock.yaml",
     "uv.lock",
     "scripts/qa/check_repo_hygiene.py",
+    "scripts/qa/check_ssot.py",
+    ".github/pull_request_template.md",
 }
 
 SKIP_PARTS = {
@@ -57,22 +59,10 @@ FORBIDDEN_PATTERNS = (
         ),
     ),
     ForbiddenPattern(
-        "v2_narrative_surface",
+        "removed_product_surface",
         re.compile(
-            r"\bnarrative_v2\b|\btest_v2_workspaces\b|"
-            r"\btest_novel_engine_v2\b|\bv2_workspaces\b|"
-            r"\bV2(?:Workspace|Provider|Job|Review|Run|Artifact|Story)\b|"
-            r"\bDashScope V2\b|\bV2 Workspace\b|\bNovel Engine V2\b|"
-            r"\blocal-first V2\b|\bV2 writing\b|\bV2 engine\b|"
-            r"\bv2_chapter_(?:draft|revision)\b|\bv2_editorial_review\b"
-        ),
-    ),
-    ForbiddenPattern(
-        "removed_story_pipeline",
-        re.compile(
-            r"StoryWorkflowService|StoryRevisionService|ChapterDraftingService|"
-            r"StoryRunRequest|story_pipeline|terminal arc|vessel_agency|"
-            r"keeper_motivation",
+            r"/api/workspaces|StoryForge|Honcho|Chroma|"
+            r"RPG Character|Knowledge API|local-first CLI",
             re.IGNORECASE,
         ),
     ),
@@ -91,13 +81,9 @@ ALLOW_RULES = (
         "external_provider_api_versions",
         re.compile(
             r"^(?:"
-            r"\.github/workflows/ci\.yml|"
-            r"\.env\.example|"
-            r"src/contexts/ai/infrastructure/providers/dashscope_text_generation_provider\.py|"
-            r"src/shared/infrastructure/config/settings\.py|"
-            r"tests/contexts/ai/infrastructure/test_provider_factory\.py|"
-            r"tests/text_generation_contract_support\.py|"
-            r"tests/unit/infrastructure/config/test_settings\.py"
+            r"src/contexts/ai/infrastructure/providers/"
+            r"dashscope_text_generation_provider\.py|"
+            r"tests/contexts/ai/infrastructure/test_provider_factory\.py"
             r")$"
         ),
         re.compile(r"/api/v(?:1|2)(?:/|$)"),
@@ -115,20 +101,6 @@ API_SURFACE_FORBIDDEN = (
 API_SURFACE_PATHS = re.compile(
     r"^(?:src/apps/api/|frontend/src/app/types/story\.ts$)"
 )
-
-REQUIRED_TEST_MARKERS = (
-    (
-        "workspace_path_leak_regression",
-        Path("tests/apps/api/test_workspaces.py"),
-        "_assert_no_private_payload",
-    ),
-    (
-        "raw_output_leak_regression",
-        Path("tests/apps/api/test_workspaces.py"),
-        "raw_model_output",
-    ),
-)
-
 
 def tracked_and_untracked_files() -> list[Path]:
     result = subprocess.run(
@@ -148,7 +120,7 @@ def tracked_and_untracked_files() -> list[Path]:
 
 def should_skip(path: Path) -> bool:
     rel = path.relative_to(ROOT).as_posix()
-    if rel in SKIP_PATHS:
+    if rel in SKIP_PATHS or rel.startswith("openspec/changes/archive/"):
         return True
     return any(part in SKIP_PARTS for part in path.relative_to(ROOT).parts)
 
@@ -174,11 +146,6 @@ def main() -> int:
             failures.append(
                 f"{path.name}/: temporary top-level *_project directory is not allowed"
             )
-
-    for name, rel_path, marker in REQUIRED_TEST_MARKERS:
-        path = ROOT / rel_path
-        if not path.exists() or marker not in path.read_text(encoding="utf-8"):
-            failures.append(f"{rel_path.as_posix()}: missing required {name} marker")
 
     for path in tracked_and_untracked_files():
         if should_skip(path):

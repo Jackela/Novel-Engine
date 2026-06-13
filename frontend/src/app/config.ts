@@ -7,12 +7,8 @@ export const appConfig = {
   apiBaseUrl,
   apiTimeoutMs,
   endpoints: {
-    guestSession: '/api/guest/session',
-    login: '/api/auth/login',
-    logout: '/api/auth/logout',
-    refresh: '/api/auth/refresh',
-    currentUser: '/api/auth/me',
-    providers: '/api/providers',
-    workspaces: '/api/workspaces',
+    setup: '/api/setup',
+    session: '/api/session',
+    projects: '/api/projects',
   },
 } as const;

@@ -123,8 +123,8 @@ def test_project_version_defaults_to_package_version(
 
     settings = NovelEngineSettings()
 
-    assert settings.project_version == "0.1.1"
-    assert settings.api.version == "0.1.1"
+    assert settings.project_version == "0.3.0"
+    assert settings.api.version == "0.3.0"
 
 
 def test_production_settings_reject_unsafe_defaults(
@@ -139,7 +139,7 @@ def test_production_settings_reject_unsafe_defaults(
         NovelEngineSettings()
 
 
-def test_production_settings_require_postgres_cors_and_non_default_docs(
+def test_production_settings_require_sqlite(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -148,20 +148,11 @@ def test_production_settings_require_postgres_cors_and_non_default_docs(
     monkeypatch.setenv("APP_ENVIRONMENT", "production")
     monkeypatch.setenv("SECURITY_SECRET_KEY", "production-secret-key-32-characters")
 
-    with pytest.raises(ValueError, match="DB_URL must use PostgreSQL"):
-        NovelEngineSettings()
-
     monkeypatch.setenv("DB_URL", "postgresql://user:pass@db.example.com/novel")
-    with pytest.raises(ValueError, match="Production CORS origins"):
+    with pytest.raises(ValueError, match="DB_URL must use the self-hosted SQLite store"):
         NovelEngineSettings()
 
-    monkeypatch.setenv("CORS_ALLOWED_ORIGINS", "https://app.example.com")
-    with pytest.raises(ValueError, match="Production docs_url"):
-        NovelEngineSettings()
-
-    monkeypatch.setenv("API_DOCS_URL", "/internal/docs")
-    monkeypatch.setenv("API_REDOC_URL", "/internal/redoc")
-    monkeypatch.setenv("API_OPENAPI_URL", "/internal/openapi.json")
+    monkeypatch.setenv("DB_URL", "sqlite:///./data/novel-engine.sqlite3")
     settings = NovelEngineSettings()
     assert settings.is_production
 

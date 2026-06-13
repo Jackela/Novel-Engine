@@ -1,0 +1,1 @@
+"""Novel Studio domain types."""

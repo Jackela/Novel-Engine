@@ -1,6 +1,6 @@
 """Infrastructure configuration package.
 
-This package provides configuration management for the Novel Engine,
+This package provides configuration management for Novel Studio,
 supporting YAML files and environment-backed settings.
 
 Example:
@@ -19,7 +19,6 @@ from .settings import (
     LogLevel,
     MonitoringSettings,
     NovelEngineSettings,
-    RedisSettings,
     SecuritySettings,
     get_settings,
     reload_settings,
@@ -38,7 +37,6 @@ __all__ = [
     "LogLevel",
     "LoggingSettings",
     "MonitoringSettings",
-    "RedisSettings",
     "SecuritySettings",
     # Functions
     "get_settings",

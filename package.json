@@ -1,0 +1,11 @@
+{
+  "name": "novel-engine-tooling",
+  "private": true,
+  "packageManager": "pnpm@11.6.0",
+  "scripts": {
+    "spec:validate": "openspec validate --all --strict"
+  },
+  "devDependencies": {
+    "@fission-ai/openspec": "1.4.1"
+  }
+}

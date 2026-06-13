@@ -2,13 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -18,425 +14,100 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  backend-quality:
-    name: Backend Quality
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Run Ruff
-        run: uv run ruff check src tests
-
-      - name: Run import-linter
-        run: uv run lint-imports
-
-      - name: Run repository hygiene scan
-        run: uv run python scripts/qa/check_repo_hygiene.py
-
-      - name: Run MyPy
-        run: >
-          uv run mypy
-          src
-          tests
-          --no-error-summary
-          --show-column-numbers
-
-  backend-tests:
-    name: Backend Tests
+  validate:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      ENABLE_DASHSCOPE_TESTS: "0"
-      ENABLE_HONCHO_TESTS: "0"
-      ENABLE_CHROMA_TESTS: "0"
-      ENABLE_POSTGRES_TESTS: "0"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Run backend test suite
-        run: uv run pytest -q
-
-      - name: Run shared infrastructure coverage gate
-        run: >
-          uv run pytest
-          tests/unit/infrastructure
-          tests/apps/api/test_health.py
-          --cov=src/shared/infrastructure/auth
-          --cov=src/shared/infrastructure/config
-          --cov=src/shared/infrastructure/health
-          --cov=src/shared/infrastructure/persistence
-          --cov-report=term-missing
-          --cov-fail-under=80
-          -q
-
-      - name: Run circuit and middleware coverage gate
-        run: >
-          uv run pytest
-          tests/shared/infrastructure/circuit_breaker
-          tests/shared/infrastructure/middleware
-          tests/apps/api/middleware
-          --cov=src/shared/infrastructure/circuit_breaker
-          --cov=src/shared/infrastructure/middleware
-          --cov=src/apps/api/middleware
-          --cov-report=term-missing
-          --cov-fail-under=80
-          -q
-
-      - name: Run optional integration coverage gate
-        run: >
-          uv run pytest
-          tests/shared/infrastructure/honcho
-          tests/contexts/ai
-          --cov=src/shared/infrastructure/honcho
-          --cov=src.shared.infrastructure.health.checks.honcho_health_check
-          --cov=src/contexts/ai/infrastructure/providers
-          --cov-report=term-missing
-          --cov-fail-under=80
-          -q
-
-  frontend:
-    name: Frontend Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
     env:
       APP_ENVIRONMENT: testing
+      APP_DATA_DIR: ${{ github.workspace }}/data
       SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
       MONITORING_METRICS_ENABLED: "false"
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: "20"
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
         with:
           enable-cache: true
-
-      - name: Install frontend dependencies
-        working-directory: frontend
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.6.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        working-directory: ${{ github.workspace }}
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Run TypeScript checks
-        working-directory: frontend
-        run: npm run type-check
-
-      - name: Run frontend unit tests with platform coverage
-        working-directory: frontend
-        run: npm run test:coverage
-
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-      - name: Run frontend smoke tests
-        working-directory: frontend
-        run: npm run test:e2e:smoke
-
-      - name: Run frontend dependency audit
-        working-directory: frontend
-        run: npm run audit:dependencies -- --output ../artifacts/qa/frontend-dependency-audit.json
-
-      - name: Upload frontend validation artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: frontend-validation-artifacts
-          path: |
-            artifacts/qa/frontend-dependency-audit.json
-            frontend/playwright-report/**
-            frontend/test-results/**
-          if-no-files-found: ignore
-
-  frontend-full-audit:
-    name: Frontend Full Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-
-    env:
-      APP_ENVIRONMENT: testing
-      SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
-      MONITORING_METRICS_ENABLED: "false"
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: "20"
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Install frontend dependencies
-        working-directory: frontend
+          uv sync --extra dev --extra test --frozen
+          pnpm install --frozen-lockfile
+      - name: Validate SSOT and OpenSpec
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Run frontend security audit (high+)
-        working-directory: frontend
-        run: npm audit --audit-level=high
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Run frontend full audit tests
-        working-directory: frontend
-        run: npm run test:e2e:full-audit
-
-      - name: Upload frontend full-audit artifacts
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: frontend-full-audit-artifacts
-          path: |
-            frontend/playwright-report/**
-            frontend/test-results/**
-          if-no-files-found: ignore
-
-  frontend-exports-audit:
-    name: Frontend Exports Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: "20"
-
-      - name: Install frontend dependencies
-        working-directory: frontend
+          uv run python scripts/qa/check_ssot.py
+          uv run python scripts/qa/check_repo_hygiene.py
+          pnpm spec:validate
+      - name: Validate backend
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-
-      - name: Run frontend exports audit
-        working-directory: frontend
-        run: npm run audit:exports
-
-  openapi-snapshot:
-    name: OpenAPI Snapshot Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Verify OpenAPI snapshot
-        run: uv run python scripts/qa/check_openapi_snapshot.py
-
-  public-api-audit:
-    name: Public API Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Run public API audit
-        run: uv run python scripts/qa/run_api_public_audit.py --output artifacts/qa/api-public-audit.json
-
-      - name: Upload public API audit report
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: api-public-audit-report
-          path: artifacts/qa/api-public-audit.json
-          if-no-files-found: error
-
-  chroma-live-smoke:
-    name: Optional Chroma Live Smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    services:
-      chroma:
-        image: chromadb/chroma
-        ports:
-          - 8000:8000
-
-    env:
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
-      ENABLE_CHROMA_TESTS: "1"
-      CHROMA_HOST: localhost
-      CHROMA_PORT: "8000"
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
-        with:
-          enable-cache: true
-
-      - name: Validate lockfile
-        run: uv lock --check
-
-      - name: Install backend dependencies
-        run: uv sync --extra dev --extra test --frozen
-
-      - name: Wait for Chroma
-        run: |
-          uv run python - <<'PY'
-          import time
-          from urllib.request import urlopen
-
-          deadline = time.time() + 60
-          last_error: Exception | None = None
-
-          while time.time() < deadline:
-              try:
-                  with urlopen("http://localhost:8000/api/v2/heartbeat", timeout=5) as response:
-                      if response.status == 200:
-                          break
-              except Exception as exc:  # pragma: no cover - CI readiness helper
-                  last_error = exc
-              time.sleep(2)
-          else:
-              raise SystemExit(f"Chroma did not become ready: {last_error}")
-          PY
-
-      - name: Run Chroma live smoke
-        run: >
+          uv run ruff check src tests
           uv run pytest -q
-          -m requires_chroma
-          tests/contexts/knowledge/infrastructure/vectorStores/test_chroma_vector_store_live.py
+          uv run python scripts/qa/check_openapi_snapshot.py
+      - name: Validate frontend
+        working-directory: frontend
+        run: |
+          pnpm type-check
+          pnpm test:unit
+          pnpm build
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Validate Studio workflow
+        working-directory: frontend
+        run: pnpm test:e2e:smoke
+      - name: Upload browser diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: studio-browser-diagnostics
+          path: |
+            frontend/playwright-report/**
+            frontend/test-results/**
+          if-no-files-found: ignore
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate
+    steps:
+      - uses: actions/checkout@v6
+      - run: docker build -t novel-studio:ci .
+      - name: Verify fresh install, persistence, restart, and deep link
+        run: |
+          set -euo pipefail
+          trap 'docker rm -f novel-studio >/dev/null 2>&1 || true; docker volume rm novel-studio-ci >/dev/null 2>&1 || true' EXIT
+          docker volume create novel-studio-ci
+          docker run -d --name novel-studio -p 8000:8000 \
+            -e SECURITY_SECRET_KEY=container-test-secret-key-1234567890 \
+            -v novel-studio-ci:/app/data \
+            novel-studio:ci
+          for attempt in {1..30}; do
+            curl -fsS http://127.0.0.1:8000/health/ready && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Studio</title>'
+          curl -fsS -H 'Content-Type: application/json' \
+            -d '{"username":"owner","password":"container-owner-password"}' \
+            http://127.0.0.1:8000/api/setup
+          curl -fsS -c cookies.txt -H 'Content-Type: application/json' \
+            -d '{"username":"owner","password":"container-owner-password"}' \
+            http://127.0.0.1:8000/api/session/login
+          docker restart novel-studio
+          for attempt in {1..30}; do
+            curl -fsS http://127.0.0.1:8000/health/ready && break
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS -b cookies.txt http://127.0.0.1:8000/api/session | grep -q '"kind":"owner"'
+          docker exec novel-studio python -c "import sqlite3; connection=sqlite3.connect('/app/data/novel-engine.sqlite3'); assert connection.execute('PRAGMA quick_check').fetchone() == ('ok',); assert connection.execute('SELECT version_num FROM alembic_version').fetchone() == ('0002_stable_revision_numbers',)"

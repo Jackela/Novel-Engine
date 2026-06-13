@@ -22,17 +22,6 @@ class CircuitBreakerSettings(BaseModel):
         default=2, description="Max calls in half-open state"
     )
 
-    # Honcho API settings
-    honcho_failure_threshold: int = Field(
-        default=5, description="Failures before opening Honcho circuit"
-    )
-    honcho_recovery_timeout: float = Field(
-        default=30.0, description="Seconds before attempting recovery"
-    )
-    honcho_half_open_max_calls: int = Field(
-        default=3, description="Max calls in half-open state"
-    )
-
     # Database settings - less sensitive
     database_failure_threshold: int = Field(
         default=10, description="Failures before opening database circuit"

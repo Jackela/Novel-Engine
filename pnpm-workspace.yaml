@@ -1,0 +1,4 @@
+packages:
+  - frontend
+allowBuilds:
+  '@fission-ai/openspec': true
