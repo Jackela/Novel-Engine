@@ -15,7 +15,7 @@ def configure_logging(
     log_level: str = "INFO",
     json_format: bool = False,
     service_name: str = "novel-engine",
-    service_version: str = "0.1.0",
+    service_version: str = "0.3.0",
 ) -> None:
     """Configure unified logging for the application.
 

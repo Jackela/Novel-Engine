@@ -233,21 +233,6 @@ def register_default_circuit_breakers() -> None:
         ),
     )
 
-    # Honcho API circuit breaker
-    CircuitBreakerRegistry.register(
-        "honcho_api",
-        CircuitBreaker(
-            name="honcho_api",
-            config=CircuitBreakerConfig(
-                failure_threshold=5,
-                recovery_timeout=30.0,
-                half_open_max_calls=3,
-                success_threshold=2,
-            ),
-            expected_exception=(Exception,),
-        ),
-    )
-
     # Database circuit breaker - less sensitive
     CircuitBreakerRegistry.register(
         "database",

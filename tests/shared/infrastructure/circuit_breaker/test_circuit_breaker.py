@@ -201,7 +201,7 @@ def test_default_initialization_registers_expected_services() -> None:
 
     states = get_circuit_breaker_states()
 
-    assert set(states) == {"openai_api", "honcho_api", "database", "external_service"}
+    assert set(states) == {"openai_api", "database", "external_service"}
     assert states["openai_api"]["state"] == "closed"
 
     reset_all_circuit_breakers()
@@ -219,5 +219,4 @@ def test_circuit_breaker_settings_defaults() -> None:
 
     assert settings.enabled is True
     assert settings.openai_failure_threshold == 3
-    assert settings.honcho_recovery_timeout == 30.0
     assert settings.embedding_fallback_to_zero is True

@@ -1,0 +1,20 @@
+services:
+  novel-studio:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENVIRONMENT: production
+      SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:?Set SECURITY_SECRET_KEY}
+      DB_URL: sqlite:///./data/novel-engine.sqlite3
+      MONITORING_METRICS_ENABLED: "false"
+    volumes:
+      - novel-studio-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  novel-studio-data:

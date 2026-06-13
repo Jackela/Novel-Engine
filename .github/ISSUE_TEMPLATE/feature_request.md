@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Propose a user-facing or repository-level improvement
+about: Propose an improvement to the single-author Novel Studio
 title: "[FEATURE] "
 labels: ["enhancement", "triage"]
 assignees: []

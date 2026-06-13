@@ -1,14 +1,11 @@
-"""Configuration settings module using pydantic-settings v2.
-
-This module provides type-safe, environment-aware configuration management
-for the Novel Engine application.
-"""
+"""Type-safe, environment-aware configuration for Novel Studio."""
 
 # mypy: disable-error-code=misc
 
 from __future__ import annotations
 
 import secrets
+import tomllib
 from enum import Enum
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
@@ -22,20 +19,14 @@ LOCAL_DOTENV_FILE = ".env.local"
 
 
 def _package_version() -> str:
+    pyproject = Path(__file__).parents[4] / "pyproject.toml"
+    if pyproject.is_file():
+        project = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+        return str(project["project"]["version"])
     try:
         return version("novel-engine")
     except PackageNotFoundError:
-        return "0.1.1"
-
-
-def _is_local_cors_origin(origin: str) -> bool:
-    normalized = origin.lower()
-    return (
-        "localhost" in normalized
-        or "127.0.0.1" in normalized
-        or "[::1]" in normalized
-        or normalized.startswith("http://::1")
-    )
+        return "0.3.0"
 
 
 def _settings_config(
@@ -87,7 +78,7 @@ class DatabaseSettings(BaseSettings):
     model_config = _settings_config(env_prefix="DB_")
 
     url: str = Field(
-        default="sqlite:///./novel_engine.db",
+        default="sqlite:///./data/novel-engine.sqlite3",
         description="Database connection URL",
     )
     pool_size: int = Field(default=5, ge=1, le=100, description="Connection pool size")
@@ -105,33 +96,9 @@ class DatabaseSettings(BaseSettings):
         """Validate database URL format."""
         if not v:
             raise ValueError("Database URL cannot be empty")
-        valid_prefixes = ("sqlite:///", "postgresql://", "postgresql+asyncpg://")
-        if not any(v.startswith(prefix) for prefix in valid_prefixes):
-            raise ValueError(
-                f"Database URL must start with one of: {', '.join(valid_prefixes)}"
-            )
+        if not v.startswith("sqlite:///"):
+            raise ValueError("DB_URL must use the self-hosted SQLite store")
         return v
-
-
-class RedisSettings(BaseSettings):
-    """Redis cache configuration settings."""
-
-    model_config = _settings_config(env_prefix="REDIS_")
-
-    host: str = Field(default="localhost", description="Redis server host")
-    port: int = Field(default=6379, ge=1, le=65535, description="Redis server port")
-    db: int = Field(default=0, ge=0, le=15, description="Redis database number")
-    password: str | None = Field(default=None, description="Redis password")
-    ssl: bool = Field(default=False, description="Use SSL connection")
-    socket_timeout: int = Field(
-        default=5, ge=1, le=60, description="Socket timeout in seconds"
-    )
-    socket_connect_timeout: int = Field(
-        default=5, ge=1, le=60, description="Socket connect timeout in seconds"
-    )
-    health_check_interval: int = Field(
-        default=30, ge=10, le=300, description="Health check interval in seconds"
-    )
 
 
 class APISettings(BaseSettings):
@@ -145,7 +112,7 @@ class APISettings(BaseSettings):
         default=1, ge=1, le=32, description="Number of worker processes"
     )
     reload: bool = Field(default=False, description="Enable auto-reload")
-    title: str = Field(default="Novel Engine API", description="API title")
+    title: str = Field(default="Novel Studio API", description="API title")
     version: str = Field(default_factory=_package_version, description="API version")
     docs_url: str | None = Field(default="/docs", description="Swagger UI URL")
     redoc_url: str | None = Field(default="/redoc", description="ReDoc URL")
@@ -162,17 +129,7 @@ class SecuritySettings(BaseSettings):
     secret_key: str = Field(
         default=DEFAULT_SECRET_KEY,
         min_length=16,
-        description="Secret key for JWT signing",
-    )
-    algorithm: str = Field(default="HS256", description="JWT algorithm")
-    access_token_expire_minutes: int = Field(
-        default=30, ge=5, le=1440, description="Access token expiration in minutes"
-    )
-    refresh_token_expire_days: int = Field(
-        default=7, ge=1, le=30, description="Refresh token expiration in days"
-    )
-    encryption_key: str | None = Field(
-        default=None, description="Fernet encryption key for sensitive data"
+        description="Local session security secret",
     )
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
@@ -319,10 +276,6 @@ class LLMSettings(BaseSettings):
     retry_delay: float = Field(
         default=1.0, ge=0.1, le=10.0, description="Retry delay in seconds"
     )
-    max_monthly_cost: float = Field(
-        default=10.0, ge=0.0, le=1000.0, description="Monthly cost limit in USD"
-    )
-
     def resolved_api_key(
         self,
         provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
@@ -406,10 +359,11 @@ class MonitoringSettings(BaseSettings):
     jaeger_endpoint: str | None = Field(
         default=None, description="Jaeger collector endpoint"
     )
-    service_name: str = Field(
-        default="novel-engine", description="Service name for tracing"
+    service_name: str = Field(default="novel-studio", description="Service name")
+    service_version: str = Field(
+        default_factory=_package_version,
+        description="Service version derived from the installed package",
     )
-    service_version: str = Field(default="0.1.0", description="Service version")
 
 
 class HealthCheckSettings(BaseSettings):
@@ -425,32 +379,6 @@ class HealthCheckSettings(BaseSettings):
     )
     external_services_check_enabled: bool = Field(
         default=True, description="Enable external services health check"
-    )
-
-
-class VectorStoreSettings(BaseSettings):
-    """Vector store configuration settings."""
-
-    model_config = _settings_config(env_prefix="VECTOR_")
-
-    host: str = Field(default="localhost", description="Vector store host")
-    port: int = Field(default=8000, ge=1, le=65535, description="Vector store port")
-    collection_name: str = Field(
-        default="knowledge", description="Default collection name"
-    )
-
-
-class KnowledgeSettings(BaseSettings):
-    """Knowledge management configuration settings."""
-
-    model_config = _settings_config(env_prefix="KNOWLEDGE_")
-
-    chunk_size: int = Field(default=500, ge=100, le=5000, description="Text chunk size")
-    chunk_overlap: int = Field(
-        default=50, ge=0, le=500, description="Chunk overlap size"
-    )
-    max_document_size: int = Field(
-        default=10_000_000, description="Maximum document size in bytes (10MB)"
     )
 
 
@@ -474,13 +402,13 @@ class NovelEngineSettings(BaseSettings):
         description="Application environment",
     )
     debug: bool = Field(default=False, description="Enable debug mode")
-    project_name: str = Field(default="Novel Engine API", description="Project name")
+    project_name: str = Field(default="Novel Studio", description="Project name")
     project_version: str = Field(
         default_factory=_package_version,
         description="Project version",
     )
     project_description: str = Field(
-        default="AI-Enhanced Interactive Novel Engine",
+        default="Self-hosted single-author novel writing studio",
         description="Project description",
     )
 
@@ -507,15 +435,12 @@ class NovelEngineSettings(BaseSettings):
 
     # Nested settings
     database: DatabaseSettings = Field(default_factory=DatabaseSettings)
-    redis: RedisSettings = Field(default_factory=RedisSettings)
     api: APISettings = Field(default_factory=APISettings)
     security: SecuritySettings = Field(default_factory=SecuritySettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
     monitoring: MonitoringSettings = Field(default_factory=MonitoringSettings)
     health: HealthCheckSettings = Field(default_factory=HealthCheckSettings)
-    vector_store: VectorStoreSettings = Field(default_factory=VectorStoreSettings)
-    knowledge: KnowledgeSettings = Field(default_factory=KnowledgeSettings)
 
     @property
     def is_development(self) -> bool:
@@ -548,27 +473,12 @@ class NovelEngineSettings(BaseSettings):
                 raise ValueError(
                     "SECURITY_SECRET_KEY must be set to a non-default value in production"
                 )
-            if not self.database.url.startswith("postgresql"):
-                raise ValueError("DB_URL must use PostgreSQL in production")
-            if not self.security.cors_origins:
-                raise ValueError("CORS_ALLOWED_ORIGINS must be explicit in production")
-            if any(
-                origin == "*" or _is_local_cors_origin(origin)
-                for origin in self.security.cors_origins
-            ):
+            if not self.database.url.startswith("sqlite:///"):
+                raise ValueError("DB_URL must use the self-hosted SQLite store")
+            if "*" in self.security.cors_origins:
                 raise ValueError(
-                    "Production CORS origins cannot include wildcards or localhost"
+                    "Production CORS origins cannot include a wildcard"
                 )
-            if (
-                self.api.docs_url == "/docs"
-                or self.api.redoc_url == "/redoc"
-                or self.api.openapi_url == "/openapi.json"
-            ):
-                raise ValueError(
-                    "Production docs_url, redoc_url, and openapi_url must be disabled "
-                    "or explicitly moved away from the default public paths"
-                )
-
         if not self.security.secret_key or self.security.secret_key == DEFAULT_SECRET_KEY:
             if self.is_testing:
                 self.security.secret_key = (

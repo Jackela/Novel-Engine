@@ -92,7 +92,7 @@ def test_http_exception_handler_response_shape() -> None:
     response = TestClient(make_app()).get("/http-error")
 
     assert response.status_code == 404
-    assert response.json() == {"error": {"code": "HTTP_ERROR", "message": "missing"}}
+    assert response.json() == {"detail": "missing"}
 
 
 def test_request_validation_handler_response_shape() -> None:

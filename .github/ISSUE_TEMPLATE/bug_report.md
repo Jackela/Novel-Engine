@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Novel Engine
+about: Report a Novel Studio authoring problem
 title: "[BUG] "
 labels: ["bug", "triage"]
 assignees: []
@@ -27,8 +27,10 @@ If applicable, add screenshots or logs to help explain your problem.
 ## Environment
  - OS: [e.g. Windows 11]
  - Browser [e.g. Chrome, Safari]
- - Version [e.g. 0.1.0]
+ - Version [e.g. 0.3.0]
  - Python Version: [e.g. 3.11]
+ - Install: [Docker Compose or local]
+ - Session: [Owner or Guest]
 
 ## Context
 Any other context about the problem here.

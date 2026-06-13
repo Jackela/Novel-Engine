@@ -1,0 +1,1 @@
+"""Novel Studio interface adapters."""

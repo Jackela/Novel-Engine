@@ -35,7 +35,7 @@ def test_cors_config_rejects_wildcards_in_production(
     )
     monkeypatch.setenv("APP_ENVIRONMENT", "production")
     monkeypatch.setenv("SECURITY_SECRET_KEY", "production-secret-key-32-characters")
-    monkeypatch.setenv("DB_URL", "postgresql://user:pass@db.example.com/novel")
+    monkeypatch.setenv("DB_URL", "sqlite:///./data/novel-engine.sqlite3")
     monkeypatch.setenv("CORS_ALLOW_CREDENTIALS", "false")
     monkeypatch.setenv("API_DOCS_URL", "/internal/docs")
     monkeypatch.setenv("API_REDOC_URL", "/internal/redoc")

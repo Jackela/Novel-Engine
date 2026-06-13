@@ -1,218 +1,183 @@
 import { appConfig } from '@/app/config';
 import type {
-  CurrentUserResponse,
-  GuestSessionRequest,
-  GuestSessionResponse,
-  LoginRequest,
-  LoginResponse,
-} from '@/app/types/auth';
-import type {
-  ProviderListResponse,
-  WorkspaceCreateRequest,
-  WorkspaceJob,
-  WorkspaceJobRequest,
-  WorkspaceListResponse,
-  WorkspaceStatus,
-} from '@/app/types/story';
+  DocumentKind,
+  ExportFormat,
+  Project,
+  Review,
+  Revision,
+  Session,
+  SetupStatus,
+  StudioDocument,
+  StudioExport,
+  StudioJob,
+} from '@/app/types/studio';
 
-class HttpError extends Error {
-  readonly status: number;
-
-  constructor(message: string, status: number) {
+export class HttpError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly detail?: unknown,
+  ) {
     super(message);
-    this.status = status;
   }
 }
 
-const buildUrl = (path: string) =>
-  appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${path}` : path;
+const url = (path: string) => (appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${path}` : path);
 
-function fallbackErrorMessage(status: number): string {
-  if (status === 502 || status === 503 || status === 504) {
-    return 'Service temporarily unavailable. Start the backend API and retry.';
-  }
-
-  if (status === 408) {
-    return 'Request timed out. Please retry.';
-  }
-
-  return `Request failed with status ${status}`;
-}
-
-function isLikelyHtml(payload: string): boolean {
-  const normalized = payload.trim().toLowerCase();
-  return normalized.startsWith('<!doctype html') || normalized.startsWith('<html');
-}
-
-function pickErrorMessage(payload: unknown): string | null {
-  if (payload == null || typeof payload !== 'object' || Array.isArray(payload)) {
-    return null;
-  }
-
-  const record = payload as Record<string, unknown>;
-  const detail = record.detail;
-  if (typeof detail === 'string' && detail.trim()) {
-    return detail;
-  }
-
-  const error = record.error;
-  if (typeof error === 'string' && error.trim()) {
-    return error;
-  }
-  if (error != null && typeof error === 'object' && !Array.isArray(error)) {
-    const nestedMessage = (error as Record<string, unknown>).message;
-    if (typeof nestedMessage === 'string' && nestedMessage.trim()) {
-      return nestedMessage;
-    }
-
-    const nestedDetail = (error as Record<string, unknown>).detail;
-    if (typeof nestedDetail === 'string' && nestedDetail.trim()) {
-      return nestedDetail;
-    }
-  }
-
-  const message = record.message;
-  if (typeof message === 'string' && message.trim()) {
-    return message;
-  }
-
-  return null;
-}
-
-async function requestJson<T>(
-  path: string,
-  init?: RequestInit,
-): Promise<T> {
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const externalSignal = init?.signal;
   let timedOut = false;
-  const abortFromExternal = () => controller.abort();
+  const abortFromExternal = () => controller.abort(externalSignal?.reason);
   if (externalSignal?.aborted) {
-    controller.abort();
+    abortFromExternal();
   } else {
     externalSignal?.addEventListener('abort', abortFromExternal, { once: true });
   }
-  const timeoutId = window.setTimeout(() => {
+  const timeout = window.setTimeout(() => {
     timedOut = true;
     controller.abort();
   }, appConfig.apiTimeoutMs);
-
   try {
     let response: Response;
     try {
-      response = await fetch(buildUrl(path), {
+      response = await fetch(url(path), {
         credentials: 'include',
+        ...init,
         headers: {
-          'Content-Type': 'application/json',
+          ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
           ...(init?.headers ?? {}),
         },
-        ...init,
         signal: controller.signal,
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (
+        (error instanceof Error || error instanceof DOMException)
+        && error.name === 'AbortError'
+      ) {
         throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.');
       }
-
       if (error instanceof TypeError) {
-        throw new Error('Service temporarily unavailable. Start the backend API and retry.');
+        throw new Error('Novel Studio is unavailable. Check the local service and retry.');
       }
-
       throw error;
     }
-
     if (!response.ok) {
-      let message = fallbackErrorMessage(response.status);
-      const contentType = response.headers.get('Content-Type') ?? '';
-
-      if (contentType.includes('application/json')) {
-        try {
-          const payload = (await response.json()) as unknown;
-          message = pickErrorMessage(payload) ?? message;
-        } catch {
-          // Fall back to the generic HTTP status message.
-        }
-      } else {
-        try {
-          const detail = (await response.text()).trim();
-          if (detail && !isLikelyHtml(detail)) {
-            message = detail;
-          }
-        } catch {
-          // Fall back to the generic HTTP status message.
-        }
-      }
-
-      throw new HttpError(message, response.status);
+      const payload = await response.json().catch(() => null) as { detail?: unknown } | null;
+      const detail = payload?.detail;
+      const message =
+        typeof detail === 'string'
+          ? detail
+          : typeof detail === 'object' && detail && 'message' in detail
+            ? String((detail as { message: unknown }).message)
+            : `Request failed with status ${response.status}`;
+      throw new HttpError(message, response.status, detail);
     }
-
-    return (await response.json()) as T;
+    if (response.status === 204) return undefined as T;
+    return await response.json() as T;
   } finally {
-    window.clearTimeout(timeoutId);
+    window.clearTimeout(timeout);
     externalSignal?.removeEventListener('abort', abortFromExternal);
   }
 }
 
+const json = (value: unknown) => JSON.stringify(value);
+
 export const api = {
-  createGuestSession: (payload?: GuestSessionRequest) =>
-    requestJson<GuestSessionResponse>(appConfig.endpoints.guestSession, {
+  setupStatus: () => request<SetupStatus>('/api/setup'),
+  setupOwner: (username: string, password: string) =>
+    request<{ id: string; username: string }>('/api/setup', {
       method: 'POST',
-      body: JSON.stringify(payload ?? {}),
+      body: json({ username, password }),
     }),
-
-  login: (payload: LoginRequest) =>
-    requestJson<LoginResponse>(appConfig.endpoints.login, {
+  login: (username: string, password: string) =>
+    request<Session>('/api/session/login', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: json({ username, password }),
     }),
-
-  refreshSession: () =>
-    requestJson<LoginResponse>(appConfig.endpoints.refresh, {
+  guest: () => request<Session>('/api/session/guest', { method: 'POST' }),
+  session: () => request<Session>('/api/session'),
+  logout: () => request<void>('/api/session', { method: 'DELETE' }),
+  projects: (init?: RequestInit) => request<{ projects: Project[] }>('/api/projects', init),
+  project: (projectId: string) => request<Project>(`/api/projects/${projectId}`),
+  createProject: (title: string, description: string) =>
+    request<Project>('/api/projects', {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: json({ title, description }),
     }),
-
-  logout: () =>
-    requestJson<{ message: string }>(appConfig.endpoints.logout, {
+  createDocument: (
+    projectId: string,
+    payload: {
+      kind: DocumentKind;
+      title: string;
+      content_markdown?: string;
+    },
+  ) =>
+    request<StudioDocument>(`/api/projects/${projectId}/documents`, {
       method: 'POST',
-      body: JSON.stringify({}),
+      body: json(payload),
     }),
-
-  getCurrentUser: () =>
-    requestJson<CurrentUserResponse>(appConfig.endpoints.currentUser),
-
-  listProviders: (init?: RequestInit) =>
-    requestJson<ProviderListResponse>(appConfig.endpoints.providers, init),
-
-  listWorkspaces: (init?: RequestInit) =>
-    requestJson<WorkspaceListResponse>(appConfig.endpoints.workspaces, init),
-
-  createWorkspace: (payload: WorkspaceCreateRequest) =>
-    requestJson<WorkspaceStatus>(appConfig.endpoints.workspaces, {
-      method: 'POST',
-      body: JSON.stringify(payload),
+  reorderDocuments: (projectId: string, documentIds: string[]) =>
+    request<{ documents: StudioDocument[] }>(`/api/projects/${projectId}/documents/reorder`, {
+      method: 'PUT',
+      body: json({ document_ids: documentIds }),
     }),
-
-  getWorkspace: (workspaceId: string, init?: RequestInit) =>
-    requestJson<WorkspaceStatus>(
-      `${appConfig.endpoints.workspaces}/${encodeURIComponent(workspaceId)}`,
-      init,
+  saveDocument: (
+    projectId: string,
+    documentId: string,
+    payload: {
+      content_markdown: string;
+      base_revision_id: string;
+      title?: string;
+      metadata?: Record<string, unknown>;
+    },
+  ) =>
+    request<StudioDocument>(`/api/projects/${projectId}/documents/${documentId}`, {
+      method: 'PUT',
+      body: json(payload),
+    }),
+  revisions: (projectId: string, documentId: string) =>
+    request<{ revisions: Revision[] }>(
+      `/api/projects/${projectId}/documents/${documentId}/revisions`,
     ),
-
-  createWorkspaceJob: (workspaceId: string, payload: WorkspaceJobRequest) =>
-    requestJson<WorkspaceJob>(
-      `${appConfig.endpoints.workspaces}/${encodeURIComponent(workspaceId)}/jobs`,
-      {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      },
+  restoreRevision: (
+    projectId: string,
+    documentId: string,
+    revisionId: string,
+    baseRevisionId: string,
+  ) =>
+    request<StudioDocument>(
+      `/api/projects/${projectId}/documents/${documentId}/revisions/${revisionId}/restore`,
+      { method: 'POST', body: json({ base_revision_id: baseRevisionId }) },
     ),
-
-  getWorkspaceJob: (workspaceId: string, jobId: string, init?: RequestInit) =>
-    requestJson<WorkspaceJob>(
-      `${appConfig.endpoints.workspaces}/${encodeURIComponent(
-        workspaceId,
-      )}/jobs/${encodeURIComponent(jobId)}`,
-      init,
+  search: (projectId: string, query: string) =>
+    request<{ results: Array<{ document_id: string; title: string; excerpt: string }> }>(
+      `/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`,
     ),
+  proposal: (
+    projectId: string,
+    documentId: string,
+    operation: 'continue' | 'rewrite' | 'generate',
+    instruction: string,
+    provider: string,
+  ) =>
+    request<StudioJob>(`/api/projects/${projectId}/documents/${documentId}/ai-proposals`, {
+      method: 'POST',
+      body: json({ operation, instruction, provider }),
+    }),
+  acceptProposal: (projectId: string, jobId: string) =>
+    request<StudioJob>(`/api/projects/${projectId}/ai-proposals/${jobId}/accept`, {
+      method: 'POST',
+    }),
+  reviews: (projectId: string) =>
+    request<{ reviews: Review[] }>(`/api/projects/${projectId}/reviews`),
+  createReview: (projectId: string) =>
+    request<Review>(`/api/projects/${projectId}/reviews`, { method: 'POST' }),
+  exports: (projectId: string) =>
+    request<{ exports: StudioExport[] }>(`/api/projects/${projectId}/exports`),
+  createExport: (projectId: string, format: ExportFormat) =>
+    request<StudioExport>(`/api/projects/${projectId}/exports`, {
+      method: 'POST',
+      body: json({ format }),
+    }),
 };
