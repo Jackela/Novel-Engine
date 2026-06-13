@@ -95,13 +95,21 @@ const backendPort = await getFreePort();
 const backendUrl = `http://127.0.0.1:${backendPort}`;
 const backendCommand = process.env.PYTHON_BIN ?? 'uv';
 const backendArgs = process.env.PYTHON_BIN
-  ? ['-m', 'uvicorn', 'src.apps.api.main:app', '--host', '127.0.0.1', '--port', String(backendPort)]
+  ? [
+      '-m',
+      'src.apps.cli.novel_engine',
+      'serve',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(backendPort),
+    ]
   : [
       'run',
       'python',
       '-m',
-      'uvicorn',
-      'src.apps.api.main:app',
+      'src.apps.cli.novel_engine',
+      'serve',
       '--host',
       '127.0.0.1',
       '--port',
