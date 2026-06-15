@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [python, javascript, javascript-typescript]
+        language: [python, javascript-typescript]
 
     steps:
       - name: Checkout
