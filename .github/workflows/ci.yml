@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
         with:
           enable-cache: true
@@ -51,14 +51,26 @@ jobs:
       - name: Validate backend
         run: |
           uv run ruff check src tests
+          uv run bandit -r src
+          uv run mypy src
+          uv run lint-imports
           uv run pytest -q
           uv run python scripts/qa/check_openapi_snapshot.py
       - name: Validate frontend
         working-directory: frontend
         run: |
+          pnpm lint
+          pnpm format:check
           pnpm type-check
           pnpm test:unit
           pnpm build
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
       - name: Install Playwright Chromium
         working-directory: frontend
         run: pnpm exec playwright install --with-deps chromium
@@ -110,4 +122,4 @@ jobs:
           done
           curl -fsS http://127.0.0.1:8000/health/ready
           curl -fsS -b cookies.txt http://127.0.0.1:8000/api/session | grep -q '"kind":"owner"'
-          docker exec novel-studio python -c "import sqlite3; connection=sqlite3.connect('/app/data/novel-engine.sqlite3'); assert connection.execute('PRAGMA quick_check').fetchone() == ('ok',); assert connection.execute('SELECT version_num FROM alembic_version').fetchone() == ('0002_stable_revision_numbers',)"
+          docker exec novel-studio python -c "import sqlite3; connection=sqlite3.connect('/app/data/novel-engine.sqlite3'); assert connection.execute('PRAGMA quick_check').fetchone() == ('ok',); assert connection.execute('SELECT version_num FROM alembic_version').fetchone() == ('0003_add_csrf_token_to_sessions',)"

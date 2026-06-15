@@ -6,9 +6,4 @@ const apiTimeoutMs = Number(import.meta.env.VITE_API_TIMEOUT ?? '300000');
 export const appConfig = {
   apiBaseUrl,
   apiTimeoutMs,
-  endpoints: {
-    setup: '/api/setup',
-    session: '/api/session',
-    projects: '/api/projects',
-  },
 } as const;

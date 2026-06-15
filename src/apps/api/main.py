@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, cast
 
@@ -17,13 +16,20 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.apps.api.health import health_router
 from src.apps.api.middleware.cors import get_cors_config
 from src.apps.api.middleware.error_handler import setup_exception_handlers
-from src.apps.api.router import api_router
-from src.contexts.studio.application.services import studio_store
+from src.contexts.studio.application.services import (
+    StudioStore,
+    configure_studio_store,
+    is_studio_store_configured,
+    studio_store,
+)
+from src.contexts.studio.infrastructure.ai_provider import (
+    create_studio_text_generation_provider,
+)
+from src.contexts.studio.infrastructure.database import studio_database
+from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import (
-    DEFAULT_SECRET_KEY,
     NovelEngineSettings,
     get_settings,
 )
@@ -34,6 +40,7 @@ from src.shared.infrastructure.middleware import (
     CorrelationIdMiddleware,
     LoggingMiddleware,
     MetricsMiddleware,
+    RateLimitMiddleware,
     start_prometheus_server,
 )
 
@@ -157,18 +164,19 @@ def create_application(
     settings: NovelEngineSettings | None = None,
 ) -> FastAPI:
     """Create and configure the canonical FastAPI application."""
-    provided_settings = settings is not None
     resolved_settings = settings or get_settings()
-    security_secret = os.getenv("SECURITY_SECRET_KEY")
 
-    if (
-        not provided_settings
-        and (resolved_settings.is_staging or resolved_settings.is_production)
-        and (not security_secret or security_secret == DEFAULT_SECRET_KEY)
-    ):
-        raise RuntimeError(
-            "SECURITY_SECRET_KEY must be set for staging and production"
+    if not is_studio_store_configured():
+        configure_studio_store(
+            StudioStore(
+                repository=SqlAlchemyStudioRepository(studio_database),
+                data_dir=resolved_settings.data_dir,
+                ai_provider_factory=create_studio_text_generation_provider,
+            )
         )
+
+    from src.apps.api.health import health_router
+    from src.apps.api.router import api_router
 
     app = FastAPI(
         title=resolved_settings.project_name,
@@ -211,6 +219,7 @@ def create_application(
     if resolved_settings.monitoring.metrics_enabled:
         app.add_middleware(MetricsMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
+    app.add_middleware(RateLimitMiddleware)
 
     setup_exception_handlers(app)
 

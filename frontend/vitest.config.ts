@@ -15,7 +15,8 @@ export default defineConfig({
     exclude: ['tests/e2e/**'],
     coverage: {
       reporter: ['text', 'html'],
-      include: ['src/app/api.ts', 'src/app/config.ts'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
+      exclude: ['src/main.tsx', 'src/vite-env.d.ts'],
     },
   },
 });

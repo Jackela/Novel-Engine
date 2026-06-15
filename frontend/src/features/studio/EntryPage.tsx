@@ -14,11 +14,27 @@ export function EntryPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    void api.session()
-      .then(() => navigate('/projects', { replace: true }))
-      .catch(() => api.setupStatus().then(setSetup).catch((reason: unknown) => {
-        setError(reason instanceof Error ? reason.message : 'Unable to reach Novel Studio.');
-      }));
+    let mounted = true;
+    void api
+      .session()
+      .then(() => {
+        if (mounted) navigate('/projects', { replace: true });
+      })
+      .catch(() =>
+        api
+          .setupStatus()
+          .then((status) => {
+            if (mounted) setSetup(status);
+          })
+          .catch((reason: unknown) => {
+            if (mounted) {
+              setError(reason instanceof Error ? reason.message : 'Unable to reach Novel Studio.');
+            }
+          }),
+      );
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   const submit = async (event: FormEvent) => {
@@ -89,7 +105,9 @@ export function EntryPage() {
             {busy ? 'Opening...' : setup?.owner_configured ? 'Sign in' : 'Create owner'}
           </button>
         </form>
-        <div className="entry__divider"><span>or</span></div>
+        <div className="entry__divider">
+          <span>or</span>
+        </div>
         <button className="command" disabled={busy} onClick={() => void guest()} type="button">
           <Sparkles aria-hidden="true" />
           Try a 24-hour guest studio

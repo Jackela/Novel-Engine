@@ -11,13 +11,37 @@ from alembic.config import Config
 from sqlalchemy import text
 
 from alembic import command
-from src.contexts.studio.application.services import studio_store
-from src.contexts.studio.infrastructure.database import backup_database
+from src.contexts.studio.application.services import (
+    StudioStore,
+    configure_studio_store,
+    is_studio_store_configured,
+    studio_store,
+)
+from src.contexts.studio.infrastructure.ai_provider import (
+    create_studio_text_generation_provider,
+)
+from src.contexts.studio.infrastructure.database import backup_database, studio_database
+from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import get_settings
+
+
+def _configure_store() -> None:
+    """Wire the application-layer store singleton with infrastructure."""
+    if is_studio_store_configured():
+        return
+    settings = get_settings()
+    configure_studio_store(
+        StudioStore(
+            repository=SqlAlchemyStudioRepository(studio_database),
+            data_dir=settings.data_dir,
+            ai_provider_factory=create_studio_text_generation_provider,
+        )
+    )
 
 
 def _prepare_database() -> None:
     """Back up the current SQLite store and apply all pending migrations."""
+    _configure_store()
     path = studio_store.database.path
     if path is not None:
         backup_database(path)
@@ -49,6 +73,7 @@ def _import_workspace(args: argparse.Namespace) -> int:
 
 
 def _backup(_args: argparse.Namespace) -> int:
+    _configure_store()
     path = studio_store.database.path
     if path is None:
         raise RuntimeError("The configured database is not a file-backed SQLite database.")

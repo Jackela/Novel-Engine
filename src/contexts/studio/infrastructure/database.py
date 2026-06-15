@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterator
 from uuid import uuid4
 
-from sqlalchemy import Engine, create_engine, event, text
+from sqlalchemy import Engine, create_engine, event, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.contexts.studio.infrastructure.models import Base, Job, JobEvent
@@ -96,7 +96,7 @@ class StudioDatabase:
     def recover_jobs(self) -> int:
         """Mark lease-less running work interrupted after a process restart."""
         with self.session() as session:
-            jobs = session.query(Job).filter(Job.status == "running").all()
+            jobs = session.scalars(select(Job).where(Job.status == "running")).all()
             now = datetime.now(UTC)
             for job in jobs:
                 job.status = "interrupted"
