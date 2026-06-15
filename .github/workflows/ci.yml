@@ -101,6 +101,7 @@ jobs:
           docker volume create novel-studio-ci
           docker run -d --name novel-studio -p 8000:8000 \
             -e SECURITY_SECRET_KEY=container-test-secret-key-1234567890 \
+            -e SECURITY_CORS_ORIGINS=https://app.example.com \
             -v novel-studio-ci:/app/data \
             novel-studio:ci
           for attempt in {1..30}; do
