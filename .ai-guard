@@ -1,0 +1,38 @@
+# .ai-guard — AI 禁区清单（Novel-Engine）
+
+## 只读（任何情况下不得修改）
+- alembic/versions/*
+- .env*
+- config/env/*
+- data/*.sqlite3
+- data/backups/*
+- .coverage
+- AUDIT_REPORT_Linus.md
+- src/events/outbox.py（待人工审批后删除）
+- src/apps/workers/__init__.py（空占位）
+
+## 修改前必须单独确认
+- pyproject.toml
+- package.json / pnpm-lock.yaml / uv.lock
+- README.md
+- compose.yaml
+- Dockerfile
+- Makefile / justfile
+- .pre-commit-config.yaml
+
+## 编码红线
+- 禁止裸 except Exception
+- 禁止 SQL/FTS5 字符串拼接
+- 禁止删除 raise / assert / validate / sanitize / escape / auth / permission 相关代码
+- 禁止引入新依赖（npm/pip/uv add）
+- 禁止修改测试文件（除非审计明确要求）
+- Python 函数不超过 50 行
+- React 组件不超过 200 行
+- 所有新增 Python 函数必须有类型注解
+
+## 执行约束
+- 一次最多修改 3 个文件
+- 修改前必须运行相关测试并确认通过
+- 修改后必须再次运行测试
+- 优先 surgical fix，禁止重写整个模块
+- 每个 Finding 独立处理，禁止跨 Finding 传递上下文
