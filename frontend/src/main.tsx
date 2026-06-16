@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import '@fontsource-variable/geist';
 
-import { router, routerFuture } from '@/app/router';
+import { router } from '@/app/router';
 import '@/index.css';
 
 type ErrorBoundaryProps = {
@@ -47,7 +47,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <RouterProvider future={routerFuture} router={router} />
+      <RouterProvider router={router} />
     </ErrorBoundary>
   </React.StrictMode>,
 );
