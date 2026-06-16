@@ -151,8 +151,8 @@ def test_project_version_defaults_to_package_version(
 
     settings = NovelEngineSettings()
 
-    assert settings.project_version == "0.3.0"
-    assert settings.api.version == "0.3.0"
+    assert settings.project_version == "0.3.1"
+    assert settings.api.version == "0.3.1"
 
 
 def test_production_settings_reject_unsafe_defaults(
