@@ -1,0 +1,315 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from src.contexts.studio.infrastructure.repository.common import (
+    Any,
+    Document,
+    DocumentDto,
+    DocumentRevision,
+    InvalidOperation,
+    NotFound,
+    Project,
+    RevisionDto,
+    Session,
+    StudioDatabase,
+    _document_dto,
+    _revision_dto,
+    datetime,
+    func,
+    new_id,
+    select,
+    text,
+)
+
+__all__ = ["DocumentRepositoryMixin"]
+
+
+class DocumentRepositoryMixin:
+    database: StudioDatabase
+
+    if TYPE_CHECKING:
+
+        def _project(
+            self,
+            session: Session,
+            project_id: str,
+            owner_id: str | None,
+            guest_session_id: str | None,
+        ) -> Project: ...
+
+    def _document(
+        self,
+        session: Session,
+        project: Project,
+        document_id: str,
+    ) -> Document:
+        document = session.scalar(
+            select(Document).where(
+                Document.id == document_id,
+                Document.project_id == project.id,
+            )
+        )
+        if document is None:
+            raise NotFound("Document not found.")
+        return document
+
+    def create_document(
+        self,
+        *,
+        project_id: str,
+        owner_id: str | None,
+        guest_session_id: str | None,
+        kind: str,
+        title: str,
+        content_markdown: str,
+        position: int,
+        metadata_json: str,
+        source: str,
+        now: datetime,
+    ) -> DocumentDto:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = Document(
+                id=new_id(),
+                project_id=project.id,
+                kind=kind,
+                title=title,
+                position=position,
+                created_at=now,
+                updated_at=now,
+            )
+            session.add(document)
+            session.flush()
+            revision = DocumentRevision(
+                id=new_id(),
+                document_id=document.id,
+                parent_revision_id=None,
+                revision_number=1,
+                content_markdown=content_markdown,
+                metadata_json=metadata_json,
+                source=source,
+                created_at=now,
+            )
+            session.add(revision)
+            session.flush()
+            document.current_revision_id = revision.id
+            self._refresh_search(session, document, revision)
+            project.updated_at = now
+            session.flush()
+            return _document_dto(document)
+
+    def list_documents(self, project_id: str) -> list[DocumentDto]:
+        with self.database.session() as session:
+            documents = session.scalars(
+                select(Document)
+                .where(Document.project_id == project_id)
+                .order_by(Document.kind, Document.position, Document.created_at)
+            ).all()
+            return [_document_dto(document) for document in documents]
+
+    def get_document(
+        self,
+        project_id: str,
+        document_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> DocumentDto:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = self._document(session, project, document_id)
+            return _document_dto(document)
+
+    def delete_document(
+        self,
+        project_id: str,
+        document_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> None:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = self._document(session, project, document_id)
+            session.execute(
+                text("DELETE FROM document_search WHERE document_id = :document_id"),
+                {"document_id": document.id},
+            )
+            session.delete(document)
+
+    def next_document_position(self, project_id: str, kind: str) -> int:
+        with self.database.session() as session:
+            max_position = session.scalar(
+                select(func.max(Document.position)).where(
+                    Document.project_id == project_id,
+                    Document.kind == kind,
+                )
+            )
+            return (max_position or 0) + 1
+
+    def save_document(
+        self,
+        project_id: str,
+        document_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+        content_markdown: str,
+        base_revision_id: str | None,
+        title: str | None,
+        metadata_json: str,
+        source: str,
+        now: datetime,
+    ) -> DocumentDto:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = self._document(session, project, document_id)
+            if document.current_revision_id != base_revision_id:
+                raise InvalidOperation("Document changed since the requested base revision.")
+            current_revision = self._current_revision(session, document)
+            if title is not None:
+                document.title = title
+            revision = DocumentRevision(
+                id=new_id(),
+                document_id=document.id,
+                parent_revision_id=document.current_revision_id,
+                revision_number=current_revision.revision_number + 1,
+                content_markdown=content_markdown,
+                metadata_json=metadata_json,
+                source=source,
+                created_at=now,
+            )
+            session.add(revision)
+            session.flush()
+            document.current_revision_id = revision.id
+            document.updated_at = now
+            project.updated_at = now
+            self._refresh_search(session, document, revision)
+            session.flush()
+            return _document_dto(document)
+
+    def _current_revision(
+        self,
+        session: Session,
+        document: Document,
+    ) -> DocumentRevision:
+        if document.current_revision_id is None:
+            raise InvalidOperation("Document has no current revision.")
+        revision = session.get(DocumentRevision, document.current_revision_id)
+        if revision is None:
+            raise InvalidOperation("Document revision chain is invalid.")
+        return revision
+
+    def _refresh_search(
+        self,
+        session: Session,
+        document: Document,
+        revision: DocumentRevision,
+    ) -> None:
+        session.execute(
+            text("DELETE FROM document_search WHERE document_id = :document_id"),
+            {"document_id": document.id},
+        )
+        session.execute(
+            text(
+                "INSERT INTO document_search(document_id, project_id, title, content) "
+                "VALUES (:document_id, :project_id, :title, :content)"
+            ),
+            {
+                "document_id": document.id,
+                "project_id": document.project_id,
+                "title": document.title,
+                "content": revision.content_markdown,
+            },
+        )
+
+    def get_revision(
+        self,
+        project_id: str,
+        document_id: str,
+        revision_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> RevisionDto:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = self._document(session, project, document_id)
+            revision = session.scalar(
+                select(DocumentRevision).where(
+                    DocumentRevision.id == revision_id,
+                    DocumentRevision.document_id == document.id,
+                )
+            )
+            if revision is None:
+                raise NotFound("Revision not found.")
+            return _revision_dto(revision)
+
+    def list_revisions(
+        self,
+        project_id: str,
+        document_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> list[RevisionDto]:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            document = self._document(session, project, document_id)
+            revisions = session.scalars(
+                select(DocumentRevision)
+                .where(DocumentRevision.document_id == document.id)
+                .order_by(DocumentRevision.revision_number.desc())
+            ).all()
+            return [_revision_dto(revision) for revision in revisions]
+
+    def reorder_documents(
+        self,
+        project_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+        document_ids: list[str],
+        now: datetime,
+    ) -> list[DocumentDto]:
+        with self.database.session() as session:
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            documents = {
+                document.id: document
+                for document in session.scalars(
+                    select(Document).where(Document.project_id == project.id)
+                ).all()
+            }
+            if set(document_ids) != set(documents):
+                raise InvalidOperation("Reorder must include every project document once.")
+            for position, doc_id in enumerate(document_ids, start=1):
+                documents[doc_id].position = position
+                documents[doc_id].updated_at = now
+            project.updated_at = now
+            session.flush()
+            return [
+                _document_dto(documents[doc_id])
+                for doc_id in document_ids
+            ]
+
+    def search_documents(
+        self,
+        project_id: str,
+        query: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> list[dict[str, Any]]:
+        with self.database.session() as session:
+            self._project(session, project_id, owner_id, guest_session_id)
+            rows = session.execute(
+                text(
+                    "SELECT document_id, title, snippet(document_search, 3, '', "
+                    "'', ' … ', 16) AS excerpt "
+                    "FROM document_search WHERE project_id = :project_id "
+                    "AND document_search MATCH :query ORDER BY rank LIMIT 30"
+                ),
+                {"project_id": project_id, "query": query},
+            ).mappings()
+            return [dict(row) for row in rows]

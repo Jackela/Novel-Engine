@@ -35,6 +35,34 @@ def _clear_dashscope_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+def test_llm_defaults_match_documented_mock_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+
+    settings = NovelEngineSettings()
+
+    assert settings.llm.provider == "mock"
+    assert settings.llm.model == "studio-copilot-v1"
+    assert settings.llm.resolved_model("mock") == "studio-copilot-v1"
+
+
+def test_metrics_default_is_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+
+    settings = NovelEngineSettings()
+
+    assert settings.monitoring.metrics_enabled is False
+
+
 def test_novel_engine_settings_loads_dashscope_values_from_dotenv_local(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

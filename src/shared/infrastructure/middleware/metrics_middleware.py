@@ -4,15 +4,15 @@ This module provides middleware for collecting Prometheus metrics
 for all HTTP requests including request counts and duration histograms.
 """
 
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request
 from prometheus_client import Counter, Gauge, Histogram
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-# Prometheus metrics
-# Note: Metrics server should be started separately, not in middleware
+# Prometheus metrics are exposed by start_prometheus_server(), which the
+# FastAPI lifespan calls when metrics are enabled.
 http_requests_total = Counter(
     "http_requests_total",
     "Total HTTP requests",
@@ -41,8 +41,8 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     - Request duration histogram by method and endpoint
     - Requests currently in progress
 
-    Note: The Prometheus metrics server should be started separately
-    using start_prometheus_server() function.
+    The FastAPI lifespan starts the Prometheus metrics server when metrics
+    are enabled.
     """
 
     async def dispatch(
@@ -65,30 +65,23 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         http_requests_in_progress.labels(method=method, endpoint=endpoint).inc()
 
         try:
-            # Time the request
             with http_request_duration_seconds.labels(
                 method=method, endpoint=endpoint
             ).time():
                 response = await call_next(request)
-
-            # Record request count with status code
             http_requests_total.labels(
                 method=method,
                 endpoint=endpoint,
                 status_code=str(response.status_code),
             ).inc()
-
             return response
-
-        except Exception:
-            # Record failed request with 500 status
+        except (RuntimeError, TypeError, ValueError):
             http_requests_total.labels(
                 method=method,
                 endpoint=endpoint,
                 status_code="500",
             ).inc()
             raise
-
         finally:
             # Decrement in-progress counter
             http_requests_in_progress.labels(method=method, endpoint=endpoint).dec()

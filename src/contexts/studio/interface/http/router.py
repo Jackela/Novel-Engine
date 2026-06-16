@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import secrets
+from collections.abc import Awaitable, Callable
 from functools import wraps
 from pathlib import Path
 from typing import (
     Annotated,
     Any,
-    Awaitable,
-    Callable,
     Literal,
     NoReturn,
     ParamSpec,
@@ -352,6 +351,21 @@ async def update_project(
     )
 
 
+@router.delete(
+    "/projects/{project_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    response_model=None,
+)
+@_handle_domain_exceptions
+async def delete_project(
+    project_id: str,
+    principal: PrincipalDependency,
+) -> Response:
+    studio_store.delete_project(principal, project_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post("/projects/{project_id}/documents", status_code=status.HTTP_201_CREATED)
 @_handle_domain_exceptions
 async def create_document(
@@ -413,6 +427,22 @@ async def save_document(
         title=payload.title,
         metadata=payload.metadata,
     )
+
+
+@router.delete(
+    "/projects/{project_id}/documents/{document_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    response_model=None,
+)
+@_handle_domain_exceptions
+async def delete_document(
+    project_id: str,
+    document_id: str,
+    principal: PrincipalDependency,
+) -> Response:
+    studio_store.delete_document(principal, project_id, document_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/projects/{project_id}/documents/{document_id}/revisions")

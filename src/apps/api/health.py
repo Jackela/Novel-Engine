@@ -11,6 +11,7 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.contexts.studio.application.services import studio_store
 from src.shared.infrastructure.config.settings import get_settings
@@ -53,7 +54,7 @@ def _database_component() -> ComponentStatusResponse:
         with studio_store.database.engine.connect() as connection:
             connection.execute(text("SELECT 1"))
         return ComponentStatusResponse(status="healthy", message="SQLite ready")
-    except Exception as exc:
+    except (RuntimeError, SQLAlchemyError) as exc:
         return ComponentStatusResponse(status="unhealthy", error=str(exc))
 
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from alembic.config import Config
 from sqlalchemy import text
@@ -20,7 +20,10 @@ from src.contexts.studio.application.services import (
 from src.contexts.studio.infrastructure.ai_provider import (
     create_studio_text_generation_provider,
 )
-from src.contexts.studio.infrastructure.database import backup_database, studio_database
+from src.contexts.studio.infrastructure.database import (
+    backup_database,
+    create_studio_database,
+)
 from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import get_settings
 
@@ -30,9 +33,10 @@ def _configure_store() -> None:
     if is_studio_store_configured():
         return
     settings = get_settings()
+    database = create_studio_database(settings)
     configure_studio_store(
         StudioStore(
-            repository=SqlAlchemyStudioRepository(studio_database),
+            repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
             ai_provider_factory=create_studio_text_generation_provider,
         )
@@ -55,11 +59,12 @@ def _serve(args: argparse.Namespace) -> int:
     _prepare_database()
     settings = get_settings()
     uvicorn.run(
-        "src.apps.api.main:app",
+        "src.apps.api.main:create_application",
         host=args.host or settings.api.host,
         port=args.port or settings.api.port,
         reload=bool(args.reload),
         log_level=settings.logging.level.value.lower(),
+        factory=True,
     )
     return 0
 
@@ -68,7 +73,7 @@ def _import_workspace(args: argparse.Namespace) -> int:
     _prepare_database()
     principal = studio_store.owner_principal(args.owner)
     project = studio_store.import_legacy_workspace(principal, Path(args.source))
-    print(json.dumps(project, ensure_ascii=False, indent=2))
+    print(json.dumps(project, ensure_ascii=False, indent=2))  # noqa: T201
     return 0
 
 
@@ -78,7 +83,7 @@ def _backup(_args: argparse.Namespace) -> int:
     if path is None:
         raise RuntimeError("The configured database is not a file-backed SQLite database.")
     target = backup_database(path)
-    print(str(target) if target else "No database exists yet.")
+    print(str(target) if target else "No database exists yet.")  # noqa: T201
     return 0
 
 
@@ -96,7 +101,7 @@ def _doctor(_args: argparse.Namespace) -> int:
         "foreign_keys": bool(foreign_keys),
         "owner_configured": studio_store.owner_exists(),
     }
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    print(json.dumps(payload, ensure_ascii=False, indent=2))  # noqa: T201
     return 0 if quick_check == "ok" and foreign_keys else 1
 
 

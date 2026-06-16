@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from fastapi import HTTPException
@@ -31,7 +31,7 @@ from src.contexts.studio.interface.http.router import (
     ],
 )
 def test_raise_http_maps_domain_exceptions(
-    exc: Exception,
+    exc: NotFound | RevisionConflict | InvalidOperation,
     expected_status: int,
     expected_detail: Any,
 ) -> None:
@@ -71,7 +71,8 @@ async def test_handle_domain_exceptions_converts_revision_conflict() -> None:
         await handler()
 
     assert ctx.value.status_code == 409
-    assert ctx.value.detail["current_revision_id"] == "rev-2"
+    detail = cast(dict[str, str], ctx.value.detail)
+    assert detail["current_revision_id"] == "rev-2"
 
 
 async def test_handle_domain_exceptions_converts_invalid_operation() -> None:

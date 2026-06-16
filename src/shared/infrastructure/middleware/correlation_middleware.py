@@ -5,7 +5,8 @@ enabling distributed tracing and request tracking across services.
 """
 
 import uuid
-from typing import Awaitable, Callable, cast
+from collections.abc import Awaitable, Callable
+from typing import cast
 
 import structlog
 from fastapi import Request

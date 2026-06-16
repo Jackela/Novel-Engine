@@ -141,4 +141,4 @@ async def test_token_bucket_uses_per_key_locks() -> None:
         limiter.is_allowed("b"),
         limiter.is_allowed("b"),
     )
-    assert results == [True, True, True, True]
+    assert list(results) == [True, True, True, True]

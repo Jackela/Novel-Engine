@@ -5,7 +5,7 @@ with detailed information including timing, status codes, and error details.
 """
 
 import time
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -49,41 +49,20 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             user_agent=request.headers.get("user-agent"),
         )
 
-        # Process request
-        try:
-            response = await call_next(request)
+        response = await call_next(request)
+        duration = time.time() - start_time
+        duration_ms = round(duration * 1000, 2)
 
-            # Calculate duration
-            duration = time.time() - start_time
-            duration_ms = round(duration * 1000, 2)
+        logger.info(
+            "Request completed",
+            path=request.url.path,
+            method=request.method,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+            content_length=response.headers.get("content-length"),
+        )
 
-            # Log response
-            logger.info(
-                "Request completed",
-                path=request.url.path,
-                method=request.method,
-                status_code=response.status_code,
-                duration_ms=duration_ms,
-                content_length=response.headers.get("content-length"),
-            )
-
-            return response
-
-        except Exception as e:
-            # Calculate duration even for errors
-            duration = time.time() - start_time
-            duration_ms = round(duration * 1000, 2)
-
-            # Log error
-            logger.error(
-                "Request failed",
-                path=request.url.path,
-                method=request.method,
-                error=str(e),
-                error_type=type(e).__name__,
-                duration_ms=duration_ms,
-            )
-            raise
+        return response
 
 
 __all__ = ["LoggingMiddleware"]
