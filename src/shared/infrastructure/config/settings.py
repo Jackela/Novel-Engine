@@ -28,7 +28,7 @@ def _package_version() -> str:
     try:
         return version("novel-engine")
     except PackageNotFoundError:
-        return "0.3.0"
+        return "0.3.1"
 
 
 def _settings_config(

@@ -15,8 +15,8 @@ def main() -> int:
     failures: list[str] = []
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     version = str(project["project"]["version"])
-    if version != "0.3.0":
-        failures.append(f"pyproject.toml must define release version 0.3.0, got {version}")
+    if version != "0.3.1":
+        failures.append(f"pyproject.toml must define release version 0.3.1, got {version}")
 
     package = json.loads((ROOT / "frontend" / "package.json").read_text(encoding="utf-8"))
     if "version" in package:

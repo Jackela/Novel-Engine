@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.1
+
+- Remediated Linus-style audit findings across security, architecture,
+  documentation, and dead code.
+- Added AI guardrails, local safety checks, and stronger CI/pre-commit mypy
+  coverage for tests.
+
 ## 0.3.0
 
 - Added the self-hosted Novel Studio API and React writing workspace.
