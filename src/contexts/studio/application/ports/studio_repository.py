@@ -295,6 +295,16 @@ class StudioRepository(Protocol):
         """Update a project's mutable fields."""
         ...
 
+    def delete_project(
+        self,
+        project_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> None:
+        """Delete a visible project and all dependent Studio records."""
+        ...
+
     def find_project_by_import_hash(self, import_hash: str) -> ProjectDto | None:
         """Look up a project by its legacy import hash."""
         ...
@@ -336,6 +346,17 @@ class StudioRepository(Protocol):
         guest_session_id: str | None,
     ) -> DocumentDto:
         """Fetch a document visible to the principal."""
+        ...
+
+    def delete_document(
+        self,
+        project_id: str,
+        document_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> None:
+        """Delete a visible document and all dependent document records."""
         ...
 
     def next_document_position(self, project_id: str, kind: str) -> int:

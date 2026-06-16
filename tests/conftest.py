@@ -84,16 +84,13 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
 
 @pytest.fixture
 def canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
-    try:
-        return build_canonical_app(monkeypatch)
-    except Exception as exc:
-        pytest.fail(f"canonical app failed to build: {exc}")
+    return build_canonical_app(monkeypatch)
 
 
 class _CsrfTestClient(TestClient):
     """TestClient that automatically sends the X-CSRF-Token header for writes."""
 
-    def request(self, method: str, url: str, **kwargs: Any) -> Any:
+    def request(self, method: str, url: str, **kwargs: Any) -> Any:  # type: ignore[override]
         if method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
             token = self.cookies.get("novel_studio_csrf")
             if token:

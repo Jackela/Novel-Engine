@@ -15,7 +15,7 @@ from uuid import UUID, uuid4
 
 
 @dataclass(frozen=True, kw_only=True)
-class DomainEvent(ABC):
+class DomainEvent(ABC):  # noqa: B024
     """Abstract base class for all domain events.
 
     Domain events capture occurrences in the domain that are relevant
@@ -39,7 +39,7 @@ class DomainEvent(ABC):
         >>> event = OrderCreated(aggregate_id=order_id, customer_id=cid, total_amount=amt)
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+    def __new__(cls, *_args: Any, **_kwargs: Any) -> Any:
         if cls is DomainEvent:
             raise TypeError("Cannot instantiate abstract class DomainEvent")
         return super().__new__(cls)

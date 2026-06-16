@@ -13,10 +13,12 @@ from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationTask,
 )
 from src.contexts.studio.application.services import (
+    Principal,
     StudioStore,
     _sanitize_chapter_markdown,
 )
 from src.contexts.studio.domain.exceptions import RevisionConflict
+from src.contexts.studio.domain.types import ExportFormat
 from src.contexts.studio.domain.utils import load_json, utcnow
 from src.contexts.studio.infrastructure.ai_provider import (
     create_studio_text_generation_provider,
@@ -46,7 +48,7 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> StudioStore:
     )
 
 
-def _owner(store: StudioStore):
+def _owner(store: StudioStore) -> Principal:
     store.setup_owner("author", "long-test-password")
     return store.owner_principal()
 
@@ -143,9 +145,17 @@ def test_search_snapshot_and_exports_use_exact_revisions(store: StudioStore) -> 
     assert results[0]["document_id"] == document["id"]
     assert "<mark>" not in results[0]["excerpt"]
 
+    malicious_results = store.search(
+        principal,
+        project["id"],
+        'lighthouse" OR title:Chapter*',
+    )
+    assert malicious_results == []
+
+    export_formats: tuple[ExportFormat, ...] = ("markdown", "docx", "epub")
     exports = [
         store.export_project(principal, project["id"], export_format=export_format)
-        for export_format in ("markdown", "docx", "epub")
+        for export_format in export_formats
     ]
     assert len({item["snapshot_id"] for item in exports}) == 1
 

@@ -205,6 +205,10 @@ export const api = {
       method: 'PATCH',
       body: json(payload),
     }),
+  deleteProject: (projectId: string) =>
+    request<void>(`/api/projects/${projectId}`, { method: 'DELETE' }),
+  deleteDocument: (projectId: string, documentId: string) =>
+    request<void>(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }),
   jobs: (projectId: string) => request<{ jobs: StudioJob[] }>(`/api/projects/${projectId}/jobs`),
   retryJob: (projectId: string, jobId: string) =>
     request<StudioJob>(`/api/projects/${projectId}/jobs/${jobId}/retry`, {

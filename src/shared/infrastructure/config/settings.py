@@ -14,8 +14,9 @@ from typing import Annotated, Any, Literal, Self, cast
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-# Default placeholder; overridden in production by SECURITY_SECRET_KEY.
-DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"  # nosec B105
+# Development placeholder. Production and staging reject this value; local and
+# testing runs replace it with a generated/test secret at settings validation.
+DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"  # noqa: S105  # nosec B105
 LOCAL_DOTENV_FILE = ".env.local"
 
 
@@ -54,7 +55,7 @@ def _settings_config(
     return cast(SettingsConfigDict, config)
 
 
-class Environment(str, Enum):
+class Environment(str, Enum):  # noqa: UP042
     """Application environment types."""
 
     DEVELOPMENT = "development"
@@ -63,7 +64,7 @@ class Environment(str, Enum):
     PRODUCTION = "production"
 
 
-class LogLevel(str, Enum):
+class LogLevel(str, Enum):  # noqa: UP042
     """Logging level types."""
 
     DEBUG = "DEBUG"
@@ -103,7 +104,7 @@ class DatabaseSettings(BaseSettings):
 
 
 # Default bind for containers; override with API_HOST.
-_DEFAULT_API_HOST = "0.0.0.0"  # nosec B104
+_DEFAULT_API_HOST = "0.0.0.0"  # noqa: S104  # nosec B104
 
 
 class APISettings(BaseSettings):
@@ -244,10 +245,10 @@ class LLMSettings(BaseSettings):
     model_config = _settings_config(env_prefix="LLM_")
 
     provider: Literal["mock", "dashscope", "openai_compatible"] = Field(
-        default="dashscope",
+        default="mock",
         description="LLM provider name",
     )
-    model: str = Field(default="qwen3.5-flash", description="LLM model name")
+    model: str = Field(default="studio-copilot-v1", description="LLM model name")
     api_key: str | None = Field(
         default=None,
         description="API key for OpenAI-compatible providers",
@@ -379,7 +380,7 @@ class MonitoringSettings(BaseSettings):
     model_config = _settings_config(env_prefix="MONITORING_")
 
     enabled: bool = Field(default=True, description="Enable monitoring")
-    metrics_enabled: bool = Field(default=True, description="Enable Prometheus metrics")
+    metrics_enabled: bool = Field(default=False, description="Enable Prometheus metrics")
     metrics_port: int = Field(
         default=9090, ge=1024, le=65535, description="Metrics server port"
     )

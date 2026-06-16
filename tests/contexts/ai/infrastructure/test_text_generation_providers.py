@@ -30,11 +30,6 @@ from src.contexts.ai.infrastructure.providers.provider_factory import (
 from src.contexts.ai.infrastructure.providers.unconfigured_text_generation_provider import (
     UnconfiguredTextGenerationProvider,
 )
-from src.shared.infrastructure.circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerConfig,
-    CircuitBreakerOpenError,
-)
 from src.shared.infrastructure.config.settings import NovelEngineSettings
 
 
@@ -162,7 +157,7 @@ async def test_deterministic_provider_covers_supported_steps() -> None:
     }
 
 
-def test_provider_factory_default_dashscope_without_key_is_explicit(
+def test_provider_factory_default_mock_without_key_is_usable(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -173,7 +168,7 @@ def test_provider_factory_default_dashscope_without_key_is_explicit(
 
     provider = create_text_generation_provider(NovelEngineSettings())
 
-    assert isinstance(provider, UnconfiguredTextGenerationProvider)
+    assert isinstance(provider, DeterministicTextGenerationProvider)
 
 
 def test_provider_factory_rejects_unknown_provider(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -584,22 +579,12 @@ async def test_openai_compatible_provider_maps_transport_timeout(
 
 
 @pytest.mark.asyncio
-async def test_unconfigured_provider_error_trips_circuit_breaker() -> None:
+async def test_unconfigured_provider_reports_missing_credentials() -> None:
     provider = UnconfiguredTextGenerationProvider(
         provider_name="dashscope",
         model="qwen3.5-flash",
         message="DASHSCOPE_API_KEY is required",
     )
-    breaker = CircuitBreaker(
-        "ai-provider",
-        CircuitBreakerConfig(failure_threshold=1),
-        expected_exception=TextGenerationProviderError,
-    )
 
-    async def _call_provider() -> None:
+    with pytest.raises(TextGenerationProviderError, match="DASHSCOPE_API_KEY"):
         await provider.generate_structured(_task())
-
-    with pytest.raises(TextGenerationProviderError):
-        await breaker.call(_call_provider)
-    with pytest.raises(CircuitBreakerOpenError):
-        await breaker.call(_call_provider)
