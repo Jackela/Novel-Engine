@@ -23,6 +23,7 @@ def test_default_cors_config_includes_local_development_origins(
     assert "http://localhost:5173" in config["allow_origins"]
     assert config["allow_credentials"] is True
     assert "Authorization" in config["allow_headers"]
+    assert "X-CSRF-Token" in config["allow_headers"]
     assert "X-Request-ID" in config["expose_headers"]
 
 
@@ -58,10 +59,13 @@ def test_origin_allowance_supports_exact_wildcard_and_rejection(
 
     assert get_cors_origins() == [
         "https://app.example.com",
-        "http://localhost:*",
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "http://localhost:8000",
     ]
     assert is_origin_allowed("https://app.example.com") is True
     assert is_origin_allowed("http://localhost:5173") is True
+    assert is_origin_allowed("http://localhost:4173") is True
     assert is_origin_allowed("https://evil.example.com") is False
 
 

@@ -2,6 +2,9 @@ import { defineConfig } from 'vitest/config';
 import path from 'node:path';
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify('test'),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -15,7 +18,8 @@ export default defineConfig({
     exclude: ['tests/e2e/**'],
     coverage: {
       reporter: ['text', 'html'],
-      include: ['src/app/api.ts', 'src/app/config.ts'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
+      exclude: ['src/main.tsx', 'src/vite-env.d.ts'],
     },
   },
 });

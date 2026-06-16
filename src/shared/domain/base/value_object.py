@@ -38,7 +38,7 @@ class ValueObject(ABC):
         or equivalent to ensure immutability.
     """
 
-    def __new__(cls, *args: Any, **kwargs: Any) -> Any:
+    def __new__(cls, *_args: Any, **_kwargs: Any) -> Any:
         if cls is ValueObject:
             raise TypeError("Cannot instantiate abstract class ValueObject")
         return super().__new__(cls)
@@ -96,7 +96,7 @@ class ValueObject(ABC):
         return {field.name: getattr(self, field.name) for field in fields(self)}
 
     @final
-    def copy(self, **kwargs: Any) -> "ValueObject":
+    def copy(self, **kwargs: Any) -> ValueObject:
         """Create a new value object with updated attributes.
 
         Since value objects are immutable, this creates a new instance

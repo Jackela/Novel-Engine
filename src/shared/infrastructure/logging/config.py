@@ -6,7 +6,8 @@ with support for structured logging, distributed tracing, and flexible output fo
 
 import logging
 import sys
-from typing import Any, MutableMapping, cast
+from collections.abc import MutableMapping
+from typing import Any, cast
 
 import structlog
 
@@ -15,7 +16,7 @@ def configure_logging(
     log_level: str = "INFO",
     json_format: bool = False,
     service_name: str = "novel-engine",
-    service_version: str = "0.3.0",
+    service_version: str = "0.3.1",
 ) -> None:
     """Configure unified logging for the application.
 
@@ -38,6 +39,7 @@ def configure_logging(
 
     # Shared processors for both sync and async contexts
     shared_processors: list[structlog.types.Processor] = [
+        structlog.contextvars.merge_contextvars,
         structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
@@ -49,8 +51,8 @@ def configure_logging(
 
     # Add service context for distributed tracing
     def add_service_context(
-        logger: structlog.typing.WrappedLogger,
-        method_name: str,
+        _logger: structlog.typing.WrappedLogger,
+        _method_name: str,
         event_dict: MutableMapping[str, Any],
     ) -> MutableMapping[str, Any]:
         """Add service context for distributed tracing."""
@@ -74,9 +76,6 @@ def configure_logging(
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
-
-    # Also configure contextvars for distributed tracing
-    structlog.contextvars.merge_contextvars
 
 
 def get_logger(name: str | None = None) -> structlog.stdlib.BoundLogger:

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import ast
 import asyncio
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 from urllib.parse import urlsplit, urlunsplit
@@ -32,6 +32,57 @@ DashScopeTransportMode = Literal[
     "multimodal_generation",
     "responses",
 ]
+MIN_FENCED_BLOCK_LINES = 3
+
+
+@dataclass
+class _FragmentScanState:
+    depth: int = 0
+    start: int = -1
+    in_string: bool = False
+    string_delimiter: str = ""
+    escaped: bool = False
+
+    def consume_string_character(self, character: str) -> bool:
+        if not self.in_string:
+            return False
+        if self.escaped:
+            self.escaped = False
+            return True
+        if character == "\\":
+            self.escaped = True
+            return True
+        if character == self.string_delimiter:
+            self.in_string = False
+        return True
+
+    def enter_string(self, character: str) -> bool:
+        if character not in {'"', "'"}:
+            return False
+        self.in_string = True
+        self.string_delimiter = character
+        return True
+
+    def append_fragment(
+        self,
+        fragments: list[str],
+        text: str,
+        *,
+        index: int,
+        opening: str,
+        closing: str,
+    ) -> None:
+        if text[index] == opening:
+            if self.depth == 0:
+                self.start = index
+            self.depth += 1
+            return
+        if text[index] != closing or not self.depth:
+            return
+        self.depth -= 1
+        if self.depth == 0 and self.start != -1:
+            fragments.append(text[self.start : index + 1].strip())
+            self.start = -1
 
 
 def _normalize_generation_base(api_base: str | None) -> str:
@@ -76,6 +127,63 @@ def _build_user_content(task: TextGenerationTask) -> str:
     )
 
 
+SchemaCoercer = Callable[[Any, dict[str, Any], str | None], Any]
+
+
+def _coerce_object_value(value: Any, schema: dict[str, Any], key: str | None) -> Any:
+    if isinstance(value, dict):
+        properties = schema.get("properties")
+        if not isinstance(properties, dict):
+            return value
+        normalized = dict(value)
+        for nested_key, nested_schema in properties.items():
+            if nested_key in normalized:
+                normalized[nested_key] = _coerce_value_to_schema(
+                    normalized[nested_key],
+                    nested_schema,
+                    key=str(nested_key),
+                )
+        return normalized
+    if isinstance(value, list):
+        return {"characters": value} if key == "character_bible" else {"items": value}
+    if value is None or value == "":
+        return {}
+    return {"value": value}
+
+
+def _coerce_array_value(value: Any, _schema: dict[str, Any], _key: str | None) -> Any:
+    if isinstance(value, list):
+        return value
+    return [] if value is None else [value]
+
+
+def _coerce_string_value(value: Any, _schema: dict[str, Any], _key: str | None) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return " ".join(str(item).strip() for item in value if str(item).strip()).strip()
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=False).strip()
+    return str(value).strip()
+
+
+def _coerce_integer_value(value: Any, _schema: dict[str, Any], _key: str | None) -> Any:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return value
+
+
+_SCHEMA_COERCERS: dict[str, SchemaCoercer] = {
+    "object": _coerce_object_value,
+    "array": _coerce_array_value,
+    "string": _coerce_string_value,
+    "integer": _coerce_integer_value,
+}
+
+
 def _coerce_value_to_schema(
     value: Any,
     schema: dict[str, Any] | None,
@@ -84,58 +192,8 @@ def _coerce_value_to_schema(
 ) -> Any:
     if not isinstance(schema, dict):
         return value
-
-    expected_type = schema.get("type")
-    if expected_type == "object":
-        if isinstance(value, dict):
-            properties = schema.get("properties")
-            if not isinstance(properties, dict):
-                return value
-            normalized = dict(value)
-            for nested_key, nested_schema in properties.items():
-                if nested_key not in normalized:
-                    continue
-                normalized[nested_key] = _coerce_value_to_schema(
-                    normalized[nested_key],
-                    nested_schema,
-                    key=str(nested_key),
-                )
-            return normalized
-        if isinstance(value, list):
-            if key == "character_bible":
-                return {"characters": value}
-            return {"items": value}
-        if value is None or value == "":
-            return {}
-        return {"value": value}
-
-    if expected_type == "array":
-        if isinstance(value, list):
-            return value
-        if value is None:
-            return []
-        return [value]
-
-    if expected_type == "string":
-        if value is None:
-            return ""
-        if isinstance(value, str):
-            return value.strip()
-        if isinstance(value, list):
-            return " ".join(
-                str(item).strip() for item in value if str(item).strip()
-            ).strip()
-        if isinstance(value, dict):
-            return json.dumps(value, ensure_ascii=False).strip()
-        return str(value).strip()
-
-    if expected_type == "integer":
-        try:
-            return int(value)
-        except (TypeError, ValueError):
-            return value
-
-    return value
+    coercer = _SCHEMA_COERCERS.get(str(schema.get("type")))
+    return coercer(value, schema, key) if coercer is not None else value
 
 
 def _coerce_payload_to_schema(
@@ -329,6 +387,12 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             )
         return self._client
 
+    async def aclose(self) -> None:
+        """Close the lazily-created HTTP client."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
+
     def _build_request_payload(self, task: TextGenerationTask) -> dict[str, Any]:
         return self._transport.build_request_payload(model=self._model, task=task)
 
@@ -421,7 +485,7 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
 
         if stripped.startswith("```") and stripped.endswith("```"):
             lines = stripped.splitlines()
-            if len(lines) >= 3:
+            if len(lines) >= MIN_FENCED_BLOCK_LINES:
                 candidates.append("\n".join(lines[1:-1]).strip())
 
         candidates.extend(
@@ -461,40 +525,19 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         closing: str,
     ) -> list[str]:
         fragments: list[str] = []
-        depth = 0
-        start = -1
-        in_string = False
-        string_delimiter = ""
-        escaped = False
-
+        state = _FragmentScanState()
         for index, character in enumerate(text):
-            if in_string:
-                if escaped:
-                    escaped = False
-                    continue
-                if character == "\\":
-                    escaped = True
-                    continue
-                if character == string_delimiter:
-                    in_string = False
+            if state.consume_string_character(character):
                 continue
-
-            if character in {'"', "'"}:
-                in_string = True
-                string_delimiter = character
+            if state.enter_string(character):
                 continue
-
-            if character == opening:
-                if depth == 0:
-                    start = index
-                depth += 1
-                continue
-
-            if character == closing and depth:
-                depth -= 1
-                if depth == 0 and start != -1:
-                    fragments.append(text[start : index + 1].strip())
-                    start = -1
+            state.append_fragment(
+                fragments,
+                text,
+                index=index,
+                opening=opening,
+                closing=closing,
+            )
 
         return fragments
 
@@ -503,12 +546,7 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         try:
             return json.loads(candidate)
         except json.JSONDecodeError:
-            pass
-        try:
-            return ast.literal_eval(candidate)
-        except (SyntaxError, ValueError):
-            pass
-        return None
+            return None
 
     @staticmethod
     def _coerce_parsed_object_candidate(parsed: Any) -> dict[str, Any] | None:
@@ -567,52 +605,20 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         last_error: Exception | None = None
         for attempt in range(1, self._retry_attempts + 1):
             try:
-                response = await client.post(
-                    self._endpoint_path(),
-                    json=self._build_request_payload(task),
-                    timeout=effective_timeout,
-                )
-                response.raise_for_status()
-                data = response.json()
-                content_text = self._transport.extract_response_text(data)
-                try:
-                    payload = self._parse_json_object(content_text)
-                except TextGenerationProviderError as exc:
-                    fallback_payload = self._fallback_payload_from_non_object_response(
-                        content_text,
-                        task.response_schema,
-                    )
-                    if fallback_payload is None:
-                        raise exc
-                    payload = fallback_payload
-                parsed = _coerce_payload_to_schema(payload, task.response_schema)
-                return TextGenerationResult(
-                    step=task.step,
-                    provider="dashscope",
-                    model=self._model,
-                    raw_text=json.dumps(parsed, ensure_ascii=False),
-                    content=parsed,
-                )
-            except httpx.HTTPStatusError as exc:
-                response_text = exc.response.text.strip()
-                last_error = TextGenerationProviderError(
-                    f"DashScope generation failed for step '{task.step}': "
-                    f"{exc.response.status_code} {response_text}"
-                )
-            except httpx.TimeoutException:
-                last_error = TextGenerationProviderError(
-                    f"DashScope generation failed for step '{task.step}': "
-                    f"timed out after {int(effective_timeout)}s"
-                )
-            except json.JSONDecodeError:
-                last_error = TextGenerationProviderError(
-                    f"DashScope generation failed for step '{task.step}': invalid JSON"
-                )
-            except TextGenerationProviderError as exc:
-                last_error = exc
-            except Exception as exc:
-                last_error = TextGenerationProviderError(
-                    f"DashScope generation failed for step '{task.step}': {exc}"
+                return await self._generate_once(client, task, effective_timeout)
+            except (
+                httpx.HTTPStatusError,
+                httpx.TimeoutException,
+                json.JSONDecodeError,
+                TextGenerationProviderError,
+                httpx.RequestError,
+                TypeError,
+                ValueError,
+            ) as exc:
+                last_error = self._coerce_generation_error(
+                    exc,
+                    task=task,
+                    effective_timeout=effective_timeout,
                 )
 
             if attempt < self._retry_attempts and self._should_retry(last_error):
@@ -625,6 +631,74 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
                 f"DashScope generation failed for step '{task.step}': unknown error"
             )
         raise last_error
+
+    async def _generate_once(
+        self,
+        client: httpx.AsyncClient,
+        task: TextGenerationTask,
+        effective_timeout: float,
+    ) -> TextGenerationResult:
+        response = await client.post(
+            self._endpoint_path(),
+            json=self._build_request_payload(task),
+            timeout=effective_timeout,
+        )
+        response.raise_for_status()
+        data = response.json()
+        content_text = self._transport.extract_response_text(data)
+        payload = self._payload_from_response_text(content_text, task.response_schema)
+        parsed = _coerce_payload_to_schema(payload, task.response_schema)
+        return TextGenerationResult(
+            step=task.step,
+            provider="dashscope",
+            model=self._model,
+            raw_text=json.dumps(parsed, ensure_ascii=False),
+            content=parsed,
+        )
+
+    def _payload_from_response_text(
+        self,
+        content_text: str,
+        response_schema: dict[str, Any],
+    ) -> dict[str, Any]:
+        try:
+            return self._parse_json_object(content_text)
+        except TextGenerationProviderError as exc:
+            fallback_payload = self._fallback_payload_from_non_object_response(
+                content_text,
+                response_schema,
+            )
+            if fallback_payload is None:
+                raise exc
+            return fallback_payload
+
+    @staticmethod
+    def _coerce_generation_error(
+        exc: Exception,
+        *,
+        task: TextGenerationTask,
+        effective_timeout: float,
+    ) -> TextGenerationProviderError:
+        if isinstance(exc, httpx.HTTPStatusError):
+            response_text = exc.response.text.strip()
+            return TextGenerationProviderError(
+                f"DashScope generation failed for step '{task.step}': "
+                f"{exc.response.status_code} {response_text}"
+            )
+        if isinstance(exc, httpx.TimeoutException):
+            return TextGenerationProviderError(
+                f"DashScope generation failed for step '{task.step}': "
+                f"timed out after {int(effective_timeout)}s"
+            )
+        if isinstance(exc, json.JSONDecodeError):
+            return TextGenerationProviderError(
+                f"DashScope generation failed for step '{task.step}': invalid JSON"
+            )
+        if isinstance(exc, TextGenerationProviderError):
+            return exc
+        return TextGenerationProviderError(
+            f"DashScope generation failed for step '{task.step}': {exc}"
+        )
 
     @staticmethod
     def _should_retry(error: Exception) -> bool:

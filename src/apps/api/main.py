@@ -5,9 +5,10 @@
 from __future__ import annotations
 
 import asyncio
-import os
+import contextlib
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, cast
+from typing import Any, cast
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,13 +18,20 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from src.apps.api.health import health_router
 from src.apps.api.middleware.cors import get_cors_config
 from src.apps.api.middleware.error_handler import setup_exception_handlers
-from src.apps.api.router import api_router
-from src.contexts.studio.application.services import studio_store
+from src.contexts.studio.application.services import (
+    StudioStore,
+    configure_studio_store,
+    is_studio_store_configured,
+    studio_store,
+)
+from src.contexts.studio.infrastructure.ai_provider import (
+    create_studio_text_generation_provider,
+)
+from src.contexts.studio.infrastructure.database import create_studio_database
+from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import (
-    DEFAULT_SECRET_KEY,
     NovelEngineSettings,
     get_settings,
 )
@@ -34,6 +42,7 @@ from src.shared.infrastructure.middleware import (
     CorrelationIdMiddleware,
     LoggingMiddleware,
     MetricsMiddleware,
+    RateLimitMiddleware,
     start_prometheus_server,
 )
 
@@ -145,32 +154,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     cleanup_task.cancel()
-    try:
+    with contextlib.suppress(asyncio.CancelledError):
         await cleanup_task
-    except asyncio.CancelledError:
-        pass
     await asyncio.to_thread(studio_store.database.dispose)
     logger.info("api_shutdown", message="Shutting down Novel Studio API")
 
 
-def create_application(
-    settings: NovelEngineSettings | None = None,
-) -> FastAPI:
-    """Create and configure the canonical FastAPI application."""
-    provided_settings = settings is not None
-    resolved_settings = settings or get_settings()
-    security_secret = os.getenv("SECURITY_SECRET_KEY")
-
-    if (
-        not provided_settings
-        and (resolved_settings.is_staging or resolved_settings.is_production)
-        and (not security_secret or security_secret == DEFAULT_SECRET_KEY)
-    ):
-        raise RuntimeError(
-            "SECURITY_SECRET_KEY must be set for staging and production"
+def _configure_runtime_store(resolved_settings: NovelEngineSettings) -> None:
+    if not is_studio_store_configured():
+        database = create_studio_database(resolved_settings)
+        configure_studio_store(
+            StudioStore(
+                repository=SqlAlchemyStudioRepository(database),
+                data_dir=resolved_settings.data_dir,
+                ai_provider_factory=create_studio_text_generation_provider,
+            )
         )
 
-    app = FastAPI(
+
+def _new_fastapi_app(resolved_settings: NovelEngineSettings) -> FastAPI:
+    return FastAPI(
         title=resolved_settings.project_name,
         description=(
             "Novel Studio API for projects, Markdown revisions, AI proposals, "
@@ -186,15 +189,21 @@ def create_application(
             {"name": "studio", "description": "Novel Studio product operations"},
         ],
     )
-    app.state.settings = resolved_settings
 
+
+def _install_openapi(app: FastAPI) -> None:
     def _openapi() -> dict[str, Any]:
         return custom_openapi(app)
 
     cast(Any, app).openapi = _openapi
 
-    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+def _add_http_middleware(
+    app: FastAPI,
+    resolved_settings: NovelEngineSettings,
+) -> None:
+    app.state.settings = resolved_settings
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     cors_config = get_cors_config(resolved_settings)
     app.add_middleware(
         CORSMiddleware,
@@ -211,13 +220,22 @@ def create_application(
     if resolved_settings.monitoring.metrics_enabled:
         app.add_middleware(MetricsMiddleware)
     app.add_middleware(CorrelationIdMiddleware)
+    app.add_middleware(RateLimitMiddleware)
+
+
+def _include_application_routes(app: FastAPI) -> None:
+    from src.apps.api.health import health_router
+    from src.apps.api.router import api_router
 
     setup_exception_handlers(app)
 
     app.include_router(health_router, tags=["health"])
     app.include_router(api_router, prefix="/api")
 
+
+def _add_docs_route(app: FastAPI, resolved_settings: NovelEngineSettings) -> None:
     if resolved_settings.api.docs_url and resolved_settings.api.openapi_url:
+
         @app.get(resolved_settings.api.docs_url, include_in_schema=False)
         async def custom_swagger_ui_html() -> HTMLResponse:
             return get_swagger_ui_html(
@@ -228,6 +246,16 @@ def create_application(
                 swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
             )
 
+
+def _spa_metadata(resolved_settings: NovelEngineSettings) -> dict[str, str]:
+    return {
+        "name": resolved_settings.project_name,
+        "version": resolved_settings.project_version,
+        "api_base": "/api",
+    }
+
+
+def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> None:
     frontend_dist = resolved_settings.base_dir / "frontend" / "dist"
     assets_dir = frontend_dist / "assets"
     if assets_dir.is_dir():
@@ -236,11 +264,7 @@ def create_application(
     @app.get("/{full_path:path}", include_in_schema=False, response_model=None)
     async def studio_spa(full_path: str) -> Any:
         if full_path.startswith(("api/", "health", "metrics", "docs", "openapi")):
-            return {
-                "name": resolved_settings.project_name,
-                "version": resolved_settings.project_version,
-                "api_base": "/api",
-            }
+            return _spa_metadata(resolved_settings)
         candidate = (frontend_dist / full_path).resolve()
         if frontend_dist.resolve() in {candidate, *candidate.parents} and candidate.is_file():
             return FileResponse(candidate)
@@ -253,6 +277,19 @@ def create_application(
             "message": "Build frontend/ to enable the Studio UI.",
         }
 
+
+def create_application(
+    settings: NovelEngineSettings | None = None,
+) -> FastAPI:
+    """Create and configure the canonical FastAPI application."""
+    resolved_settings = settings or get_settings()
+    _configure_runtime_store(resolved_settings)
+    app = _new_fastapi_app(resolved_settings)
+    _install_openapi(app)
+    _add_http_middleware(app, resolved_settings)
+    _include_application_routes(app)
+    _add_docs_route(app, resolved_settings)
+    _mount_frontend(app, resolved_settings)
     return app
 
 
@@ -262,14 +299,13 @@ def main() -> None:
 
     settings = get_settings()
     uvicorn.run(
-        "src.apps.api.main:app",
+        "src.apps.api.main:create_application",
         host=settings.api.host,
         port=settings.api.port,
         reload=settings.api.reload,
         log_level=settings.logging.level.value.lower(),
+        factory=True,
     )
 
 
-app = create_application()
-
-__all__ = ["app", "create_application", "main"]
+__all__ = ["create_application", "main"]

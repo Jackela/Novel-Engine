@@ -45,13 +45,14 @@ jobs:
         if: matrix.language == 'python'
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Set up uv
         if: matrix.language == 'python'
         uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: true
+          cache-suffix: codeql
 
       - name: Validate lockfile
         if: matrix.language == 'python'
@@ -63,7 +64,7 @@ jobs:
 
       - name: Set up pnpm
         if: matrix.language == 'javascript-typescript'
-        uses: pnpm/action-setup@v6.0.4
+        uses: pnpm/action-setup@v6.0.9
         with:
           version: 11.6.0
 

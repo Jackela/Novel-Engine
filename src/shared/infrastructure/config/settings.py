@@ -14,7 +14,9 @@ from typing import Annotated, Any, Literal, Self, cast
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"
+# Development placeholder. Production and staging reject this value; local and
+# testing runs replace it with a generated/test secret at settings validation.
+DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"  # noqa: S105  # nosec B105
 LOCAL_DOTENV_FILE = ".env.local"
 
 
@@ -26,7 +28,7 @@ def _package_version() -> str:
     try:
         return version("novel-engine")
     except PackageNotFoundError:
-        return "0.3.0"
+        return "0.3.1"
 
 
 def _settings_config(
@@ -53,7 +55,7 @@ def _settings_config(
     return cast(SettingsConfigDict, config)
 
 
-class Environment(str, Enum):
+class Environment(str, Enum):  # noqa: UP042
     """Application environment types."""
 
     DEVELOPMENT = "development"
@@ -62,7 +64,7 @@ class Environment(str, Enum):
     PRODUCTION = "production"
 
 
-class LogLevel(str, Enum):
+class LogLevel(str, Enum):  # noqa: UP042
     """Logging level types."""
 
     DEBUG = "DEBUG"
@@ -101,12 +103,16 @@ class DatabaseSettings(BaseSettings):
         return v
 
 
+# Default bind for containers; override with API_HOST.
+_DEFAULT_API_HOST = "0.0.0.0"  # noqa: S104  # nosec B104
+
+
 class APISettings(BaseSettings):
     """API server configuration settings."""
 
     model_config = _settings_config(env_prefix="API_")
 
-    host: str = Field(default="0.0.0.0", description="API server host")
+    host: str = Field(default=_DEFAULT_API_HOST, description="API server host")
     port: int = Field(default=8000, ge=1024, le=65535, description="API server port")
     workers: int = Field(
         default=1, ge=1, le=32, description="Number of worker processes"
@@ -124,7 +130,10 @@ class APISettings(BaseSettings):
 class SecuritySettings(BaseSettings):
     """Security configuration settings."""
 
-    model_config = _settings_config(env_prefix="SECURITY_")
+    model_config = _settings_config(
+        env_prefix="SECURITY_",
+        populate_by_name=True,
+    )
 
     secret_key: str = Field(
         default=DEFAULT_SECRET_KEY,
@@ -133,20 +142,14 @@ class SecuritySettings(BaseSettings):
     )
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
-            "http://localhost:4173",
-            "http://127.0.0.1:4173",
-            "http://localhost:4273",
-            "http://127.0.0.1:4273",
             "http://localhost:5173",
-            "http://127.0.0.1:5173",
-            "http://localhost:3000",
+            "http://localhost:4173",
             "http://localhost:8000",
-            "http://localhost:8080",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:8000",
-            "http://127.0.0.1:8080",
         ],
-        description="Allowed CORS origins",
+        description=(
+            "Allowed CORS origins. "
+            "Production deployments must explicitly set SECURITY_CORS_ORIGINS."
+        ),
         validation_alias=AliasChoices(
             "SECURITY_CORS_ORIGINS",
             "CORS_ALLOWED_ORIGINS",
@@ -174,13 +177,34 @@ class SecuritySettings(BaseSettings):
             "Accept",
             "Origin",
             "X-Requested-With",
+            "X-CSRF-Token",
         ],
         description="Allowed CORS headers",
     )
-    rate_limit: str = Field(default="100/minute", description="Rate limit string")
+    rate_limit: str = Field(default="5/minute", description="Rate limit string")
     rate_limit_burst: int = Field(
-        default=10, ge=1, le=100, description="Rate limit burst"
+        default=5, ge=1, le=100, description="Rate limit burst"
     )
+    trusted_proxies: Annotated[list[str], NoDecode] = Field(
+        default_factory=list,
+        description=(
+            "Trusted proxy IP addresses or CIDR networks. "
+            "When set, X-Forwarded-For is parsed for requests coming from these proxies."
+        ),
+        validation_alias=AliasChoices(
+            "SECURITY_TRUSTED_PROXIES",
+            "TRUSTED_PROXIES",
+        ),
+    )
+
+    @field_validator("rate_limit")
+    @classmethod
+    def validate_rate_limit(cls, v: str) -> str:
+        """Validate that the rate limit string is parseable."""
+        from src.shared.infrastructure.rate_limit import parse_rate_limit
+
+        parse_rate_limit(v)
+        return v
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -206,6 +230,14 @@ class SecuritySettings(BaseSettings):
             return [header.strip() for header in v.split(",") if header.strip()]
         return v if isinstance(v, list) else []
 
+    @field_validator("trusted_proxies", mode="before")
+    @classmethod
+    def parse_trusted_proxies(cls, v: Any) -> list[str]:
+        """Parse trusted proxies from string or list."""
+        if isinstance(v, str):
+            return [proxy.strip() for proxy in v.split(",") if proxy.strip()]
+        return v if isinstance(v, list) else []
+
 
 class LLMSettings(BaseSettings):
     """LLM provider configuration settings."""
@@ -213,10 +245,10 @@ class LLMSettings(BaseSettings):
     model_config = _settings_config(env_prefix="LLM_")
 
     provider: Literal["mock", "dashscope", "openai_compatible"] = Field(
-        default="dashscope",
+        default="mock",
         description="LLM provider name",
     )
-    model: str = Field(default="qwen3.5-flash", description="LLM model name")
+    model: str = Field(default="studio-copilot-v1", description="LLM model name")
     api_key: str | None = Field(
         default=None,
         description="API key for OpenAI-compatible providers",
@@ -348,7 +380,7 @@ class MonitoringSettings(BaseSettings):
     model_config = _settings_config(env_prefix="MONITORING_")
 
     enabled: bool = Field(default=True, description="Enable monitoring")
-    metrics_enabled: bool = Field(default=True, description="Enable Prometheus metrics")
+    metrics_enabled: bool = Field(default=False, description="Enable Prometheus metrics")
     metrics_port: int = Field(
         default=9090, ge=1024, le=65535, description="Metrics server port"
     )
@@ -465,20 +497,27 @@ class NovelEngineSettings(BaseSettings):
     @model_validator(mode="after")
     def apply_runtime_security_defaults(self) -> Self:
         """Apply safe runtime defaults for local and testing environments."""
-        if self.is_production:
+        if self.is_production or self.is_staging:
+            environment_name = "production" if self.is_production else "staging"
             if (
                 not self.security.secret_key
                 or self.security.secret_key == DEFAULT_SECRET_KEY
             ):
                 raise ValueError(
-                    "SECURITY_SECRET_KEY must be set to a non-default value in production"
+                    f"SECURITY_SECRET_KEY must be set to a non-default value in {environment_name}"
                 )
-            if not self.database.url.startswith("sqlite:///"):
-                raise ValueError("DB_URL must use the self-hosted SQLite store")
-            if "*" in self.security.cors_origins:
-                raise ValueError(
-                    "Production CORS origins cannot include a wildcard"
-                )
+            if self.is_production:
+                if not self.database.url.startswith("sqlite:///"):
+                    raise ValueError("DB_URL must use the self-hosted SQLite store")
+                if "*" in self.security.cors_origins:
+                    raise ValueError(
+                        "Production CORS origins cannot include a wildcard"
+                    )
+                for origin in self.security.cors_origins:
+                    if "localhost" in origin or "127.0.0.1" in origin:
+                        raise ValueError(
+                            "Production CORS origins cannot include localhost or 127.0.0.1"
+                        )
         if not self.security.secret_key or self.security.secret_key == DEFAULT_SECRET_KEY:
             if self.is_testing:
                 self.security.secret_key = (

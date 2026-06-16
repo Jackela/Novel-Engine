@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator
 from uuid import uuid4
 
-from sqlalchemy import Engine, create_engine, event, text
+from sqlalchemy import Engine, create_engine, event, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from src.contexts.studio.infrastructure.models import Base, Job, JobEvent
-from src.shared.infrastructure.config.settings import get_settings
+from src.shared.infrastructure.config.settings import NovelEngineSettings, get_settings
 
 
 def _database_path_from_url(url: str) -> Path | None:
@@ -40,8 +40,7 @@ class StudioDatabase:
     """Own the SQLite engine and transactional sessions."""
 
     def __init__(self, url: str | None = None) -> None:
-        settings = get_settings()
-        self.url = url or settings.database.url
+        self.url = url or get_settings().database.url
         path = _database_path_from_url(self.url)
         if path is not None:
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -96,7 +95,7 @@ class StudioDatabase:
     def recover_jobs(self) -> int:
         """Mark lease-less running work interrupted after a process restart."""
         with self.session() as session:
-            jobs = session.query(Job).filter(Job.status == "running").all()
+            jobs = session.scalars(select(Job).where(Job.status == "running")).all()
             now = datetime.now(UTC)
             for job in jobs:
                 job.status = "interrupted"
@@ -122,19 +121,27 @@ class StudioDatabase:
 
     @contextmanager
     def session(self) -> Iterator[Session]:
-        session = self._session_factory()
-        try:
+        with self._session_factory() as session, session.begin():
             yield session
-            session.commit()
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.close()
 
 
-studio_database = StudioDatabase()
+def create_studio_database(
+    settings: NovelEngineSettings | None = None,
+    *,
+    url: str | None = None,
+) -> StudioDatabase:
+    """Create a Studio database after runtime configuration has been resolved."""
+    resolved_settings = settings or get_settings()
+    return StudioDatabase(url or resolved_settings.database.url)
 
 
-def initialize_studio_database() -> None:
-    studio_database.initialize()
+def initialize_studio_database(
+    settings: NovelEngineSettings | None = None,
+    *,
+    create_backup: bool = True,
+    create_schema: bool = True,
+) -> StudioDatabase:
+    """Create and initialize a Studio database for operational scripts."""
+    database = create_studio_database(settings)
+    database.initialize(create_backup=create_backup, create_schema=create_schema)
+    return database

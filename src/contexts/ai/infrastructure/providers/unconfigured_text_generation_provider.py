@@ -19,7 +19,7 @@ class UnconfiguredTextGenerationProvider:
 
     async def generate_structured(
         self,
-        task: TextGenerationTask,
+        _task: TextGenerationTask,
     ) -> TextGenerationResult:
         raise TextGenerationProviderError(self._message)
 

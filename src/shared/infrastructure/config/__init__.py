@@ -1,15 +1,5 @@
-"""Infrastructure configuration package.
+"""Environment-backed configuration package for Novel Studio."""
 
-This package provides configuration management for Novel Studio,
-supporting YAML files and environment-backed settings.
-
-Example:
-    >>> from src.shared.infrastructure.config import get_settings
-    >>> settings = get_settings()
-    >>> print(settings.environment)
-"""
-
-from .loader import ConfigLoader, ConfigLoadError, load_yaml_config, merge_configs
 from .settings import (
     APISettings,
     DatabaseSettings,
@@ -27,7 +17,6 @@ from .settings import (
 
 __all__ = [
     # Main classes
-    "ConfigLoader",
     "NovelEngineSettings",
     # Settings classes
     "APISettings",
@@ -40,10 +29,6 @@ __all__ = [
     "SecuritySettings",
     # Functions
     "get_settings",
-    "load_yaml_config",
-    "merge_configs",
     "reload_settings",
     "reset_settings",
-    # Exceptions
-    "ConfigLoadError",
 ]

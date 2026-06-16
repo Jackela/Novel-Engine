@@ -48,6 +48,12 @@ class OpenAICompatibleTextGenerationProvider(TextGenerationProvider):
             )
         return self._client
 
+    async def aclose(self) -> None:
+        """Close the lazily-created HTTP client."""
+        if self._client is not None:
+            await self._client.aclose()
+            self._client = None
+
     def _build_request_payload(self, task: TextGenerationTask) -> dict[str, object]:
         schema_text = json.dumps(task.response_schema, ensure_ascii=False)
         metadata_text = json.dumps(task.metadata, ensure_ascii=False)
@@ -131,7 +137,7 @@ class OpenAICompatibleTextGenerationProvider(TextGenerationProvider):
             ) from exc
         except TextGenerationProviderError:
             raise
-        except Exception as exc:
+        except (httpx.RequestError, TypeError, ValueError) as exc:
             raise TextGenerationProviderError(
                 f"OpenAI-compatible generation failed for step '{task.step}': {exc}"
             ) from exc

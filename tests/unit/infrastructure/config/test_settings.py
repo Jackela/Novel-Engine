@@ -35,6 +35,34 @@ def _clear_dashscope_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+def test_llm_defaults_match_documented_mock_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+
+    settings = NovelEngineSettings()
+
+    assert settings.llm.provider == "mock"
+    assert settings.llm.model == "studio-copilot-v1"
+    assert settings.llm.resolved_model("mock") == "studio-copilot-v1"
+
+
+def test_metrics_default_is_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+
+    settings = NovelEngineSettings()
+
+    assert settings.monitoring.metrics_enabled is False
+
+
 def test_novel_engine_settings_loads_dashscope_values_from_dotenv_local(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -123,8 +151,8 @@ def test_project_version_defaults_to_package_version(
 
     settings = NovelEngineSettings()
 
-    assert settings.project_version == "0.3.0"
-    assert settings.api.version == "0.3.0"
+    assert settings.project_version == "0.3.1"
+    assert settings.api.version == "0.3.1"
 
 
 def test_production_settings_reject_unsafe_defaults(
@@ -147,6 +175,7 @@ def test_production_settings_require_sqlite(
     _clear_dashscope_env(monkeypatch)
     monkeypatch.setenv("APP_ENVIRONMENT", "production")
     monkeypatch.setenv("SECURITY_SECRET_KEY", "production-secret-key-32-characters")
+    monkeypatch.setenv("SECURITY_CORS_ORIGINS", "https://app.example.com")
 
     monkeypatch.setenv("DB_URL", "postgresql://user:pass@db.example.com/novel")
     with pytest.raises(ValueError, match="DB_URL must use the self-hosted SQLite store"):
@@ -155,6 +184,19 @@ def test_production_settings_require_sqlite(
     monkeypatch.setenv("DB_URL", "sqlite:///./data/novel-engine.sqlite3")
     settings = NovelEngineSettings()
     assert settings.is_production
+
+
+def test_security_settings_validates_rate_limit_format(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    _clear_dashscope_env(monkeypatch)
+    monkeypatch.setenv("APP_ENVIRONMENT", "testing")
+    monkeypatch.setenv("SECURITY_RATE_LIMIT", "not-a-rate")
+
+    with pytest.raises(ValueError, match="Invalid rate limit format"):
+        NovelEngineSettings()
 
 
 def test_llm_settings_loads_dotenv_local_in_isolation(

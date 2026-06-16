@@ -196,10 +196,9 @@ def test_dashscope_provider_extracts_json_from_code_fence() -> None:
     assert parsed == {"ok": True}
 
 
-def test_dashscope_provider_extracts_single_quoted_python_dict() -> None:
-    parsed = DashScopeTextGenerationProvider._parse_json_object("{'ok': True, 'count': 2}")
-
-    assert parsed == {"ok": True, "count": 2}
+def test_dashscope_provider_rejects_single_quoted_python_dict() -> None:
+    with pytest.raises(TextGenerationProviderError, match="not a JSON object"):
+        DashScopeTextGenerationProvider._parse_json_object("{'ok': True, 'count': 2}")
 
 
 def test_dashscope_provider_extracts_single_dict_from_array_wrapper() -> None:
@@ -246,7 +245,7 @@ def test_dashscope_provider_reports_timeout_with_step_specific_budget(
     )
 
     class _TimeoutClient:
-        async def post(self, *args: object, **kwargs: object) -> object:
+        async def post(self, *_args: object, **_kwargs: object) -> object:
             raise httpx.ReadTimeout("chapter timed out")
 
     monkeypatch.setattr(provider, "_get_client", cast(Any, lambda: _TimeoutClient()))

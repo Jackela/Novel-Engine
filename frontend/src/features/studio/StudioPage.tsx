@@ -1,35 +1,5 @@
-import {
-  BookOpen,
-  Bot,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  ChevronLeft,
-  Clock3,
-  Download,
-  FileText,
-  Globe2,
-  History,
-  Loader2,
-  Plus,
-  RotateCcw,
-  Search,
-  Settings2,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  X,
-} from 'lucide-react';
-import {
-  useCallback,
-  useEffect,
-  lazy,
-  useMemo,
-  useRef,
-  useState,
-  Suspense,
-  type FormEvent,
-} from 'react';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { api, HttpError } from '@/app/api';
@@ -41,40 +11,16 @@ import type {
   Revision,
   SaveState,
   Session,
-  StudioDocument,
   StudioExport,
   StudioJob,
 } from '@/app/types/studio';
 
-const MarkdownEditor = lazy(async () => {
-  const module = await import('./MarkdownEditor');
-  return { default: module.MarkdownEditor };
-});
-
-const GROUPS: Array<{
-  kind: DocumentKind;
-  label: string;
-  icon: typeof FileText;
-}> = [
-  { kind: 'chapter', label: 'Manuscript', icon: BookOpen },
-  { kind: 'outline', label: 'Outline', icon: FileText },
-  { kind: 'character', label: 'Characters', icon: Users },
-  { kind: 'world', label: 'World', icon: Globe2 },
-  { kind: 'note', label: 'Notes', icon: FileText },
-];
-
-type InspectorTab = 'copilot' | 'review' | 'history' | 'settings';
-
-const SECTIONS = [
-  ['manuscript', 'Manuscript'],
-  ['outline', 'Outline'],
-  ['characters', 'Characters'],
-  ['world', 'World'],
-  ['review', 'Review'],
-  ['history', 'History'],
-  ['export', 'Export'],
-  ['settings', 'Settings'],
-] as const;
+import { StudioEditorPane } from './StudioEditorPane';
+import { StudioInspector, type SettingsFormState } from './StudioInspector';
+import { StudioNavigator } from './StudioNavigator';
+import { StudioStatusbar } from './StudioStatusbar';
+import { StudioTopbar } from './StudioTopbar';
+import { GROUPS, type InspectorTab } from './studioConstants';
 
 export function StudioPage() {
   const { projectId = '', section = 'manuscript' } = useParams();
@@ -91,17 +37,34 @@ export function StudioPage() {
   const [exports, setExports] = useState<StudioExport[]>([]);
   const [proposal, setProposal] = useState<StudioJob | null>(null);
   const [instruction, setInstruction] = useState('');
+  const [titleDraft, setTitleDraft] = useState('');
+  const [settingsForm, setSettingsForm] = useState<SettingsFormState>({
+    title: '',
+    description: '',
+    provider: 'mock',
+  });
+  const [jobs, setJobs] = useState<StudioJob[]>([]);
   const [search, setSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<
     Array<{ document_id: string; title: string; excerpt: string }>
   >([]);
   const loadedRevision = useRef<string | null>(null);
   const saveTimer = useRef<number | null>(null);
+  const draftRef = useRef({ draft, titleDraft, activeDocument: null as typeof activeDocument });
 
-  const activeDocument = useMemo(
-    () => project?.documents?.find((document) => document.id === activeId) ?? null,
-    [activeId, project],
-  );
+  const activeDocument = useMemo(() => {
+    const document = project?.documents?.find((item) => item.id === activeId) ?? null;
+    if (!document) return null;
+    if (section === 'outline' && document.kind !== 'outline') return null;
+    if (section === 'characters' && document.kind !== 'character') return null;
+    if (section === 'world' && document.kind !== 'world') return null;
+    return document;
+  }, [activeId, project, section]);
+
+  useEffect(() => {
+    draftRef.current = { draft, titleDraft, activeDocument };
+  }, [draft, titleDraft, activeDocument]);
 
   const loadProject = useCallback(async () => {
     try {
@@ -132,41 +95,86 @@ export function StudioPage() {
   }, [section]);
 
   useEffect(() => {
+    if (!search.trim()) {
+      setSearchResults([]);
+    }
+  }, [search]);
+
+  useEffect(() => {
+    if (!project) return;
+    const kind: DocumentKind | null =
+      section === 'outline' || section === 'characters' || section === 'world'
+        ? section === 'characters'
+          ? 'character'
+          : section
+        : null;
+    if (!kind) return;
+    const currentDocument = project.documents?.find((document) => document.id === activeId);
+    if (currentDocument?.kind === kind) return;
+    const first = project.documents?.find((document) => document.kind === kind);
+    setActiveId(first?.id ?? null);
+  }, [project, section, activeId]);
+
+  useEffect(() => {
+    // Only react to the active document identity changing, not to every field
+    // update, to avoid resetting the editor while the user is typing.
     if (!activeDocument) return;
     loadedRevision.current = activeDocument.current_revision_id;
     setDraft(activeDocument.content_markdown);
+    setTitleDraft(activeDocument.title);
     setSaveState('idle');
     setProposal(null);
-    void api.revisions(projectId, activeDocument.id).then((response) => {
-      setRevisions(response.revisions);
-    });
+    void api
+      .revisions(projectId, activeDocument.id)
+      .then((response) => {
+        setRevisions(response.revisions);
+      })
+      .catch(setError);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeDocument?.id]);
 
   useEffect(() => {
     if (!activeDocument) return;
-    if (draft === activeDocument.content_markdown) {
+    const unchanged =
+      draft === activeDocument.content_markdown && titleDraft === activeDocument.title;
+    if (unchanged) {
       setSaveState('idle');
       return;
     }
     setSaveState('saving');
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
+      const {
+        draft: currentDraft,
+        titleDraft: currentTitle,
+        activeDocument: currentDocument,
+      } = draftRef.current;
+      if (!currentDocument) return;
       try {
-        const saved = await api.saveDocument(projectId, activeDocument.id, {
-          content_markdown: draft,
-          base_revision_id: loadedRevision.current ?? activeDocument.current_revision_id,
+        const saved = await api.saveDocument(projectId, currentDocument.id, {
+          content_markdown: currentDraft,
+          base_revision_id: loadedRevision.current ?? currentDocument.current_revision_id,
+          title: currentTitle,
         });
         loadedRevision.current = saved.current_revision_id;
-        setProject((current) => current ? {
-          ...current,
-          documents: current.documents?.map((document) =>
-            document.id === saved.id ? saved : document
-          ),
-        } : current);
+        setProject((current) =>
+          current
+            ? {
+                ...current,
+                documents: current.documents?.map((document) =>
+                  document.id === saved.id ? saved : document,
+                ),
+              }
+            : current,
+        );
+        setTitleDraft(saved.title);
         setSaveState('saved');
-        void api.revisions(projectId, activeDocument.id).then((response) => {
-          setRevisions(response.revisions);
-        });
+        void api
+          .revisions(projectId, currentDocument.id)
+          .then((response) => {
+            setRevisions(response.revisions);
+          })
+          .catch(setError);
       } catch (reason) {
         setSaveState(reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error');
         setError(reason instanceof Error ? reason.message : 'Unable to save.');
@@ -175,7 +183,7 @@ export function StudioPage() {
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
     };
-  }, [activeDocument, draft, projectId]);
+  }, [draft, titleDraft, activeDocument, projectId]);
 
   const createDocument = async (kind: DocumentKind) => {
     if (!project) return;
@@ -187,10 +195,14 @@ export function StudioPage() {
         title: kind === 'chapter' ? `Chapter ${count + 1}` : `${label} ${count + 1}`,
         content_markdown: kind === 'chapter' ? `# Chapter ${count + 1}\n\n` : '',
       });
-      setProject((current) => current ? {
-        ...current,
-        documents: [...(current.documents ?? []), document],
-      } : current);
+      setProject((current) =>
+        current
+          ? {
+              ...current,
+              documents: [...(current.documents ?? []), document],
+            }
+          : current,
+      );
       setActiveId(document.id);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to create document.');
@@ -209,8 +221,11 @@ export function StudioPage() {
     ordered[index] = targetItem;
     ordered[target] = currentItem;
     try {
-      const response = await api.reorderDocuments(project.id, ordered.map((item) => item.id));
-      setProject((current) => current ? { ...current, documents: response.documents } : current);
+      const response = await api.reorderDocuments(
+        project.id,
+        ordered.map((item) => item.id),
+      );
+      setProject((current) => (current ? { ...current, documents: response.documents } : current));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to reorder documents.');
     }
@@ -222,12 +237,19 @@ export function StudioPage() {
       setSearchResults([]);
       return;
     }
-    const response = await api.search(projectId, search);
-    setSearchResults(response.results);
+    setIsSearching(true);
+    try {
+      const response = await api.search(projectId, search);
+      setSearchResults(response.results);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Search failed.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const runProposal = async (operation: 'continue' | 'rewrite') => {
-    if (!activeDocument) return;
+    if (!activeDocument || !project) return;
     setError(null);
     try {
       const nextProposal = await api.proposal(
@@ -235,7 +257,7 @@ export function StudioPage() {
         activeDocument.id,
         operation,
         instruction,
-        'mock',
+        String(project.settings.provider ?? 'mock'),
       );
       setProposal(nextProposal);
       setInspector('copilot');
@@ -254,9 +276,13 @@ export function StudioPage() {
       if (refreshedDocument) {
         loadedRevision.current = refreshedDocument.current_revision_id;
         setDraft(refreshedDocument.content_markdown);
+        setTitleDraft(refreshedDocument.title);
       }
+      const response = await api.revisions(projectId, activeDocument.id);
+      setRevisions(response.revisions);
       setProposal(null);
       setSaveState('saved');
+      void loadJobs();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to accept proposal.');
     }
@@ -273,10 +299,24 @@ export function StudioPage() {
   };
 
   const exportProject = async (format: ExportFormat) => {
+    if (!project) return;
     try {
       const item = await api.createExport(projectId, format);
       setExports((current) => [item, ...current]);
-      window.location.assign(item.download_url);
+      const response = await fetch(item.download_url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error(`Export download failed: ${response.status} ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const extension = format === 'markdown' ? 'md' : format;
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `${project.title}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to export project.');
     }
@@ -293,12 +333,17 @@ export function StudioPage() {
       );
       loadedRevision.current = restored.current_revision_id;
       setDraft(restored.content_markdown);
-      setProject((current) => current ? {
-        ...current,
-        documents: current.documents?.map((document) =>
-          document.id === restored.id ? restored : document
-        ),
-      } : current);
+      setTitleDraft(restored.title);
+      setProject((current) =>
+        current
+          ? {
+              ...current,
+              documents: current.documents?.map((document) =>
+                document.id === restored.id ? restored : document,
+              ),
+            }
+          : current,
+      );
       const response = await api.revisions(projectId, activeDocument.id);
       setRevisions(response.revisions);
     } catch (reason) {
@@ -306,292 +351,130 @@ export function StudioPage() {
     }
   };
 
+  const loadJobs = useCallback(async () => {
+    try {
+      const response = await api.jobs(projectId);
+      setJobs(response.jobs);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to load jobs.');
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (inspector === 'jobs') {
+      void loadJobs();
+    }
+  }, [inspector, loadJobs]);
+
+  useEffect(() => {
+    if (inspector === 'settings' && project) {
+      setSettingsForm({
+        title: project.title,
+        description: project.description,
+        provider: String(project.settings.provider ?? 'mock'),
+      });
+    }
+  }, [inspector, project]);
+
+  const updateProjectSettings = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!project) return;
+    try {
+      const updated = await api.updateProject(project.id, {
+        title: settingsForm.title,
+        description: settingsForm.description,
+        settings: { ...project.settings, provider: settingsForm.provider },
+      });
+      setProject(updated);
+      setError(null);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to update project.');
+    }
+  };
+
+  const retryJob = async (jobId: string) => {
+    try {
+      await api.retryJob(projectId, jobId);
+      void loadJobs();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to retry job.');
+    }
+  };
+
   const latestReview = reviews[0] ?? null;
 
   if (!project) {
-    return <main className="studio-loading"><Loader2 className="spin" /> Loading Studio</main>;
+    return (
+      <main className="studio-loading">
+        <Loader2 className="spin" /> Loading Studio
+      </main>
+    );
   }
 
   return (
     <main className="studio">
-      <header className="studio-topbar">
-        <button className="icon-command" onClick={() => navigate('/projects')} title="Projects">
-          <ChevronLeft />
-        </button>
-        <div className="brand"><BookOpen /> Novel Studio</div>
-        <div className="studio-project-title">{project.title}</div>
-        <div className="studio-topbar__spacer" />
-        {session?.kind === 'guest' ? (
-          <span className="session-expiry">
-            <Clock3 />
-            {session.expires_at ? new Date(session.expires_at).toLocaleTimeString() : 'Guest'}
-          </span>
-        ) : null}
-        <button className="command" onClick={() => void runReview()} type="button">
-          <ShieldCheck /> Review
-        </button>
-        <details className="export-menu">
-          <summary aria-haspopup="menu" className="command command--primary" role="button">
-            <Download /> Export
-          </summary>
-          <div className="export-menu__items">
-            {(['markdown', 'docx', 'epub'] as ExportFormat[]).map((format) => (
-              <button key={format} onClick={() => void exportProject(format)} type="button">
-                {format.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </details>
-        <button
-          className="icon-command"
-          onClick={() => navigate(`/projects/${project.id}/settings`)}
-          title="Project settings"
-          type="button"
-        ><Settings2 /></button>
-      </header>
+      <StudioTopbar
+        project={project}
+        session={session}
+        onBack={() => navigate('/projects')}
+        onReview={() => void runReview()}
+        onExport={(format) => void exportProject(format)}
+        onSettings={() => navigate(`/projects/${project.id}/settings`)}
+      />
 
-      <aside className="studio-nav">
-        <nav className="section-nav" aria-label="Project sections">
-          {SECTIONS.map(([path, label]) => (
-            <button
-              className={section === path ? 'active' : ''}
-              key={path}
-              onClick={() => navigate(`/projects/${project.id}/${path}`)}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
-        <form className="studio-search" onSubmit={runSearch}>
-          <Search />
-          <input
-            aria-label="Search project"
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search documents"
-            value={search}
-          />
-        </form>
-        {searchResults.length ? (
-          <div className="search-results">
-            {searchResults.map((result) => (
-              <button key={result.document_id} onClick={() => setActiveId(result.document_id)} type="button">
-                <strong>{result.title}</strong>
-                <span>{result.excerpt}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
-        <div className="document-tree">
-          {GROUPS.map(({ kind, label, icon: Icon }) => {
-            const documents = project.documents?.filter((document) => document.kind === kind) ?? [];
-            return (
-              <section className="document-group" key={kind}>
-                <header>
-                  <span><Icon /> {label}</span>
-                  <button onClick={() => void createDocument(kind)} title={`Add ${label}`} type="button">
-                    <Plus />
-                  </button>
-                </header>
-                {documents.map((document, index) => (
-                  <div className="document-row-wrap" key={document.id}>
-                    <button
-                      className={document.id === activeId ? 'document-row document-row--active' : 'document-row'}
-                      onClick={() => setActiveId(document.id)}
-                      type="button"
-                    >
-                      <FileText />
-                      <span>{document.title}</span>
-                    </button>
-                    <span className="document-order">
-                      <button
-                        disabled={index === 0}
-                        onClick={() => void moveDocument(document.id, -1)}
-                        title="Move up"
-                        type="button"
-                      ><ArrowUp /></button>
-                      <button
-                        disabled={index === documents.length - 1}
-                        onClick={() => void moveDocument(document.id, 1)}
-                        title="Move down"
-                        type="button"
-                      ><ArrowDown /></button>
-                    </span>
-                  </div>
-                ))}
-              </section>
-            );
-          })}
-        </div>
-      </aside>
+      <StudioNavigator
+        project={project}
+        section={section}
+        activeId={activeId}
+        search={search}
+        isSearching={isSearching}
+        searchResults={searchResults}
+        onSearchChange={setSearch}
+        onSearchSubmit={runSearch}
+        onNavigateSection={(nextSection) => navigate(`/projects/${project.id}/${nextSection}`)}
+        onSelectDocument={setActiveId}
+        onCreateDocument={(kind) => void createDocument(kind)}
+        onMoveDocument={(documentId, direction) => void moveDocument(documentId, direction)}
+      />
 
-      <section className="studio-editor">
-        {activeDocument ? (
-          <>
-            <header className="editor-header">
-              <div>
-                <input
-                  aria-label="Document title"
-                  className="editor-title"
-                  value={activeDocument.title}
-                  readOnly
-                />
-                <span className={`save-state save-state--${saveState}`}>
-                  {saveState === 'saving' ? <Loader2 className="spin" /> : <Check />}
-                  {saveState === 'idle' ? 'saved' : saveState}
-                </span>
-              </div>
-              <span>{activeDocument.word_count} words</span>
-            </header>
-            <div className="editor-toolbar"><span>Markdown</span></div>
-            <Suspense fallback={<div className="editor-loading">Loading editor...</div>}>
-              <MarkdownEditor value={draft} onChange={setDraft} />
-            </Suspense>
-          </>
-        ) : (
-          <div className="empty-editor">Create a document to begin writing.</div>
-        )}
-      </section>
+      <StudioEditorPane
+        activeDocument={activeDocument}
+        draft={draft}
+        titleDraft={titleDraft}
+        saveState={saveState}
+        onDraftChange={setDraft}
+        onTitleChange={setTitleDraft}
+      />
 
-      <aside className="studio-inspector">
-        <nav className="inspector-tabs">
-          <button
-            className={inspector === 'copilot' ? 'active' : ''}
-            onClick={() => setInspector('copilot')}
-            type="button"
-          >
-            <Bot /> Copilot
-          </button>
-          <button
-            className={inspector === 'review' ? 'active' : ''}
-            onClick={() => setInspector('review')}
-            type="button"
-          >
-            <ShieldCheck /> Review
-          </button>
-          <button
-            className={inspector === 'history' ? 'active' : ''}
-            onClick={() => setInspector('history')}
-            type="button"
-          >
-            <History /> History
-          </button>
-        </nav>
+      <StudioInspector
+        error={error}
+        exports={exports}
+        inspector={inspector}
+        instruction={instruction}
+        jobs={jobs}
+        latestReview={latestReview}
+        loadedRevisionId={loadedRevision.current}
+        proposal={proposal}
+        revisions={revisions}
+        settingsForm={settingsForm}
+        onAcceptProposal={() => void acceptProposal()}
+        onLoadJobs={() => void loadJobs()}
+        onRestoreRevision={(revisionId) => void restoreRevision(revisionId)}
+        onRetryJob={(jobId) => void retryJob(jobId)}
+        onRunProposal={(operation) => void runProposal(operation)}
+        onRunReview={() => void runReview()}
+        onUpdateSettings={updateProjectSettings}
+        setInspector={setInspector}
+        setInstruction={setInstruction}
+        setProposal={setProposal}
+        setSettingsForm={setSettingsForm}
+      />
 
-        {error ? <div className="inspector-error">{error}</div> : null}
-
-        {inspector === 'copilot' ? (
-          <div className="inspector-content">
-            <h2>AI proposal</h2>
-            <p>Copilot never changes the manuscript until you accept a proposal.</p>
-            <textarea
-              onChange={(event) => setInstruction(event.target.value)}
-              placeholder="Describe the change or direction..."
-              rows={5}
-              value={instruction}
-            />
-            <div className="inspector-actions">
-              <button className="command" onClick={() => void runProposal('rewrite')} type="button">
-                <Sparkles /> Rewrite
-              </button>
-              <button className="command" onClick={() => void runProposal('continue')} type="button">
-                Continue
-              </button>
-            </div>
-            {proposal?.result.proposal_markdown ? (
-              <section className="proposal">
-                <header><strong>Proposed Markdown</strong><span>Preview only</span></header>
-                <pre>{proposal.result.proposal_markdown}</pre>
-                <div className="inspector-actions">
-                  <button className="command command--primary" onClick={() => void acceptProposal()} type="button">
-                    <Check /> Accept
-                  </button>
-                  <button className="command" onClick={() => setProposal(null)} type="button">
-                    <X /> Reject
-                  </button>
-                </div>
-              </section>
-            ) : null}
-          </div>
-        ) : null}
-
-        {inspector === 'review' ? (
-          <div className="inspector-content">
-            <header className="inspector-heading">
-              <div><h2>Review findings</h2><p>Snapshot-bound and non-mutating.</p></div>
-              <button className="icon-command" onClick={() => void runReview()} title="Run review" type="button">
-                <RotateCcw />
-              </button>
-            </header>
-            {latestReview?.issues.length ? latestReview.issues.map((issue) => (
-              <article className={`review-issue review-issue--${issue.severity}`} key={issue.id}>
-                <header><strong>{issue.code.replace(/_/g, ' ')}</strong><span>{issue.severity}</span></header>
-                <p>{issue.message}</p>
-                <small>{issue.suggestion}</small>
-              </article>
-            )) : <p className="empty-panel">No review findings. Run a review when ready.</p>}
-          </div>
-        ) : null}
-
-        {inspector === 'history' ? (
-          <div className="inspector-content">
-            <h2>Revision history</h2>
-            <p>Restoring creates a new revision and preserves the chain.</p>
-            <div className="revision-list">
-              {revisions.map((revision) => (
-                <article key={revision.id}>
-                  <div>
-                    <strong>{revision.source}</strong>
-                    <time>{new Date(revision.created_at).toLocaleString()}</time>
-                    <small>{revision.word_count} words · {revision.id.slice(0, 8)}</small>
-                  </div>
-                  {revision.id !== loadedRevision.current ? (
-                    <button
-                      className="icon-command"
-                      onClick={() => void restoreRevision(revision.id)}
-                      title="Restore revision"
-                      type="button"
-                    >
-                      <RotateCcw />
-                    </button>
-                  ) : <span className="current-revision">Current</span>}
-                </article>
-              ))}
-            </div>
-            {exports.length ? (
-              <>
-                <h2>Recent exports</h2>
-                {exports.slice(0, 4).map((item) => (
-                  <a className="export-row" href={item.download_url} key={item.id}>
-                    <Download />
-                    <span>{item.format.toUpperCase()} · {Math.ceil(item.size_bytes / 1024)} KB</span>
-                  </a>
-                ))}
-              </>
-            ) : null}
-          </div>
-        ) : null}
-
-        {inspector === 'settings' ? (
-          <div className="inspector-content">
-            <h2>Project settings</h2>
-            <dl className="settings-list">
-              <div><dt>Title</dt><dd>{project.title}</dd></div>
-              <div><dt>Provider</dt><dd>{String(project.settings.provider ?? 'mock')}</dd></div>
-              <div><dt>Storage</dt><dd>SQLite</dd></div>
-              <div><dt>Document syntax</dt><dd>Markdown</dd></div>
-            </dl>
-          </div>
-        ) : null}
-      </aside>
-
-      <footer className="studio-statusbar">
-        <span><Check /> {saveState === 'saving' ? 'Saving' : saveState === 'conflict' ? 'Conflict' : 'Saved'}</span>
-        <span>Revision {loadedRevision.current?.slice(0, 8) ?? 'none'}</span>
-        <span className="studio-statusbar__spacer" />
-        <span>{activeDocument?.word_count ?? 0} words</span>
-        <span>Novel Studio {__APP_VERSION__}</span>
-      </footer>
+      <StudioStatusbar
+        activeDocument={activeDocument}
+        loadedRevisionId={loadedRevision.current}
+        saveState={saveState}
+      />
     </main>
   );
 }

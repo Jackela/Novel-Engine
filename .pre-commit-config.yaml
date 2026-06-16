@@ -23,6 +23,38 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+      - id: bandit-check
+        name: bandit security check
+        entry: uv run bandit -r src
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: mypy-check
+        name: mypy type check
+        entry: uv run mypy src tests
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: detect-secrets
+        name: detect-secrets scan
+        entry: uvx --from detect-secrets detect-secrets-hook --baseline .secrets.baseline
+        language: system
+        pass_filenames: true
+        files: \.(py|ts|tsx|js|yaml|yml|toml|env|md)$
+        stages: [pre-commit]
+
+      - id: importlinter-check
+        name: import linter
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
       - id: uv-lock-check
         name: uv lock --check
         entry: uv lock --check
@@ -33,7 +65,7 @@ repos:
 
       - id: ssot
         name: SSOT alignment
-        entry: python scripts/qa/check_ssot.py
+        entry: uv run python scripts/qa/check_ssot.py
         language: system
         pass_filenames: false
         always_run: true
@@ -41,7 +73,7 @@ repos:
 
       - id: repo-hygiene
         name: repository hygiene
-        entry: python scripts/qa/check_repo_hygiene.py
+        entry: uv run python scripts/qa/check_repo_hygiene.py
         language: system
         pass_filenames: false
         always_run: true
@@ -55,9 +87,25 @@ repos:
         always_run: true
         stages: [pre-commit]
 
+      - id: frontend-lint
+        name: frontend lint
+        entry: corepack pnpm --dir frontend lint
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: frontend-format-check
+        name: frontend format check
+        entry: corepack pnpm --dir frontend format:check
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
       - id: backend-pytest
         name: backend pytest
-        entry: python -m pytest -q
+        entry: uv run pytest -q
         language: system
         pass_filenames: false
         always_run: true
@@ -65,7 +113,7 @@ repos:
 
       - id: openapi-snapshot
         name: OpenAPI snapshot
-        entry: python scripts/qa/check_openapi_snapshot.py
+        entry: uv run python scripts/qa/check_openapi_snapshot.py
         language: system
         pass_filenames: false
         always_run: true

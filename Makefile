@@ -1,4 +1,4 @@
-.PHONY: install validate test frontend build serve doctor
+.PHONY: install validate test frontend validate-frontend build e2e-smoke serve doctor
 
 install:
 	uv sync --extra dev --extra test
@@ -13,11 +13,18 @@ test:
 	uv run pytest -q
 
 frontend:
+	corepack pnpm --dir frontend lint
+	corepack pnpm --dir frontend format:check
 	corepack pnpm --dir frontend type-check
 	corepack pnpm --dir frontend test:unit
 
+validate-frontend: frontend build
+
 build:
 	corepack pnpm --dir frontend build
+
+e2e-smoke:
+	corepack pnpm --dir frontend test:e2e:smoke
 
 serve:
 	uv run novel-engine serve --reload

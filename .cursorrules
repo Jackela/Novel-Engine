@@ -1,0 +1,41 @@
+# Project: Novel-Engine
+# AI Guardrails - DO NOT OVERRIDE
+
+## 项目上下文
+- 当前正在接受 Linus 风格审计，审计报告位于 AUDIT_REPORT_Linus.md
+- 技术栈：Python 3.11+ (FastAPI/SQLAlchemy 2.0/Pydantic v2/SQLite/Alembic) + React 18 + Vite + TypeScript
+- 包管理器：uv (Python), pnpm (Node)
+- 架构：Clean Architecture / DDD，分 domain / application / infrastructure / interface 四层
+
+## 绝对禁止
+- 修改 migrations/ 目录下的任何文件
+- 修改 .env* 文件和 secrets 配置
+- 修改 alembic/versions/*、data/*.sqlite3、.coverage
+- 执行 `rm -rf`、`git push -f`、`drop table`
+- 引入新的依赖（npm/pip/uv add），除非获得明确授权
+- 删除 error handling、auth checks、input validation、sanitize、escape 相关代码
+- 修改测试文件（除非审计明确要求）
+
+## 编码规范
+- Python: 函数不超过 50 行，裸 except 必须改为精确异常类型
+- React: 组件不超过 200 行，超过必须拆分
+- SQL/FTS5: 禁止字符串拼接，必须使用参数化查询或严格转义
+- 所有新增 Python 函数必须有类型注解
+- 禁止新增 import-time side effects（模块导入时创建数据库/app 实例）
+
+## 执行约束
+- 修改前必须运行相关测试并确认通过
+- 修改后必须再次运行测试
+- 每次会话最多修改 3 个文件
+- 优先 surgical fix，禁止重写整个模块
+- 每个审计 Finding 独立处理，禁止跨 Finding 传递上下文
+- 修改后必须查看 git diff，确认只改了该改的文件
+
+## 验证命令
+- Python: `uv run pytest -q`, `uv run mypy src`, `uv run ruff check src tests`, `uv run bandit -r src`
+- Frontend: `corepack pnpm --dir frontend lint`, `corepack pnpm --dir frontend type-check`, `corepack pnpm --dir frontend test:unit`
+- Full: `corepack pnpm spec:validate`, `uv run lint-imports`
+
+## 应急
+- 如果改坏了，运行 `just panic` 回滚
+- 如果 AI 开始修改禁区，立即停止并回滚

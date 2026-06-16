@@ -19,10 +19,19 @@ export class HttpError extends Error {
     readonly detail?: unknown,
   ) {
     super(message);
+    Object.setPrototypeOf(this, HttpError.prototype);
   }
 }
 
 const url = (path: string) => (appConfig.apiBaseUrl ? `${appConfig.apiBaseUrl}${path}` : path);
+
+export function getCsrfToken(): string | undefined {
+  if (typeof document === 'undefined') {
+    return undefined;
+  }
+  const match = document.cookie.match(/(?:^|; )novel_studio_csrf=([^;]*)/);
+  return match?.[1];
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController();
@@ -41,19 +50,23 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     let response: Response;
     try {
+      const method = init?.method?.toUpperCase();
+      const csrfToken =
+        method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ? getCsrfToken() : undefined;
       response = await fetch(url(path), {
         credentials: 'include',
         ...init,
         headers: {
           ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
           ...(init?.headers ?? {}),
         },
         signal: controller.signal,
       });
     } catch (error) {
       if (
-        (error instanceof Error || error instanceof DOMException)
-        && error.name === 'AbortError'
+        (error instanceof Error || error instanceof DOMException) &&
+        error.name === 'AbortError'
       ) {
         throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.');
       }
@@ -63,7 +76,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw error;
     }
     if (!response.ok) {
-      const payload = await response.json().catch(() => null) as { detail?: unknown } | null;
+      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
       const detail = payload?.detail;
       const message =
         typeof detail === 'string'
@@ -74,7 +87,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       throw new HttpError(message, response.status, detail);
     }
     if (response.status === 204) return undefined as T;
-    return await response.json() as T;
+    return (await response.json()) as T;
   } finally {
     window.clearTimeout(timeout);
     externalSignal?.removeEventListener('abort', abortFromExternal);
@@ -179,5 +192,26 @@ export const api = {
     request<StudioExport>(`/api/projects/${projectId}/exports`, {
       method: 'POST',
       body: json({ format }),
+    }),
+  updateProject: (
+    projectId: string,
+    payload: {
+      title?: string;
+      description?: string;
+      settings?: Record<string, unknown>;
+    },
+  ) =>
+    request<Project>(`/api/projects/${projectId}`, {
+      method: 'PATCH',
+      body: json(payload),
+    }),
+  deleteProject: (projectId: string) =>
+    request<void>(`/api/projects/${projectId}`, { method: 'DELETE' }),
+  deleteDocument: (projectId: string, documentId: string) =>
+    request<void>(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }),
+  jobs: (projectId: string) => request<{ jobs: StudioJob[] }>(`/api/projects/${projectId}/jobs`),
+  retryJob: (projectId: string, jobId: string) =>
+    request<StudioJob>(`/api/projects/${projectId}/jobs/${jobId}/retry`, {
+      method: 'POST',
     }),
 };

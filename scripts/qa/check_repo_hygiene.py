@@ -99,7 +99,7 @@ API_SURFACE_FORBIDDEN = (
 )
 
 API_SURFACE_PATHS = re.compile(
-    r"^(?:src/apps/api/|frontend/src/app/types/story\.ts$)"
+    r"^(?:src/apps/api/|frontend/src/app/types/studio\.ts$)"
 )
 
 def tracked_and_untracked_files() -> list[Path]:

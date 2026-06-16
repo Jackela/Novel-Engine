@@ -7,7 +7,7 @@ from typing import Literal
 DocumentKind = Literal["chapter", "outline", "character", "world", "note"]
 SessionKind = Literal["owner", "guest"]
 JobStatus = Literal["queued", "running", "completed", "failed", "interrupted"]
-JobKind = Literal["ai", "review", "export", "import"]
+JobKind = Literal["proposal", "review", "export", "import"]
 ExportFormat = Literal["markdown", "docx", "epub"]
 
 DOCUMENT_KINDS: tuple[DocumentKind, ...] = (
@@ -17,3 +17,5 @@ DOCUMENT_KINDS: tuple[DocumentKind, ...] = (
     "world",
     "note",
 )
+
+JOB_KINDS: tuple[JobKind, ...] = ("proposal", "review", "export", "import")
