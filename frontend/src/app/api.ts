@@ -8,6 +8,7 @@ import type {
   Session,
   SetupStatus,
   StudioDocument,
+  ProviderInfo,
   StudioExport,
   StudioJob,
 } from '@/app/types/studio';
@@ -134,6 +135,7 @@ export const api = {
   guest: () => request<Session>('/api/session/guest', { method: 'POST' }),
   session: () => request<Session>('/api/session'),
   logout: () => request<void>('/api/session', { method: 'DELETE' }),
+  providers: () => request<{ providers: ProviderInfo[] }>('/api/providers'),
   projects: (init?: RequestInit) => request<{ projects: Project[] }>('/api/projects', init),
   project: (projectId: string) => request<Project>(`/api/projects/${projectId}`),
   createProject: (title: string, description: string) =>

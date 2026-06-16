@@ -3,6 +3,13 @@ export type DocumentKind = 'chapter' | 'outline' | 'character' | 'world' | 'note
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 export type ExportFormat = 'markdown' | 'docx' | 'epub';
 export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';
+
+export interface ProviderInfo {
+  provider: string;
+  configured: boolean;
+  model: string | null;
+  is_default: boolean;
+}
 export type StudioJobKind = 'proposal' | 'review' | 'export';
 export type StudioJobOperation = 'continue' | 'rewrite' | 'generate' | 'review' | 'export';
 

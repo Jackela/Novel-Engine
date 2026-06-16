@@ -12,7 +12,6 @@ import logging
 import re
 import secrets
 from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, TypeVar, cast
@@ -40,6 +39,7 @@ from src.contexts.studio.domain.exceptions import (
     NotFound,
     RevisionConflict,
 )
+from src.contexts.studio.domain.principal import Principal
 from src.contexts.studio.domain.types import DOCUMENT_KINDS, DocumentKind, ExportFormat
 from src.contexts.studio.domain.utils import (
     _token_hash,
@@ -201,21 +201,24 @@ def _sanitize_chapter_markdown(markdown: str) -> str:
     return cleaned.strip()
 
 
-@dataclass(frozen=True, slots=True)
-class Principal:
-    """Identity of the caller for authorization and scoping."""
-
-    session_id: str
-    kind: str
-    owner_id: str | None
-    expires_at: datetime | None
-
-
 def _owner_scopes(principal: Principal) -> tuple[str | None, str | None]:
     """Return (owner_id, guest_session_id) used to scope repository queries."""
     if principal.kind == "owner" and principal.owner_id:
         return principal.owner_id, None
     return None, principal.session_id
+
+
+def _safe_load_json(value: str | None) -> Any:
+    """Deserialize stored JSON, returning ``{}`` on malformed input.
+
+    Payload helpers use this to stay resilient against corrupt stored JSON.
+    Logs a warning so the corruption is visible.
+    """
+    try:
+        return load_json(value)
+    except ValueError as exc:
+        logger.warning("json_decode_failed value=%s error=%s", value, str(exc))
+        return {}
 
 
 # ---------------------------------------------------------------------------
@@ -230,7 +233,7 @@ def _project_payload(
         "id": project.id,
         "title": project.title,
         "description": project.description,
-        "settings": load_json(project.settings_json),
+        "settings": _safe_load_json(project.settings_json),
         "import_hash": project.import_hash,
         "created_at": iso(project.created_at),
         "updated_at": iso(project.updated_at),
@@ -253,7 +256,7 @@ def _document_payload(document: DocumentDto) -> dict[str, Any]:
         "position": document.position,
         "current_revision_id": revision.id,
         "content_markdown": revision.content_markdown,
-        "metadata": load_json(revision.metadata_json),
+        "metadata": _safe_load_json(revision.metadata_json),
         "revision_source": revision.source,
         "word_count": _word_count(revision.content_markdown),
         "created_at": iso(document.created_at),
@@ -268,7 +271,7 @@ def _revision_payload(revision: RevisionDto) -> dict[str, Any]:
         "parent_revision_id": revision.parent_revision_id,
         "revision_number": revision.revision_number,
         "content_markdown": revision.content_markdown,
-        "metadata": load_json(revision.metadata_json),
+        "metadata": _safe_load_json(revision.metadata_json),
         "source": revision.source,
         "word_count": _word_count(revision.content_markdown),
         "created_at": iso(revision.created_at),
@@ -309,7 +312,7 @@ def _review_payload(review: ReviewDto) -> dict[str, Any]:
                 "code": issue.code,
                 "message": issue.message,
                 "suggestion": issue.suggestion,
-                "evidence": load_json(issue.evidence_json),
+                "evidence": _safe_load_json(issue.evidence_json),
             }
             for issue in review.issues
         ],
@@ -326,8 +329,8 @@ def _job_payload(job: JobDto) -> dict[str, Any]:
         "status": job.status,
         "provider": job.provider,
         "model": job.model,
-        "request": load_json(job.request_json),
-        "result": load_json(job.result_json),
+        "request": _safe_load_json(job.request_json),
+        "result": _safe_load_json(job.result_json),
         "error": job.error,
         "retry_of_job_id": job.retry_of_job_id,
         "created_at": iso(job.created_at),
@@ -336,7 +339,7 @@ def _job_payload(job: JobDto) -> dict[str, Any]:
             {
                 "id": event.id,
                 "status": event.status,
-                "details": load_json(event.details_json),
+                "details": _safe_load_json(event.details_json),
                 "created_at": iso(event.created_at),
             }
             for event in job.events

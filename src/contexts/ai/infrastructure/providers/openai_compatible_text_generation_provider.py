@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
 import httpx
 
@@ -79,6 +80,19 @@ class OpenAICompatibleTextGenerationProvider(TextGenerationProvider):
             or " 504 " in message
         )
 
+    @staticmethod
+    def _extract_usage_tokens(data: dict[str, Any]) -> tuple[int | None, int | None]:
+        """Return ``(prompt_tokens, completion_tokens)`` from an OpenAI response."""
+        usage = data.get("usage")
+        if not isinstance(usage, dict):
+            return None, None
+        prompt_tokens = usage.get("prompt_tokens")
+        completion_tokens = usage.get("completion_tokens")
+        return (
+            int(prompt_tokens) if isinstance(prompt_tokens, int) else None,
+            int(completion_tokens) if isinstance(completion_tokens, int) else None,
+        )
+
     def _build_request_payload(self, task: TextGenerationTask) -> dict[str, object]:
         schema_text = json.dumps(task.response_schema, ensure_ascii=False)
         metadata_text = json.dumps(task.metadata, ensure_ascii=False)
@@ -143,12 +157,15 @@ class OpenAICompatibleTextGenerationProvider(TextGenerationProvider):
             raise TextGenerationProviderError(
                 "OpenAI-compatible response is not a JSON object"
             )
+        prompt_tokens, completion_tokens = self._extract_usage_tokens(data)
         return TextGenerationResult(
             step=task.step,
             provider=self._provider_name,
             model=self._model,
             raw_text=json.dumps(parsed, ensure_ascii=False),
             content=parsed,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
         )
 
     def _coerce_generation_error(

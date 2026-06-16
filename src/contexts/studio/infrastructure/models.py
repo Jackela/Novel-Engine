@@ -132,30 +132,6 @@ class DocumentRevision(Base):
     )
 
 
-class DocumentLink(Base):
-    __tablename__ = "document_links"
-    __table_args__ = (
-        UniqueConstraint(
-            "source_document_id",
-            "target_document_id",
-            "relation",
-            name="uq_document_link",
-        ),
-    )
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    source_document_id: Mapped[str] = mapped_column(
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    target_document_id: Mapped[str] = mapped_column(
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    relation: Mapped[str] = mapped_column(String(80), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-
-
 class ProjectSnapshot(Base):
     __tablename__ = "project_snapshots"
 

@@ -1,6 +1,6 @@
 import { BookOpen, FileText, Globe2, Users } from 'lucide-react';
 
-import type { DocumentKind } from '@/app/types/studio';
+import type { DocumentKind, ProviderInfo } from '@/app/types/studio';
 
 export const GROUPS: Array<{
   kind: DocumentKind;
@@ -26,3 +26,9 @@ export const SECTIONS = [
   ['export', 'Export'],
   ['settings', 'Settings'],
 ] as const;
+
+export const DEFAULT_PROVIDER_OPTIONS: ProviderInfo[] = [
+  { provider: 'mock', configured: true, model: null, is_default: true },
+  { provider: 'dashscope', configured: false, model: null, is_default: false },
+  { provider: 'openai_compatible', configured: false, model: null, is_default: false },
+];

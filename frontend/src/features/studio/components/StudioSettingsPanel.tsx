@@ -1,17 +1,22 @@
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
+import type { ProviderInfo } from '@/app/types/studio';
+
+import { DEFAULT_PROVIDER_OPTIONS } from '../studioConstants';
 import type { SettingsFormState } from '../StudioInspector';
 
 interface StudioSettingsPanelProps {
   settingsForm: SettingsFormState;
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
   onUpdateSettings: (event: FormEvent) => void;
+  providers?: ProviderInfo[];
 }
 
 export function StudioSettingsPanel({
   settingsForm,
   setSettingsForm,
   onUpdateSettings,
+  providers = DEFAULT_PROVIDER_OPTIONS,
 }: StudioSettingsPanelProps) {
   return (
     <form className="inspector-content" onSubmit={onUpdateSettings}>
@@ -40,14 +45,17 @@ export function StudioSettingsPanel({
       <label className="settings-field">
         <span>Provider</span>
         <select
+          aria-label="Provider"
           onChange={(event) =>
             setSettingsForm((current) => ({ ...current, provider: event.target.value }))
           }
           value={settingsForm.provider}
         >
-          <option value="mock">mock</option>
-          <option value="dashscope">dashscope</option>
-          <option value="openai_compatible">openai_compatible</option>
+          {providers.map((provider) => (
+            <option key={provider.provider} value={provider.provider}>
+              {provider.provider}
+            </option>
+          ))}
         </select>
       </label>
       <div className="settings-field">

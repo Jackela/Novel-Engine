@@ -1,7 +1,7 @@
 import { Bot, Briefcase, History, ShieldCheck } from 'lucide-react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
-import type { Review, Revision, StudioExport, StudioJob } from '@/app/types/studio';
+import type { ProviderInfo, Review, Revision, StudioExport, StudioJob } from '@/app/types/studio';
 
 import { StudioCopilotPanel } from './components/StudioCopilotPanel';
 import { StudioHistoryPanel } from './components/StudioHistoryPanel';
@@ -25,6 +25,7 @@ interface StudioInspectorProps {
   latestReview: Review | null;
   loadedRevisionId: string | null;
   proposal: StudioJob | null;
+  providers: ProviderInfo[];
   revisions: Revision[];
   settingsForm: SettingsFormState;
   onAcceptProposal: () => void;
@@ -49,6 +50,7 @@ export function StudioInspector({
   latestReview,
   loadedRevisionId,
   proposal,
+  providers,
   revisions,
   settingsForm,
   onAcceptProposal,
@@ -127,6 +129,7 @@ export function StudioInspector({
           settingsForm={settingsForm}
           setSettingsForm={setSettingsForm}
           onUpdateSettings={onUpdateSettings}
+          providers={providers}
         />
       )}
     </aside>

@@ -6,8 +6,8 @@ from src.contexts.studio.application.service_common import (
     StudioRepository,
     _owner_scopes,
     _revision_payload,
+    _safe_load_json,
     cast,
-    load_json,
 )
 
 from .document_service import DocumentService
@@ -58,7 +58,7 @@ class RevisionService:
             owner_id=owner_id,
             guest_session_id=guest_session_id,
         )
-        metadata = cast(dict[str, Any], load_json(revision.metadata_json))
+        metadata = cast(dict[str, Any], _safe_load_json(revision.metadata_json))
         return self._document_service.save_document(
             principal,
             project_id,

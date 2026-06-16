@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime
 from typing import Any, cast
 
@@ -25,7 +27,7 @@ from src.contexts.studio.application.ports.studio_repository import (
 from src.contexts.studio.domain.exceptions import InvalidOperation, NotFound
 from src.contexts.studio.domain.types import JOB_KINDS
 from src.contexts.studio.domain.utils import _word_count, dump_json, new_id, utcnow
-from src.contexts.studio.infrastructure.database import StudioDatabase
+from src.contexts.studio.infrastructure.database import StudioDatabase, UnitOfWork
 from src.contexts.studio.infrastructure.models import (
     Document,
     DocumentRevision,
@@ -39,6 +41,19 @@ from src.contexts.studio.infrastructure.models import (
     SessionRecord,
     UsageEvent,
 )
+
+
+@contextmanager
+def _session(
+    database: StudioDatabase,
+    session: Session | None = None,
+) -> Iterator[Session]:
+    """Yield a shared session or a fresh transactional session."""
+    if session is not None:
+        yield session
+        return
+    with database.session() as new_session:
+        yield new_session
 
 
 def _owner_dto(owner: Owner) -> OwnerDto:
@@ -192,6 +207,8 @@ __all__ = [
     "select",
     "text",
     "Session",
+    "UnitOfWork",
+    "_session",
     "DocumentDto",
     "ExportDto",
     "JobDto",

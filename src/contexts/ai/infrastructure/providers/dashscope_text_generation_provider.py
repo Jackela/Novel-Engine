@@ -477,6 +477,19 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         )
 
     @staticmethod
+    def _extract_usage_tokens(data: dict[str, Any]) -> tuple[int | None, int | None]:
+        """Return ``(prompt_tokens, completion_tokens)`` from a DashScope response."""
+        usage = data.get("usage")
+        if not isinstance(usage, dict):
+            return None, None
+        prompt_tokens = usage.get("prompt_tokens")
+        completion_tokens = usage.get("completion_tokens")
+        return (
+            int(prompt_tokens) if isinstance(prompt_tokens, int) else None,
+            int(completion_tokens) if isinstance(completion_tokens, int) else None,
+        )
+
+    @staticmethod
     def _parse_json_object(raw_text: str) -> dict[str, Any]:
         candidates: list[str] = []
         stripped = raw_text.strip()
@@ -644,6 +657,7 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         response.raise_for_status()
         data = response.json()
         content_text = self._transport.extract_response_text(data)
+        prompt_tokens, completion_tokens = self._extract_usage_tokens(data)
         payload = self._payload_from_response_text(content_text, task.response_schema)
         parsed = _coerce_payload_to_schema(payload, task.response_schema)
         return TextGenerationResult(
@@ -652,6 +666,8 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             model=self._model,
             raw_text=json.dumps(parsed, ensure_ascii=False),
             content=parsed,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
         )
 
     def _payload_from_response_text(

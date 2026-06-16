@@ -43,7 +43,8 @@ export function useDocumentDraft(
     if (!activeDocument) return;
     onActiveDocumentChanged?.();
     resetFor(activeDocument);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only reset when the active document identity changes, not when its content is mutated.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Reset draft for a new document id; content changes are handled by user edits and autosave.
   }, [activeDocument?.id, onActiveDocumentChanged, resetFor]);
 
   useEffect(() => {

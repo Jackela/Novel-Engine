@@ -17,6 +17,7 @@ from src.contexts.studio.infrastructure.repository.common import (
     Session,
     StudioDatabase,
     _document_dto,
+    _session,
     cast,
     datetime,
     dump_json,
@@ -74,8 +75,9 @@ class ProjectRepositoryMixin:
         settings_json: str,
         now: datetime,
         create_seed: bool = True,
+        session: Session | None = None,
     ) -> ProjectDto:
-        with self.database.session() as session:
+        with _session(self.database, session) as db_session:
             project = Project(
                 id=new_id(),
                 owner_id=owner_id,
@@ -86,8 +88,8 @@ class ProjectRepositoryMixin:
                 created_at=now,
                 updated_at=now,
             )
-            session.add(project)
-            session.flush()
+            db_session.add(project)
+            db_session.flush()
             documents: list[DocumentDto] = []
             if create_seed:
                 document = Document(
@@ -99,8 +101,8 @@ class ProjectRepositoryMixin:
                     created_at=now,
                     updated_at=now,
                 )
-                session.add(document)
-                session.flush()
+                db_session.add(document)
+                db_session.flush()
                 revision = DocumentRevision(
                     id=new_id(),
                     document_id=document.id,
@@ -111,10 +113,10 @@ class ProjectRepositoryMixin:
                     source="author",
                     created_at=now,
                 )
-                session.add(revision)
-                session.flush()
+                db_session.add(revision)
+                db_session.flush()
                 document.current_revision_id = revision.id
-                self._refresh_search(session, document, revision)
+                self._refresh_search(db_session, document, revision)
                 documents.append(_document_dto(document))
             return ProjectDto(
                 id=project.id,
@@ -134,15 +136,16 @@ class ProjectRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> list[ProjectDto]:
-        with self.database.session() as session:
+        with _session(self.database, session) as db_session:
             statement = (
                 select(Project)
                 .order_by(Project.updated_at.desc())
                 .options(selectinload(Project.documents).selectinload(Document.revisions))
             )
             statement = self._scope_projects(statement, owner_id, guest_session_id)
-            projects = session.scalars(statement).all()
+            projects = db_session.scalars(statement).all()
             return [
                 ProjectDto(
                     id=project.id,
@@ -165,10 +168,11 @@ class ProjectRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> ProjectDto:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            documents = session.scalars(
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
+            documents = db_session.scalars(
                 select(Document)
                 .where(Document.project_id == project.id)
                 .order_by(Document.kind, Document.position, Document.created_at)
@@ -197,9 +201,10 @@ class ProjectRepositoryMixin:
         description: str | None,
         settings_json: str | None,
         now: datetime,
+        session: Session | None = None,
     ) -> ProjectDto:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
             if title is not None:
                 project.title = title
             if description is not None:
@@ -207,7 +212,7 @@ class ProjectRepositoryMixin:
             if settings_json is not None:
                 project.settings_json = settings_json
             project.updated_at = now
-            documents = session.scalars(
+            documents = db_session.scalars(
                 select(Document)
                 .where(Document.project_id == project.id)
                 .order_by(Document.kind, Document.position, Document.created_at)
@@ -231,26 +236,27 @@ class ProjectRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> None:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            session.execute(
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
+            db_session.execute(
                 text("DELETE FROM document_search WHERE project_id = :project_id"),
                 {"project_id": project.id},
             )
-            snapshot_ids = session.scalars(
+            snapshot_ids = db_session.scalars(
                 select(ProjectSnapshot.id).where(ProjectSnapshot.project_id == project.id)
             ).all()
             if snapshot_ids:
-                session.execute(
+                db_session.execute(
                     delete(SnapshotDocument).where(
                         SnapshotDocument.snapshot_id.in_(snapshot_ids)
                     )
                 )
-                session.execute(
+                db_session.execute(
                     delete(ProjectSnapshot).where(ProjectSnapshot.id.in_(snapshot_ids))
                 )
-            session.delete(project)
+            db_session.delete(project)
 
     def find_project_by_import_hash(
         self,
@@ -258,11 +264,12 @@ class ProjectRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> ProjectDto | None:
-        with self.database.session() as session:
+        with _session(self.database, session) as db_session:
             statement = select(Project).where(Project.import_hash == import_hash)
             statement = self._scope_projects(statement, owner_id, guest_session_id)
-            project = session.scalar(statement)
+            project = db_session.scalar(statement)
             if project is None:
                 return None
             return ProjectDto(
@@ -285,7 +292,8 @@ class ProjectRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> None:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
             project.import_hash = import_hash

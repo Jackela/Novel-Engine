@@ -94,25 +94,14 @@ class _AsyncPostClient:
         return outcome
 
 
-def _dashscope_success_response(content: str) -> _ProviderResponse:
-    return _ProviderResponse(
-        {
-            "output": {
-                "choices": [
-                    {
-                        "message": {
-                            "content": content,
-                        }
-                    }
-                ]
-            }
-        }
-    )
-
-
-def _openai_success_response(content: str) -> _ProviderResponse:
-    return _ProviderResponse(
-        {
+def _dashscope_success_response(
+    content: str,
+    *,
+    prompt_tokens: int | None = None,
+    completion_tokens: int | None = None,
+) -> _ProviderResponse:
+    data: dict[str, Any] = {
+        "output": {
             "choices": [
                 {
                     "message": {
@@ -121,7 +110,36 @@ def _openai_success_response(content: str) -> _ProviderResponse:
                 }
             ]
         }
-    )
+    }
+    if prompt_tokens is not None and completion_tokens is not None:
+        data["usage"] = {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+        }
+    return _ProviderResponse(data)
+
+
+def _openai_success_response(
+    content: str,
+    *,
+    prompt_tokens: int | None = None,
+    completion_tokens: int | None = None,
+) -> _ProviderResponse:
+    data: dict[str, Any] = {
+        "choices": [
+            {
+                "message": {
+                    "content": content,
+                }
+            }
+        ]
+    }
+    if prompt_tokens is not None and completion_tokens is not None:
+        data["usage"] = {
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+        }
+    return _ProviderResponse(data)
 
 
 @pytest.mark.asyncio
@@ -209,7 +227,13 @@ async def test_dashscope_provider_generates_structured_payload(
 ) -> None:
     provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
     fake_client = _AsyncPostClient(
-        [_dashscope_success_response('{"items": "single", "count": "2"}')]
+        [
+            _dashscope_success_response(
+                '{"items": "single", "count": "2"}',
+                prompt_tokens=12,
+                completion_tokens=7,
+            )
+        ]
     )
     monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
 
@@ -224,6 +248,8 @@ async def test_dashscope_provider_generates_structured_payload(
 
     assert result.provider == "dashscope"
     assert result.content == {"items": ["single"], "count": 2}
+    assert result.prompt_tokens == 12
+    assert result.completion_tokens == 7
     assert fake_client.calls[0][0] == (provider._endpoint_path(),)
     assert fake_client.calls[0][1]["timeout"] == 30.0
 
@@ -500,13 +526,17 @@ async def test_openai_compatible_provider_generates_structured_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
-    fake_client = _AsyncPostClient([_openai_success_response('{"ok": true}')])
+    fake_client = _AsyncPostClient(
+        [_openai_success_response('{"ok": true}', prompt_tokens=9, completion_tokens=3)]
+    )
     monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
 
     result = await provider.generate_structured(_task())
 
     assert result.provider == "openai_compatible"
     assert result.content == {"ok": True}
+    assert result.prompt_tokens == 9
+    assert result.completion_tokens == 3
     assert fake_client.calls[0][0] == ("/chat/completions",)
     payload = fake_client.calls[0][1]["json"]
     assert payload["response_format"] == {"type": "json_object"}

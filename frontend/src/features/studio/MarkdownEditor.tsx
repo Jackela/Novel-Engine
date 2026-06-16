@@ -56,7 +56,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     });
     view.current = nextView;
     return () => nextView.destroy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Editor instance created once per mount; external value changes handled by the effect below.
   }, []);
 
   useEffect(() => {

@@ -32,6 +32,7 @@ from src.contexts.studio.infrastructure.models import (
     JobEvent,
     Project,
     SessionRecord,
+    UsageEvent,
 )
 from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config import settings as settings_module
@@ -84,6 +85,8 @@ class MechanicalPhraseProvider:
             model="mechanical-phrase-fixture",
             raw_text=json.dumps(payload, ensure_ascii=False),
             content=payload,
+            prompt_tokens=13,
+            completion_tokens=21,
         )
 
 
@@ -257,18 +260,13 @@ def test_online_backup_is_consistent_with_wal(store: StudioStore) -> None:
     assert integrity == ("ok",)
 
 
-def test_load_json_returns_empty_for_invalid_json_and_logs_warning(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
+def test_load_json_returns_empty_for_empty_input_and_raises_for_invalid_json() -> None:
     assert load_json(None) == {}
     assert load_json("") == {}
     assert load_json('{"valid": true}') == {"valid": True}
 
-    with caplog.at_level("WARNING"):
-        assert load_json("not valid json") == {}
-
-    assert "json_decode_failed" in caplog.text
-    assert "not valid json" in caplog.text
+    with pytest.raises(ValueError, match="Malformed JSON"):
+        load_json("not valid json")
 
 
 def test_sanitize_chapter_markdown_removes_preambles_and_rewrites_phrases() -> None:
@@ -332,6 +330,14 @@ async def test_create_ai_proposal_sanitizes_mechanical_phrases_before_storage(
     _assert_no_mechanical_prose(proposal_markdown)
     assert "Mira followed the bell" in proposal_markdown
     assert "The scene settles with Mira stepping" in proposal_markdown
+
+    with store.database.session() as session:
+        usage_event = session.query(UsageEvent).filter(
+            UsageEvent.project_id == project["id"]
+        ).first()
+        assert usage_event is not None
+        assert usage_event.prompt_tokens == 13
+        assert usage_event.completion_tokens == 21
 
 
 def test_sanitize_instruction_neutralizes_injection_patterns() -> None:

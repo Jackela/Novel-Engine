@@ -17,6 +17,7 @@ import { useStudioActions } from './hooks/useStudioActions';
 import { useStudioJobs } from './hooks/useStudioJobs';
 import { useStudioProject } from './hooks/useStudioProject';
 import { useStudioProposal } from './hooks/useStudioProposal';
+import { useStudioProviders } from './hooks/useStudioProviders';
 import { useStudioSearch } from './hooks/useStudioSearch';
 
 export function StudioPage() {
@@ -83,6 +84,8 @@ export function StudioPage() {
     projectId,
     setError,
   );
+
+  const providers = useStudioProviders();
 
   const { exportProject } = useExportDownload(project, projectId, setExports, setError);
 
@@ -175,6 +178,7 @@ export function StudioPage() {
         latestReview={latestReview}
         loadedRevisionId={loadedRevision.current}
         proposal={proposal}
+        providers={providers}
         revisions={revisions}
         settingsForm={settingsForm}
         onAcceptProposal={() => void acceptProposal()}

@@ -6,7 +6,7 @@
 ## 1. Project Overview
 
 **Name:** Novel-Engine / Novel Studio 0.3.1
-**Stack:** Python 3.11+ (FastAPI + SQLAlchemy 2.0 + Alembic + Pydantic v2 + SQLite), React 18 + Vite + TypeScript
+**Stack:** Python 3.11+ (FastAPI + SQLAlchemy 2.0 + Alembic + Pydantic v2 + SQLite), React 19 + Vite + TypeScript
 **Package managers:** `uv` (Python), `pnpm` (Node, workspace root + frontend)
 **Current status:** Audit remediation branch ready for staging validation.
 
@@ -22,7 +22,7 @@ src/
       domain/
       application/
         services/ # Per-service modules (project, document, ai, export, job, etc.)
-        facade.py # Thin coordinator over services
+        facade.py # Thin coordinator over services (legacy compatibility; new code should prefer dependency injection via FastAPI Depends)
       infrastructure/
       interface/
     ai/           # Text-generation providers (mock, dashscope, openai_compatible)

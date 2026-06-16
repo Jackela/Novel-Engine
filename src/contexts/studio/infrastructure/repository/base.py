@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.contexts.studio.infrastructure.database import UnitOfWork
 from src.contexts.studio.infrastructure.repository.common import (
     StudioDatabase,
 )
@@ -22,3 +23,7 @@ class RepositoryBase:
             return True
         except (RuntimeError, SQLAlchemyError):
             return False
+
+    def unit_of_work(self) -> UnitOfWork:
+        """Return a unit of work bound to the underlying database."""
+        return self.database.unit_of_work()

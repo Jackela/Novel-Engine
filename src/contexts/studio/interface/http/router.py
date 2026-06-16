@@ -23,7 +23,6 @@ from src.contexts.studio.application.services import (
     CSRF_COOKIE,
     GUEST_TTL,
     SESSION_COOKIE,
-    Principal,
     studio_store,
 )
 from src.contexts.studio.domain.exceptions import (
@@ -31,6 +30,7 @@ from src.contexts.studio.domain.exceptions import (
     NotFound,
     RevisionConflict,
 )
+from src.contexts.studio.domain.principal import Principal
 from src.contexts.studio.domain.types import DocumentKind, ExportFormat
 from src.shared.infrastructure.config.settings import get_settings
 
