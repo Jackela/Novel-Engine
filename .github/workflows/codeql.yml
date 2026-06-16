@@ -64,7 +64,7 @@ jobs:
 
       - name: Set up pnpm
         if: matrix.language == 'javascript-typescript'
-        uses: pnpm/action-setup@v6.0.4
+        uses: pnpm/action-setup@v6.0.9
         with:
           version: 11.6.0
 
