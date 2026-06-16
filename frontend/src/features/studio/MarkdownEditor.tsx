@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { markdown } from '@codemirror/lang-markdown';
-import { EditorState } from '@codemirror/state';
+import { EditorSelection, EditorState, Transaction } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 
@@ -19,6 +19,9 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   }, [onChange]);
 
   useEffect(() => {
+    // Editor is created once per mount; subsequent external value changes are
+    // applied in a separate effect below to avoid recreating the editor and
+    // losing editor state (cursor, undo history).
     if (!parent.current) return;
     const nextView = new EditorView({
       parent: parent.current,
@@ -44,22 +47,44 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             '.cm-focused': { outline: 'none' },
             '.cm-gutters': { display: 'none' },
             '.cm-activeLine': { backgroundColor: 'transparent' },
-            '.cm-selectionBackground': { backgroundColor: '#ccfbf1 !important' },
+            '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
+              backgroundColor: '#ccfbf1',
+            },
           }),
         ],
       }),
     });
     view.current = nextView;
     return () => nextView.destroy();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     const editor = view.current;
     if (!editor || editor.state.doc.toString() === value) return;
+
+    const currentSelection = editor.state.selection;
+    const newLength = value.length;
+    const ranges = currentSelection.ranges.map((range) => {
+      const from = Math.min(range.from, newLength);
+      const to = Math.min(range.to, newLength);
+      return EditorSelection.range(from, to);
+    });
+
     editor.dispatch({
       changes: { from: 0, to: editor.state.doc.length, insert: value },
+      selection: EditorSelection.create(ranges, currentSelection.mainIndex),
+      annotations: Transaction.addToHistory.of(false),
     });
   }, [value]);
 
-  return <div className="markdown-editor" ref={parent} />;
+  return (
+    <div
+      className="markdown-editor"
+      ref={parent}
+      role="textbox"
+      aria-label="Markdown editor"
+      aria-multiline="true"
+    />
+  );
 }

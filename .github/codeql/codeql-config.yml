@@ -2,9 +2,8 @@ name: Novel Engine CodeQL
 
 paths:
   - src
-  - tests
   - scripts
-  - frontend
+  - frontend/src
 
 paths-ignore:
   - "**/__pycache__/**"
@@ -14,12 +13,5 @@ paths-ignore:
   - "frontend/.vite/**"
   - "frontend/dist/**"
   - "frontend/node_modules/**"
-  - "frontend/tests/e2e/diplomacy.spec.ts"
+  - "frontend/coverage/**"
   - "scripts/evaluation/**"
-  - "src/api/**"
-  - "src/caching/**"
-  - "src/contexts/character/**"
-  - "src/contexts/knowledge/**"
-  - "src/contexts/world/**"
-  - "src/events/**"
-  - "tests/**"

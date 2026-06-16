@@ -2,26 +2,43 @@
 
 from __future__ import annotations
 
+import secrets
+from functools import wraps
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import (
+    Annotated,
+    Any,
+    Awaitable,
+    Callable,
+    Literal,
+    NoReturn,
+    ParamSpec,
+    TypeVar,
+)
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from src.contexts.studio.application.services import (
+    CSRF_COOKIE,
     GUEST_TTL,
     SESSION_COOKIE,
+    Principal,
+    studio_store,
+)
+from src.contexts.studio.domain.exceptions import (
     InvalidOperation,
     NotFound,
-    Principal,
     RevisionConflict,
-    studio_store,
 )
 from src.contexts.studio.domain.types import DocumentKind, ExportFormat
 from src.shared.infrastructure.config.settings import get_settings
 
 router = APIRouter(tags=["studio"])
+
+P = ParamSpec("P")
+T = TypeVar("T")
 
 
 class OwnerSetupRequest(BaseModel):
@@ -90,7 +107,7 @@ class SnapshotRequest(BaseModel):
     reason: str = Field(default="manual", min_length=1, max_length=48)
 
 
-def _raise_http(exc: Exception) -> None:
+def _raise_http(exc: NotFound | RevisionConflict | InvalidOperation) -> NoReturn:
     if isinstance(exc, NotFound):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     if isinstance(exc, RevisionConflict):
@@ -106,7 +123,19 @@ def _raise_http(exc: Exception) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
-    raise exc
+
+
+def _handle_domain_exceptions(
+    handler: Callable[P, Awaitable[T]],
+) -> Callable[P, Awaitable[T]]:
+    @wraps(handler)
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        try:
+            return await handler(*args, **kwargs)
+        except (NotFound, RevisionConflict, InvalidOperation) as exc:
+            _raise_http(exc)
+
+    return wrapper
 
 
 def _session_cookie(
@@ -126,7 +155,32 @@ def _session_cookie(
     )
 
 
+def _csrf_cookie(
+    response: Response,
+    token: str,
+    *,
+    max_age: int | None,
+) -> None:
+    response.set_cookie(
+        CSRF_COOKIE,
+        token,
+        httponly=False,
+        secure=get_settings().is_production,
+        samesite="lax",
+        max_age=max_age,
+        path="/",
+    )
+
+
+_CSRF_EXEMPT_PATHS = {
+    "/api/setup",
+    "/api/session/login",
+    "/api/session/guest",
+}
+
+
 def get_principal(
+    request: Request,
     novel_studio_session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
 ) -> Principal:
     principal = studio_store.principal_from_token(novel_studio_session)
@@ -135,6 +189,22 @@ def get_principal(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Owner or guest session required.",
         )
+    if (
+        request.method in {"POST", "PUT", "PATCH", "DELETE"}
+        and request.url.path not in _CSRF_EXEMPT_PATHS
+    ):
+        cookie_token = request.cookies.get(CSRF_COOKIE)
+        header_token = request.headers.get("X-CSRF-Token")
+        if not cookie_token or not header_token:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="CSRF token missing.",
+            )
+        if not secrets.compare_digest(cookie_token, header_token):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="CSRF token invalid.",
+            )
     return principal
 
 
@@ -175,32 +245,30 @@ async def setup_status() -> dict[str, Any]:
 
 
 @router.post("/setup", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def setup_owner(payload: OwnerSetupRequest) -> dict[str, Any]:
-    try:
-        return studio_store.setup_owner(payload.username, payload.password)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.setup_owner(payload.username, payload.password)
 
 
 @router.post("/session/login")
+@_handle_domain_exceptions
 async def login(payload: LoginRequest, response: Response) -> dict[str, Any]:
-    try:
-        token, principal = studio_store.create_owner_session(
-            payload.username,
-            payload.password,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
-    _session_cookie(response, token, max_age=60 * 60 * 24 * 30)
+    token, csrf_token, principal = studio_store.create_owner_session(
+        payload.username,
+        payload.password,
+    )
+    max_age = 60 * 60 * 24 * 30
+    _session_cookie(response, token, max_age=max_age)
+    _csrf_cookie(response, csrf_token, max_age=max_age)
     return _principal_payload(principal)
 
 
 @router.post("/session/guest", status_code=status.HTTP_201_CREATED)
 async def guest_session(response: Response) -> dict[str, Any]:
-    token, principal = studio_store.create_guest_session()
-    _session_cookie(response, token, max_age=int(GUEST_TTL.total_seconds()))
+    token, csrf_token, principal = studio_store.create_guest_session()
+    max_age = int(GUEST_TTL.total_seconds())
+    _session_cookie(response, token, max_age=max_age)
+    _csrf_cookie(response, csrf_token, max_age=max_age)
     return _principal_payload(principal)
 
 
@@ -217,10 +285,11 @@ async def current_session(principal: PrincipalDependency) -> dict[str, Any]:
 )
 async def logout(
     response: Response,
-    novel_studio_session: Annotated[str | None, Cookie(alias=SESSION_COOKIE)] = None,
+    principal: PrincipalDependency,
 ) -> Response:
-    studio_store.logout(novel_studio_session)
+    studio_store.logout(principal.session_id)
     response.delete_cookie(SESSION_COOKIE, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
 
@@ -249,146 +318,123 @@ async def list_projects(principal: PrincipalDependency) -> dict[str, Any]:
 
 
 @router.post("/projects", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def create_project(
     payload: ProjectRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.create_project(
-            principal,
-            title=payload.title,
-            description=payload.description,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.create_project(
+        principal,
+        title=payload.title,
+        description=payload.description,
+    )
 
 
 @router.get("/projects/{project_id}")
+@_handle_domain_exceptions
 async def get_project(project_id: str, principal: PrincipalDependency) -> dict[str, Any]:
-    try:
-        return studio_store.get_project(principal, project_id)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.get_project(principal, project_id)
 
 
 @router.patch("/projects/{project_id}")
+@_handle_domain_exceptions
 async def update_project(
     project_id: str,
     payload: ProjectUpdateRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.update_project(
-            principal,
-            project_id,
-            title=payload.title,
-            description=payload.description,
-            settings=payload.settings,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.update_project(
+        principal,
+        project_id,
+        title=payload.title,
+        description=payload.description,
+        settings=payload.settings,
+    )
 
 
 @router.post("/projects/{project_id}/documents", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def create_document(
     project_id: str,
     payload: DocumentCreateRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.create_document(
-            principal,
-            project_id,
-            kind=payload.kind,
-            title=payload.title,
-            content_markdown=payload.content_markdown,
-            position=payload.position,
-            metadata=payload.metadata,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.create_document(
+        principal,
+        project_id,
+        kind=payload.kind,
+        title=payload.title,
+        content_markdown=payload.content_markdown,
+        position=payload.position,
+        metadata=payload.metadata,
+    )
 
 
 @router.put("/projects/{project_id}/documents/reorder")
+@_handle_domain_exceptions
 async def reorder_documents(
     project_id: str,
     payload: ReorderRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {
-            "documents": studio_store.reorder_documents(
-                principal,
-                project_id,
-                payload.document_ids,
-            )
-        }
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {
+        "documents": studio_store.reorder_documents(
+            principal,
+            project_id,
+            payload.document_ids,
+        )
+    }
 
 
 @router.get("/projects/{project_id}/documents/{document_id}")
+@_handle_domain_exceptions
 async def get_document(
     project_id: str,
     document_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.get_document(principal, project_id, document_id)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.get_document(principal, project_id, document_id)
 
 
 @router.put("/projects/{project_id}/documents/{document_id}")
+@_handle_domain_exceptions
 async def save_document(
     project_id: str,
     document_id: str,
     payload: DocumentSaveRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.save_document(
-            principal,
-            project_id,
-            document_id,
-            content_markdown=payload.content_markdown,
-            base_revision_id=payload.base_revision_id,
-            title=payload.title,
-            metadata=payload.metadata,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.save_document(
+        principal,
+        project_id,
+        document_id,
+        content_markdown=payload.content_markdown,
+        base_revision_id=payload.base_revision_id,
+        title=payload.title,
+        metadata=payload.metadata,
+    )
 
 
 @router.get("/projects/{project_id}/documents/{document_id}/revisions")
+@_handle_domain_exceptions
 async def list_revisions(
     project_id: str,
     document_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {
-            "revisions": studio_store.list_revisions(
-                principal,
-                project_id,
-                document_id,
-            )
-        }
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {
+        "revisions": studio_store.list_revisions(
+            principal,
+            project_id,
+            document_id,
+        )
+    }
 
 
 @router.post(
     "/projects/{project_id}/documents/{document_id}/revisions/{revision_id}/restore"
 )
+@_handle_domain_exceptions
 async def restore_revision(
     project_id: str,
     document_id: str,
@@ -396,215 +442,169 @@ async def restore_revision(
     payload: DocumentRestoreRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.restore_revision(
-            principal,
-            project_id,
-            document_id,
-            revision_id,
-            base_revision_id=payload.base_revision_id,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.restore_revision(
+        principal,
+        project_id,
+        document_id,
+        revision_id,
+        base_revision_id=payload.base_revision_id,
+    )
 
 
 @router.get("/projects/{project_id}/search")
+@_handle_domain_exceptions
 async def search_project(
     project_id: str,
     q: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {"results": studio_store.search(principal, project_id, q)}
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {"results": studio_store.search(principal, project_id, q)}
 
 
 @router.get("/projects/{project_id}/snapshots")
+@_handle_domain_exceptions
 async def list_snapshots(
     project_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {"snapshots": studio_store.list_snapshots(principal, project_id)}
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {"snapshots": studio_store.list_snapshots(principal, project_id)}
 
 
 @router.post(
     "/projects/{project_id}/snapshots",
     status_code=status.HTTP_201_CREATED,
 )
+@_handle_domain_exceptions
 async def create_snapshot(
     project_id: str,
     payload: SnapshotRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.create_snapshot(
-            principal,
-            project_id,
-            reason=payload.reason,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.create_snapshot(
+        principal,
+        project_id,
+        reason=payload.reason,
+    )
 
 
 @router.post("/projects/{project_id}/documents/{document_id}/ai-proposals")
+@_handle_domain_exceptions
 async def create_ai_proposal(
     project_id: str,
     document_id: str,
     payload: AIProposalRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.create_ai_proposal(
-            principal,
-            project_id,
-            document_id,
-            operation=payload.operation,
-            instruction=payload.instruction,
-            provider=payload.provider,
-            model=get_settings().llm.resolved_model(payload.provider),
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return await studio_store.create_ai_proposal(
+        principal,
+        project_id,
+        document_id,
+        operation=payload.operation,
+        instruction=payload.instruction,
+        provider=payload.provider,
+        model=get_settings().llm.resolved_model(payload.provider),
+    )
 
 
 @router.post("/projects/{project_id}/ai-proposals/{job_id}/accept")
+@_handle_domain_exceptions
 async def accept_ai_proposal(
     project_id: str,
     job_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.accept_ai_proposal(principal, project_id, job_id)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.accept_ai_proposal(principal, project_id, job_id)
 
 
 @router.get("/projects/{project_id}/jobs")
+@_handle_domain_exceptions
 async def list_jobs(project_id: str, principal: PrincipalDependency) -> dict[str, Any]:
-    try:
-        return {"jobs": studio_store.list_jobs(principal, project_id)}
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {"jobs": studio_store.list_jobs(principal, project_id)}
 
 
 @router.post("/projects/{project_id}/jobs/{job_id}/retry")
+@_handle_domain_exceptions
 async def retry_job(
     project_id: str,
     job_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.retry_job(principal, project_id, job_id)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return await studio_store.retry_job(principal, project_id, job_id)
 
 
 @router.post("/projects/{project_id}/reviews", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def create_review(
     project_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.review_project(principal, project_id)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.review_project(principal, project_id)
 
 
 @router.get("/projects/{project_id}/reviews")
+@_handle_domain_exceptions
 async def list_reviews(
     project_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {"reviews": studio_store.list_reviews(principal, project_id)}
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {"reviews": studio_store.list_reviews(principal, project_id)}
 
 
 @router.post("/projects/{project_id}/exports", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def create_export(
     project_id: str,
     payload: ExportRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return studio_store.export_project(
-            principal,
-            project_id,
-            export_format=payload.format,
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.export_project(
+        principal,
+        project_id,
+        export_format=payload.format,
+    )
 
 
 @router.get("/projects/{project_id}/exports")
+@_handle_domain_exceptions
 async def list_exports(
     project_id: str,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
-    try:
-        return {"exports": studio_store.list_exports(principal, project_id)}
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return {"exports": studio_store.list_exports(principal, project_id)}
 
 
 @router.get("/projects/{project_id}/exports/{export_id}/download")
+@_handle_domain_exceptions
 async def download_export(
     project_id: str,
     export_id: str,
     principal: PrincipalDependency,
 ) -> FileResponse:
-    try:
-        path = studio_store.export_path(principal, project_id, export_id)
-        return FileResponse(path, filename=path.name)
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    path = studio_store.export_path(principal, project_id, export_id)
+    return FileResponse(path, filename=path.name)
 
 
 @router.post("/imports/preview")
+@_handle_domain_exceptions
 async def preview_import(
     payload: LegacyPathRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
     _require_owner(principal)
-    try:
-        return studio_store.preview_legacy_workspace(_web_import_source(payload.source))
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.preview_legacy_workspace(_web_import_source(payload.source))
 
 
 @router.post("/imports", status_code=status.HTTP_201_CREATED)
+@_handle_domain_exceptions
 async def import_workspace(
     payload: LegacyPathRequest,
     principal: PrincipalDependency,
 ) -> dict[str, Any]:
     _require_owner(principal)
-    try:
-        return studio_store.import_legacy_workspace(
-            principal,
-            _web_import_source(payload.source),
-        )
-    except Exception as exc:
-        _raise_http(exc)
-        raise
+    return studio_store.import_legacy_workspace(
+        principal,
+        _web_import_source(payload.source),
+    )
 
 
 def _principal_payload(principal: Principal) -> dict[str, Any]:

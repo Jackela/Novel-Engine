@@ -2,6 +2,9 @@ export type SessionKind = 'owner' | 'guest';
 export type DocumentKind = 'chapter' | 'outline' | 'character' | 'world' | 'note';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 export type ExportFormat = 'markdown' | 'docx' | 'epub';
+export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';
+export type StudioJobKind = 'proposal' | 'review' | 'export';
+export type StudioJobOperation = 'continue' | 'rewrite' | 'generate' | 'review' | 'export';
 
 export interface Session {
   session_id: string;
@@ -45,6 +48,7 @@ export interface Revision {
   id: string;
   document_id: string;
   parent_revision_id: string | null;
+  revision_number: number;
   content_markdown: string;
   metadata: Record<string, unknown>;
   source: string;
@@ -73,13 +77,20 @@ export interface Review {
   issues: ReviewIssue[];
 }
 
+export interface StudioJobEvent {
+  id: string;
+  status: StudioJobStatus;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface StudioJob {
   id: string;
   project_id: string;
   document_id: string | null;
-  kind: string;
-  operation: string;
-  status: string;
+  kind: StudioJobKind;
+  operation: StudioJobOperation;
+  status: StudioJobStatus;
   provider: string;
   model: string;
   request: Record<string, unknown>;
@@ -89,6 +100,8 @@ export interface StudioJob {
     accepted_revision_id?: string | null;
   };
   error: string | null;
+  retry_of_job_id: string | null;
+  events: StudioJobEvent[];
   created_at: string;
   updated_at: string;
 }

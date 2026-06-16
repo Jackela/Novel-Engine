@@ -10,7 +10,7 @@ import sys
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import pytest
 from fastapi import FastAPI
@@ -52,18 +52,30 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     monkeypatch.setenv("MONITORING_METRICS_ENABLED", "false")
     monkeypatch.setenv("LLM_PROVIDER", "mock")
 
-    from src.contexts.studio.application import services as services_module
+    from src.contexts.studio.application.services import (
+        StudioStore,
+        configure_studio_store,
+    )
+    from src.contexts.studio.infrastructure.ai_provider import (
+        create_studio_text_generation_provider,
+    )
     from src.contexts.studio.infrastructure.database import StudioDatabase
+    from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
     from src.shared.infrastructure.config import settings as settings_module
 
     settings_module.reset_settings()
-    database = StudioDatabase(
-        f"sqlite:///{Path(os.environ['APP_DATA_DIR']) / 'test.sqlite3'}"
-    )
+    data_dir = Path(os.environ["APP_DATA_DIR"])
+    database = StudioDatabase(f"sqlite:///{data_dir / 'test.sqlite3'}")
     database.initialize(create_backup=False)
-    services_module.studio_store.database = database
+    configure_studio_store(
+        StudioStore(
+            repository=SqlAlchemyStudioRepository(database),
+            data_dir=data_dir,
+            ai_provider_factory=create_studio_text_generation_provider,
+        )
+    )
 
-    for module_name in ("src.apps.api.router",):
+    for module_name in ("src.apps.api.router", "src.apps.api.health"):
         sys.modules.pop(module_name, None)
 
     main_module = importlib.import_module("src.apps.api.main")
@@ -78,7 +90,21 @@ def canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
         pytest.fail(f"canonical app failed to build: {exc}")
 
 
+class _CsrfTestClient(TestClient):
+    """TestClient that automatically sends the X-CSRF-Token header for writes."""
+
+    def request(self, method: str, url: str, **kwargs: Any) -> Any:
+        if method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
+            token = self.cookies.get("novel_studio_csrf")
+            if token:
+                headers = kwargs.get("headers") or {}
+                if isinstance(headers, dict):
+                    headers["X-CSRF-Token"] = token
+                    kwargs["headers"] = headers
+        return super().request(method, url, **kwargs)
+
+
 @pytest.fixture
 def canonical_client(canonical_app: FastAPI) -> Generator[TestClient, None, None]:
-    with TestClient(canonical_app, raise_server_exceptions=False) as client:
+    with _CsrfTestClient(canonical_app, raise_server_exceptions=False) as client:
         yield client

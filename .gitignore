@@ -496,6 +496,7 @@ frontend/reports/
 coverage.json
 
 # Runtime artifacts
+/session_*.zip
 /data/
 .playwright-mcp/
 .playwright-cli/

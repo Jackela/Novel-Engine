@@ -54,7 +54,7 @@ class NotFoundError(APIError):
 class ConflictError(APIError):
     """Resource conflict error."""
 
-    def __init__(self, message: str):
+    def __init__(self, message: str) -> None:
         super().__init__(
             message=message,
             status_code=status.HTTP_409_CONFLICT,

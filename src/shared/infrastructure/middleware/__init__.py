@@ -20,6 +20,9 @@ from src.shared.infrastructure.middleware.metrics_middleware import (
     http_requests_total,
     start_prometheus_server,
 )
+from src.shared.infrastructure.middleware.rate_limit_middleware import (
+    RateLimitMiddleware,
+)
 
 __all__ = [
     # Correlation ID middleware
@@ -37,4 +40,6 @@ __all__ = [
     "http_requests_total",
     "http_request_duration_seconds",
     "http_requests_in_progress",
+    # Rate limit middleware
+    "RateLimitMiddleware",
 ]

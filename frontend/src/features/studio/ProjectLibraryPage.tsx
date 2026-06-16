@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { BookOpen, Clock3, LogOut, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +13,7 @@ export function ProjectLibraryPage() {
   const [description, setDescription] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const [nextSession, response] = await Promise.all([api.session(), api.projects()]);
       setSession(nextSession);
@@ -21,11 +21,11 @@ export function ProjectLibraryPage() {
     } catch {
       navigate('/', { replace: true });
     }
-  };
+  }, [navigate]);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const createProject = async (event: FormEvent) => {
     event.preventDefault();
@@ -39,22 +39,35 @@ export function ProjectLibraryPage() {
   };
 
   const logout = async () => {
-    await api.logout();
+    try {
+      await api.logout();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Unable to sign out.');
+      return;
+    }
     navigate('/');
   };
 
   return (
     <main className="library">
       <header className="library__header">
-        <div className="brand"><BookOpen aria-hidden="true" /> Novel Studio</div>
+        <div className="brand">
+          <BookOpen aria-hidden="true" /> Novel Studio
+        </div>
         <div className="library__header-actions">
           {session?.kind === 'guest' ? (
             <span className="session-expiry">
               <Clock3 aria-hidden="true" />
-              Guest expires {session.expires_at ? new Date(session.expires_at).toLocaleString() : ''}
+              Guest expires{' '}
+              {session.expires_at ? new Date(session.expires_at).toLocaleString() : ''}
             </span>
           ) : null}
-          <button className="icon-command" onClick={() => void logout()} title="Sign out" type="button">
+          <button
+            className="icon-command"
+            onClick={() => void logout()}
+            title="Sign out"
+            type="button"
+          >
             <LogOut aria-hidden="true" />
           </button>
         </div>
@@ -69,7 +82,9 @@ export function ProjectLibraryPage() {
         </div>
         <div className="library__grid">
           <form className="project-create" onSubmit={createProject}>
-            <div className="project-create__icon"><Plus /></div>
+            <div className="project-create__icon">
+              <Plus />
+            </div>
             <h2>New project</h2>
             <label>
               <span>Title</span>
@@ -84,7 +99,9 @@ export function ProjectLibraryPage() {
               />
             </label>
             {error ? <p className="form-error">{error}</p> : null}
-            <button className="command command--primary" type="submit">Create project</button>
+            <button className="command command--primary" type="submit">
+              Create project
+            </button>
           </form>
           {projects.map((project) => (
             <button

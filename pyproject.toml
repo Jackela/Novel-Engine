@@ -55,6 +55,9 @@ dev = [
     "pytest-asyncio>=0.21.0",
     "pytest-cov>=4.0.0",
     "ruff==0.15.13",
+    "mypy>=1.0",
+    "bandit[toml]>=1.7",
+    "import-linter>=2.0",
 ]
 test = [
     "pytest>=7.0.0",
@@ -119,7 +122,7 @@ ignore = ["E402"]  # Module level import not at top of file (needed for scripts)
 
 # MyPy type checking
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 plugins = ["pydantic.mypy"]
 warn_return_any = true
 warn_unused_configs = true
@@ -155,9 +158,6 @@ omit = [
     "*/__pycache__/*",
     "*/venv/*",
     "*/.venv/*",
-    "*/migrations/*",
-    "*/templates/*",
-    "*/static/*",
     "setup.py",
     "demo_*.py",
     "example_*.py",

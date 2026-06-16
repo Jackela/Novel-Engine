@@ -1,6 +1,10 @@
 @import '@fontsource-variable/geist';
 
 :root {
+  --line: #dfe2e3;
+  --muted: #5f6667;
+  --teal-soft: #dff3f1;
+  --teal-strong: #0f766e;
   font-family: Geist, Inter, system-ui, sans-serif;
   color: #18181b;
   background: #f7f8f8;
@@ -172,24 +176,6 @@ svg { width: 17px; height: 17px; stroke-width: 1.8; flex: 0 0 auto; }
   font-weight: 650;
 }
 .studio-topbar__spacer, .studio-statusbar__spacer { flex: 1; }
-.export-menu { position: relative; }
-.export-menu__items {
-  display: none;
-  position: absolute;
-  top: 38px;
-  right: 0;
-  width: 130px;
-  padding: 5px;
-  background: #fff;
-  border: 1px solid #dfe2e3;
-  border-radius: 6px;
-  box-shadow: 0 12px 34px rgba(0,0,0,.12);
-  z-index: 10;
-}
-.export-menu:hover .export-menu__items, .export-menu:focus-within .export-menu__items { display: grid; }
-.export-menu__items button { border: 0; background: transparent; padding: 9px; text-align: left; border-radius: 4px; font-size: 12px; }
-.export-menu__items button:hover { background: #eef7f6; }
-
 .studio-nav {
   grid-area: nav;
   min-width: 0;
@@ -304,28 +290,33 @@ svg { width: 17px; height: 17px; stroke-width: 1.8; flex: 0 0 auto; }
   width: 13px;
 }
 
-.settings-list {
+.settings-field {
   display: grid;
-  gap: 0;
-  margin: 12px 0;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.settings-list div {
-  display: grid;
-  grid-template-columns: 1fr 1.4fr;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
+.settings-field input,
+.settings-field textarea,
+.settings-field select {
+  width: 100%;
+  border: 1px solid #d7dcdd;
+  border-radius: 5px;
+  padding: 10px 11px;
+  outline: none;
+  background: #fff;
+  font-weight: 400;
 }
 
-.settings-list dt {
-  color: var(--muted);
+.settings-field input:focus,
+.settings-field textarea:focus,
+.settings-field select:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px #ccfbf1;
 }
 
-.settings-list dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
+.settings-field textarea { resize: vertical; }
 .document-row svg { width: 14px; height: 14px; color: #7c8485; }
 .document-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .document-row:hover { background: #edf1f1; }

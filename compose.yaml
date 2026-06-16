@@ -6,12 +6,14 @@ services:
     environment:
       APP_ENVIRONMENT: production
       SECURITY_SECRET_KEY: ${SECURITY_SECRET_KEY:?Set SECURITY_SECRET_KEY}
+      SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-https://app.example.com}
       DB_URL: sqlite:///./data/novel-engine.sqlite3
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       MONITORING_METRICS_ENABLED: "false"
     volumes:
       - novel-studio-data:/app/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
       interval: 30s
       timeout: 5s
       retries: 5
