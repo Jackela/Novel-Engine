@@ -36,9 +36,7 @@ from src.contexts.studio.infrastructure.models import (
     Project,
     ProjectSnapshot,
     Review,
-    ReviewIssue,
     SessionRecord,
-    SnapshotDocument,
     UsageEvent,
 )
 
@@ -99,11 +97,7 @@ def _document_dto(document: Document) -> DocumentDto:
 
 
 def _snapshot_dto(session: Session, snapshot: ProjectSnapshot) -> SnapshotDto:
-    documents = session.scalars(
-        select(SnapshotDocument)
-        .where(SnapshotDocument.snapshot_id == snapshot.id)
-        .order_by(SnapshotDocument.position)
-    ).all()
+    del session
     return SnapshotDto(
         id=snapshot.id,
         project_id=snapshot.project_id,
@@ -115,17 +109,13 @@ def _snapshot_dto(session: Session, snapshot: ProjectSnapshot) -> SnapshotDto:
                 revision_id=item.revision_id,
                 position=item.position,
             )
-            for item in documents
+            for item in snapshot.snapshot_documents
         ],
     )
 
 
 def _review_dto(session: Session, review: Review) -> ReviewDto:
-    issues = session.scalars(
-        select(ReviewIssue)
-        .where(ReviewIssue.review_id == review.id)
-        .order_by(ReviewIssue.severity, ReviewIssue.code)
-    ).all()
+    del session
     return ReviewDto(
         id=review.id,
         project_id=review.project_id,
@@ -144,7 +134,7 @@ def _review_dto(session: Session, review: Review) -> ReviewDto:
                 suggestion=issue.suggestion,
                 evidence_json=issue.evidence_json,
             )
-            for issue in issues
+            for issue in review.issues
         ],
     )
 
@@ -160,11 +150,7 @@ def _job_event_dto(event: JobEvent) -> JobEventDto:
 
 
 def _job_dto(session: Session, job: Job) -> JobDto:
-    events = session.scalars(
-        select(JobEvent)
-        .where(JobEvent.job_id == job.id)
-        .order_by(JobEvent.created_at)
-    ).all()
+    del session
     return JobDto(
         id=job.id,
         project_id=job.project_id,
@@ -182,7 +168,7 @@ def _job_dto(session: Session, job: Job) -> JobDto:
         updated_at=job.updated_at,
         started_at=job.started_at,
         finished_at=job.finished_at,
-        events=[_job_event_dto(event) for event in events],
+        events=[_job_event_dto(event) for event in job.events],
     )
 
 
@@ -230,14 +216,11 @@ __all__ = [
     "DocumentRevision",
     "Export",
     "Job",
-    "JobEvent",
     "Owner",
     "Project",
     "ProjectSnapshot",
     "Review",
-    "ReviewIssue",
     "SessionRecord",
-    "SnapshotDocument",
     "UsageEvent",
     "_owner_dto",
     "_session_dto",

@@ -542,7 +542,10 @@ async def test_openai_compatible_provider_maps_shape_errors(
 async def test_openai_compatible_provider_maps_http_and_json_errors(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    status_provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
+    status_provider = OpenAICompatibleTextGenerationProvider(
+        api_key="openai-key",
+        retry_attempts=1,
+    )
     monkeypatch.setattr(
         status_provider,
         "_get_client",
@@ -552,7 +555,10 @@ async def test_openai_compatible_provider_maps_http_and_json_errors(
     with pytest.raises(TextGenerationProviderError, match="401 nope"):
         await status_provider.generate_structured(_task())
 
-    json_provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
+    json_provider = OpenAICompatibleTextGenerationProvider(
+        api_key="openai-key",
+        retry_attempts=1,
+    )
     monkeypatch.setattr(
         json_provider,
         "_get_client",
@@ -567,7 +573,10 @@ async def test_openai_compatible_provider_maps_http_and_json_errors(
 async def test_openai_compatible_provider_maps_transport_timeout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
+    provider = OpenAICompatibleTextGenerationProvider(
+        api_key="openai-key",
+        retry_attempts=1,
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -576,6 +585,53 @@ async def test_openai_compatible_provider_maps_transport_timeout(
 
     with pytest.raises(TextGenerationProviderError, match="slow"):
         await provider.generate_structured(_task())
+
+
+@pytest.mark.asyncio
+async def test_openai_compatible_provider_retries_retriable_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = OpenAICompatibleTextGenerationProvider(
+        api_key="openai-key",
+        retry_attempts=3,
+        retry_delay=0.0,
+    )
+    fake_client = _AsyncPostClient(
+        [
+            _ProviderResponse(status_code=500, text="boom"),
+            _ProviderResponse(status_code=502, text="retry"),
+            _openai_success_response('{"ok": true}'),
+        ]
+    )
+    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
+
+    result = await provider.generate_structured(_task())
+
+    assert result.content == {"ok": True}
+    assert len(fake_client.calls) == 3
+
+
+@pytest.mark.asyncio
+async def test_openai_compatible_provider_exhausts_retries(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    provider = OpenAICompatibleTextGenerationProvider(
+        api_key="openai-key",
+        retry_attempts=2,
+        retry_delay=0.0,
+    )
+    fake_client = _AsyncPostClient(
+        [
+            _ProviderResponse(status_code=500, text="first"),
+            _ProviderResponse(status_code=500, text="second"),
+        ]
+    )
+    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
+
+    with pytest.raises(TextGenerationProviderError, match="500"):
+        await provider.generate_structured(_task())
+
+    assert len(fake_client.calls) == 2
 
 
 @pytest.mark.asyncio

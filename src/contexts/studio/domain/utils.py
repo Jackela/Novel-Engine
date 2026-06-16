@@ -30,7 +30,7 @@ def load_json(value: str | None) -> Any:
     try:
         return json.loads(value)
     except json.JSONDecodeError as exc:
-        logger.warning("json_decode_failed value=%s error=%s", value, str(exc))
+        logger.error("json_decode_failed value=%s error=%s", value, str(exc))
         return {}
 
 

@@ -154,6 +154,38 @@ _FORBIDDEN_TEMPLATE_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
 )
 
 
+_PROMPT_INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE),
+    re.compile(r"disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE),
+    re.compile(r"new\s+system\s+prompt", re.IGNORECASE),
+    re.compile(r"you\s+are\s+now\s+(?:a|an|the)", re.IGNORECASE),
+    re.compile(r"override\s+(?:the\s+)?system\s+prompt", re.IGNORECASE),
+    re.compile(r"(?:act\s+as|pretend\s+to\s+be)\s+(?:a|an|the)", re.IGNORECASE),
+)
+
+
+def _sanitize_instruction(instruction: str) -> str:
+    """Neutralize common prompt-injection patterns and wrap the instruction.
+
+    The wrapped format makes it harder for user content to be interpreted as
+    system-level instructions, while preserving the author's writing direction.
+    """
+    cleaned = instruction.strip()
+    for pattern in _PROMPT_INJECTION_PATTERNS:
+        cleaned = pattern.sub("[REDACTED]", cleaned)
+    return cleaned
+
+
+def _format_user_instruction(instruction: str) -> str:
+    """Format an author instruction so it is structurally isolated in the prompt."""
+    sanitized = _sanitize_instruction(instruction)
+    return (
+        "[BEGIN AUTHOR INSTRUCTION]\n"
+        f"{sanitized}\n"
+        "[END AUTHOR INSTRUCTION]"
+    )
+
+
 def _sanitize_chapter_markdown(markdown: str) -> str:
     """Remove provider preambles and mechanical labels before manuscript storage."""
     cleaned_lines: list[str] = []
@@ -375,6 +407,8 @@ __all__ = [
     "_build_fts5_match_query",
     "_stream_sha256",
     "_sanitize_chapter_markdown",
+    "_sanitize_instruction",
+    "_format_user_instruction",
     "Principal",
     "_owner_scopes",
     "_project_payload",

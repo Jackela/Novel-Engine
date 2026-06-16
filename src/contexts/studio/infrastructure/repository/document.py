@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import selectinload
+
 from src.contexts.studio.infrastructure.repository.common import (
     Any,
     Document,
@@ -99,12 +101,20 @@ class DocumentRepositoryMixin:
             session.flush()
             return _document_dto(document)
 
-    def list_documents(self, project_id: str) -> list[DocumentDto]:
+    def list_documents(
+        self,
+        project_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> list[DocumentDto]:
         with self.database.session() as session:
+            self._project(session, project_id, owner_id, guest_session_id)
             documents = session.scalars(
                 select(Document)
                 .where(Document.project_id == project_id)
                 .order_by(Document.kind, Document.position, Document.created_at)
+                .options(selectinload(Document.revisions))
             ).all()
             return [_document_dto(document) for document in documents]
 

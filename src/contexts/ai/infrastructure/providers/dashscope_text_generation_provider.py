@@ -612,8 +612,6 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
                 json.JSONDecodeError,
                 TextGenerationProviderError,
                 httpx.RequestError,
-                TypeError,
-                ValueError,
             ) as exc:
                 last_error = self._coerce_generation_error(
                     exc,

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import selectinload
+
+from src.contexts.studio.infrastructure.models import JobEvent
 from src.contexts.studio.infrastructure.repository.common import (
     JOB_KINDS,
     InvalidOperation,
     Job,
     JobDto,
-    JobEvent,
     NotFound,
     Project,
     Session,
@@ -109,6 +111,7 @@ class JobRepositoryMixin:
                 select(Job)
                 .where(Job.project_id == project.id)
                 .order_by(Job.created_at.desc())
+                .options(selectinload(Job.events))
             ).all()
             return [_job_dto(session, job) for job in jobs]
 

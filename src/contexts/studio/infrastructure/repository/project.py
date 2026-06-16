@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy import delete
+from sqlalchemy.orm import selectinload
+
+from src.contexts.studio.infrastructure.models import ProjectSnapshot, SnapshotDocument
 from src.contexts.studio.infrastructure.repository.common import (
     Any,
     Document,
@@ -132,7 +136,11 @@ class ProjectRepositoryMixin:
         guest_session_id: str | None,
     ) -> list[ProjectDto]:
         with self.database.session() as session:
-            statement = select(Project).order_by(Project.updated_at.desc())
+            statement = (
+                select(Project)
+                .order_by(Project.updated_at.desc())
+                .options(selectinload(Project.documents).selectinload(Document.revisions))
+            )
             statement = self._scope_projects(statement, owner_id, guest_session_id)
             projects = session.scalars(statement).all()
             return [
@@ -164,6 +172,7 @@ class ProjectRepositoryMixin:
                 select(Document)
                 .where(Document.project_id == project.id)
                 .order_by(Document.kind, Document.position, Document.created_at)
+                .options(selectinload(Document.revisions))
             ).all()
             return ProjectDto(
                 id=project.id,
@@ -229,13 +238,31 @@ class ProjectRepositoryMixin:
                 text("DELETE FROM document_search WHERE project_id = :project_id"),
                 {"project_id": project.id},
             )
+            snapshot_ids = session.scalars(
+                select(ProjectSnapshot.id).where(ProjectSnapshot.project_id == project.id)
+            ).all()
+            if snapshot_ids:
+                session.execute(
+                    delete(SnapshotDocument).where(
+                        SnapshotDocument.snapshot_id.in_(snapshot_ids)
+                    )
+                )
+                session.execute(
+                    delete(ProjectSnapshot).where(ProjectSnapshot.id.in_(snapshot_ids))
+                )
             session.delete(project)
 
-    def find_project_by_import_hash(self, import_hash: str) -> ProjectDto | None:
+    def find_project_by_import_hash(
+        self,
+        import_hash: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> ProjectDto | None:
         with self.database.session() as session:
-            project = session.scalar(
-                select(Project).where(Project.import_hash == import_hash)
-            )
+            statement = select(Project).where(Project.import_hash == import_hash)
+            statement = self._scope_projects(statement, owner_id, guest_session_id)
+            project = session.scalar(statement)
             if project is None:
                 return None
             return ProjectDto(
@@ -251,8 +278,14 @@ class ProjectRepositoryMixin:
                 documents=None,
             )
 
-    def set_project_import_hash(self, project_id: str, import_hash: str) -> None:
+    def set_project_import_hash(
+        self,
+        project_id: str,
+        import_hash: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> None:
         with self.database.session() as session:
-            project = session.get(Project, project_id)
-            if project is not None:
-                project.import_hash = import_hash
+            project = self._project(session, project_id, owner_id, guest_session_id)
+            project.import_hash = import_hash

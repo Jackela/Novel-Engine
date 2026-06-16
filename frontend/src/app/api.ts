@@ -96,6 +96,29 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 const json = (value: unknown) => JSON.stringify(value);
 
+async function downloadBlob(path: string): Promise<Blob> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), appConfig.apiTimeoutMs);
+  try {
+    const response = await fetch(url(path), { credentials: 'include', signal: controller.signal });
+    if (!response.ok) {
+      throw new HttpError(`Download failed with status ${response.status}`, response.status);
+    }
+    return await response.blob();
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    if ((error instanceof Error || error instanceof DOMException) && error.name === 'AbortError') {
+      throw new Error('Download timed out. Please retry.');
+    }
+    if (error instanceof TypeError) {
+      throw new Error('Novel Studio is unavailable. Check the local service and retry.');
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
 export const api = {
   setupStatus: () => request<SetupStatus>('/api/setup'),
   setupOwner: (username: string, password: string) =>
@@ -214,4 +237,5 @@ export const api = {
     request<StudioJob>(`/api/projects/${projectId}/jobs/${jobId}/retry`, {
       method: 'POST',
     }),
+  download: (path: string) => downloadBlob(path),
 };

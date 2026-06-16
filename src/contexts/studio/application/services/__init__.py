@@ -5,7 +5,9 @@ from src.contexts.studio.application.service_common import (
     GUEST_TTL,
     SESSION_COOKIE,
     Principal,
+    _format_user_instruction,
     _sanitize_chapter_markdown,
+    _sanitize_instruction,
 )
 from src.contexts.studio.application.services.ai_service import AIService
 from src.contexts.studio.application.services.auth_service import AuthService
@@ -41,6 +43,8 @@ __all__ = [
     "SnapshotService",
     "StudioStore",
     "_sanitize_chapter_markdown",
+    "_sanitize_instruction",
+    "_format_user_instruction",
     "configure_studio_store",
     "is_studio_store_configured",
     "studio_store",

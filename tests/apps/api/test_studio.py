@@ -138,3 +138,29 @@ def test_project_and_document_delete_endpoints(canonical_client: TestClient) -> 
     deleted_project = canonical_client.delete(f"/api/projects/{project['id']}")
     assert deleted_project.status_code == 204
     assert canonical_client.get(f"/api/projects/{project['id']}").status_code == 404
+
+
+def test_delete_project_with_snapshots(canonical_client: TestClient) -> None:
+    """Regression test: projects with export snapshots must be deletable."""
+    canonical_client.post("/api/session/guest")
+    project = canonical_client.post("/api/projects", json={"title": "Snapshot Delete"}).json()
+    document = project["documents"][0]
+    saved = canonical_client.put(
+        f"/api/projects/{project['id']}/documents/{document['id']}",
+        json={
+            "content_markdown": "# Chapter 1\n\nSnapshot marker.",
+            "base_revision_id": document["current_revision_id"],
+            "metadata": {},
+        },
+    )
+    assert saved.status_code == 200
+
+    export = canonical_client.post(
+        f"/api/projects/{project['id']}/exports",
+        json={"format": "markdown"},
+    )
+    assert export.status_code == 201
+
+    deleted_project = canonical_client.delete(f"/api/projects/{project['id']}")
+    assert deleted_project.status_code == 204
+    assert canonical_client.get(f"/api/projects/{project['id']}").status_code == 404

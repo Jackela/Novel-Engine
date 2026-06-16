@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
+from src.contexts.studio.application.ports import ExportChapter, ExportFormatWriter
 from src.contexts.studio.application.service_common import (
     Any,
     DocumentDto,
@@ -11,7 +14,6 @@ from src.contexts.studio.application.service_common import (
     Principal,
     RevisionDto,
     StudioRepository,
-    _escape_html,
     _export_payload,
     _owner_scopes,
     _plain_text,
@@ -31,9 +33,11 @@ class ExportService:
         repository: StudioRepository,
         *,
         data_dir: Path,
+        writers: Mapping[ExportFormat, ExportFormatWriter] | None = None,
     ) -> None:
         self._repository = repository
         self._data_dir = data_dir
+        self._writers = writers or {}
 
     def export_project(
         self,
@@ -42,7 +46,8 @@ class ExportService:
         *,
         export_format: ExportFormat,
     ) -> dict[str, Any]:
-        if export_format not in {"markdown", "docx", "epub"}:
+        supported_formats = {"markdown", *self._writers.keys()}
+        if export_format not in supported_formats:
             raise InvalidOperation(f"Unsupported export format: {export_format}")
         owner_id, guest_session_id = _owner_scopes(principal)
 
@@ -58,10 +63,18 @@ class ExportService:
         )
         current_revisions = {
             document.id: document.current_revision_id
-            for document in self._repository.list_documents(project_id)
+            for document in self._repository.list_documents(
+                project_id,
+                owner_id=owner_id,
+                guest_session_id=guest_session_id,
+            )
         }
         snapshot_revisions = (
-            self._repository.snapshot_revision_map(snapshot.id)
+            self._repository.snapshot_revision_map(
+                snapshot.id,
+                owner_id=owner_id,
+                guest_session_id=guest_session_id,
+            )
             if snapshot is not None
             else {}
         )
@@ -75,7 +88,11 @@ class ExportService:
             )
         content = [
             (document, revision)
-            for document, revision in self._repository.snapshot_content(snapshot.id)
+            for document, revision in self._repository.snapshot_content(
+                snapshot.id,
+                owner_id=owner_id,
+                guest_session_id=guest_session_id,
+            )
             if document.kind == "chapter"
         ]
         if not content:
@@ -87,10 +104,9 @@ class ExportService:
         output_path = output_dir / f"{export_id}.{suffix}"
         if export_format == "markdown":
             self._write_markdown(output_path, project.title, content)
-        elif export_format == "docx":
-            self._write_docx(output_path, project.title, content)
         else:
-            self._write_epub(output_path, project.title, content)
+            writer = self._writers[export_format]
+            self._write_export(output_path, project.title, content, writer)
         checksum = _stream_sha256(output_path)
         relative_path = output_path.relative_to(self._data_dir).as_posix()
         export = self._repository.create_export(
@@ -148,51 +164,17 @@ class ExportService:
         path.write_text("\n\n".join(parts).strip() + "\n", encoding="utf-8")
 
     @staticmethod
-    def _write_docx(
+    def _write_export(
         path: Path,
         title: str,
         content: Iterable[tuple[DocumentDto, RevisionDto]],
+        writer: ExportFormatWriter,
     ) -> None:
-        from docx import Document as DocxDocument
-
-        output = DocxDocument()
-        output.add_heading(title, 0)
-        for document, revision in content:
-            output.add_heading(document.title, level=1)
-            for paragraph in _plain_text(revision.content_markdown).split("\n\n"):
-                if paragraph.strip():
-                    output.add_paragraph(paragraph.strip())
-        output.save(str(path))
-
-    @staticmethod
-    def _write_epub(
-        path: Path,
-        title: str,
-        content: Iterable[tuple[DocumentDto, RevisionDto]],
-    ) -> None:
-        from ebooklib import epub
-
-        book = epub.EpubBook()
-        book.set_identifier(new_id())
-        book.set_title(title)
-        book.set_language("en")
-        chapters = []
-        for index, (document, revision) in enumerate(content, start=1):
-            chapter = epub.EpubHtml(
+        chapters = [
+            ExportChapter(
                 title=document.title,
-                file_name=f"chapter-{index:03d}.xhtml",
-                lang="en",
+                plain_text=_plain_text(revision.content_markdown),
             )
-            paragraphs = "".join(
-                f"<p>{_escape_html(paragraph)}</p>"
-                for paragraph in _plain_text(revision.content_markdown).split("\n\n")
-                if paragraph.strip()
-            )
-            chapter.content = f"<h1>{_escape_html(document.title)}</h1>{paragraphs}"
-            book.add_item(chapter)
-            chapters.append(chapter)
-        book.toc = tuple(chapters)
-        book.spine = ["nav", *chapters]
-        book.add_item(epub.EpubNcx())
-        book.add_item(epub.EpubNav())
-        epub.write_epub(path, book)
+            for document, revision in content
+        ]
+        writer.write(path, title, chapters)

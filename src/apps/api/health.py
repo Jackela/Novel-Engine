@@ -10,8 +10,6 @@ from typing import Any
 from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
 
 from src.contexts.studio.application.services import studio_store
 from src.shared.infrastructure.config.settings import get_settings
@@ -50,12 +48,22 @@ def _timestamp() -> str:
 
 
 def _database_component() -> ComponentStatusResponse:
+    repository = studio_store.repository
+    if repository is None:
+        return ComponentStatusResponse(
+            status="unhealthy", error="StudioStore has not been configured with a repository."
+        )
+
     try:
-        with studio_store.database.engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-        return ComponentStatusResponse(status="healthy", message="SQLite ready")
-    except (RuntimeError, SQLAlchemyError) as exc:
+        healthy = repository.health_check()
+    except RuntimeError as exc:
         return ComponentStatusResponse(status="unhealthy", error=str(exc))
+
+    if healthy:
+        return ComponentStatusResponse(status="healthy", message="SQLite ready")
+    return ComponentStatusResponse(
+        status="unhealthy", error="database health check failed"
+    )
 
 
 @health_router.get("/health", response_model=DetailedHealthResponse)
