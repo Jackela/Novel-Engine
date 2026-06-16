@@ -35,7 +35,7 @@ dependencies = [
     # Monitoring and telemetry
     "prometheus-client>=0.19.0,<1.0.0",
     # Structured Logging (ARCH-003)
-    "structlog>=24.0.0,<26.0.0",
+    "structlog>=24.0.0,<27.0.0",
     # Local Owner password hashing
     "bcrypt>=5.0.0,<6.0.0",
     # Authoritative local persistence and deterministic exports

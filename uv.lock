@@ -1262,7 +1262,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.0,<7.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.13" },
     { name = "sqlalchemy", specifier = ">=2.0.0,<3.0.0" },
-    { name = "structlog", specifier = ">=24.0.0,<26.0.0" },
+    { name = "structlog", specifier = ">=24.0.0,<27.0.0" },
     { name = "uvicorn", specifier = ">=0.35.0,<1.0.0" },
 ]
 provides-extras = ["dev", "test", "docs"]
