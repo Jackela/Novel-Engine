@@ -24,6 +24,7 @@ from src.contexts.studio.infrastructure.database import (
     backup_database,
     create_studio_database,
 )
+from src.contexts.studio.infrastructure.exporters import DEFAULT_EXPORT_WRITERS
 from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import get_settings
 
@@ -39,6 +40,7 @@ def _configure_store() -> None:
             repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
             ai_provider_factory=create_studio_text_generation_provider,
+            export_writers=DEFAULT_EXPORT_WRITERS,
         )
     )
 

@@ -30,6 +30,7 @@ from src.contexts.studio.infrastructure.ai_provider import (
     create_studio_text_generation_provider,
 )
 from src.contexts.studio.infrastructure.database import create_studio_database
+from src.contexts.studio.infrastructure.exporters import DEFAULT_EXPORT_WRITERS
 from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
 from src.shared.infrastructure.config.settings import (
     NovelEngineSettings,
@@ -168,6 +169,7 @@ def _configure_runtime_store(resolved_settings: NovelEngineSettings) -> None:
                 repository=SqlAlchemyStudioRepository(database),
                 data_dir=resolved_settings.data_dir,
                 ai_provider_factory=create_studio_text_generation_provider,
+                export_writers=DEFAULT_EXPORT_WRITERS,
             )
         )
 

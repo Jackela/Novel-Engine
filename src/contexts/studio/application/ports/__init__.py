@@ -5,6 +5,10 @@ from __future__ import annotations
 from src.contexts.studio.application.ports.ai_provider import (
     TextGenerationProviderFactory,
 )
+from src.contexts.studio.application.ports.export_writer import (
+    ExportChapter,
+    ExportFormatWriter,
+)
 from src.contexts.studio.application.ports.studio_repository import (
     DocumentDto,
     ExportDto,
@@ -23,7 +27,9 @@ from src.contexts.studio.application.ports.studio_repository import (
 
 __all__ = [
     "DocumentDto",
+    "ExportChapter",
     "ExportDto",
+    "ExportFormatWriter",
     "JobDto",
     "JobEventDto",
     "OwnerDto",

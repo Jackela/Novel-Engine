@@ -67,6 +67,8 @@ def create_text_generation_provider(
             model=resolved_model or "gpt-4o-mini",
             api_base=settings.llm.resolved_api_base("openai_compatible"),
             timeout=settings.llm.timeout,
+            retry_attempts=settings.llm.retry_attempts,
+            retry_delay=settings.llm.retry_delay,
         )
 
     raise ValueError(f"Unsupported text generation provider: {resolved_provider}")

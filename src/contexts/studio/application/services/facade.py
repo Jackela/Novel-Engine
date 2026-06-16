@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
+
+from src.contexts.studio.application.ports import ExportFormatWriter
 from src.contexts.studio.application.service_common import (
     Any,
     DocumentDto,
@@ -48,10 +51,12 @@ class StudioStore:
         *,
         data_dir: Path | None = None,
         ai_provider_factory: TextGenerationProviderFactory | None = None,
+        export_writers: Mapping[ExportFormat, ExportFormatWriter] | None = None,
     ) -> None:
         self.repository = repository
         self.data_dir = data_dir
         self.ai_provider_factory = ai_provider_factory
+        self.export_writers = export_writers
         self._build_services()
 
     def _build_services(self) -> None:
@@ -78,7 +83,11 @@ class StudioStore:
             self.review_service = ReviewService(repository)
             if data_dir is None:
                 raise InvalidOperation("data_dir is required when a repository is provided.")
-            self.export_service = ExportService(repository, data_dir=data_dir)
+            self.export_service = ExportService(
+                repository,
+                data_dir=data_dir,
+                writers=self.export_writers,
+            )
             if ai_factory is None:
                 raise InvalidOperation(
                     "ai_provider_factory is required when a repository is provided."
@@ -101,7 +110,7 @@ class StudioStore:
         """Expose the underlying infrastructure database for diagnostics."""
         if self.repository is None:
             raise RuntimeError("StudioStore has not been configured with a repository.")
-        return self.repository.database
+        return cast(Any, self.repository).database
 
     def _service(self, service: T | None) -> T:
         if service is None:

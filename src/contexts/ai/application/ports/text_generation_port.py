@@ -33,6 +33,8 @@ class TextGenerationResult:
     model: str
     raw_text: str
     content: dict[str, Any]
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
 
 
 class TextGenerationProvider(Protocol):

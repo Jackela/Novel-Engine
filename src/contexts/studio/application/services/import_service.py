@@ -59,9 +59,13 @@ class ImportService:
         source: Path,
     ) -> dict[str, Any]:
         preview = self.preview_legacy_workspace(source)
-        existing = self._repository.find_project_by_import_hash(preview["source_hash"])
+        owner_id, guest_session_id = _owner_scopes(principal)
+        existing = self._repository.find_project_by_import_hash(
+            preview["source_hash"],
+            owner_id=owner_id,
+            guest_session_id=guest_session_id,
+        )
         if existing is not None:
-            owner_id, guest_session_id = _owner_scopes(principal)
             project = self._repository.get_project(
                 existing.id,
                 owner_id=owner_id,
@@ -89,9 +93,11 @@ class ImportService:
                 metadata={"legacy_filename": chapter_path.name},
             )
         self._repository.set_project_import_hash(
-            new_project["id"], str(preview["source_hash"])
+            new_project["id"],
+            str(preview["source_hash"]),
+            owner_id=owner_id,
+            guest_session_id=guest_session_id,
         )
-        owner_id, guest_session_id = _owner_scopes(principal)
         stored = self._repository.get_project(
             new_project["id"],
             owner_id=owner_id,

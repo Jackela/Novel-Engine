@@ -11,10 +11,9 @@ from src.contexts.studio.application.service_common import (
     TextGenerationProviderError,
     _job_payload,
     _owner_scopes,
-    _word_count,
+    _safe_load_json,
     cast,
     dump_json,
-    load_json,
     logger,
     utcnow,
 )
@@ -112,12 +111,17 @@ class JobService:
         principal: Principal,
         retry: JobDto,
     ) -> dict[str, Any]:
-        request = cast(dict[str, Any], load_json(retry.request_json))
+        request = cast(dict[str, Any], _safe_load_json(retry.request_json))
         base_revision_id = cast(str | None, request.get("base_revision_id"))
         instruction = str(request.get("instruction", ""))
         if not base_revision_id or retry.document_id is None:
             raise InvalidOperation("Original AI job is missing base_revision_id.")
-        proposal_markdown, generated_base_revision_id = await self._ai_service.generate_proposal(
+        (
+            proposal_markdown,
+            generated_base_revision_id,
+            prompt_tokens,
+            completion_tokens,
+        ) = await self._ai_service.generate_proposal(
             principal,
             retry.project_id,
             retry.document_id,
@@ -151,8 +155,8 @@ class JobService:
             job_id=retry.id,
             provider=retry.provider,
             model=retry.model,
-            prompt_tokens=_word_count(instruction),
-            completion_tokens=_word_count(proposal_markdown),
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
             request_evidence_json=dump_json(
                 {"operation": retry.operation, "base_revision_id": generated_base_revision_id}
             ),

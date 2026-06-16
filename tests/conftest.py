@@ -60,6 +60,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
         create_studio_text_generation_provider,
     )
     from src.contexts.studio.infrastructure.database import StudioDatabase
+    from src.contexts.studio.infrastructure.exporters import DEFAULT_EXPORT_WRITERS
     from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
     from src.shared.infrastructure.config import settings as settings_module
 
@@ -72,6 +73,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
             repository=SqlAlchemyStudioRepository(database),
             data_dir=data_dir,
             ai_provider_factory=create_studio_text_generation_provider,
+            export_writers=DEFAULT_EXPORT_WRITERS,
         )
     )
 

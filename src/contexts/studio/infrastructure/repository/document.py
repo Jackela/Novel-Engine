@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import selectinload
+
 from src.contexts.studio.infrastructure.repository.common import (
     Any,
     Document,
@@ -15,6 +17,7 @@ from src.contexts.studio.infrastructure.repository.common import (
     StudioDatabase,
     _document_dto,
     _revision_dto,
+    _session,
     datetime,
     func,
     new_id,
@@ -67,9 +70,10 @@ class DocumentRepositoryMixin:
         metadata_json: str,
         source: str,
         now: datetime,
+        session: Session | None = None,
     ) -> DocumentDto:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
             document = Document(
                 id=new_id(),
                 project_id=project.id,
@@ -79,8 +83,8 @@ class DocumentRepositoryMixin:
                 created_at=now,
                 updated_at=now,
             )
-            session.add(document)
-            session.flush()
+            db_session.add(document)
+            db_session.flush()
             revision = DocumentRevision(
                 id=new_id(),
                 document_id=document.id,
@@ -91,20 +95,29 @@ class DocumentRepositoryMixin:
                 source=source,
                 created_at=now,
             )
-            session.add(revision)
-            session.flush()
+            db_session.add(revision)
+            db_session.flush()
             document.current_revision_id = revision.id
-            self._refresh_search(session, document, revision)
+            self._refresh_search(db_session, document, revision)
             project.updated_at = now
-            session.flush()
+            db_session.flush()
             return _document_dto(document)
 
-    def list_documents(self, project_id: str) -> list[DocumentDto]:
-        with self.database.session() as session:
-            documents = session.scalars(
+    def list_documents(
+        self,
+        project_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+        session: Session | None = None,
+    ) -> list[DocumentDto]:
+        with _session(self.database, session) as db_session:
+            self._project(db_session, project_id, owner_id, guest_session_id)
+            documents = db_session.scalars(
                 select(Document)
                 .where(Document.project_id == project_id)
                 .order_by(Document.kind, Document.position, Document.created_at)
+                .options(selectinload(Document.revisions))
             ).all()
             return [_document_dto(document) for document in documents]
 
@@ -115,10 +128,11 @@ class DocumentRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> DocumentDto:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            document = self._document(session, project, document_id)
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
+            document = self._document(db_session, project, document_id)
             return _document_dto(document)
 
     def delete_document(
@@ -128,19 +142,25 @@ class DocumentRepositoryMixin:
         *,
         owner_id: str | None,
         guest_session_id: str | None,
+        session: Session | None = None,
     ) -> None:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            document = self._document(session, project, document_id)
-            session.execute(
+        with _session(self.database, session) as db_session:
+            project = self._project(db_session, project_id, owner_id, guest_session_id)
+            document = self._document(db_session, project, document_id)
+            db_session.execute(
                 text("DELETE FROM document_search WHERE document_id = :document_id"),
                 {"document_id": document.id},
             )
-            session.delete(document)
+            db_session.delete(document)
 
-    def next_document_position(self, project_id: str, kind: str) -> int:
-        with self.database.session() as session:
-            max_position = session.scalar(
+    def next_document_position(
+        self,
+        project_id: str,
+        kind: str,
+        session: Session | None = None,
+    ) -> int:
+        with _session(self.database, session) as db_session:
+            max_position = db_session.scalar(
                 select(func.max(Document.position)).where(
                     Document.project_id == project_id,
                     Document.kind == kind,

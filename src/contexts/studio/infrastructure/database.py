@@ -16,6 +16,40 @@ from src.contexts.studio.infrastructure.models import Base, Job, JobEvent
 from src.shared.infrastructure.config.settings import NovelEngineSettings, get_settings
 
 
+class UnitOfWork:
+    """Single transactional session for multiple repository operations.
+
+    The context manager yields one SQLAlchemy session. On successful exit it
+    commits; on exception it rolls back. The session is always closed.
+    """
+
+    def __init__(self, database: StudioDatabase) -> None:
+        self._database = database
+        self._session: Session | None = None
+
+    def __enter__(self) -> Session:
+        self._session = self._database._session_factory()
+        return self._session
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object | None,
+    ) -> None:
+        session = self._session
+        if session is None:
+            return
+        try:
+            if exc_type is None:
+                session.commit()
+            else:
+                session.rollback()
+        finally:
+            session.close()
+            self._session = None
+
+
 def _database_path_from_url(url: str) -> Path | None:
     prefix = "sqlite:///"
     if not url.startswith(prefix) or url.endswith(":memory:"):
@@ -123,6 +157,10 @@ class StudioDatabase:
     def session(self) -> Iterator[Session]:
         with self._session_factory() as session, session.begin():
             yield session
+
+    def unit_of_work(self) -> UnitOfWork:
+        """Return a new unit of work bound to this database."""
+        return UnitOfWork(self)
 
 
 def create_studio_database(

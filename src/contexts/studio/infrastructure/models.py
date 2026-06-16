@@ -132,30 +132,6 @@ class DocumentRevision(Base):
     )
 
 
-class DocumentLink(Base):
-    __tablename__ = "document_links"
-    __table_args__ = (
-        UniqueConstraint(
-            "source_document_id",
-            "target_document_id",
-            "relation",
-            name="uq_document_link",
-        ),
-    )
-
-    id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    source_document_id: Mapped[str] = mapped_column(
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    target_document_id: Mapped[str] = mapped_column(
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False,
-    )
-    relation: Mapped[str] = mapped_column(String(80), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-
-
 class ProjectSnapshot(Base):
     __tablename__ = "project_snapshots"
 
@@ -167,6 +143,12 @@ class ProjectSnapshot(Base):
     )
     reason: Mapped[str] = mapped_column(String(48), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    snapshot_documents: Mapped[list[SnapshotDocument]] = relationship(
+        back_populates="snapshot",
+        cascade="all, delete-orphan",
+        order_by="SnapshotDocument.position",
+    )
 
 
 class SnapshotDocument(Base):
@@ -190,6 +172,8 @@ class SnapshotDocument(Base):
         nullable=False,
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    snapshot: Mapped[ProjectSnapshot] = relationship(back_populates="snapshot_documents")
 
 
 class Job(Base):
@@ -222,6 +206,12 @@ class Job(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    events: Mapped[list[JobEvent]] = relationship(
+        back_populates="job",
+        cascade="all, delete-orphan",
+        order_by="JobEvent.created_at",
+    )
+
 
 class JobEvent(Base):
     __tablename__ = "job_events"
@@ -235,6 +225,8 @@ class JobEvent(Base):
     status: Mapped[str] = mapped_column(String(24), nullable=False)
     details_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    job: Mapped[Job] = relationship(back_populates="events")
 
 
 class Review(Base):
@@ -255,6 +247,12 @@ class Review(Base):
     summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
+    issues: Mapped[list[ReviewIssue]] = relationship(
+        back_populates="review",
+        cascade="all, delete-orphan",
+        order_by="ReviewIssue.severity, ReviewIssue.code",
+    )
+
 
 class ReviewIssue(Base):
     __tablename__ = "review_issues"
@@ -274,6 +272,8 @@ class ReviewIssue(Base):
     message: Mapped[str] = mapped_column(Text, nullable=False)
     suggestion: Mapped[str] = mapped_column(Text, default="", nullable=False)
     evidence_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+
+    review: Mapped[Review] = relationship(back_populates="issues")
 
 
 class Export(Base):

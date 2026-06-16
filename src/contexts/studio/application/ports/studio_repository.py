@@ -182,12 +182,12 @@ class StudioRepository(Protocol):
     """Abstract port for all Studio persistence operations.
 
     Implementations are responsible for translating between aggregate DTOs and
-    their concrete storage representation. The ``database`` attribute is exposed
-    so that application diagnostics (health checks, CLI tools) can reach the
-    underlying infrastructure without the application layer importing it.
+    their concrete storage representation.
     """
 
-    database: Any
+    def health_check(self) -> bool:
+        """Return whether the persistence backend is reachable."""
+        ...
 
     # ------------------------------------------------------------------
     # Owner and authentication
@@ -305,12 +305,25 @@ class StudioRepository(Protocol):
         """Delete a visible project and all dependent Studio records."""
         ...
 
-    def find_project_by_import_hash(self, import_hash: str) -> ProjectDto | None:
-        """Look up a project by its legacy import hash."""
+    def find_project_by_import_hash(
+        self,
+        import_hash: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> ProjectDto | None:
+        """Look up a visible project by its legacy import hash."""
         ...
 
-    def set_project_import_hash(self, project_id: str, import_hash: str) -> None:
-        """Assign an import hash to an existing project."""
+    def set_project_import_hash(
+        self,
+        project_id: str,
+        import_hash: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> None:
+        """Assign an import hash to a visible project."""
         ...
 
     # ------------------------------------------------------------------
@@ -333,8 +346,14 @@ class StudioRepository(Protocol):
         """Create a document together with its first revision."""
         ...
 
-    def list_documents(self, project_id: str) -> list[DocumentDto]:
-        """List all documents in a project ordered for presentation."""
+    def list_documents(
+        self,
+        project_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> list[DocumentDto]:
+        """List all documents in a visible project ordered for presentation."""
         ...
 
     def get_document(
@@ -468,12 +487,21 @@ class StudioRepository(Protocol):
     def snapshot_content(
         self,
         snapshot_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
     ) -> list[tuple[DocumentDto, RevisionDto]]:
-        """Return the document/revision pairs captured by a snapshot."""
+        """Return the document/revision pairs captured by a visible snapshot."""
         ...
 
-    def snapshot_revision_map(self, snapshot_id: str) -> dict[str, str]:
-        """Return ``{document_id: revision_id}`` for a snapshot."""
+    def snapshot_revision_map(
+        self,
+        snapshot_id: str,
+        *,
+        owner_id: str | None,
+        guest_session_id: str | None,
+    ) -> dict[str, str]:
+        """Return ``{document_id: revision_id}`` for a visible snapshot."""
         ...
 
     # ------------------------------------------------------------------

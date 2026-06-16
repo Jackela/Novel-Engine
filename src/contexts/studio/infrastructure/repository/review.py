@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlalchemy.orm import selectinload
+
+from src.contexts.studio.infrastructure.models import ReviewIssue, SnapshotDocument
 from src.contexts.studio.infrastructure.repository.common import (
     Document,
     DocumentRevision,
@@ -9,9 +12,7 @@ from src.contexts.studio.infrastructure.repository.common import (
     ProjectSnapshot,
     Review,
     ReviewDto,
-    ReviewIssue,
     Session,
-    SnapshotDocument,
     StudioDatabase,
     _review_dto,
     _word_count,
@@ -151,5 +152,6 @@ class ReviewRepositoryMixin:
                 select(Review)
                 .where(Review.project_id == project.id)
                 .order_by(Review.created_at.desc())
+                .options(selectinload(Review.issues))
             ).all()
             return [_review_dto(session, review) for review in reviews]

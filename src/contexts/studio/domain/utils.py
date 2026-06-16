@@ -24,14 +24,17 @@ def dump_json(value: object) -> str:
 
 
 def load_json(value: str | None) -> Any:
-    """Deserialize JSON, returning an empty dict on empty/malformed input."""
+    """Deserialize JSON.
+
+    Returns an empty dict for empty input. Raises ``ValueError`` for malformed
+    JSON so callers must decide how to handle corrupt stored data.
+    """
     if not value:
         return {}
     try:
         return json.loads(value)
     except json.JSONDecodeError as exc:
-        logger.warning("json_decode_failed value=%s error=%s", value, str(exc))
-        return {}
+        raise ValueError(f"Malformed JSON: {exc}") from exc
 
 
 def new_id() -> str:

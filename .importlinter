@@ -35,3 +35,23 @@ name = Shared Kernel Access
 type = forbidden
 source_modules = src.shared
 forbidden_modules = src.contexts.*
+
+[importlinter:contract:interface-infrastructure-isolation]
+name = Interface Layer Isolation
+type = forbidden
+source_modules =
+    src.contexts.*.interface
+forbidden_modules =
+    src.contexts.*.infrastructure
+
+[importlinter:contract:domain-application-interface-isolation]
+name = Domain and Application Avoid Interface
+type = forbidden
+source_modules =
+    src.contexts.*.domain
+    src.contexts.*.application
+    src.shared.domain
+    src.shared.application
+forbidden_modules =
+    src.contexts.*.interface
+    src.shared.interface
