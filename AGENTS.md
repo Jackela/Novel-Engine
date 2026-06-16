@@ -5,7 +5,7 @@
 
 ## 1. Project Overview
 
-**Name:** Novel-Engine / Novel Studio 0.3.0
+**Name:** Novel-Engine / Novel Studio 0.3.1
 **Stack:** Python 3.11+ (FastAPI + SQLAlchemy 2.0 + Alembic + Pydantic v2 + SQLite), React 18 + Vite + TypeScript
 **Package managers:** `uv` (Python), `pnpm` (Node, workspace root + frontend)
 **Current status:** Audit remediation branch ready for staging validation.
