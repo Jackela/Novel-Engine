@@ -13,13 +13,13 @@ from typing import Any, cast
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.apps.api.middleware.cors import get_cors_config
 from src.apps.api.middleware.error_handler import setup_exception_handlers
+from src.apps.api.swagger_ui import add_docs_route
 from src.contexts.studio.application.services import (
     StudioStore,
     configure_studio_store,
@@ -235,28 +235,6 @@ def _include_application_routes(app: FastAPI) -> None:
     app.include_router(api_router, prefix="/api")
 
 
-def _add_docs_route(app: FastAPI, resolved_settings: NovelEngineSettings) -> None:
-    if resolved_settings.api.docs_url and resolved_settings.api.openapi_url:
-
-        @app.get(resolved_settings.api.docs_url, include_in_schema=False)
-        async def custom_swagger_ui_html() -> HTMLResponse:
-            return get_swagger_ui_html(
-                openapi_url=resolved_settings.api.openapi_url or "",
-                title=f"{app.title} - Swagger UI",
-                oauth2_redirect_url=f"{resolved_settings.api.docs_url}/oauth2-redirect",
-                swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
-                swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
-            )
-
-
-def _spa_metadata(resolved_settings: NovelEngineSettings) -> dict[str, str]:
-    return {
-        "name": resolved_settings.project_name,
-        "version": resolved_settings.project_version,
-        "api_base": "/api",
-    }
-
-
 def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> None:
     frontend_dist = resolved_settings.base_dir / "frontend" / "dist"
     assets_dir = frontend_dist / "assets"
@@ -266,7 +244,11 @@ def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> Non
     @app.get("/{full_path:path}", include_in_schema=False, response_model=None)
     async def studio_spa(full_path: str) -> Any:
         if full_path.startswith(("api/", "health", "metrics", "docs", "openapi")):
-            return _spa_metadata(resolved_settings)
+            return {
+                "name": resolved_settings.project_name,
+                "version": resolved_settings.project_version,
+                "api_base": "/api",
+            }
         candidate = (frontend_dist / full_path).resolve()
         if frontend_dist.resolve() in {candidate, *candidate.parents} and candidate.is_file():
             return FileResponse(candidate)
@@ -290,7 +272,7 @@ def create_application(
     _install_openapi(app)
     _add_http_middleware(app, resolved_settings)
     _include_application_routes(app)
-    _add_docs_route(app, resolved_settings)
+    add_docs_route(app, resolved_settings.api)
     _mount_frontend(app, resolved_settings)
     return app
 

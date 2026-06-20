@@ -164,3 +164,30 @@ def test_delete_project_with_snapshots(canonical_client: TestClient) -> None:
     deleted_project = canonical_client.delete(f"/api/projects/{project['id']}")
     assert deleted_project.status_code == 204
     assert canonical_client.get(f"/api/projects/{project['id']}").status_code == 404
+
+
+def test_swagger_ui_assets_are_version_pinned_and_integrity_checked(
+    canonical_client: TestClient,
+) -> None:
+    # Given / When
+    response = canonical_client.get("/docs")
+
+    # Then
+    assert response.status_code == 200
+    assert (
+        "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.6/swagger-ui-bundle.js"
+        in response.text
+    )
+    assert (
+        "sha384-EYdOaiRwn44zNjrw+Tfs06qYz9BGQVo2f4/pLY5i7VorbjnZNhdplAbTBk8FXHUJ"
+        in response.text
+    )
+    assert (
+        "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.32.6/swagger-ui.css"
+        in response.text
+    )
+    assert (
+        "sha384-9Q2fpS+xeS4ffJy6CagnwoUl+4ldAYhOs9pgZuEKxypVModhmZFzeMlvVsAjf7uT"
+        in response.text
+    )
+    assert response.text.count('crossorigin="anonymous"') == 2
