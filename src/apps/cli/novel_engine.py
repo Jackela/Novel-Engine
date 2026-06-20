@@ -4,23 +4,21 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from alembic.config import Config
 from sqlalchemy import text
 
 from alembic import command
-from src.contexts.studio.application.services import (
-    StudioStore,
-    configure_studio_store,
-    is_studio_store_configured,
-    studio_store,
-)
+from src.contexts.studio.application.services import StudioStore
 from src.contexts.studio.infrastructure.ai_provider import (
     create_studio_text_generation_provider,
 )
 from src.contexts.studio.infrastructure.database import (
+    StudioDatabase,
     backup_database,
     create_studio_database,
 )
@@ -29,26 +27,42 @@ from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioReposi
 from src.shared.infrastructure.config.settings import get_settings
 
 
-def _configure_store() -> None:
-    """Wire the application-layer store singleton with infrastructure."""
-    if is_studio_store_configured():
-        return
+class FileBackedDatabaseRequiredError(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class CliRuntime:
+    store: StudioStore
+    database: StudioDatabase
+
+
+def _create_runtime() -> CliRuntime:
     settings = get_settings()
     database = create_studio_database(settings)
-    configure_studio_store(
-        StudioStore(
+    return CliRuntime(
+        store=StudioStore(
             repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
             ai_provider_factory=create_studio_text_generation_provider,
             export_writers=DEFAULT_EXPORT_WRITERS,
-        )
+        ),
+        database=database,
     )
 
 
-def _prepare_database() -> None:
+@contextmanager
+def _configured_runtime() -> Iterator[CliRuntime]:
+    runtime = _create_runtime()
+    try:
+        yield runtime
+    finally:
+        runtime.database.dispose()
+
+
+def _prepare_database(database: StudioDatabase) -> None:
     """Back up the current SQLite store and apply all pending migrations."""
-    _configure_store()
-    path = studio_store.database.path
+    path = database.path
     if path is not None:
         backup_database(path)
     config = Config(str(get_settings().base_dir / "alembic.ini"))
@@ -58,7 +72,8 @@ def _prepare_database() -> None:
 def _serve(args: argparse.Namespace) -> int:
     import uvicorn
 
-    _prepare_database()
+    with _configured_runtime() as runtime:
+        _prepare_database(runtime.database)
     settings = get_settings()
     uvicorn.run(
         "src.apps.api.main:create_application",
@@ -72,37 +87,44 @@ def _serve(args: argparse.Namespace) -> int:
 
 
 def _import_workspace(args: argparse.Namespace) -> int:
-    _prepare_database()
-    principal = studio_store.owner_principal(args.owner)
-    project = studio_store.import_legacy_workspace(principal, Path(args.source))
+    with _configured_runtime() as runtime:
+        _prepare_database(runtime.database)
+        principal = runtime.store.owner_principal(args.owner)
+        project = runtime.store.import_legacy_workspace(
+            principal,
+            Path(args.source),
+        )
     print(json.dumps(project, ensure_ascii=False, indent=2))  # noqa: T201
     return 0
 
 
 def _backup(_args: argparse.Namespace) -> int:
-    _configure_store()
-    path = studio_store.database.path
-    if path is None:
-        raise RuntimeError("The configured database is not a file-backed SQLite database.")
-    target = backup_database(path)
+    with _configured_runtime() as runtime:
+        path = runtime.database.path
+        if path is None:
+            raise FileBackedDatabaseRequiredError(
+                "The configured database is not a file-backed SQLite database."
+            )
+        target = backup_database(path)
     print(str(target) if target else "No database exists yet.")  # noqa: T201
     return 0
 
 
 def _doctor(_args: argparse.Namespace) -> int:
-    _prepare_database()
-    with studio_store.database.engine.connect() as connection:
-        quick_check = connection.execute(text("PRAGMA quick_check")).scalar_one()
-        journal_mode = connection.execute(text("PRAGMA journal_mode")).scalar_one()
-        foreign_keys = connection.execute(text("PRAGMA foreign_keys")).scalar_one()
-    payload = {
-        "version": get_settings().project_version,
-        "database": str(studio_store.database.path),
-        "quick_check": quick_check,
-        "journal_mode": journal_mode,
-        "foreign_keys": bool(foreign_keys),
-        "owner_configured": studio_store.owner_exists(),
-    }
+    with _configured_runtime() as runtime:
+        _prepare_database(runtime.database)
+        with runtime.database.engine.connect() as connection:
+            quick_check = connection.execute(text("PRAGMA quick_check")).scalar_one()
+            journal_mode = connection.execute(text("PRAGMA journal_mode")).scalar_one()
+            foreign_keys = connection.execute(text("PRAGMA foreign_keys")).scalar_one()
+        payload = {
+            "version": get_settings().project_version,
+            "database": str(runtime.database.path),
+            "quick_check": quick_check,
+            "journal_mode": journal_mode,
+            "foreign_keys": bool(foreign_keys),
+            "owner_configured": runtime.store.owner_exists(),
+        }
     print(json.dumps(payload, ensure_ascii=False, indent=2))  # noqa: T201
     return 0 if quick_check == "ok" and foreign_keys else 1
 

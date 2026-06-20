@@ -2,12 +2,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.apps.api.runtime import StudioRuntime
+from src.contexts.studio.application.services import StudioStore
 from src.shared.infrastructure.config.settings import get_settings
 
 
-def test_guest_project_revision_conflict_and_export(canonical_client: TestClient) -> None:
+def test_guest_project_revision_conflict_and_export(
+    canonical_client: TestClient,
+) -> None:
     session = canonical_client.post("/api/session/guest")
     assert session.status_code == 201
     assert session.json()["expires_at"]
@@ -143,7 +149,9 @@ def test_project_and_document_delete_endpoints(canonical_client: TestClient) -> 
 def test_delete_project_with_snapshots(canonical_client: TestClient) -> None:
     """Regression test: projects with export snapshots must be deletable."""
     canonical_client.post("/api/session/guest")
-    project = canonical_client.post("/api/projects", json={"title": "Snapshot Delete"}).json()
+    project = canonical_client.post(
+        "/api/projects", json={"title": "Snapshot Delete"}
+    ).json()
     document = project["documents"][0]
     saved = canonical_client.put(
         f"/api/projects/{project['id']}/documents/{document['id']}",
@@ -191,3 +199,38 @@ def test_swagger_ui_assets_are_version_pinned_and_integrity_checked(
         in response.text
     )
     assert response.text.count('crossorigin="anonymous"') == 2
+
+
+def test_application_owns_an_explicit_runtime_store(
+    canonical_app: FastAPI,
+) -> None:
+    # Given / When
+    runtime_store = canonical_app.state.studio_store
+
+    # Then
+    assert isinstance(runtime_store, StudioStore)
+
+
+def test_lifespan_disposes_database_when_context_raises(
+    canonical_app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Given
+    runtime = canonical_app.state.studio_runtime
+    assert isinstance(runtime, StudioRuntime)
+    original_dispose = runtime.database.dispose
+    disposed = False
+
+    def record_dispose() -> None:
+        nonlocal disposed
+        disposed = True
+        original_dispose()
+
+    monkeypatch.setattr(runtime.database, "dispose", record_dispose)
+
+    # When
+    with pytest.raises(RuntimeError, match="lifespan test"), TestClient(canonical_app):
+        raise RuntimeError("lifespan test")
+
+    # Then
+    assert disposed is True

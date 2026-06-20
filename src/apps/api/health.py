@@ -11,7 +11,8 @@ from fastapi import APIRouter, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from src.contexts.studio.application.services import studio_store
+from src.contexts.studio.application.services import StudioStore
+from src.contexts.studio.interface.http.dependencies import StudioStoreDependency
 from src.shared.infrastructure.config.settings import get_settings
 
 health_router = APIRouter()
@@ -47,13 +48,8 @@ def _timestamp() -> str:
     return datetime.now(UTC).isoformat()
 
 
-def _database_component() -> ComponentStatusResponse:
-    repository = studio_store.repository
-    if repository is None:
-        return ComponentStatusResponse(
-            status="unhealthy", error="StudioStore has not been configured with a repository."
-        )
-
+def _database_component(store: StudioStore) -> ComponentStatusResponse:
+    repository = store.repository
     try:
         healthy = repository.health_check()
     except RuntimeError as exc:
@@ -67,9 +63,9 @@ def _database_component() -> ComponentStatusResponse:
 
 
 @health_router.get("/health", response_model=DetailedHealthResponse)
-async def health_check() -> JSONResponse:
+async def health_check(store: StudioStoreDependency) -> JSONResponse:
     """Return the detailed runtime health of the application."""
-    database = _database_component()
+    database = _database_component(store)
     return JSONResponse(
         content={
             "overall_status": database.status,
@@ -87,9 +83,9 @@ async def liveness_probe() -> SimpleHealthResponse:
 
 
 @health_router.get("/health/ready", response_model=SimpleHealthResponse)
-async def readiness_probe() -> JSONResponse:
+async def readiness_probe(store: StudioStoreDependency) -> JSONResponse:
     """Return whether the authoritative SQLite database is available."""
-    component = _database_component()
+    component = _database_component(store)
     if component.status != "healthy":
         return JSONResponse(
             content={"status": "not_ready", "reason": component.error},

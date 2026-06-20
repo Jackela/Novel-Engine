@@ -4,11 +4,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import contextlib
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
-from typing import Any, cast
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,24 +15,13 @@ from fastapi.staticfiles import StaticFiles
 
 from src.apps.api.middleware.cors import get_cors_config
 from src.apps.api.middleware.error_handler import setup_exception_handlers
+from src.apps.api.runtime import StudioRuntime, attach_runtime, create_runtime, lifespan
 from src.apps.api.swagger_ui import add_docs_route
-from src.contexts.studio.application.services import (
-    StudioStore,
-    configure_studio_store,
-    is_studio_store_configured,
-    studio_store,
-)
-from src.contexts.studio.infrastructure.ai_provider import (
-    create_studio_text_generation_provider,
-)
-from src.contexts.studio.infrastructure.database import create_studio_database
-from src.contexts.studio.infrastructure.exporters import DEFAULT_EXPORT_WRITERS
-from src.contexts.studio.infrastructure.repository import SqlAlchemyStudioRepository
+from src.contexts.studio.interface.http.dependencies import attach_studio_store
 from src.shared.infrastructure.config.settings import (
     NovelEngineSettings,
     get_settings,
 )
-from src.shared.infrastructure.logging.config import configure_logging, get_logger
 from src.shared.infrastructure.middleware import (
     CORRELATION_ID_HEADER,
     REQUEST_ID_HEADER,
@@ -44,11 +29,15 @@ from src.shared.infrastructure.middleware import (
     LoggingMiddleware,
     MetricsMiddleware,
     RateLimitMiddleware,
-    start_prometheus_server,
 )
 
 
-def custom_openapi(app: FastAPI) -> dict:
+class NovelStudioApplication(FastAPI):
+    def openapi(self) -> dict[str, Any]:
+        return custom_openapi(self)
+
+
+def custom_openapi(app: FastAPI) -> dict[str, Any]:
     """Generate the canonical OpenAPI schema."""
     if app.openapi_schema:
         return app.openapi_schema
@@ -110,72 +99,8 @@ def _apply_openapi_security(openapi_schema: dict[str, Any]) -> None:
                 operation["security"] = cookie_auth
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    """Canonical startup/shutdown hooks."""
-    settings: NovelEngineSettings = app.state.settings
-    configure_logging(
-        log_level=settings.logging.level.value,
-        json_format=settings.logging.json_format,
-        service_name=settings.monitoring.service_name,
-        service_version=settings.monitoring.service_version,
-    )
-    logger = get_logger(__name__)
-    logger.info(
-        "api_startup",
-        version=settings.project_version,
-        environment=settings.environment.value,
-    )
-
-    if settings.monitoring.metrics_enabled:
-        try:
-            start_prometheus_server(port=settings.monitoring.metrics_port)
-            logger.info(
-                "prometheus_started",
-                port=settings.monitoring.metrics_port,
-                path=settings.monitoring.metrics_path,
-            )
-        except OSError as exc:
-            logger.warning("prometheus_start_failed", reason=str(exc))
-
-    await asyncio.to_thread(
-        studio_store.database.initialize,
-        create_backup=False,
-        create_schema=False,
-    )
-    await asyncio.to_thread(studio_store.cleanup_expired_guests)
-
-    async def cleanup_expired_guests() -> None:
-        while True:
-            await asyncio.sleep(60 * 60)
-            await asyncio.to_thread(studio_store.cleanup_expired_guests)
-
-    cleanup_task = asyncio.create_task(cleanup_expired_guests())
-
-    yield
-
-    cleanup_task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await cleanup_task
-    await asyncio.to_thread(studio_store.database.dispose)
-    logger.info("api_shutdown", message="Shutting down Novel Studio API")
-
-
-def _configure_runtime_store(resolved_settings: NovelEngineSettings) -> None:
-    if not is_studio_store_configured():
-        database = create_studio_database(resolved_settings)
-        configure_studio_store(
-            StudioStore(
-                repository=SqlAlchemyStudioRepository(database),
-                data_dir=resolved_settings.data_dir,
-                ai_provider_factory=create_studio_text_generation_provider,
-                export_writers=DEFAULT_EXPORT_WRITERS,
-            )
-        )
-
-
 def _new_fastapi_app(resolved_settings: NovelEngineSettings) -> FastAPI:
-    return FastAPI(
+    return NovelStudioApplication(
         title=resolved_settings.project_name,
         description=(
             "Novel Studio API for projects, Markdown revisions, AI proposals, "
@@ -191,13 +116,6 @@ def _new_fastapi_app(resolved_settings: NovelEngineSettings) -> FastAPI:
             {"name": "studio", "description": "Novel Studio product operations"},
         ],
     )
-
-
-def _install_openapi(app: FastAPI) -> None:
-    def _openapi() -> dict[str, Any]:
-        return custom_openapi(app)
-
-    cast(Any, app).openapi = _openapi
 
 
 def _add_http_middleware(
@@ -242,7 +160,7 @@ def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> Non
         app.mount("/assets", StaticFiles(directory=assets_dir), name="studio-assets")
 
     @app.get("/{full_path:path}", include_in_schema=False, response_model=None)
-    async def studio_spa(full_path: str) -> Any:
+    async def studio_spa(full_path: str) -> FileResponse | dict[str, str]:
         if full_path.startswith(("api/", "health", "metrics", "docs", "openapi")):
             return {
                 "name": resolved_settings.project_name,
@@ -250,7 +168,10 @@ def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> Non
                 "api_base": "/api",
             }
         candidate = (frontend_dist / full_path).resolve()
-        if frontend_dist.resolve() in {candidate, *candidate.parents} and candidate.is_file():
+        if (
+            frontend_dist.resolve() in {candidate, *candidate.parents}
+            and candidate.is_file()
+        ):
             return FileResponse(candidate)
         index = frontend_dist / "index.html"
         if index.is_file():
@@ -264,12 +185,15 @@ def _mount_frontend(app: FastAPI, resolved_settings: NovelEngineSettings) -> Non
 
 def create_application(
     settings: NovelEngineSettings | None = None,
+    *,
+    runtime: StudioRuntime | None = None,
 ) -> FastAPI:
     """Create and configure the canonical FastAPI application."""
     resolved_settings = settings or get_settings()
-    _configure_runtime_store(resolved_settings)
+    resolved_runtime = runtime or create_runtime(resolved_settings)
     app = _new_fastapi_app(resolved_settings)
-    _install_openapi(app)
+    attach_runtime(app, resolved_runtime)
+    attach_studio_store(app, resolved_runtime.store)
     _add_http_middleware(app, resolved_settings)
     _include_application_routes(app)
     add_docs_route(app, resolved_settings.api)

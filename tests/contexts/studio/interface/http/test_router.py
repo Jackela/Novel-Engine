@@ -12,7 +12,7 @@ from src.contexts.studio.domain.exceptions import (
     NotFound,
     RevisionConflict,
 )
-from src.contexts.studio.interface.http.router import (
+from src.contexts.studio.interface.http.errors import (
     _handle_domain_exceptions,
     _raise_http,
 )
@@ -25,7 +25,10 @@ from src.contexts.studio.interface.http.router import (
         (
             RevisionConflict("rev-1"),
             409,
-            {"message": "Document changed since the requested base revision.", "current_revision_id": "rev-1"},
+            {
+                "message": "Document changed since the requested base revision.",
+                "current_revision_id": "rev-1",
+            },
         ),
         (InvalidOperation("bad"), 422, "bad"),
     ],
