@@ -81,7 +81,7 @@ exclude = ["tests*", "ai_testing*", "frontend*", "docs*", "logs*", "build*", "di
 # Black code formatting
 [tool.black]
 line-length = 88
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py311', 'py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -178,13 +178,6 @@ omit = [
     "*/__pycache__/*",
     "*/venv/*",
     "*/.venv/*",
-    "setup.py",
-    "demo_*.py",
-    "example_*.py",
-    "*_demo.py",
-    "fix_*.py",
-    "run_*.py",
-    "simple_*.py",
 ]
 
 [tool.coverage.report]
