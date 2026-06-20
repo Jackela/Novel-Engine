@@ -4,6 +4,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import { HttpError, api } from '@/app/api';
 import type { Project, Revision, SaveState, StudioDocument } from '@/app/types/studio';
 
+function errorMessage(reason: unknown, fallback: string): string {
+  return reason instanceof Error ? reason.message : fallback;
+}
+
 export function useDocumentDraft(
   activeDocument: StudioDocument | null,
   projectId: string,
@@ -34,7 +38,9 @@ export function useDocumentDraft(
         .then((response) => {
           setRevisions(response.revisions);
         })
-        .catch(setError);
+        .catch((reason: unknown) => {
+          setError(errorMessage(reason, 'Unable to load revisions.'));
+        });
     },
     [projectId, setError],
   );
@@ -88,10 +94,12 @@ export function useDocumentDraft(
           .then((response) => {
             setRevisions(response.revisions);
           })
-          .catch(setError);
+          .catch((reason: unknown) => {
+            setError(errorMessage(reason, 'Unable to load revisions.'));
+          });
       } catch (reason) {
         setSaveState(reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error');
-        setError(reason instanceof Error ? reason.message : 'Unable to save.');
+        setError(errorMessage(reason, 'Unable to save.'));
       }
     }, 1500);
     return () => {
@@ -125,7 +133,7 @@ export function useDocumentDraft(
         const response = await api.revisions(projectId, activeDocument.id);
         setRevisions(response.revisions);
       } catch (reason) {
-        setError(reason instanceof Error ? reason.message : 'Unable to restore revision.');
+        setError(errorMessage(reason, 'Unable to restore revision.'));
       }
     },
     [activeDocument, projectId, setError, setProject],
