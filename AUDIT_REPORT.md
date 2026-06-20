@@ -1,8 +1,8 @@
 # Novel-Engine Remediation Report
 
-**Date:** 2026-06-17
-**Status:** Audit remediation branch in progress; completed items and remaining
-work are tracked with evidence rather than summarized as "zero debt."
+**Date:** 2026-06-20
+**Status:** The findings tracked by this remediation branch are implemented and
+awaiting final pull-request validation.
 
 This file replaces the prior over-confident audit summary. The previous claim
 of "zero remaining technical debt" was inaccurate because the repository still
@@ -20,8 +20,14 @@ contained unused infrastructure and several large, hard-to-edit modules.
   and FTS index cleanup.
 - Split Studio application services and SQLAlchemy repository implementation
   into focused modules with facade exports.
+- Replaced the module-level `StudioStore.__getattr__` proxy with explicit
+  per-application FastAPI dependencies and short-lived CLI runtime ownership.
+- Split the Studio HTTP contract into session, project, and workflow routers,
+  and removed their legacy file-size exemptions.
 - Split the Studio frontend surface into focused topbar, navigator, editor,
   inspector, and statusbar components.
+- Added focused unit coverage for Studio project, document, proposal, export,
+  search, jobs, actions, active-document, and inspector-state hooks.
 - Deleted unused outbox, Result-monad/error-handler, circuit-breaker, generic
   health, YAML config loader, empty worker/cache/policy, and broken demo code.
 - Consolidated environment documentation around the root `.env.example` and
@@ -31,6 +37,7 @@ contained unused infrastructure and several large, hard-to-edit modules.
 - Cleaned Python tool configuration drift in `pyproject.toml`.
 - Made export artifact writes atomic so failed writers do not publish partial
   files.
+- Pinned Swagger UI assets to `5.32.6` with verified SHA-384 integrity metadata.
 - Aligned README validation commands with the current CI and hidden QA gates.
 
 ## Validation
@@ -54,10 +61,8 @@ corepack pnpm --dir frontend test:unit
 corepack pnpm --dir frontend build
 ```
 
-## Remaining Non-Blocking Work
+## Remaining Work
 
-- Replace the legacy `StudioStore.__getattr__` compatibility proxy with explicit
-  service injection.
-- Pin or vendor Swagger UI assets and define an integrity policy.
-- Consider adding broader frontend unit coverage for the newly extracted Studio
-  components.
+No unresolved findings from the remediation scope are tracked here. The
+file-size checker continues to list unrelated legacy baselines explicitly so
+they cannot grow unnoticed.

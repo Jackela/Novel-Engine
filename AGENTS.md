@@ -22,7 +22,7 @@ src/
       domain/
       application/
         services/ # Per-service modules (project, document, ai, export, job, etc.)
-        facade.py # Thin coordinator over services (legacy compatibility; new code should prefer dependency injection via FastAPI Depends)
+        facade.py # Thin compatibility coordinator; HTTP handlers receive it via FastAPI Depends
       infrastructure/
       interface/
     ai/           # Text-generation providers (mock, dashscope, openai_compatible)
@@ -86,8 +86,8 @@ Note: `mypy src tests` currently passes.
 
 ## 6. Common AI Pitfalls in This Codebase
 
-1. **`studio_store` compatibility facade**
-   `src/contexts/studio/application/services/facade.py` exposes a global `studio_store`. It must be configured before use. New code should prefer dependency injection via FastAPI `Depends`. Tests may need `settings_module.reset_settings()` and `sys.modules` cleanup.
+1. **Studio runtime ownership**
+   Each FastAPI application owns its `StudioStore` through `app.state` and handlers receive it through `FastAPI Depends`. CLI commands create short-lived runtime objects. Do not reintroduce module-level store singletons or magic proxies. Tests may still need `settings_module.reset_settings()` and `sys.modules` cleanup.
 
 2. **Module-level singletons**
    Do not introduce new import-time side effects (e.g., creating DB engines or FastAPI apps at module import time).
