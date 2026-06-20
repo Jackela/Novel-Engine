@@ -5,15 +5,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { StudioDocument } from '@/app/types/studio';
 
 import { StudioEditorPane } from './StudioEditorPane';
-import { StudioInspector, type SettingsFormState } from './StudioInspector';
+import { StudioInspector } from './StudioInspector';
 import { StudioNavigator } from './StudioNavigator';
 import { StudioStatusbar } from './StudioStatusbar';
 import { StudioTopbar } from './StudioTopbar';
-import { type InspectorTab } from './studioConstants';
 import { useActiveDocument } from './hooks/useActiveDocument';
 import { useDocumentDraft } from './hooks/useDocumentDraft';
 import { useExportDownload } from './hooks/useExportDownload';
 import { useStudioActions } from './hooks/useStudioActions';
+import { useStudioInspectorState } from './hooks/useStudioInspectorState';
 import { useStudioJobs } from './hooks/useStudioJobs';
 import { useStudioProject } from './hooks/useStudioProject';
 import { useStudioProposal } from './hooks/useStudioProposal';
@@ -24,12 +24,6 @@ export function StudioPage() {
   const { projectId = '', section = 'manuscript' } = useParams();
   const navigate = useNavigate();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [inspector, setInspector] = useState<InspectorTab>('copilot');
-  const [settingsForm, setSettingsForm] = useState<SettingsFormState>({
-    title: '',
-    description: '',
-    provider: 'mock',
-  });
 
   const {
     project,
@@ -62,6 +56,11 @@ export function StudioPage() {
   } = useDocumentDraft(activeDocument, projectId, setProject, setError);
 
   const { jobs, loadJobs } = useStudioJobs(projectId, setError);
+  const { inspector, setInspector, settingsForm, setSettingsForm } = useStudioInspectorState({
+    section,
+    project,
+    loadJobs,
+  });
 
   const onProposalAccepted = useCallback(
     (document: StudioDocument) => resetFor(document, 'saved'),
@@ -101,28 +100,6 @@ export function StudioPage() {
       settingsForm,
       loadJobs,
     });
-
-  useEffect(() => {
-    if (section === 'review') setInspector('review');
-    if (section === 'history' || section === 'export') setInspector('history');
-    if (section === 'settings') setInspector('settings');
-  }, [section]);
-
-  useEffect(() => {
-    if (inspector === 'jobs') {
-      void loadJobs();
-    }
-  }, [inspector, loadJobs]);
-
-  useEffect(() => {
-    if (inspector === 'settings' && project) {
-      setSettingsForm({
-        title: project.title,
-        description: project.description,
-        provider: String(project.settings.provider ?? 'mock'),
-      });
-    }
-  }, [inspector, project]);
 
   const latestReview = reviews[0] ?? null;
 
