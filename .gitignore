@@ -60,6 +60,7 @@ frontend/coverage/
 # Temporary files
 *_world_state.json
 *_REPORT.md
+!AUDIT_REPORT.md
 *_STATUS.md
 
 # Installer logs
