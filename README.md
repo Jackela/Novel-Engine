@@ -77,9 +77,9 @@ after the Owner account has been created.
 uv run python scripts/qa/check_file_sizes.py
 uv run python scripts/qa/check_ssot.py
 uv run python scripts/qa/check_repo_hygiene.py
+uv run ruff format --check src tests scripts
 uv run ruff check src tests
 uv run bandit -r src
-uv run mypy src
 uv run mypy src tests
 uv run lint-imports
 uv run pytest -q

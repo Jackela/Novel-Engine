@@ -159,6 +159,7 @@ class JobRepositoryMixin:
                     created_at=now,
                 )
             )
+
     def add_usage_event(
         self,
         *,

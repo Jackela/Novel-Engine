@@ -165,8 +165,10 @@ async def test_deterministic_provider_covers_supported_steps() -> None:
     assert all(isinstance(result, TextGenerationResult) for result in results)
     assert results[0].content["chapter_markdown"].startswith("# Chapter 1")
     assert results[0].content["sidecar_metadata"]["characters"] == ["Mira", "Tomas"]
-    assert results[1].content["chapter_markdown"].startswith(
-        "# Chapter 1: The Debt in the Rain"
+    assert (
+        results[1]
+        .content["chapter_markdown"]
+        .startswith("# Chapter 1: The Debt in the Rain")
     )
     assert results[2].content == {
         "result": "ok",
@@ -189,7 +191,9 @@ def test_provider_factory_default_mock_without_key_is_usable(
     assert isinstance(provider, DeterministicTextGenerationProvider)
 
 
-def test_provider_factory_rejects_unknown_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_provider_factory_rejects_unknown_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("APP_ENVIRONMENT", "testing")
     settings = NovelEngineSettings()
 
@@ -225,7 +229,9 @@ def test_dashscope_provider_requires_api_key() -> None:
 async def test_dashscope_provider_generates_structured_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     fake_client = _AsyncPostClient(
         [
             _dashscope_success_response(
@@ -258,7 +264,9 @@ async def test_dashscope_provider_generates_structured_payload(
 async def test_dashscope_provider_coerces_nested_sidecar_schema(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     fake_client = _AsyncPostClient(
         [
             _dashscope_success_response(
@@ -328,7 +336,9 @@ async def test_dashscope_provider_retries_timeout_then_succeeds(
 async def test_dashscope_provider_maps_http_status_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -345,7 +355,9 @@ async def test_dashscope_provider_maps_http_status_error(
 async def test_dashscope_provider_maps_json_decode_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -367,7 +379,9 @@ async def test_dashscope_provider_maps_json_decode_error(
 async def test_dashscope_provider_maps_non_json_object_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -382,7 +396,9 @@ async def test_dashscope_provider_maps_non_json_object_response(
 async def test_dashscope_provider_uses_chapter_text_fallback_for_non_object_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -422,7 +438,9 @@ async def test_dashscope_provider_uses_chapter_text_fallback_for_non_object_resp
 async def test_dashscope_provider_rejects_non_text_chapter_array(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", retry_attempts=1)
+    provider = DashScopeTextGenerationProvider(
+        api_key="dashscope-key", retry_attempts=1
+    )
     monkeypatch.setattr(
         provider,
         "_get_client",
@@ -460,10 +478,14 @@ def test_dashscope_generation_response_shape_errors(
 
 def test_dashscope_extracts_generation_content_list_and_text_fallback() -> None:
     content_list = DashScopeTextGenerationProvider._extract_generation_response_text(
-        {"output": {"choices": [{"message": {"content": [{"text": "a"}, {"text": "b"}]}}]}}
+        {
+            "output": {
+                "choices": [{"message": {"content": [{"text": "a"}, {"text": "b"}]}}]
+            }
+        }
     )
     text_fallback = DashScopeTextGenerationProvider._extract_generation_response_text(
-        {"output": {"text": "{\"ok\": true}"}}
+        {"output": {"text": '{"ok": true}'}}
     )
 
     assert content_list == "ab"

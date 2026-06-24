@@ -111,20 +111,12 @@ def _normalize_responses_base(api_base: str | None) -> str:
 
 def _build_system_content(task: TextGenerationTask) -> str:
     schema_text = json.dumps(task.response_schema, ensure_ascii=False)
-    return (
-        f"{task.system_prompt}\n"
-        "Return valid JSON only. "
-        f"Output schema: {schema_text}"
-    )
+    return f"{task.system_prompt}\nReturn valid JSON only. Output schema: {schema_text}"
 
 
 def _build_user_content(task: TextGenerationTask) -> str:
     metadata_text = json.dumps(task.metadata, ensure_ascii=False)
-    return (
-        f"{task.user_prompt}\n"
-        f"Task step: {task.step}\n"
-        f"Metadata: {metadata_text}"
-    )
+    return f"{task.user_prompt}\nTask step: {task.step}\nMetadata: {metadata_text}"
 
 
 SchemaCoercer = Callable[[Any, dict[str, Any], str | None], Any]
@@ -163,7 +155,9 @@ def _coerce_string_value(value: Any, _schema: dict[str, Any], _key: str | None) 
     if isinstance(value, str):
         return value.strip()
     if isinstance(value, list):
-        return " ".join(str(item).strip() for item in value if str(item).strip()).strip()
+        return " ".join(
+            str(item).strip() for item in value if str(item).strip()
+        ).strip()
     if isinstance(value, dict):
         return json.dumps(value, ensure_ascii=False).strip()
     return str(value).strip()
@@ -210,25 +204,20 @@ def _coerce_payload_to_schema(
 
 class _DashScopeTransport(Protocol):
     @property
-    def mode(self) -> DashScopeTransportMode:
-        ...
+    def mode(self) -> DashScopeTransportMode: ...
 
-    def normalize_api_base(self, api_base: str | None) -> str:
-        ...
+    def normalize_api_base(self, api_base: str | None) -> str: ...
 
-    def endpoint_path(self) -> str:
-        ...
+    def endpoint_path(self) -> str: ...
 
     def build_request_payload(
         self,
         *,
         model: str,
         task: TextGenerationTask,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
-    def extract_response_text(self, data: dict[str, Any]) -> str:
-        ...
+    def extract_response_text(self, data: dict[str, Any]) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -404,7 +393,9 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             "chapter_draft": 180.0,
             "chapter_revision": 180.0,
         }
-        return max(float(self._timeout), timeout_floors.get(task.step, float(self._timeout)))
+        return max(
+            float(self._timeout), timeout_floors.get(task.step, float(self._timeout))
+        )
 
     @staticmethod
     def _extract_content_text(message: dict[str, Any]) -> str:
@@ -524,7 +515,9 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             parsed = DashScopeTextGenerationProvider._parse_json_like_value(candidate)
             if parsed is None:
                 continue
-            normalized = DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed)
+            normalized = (
+                DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed)
+            )
             if normalized is not None:
                 return normalized
 
@@ -566,15 +559,21 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         if isinstance(parsed, dict):
             return parsed
         if isinstance(parsed, str):
-            nested = DashScopeTextGenerationProvider._parse_json_like_value(parsed.strip())
+            nested = DashScopeTextGenerationProvider._parse_json_like_value(
+                parsed.strip()
+            )
             if nested is None or nested == parsed:
                 return None
-            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(nested)
+            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(
+                nested
+            )
         if isinstance(parsed, list):
             objects: list[dict[str, Any]] = []
             for item in parsed:
                 normalized = (
-                    DashScopeTextGenerationProvider._coerce_parsed_object_candidate(item)
+                    DashScopeTextGenerationProvider._coerce_parsed_object_candidate(
+                        item
+                    )
                 )
                 if normalized is not None:
                     objects.append(normalized)
@@ -592,15 +591,22 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         response_schema: dict[str, Any],
     ) -> dict[str, Any] | None:
         chapter_schema = response_schema.get("chapter_markdown")
-        if not isinstance(chapter_schema, dict) or chapter_schema.get("type") != "string":
+        if (
+            not isinstance(chapter_schema, dict)
+            or chapter_schema.get("type") != "string"
+        ):
             return None
 
-        parsed = DashScopeTextGenerationProvider._parse_json_like_value(raw_text.strip())
+        parsed = DashScopeTextGenerationProvider._parse_json_like_value(
+            raw_text.strip()
+        )
         if isinstance(parsed, str):
             markdown = parsed.strip()
         elif isinstance(parsed, list):
             markdown = "\n\n".join(
-                item.strip() for item in parsed if isinstance(item, str) and item.strip()
+                item.strip()
+                for item in parsed
+                if isinstance(item, str) and item.strip()
             ).strip()
         else:
             markdown = raw_text.strip()

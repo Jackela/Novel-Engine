@@ -5,6 +5,7 @@ Run this after any AI-assisted change to detect common anti-patterns
 introduced by AI: deleted safety code, bare except, hardcoded secrets,
 SQL/FTS5 string concatenation, etc.
 """
+
 from __future__ import annotations
 
 import re
@@ -41,7 +42,9 @@ def run_git_diff() -> str:
     return result.stdout
 
 
-def parse_diff(diff: str) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
+def parse_diff(
+    diff: str,
+) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
     """Parse diff into per-file additions, deletions, and entirely-deleted files."""
     additions: dict[str, list[str]] = {}
     deletions: dict[str, list[str]] = {}
@@ -98,7 +101,9 @@ def check_deleted_safety_lines(
         for line in lines:
             for keyword in SAFETY_KEYWORDS:
                 if re.search(rf"\b{keyword}\b", line):
-                    issues.append(f"[{filename}] Deleted safety keyword '{keyword}': {line}")
+                    issues.append(
+                        f"[{filename}] Deleted safety keyword '{keyword}': {line}"
+                    )
                     break
     return issues
 
@@ -114,7 +119,9 @@ def check_dangerous_additions(additions: dict[str, list[str]]) -> list[str]:
     return issues
 
 
-def check_file_count(additions: dict[str, list[str]], deletions: dict[str, list[str]]) -> list[str]:
+def check_file_count(
+    additions: dict[str, list[str]], deletions: dict[str, list[str]]
+) -> list[str]:
     changed_files = set(additions) | set(deletions)
     issues: list[str] = []
     if len(changed_files) > 5:

@@ -52,6 +52,7 @@ jobs:
           pnpm spec:validate
       - name: Validate backend
         run: |
+          uv run ruff format --check src tests scripts
           uv run ruff check src tests
           uv run bandit -r src
           uv run mypy src tests

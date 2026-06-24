@@ -216,7 +216,9 @@ class FakeStudioRepository:
             project,
             title=title if title is not None else project.title,
             description=description if description is not None else project.description,
-            settings_json=settings_json if settings_json is not None else project.settings_json,
+            settings_json=settings_json
+            if settings_json is not None
+            else project.settings_json,
             updated_at=now,
         )
         return self._project_with_documents(project_id)
@@ -283,7 +285,14 @@ class FakeStudioRepository:
     ) -> DocumentDto:
         self._get_visible_project(project_id, owner_id, guest_session_id)
         document, revision = self._make_document(
-            project_id, kind, title, content_markdown, position, metadata_json, source, now
+            project_id,
+            kind,
+            title,
+            content_markdown,
+            position,
+            metadata_json,
+            source,
+            now,
         )
         self._revisions[revision.id] = revision
         self._documents[document.id] = document
@@ -433,9 +442,7 @@ class FakeStudioRepository:
             if document.project_id == project_id
         }
         if set(document_ids) != existing:
-            raise InvalidOperation(
-                "Reorder must include every project document once."
-            )
+            raise InvalidOperation("Reorder must include every project document once.")
         for position, doc_id in enumerate(document_ids, start=1):
             document = self._documents[doc_id]
             self._documents[doc_id] = DocumentDto(
@@ -462,7 +469,11 @@ class FakeStudioRepository:
     ) -> list[dict[str, Any]]:
         self._get_visible_project(project_id, owner_id, guest_session_id)
         tokens = [token.strip('"') for token in query.split('" "') if token.strip('"')]
-        return [self._match_entry(entry, tokens) for entry in self._search_index if self._entry_matches(entry, project_id, tokens)]
+        return [
+            self._match_entry(entry, tokens)
+            for entry in self._search_index
+            if self._entry_matches(entry, project_id, tokens)
+        ]
 
     # ------------------------------------------------------------------
     # Snapshots
@@ -598,7 +609,9 @@ class FakeStudioRepository:
     ) -> list[ReviewDto]:
         self._get_visible_project(project_id, owner_id, guest_session_id)
         reviews = [
-            review for review in self._reviews.values() if review.project_id == project_id
+            review
+            for review in self._reviews.values()
+            if review.project_id == project_id
         ]
         reviews.sort(key=lambda review: review.created_at, reverse=True)
         return reviews
@@ -640,7 +653,9 @@ class FakeStudioRepository:
     ) -> list[ExportDto]:
         self._get_visible_project(project_id, owner_id, guest_session_id)
         exports = [
-            export for export in self._exports.values() if export.project_id == project_id
+            export
+            for export in self._exports.values()
+            if export.project_id == project_id
         ]
         exports.sort(key=lambda export: export.created_at, reverse=True)
         return exports
@@ -839,7 +854,9 @@ class FakeStudioRepository:
         guest_session_id: str | None,
     ) -> ProjectDto:
         project = self._projects.get(project_id)
-        if project is None or not self._scope_filter(project, owner_id, guest_session_id):
+        if project is None or not self._scope_filter(
+            project, owner_id, guest_session_id
+        ):
             raise NotFound("Project not found.")
         return project
 
@@ -859,7 +876,9 @@ class FakeStudioRepository:
             guest_session_id=project.guest_session_id,
             title=title if title is not None else project.title,
             description=description if description is not None else project.description,
-            settings_json=settings_json if settings_json is not None else project.settings_json,
+            settings_json=settings_json
+            if settings_json is not None
+            else project.settings_json,
             import_hash=import_hash if import_hash is not None else project.import_hash,
             created_at=project.created_at,
             updated_at=updated_at if updated_at is not None else project.updated_at,
@@ -905,7 +924,9 @@ class FakeStudioRepository:
             for document in self._documents.values()
             if document.project_id == project_id
         ]
-        documents.sort(key=lambda document: (document.kind, document.position, document.created_at))
+        documents.sort(
+            key=lambda document: (document.kind, document.position, document.created_at)
+        )
         return documents
 
     def _get_project_document(self, project_id: str, document_id: str) -> DocumentDto:
@@ -975,9 +996,7 @@ class FakeStudioRepository:
 
     def _index_document(self, document: DocumentDto, revision: RevisionDto) -> None:
         self._search_index = [
-            entry
-            for entry in self._search_index
-            if entry.document_id != document.id
+            entry for entry in self._search_index if entry.document_id != document.id
         ]
         self._search_index.append(
             _FakeSearchIndex(
@@ -994,9 +1013,7 @@ class FakeStudioRepository:
             if revision.document_id == document_id:
                 del self._revisions[revision_id]
         self._search_index = [
-            entry
-            for entry in self._search_index
-            if entry.document_id != document_id
+            entry for entry in self._search_index if entry.document_id != document_id
         ]
 
     def _delete_project_records(
@@ -1026,9 +1043,7 @@ class FakeStudioRepository:
                 self._job_events.pop(job_id, None)
                 del self._jobs[job_id]
         self._usage_events = [
-            event
-            for event in self._usage_events
-            if event["project_id"] != project_id
+            event for event in self._usage_events if event["project_id"] != project_id
         ]
 
     def _delete_session_cascade(self, session_id: str) -> None:
@@ -1078,7 +1093,8 @@ class FakeStudioRepository:
         documents = [
             document
             for document in self._documents.values()
-            if document.project_id == project_id and document.current_revision_id is not None
+            if document.project_id == project_id
+            and document.current_revision_id is not None
         ]
         documents.sort(key=lambda document: (document.position, document.created_at))
         return [
@@ -1090,7 +1106,9 @@ class FakeStudioRepository:
             for document in documents
         ]
 
-    def _snapshot_content_pairs(self, snapshot_id: str) -> list[tuple[DocumentDto, RevisionDto]]:
+    def _snapshot_content_pairs(
+        self, snapshot_id: str
+    ) -> list[tuple[DocumentDto, RevisionDto]]:
         pairs = []
         for item in self._snapshot_documents.get(snapshot_id, []):
             document = self._documents.get(item.document_id)

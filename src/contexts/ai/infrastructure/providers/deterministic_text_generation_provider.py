@@ -109,8 +109,8 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             f"stayed harmless after midnight. Tonight it had narrowed to {object_name}, "
             f"wrapped in plain paper and left where only a frightened friend would "
             f"think to look.\n\n"
-            f"\"You should have burned it,\" {confidant} said.\n\n"
-            f"\"You should have warned me before it learned my name,\" {protagonist} "
+            f'"You should have burned it," {confidant} said.\n\n'
+            f'"You should have warned me before it learned my name," {protagonist} '
             f"answered.\n\n"
             f"That made {confidant} go still. The silence was useful because it showed "
             f"where the truth pressed hardest. {protagonist} opened the packet and found "
@@ -123,8 +123,8 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             f"That choice changed the room more than the evidence did. People who had "
             f"looked bored now looked careful. The exit behind {confidant} filled with "
             f"someone's shadow, too patient to be an accident.\n\n"
-            f"{protagonist} folded the {object_name} into an inside pocket. \"If this "
-            f"is a trap, we spring it where we can see the teeth.\"\n\n"
+            f'{protagonist} folded the {object_name} into an inside pocket. "If this '
+            f'is a trap, we spring it where we can see the teeth."\n\n'
             f"The shadow at the exit shifted. {confidant} did not run. That was the "
             f"first honest thing either of them had done all night, and it cost them "
             f"their last quiet minute."
@@ -238,7 +238,10 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
                         f"Revise {location} so {label} is carried by a visible prose beat."
                     ),
                     "evidence": evidence_by_code[code],
-                    "details": {"dimension": label, "source": "deterministic-editorial"},
+                    "details": {
+                        "dimension": label,
+                        "source": "deterministic-editorial",
+                    },
                 }
             )
         return {"suggestions": suggestions}
@@ -278,9 +281,9 @@ class DeterministicTextGenerationProvider(TextGenerationProvider):
             "breathed on it, and each tremor pulled another memory loose: her "
             "father's sleeve dark with rain, her mother refusing to answer the door, "
             "Tomas pretending not to know which name had been crossed out first.\n\n"
-            "\"Say it plainly,\" she told him.\n\n"
-            "Tomas looked at the tunnel instead. \"Plainly gets people killed.\"\n\n"
-            "\"So does ornament.\"\n\n"
+            '"Say it plainly," she told him.\n\n'
+            'Tomas looked at the tunnel instead. "Plainly gets people killed."\n\n'
+            '"So does ornament."\n\n'
             "That made him face her. Something changed there, not on the page: he "
             "stopped performing caution and let the old grief show. When the train "
             "arrived, neither of them boarded. They stayed beside the wet rail until "

@@ -80,9 +80,7 @@ async def test_create_ai_proposal_persists_completed_job(
     fake_repository: FakeStudioRepository,
 ) -> None:
     principal = _guest("guest-session-1")
-    project = ProjectService(fake_repository).create_project(
-        principal, title="AI Test"
-    )
+    project = ProjectService(fake_repository).create_project(principal, title="AI Test")
     document = project["documents"][0]
     service = AIService(
         fake_repository, cast(TextGenerationProviderFactory, _fake_provider_factory)
@@ -139,7 +137,12 @@ async def test_generate_proposal_returns_proposal_and_base_revision(
         fake_repository, cast(TextGenerationProviderFactory, _fake_provider_factory)
     )
 
-    proposal, base_revision_id, prompt_tokens, completion_tokens = await service.generate_proposal(
+    (
+        proposal,
+        base_revision_id,
+        prompt_tokens,
+        completion_tokens,
+    ) = await service.generate_proposal(
         principal,
         project["id"],
         document["id"],

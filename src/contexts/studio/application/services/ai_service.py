@@ -101,7 +101,9 @@ class AIService:
             result = await generation_provider.generate_structured(task)
             prompt_tokens = result.prompt_tokens
             completion_tokens = result.completion_tokens
-            proposal_markdown = result.content.get("chapter_markdown") or result.raw_text
+            proposal_markdown = (
+                result.content.get("chapter_markdown") or result.raw_text
+            )
             return (
                 _sanitize_chapter_markdown(str(proposal_markdown)),
                 prompt_tokens,
@@ -155,7 +157,11 @@ class AIService:
         _document, revision = self._load_revision(principal, project_id, document_id)
         now = utcnow()
         try:
-            proposal_markdown, prompt_tokens, completion_tokens = await self._generate_proposal_text(
+            (
+                proposal_markdown,
+                prompt_tokens,
+                completion_tokens,
+            ) = await self._generate_proposal_text(
                 revision,
                 operation=operation,
                 instruction=instruction,

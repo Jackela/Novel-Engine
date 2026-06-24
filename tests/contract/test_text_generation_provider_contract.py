@@ -30,9 +30,7 @@ async def _exercise_contract(provider: TextGenerationProvider, *, strict: bool) 
             result,
             case,
             provider_name="dashscope" if not strict else "mock",
-            model_name=(
-                "qwen3.5-flash" if not strict else "deterministic-story-v1"
-            ),
+            model_name=("qwen3.5-flash" if not strict else "deterministic-story-v1"),
             strict=strict,
         )
 

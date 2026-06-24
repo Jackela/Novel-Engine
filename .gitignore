@@ -37,6 +37,7 @@ MANIFEST
 
 # Local tooling artifacts
 .gemini/
+/.omo/
 codex/
 codql-annotations*.json
 .benchmarks/

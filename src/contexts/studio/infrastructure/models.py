@@ -26,7 +26,9 @@ class Owner(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     username: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
 
 class SessionRecord(Base):
@@ -39,12 +41,16 @@ class SessionRecord(Base):
         nullable=True,
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
-    last_seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     csrf_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
@@ -63,9 +69,15 @@ class Project(Base):
     title: Mapped[str] = mapped_column(String(240), nullable=False)
     description: Mapped[str] = mapped_column(Text, default="", nullable=False)
     settings_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
-    import_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    import_hash: Mapped[str | None] = mapped_column(
+        String(64), unique=True, nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     documents: Mapped[list[Document]] = relationship(
         back_populates="project",
@@ -89,8 +101,12 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String(240), nullable=False)
     position: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     current_revision_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     project: Mapped[Project] = relationship(back_populates="documents")
     revisions: Mapped[list[DocumentRevision]] = relationship(
@@ -124,7 +140,9 @@ class DocumentRevision(Base):
     content_markdown: Mapped[str] = mapped_column(Text, default="", nullable=False)
     metadata_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     source: Mapped[str] = mapped_column(String(32), default="author", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     document: Mapped[Document] = relationship(
         back_populates="revisions",
@@ -142,7 +160,9 @@ class ProjectSnapshot(Base):
         index=True,
     )
     reason: Mapped[str] = mapped_column(String(48), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     snapshot_documents: Mapped[list[SnapshotDocument]] = relationship(
         back_populates="snapshot",
@@ -173,7 +193,9 @@ class SnapshotDocument(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    snapshot: Mapped[ProjectSnapshot] = relationship(back_populates="snapshot_documents")
+    snapshot: Mapped[ProjectSnapshot] = relationship(
+        back_populates="snapshot_documents"
+    )
 
 
 class Job(Base):
@@ -201,8 +223,12 @@ class Job(Base):
         ForeignKey("jobs.id", ondelete="SET NULL"),
         nullable=True,
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
@@ -224,7 +250,9 @@ class JobEvent(Base):
     )
     status: Mapped[str] = mapped_column(String(24), nullable=False)
     details_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     job: Mapped[Job] = relationship(back_populates="events")
 
@@ -245,7 +273,9 @@ class Review(Base):
     provider: Mapped[str] = mapped_column(String(48), nullable=False)
     model: Mapped[str] = mapped_column(String(120), nullable=False)
     summary: Mapped[str] = mapped_column(Text, default="", nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
     issues: Mapped[list[ReviewIssue]] = relationship(
         back_populates="review",
@@ -293,7 +323,9 @@ class Export(Base):
     relative_path: Mapped[str] = mapped_column(Text, nullable=False)
     size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
     checksum_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
 
 class UsageEvent(Base):
@@ -313,6 +345,10 @@ class UsageEvent(Base):
     model: Mapped[str] = mapped_column(String(120), nullable=False)
     prompt_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completion_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    request_evidence_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
+    request_evidence_json: Mapped[str] = mapped_column(
+        Text, default="{}", nullable=False
+    )
     estimated_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )

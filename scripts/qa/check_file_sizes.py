@@ -50,15 +50,16 @@ SKIP_PARTS: Final = frozenset(
     }
 )
 LEGACY_LIMITS: Final = {
-    "tests/fakes/fake_studio_repository.py": 1064,
-    "src/contexts/ai/infrastructure/providers/dashscope_text_generation_provider.py": 633,
-    "tests/contexts/ai/infrastructure/test_text_generation_providers.py": 570,
+    "tests/fakes/fake_studio_repository.py": 1082,
+    "src/contexts/ai/infrastructure/providers/dashscope_text_generation_provider.py": 639,
+    "tests/contexts/ai/infrastructure/test_text_generation_providers.py": 592,
     "src/contexts/studio/application/ports/studio_repository.py": 543,
-    "src/shared/infrastructure/config/settings.py": 515,
-    "src/contexts/studio/application/services/ai_service.py": 377,
+    "src/shared/infrastructure/config/settings.py": 523,
+    "src/contexts/studio/application/services/ai_service.py": 383,
     "src/contexts/studio/application/service_common.py": 354,
-    "tests/contexts/studio/test_services.py": 316,
-    "src/contexts/studio/infrastructure/repository/document.py": 314,
+    "src/contexts/studio/infrastructure/repository/document.py": 315,
+    "src/contexts/ai/infrastructure/providers/deterministic_text_generation_provider.py": 302,
+    "src/contexts/studio/infrastructure/models.py": 301,
 }
 
 
@@ -106,6 +107,29 @@ def code_line_count(path: Path) -> int:
     return sum(1 for line in lines if is_code_line(line, path.suffix))
 
 
+def legacy_limit_violations() -> list[str]:
+    violations: list[str] = []
+    for relative_path, configured_limit in sorted(LEGACY_LIMITS.items()):
+        path = ROOT / relative_path
+        if not path.is_file():
+            violations.append(f"{relative_path}: legacy baseline file is missing")
+            continue
+
+        current_count = code_line_count(path)
+        if current_count <= MAX_CODE_LINES:
+            violations.append(
+                f"{relative_path}: stale legacy baseline; {current_count} code lines "
+                f"is at or below default limit {MAX_CODE_LINES}"
+            )
+            continue
+        if configured_limit != current_count:
+            violations.append(
+                f"{relative_path}: stale legacy baseline; configured limit "
+                f"{configured_limit} differs from current count {current_count}"
+            )
+    return violations
+
+
 def limit_for(relative_path: str) -> int:
     return LEGACY_LIMITS.get(relative_path, MAX_CODE_LINES)
 
@@ -131,6 +155,13 @@ def file_size_violations(files: list[Path]) -> list[FileSizeViolation]:
 
 
 def main() -> int:
+    invalid_legacy_baselines = legacy_limit_violations()
+    if invalid_legacy_baselines:
+        write_line("[file-size] invalid legacy baselines:", stderr=True)
+        for failure in invalid_legacy_baselines:
+            write_line(f"  {failure}", stderr=True)
+        return 1
+
     files = tracked_and_new_files()
     violations = file_size_violations(files)
     if violations:

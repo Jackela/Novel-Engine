@@ -158,7 +158,10 @@ class JobService:
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             request_evidence_json=dump_json(
-                {"operation": retry.operation, "base_revision_id": generated_base_revision_id}
+                {
+                    "operation": retry.operation,
+                    "base_revision_id": generated_base_revision_id,
+                }
             ),
             now=now,
         )

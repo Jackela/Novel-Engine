@@ -140,6 +140,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "scripts/*" = ["E402"]  # Scripts need sys.path modification before imports
 
+[tool.ruff.format]
+line-ending = "lf"
+
 # MyPy type checking
 [tool.mypy]
 python_version = "3.12"

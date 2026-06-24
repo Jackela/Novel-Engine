@@ -46,9 +46,7 @@ class EpubExportWriter:
                 for paragraph in chapter.plain_text.split("\n\n")
                 if paragraph.strip()
             )
-            html_chapter.content = (
-                f"<h1>{_escape_html(chapter.title)}</h1>{paragraphs}"
-            )
+            html_chapter.content = f"<h1>{_escape_html(chapter.title)}</h1>{paragraphs}"
             book.add_item(html_chapter)
             epub_chapters.append(html_chapter)
         book.toc = tuple(epub_chapters)
