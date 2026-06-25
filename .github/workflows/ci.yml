@@ -25,7 +25,7 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -95,7 +95,7 @@ jobs:
     timeout-minutes: 20
     needs: validate
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: docker build -t novel-studio:ci .
       - name: Verify fresh install, persistence, restart, and deep link
         run: |
