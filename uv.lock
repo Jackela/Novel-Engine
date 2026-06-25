@@ -1237,7 +1237,7 @@ requires-dist = [
     { name = "bcrypt", specifier = ">=5.0.0,<6.0.0" },
     { name = "coverage", extras = ["toml"], marker = "extra == 'test'", specifier = ">=7.0.0" },
     { name = "ebooklib", specifier = ">=0.18,<1.0" },
-    { name = "fastapi", specifier = ">=0.116.1,<0.138.0" },
+    { name = "fastapi", specifier = ">=0.116.1,<0.139.0" },
     { name = "httpx", specifier = ">=0.28.1,<1.0.0" },
     { name = "httpx", marker = "extra == 'test'", specifier = ">=0.28.1" },
     { name = "import-linter", marker = "extra == 'dev'", specifier = ">=2.0" },
