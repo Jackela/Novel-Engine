@@ -13,12 +13,7 @@ from src.contexts.studio.application.services.ai_service import AIService
 from src.contexts.studio.application.services.auth_service import AuthService
 from src.contexts.studio.application.services.document_service import DocumentService
 from src.contexts.studio.application.services.export_service import ExportService
-from src.contexts.studio.application.services.facade import (
-    StudioStore,
-    configure_studio_store,
-    is_studio_store_configured,
-    studio_store,
-)
+from src.contexts.studio.application.services.facade import StudioStore
 from src.contexts.studio.application.services.import_service import ImportService
 from src.contexts.studio.application.services.job_service import JobService
 from src.contexts.studio.application.services.project_service import ProjectService
@@ -45,7 +40,4 @@ __all__ = [
     "_sanitize_chapter_markdown",
     "_sanitize_instruction",
     "_format_user_instruction",
-    "configure_studio_store",
-    "is_studio_store_configured",
-    "studio_store",
 ]

@@ -37,6 +37,7 @@ MANIFEST
 
 # Local tooling artifacts
 .gemini/
+/.omo/
 codex/
 codql-annotations*.json
 .benchmarks/
@@ -60,6 +61,7 @@ frontend/coverage/
 # Temporary files
 *_world_state.json
 *_REPORT.md
+!AUDIT_REPORT.md
 *_STATUS.md
 
 # Installer logs

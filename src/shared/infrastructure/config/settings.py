@@ -308,6 +308,7 @@ class LLMSettings(BaseSettings):
     retry_delay: float = Field(
         default=1.0, ge=0.1, le=10.0, description="Retry delay in seconds"
     )
+
     def resolved_api_key(
         self,
         provider_name: Literal["mock", "dashscope", "openai_compatible"] | str,
@@ -380,7 +381,9 @@ class MonitoringSettings(BaseSettings):
     model_config = _settings_config(env_prefix="MONITORING_")
 
     enabled: bool = Field(default=True, description="Enable monitoring")
-    metrics_enabled: bool = Field(default=False, description="Enable Prometheus metrics")
+    metrics_enabled: bool = Field(
+        default=False, description="Enable Prometheus metrics"
+    )
     metrics_port: int = Field(
         default=9090, ge=1024, le=65535, description="Metrics server port"
     )
@@ -450,18 +453,21 @@ class NovelEngineSettings(BaseSettings):
         description="Project base directory",
     )
     config_dir: Path = Field(
-        default_factory=lambda: Path(__file__).parent.parent.parent.parent.parent
-        / "config",
+        default_factory=lambda: (
+            Path(__file__).parent.parent.parent.parent.parent / "config"
+        ),
         description="Configuration directory",
     )
     data_dir: Path = Field(
-        default_factory=lambda: Path(__file__).parent.parent.parent.parent.parent
-        / "data",
+        default_factory=lambda: (
+            Path(__file__).parent.parent.parent.parent.parent / "data"
+        ),
         description="Data directory",
     )
     logs_dir: Path = Field(
-        default_factory=lambda: Path(__file__).parent.parent.parent.parent.parent
-        / "logs",
+        default_factory=lambda: (
+            Path(__file__).parent.parent.parent.parent.parent / "logs"
+        ),
         description="Logs directory",
     )
 
@@ -518,7 +524,10 @@ class NovelEngineSettings(BaseSettings):
                         raise ValueError(
                             "Production CORS origins cannot include localhost or 127.0.0.1"
                         )
-        if not self.security.secret_key or self.security.secret_key == DEFAULT_SECRET_KEY:
+        if (
+            not self.security.secret_key
+            or self.security.secret_key == DEFAULT_SECRET_KEY
+        ):
             if self.is_testing:
                 self.security.secret_key = (
                     self.security.secret_key

@@ -28,7 +28,9 @@ def test_guest_full_project_workflow(canonical_client: TestClient) -> None:
         },
     )
     assert saved.status_code == 200
-    assert saved.json()["content_markdown"] == "# Chapter 1\n\nThe lighthouse went dark."
+    assert (
+        saved.json()["content_markdown"] == "# Chapter 1\n\nThe lighthouse went dark."
+    )
 
     review = canonical_client.post(f"/api/projects/{project['id']}/reviews")
     assert review.status_code == 201

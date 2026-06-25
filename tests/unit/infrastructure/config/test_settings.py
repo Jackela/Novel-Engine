@@ -91,10 +91,7 @@ def test_novel_engine_settings_loads_dashscope_values_from_dotenv_local(
     assert settings.llm.provider == "dashscope"
     assert settings.llm.model == "qwen3.5-flash"
     assert settings.llm.dashscope_api_key == "file-dashscope-key"
-    assert (
-        settings.llm.dashscope_api_base
-        == "https://dashscope.aliyuncs.com/api/v1"
-    )
+    assert settings.llm.dashscope_api_base == "https://dashscope.aliyuncs.com/api/v1"
     assert settings.llm.dashscope_model == "qwen3.5-flash"
     assert settings.llm.dashscope_transport_mode == "multimodal_generation"
     assert settings.llm.dashscope_review_model == "qwen3.5-flash"
@@ -178,7 +175,9 @@ def test_production_settings_require_sqlite(
     monkeypatch.setenv("SECURITY_CORS_ORIGINS", "https://app.example.com")
 
     monkeypatch.setenv("DB_URL", "postgresql://user:pass@db.example.com/novel")
-    with pytest.raises(ValueError, match="DB_URL must use the self-hosted SQLite store"):
+    with pytest.raises(
+        ValueError, match="DB_URL must use the self-hosted SQLite store"
+    ):
         NovelEngineSettings()
 
     monkeypatch.setenv("DB_URL", "sqlite:///./data/novel-engine.sqlite3")

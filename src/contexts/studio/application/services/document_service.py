@@ -40,7 +40,9 @@ class DocumentService:
         owner_id, guest_session_id = _owner_scopes(principal)
         resolved_position = position
         if resolved_position is None:
-            resolved_position = self._repository.next_document_position(project_id, kind)
+            resolved_position = self._repository.next_document_position(
+                project_id, kind
+            )
         document = self._repository.create_document(
             project_id=project_id,
             owner_id=owner_id,

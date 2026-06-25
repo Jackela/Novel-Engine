@@ -53,7 +53,9 @@ class AuthService:
             raise InvalidOperation("The local owner has already been configured.")
         owner = self._repository.create_owner(
             username=username,
-            password_hash=bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode("ascii"),
+            password_hash=bcrypt.hashpw(password_bytes, bcrypt.gensalt()).decode(
+                "ascii"
+            ),
         )
         return {"id": owner.id, "username": owner.username}
 
@@ -67,9 +69,7 @@ class AuthService:
         # Always run bcrypt against a real or dummy hash so the timing of the
         # response does not reveal whether the username exists.
         password_hash = (
-            owner.password_hash.encode("ascii")
-            if owner is not None
-            else _DUMMY_HASH
+            owner.password_hash.encode("ascii") if owner is not None else _DUMMY_HASH
         )
         password_valid = bcrypt.checkpw(password_bytes, password_hash)
         if owner is None or len(password_bytes) > 72 or not password_valid:

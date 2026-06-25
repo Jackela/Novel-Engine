@@ -39,7 +39,9 @@ class ImportService:
             raise InvalidOperation("Legacy workspace must contain story.yaml.")
         story = yaml.safe_load(story_path.read_text(encoding="utf-8")) or {}
         chapter_dir = source / "manuscript" / "chapters"
-        chapters = sorted(chapter_dir.glob("chapter-*.md")) if chapter_dir.exists() else []
+        chapters = (
+            sorted(chapter_dir.glob("chapter-*.md")) if chapter_dir.exists() else []
+        )
         source_hash = self._legacy_hash(source, [story_path, *chapters])
         return {
             "source": str(source),

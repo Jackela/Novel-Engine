@@ -50,8 +50,7 @@ class ProjectService:
             guest_session_id=guest_session_id,
         )
         return [
-            _project_payload(project, include_documents=False)
-            for project in projects
+            _project_payload(project, include_documents=False) for project in projects
         ]
 
     def get_project(self, principal: Principal, project_id: str) -> dict[str, Any]:

@@ -40,7 +40,9 @@ def isolate_provider_factory_tests_from_repo_dotenv(
     monkeypatch.chdir(tmp_path)
 
 
-def test_factory_honors_explicit_mock_provider_in_testing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_factory_honors_explicit_mock_provider_in_testing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("APP_ENVIRONMENT", "testing")
     monkeypatch.setenv("LLM_PROVIDER", "mock")
 
@@ -130,10 +132,14 @@ def test_dashscope_qwen35_uses_multimodal_native_payload() -> None:
     )
 
     payload = provider._build_request_payload(task)
-    assert provider._endpoint_path() == "/services/aigc/multimodal-generation/generation"
+    assert (
+        provider._endpoint_path() == "/services/aigc/multimodal-generation/generation"
+    )
     assert provider.transport_mode == "multimodal_generation"
     assert payload["input"]["messages"][0]["content"] == [
-        {"text": "system\nReturn valid JSON only. Output schema: {\"ok\": {\"type\": \"boolean\"}}"}
+        {
+            "text": 'system\nReturn valid JSON only. Output schema: {"ok": {"type": "boolean"}}'
+        }
     ]
     assert payload["parameters"]["enable_thinking"] is False
     assert payload["parameters"]["result_format"] == "message"
@@ -190,7 +196,7 @@ def test_dashscope_responses_transport_normalizes_base_and_payload() -> None:
 
 def test_dashscope_provider_extracts_json_from_code_fence() -> None:
     parsed = DashScopeTextGenerationProvider._parse_json_object(
-        "```json\n{\n  \"ok\": true\n}\n```"
+        '```json\n{\n  "ok": true\n}\n```'
     )
 
     assert parsed == {"ok": True}
@@ -209,7 +215,7 @@ def test_dashscope_provider_extracts_single_dict_from_array_wrapper() -> None:
 
 def test_dashscope_provider_extracts_balanced_object_from_prefixed_text() -> None:
     parsed = DashScopeTextGenerationProvider._parse_json_object(
-        "Here is the payload you asked for:\n{\"ok\": true, \"items\": [1, 2, 3]}\nUse it carefully."
+        'Here is the payload you asked for:\n{"ok": true, "items": [1, 2, 3]}\nUse it carefully.'
     )
 
     assert parsed == {"ok": True, "items": [1, 2, 3]}

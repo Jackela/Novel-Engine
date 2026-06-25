@@ -74,12 +74,19 @@ after the Owner account has been created.
 ## Validation
 
 ```bash
-uv run ruff check src tests
-uv run mypy src tests
-uv run pytest -q
+uv run python scripts/qa/check_file_sizes.py
 uv run python scripts/qa/check_ssot.py
 uv run python scripts/qa/check_repo_hygiene.py
+uv run ruff format --check src tests scripts
+uv run ruff check src tests
+uv run bandit -r src
+uv run mypy src tests
+uv run lint-imports
+uv run pytest -q
 uv run python scripts/qa/check_openapi_snapshot.py
+corepack pnpm spec:validate
+corepack pnpm --dir frontend lint
+corepack pnpm --dir frontend format:check
 corepack pnpm --dir frontend type-check
 corepack pnpm --dir frontend test:unit
 corepack pnpm --dir frontend build

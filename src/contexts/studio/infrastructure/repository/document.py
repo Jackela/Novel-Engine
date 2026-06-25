@@ -186,7 +186,9 @@ class DocumentRepositoryMixin:
             project = self._project(session, project_id, owner_id, guest_session_id)
             document = self._document(session, project, document_id)
             if document.current_revision_id != base_revision_id:
-                raise InvalidOperation("Document changed since the requested base revision.")
+                raise InvalidOperation(
+                    "Document changed since the requested base revision."
+                )
             current_revision = self._current_revision(session, document)
             if title is not None:
                 document.title = title
@@ -302,16 +304,15 @@ class DocumentRepositoryMixin:
                 ).all()
             }
             if set(document_ids) != set(documents):
-                raise InvalidOperation("Reorder must include every project document once.")
+                raise InvalidOperation(
+                    "Reorder must include every project document once."
+                )
             for position, doc_id in enumerate(document_ids, start=1):
                 documents[doc_id].position = position
                 documents[doc_id].updated_at = now
             project.updated_at = now
             session.flush()
-            return [
-                _document_dto(documents[doc_id])
-                for doc_id in document_ids
-            ]
+            return [_document_dto(documents[doc_id]) for doc_id in document_ids]
 
     def search_documents(
         self,

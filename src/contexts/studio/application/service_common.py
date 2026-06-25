@@ -155,8 +155,12 @@ _FORBIDDEN_TEMPLATE_REPLACEMENTS: tuple[tuple[re.Pattern[str], str], ...] = (
 
 
 _PROMPT_INJECTION_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE),
-    re.compile(r"disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE),
+    re.compile(
+        r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE
+    ),
+    re.compile(
+        r"disregard\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.IGNORECASE
+    ),
     re.compile(r"new\s+system\s+prompt", re.IGNORECASE),
     re.compile(r"you\s+are\s+now\s+(?:a|an|the)", re.IGNORECASE),
     re.compile(r"override\s+(?:the\s+)?system\s+prompt", re.IGNORECASE),
@@ -179,11 +183,7 @@ def _sanitize_instruction(instruction: str) -> str:
 def _format_user_instruction(instruction: str) -> str:
     """Format an author instruction so it is structurally isolated in the prompt."""
     sanitized = _sanitize_instruction(instruction)
-    return (
-        "[BEGIN AUTHOR INSTRUCTION]\n"
-        f"{sanitized}\n"
-        "[END AUTHOR INSTRUCTION]"
-    )
+    return f"[BEGIN AUTHOR INSTRUCTION]\n{sanitized}\n[END AUTHOR INSTRUCTION]"
 
 
 def _sanitize_chapter_markdown(markdown: str) -> str:

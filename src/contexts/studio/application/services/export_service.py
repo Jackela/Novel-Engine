@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+import tempfile
+from collections.abc import Callable, Mapping
 
 from src.contexts.studio.application.ports import ExportChapter, ExportFormatWriter
 from src.contexts.studio.application.service_common import (
@@ -161,7 +162,12 @@ class ExportService:
     ) -> None:
         parts = [f"# {title}"]
         parts.extend(revision.content_markdown.strip() for _, revision in content)
-        path.write_text("\n\n".join(parts).strip() + "\n", encoding="utf-8")
+        text = "\n\n".join(parts).strip() + "\n"
+
+        def write(temp_path: Path) -> None:
+            temp_path.write_text(text, encoding="utf-8")
+
+        ExportService._write_atomically(path, write)
 
     @staticmethod
     def _write_export(
@@ -177,4 +183,29 @@ class ExportService:
             )
             for document, revision in content
         ]
-        writer.write(path, title, chapters)
+        ExportService._write_atomically(
+            path,
+            lambda temp_path: writer.write(temp_path, title, chapters),
+        )
+
+    @staticmethod
+    def _write_atomically(path: Path, write: Callable[[Path], None]) -> None:
+        temp_path = ExportService._new_temp_path(path)
+        replaced = False
+        try:
+            write(temp_path)
+            temp_path.replace(path)
+            replaced = True
+        finally:
+            if not replaced:
+                temp_path.unlink(missing_ok=True)
+
+    @staticmethod
+    def _new_temp_path(path: Path) -> Path:
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        ) as handle:
+            return Path(handle.name)

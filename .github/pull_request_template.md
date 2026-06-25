@@ -5,6 +5,7 @@
 
 ## Validation
 
+- [ ] `uv run ruff format --check src tests scripts`
 - [ ] `uv run ruff check src tests`
 - [ ] `uv run pytest -q`
 - [ ] `pnpm spec:validate`

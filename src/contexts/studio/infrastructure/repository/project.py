@@ -142,7 +142,9 @@ class ProjectRepositoryMixin:
             statement = (
                 select(Project)
                 .order_by(Project.updated_at.desc())
-                .options(selectinload(Project.documents).selectinload(Document.revisions))
+                .options(
+                    selectinload(Project.documents).selectinload(Document.revisions)
+                )
             )
             statement = self._scope_projects(statement, owner_id, guest_session_id)
             projects = db_session.scalars(statement).all()
@@ -245,7 +247,9 @@ class ProjectRepositoryMixin:
                 {"project_id": project.id},
             )
             snapshot_ids = db_session.scalars(
-                select(ProjectSnapshot.id).where(ProjectSnapshot.project_id == project.id)
+                select(ProjectSnapshot.id).where(
+                    ProjectSnapshot.project_id == project.id
+                )
             ).all()
             if snapshot_ids:
                 db_session.execute(

@@ -20,7 +20,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     """Skip opt-in external integration tests unless explicitly enabled."""
     del config
 
@@ -54,7 +57,6 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
 
     from src.contexts.studio.application.services import (
         StudioStore,
-        configure_studio_store,
     )
     from src.contexts.studio.infrastructure.ai_provider import (
         create_studio_text_generation_provider,
@@ -68,20 +70,20 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     data_dir = Path(os.environ["APP_DATA_DIR"])
     database = StudioDatabase(f"sqlite:///{data_dir / 'test.sqlite3'}")
     database.initialize(create_backup=False)
-    configure_studio_store(
-        StudioStore(
-            repository=SqlAlchemyStudioRepository(database),
-            data_dir=data_dir,
-            ai_provider_factory=create_studio_text_generation_provider,
-            export_writers=DEFAULT_EXPORT_WRITERS,
-        )
+    store = StudioStore(
+        repository=SqlAlchemyStudioRepository(database),
+        data_dir=data_dir,
+        ai_provider_factory=create_studio_text_generation_provider,
+        export_writers=DEFAULT_EXPORT_WRITERS,
     )
 
     for module_name in ("src.apps.api.router", "src.apps.api.health"):
         sys.modules.pop(module_name, None)
 
     main_module = importlib.import_module("src.apps.api.main")
-    return cast(FastAPI, main_module.create_application())
+    runtime_module = importlib.import_module("src.apps.api.runtime")
+    runtime = runtime_module.StudioRuntime(store=store, database=database)
+    return cast(FastAPI, main_module.create_application(runtime=runtime))
 
 
 @pytest.fixture
