@@ -1,17 +1,26 @@
 import { appConfig } from '@/app/config';
-import type {
-  DocumentKind,
-  ExportFormat,
-  Project,
-  Review,
-  Revision,
-  Session,
-  SetupStatus,
-  StudioDocument,
-  ProviderInfo,
-  StudioExport,
-  StudioJob,
-} from '@/app/types/studio';
+import {
+  parseDocuments,
+  parseOwnerSetup,
+  parseProject,
+  parseProjects,
+  parseProviders,
+  parseRevisions,
+  parseSearch,
+  parseSession,
+  parseSetupStatus,
+  parseStudioDocument,
+  parseVoid,
+} from '@/app/apiContract';
+import {
+  parseExport,
+  parseExports,
+  parseJob,
+  parseJobs,
+  parseReview,
+  parseReviews,
+} from '@/app/apiWorkflowContract';
+import type { DocumentKind, ExportFormat } from '@/app/types/studio';
 
 export class HttpError extends Error {
   constructor(
@@ -34,7 +43,13 @@ export function getCsrfToken(): string | undefined {
   return match?.[1];
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+type ResponseParser<T> = (value: unknown) => T;
+
+async function request<T>(
+  path: string,
+  init: RequestInit | undefined,
+  parse: ResponseParser<T>,
+): Promise<T> {
   const controller = new AbortController();
   const externalSignal = init?.signal;
   let timedOut = false;
@@ -87,8 +102,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
             : `Request failed with status ${response.status}`;
       throw new HttpError(message, response.status, detail);
     }
-    if (response.status === 204) return undefined as T;
-    return (await response.json()) as T;
+    if (response.status === 204) return parse(undefined);
+    return parse(await response.json());
   } finally {
     window.clearTimeout(timeout);
     externalSignal?.removeEventListener('abort', abortFromExternal);
@@ -96,6 +111,13 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const json = (value: unknown) => JSON.stringify(value);
+
+const postJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
+  request(path, { method: 'POST', body: json(value) }, parse);
+const putJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
+  request(path, { method: 'PUT', body: json(value) }, parse);
+const patchJson = <T>(path: string, value: unknown, parse: ResponseParser<T>) =>
+  request(path, { method: 'PATCH', body: json(value) }, parse);
 
 async function downloadBlob(path: string): Promise<Blob> {
   const controller = new AbortController();
@@ -121,28 +143,19 @@ async function downloadBlob(path: string): Promise<Blob> {
 }
 
 export const api = {
-  setupStatus: () => request<SetupStatus>('/api/setup'),
+  setupStatus: () => request('/api/setup', undefined, parseSetupStatus),
   setupOwner: (username: string, password: string) =>
-    request<{ id: string; username: string }>('/api/setup', {
-      method: 'POST',
-      body: json({ username, password }),
-    }),
+    postJson('/api/setup', { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
-    request<Session>('/api/session/login', {
-      method: 'POST',
-      body: json({ username, password }),
-    }),
-  guest: () => request<Session>('/api/session/guest', { method: 'POST' }),
-  session: () => request<Session>('/api/session'),
-  logout: () => request<void>('/api/session', { method: 'DELETE' }),
-  providers: () => request<{ providers: ProviderInfo[] }>('/api/providers'),
-  projects: (init?: RequestInit) => request<{ projects: Project[] }>('/api/projects', init),
-  project: (projectId: string) => request<Project>(`/api/projects/${projectId}`),
+    postJson('/api/session/login', { username, password }, parseSession),
+  guest: () => request('/api/session/guest', { method: 'POST' }, parseSession),
+  session: () => request('/api/session', undefined, parseSession),
+  logout: () => request('/api/session', { method: 'DELETE' }, parseVoid),
+  providers: () => request('/api/providers', undefined, parseProviders),
+  projects: (init?: RequestInit) => request('/api/projects', init, parseProjects),
+  project: (projectId: string) => request(`/api/projects/${projectId}`, undefined, parseProject),
   createProject: (title: string, description: string) =>
-    request<Project>('/api/projects', {
-      method: 'POST',
-      body: json({ title, description }),
-    }),
+    postJson('/api/projects', { title, description }, parseProject),
   createDocument: (
     projectId: string,
     payload: {
@@ -150,16 +163,13 @@ export const api = {
       title: string;
       content_markdown?: string;
     },
-  ) =>
-    request<StudioDocument>(`/api/projects/${projectId}/documents`, {
-      method: 'POST',
-      body: json(payload),
-    }),
+  ) => postJson(`/api/projects/${projectId}/documents`, payload, parseStudioDocument),
   reorderDocuments: (projectId: string, documentIds: string[]) =>
-    request<{ documents: StudioDocument[] }>(`/api/projects/${projectId}/documents/reorder`, {
-      method: 'PUT',
-      body: json({ document_ids: documentIds }),
-    }),
+    putJson(
+      `/api/projects/${projectId}/documents/reorder`,
+      { document_ids: documentIds },
+      parseDocuments,
+    ),
   saveDocument: (
     projectId: string,
     documentId: string,
@@ -169,14 +179,12 @@ export const api = {
       title?: string;
       metadata?: Record<string, unknown>;
     },
-  ) =>
-    request<StudioDocument>(`/api/projects/${projectId}/documents/${documentId}`, {
-      method: 'PUT',
-      body: json(payload),
-    }),
+  ) => putJson(`/api/projects/${projectId}/documents/${documentId}`, payload, parseStudioDocument),
   revisions: (projectId: string, documentId: string) =>
-    request<{ revisions: Revision[] }>(
+    request(
       `/api/projects/${projectId}/documents/${documentId}/revisions`,
+      undefined,
+      parseRevisions,
     ),
   restoreRevision: (
     projectId: string,
@@ -184,13 +192,16 @@ export const api = {
     revisionId: string,
     baseRevisionId: string,
   ) =>
-    request<StudioDocument>(
+    postJson(
       `/api/projects/${projectId}/documents/${documentId}/revisions/${revisionId}/restore`,
-      { method: 'POST', body: json({ base_revision_id: baseRevisionId }) },
+      { base_revision_id: baseRevisionId },
+      parseStudioDocument,
     ),
   search: (projectId: string, query: string) =>
-    request<{ results: Array<{ document_id: string; title: string; excerpt: string }> }>(
+    request(
       `/api/projects/${projectId}/search?q=${encodeURIComponent(query)}`,
+      undefined,
+      parseSearch,
     ),
   proposal: (
     projectId: string,
@@ -199,25 +210,25 @@ export const api = {
     instruction: string,
     provider: string,
   ) =>
-    request<StudioJob>(`/api/projects/${projectId}/documents/${documentId}/ai-proposals`, {
-      method: 'POST',
-      body: json({ operation, instruction, provider }),
-    }),
+    postJson(
+      `/api/projects/${projectId}/documents/${documentId}/ai-proposals`,
+      { operation, instruction, provider },
+      parseJob,
+    ),
   acceptProposal: (projectId: string, jobId: string) =>
-    request<StudioJob>(`/api/projects/${projectId}/ai-proposals/${jobId}/accept`, {
-      method: 'POST',
-    }),
+    request(
+      `/api/projects/${projectId}/ai-proposals/${jobId}/accept`,
+      { method: 'POST' },
+      parseJob,
+    ),
   reviews: (projectId: string) =>
-    request<{ reviews: Review[] }>(`/api/projects/${projectId}/reviews`),
+    request(`/api/projects/${projectId}/reviews`, undefined, parseReviews),
   createReview: (projectId: string) =>
-    request<Review>(`/api/projects/${projectId}/reviews`, { method: 'POST' }),
+    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReview),
   exports: (projectId: string) =>
-    request<{ exports: StudioExport[] }>(`/api/projects/${projectId}/exports`),
+    request(`/api/projects/${projectId}/exports`, undefined, parseExports),
   createExport: (projectId: string, format: ExportFormat) =>
-    request<StudioExport>(`/api/projects/${projectId}/exports`, {
-      method: 'POST',
-      body: json({ format }),
-    }),
+    postJson(`/api/projects/${projectId}/exports`, { format }, parseExport),
   updateProject: (
     projectId: string,
     payload: {
@@ -225,19 +236,13 @@ export const api = {
       description?: string;
       settings?: Record<string, unknown>;
     },
-  ) =>
-    request<Project>(`/api/projects/${projectId}`, {
-      method: 'PATCH',
-      body: json(payload),
-    }),
+  ) => patchJson(`/api/projects/${projectId}`, payload, parseProject),
   deleteProject: (projectId: string) =>
-    request<void>(`/api/projects/${projectId}`, { method: 'DELETE' }),
+    request(`/api/projects/${projectId}`, { method: 'DELETE' }, parseVoid),
   deleteDocument: (projectId: string, documentId: string) =>
-    request<void>(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }),
-  jobs: (projectId: string) => request<{ jobs: StudioJob[] }>(`/api/projects/${projectId}/jobs`),
+    request(`/api/projects/${projectId}/documents/${documentId}`, { method: 'DELETE' }, parseVoid),
+  jobs: (projectId: string) => request(`/api/projects/${projectId}/jobs`, undefined, parseJobs),
   retryJob: (projectId: string, jobId: string) =>
-    request<StudioJob>(`/api/projects/${projectId}/jobs/${jobId}/retry`, {
-      method: 'POST',
-    }),
+    request(`/api/projects/${projectId}/jobs/${jobId}/retry`, { method: 'POST' }, parseJob),
   download: (path: string) => downloadBlob(path),
 };

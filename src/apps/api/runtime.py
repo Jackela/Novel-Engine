@@ -8,10 +8,14 @@ from functools import partial
 import anyio
 from fastapi import FastAPI
 
-from src.contexts.studio.application.services import StudioStore
-from src.contexts.studio.infrastructure.ai_provider import (
-    create_studio_text_generation_provider,
+from src.contexts.ai.application.ports.text_generation_port import (
+    TextGenerationProvider,
+    TextGenerationProviderName,
 )
+from src.contexts.ai.infrastructure.providers.provider_factory import (
+    create_text_generation_provider,
+)
+from src.contexts.studio.application.services import StudioStore
 from src.contexts.studio.infrastructure.database import (
     StudioDatabase,
     create_studio_database,
@@ -35,11 +39,18 @@ class StudioRuntimeNotConfiguredError(RuntimeError):
 
 def create_runtime(settings: NovelEngineSettings) -> StudioRuntime:
     database = create_studio_database(settings)
+
+    def ai_provider_factory(
+        provider_name: TextGenerationProviderName,
+        model_name: str,
+    ) -> TextGenerationProvider:
+        return create_text_generation_provider(settings, provider_name, model_name)
+
     return StudioRuntime(
         store=StudioStore(
             repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
-            ai_provider_factory=create_studio_text_generation_provider,
+            ai_provider_factory=ai_provider_factory,
             export_writers=DEFAULT_EXPORT_WRITERS,
         ),
         database=database,

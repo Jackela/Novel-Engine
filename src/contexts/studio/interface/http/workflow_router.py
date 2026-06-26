@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import FileResponse
 
 from src.contexts.studio.domain.exceptions import InvalidOperation, NotFound
@@ -16,7 +16,6 @@ from src.contexts.studio.interface.http.schemas import (
     LegacyPathRequest,
 )
 from src.contexts.studio.interface.http.session_router import PrincipalDependency
-from src.shared.infrastructure.config.settings import get_settings
 
 workflow_router = APIRouter(tags=["studio"])
 
@@ -29,13 +28,13 @@ def _require_owner(principal: Principal) -> None:
         )
 
 
-def _web_import_source(source: str) -> Path:
+def _web_import_source(source: str, data_dir: Path) -> Path:
     if source in {".", ".."} or "/" in source or "\\" in source:
         raise InvalidOperation(
             "Web imports must name a workspace directory under data/imports."
         )
 
-    import_root = (get_settings().data_dir / "imports").resolve()
+    import_root = (data_dir / "imports").resolve()
     import_root.mkdir(parents=True, exist_ok=True)
     for candidate in import_root.iterdir():
         if candidate.name != source or candidate.is_symlink() or not candidate.is_dir():
@@ -52,9 +51,11 @@ async def create_ai_proposal(
     project_id: str,
     document_id: str,
     payload: AIProposalRequest,
+    request: Request,
     principal: PrincipalDependency,
     store: StudioStoreDependency,
 ) -> dict[str, Any]:
+    settings = request.app.state.settings
     return await store.create_ai_proposal(
         principal,
         project_id,
@@ -62,7 +63,7 @@ async def create_ai_proposal(
         operation=payload.operation,
         instruction=payload.instruction,
         provider=payload.provider,
-        model=get_settings().llm.resolved_model(payload.provider),
+        model=settings.llm.resolved_model(payload.provider),
     )
 
 
@@ -165,22 +166,26 @@ async def download_export(
 @_handle_domain_exceptions
 async def preview_import(
     payload: LegacyPathRequest,
+    request: Request,
     principal: PrincipalDependency,
     store: StudioStoreDependency,
 ) -> dict[str, Any]:
     _require_owner(principal)
-    return store.preview_legacy_workspace(_web_import_source(payload.source))
+    return store.preview_legacy_workspace(
+        _web_import_source(payload.source, request.app.state.settings.data_dir)
+    )
 
 
 @workflow_router.post("/imports", status_code=status.HTTP_201_CREATED)
 @_handle_domain_exceptions
 async def import_workspace(
     payload: LegacyPathRequest,
+    request: Request,
     principal: PrincipalDependency,
     store: StudioStoreDependency,
 ) -> dict[str, Any]:
     _require_owner(principal)
     return store.import_legacy_workspace(
         principal,
-        _web_import_source(payload.source),
+        _web_import_source(payload.source, request.app.state.settings.data_dir),
     )

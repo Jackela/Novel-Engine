@@ -23,6 +23,20 @@ describe('Studio API client', () => {
     );
   });
 
+  it('rejects project payloads that do not match the API contract', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ projects: [{ id: 'p1' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    await expect(api.projects()).rejects.toThrow('Invalid projects[0].title');
+  });
+
   it('preserves revision conflict detail', async () => {
     vi.stubGlobal(
       'fetch',
@@ -72,14 +86,25 @@ describe('Studio API client', () => {
   it('sends X-CSRF-Token header on write requests when cookie is present', async () => {
     vi.stubGlobal('document', { cookie: 'novel_studio_csrf=test-csrf-token' });
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: 'p1' }), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      }),
+      new Response(
+        JSON.stringify({
+          id: 'p1',
+          title: 'Title',
+          description: '',
+          settings: {},
+          import_hash: null,
+          created_at: '2026-06-25T00:00:00Z',
+          updated_at: '2026-06-25T00:00:00Z',
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(api.createProject('Title', '')).resolves.toEqual({ id: 'p1' });
+    await expect(api.createProject('Title', '')).resolves.toMatchObject({ id: 'p1' });
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/projects',
       expect.objectContaining({

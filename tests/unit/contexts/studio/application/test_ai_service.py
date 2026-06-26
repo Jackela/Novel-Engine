@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import cast
 
+import pytest
+
 from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationProvider,
     TextGenerationProviderError,
@@ -15,7 +17,7 @@ from src.contexts.ai.application.ports.text_generation_port import (
 from src.contexts.studio.application.ports.ai_provider import (
     TextGenerationProviderFactory,
 )
-from src.contexts.studio.application.service_common import Principal
+from src.contexts.studio.application.service_common import InvalidOperation, Principal
 from src.contexts.studio.application.services.ai_service import AIService
 from src.contexts.studio.application.services.project_service import ProjectService
 from tests.fakes.fake_studio_repository import FakeStudioRepository
@@ -123,6 +125,38 @@ async def test_create_ai_proposal_persists_failed_job_on_provider_error(
     assert result["status"] == "failed"
     assert result["error"] == "provider failure"
     assert result["result"]["proposal_markdown"] == ""
+
+
+async def test_accept_ai_proposal_rejects_failed_job_without_changing_document(
+    fake_repository: FakeStudioRepository,
+) -> None:
+    principal = _guest("guest-session-1")
+    project = ProjectService(fake_repository).create_project(
+        principal, title="AI Failure Accept Test"
+    )
+    document = project["documents"][0]
+    service = AIService(
+        fake_repository, cast(TextGenerationProviderFactory, _failing_provider_factory)
+    )
+    failed = await service.create_ai_proposal(
+        principal,
+        project["id"],
+        document["id"],
+        operation="continue",
+        instruction="Make it longer.",
+    )
+
+    with pytest.raises(InvalidOperation, match="completed proposal"):
+        service.accept_ai_proposal(principal, project["id"], failed["id"])
+
+    current = fake_repository.get_document(
+        project["id"],
+        document["id"],
+        owner_id=None,
+        guest_session_id=principal.session_id,
+    )
+    assert current.current_revision is not None
+    assert current.current_revision.content_markdown == document["content_markdown"]
 
 
 async def test_generate_proposal_returns_proposal_and_base_revision(

@@ -6,6 +6,8 @@
   documentation, and dead code.
 - Added AI guardrails, local safety checks, and stronger CI/pre-commit mypy
   coverage for tests.
+- Hardened AI proposal acceptance, app-owned API runtime settings, token bucket
+  cleanup, and frontend API response contract parsing.
 
 ## 0.3.0
 
