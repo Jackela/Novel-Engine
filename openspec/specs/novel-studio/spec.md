@@ -51,6 +51,12 @@ author accepts the proposal.
 - **WHEN** the author accepts it
 - **THEN** the proposed Markdown is saved as a new revision
 
+#### Scenario: Reject an invalid proposal acceptance
+- **GIVEN** an AI proposal job failed or contains no proposed Markdown
+- **WHEN** the author attempts to accept it
+- **THEN** the system rejects the acceptance
+- **AND** no document revision is created
+
 ### Requirement: Snapshot-bound review and export
 Reviews and exports MUST reference immutable project snapshots.
 

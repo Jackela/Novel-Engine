@@ -108,6 +108,8 @@ async def test_token_bucket_cleans_up_expired_keys() -> None:
     assert "b" not in limiter._tokens
     assert "a" not in limiter._last_update
     assert "b" not in limiter._last_update
+    assert "a" not in limiter._locks
+    assert "b" not in limiter._locks
 
 
 async def test_token_bucket_keeps_active_keys_during_cleanup() -> None:

@@ -170,3 +170,4 @@ class TokenBucketRateLimiter:
             for k in expired:
                 self._tokens.pop(k, None)
                 self._last_update.pop(k, None)
+                self._locks.pop(k, None)

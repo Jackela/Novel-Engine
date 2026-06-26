@@ -29,6 +29,10 @@ from src.contexts.studio.application.services.document_service import DocumentSe
 __all__ = ["AIService"]
 
 
+def _resolved_token_count(value: int | None, text: str) -> int:
+    return value if value is not None else _word_count(text)
+
+
 class AIService:
     """AI-driven manuscript proposals."""
 
@@ -99,15 +103,13 @@ class AIService:
         )
         try:
             result = await generation_provider.generate_structured(task)
-            prompt_tokens = result.prompt_tokens
-            completion_tokens = result.completion_tokens
             proposal_markdown = (
                 result.content.get("chapter_markdown") or result.raw_text
             )
             return (
                 _sanitize_chapter_markdown(str(proposal_markdown)),
-                prompt_tokens,
-                completion_tokens,
+                result.prompt_tokens,
+                result.completion_tokens,
             )
         finally:
             close = getattr(generation_provider, "aclose", None)
@@ -137,10 +139,8 @@ class AIService:
         return (
             proposal,
             revision.id,
-            prompt_tokens if prompt_tokens is not None else _word_count(instruction),
-            completion_tokens
-            if completion_tokens is not None
-            else _word_count(proposal),
+            _resolved_token_count(prompt_tokens, instruction),
+            _resolved_token_count(completion_tokens, proposal),
         )
 
     async def create_ai_proposal(
@@ -168,7 +168,6 @@ class AIService:
                 provider=provider,
                 model=model,
             )
-            proposal_markdown = _sanitize_chapter_markdown(proposal_markdown)
         except TextGenerationProviderError as exc:
             logger.exception(
                 "ai_proposal_failed",
@@ -268,13 +267,10 @@ class AIService:
             job_id=job.id,
             provider=provider,
             model=model,
-            prompt_tokens=(
-                prompt_tokens if prompt_tokens is not None else _word_count(instruction)
-            ),
-            completion_tokens=(
-                completion_tokens
-                if completion_tokens is not None
-                else _word_count(proposal_markdown)
+            prompt_tokens=_resolved_token_count(prompt_tokens, instruction),
+            completion_tokens=_resolved_token_count(
+                completion_tokens,
+                proposal_markdown,
             ),
             request_evidence_json=dump_json(
                 {"operation": operation, "base_revision_id": base_revision_id}
@@ -372,12 +368,18 @@ class AIService:
         )
         if job.kind != "proposal" or job.document_id is None:
             raise NotFound("AI proposal not found.")
+        if job.status != "completed":
+            raise InvalidOperation("Only a completed proposal can be accepted.")
         result = cast(dict[str, Any], _safe_load_json(job.result_json))
         request = cast(dict[str, Any], _safe_load_json(job.request_json))
         if result.get("accepted_revision_id"):
             return _job_payload(job)
         document_id = job.document_id
         proposal = str(result.get("proposal_markdown", ""))
+        if not proposal.strip():
+            raise InvalidOperation(
+                "Only a completed proposal with content can be accepted."
+            )
         base_revision_id = cast(str | None, request.get("base_revision_id"))
 
         document_service = DocumentService(self._repository)

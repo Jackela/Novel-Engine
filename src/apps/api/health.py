@@ -7,13 +7,12 @@ import sys
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from src.contexts.studio.application.services import StudioStore
 from src.contexts.studio.interface.http.dependencies import StudioStoreDependency
-from src.shared.infrastructure.config.settings import get_settings
 
 health_router = APIRouter()
 
@@ -95,9 +94,9 @@ async def readiness_probe(store: StudioStoreDependency) -> JSONResponse:
 
 
 @health_router.get("/version", response_model=dict[str, str])
-async def version() -> dict[str, str]:
+async def version(request: Request) -> dict[str, str]:
     """Return application version metadata."""
-    settings = get_settings()
+    settings = request.app.state.settings
     return {
         "version": settings.project_version,
         "name": settings.project_name,

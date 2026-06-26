@@ -14,7 +14,6 @@ from src.contexts.studio.domain.principal import Principal
 from src.contexts.studio.interface.http.dependencies import StudioStoreDependency
 from src.contexts.studio.interface.http.errors import _handle_domain_exceptions
 from src.contexts.studio.interface.http.schemas import LoginRequest, OwnerSetupRequest
-from src.shared.infrastructure.config.settings import get_settings
 
 session_router = APIRouter(tags=["studio"])
 
@@ -24,12 +23,13 @@ def _session_cookie(
     token: str,
     *,
     max_age: int | None,
+    secure: bool,
 ) -> None:
     response.set_cookie(
         SESSION_COOKIE,
         token,
         httponly=True,
-        secure=get_settings().is_production,
+        secure=secure,
         samesite="lax",
         max_age=max_age,
         path="/",
@@ -41,12 +41,13 @@ def _csrf_cookie(
     token: str,
     *,
     max_age: int | None,
+    secure: bool,
 ) -> None:
     response.set_cookie(
         CSRF_COOKIE,
         token,
         httponly=False,
-        secure=get_settings().is_production,
+        secure=secure,
         samesite="lax",
         max_age=max_age,
         path="/",
@@ -107,10 +108,12 @@ def _principal_payload(principal: Principal) -> dict[str, Any]:
 
 
 @session_router.get("/setup")
-async def setup_status(store: StudioStoreDependency) -> dict[str, Any]:
+async def setup_status(
+    request: Request, store: StudioStoreDependency
+) -> dict[str, Any]:
     return {
         "owner_configured": store.owner_exists(),
-        "version": get_settings().project_version,
+        "version": request.app.state.settings.project_version,
     }
 
 
@@ -126,6 +129,7 @@ async def setup_owner(
 @session_router.post("/session/login")
 @_handle_domain_exceptions
 async def login(
+    request: Request,
     payload: LoginRequest,
     response: Response,
     store: StudioStoreDependency,
@@ -135,20 +139,23 @@ async def login(
         payload.password,
     )
     max_age = 60 * 60 * 24 * 30
-    _session_cookie(response, token, max_age=max_age)
-    _csrf_cookie(response, csrf_token, max_age=max_age)
+    secure = request.app.state.settings.is_production
+    _session_cookie(response, token, max_age=max_age, secure=secure)
+    _csrf_cookie(response, csrf_token, max_age=max_age, secure=secure)
     return _principal_payload(principal)
 
 
 @session_router.post("/session/guest", status_code=status.HTTP_201_CREATED)
 async def guest_session(
+    request: Request,
     response: Response,
     store: StudioStoreDependency,
 ) -> dict[str, Any]:
     token, csrf_token, principal = store.create_guest_session()
     max_age = int(GUEST_TTL.total_seconds())
-    _session_cookie(response, token, max_age=max_age)
-    _csrf_cookie(response, csrf_token, max_age=max_age)
+    secure = request.app.state.settings.is_production
+    _session_cookie(response, token, max_age=max_age, secure=secure)
+    _csrf_cookie(response, csrf_token, max_age=max_age, secure=secure)
     return _principal_payload(principal)
 
 
@@ -176,9 +183,9 @@ async def logout(
 
 
 @session_router.get("/providers")
-async def providers(principal: PrincipalDependency) -> dict[str, Any]:
+async def providers(request: Request, principal: PrincipalDependency) -> dict[str, Any]:
     del principal
-    settings = get_settings()
+    settings = request.app.state.settings
     items = []
     for provider in ("mock", "dashscope", "openai_compatible"):
         items.append(
