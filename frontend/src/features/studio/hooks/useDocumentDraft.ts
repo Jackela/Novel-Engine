@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { HttpError, api } from '@/app/api';
-import type { Project, Revision, SaveState, StudioDocument } from '@/app/types/studio';
+import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
+
+import { useRevisionCache } from './useRevisionCache';
 
 function errorMessage(reason: unknown, fallback: string): string {
   return reason instanceof Error ? reason.message : fallback;
@@ -13,11 +15,6 @@ interface DraftState {
   readonly draft: string;
   readonly titleDraft: string;
   readonly saveState: SaveState;
-}
-
-interface RevisionState {
-  readonly documentId: string | null;
-  readonly revisions: Revision[];
 }
 
 function draftStateFor(document: StudioDocument | null, saveState: SaveState = 'idle'): DraftState {
@@ -38,37 +35,33 @@ export function useDocumentDraft(
   projectId: string,
   setProject: Dispatch<SetStateAction<Project | null>>,
   setError: Dispatch<SetStateAction<string | null>>,
-  onActiveDocumentChanged?: () => void,
 ) {
   const [draftState, setDraftState] = useState<DraftState>(() => draftStateFor(activeDocument));
   const activeDocumentId = activeDocument?.id ?? null;
-  const [revisionState, setRevisionState] = useState<RevisionState>(() => ({
-    documentId: activeDocumentId,
-    revisions: [],
-  }));
-  const loadedRevision = useRef<string | null>(null);
+  const loadedRevision = useRef<string | null>(activeDocument?.current_revision_id ?? null);
   const saveTimer = useRef<number | null>(null);
   const activeDraftState = stateForDocument(draftState, activeDocument);
   const { draft, titleDraft, saveState } = activeDraftState;
-  const revisions = revisionState.documentId === activeDocumentId ? revisionState.revisions : [];
   const draftRef = useRef({ draft, titleDraft, activeDocument });
 
   useEffect(() => {
     draftRef.current = { draft, titleDraft, activeDocument };
   }, [draft, titleDraft, activeDocument]);
 
-  const loadRevisions = useCallback(
-    (documentId: string) => {
-      void api
-        .revisions(projectId, documentId)
-        .then((response) => {
-          setRevisionState({ documentId, revisions: response.revisions });
-        })
-        .catch((reason: unknown) => {
-          setError(errorMessage(reason, 'Unable to load revisions.'));
-        });
+  useEffect(() => {
+    loadedRevision.current = activeDocument?.current_revision_id ?? null;
+  }, [activeDocument?.current_revision_id]);
+
+  const reportRevisionError = useCallback(
+    (reason: unknown) => {
+      setError(errorMessage(reason, 'Unable to load revisions.'));
     },
-    [projectId, setError],
+    [setError],
+  );
+  const { revisions, refreshDocumentRevisions } = useRevisionCache(
+    projectId,
+    activeDocumentId,
+    reportRevisionError,
   );
 
   const setDraft = useCallback<Dispatch<SetStateAction<string>>>((nextDraft) => {
@@ -103,22 +96,10 @@ export function useDocumentDraft(
     (document: StudioDocument, nextSaveState: SaveState = 'idle') => {
       loadedRevision.current = document.current_revision_id;
       setDraftState(draftStateFor(document, nextSaveState));
-      loadRevisions(document.id);
+      refreshDocumentRevisions(document.id);
     },
-    [loadRevisions],
+    [refreshDocumentRevisions],
   );
-
-  useEffect(() => {
-    if (activeDocumentId === null) {
-      loadedRevision.current = null;
-      return;
-    }
-    const currentDocument = draftRef.current.activeDocument;
-    if (!currentDocument || currentDocument.id !== activeDocumentId) return;
-    onActiveDocumentChanged?.();
-    loadedRevision.current = currentDocument.current_revision_id;
-    loadRevisions(activeDocumentId);
-  }, [activeDocumentId, loadRevisions, onActiveDocumentChanged]);
 
   useEffect(() => {
     if (!activeDocument) return;
@@ -159,17 +140,7 @@ export function useDocumentDraft(
           titleDraft: saved.title,
           saveState: 'saved',
         }));
-        void api
-          .revisions(projectId, currentDocument.id)
-          .then((response) => {
-            setRevisionState({
-              documentId: currentDocument.id,
-              revisions: response.revisions,
-            });
-          })
-          .catch((reason: unknown) => {
-            setError(errorMessage(reason, 'Unable to load revisions.'));
-          });
+        refreshDocumentRevisions(currentDocument.id);
       } catch (reason) {
         setCurrentSaveState(
           reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error',
@@ -180,7 +151,16 @@ export function useDocumentDraft(
     return () => {
       if (saveTimer.current) window.clearTimeout(saveTimer.current);
     };
-  }, [draft, titleDraft, activeDocument, projectId, setCurrentSaveState, setError, setProject]);
+  }, [
+    draft,
+    titleDraft,
+    activeDocument,
+    projectId,
+    refreshDocumentRevisions,
+    setCurrentSaveState,
+    setError,
+    setProject,
+  ]);
 
   const restoreRevision = useCallback(
     async (revisionId: string) => {
@@ -207,16 +187,12 @@ export function useDocumentDraft(
               }
             : current,
         );
-        const response = await api.revisions(projectId, activeDocument.id);
-        setRevisionState({
-          documentId: activeDocument.id,
-          revisions: response.revisions,
-        });
+        refreshDocumentRevisions(activeDocument.id);
       } catch (reason) {
         setError(errorMessage(reason, 'Unable to restore revision.'));
       }
     },
-    [activeDocument, projectId, setError, setProject],
+    [activeDocument, projectId, refreshDocumentRevisions, setError, setProject],
   );
 
   return {
