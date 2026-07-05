@@ -57,7 +57,6 @@ LEGACY_LIMITS: Final = {
     "src/contexts/studio/application/services/ai_service.py": 383,
     "src/contexts/studio/application/service_common.py": 354,
     "src/contexts/studio/infrastructure/repository/document.py": 315,
-    "src/contexts/ai/infrastructure/providers/deterministic_text_generation_provider.py": 302,
     "src/contexts/studio/infrastructure/models.py": 301,
 }
 

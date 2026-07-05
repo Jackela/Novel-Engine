@@ -1,5 +1,3 @@
-"""Deterministic text generation provider for local tests."""
-
 from __future__ import annotations
 
 import json
@@ -14,8 +12,6 @@ from src.contexts.ai.application.ports.text_generation_port import (
 
 
 class DeterministicTextGenerationProvider(TextGenerationProvider):
-    """Deterministic provider that returns stable local-writing outputs."""
-
     def __init__(
         self,
         provider_name: TextGenerationProviderName = "mock",
