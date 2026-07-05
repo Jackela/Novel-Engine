@@ -138,6 +138,29 @@ def test_deleted_safety_lines_are_reported_in_tests_and_source() -> None:
     ]
 
 
+def test_moved_safety_lines_are_not_reported_as_deleted() -> None:
+    # Given
+    details = regression_check.DiffDetails(
+        additions={
+            "tests/fakes/fake_studio_repository_jobs.py": [
+                '+            raise NotFound("Job not found.")',
+            ],
+        },
+        deletions={
+            "tests/fakes/fake_studio_repository.py": [
+                '-            raise NotFound("Job not found.")',
+            ],
+        },
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_deleted_safety_lines(details)
+
+    # Then
+    assert issues == []
+
+
 def test_deleted_test_files_and_forbidden_paths_are_reported() -> None:
     # Given
     details = regression_check.DiffDetails(

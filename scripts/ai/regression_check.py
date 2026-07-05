@@ -12,6 +12,8 @@ from pathlib import Path
 from re import Pattern
 from typing import Final
 
+from scripts.ai.regression_diff import DiffDetails, parse_diff
+
 DEFAULT_MAX_FILES: Final = 5
 GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
 SAFETY_KEYWORDS: Final = (
@@ -34,16 +36,6 @@ FORBIDDEN_PREFIXES: Final = (
 class DangerPattern:
     regex: Pattern[str]
     description: str
-
-
-@dataclass(frozen=True, slots=True)
-class DiffDetails:
-    additions: dict[str, list[str]]
-    deletions: dict[str, list[str]]
-    deleted_files: set[str]
-
-    def changed_files(self) -> set[str]:
-        return set(self.additions) | set(self.deletions) | self.deleted_files
 
 
 DANGEROUS_PATTERNS: Final = (
@@ -120,63 +112,42 @@ def run_git_diff(base_ref: str | None = None, head_ref: str | None = None) -> st
     return result.stdout
 
 
-def _path_from_diff_header(line: str) -> str | None:
-    parts = line.split()
-    if len(parts) < 4:
-        return None
-    return parts[3].removeprefix("b/")
-
-
-def _is_deleted_marker(line: str) -> bool:
-    return line in {
-        "deleted file mode 100644",
-        "deleted file mode 100755",
-    } or line.startswith("+++ /dev/null")
-
-
-def _is_diff_metadata(line: str) -> bool:
-    return line.startswith(("--- a/", "+++ b/"))
-
-
-def parse_diff(diff: str) -> DiffDetails:
-    additions: dict[str, list[str]] = {}
-    deletions: dict[str, list[str]] = {}
-    deleted_files: set[str] = set()
-    current_file: str | None = None
-
-    for line in diff.splitlines():
-        if line.startswith("diff --git a/"):
-            current_file = _path_from_diff_header(line)
-            continue
-        if _is_deleted_marker(line):
-            if current_file is not None:
-                deleted_files.add(current_file)
-            continue
-        if _is_diff_metadata(line) or current_file is None:
-            continue
-        if line.startswith("+") and not line.startswith("+++"):
-            additions.setdefault(current_file, []).append(line)
-            continue
-        if line.startswith("-") and not line.startswith("---"):
-            deletions.setdefault(current_file, []).append(line)
-
-    return DiffDetails(
-        additions=additions, deletions=deletions, deleted_files=deleted_files
-    )
-
-
 def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
     issues: list[str] = []
+    moved_line_bodies = _added_line_bodies(diff)
     for filename, lines in diff.deletions.items():
         for line in lines:
-            issue = _deleted_safety_issue(filename, line)
+            issue = _deleted_safety_issue(filename, line, moved_line_bodies)
             if issue is not None:
                 issues.append(issue)
     return issues
 
 
-def _deleted_safety_issue(filename: str, line: str) -> str | None:
+def _added_line_bodies(diff: DiffDetails) -> set[str]:
+    return {
+        _diff_line_body(line)
+        for lines in diff.additions.values()
+        for line in lines
+        if _contains_safety_keyword(line)
+    }
+
+
+def _diff_line_body(line: str) -> str:
+    return line[1:].strip() if line[:1] in {"+", "-"} else line.strip()
+
+
+def _contains_safety_keyword(line: str) -> bool:
+    return any(re.search(rf"\b{keyword}\b", line) for keyword in SAFETY_KEYWORDS)
+
+
+def _deleted_safety_issue(
+    filename: str,
+    line: str,
+    moved_line_bodies: set[str],
+) -> str | None:
     if _is_self_definition_line(filename, line):
+        return None
+    if _diff_line_body(line) in moved_line_bodies:
         return None
     for keyword in SAFETY_KEYWORDS:
         if re.search(rf"\b{keyword}\b", line):
