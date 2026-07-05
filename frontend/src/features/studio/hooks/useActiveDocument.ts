@@ -1,36 +1,38 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
+
+function documentKindForSection(section: string): DocumentKind | null {
+  switch (section) {
+    case 'outline':
+      return 'outline';
+    case 'characters':
+      return 'character';
+    case 'world':
+      return 'world';
+    default:
+      return null;
+  }
+}
 
 export function useActiveDocument(
   project: Project | null,
   section: string,
   activeId: string | null,
-  setActiveId: (id: string | null) => void,
 ): StudioDocument | null {
-  const activeDocument = useMemo(() => {
-    const document = project?.documents?.find((item) => item.id === activeId) ?? null;
-    if (!document) return null;
-    if (section === 'outline' && document.kind !== 'outline') return null;
-    if (section === 'characters' && document.kind !== 'character') return null;
-    if (section === 'world' && document.kind !== 'world') return null;
-    return document;
+  return useMemo(() => {
+    const documents = project?.documents ?? [];
+    const activeDocument = documents.find((document) => document.id === activeId) ?? null;
+    const sectionKind = documentKindForSection(section);
+
+    if (sectionKind === null) {
+      return activeDocument ?? documents[0] ?? null;
+    }
+
+    if (activeDocument?.kind === sectionKind) {
+      return activeDocument;
+    }
+
+    return documents.find((document) => document.kind === sectionKind) ?? null;
   }, [activeId, project, section]);
-
-  useEffect(() => {
-    if (!project) return;
-    const kind: DocumentKind | null =
-      section === 'outline' || section === 'characters' || section === 'world'
-        ? section === 'characters'
-          ? 'character'
-          : section
-        : null;
-    if (!kind) return;
-    const currentDocument = project.documents?.find((document) => document.id === activeId);
-    if (currentDocument?.kind === kind) return;
-    const first = project.documents?.find((document) => document.kind === kind);
-    setActiveId(first?.id ?? null);
-  }, [project, section, activeId, setActiveId]);
-
-  return activeDocument;
 }
