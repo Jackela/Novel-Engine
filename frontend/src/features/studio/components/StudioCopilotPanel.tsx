@@ -25,6 +25,7 @@ export function StudioCopilotPanel({
       <h2>AI proposal</h2>
       <p>Copilot never changes the manuscript until you accept a proposal.</p>
       <textarea
+        aria-label="Proposal instruction"
         onChange={(event) => setInstruction(event.target.value)}
         placeholder="Describe the change or direction..."
         rows={5}
