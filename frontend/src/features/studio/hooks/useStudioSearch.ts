@@ -1,39 +1,79 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useReducer } from 'react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
+
+interface SearchResult {
+  readonly document_id: string;
+  readonly title: string;
+  readonly excerpt: string;
+}
+
+interface SearchState {
+  readonly search: string;
+  readonly isSearching: boolean;
+  readonly searchResults: SearchResult[];
+}
+
+type SearchAction =
+  | { readonly type: 'searchChanged'; readonly search: string }
+  | { readonly type: 'searchStarted' }
+  | { readonly type: 'searchSucceeded'; readonly results: SearchResult[] }
+  | { readonly type: 'searchFailed' };
+
+function reduceSearchState(state: SearchState, action: SearchAction): SearchState {
+  switch (action.type) {
+    case 'searchChanged':
+      return {
+        ...state,
+        search: action.search,
+        searchResults: action.search.trim() ? state.searchResults : [],
+      };
+    case 'searchStarted':
+      return { ...state, isSearching: true };
+    case 'searchSucceeded':
+      return { ...state, isSearching: false, searchResults: action.results };
+    case 'searchFailed':
+      return { ...state, isSearching: false };
+  }
+  const unreachable: never = action;
+  return unreachable;
+}
 
 export function useStudioSearch(
   projectId: string,
   setError: Dispatch<SetStateAction<string | null>>,
 ) {
-  const [search, setSearch] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<
-    Array<{ document_id: string; title: string; excerpt: string }>
-  >([]);
+  const [{ search, isSearching, searchResults }, dispatch] = useReducer(reduceSearchState, {
+    search: '',
+    isSearching: false,
+    searchResults: [],
+  });
 
-  useEffect(() => {
-    if (!search.trim()) {
-      setSearchResults([]);
-    }
-  }, [search]);
+  const setSearch = useCallback<Dispatch<SetStateAction<string>>>(
+    (nextSearch) => {
+      dispatch({
+        type: 'searchChanged',
+        search: typeof nextSearch === 'function' ? nextSearch(search) : nextSearch,
+      });
+    },
+    [search],
+  );
 
   const runSearch = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
       if (!search.trim()) {
-        setSearchResults([]);
+        dispatch({ type: 'searchChanged', search });
         return;
       }
-      setIsSearching(true);
+      dispatch({ type: 'searchStarted' });
       try {
         const response = await api.search(projectId, search);
-        setSearchResults(response.results);
+        dispatch({ type: 'searchSucceeded', results: response.results });
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Search failed.');
-      } finally {
-        setIsSearching(false);
+        dispatch({ type: 'searchFailed' });
       }
     },
     [projectId, search, setError],

@@ -4,7 +4,7 @@ import { EntryPage } from '@/features/studio/EntryPage';
 import { ProjectLibraryPage } from '@/features/studio/ProjectLibraryPage';
 import { StudioPage } from '@/features/studio/StudioPage';
 
-export const routerFuture = {
+const routerFuture = {
   v7_relativeSplatPath: true,
   v7_startTransition: true,
 } as const;

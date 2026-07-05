@@ -1,17 +1,20 @@
 import { useEffect, useRef } from 'react';
-import { markdown } from '@codemirror/lang-markdown';
-import { EditorSelection, EditorState, Transaction } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
 }
 
+interface CodeMirrorRuntime {
+  readonly EditorSelection: typeof import('@codemirror/state').EditorSelection;
+  readonly Transaction: typeof import('@codemirror/state').Transaction;
+}
+
 export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   const parent = useRef<HTMLDivElement>(null);
-  const view = useRef<EditorView | null>(null);
+  const view = useRef<import('@codemirror/view').EditorView | null>(null);
+  const runtime = useRef<CodeMirrorRuntime | null>(null);
+  const latestValueRef = useRef(value);
   const onChangeRef = useRef(onChange);
 
   useEffect(() => {
@@ -19,72 +22,89 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
   }, [onChange]);
 
   useEffect(() => {
-    // Editor is created once per mount; subsequent external value changes are
-    // applied in a separate effect below to avoid recreating the editor and
-    // losing editor state (cursor, undo history).
-    if (!parent.current) return;
-    const nextView = new EditorView({
-      parent: parent.current,
-      state: EditorState.create({
-        doc: value,
-        extensions: [
-          history(),
-          keymap.of([...defaultKeymap, ...historyKeymap]),
-          markdown(),
-          EditorView.lineWrapping,
-          EditorView.updateListener.of((update) => {
-            if (update.docChanged) onChangeRef.current(update.state.doc.toString());
-          }),
-          EditorView.theme({
-            '&': { height: '100%', backgroundColor: '#fff' },
-            '.cm-scroller': {
-              fontFamily: '"Source Serif 4", Georgia, serif',
-              fontSize: '19px',
-              lineHeight: '1.8',
-              padding: '34px 54px 80px',
-            },
-            '.cm-content': { maxWidth: '780px', margin: '0 auto', caretColor: '#0f766e' },
-            '.cm-focused': { outline: 'none' },
-            '.cm-gutters': { display: 'none' },
-            '.cm-activeLine': { backgroundColor: 'transparent' },
-            '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
-              backgroundColor: '#ccfbf1',
-            },
-          }),
-        ],
-      }),
+    latestValueRef.current = value;
+  }, [value]);
+
+  useEffect(() => {
+    let mountedView: import('@codemirror/view').EditorView | null = null;
+    let cancelled = false;
+
+    void Promise.all([
+      import('@codemirror/lang-markdown'),
+      import('@codemirror/state'),
+      import('@codemirror/view'),
+      import('@codemirror/commands'),
+    ]).then(([language, state, editorView, commands]) => {
+      if (cancelled || !parent.current) return;
+      const nextView = new editorView.EditorView({
+        parent: parent.current,
+        state: state.EditorState.create({
+          doc: latestValueRef.current,
+          extensions: [
+            commands.history(),
+            editorView.keymap.of([...commands.defaultKeymap, ...commands.historyKeymap]),
+            language.markdown(),
+            editorView.EditorView.lineWrapping,
+            editorView.EditorView.contentAttributes.of({
+              'aria-label': 'Markdown editor',
+              'aria-multiline': 'true',
+            }),
+            editorView.EditorView.updateListener.of((update) => {
+              if (update.docChanged) onChangeRef.current(update.state.doc.toString());
+            }),
+            editorView.EditorView.theme({
+              '&': { height: '100%', backgroundColor: '#fff' },
+              '.cm-scroller': {
+                fontFamily: '"Source Serif 4", Georgia, serif',
+                fontSize: '19px',
+                lineHeight: '1.8',
+                padding: '34px 54px 80px',
+              },
+              '.cm-content': { maxWidth: '780px', margin: '0 auto', caretColor: '#0f766e' },
+              '.cm-focused': { outline: 'none' },
+              '.cm-gutters': { display: 'none' },
+              '.cm-activeLine': { backgroundColor: 'transparent' },
+              '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {
+                backgroundColor: '#ccfbf1',
+              },
+            }),
+          ],
+        }),
+      });
+      mountedView = nextView;
+      runtime.current = {
+        EditorSelection: state.EditorSelection,
+        Transaction: state.Transaction,
+      };
+      view.current = nextView;
     });
-    view.current = nextView;
-    return () => nextView.destroy();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Editor instance created once per mount; external value changes handled by the effect below.
+
+    return () => {
+      cancelled = true;
+      mountedView?.destroy();
+      if (view.current === mountedView) view.current = null;
+    };
   }, []);
 
   useEffect(() => {
     const editor = view.current;
-    if (!editor || editor.state.doc.toString() === value) return;
+    const codeMirror = runtime.current;
+    if (!editor || !codeMirror || editor.state.doc.toString() === value) return;
 
     const currentSelection = editor.state.selection;
     const newLength = value.length;
     const ranges = currentSelection.ranges.map((range) => {
       const from = Math.min(range.from, newLength);
       const to = Math.min(range.to, newLength);
-      return EditorSelection.range(from, to);
+      return codeMirror.EditorSelection.range(from, to);
     });
 
     editor.dispatch({
       changes: { from: 0, to: editor.state.doc.length, insert: value },
-      selection: EditorSelection.create(ranges, currentSelection.mainIndex),
-      annotations: Transaction.addToHistory.of(false),
+      selection: codeMirror.EditorSelection.create(ranges, currentSelection.mainIndex),
+      annotations: codeMirror.Transaction.addToHistory.of(false),
     });
   }, [value]);
 
-  return (
-    <div
-      className="markdown-editor"
-      ref={parent}
-      role="textbox"
-      aria-label="Markdown editor"
-      aria-multiline="true"
-    />
-  );
+  return <div className="markdown-editor" ref={parent} />;
 }
