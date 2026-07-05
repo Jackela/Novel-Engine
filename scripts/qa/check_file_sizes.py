@@ -55,7 +55,6 @@ LEGACY_LIMITS: Final = {
     "src/shared/infrastructure/config/settings.py": 523,
     "src/contexts/studio/application/services/ai_service.py": 383,
     "src/contexts/studio/application/service_common.py": 354,
-    "src/contexts/studio/infrastructure/repository/document.py": 315,
 }
 
 
