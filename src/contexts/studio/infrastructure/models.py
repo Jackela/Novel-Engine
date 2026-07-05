@@ -1,5 +1,3 @@
-"""SQLAlchemy models for the authoritative Novel Studio store."""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -17,7 +15,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    """Declarative base for the Studio schema."""
+    pass
 
 
 class Owner(Base):
