@@ -3,20 +3,23 @@ from __future__ import annotations
 from datetime import datetime
 
 from src.contexts.studio.application.ports.studio_repository import (
+    DocumentDto,
     ExportDto,
     ProjectDto,
     ReviewDto,
     ReviewIssueDto,
+    RevisionDto,
     SnapshotDto,
 )
 from src.contexts.studio.domain.exceptions import NotFound
-from src.contexts.studio.domain.utils import new_id
+from src.contexts.studio.domain.utils import _word_count, dump_json, new_id
 
 
 class FakeStudioRepositoryReviewExportMixin:
     _reviews: dict[str, ReviewDto]
     _review_issues: dict[str, list[ReviewIssueDto]]
     _exports: dict[str, ExportDto]
+    _documents: dict[str, DocumentDto]
 
     def _get_visible_project(
         self,
@@ -37,11 +40,7 @@ class FakeStudioRepositoryReviewExportMixin:
     ) -> SnapshotDto:
         raise NotImplementedError
 
-    def _build_review_issues(
-        self,
-        project_id: str,
-        _now: datetime,
-    ) -> list[ReviewIssueDto]:
+    def _current_revision(self, document: DocumentDto) -> RevisionDto:
         raise NotImplementedError
 
     def create_review(
@@ -92,6 +91,43 @@ class FakeStudioRepositoryReviewExportMixin:
         ]
         reviews.sort(key=lambda review: review.created_at, reverse=True)
         return reviews
+
+    def _build_review_issues(
+        self,
+        project_id: str,
+        _now: datetime,
+    ) -> list[ReviewIssueDto]:
+        issues: list[ReviewIssueDto] = []
+        for document in self._documents.values():
+            if document.project_id != project_id or document.kind != "chapter":
+                continue
+            revision = self._current_revision(document)
+            words = _word_count(revision.content_markdown)
+            if words < 250:
+                issues.append(
+                    ReviewIssueDto(
+                        id=new_id(),
+                        document_id=document.id,
+                        severity="warning",
+                        code="thin_chapter",
+                        message=f"{document.title} contains only {words} words.",
+                        suggestion="Develop the scene turn, consequence, and sensory detail.",
+                        evidence_json=dump_json({"word_count": words}),
+                    )
+                )
+            if not revision.content_markdown.strip():
+                issues.append(
+                    ReviewIssueDto(
+                        id=new_id(),
+                        document_id=document.id,
+                        severity="blocker",
+                        code="empty_chapter",
+                        message=f"{document.title} has no manuscript content.",
+                        suggestion="Draft the chapter before exporting.",
+                        evidence_json="{}",
+                    )
+                )
+        return issues
 
     def create_export(
         self,

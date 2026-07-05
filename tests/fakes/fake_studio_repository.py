@@ -20,7 +20,7 @@ from src.contexts.studio.application.ports.studio_repository import (
     SnapshotDto,
 )
 from src.contexts.studio.domain.exceptions import InvalidOperation, NotFound
-from src.contexts.studio.domain.utils import _word_count, dump_json, new_id, utcnow
+from src.contexts.studio.domain.utils import new_id, utcnow
 from tests.fakes.fake_studio_repository_auth import FakeStudioRepositoryAuthMixin
 from tests.fakes.fake_studio_repository_jobs import (
     FakeStudioRepositoryJobsMixin,
@@ -392,40 +392,3 @@ class FakeStudioRepository(
             self._delete_project_records(project_id, document_ids)
             del self._projects[project_id]
         self._sessions.pop(session_id, None)
-
-    def _build_review_issues(
-        self,
-        project_id: str,
-        _now: datetime,
-    ) -> list[ReviewIssueDto]:
-        issues: list[ReviewIssueDto] = []
-        for document in self._documents.values():
-            if document.project_id != project_id or document.kind != "chapter":
-                continue
-            revision = self._current_revision(document)
-            words = _word_count(revision.content_markdown)
-            if words < 250:
-                issues.append(
-                    ReviewIssueDto(
-                        id=new_id(),
-                        document_id=document.id,
-                        severity="warning",
-                        code="thin_chapter",
-                        message=f"{document.title} contains only {words} words.",
-                        suggestion="Develop the scene turn, consequence, and sensory detail.",
-                        evidence_json=dump_json({"word_count": words}),
-                    )
-                )
-            if not revision.content_markdown.strip():
-                issues.append(
-                    ReviewIssueDto(
-                        id=new_id(),
-                        document_id=document.id,
-                        severity="blocker",
-                        code="empty_chapter",
-                        message=f"{document.title} has no manuscript content.",
-                        suggestion="Draft the chapter before exporting.",
-                        evidence_json="{}",
-                    )
-                )
-        return issues

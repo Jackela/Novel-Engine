@@ -50,7 +50,7 @@ SKIP_PARTS: Final = frozenset(
     }
 )
 LEGACY_LIMITS: Final = {
-    "tests/fakes/fake_studio_repository.py": 401,
+    "tests/fakes/fake_studio_repository.py": 365,
     "src/contexts/ai/infrastructure/providers/dashscope_text_generation_provider.py": 639,
     "tests/contexts/ai/infrastructure/test_text_generation_providers.py": 592,
     "src/contexts/studio/application/ports/studio_repository.py": 543,
