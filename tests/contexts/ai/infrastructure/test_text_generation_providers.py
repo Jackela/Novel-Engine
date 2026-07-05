@@ -21,9 +21,6 @@ from src.contexts.ai.infrastructure.providers.dashscope_text_generation_provider
 from src.contexts.ai.infrastructure.providers.deterministic_text_generation_provider import (
     DeterministicTextGenerationProvider,
 )
-from src.contexts.ai.infrastructure.providers.openai_compatible_text_generation_provider import (
-    OpenAICompatibleTextGenerationProvider,
-)
 from src.contexts.ai.infrastructure.providers.provider_factory import (
     create_text_generation_provider,
 )
@@ -119,29 +116,6 @@ def _dashscope_success_response(
     return _ProviderResponse(data)
 
 
-def _openai_success_response(
-    content: str,
-    *,
-    prompt_tokens: int | None = None,
-    completion_tokens: int | None = None,
-) -> _ProviderResponse:
-    data: dict[str, Any] = {
-        "choices": [
-            {
-                "message": {
-                    "content": content,
-                }
-            }
-        ]
-    }
-    if prompt_tokens is not None and completion_tokens is not None:
-        data["usage"] = {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-        }
-    return _ProviderResponse(data)
-
-
 @pytest.mark.asyncio
 async def test_deterministic_provider_covers_supported_steps() -> None:
     provider = DeterministicTextGenerationProvider()
@@ -213,11 +187,6 @@ def test_provider_factory_model_override(monkeypatch: pytest.MonkeyPatch) -> Non
     result = asyncio.run(provider.generate_structured(_task()))
 
     assert result.model == "test-model"
-
-
-def test_openai_provider_requires_api_key() -> None:
-    with pytest.raises(ValueError, match="API key"):
-        OpenAICompatibleTextGenerationProvider(api_key="")
 
 
 def test_dashscope_provider_requires_api_key() -> None:
@@ -541,149 +510,6 @@ def test_dashscope_retry_policy_boundaries() -> None:
         TextGenerationProviderError("provider returned 429 too many requests")
     )
     assert not DashScopeTextGenerationProvider._should_retry(RuntimeError("boom"))
-
-
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_generates_structured_payload(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
-    fake_client = _AsyncPostClient(
-        [_openai_success_response('{"ok": true}', prompt_tokens=9, completion_tokens=3)]
-    )
-    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
-
-    result = await provider.generate_structured(_task())
-
-    assert result.provider == "openai_compatible"
-    assert result.content == {"ok": True}
-    assert result.prompt_tokens == 9
-    assert result.completion_tokens == 3
-    assert fake_client.calls[0][0] == ("/chat/completions",)
-    payload = fake_client.calls[0][1]["json"]
-    assert payload["response_format"] == {"type": "json_object"}
-
-
-@pytest.mark.parametrize(
-    ("payload", "message"),
-    [
-        ({}, "missing choices"),
-        ({"choices": [1]}, "choice is not an object"),
-        ({"choices": [{"message": "text"}]}, "message is not an object"),
-        ({"choices": [{"message": {"content": "[1]"}}]}, "not a JSON object"),
-    ],
-)
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_maps_shape_errors(
-    monkeypatch: pytest.MonkeyPatch,
-    payload: dict[str, Any],
-    message: str,
-) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(api_key="openai-key")
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient([_ProviderResponse(payload)]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match=message):
-        await provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_maps_http_and_json_errors(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    status_provider = OpenAICompatibleTextGenerationProvider(
-        api_key="openai-key",
-        retry_attempts=1,
-    )
-    monkeypatch.setattr(
-        status_provider,
-        "_get_client",
-        lambda: _AsyncPostClient([_ProviderResponse(status_code=401, text="nope")]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="401 nope"):
-        await status_provider.generate_structured(_task())
-
-    json_provider = OpenAICompatibleTextGenerationProvider(
-        api_key="openai-key",
-        retry_attempts=1,
-    )
-    monkeypatch.setattr(
-        json_provider,
-        "_get_client",
-        lambda: _AsyncPostClient([_openai_success_response("not-json")]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="invalid JSON"):
-        await json_provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_maps_transport_timeout(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(
-        api_key="openai-key",
-        retry_attempts=1,
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient([httpx.ReadTimeout("slow")]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="slow"):
-        await provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_retries_retriable_errors(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(
-        api_key="openai-key",
-        retry_attempts=3,
-        retry_delay=0.0,
-    )
-    fake_client = _AsyncPostClient(
-        [
-            _ProviderResponse(status_code=500, text="boom"),
-            _ProviderResponse(status_code=502, text="retry"),
-            _openai_success_response('{"ok": true}'),
-        ]
-    )
-    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
-
-    result = await provider.generate_structured(_task())
-
-    assert result.content == {"ok": True}
-    assert len(fake_client.calls) == 3
-
-
-@pytest.mark.asyncio
-async def test_openai_compatible_provider_exhausts_retries(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = OpenAICompatibleTextGenerationProvider(
-        api_key="openai-key",
-        retry_attempts=2,
-        retry_delay=0.0,
-    )
-    fake_client = _AsyncPostClient(
-        [
-            _ProviderResponse(status_code=500, text="first"),
-            _ProviderResponse(status_code=500, text="second"),
-        ]
-    )
-    monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
-
-    with pytest.raises(TextGenerationProviderError, match="500"):
-        await provider.generate_structured(_task())
-
-    assert len(fake_client.calls) == 2
 
 
 @pytest.mark.asyncio
