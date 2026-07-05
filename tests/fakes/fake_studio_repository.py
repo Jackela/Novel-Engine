@@ -27,6 +27,9 @@ from tests.fakes.fake_studio_repository_jobs import (
     FakeStudioRepositoryJobsMixin,
     UsageEvent,
 )
+from tests.fakes.fake_studio_repository_review_export import (
+    FakeStudioRepositoryReviewExportMixin,
+)
 
 
 @dataclass
@@ -42,6 +45,7 @@ class _FakeSearchIndex:
 class FakeStudioRepository(
     FakeStudioRepositoryAuthMixin,
     FakeStudioRepositoryJobsMixin,
+    FakeStudioRepositoryReviewExportMixin,
 ):
     """In-memory StudioRepository for fast, deterministic unit tests."""
 
@@ -476,116 +480,6 @@ class FakeStudioRepository(
             item.document_id: item.revision_id
             for item in self._snapshot_documents.get(snapshot_id, [])
         }
-
-    # ------------------------------------------------------------------
-    # Reviews
-    # ------------------------------------------------------------------
-    def create_review(
-        self,
-        project_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-        provider: str,
-        model: str,
-        now: datetime,
-    ) -> ReviewDto:
-        self._get_visible_project(project_id, owner_id, guest_session_id)
-        snapshot = self.create_snapshot(
-            project_id,
-            owner_id=owner_id,
-            guest_session_id=guest_session_id,
-            reason="review",
-            now=now,
-        )
-        issues = self._build_review_issues(project_id, now)
-        review = ReviewDto(
-            id=new_id(),
-            project_id=project_id,
-            snapshot_id=snapshot.id,
-            provider=provider,
-            model=model,
-            summary="Editorial checks completed without modifying the manuscript.",
-            created_at=now,
-            issues=issues,
-        )
-        self._reviews[review.id] = review
-        self._review_issues[review.id] = issues
-        return review
-
-    def list_reviews(
-        self,
-        project_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> list[ReviewDto]:
-        self._get_visible_project(project_id, owner_id, guest_session_id)
-        reviews = [
-            review
-            for review in self._reviews.values()
-            if review.project_id == project_id
-        ]
-        reviews.sort(key=lambda review: review.created_at, reverse=True)
-        return reviews
-
-    # ------------------------------------------------------------------
-    # Exports
-    # ------------------------------------------------------------------
-    def create_export(
-        self,
-        *,
-        export_id: str,
-        project_id: str,
-        snapshot_id: str,
-        export_format: str,
-        relative_path: str,
-        size_bytes: int,
-        checksum_sha256: str,
-        now: datetime,
-    ) -> ExportDto:
-        export = ExportDto(
-            id=export_id,
-            project_id=project_id,
-            snapshot_id=snapshot_id,
-            format=export_format,
-            relative_path=relative_path,
-            size_bytes=size_bytes,
-            checksum_sha256=checksum_sha256,
-            created_at=now,
-        )
-        self._exports[export.id] = export
-        return export
-
-    def list_exports(
-        self,
-        project_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> list[ExportDto]:
-        self._get_visible_project(project_id, owner_id, guest_session_id)
-        exports = [
-            export
-            for export in self._exports.values()
-            if export.project_id == project_id
-        ]
-        exports.sort(key=lambda export: export.created_at, reverse=True)
-        return exports
-
-    def get_export(
-        self,
-        project_id: str,
-        export_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> ExportDto:
-        self._get_visible_project(project_id, owner_id, guest_session_id)
-        export = self._exports.get(export_id)
-        if export is None or export.project_id != project_id:
-            raise NotFound("Export not found.")
-        return export
 
     # ------------------------------------------------------------------
     # Internal helpers
