@@ -76,7 +76,8 @@ jobs:
           uv run bandit -r src
           uv run mypy src tests
           uv run lint-imports
-          uv run pytest -q
+          uv run coverage run -m pytest -q
+          uv run coverage report --fail-under=88
           uv run python scripts/qa/check_openapi_snapshot.py
       - name: Validate frontend
         working-directory: frontend
@@ -86,6 +87,29 @@ jobs:
           pnpm type-check
           pnpm test:unit
           pnpm build
+      - name: Validate React static diagnostics
+        working-directory: frontend
+        run: |
+          react_doctor_report="${RUNNER_TEMP}/react-doctor.json"
+          pnpm dlx react-doctor@0.7.1 --json > "${react_doctor_report}"
+          node - "${react_doctor_report}" <<'NODE'
+          const fs = require("node:fs");
+          const report = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const summary = report.summary ?? report.projects?.[0]?.summary;
+          if (!summary) {
+            console.error("React Doctor report did not include a summary.");
+            process.exit(1);
+          }
+          if (summary.totalDiagnosticCount !== 0) {
+            console.error(
+              `React Doctor found ${summary.totalDiagnosticCount} diagnostics.`,
+            );
+            process.exit(1);
+          }
+          console.log(
+            `React Doctor clean: score ${summary.score} (${summary.scoreLabel})`,
+          );
+          NODE
       - name: Cache Playwright browsers
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
