@@ -52,7 +52,6 @@ SKIP_PARTS: Final = frozenset(
 LEGACY_LIMITS: Final = {
     "src/contexts/ai/infrastructure/providers/dashscope_text_generation_provider.py": 639,
     "src/contexts/studio/application/ports/studio_repository.py": 543,
-    "src/shared/infrastructure/config/settings.py": 523,
 }
 
 
