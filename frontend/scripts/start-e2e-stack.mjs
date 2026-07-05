@@ -70,9 +70,7 @@ async function waitForUrl(url, label) {
 }
 
 const e2eProvider = process.env.E2E_LLM_PROVIDER ?? 'mock';
-const dataDir = path.resolve(
-  process.env.APP_DATA_DIR ?? path.join(repoRoot, 'data', 'playwright'),
-);
+const dataDir = path.resolve(process.env.APP_DATA_DIR ?? path.join(repoRoot, 'data', 'playwright'));
 const databasePath = path.join(dataDir, 'novel-engine.sqlite3').replaceAll('\\', '/');
 
 const backendEnv = {
@@ -87,8 +85,7 @@ const backendEnv = {
   // when a live provider is explicitly desired.
   LLM_PROVIDER: e2eProvider,
   CORS_ALLOWED_ORIGINS:
-    process.env.CORS_ALLOWED_ORIGINS ??
-    'http://127.0.0.1:4273,http://localhost:4273',
+    process.env.CORS_ALLOWED_ORIGINS ?? 'http://127.0.0.1:4273,http://localhost:4273',
 };
 
 const backendPort = await getFreePort();
@@ -115,12 +112,7 @@ const backendArgs = process.env.PYTHON_BIN
       '--port',
       String(backendPort),
     ];
-const backend = spawnProcess(
-  backendCommand,
-  backendArgs,
-  repoRoot,
-  backendEnv,
-);
+const backend = spawnProcess(backendCommand, backendArgs, repoRoot, backendEnv);
 
 let frontend = null;
 let shuttingDown = false;
@@ -136,8 +128,12 @@ const shutdown = (exitCode = 0) => {
   setTimeout(() => process.exit(exitCode), 1000).unref();
 };
 
-backend.on('exit', (code) => {
-  if (!shuttingDown && code !== 0) {
+function isControlledExit(code, signal) {
+  return shuttingDown || code === 0 || signal === 'SIGTERM' || signal === 'SIGINT';
+}
+
+backend.on('exit', (code, signal) => {
+  if (!isControlledExit(code, signal)) {
     console.error(`Backend server exited with code ${code ?? 'unknown'}`);
     shutdown(code ?? 1);
   }
@@ -165,8 +161,8 @@ frontend = spawnProcess(
   },
 );
 
-frontend.on('exit', (code) => {
-  if (!shuttingDown && code !== 0) {
+frontend.on('exit', (code, signal) => {
+  if (!isControlledExit(code, signal)) {
     console.error(`Frontend server exited with code ${code ?? 'unknown'}`);
     shutdown(code ?? 1);
   }
