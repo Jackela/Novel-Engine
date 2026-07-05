@@ -13,7 +13,7 @@ def _guest_client(app: FastAPI) -> TestClient:
 
 def _csrf_cookie(client: TestClient) -> str:
     value = client.cookies.get("novel_studio_csrf")
-    assert value is not None
+    assert isinstance(value, str)
     return value
 
 
@@ -68,6 +68,21 @@ def test_write_with_correct_csrf_header_succeeds(canonical_app: FastAPI) -> None
     )
     assert response.status_code == 201
     assert response.json()["title"] == "Valid CSRF"
+
+
+def test_canonical_client_injects_csrf_header_for_writes(
+    canonical_client: TestClient,
+) -> None:
+    guest = canonical_client.post("/api/session/guest")
+    assert guest.status_code == 201
+
+    response = canonical_client.post(
+        "/api/projects",
+        json={"title": "Fixture CSRF"},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["title"] == "Fixture CSRF"
 
 
 def test_get_session_does_not_require_csrf_header(canonical_app: FastAPI) -> None:

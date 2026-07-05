@@ -1,5 +1,3 @@
-"""Fail when removed product surfaces reappear."""
-
 from __future__ import annotations
 
 import re
@@ -7,49 +5,52 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Pattern
+from re import Pattern
+from typing import Final
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT: Final = Path(__file__).resolve().parents[2]
 
-SKIP_PATHS = {
-    "docs/api/openapi.current.json",
-    "pnpm-lock.yaml",
-    "uv.lock",
-    "scripts/qa/check_repo_hygiene.py",
-    "scripts/qa/check_ssot.py",
-    ".github/pull_request_template.md",
-}
+SKIP_PATHS: Final = frozenset(
+    {
+        "docs/api/openapi.current.json",
+        "pnpm-lock.yaml",
+        "uv.lock",
+        "scripts/qa/check_repo_hygiene.py",
+        "scripts/qa/check_ssot.py",
+        ".github/pull_request_template.md",
+    }
+)
+SKIP_PARTS: Final = frozenset(
+    {
+        ".git",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "artifacts",
+        "coverage",
+        "dist",
+        "htmlcov",
+        "node_modules",
+        "playwright-report",
+        "test-results",
+    }
+)
 
-SKIP_PARTS = {
-    ".git",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "artifacts",
-    "coverage",
-    "dist",
-    "htmlcov",
-    "node_modules",
-    "playwright-report",
-    "test-results",
-}
 
-
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class ForbiddenPattern:
     name: str
     regex: Pattern[str]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class AllowRule:
-    name: str
     path_regex: Pattern[str]
     line_regex: Pattern[str]
 
 
-FORBIDDEN_PATTERNS = (
+FORBIDDEN_PATTERNS: Final = (
     ForbiddenPattern(
         "internal_api_versioning",
         re.compile(
@@ -75,10 +76,8 @@ FORBIDDEN_PATTERNS = (
         ),
     ),
 )
-
-ALLOW_RULES = (
+ALLOW_RULES: Final = (
     AllowRule(
-        "external_provider_api_versions",
         re.compile(
             r"^(?:"
             r"src/contexts/ai/infrastructure/providers/"
@@ -89,16 +88,15 @@ ALLOW_RULES = (
         re.compile(r"/api/v(?:1|2)(?:/|$)"),
     ),
 )
-
-
-API_SURFACE_FORBIDDEN = (
+API_SURFACE_FORBIDDEN: Final = (
     ForbiddenPattern(
         "api_private_payload_surface",
         re.compile(r"\braw_model_output\b|\bchapter_markdown\b|artifact\.to_dict\("),
     ),
 )
-
-API_SURFACE_PATHS = re.compile(r"^(?:src/apps/api/|frontend/src/app/types/studio\.ts$)")
+API_SURFACE_PATHS: Final = re.compile(
+    r"^(?:src/apps/api/|frontend/src/app/types/studio\.ts$)"
+)
 
 
 def tracked_and_untracked_files() -> list[Path]:
@@ -109,12 +107,11 @@ def tracked_and_untracked_files() -> list[Path]:
         capture_output=True,
         text=True,
     )
-    files: list[Path] = []
-    for raw_path in result.stdout.splitlines():
-        path = ROOT / raw_path
-        if path.is_file():
-            files.append(path)
-    return files
+    return [
+        ROOT / raw_path
+        for raw_path in result.stdout.splitlines()
+        if (ROOT / raw_path).is_file()
+    ]
 
 
 def should_skip(path: Path) -> bool:
@@ -138,40 +135,69 @@ def iter_text_lines(path: Path) -> list[str]:
         return []
 
 
-def main() -> int:
+def temporary_project_failures() -> list[str]:
+    return [
+        f"{path.name}/: temporary top-level *_project directory is not allowed"
+        for path in ROOT.iterdir()
+        if path.is_dir() and re.fullmatch(r"[A-Za-z0-9_-]+_project", path.name)
+    ]
+
+
+def line_failures(rel_path: str, line_number: int, line: str) -> list[str]:
+    if is_allowed(rel_path, line):
+        return []
+
+    failures = _pattern_failures(rel_path, line_number, line, FORBIDDEN_PATTERNS)
+    if API_SURFACE_PATHS.search(rel_path):
+        failures.extend(
+            _pattern_failures(rel_path, line_number, line, API_SURFACE_FORBIDDEN)
+        )
+    return failures
+
+
+def _pattern_failures(
+    rel_path: str,
+    line_number: int,
+    line: str,
+    patterns: tuple[ForbiddenPattern, ...],
+) -> list[str]:
+    return [
+        f"{rel_path}:{line_number}: {pattern.name}: {line.strip()}"
+        for pattern in patterns
+        if pattern.regex.search(line)
+    ]
+
+
+def file_failures(path: Path) -> list[str]:
+    rel_path = path.relative_to(ROOT).as_posix()
     failures: list[str] = []
-    for path in ROOT.iterdir():
-        if path.is_dir() and re.fullmatch(r"[A-Za-z0-9_-]+_project", path.name):
-            failures.append(
-                f"{path.name}/: temporary top-level *_project directory is not allowed"
-            )
+    for line_number, line in enumerate(iter_text_lines(path), start=1):
+        failures.extend(line_failures(rel_path, line_number, line))
+    return failures
 
+
+def failures() -> list[str]:
+    found = temporary_project_failures()
     for path in tracked_and_untracked_files():
-        if should_skip(path):
-            continue
-        rel_path = path.relative_to(ROOT).as_posix()
-        for line_number, line in enumerate(iter_text_lines(path), start=1):
-            if is_allowed(rel_path, line):
-                continue
-            for pattern in FORBIDDEN_PATTERNS:
-                if pattern.regex.search(line):
-                    failures.append(
-                        f"{rel_path}:{line_number}: {pattern.name}: {line.strip()}"
-                    )
-            if API_SURFACE_PATHS.search(rel_path):
-                for pattern in API_SURFACE_FORBIDDEN:
-                    if pattern.regex.search(line):
-                        failures.append(
-                            f"{rel_path}:{line_number}: {pattern.name}: {line.strip()}"
-                        )
+        if not should_skip(path):
+            found.extend(file_failures(path))
+    return found
 
-    if failures:
-        print("[repo-hygiene] forbidden residues found:", file=sys.stderr)
-        for failure in failures:
-            print(f"  {failure}", file=sys.stderr)
+
+def write_line(message: str, *, stderr: bool = False) -> None:
+    stream = sys.stderr if stderr else sys.stdout
+    stream.write(f"{message}\n")
+
+
+def main() -> int:
+    found = failures()
+    if found:
+        write_line("[repo-hygiene] forbidden residues found:", stderr=True)
+        for failure in found:
+            write_line(f"  {failure}", stderr=True)
         return 1
 
-    print("[repo-hygiene] clean")
+    write_line("[repo-hygiene] clean")
     return 0
 
 

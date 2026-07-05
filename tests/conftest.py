@@ -8,13 +8,14 @@ import importlib
 import os
 import sys
 import tempfile
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import Request
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -91,21 +92,22 @@ def canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
     return build_canonical_app(monkeypatch)
 
 
-class _CsrfTestClient(TestClient):
-    """TestClient that automatically sends the X-CSRF-Token header for writes."""
+WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
-    def request(self, method: str, url: str, **kwargs: Any) -> Any:  # type: ignore[override]
-        if method.upper() in {"POST", "PUT", "PATCH", "DELETE"}:
-            token = self.cookies.get("novel_studio_csrf")
-            if token:
-                headers = kwargs.get("headers") or {}
-                if isinstance(headers, dict):
-                    headers["X-CSRF-Token"] = token
-                    kwargs["headers"] = headers
-        return super().request(method, url, **kwargs)
+
+def _csrf_header_hook(client: TestClient) -> Callable[[Request], None]:
+    def inject_csrf_header(request: Request) -> None:
+        if request.method not in WRITE_METHODS:
+            return
+        token = client.cookies.get("novel_studio_csrf")
+        if token is not None:
+            request.headers["X-CSRF-Token"] = token
+
+    return inject_csrf_header
 
 
 @pytest.fixture
 def canonical_client(canonical_app: FastAPI) -> Generator[TestClient, None, None]:
-    with _CsrfTestClient(canonical_app, raise_server_exceptions=False) as client:
+    with TestClient(canonical_app, raise_server_exceptions=False) as client:
+        client.event_hooks["request"].append(_csrf_header_hook(client))
         yield client

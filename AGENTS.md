@@ -99,6 +99,15 @@ Require separate human confirmation before changing `pyproject.toml`, root packa
 - Prefer surgical changes; do not rewrite whole modules.
 - Run relevant tests before and after changes. Review `git diff` and preserve unrelated worktree edits.
 - Do not carry implementation context across unrelated findings.
+- For AI-assisted code changes, run `uv run python scripts/ai/regression_check.py`; PR CI enforces the safety/security diff checks while process rules enforce scope.
+
+## HARNESS ENGINEERING OVERLAY
+
+- Start from the owning layer, current baseline, and matching validation surface before editing.
+- Prefer baseline-first work: reproduce the failure, inspect the existing contract, or capture the current behavior before changing it.
+- Keep evidence replayable. Report exact commands, browser/API flows, or skipped checks with reasons.
+- Validate through the surface that owns the change: service/API tests for backend behavior, browser workflows for UI behavior, import/spec/SSOT gates for contracts.
+- Treat generated outputs, caches, local evidence, and ignored agent configuration as harness state, not product architecture.
 
 ## VALIDATION
 
@@ -107,7 +116,7 @@ Require separate human confirmation before changing `pyproject.toml`, root packa
 uv run pytest -q
 uv run mypy src tests
 uv run ruff format --check src tests scripts
-uv run ruff check src tests
+uv run ruff check src tests scripts
 uv run bandit -r src
 uv run lint-imports
 
