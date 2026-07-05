@@ -147,12 +147,19 @@ def _deleted_safety_issue(
 ) -> str | None:
     if _is_self_definition_line(filename, line):
         return None
-    if _diff_line_body(line) in moved_line_bodies:
+    line_body = _diff_line_body(line)
+    if _is_comment_line_body(line_body):
+        return None
+    if line_body in moved_line_bodies:
         return None
     for keyword in SAFETY_KEYWORDS:
         if re.search(rf"\b{keyword}\b", line):
             return f"[{filename}] Deleted safety keyword '{keyword}': {line}"
     return None
+
+
+def _is_comment_line_body(line_body: str) -> bool:
+    return line_body.startswith(("#", "//"))
 
 
 def check_deleted_files(diff: DiffDetails) -> list[str]:

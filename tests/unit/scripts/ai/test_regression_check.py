@@ -161,6 +161,21 @@ def test_moved_safety_lines_are_not_reported_as_deleted() -> None:
     assert issues == []
 
 
+def test_deleted_safety_keyword_comments_are_not_reported() -> None:
+    # Given
+    details = regression_check.DiffDetails(
+        additions={},
+        deletions={"tests/fakes/fake_studio_repository.py": ["-    # Health and auth"]},
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_deleted_safety_lines(details)
+
+    # Then
+    assert issues == []
+
+
 def test_deleted_test_files_and_forbidden_paths_are_reported() -> None:
     # Given
     details = regression_check.DiffDetails(
