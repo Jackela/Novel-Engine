@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -33,24 +32,19 @@ from tests.fakes.fake_studio_repository_projects import (
 from tests.fakes.fake_studio_repository_review_export import (
     FakeStudioRepositoryReviewExportMixin,
 )
+from tests.fakes.fake_studio_repository_search import (
+    FakeSearchIndexEntry,
+    FakeStudioRepositorySearchMixin,
+)
 from tests.fakes.fake_studio_repository_snapshots import (
     FakeStudioRepositorySnapshotsMixin,
 )
 
 
-@dataclass
-class _FakeSearchIndex:
-    """In-memory search index entry for a document revision."""
-
-    document_id: str
-    project_id: str
-    title: str
-    content: str
-
-
 class FakeStudioRepository(
     FakeStudioRepositoryAuthMixin,
     FakeStudioRepositoryProjectsMixin,
+    FakeStudioRepositorySearchMixin,
     FakeStudioRepositoryJobsMixin,
     FakeStudioRepositoryReviewExportMixin,
     FakeStudioRepositorySnapshotsMixin,
@@ -72,7 +66,7 @@ class FakeStudioRepository(
         self._jobs: dict[str, JobDto] = {}
         self._job_events: dict[str, list[JobEventDto]] = {}
         self._usage_events: list[UsageEvent] = []
-        self._search_index: list[_FakeSearchIndex] = []
+        self._search_index: list[FakeSearchIndexEntry] = []
 
     # ------------------------------------------------------------------
     # Documents
@@ -267,22 +261,6 @@ class FakeStudioRepository(
         self._update_project_timestamp(project_id, now)
         return [self._documents[doc_id] for doc_id in document_ids]
 
-    def search_documents(
-        self,
-        project_id: str,
-        query: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> list[dict[str, Any]]:
-        self._get_visible_project(project_id, owner_id, guest_session_id)
-        tokens = [token.strip('"') for token in query.split('" "') if token.strip('"')]
-        return [
-            self._match_entry(entry, tokens)
-            for entry in self._search_index
-            if self._entry_matches(entry, project_id, tokens)
-        ]
-
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -362,27 +340,12 @@ class FakeStudioRepository(
         )
         return document, revision
 
-    def _index_document(self, document: DocumentDto, revision: RevisionDto) -> None:
-        self._search_index = [
-            entry for entry in self._search_index if entry.document_id != document.id
-        ]
-        self._search_index.append(
-            _FakeSearchIndex(
-                document_id=document.id,
-                project_id=document.project_id,
-                title=document.title,
-                content=revision.content_markdown,
-            )
-        )
-
     def _delete_document_records(self, document_id: str) -> None:
         self._documents.pop(document_id, None)
         for revision_id, revision in list(self._revisions.items()):
             if revision.document_id == document_id:
                 del self._revisions[revision_id]
-        self._search_index = [
-            entry for entry in self._search_index if entry.document_id != document_id
-        ]
+        self._delete_search_document_records(document_id)
 
     def _delete_project_records(
         self,
@@ -429,33 +392,6 @@ class FakeStudioRepository(
             self._delete_project_records(project_id, document_ids)
             del self._projects[project_id]
         self._sessions.pop(session_id, None)
-
-    def _entry_matches(
-        self,
-        entry: _FakeSearchIndex,
-        project_id: str,
-        tokens: list[str],
-    ) -> bool:
-        if entry.project_id != project_id or not tokens:
-            return False
-        title_lower = entry.title.casefold()
-        content_lower = entry.content.casefold()
-        return all(
-            token.casefold() in title_lower or token.casefold() in content_lower
-            for token in tokens
-        )
-
-    def _match_entry(
-        self,
-        entry: _FakeSearchIndex,
-        _tokens: list[str],
-    ) -> dict[str, Any]:
-        excerpt = entry.content[:100]
-        return {
-            "document_id": entry.document_id,
-            "title": entry.title,
-            "excerpt": excerpt,
-        }
 
     def _build_review_issues(
         self,
