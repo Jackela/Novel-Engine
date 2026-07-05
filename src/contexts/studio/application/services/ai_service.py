@@ -4,7 +4,6 @@ from src.contexts.studio.application.service_common import (
     Any,
     DocumentDto,
     InvalidOperation,
-    JobDto,
     NotFound,
     Principal,
     RevisionDto,
@@ -17,20 +16,20 @@ from src.contexts.studio.application.service_common import (
     _owner_scopes,
     _safe_load_json,
     _sanitize_chapter_markdown,
-    _word_count,
     cast,
-    datetime,
     dump_json,
     logger,
     utcnow,
 )
+from src.contexts.studio.application.services.ai_job_persistence import (
+    AIJobPersistence,
+    AIProposalJobInput,
+    AIProposalJobResult,
+    resolved_token_count,
+)
 from src.contexts.studio.application.services.document_service import DocumentService
 
 __all__ = ["AIService"]
-
-
-def _resolved_token_count(value: int | None, text: str) -> int:
-    return value if value is not None else _word_count(text)
 
 
 class AIService:
@@ -43,6 +42,7 @@ class AIService:
     ) -> None:
         self._repository = repository
         self._ai_provider_factory = ai_provider_factory
+        self._job_persistence = AIJobPersistence(repository)
 
     def _load_revision(
         self,
@@ -139,8 +139,8 @@ class AIService:
         return (
             proposal,
             revision.id,
-            _resolved_token_count(prompt_tokens, instruction),
-            _resolved_token_count(completion_tokens, proposal),
+            resolved_token_count(prompt_tokens, instruction),
+            resolved_token_count(completion_tokens, proposal),
         )
 
     async def create_ai_proposal(
@@ -156,6 +156,16 @@ class AIService:
     ) -> dict[str, Any]:
         _document, revision = self._load_revision(principal, project_id, document_id)
         now = utcnow()
+        request = AIProposalJobInput(
+            project_id=project_id,
+            document_id=document_id,
+            operation=operation,
+            provider=provider,
+            model=model,
+            instruction=instruction,
+            base_revision_id=revision.id,
+            now=now,
+        )
         try:
             (
                 proposal_markdown,
@@ -179,178 +189,17 @@ class AIService:
                     "model": model,
                 },
             )
-            return self._persist_failed_ai_job(
-                project_id=project_id,
-                document_id=document_id,
-                operation=operation,
-                provider=provider,
-                model=model,
-                instruction=instruction,
-                base_revision_id=revision.id,
+            return self._job_persistence.persist_failed(
+                request,
                 error=str(exc),
-                now=now,
             )
-        return self._persist_completed_ai_job(
-            project_id=project_id,
-            document_id=document_id,
-            operation=operation,
-            provider=provider,
-            model=model,
-            instruction=instruction,
-            base_revision_id=revision.id,
-            proposal_markdown=proposal_markdown,
-            prompt_tokens=prompt_tokens,
-            completion_tokens=completion_tokens,
-            now=now,
-        )
-
-    def _persist_failed_ai_job(
-        self,
-        *,
-        project_id: str,
-        document_id: str,
-        operation: str,
-        provider: str,
-        model: str,
-        instruction: str,
-        base_revision_id: str,
-        error: str,
-        now: datetime,
-    ) -> dict[str, Any]:
-        job = self._create_ai_job(
-            project_id=project_id,
-            document_id=document_id,
-            operation=operation,
-            provider=provider,
-            model=model,
-            instruction=instruction,
-            base_revision_id=base_revision_id,
-            status="failed",
-            proposal_markdown="",
-            error=error,
-            event_details={"error": error},
-            now=now,
-        )
-        return _job_payload(job)
-
-    def _persist_completed_ai_job(
-        self,
-        *,
-        project_id: str,
-        document_id: str,
-        operation: str,
-        provider: str,
-        model: str,
-        instruction: str,
-        base_revision_id: str,
-        proposal_markdown: str,
-        prompt_tokens: int | None,
-        completion_tokens: int | None,
-        now: datetime,
-    ) -> dict[str, Any]:
-        job = self._create_ai_job(
-            project_id=project_id,
-            document_id=document_id,
-            operation=operation,
-            provider=provider,
-            model=model,
-            instruction=instruction,
-            base_revision_id=base_revision_id,
-            status="completed",
-            proposal_markdown=proposal_markdown,
-            error=None,
-            event_details={"proposal_only": True},
-            now=now,
-        )
-        self._repository.add_usage_event(
-            project_id=project_id,
-            job_id=job.id,
-            provider=provider,
-            model=model,
-            prompt_tokens=_resolved_token_count(prompt_tokens, instruction),
-            completion_tokens=_resolved_token_count(
-                completion_tokens,
-                proposal_markdown,
-            ),
-            request_evidence_json=dump_json(
-                {"operation": operation, "base_revision_id": base_revision_id}
-            ),
-            now=now,
-        )
-        return _job_payload(job)
-
-    def _create_ai_job(
-        self,
-        *,
-        project_id: str,
-        document_id: str,
-        operation: str,
-        provider: str,
-        model: str,
-        instruction: str,
-        base_revision_id: str,
-        status: str,
-        proposal_markdown: str,
-        error: str | None,
-        event_details: dict[str, Any],
-        now: datetime,
-    ) -> JobDto:
-        job = self._repository.create_job(
-            project_id=project_id,
-            document_id=document_id,
-            kind="proposal",
-            operation=operation,
-            status=status,
-            provider=provider,
-            model=model,
-            request_json=self._proposal_request_json(
-                operation=operation,
-                instruction=instruction,
-                base_revision_id=base_revision_id,
-            ),
-            result_json=self._proposal_result_json(
-                base_revision_id=base_revision_id,
+        return self._job_persistence.persist_completed(
+            request,
+            AIProposalJobResult(
                 proposal_markdown=proposal_markdown,
+                prompt_tokens=prompt_tokens,
+                completion_tokens=completion_tokens,
             ),
-            error=error,
-            retry_of_job_id=None,
-            now=now,
-        )
-        self._repository.add_job_event(
-            job.id,
-            status=status,
-            details_json=dump_json(event_details),
-            now=now,
-        )
-        return job
-
-    @staticmethod
-    def _proposal_request_json(
-        *,
-        operation: str,
-        instruction: str,
-        base_revision_id: str,
-    ) -> str:
-        return dump_json(
-            {
-                "operation": operation,
-                "instruction": instruction,
-                "base_revision_id": base_revision_id,
-            }
-        )
-
-    @staticmethod
-    def _proposal_result_json(
-        *,
-        base_revision_id: str,
-        proposal_markdown: str,
-    ) -> str:
-        return dump_json(
-            {
-                "proposal_markdown": proposal_markdown,
-                "base_revision_id": base_revision_id,
-                "accepted_revision_id": None,
-            }
         )
 
     def accept_ai_proposal(
