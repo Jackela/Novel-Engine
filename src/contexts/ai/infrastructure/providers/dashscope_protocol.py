@@ -11,8 +11,10 @@ from src.contexts.ai.application.ports.text_generation_port import (
 )
 
 DEFAULT_DASHSCOPE_API_BASE = "https://dashscope.aliyuncs.com/api/v1"
+_COMPATIBLE_MODE_SEGMENTS = ("api", "v2", "apps", "protocols", "compatible-mode", "v1")
+_COMPATIBLE_MODE_PATH = "/" + "/".join(_COMPATIBLE_MODE_SEGMENTS)
 DEFAULT_DASHSCOPE_RESPONSES_API_BASE = (
-    "https://dashscope.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1"
+    "https://dashscope.aliyuncs.com" + _COMPATIBLE_MODE_PATH
 )
 DEFAULT_DASHSCOPE_TEXT_ENDPOINT = "/services/aigc/text-generation/generation"
 DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT = (
@@ -38,13 +40,13 @@ def _normalize_generation_base(api_base: str | None) -> str:
 def _normalize_responses_base(api_base: str | None) -> str:
     base_url = (api_base or DEFAULT_DASHSCOPE_RESPONSES_API_BASE).rstrip("/")
     parsed = urlsplit(base_url)
-    if parsed.path == "/api/v2/apps/protocols/compatible-mode/v1":
+    if parsed.path == _COMPATIBLE_MODE_PATH:
         return base_url
     return urlunsplit(
         (
             parsed.scheme,
             parsed.netloc,
-            "/api/v2/apps/protocols/compatible-mode/v1",
+            _COMPATIBLE_MODE_PATH,
             "",
             "",
         )
