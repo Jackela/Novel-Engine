@@ -49,9 +49,7 @@ SKIP_PARTS: Final = frozenset(
         "test-results",
     }
 )
-LEGACY_LIMITS: Final = {
-    "src/contexts/studio/application/ports/studio_repository.py": 543,
-}
+LEGACY_LIMITS: Final[dict[str, int]] = {}
 
 
 @dataclass(frozen=True)
