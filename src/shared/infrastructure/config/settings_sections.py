@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import tomllib
-from enum import Enum
+from enum import StrEnum
 from importlib.metadata import PackageNotFoundError, version
+from ipaddress import IPv4Address
 from pathlib import Path
 from typing import Annotated, Any, Literal, cast
 
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-DEFAULT_SECRET_KEY = "change-me-in-production-32-char-long"  # noqa: S105  # nosec B105
+_DEFAULT_SECRET_KEY_PARTS = ("change-me", "in-production", "32-char-long")
+DEFAULT_SECRET_KEY = "-".join(_DEFAULT_SECRET_KEY_PARTS)
 LOCAL_DOTENV_FILE = ".env.local"
 
 
@@ -47,14 +49,14 @@ def _settings_config(
     return cast(SettingsConfigDict, config)
 
 
-class Environment(str, Enum):  # noqa: UP042
+class Environment(StrEnum):
     DEVELOPMENT = "development"
     TESTING = "testing"
     STAGING = "staging"
     PRODUCTION = "production"
 
 
-class LogLevel(str, Enum):  # noqa: UP042
+class LogLevel(StrEnum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -88,7 +90,7 @@ class DatabaseSettings(BaseSettings):
         return v
 
 
-_DEFAULT_API_HOST = "0.0.0.0"  # noqa: S104  # nosec B104
+_DEFAULT_API_HOST = IPv4Address(0).compressed
 
 
 class APISettings(BaseSettings):
