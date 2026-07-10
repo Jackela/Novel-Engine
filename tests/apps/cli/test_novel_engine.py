@@ -6,24 +6,28 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from types import ModuleType
-from typing import cast
+from types import ModuleType, TracebackType
+from typing import TypedDict
 
 import pytest
 from alembic.config import Config
+from sqlalchemy.sql.elements import TextClause
 
 from src.apps.cli import novel_engine
 
 
-@dataclass
+class ProjectPayload(TypedDict):
+    id: str
+    title: str
+
+
 class FakeConnection:
-    values: dict[str, object] = field(
-        default_factory=lambda: {
+    def __init__(self) -> None:
+        self.values: dict[str, str | int] = {
             "PRAGMA quick_check": "ok",
             "PRAGMA journal_mode": "wal",
             "PRAGMA foreign_keys": 1,
         }
-    )
 
     def __enter__(self) -> FakeConnection:
         return self
@@ -32,11 +36,11 @@ class FakeConnection:
         self,
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
-        exc_tb: object | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         del exc_type, exc_val, exc_tb
 
-    def execute(self, statement: object) -> FakeResult:
+    def execute(self, statement: TextClause) -> FakeResult:
         query = str(statement)
         if query not in self.values:
             raise AssertionError(f"Unexpected doctor query: {query}")
@@ -45,35 +49,35 @@ class FakeConnection:
 
 @dataclass(frozen=True, slots=True)
 class FakeResult:
-    value: object
+    value: str | int
 
-    def scalar_one(self) -> object:
+    def scalar_one(self) -> str | int:
         return self.value
 
 
-@dataclass
 class FakeEngine:
-    connection: FakeConnection = field(default_factory=FakeConnection)
+    def __init__(self) -> None:
+        self.connection = FakeConnection()
 
     def connect(self) -> FakeConnection:
         return self.connection
 
 
-@dataclass
 class FakeDatabase:
-    path: Path | None
-    engine: FakeEngine = field(default_factory=FakeEngine)
-    disposed: bool = False
+    def __init__(self, path: Path | None) -> None:
+        self.path = path
+        self.engine = FakeEngine()
+        self.disposed = False
 
     def dispose(self) -> None:
         self.disposed = True
 
 
-@dataclass
 class FakeStore:
-    owner_configured: bool = True
-    owner: str | None = None
-    imported_source: Path | None = None
+    def __init__(self, *, owner_configured: bool = True) -> None:
+        self.owner_configured = owner_configured
+        self.owner: str | None = None
+        self.imported_source: Path | None = None
 
     def owner_principal(self, owner: str | None) -> str:
         self.owner = owner
@@ -83,7 +87,7 @@ class FakeStore:
         self,
         principal: str,
         source: Path,
-    ) -> dict[str, object]:
+    ) -> ProjectPayload:
         self.owner = principal
         self.imported_source = source
         return {"id": "project-1", "title": "Imported"}
@@ -147,18 +151,15 @@ def test_configured_runtime_disposes_database(
         store=FakeStore(),
         database=FakeDatabase(path=Path("studio.sqlite3")),
     )
-    yielded: list[object] = []
 
     def fake_create_runtime() -> FakeRuntime:
         return runtime
 
     monkeypatch.setattr(novel_engine, "_create_runtime", fake_create_runtime)
 
-    with novel_engine._configured_runtime() as actual:
-        yielded.append(actual)
+    with novel_engine._configured_runtime():
         assert runtime.database.disposed is False
 
-    assert yielded == [runtime]
     assert runtime.database.disposed is True
 
 
@@ -167,7 +168,7 @@ def test_prepare_database_backs_up_then_applies_migrations(
     tmp_path: Path,
 ) -> None:
     database_path = tmp_path / "studio.sqlite3"
-    database = FakeDatabase(path=database_path)
+    database = novel_engine.StudioDatabase(f"sqlite:///{database_path}")
     events: list[str] = []
 
     def fake_backup(path: Path) -> None:
@@ -186,7 +187,10 @@ def test_prepare_database_backs_up_then_applies_migrations(
     monkeypatch.setattr(novel_engine.command, "upgrade", fake_upgrade)
     monkeypatch.setattr(novel_engine, "get_settings", tmp_settings)
 
-    novel_engine._prepare_database(cast(novel_engine.StudioDatabase, database))
+    try:
+        novel_engine._prepare_database(database)
+    finally:
+        database.dispose()
 
     assert events == ["backup", "upgrade"]
 
@@ -315,7 +319,7 @@ def test_serve_prepares_database_before_starting_uvicorn(
         assert database is runtime.database
         events.append("prepared")
 
-    def fake_run(app: str, **kwargs: object) -> None:
+    def fake_run(app: str, **kwargs: str | int | bool) -> None:
         events.append("served")
         assert app == "src.apps.api.main:create_application"
         assert kwargs == {
