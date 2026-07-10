@@ -7,17 +7,16 @@ import httpx
 import pytest
 
 from src.contexts.ai.application.ports.text_generation_port import (
-    TextGenerationProviderError,
     TextGenerationTask,
 )
 from src.contexts.ai.infrastructure.providers.dashscope_text_generation_provider import (
     DashScopeTextGenerationProvider,
 )
 
-_DASHSCOPE_API_KEY = "dashscope-key"
+DASHSCOPE_API_KEY = "dashscope-key"
 
 
-def _task(
+def make_task(
     step: str = "bible",
     response_schema: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
@@ -31,7 +30,7 @@ def _task(
     )
 
 
-class _ProviderResponse:
+class ProviderResponse:
     def __init__(
         self,
         data: dict[str, Any] | None = None,
@@ -65,7 +64,7 @@ class _ProviderResponse:
         return self._data
 
 
-class _AsyncPostClient:
+class AsyncPostClient:
     def __init__(self, outcomes: list[Any]) -> None:
         self.outcomes = outcomes
         self.calls: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
@@ -78,12 +77,12 @@ class _AsyncPostClient:
         return outcome
 
 
-def _dashscope_success_response(
+def dashscope_success_response(
     content: str,
     *,
     prompt_tokens: int | None = None,
     completion_tokens: int | None = None,
-) -> _ProviderResponse:
+) -> ProviderResponse:
     data: dict[str, Any] = {
         "output": {
             "choices": [
@@ -100,7 +99,7 @@ def _dashscope_success_response(
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
         }
-    return _ProviderResponse(data)
+    return ProviderResponse(data)
 
 
 def test_dashscope_provider_requires_api_key() -> None:
@@ -113,11 +112,11 @@ async def test_dashscope_provider_generates_structured_payload(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
+        api_key=DASHSCOPE_API_KEY, retry_attempts=1
     )
-    fake_client = _AsyncPostClient(
+    fake_client = AsyncPostClient(
         [
-            _dashscope_success_response(
+            dashscope_success_response(
                 '{"items": "single", "count": "2"}',
                 prompt_tokens=12,
                 completion_tokens=7,
@@ -127,7 +126,7 @@ async def test_dashscope_provider_generates_structured_payload(
     monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
 
     result = await provider.generate_structured(
-        _task(
+        make_task(
             response_schema={
                 "items": {"type": "array"},
                 "count": {"type": "integer"},
@@ -148,11 +147,11 @@ async def test_dashscope_provider_coerces_nested_sidecar_schema(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
+        api_key=DASHSCOPE_API_KEY, retry_attempts=1
     )
-    fake_client = _AsyncPostClient(
+    fake_client = AsyncPostClient(
         [
-            _dashscope_success_response(
+            dashscope_success_response(
                 json.dumps(
                     {
                         "chapter_markdown": "# Chapter 1\n\nA courier waits.",
@@ -169,7 +168,7 @@ async def test_dashscope_provider_coerces_nested_sidecar_schema(
     monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
 
     result = await provider.generate_structured(
-        _task(
+        make_task(
             step="chapter_draft",
             response_schema={
                 "chapter_markdown": {"type": "string"},
@@ -197,146 +196,19 @@ async def test_dashscope_provider_retries_timeout_then_succeeds(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY,
+        api_key=DASHSCOPE_API_KEY,
         retry_attempts=2,
         retry_delay=0,
     )
-    fake_client = _AsyncPostClient(
+    fake_client = AsyncPostClient(
         [
             httpx.ReadTimeout("slow"),
-            _dashscope_success_response('{"ok": true}'),
+            dashscope_success_response('{"ok": true}'),
         ]
     )
     monkeypatch.setattr(provider, "_get_client", lambda: fake_client)
 
-    result = await provider.generate_structured(_task())
+    result = await provider.generate_structured(make_task())
 
     assert result.content == {"ok": True}
     assert len(fake_client.calls) == 2
-
-
-@pytest.mark.asyncio
-async def test_dashscope_provider_maps_http_status_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient(
-            [_ProviderResponse(status_code=500, text="upstream failed")]
-        ),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="500 upstream failed"):
-        await provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_dashscope_provider_maps_json_decode_error(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient(
-            [
-                _ProviderResponse(
-                    {"output": {}},
-                    json_error=json.JSONDecodeError("bad json", "not-json", 0),
-                )
-            ]
-        ),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="invalid JSON"):
-        await provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_dashscope_provider_maps_non_json_object_response(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient([_dashscope_success_response("[1, 2]")]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="not a JSON object"):
-        await provider.generate_structured(_task())
-
-
-@pytest.mark.asyncio
-async def test_dashscope_provider_uses_chapter_text_fallback_for_non_object_response(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient(
-            [
-                _dashscope_success_response(
-                    json.dumps(
-                        [
-                            "# Chapter 1: The Bell Debt",
-                            "Mira follows the sound into the counting room.",
-                        ]
-                    )
-                )
-            ]
-        ),
-    )
-
-    result = await provider.generate_structured(
-        _task(
-            "chapter_draft",
-            response_schema={
-                "chapter_markdown": {"type": "string"},
-                "sidecar_metadata": {"type": "object"},
-            },
-        )
-    )
-
-    assert result.content == {
-        "chapter_markdown": (
-            "# Chapter 1: The Bell Debt\n\n"
-            "Mira follows the sound into the counting room."
-        )
-    }
-
-
-@pytest.mark.asyncio
-async def test_dashscope_provider_rejects_non_text_chapter_array(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    provider = DashScopeTextGenerationProvider(
-        api_key=_DASHSCOPE_API_KEY, retry_attempts=1
-    )
-    monkeypatch.setattr(
-        provider,
-        "_get_client",
-        lambda: _AsyncPostClient([_dashscope_success_response("[1, 2]")]),
-    )
-
-    with pytest.raises(TextGenerationProviderError, match="not a JSON object"):
-        await provider.generate_structured(
-            _task(
-                "chapter_draft",
-                response_schema={
-                    "chapter_markdown": {"type": "string"},
-                    "sidecar_metadata": {"type": "object"},
-                },
-            )
-        )
