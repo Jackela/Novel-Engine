@@ -50,8 +50,8 @@ class FakeStudioRepository(
     FakeStudioRepositorySearchMixin,
     FakeStudioRepositoryDocumentsMixin,
     FakeStudioRepositoryJobsMixin,
-    FakeStudioRepositoryReviewExportMixin,
     FakeStudioRepositorySnapshotsMixin,
+    FakeStudioRepositoryReviewExportMixin,
 ):
     """In-memory StudioRepository for fast, deterministic unit tests."""
 
