@@ -7,8 +7,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
+from typing import cast
 
 import pytest
+from alembic.config import Config
 
 from src.apps.cli import novel_engine
 
@@ -136,6 +138,57 @@ def install_runtime(
 
 def fake_settings() -> FakeSettings:
     return FakeSettings()
+
+
+def test_configured_runtime_disposes_database(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runtime = FakeRuntime(
+        store=FakeStore(),
+        database=FakeDatabase(path=Path("studio.sqlite3")),
+    )
+    yielded: list[object] = []
+
+    def fake_create_runtime() -> FakeRuntime:
+        return runtime
+
+    monkeypatch.setattr(novel_engine, "_create_runtime", fake_create_runtime)
+
+    with novel_engine._configured_runtime() as actual:
+        yielded.append(actual)
+        assert runtime.database.disposed is False
+
+    assert yielded == [runtime]
+    assert runtime.database.disposed is True
+
+
+def test_prepare_database_backs_up_then_applies_migrations(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    database_path = tmp_path / "studio.sqlite3"
+    database = FakeDatabase(path=database_path)
+    events: list[str] = []
+
+    def fake_backup(path: Path) -> None:
+        assert path == database_path
+        events.append("backup")
+
+    def fake_upgrade(config: Config, revision: str) -> None:
+        assert config.config_file_name == str(tmp_path / "alembic.ini")
+        assert revision == "head"
+        events.append("upgrade")
+
+    def tmp_settings() -> FakeSettings:
+        return FakeSettings(base_dir=tmp_path)
+
+    monkeypatch.setattr(novel_engine, "backup_database", fake_backup)
+    monkeypatch.setattr(novel_engine.command, "upgrade", fake_upgrade)
+    monkeypatch.setattr(novel_engine, "get_settings", tmp_settings)
+
+    novel_engine._prepare_database(cast(novel_engine.StudioDatabase, database))
+
+    assert events == ["backup", "upgrade"]
 
 
 def test_help_does_not_require_production_secrets(
