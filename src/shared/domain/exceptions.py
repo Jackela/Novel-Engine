@@ -1,4 +1,4 @@
-"""Domain exceptions for Novel Engine.
+"""Domain exceptions for Novel Studio.
 
 This module defines the exception hierarchy for the domain layer.
 All domain exceptions inherit from DomainException to allow
