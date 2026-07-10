@@ -25,6 +25,7 @@ from src.contexts.studio.infrastructure.repository.common import (
     select,
     text,
 )
+from src.contexts.studio.infrastructure.repository.project_payloads import project_dto
 
 __all__ = ["ProjectRepositoryMixin"]
 
@@ -118,18 +119,7 @@ class ProjectRepositoryMixin:
                 document.current_revision_id = revision.id
                 self._refresh_search(db_session, document, revision)
                 documents.append(_document_dto(document))
-            return ProjectDto(
-                id=project.id,
-                owner_id=project.owner_id,
-                guest_session_id=project.guest_session_id,
-                title=project.title,
-                description=project.description,
-                settings_json=project.settings_json,
-                import_hash=project.import_hash,
-                created_at=project.created_at,
-                updated_at=project.updated_at,
-                documents=documents,
-            )
+            return project_dto(project, documents=documents)
 
     def list_projects(
         self,
@@ -148,21 +138,7 @@ class ProjectRepositoryMixin:
             )
             statement = self._scope_projects(statement, owner_id, guest_session_id)
             projects = db_session.scalars(statement).all()
-            return [
-                ProjectDto(
-                    id=project.id,
-                    owner_id=project.owner_id,
-                    guest_session_id=project.guest_session_id,
-                    title=project.title,
-                    description=project.description,
-                    settings_json=project.settings_json,
-                    import_hash=project.import_hash,
-                    created_at=project.created_at,
-                    updated_at=project.updated_at,
-                    documents=None,
-                )
-                for project in projects
-            ]
+            return [project_dto(project, documents=None) for project in projects]
 
     def get_project(
         self,
@@ -180,18 +156,7 @@ class ProjectRepositoryMixin:
                 .order_by(Document.kind, Document.position, Document.created_at)
                 .options(selectinload(Document.revisions))
             ).all()
-            return ProjectDto(
-                id=project.id,
-                owner_id=project.owner_id,
-                guest_session_id=project.guest_session_id,
-                title=project.title,
-                description=project.description,
-                settings_json=project.settings_json,
-                import_hash=project.import_hash,
-                created_at=project.created_at,
-                updated_at=project.updated_at,
-                documents=[_document_dto(document) for document in documents],
-            )
+            return project_dto(project, documents=documents)
 
     def update_project(
         self,
@@ -219,18 +184,7 @@ class ProjectRepositoryMixin:
                 .where(Document.project_id == project.id)
                 .order_by(Document.kind, Document.position, Document.created_at)
             ).all()
-            return ProjectDto(
-                id=project.id,
-                owner_id=project.owner_id,
-                guest_session_id=project.guest_session_id,
-                title=project.title,
-                description=project.description,
-                settings_json=project.settings_json,
-                import_hash=project.import_hash,
-                created_at=project.created_at,
-                updated_at=project.updated_at,
-                documents=[_document_dto(document) for document in documents],
-            )
+            return project_dto(project, documents=documents)
 
     def delete_project(
         self,
@@ -276,18 +230,7 @@ class ProjectRepositoryMixin:
             project = db_session.scalar(statement)
             if project is None:
                 return None
-            return ProjectDto(
-                id=project.id,
-                owner_id=project.owner_id,
-                guest_session_id=project.guest_session_id,
-                title=project.title,
-                description=project.description,
-                settings_json=project.settings_json,
-                import_hash=project.import_hash,
-                created_at=project.created_at,
-                updated_at=project.updated_at,
-                documents=None,
-            )
+            return project_dto(project, documents=None)
 
     def set_project_import_hash(
         self,
