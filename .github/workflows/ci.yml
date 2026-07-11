@@ -104,6 +104,12 @@ jobs:
             console.error(
               `React Doctor found ${summary.totalDiagnosticCount} diagnostics.`,
             );
+            const diagnostics = report.diagnostics?.length
+              ? report.diagnostics
+              : (report.projects ?? []).flatMap(
+                  (project) => project.diagnostics ?? [],
+                );
+            console.error(JSON.stringify(diagnostics, null, 2));
             process.exit(1);
           }
           console.log(
