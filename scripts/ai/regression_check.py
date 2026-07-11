@@ -19,6 +19,7 @@ from scripts.ai.regression_diff import DiffDetails, parse_diff
 DEFAULT_MAX_FILES: Final = 5
 GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
 GUARDRAIL_TEST_PREFIX: Final = "tests/unit/scripts/ai/test_regression_check"
+STRING_CONTENT_TOKEN_NAMES: Final = frozenset({"STRING", "FSTRING_MIDDLE"})
 SAFETY_KEYWORDS: Final = (
     "raise",
     "validate",
@@ -217,12 +218,16 @@ def _guardrail_scan_line(filename: str, line: str) -> str:
     try:
         tokens = tokenize.generate_tokens(StringIO(body).readline)
         sanitized = tokenize.untokenize(
-            (token.type, '""' if token.type == tokenize.STRING else token.string)
-            for token in tokens
+            (token.type, _scan_token_text(token)) for token in tokens
         )
     except (IndentationError, tokenize.TokenError):
         return line
     return f"{marker}{sanitized}"
+
+
+def _scan_token_text(token: tokenize.TokenInfo) -> str:
+    token_name = tokenize.tok_name.get(token.type)
+    return '""' if token_name in STRING_CONTENT_TOKEN_NAMES else token.string
 
 
 def _is_guardrail_test_file(filename: str) -> bool:
