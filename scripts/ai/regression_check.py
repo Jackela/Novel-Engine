@@ -1,39 +1,113 @@
 #!/usr/bin/env python3
-"""Regression check after AI modifies code.
-
-Run this after any AI-assisted change to detect common anti-patterns
-introduced by AI: deleted safety code, bare except, hardcoded secrets,
-SQL/FTS5 string concatenation, etc.
-"""
-
 from __future__ import annotations
 
+import argparse
+import os
 import re
 import subprocess
 import sys
+import tokenize
+from collections.abc import Sequence
+from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path
+from re import Pattern
+from typing import Final
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-SAFETY_KEYWORDS = ["raise", "validate", "sanitize", "escape", "auth", "permission"]
-DANGEROUS_PATTERNS = [
-    (r"^\+.*except\s+Exception\s*:", "bare except Exception"),
-    (r'^\+.*f".*\b(SELECT|INSERT|UPDATE|DELETE|MATCH)\b', "SQL/FTS5 f-string"),
-    (r"^\+.*sk-[a-zA-Z0-9]{20,}", "possible OpenAI key"),
-    (r"^\+.*password\s*=\s*['\"][^'\"]+['\"]", "hardcoded password"),
-    (r"^\+.*SECRET_KEY\s*=\s*['\"][^'\"]+['\"]", "hardcoded secret key"),
-]
-FORBIDDEN_PREFIXES = {
+from scripts.ai.regression_diff import DiffDetails, parse_diff
+
+DEFAULT_MAX_FILES: Final = 5
+GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
+GUARDRAIL_TEST_PREFIX: Final = "tests/unit/scripts/ai/test_regression_check"
+STRING_CONTENT_TOKEN_NAMES: Final = frozenset({"STRING", "FSTRING_MIDDLE"})
+SAFETY_KEYWORDS: Final = (
+    "raise",
+    "validate",
+    "sanitize",
+    "escape",
+    "auth",
+    "permission",
+)
+FORBIDDEN_PREFIXES: Final = (
     "alembic/versions/",
     ".env",
     "config/env/",
     "data/",
-}
+)
 
 
-def run_git_diff() -> str:
+@dataclass(frozen=True, slots=True)
+class DangerPattern:
+    regex: Pattern[str]
+    description: str
+
+
+DANGEROUS_PATTERNS: Final = (
+    DangerPattern(
+        re.compile(r"^\+.*except\s+(?:Exception|BaseException)\b"), "broad except"
+    ),
+    DangerPattern(re.compile(r"^\+\s*except\s*:"), "bare except"),
+    DangerPattern(
+        re.compile(r"^\+.*(?:f['\"].*\b(?:SELECT|INSERT|UPDATE|DELETE|MATCH)\b)"),
+        "SQL/FTS5 f-string",
+    ),
+    DangerPattern(
+        re.compile(r"^\+.*\b(?:SELECT|INSERT|UPDATE|DELETE|MATCH)\b.*\+"),
+        "SQL/FTS5 string concatenation",
+    ),
+    DangerPattern(re.compile(r"^\+.*sk-[a-zA-Z0-9]{20,}"), "possible OpenAI key"),
+    DangerPattern(
+        re.compile(
+            r"^\+.*\b(?:password|api_key|secret_key|token)\s*=\s*['\"][^'\"]+['\"]",
+            re.IGNORECASE,
+        ),
+        "hardcoded secret-like value",
+    ),
+    DangerPattern(re.compile(r"^\+.*#\s*type:\s*ignore"), "type ignore suppression"),
+    DangerPattern(re.compile(r"^\+.*#\s*pyright:\s*ignore"), "pyright suppression"),
+    DangerPattern(
+        re.compile(r"^\+.*#\s*(?:noqa|nosec)\b"), "lint/security suppression"
+    ),
+    DangerPattern(
+        re.compile(r"^\+.*(?:\bas\s+any\b|:\s*any\b|<any>)"), "TypeScript any escape"
+    ),
+    DangerPattern(
+        re.compile(r"^\+.*(?:dangerouslySetInnerHTML|innerHTML\s*=|eval\()"),
+        "unsafe DOM/code execution",
+    ),
+)
+
+GUARDRAIL_WEAKENING_PATTERNS: Final = (
+    DangerPattern(
+        re.compile(r"^\+\s*return\s+\[\]\s*(?:#.*)?$"),
+        "guardrail short-circuit",
+    ),
+)
+
+
+def _project_root() -> Path:
+    override = os.getenv("REGRESSION_CHECK_PROJECT_ROOT")
+    if override is not None:
+        return Path(override).resolve()
+    return Path(__file__).resolve().parents[2]
+
+
+PROJECT_ROOT: Final = _project_root()
+
+
+def build_diff_command(base_ref: str | None, head_ref: str | None) -> list[str]:
+    if base_ref is None and head_ref is None:
+        return ["git", "diff", "--no-color"]
+    if base_ref is None or head_ref is None:
+        raise ValueError("--base-ref and --head-ref must be provided together")
+    return ["git", "diff", "--no-color", f"{base_ref}...{head_ref}"]
+
+
+def run_git_diff(base_ref: str | None = None, head_ref: str | None = None) -> str:
     result = subprocess.run(
-        ["git", "diff", "--no-color"],
+        build_diff_command(base_ref, head_ref),
         cwd=PROJECT_ROOT,
+        check=True,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -42,122 +116,200 @@ def run_git_diff() -> str:
     return result.stdout
 
 
-def parse_diff(
-    diff: str,
-) -> tuple[dict[str, list[str]], dict[str, list[str]], set[str]]:
-    """Parse diff into per-file additions, deletions, and entirely-deleted files."""
-    additions: dict[str, list[str]] = {}
-    deletions: dict[str, list[str]] = {}
-    deleted_files: set[str] = set()
-
-    current_file: str | None = None
-    is_deleted = False
-
-    for line in diff.splitlines():
-        if line.startswith("diff --git a/"):
-            # Reset for new file
-            current_file = None
-            is_deleted = False
-            parts = line.split()
-            if len(parts) >= 4:
-                # parts[3] is b/<filename>; remove prefix to get current file.
-                current_file = parts[3].removeprefix("b/")
-        elif line == "deleted file mode 100644" or line == "deleted file mode 100755":
-            is_deleted = True
-            if current_file:
-                deleted_files.add(current_file)
-                current_file = None
-        elif line.startswith("--- a/"):
-            # old file path; nothing to do
-            pass
-        elif line.startswith("+++ /dev/null"):
-            # File was deleted entirely.
-            is_deleted = True
-            if current_file:
-                deleted_files.add(current_file)
-                current_file = None
-        elif line.startswith("+++ b/"):
-            # New file path; current_file already known from diff --git line
-            pass
-        elif current_file and line.startswith("+") and not line.startswith("+++"):
-            additions.setdefault(current_file, []).append(line)
-        elif current_file and line.startswith("-") and not line.startswith("---"):
-            deletions.setdefault(current_file, []).append(line)
-
-    return additions, deletions, deleted_files
-
-
-def check_deleted_safety_lines(
-    deletions: dict[str, list[str]], deleted_files: set[str]
-) -> list[str]:
+def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
     issues: list[str] = []
-    for filename, lines in deletions.items():
-        if filename in deleted_files:
-            # Dead code removal is expected; do not flag every deleted line.
-            continue
+    moved_line_bodies = _added_line_bodies(diff)
+    for filename, lines in diff.deletions.items():
+        for line in lines:
+            issue = _deleted_safety_issue(filename, line, moved_line_bodies)
+            if issue is not None:
+                issues.append(issue)
+    return issues
+
+
+def _added_line_bodies(diff: DiffDetails) -> set[str]:
+    moved_line_bodies: set[str] = set()
+    for filename, lines in diff.additions.items():
+        for line in lines:
+            scan_line = _guardrail_scan_line(filename, line)
+            if _contains_safety_keyword(scan_line):
+                moved_line_bodies.add(_diff_line_body(scan_line))
+    return moved_line_bodies
+
+
+def _diff_line_body(line: str) -> str:
+    return line[1:].strip() if line[:1] in {"+", "-"} else line.strip()
+
+
+def _contains_safety_keyword(line: str) -> bool:
+    return any(re.search(rf"\b{keyword}\b", line) for keyword in SAFETY_KEYWORDS)
+
+
+def _deleted_safety_issue(
+    filename: str,
+    line: str,
+    moved_line_bodies: set[str],
+) -> str | None:
+    scan_line = _guardrail_scan_line(filename, line)
+    if _is_self_definition_line(filename, scan_line):
+        return None
+    line_body = _diff_line_body(scan_line)
+    if _is_comment_line_body(line_body):
+        return None
+    if line_body in moved_line_bodies:
+        return None
+    for keyword in SAFETY_KEYWORDS:
+        if re.search(rf"\b{keyword}\b", scan_line):
+            return f"[{filename}] Deleted safety keyword '{keyword}': {line}"
+    return None
+
+
+def _is_comment_line_body(line_body: str) -> bool:
+    return line_body.startswith(("#", "//"))
+
+
+def check_deleted_files(diff: DiffDetails) -> list[str]:
+    issues: list[str] = []
+    for filename in sorted(diff.deleted_files):
         if filename.startswith("tests/"):
-            # Test deletions are usually fine.
+            issues.append(f"[{filename}] Deleted test file")
+        if filename.startswith(FORBIDDEN_PREFIXES):
+            issues.append(f"[{filename}] Deleted forbidden-zone file")
+    return issues
+
+
+def check_dangerous_additions(diff: DiffDetails) -> list[str]:
+    issues: list[str] = []
+    for filename, lines in diff.additions.items():
+        for line in lines:
+            issue = _dangerous_addition_issue(filename, line)
+            if issue is not None:
+                issues.append(issue)
+    return issues
+
+
+def check_guardrail_self_modification(diff: DiffDetails) -> list[str]:
+    issues: list[str] = []
+    for line in diff.additions.get(GUARDRAIL_FILE, []):
+        if _is_self_definition_line(GUARDRAIL_FILE, line):
             continue
-        for line in lines:
-            for keyword in SAFETY_KEYWORDS:
-                if re.search(rf"\b{keyword}\b", line):
-                    issues.append(
-                        f"[{filename}] Deleted safety keyword '{keyword}': {line}"
-                    )
-                    break
+        for pattern in GUARDRAIL_WEAKENING_PATTERNS:
+            if pattern.regex.search(line):
+                issues.append(f"[{GUARDRAIL_FILE}] {pattern.description}: {line}")
+                break
     return issues
 
 
-def check_dangerous_additions(additions: dict[str, list[str]]) -> list[str]:
-    issues: list[str] = []
-    for filename, lines in additions.items():
-        for line in lines:
-            for pattern, description in DANGEROUS_PATTERNS:
-                if re.search(pattern, line, re.IGNORECASE):
-                    issues.append(f"[{filename}] {description}: {line}")
-                    break
-    return issues
+def _dangerous_addition_issue(filename: str, line: str) -> str | None:
+    scan_line = _guardrail_scan_line(filename, line)
+    if _is_self_definition_line(filename, scan_line):
+        return None
+    for pattern in DANGEROUS_PATTERNS:
+        if pattern.regex.search(scan_line):
+            return f"[{filename}] {pattern.description}: {line}"
+    return None
 
 
-def check_file_count(
-    additions: dict[str, list[str]], deletions: dict[str, list[str]]
+def _guardrail_scan_line(filename: str, line: str) -> str:
+    if not _is_guardrail_test_file(filename):
+        return line
+    marker = line[:1] if line[:1] in {"+", "-"} else ""
+    body = line[1:] if marker else line
+    try:
+        tokens = tokenize.generate_tokens(StringIO(body).readline)
+        sanitized = tokenize.untokenize(
+            (token.type, _scan_token_text(token)) for token in tokens
+        )
+    except (IndentationError, tokenize.TokenError):
+        return line
+    return f"{marker}{sanitized}"
+
+
+def _scan_token_text(token: tokenize.TokenInfo) -> str:
+    token_name = tokenize.tok_name.get(token.type)
+    return '""' if token_name in STRING_CONTENT_TOKEN_NAMES else token.string
+
+
+def _is_guardrail_test_file(filename: str) -> bool:
+    return filename.startswith(GUARDRAIL_TEST_PREFIX) and filename.endswith(".py")
+
+
+def _is_self_definition_line(filename: str, line: str) -> bool:
+    return filename == GUARDRAIL_FILE and any(
+        token in line for token in ("SAFETY_KEYWORDS", "DangerPattern(", "re.compile(")
+    )
+
+
+def check_file_scope(
+    diff: DiffDetails, *, max_files: int, skip_file_count: bool
 ) -> list[str]:
-    changed_files = set(additions) | set(deletions)
+    changed_files = diff.changed_files()
     issues: list[str] = []
-    if len(changed_files) > 5:
+    if not skip_file_count and len(changed_files) > max_files:
         issues.append(
             f"AI changed {len(changed_files)} files. Consider splitting into smaller tasks."
         )
-    for f in changed_files:
-        for prefix in FORBIDDEN_PREFIXES:
-            if f.startswith(prefix):
-                issues.append(f"AI modified forbidden zone: {f}")
+    for filename in sorted(changed_files):
+        if filename.startswith(FORBIDDEN_PREFIXES):
+            issues.append(f"AI modified forbidden zone: {filename}")
     return issues
 
 
-def main() -> int:
-    diff = run_git_diff()
-    if not diff.strip():
-        print("No diff found. Did you forget to make changes?")
+def find_regressions(
+    diff: DiffDetails,
+    *,
+    max_files: int = DEFAULT_MAX_FILES,
+    skip_file_count: bool = False,
+) -> list[str]:
+    issues: list[str] = []
+    issues.extend(check_deleted_safety_lines(diff))
+    issues.extend(check_deleted_files(diff))
+    issues.extend(check_guardrail_self_modification(diff))
+    issues.extend(check_dangerous_additions(diff))
+    issues.extend(
+        check_file_scope(diff, max_files=max_files, skip_file_count=skip_file_count)
+    )
+    return issues
+
+
+def write_line(message: str, *, stderr: bool = False) -> None:
+    stream = sys.stderr if stderr else sys.stdout
+    stream.write(f"{message}\n")
+
+
+def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Check diffs for AI regression risks.")
+    parser.add_argument("--base-ref", help="Base git ref for PR diff checks.")
+    parser.add_argument("--head-ref", help="Head git ref for PR diff checks.")
+    parser.add_argument("--max-files", type=int, default=DEFAULT_MAX_FILES)
+    parser.add_argument("--skip-file-count", action="store_true")
+    return parser.parse_args(argv)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parse_args(sys.argv[1:] if argv is None else argv)
+    diff_text = run_git_diff(base_ref=args.base_ref, head_ref=args.head_ref)
+    if not diff_text.strip():
+        write_line("No diff found. Did you forget to make changes?")
         return 0
 
-    additions, deletions, deleted_files = parse_diff(diff)
-
-    all_issues: list[str] = []
-    all_issues.extend(check_deleted_safety_lines(deletions, deleted_files))
-    all_issues.extend(check_dangerous_additions(additions))
-    all_issues.extend(check_file_count(additions, deletions))
-
-    if not all_issues:
-        print("[PASS] Regression check passed. No obvious AI anti-patterns detected.")
+    issues = find_regressions(
+        parse_diff(diff_text),
+        max_files=args.max_files,
+        skip_file_count=args.skip_file_count,
+    )
+    if not issues:
+        write_line(
+            "[PASS] Regression check passed. No obvious AI anti-patterns detected."
+        )
         return 0
 
-    print("[WARN] Regression check found potential issues:\n")
-    for issue in all_issues:
-        print(f"  - {issue}")
-    print(f"\nTotal issues: {len(all_issues)}")
+    write_line("[WARN] Regression check found potential issues:\n", stderr=True)
+    for issue in issues:
+        write_line(f"  - {issue}", stderr=True)
+    write_line(f"\nTotal issues: {len(issues)}", stderr=True)
     return 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

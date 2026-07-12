@@ -21,7 +21,7 @@ export function StudioTopbar({
 }: StudioTopbarProps) {
   return (
     <header className="studio-topbar">
-      <button className="icon-command" onClick={onBack} title="Projects">
+      <button className="icon-command" onClick={onBack} title="Projects" type="button">
         <ChevronLeft />
       </button>
       <div className="brand">

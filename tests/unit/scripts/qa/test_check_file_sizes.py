@@ -12,11 +12,20 @@ def _write_code_lines(path: Path, line_count: int) -> None:
     path.write_text("value = 1\n" * line_count, encoding="utf-8")
 
 
-def test_exact_active_legacy_ceiling_is_accepted() -> None:
+def test_exact_active_legacy_ceiling_is_accepted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # Given
-    relative_path = "src/contexts/studio/application/ports/studio_repository.py"
-    path = check_file_sizes.ROOT / relative_path
-    configured_limit = check_file_sizes.LEGACY_LIMITS[relative_path]
+    relative_path = "src/legacy.py"
+    configured_limit = check_file_sizes.MAX_CODE_LINES + 1
+    path = tmp_path / relative_path
+    _write_code_lines(path, configured_limit)
+    monkeypatch.setattr(check_file_sizes, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        check_file_sizes,
+        "LEGACY_LIMITS",
+        {relative_path: configured_limit},
+    )
     assert configured_limit > check_file_sizes.MAX_CODE_LINES
     assert check_file_sizes.code_line_count(path) == configured_limit
 

@@ -5,18 +5,15 @@ from typing import TYPE_CHECKING
 from sqlalchemy.orm import selectinload
 
 from src.contexts.studio.infrastructure.repository.common import (
-    Any,
     Document,
     DocumentDto,
     DocumentRevision,
     InvalidOperation,
     NotFound,
     Project,
-    RevisionDto,
     Session,
     StudioDatabase,
     _document_dto,
-    _revision_dto,
     _session,
     datetime,
     func,
@@ -24,11 +21,20 @@ from src.contexts.studio.infrastructure.repository.common import (
     select,
     text,
 )
+from src.contexts.studio.infrastructure.repository.document_revisions import (
+    DocumentRevisionRepositoryMixin,
+)
+from src.contexts.studio.infrastructure.repository.document_search import (
+    DocumentSearchRepositoryMixin,
+)
 
 __all__ = ["DocumentRepositoryMixin"]
 
 
-class DocumentRepositoryMixin:
+class DocumentRepositoryMixin(
+    DocumentRevisionRepositoryMixin,
+    DocumentSearchRepositoryMixin,
+):
     database: StudioDatabase
 
     if TYPE_CHECKING:
@@ -211,81 +217,6 @@ class DocumentRepositoryMixin:
             session.flush()
             return _document_dto(document)
 
-    def _current_revision(
-        self,
-        session: Session,
-        document: Document,
-    ) -> DocumentRevision:
-        if document.current_revision_id is None:
-            raise InvalidOperation("Document has no current revision.")
-        revision = session.get(DocumentRevision, document.current_revision_id)
-        if revision is None:
-            raise InvalidOperation("Document revision chain is invalid.")
-        return revision
-
-    def _refresh_search(
-        self,
-        session: Session,
-        document: Document,
-        revision: DocumentRevision,
-    ) -> None:
-        session.execute(
-            text("DELETE FROM document_search WHERE document_id = :document_id"),
-            {"document_id": document.id},
-        )
-        session.execute(
-            text(
-                "INSERT INTO document_search(document_id, project_id, title, content) "
-                "VALUES (:document_id, :project_id, :title, :content)"
-            ),
-            {
-                "document_id": document.id,
-                "project_id": document.project_id,
-                "title": document.title,
-                "content": revision.content_markdown,
-            },
-        )
-
-    def get_revision(
-        self,
-        project_id: str,
-        document_id: str,
-        revision_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> RevisionDto:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            document = self._document(session, project, document_id)
-            revision = session.scalar(
-                select(DocumentRevision).where(
-                    DocumentRevision.id == revision_id,
-                    DocumentRevision.document_id == document.id,
-                )
-            )
-            if revision is None:
-                raise NotFound("Revision not found.")
-            return _revision_dto(revision)
-
-    def list_revisions(
-        self,
-        project_id: str,
-        document_id: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> list[RevisionDto]:
-        with self.database.session() as session:
-            project = self._project(session, project_id, owner_id, guest_session_id)
-            document = self._document(session, project, document_id)
-            revisions = session.scalars(
-                select(DocumentRevision)
-                .where(DocumentRevision.document_id == document.id)
-                .order_by(DocumentRevision.revision_number.desc())
-            ).all()
-            return [_revision_dto(revision) for revision in revisions]
-
     def reorder_documents(
         self,
         project_id: str,
@@ -313,24 +244,3 @@ class DocumentRepositoryMixin:
             project.updated_at = now
             session.flush()
             return [_document_dto(documents[doc_id]) for doc_id in document_ids]
-
-    def search_documents(
-        self,
-        project_id: str,
-        query: str,
-        *,
-        owner_id: str | None,
-        guest_session_id: str | None,
-    ) -> list[dict[str, Any]]:
-        with self.database.session() as session:
-            self._project(session, project_id, owner_id, guest_session_id)
-            rows = session.execute(
-                text(
-                    "SELECT document_id, title, snippet(document_search, 3, '', "
-                    "'', ' … ', 16) AS excerpt "
-                    "FROM document_search WHERE project_id = :project_id "
-                    "AND document_search MATCH :query ORDER BY rank LIMIT 30"
-                ),
-                {"project_id": project_id, "query": query},
-            ).mappings()
-            return [dict(row) for row in rows]

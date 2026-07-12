@@ -1,4 +1,4 @@
-"""Semantic type definitions for Novel Engine domain layer.
+"""Semantic type definitions for the Novel Studio domain layer.
 
 This module defines semantic types that provide type safety and
 clear meaning to primitive values used throughout the domain layer.

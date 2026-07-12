@@ -1,5 +1,3 @@
-"""Validate the editable Novel Studio version and product authority."""
-
 from __future__ import annotations
 
 import json
@@ -7,51 +5,99 @@ import re
 import sys
 import tomllib
 from pathlib import Path
+from typing import Final
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT: Final = Path(__file__).resolve().parents[2]
+EXPECTED_VERSION: Final = "0.3.1"
+TEXT_SUFFIXES: Final = frozenset({".md", ".py", ".ts", ".tsx"})
+IDENTITY_SCAN_PATHS: Final = ("README.md", "frontend/src", "src/apps/api")
+RETIRED_IDENTITY = re.compile(
+    r"StoryForge|multi-agent narrative|Markdown files are the manuscript source of truth",
+    re.I,
+)
 
 
-def main() -> int:
-    failures: list[str] = []
+def _project_version() -> str:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    version = str(project["project"]["version"])
-    if version != "0.3.1":
-        failures.append(
-            f"pyproject.toml must define release version 0.3.1, got {version}"
-        )
+    return str(project["project"]["version"])
 
+
+def _frontend_package() -> dict[str, str]:
     package = json.loads(
         (ROOT / "frontend" / "package.json").read_text(encoding="utf-8")
     )
+    if not isinstance(package, dict):
+        raise RuntimeError("frontend/package.json did not decode to an object.")
+    return {str(key): str(value) for key, value in package.items()}
+
+
+def _identity_files(relative: str) -> list[Path]:
+    path = ROOT / relative
+    if path.is_file():
+        return [path]
+    return [candidate for candidate in path.rglob("*") if candidate.is_file()]
+
+
+def _version_failures() -> list[str]:
+    version = _project_version()
+    if version == EXPECTED_VERSION:
+        return []
+    return [
+        f"pyproject.toml must define release version {EXPECTED_VERSION}, got {version}"
+    ]
+
+
+def _frontend_failures() -> list[str]:
+    package = _frontend_package()
+    failures: list[str] = []
     if "version" in package:
         failures.append("frontend/package.json must not define a product version")
     if package.get("name") != "novel-engine-studio":
         failures.append("frontend package must be named novel-engine-studio")
+    return failures
 
+
+def _openspec_failures() -> list[str]:
     required = ROOT / "openspec" / "specs" / "novel-studio" / "spec.md"
-    if not required.is_file():
-        failures.append("canonical OpenSpec capability is missing")
+    if required.is_file():
+        return []
+    return ["canonical OpenSpec capability is missing"]
 
-    forbidden = re.compile(
-        r"StoryForge|multi-agent narrative|Markdown files are the manuscript source of truth",
-        re.I,
-    )
-    for relative in ("README.md", "frontend/src", "src/apps/api"):
-        path = ROOT / relative
-        files = [path] if path.is_file() else list(path.rglob("*"))
-        for file in files:
-            if not file.is_file() or file.suffix not in {".md", ".py", ".ts", ".tsx"}:
+
+def _identity_failures() -> list[str]:
+    failures: list[str] = []
+    for relative in IDENTITY_SCAN_PATHS:
+        for path in _identity_files(relative):
+            if path.suffix not in TEXT_SUFFIXES:
                 continue
-            if forbidden.search(file.read_text(encoding="utf-8")):
+            if RETIRED_IDENTITY.search(path.read_text(encoding="utf-8")):
                 failures.append(
-                    f"{file.relative_to(ROOT)} contains a retired product identity"
+                    f"{path.relative_to(ROOT)} contains a retired product identity"
                 )
+    return failures
 
+
+def _failures() -> list[str]:
+    failures: list[str] = []
+    failures.extend(_version_failures())
+    failures.extend(_frontend_failures())
+    failures.extend(_openspec_failures())
+    failures.extend(_identity_failures())
+    return failures
+
+
+def write_line(message: str, *, stderr: bool = False) -> None:
+    stream = sys.stderr if stderr else sys.stdout
+    stream.write(f"{message}\n")
+
+
+def main() -> int:
+    failures = _failures()
     if failures:
         for failure in failures:
-            print(f"[ssot] {failure}", file=sys.stderr)
+            write_line(f"[ssot] {failure}", stderr=True)
         return 1
-    print(f"[ssot] Novel Studio {version} is aligned")
+    write_line(f"[ssot] Novel Studio {_project_version()} is aligned")
     return 0
 
 

@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Any, Literal, Protocol
-from urllib.parse import urlsplit, urlunsplit
+from typing import Any
 
 import httpx
 
@@ -17,314 +14,20 @@ from src.contexts.ai.application.ports.text_generation_port import (
     TextGenerationResult,
     TextGenerationTask,
 )
-
-DEFAULT_DASHSCOPE_API_BASE = "https://dashscope.aliyuncs.com/api/v1"
-DEFAULT_DASHSCOPE_RESPONSES_API_BASE = (
-    "https://dashscope.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1"
+from src.contexts.ai.infrastructure.providers.dashscope_json import parse_json_object
+from src.contexts.ai.infrastructure.providers.dashscope_payload import (
+    coerce_payload_to_schema,
+    fallback_payload_from_non_object_response,
+    payload_from_response_text,
 )
-DEFAULT_DASHSCOPE_TEXT_ENDPOINT = "/services/aigc/text-generation/generation"
-DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT = (
-    "/services/aigc/multimodal-generation/generation"
+from src.contexts.ai.infrastructure.providers.dashscope_protocol import (
+    DashScopeTransport,
+    DashScopeTransportMode,
+    extract_generation_response_text,
+    extract_responses_text,
+    extract_usage_tokens,
+    resolve_transport,
 )
-DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT = "/responses"
-DashScopeTransportMode = Literal[
-    "text_generation",
-    "multimodal_generation",
-    "responses",
-]
-MIN_FENCED_BLOCK_LINES = 3
-
-
-@dataclass
-class _FragmentScanState:
-    depth: int = 0
-    start: int = -1
-    in_string: bool = False
-    string_delimiter: str = ""
-    escaped: bool = False
-
-    def consume_string_character(self, character: str) -> bool:
-        if not self.in_string:
-            return False
-        if self.escaped:
-            self.escaped = False
-            return True
-        if character == "\\":
-            self.escaped = True
-            return True
-        if character == self.string_delimiter:
-            self.in_string = False
-        return True
-
-    def enter_string(self, character: str) -> bool:
-        if character not in {'"', "'"}:
-            return False
-        self.in_string = True
-        self.string_delimiter = character
-        return True
-
-    def append_fragment(
-        self,
-        fragments: list[str],
-        text: str,
-        *,
-        index: int,
-        opening: str,
-        closing: str,
-    ) -> None:
-        if text[index] == opening:
-            if self.depth == 0:
-                self.start = index
-            self.depth += 1
-            return
-        if text[index] != closing or not self.depth:
-            return
-        self.depth -= 1
-        if self.depth == 0 and self.start != -1:
-            fragments.append(text[self.start : index + 1].strip())
-            self.start = -1
-
-
-def _normalize_generation_base(api_base: str | None) -> str:
-    base_url = (api_base or DEFAULT_DASHSCOPE_API_BASE).rstrip("/")
-    parsed = urlsplit(base_url)
-    if "compatible-mode" not in parsed.path:
-        return base_url
-    return urlunsplit((parsed.scheme, parsed.netloc, "/api/v1", "", ""))
-
-
-def _normalize_responses_base(api_base: str | None) -> str:
-    base_url = (api_base or DEFAULT_DASHSCOPE_RESPONSES_API_BASE).rstrip("/")
-    parsed = urlsplit(base_url)
-    if parsed.path == "/api/v2/apps/protocols/compatible-mode/v1":
-        return base_url
-    return urlunsplit(
-        (
-            parsed.scheme,
-            parsed.netloc,
-            "/api/v2/apps/protocols/compatible-mode/v1",
-            "",
-            "",
-        )
-    )
-
-
-def _build_system_content(task: TextGenerationTask) -> str:
-    schema_text = json.dumps(task.response_schema, ensure_ascii=False)
-    return f"{task.system_prompt}\nReturn valid JSON only. Output schema: {schema_text}"
-
-
-def _build_user_content(task: TextGenerationTask) -> str:
-    metadata_text = json.dumps(task.metadata, ensure_ascii=False)
-    return f"{task.user_prompt}\nTask step: {task.step}\nMetadata: {metadata_text}"
-
-
-SchemaCoercer = Callable[[Any, dict[str, Any], str | None], Any]
-
-
-def _coerce_object_value(value: Any, schema: dict[str, Any], key: str | None) -> Any:
-    if isinstance(value, dict):
-        properties = schema.get("properties")
-        if not isinstance(properties, dict):
-            return value
-        normalized = dict(value)
-        for nested_key, nested_schema in properties.items():
-            if nested_key in normalized:
-                normalized[nested_key] = _coerce_value_to_schema(
-                    normalized[nested_key],
-                    nested_schema,
-                    key=str(nested_key),
-                )
-        return normalized
-    if isinstance(value, list):
-        return {"characters": value} if key == "character_bible" else {"items": value}
-    if value is None or value == "":
-        return {}
-    return {"value": value}
-
-
-def _coerce_array_value(value: Any, _schema: dict[str, Any], _key: str | None) -> Any:
-    if isinstance(value, list):
-        return value
-    return [] if value is None else [value]
-
-
-def _coerce_string_value(value: Any, _schema: dict[str, Any], _key: str | None) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        return value.strip()
-    if isinstance(value, list):
-        return " ".join(
-            str(item).strip() for item in value if str(item).strip()
-        ).strip()
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False).strip()
-    return str(value).strip()
-
-
-def _coerce_integer_value(value: Any, _schema: dict[str, Any], _key: str | None) -> Any:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return value
-
-
-_SCHEMA_COERCERS: dict[str, SchemaCoercer] = {
-    "object": _coerce_object_value,
-    "array": _coerce_array_value,
-    "string": _coerce_string_value,
-    "integer": _coerce_integer_value,
-}
-
-
-def _coerce_value_to_schema(
-    value: Any,
-    schema: dict[str, Any] | None,
-    *,
-    key: str | None = None,
-) -> Any:
-    if not isinstance(schema, dict):
-        return value
-    coercer = _SCHEMA_COERCERS.get(str(schema.get("type")))
-    return coercer(value, schema, key) if coercer is not None else value
-
-
-def _coerce_payload_to_schema(
-    payload: dict[str, Any],
-    response_schema: dict[str, Any],
-) -> dict[str, Any]:
-    normalized = dict(payload)
-    for key, schema in response_schema.items():
-        if key not in normalized:
-            continue
-        normalized[key] = _coerce_value_to_schema(normalized[key], schema, key=key)
-    return normalized
-
-
-class _DashScopeTransport(Protocol):
-    @property
-    def mode(self) -> DashScopeTransportMode: ...
-
-    def normalize_api_base(self, api_base: str | None) -> str: ...
-
-    def endpoint_path(self) -> str: ...
-
-    def build_request_payload(
-        self,
-        *,
-        model: str,
-        task: TextGenerationTask,
-    ) -> dict[str, Any]: ...
-
-    def extract_response_text(self, data: dict[str, Any]) -> str: ...
-
-
-@dataclass(frozen=True, slots=True)
-class _DashScopeGenerationTransport:
-    mode: DashScopeTransportMode = "text_generation"
-
-    def normalize_api_base(self, api_base: str | None) -> str:
-        return _normalize_generation_base(api_base)
-
-    def endpoint_path(self) -> str:
-        return DEFAULT_DASHSCOPE_TEXT_ENDPOINT
-
-    def build_request_payload(
-        self,
-        *,
-        model: str,
-        task: TextGenerationTask,
-    ) -> dict[str, Any]:
-        return {
-            "model": model,
-            "input": {
-                "messages": [
-                    {"role": "system", "content": _build_system_content(task)},
-                    {"role": "user", "content": _build_user_content(task)},
-                ],
-            },
-            "parameters": {
-                "temperature": task.temperature,
-                "enable_thinking": False,
-                "result_format": "message",
-                "response_format": {"type": "json_object"},
-            },
-        }
-
-    def extract_response_text(self, data: dict[str, Any]) -> str:
-        return DashScopeTextGenerationProvider._extract_generation_response_text(data)
-
-
-@dataclass(frozen=True, slots=True)
-class _DashScopeMultimodalGenerationTransport:
-    mode: DashScopeTransportMode = "multimodal_generation"
-
-    def normalize_api_base(self, api_base: str | None) -> str:
-        return _normalize_generation_base(api_base)
-
-    def endpoint_path(self) -> str:
-        return DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT
-
-    def build_request_payload(
-        self,
-        *,
-        model: str,
-        task: TextGenerationTask,
-    ) -> dict[str, Any]:
-        return {
-            "model": model,
-            "input": {
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": [{"text": _build_system_content(task)}],
-                    },
-                    {
-                        "role": "user",
-                        "content": [{"text": _build_user_content(task)}],
-                    },
-                ],
-            },
-            "parameters": {
-                "temperature": task.temperature,
-                "enable_thinking": False,
-                "result_format": "message",
-                "response_format": {"type": "json_object"},
-            },
-        }
-
-    def extract_response_text(self, data: dict[str, Any]) -> str:
-        return DashScopeTextGenerationProvider._extract_generation_response_text(data)
-
-
-@dataclass(frozen=True, slots=True)
-class _DashScopeResponsesTransport:
-    mode: DashScopeTransportMode = "responses"
-
-    def normalize_api_base(self, api_base: str | None) -> str:
-        return _normalize_responses_base(api_base)
-
-    def endpoint_path(self) -> str:
-        return DEFAULT_DASHSCOPE_RESPONSES_ENDPOINT
-
-    def build_request_payload(
-        self,
-        *,
-        model: str,
-        task: TextGenerationTask,
-    ) -> dict[str, Any]:
-        return {
-            "model": model,
-            "input": (
-                f"System:\n{_build_system_content(task)}\n\n"
-                f"User:\n{_build_user_content(task)}"
-            ),
-            "temperature": task.temperature,
-        }
-
-    def extract_response_text(self, data: dict[str, Any]) -> str:
-        return DashScopeTextGenerationProvider._extract_responses_text(data)
 
 
 class DashScopeTextGenerationProvider(TextGenerationProvider):
@@ -356,12 +59,8 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         return self._transport.mode
 
     @staticmethod
-    def _resolve_transport(mode: DashScopeTransportMode) -> _DashScopeTransport:
-        if mode == "text_generation":
-            return _DashScopeGenerationTransport()
-        if mode == "multimodal_generation":
-            return _DashScopeMultimodalGenerationTransport()
-        return _DashScopeResponsesTransport()
+    def _resolve_transport(mode: DashScopeTransportMode) -> DashScopeTransport:
+        return resolve_transport(mode)
 
     def _get_client(self) -> httpx.AsyncClient:
         if self._client is None:
@@ -397,223 +96,13 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             float(self._timeout), timeout_floors.get(task.step, float(self._timeout))
         )
 
-    @staticmethod
-    def _extract_content_text(message: dict[str, Any]) -> str:
-        content = message.get("content", "")
-        if isinstance(content, str):
-            return content or "{}"
-        if isinstance(content, list):
-            text_parts: list[str] = []
-            for item in content:
-                if isinstance(item, dict):
-                    text = item.get("text")
-                    if isinstance(text, str) and text.strip():
-                        text_parts.append(text)
-            if text_parts:
-                return "".join(text_parts)
-        return "{}"
-
-    @classmethod
-    def _extract_generation_response_text(cls, data: dict[str, Any]) -> str:
-        output = data.get("output")
-        if not isinstance(output, dict):
-            raise TextGenerationProviderError("DashScope response missing output")
-
-        choices = output.get("choices")
-        if isinstance(choices, list) and choices:
-            first_choice = choices[0]
-            if not isinstance(first_choice, dict):
-                raise TextGenerationProviderError(
-                    "DashScope response choice is not an object"
-                )
-            message = first_choice.get("message", {})
-            if not isinstance(message, dict):
-                raise TextGenerationProviderError(
-                    "DashScope response message is not an object"
-                )
-            return cls._extract_content_text(message)
-
-        text = output.get("text")
-        if isinstance(text, str) and text.strip():
-            return text
-
-        raise TextGenerationProviderError(
-            "DashScope response missing structured message content"
-        )
-
-    @staticmethod
-    def _extract_responses_text(data: dict[str, Any]) -> str:
-        output = data.get("output")
-        if not isinstance(output, list):
-            raise TextGenerationProviderError("DashScope responses output is invalid")
-
-        for item in output:
-            if not isinstance(item, dict) or item.get("type") != "message":
-                continue
-            content = item.get("content")
-            if not isinstance(content, list):
-                continue
-            text_parts: list[str] = []
-            for entry in content:
-                if not isinstance(entry, dict):
-                    continue
-                text = entry.get("text")
-                if isinstance(text, str) and text.strip():
-                    text_parts.append(text)
-            if text_parts:
-                return "".join(text_parts)
-
-        raise TextGenerationProviderError(
-            "DashScope responses output missing message text"
-        )
-
-    @staticmethod
-    def _extract_usage_tokens(data: dict[str, Any]) -> tuple[int | None, int | None]:
-        """Return ``(prompt_tokens, completion_tokens)`` from a DashScope response."""
-        usage = data.get("usage")
-        if not isinstance(usage, dict):
-            return None, None
-        prompt_tokens = usage.get("prompt_tokens")
-        completion_tokens = usage.get("completion_tokens")
-        return (
-            int(prompt_tokens) if isinstance(prompt_tokens, int) else None,
-            int(completion_tokens) if isinstance(completion_tokens, int) else None,
-        )
-
-    @staticmethod
-    def _parse_json_object(raw_text: str) -> dict[str, Any]:
-        candidates: list[str] = []
-        stripped = raw_text.strip()
-        if stripped:
-            candidates.append(stripped)
-
-        if stripped.startswith("```") and stripped.endswith("```"):
-            lines = stripped.splitlines()
-            if len(lines) >= MIN_FENCED_BLOCK_LINES:
-                candidates.append("\n".join(lines[1:-1]).strip())
-
-        candidates.extend(
-            DashScopeTextGenerationProvider._extract_balanced_fragments(
-                stripped,
-                opening="{",
-                closing="}",
-            )
-        )
-        candidates.extend(
-            DashScopeTextGenerationProvider._extract_balanced_fragments(
-                stripped,
-                opening="[",
-                closing="]",
-            )
-        )
-
-        seen: set[str] = set()
-        for candidate in candidates:
-            if not candidate or candidate in seen:
-                continue
-            seen.add(candidate)
-            parsed = DashScopeTextGenerationProvider._parse_json_like_value(candidate)
-            if parsed is None:
-                continue
-            normalized = (
-                DashScopeTextGenerationProvider._coerce_parsed_object_candidate(parsed)
-            )
-            if normalized is not None:
-                return normalized
-
-        raise TextGenerationProviderError("DashScope response is not a JSON object")
-
-    @staticmethod
-    def _extract_balanced_fragments(
-        text: str,
-        *,
-        opening: str,
-        closing: str,
-    ) -> list[str]:
-        fragments: list[str] = []
-        state = _FragmentScanState()
-        for index, character in enumerate(text):
-            if state.consume_string_character(character):
-                continue
-            if state.enter_string(character):
-                continue
-            state.append_fragment(
-                fragments,
-                text,
-                index=index,
-                opening=opening,
-                closing=closing,
-            )
-
-        return fragments
-
-    @staticmethod
-    def _parse_json_like_value(candidate: str) -> Any | None:
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError:
-            return None
-
-    @staticmethod
-    def _coerce_parsed_object_candidate(parsed: Any) -> dict[str, Any] | None:
-        if isinstance(parsed, dict):
-            return parsed
-        if isinstance(parsed, str):
-            nested = DashScopeTextGenerationProvider._parse_json_like_value(
-                parsed.strip()
-            )
-            if nested is None or nested == parsed:
-                return None
-            return DashScopeTextGenerationProvider._coerce_parsed_object_candidate(
-                nested
-            )
-        if isinstance(parsed, list):
-            objects: list[dict[str, Any]] = []
-            for item in parsed:
-                normalized = (
-                    DashScopeTextGenerationProvider._coerce_parsed_object_candidate(
-                        item
-                    )
-                )
-                if normalized is not None:
-                    objects.append(normalized)
-            if not objects:
-                return None
-            merged: dict[str, Any] = {}
-            for item in objects:
-                merged.update(item)
-            return merged
-        return None
-
-    @staticmethod
-    def _fallback_payload_from_non_object_response(
-        raw_text: str,
-        response_schema: dict[str, Any],
-    ) -> dict[str, Any] | None:
-        chapter_schema = response_schema.get("chapter_markdown")
-        if (
-            not isinstance(chapter_schema, dict)
-            or chapter_schema.get("type") != "string"
-        ):
-            return None
-
-        parsed = DashScopeTextGenerationProvider._parse_json_like_value(
-            raw_text.strip()
-        )
-        if isinstance(parsed, str):
-            markdown = parsed.strip()
-        elif isinstance(parsed, list):
-            markdown = "\n\n".join(
-                item.strip()
-                for item in parsed
-                if isinstance(item, str) and item.strip()
-            ).strip()
-        else:
-            markdown = raw_text.strip()
-
-        if not markdown:
-            return None
-        return {"chapter_markdown": markdown}
+    _extract_generation_response_text = staticmethod(extract_generation_response_text)
+    _extract_responses_text = staticmethod(extract_responses_text)
+    _extract_usage_tokens = staticmethod(extract_usage_tokens)
+    _parse_json_object = staticmethod(parse_json_object)
+    _fallback_payload_from_non_object_response = staticmethod(
+        fallback_payload_from_non_object_response
+    )
 
     async def generate_structured(
         self,
@@ -663,9 +152,9 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
         response.raise_for_status()
         data = response.json()
         content_text = self._transport.extract_response_text(data)
-        prompt_tokens, completion_tokens = self._extract_usage_tokens(data)
-        payload = self._payload_from_response_text(content_text, task.response_schema)
-        parsed = _coerce_payload_to_schema(payload, task.response_schema)
+        prompt_tokens, completion_tokens = extract_usage_tokens(data)
+        payload = payload_from_response_text(content_text, task.response_schema)
+        parsed = coerce_payload_to_schema(payload, task.response_schema)
         return TextGenerationResult(
             step=task.step,
             provider="dashscope",
@@ -675,22 +164,6 @@ class DashScopeTextGenerationProvider(TextGenerationProvider):
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )
-
-    def _payload_from_response_text(
-        self,
-        content_text: str,
-        response_schema: dict[str, Any],
-    ) -> dict[str, Any]:
-        try:
-            return self._parse_json_object(content_text)
-        except TextGenerationProviderError as exc:
-            fallback_payload = self._fallback_payload_from_non_object_response(
-                content_text,
-                response_schema,
-            )
-            if fallback_payload is None:
-                raise exc
-            return fallback_payload
 
     @staticmethod
     def _coerce_generation_error(

@@ -9,7 +9,7 @@ import type {
   StudioDocument,
 } from '@/app/types/studio';
 
-export class ApiContractError extends Error {
+class ApiContractError extends Error {
   constructor(label: string) {
     super(`Invalid ${label}`);
     Object.setPrototypeOf(this, ApiContractError.prototype);
@@ -21,7 +21,7 @@ type JsonRecord = Record<string, unknown>;
 const documentKinds = ['chapter', 'outline', 'character', 'world', 'note'] as const;
 const sessionKinds = ['owner', 'guest'] as const;
 
-export function fail(label: string): never {
+function fail(label: string): never {
   throw new ApiContractError(label);
 }
 
@@ -30,7 +30,7 @@ export function objectValue(value: unknown, label: string): JsonRecord {
   return value as JsonRecord;
 }
 
-export function field(source: JsonRecord, key: string, parent: string): unknown {
+function field(source: JsonRecord, key: string, parent: string): unknown {
   if (!Object.prototype.hasOwnProperty.call(source, key)) fail(`${parent}.${key}`);
   return source[key];
 }
@@ -73,7 +73,7 @@ export function recordField(
   return objectValue(field(source, key, parent), `${parent}.${key}`);
 }
 
-export function arrayValue<T>(
+function arrayValue<T>(
   value: unknown,
   label: string,
   parseItem: (item: unknown, index: number) => T,
@@ -90,7 +90,7 @@ export function arrayField<T>(
   return arrayValue(field(source, key, parent), `${parent}.${key}`, parseItem);
 }
 
-export function literalValue<T extends readonly string[]>(
+function literalValue<T extends readonly string[]>(
   value: unknown,
   allowed: T,
   label: string,

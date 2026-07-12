@@ -40,6 +40,13 @@ export function StudioNavigator({
   onCreateDocument,
   onMoveDocument,
 }: StudioNavigatorProps) {
+  const visibleGroups = GROUPS.flatMap((group) => {
+    if (section === 'outline' && group.kind !== 'outline') return [];
+    if (section === 'characters' && group.kind !== 'character') return [];
+    if (section === 'world' && group.kind !== 'world') return [];
+    return [group];
+  });
+
   return (
     <aside className="studio-nav">
       <nav className="section-nav" aria-label="Project sections">
@@ -79,12 +86,7 @@ export function StudioNavigator({
         </div>
       ) : null}
       <div className="document-tree">
-        {GROUPS.filter(({ kind }) => {
-          if (section === 'outline') return kind === 'outline';
-          if (section === 'characters') return kind === 'character';
-          if (section === 'world') return kind === 'world';
-          return true;
-        }).map(({ kind, label, icon: Icon }) => {
+        {visibleGroups.map(({ kind, label, icon: Icon }) => {
           const documents = project.documents?.filter((document) => document.kind === kind) ?? [];
           return (
             <section className="document-group" key={kind}>

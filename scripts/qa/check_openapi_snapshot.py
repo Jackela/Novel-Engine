@@ -1,11 +1,10 @@
-"""Generate or verify the canonical OpenAPI snapshot."""
-
 from __future__ import annotations
 
 import argparse
 import json
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -46,24 +45,28 @@ def _write_snapshot(output_path: Path, content: str) -> None:
     output_path.write_text(content, encoding="utf-8")
 
 
+def write_line(message: str) -> None:
+    sys.stdout.write(f"{message}\n")
+
+
 def _check_snapshot(output_path: Path, content: str) -> int:
     if not output_path.exists():
-        print(f"[openapi-snapshot] missing snapshot: {output_path}")
-        print("[openapi-snapshot] run with --write to generate it.")
+        write_line(f"[openapi-snapshot] missing snapshot: {output_path}")
+        write_line("[openapi-snapshot] run with --write to generate it.")
         return 1
 
     current = output_path.read_text(encoding="utf-8")
     if current != content:
-        print(f"[openapi-snapshot] drift detected: {output_path}")
-        print("[openapi-snapshot] run with --write to refresh the snapshot.")
+        write_line(f"[openapi-snapshot] drift detected: {output_path}")
+        write_line("[openapi-snapshot] run with --write to refresh the snapshot.")
         return 1
 
-    print(f"[openapi-snapshot] snapshot is up to date: {output_path}")
+    write_line(f"[openapi-snapshot] snapshot is up to date: {output_path}")
     return 0
 
 
-def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
+def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Generate or verify OpenAPI snapshot.")
     parser.add_argument(
         "--output",
         default="docs/api/openapi.current.json",
@@ -74,18 +77,17 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Overwrite the snapshot file with the current generated schema.",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = _parse_args()
+def main(argv: Sequence[str] | None = None) -> int:
+    args = _parse_args(sys.argv[1:] if argv is None else argv)
     output_path = Path(args.output).resolve()
-    schema = _load_openapi_schema()
-    content = _render_openapi_schema(schema)
+    content = _render_openapi_schema(_load_openapi_schema())
 
     if args.write:
         _write_snapshot(output_path, content)
-        print(f"[openapi-snapshot] wrote snapshot: {output_path}")
+        write_line(f"[openapi-snapshot] wrote snapshot: {output_path}")
         return 0
 
     return _check_snapshot(output_path, content)

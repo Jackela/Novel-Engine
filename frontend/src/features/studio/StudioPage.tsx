@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import type { StudioDocument } from '@/app/types/studio';
@@ -37,11 +37,8 @@ export function StudioPage() {
     setError,
   } = useStudioProject(projectId);
 
-  useEffect(() => {
-    setActiveId((current) => current ?? project?.documents?.[0]?.id ?? null);
-  }, [project]);
-
-  const activeDocument = useActiveDocument(project, section, activeId, setActiveId);
+  const activeDocument = useActiveDocument(project, section, activeId);
+  const visibleActiveId = activeDocument?.id ?? activeId;
 
   const {
     draft,
@@ -125,7 +122,7 @@ export function StudioPage() {
       <StudioNavigator
         project={project}
         section={section}
-        activeId={activeId}
+        activeId={visibleActiveId}
         search={search}
         isSearching={isSearching}
         searchResults={searchResults}

@@ -1,6 +1,6 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { Project, StudioDocument } from '@/app/types/studio';
 
@@ -60,20 +60,17 @@ afterEach(() => {
     container.remove();
   }
   mountedRoots.length = 0;
-  vi.restoreAllMocks();
 });
 
 function renderActiveDocument(initialArgs: HookArgs): {
   readonly result: () => StudioDocument | null;
   readonly rerender: (args: HookArgs) => void;
-  readonly setActiveId: ReturnType<typeof vi.fn<(id: string | null) => void>>;
 } {
   let args = initialArgs;
   let current: StudioDocument | null = null;
-  const setActiveId = vi.fn<(id: string | null) => void>();
 
   function Wrapper(): null {
-    current = useActiveDocument(args.project, args.section, args.activeId, setActiveId);
+    current = useActiveDocument(args.project, args.section, args.activeId);
     return null;
   }
 
@@ -91,7 +88,6 @@ function renderActiveDocument(initialArgs: HookArgs): {
       args = nextArgs;
       act(render);
     },
-    setActiveId,
   };
 }
 
@@ -106,10 +102,9 @@ describe('useActiveDocument', () => {
 
     // Then
     expect(hook.result()).toEqual(chapter);
-    expect(hook.setActiveId).not.toHaveBeenCalled();
   });
 
-  it('selects the first document matching a scoped section', () => {
+  it('returns the first document matching a scoped section', () => {
     // Given
     const hook = renderActiveDocument({
       project,
@@ -121,11 +116,10 @@ describe('useActiveDocument', () => {
     hook.rerender({ project, section: 'characters', activeId: chapter.id });
 
     // Then
-    expect(hook.result()).toBeNull();
-    expect(hook.setActiveId).toHaveBeenLastCalledWith(character.id);
+    expect(hook.result()).toEqual(character);
   });
 
-  it('clears selection when a scoped section has no matching document', () => {
+  it('returns null when a scoped section has no matching document', () => {
     // Given / When
     const hook = renderActiveDocument({
       project: { ...project, documents: [chapter] },
@@ -135,6 +129,5 @@ describe('useActiveDocument', () => {
 
     // Then
     expect(hook.result()).toBeNull();
-    expect(hook.setActiveId).toHaveBeenCalledWith(null);
   });
 });

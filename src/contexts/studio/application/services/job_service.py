@@ -104,7 +104,7 @@ class JobService:
                     "kind": retry.kind,
                 },
             )
-            return self._fail_retry(retry.id, str(exc))
+            return self._fail_retry(principal, retry, str(exc))
 
     async def _retry_ai_job(
         self,
@@ -131,25 +131,17 @@ class JobService:
             model=retry.model,
         )
         now = utcnow()
-        updated = self._repository.update_job(
-            retry.id,
-            status="completed",
-            result_json=dump_json(
+        payload = (
+            dump_json(
                 {
                     "proposal_markdown": proposal_markdown,
                     "base_revision_id": generated_base_revision_id,
                     "accepted_revision_id": None,
                 }
             ),
-            finished_at=now,
-            now=now,
+            dump_json({"proposal_only": True}),
         )
-        self._repository.add_job_event(
-            retry.id,
-            status="completed",
-            details_json=dump_json({"proposal_only": True}),
-            now=now,
-        )
+        result = self._complete_retry(principal, retry, payload)
         self._repository.add_usage_event(
             project_id=retry.project_id,
             job_id=retry.id,
@@ -165,7 +157,7 @@ class JobService:
             ),
             now=now,
         )
-        return _job_payload(updated)
+        return result
 
     async def _retry_review_job(
         self,
@@ -178,27 +170,17 @@ class JobService:
             provider=retry.provider or "deterministic",
             model=retry.model or "studio-review-v1",
         )
-        now = utcnow()
-        updated = self._repository.update_job(
-            retry.id,
-            status="completed",
-            result_json=dump_json(
+        payload = (
+            dump_json(
                 {
                     "review_id": review["id"],
                     "snapshot_id": review["snapshot_id"],
                     "summary": review["summary"],
                 }
             ),
-            finished_at=now,
-            now=now,
+            dump_json({"review_id": review["id"]}),
         )
-        self._repository.add_job_event(
-            retry.id,
-            status="completed",
-            details_json=dump_json({"review_id": review["id"]}),
-            now=now,
-        )
-        return _job_payload(updated)
+        return self._complete_retry(principal, retry, payload)
 
     async def _retry_export_job(
         self,
@@ -210,11 +192,8 @@ class JobService:
             retry.project_id,
             export_format=cast(ExportFormat, retry.operation),
         )
-        now = utcnow()
-        updated = self._repository.update_job(
-            retry.id,
-            status="completed",
-            result_json=dump_json(
+        payload = (
+            dump_json(
                 {
                     "export_id": export["id"],
                     "snapshot_id": export["snapshot_id"],
@@ -222,30 +201,62 @@ class JobService:
                     "download_url": export["download_url"],
                 }
             ),
+            dump_json({"export_id": export["id"]}),
+        )
+        return self._complete_retry(principal, retry, payload)
+
+    def _complete_retry(
+        self,
+        principal: Principal,
+        retry: JobDto,
+        payload: tuple[str, str],
+    ) -> dict[str, Any]:
+        result_json, details_json = payload
+        now = utcnow()
+        self._repository.update_job(
+            retry.id,
+            status="completed",
+            result_json=result_json,
             finished_at=now,
             now=now,
         )
         self._repository.add_job_event(
             retry.id,
             status="completed",
-            details_json=dump_json({"export_id": export["id"]}),
+            details_json=details_json,
             now=now,
         )
-        return _job_payload(updated)
+        return self._job_with_events_payload(principal, retry)
 
-    def _fail_retry(self, retry_id: str, error_message: str) -> dict[str, Any]:
+    def _fail_retry(
+        self,
+        principal: Principal,
+        retry: JobDto,
+        error_message: str,
+    ) -> dict[str, Any]:
         now = utcnow()
-        updated = self._repository.update_job(
-            retry_id,
+        self._repository.update_job(
+            retry.id,
             status="failed",
             error=error_message,
             finished_at=now,
             now=now,
         )
         self._repository.add_job_event(
-            retry_id,
+            retry.id,
             status="failed",
             details_json=dump_json({"error": error_message}),
             now=now,
         )
-        return _job_payload(updated)
+        return self._job_with_events_payload(principal, retry)
+
+    def _job_with_events_payload(
+        self,
+        principal: Principal,
+        job: JobDto,
+    ) -> dict[str, Any]:
+        owner_id, guest_session_id = _owner_scopes(principal)
+        refreshed = self._repository.get_job(
+            job.project_id, job.id, owner_id=owner_id, guest_session_id=guest_session_id
+        )
+        return _job_payload(refreshed)
