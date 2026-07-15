@@ -1,4 +1,4 @@
-import { Download, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 import type { Revision, StudioExport } from '@/app/types/studio';
 
@@ -7,6 +7,7 @@ interface StudioHistoryPanelProps {
   loadedRevisionId: string | null;
   exports: StudioExport[];
   onRestoreRevision: (revisionId: string) => void;
+  restoringRevisionId?: string | null;
 }
 
 export function StudioHistoryPanel({
@@ -14,9 +15,13 @@ export function StudioHistoryPanel({
   loadedRevisionId,
   exports,
   onRestoreRevision,
+  restoringRevisionId = null,
 }: StudioHistoryPanelProps) {
+  void exports;
+  const isBusy = restoringRevisionId !== null;
+
   return (
-    <div className="inspector-content">
+    <div aria-busy={isBusy} className="inspector-content">
       <h2>Revision history</h2>
       <p>Restoring creates a new revision and preserves the chain.</p>
       <div className="revision-list">
@@ -31,7 +36,14 @@ export function StudioHistoryPanel({
             </div>
             {revision.id !== loadedRevisionId ? (
               <button
+                aria-busy={restoringRevisionId === revision.id}
+                aria-label={
+                  restoringRevisionId === revision.id
+                    ? `Restoring revision ${revision.id.slice(0, 8)}`
+                    : `Restore revision ${revision.id.slice(0, 8)}`
+                }
                 className="icon-command"
+                disabled={isBusy}
                 onClick={() => onRestoreRevision(revision.id)}
                 title="Restore revision"
                 type="button"
@@ -44,19 +56,6 @@ export function StudioHistoryPanel({
           </article>
         ))}
       </div>
-      {exports.length ? (
-        <>
-          <h2>Recent exports</h2>
-          {exports.slice(0, 4).map((item) => (
-            <a className="export-row" href={item.download_url} key={item.id}>
-              <Download />
-              <span>
-                {item.format.toUpperCase()} · {Math.ceil(item.size_bytes / 1024)} KB
-              </span>
-            </a>
-          ))}
-        </>
-      ) : null}
     </div>
   );
 }

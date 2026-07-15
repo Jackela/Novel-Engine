@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import secrets
 from typing import Annotated, Any
+from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 
@@ -59,6 +60,65 @@ _CSRF_EXEMPT_PATHS = {
     "/api/session/login",
     "/api/session/guest",
 }
+_LOCALHOST_CORS_PORTS = frozenset({"5173", "4173", "8000"})
+
+
+def _is_configured_setup_origin(origin: str, request: Request) -> bool:
+    """Allow exact configured origins and explicit localhost port wildcards."""
+    configured = request.app.state.settings.security.cors_origins
+    for allowed in configured:
+        allowed_origin = allowed.rstrip("/").lower()
+        if allowed_origin == "*":
+            continue
+        if origin == allowed_origin:
+            return True
+        if not allowed_origin.endswith(":*"):
+            continue
+        prefix = allowed_origin[:-1]
+        local_prefixes = (
+            "http://localhost:",
+            "https://localhost:",
+            "http://127.0.0.1:",
+            "https://127.0.0.1:",
+        )
+        if prefix in local_prefixes and origin.startswith(prefix):
+            return origin[len(prefix) :] in _LOCALHOST_CORS_PORTS
+    return False
+
+
+def _is_same_origin_request(request: Request) -> bool:
+    """Allow unauthenticated setup only from trusted browser origins.
+
+    First-run setup has no CSRF cookie yet, so browsers need an origin check
+    instead.  Requests without browser origin metadata remain allowed for
+    local CLI/bootstrap clients that do not send ``Origin`` or ``Referer``.
+    """
+    expected = f"{request.url.scheme.lower()}://{request.url.netloc.lower()}"
+    for header_name in ("origin", "referer"):
+        header_value = request.headers.get(header_name)
+        if not header_value:
+            continue
+        parsed = urlsplit(header_value)
+        if (
+            parsed.scheme.lower() not in {"http", "https"}
+            or not parsed.netloc
+            or parsed.username is not None
+            or parsed.password is not None
+            or header_value.strip().lower() == "null"
+        ):
+            return False
+        if header_name == "origin" and (parsed.path or parsed.query or parsed.fragment):
+            return False
+        try:
+            port = parsed.port
+        except ValueError:
+            return False
+        if port is not None and not 1 <= port <= 65535:
+            return False
+        origin = f"{parsed.scheme.lower()}://{parsed.netloc.lower()}"
+        if origin != expected and not _is_configured_setup_origin(origin, request):
+            return False
+    return True
 
 
 def get_principal(
@@ -120,9 +180,15 @@ async def setup_status(
 @session_router.post("/setup", status_code=status.HTTP_201_CREATED)
 @_handle_domain_exceptions
 async def setup_owner(
+    request: Request,
     payload: OwnerSetupRequest,
     store: StudioStoreDependency,
 ) -> dict[str, Any]:
+    if not _is_same_origin_request(request):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Setup requests must be same-origin.",
+        )
     return store.setup_owner(payload.username, payload.password)
 
 
@@ -139,7 +205,10 @@ async def login(
         payload.password,
     )
     max_age = 60 * 60 * 24 * 30
-    secure = request.app.state.settings.is_production
+    secure = (
+        request.app.state.settings.is_production
+        or request.app.state.settings.is_staging
+    )
     _session_cookie(response, token, max_age=max_age, secure=secure)
     _csrf_cookie(response, csrf_token, max_age=max_age, secure=secure)
     return _principal_payload(principal)
@@ -153,7 +222,10 @@ async def guest_session(
 ) -> dict[str, Any]:
     token, csrf_token, principal = store.create_guest_session()
     max_age = int(GUEST_TTL.total_seconds())
-    secure = request.app.state.settings.is_production
+    secure = (
+        request.app.state.settings.is_production
+        or request.app.state.settings.is_staging
+    )
     _session_cookie(response, token, max_age=max_age, secure=secure)
     _csrf_cookie(response, csrf_token, max_age=max_age, secure=secure)
     return _principal_payload(principal)

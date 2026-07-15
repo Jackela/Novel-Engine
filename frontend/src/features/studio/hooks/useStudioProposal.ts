@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
@@ -8,6 +8,11 @@ import type { Project, StudioDocument, StudioJob } from '@/app/types/studio';
 interface DocumentProposal {
   readonly documentId: string;
   readonly job: StudioJob;
+}
+
+interface PendingProposalActions {
+  readonly proposal: boolean;
+  readonly accept: boolean;
 }
 
 export function useStudioProposal(
@@ -22,8 +27,27 @@ export function useStudioProposal(
 ) {
   const [proposalState, setProposalState] = useState<DocumentProposal | null>(null);
   const [instruction, setInstruction] = useState('');
+  const [pending, setPending] = useState<PendingProposalActions>({
+    proposal: false,
+    accept: false,
+  });
+  const pendingRef = useRef<Set<keyof PendingProposalActions> | null>(null);
   const activeDocumentId = activeDocument?.id ?? null;
   const proposal = proposalState?.documentId === activeDocumentId ? proposalState.job : null;
+
+  const begin = useCallback((key: keyof PendingProposalActions) => {
+    const current =
+      pendingRef.current ?? (pendingRef.current = new Set<keyof PendingProposalActions>());
+    if (current.has(key)) return false;
+    current.add(key);
+    setPending((current) => ({ ...current, [key]: true }));
+    return true;
+  }, []);
+
+  const finish = useCallback((key: keyof PendingProposalActions) => {
+    pendingRef.current?.delete(key);
+    setPending((current) => ({ ...current, [key]: false }));
+  }, []);
 
   const setProposal = useCallback<Dispatch<SetStateAction<StudioJob | null>>>(
     (nextProposal) => {
@@ -39,7 +63,7 @@ export function useStudioProposal(
 
   const runProposal = useCallback(
     async (operation: 'continue' | 'rewrite') => {
-      if (!activeDocument || !project) return;
+      if (!activeDocument || !project || !begin('proposal')) return;
       setError(null);
       try {
         const nextProposal = await api.proposal(
@@ -53,13 +77,16 @@ export function useStudioProposal(
         setInspector('copilot');
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to create proposal.');
+      } finally {
+        finish('proposal');
       }
     },
-    [activeDocument, project, projectId, instruction, setError, setInspector],
+    [activeDocument, begin, finish, project, projectId, instruction, setError, setInspector],
   );
 
   const acceptProposal = useCallback(async () => {
-    if (!proposal || !activeDocument) return;
+    if (!proposal || !activeDocument || !begin('accept')) return;
+    setError(null);
     try {
       await api.acceptProposal(projectId, proposal.id);
       const refreshed = await api.project(projectId);
@@ -70,8 +97,31 @@ export function useStudioProposal(
       loadJobs();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to accept proposal.');
+    } finally {
+      finish('accept');
     }
-  }, [proposal, activeDocument, projectId, setProject, onAccepted, setError, loadJobs]);
+  }, [
+    activeDocument,
+    begin,
+    finish,
+    loadJobs,
+    onAccepted,
+    projectId,
+    proposal,
+    setError,
+    setProject,
+  ]);
 
-  return { proposal, setProposal, instruction, setInstruction, runProposal, acceptProposal };
+  return {
+    proposal,
+    setProposal,
+    instruction,
+    setInstruction,
+    runProposal,
+    acceptProposal,
+    pending,
+    isRunningProposal: pending.proposal,
+    isAcceptingProposal: pending.accept,
+    isBusy: pending.proposal || pending.accept,
+  };
 }

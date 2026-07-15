@@ -8,6 +8,7 @@ infrastructure implementation.
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import re
 import secrets
@@ -192,6 +193,27 @@ def _format_user_instruction(instruction: str) -> str:
     return f"[BEGIN AUTHOR INSTRUCTION]\n{sanitized}\n[END AUTHOR INSTRUCTION]"
 
 
+def _format_untrusted_manuscript(markdown: str) -> str:
+    """Encode manuscript text as an explicitly untrusted JSON data block.
+
+    Manuscript content is author-controlled data, not an instruction channel.
+    JSON encoding keeps newlines, quotes, and other control characters inside
+    the value boundary. Brackets in the encoded payload are escaped so marker
+    text supplied by an author cannot manufacture a second delimiter.
+    """
+    payload = json.dumps(
+        {"content_markdown": str(markdown)},
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+    escaped_payload = payload.replace("[", r"\u005b").replace("]", r"\u005d")
+    return (
+        "[BEGIN UNTRUSTED MANUSCRIPT JSON]\n"
+        f"{escaped_payload}\n"
+        "[END UNTRUSTED MANUSCRIPT JSON]"
+    )
+
+
 def _sanitize_chapter_markdown(markdown: str) -> str:
     """Remove provider preambles and mechanical labels before manuscript storage."""
     cleaned_lines: list[str] = []
@@ -267,6 +289,7 @@ __all__ = [
     "_sanitize_chapter_markdown",
     "_sanitize_instruction",
     "_format_user_instruction",
+    "_format_untrusted_manuscript",
     "Principal",
     "_owner_scopes",
     "_project_payload",

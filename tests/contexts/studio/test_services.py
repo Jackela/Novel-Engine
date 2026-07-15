@@ -52,6 +52,7 @@ def store(tmp_path: Path, database: StudioDatabase) -> StudioStore:
         repository=SqlAlchemyStudioRepository(database),
         data_dir=tmp_path,
         ai_provider_factory=create_studio_text_generation_provider,
+        session_secret=settings_module.get_settings().security.secret_key,
         export_writers=DEFAULT_EXPORT_WRITERS,
     )
 
@@ -90,6 +91,38 @@ def test_revisions_are_immutable_and_stale_saves_conflict(store: StudioStore) ->
     assert revisions[0]["parent_revision_id"] == initial
     assert saved["current_revision_id"] == revisions[0]["id"]
     assert revisions[1]["content_markdown"] == "# Chapter 1\n\n"
+
+
+def test_session_secret_verifies_sessions_and_rotation_invalidates_old_tokens(
+    tmp_path: Path,
+    database: StudioDatabase,
+) -> None:
+    def build_store(session_secret: str) -> StudioStore:
+        return StudioStore(
+            repository=SqlAlchemyStudioRepository(database),
+            data_dir=tmp_path,
+            ai_provider_factory=create_studio_text_generation_provider,
+            session_secret=session_secret,
+            export_writers=DEFAULT_EXPORT_WRITERS,
+        )
+
+    original = build_store("session-secret-v1")
+    token, csrf_token, principal = original.create_guest_session()
+
+    assert csrf_token
+    verified = original.principal_from_token(token)
+    assert verified is not None
+    assert verified.session_id == principal.session_id
+    assert verified.kind == principal.kind
+    assert verified.owner_id == principal.owner_id
+
+    same_key = build_store("session-secret-v1")
+    same_key_principal = same_key.principal_from_token(token)
+    assert same_key_principal is not None
+    assert same_key_principal.session_id == principal.session_id
+
+    rotated = build_store("session-secret-v2")
+    assert rotated.principal_from_token(token) is None
 
 
 def test_search_snapshot_and_exports_use_exact_revisions(store: StudioStore) -> None:

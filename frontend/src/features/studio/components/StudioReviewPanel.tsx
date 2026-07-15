@@ -5,20 +5,34 @@ import type { Review } from '@/app/types/studio';
 interface StudioReviewPanelProps {
   latestReview: Review | null;
   onRunReview: () => void;
+  isRunning?: boolean;
 }
 
-export function StudioReviewPanel({ latestReview, onRunReview }: StudioReviewPanelProps) {
+export function StudioReviewPanel({
+  latestReview,
+  onRunReview,
+  isRunning = false,
+}: StudioReviewPanelProps) {
   return (
-    <div className="inspector-content">
+    <div aria-busy={isRunning} className="inspector-content">
       <header className="inspector-heading">
         <div>
           <h2>Review findings</h2>
           <p>Snapshot-bound and non-mutating.</p>
         </div>
-        <button className="icon-command" onClick={onRunReview} title="Run review" type="button">
+        <button
+          aria-busy={isRunning}
+          aria-label={isRunning ? 'Running review' : 'Run review'}
+          className="icon-command"
+          disabled={isRunning}
+          onClick={onRunReview}
+          title="Run review"
+          type="button"
+        >
           <RotateCcw />
         </button>
       </header>
+      {isRunning ? <p role="status">Running review…</p> : null}
       {latestReview?.issues.length ? (
         latestReview.issues.map((issue) => (
           <article className={`review-issue review-issue--${issue.severity}`} key={issue.id}>

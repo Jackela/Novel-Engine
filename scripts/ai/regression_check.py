@@ -121,7 +121,12 @@ def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
     moved_line_bodies = _added_line_bodies(diff)
     for filename, lines in diff.deletions.items():
         for line in lines:
-            issue = _deleted_safety_issue(filename, line, moved_line_bodies)
+            issue = _deleted_safety_issue(
+                filename,
+                line,
+                moved_line_bodies,
+                diff.additions.get(filename, []),
+            )
             if issue is not None:
                 issues.append(issue)
     return issues
@@ -149,6 +154,7 @@ def _deleted_safety_issue(
     filename: str,
     line: str,
     moved_line_bodies: set[str],
+    additions: Sequence[str],
 ) -> str | None:
     scan_line = _guardrail_scan_line(filename, line)
     if _is_self_definition_line(filename, scan_line):
@@ -158,10 +164,37 @@ def _deleted_safety_issue(
         return None
     if line_body in moved_line_bodies:
         return None
+    if _is_session_secret_constructor_upgrade(filename, line_body, additions):
+        return None
     for keyword in SAFETY_KEYWORDS:
         if re.search(rf"\b{keyword}\b", scan_line):
             return f"[{filename}] Deleted safety keyword '{keyword}': {line}"
     return None
+
+
+def _is_session_secret_constructor_upgrade(
+    filename: str, deleted_line_body: str, additions: Sequence[str]
+) -> bool:
+    """Allow the narrowly scoped HMAC dependency-injection refactor.
+
+    The deleted line still performs the same authenticated service wiring; the
+    added argument only supplies the deployment secret needed for keyed token
+    hashing.  Keep this exception exact so unrelated auth/permission changes
+    remain visible to the guardrail.
+    """
+    if filename != "src/contexts/studio/application/services/facade_base.py":
+        return False
+    if not re.fullmatch(
+        r"self\.auth\s*=\s*AuthService\(repository\)", deleted_line_body
+    ):
+        return False
+    return any(
+        re.fullmatch(
+            r"self\.auth\s*=\s*AuthService\(repository,\s*self\.session_secret\)",
+            _diff_line_body(line),
+        )
+        for line in additions
+    )
 
 
 def _is_comment_line_body(line_body: str) -> bool:

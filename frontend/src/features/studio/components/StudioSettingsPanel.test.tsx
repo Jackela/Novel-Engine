@@ -85,4 +85,22 @@ describe('StudioSettingsPanel', () => {
 
     expect(onUpdateSettings).toHaveBeenCalledTimes(1);
   });
+
+  it('restores focus to the save button after the update completes', async () => {
+    const onUpdateSettings = vi.fn(async (event: React.FormEvent) => {
+      event.preventDefault();
+      await Promise.resolve();
+    });
+
+    const container = render(
+      <StudioSettingsPanel {...baseProps} onUpdateSettings={onUpdateSettings} />,
+    );
+    const saveButton = getByRole(container, 'button', { name: 'Save settings' });
+
+    await act(async () => {
+      fireEvent.submit(saveButton);
+    });
+
+    expect(document.activeElement).toBe(saveButton);
+  });
 });

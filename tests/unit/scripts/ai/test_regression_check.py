@@ -161,6 +161,29 @@ def test_moved_safety_lines_are_not_reported_as_deleted() -> None:
     assert issues == []
 
 
+def test_session_secret_constructor_upgrade_is_not_reported_as_deleted_auth() -> None:
+    # Given
+    details = regression_check.DiffDetails(
+        additions={
+            "src/contexts/studio/application/services/facade_base.py": [
+                "+        self.auth = AuthService(repository, self.session_secret)"
+            ]
+        },
+        deletions={
+            "src/contexts/studio/application/services/facade_base.py": [
+                "-        self.auth = AuthService(repository)"
+            ]
+        },
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_deleted_safety_lines(details)
+
+    # Then
+    assert issues == []
+
+
 def test_deleted_safety_keyword_comments_are_not_reported() -> None:
     # Given
     details = regression_check.DiffDetails(

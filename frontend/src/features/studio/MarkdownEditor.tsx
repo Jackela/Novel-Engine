@@ -55,13 +55,13 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
             editorView.EditorView.theme({
               '&': { height: '100%', backgroundColor: '#fff' },
               '.cm-scroller': {
-                fontFamily: '"Source Serif 4", Georgia, serif',
+                fontFamily: 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif',
                 fontSize: '19px',
                 lineHeight: '1.8',
-                padding: '34px 54px 80px',
+                padding: 'clamp(24px, 4vw, 34px) clamp(20px, 6vw, 54px) 80px',
               },
-              '.cm-content': { maxWidth: '780px', margin: '0 auto', caretColor: '#0f766e' },
-              '.cm-focused': { outline: 'none' },
+              '.cm-content': { maxWidth: '72ch', margin: '0 auto', caretColor: '#0f766e' },
+              '&.cm-focused': { outline: '3px solid #0f766e', outlineOffset: '-3px' },
               '.cm-gutters': { display: 'none' },
               '.cm-activeLine': { backgroundColor: 'transparent' },
               '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground': {

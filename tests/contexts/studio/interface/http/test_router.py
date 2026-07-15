@@ -11,6 +11,7 @@ from src.contexts.studio.domain.exceptions import (
     InvalidOperation,
     NotFound,
     RevisionConflict,
+    SnapshotConflict,
 )
 from src.contexts.studio.interface.http.errors import (
     _handle_domain_exceptions,
@@ -30,11 +31,16 @@ from src.contexts.studio.interface.http.errors import (
                 "current_revision_id": "rev-1",
             },
         ),
+        (
+            SnapshotConflict(),
+            409,
+            "Document is referenced by an immutable snapshot.",
+        ),
         (InvalidOperation("bad"), 422, "bad"),
     ],
 )
 def test_raise_http_maps_domain_exceptions(
-    exc: NotFound | RevisionConflict | InvalidOperation,
+    exc: NotFound | RevisionConflict | SnapshotConflict | InvalidOperation,
     expected_status: int,
     expected_detail: Any,
 ) -> None:
@@ -76,6 +82,18 @@ async def test_handle_domain_exceptions_converts_revision_conflict() -> None:
     assert ctx.value.status_code == 409
     detail = cast(dict[str, str], ctx.value.detail)
     assert detail["current_revision_id"] == "rev-2"
+
+
+async def test_handle_domain_exceptions_converts_snapshot_conflict() -> None:
+    @_handle_domain_exceptions
+    async def handler() -> dict[str, Any]:
+        raise SnapshotConflict()
+
+    with pytest.raises(HTTPException) as ctx:
+        await handler()
+
+    assert ctx.value.status_code == 409
+    assert ctx.value.detail == "Document is referenced by an immutable snapshot."
 
 
 async def test_handle_domain_exceptions_converts_invalid_operation() -> None:

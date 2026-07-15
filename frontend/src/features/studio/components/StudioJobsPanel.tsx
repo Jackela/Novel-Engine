@@ -6,17 +6,35 @@ interface StudioJobsPanelProps {
   jobs: StudioJob[];
   onLoadJobs: () => void;
   onRetryJob: (jobId: string) => void;
+  isLoading?: boolean;
+  retryingJobId?: string | null;
 }
 
-export function StudioJobsPanel({ jobs, onLoadJobs, onRetryJob }: StudioJobsPanelProps) {
+export function StudioJobsPanel({
+  jobs,
+  onLoadJobs,
+  onRetryJob,
+  isLoading = false,
+  retryingJobId = null,
+}: StudioJobsPanelProps) {
+  const isBusy = isLoading || retryingJobId !== null;
+
   return (
-    <div className="inspector-content">
+    <div aria-busy={isBusy} className="inspector-content">
       <header className="inspector-heading">
         <div>
           <h2>Jobs</h2>
           <p>Durable operation status.</p>
         </div>
-        <button className="icon-command" onClick={onLoadJobs} title="Refresh jobs" type="button">
+        <button
+          aria-busy={isLoading}
+          aria-label={isLoading ? 'Refreshing jobs' : 'Refresh jobs'}
+          className="icon-command"
+          disabled={isBusy}
+          onClick={onLoadJobs}
+          title="Refresh jobs"
+          type="button"
+        >
           <RotateCcw />
         </button>
       </header>
@@ -34,7 +52,14 @@ export function StudioJobsPanel({ jobs, onLoadJobs, onRetryJob }: StudioJobsPane
               </div>
               {job.status === 'failed' || job.status === 'interrupted' ? (
                 <button
+                  aria-busy={retryingJobId === job.id}
+                  aria-label={
+                    retryingJobId === job.id
+                      ? `Retrying ${job.operation}`
+                      : `Retry ${job.operation}`
+                  }
                   className="icon-command"
+                  disabled={isBusy}
                   onClick={() => onRetryJob(job.id)}
                   title="Retry job"
                   type="button"

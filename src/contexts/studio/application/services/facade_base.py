@@ -28,17 +28,19 @@ class StudioServiceRegistry:
         *,
         data_dir: Path,
         ai_provider_factory: TextGenerationProviderFactory,
+        session_secret: str,
         export_writers: Mapping[ExportFormat, ExportFormatWriter] | None = None,
     ) -> None:
         self.repository = repository
         self.data_dir = data_dir
         self.ai_provider_factory = ai_provider_factory
+        self.session_secret = session_secret
         self.export_writers = export_writers
         self._build_services()
 
     def _build_services(self) -> None:
         repository = self.repository
-        self.auth = AuthService(repository)
+        self.auth = AuthService(repository, self.session_secret)
         self.project_service = ProjectService(repository)
         self.document_service = DocumentService(repository)
         self.revision_service = RevisionService(repository, self.document_service)

@@ -45,6 +45,7 @@ def _create_runtime() -> CliRuntime:
             repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
             ai_provider_factory=create_studio_text_generation_provider,
+            session_secret=settings.security.secret_key,
             export_writers=DEFAULT_EXPORT_WRITERS,
         ),
         database=database,

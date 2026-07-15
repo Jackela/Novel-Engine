@@ -13,8 +13,12 @@ interface StudioEditorPaneProps {
   draft: string;
   titleDraft: string;
   saveState: SaveState;
+  error?: string | null;
+  isConflictActionPending?: boolean;
   onDraftChange: (value: string) => void;
   onTitleChange: (value: string) => void;
+  onLoadLatest?: () => void | Promise<void>;
+  onRetryOverwrite?: () => void | Promise<void>;
 }
 
 export function StudioEditorPane({
@@ -22,11 +26,21 @@ export function StudioEditorPane({
   draft,
   titleDraft,
   saveState,
+  error = null,
+  isConflictActionPending = false,
   onDraftChange,
   onTitleChange,
+  onLoadLatest,
+  onRetryOverwrite,
 }: StudioEditorPaneProps) {
+  const saveNeedsAttention = saveState === 'conflict' || saveState === 'error';
+  const conflictActionsDisabled = isConflictActionPending || saveState === 'saving';
+
   return (
-    <section className="studio-editor">
+    <section
+      aria-busy={isConflictActionPending || saveState === 'saving'}
+      className="studio-editor"
+    >
       {activeDocument ? (
         <>
           <header className="editor-header">
@@ -37,19 +51,52 @@ export function StudioEditorPane({
                 value={titleDraft}
                 onChange={(event) => onTitleChange(event.target.value)}
               />
-              <span className={`save-state save-state--${saveState}`}>
+              <span
+                aria-atomic="true"
+                aria-live={saveNeedsAttention ? 'assertive' : 'polite'}
+                className={`save-state save-state--${saveState}`}
+                role={saveNeedsAttention ? 'alert' : 'status'}
+              >
                 {saveState === 'saving' ? (
-                  <Loader2 className="spin" />
-                ) : saveState === 'error' ? (
-                  <X />
+                  <Loader2 aria-hidden="true" className="spin" />
+                ) : saveNeedsAttention ? (
+                  <X aria-hidden="true" />
                 ) : (
-                  <Check />
+                  <Check aria-hidden="true" />
                 )}
-                {saveState === 'idle' ? 'saved' : saveState === 'error' ? 'Save failed' : saveState}
+                {saveState === 'idle' || saveState === 'saved'
+                  ? 'Saved'
+                  : saveState === 'saving'
+                    ? 'saving'
+                    : saveState === 'conflict'
+                      ? 'Save conflict'
+                      : 'Save failed'}
               </span>
             </div>
-            <span>{activeDocument.word_count} words</span>
+            <span className="editor-word-count">{activeDocument.word_count} words</span>
           </header>
+          {saveState === 'conflict' ? (
+            <div aria-live="assertive" className="editor-conflict" role="alert">
+              <strong>Someone else changed this document.</strong>
+              {error ? <span>{error}</span> : null}
+              <div className="editor-conflict__actions">
+                <button
+                  disabled={conflictActionsDisabled || onLoadLatest === undefined}
+                  onClick={() => void onLoadLatest?.()}
+                  type="button"
+                >
+                  Load latest (discard local)
+                </button>
+                <button
+                  disabled={conflictActionsDisabled || onRetryOverwrite === undefined}
+                  onClick={() => void onRetryOverwrite?.()}
+                  type="button"
+                >
+                  Keep local and retry overwrite
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div className="editor-toolbar">
             <span>Markdown</span>
           </div>

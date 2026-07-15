@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, FileText, Loader2, Plus, Search } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, FileText, Loader2, Plus, Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 
 import type { DocumentKind, Project } from '@/app/types/studio';
@@ -24,6 +24,8 @@ interface StudioNavigatorProps {
   onSelectDocument: (documentId: string) => void;
   onCreateDocument: (kind: DocumentKind) => void;
   onMoveDocument: (documentId: string, direction: -1 | 1) => void;
+  isCreatingDocument?: boolean;
+  isMovingDocument?: boolean;
 }
 
 export function StudioNavigator({
@@ -39,6 +41,8 @@ export function StudioNavigator({
   onSelectDocument,
   onCreateDocument,
   onMoveDocument,
+  isCreatingDocument = false,
+  isMovingDocument = false,
 }: StudioNavigatorProps) {
   const visibleGroups = GROUPS.flatMap((group) => {
     if (section === 'outline' && group.kind !== 'outline') return [];
@@ -49,93 +53,124 @@ export function StudioNavigator({
 
   return (
     <aside className="studio-nav">
-      <nav className="section-nav" aria-label="Project sections">
-        {SECTIONS.map(([path, label]) => (
-          <button
-            className={section === path ? 'active' : ''}
-            key={path}
-            onClick={() => onNavigateSection(path)}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-      <form className="studio-search" onSubmit={onSearchSubmit}>
-        {isSearching ? <Loader2 className="spin" /> : <Search />}
-        <input
-          aria-label="Search project"
-          disabled={isSearching}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search documents"
-          value={search}
-        />
-      </form>
-      {searchResults.length ? (
-        <div className="search-results">
-          {searchResults.map((result) => (
-            <button
-              key={result.document_id}
-              onClick={() => onSelectDocument(result.document_id)}
-              type="button"
-            >
-              <strong>{result.title}</strong>
-              <span>{result.excerpt}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-      <div className="document-tree">
-        {visibleGroups.map(({ kind, label, icon: Icon }) => {
-          const documents = project.documents?.filter((document) => document.kind === kind) ?? [];
-          return (
-            <section className="document-group" key={kind}>
-              <header>
-                <span>
-                  <Icon /> {label}
-                </span>
-                <button onClick={() => onCreateDocument(kind)} title={`Add ${label}`} type="button">
-                  <Plus />
+      <details className="studio-nav__disclosure" open>
+        <summary className="studio-nav__summary">
+          <span>Project navigation</span>
+          <ChevronDown aria-hidden="true" />
+        </summary>
+        <div className="studio-nav__content">
+          <nav className="section-nav" aria-label="Project sections">
+            {SECTIONS.map(([path, label]) => (
+              <button
+                aria-current={section === path ? 'page' : undefined}
+                className={section === path ? 'active' : ''}
+                key={path}
+                onClick={() => onNavigateSection(path)}
+                type="button"
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          <form className="studio-search" onSubmit={onSearchSubmit}>
+            {isSearching ? (
+              <Loader2 aria-hidden="true" className="spin" />
+            ) : (
+              <Search aria-hidden="true" />
+            )}
+            <input
+              aria-label="Search project"
+              disabled={isSearching}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search documents"
+              value={search}
+            />
+          </form>
+          {searchResults.length ? (
+            <section aria-label="Search results" className="search-results">
+              {searchResults.map((result) => (
+                <button
+                  aria-label={`Open ${result.title}`}
+                  key={result.document_id}
+                  onClick={() => onSelectDocument(result.document_id)}
+                  type="button"
+                >
+                  <strong>{result.title}</strong>
+                  <span>{result.excerpt}</span>
                 </button>
-              </header>
-              {documents.map((document, index) => (
-                <div className="document-row-wrap" key={document.id}>
-                  <button
-                    className={
-                      document.id === activeId
-                        ? 'document-row document-row--active'
-                        : 'document-row'
-                    }
-                    onClick={() => onSelectDocument(document.id)}
-                    type="button"
-                  >
-                    <FileText />
-                    <span>{document.title}</span>
-                  </button>
-                  <span className="document-order">
-                    <button
-                      disabled={index === 0}
-                      onClick={() => onMoveDocument(document.id, -1)}
-                      title="Move up"
-                      type="button"
-                    >
-                      <ArrowUp />
-                    </button>
-                    <button
-                      disabled={index === documents.length - 1}
-                      onClick={() => onMoveDocument(document.id, 1)}
-                      title="Move down"
-                      type="button"
-                    >
-                      <ArrowDown />
-                    </button>
-                  </span>
-                </div>
               ))}
             </section>
-          );
-        })}
-      </div>
+          ) : null}
+          <div className="document-tree">
+            {visibleGroups.map(({ kind, label, icon: Icon }) => {
+              const documents =
+                project.documents?.filter((document) => document.kind === kind) ?? [];
+              return (
+                <section className="document-group" key={kind}>
+                  <header>
+                    <span>
+                      <Icon aria-hidden="true" /> {label}
+                    </span>
+                    <button
+                      aria-busy={isCreatingDocument || undefined}
+                      aria-label={isCreatingDocument ? `Adding ${label}` : `Add ${label}`}
+                      disabled={isCreatingDocument}
+                      onClick={() => onCreateDocument(kind)}
+                      title={isCreatingDocument ? `Adding ${label}` : `Add ${label}`}
+                      type="button"
+                    >
+                      {isCreatingDocument ? (
+                        <Loader2 aria-hidden="true" className="spin" />
+                      ) : (
+                        <Plus aria-hidden="true" />
+                      )}
+                    </button>
+                  </header>
+                  {documents.map((document, index) => (
+                    <div className="document-row-wrap" key={document.id}>
+                      <button
+                        aria-current={document.id === activeId ? 'page' : undefined}
+                        className={
+                          document.id === activeId
+                            ? 'document-row document-row--active'
+                            : 'document-row'
+                        }
+                        onClick={() => onSelectDocument(document.id)}
+                        type="button"
+                      >
+                        <FileText aria-hidden="true" />
+                        <span>{document.title}</span>
+                      </button>
+                      <span className="document-order" aria-label={`Reorder ${document.title}`}>
+                        <button
+                          aria-label={`Move ${document.title} up`}
+                          aria-busy={isMovingDocument || undefined}
+                          disabled={isMovingDocument || index === 0}
+                          onClick={() => onMoveDocument(document.id, -1)}
+                          title={isMovingDocument ? 'Reordering documents' : 'Move up'}
+                          type="button"
+                        >
+                          <ArrowUp aria-hidden="true" />
+                        </button>
+                        <button
+                          aria-label={`Move ${document.title} down`}
+                          aria-busy={isMovingDocument || undefined}
+                          disabled={isMovingDocument || index === documents.length - 1}
+                          onClick={() => onMoveDocument(document.id, 1)}
+                          title={isMovingDocument ? 'Reordering documents' : 'Move down'}
+                          type="button"
+                        >
+                          <ArrowDown aria-hidden="true" />
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </details>
     </aside>
   );
 }

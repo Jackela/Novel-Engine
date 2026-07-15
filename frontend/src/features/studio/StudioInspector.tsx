@@ -1,20 +1,44 @@
-import { Bot, Briefcase, History, ShieldCheck } from 'lucide-react';
-import type { Dispatch, FormEvent, SetStateAction } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { useId, type Dispatch, type FormEvent, type SetStateAction } from 'react';
 
-import type { ProviderInfo, Review, Revision, StudioExport, StudioJob } from '@/app/types/studio';
+import type {
+  ExportFormat,
+  ProviderInfo,
+  Review,
+  Revision,
+  StudioExport,
+  StudioJob,
+} from '@/app/types/studio';
 
-import { StudioCopilotPanel } from './components/StudioCopilotPanel';
-import { StudioHistoryPanel } from './components/StudioHistoryPanel';
-import { StudioJobsPanel } from './components/StudioJobsPanel';
-import { StudioReviewPanel } from './components/StudioReviewPanel';
-import { StudioSettingsPanel } from './components/StudioSettingsPanel';
-import type { InspectorTab } from './studioConstants';
+import { StudioInspectorPanels } from './StudioInspectorPanels';
+import { StudioInspectorTabs } from './StudioInspectorTabs';
+import { type InspectorTab } from './studioConstants';
 
 export interface SettingsFormState {
   title: string;
   description: string;
   provider: string;
 }
+
+export interface InspectorPendingState {
+  proposal: {
+    running: boolean;
+    accepting: boolean;
+  };
+  review: boolean;
+  jobs: {
+    loading: boolean;
+    retrying: boolean;
+  };
+  settings: boolean;
+}
+
+const DEFAULT_INSPECTOR_PENDING: InspectorPendingState = {
+  proposal: { running: false, accepting: false },
+  review: false,
+  jobs: { loading: false, retrying: false },
+  settings: false,
+};
 
 interface StudioInspectorProps {
   error: string | null;
@@ -29,6 +53,8 @@ interface StudioInspectorProps {
   revisions: Revision[];
   settingsForm: SettingsFormState;
   onAcceptProposal: () => void;
+  onExport?: (format: ExportFormat) => void;
+  onRetryExport?: (format: ExportFormat) => void;
   onLoadJobs: () => void;
   onRestoreRevision: (revisionId: string) => void;
   onRetryJob: (jobId: string) => void;
@@ -39,6 +65,10 @@ interface StudioInspectorProps {
   setInstruction: Dispatch<SetStateAction<string>>;
   setProposal: Dispatch<SetStateAction<StudioJob | null>>;
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
+  exportingFormat?: ExportFormat | null;
+  failedFormat?: ExportFormat | null;
+  pending?: InspectorPendingState;
+  errorForExport?: string | null;
 }
 
 export function StudioInspector({
@@ -54,6 +84,8 @@ export function StudioInspector({
   revisions,
   settingsForm,
   onAcceptProposal,
+  onExport,
+  onRetryExport,
   onLoadJobs,
   onRestoreRevision,
   onRetryJob,
@@ -64,74 +96,70 @@ export function StudioInspector({
   setInstruction,
   setProposal,
   setSettingsForm,
+  exportingFormat = null,
+  failedFormat = null,
+  pending = DEFAULT_INSPECTOR_PENDING,
+  errorForExport = null,
 }: StudioInspectorProps) {
+  const inspectorId = useId();
+  const tabId = (tab: Exclude<InspectorTab, 'settings'>) => `${inspectorId}-${tab}-tab`;
+  const panelId = (tab: Exclude<InspectorTab, 'settings'>) => `${inspectorId}-${tab}-panel`;
+
   return (
     <aside className="studio-inspector">
-      <nav className="inspector-tabs">
-        <button
-          className={inspector === 'copilot' ? 'active' : ''}
-          onClick={() => setInspector('copilot')}
-          type="button"
-        >
-          <Bot /> Copilot
-        </button>
-        <button
-          className={inspector === 'review' ? 'active' : ''}
-          onClick={() => setInspector('review')}
-          type="button"
-        >
-          <ShieldCheck /> Review
-        </button>
-        <button
-          className={inspector === 'history' ? 'active' : ''}
-          onClick={() => setInspector('history')}
-          type="button"
-        >
-          <History /> History
-        </button>
-        <button
-          className={inspector === 'jobs' ? 'active' : ''}
-          onClick={() => setInspector('jobs')}
-          type="button"
-        >
-          <Briefcase /> Jobs
-        </button>
-      </nav>
+      <details className="studio-inspector__disclosure" open>
+        <summary className="studio-inspector__summary">
+          <span>Inspector</span>
+          <ChevronDown aria-hidden="true" />
+        </summary>
+        <div className="studio-inspector__content">
+          {inspector !== 'settings' && (
+            <StudioInspectorTabs
+              inspector={inspector}
+              tabId={tabId}
+              panelId={panelId}
+              setInspector={setInspector}
+            />
+          )}
 
-      {error ? <div className="inspector-error">{error}</div> : null}
+          {error && inspector !== 'export' ? (
+            <div aria-live="assertive" className="inspector-error" role="alert">
+              {error}
+            </div>
+          ) : null}
 
-      {inspector === 'copilot' && (
-        <StudioCopilotPanel
-          instruction={instruction}
-          setInstruction={setInstruction}
-          proposal={proposal}
-          setProposal={setProposal}
-          onRunProposal={onRunProposal}
-          onAcceptProposal={onAcceptProposal}
-        />
-      )}
-      {inspector === 'review' && (
-        <StudioReviewPanel latestReview={latestReview} onRunReview={onRunReview} />
-      )}
-      {inspector === 'history' && (
-        <StudioHistoryPanel
-          revisions={revisions}
-          loadedRevisionId={loadedRevisionId}
-          exports={exports}
-          onRestoreRevision={onRestoreRevision}
-        />
-      )}
-      {inspector === 'jobs' && (
-        <StudioJobsPanel jobs={jobs} onLoadJobs={onLoadJobs} onRetryJob={onRetryJob} />
-      )}
-      {inspector === 'settings' && (
-        <StudioSettingsPanel
-          settingsForm={settingsForm}
-          setSettingsForm={setSettingsForm}
-          onUpdateSettings={onUpdateSettings}
-          providers={providers}
-        />
-      )}
+          <StudioInspectorPanels
+            inspector={inspector}
+            tabId={tabId}
+            panelId={panelId}
+            exports={exports}
+            instruction={instruction}
+            jobs={jobs}
+            latestReview={latestReview}
+            loadedRevisionId={loadedRevisionId}
+            proposal={proposal}
+            providers={providers}
+            revisions={revisions}
+            settingsForm={settingsForm}
+            onAcceptProposal={onAcceptProposal}
+            onExport={onExport}
+            onRetryExport={onRetryExport}
+            onLoadJobs={onLoadJobs}
+            onRestoreRevision={onRestoreRevision}
+            onRetryJob={onRetryJob}
+            onRunProposal={onRunProposal}
+            onRunReview={onRunReview}
+            onUpdateSettings={onUpdateSettings}
+            setInstruction={setInstruction}
+            setProposal={setProposal}
+            setSettingsForm={setSettingsForm}
+            exportingFormat={exportingFormat}
+            failedFormat={failedFormat}
+            pending={pending}
+            errorForExport={errorForExport}
+          />
+        </div>
+      </details>
     </aside>
   );
 }

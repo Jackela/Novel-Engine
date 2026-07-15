@@ -1,23 +1,12 @@
-import { fireEvent } from '@testing-library/dom';
 import { act, type FormEvent, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { Project, Session, StudioDocument } from '@/app/types/studio';
 
-import { StudioEditorPane } from './StudioEditorPane';
+import { StudioInspector } from './StudioInspector';
 import { StudioNavigator } from './StudioNavigator';
 import { StudioTopbar } from './StudioTopbar';
-
-vi.mock('./MarkdownEditor', () => ({
-  MarkdownEditor: ({ value, onChange }: { value: string; onChange: (value: string) => void }) => (
-    <textarea
-      aria-label="Markdown body"
-      onChange={(event) => onChange(event.target.value)}
-      value={value}
-    />
-  ),
-}));
 
 const mountedRoots: Array<{ container: HTMLDivElement; root: Root }> = [];
 
@@ -87,13 +76,146 @@ const baseProject: Project = {
 };
 
 describe('Studio split components', () => {
-  it('routes topbar actions without owning page state', () => {
-    const callbacks = {
-      back: vi.fn(),
-      review: vi.fn(),
-      exportProject: vi.fn(),
-      settings: vi.fn(),
-    };
+  it('exposes the inspector tabs and active panel as an associated ARIA tab set', () => {
+    const setInspector = vi.fn();
+    const container = render(
+      <StudioInspector
+        error={null}
+        exports={[]}
+        inspector="copilot"
+        instruction=""
+        jobs={[]}
+        latestReview={null}
+        loadedRevisionId={null}
+        proposal={null}
+        providers={[]}
+        revisions={[]}
+        settingsForm={{ title: '', description: '', provider: '' }}
+        onAcceptProposal={vi.fn()}
+        onLoadJobs={vi.fn()}
+        onRestoreRevision={vi.fn()}
+        onRetryJob={vi.fn()}
+        onRunProposal={vi.fn()}
+        onRunReview={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        setInspector={setInspector}
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+        setSettingsForm={vi.fn()}
+      />,
+    );
+
+    const tablist = container.querySelector('[role="tablist"]');
+    const disclosure = container.querySelector('details.studio-inspector__disclosure');
+    const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
+    const activeTab = tabs.find((tab) => tab.getAttribute('aria-selected') === 'true');
+    const panels = Array.from(container.querySelectorAll('[role="tabpanel"]'));
+    const activePanel = panels.find((panel) => !panel.hasAttribute('hidden'));
+
+    expect(tablist).not.toBeNull();
+    expect(disclosure).not.toBeNull();
+    expect(disclosure?.querySelector('summary')?.textContent).toContain('Inspector');
+    expect(disclosure?.hasAttribute('open')).toBe(true);
+    expect(tabs).toHaveLength(5);
+    expect(panels).toHaveLength(5);
+    expect(activeTab?.textContent).toContain('Copilot');
+    expect(tabs.filter((tab) => tab.getAttribute('aria-selected') === 'false')).toHaveLength(4);
+    expect(activeTab?.getAttribute('aria-controls')).toBe(activePanel?.id);
+    expect(activePanel?.getAttribute('aria-labelledby')).toBe(activeTab?.id);
+    expect(
+      tabs.every((tab) => panels.some((panel) => panel.id === tab.getAttribute('aria-controls'))),
+    ).toBe(true);
+    expect(panels.filter((panel) => panel.hasAttribute('hidden'))).toHaveLength(4);
+
+    click(tabs.find((tab) => tab.textContent?.includes('Review')) ?? null);
+    expect(setInspector).toHaveBeenCalledWith('review');
+  });
+
+  it('supports APG tablist keyboard navigation and keeps one tab in the tab sequence', () => {
+    const setInspector = vi.fn();
+    const container = render(
+      <StudioInspector
+        error={null}
+        exports={[]}
+        inspector="copilot"
+        instruction=""
+        jobs={[]}
+        latestReview={null}
+        loadedRevisionId={null}
+        proposal={null}
+        providers={[]}
+        revisions={[]}
+        settingsForm={{ title: '', description: '', provider: '' }}
+        onAcceptProposal={vi.fn()}
+        onLoadJobs={vi.fn()}
+        onRestoreRevision={vi.fn()}
+        onRetryJob={vi.fn()}
+        onRunProposal={vi.fn()}
+        onRunReview={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        setInspector={setInspector}
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+        setSettingsForm={vi.fn()}
+      />,
+    );
+
+    const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    expect(tabs.filter((tab) => tab.tabIndex === 0)).toHaveLength(1);
+
+    act(() => {
+      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(setInspector).toHaveBeenCalledWith('review');
+
+    act(() => {
+      tabs[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+    });
+    expect(setInspector).toHaveBeenCalledWith('jobs');
+
+    act(() => {
+      tabs[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }));
+    });
+    expect(setInspector).toHaveBeenCalledWith('copilot');
+  });
+
+  it('does not expose an unselected tablist while the settings route is active', () => {
+    const container = render(
+      <StudioInspector
+        error={null}
+        exports={[]}
+        inspector="settings"
+        instruction=""
+        jobs={[]}
+        latestReview={null}
+        loadedRevisionId={null}
+        proposal={null}
+        providers={[]}
+        revisions={[]}
+        settingsForm={{ title: '', description: '', provider: '' }}
+        onAcceptProposal={vi.fn()}
+        onLoadJobs={vi.fn()}
+        onRestoreRevision={vi.fn()}
+        onRetryJob={vi.fn()}
+        onRunProposal={vi.fn()}
+        onRunReview={vi.fn()}
+        onUpdateSettings={vi.fn()}
+        setInspector={vi.fn()}
+        setInstruction={vi.fn()}
+        setProposal={vi.fn()}
+        setSettingsForm={vi.fn()}
+      />,
+    );
+
+    const tabs = Array.from(container.querySelectorAll('[role="tab"]'));
+
+    expect(container.querySelector('[role="tablist"]')).toBeNull();
+    expect(tabs).toHaveLength(0);
+    expect(container.querySelector('form.inspector-content')).not.toBeNull();
+  });
+
+  it('keeps topbar navigation focused on returning to the project library', () => {
+    const back = vi.fn();
     const guestSession: Session = {
       session_id: 'session-1',
       kind: 'guest',
@@ -102,26 +224,13 @@ describe('Studio split components', () => {
     };
 
     const container = render(
-      <StudioTopbar
-        project={baseProject}
-        session={guestSession}
-        onBack={callbacks.back}
-        onReview={callbacks.review}
-        onExport={callbacks.exportProject}
-        onSettings={callbacks.settings}
-      />,
+      <StudioTopbar project={baseProject} session={guestSession} onBack={back} />,
     );
 
     expect(container.textContent).toContain('Clockwork Harbor');
-    click(container.querySelector('button[title="Projects"]'));
-    click(container.querySelector('.command:not(.command--primary)'));
-    click(container.querySelector('button[title="Project settings"]'));
-    click(Array.from(container.querySelectorAll('.export-menu__items button'))[1]);
-
-    expect(callbacks.back).toHaveBeenCalledTimes(1);
-    expect(callbacks.review).toHaveBeenCalledTimes(1);
-    expect(callbacks.settings).toHaveBeenCalledTimes(1);
-    expect(callbacks.exportProject).toHaveBeenCalledWith('docx');
+    click(container.querySelector('button[aria-label="Back to projects"]'));
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('.export-menu')).toBeNull();
   });
 
   it('keeps navigation callbacks scoped to section, search, and document actions', () => {
@@ -151,6 +260,12 @@ describe('Studio split components', () => {
       />,
     );
 
+    expect(container.querySelector('summary.studio-nav__summary')).not.toBeNull();
+    expect(container.querySelector('summary')?.textContent).toContain('Project navigation');
+    expect(container.querySelector('summary')?.hasAttribute('aria-label')).toBe(false);
+    expect(container.querySelector('button[aria-label="Add Manuscript"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="Move Second down"]')).not.toBeNull();
+
     click(Array.from(container.querySelectorAll('.section-nav button'))[1]);
     click(container.querySelector('.search-results button'));
     click(container.querySelector('.document-group header button'));
@@ -164,41 +279,5 @@ describe('Studio split components', () => {
     expect(callbacks.createDocument).toHaveBeenCalledWith('chapter');
     expect(callbacks.moveDocument).toHaveBeenCalledWith('doc-1', 1);
     expect(callbacks.searchSubmit).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders editor state and forwards title/body edits', async () => {
-    const onTitleChange = vi.fn();
-    const onDraftChange = vi.fn();
-    const container = render(
-      <StudioEditorPane
-        activeDocument={baseDocument}
-        draft="# Opening"
-        titleDraft="Opening"
-        saveState="saving"
-        onDraftChange={onDraftChange}
-        onTitleChange={onTitleChange}
-      />,
-    );
-
-    await act(async () => {
-      await Promise.resolve();
-    });
-
-    const title = container.querySelector('input[aria-label="Document title"]');
-    const body = container.querySelector('textarea[aria-label="Markdown body"]');
-    expect(container.textContent).toContain('42 words');
-    expect(container.textContent).toContain('saving');
-
-    act(() => {
-      if (title instanceof HTMLInputElement) {
-        fireEvent.input(title, { target: { value: 'New Opening' } });
-      }
-      if (body instanceof HTMLTextAreaElement) {
-        fireEvent.input(body, { target: { value: '# New Opening' } });
-      }
-    });
-
-    expect(onTitleChange).toHaveBeenCalledWith('New Opening');
-    expect(onDraftChange).toHaveBeenCalledWith('# New Opening');
   });
 });

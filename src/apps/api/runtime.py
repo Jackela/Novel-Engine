@@ -51,6 +51,7 @@ def create_runtime(settings: NovelEngineSettings) -> StudioRuntime:
             repository=SqlAlchemyStudioRepository(database),
             data_dir=settings.data_dir,
             ai_provider_factory=ai_provider_factory,
+            session_secret=settings.security.secret_key,
             export_writers=DEFAULT_EXPORT_WRITERS,
         ),
         database=database,
