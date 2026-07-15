@@ -1,7 +1,13 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy import func, select
+
+from src.contexts.studio.infrastructure.models import Owner
+from src.shared.infrastructure.config.settings import Environment
 
 
 def _guest_client(app: FastAPI) -> TestClient:
@@ -35,6 +41,91 @@ def test_login_and_guest_set_csrf_cookie(canonical_app: FastAPI) -> None:
     )
     assert login.status_code == 200
     assert "novel_studio_csrf" in login.cookies
+
+
+def test_session_cookie_api_and_csrf_contract_shape_is_stable(
+    canonical_app: FastAPI,
+) -> None:
+    client = TestClient(canonical_app, raise_server_exceptions=False)
+
+    response = client.post("/api/session/guest")
+
+    assert response.status_code == 201
+    assert set(response.json()) == {
+        "session_id",
+        "kind",
+        "owner_id",
+        "expires_at",
+    }
+    assert response.json()["kind"] == "guest"
+    assert response.cookies.get("novel_studio_session")
+    assert response.cookies.get("novel_studio_csrf")
+
+    current = client.get("/api/session")
+    assert current.status_code == 200
+    assert set(current.json()) == set(response.json())
+
+    csrf_token = _csrf_cookie(client)
+    project = client.post(
+        "/api/projects",
+        json={"title": "Contract shape"},
+        headers={"X-CSRF-Token": csrf_token},
+    )
+    assert project.status_code == 201
+
+
+def test_setup_rejects_cross_site_origin_without_csrf_cookie(
+    canonical_app: FastAPI,
+) -> None:
+    client = TestClient(canonical_app, raise_server_exceptions=False)
+    response = client.post(
+        "/api/setup",
+        json={"username": "owner", "password": "owner-password-123"},
+        headers={"Origin": "https://evil.example"},
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Setup requests must be same-origin."
+    assert not canonical_app.state.studio_store.owner_exists()
+
+
+def test_setup_accepts_configured_vite_origin(canonical_app: FastAPI) -> None:
+    client = TestClient(canonical_app, raise_server_exceptions=False)
+    response = client.post(
+        "/api/setup",
+        json={"username": "owner", "password": "owner-password-123"},
+        headers={"Origin": "http://localhost:5173"},
+    )
+
+    assert response.status_code == 201
+
+
+def test_concurrent_setup_creates_only_one_owner(canonical_app: FastAPI) -> None:
+    def setup_owner() -> int:
+        client = TestClient(canonical_app, raise_server_exceptions=False)
+        response = client.post(
+            "/api/setup",
+            json={"username": "owner", "password": "owner-password-123"},
+        )
+        return int(response.status_code)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        statuses = list(executor.map(lambda _: setup_owner(), range(2)))
+
+    assert sorted(statuses) == [201, 422]
+    database = canonical_app.state.studio_runtime.database
+    with database.session() as session:
+        assert session.scalar(select(func.count()).select_from(Owner)) == 1
+
+
+def test_staging_session_cookies_are_secure(canonical_app: FastAPI) -> None:
+    canonical_app.state.settings.environment = Environment.STAGING
+    client = TestClient(canonical_app, raise_server_exceptions=False)
+
+    response = client.post("/api/session/guest")
+
+    assert response.status_code == 201
+    assert "Secure" in response.headers["set-cookie"]
 
 
 def test_write_without_csrf_header_is_forbidden(canonical_app: FastAPI) -> None:

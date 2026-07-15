@@ -63,6 +63,7 @@ export function ProjectLibraryPage() {
             </span>
           ) : null}
           <button
+            aria-label="Sign out"
             className="icon-command"
             onClick={() => void logout()}
             title="Sign out"

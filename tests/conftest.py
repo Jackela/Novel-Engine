@@ -75,6 +75,7 @@ def build_canonical_app(monkeypatch: pytest.MonkeyPatch) -> FastAPI:
         repository=SqlAlchemyStudioRepository(database),
         data_dir=data_dir,
         ai_provider_factory=create_studio_text_generation_provider,
+        session_secret=settings_module.get_settings().security.secret_key,
         export_writers=DEFAULT_EXPORT_WRITERS,
     )
 

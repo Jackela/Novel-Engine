@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, ValidationError
 
+from src.apps.api.middleware import error_handler as error_handler_module
 from src.apps.api.middleware.error_handler import (
     APIError,
     AuthenticationError,
@@ -18,6 +23,10 @@ from src.apps.api.middleware.error_handler import (
 
 class Payload(BaseModel):
     count: int
+
+
+class SensitivePayload(BaseModel):
+    token: int
 
 
 def make_app() -> FastAPI:
@@ -39,6 +48,10 @@ def make_app() -> FastAPI:
 
     @app.post("/request-validation")
     async def request_validation(payload: Payload) -> Payload:
+        return payload
+
+    @app.post("/sensitive-validation")
+    async def sensitive_validation(payload: SensitivePayload) -> SensitivePayload:
         return payload
 
     @app.get("/pydantic-validation")
@@ -108,11 +121,58 @@ def test_request_validation_handler_response_shape() -> None:
     assert payload["error"]["details"]["errors"][0]["field"] == ".body.count"
 
 
+def test_request_validation_log_uses_safe_whitelist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    warning = AsyncMock()
+    monkeypatch.setattr(
+        error_handler_module, "logger", SimpleNamespace(awarning=warning)
+    )
+
+    response = TestClient(make_app()).post(
+        "/sensitive-validation",
+        json={"token": "super-secret-token"},
+    )
+
+    assert response.status_code == 422
+    warning.assert_awaited_once()
+    call = warning.await_args
+    assert call is not None
+    _, kwargs = call
+    assert kwargs["path"] == "/sensitive-validation"
+    assert kwargs["method"] == "POST"
+    assert kwargs["errors"][0].keys() == {"field", "message", "type"}
+    serialized = repr(kwargs)
+    assert "input" not in serialized
+    assert "super-secret-token" not in serialized
+
+
 def test_pydantic_validation_handler_response_shape() -> None:
     response = TestClient(make_app()).get("/pydantic-validation")
 
     assert response.status_code == 422
     assert response.json()["error"]["message"] == "Data validation failed"
+
+
+def test_pydantic_validation_log_uses_safe_whitelist(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    warning = AsyncMock()
+    monkeypatch.setattr(
+        error_handler_module, "logger", SimpleNamespace(awarning=warning)
+    )
+
+    response = TestClient(make_app()).get("/pydantic-validation")
+
+    assert response.status_code == 422
+    warning.assert_awaited_once()
+    call = warning.await_args
+    assert call is not None
+    _, kwargs = call
+    assert kwargs["path"] == "/pydantic-validation"
+    assert kwargs["method"] == "GET"
+    assert kwargs["errors"][0].keys() == {"field", "message", "type"}
+    assert "input" not in repr(kwargs)
 
 
 def test_general_exception_handler_hides_internal_message() -> None:

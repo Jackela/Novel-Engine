@@ -174,6 +174,51 @@ def test_delete_project_with_snapshots(canonical_client: TestClient) -> None:
     assert canonical_client.get(f"/api/projects/{project['id']}").status_code == 404
 
 
+@pytest.mark.parametrize(
+    ("workflow", "payload"),
+    [("reviews", None), ("exports", {"format": "markdown"})],
+)
+def test_document_delete_with_snapshot_returns_conflict(
+    canonical_client: TestClient,
+    workflow: str,
+    payload: dict[str, str] | None,
+) -> None:
+    """Immutable review/export snapshots protect their source documents."""
+    canonical_client.post("/api/session/guest")
+    project = canonical_client.post(
+        "/api/projects", json={"title": "Protected Document"}
+    ).json()
+    document = project["documents"][0]
+    saved = canonical_client.put(
+        f"/api/projects/{project['id']}/documents/{document['id']}",
+        json={
+            "content_markdown": "# Protected\n\nSnapshot content.",
+            "base_revision_id": document["current_revision_id"],
+            "metadata": {},
+        },
+    )
+    assert saved.status_code == 200
+
+    created = canonical_client.post(
+        f"/api/projects/{project['id']}/{workflow}", json=payload
+    )
+    assert created.status_code == 201
+
+    blocked = canonical_client.delete(
+        f"/api/projects/{project['id']}/documents/{document['id']}"
+    )
+    assert blocked.status_code == 409
+    assert blocked.json()["detail"] == (
+        "Document is referenced by an immutable snapshot."
+    )
+
+    revisions = canonical_client.get(
+        f"/api/projects/{project['id']}/documents/{document['id']}/revisions"
+    )
+    assert revisions.status_code == 200
+    assert revisions.json()["revisions"]
+
+
 def test_swagger_ui_assets_are_version_pinned_and_integrity_checked(
     canonical_client: TestClient,
 ) -> None:

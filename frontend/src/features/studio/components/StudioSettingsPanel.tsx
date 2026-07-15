@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import type { ProviderInfo } from '@/app/types/studio';
@@ -8,8 +9,9 @@ import type { SettingsFormState } from '../StudioInspector';
 interface StudioSettingsPanelProps {
   settingsForm: SettingsFormState;
   setSettingsForm: Dispatch<SetStateAction<SettingsFormState>>;
-  onUpdateSettings: (event: FormEvent) => void;
+  onUpdateSettings: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   providers?: ProviderInfo[];
+  isSaving?: boolean;
 }
 
 export function StudioSettingsPanel({
@@ -17,9 +19,24 @@ export function StudioSettingsPanel({
   setSettingsForm,
   onUpdateSettings,
   providers = DEFAULT_PROVIDER_OPTIONS,
+  isSaving = false,
 }: StudioSettingsPanelProps) {
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    try {
+      await onUpdateSettings(event);
+    } finally {
+      saveButtonRef.current?.focus();
+    }
+  };
+
   return (
-    <form className="inspector-content" onSubmit={onUpdateSettings}>
+    <form
+      aria-busy={isSaving}
+      className="inspector-content"
+      onSubmit={(event) => void handleSubmit(event)}
+    >
       <h2>Project settings</h2>
       <label className="settings-field">
         <span>Title</span>
@@ -67,10 +84,19 @@ export function StudioSettingsPanel({
         <span>Markdown</span>
       </div>
       <div className="inspector-actions">
-        <button className="command command--primary" type="submit">
-          Save settings
+        <button
+          aria-busy={isSaving}
+          className="command command--primary"
+          disabled={isSaving}
+          ref={saveButtonRef}
+          type="submit"
+        >
+          {isSaving ? 'Saving…' : 'Save settings'}
         </button>
       </div>
+      <p aria-live="polite" className="sr-only">
+        {isSaving ? 'Saving project settings.' : ''}
+      </p>
     </form>
   );
 }

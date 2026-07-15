@@ -26,7 +26,8 @@ interface SettingsFormSnapshot {
 
 function inspectorForSection(section: string): InspectorTab | null {
   if (section === 'review') return 'review';
-  if (section === 'history' || section === 'export') return 'history';
+  if (section === 'history') return 'history';
+  if (section === 'export') return 'export';
   if (section === 'settings') return 'settings';
   return null;
 }

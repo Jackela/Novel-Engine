@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
 import re
@@ -42,8 +43,19 @@ def new_id() -> str:
     return str(uuid4())
 
 
-def _token_hash(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+def _token_hash(token: str, secret_key: str) -> str:
+    """Derive a session lookup digest with the deployment secret.
+
+    Session tokens are bearer credentials.  Keying their database digest with
+    the deployment secret prevents an attacker with a database-only copy from
+    validating guesses offline, and rotating the secret invalidates all
+    existing sessions by design.
+    """
+    return hmac.new(
+        secret_key.encode("utf-8"),
+        token.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
 
 
 def _word_count(markdown: str) -> int:

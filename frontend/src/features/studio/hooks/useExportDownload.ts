@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
@@ -10,9 +10,17 @@ export function useExportDownload(
   setExports: Dispatch<SetStateAction<StudioExport[]>>,
   setError: Dispatch<SetStateAction<string | null>>,
 ) {
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+  const [failedFormat, setFailedFormat] = useState<ExportFormat | null>(null);
+  const exportingRef = useRef(false);
+
   const exportProject = useCallback(
     async (format: ExportFormat) => {
-      if (!project) return;
+      if (!project || exportingRef.current) return;
+      exportingRef.current = true;
+      setExportingFormat(format);
+      setFailedFormat(null);
+      setError(null);
       try {
         const item = await api.createExport(projectId, format);
         setExports((current) => [item, ...current]);
@@ -27,11 +35,21 @@ export function useExportDownload(
         link.remove();
         setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
       } catch (reason) {
+        setFailedFormat(format);
         setError(reason instanceof Error ? reason.message : 'Unable to export project.');
+      } finally {
+        exportingRef.current = false;
+        setExportingFormat(null);
       }
     },
     [project, projectId, setExports, setError],
   );
 
-  return { exportProject };
+  return {
+    exportProject,
+    exportingFormat,
+    failedFormat,
+    isExporting: exportingFormat !== null,
+    isBusy: exportingFormat !== null,
+  };
 }

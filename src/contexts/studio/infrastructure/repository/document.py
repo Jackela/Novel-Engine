@@ -12,6 +12,8 @@ from src.contexts.studio.infrastructure.repository.common import (
     NotFound,
     Project,
     Session,
+    SnapshotConflict,
+    SnapshotDocument,
     StudioDatabase,
     _document_dto,
     _session,
@@ -153,6 +155,13 @@ class DocumentRepositoryMixin(
         with _session(self.database, session) as db_session:
             project = self._project(db_session, project_id, owner_id, guest_session_id)
             document = self._document(db_session, project, document_id)
+            snapshot_reference = db_session.scalar(
+                select(SnapshotDocument.id).where(
+                    SnapshotDocument.document_id == document.id
+                )
+            )
+            if snapshot_reference is not None:
+                raise SnapshotConflict()
             db_session.execute(
                 text("DELETE FROM document_search WHERE document_id = :document_id"),
                 {"document_id": document.id},

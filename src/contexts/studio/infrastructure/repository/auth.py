@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from src.contexts.studio.infrastructure.repository.common import (
+    InvalidOperation,
     Owner,
     OwnerDto,
     Session,
@@ -54,6 +55,10 @@ class AuthRepositoryMixin:
         session: Session | None = None,
     ) -> OwnerDto:
         with _session(self.database, session) as db_session:
+            if session is None and self.database.engine.dialect.name == "sqlite":
+                db_session.connection().exec_driver_sql("BEGIN IMMEDIATE")
+            if db_session.scalar(select(func.count()).select_from(Owner)):
+                raise InvalidOperation("The local owner has already been configured.")
             owner = Owner(
                 id=new_id(),
                 username=username,

@@ -21,8 +21,9 @@ __all__ = ["AuthService"]
 class AuthService:
     """Owner configuration and session lifecycle."""
 
-    def __init__(self, repository: StudioRepository) -> None:
+    def __init__(self, repository: StudioRepository, session_secret: str) -> None:
         self._repository = repository
+        self._session_secret = session_secret
 
     def owner_exists(self) -> bool:
         return self._repository.owner_exists()
@@ -96,7 +97,7 @@ class AuthService:
         record = self._repository.create_session(
             kind=kind,
             owner_id=owner_id,
-            token_hash=_token_hash(token),
+            token_hash=_token_hash(token, self._session_secret),
             csrf_token=csrf_token,
             expires_at=expires_at,
             created_at=now,
@@ -112,7 +113,9 @@ class AuthService:
     def principal_from_token(self, token: str | None) -> Principal | None:
         if not token:
             return None
-        record = self._repository.get_session_by_token_hash(_token_hash(token))
+        record = self._repository.get_session_by_token_hash(
+            _token_hash(token, self._session_secret)
+        )
         if record is None:
             return None
         now = utcnow()
@@ -126,7 +129,9 @@ class AuthService:
     def logout(self, token: str | None) -> None:
         if not token:
             return
-        record = self._repository.get_session_by_token_hash(_token_hash(token))
+        record = self._repository.get_session_by_token_hash(
+            _token_hash(token, self._session_secret)
+        )
         if record is not None:
             self._repository.delete_session(record.id)
 

@@ -155,9 +155,13 @@ async def validation_exception_handler(
     request: Request, exc: RequestValidationError
 ) -> JSONResponse:
     """Handle request validation errors."""
+    # Keep validation telemetry deliberately narrow.  ``exc.errors()`` may
+    # include an ``input`` value (passwords, API keys, or other secrets), so
+    # never pass the raw Pydantic structures to the logger.
+    safe_errors = format_validation_errors(exc.errors())
     await logger.awarning(
         "validation_error",
-        errors=exc.errors(),
+        errors=safe_errors,
         path=request.url.path,
         method=request.method,
     )
@@ -169,7 +173,7 @@ async def validation_exception_handler(
                 "code": "VALIDATION_ERROR",
                 "message": "Request validation failed",
                 "details": {
-                    "errors": format_validation_errors(exc.errors()),
+                    "errors": safe_errors,
                 },
             }
         },
@@ -180,9 +184,12 @@ async def pydantic_validation_handler(
     request: Request, exc: ValidationError
 ) -> JSONResponse:
     """Handle Pydantic validation errors."""
+    # Use the same redacted representation as request validation above; the
+    # raw ``errors()`` payload is intentionally not emitted to logs.
+    safe_errors = format_validation_errors(exc.errors())
     await logger.awarning(
         "pydantic_validation_error",
-        errors=exc.errors(),
+        errors=safe_errors,
         path=request.url.path,
         method=request.method,
     )
@@ -194,7 +201,7 @@ async def pydantic_validation_handler(
                 "code": "VALIDATION_ERROR",
                 "message": "Data validation failed",
                 "details": {
-                    "errors": format_validation_errors(exc.errors()),
+                    "errors": safe_errors,
                 },
             }
         },

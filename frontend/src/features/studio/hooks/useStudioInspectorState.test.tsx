@@ -87,7 +87,7 @@ describe('useStudioInspectorState', () => {
     expect(hook.result().inspector).toBe('history');
 
     hook.rerender({ section: 'export', project: baseProject, loadJobs });
-    expect(hook.result().inspector).toBe('history');
+    expect(hook.result().inspector).toBe('export');
 
     hook.rerender({ section: 'settings', project: baseProject, loadJobs });
     expect(hook.result().inspector).toBe('settings');

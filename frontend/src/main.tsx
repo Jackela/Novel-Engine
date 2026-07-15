@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
-import '@fontsource-variable/geist';
+import '@fontsource-variable/ibm-plex-sans';
 
 import { router } from '@/app/router';
 import '@/index.css';

@@ -11,6 +11,13 @@ class RevisionConflict(RuntimeError):
         self.current_revision_id = current_revision_id
 
 
+class SnapshotConflict(RuntimeError):
+    """Raised when an immutable snapshot still references a document."""
+
+    def __init__(self) -> None:
+        super().__init__("Document is referenced by an immutable snapshot.")
+
+
 class NotFound(RuntimeError):
     """Raised when a resource is not visible to the active principal."""
 

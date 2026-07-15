@@ -44,8 +44,16 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: |
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-factor 2
+          pnpm config set fetch-retry-mintimeout 1000
+          pnpm config set fetch-retry-maxtimeout 60000
           uv sync --extra dev --extra test --frozen
           pnpm install --frozen-lockfile
+      - name: Validate dependency security
+        run: |
+          uv run pip-audit
+          pnpm audit --audit-level high
       - name: Check AI regression diff
         if: github.event_name == 'pull_request'
         shell: bash
@@ -91,7 +99,7 @@ jobs:
         working-directory: frontend
         run: |
           react_doctor_report="${RUNNER_TEMP}/react-doctor.json"
-          pnpm dlx react-doctor@0.7.1 --json > "${react_doctor_report}"
+          pnpm exec react-doctor --json > "${react_doctor_report}"
           node - "${react_doctor_report}" <<'NODE'
           const fs = require("node:fs");
           const report = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));

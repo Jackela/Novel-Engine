@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
-import { HttpError, api } from '@/app/api';
+import { HttpError } from '@/app/api';
 import type { Project, SaveState, StudioDocument } from '@/app/types/studio';
 
 import { useRevisionCache } from './useRevisionCache';
+import {
+  loadLatestDocument,
+  restoreDocumentRevision,
+  saveDocumentDraft,
+  useDocumentDraftAutosave,
+} from './useDocumentDraftAutosave';
 
 function errorMessage(reason: unknown, fallback: string): string {
   return reason instanceof Error ? reason.message : fallback;
@@ -15,6 +21,12 @@ interface DraftState {
   readonly draft: string;
   readonly titleDraft: string;
   readonly saveState: SaveState;
+}
+
+interface PersistedDraft {
+  readonly documentId: string;
+  readonly draft: string;
+  readonly titleDraft: string;
 }
 
 function draftStateFor(document: StudioDocument | null, saveState: SaveState = 'idle'): DraftState {
@@ -40,13 +52,23 @@ export function useDocumentDraft(
   const activeDocumentId = activeDocument?.id ?? null;
   const loadedRevision = useRef<string | null>(activeDocument?.current_revision_id ?? null);
   const saveTimer = useRef<number | null>(null);
+  const saveInFlight = useRef(false);
+  const lastPersistedDraft = useRef<PersistedDraft | null>(null);
   const activeDraftState = stateForDocument(draftState, activeDocument);
   const { draft, titleDraft, saveState } = activeDraftState;
   const draftRef = useRef({ draft, titleDraft, activeDocument });
+  const [isConflictActionPending, setIsConflictActionPending] = useState(false);
+  const saveStateRef = useRef(saveState);
+  const conflictActionPendingRef = useRef(isConflictActionPending);
 
   useEffect(() => {
     draftRef.current = { draft, titleDraft, activeDocument };
   }, [draft, titleDraft, activeDocument]);
+
+  useEffect(() => {
+    saveStateRef.current = saveState;
+    conflictActionPendingRef.current = isConflictActionPending;
+  }, [isConflictActionPending, saveState]);
 
   useEffect(() => {
     loadedRevision.current = activeDocument?.current_revision_id ?? null;
@@ -86,6 +108,7 @@ export function useDocumentDraft(
   }, []);
 
   const setCurrentSaveState = useCallback((nextSaveState: SaveState) => {
+    saveStateRef.current = nextSaveState;
     setDraftState((current) => ({
       ...stateForDocument(current, draftRef.current.activeDocument),
       saveState: nextSaveState,
@@ -95,80 +118,148 @@ export function useDocumentDraft(
   const resetFor = useCallback(
     (document: StudioDocument, nextSaveState: SaveState = 'idle') => {
       loadedRevision.current = document.current_revision_id;
+      lastPersistedDraft.current = {
+        documentId: document.id,
+        draft: document.content_markdown,
+        titleDraft: document.title,
+      };
       setDraftState(draftStateFor(document, nextSaveState));
       refreshDocumentRevisions(document.id);
     },
     [refreshDocumentRevisions],
   );
 
-  useEffect(() => {
-    if (!activeDocument) return;
-    const unchanged =
-      draft === activeDocument.content_markdown && titleDraft === activeDocument.title;
-    if (unchanged) {
-      setCurrentSaveState('idle');
-      return;
-    }
-    setCurrentSaveState('saving');
-    if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(async () => {
-      const {
-        draft: currentDraft,
-        titleDraft: currentTitle,
-        activeDocument: currentDocument,
-      } = draftRef.current;
-      if (!currentDocument) return;
-      try {
-        const saved = await api.saveDocument(projectId, currentDocument.id, {
-          content_markdown: currentDraft,
-          base_revision_id: loadedRevision.current ?? currentDocument.current_revision_id,
-          title: currentTitle,
-        });
-        loadedRevision.current = saved.current_revision_id;
-        setProject((current) =>
-          current
-            ? {
-                ...current,
-                documents: current.documents?.map((document) =>
-                  document.id === saved.id ? saved : document,
-                ),
-              }
-            : current,
-        );
-        setDraftState((current) => ({
-          ...stateForDocument(current, currentDocument),
-          titleDraft: saved.title,
-          saveState: 'saved',
-        }));
-        refreshDocumentRevisions(currentDocument.id);
-      } catch (reason) {
-        setCurrentSaveState(
-          reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error',
-        );
-        setError(errorMessage(reason, 'Unable to save.'));
-      }
-    }, 1500);
-    return () => {
-      if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    };
-  }, [
+  const refreshLatestDocument = useCallback(
+    async (documentId: string): Promise<StudioDocument> => {
+      const { project, document } = await loadLatestDocument(projectId, documentId);
+      loadedRevision.current = document.current_revision_id;
+      setProject(project);
+      return document;
+    },
+    [projectId, setProject],
+  );
+
+  const persistDraft = useCallback(
+    async (
+      document: StudioDocument,
+      content: string,
+      title: string,
+      baseRevisionId: string,
+    ): Promise<StudioDocument> => {
+      const saved = await saveDocumentDraft(projectId, document, content, title, baseRevisionId);
+      loadedRevision.current = saved.current_revision_id;
+      saveStateRef.current = 'saved';
+      lastPersistedDraft.current = {
+        documentId: saved.id,
+        draft: content,
+        titleDraft: saved.title,
+      };
+      setProject((current) =>
+        current
+          ? {
+              ...current,
+              documents: current.documents?.map((currentDocument) =>
+                currentDocument.id === saved.id ? saved : currentDocument,
+              ),
+            }
+          : current,
+      );
+      setDraftState((current) => ({
+        ...stateForDocument(current, document),
+        titleDraft: saved.title,
+        saveState: 'saved',
+      }));
+      refreshDocumentRevisions(document.id);
+      setError(null);
+      return saved;
+    },
+    [projectId, refreshDocumentRevisions, setError, setProject],
+  );
+
+  useDocumentDraftAutosave({
+    activeDocument,
     draft,
     titleDraft,
-    activeDocument,
-    projectId,
-    refreshDocumentRevisions,
+    saveState,
+    draftRef,
+    lastPersistedDraft,
+    loadedRevision,
+    saveStateRef,
+    conflictActionPendingRef,
+    saveTimerRef: saveTimer,
+    saveInFlightRef: saveInFlight,
+    persistDraft,
+    refreshLatestDocument,
     setCurrentSaveState,
     setError,
-    setProject,
+  });
+
+  const loadLatest = useCallback(async () => {
+    if (!activeDocument || conflictActionPendingRef.current || saveInFlight.current) return;
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    setIsConflictActionPending(true);
+    conflictActionPendingRef.current = true;
+    try {
+      const latestDocument = await refreshLatestDocument(activeDocument.id);
+      lastPersistedDraft.current = {
+        documentId: latestDocument.id,
+        draft: latestDocument.content_markdown,
+        titleDraft: latestDocument.title,
+      };
+      saveStateRef.current = 'idle';
+      setDraftState(draftStateFor(latestDocument));
+      refreshDocumentRevisions(latestDocument.id);
+      setError(null);
+    } catch (reason) {
+      setCurrentSaveState('error');
+      setError(errorMessage(reason, 'Unable to load the latest document.'));
+    } finally {
+      setIsConflictActionPending(false);
+      conflictActionPendingRef.current = false;
+    }
+  }, [
+    activeDocument,
+    refreshDocumentRevisions,
+    refreshLatestDocument,
+    setCurrentSaveState,
+    setError,
   ]);
+
+  const retryOverwrite = useCallback(async () => {
+    if (!activeDocument || conflictActionPendingRef.current || saveInFlight.current) return;
+    if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    setIsConflictActionPending(true);
+    conflictActionPendingRef.current = true;
+    saveInFlight.current = true;
+    const { draft: currentDraft, titleDraft: currentTitle } = draftRef.current;
+    try {
+      const latestDocument = await refreshLatestDocument(activeDocument.id);
+      setCurrentSaveState('saving');
+      await persistDraft(
+        latestDocument,
+        currentDraft,
+        currentTitle,
+        latestDocument.current_revision_id,
+      );
+    } catch (reason) {
+      setCurrentSaveState(
+        reason instanceof HttpError && reason.status === 409 ? 'conflict' : 'error',
+      );
+      setError(errorMessage(reason, 'Unable to overwrite the latest document.'));
+    } finally {
+      saveInFlight.current = false;
+      setIsConflictActionPending(false);
+      conflictActionPendingRef.current = false;
+    }
+  }, [activeDocument, persistDraft, refreshLatestDocument, setCurrentSaveState, setError]);
 
   const restoreRevision = useCallback(
     async (revisionId: string) => {
       if (!activeDocument) return;
       try {
-        const restored = await api.restoreRevision(
+        const restored = await restoreDocumentRevision(
           projectId,
-          activeDocument.id,
+          activeDocument,
           revisionId,
           loadedRevision.current ?? activeDocument.current_revision_id,
         );
@@ -205,5 +296,8 @@ export function useDocumentDraft(
     revisions,
     resetFor,
     restoreRevision,
+    isConflictActionPending,
+    loadLatest,
+    retryOverwrite,
   };
 }

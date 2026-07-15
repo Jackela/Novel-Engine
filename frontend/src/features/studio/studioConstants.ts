@@ -14,7 +14,21 @@ export const GROUPS: Array<{
   { kind: 'note', label: 'Notes', icon: FileText },
 ];
 
-export type InspectorTab = 'copilot' | 'review' | 'history' | 'jobs' | 'settings';
+/**
+ * Inspector routes are intentionally independent from the project-level
+ * section routes.  In particular, export is its own panel rather than an
+ * alias for history so that the two workflows remain discoverable and
+ * keyboard addressable.
+ */
+export type InspectorTab = 'copilot' | 'review' | 'history' | 'export' | 'jobs' | 'settings';
+
+export const INSPECTOR_TABS: Exclude<InspectorTab, 'settings'>[] = [
+  'copilot',
+  'review',
+  'history',
+  'export',
+  'jobs',
+];
 
 export const SECTIONS = [
   ['manuscript', 'Manuscript'],

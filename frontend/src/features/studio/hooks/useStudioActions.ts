@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { Dispatch, FormEvent, SetStateAction } from 'react';
 
 import { api } from '@/app/api';
@@ -18,6 +18,24 @@ interface UseStudioActionsOptions {
   loadJobs: () => void;
 }
 
+type ActionKey = 'createDocument' | 'moveDocument' | 'runReview' | 'updateSettings' | 'retryJob';
+
+interface PendingActions {
+  readonly createDocument: boolean;
+  readonly moveDocument: boolean;
+  readonly runReview: boolean;
+  readonly updateSettings: boolean;
+  readonly retryJob: boolean;
+}
+
+const INITIAL_PENDING: PendingActions = {
+  createDocument: false,
+  moveDocument: false,
+  runReview: false,
+  updateSettings: false,
+  retryJob: false,
+};
+
 export function useStudioActions({
   project,
   projectId,
@@ -29,11 +47,28 @@ export function useStudioActions({
   settingsForm,
   loadJobs,
 }: UseStudioActionsOptions) {
+  const [pending, setPending] = useState<PendingActions>(INITIAL_PENDING);
+  const pendingRef = useRef<Set<ActionKey> | null>(null);
+
+  const begin = useCallback((key: ActionKey) => {
+    const current = pendingRef.current ?? (pendingRef.current = new Set<ActionKey>());
+    if (current.has(key)) return false;
+    current.add(key);
+    setPending((current) => ({ ...current, [key]: true }));
+    return true;
+  }, []);
+
+  const finish = useCallback((key: ActionKey) => {
+    pendingRef.current?.delete(key);
+    setPending((current) => ({ ...current, [key]: false }));
+  }, []);
+
   const createDocument = useCallback(
     async (kind: DocumentKind) => {
-      if (!project) return;
+      if (!project || !begin('createDocument')) return;
       const count = project.documents?.filter((document) => document.kind === kind).length ?? 0;
       const label = GROUPS.find((group) => group.kind === kind)?.label ?? 'Document';
+      setError(null);
       try {
         const document = await api.createDocument(project.id, {
           kind,
@@ -46,23 +81,32 @@ export function useStudioActions({
         setActiveId(document.id);
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to create document.');
+      } finally {
+        finish('createDocument');
       }
     },
-    [project, setActiveId, setError, setProject],
+    [begin, finish, project, setActiveId, setError, setProject],
   );
 
   const moveDocument = useCallback(
     async (documentId: string, direction: -1 | 1) => {
-      if (!project?.documents) return;
+      if (!project?.documents || !begin('moveDocument')) return;
       const ordered = [...project.documents].sort((a, b) => a.position - b.position);
       const index = ordered.findIndex((document) => document.id === documentId);
       const target = index + direction;
-      if (index < 0 || target < 0 || target >= ordered.length) return;
+      if (index < 0 || target < 0 || target >= ordered.length) {
+        finish('moveDocument');
+        return;
+      }
       const currentItem = ordered[index];
       const targetItem = ordered[target];
-      if (!currentItem || !targetItem) return;
+      if (!currentItem || !targetItem) {
+        finish('moveDocument');
+        return;
+      }
       ordered[index] = targetItem;
       ordered[target] = currentItem;
+      setError(null);
       try {
         const response = await api.reorderDocuments(
           project.id,
@@ -73,25 +117,32 @@ export function useStudioActions({
         );
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to reorder documents.');
+      } finally {
+        finish('moveDocument');
       }
     },
-    [project, setError, setProject],
+    [begin, finish, project, setError, setProject],
   );
 
   const runReview = useCallback(async () => {
+    if (!begin('runReview')) return;
+    setError(null);
     try {
       const review = await api.createReview(projectId);
       setReviews((current) => [review, ...current]);
       setInspector('review');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to run review.');
+    } finally {
+      finish('runReview');
     }
-  }, [projectId, setError, setInspector, setReviews]);
+  }, [begin, finish, projectId, setError, setInspector, setReviews]);
 
   const updateProjectSettings = useCallback(
     async (event: FormEvent) => {
       event.preventDefault();
-      if (!project) return;
+      if (!project || !begin('updateSettings')) return;
+      setError(null);
       try {
         const updated = await api.updateProject(project.id, {
           title: settingsForm.title,
@@ -102,22 +153,41 @@ export function useStudioActions({
         setError(null);
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to update project.');
+      } finally {
+        finish('updateSettings');
       }
     },
-    [project, settingsForm, setError, setProject],
+    [begin, finish, project, settingsForm, setError, setProject],
   );
 
   const retryJob = useCallback(
     async (jobId: string) => {
+      if (!begin('retryJob')) return;
+      setError(null);
       try {
         await api.retryJob(projectId, jobId);
         void loadJobs();
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to retry job.');
+      } finally {
+        finish('retryJob');
       }
     },
-    [projectId, loadJobs, setError],
+    [begin, finish, projectId, loadJobs, setError],
   );
 
-  return { createDocument, moveDocument, runReview, updateProjectSettings, retryJob };
+  return {
+    createDocument,
+    moveDocument,
+    runReview,
+    updateProjectSettings,
+    retryJob,
+    pending,
+    isCreatingDocument: pending.createDocument,
+    isMovingDocument: pending.moveDocument,
+    isRunningReview: pending.runReview,
+    isUpdatingSettings: pending.updateSettings,
+    isRetryingJob: pending.retryJob,
+    isBusy: Object.values(pending).some(Boolean),
+  };
 }

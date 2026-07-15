@@ -24,7 +24,11 @@ from src.contexts.studio.application.ports.studio_repository import (
     SnapshotDocumentDto,
     SnapshotDto,
 )
-from src.contexts.studio.domain.exceptions import InvalidOperation, NotFound
+from src.contexts.studio.domain.exceptions import (
+    InvalidOperation,
+    NotFound,
+    SnapshotConflict,
+)
 from src.contexts.studio.domain.types import JOB_KINDS
 from src.contexts.studio.domain.utils import _word_count, dump_json, new_id, utcnow
 from src.contexts.studio.infrastructure.database import StudioDatabase, UnitOfWork
@@ -39,6 +43,7 @@ from src.contexts.studio.infrastructure.models import (
     ProjectSnapshot,
     Review,
     SessionRecord,
+    SnapshotDocument,
     UsageEvent,
 )
 
@@ -224,6 +229,7 @@ __all__ = [
     "SnapshotDto",
     "InvalidOperation",
     "NotFound",
+    "SnapshotConflict",
     "JOB_KINDS",
     "_word_count",
     "dump_json",
@@ -239,6 +245,7 @@ __all__ = [
     "ProjectSnapshot",
     "Review",
     "SessionRecord",
+    "SnapshotDocument",
     "UsageEvent",
     "_owner_dto",
     "_session_dto",

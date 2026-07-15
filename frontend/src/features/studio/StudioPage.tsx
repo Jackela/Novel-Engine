@@ -1,106 +1,15 @@
 import { Loader2 } from 'lucide-react';
-import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import type { StudioDocument } from '@/app/types/studio';
-
-import { StudioEditorPane } from './StudioEditorPane';
-import { StudioInspector } from './StudioInspector';
-import { StudioNavigator } from './StudioNavigator';
-import { StudioStatusbar } from './StudioStatusbar';
-import { StudioTopbar } from './StudioTopbar';
-import { useActiveDocument } from './hooks/useActiveDocument';
-import { useDocumentDraft } from './hooks/useDocumentDraft';
-import { useExportDownload } from './hooks/useExportDownload';
-import { useStudioActions } from './hooks/useStudioActions';
-import { useStudioInspectorState } from './hooks/useStudioInspectorState';
-import { useStudioJobs } from './hooks/useStudioJobs';
-import { useStudioProject } from './hooks/useStudioProject';
-import { useStudioProposal } from './hooks/useStudioProposal';
-import { useStudioProviders } from './hooks/useStudioProviders';
-import { useStudioSearch } from './hooks/useStudioSearch';
+import { StudioPageView } from './StudioPageView';
+import { useStudioPageModel } from './hooks/useStudioPageModel';
 
 export function StudioPage() {
   const { projectId = '', section = 'manuscript' } = useParams();
   const navigate = useNavigate();
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const { project, viewProps } = useStudioPageModel(projectId, section, navigate);
 
-  const {
-    project,
-    setProject,
-    session,
-    reviews,
-    setReviews,
-    exports,
-    setExports,
-    error,
-    setError,
-  } = useStudioProject(projectId);
-
-  const activeDocument = useActiveDocument(project, section, activeId);
-  const visibleActiveId = activeDocument?.id ?? activeId;
-
-  const {
-    draft,
-    setDraft,
-    titleDraft,
-    setTitleDraft,
-    saveState,
-    loadedRevision,
-    revisions,
-    resetFor,
-    restoreRevision,
-  } = useDocumentDraft(activeDocument, projectId, setProject, setError);
-
-  const { jobs, loadJobs } = useStudioJobs(projectId, setError);
-  const { inspector, setInspector, settingsForm, setSettingsForm } = useStudioInspectorState({
-    section,
-    project,
-    loadJobs,
-  });
-
-  const onProposalAccepted = useCallback(
-    (document: StudioDocument) => resetFor(document, 'saved'),
-    [resetFor],
-  );
-
-  const { proposal, setProposal, instruction, setInstruction, runProposal, acceptProposal } =
-    useStudioProposal(
-      projectId,
-      activeDocument,
-      project,
-      setProject,
-      setInspector,
-      setError,
-      loadJobs,
-      onProposalAccepted,
-    );
-
-  const { search, setSearch, isSearching, searchResults, runSearch } = useStudioSearch(
-    projectId,
-    setError,
-  );
-
-  const providers = useStudioProviders();
-
-  const { exportProject } = useExportDownload(project, projectId, setExports, setError);
-
-  const { createDocument, moveDocument, runReview, updateProjectSettings, retryJob } =
-    useStudioActions({
-      project,
-      projectId,
-      setProject,
-      setReviews,
-      setError,
-      setActiveId,
-      setInspector,
-      settingsForm,
-      loadJobs,
-    });
-
-  const latestReview = reviews[0] ?? null;
-
-  if (!project) {
+  if (!project || !viewProps) {
     return (
       <main className="studio-loading">
         <Loader2 className="spin" /> Loading Studio
@@ -108,71 +17,5 @@ export function StudioPage() {
     );
   }
 
-  return (
-    <main className="studio">
-      <StudioTopbar
-        project={project}
-        session={session}
-        onBack={() => navigate('/projects')}
-        onReview={() => void runReview()}
-        onExport={(format) => void exportProject(format)}
-        onSettings={() => navigate(`/projects/${project.id}/settings`)}
-      />
-
-      <StudioNavigator
-        project={project}
-        section={section}
-        activeId={visibleActiveId}
-        search={search}
-        isSearching={isSearching}
-        searchResults={searchResults}
-        onSearchChange={setSearch}
-        onSearchSubmit={runSearch}
-        onNavigateSection={(nextSection) => navigate(`/projects/${project.id}/${nextSection}`)}
-        onSelectDocument={setActiveId}
-        onCreateDocument={(kind) => void createDocument(kind)}
-        onMoveDocument={(documentId, direction) => void moveDocument(documentId, direction)}
-      />
-
-      <StudioEditorPane
-        activeDocument={activeDocument}
-        draft={draft}
-        titleDraft={titleDraft}
-        saveState={saveState}
-        onDraftChange={setDraft}
-        onTitleChange={setTitleDraft}
-      />
-
-      <StudioInspector
-        error={error}
-        exports={exports}
-        inspector={inspector}
-        instruction={instruction}
-        jobs={jobs}
-        latestReview={latestReview}
-        loadedRevisionId={loadedRevision.current}
-        proposal={proposal}
-        providers={providers}
-        revisions={revisions}
-        settingsForm={settingsForm}
-        onAcceptProposal={() => void acceptProposal()}
-        onLoadJobs={() => void loadJobs()}
-        onRestoreRevision={(revisionId) => void restoreRevision(revisionId)}
-        onRetryJob={(jobId) => void retryJob(jobId)}
-        onRunProposal={(operation) => void runProposal(operation)}
-        onRunReview={() => void runReview()}
-        onUpdateSettings={updateProjectSettings}
-        setInspector={setInspector}
-        setInstruction={setInstruction}
-        setProposal={setProposal}
-        setSettingsForm={setSettingsForm}
-      />
-
-      <StudioStatusbar
-        activeDocument={activeDocument}
-        loadedRevisionId={loadedRevision.current}
-        saveState={saveState}
-      />
-    </main>
-  );
+  return <StudioPageView {...viewProps} />;
 }
