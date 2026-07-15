@@ -179,7 +179,7 @@ def _is_session_secret_constructor_upgrade(
 
     The deleted line still performs the same authenticated service wiring; the
     added argument only supplies the deployment secret needed for keyed token
-    hashing.  Keep this exception exact so unrelated auth/permission changes
+    hashing. Keep this exception exact so unrelated auth/permission changes
     remain visible to the guardrail.
     """
     if filename != "src/contexts/studio/application/services/facade_base.py":
