@@ -64,12 +64,13 @@ export function useRevisionCache(
       const requestVersion = (revisionRequestVersions.get(key) ?? 0) + 1;
       revisionRequestVersions.set(key, requestVersion);
       try {
+        if (revisionRequestVersions.get(key) !== requestVersion) return;
         const response = await api.revisions(projectId, nextDocumentId);
-        if (revisionRequestVersions.get(key) !== requestVersion) return;
-        replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
+        if (revisionRequestVersions.get(key) === requestVersion) {
+          replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
+        }
       } catch (reason: unknown) {
-        if (revisionRequestVersions.get(key) !== requestVersion) return;
-        onError(reason);
+        if (revisionRequestVersions.get(key) === requestVersion) onError(reason);
       }
     },
     [onError, projectId],
