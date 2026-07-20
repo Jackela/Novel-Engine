@@ -49,7 +49,5 @@ export function useExportDownload(
     exportProject,
     exportingFormat,
     failedFormat,
-    isExporting: exportingFormat !== null,
-    isBusy: exportingFormat !== null,
   };
 }

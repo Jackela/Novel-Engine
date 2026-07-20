@@ -278,7 +278,7 @@ export function useDocumentDraft(
               }
             : current,
         );
-        refreshDocumentRevisions(activeDocument.id);
+        await refreshDocumentRevisions(activeDocument.id);
       } catch (reason) {
         setError(errorMessage(reason, 'Unable to restore revision.'));
       }

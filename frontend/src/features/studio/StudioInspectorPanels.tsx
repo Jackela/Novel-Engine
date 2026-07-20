@@ -16,7 +16,7 @@ import { StudioJobsPanel } from './components/StudioJobsPanel';
 import { StudioReviewPanel } from './components/StudioReviewPanel';
 import { StudioSettingsPanel } from './components/StudioSettingsPanel';
 import { type InspectorTab } from './studioConstants';
-import type { InspectorPendingState, SettingsFormState } from './StudioInspector';
+import type { InspectorPendingState, SettingsFormState } from './studioInspectorTypes';
 
 interface StudioInspectorPanelsProps {
   inspector: InspectorTab;
@@ -146,8 +146,8 @@ export function StudioInspectorPanels({
         <StudioHistoryPanel
           revisions={revisions}
           loadedRevisionId={loadedRevisionId}
-          exports={[]}
           onRestoreRevision={onRestoreRevision}
+          restoringRevisionId={pending.history?.restoringRevisionId}
         />
       </div>
       <div
@@ -162,10 +162,11 @@ export function StudioInspectorPanels({
           onRetryJob={onRetryJob}
           isLoading={pending.jobs.loading}
           retryingJobId={
-            pending.jobs.retrying
+            pending.jobs.retryingJobId ??
+            (pending.jobs.retrying
               ? (jobs.find((job) => job.status === 'failed' || job.status === 'interrupted')?.id ??
                 '__retrying__')
-              : null
+              : null)
           }
         />
       </div>

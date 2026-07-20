@@ -10,7 +10,7 @@ let revisionStoreVersion = 0;
 
 interface RevisionCacheResult {
   readonly revisions: Revision[];
-  readonly refreshDocumentRevisions: (documentId: string) => void;
+  readonly refreshDocumentRevisions: (documentId: string) => Promise<void>;
 }
 
 function cacheKey(projectId: string, documentId: string): string {
@@ -59,7 +59,7 @@ export function useRevisionCache(
   useSyncExternalStore(subscribeRevisionStore, getRevisionStoreSnapshot, getRevisionStoreSnapshot);
 
   const refreshDocumentRevisions = useCallback(
-    (nextDocumentId: string) => {
+    async (nextDocumentId: string): Promise<void> => {
       let currentRequestIds = requestIds.current;
       if (currentRequestIds === null) {
         currentRequestIds = new Map<string, number>();
@@ -68,16 +68,14 @@ export function useRevisionCache(
       const key = cacheKey(projectId, nextDocumentId);
       const requestId = (currentRequestIds.get(key) ?? 0) + 1;
       currentRequestIds.set(key, requestId);
-      void api
-        .revisions(projectId, nextDocumentId)
-        .then((response) => {
-          if (requestIds.current?.get(key) !== requestId) return;
-          replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
-        })
-        .catch((reason: unknown) => {
-          if (requestIds.current?.get(key) !== requestId) return;
-          onError(reason);
-        });
+      try {
+        const response = await api.revisions(projectId, nextDocumentId);
+        if (requestIds.current?.get(key) !== requestId) return;
+        replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
+      } catch (reason: unknown) {
+        if (requestIds.current?.get(key) !== requestId) return;
+        onError(reason);
+      }
     },
     [onError, projectId],
   );
@@ -85,7 +83,7 @@ export function useRevisionCache(
   useEffect(() => {
     if (documentId === null) return;
     replaceCachedRevisions(projectId, documentId, emptyRevisions);
-    refreshDocumentRevisions(documentId);
+    void refreshDocumentRevisions(documentId);
   }, [documentId, projectId, refreshDocumentRevisions]);
 
   return {

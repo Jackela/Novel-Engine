@@ -122,6 +122,5 @@ export function useStudioProposal(
     pending,
     isRunningProposal: pending.proposal,
     isAcceptingProposal: pending.accept,
-    isBusy: pending.proposal || pending.accept,
   };
 }

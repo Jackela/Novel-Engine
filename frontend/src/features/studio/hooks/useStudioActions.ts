@@ -15,7 +15,7 @@ interface UseStudioActionsOptions {
   setActiveId: Dispatch<SetStateAction<string | null>>;
   setInspector: Dispatch<SetStateAction<InspectorTab>>;
   settingsForm: { title: string; description: string; provider: string };
-  loadJobs: () => void;
+  loadJobs: () => Promise<void>;
 }
 
 type ActionKey = 'createDocument' | 'moveDocument' | 'runReview' | 'updateSettings' | 'retryJob';
@@ -48,6 +48,7 @@ export function useStudioActions({
   loadJobs,
 }: UseStudioActionsOptions) {
   const [pending, setPending] = useState<PendingActions>(INITIAL_PENDING);
+  const [retryingJobId, setRetryingJobId] = useState<string | null>(null);
   const pendingRef = useRef<Set<ActionKey> | null>(null);
 
   const begin = useCallback((key: ActionKey) => {
@@ -163,13 +164,15 @@ export function useStudioActions({
   const retryJob = useCallback(
     async (jobId: string) => {
       if (!begin('retryJob')) return;
+      setRetryingJobId(jobId);
       setError(null);
       try {
         await api.retryJob(projectId, jobId);
-        void loadJobs();
+        await loadJobs();
       } catch (reason) {
         setError(reason instanceof Error ? reason.message : 'Unable to retry job.');
       } finally {
+        setRetryingJobId(null);
         finish('retryJob');
       }
     },
@@ -188,6 +191,6 @@ export function useStudioActions({
     isRunningReview: pending.runReview,
     isUpdatingSettings: pending.updateSettings,
     isRetryingJob: pending.retryJob,
-    isBusy: Object.values(pending).some(Boolean),
+    retryingJobId,
   };
 }

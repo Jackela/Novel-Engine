@@ -1,11 +1,10 @@
 import { RotateCcw } from 'lucide-react';
 
-import type { Revision, StudioExport } from '@/app/types/studio';
+import type { Revision } from '@/app/types/studio';
 
 interface StudioHistoryPanelProps {
   revisions: Revision[];
   loadedRevisionId: string | null;
-  exports: StudioExport[];
   onRestoreRevision: (revisionId: string) => void;
   restoringRevisionId?: string | null;
 }
@@ -13,11 +12,9 @@ interface StudioHistoryPanelProps {
 export function StudioHistoryPanel({
   revisions,
   loadedRevisionId,
-  exports,
   onRestoreRevision,
   restoringRevisionId = null,
 }: StudioHistoryPanelProps) {
-  void exports;
   const isBusy = restoringRevisionId !== null;
 
   return (

@@ -4,7 +4,7 @@ import type { Dispatch, FormEvent, SetStateAction } from 'react';
 import type { ProviderInfo } from '@/app/types/studio';
 
 import { DEFAULT_PROVIDER_OPTIONS } from '../studioConstants';
-import type { SettingsFormState } from '../StudioInspector';
+import type { SettingsFormState } from '../studioInspectorTypes';
 
 interface StudioSettingsPanelProps {
   settingsForm: SettingsFormState;
