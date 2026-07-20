@@ -1,16 +1,17 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { api } from '@/app/api';
 import type { Revision } from '@/app/types/studio';
 
 const emptyRevisions: Revision[] = [];
 const revisionCache = new Map<string, Revision[]>();
+const revisionRequestVersions = new Map<string, number>();
 const listeners = new Set<() => void>();
 let revisionStoreVersion = 0;
 
 interface RevisionCacheResult {
   readonly revisions: Revision[];
-  readonly refreshDocumentRevisions: (documentId: string) => void;
+  readonly refreshDocumentRevisions: (documentId: string) => Promise<void>;
 }
 
 function cacheKey(projectId: string, documentId: string): string {
@@ -55,29 +56,22 @@ export function useRevisionCache(
   documentId: string | null,
   onError: (reason: unknown) => void,
 ): RevisionCacheResult {
-  const requestIds = useRef<Map<string, number> | null>(null);
   useSyncExternalStore(subscribeRevisionStore, getRevisionStoreSnapshot, getRevisionStoreSnapshot);
 
   const refreshDocumentRevisions = useCallback(
-    (nextDocumentId: string) => {
-      let currentRequestIds = requestIds.current;
-      if (currentRequestIds === null) {
-        currentRequestIds = new Map<string, number>();
-        requestIds.current = currentRequestIds;
-      }
+    async (nextDocumentId: string): Promise<void> => {
       const key = cacheKey(projectId, nextDocumentId);
-      const requestId = (currentRequestIds.get(key) ?? 0) + 1;
-      currentRequestIds.set(key, requestId);
-      void api
-        .revisions(projectId, nextDocumentId)
-        .then((response) => {
-          if (requestIds.current?.get(key) !== requestId) return;
+      const requestVersion = (revisionRequestVersions.get(key) ?? 0) + 1;
+      revisionRequestVersions.set(key, requestVersion);
+      try {
+        if (revisionRequestVersions.get(key) !== requestVersion) return;
+        const response = await api.revisions(projectId, nextDocumentId);
+        if (revisionRequestVersions.get(key) === requestVersion) {
           replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
-        })
-        .catch((reason: unknown) => {
-          if (requestIds.current?.get(key) !== requestId) return;
-          onError(reason);
-        });
+        }
+      } catch (reason: unknown) {
+        if (revisionRequestVersions.get(key) === requestVersion) onError(reason);
+      }
     },
     [onError, projectId],
   );
@@ -85,7 +79,7 @@ export function useRevisionCache(
   useEffect(() => {
     if (documentId === null) return;
     replaceCachedRevisions(projectId, documentId, emptyRevisions);
-    refreshDocumentRevisions(documentId);
+    void refreshDocumentRevisions(documentId);
   }, [documentId, projectId, refreshDocumentRevisions]);
 
   return {

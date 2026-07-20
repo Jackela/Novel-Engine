@@ -5,6 +5,7 @@ import type { NavigateFunction } from 'react-router-dom';
 import type { StudioDocument } from '@/app/types/studio';
 
 import { StudioPageView } from '../StudioPageView';
+import { buildStudioNavigatorProps } from './studioPageModelView';
 import { useActiveDocument } from './useActiveDocument';
 import { useDocumentDraft } from './useDocumentDraft';
 import { useExportDownload } from './useExportDownload';
@@ -24,6 +25,7 @@ export function useStudioPageModel(
   navigate: NavigateFunction,
 ): { project: StudioViewProps['project'] | null; viewProps: StudioViewProps | null } {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
   const {
     project,
     setProject,
@@ -60,6 +62,17 @@ export function useStudioPageModel(
   const onProposalAccepted = useCallback(
     (document: StudioDocument) => resetFor(document, 'saved'),
     [resetFor],
+  );
+  const onRestoreRevision = useCallback(
+    async (revisionId: string) => {
+      setRestoringRevisionId(revisionId);
+      try {
+        await restoreRevision(revisionId);
+      } finally {
+        setRestoringRevisionId(null);
+      }
+    },
+    [restoreRevision],
   );
   const {
     proposal,
@@ -100,6 +113,7 @@ export function useStudioPageModel(
     isRunningReview,
     isUpdatingSettings,
     isRetryingJob,
+    retryingJobId,
     isCreatingDocument,
     isMovingDocument,
   } = useStudioActions({
@@ -117,28 +131,45 @@ export function useStudioPageModel(
   if (!project) return { project, viewProps: null };
 
   const latestReview = reviews[0] ?? null;
+  const inspectorPending = {
+    proposal: {
+      running: isRunningProposal,
+      accepting: isAcceptingProposal,
+    },
+    review: isRunningReview,
+    jobs: {
+      loading: isLoadingJobs,
+      retrying: isRetryingJob,
+      retryingJobId,
+    },
+    settings: isUpdatingSettings,
+    history: { restoringRevisionId },
+  };
+
   return {
     project,
     viewProps: {
       project,
       session,
       onBack: () => navigate('/projects'),
-      navigator: {
-        project,
-        section,
-        activeId: visibleActiveId,
-        search,
-        isSearching,
-        searchResults,
-        onSearchChange: setSearch,
-        onSearchSubmit: runSearch,
-        onNavigateSection: (nextSection) => navigate(`/projects/${project.id}/${nextSection}`),
-        onSelectDocument: setActiveId,
-        onCreateDocument: (kind) => void createDocument(kind),
-        onMoveDocument: (documentId, direction) => void moveDocument(documentId, direction),
-        isCreatingDocument,
-        isMovingDocument,
-      },
+      navigator: buildStudioNavigatorProps(
+        {
+          project,
+          section,
+          activeId: visibleActiveId,
+          search,
+          isSearching,
+          searchResults,
+          onSearchChange: setSearch,
+          onSearchSubmit: runSearch,
+          onSelectDocument: setActiveId,
+          createDocument,
+          moveDocument,
+          isCreatingDocument,
+          isMovingDocument,
+        },
+        navigate,
+      ),
       editor: {
         activeDocument,
         draft,
@@ -168,21 +199,10 @@ export function useStudioPageModel(
         exportingFormat,
         failedFormat,
         onRetryExport: (format) => void exportProject(format),
-        pending: {
-          proposal: {
-            running: isRunningProposal,
-            accepting: isAcceptingProposal,
-          },
-          review: isRunningReview,
-          jobs: {
-            loading: isLoadingJobs,
-            retrying: isRetryingJob,
-          },
-          settings: isUpdatingSettings,
-        },
+        pending: inspectorPending,
         errorForExport: section === 'export' ? error : null,
         onLoadJobs: () => void loadJobs(),
-        onRestoreRevision: (revisionId) => void restoreRevision(revisionId),
+        onRestoreRevision: (revisionId) => void onRestoreRevision(revisionId),
         onRetryJob: (jobId) => void retryJob(jobId),
         onRunProposal: (operation) => void runProposal(operation),
         onRunReview: () => void runReview(),

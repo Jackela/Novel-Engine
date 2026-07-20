@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import type { Project } from '@/app/types/studio';
 
-import type { SettingsFormState } from '../StudioInspector';
+import type { SettingsFormState } from '../studioInspectorTypes';
 import type { InspectorTab } from '../studioConstants';
 
 interface UseStudioInspectorStateArgs {

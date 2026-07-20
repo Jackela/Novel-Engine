@@ -104,13 +104,16 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
-function renderActions(): {
+function renderActions(
+  loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>> = vi
+    .fn<() => Promise<void>>()
+    .mockResolvedValue(undefined),
+): {
   readonly result: () => HarnessSnapshot;
-  readonly loadJobs: ReturnType<typeof vi.fn<() => void>>;
+  readonly loadJobs: ReturnType<typeof vi.fn<() => Promise<void>>>;
   readonly submitSettings: () => void;
 } {
   let current: HarnessSnapshot | undefined;
-  const loadJobs = vi.fn<() => void>();
 
   function Wrapper() {
     const [project, setProject] = useState<Project | null>(projectFixture);
@@ -247,16 +250,43 @@ describe('useStudioActions', () => {
 
   it('reloads jobs after retrying a failed job', async () => {
     // Given
-    vi.mocked(api.retryJob).mockResolvedValue(retriedJob);
-    const harness = renderActions();
+    let resolveLoadJobs: (() => void) | undefined;
+    const loadJobs = vi.fn<() => Promise<void>>().mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveLoadJobs = resolve;
+      }),
+    );
+    let resolveRetry: ((job: StudioJob) => void) | undefined;
+    vi.mocked(api.retryJob).mockReturnValue(
+      new Promise<StudioJob>((resolve) => {
+        resolveRetry = resolve;
+      }),
+    );
+    const harness = renderActions(loadJobs);
 
     // When
+    const retryPromise = harness.result().actions.retryJob('job-1');
     await act(async () => {
-      await harness.result().actions.retryJob('job-1');
+      await Promise.resolve();
     });
 
     // Then
     expect(api.retryJob).toHaveBeenCalledWith(projectFixture.id, 'job-1');
+    expect(harness.result().actions.retryingJobId).toBe('job-1');
+
+    await act(async () => {
+      resolveRetry?.(retriedJob);
+      await Promise.resolve();
+    });
+
     expect(harness.loadJobs).toHaveBeenCalledTimes(1);
+    expect(harness.result().actions.retryingJobId).toBe('job-1');
+
+    await act(async () => {
+      resolveLoadJobs?.();
+      await retryPromise;
+    });
+
+    expect(harness.result().actions.retryingJobId).toBeNull();
   });
 });

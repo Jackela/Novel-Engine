@@ -13,25 +13,7 @@ import type {
 import { StudioInspectorPanels } from './StudioInspectorPanels';
 import { StudioInspectorTabs } from './StudioInspectorTabs';
 import { type InspectorTab } from './studioConstants';
-
-export interface SettingsFormState {
-  title: string;
-  description: string;
-  provider: string;
-}
-
-export interface InspectorPendingState {
-  proposal: {
-    running: boolean;
-    accepting: boolean;
-  };
-  review: boolean;
-  jobs: {
-    loading: boolean;
-    retrying: boolean;
-  };
-  settings: boolean;
-}
+import type { InspectorPendingState, SettingsFormState } from './studioInspectorTypes';
 
 const DEFAULT_INSPECTOR_PENDING: InspectorPendingState = {
   proposal: { running: false, accepting: false },
