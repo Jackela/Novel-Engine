@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { api } from '@/app/api';
 import type { Revision } from '@/app/types/studio';
 
 const emptyRevisions: Revision[] = [];
 const revisionCache = new Map<string, Revision[]>();
+const revisionRequestVersions = new Map<string, number>();
 const listeners = new Set<() => void>();
 let revisionStoreVersion = 0;
 
@@ -55,25 +56,19 @@ export function useRevisionCache(
   documentId: string | null,
   onError: (reason: unknown) => void,
 ): RevisionCacheResult {
-  const requestIds = useRef<Map<string, number> | null>(null);
   useSyncExternalStore(subscribeRevisionStore, getRevisionStoreSnapshot, getRevisionStoreSnapshot);
 
   const refreshDocumentRevisions = useCallback(
     async (nextDocumentId: string): Promise<void> => {
-      let currentRequestIds = requestIds.current;
-      if (currentRequestIds === null) {
-        currentRequestIds = new Map<string, number>();
-        requestIds.current = currentRequestIds;
-      }
       const key = cacheKey(projectId, nextDocumentId);
-      const requestId = (currentRequestIds.get(key) ?? 0) + 1;
-      currentRequestIds.set(key, requestId);
+      const requestVersion = (revisionRequestVersions.get(key) ?? 0) + 1;
+      revisionRequestVersions.set(key, requestVersion);
       try {
         const response = await api.revisions(projectId, nextDocumentId);
-        if (requestIds.current?.get(key) !== requestId) return;
+        if (revisionRequestVersions.get(key) !== requestVersion) return;
         replaceCachedRevisions(projectId, nextDocumentId, response.revisions);
       } catch (reason: unknown) {
-        if (requestIds.current?.get(key) !== requestId) return;
+        if (revisionRequestVersions.get(key) !== requestVersion) return;
         onError(reason);
       }
     },

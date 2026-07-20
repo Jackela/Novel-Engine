@@ -46,6 +46,12 @@ const revision: Revision = {
   created_at: '2026-07-20T00:00:00Z',
 };
 
+const staleRevision: Revision = {
+  ...revision,
+  id: 'revision-stale',
+  content_markdown: 'Stale draft',
+};
+
 const activeDocument: StudioDocument = {
   id: 'document-1',
   project_id: 'project-1',
@@ -79,7 +85,10 @@ const restoredDocument: StudioDocument = {
   updated_at: '2026-07-20T00:01:00Z',
 };
 
-function renderCache(): { readonly result: () => { readonly hook: HookResult } } {
+function renderCache(): {
+  readonly result: () => { readonly hook: HookResult };
+  readonly dispose: () => void;
+} {
   let current: { readonly hook: HookResult } | undefined;
   const onError = vi.fn();
 
@@ -98,6 +107,12 @@ function renderCache(): { readonly result: () => { readonly hook: HookResult } }
     result: () => {
       if (current === undefined) throw new Error('Expected hook result after render.');
       return current;
+    },
+    dispose: () => {
+      act(() => root.unmount());
+      container.remove();
+      const index = mountedRoots.findIndex((mounted) => mounted.root === root);
+      if (index >= 0) mountedRoots.splice(index, 1);
     },
   };
 }
@@ -159,6 +174,37 @@ describe('useRevisionCache', () => {
 
     expect(settled).toBe(true);
     expect(cache.result().hook.revisions).toEqual([revision]);
+  });
+
+  it('does not let an unmounted cache instance overwrite a newer response', async () => {
+    let resolveStale: ((response: { revisions: Revision[] }) => void) | undefined;
+    let resolveCurrent: ((response: { revisions: Revision[] }) => void) | undefined;
+    vi.mocked(api.revisions)
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveStale = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveCurrent = resolve;
+        }),
+      );
+
+    const staleCache = renderCache();
+    staleCache.dispose();
+    const currentCache = renderCache();
+
+    await act(async () => {
+      resolveCurrent?.({ revisions: [revision] });
+      await Promise.resolve();
+    });
+    await act(async () => {
+      resolveStale?.({ revisions: [staleRevision] });
+      await Promise.resolve();
+    });
+
+    expect(currentCache.result().hook.revisions).toEqual([revision]);
   });
 
   it('keeps restore pending until the revision refresh completes', async () => {
