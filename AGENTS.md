@@ -137,3 +137,9 @@ CI additionally runs SSOT, repo hygiene, file-size, OpenAPI snapshot, frontend f
 Before AI work use `just snapshot` (or a deliberate snapshot commit). After work use `just check` and `just validate`. `just panic` is the emergency rollback path and must not be invoked casually.
 
 Audit findings in `AUDIT_REPORT_Linus.md` are read-only references. Match one finding, its stated location, and its fix direction; do not broaden scope merely because nearby cleanup is possible.
+
+### Issue tracker
+
+Issues and specs for this repo live as GitHub issues on `Jackela/Novel-Engine`.
+Tracker configuration, including the Wayfinding operations section, is
+`docs/agents/issue-tracker.md`; triage labels are `docs/agents/triage-labels.md`.
