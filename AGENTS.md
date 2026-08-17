@@ -4,7 +4,9 @@
 
 ## OVERVIEW
 
-Novel Studio 0.3.1 is a self-hosted writing studio. Backend: Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2, SQLite. Frontend: React 19, Vite, TypeScript. Package managers: `uv` and pnpm 11.
+Novel Engine 0.3.1 is a self-hosted writing studio. Backend: Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2, SQLite. Frontend: React 19, Vite, TypeScript. Package managers: `uv` and pnpm 11.
+
+Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code names, docs, and discussion.
 
 ## STRUCTURE
 

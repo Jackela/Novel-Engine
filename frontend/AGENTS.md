@@ -2,7 +2,7 @@
 
 ## OVERVIEW
 
-React 19 + Vite + TypeScript browser application for Novel Studio. Root repository rules still apply.
+React 19 + Vite + TypeScript browser application for Novel Engine. Root repository rules still apply.
 
 ## STRUCTURE
 

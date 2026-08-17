@@ -1,1 +1,1 @@
-"""Test fakes for Novel Studio application-layer ports."""
+"""Test fakes for Novel Engine application-layer ports."""

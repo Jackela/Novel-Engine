@@ -1,1 +1,1 @@
-"""Novel Studio domain types."""
+"""Novel Engine domain types."""

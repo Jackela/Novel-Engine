@@ -1,4 +1,4 @@
-"""Transactional application services for Novel Studio.
+"""Transactional application services for Novel Engine.
 
 The application layer now depends only on the ``StudioRepository`` port and
 small injected callables. All SQLAlchemy/model details are encapsulated by the

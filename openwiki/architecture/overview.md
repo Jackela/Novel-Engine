@@ -1,6 +1,6 @@
 # Architecture overview
 
-Novel Studio is a FastAPI application with a React frontend; its persistence layer uses synchronous SQLAlchemy sessions. The Studio domain is organized into domain, application, infrastructure, and HTTP-interface layers; import-linter makes those boundaries executable rather than conventional (`.importlinter`).
+Novel Engine is a FastAPI application with a React frontend; its persistence layer uses synchronous SQLAlchemy sessions. The Studio domain is organized into domain, application, infrastructure, and HTTP-interface layers; import-linter makes those boundaries executable rather than conventional (`.importlinter`).
 
 ## Runtime composition and lifecycle
 

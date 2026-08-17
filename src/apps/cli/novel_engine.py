@@ -1,4 +1,4 @@
-"""Operational CLI for the self-hosted Novel Studio service."""
+"""Operational CLI for the self-hosted Novel Engine service."""
 
 from __future__ import annotations
 
@@ -134,7 +134,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="novel-engine")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    serve = subparsers.add_parser("serve", help="Run the Novel Studio service.")
+    serve = subparsers.add_parser("serve", help="Run the Novel Engine service.")
     serve.add_argument("--host")
     serve.add_argument("--port", type=int)
     serve.add_argument("--reload", action="store_true")

@@ -1,4 +1,4 @@
-"""Environment-backed configuration package for Novel Studio."""
+"""Environment-backed configuration package for Novel Engine."""
 
 from .settings import (
     APISettings,

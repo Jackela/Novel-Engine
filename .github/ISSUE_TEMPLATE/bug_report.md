@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Report a Novel Studio authoring problem
+about: Report a Novel Engine authoring problem
 title: "[BUG] "
 labels: ["bug", "triage"]
 assignees: []

@@ -87,7 +87,7 @@ async function request<T>(
         throw new Error(timedOut ? 'Request timed out. Please retry.' : 'Request cancelled.');
       }
       if (error instanceof TypeError) {
-        throw new Error('Novel Studio is unavailable. Check the local service and retry.');
+        throw new Error('Novel Engine is unavailable. Check the local service and retry.');
       }
       throw error;
     }
@@ -134,7 +134,7 @@ async function downloadBlob(path: string): Promise<Blob> {
       throw new Error('Download timed out. Please retry.');
     }
     if (error instanceof TypeError) {
-      throw new Error('Novel Studio is unavailable. Check the local service and retry.');
+      throw new Error('Novel Engine is unavailable. Check the local service and retry.');
     }
     throw error;
   } finally {

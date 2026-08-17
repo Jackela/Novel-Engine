@@ -34,7 +34,7 @@ export function StudioStatusbar({
       <span>Revision {loadedRevisionId?.slice(0, 8) ?? 'none'}</span>
       <span className="studio-statusbar__spacer" />
       <span>{activeDocument?.word_count ?? 0} words</span>
-      <span>Novel Studio {__APP_VERSION__}</span>
+      <span>Novel Engine {__APP_VERSION__}</span>
     </footer>
   );
 }

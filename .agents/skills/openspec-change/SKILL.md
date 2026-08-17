@@ -1,6 +1,6 @@
 ---
 name: openspec-change
-description: Run a product change through this repository's OpenSpec workflow — draft a dated change folder with proposal, design, tasks, and spec deltas written as Requirements with GIVEN/WHEN/THEN scenarios, then pass the strict OpenSpec validation gate. Use when adding or changing product behavior that belongs in the Novel Studio capability specification.
+description: Run a product change through this repository's OpenSpec workflow — draft a dated change folder with proposal, design, tasks, and spec deltas written as Requirements with GIVEN/WHEN/THEN scenarios, then pass the strict OpenSpec validation gate. Use when adding or changing product behavior that belongs in the Novel Engine capability specification.
 ---
 
 # OpenSpec change workflow

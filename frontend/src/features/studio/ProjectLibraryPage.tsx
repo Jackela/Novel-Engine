@@ -52,7 +52,7 @@ export function ProjectLibraryPage() {
     <main className="library">
       <header className="library__header">
         <div className="brand">
-          <BookOpen aria-hidden="true" /> Novel Studio
+          <BookOpen aria-hidden="true" /> Novel Engine
         </div>
         <div className="library__header-actions">
           {session?.kind === 'guest' ? (

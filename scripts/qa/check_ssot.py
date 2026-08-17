@@ -97,7 +97,7 @@ def main() -> int:
         for failure in failures:
             write_line(f"[ssot] {failure}", stderr=True)
         return 1
-    write_line(f"[ssot] Novel Studio {_project_version()} is aligned")
+    write_line(f"[ssot] Novel Engine {_project_version()} is aligned")
     return 0
 
 

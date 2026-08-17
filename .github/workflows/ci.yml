@@ -169,7 +169,7 @@ jobs:
             sleep 2
           done
           curl -fsS http://127.0.0.1:8000/health/ready
-          curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Studio</title>'
+          curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Engine</title>'
           curl -fsS -H 'Content-Type: application/json' \
             -d '{"username":"owner","password":"container-owner-password"}' \
             http://127.0.0.1:8000/api/setup

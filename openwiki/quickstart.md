@@ -1,6 +1,6 @@
-# Novel Studio quickstart
+# Novel Engine quickstart
 
-Novel Studio **0.3.1** is a self-hosted, single-author writing studio. The authoritative store is SQLite, with repository documentation and configuration kept in version-controlled text files. The Python package requires **Python 3.11+**; the committed tooling specifies **pnpm 11.6.0**, and CI uses Python 3.12 and Node 22 (`pyproject.toml`, `package.json`, `.github/workflows/ci.yml`).
+Novel Engine **0.3.1** is a self-hosted, single-author writing studio. The authoritative store is SQLite, with repository documentation and configuration kept in version-controlled text files. The Python package requires **Python 3.11+**; the committed tooling specifies **pnpm 11.6.0**, and CI uses Python 3.12 and Node 22 (`pyproject.toml`, `package.json`, `.github/workflows/ci.yml`).
 
 This page covers local operation, migration preparation, and the fastest checks after a change. The product specification is `openspec/specs/novel-studio/spec.md`.
 

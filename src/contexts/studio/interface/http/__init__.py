@@ -1,1 +1,1 @@
-"""HTTP interface for Novel Studio."""
+"""HTTP interface for Novel Engine."""

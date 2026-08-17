@@ -1,1 +1,1 @@
-"""Novel Studio product context."""
+"""Novel Engine product context."""

@@ -1,4 +1,4 @@
-"""Health and readiness endpoints for Novel Studio."""
+"""Health and readiness endpoints for Novel Engine."""
 
 from __future__ import annotations
 

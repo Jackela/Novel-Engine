@@ -1,13 +1,13 @@
 ## Purpose
 
-Define the complete Novel Studio 0.3 product contract. This specification is
+Define the complete Novel Engine 0.3 product contract. This specification is
 the single source of truth for its product boundaries, persistence model,
 public behavior, and acceptance scenarios.
 
 ## Requirements
 
 ### Requirement: One product and version authority
-The system MUST define Novel Studio as the only authoring product, MUST read the
+The system MUST define Novel Engine as the only authoring product, MUST read the
 product version from `pyproject.toml`, and MUST define product behavior in this
 capability specification.
 

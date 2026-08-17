@@ -1,4 +1,4 @@
-"""Shared Novel Studio domain types."""
+"""Shared Novel Engine domain types."""
 
 from __future__ import annotations
 

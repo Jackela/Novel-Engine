@@ -1,4 +1,4 @@
-"""Shared domain utilities for Novel Studio."""
+"""Shared domain utilities for Novel Engine."""
 
 from __future__ import annotations
 

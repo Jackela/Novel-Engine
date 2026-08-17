@@ -95,7 +95,7 @@ class APISettings(BaseSettings):
         default=1, ge=1, le=32, description="Number of worker processes"
     )
     reload: bool = Field(default=False, description="Enable auto-reload")
-    title: str = Field(default="Novel Studio API", description="API title")
+    title: str = Field(default="Novel Engine API", description="API title")
     version: str = Field(default_factory=_package_version, description="API version")
     docs_url: str | None = Field(default="/docs", description="Swagger UI URL")
     redoc_url: str | None = Field(default="/redoc", description="ReDoc URL")
