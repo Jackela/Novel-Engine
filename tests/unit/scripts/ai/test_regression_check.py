@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from scripts.ai import regression_check
@@ -223,6 +225,93 @@ def test_deleted_safety_keyword_comments_are_not_reported() -> None:
 
     # Then
     assert issues == []
+
+
+def test_safety_keyword_exemption_suppresses_matching_path_and_keyword() -> None:
+    # Given
+    details = regression_check.DiffDetails(
+        additions={},
+        deletions={
+            "src/legacy/auth_wiring.py": ["-        self.auth = build_auth(repository)"]
+        },
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_deleted_safety_lines(
+        details,
+        exemptions=frozenset({("src/legacy/auth_wiring.py", "auth")}),
+    )
+
+    # Then
+    assert issues == []
+
+
+def test_safety_keyword_exemption_still_reports_other_keywords_on_same_line() -> None:
+    # Given: the deleted line matches both 'raise' and 'permission'; only the
+    # 'permission' deletion is exempted by the registry entry.
+    details = regression_check.DiffDetails(
+        additions={},
+        deletions={"src/app.py": ["-raise PermissionError()"]},
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_deleted_safety_lines(
+        details,
+        exemptions=frozenset({("src/app.py", "permission")}),
+    )
+
+    # Then
+    assert issues == [
+        "[src/app.py] Deleted safety keyword 'raise': -raise PermissionError()"
+    ]
+
+
+def test_load_exemptions_parses_registry_entries(tmp_path: Path) -> None:
+    # Given
+    registry = tmp_path / "exemptions.txt"
+    registry.write_text(
+        "# registry header\n"
+        "\n"
+        "src/legacy/auth_wiring.py :: auth :: planned rename, ref #250\n",
+        encoding="utf-8",
+    )
+
+    # When
+    entries = regression_check.load_exemptions(registry)
+
+    # Then
+    assert entries == frozenset({("src/legacy/auth_wiring.py", "auth")})
+
+
+def test_load_exemptions_missing_file_yields_no_entries(tmp_path: Path) -> None:
+    # Given / When
+    entries = regression_check.load_exemptions(tmp_path / "absent.txt")
+
+    # Then
+    assert entries == frozenset()
+
+
+@pytest.mark.parametrize(
+    ("entry_line", "match"),
+    [
+        ("src/app.py :: not-a-keyword :: reason", "unknown safety keyword"),
+        ("scripts/ai/regression_check.py :: auth :: reason", "cannot be exempted"),
+        ("src/app.py :: auth", "expected '<path> :: <keyword> :: <reason>'"),
+        ("src/app.py :: auth :: ", "expected '<path> :: <keyword> :: <reason>'"),
+    ],
+)
+def test_load_exemptions_rejects_invalid_entries(
+    tmp_path: Path, entry_line: str, match: str
+) -> None:
+    # Given
+    registry = tmp_path / "exemptions.txt"
+    registry.write_text(f"{entry_line}\n", encoding="utf-8")
+
+    # When / Then
+    with pytest.raises(ValueError, match=rf"line 1:.*{match}"):
+        regression_check.load_exemptions(registry)
 
 
 def test_deleted_test_files_and_forbidden_paths_are_reported() -> None:

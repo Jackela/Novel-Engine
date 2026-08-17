@@ -19,6 +19,8 @@ from scripts.ai.regression_diff import DiffDetails, parse_diff
 DEFAULT_MAX_FILES: Final = 5
 GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
 GUARDRAIL_TEST_PREFIX: Final = "tests/unit/scripts/ai/test_regression_check"
+EXEMPTIONS_FILE: Final = "scripts/ai/regression_check_exemptions.txt"
+EXEMPTION_SEPARATOR: Final = " :: "
 STRING_CONTENT_TOKEN_NAMES: Final = frozenset({"STRING", "FSTRING_MIDDLE"})
 SAFETY_KEYWORDS: Final = (
     "raise",
@@ -130,8 +132,54 @@ def run_git_diff(base_ref: str | None = None, head_ref: str | None = None) -> st
     return result.stdout
 
 
-def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
+def load_exemptions(exemptions_file: Path | None = None) -> frozenset[tuple[str, str]]:
+    """Load planned safety-keyword removal exemptions from the registry.
+
+    Each entry is ``<repo path> :: <keyword> :: <reason>`` on one line. The
+    registry lives in version control so every exemption is visible in the
+    same diff as the safety-keyword deletion it permits. Malformed input fails
+    loudly so a broken registry can never silently weaken the guardrail.
+    """
+    registry = (
+        PROJECT_ROOT / EXEMPTIONS_FILE if exemptions_file is None else exemptions_file
+    )
+    if not registry.is_file():
+        return frozenset()
+    entries: set[tuple[str, str]] = set()
+    for line_number, raw_line in enumerate(
+        registry.read_text(encoding="utf-8").splitlines(),
+        start=1,
+    ):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = [part.strip() for part in line.split(EXEMPTION_SEPARATOR)]
+        if len(parts) != 3 or not all(parts):
+            raise ValueError(
+                f"{EXEMPTIONS_FILE} line {line_number}: expected "
+                f"'<path> :: <keyword> :: <reason>'"
+            )
+        path, keyword, _reason = parts
+        if path == GUARDRAIL_FILE:
+            raise ValueError(
+                f"{EXEMPTIONS_FILE} line {line_number}: the guardrail itself "
+                "cannot be exempted"
+            )
+        if keyword not in SAFETY_KEYWORDS:
+            raise ValueError(
+                f"{EXEMPTIONS_FILE} line {line_number}: unknown safety keyword "
+                f"'{keyword}'"
+            )
+        entries.add((path, keyword))
+    return frozenset(entries)
+
+
+def check_deleted_safety_lines(
+    diff: DiffDetails,
+    exemptions: frozenset[tuple[str, str]] | None = None,
+) -> list[str]:
     issues: list[str] = []
+    active_exemptions = load_exemptions() if exemptions is None else exemptions
     moved_line_bodies = _added_line_bodies(diff)
     for filename, lines in diff.deletions.items():
         for line in lines:
@@ -140,6 +188,7 @@ def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
                 line,
                 moved_line_bodies,
                 diff.additions.get(filename, []),
+                active_exemptions,
             )
             if issue is not None:
                 issues.append(issue)
@@ -169,6 +218,7 @@ def _deleted_safety_issue(
     line: str,
     moved_line_bodies: set[str],
     additions: Sequence[str],
+    exemptions: frozenset[tuple[str, str]],
 ) -> str | None:
     scan_line = _guardrail_scan_line(filename, line)
     if _is_self_definition_line(filename, scan_line):
@@ -182,6 +232,8 @@ def _deleted_safety_issue(
         return None
     for keyword in SAFETY_KEYWORDS:
         if re.search(rf"\b{keyword}\b", scan_line):
+            if (filename, keyword) in exemptions:
+                continue
             return f"[{filename}] Deleted safety keyword '{keyword}': {line}"
     return None
 
