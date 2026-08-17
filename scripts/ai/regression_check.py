@@ -34,6 +34,20 @@ FORBIDDEN_PREFIXES: Final = (
     "config/env/",
     "data/",
 )
+# Dangerous patterns describe executable code lines. Documentation and agent
+# configuration (Markdown skill references, docs code fences) cannot execute,
+# so the scan targets product code files only.
+SCANNED_CODE_SUFFIXES: Final = {
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".vue",
+    ".svelte",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -234,6 +248,8 @@ def check_guardrail_self_modification(diff: DiffDetails) -> list[str]:
 
 
 def _dangerous_addition_issue(filename: str, line: str) -> str | None:
+    if not filename.endswith(tuple(SCANNED_CODE_SUFFIXES)):
+        return None
     scan_line = _guardrail_scan_line(filename, line)
     if _is_self_definition_line(filename, scan_line):
         return None

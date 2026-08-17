@@ -117,6 +117,29 @@ def test_dangerous_additions_report_ai_risk_patterns() -> None:
     ]
 
 
+def test_dangerous_additions_skip_documentation_files() -> None:
+    # Given
+    details = regression_check.DiffDetails(
+        additions={
+            ".agents/skills/react-best-practices/rules/example.md": [
+                "+        dangerouslySetInnerHTML={{",
+                "+const value = payload as any;",
+            ],
+            "docs/design/notes.markdown": [
+                "+except Exception:",
+            ],
+        },
+        deletions={},
+        deleted_files=set(),
+    )
+
+    # When
+    issues = regression_check.check_dangerous_additions(details)
+
+    # Then
+    assert issues == []
+
+
 def test_deleted_safety_lines_are_reported_in_tests_and_source() -> None:
     # Given
     details = regression_check.DiffDetails(
