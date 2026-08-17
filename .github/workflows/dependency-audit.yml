@@ -1,0 +1,79 @@
+name: Dependency Audit
+
+# Full-tree dependency audit (production + dev tooling). PR CI only audits
+# production dependencies so upstream advisory publications cannot flap open
+# PRs; this scheduled run is the authoritative net for everything else and
+# tracks failures in a single reusable issue until the audit is green again.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: dependency-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8646c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          enable-cache: true
+          cache-suffix: audit
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.6.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: |
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-factor 2
+          pnpm config set fetch-retry-mintimeout 1000
+          pnpm config set fetch-retry-maxtimeout 60000
+          uv sync --extra dev --extra test --frozen
+          pnpm install --frozen-lockfile
+      - name: Audit all dependencies
+        id: audit
+        run: |
+          uv run pip-audit
+          pnpm audit --audit-level high
+      - name: Track advisory status in an issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          export TRACKING_TITLE="dependency audit: known advisories need attention"
+          open_number=$(gh issue list --state open --limit 100 \
+            --json number,title \
+            --jq '.[] | select(.title == env.TRACKING_TITLE) | .number' | head -n 1)
+          if [ "${AUDIT_OUTCOME}" = "success" ]; then
+            if [ -n "${open_number}" ]; then
+              gh issue close "${open_number}" \
+                --comment "Full audit is green again: ${RUN_URL}"
+            fi
+            echo "Full audit green; nothing to track."
+            exit 0
+          fi
+          body="The full dependency audit (dev tooling included) failed. Production-only PR gate may still be green. See ${RUN_URL}"
+          if [ -n "${open_number}" ]; then
+            gh issue comment "${open_number}" --body "Still failing: ${RUN_URL}"
+          else
+            gh issue create --title "${TRACKING_TITLE}" --body "${body}"
+          fi
+          exit 1

@@ -51,9 +51,12 @@ jobs:
           uv sync --extra dev --extra test --frozen
           pnpm install --frozen-lockfile
       - name: Validate dependency security
+        # Production deps only: the full audit (including dev tooling) runs in
+        # the scheduled dependency-audit workflow so new upstream advisories
+        # cannot flap open PRs whose lockfile predates them.
         run: |
           uv run pip-audit
-          pnpm audit --audit-level high
+          pnpm audit --audit-level high --prod
       - name: Check AI regression diff
         if: github.event_name == 'pull_request'
         shell: bash
