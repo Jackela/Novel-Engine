@@ -6,20 +6,19 @@ import os
 import re
 import subprocess
 import sys
-import tokenize
 from collections.abc import Sequence
 from dataclasses import dataclass
-from io import StringIO
 from pathlib import Path
 from re import Pattern
 from typing import Final
 
 from scripts.ai.regression_diff import DiffDetails, parse_diff
+from scripts.ai.regression_exemptions import load_exemption_entries
+from scripts.ai.regression_scan import guardrail_scan_line as _guardrail_scan_line
 
 DEFAULT_MAX_FILES: Final = 5
 GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
-GUARDRAIL_TEST_PREFIX: Final = "tests/unit/scripts/ai/test_regression_check"
-STRING_CONTENT_TOKEN_NAMES: Final = frozenset({"STRING", "FSTRING_MIDDLE"})
+EXEMPTIONS_FILE: Final = "scripts/ai/regression_check_exemptions.txt"
 SAFETY_KEYWORDS: Final = (
     "raise",
     "validate",
@@ -130,8 +129,20 @@ def run_git_diff(base_ref: str | None = None, head_ref: str | None = None) -> st
     return result.stdout
 
 
-def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
+def check_deleted_safety_lines(
+    diff: DiffDetails,
+    exemptions: frozenset[tuple[str, str]] | None = None,
+) -> list[str]:
     issues: list[str] = []
+    active_exemptions = (
+        exemptions
+        if exemptions is not None
+        else load_exemption_entries(
+            PROJECT_ROOT / EXEMPTIONS_FILE,
+            allowed_keywords=SAFETY_KEYWORDS,
+            protected_paths=(GUARDRAIL_FILE,),
+        )
+    )
     moved_line_bodies = _added_line_bodies(diff)
     for filename, lines in diff.deletions.items():
         for line in lines:
@@ -140,6 +151,7 @@ def check_deleted_safety_lines(diff: DiffDetails) -> list[str]:
                 line,
                 moved_line_bodies,
                 diff.additions.get(filename, []),
+                active_exemptions,
             )
             if issue is not None:
                 issues.append(issue)
@@ -169,6 +181,7 @@ def _deleted_safety_issue(
     line: str,
     moved_line_bodies: set[str],
     additions: Sequence[str],
+    exemptions: frozenset[tuple[str, str]],
 ) -> str | None:
     scan_line = _guardrail_scan_line(filename, line)
     if _is_self_definition_line(filename, scan_line):
@@ -182,6 +195,8 @@ def _deleted_safety_issue(
         return None
     for keyword in SAFETY_KEYWORDS:
         if re.search(rf"\b{keyword}\b", scan_line):
+            if (filename, keyword) in exemptions:
+                continue
             return f"[{filename}] Deleted safety keyword '{keyword}': {line}"
     return None
 
@@ -257,30 +272,6 @@ def _dangerous_addition_issue(filename: str, line: str) -> str | None:
         if pattern.regex.search(scan_line):
             return f"[{filename}] {pattern.description}: {line}"
     return None
-
-
-def _guardrail_scan_line(filename: str, line: str) -> str:
-    if not _is_guardrail_test_file(filename):
-        return line
-    marker = line[:1] if line[:1] in {"+", "-"} else ""
-    body = line[1:] if marker else line
-    try:
-        tokens = tokenize.generate_tokens(StringIO(body).readline)
-        sanitized = tokenize.untokenize(
-            (token.type, _scan_token_text(token)) for token in tokens
-        )
-    except (IndentationError, tokenize.TokenError):
-        return line
-    return f"{marker}{sanitized}"
-
-
-def _scan_token_text(token: tokenize.TokenInfo) -> str:
-    token_name = tokenize.tok_name.get(token.type)
-    return '""' if token_name in STRING_CONTENT_TOKEN_NAMES else token.string
-
-
-def _is_guardrail_test_file(filename: str) -> bool:
-    return filename.startswith(GUARDRAIL_TEST_PREFIX) and filename.endswith(".py")
 
 
 def _is_self_definition_line(filename: str, line: str) -> bool:
