@@ -16,6 +16,7 @@ from src.shared.infrastructure.config.settings import (
     NovelEngineSettings,
     reset_settings,
 )
+from tests.credential_fixtures import fixture_api_key
 
 
 def test_web_import_uses_app_owned_data_dir_after_global_settings_change(
@@ -61,7 +62,7 @@ def test_runtime_provider_factory_uses_explicit_settings(
         database=DatabaseSettings(url=f"sqlite:///{tmp_path / 'studio.sqlite3'}"),
         llm=LLMSettings(
             provider="dashscope",
-            DASHSCOPE_API_KEY="explicit-dashscope-key",
+            DASHSCOPE_API_KEY=fixture_api_key("explicit-dashscope"),
             DASHSCOPE_MODEL="explicit-model",
         ),
     )

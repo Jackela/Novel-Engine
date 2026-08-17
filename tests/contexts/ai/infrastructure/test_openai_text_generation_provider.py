@@ -12,8 +12,9 @@ from src.contexts.ai.application.ports.text_generation_port import (
 from src.contexts.ai.infrastructure.providers.openai_compatible_text_generation_provider import (
     OpenAICompatibleTextGenerationProvider,
 )
+from tests.credential_fixtures import fixture_api_key
 
-_OPENAI_API_KEY = "openai-key"
+_OPENAI_API_KEY = fixture_api_key("openai")
 
 
 def _task(

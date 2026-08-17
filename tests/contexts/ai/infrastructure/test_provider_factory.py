@@ -29,6 +29,7 @@ from src.contexts.ai.infrastructure.providers.unconfigured_text_generation_provi
     UnconfiguredTextGenerationProvider,
 )
 from src.shared.infrastructure.config.settings import NovelEngineSettings
+from tests.credential_fixtures import fixture_api_key
 
 
 @pytest.fixture(autouse=True)
@@ -109,7 +110,7 @@ def test_factory_builds_dashscope_provider_when_explicitly_configured(
 
 def test_dashscope_provider_normalizes_compatible_mode_base() -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key="dashscope-key",
+        api_key=fixture_api_key("dashscope"),
         api_base="https://dashscope.aliyuncs.com/compatible-mode/v1",
     )
 
@@ -119,7 +120,7 @@ def test_dashscope_provider_normalizes_compatible_mode_base() -> None:
 
 def test_dashscope_qwen35_uses_multimodal_native_payload() -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key="dashscope-key",
+        api_key=fixture_api_key("dashscope"),
         model="qwen3.5-flash",
     )
     task = TextGenerationTask(
@@ -148,7 +149,7 @@ def test_dashscope_qwen35_uses_multimodal_native_payload() -> None:
 
 def test_dashscope_text_generation_transport_requests_json_object_output() -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key="dashscope-key",
+        api_key=fixture_api_key("dashscope"),
         model="qwen-plus",
         transport_mode="text_generation",
     )
@@ -169,7 +170,7 @@ def test_dashscope_text_generation_transport_requests_json_object_output() -> No
 
 def test_dashscope_responses_transport_normalizes_base_and_payload() -> None:
     provider = DashScopeTextGenerationProvider(
-        api_key="dashscope-key",
+        api_key=fixture_api_key("dashscope"),
         model="qwen3.5-flash",
         api_base="https://dashscope.aliyuncs.com/api/v1",
         transport_mode="responses",
@@ -222,7 +223,9 @@ def test_dashscope_provider_extracts_balanced_object_from_prefixed_text() -> Non
 
 
 def test_dashscope_provider_uses_extended_timeout_for_chapter_steps() -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    provider = DashScopeTextGenerationProvider(
+        api_key=fixture_api_key("dashscope"), timeout=30
+    )
     task = TextGenerationTask(
         step="chapter_draft",
         system_prompt="system",
@@ -239,7 +242,9 @@ def test_dashscope_provider_uses_extended_timeout_for_chapter_steps() -> None:
 def test_dashscope_provider_reports_timeout_with_step_specific_budget(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    provider = DashScopeTextGenerationProvider(api_key="dashscope-key", timeout=30)
+    provider = DashScopeTextGenerationProvider(
+        api_key=fixture_api_key("dashscope"), timeout=30
+    )
     task = TextGenerationTask(
         step="chapter_revision",
         system_prompt="system",

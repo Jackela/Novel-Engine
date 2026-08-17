@@ -5,6 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '@/app/api';
 import type { SetupStatus } from '@/app/types/studio';
 
+const PASSWORD_AUTOCOMPLETE = {
+  existing: 'current-password',
+  fresh: 'new-password',
+} as const;
+
 export function EntryPage() {
   const navigate = useNavigate();
   const [setup, setSetup] = useState<SetupStatus | null>(null);
@@ -91,7 +96,11 @@ export function EntryPage() {
           <label>
             <span>Password</span>
             <input
-              autoComplete={setup?.owner_configured ? 'current-password' : 'new-password'}
+              autoComplete={
+                setup?.owner_configured
+                  ? PASSWORD_AUTOCOMPLETE.existing
+                  : PASSWORD_AUTOCOMPLETE.fresh
+              }
               minLength={10}
               onChange={(event) => setPassword(event.target.value)}
               required

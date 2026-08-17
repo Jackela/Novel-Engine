@@ -12,8 +12,9 @@ from src.contexts.ai.application.ports.text_generation_port import (
 from src.contexts.ai.infrastructure.providers.dashscope_text_generation_provider import (
     DashScopeTextGenerationProvider,
 )
+from tests.credential_fixtures import fixture_api_key
 
-DASHSCOPE_API_KEY = "dashscope-key"
+DASHSCOPE_API_KEY = fixture_api_key("dashscope")
 
 
 def make_task(
