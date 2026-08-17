@@ -13,4 +13,4 @@
 
 - [x] 3.1 `corepack pnpm spec:validate` green
 - [x] 3.2 `uv run python scripts/qa/check_openapi_snapshot.py` green after snapshot update
-- [ ] 3.3 CI green, then archive this change
+- [x] 3.3 CI green, then archive this change
