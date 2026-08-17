@@ -4,7 +4,15 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ai import regression_check
+from scripts.ai import regression_check, regression_exemptions
+
+
+def _load_registry(registry: Path) -> frozenset[tuple[str, str]]:
+    return regression_exemptions.load_exemption_entries(
+        registry,
+        allowed_keywords=regression_check.SAFETY_KEYWORDS,
+        protected_paths=(regression_check.GUARDRAIL_FILE,),
+    )
 
 
 def test_build_diff_command_uses_local_diff_when_refs_are_absent() -> None:
@@ -279,7 +287,7 @@ def test_load_exemptions_parses_registry_entries(tmp_path: Path) -> None:
     )
 
     # When
-    entries = regression_check.load_exemptions(registry)
+    entries = _load_registry(registry)
 
     # Then
     assert entries == frozenset({("src/legacy/auth_wiring.py", "auth")})
@@ -287,7 +295,7 @@ def test_load_exemptions_parses_registry_entries(tmp_path: Path) -> None:
 
 def test_load_exemptions_missing_file_yields_no_entries(tmp_path: Path) -> None:
     # Given / When
-    entries = regression_check.load_exemptions(tmp_path / "absent.txt")
+    entries = _load_registry(tmp_path / "absent.txt")
 
     # Then
     assert entries == frozenset()
@@ -311,7 +319,7 @@ def test_load_exemptions_rejects_invalid_entries(
 
     # When / Then
     with pytest.raises(ValueError, match=rf"line 1:.*{match}"):
-        regression_check.load_exemptions(registry)
+        _load_registry(registry)
 
 
 def test_deleted_test_files_and_forbidden_paths_are_reported() -> None:

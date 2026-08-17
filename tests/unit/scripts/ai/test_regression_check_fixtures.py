@@ -4,7 +4,7 @@ import tokenize
 
 import pytest
 
-from scripts.ai import regression_check
+from scripts.ai import regression_check, regression_scan
 
 _GUARDRAIL_TEST_FILE = "tests/unit/scripts/ai/test_regression_check_fixtures.py"
 
@@ -57,6 +57,6 @@ def test_python312_fstring_content_tokens_are_sanitized(
     monkeypatch.setitem(tokenize.tok_name, token_type, "FSTRING_MIDDLE")
     token = tokenize.TokenInfo(token_type, "except Exception:", (1, 0), (1, 17), "")
 
-    sanitized = regression_check._scan_token_text(token)
+    sanitized = regression_scan._scan_token_text(token)
 
     assert sanitized == '""'

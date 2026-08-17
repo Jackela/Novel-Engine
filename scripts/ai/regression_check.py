@@ -6,22 +6,19 @@ import os
 import re
 import subprocess
 import sys
-import tokenize
 from collections.abc import Sequence
 from dataclasses import dataclass
-from io import StringIO
 from pathlib import Path
 from re import Pattern
 from typing import Final
 
 from scripts.ai.regression_diff import DiffDetails, parse_diff
+from scripts.ai.regression_exemptions import load_exemption_entries
+from scripts.ai.regression_scan import guardrail_scan_line as _guardrail_scan_line
 
 DEFAULT_MAX_FILES: Final = 5
 GUARDRAIL_FILE: Final = "scripts/ai/regression_check.py"
-GUARDRAIL_TEST_PREFIX: Final = "tests/unit/scripts/ai/test_regression_check"
 EXEMPTIONS_FILE: Final = "scripts/ai/regression_check_exemptions.txt"
-EXEMPTION_SEPARATOR: Final = " :: "
-STRING_CONTENT_TOKEN_NAMES: Final = frozenset({"STRING", "FSTRING_MIDDLE"})
 SAFETY_KEYWORDS: Final = (
     "raise",
     "validate",
@@ -132,54 +129,20 @@ def run_git_diff(base_ref: str | None = None, head_ref: str | None = None) -> st
     return result.stdout
 
 
-def load_exemptions(exemptions_file: Path | None = None) -> frozenset[tuple[str, str]]:
-    """Load planned safety-keyword removal exemptions from the registry.
-
-    Each entry is ``<repo path> :: <keyword> :: <reason>`` on one line. The
-    registry lives in version control so every exemption is visible in the
-    same diff as the safety-keyword deletion it permits. Malformed input fails
-    loudly so a broken registry can never silently weaken the guardrail.
-    """
-    registry = (
-        PROJECT_ROOT / EXEMPTIONS_FILE if exemptions_file is None else exemptions_file
-    )
-    if not registry.is_file():
-        return frozenset()
-    entries: set[tuple[str, str]] = set()
-    for line_number, raw_line in enumerate(
-        registry.read_text(encoding="utf-8").splitlines(),
-        start=1,
-    ):
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        parts = [part.strip() for part in line.split(EXEMPTION_SEPARATOR)]
-        if len(parts) != 3 or not all(parts):
-            raise ValueError(
-                f"{EXEMPTIONS_FILE} line {line_number}: expected "
-                f"'<path> :: <keyword> :: <reason>'"
-            )
-        path, keyword, _reason = parts
-        if path == GUARDRAIL_FILE:
-            raise ValueError(
-                f"{EXEMPTIONS_FILE} line {line_number}: the guardrail itself "
-                "cannot be exempted"
-            )
-        if keyword not in SAFETY_KEYWORDS:
-            raise ValueError(
-                f"{EXEMPTIONS_FILE} line {line_number}: unknown safety keyword "
-                f"'{keyword}'"
-            )
-        entries.add((path, keyword))
-    return frozenset(entries)
-
-
 def check_deleted_safety_lines(
     diff: DiffDetails,
     exemptions: frozenset[tuple[str, str]] | None = None,
 ) -> list[str]:
     issues: list[str] = []
-    active_exemptions = load_exemptions() if exemptions is None else exemptions
+    active_exemptions = (
+        exemptions
+        if exemptions is not None
+        else load_exemption_entries(
+            PROJECT_ROOT / EXEMPTIONS_FILE,
+            allowed_keywords=SAFETY_KEYWORDS,
+            protected_paths=(GUARDRAIL_FILE,),
+        )
+    )
     moved_line_bodies = _added_line_bodies(diff)
     for filename, lines in diff.deletions.items():
         for line in lines:
@@ -309,30 +272,6 @@ def _dangerous_addition_issue(filename: str, line: str) -> str | None:
         if pattern.regex.search(scan_line):
             return f"[{filename}] {pattern.description}: {line}"
     return None
-
-
-def _guardrail_scan_line(filename: str, line: str) -> str:
-    if not _is_guardrail_test_file(filename):
-        return line
-    marker = line[:1] if line[:1] in {"+", "-"} else ""
-    body = line[1:] if marker else line
-    try:
-        tokens = tokenize.generate_tokens(StringIO(body).readline)
-        sanitized = tokenize.untokenize(
-            (token.type, _scan_token_text(token)) for token in tokens
-        )
-    except (IndentationError, tokenize.TokenError):
-        return line
-    return f"{marker}{sanitized}"
-
-
-def _scan_token_text(token: tokenize.TokenInfo) -> str:
-    token_name = tokenize.tok_name.get(token.type)
-    return '""' if token_name in STRING_CONTENT_TOKEN_NAMES else token.string
-
-
-def _is_guardrail_test_file(filename: str) -> bool:
-    return filename.startswith(GUARDRAIL_TEST_PREFIX) and filename.endswith(".py")
 
 
 def _is_self_definition_line(filename: str, line: str) -> bool:
