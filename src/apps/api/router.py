@@ -1,4 +1,4 @@
-"""Novel Studio API router registration."""
+"""Novel Engine API router registration."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Domain exceptions for Novel Studio."""
+"""Domain exceptions for Novel Engine."""
 
 from __future__ import annotations
 

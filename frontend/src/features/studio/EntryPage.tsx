@@ -28,7 +28,7 @@ export function EntryPage() {
           })
           .catch((reason: unknown) => {
             if (mounted) {
-              setError(reason instanceof Error ? reason.message : 'Unable to reach Novel Studio.');
+              setError(reason instanceof Error ? reason.message : 'Unable to reach Novel Engine.');
             }
           }),
       );
@@ -72,7 +72,7 @@ export function EntryPage() {
       <section className="entry__panel">
         <div className="entry__brand">
           <BookOpen aria-hidden="true" />
-          <span>Novel Studio</span>
+          <span>Novel Engine</span>
         </div>
         <h1>{setup?.owner_configured ? 'Open your writing studio' : 'Create the local owner'}</h1>
         <p>
@@ -112,7 +112,7 @@ export function EntryPage() {
           <Sparkles aria-hidden="true" />
           Try a 24-hour guest studio
         </button>
-        <footer>Novel Studio {__APP_VERSION__}</footer>
+        <footer>Novel Engine {__APP_VERSION__}</footer>
       </section>
     </main>
   );

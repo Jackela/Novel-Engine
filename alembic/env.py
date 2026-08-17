@@ -1,4 +1,4 @@
-"""Alembic environment for the Novel Studio SQLite store."""
+"""Alembic environment for the Novel Engine SQLite store."""
 
 from __future__ import annotations
 

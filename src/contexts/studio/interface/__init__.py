@@ -1,1 +1,1 @@
-"""Novel Studio interface adapters."""
+"""Novel Engine interface adapters."""

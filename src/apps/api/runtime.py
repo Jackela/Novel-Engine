@@ -123,4 +123,4 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 tasks.cancel_scope.cancel()
     finally:
         await anyio.to_thread.run_sync(runtime.database.dispose)
-        logger.info("api_shutdown", message="Shutting down Novel Studio API")
+        logger.info("api_shutdown", message="Shutting down Novel Engine API")

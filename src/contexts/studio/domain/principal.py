@@ -1,4 +1,4 @@
-"""Caller identity primitive for Novel Studio."""
+"""Caller identity primitive for Novel Engine."""
 
 from __future__ import annotations
 

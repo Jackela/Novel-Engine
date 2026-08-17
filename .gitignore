@@ -546,3 +546,6 @@ nul
 /frontend/test-results.json
 **/__pycache__/
 *.pyc
+
+# Agent harness state
+.mimosa/

@@ -1,6 +1,6 @@
-# Novel Studio
+# Novel Engine
 
-Novel Studio `0.3.1` is a self-hosted single-author novel writing IDE. SQLite is
+Novel Engine `0.3.1` is a self-hosted single-author novel writing IDE. SQLite is
 the content authority and Markdown is the document syntax.
 
 ## First-Time Setup

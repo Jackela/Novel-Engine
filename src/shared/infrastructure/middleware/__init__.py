@@ -1,6 +1,6 @@
 """Shared infrastructure middleware.
 
-This package contains middleware components for the Novel Studio application
+This package contains middleware components for the Novel Engine application
 including logging, correlation ID tracking, and metrics collection.
 """
 

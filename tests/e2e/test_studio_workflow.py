@@ -1,4 +1,4 @@
-"""End-to-end workflow test for the Novel Studio API."""
+"""End-to-end workflow test for the Novel Engine API."""
 
 from __future__ import annotations
 

@@ -1,1 +1,1 @@
-"""Novel Studio infrastructure."""
+"""Novel Engine infrastructure."""

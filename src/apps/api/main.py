@@ -1,4 +1,4 @@
-"""Canonical FastAPI application for Novel Studio."""
+"""Canonical FastAPI application for Novel Engine."""
 
 # mypy: disable-error-code=misc
 
@@ -59,7 +59,7 @@ def custom_openapi(app: FastAPI) -> dict[str, Any]:
     }
     _apply_openapi_security(openapi_schema)
     openapi_schema["servers"] = [
-        {"url": "/", "description": "Same-origin Novel Studio service"},
+        {"url": "/", "description": "Same-origin Novel Engine service"},
         {"url": "http://localhost:8000", "description": "Local development"},
     ]
     app.openapi_schema = openapi_schema
@@ -103,7 +103,7 @@ def _new_fastapi_app(resolved_settings: NovelEngineSettings) -> FastAPI:
     return NovelStudioApplication(
         title=resolved_settings.project_name,
         description=(
-            "Novel Studio API for projects, Markdown revisions, AI proposals, "
+            "Novel Engine API for projects, Markdown revisions, AI proposals, "
             "reviews, snapshots, exports, sessions, and durable jobs."
         ),
         version=resolved_settings.project_version,
@@ -113,7 +113,7 @@ def _new_fastapi_app(resolved_settings: NovelEngineSettings) -> FastAPI:
         lifespan=lifespan,
         openapi_tags=[
             {"name": "health", "description": "Health and readiness endpoints"},
-            {"name": "studio", "description": "Novel Studio product operations"},
+            {"name": "studio", "description": "Novel Engine product operations"},
         ],
     )
 

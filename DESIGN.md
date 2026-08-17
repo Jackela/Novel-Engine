@@ -1,4 +1,4 @@
-# Novel Studio Design Notes
+# Novel Engine Design Notes
 
 ## Typography
 

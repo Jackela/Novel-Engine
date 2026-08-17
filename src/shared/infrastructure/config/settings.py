@@ -1,4 +1,4 @@
-"""Type-safe, environment-aware configuration for Novel Studio."""
+"""Type-safe, environment-aware configuration for Novel Engine."""
 
 # mypy: disable-error-code=misc
 
@@ -111,7 +111,7 @@ class NovelEngineSettings(BaseSettings):
         description="Application environment",
     )
     debug: bool = Field(default=False, description="Enable debug mode")
-    project_name: str = Field(default="Novel Studio", description="Project name")
+    project_name: str = Field(default="Novel Engine", description="Project name")
     project_version: str = Field(
         default_factory=_package_version,
         description="Project version",

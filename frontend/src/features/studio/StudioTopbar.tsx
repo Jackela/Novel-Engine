@@ -15,7 +15,7 @@ export function StudioTopbar({ project, session, onBack }: StudioTopbarProps) {
         <ChevronLeft />
       </button>
       <div className="brand">
-        <BookOpen /> Novel Studio
+        <BookOpen /> Novel Engine
       </div>
       <div className="studio-project-title">{project.title}</div>
       <div className="studio-topbar__spacer" />

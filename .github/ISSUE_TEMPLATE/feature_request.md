@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Propose an improvement to the single-author Novel Studio
+about: Propose an improvement to the single-author Novel Engine
 title: "[FEATURE] "
 labels: ["enhancement", "triage"]
 assignees: []

@@ -1,1 +1,1 @@
-"""Novel Studio application services."""
+"""Novel Engine application services."""

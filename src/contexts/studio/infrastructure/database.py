@@ -1,4 +1,4 @@
-"""SQLite database lifecycle for Novel Studio."""
+"""SQLite database lifecycle for Novel Engine."""
 
 from __future__ import annotations
 
