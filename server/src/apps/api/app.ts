@@ -1,10 +1,61 @@
+import { randomUUID } from "node:crypto";
+import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import Fastify from "fastify";
+import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 
-export async function buildApp() {
-  const app = Fastify({ logger: false }).withTypeProvider<TypeBoxTypeProvider>();
+import type { HealthProbe } from "../../shared/application/ports/health.js";
+import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
+import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
+import { healthRoutes } from "../../shared/interface/http/health_routes.js";
+import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 
-  app.get("/api/hello", async () => ({ message: "hello from novel-engine server" }));
+export interface AppOptions {
+  logger?: boolean | FastifyLoggerOptions | undefined;
+  healthProbe?: HealthProbe | undefined;
+  environment?: string | undefined;
+  buildSha?: string | undefined;
+}
 
+const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
+
+/**
+ * Composition root of the TS server: correlation-id request logging, the
+ * unified error envelope, health probes, /version metadata, and the OpenAPI
+ * document seam consumed by the snapshot gate.
+ */
+export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
+  const app = Fastify({
+    logger: options.logger ?? true,
+    genReqId: () => randomUUID(),
+    requestIdHeader: "x-request-id",
+  }).withTypeProvider<TypeBoxTypeProvider>();
+
+  app.addHook("onRequest", async (request, reply) => {
+    reply.header("x-request-id", request.id);
+  });
+
+  const versionInfo: VersionInfo = {
+    version: readWorkspaceVersion(),
+    name: "Novel Engine",
+    runtime: { name: "node", version: process.versions.node },
+    environment: options.environment ?? process.env.NODE_ENV ?? "development",
+    build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
+  };
+
+  await app.register(swagger, {
+    openapi: {
+      info: {
+        title: "Novel Engine API",
+        version: versionInfo.version,
+        description: "Self-hosted writing studio API (TypeScript rewrite).",
+      },
+    },
+  });
+  await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
+  await app.register(versionRoutes, { info: versionInfo });
+
+  app.get("/openapi.json", async () => app.swagger());
+
+  registerErrorEnvelope(app);
   return app;
 }
