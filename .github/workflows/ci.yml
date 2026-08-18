@@ -98,6 +98,9 @@ jobs:
           pnpm type-check
           pnpm test:unit
           pnpm build
+      - name: Check generated API types drift
+        working-directory: frontend
+        run: pnpm check:api-types
       - name: Validate React static diagnostics
         working-directory: frontend
         run: |
