@@ -7,7 +7,7 @@
     "root": ".."
   },
   "files": {
-    "includes": ["**", "!qa-baselines"]
+    "includes": ["**", "!qa-baselines", "!drizzle"]
   },
   "formatter": {
     "enabled": true,

@@ -15,19 +15,25 @@
     "gate:hygiene": "node scripts/qa/check_repo_hygiene.mjs",
     "gate:sizes": "node scripts/qa/check_file_sizes.mjs",
     "gate:freeze": "node scripts/qa/python_freeze_check.mjs",
+    "gate:migrations": "node scripts/qa/check_migration_channel.mjs",
     "gate:openapi": "vitest run tests/qa/openapi_snapshot.test.ts",
     "openapi:snapshot": "OPENAPI_SNAPSHOT_WRITE=1 vitest run tests/qa/openapi_snapshot.test.ts",
-    "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:sizes && pnpm run gate:openapi"
+    "db:generate": "drizzle-kit generate",
+    "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:openapi"
   },
   "dependencies": {
     "@fastify/swagger": "^9.8.1",
     "@fastify/type-provider-typebox": "^6.1.0",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.2",
     "fastify": "^5.12.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.8",
+    "@types/better-sqlite3": "9.6.0",
     "@types/node": "^24.13.3",
     "dependency-cruiser": "^18.2.0",
+    "drizzle-kit": "0.31.10",
     "typescript": "~6.0.3",
     "vitest": "~4.1.10"
   }

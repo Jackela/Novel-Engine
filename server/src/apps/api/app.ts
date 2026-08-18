@@ -4,16 +4,30 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 
 import type { HealthProbe } from "../../shared/application/ports/health.js";
+import { openStudioDatabase, type StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
+
+declare module "fastify" {
+  interface FastifyInstance {
+    /** The content-authority handle, present once a data directory is configured. */
+    studioDb?: StudioDatabase;
+  }
+}
 
 export interface AppOptions {
   logger?: boolean | FastifyLoggerOptions | undefined;
   healthProbe?: HealthProbe | undefined;
   environment?: string | undefined;
   buildSha?: string | undefined;
+  /**
+   * Directory holding novel-engine.sqlite3. When set, startup runs the
+   * persistence pipeline (backup → migrations → restart recovery) before
+   * serving; when absent the app stays database-free (walking skeleton).
+   */
+  dataDirectory?: string | undefined;
 }
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
@@ -35,8 +49,10 @@ function correlationIdFrom(value: string | string[] | undefined): string | undef
 
 /**
  * Composition root of the TS server: correlation-id request logging, the
- * unified error envelope, health probes, /version metadata, and the OpenAPI
- * document seam consumed by the snapshot gate.
+ * unified error envelope, health probes, /version metadata, the OpenAPI
+ * document seam consumed by the snapshot gate, and — when a data directory
+ * is configured — the persistence pipeline (backup → migrate → recover)
+ * that must complete before the app serves traffic.
  */
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify({
@@ -47,6 +63,20 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   app.addHook("onRequest", async (request, reply) => {
     reply.header("x-request-id", request.id);
   });
+
+  let studioDb: StudioDatabase | undefined;
+  if (options.dataDirectory !== undefined) {
+    try {
+      studioDb = await openStudioDatabase(options.dataDirectory);
+    } catch (error) {
+      await app.close();
+      throw error;
+    }
+    app.decorate("studioDb", studioDb);
+    app.addHook("onClose", async () => {
+      studioDb?.close();
+    });
+  }
 
   const versionInfo: VersionInfo = {
     version: readWorkspaceVersion(),
