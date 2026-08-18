@@ -549,3 +549,7 @@ nul
 
 # Agent harness state
 .mimosa/
+
+# TS server build artifacts
+/server/dist/
+/server/tmp/

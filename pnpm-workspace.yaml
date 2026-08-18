@@ -1,5 +1,6 @@
 packages:
   - frontend
+  - server
 allowBuilds:
   '@fission-ai/openspec': true
 overrides:
