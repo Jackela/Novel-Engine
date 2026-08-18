@@ -22,7 +22,7 @@ module.exports = {
       name: "application-isolation",
       comment: "Application layers orchestrate through ports; they never import infrastructure.",
       severity: "error",
-      from: { path: "^src/contexts/[^/]+/application" },
+      from: { path: "^src/(contexts/[^/]+|shared)/application" },
       to: { path: "^src/(contexts/[^/]+/infrastructure|shared/infrastructure)" },
     },
     {
@@ -44,14 +44,14 @@ module.exports = {
       comment:
         "Interface layers own HTTP concerns only — no direct infrastructure imports, including shared infrastructure (audit gap closure F-8).",
       severity: "error",
-      from: { path: "^src/contexts/[^/]+/interface" },
+      from: { path: "^src/(contexts/[^/]+|shared)/interface" },
       to: { path: "^src/(contexts/[^/]+/infrastructure|shared/infrastructure)" },
     },
     {
       name: "domain-application-avoid-interface",
       comment: "Domain and application layers never import interface layers.",
       severity: "error",
-      from: { path: "^src/(contexts/[^/]+/(domain|application)|shared/domain)" },
+      from: { path: "^src/(contexts/[^/]+/(domain|application)|shared/(domain|application))" },
       to: { path: "^src/(contexts/[^/]+/interface|shared/interface)" },
     },
     {

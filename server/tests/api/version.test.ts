@@ -49,9 +49,17 @@ describe("GET /version", () => {
         headers: { "x-request-id": "corr-abc" },
       });
       const withoutHeader = await app.inject({ method: "GET", url: "/version" });
+      const withHostileHeader = await app.inject({
+        method: "GET",
+        url: "/version",
+        headers: { "x-request-id": "drop table logs; <script>" },
+      });
 
       expect(withHeader.headers["x-request-id"]).toBe("corr-abc");
       expect(withoutHeader.headers["x-request-id"]).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+      );
+      expect(withHostileHeader.headers["x-request-id"]).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
     } finally {

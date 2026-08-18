@@ -126,15 +126,6 @@
         }
       }
     },
-    "/openapi.json": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
     "/version": {
       "get": {
         "responses": {

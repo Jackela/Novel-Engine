@@ -18,6 +18,21 @@ export interface AppOptions {
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
+const REQUEST_ID_HEADER = "x-request-id";
+const SAFE_REQUEST_ID = /^[A-Za-z0-9._-]{1,128}$/;
+
+/**
+ * Inbound correlation ids are honored only when short and plain: a hostile
+ * header value must not flow into logs, responses, or error ids.
+ */
+function correlationIdFrom(value: string | string[] | undefined): string | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  const trimmed = value.trim();
+  return SAFE_REQUEST_ID.test(trimmed) ? trimmed : undefined;
+}
+
 /**
  * Composition root of the TS server: correlation-id request logging, the
  * unified error envelope, health probes, /version metadata, and the OpenAPI
@@ -26,8 +41,7 @@ const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify({
     logger: options.logger ?? true,
-    genReqId: () => randomUUID(),
-    requestIdHeader: "x-request-id",
+    genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   app.addHook("onRequest", async (request, reply) => {
@@ -54,7 +68,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
   await app.register(versionRoutes, { info: versionInfo });
 
-  app.get("/openapi.json", async () => app.swagger());
+  app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
   registerErrorEnvelope(app);
   return app;

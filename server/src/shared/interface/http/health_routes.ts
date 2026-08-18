@@ -16,7 +16,7 @@ interface SerializedComponent {
   response_time_ms: number;
   message: string;
   error: string | null;
-  details: Record<string, never>;
+  details: Record<string, unknown>;
 }
 
 interface DetailedHealthPayload {
