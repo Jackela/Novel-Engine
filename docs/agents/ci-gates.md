@@ -13,6 +13,26 @@ The authoritative definition of every gate is the workflow files under
 | `CI` / Check AI regression diff | `scripts/ai/regression_check.py` (main's copy) against the PR diff | The diff deletes safety-keyword lines, adds dangerous patterns, touches forbidden zones, or weakens the guardrail |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
 | `CI` / Validate backend / frontend | ruff, bandit, mypy, lint-imports, pytest+coverage, vitest, build | Conventional test/lint/type failures |
+| `CI` / python-freeze | `server/scripts/qa/python_freeze_check.mjs` (run by the job with `--base-ref`/`--head-ref`): PR diffs must not touch `src/**`, `tests/**`, `alembic/**`, `scripts/**`, `pyproject.toml`, or `uv.lock` unless the PR is labeled `python-freeze-exception` | The PR modifies the frozen Python implementation outside an approved exception |
+| `CI` / Validate workspace gates (server) | Node twins of the Python QA gates (`server/scripts/qa/`, run via `pnpm --dir server gates`): SSOT, repo hygiene, file-size budgets over the pnpm workspace | Version/identity drift, forbidden residues, or a file over the 300 code-line budget in `server/` or `frontend/` |
+| `CI` / Validate server architecture | dependency-cruiser (`pnpm --dir server arch`): the six `.importlinter` contract twins plus the two audit gap closures — interface must not import shared infrastructure (F-8) and the ai context is a leaf reachable only through its application ports | A `server/src` module breaks layering or reaches into `contexts/ai` past its ports |
+| `CI` / Validate server types and lint / Test server | `tsc --strict`, Biome (server only), vitest with Fastify `inject()` | Conventional test/lint/type failures in the TS backend |
+
+## Runbook: python-freeze exceptions
+
+The Python tree is frozen for the TS rewrite (#260): PRs touching
+`src/**`, `tests/**`, `alembic/**`, `scripts/**`, `pyproject.toml`, or
+`uv.lock` fail the `python-freeze` job. The `python-freeze-exception`
+label is reserved for security and data-loss fixes in the frozen tree
+(and for the Python gates' own retirement at cutover):
+
+1. Apply the label only on a PR whose changes are strictly within the
+   exception's purpose; the label exempts the whole PR, so keep such PRs
+   minimal.
+2. Say why the label is warranted in the PR description, citing the
+   advisory or incident.
+3. The label is read from the PR event; if you add it after a red run,
+   re-run the job (push or re-run `python-freeze` only).
 
 ## Runbook: dependency advisory flaps
 

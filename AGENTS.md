@@ -11,15 +11,16 @@ Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code na
 ## STRUCTURE
 
 ```text
-src/
+src/                      # Python implementation — FROZEN for the TS rewrite (python-freeze CI guard)
 ├── apps/                 # FastAPI and CLI composition roots
 ├── contexts/
 │   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports
 │   └── ai/               # Structured text-generation ports and providers
 └── shared/               # Cross-cutting domain and infrastructure
+server/                   # TS rewrite backend (ADR-0002): Fastify app, gates, Node QA twins
 frontend/                 # React application and browser tests
 tests/                    # Backend unit, API, contract, and e2e tests
-scripts/qa/               # SSOT, hygiene, size, and OpenAPI gates
+scripts/qa/               # SSOT, hygiene, size, and OpenAPI gates (frozen; Node twins in server/scripts/qa/)
 openspec/                 # Canonical product specifications
 alembic/versions/         # Migrations; read-only for AI
 ```
@@ -39,7 +40,8 @@ Generated/runtime trees such as `.venv/`, caches, `htmlcov/`, `frontend/coverage
 | Change frontend API contract | `frontend/src/app/api.ts`, `frontend/src/app/types/studio.ts` | Keep synchronized with OpenAPI |
 | Change Studio UI | `frontend/src/features/studio/` | Page shell, hooks, and panels |
 | Add backend coverage | `tests/` | Reuse canonical fixtures in `tests/conftest.py` |
-| Validate policy | `scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate |
+| Build the TS server app | `server/src/apps/api/app.ts` | Fastify + TypeBox scaffold; #263 grows the walking skeleton |
+| Validate policy | `scripts/qa/`, `server/scripts/qa/`, `.github/workflows/ci.yml` | CI is the authoritative full gate; Node twins run via `pnpm --dir server gates` |
 
 ## CODE MAP
 
@@ -127,6 +129,13 @@ corepack pnpm --dir frontend lint
 corepack pnpm --dir frontend type-check
 corepack pnpm --dir frontend test:unit
 corepack pnpm --dir frontend build
+
+# Server (TS rewrite)
+pnpm --dir server type-check
+pnpm --dir server lint
+pnpm --dir server test
+pnpm --dir server arch
+pnpm --dir server gates
 
 # Product/spec
 corepack pnpm spec:validate

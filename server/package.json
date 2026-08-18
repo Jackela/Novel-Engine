@@ -1,0 +1,31 @@
+{
+  "name": "novel-engine-server",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "type-check": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "arch": "depcruise src --config .dependency-cruiser.cjs",
+    "test": "vitest run",
+    "gate:ssot": "node scripts/qa/check_ssot.mjs",
+    "gate:hygiene": "node scripts/qa/check_repo_hygiene.mjs",
+    "gate:sizes": "node scripts/qa/check_file_sizes.mjs",
+    "gate:freeze": "node scripts/qa/python_freeze_check.mjs",
+    "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:sizes"
+  },
+  "dependencies": {
+    "@fastify/type-provider-typebox": "^6.1.0",
+    "fastify": "^5.12.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.8",
+    "@types/node": "^24.13.3",
+    "dependency-cruiser": "^18.2.0",
+    "typescript": "~6.0.3",
+    "vitest": "~4.1.10"
+  }
+}
