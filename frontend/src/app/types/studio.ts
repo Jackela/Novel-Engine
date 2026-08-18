@@ -1,7 +1,23 @@
+import type { components } from '../../../generated/api-types';
+
+/**
+ * Contract types are derived from the frozen Python OpenAPI snapshot
+ * (`docs/api/openapi.current.json` → `generated/api-types.ts`).
+ * That snapshot types request bodies precisely but leaves response bodies
+ * untyped (`additionalProperties: true`), so the response views below remain
+ * hand-written and are runtime-validated by the apiContract parsers; they move
+ * to generated types when the TS snapshot becomes the regenerated baseline
+ * (#260, at TS-first-green).
+ */
+
+export type DocumentKind = components['schemas']['DocumentCreateRequest']['kind'];
+export type ExportFormat = components['schemas']['ExportRequest']['format'];
+export type StudioJobOperation =
+  | components['schemas']['AIProposalRequest']['operation']
+  | 'review'
+  | 'export';
 export type SessionKind = 'owner' | 'guest';
-export type DocumentKind = 'chapter' | 'outline' | 'character' | 'world' | 'note';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
-export type ExportFormat = 'markdown' | 'docx' | 'epub';
 export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';
 
 export interface ProviderInfo {
@@ -11,7 +27,6 @@ export interface ProviderInfo {
   is_default: boolean;
 }
 export type StudioJobKind = 'proposal' | 'review' | 'export';
-export type StudioJobOperation = 'continue' | 'rewrite' | 'generate' | 'review' | 'export';
 
 export interface Session {
   session_id: string;
