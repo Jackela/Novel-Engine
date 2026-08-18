@@ -6,6 +6,9 @@
     "useIgnoreFile": true,
     "root": ".."
   },
+  "files": {
+    "includes": ["**", "!qa-baselines"]
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
