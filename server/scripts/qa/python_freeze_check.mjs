@@ -69,7 +69,7 @@ function parseArgs(argv) {
       if (value === undefined) {
         throw new Error(`${arg} requires a value`);
       }
-      mode[arg.slice(2)] = value;
+      mode[arg === "--base-ref" ? "baseRef" : "headRef"] = value;
     } else if (arg === "--paths") {
       mode.kind = "paths";
     } else if (mode.kind === "paths") {
