@@ -131,6 +131,11 @@ describe("environment configuration surface", () => {
     expect(rejected.message).toContain("SECURITY_RATE_LIMIT");
   });
 
+  it("rejects a zero rate limit at load time, before any side effect", () => {
+    const rejected = expectRejected(load({ env: { SECURITY_RATE_LIMIT: "0/minute" } }));
+    expect(rejected.message).toContain("SECURITY_RATE_LIMIT");
+  });
+
   it("rejects unknown environment names loudly", () => {
     const rejected = expectRejected(load({ env: { APP_ENVIRONMENT: "chaos" } }));
     expect(rejected.message).toContain("APP_ENVIRONMENT");
@@ -145,6 +150,21 @@ describe("environment configuration surface", () => {
     const secret = generatedSecret();
     const config = load({ env: { SECURITY_SECRET_KEY: secret } }) as ServerConfig;
     expect(config.sessionSecret).toBe(secret);
+  });
+
+  it("refuses production startup when the secret is empty or whitespace", () => {
+    for (const empty of ["", "   "]) {
+      const rejected = expectRejected(
+        load({ env: { APP_ENVIRONMENT: "production", SECURITY_SECRET_KEY: empty } }),
+      );
+      expect(rejected.message).toContain("SECURITY_SECRET_KEY");
+    }
+  });
+
+  it("refuses an explicitly short secret in every environment", () => {
+    const tooShort = randomBytes(6).toString("hex").slice(0, 12);
+    const rejected = expectRejected(load({ env: { SECURITY_SECRET_KEY: tooShort } }));
+    expect(rejected.message).toContain("SECURITY_SECRET_KEY");
   });
 });
 

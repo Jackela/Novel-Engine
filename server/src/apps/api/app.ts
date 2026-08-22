@@ -7,6 +7,7 @@ import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastif
 
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
+import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
 import {
   assertStartupGuards,
   type ServerConfig,
@@ -17,7 +18,7 @@ import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_id
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
 import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
 import { authRoutes } from "../../shared/interface/http/auth_routes.js";
-import { corsAllowList, DEFAULT_CORS_ORIGINS } from "../../shared/interface/http/cors_policy.js";
+import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";

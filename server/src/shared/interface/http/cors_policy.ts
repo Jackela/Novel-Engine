@@ -1,9 +1,4 @@
-import { LOCALHOST_CORS_PORTS } from "./origin_validation.js";
-
-/** The default development origin set, derived from the single port SSOT. */
-export const DEFAULT_CORS_ORIGINS: string[] = [...LOCALHOST_CORS_PORTS].map(
-  (port) => `http://localhost:${port}`,
-);
+import { LOCALHOST_CORS_PORTS } from "../../domain/cors_contract.js";
 
 export interface CorsAllowList {
   /** True for a configured bare `*` — reflect any origin (non-production only). */

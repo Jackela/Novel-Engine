@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
+import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
 import { parseEnvFile } from "./env_file.js";
 
 /** The single converged prefix family; nothing outside it is read. */
@@ -10,15 +11,13 @@ const DEFAULT_DATABASE_URL = "sqlite:///./data/novel-engine.sqlite3";
 const DEFAULT_HOST = "0.0.0.0";
 const DEFAULT_PORT = 8000;
 const DEFAULT_RATE_LIMIT = "5/minute";
-const DEFAULT_CORS_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "http://localhost:8000",
-];
-const RATE_LIMIT_PATTERN = /^(\d{1,6})\/minute$/;
+const RATE_LIMIT_PATTERN = /^([1-9]\d{0,5})\/minute$/;
 
 // Assembled like the Python sentinel so no credential-shaped literal ships in source.
 export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"].join("-");
+
+/** Minimum usable secret length, mirroring the Python field constraint. */
+const MIN_SECRET_LENGTH = 16;
 
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
 
@@ -71,9 +70,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
   }
   const workingDirectory = input.workingDirectory ?? process.cwd();
   const databasePath = resolve(workingDirectory, databaseUrl.slice("sqlite:///".length));
-  const rawSecret = stringFrom(env, "SECURITY_SECRET_KEY");
-  const sessionSecret =
-    rawSecret === undefined || rawSecret === DEFAULT_SECRET_KEY ? undefined : rawSecret;
+  const sessionSecret = secretFrom(stringFrom(env, "SECURITY_SECRET_KEY"));
 
   const config: ServerConfig = {
     environment,
@@ -117,6 +114,24 @@ export function assertStartupGuards(config: ServerConfig): void {
   ) {
     throw new ConfigurationError("Production CORS origins cannot include localhost or 127.0.0.1");
   }
+}
+
+/**
+ * Normalize the session secret like the Python gold standard: unset, empty,
+ * or the default value rotate (or refuse, per the production guards), while
+ * an explicitly short-but-real value fails validation everywhere.
+ */
+function secretFrom(rawSecret: string | undefined): string | undefined {
+  const trimmed = rawSecret?.trim() ?? "";
+  if (trimmed === "" || trimmed === DEFAULT_SECRET_KEY) {
+    return undefined;
+  }
+  if (trimmed.length < MIN_SECRET_LENGTH) {
+    throw new ConfigurationError(
+      `SECURITY_SECRET_KEY must be at least ${MIN_SECRET_LENGTH} characters long`,
+    );
+  }
+  return trimmed;
 }
 
 function mergedEnvironment(input: LoadServerConfigInput): Map<string, string> {

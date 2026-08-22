@@ -1,10 +1,7 @@
 import type { FastifyRequest } from "fastify";
 
-/**
- * The development ports the CORS contract allows on localhost — the single
- * port SSOT shared with the CORS policy materialization in cors_policy.ts.
- */
-export const LOCALHOST_CORS_PORTS = new Set(["5173", "4173", "8000"]);
+import { LOCALHOST_CORS_PORTS } from "../../domain/cors_contract.js";
+
 const LOCALHOST_PREFIXES = [
   "http://localhost:",
   "https://localhost:",
