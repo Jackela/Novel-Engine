@@ -4,7 +4,10 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
-
+import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
+import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
+import { documentRoutes } from "../../contexts/studio/interface/http/document_routes.js";
+import { projectRoutes } from "../../contexts/studio/interface/http/project_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
@@ -144,6 +147,13 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             randomBytes(32).toString("base64url"),
           now: options.clock,
         });
+  const studioServices =
+    studioDb === undefined || dataDirectory === undefined
+      ? undefined
+      : createStudioServices(
+          new DrizzleStudioStore({ database: studioDb.db, dataDirectory }),
+          options.clock,
+        );
 
   const versionInfo: VersionInfo = {
     version: readWorkspaceVersion(),
@@ -211,6 +221,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
   await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
   await app.register(versionRoutes, { info: versionInfo });
+  await app.register(projectRoutes, { authService, services: studioServices });
+  await app.register(documentRoutes, { authService, services: studioServices });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
