@@ -22,8 +22,10 @@
     "gates": "pnpm run gate:ssot && pnpm run gate:hygiene && pnpm run gate:sizes && pnpm run gate:migrations && pnpm run gate:openapi"
   },
   "dependencies": {
+    "@fastify/cookie": "^11.1.2",
     "@fastify/swagger": "^9.8.1",
     "@fastify/type-provider-typebox": "^6.1.0",
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "13.0.3",
     "drizzle-orm": "0.45.2",
     "fastify": "^5.12.0"
