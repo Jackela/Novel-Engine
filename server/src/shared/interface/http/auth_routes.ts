@@ -1,8 +1,9 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 
 import type { AuthService, IssuedSession } from "../../application/auth_service.js";
+import type { Principal } from "../../application/ports/auth.js";
 import type { RateLimiter } from "../../application/ports/rate_limit.js";
-import { principalGuard } from "./auth_guard.js";
+import { FIRST_CONTACT_PATHS, principalGuard } from "./auth_guard.js";
 import { AppError } from "./error_envelope.js";
 import { isSameOriginRequest } from "./origin_validation.js";
 import {
@@ -11,9 +12,6 @@ import {
   principalPayload,
   SESSION_COOKIE,
 } from "./session_cookies.js";
-
-/** Unauthenticated surfaces whose abuse is blunted by per-IP rate limiting. */
-const RATE_LIMITED_PATHS = new Set(["/api/setup", "/api/session/login", "/api/session/guest"]);
 
 export type ClientIdentityResolver = (request: {
   socket?: { remoteAddress?: string | undefined } | undefined;
@@ -81,22 +79,19 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
       return;
     }
     const path = request.url.split("?")[0] ?? request.url;
-    if (!RATE_LIMITED_PATHS.has(path)) {
+    if (!FIRST_CONTACT_PATHS.has(path)) {
       return;
     }
     const key = `${options.resolveClientIdentity(request)}:${request.method}:${path}`;
     const decision = options.limiter.check(key);
     if (!decision.allowed) {
-      await reply
-        .status(429)
-        .header("retry-after", String(decision.retryAfterSeconds))
-        .send({
-          error: {
-            code: "RATE_LIMIT_EXCEEDED",
-            message: "Rate limit exceeded.",
-            details: { retry_after_seconds: decision.retryAfterSeconds },
-          },
-        });
+      reply.header("retry-after", String(decision.retryAfterSeconds));
+      throw new AppError({
+        statusCode: 429,
+        code: "RATE_LIMIT_EXCEEDED",
+        message: "Rate limit exceeded.",
+        details: { retry_after_seconds: decision.retryAfterSeconds },
+      });
     }
   });
 
@@ -146,7 +141,7 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
         });
       }
       const body = request.body as { username: string; password: string };
-      const owner = service.configureOwner(body.username, body.password);
+      const owner = await service.configureOwner(body.username, body.password);
       reply.status(201);
       return owner;
     },
@@ -157,7 +152,7 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     { schema: { body: credentialsBodySchema, response: { 200: principalResponseSchema } } },
     async (request, reply) => {
       const body = request.body as { username: string; password: string };
-      const issued = requireService(options).createOwnerSession(body.username, body.password);
+      const issued = await requireService(options).createOwnerSession(body.username, body.password);
       return respondWithSession(reply, issued, options.environment);
     },
   );
@@ -178,17 +173,8 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
       preHandler: [guard],
       schema: { response: { 200: principalResponseSchema } },
     },
-    async (request) => {
-      const principal = request.principal;
-      if (principal === undefined) {
-        throw new AppError({
-          statusCode: 401,
-          code: "UNAUTHORIZED",
-          message: "Owner or guest session required.",
-        });
-      }
-      return principalPayload(principal);
-    },
+    // The guard has already resolved and attached the principal.
+    async (request) => principalPayload(request.principal as Principal),
   );
 
   app.delete(

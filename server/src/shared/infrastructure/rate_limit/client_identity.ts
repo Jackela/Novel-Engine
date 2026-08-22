@@ -22,15 +22,26 @@ function parseIPv4(text: string): bigint | null {
   return value;
 }
 
+/** An embedded IPv4 tail counts as two 16-bit groups. */
+function unitCount(groups: string[]): number {
+  let units = 0;
+  for (const group of groups) {
+    units += group.includes(".") ? 2 : 1;
+  }
+  return units;
+}
+
 function groupsToValue(rawGroups: string[]): bigint | null {
   const groups: string[] = [];
+  let units = 0;
   for (let index = 0; index < rawGroups.length; index += 1) {
     const group = rawGroups[index];
     if (group === undefined) {
       return null;
     }
     if (group.includes(".")) {
-      // An embedded IPv4 tail (e.g. ::ffff:127.0.0.1) expands to two groups.
+      // An embedded IPv4 tail (e.g. ::ffff:127.0.0.1) expands to two groups
+      // and must sit at the end.
       if (index !== rawGroups.length - 1) {
         return null;
       }
@@ -39,11 +50,13 @@ function groupsToValue(rawGroups: string[]): bigint | null {
         return null;
       }
       groups.push(((embedded >> 16n) & 0xffffn).toString(16), (embedded & 0xffffn).toString(16));
+      units += 2;
       continue;
     }
     groups.push(group);
+    units += 1;
   }
-  if (groups.length !== 8) {
+  if (units !== 8) {
     return null;
   }
   let value = 0n;
@@ -68,7 +81,7 @@ function parseIPv6(text: string): bigint | null {
     const right = head.slice(doubleColon + 2);
     const leftGroups = left === "" ? [] : left.split(":");
     const rightGroups = right === "" ? [] : right.split(":");
-    const missing = 8 - leftGroups.length - rightGroups.length;
+    const missing = 8 - unitCount(leftGroups) - unitCount(rightGroups);
     if (missing < 1) {
       return null;
     }
@@ -123,6 +136,11 @@ export function isTrustedProxy(host: string, trustedProxies: string[]): boolean 
     const network = parseIpAddress(proxy.slice(0, slash));
     const prefix = Number(proxy.slice(slash + 1));
     if (network === null || !Number.isInteger(prefix) || prefix < 0 || prefix > network.bits) {
+      // Not a parseable IP network (e.g. a host string containing slashes):
+      // fall back to comparing the whole entry, like the Python gold standard.
+      if (host === proxy) {
+        return true;
+      }
       continue;
     }
     if (address !== null && address.bits === network.bits) {

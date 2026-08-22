@@ -60,18 +60,46 @@ describe("auth endpoint rate limiting", () => {
     }
   });
 
+  it("drops rate-limited setup attempts without creating an owner", async () => {
+    const { app } = await buildAuthApp();
+    try {
+      // Five invalid setups consume the bucket without ever creating an owner.
+      for (let index = 0; index < 5; index += 1) {
+        const response = await app.inject({
+          method: "POST",
+          url: "/api/setup",
+          payload: { username: "owner", password: "short" },
+        });
+        expect(response.statusCode).toBe(422);
+      }
+      const blocked = await app.inject({
+        method: "POST",
+        url: "/api/setup",
+        payload: { username: "owner", password: "a-valid-long-password" },
+      });
+      expect(blocked.statusCode).toBe(429);
+
+      const status = await app.inject({ method: "GET", url: "/api/setup" });
+      expect(status.json().owner_configured).toBe(false);
+    } finally {
+      await app.close();
+    }
+  });
+
   it("exempts preflight OPTIONS requests", async () => {
     const { app } = await buildAuthApp();
     try {
       for (let index = 0; index < 5; index += 1) {
         await createGuest(app);
       }
+      // No CORS plugin yet, so Fastify answers an unrouted OPTIONS with 404 —
+      // the point is that the rate limiter never answers instead.
       const preflight = await app.inject({
         method: "OPTIONS",
         url: "/api/session/guest",
         headers: { origin: "http://localhost:5173", "access-control-request-method": "POST" },
       });
-      expect(preflight.statusCode).not.toBe(429);
+      expect(preflight.statusCode).toBe(404);
     } finally {
       await app.close();
     }

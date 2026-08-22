@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { compareSync, genSaltSync, hashSync } from "bcryptjs";
+import { compare, hash } from "bcryptjs";
 
 import { InvalidOperationError } from "../domain/exceptions.js";
 import type { AuthStore, Principal, SessionKind } from "./ports/auth.js";
@@ -8,15 +8,17 @@ const GUEST_TTL_MS = 24 * 60 * 60 * 1000;
 /** Cost factor matching the Python gold standard's gensalt() default. */
 const BCRYPT_ROUNDS = 12;
 
-let dummyHashMemo: string | undefined;
+let dummyHashMemo: Promise<string> | undefined;
 
 /**
  * Constant dummy bcrypt hash used to keep login timing constant regardless of
  * whether the supplied username exists. The salt is random per process, so no
- * usable password literal ever lives in source control.
+ * usable password literal ever lives in source control. The async bcrypt API
+ * is mandatory here: pure-JS hashing at cost 12 must yield to the event loop
+ * instead of stalling every concurrent request for hundreds of milliseconds.
  */
-function dummyPasswordHash(): string {
-  dummyHashMemo ??= hashSync(randomBytes(32).toString("base64url"), genSaltSync(BCRYPT_ROUNDS));
+function dummyPasswordHash(): Promise<string> {
+  dummyHashMemo ??= hash(randomBytes(32).toString("base64url"), BCRYPT_ROUNDS);
   return dummyHashMemo;
 }
 
@@ -61,23 +63,26 @@ export class AuthService {
    * from the frontend client's setupOwner so static cross-project symbol
    * merging cannot stitch an HTTP-input taint onto an unrelated fetch sink.
    */
-  configureOwner(username: string, password: string): { id: string; username: string } {
+  async configureOwner(
+    username: string,
+    password: string,
+  ): Promise<{ id: string; username: string }> {
     const trimmed = username.trim();
     if (trimmed.length === 0 || password.length < 10 || utf8ByteLength(password) > 72) {
       throw new InvalidOperationError(
         "Username is required and password must be 10-72 UTF-8 bytes.",
       );
     }
-    const owner = this.store.createOwner(trimmed, hashSync(password, genSaltSync(BCRYPT_ROUNDS)));
+    const owner = this.store.createOwner(trimmed, await hash(password, BCRYPT_ROUNDS));
     return { id: owner.id, username: owner.username };
   }
 
-  createOwnerSession(username: string, password: string): IssuedSession {
+  async createOwnerSession(username: string, password: string): Promise<IssuedSession> {
     const owner = this.store.getOwnerByUsername(username.trim());
     // Always run bcrypt against a real or dummy hash so the timing of the
     // response does not reveal whether the username exists.
-    const passwordHash = owner?.passwordHash ?? dummyPasswordHash();
-    const passwordValid = compareSync(password, passwordHash);
+    const passwordHash = owner?.passwordHash ?? (await dummyPasswordHash());
+    const passwordValid = await compare(password, passwordHash);
     if (owner === null || utf8ByteLength(password) > 72 || !passwordValid) {
       throw new InvalidOperationError("Invalid username or password.");
     }
@@ -96,14 +101,15 @@ export class AuthService {
   ): IssuedSession {
     const token = randomBytes(36).toString("base64url");
     const csrfToken = randomBytes(32).toString("base64url");
+    const now = this.now();
     const record = this.store.createSession({
       kind,
       ownerId,
       tokenHash: this.tokenHash(token),
       csrfToken,
       expiresAt,
-      createdAt: this.now(),
-      lastSeenAt: this.now(),
+      createdAt: now,
+      lastSeenAt: now,
     });
     return {
       token,

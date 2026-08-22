@@ -6,8 +6,16 @@ import type { Principal } from "../../application/ports/auth.js";
 import { AppError } from "./error_envelope.js";
 import { CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE } from "./session_cookies.js";
 
-/** Writes exempt from CSRF double-submit: first-contact, cookie-less surfaces. */
-const CSRF_EXEMPT_PATHS = new Set(["/api/setup", "/api/session/login", "/api/session/guest"]);
+/**
+ * First-contact surfaces: cookie-less by design, so they are exempt from CSRF
+ * double-submit AND the paths whose abuse the per-IP rate limiter blunts.
+ * One list on purpose — the two duties must never drift apart.
+ */
+export const FIRST_CONTACT_PATHS = new Set([
+  "/api/setup",
+  "/api/session/login",
+  "/api/session/guest",
+]);
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 declare module "fastify" {
@@ -49,7 +57,7 @@ export function principalGuard(
       });
     }
     const path = request.url.split("?")[0] ?? request.url;
-    if (WRITE_METHODS.has(request.method) && !CSRF_EXEMPT_PATHS.has(path)) {
+    if (WRITE_METHODS.has(request.method) && !FIRST_CONTACT_PATHS.has(path)) {
       const cookieToken = request.cookies[CSRF_COOKIE];
       const headerToken = request.headers[CSRF_HEADER];
       if (
