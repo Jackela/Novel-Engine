@@ -1,5 +1,7 @@
 import type { FastifyError, FastifyInstance, FastifyReply } from "fastify";
 
+import { InvalidOperationError } from "../../domain/exceptions.js";
+
 /** Optional machine-readable payload carried inside the unified error envelope. */
 export type ErrorEnvelopeDetails = Record<string, unknown>;
 
@@ -81,6 +83,10 @@ export function registerErrorEnvelope(app: FastifyInstance): void {
   app.setErrorHandler((error: unknown, request, reply) => {
     if (error instanceof AppError) {
       sendEnvelope(reply, error.statusCode, error.code, error.message, error.details);
+      return;
+    }
+    if (error instanceof InvalidOperationError) {
+      sendEnvelope(reply, 422, "INVALID_OPERATION", error.message);
       return;
     }
     if (hasValidationErrors(error)) {

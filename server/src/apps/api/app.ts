@@ -1,11 +1,17 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
+import cookie from "@fastify/cookie";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 
+import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
+import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase, type StudioDatabase } from "../../shared/infrastructure/db/startup.js";
+import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
+import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
 import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
+import { authRoutes } from "../../shared/interface/http/auth_routes.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
@@ -28,7 +34,28 @@ export interface AppOptions {
    * serving; when absent the app stays database-free (walking skeleton).
    */
   dataDirectory?: string | undefined;
+  /**
+   * HMAC key for session token digests. Unset outside the production guards:
+   * a fresh random value per start deliberately invalidates all sessions at
+   * each restart.
+   */
+  sessionSecret?: string | undefined;
+  /** Browser origins allowed by the setup same-origin check (default: dev set). */
+  corsOrigins?: string[] | undefined;
+  /** Trusted proxy IPs/CIDRs/hosts for rate-limit client identity (default: none). */
+  trustedProxies?: string[] | undefined;
+  /** Auth endpoint rate limit in requests per minute (default: five). */
+  authRateLimitPerMinute?: number | undefined;
+  /** Injectable time source for the session lifecycle (tests). */
+  clock?: (() => Date) | undefined;
 }
+
+const DEFAULT_CORS_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://localhost:8000",
+];
+const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
 
@@ -78,14 +105,29 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     });
   }
 
+  const environment = options.environment ?? process.env.NODE_ENV ?? "development";
+  const authService =
+    studioDb === undefined
+      ? undefined
+      : new AuthService({
+          store: new DrizzleAuthStore(studioDb.db),
+          sessionSecret: options.sessionSecret ?? randomBytes(32).toString("base64url"),
+          now: options.clock,
+        });
+
   const versionInfo: VersionInfo = {
     version: readWorkspaceVersion(),
     name: "Novel Engine",
     runtime: { name: "node", version: process.versions.node },
-    environment: options.environment ?? process.env.NODE_ENV ?? "development",
+    environment,
     build: options.buildSha ?? process.env.BUILD_SHA ?? "unknown",
   };
 
+  // The envelope must be installed before route plugins: Fastify child
+  // contexts snapshot their parent's error handler at registration time.
+  registerErrorEnvelope(app);
+
+  await app.register(cookie);
   await app.register(swagger, {
     openapi: {
       info: {
@@ -93,13 +135,41 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
         version: versionInfo.version,
         description: "Self-hosted writing studio API (TypeScript rewrite).",
       },
+      components: {
+        securitySchemes: {
+          cookieAuth: {
+            type: "apiKey",
+            in: "cookie",
+            name: "novel_engine_session",
+          },
+        },
+      },
     },
+  });
+  const perMinute = options.authRateLimitPerMinute ?? DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
+  await app.register(authRoutes, {
+    authService,
+    limiter: new TokenBucketRateLimiter({
+      ratePerSecond: perMinute / 60,
+      capacity: perMinute,
+      keyTtlSeconds: 60,
+    }),
+    version: versionInfo.version,
+    environment,
+    corsOrigins: options.corsOrigins ?? DEFAULT_CORS_ORIGINS,
+    resolveClientIdentity: (request) =>
+      clientIdentity(
+        request.socket?.remoteAddress,
+        typeof request.headers["x-forwarded-for"] === "string"
+          ? request.headers["x-forwarded-for"]
+          : undefined,
+        options.trustedProxies ?? [],
+      ),
   });
   await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
   await app.register(versionRoutes, { info: versionInfo });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
-  registerErrorEnvelope(app);
   return app;
 }

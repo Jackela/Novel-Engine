@@ -1,6 +1,13 @@
 {
   "components": {
-    "schemas": {}
+    "schemas": {},
+    "securitySchemes": {
+      "cookieAuth": {
+        "in": "cookie",
+        "name": "novel_engine_session",
+        "type": "apiKey"
+      }
+    }
   },
   "info": {
     "description": "Self-hosted writing studio API (TypeScript rewrite).",
@@ -9,6 +16,239 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/session": {
+      "delete": {
+        "responses": {
+          "204": {
+            "description": "Default Response"
+          }
+        }
+      },
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "expires_at": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "owner",
+                        "guest"
+                      ],
+                      "type": "string"
+                    },
+                    "owner_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "session_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "session_id",
+                    "kind",
+                    "owner_id",
+                    "expires_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/session/guest": {
+      "post": {
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "expires_at": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "owner",
+                        "guest"
+                      ],
+                      "type": "string"
+                    },
+                    "owner_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "session_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "session_id",
+                    "kind",
+                    "owner_id",
+                    "expires_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/session/login": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "expires_at": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "owner",
+                        "guest"
+                      ],
+                      "type": "string"
+                    },
+                    "owner_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "session_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "session_id",
+                    "kind",
+                    "owner_id",
+                    "expires_at"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/setup": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "owner_configured": {
+                      "type": "boolean"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "owner_configured",
+                    "version"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "username"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "responses": {
