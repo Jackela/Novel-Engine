@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",
+    "@fastify/cors": "^11.3.0",
     "@fastify/swagger": "^9.8.1",
     "@fastify/type-provider-typebox": "^6.1.0",
     "bcryptjs": "^3.0.3",

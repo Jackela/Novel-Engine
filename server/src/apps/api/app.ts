@@ -1,17 +1,23 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import cookie from "@fastify/cookie";
+import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
+import {
+  assertStartupGuards,
+  type ServerConfig,
+} from "../../shared/infrastructure/config/server_config.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase, type StudioDatabase } from "../../shared/infrastructure/db/startup.js";
 import { clientIdentity } from "../../shared/infrastructure/rate_limit/client_identity.js";
 import { TokenBucketRateLimiter } from "../../shared/infrastructure/rate_limit/token_bucket.js";
 import { readWorkspaceVersion } from "../../shared/infrastructure/workspace_manifest.js";
 import { authRoutes } from "../../shared/interface/http/auth_routes.js";
+import { corsAllowList, DEFAULT_CORS_ORIGINS } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
@@ -48,13 +54,25 @@ export interface AppOptions {
   authRateLimitPerMinute?: number | undefined;
   /** Injectable time source for the session lifecycle (tests). */
   clock?: (() => Date) | undefined;
+  /**
+   * Resolved operational configuration (loadServerConfig). When present the
+   * production guards fail fast here and unset options fall back to it.
+   */
+  config?: ServerConfig | undefined;
 }
 
-const DEFAULT_CORS_ORIGINS = [
-  "http://localhost:5173",
-  "http://localhost:4173",
-  "http://localhost:8000",
+const CORS_ALLOWED_HEADERS = [
+  "content-type",
+  "authorization",
+  "x-api-key",
+  "x-request-id",
+  "accept",
+  "origin",
+  "x-requested-with",
+  "x-csrf-token",
 ];
+const CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"];
+
 const DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE = 5;
 
 const emptyHealthProbe: HealthProbe = async () => ({ components: [] });
@@ -82,6 +100,12 @@ function correlationIdFrom(value: string | string[] | undefined): string | undef
  * that must complete before the app serves traffic.
  */
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
+  // Guards run before any side effect: a misconfigured production start must
+  // not create directories, open databases, or listen.
+  if (options.config !== undefined) {
+    assertStartupGuards(options.config);
+  }
+
   const app = Fastify({
     logger: options.logger ?? true,
     genReqId: (request) => correlationIdFrom(request.headers[REQUEST_ID_HEADER]) ?? randomUUID(),
@@ -91,10 +115,11 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     reply.header("x-request-id", request.id);
   });
 
+  const dataDirectory = options.dataDirectory ?? options.config?.dataDirectory;
   let studioDb: StudioDatabase | undefined;
-  if (options.dataDirectory !== undefined) {
+  if (dataDirectory !== undefined) {
     try {
-      studioDb = await openStudioDatabase(options.dataDirectory);
+      studioDb = await openStudioDatabase(dataDirectory);
     } catch (error) {
       await app.close();
       throw error;
@@ -105,13 +130,17 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     });
   }
 
-  const environment = options.environment ?? process.env.NODE_ENV ?? "development";
+  const environment =
+    options.environment ?? options.config?.environment ?? process.env.NODE_ENV ?? "development";
   const authService =
     studioDb === undefined
       ? undefined
       : new AuthService({
           store: new DrizzleAuthStore(studioDb.db),
-          sessionSecret: options.sessionSecret ?? randomBytes(32).toString("base64url"),
+          sessionSecret:
+            options.sessionSecret ??
+            options.config?.sessionSecret ??
+            randomBytes(32).toString("base64url"),
           now: options.clock,
         });
 
@@ -146,7 +175,20 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       },
     },
   });
-  const perMinute = options.authRateLimitPerMinute ?? DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
+  const corsOrigins = options.corsOrigins ?? options.config?.corsOrigins ?? DEFAULT_CORS_ORIGINS;
+  const allowList = corsAllowList(corsOrigins);
+  await app.register(cors, {
+    origin: allowList.allowAll ? true : allowList.origins,
+    credentials: true,
+    allowedHeaders: CORS_ALLOWED_HEADERS,
+    methods: CORS_ALLOWED_METHODS,
+    exposedHeaders: ["x-request-id", "x-total-count"],
+    maxAge: 600,
+  });
+  const perMinute =
+    options.authRateLimitPerMinute ??
+    options.config?.authRateLimitPerMinute ??
+    DEFAULT_AUTH_RATE_LIMIT_PER_MINUTE;
   await app.register(authRoutes, {
     authService,
     limiter: new TokenBucketRateLimiter({
@@ -156,14 +198,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     }),
     version: versionInfo.version,
     environment,
-    corsOrigins: options.corsOrigins ?? DEFAULT_CORS_ORIGINS,
+    corsOrigins,
     resolveClientIdentity: (request) =>
       clientIdentity(
         request.socket?.remoteAddress,
         typeof request.headers["x-forwarded-for"] === "string"
           ? request.headers["x-forwarded-for"]
           : undefined,
-        options.trustedProxies ?? [],
+        options.trustedProxies ?? options.config?.trustedProxies ?? [],
       ),
   });
   await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });

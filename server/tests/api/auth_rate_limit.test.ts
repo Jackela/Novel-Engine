@@ -92,14 +92,14 @@ describe("auth endpoint rate limiting", () => {
       for (let index = 0; index < 5; index += 1) {
         await createGuest(app);
       }
-      // No CORS plugin yet, so Fastify answers an unrouted OPTIONS with 404 —
-      // the point is that the rate limiter never answers instead.
+      // The CORS contract (#275) answers preflights with 204 — the point is
+      // that the exhausted rate limiter never answers instead.
       const preflight = await app.inject({
         method: "OPTIONS",
         url: "/api/session/guest",
         headers: { origin: "http://localhost:5173", "access-control-request-method": "POST" },
       });
-      expect(preflight.statusCode).toBe(404);
+      expect(preflight.statusCode).toBe(204);
     } finally {
       await app.close();
     }
