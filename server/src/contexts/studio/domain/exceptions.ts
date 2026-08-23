@@ -23,6 +23,14 @@ export class RevisionConflictError extends Error {
   }
 }
 
+/** An immutable snapshot still references the requested document. */
+export class SnapshotConflict extends Error {
+  constructor() {
+    super("Document is referenced by an immutable snapshot.");
+    this.name = "SnapshotConflict";
+  }
+}
+
 /** A document with the same (project, kind, title) identity already exists. */
 export class DuplicateDocumentError extends Error {
   readonly kind: string;
