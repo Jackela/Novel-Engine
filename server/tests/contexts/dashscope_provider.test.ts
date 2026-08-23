@@ -214,6 +214,25 @@ describe("dashscope adapter transient failure handling", () => {
     expect(capture).toHaveLength(3);
   });
 
+  it("rethrows a post-dispatch programming error without retrying", async () => {
+    const capture: CapturedRequest[] = [];
+    const programmingError = new TypeError("response parser programming error");
+    const response = {
+      ok: true,
+      status: 200,
+      text: async () => "",
+      json: async () => {
+        throw programmingError;
+      },
+    } as unknown as Response;
+    const attempt = provider({
+      transport: scriptedTransport([response], capture),
+    }).generateStructured(chapterTask("chapter_draft"));
+
+    await expect(attempt).rejects.toBe(programmingError);
+    expect(capture).toHaveLength(1);
+  });
+
   it("fails immediately when the response shape lacks choices", async () => {
     const capture: CapturedRequest[] = [];
     const attempt = provider({

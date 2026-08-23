@@ -155,18 +155,24 @@ export class DashScopeTextProvider implements TextGenerationProvider {
     context: string,
     url: string,
   ): Promise<TextGenerationResult> {
+    const body = JSON.stringify(this.protocol.buildRequestPayload(this.model, task));
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutSeconds * 1_000);
     try {
-      const response = await this.dispatch(url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(this.protocol.buildRequestPayload(this.model, task)),
-        signal: controller.signal,
-      });
+      let response: Response | undefined;
+      try {
+        response = await this.dispatch(url, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body,
+          signal: controller.signal,
+        });
+      } catch (error) {
+        throw classifyTransportRejection(error, context, timeoutSeconds);
+      }
       if (!isResponseLike(response)) {
         throw new ProviderTransportError(`${context}: transport returned no response`);
       }
@@ -193,8 +199,6 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         promptTokens,
         completionTokens,
       };
-    } catch (error) {
-      throw classifyTransportRejection(error, context, timeoutSeconds);
     } finally {
       clearTimeout(timeout);
     }
