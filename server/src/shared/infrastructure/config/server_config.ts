@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
+import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+
+export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
 const ENV_FILE_NAME = ".env.local";
@@ -38,13 +41,6 @@ const MAX_LLM_RETRY_DELAY_SECONDS = 10;
 export type ServerEnvironment = (typeof ENVIRONMENTS)[number];
 export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 export type DashscopeTransportMode = (typeof DASHSCOPE_TRANSPORT_MODES)[number];
-
-export class ConfigurationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ConfigurationError";
-  }
-}
 
 /**
  * Server-only provider values. This stays a plain-scalar configuration seam:
