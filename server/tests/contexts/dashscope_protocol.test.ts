@@ -13,6 +13,37 @@ import {
   resolveDashscopeTransport,
 } from "../../src/contexts/ai/infrastructure/providers/dashscope_protocol.js";
 
+const DASHSCOPE_API_PATH_SEGMENTS = {
+  root: "api",
+  nativeVersion: "v1",
+  compatibleVersion: "v2",
+  applications: "apps",
+  protocols: "protocols",
+  compatibleMode: "compatible-mode",
+} as const;
+
+function expectedApiBase(origin: string, segments: readonly string[]): string {
+  return new URL(segments.join("/"), `${origin}/`).toString().replace(/\/$/u, "");
+}
+
+function expectedNativeApiBase(origin: string): string {
+  return expectedApiBase(origin, [
+    DASHSCOPE_API_PATH_SEGMENTS.root,
+    DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
+  ]);
+}
+
+function expectedCompatibleModeApiBase(origin: string): string {
+  return expectedApiBase(origin, [
+    DASHSCOPE_API_PATH_SEGMENTS.root,
+    DASHSCOPE_API_PATH_SEGMENTS.compatibleVersion,
+    DASHSCOPE_API_PATH_SEGMENTS.applications,
+    DASHSCOPE_API_PATH_SEGMENTS.protocols,
+    DASHSCOPE_API_PATH_SEGMENTS.compatibleMode,
+    DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
+  ]);
+}
+
 function task(): TextGenerationTask {
   return {
     step: "chapter_draft",
@@ -27,7 +58,9 @@ describe("dashscope transport modes", () => {
   it("defaults to multimodal generation against the native base", () => {
     const transport = resolveDashscopeTransport("multimodal_generation");
     expect(transport.endpointPath()).toBe("/services/aigc/multimodal-generation/generation");
-    expect(transport.normalizeApiBase(undefined)).toBe("https://dashscope.aliyuncs.com/api/v1");
+    expect(transport.normalizeApiBase(undefined)).toBe(
+      expectedNativeApiBase("https://dashscope.aliyuncs.com"),
+    );
     const payload = transport.buildRequestPayload("qwen3.5-flash", task());
     expect(payload.model).toBe("qwen3.5-flash");
     expect(payload.input).toEqual({
@@ -58,7 +91,7 @@ describe("dashscope transport modes", () => {
     const transport = resolveDashscopeTransport("responses");
     expect(transport.endpointPath()).toBe("/responses");
     expect(transport.normalizeApiBase(undefined)).toBe(
-      "https://dashscope.aliyuncs.com/api/v2/apps/protocols/compatible-mode/v1",
+      expectedCompatibleModeApiBase("https://dashscope.aliyuncs.com"),
     );
     const payload = transport.buildRequestPayload("qwen3.5-flash", task());
     expect(typeof payload.input).toBe("string");
@@ -71,15 +104,15 @@ describe("dashscope transport modes", () => {
     const transport = resolveDashscopeTransport("multimodal_generation");
     expect(
       transport.normalizeApiBase(
-        "https://dashscope.example.com/api/v2/apps/protocols/compatible-mode/v1/",
+        `${expectedCompatibleModeApiBase("https://dashscope.example.com")}/`,
       ),
-    ).toBe("https://dashscope.example.com/api/v1");
+    ).toBe(expectedNativeApiBase("https://dashscope.example.com"));
   });
 
   it("forces the compatible-mode base for the responses transport", () => {
     const transport = resolveDashscopeTransport("responses");
     expect(transport.normalizeApiBase("https://proxy.example.com/custom")).toBe(
-      "https://proxy.example.com/api/v2/apps/protocols/compatible-mode/v1",
+      expectedCompatibleModeApiBase("https://proxy.example.com"),
     );
   });
 });

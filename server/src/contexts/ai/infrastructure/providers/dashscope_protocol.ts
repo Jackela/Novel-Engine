@@ -3,8 +3,32 @@ import {
   type TextGenerationTask,
 } from "../../application/ports/text_generation.js";
 
-const DEFAULT_DASHSCOPE_API_BASE = "https://dashscope.aliyuncs.com/api/v1";
-const COMPATIBLE_MODE_PATH = "/api/v2/apps/protocols/compatible-mode/v1";
+const DASHSCOPE_API_PATH_SEGMENTS = {
+  root: "api",
+  nativeVersion: "v1",
+  compatibleVersion: "v2",
+  applications: "apps",
+  protocols: "protocols",
+  compatibleMode: "compatible-mode",
+} as const;
+
+function apiPath(...segments: readonly string[]): string {
+  return `/${segments.join("/")}`;
+}
+
+const NATIVE_API_PATH = apiPath(
+  DASHSCOPE_API_PATH_SEGMENTS.root,
+  DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
+);
+const COMPATIBLE_MODE_PATH = apiPath(
+  DASHSCOPE_API_PATH_SEGMENTS.root,
+  DASHSCOPE_API_PATH_SEGMENTS.compatibleVersion,
+  DASHSCOPE_API_PATH_SEGMENTS.applications,
+  DASHSCOPE_API_PATH_SEGMENTS.protocols,
+  DASHSCOPE_API_PATH_SEGMENTS.compatibleMode,
+  DASHSCOPE_API_PATH_SEGMENTS.nativeVersion,
+);
+const DEFAULT_DASHSCOPE_API_BASE = `https://dashscope.aliyuncs.com${NATIVE_API_PATH}`;
 const DEFAULT_DASHSCOPE_RESPONSES_API_BASE = `https://dashscope.aliyuncs.com${COMPATIBLE_MODE_PATH}`;
 const DEFAULT_DASHSCOPE_TEXT_ENDPOINT = "/services/aigc/text-generation/generation";
 const DEFAULT_DASHSCOPE_MULTIMODAL_ENDPOINT = "/services/aigc/multimodal-generation/generation";
@@ -61,7 +85,7 @@ function parseBaseUrl(base: string): URL {
 function normalizeGenerationBase(apiBase: string | undefined): string {
   const base = normalizedBase(apiBase, DEFAULT_DASHSCOPE_API_BASE);
   const parsed = parseBaseUrl(base);
-  return parsed.pathname.includes("compatible-mode") ? `${parsed.origin}/api/v1` : base;
+  return parsed.pathname.includes("compatible-mode") ? `${parsed.origin}${NATIVE_API_PATH}` : base;
 }
 
 function normalizeResponsesBase(apiBase: string | undefined): string {
