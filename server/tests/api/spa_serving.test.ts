@@ -144,6 +144,10 @@ describe("SPA serving without a built dist (API-only mode)", () => {
       expect(deepLink.statusCode).toBe(200);
       expect(deepLink.json().message).toBe("Build frontend/ to enable the Studio UI.");
 
+      const missingAsset = await app.inject({ method: "GET", url: "/assets/missing.js" });
+      expect(missingAsset.statusCode).toBe(404);
+      expect(missingAsset.json()).toMatchObject({ error: { code: "NOT_FOUND" } });
+
       const health = await app.inject({ method: "GET", url: "/health/live" });
       expect(health.statusCode).toBe(200);
 

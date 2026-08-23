@@ -135,6 +135,11 @@ export async function registerSpaServing(
       return reply.callNotFound();
     }
     if (distRoot === null) {
+      // API-only mode still distinguishes browser routes from static names:
+      // a missing bundle or favicon is not a client route and must be 404.
+      if (hasAssetIdentity(rawPath)) {
+        return reply.callNotFound();
+      }
       return reply.send({
         name: options.productName,
         version: options.version,
