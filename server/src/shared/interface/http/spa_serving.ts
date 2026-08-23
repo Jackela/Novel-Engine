@@ -1,5 +1,5 @@
-import { existsSync, statSync } from "node:fs";
-import { isAbsolute, join, normalize } from "node:path";
+import { existsSync, realpathSync, statSync } from "node:fs";
+import { extname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import fastifyStatic from "@fastify/static";
@@ -39,29 +39,55 @@ export function defaultSpaDistDirectory(): string {
 }
 
 /**
- * Normalize a wildcard path and reject escapes: only paths that stay inside
- * the dist root after normalization are file candidates. This mirrors the
- * Python resolve-and-contain check; the actual byte stream still comes from
- * @fastify/static's root-contained send.
+ * Compare paths structurally instead of with a string prefix. The candidate
+ * must remain below the root both before and after resolving symlinks.
  */
-function containedRelative(rawPath: string): string | null {
+function isInsideDirectory(root: string, candidate: string): boolean {
+  const pathFromRoot = relative(root, candidate);
+  return (
+    pathFromRoot === "" ||
+    (!isAbsolute(pathFromRoot) && pathFromRoot !== ".." && !pathFromRoot.startsWith(`..${sep}`))
+  );
+}
+
+function resolveDistDirectory(distDirectory: string): string | null {
+  if (!existsSync(distDirectory)) {
+    return null;
+  }
+  const resolvedDirectory = realpathSync(distDirectory);
+  return statSync(resolvedDirectory).isDirectory() ? resolvedDirectory : null;
+}
+
+/**
+ * Resolve a requested static file to a canonical relative path. Resolving the
+ * candidate through realpath prevents an in-dist symlink from escaping the
+ * built SPA directory before @fastify/static opens the file.
+ */
+function resolveStaticFile(distRoot: string, rawPath: string): string | null {
   if (rawPath.includes("\0")) {
     return null;
   }
-  const normalized = normalize(rawPath);
-  if (isAbsolute(normalized) || normalized === ".." || normalized.startsWith("../")) {
+  const candidate = resolve(distRoot, rawPath);
+  if (!isInsideDirectory(distRoot, candidate) || !existsSync(candidate)) {
     return null;
   }
-  return normalized;
+  const resolvedCandidate = realpathSync(candidate);
+  if (!isInsideDirectory(distRoot, resolvedCandidate) || !statSync(resolvedCandidate).isFile()) {
+    return null;
+  }
+  return relative(distRoot, resolvedCandidate);
+}
+
+/**
+ * Client routes are segment paths. A static namespace or a file extension is
+ * an asset identity, so a missing request there must reach the normal 404.
+ */
+function hasAssetIdentity(rawPath: string): boolean {
+  return rawPath === "assets" || rawPath.startsWith("assets/") || extname(rawPath) !== "";
 }
 
 function isReservedPath(rawPath: string): boolean {
   return rawPath === "api" || RESERVED_PATH_PREFIXES.some((prefix) => rawPath.startsWith(prefix));
-}
-
-function isFileCandidate(distDirectory: string, relativePath: string): boolean {
-  const candidate = join(distDirectory, relativePath);
-  return existsSync(candidate) && statSync(candidate).isFile();
 }
 
 function sendSpaFile(
@@ -90,42 +116,41 @@ export async function registerSpaServing(
   options: SpaServingOptions,
 ): Promise<void> {
   const { distDirectory } = options;
-  const distPresent = existsSync(distDirectory) && statSync(distDirectory).isDirectory();
+  const distRoot = resolveDistDirectory(distDirectory);
 
-  if (distPresent) {
+  if (distRoot !== null) {
     // Route-less registration: only reply.sendFile is decorated, so every
     // serving decision stays explicit in the catch-all below.
     await app.register(fastifyStatic, {
-      root: distDirectory,
+      root: distRoot,
       serve: false,
       decorateReply: true,
     });
   }
 
-  app.get(
-    "/*",
-    { schema: { hide: true } },
-    async (request, reply) => {
-      const rawPath = String(request.params["*"] ?? "");
-      if (isReservedPath(rawPath)) {
-        // Reserved prefixes keep the pre-SPA behavior: the unified envelope.
-        return reply.callNotFound();
-      }
-      if (!distPresent) {
-        return reply.send({
-          name: options.productName,
-          version: options.version,
-          message: UNBUILT_DIST_MESSAGE,
-        });
-      }
-      const relative = containedRelative(rawPath);
-      if (relative !== null && isFileCandidate(distDirectory, relative)) {
-        // Content-hashed bundles under assets/ are immutable; everything the
-        // shell references by stable name (index.html, favicon, ...) must
-        // revalidate so new deploys are picked up.
-        return sendSpaFile(reply, relative, { immutable: relative.startsWith("assets/") });
-      }
-      return sendSpaFile(reply, "index.html", { immutable: false });
-    },
-  );
+  app.get<{ Params: { "*": string } }>("/*", { schema: { hide: true } }, async (request, reply) => {
+    const rawPath = String(request.params["*"] ?? "");
+    if (isReservedPath(rawPath)) {
+      // Reserved prefixes keep the pre-SPA behavior: the unified envelope.
+      return reply.callNotFound();
+    }
+    if (distRoot === null) {
+      return reply.send({
+        name: options.productName,
+        version: options.version,
+        message: UNBUILT_DIST_MESSAGE,
+      });
+    }
+    const staticFile = resolveStaticFile(distRoot, rawPath);
+    if (staticFile !== null) {
+      // Content-hashed bundles under assets/ are immutable; everything the
+      // shell references by stable name (index.html, favicon, ...) must
+      // revalidate so new deploys are picked up.
+      return sendSpaFile(reply, staticFile, { immutable: staticFile.startsWith("assets/") });
+    }
+    if (hasAssetIdentity(rawPath)) {
+      return reply.callNotFound();
+    }
+    return sendSpaFile(reply, "index.html", { immutable: false });
+  });
 }

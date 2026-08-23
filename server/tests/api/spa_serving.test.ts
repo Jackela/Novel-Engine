@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -22,6 +22,7 @@ function buildSpaFixture(): SpaFixture {
   writeFileSync(join(dist, "assets", "index-AbC123.js"), ASSET_JS);
   writeFileSync(join(dist, "favicon.svg"), "<svg></svg>");
   writeFileSync(join(parent, "secret.txt"), SECRET_OUTSIDE_DIST);
+  symlinkSync(join(parent, "secret.txt"), join(dist, "assets", "outside.js"));
   return { distDirectory: dist, cleanup: () => rmSync(parent, { recursive: true, force: true }) };
 }
 
@@ -74,6 +75,17 @@ describe("SPA serving surface", () => {
     expect(response.headers["cache-control"]).not.toContain("immutable");
   });
 
+  it("keeps missing and out-of-root assets on the normal 404 envelope", async () => {
+    const missing = await app.inject({ method: "GET", url: "/assets/missing.js" });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json()).toMatchObject({ error: { code: "NOT_FOUND" } });
+
+    const outside = await app.inject({ method: "GET", url: "/assets/outside.js" });
+    expect(outside.statusCode).toBe(404);
+    expect(outside.json()).toMatchObject({ error: { code: "NOT_FOUND" } });
+    expect(outside.body).not.toContain(SECRET_OUTSIDE_DIST);
+  });
+
   it("keeps API and operational routes distinct from the SPA", async () => {
     const unknownApi = await app.inject({ method: "GET", url: "/api/not-a-route" });
     expect(unknownApi.statusCode).toBe(404);
@@ -102,10 +114,12 @@ describe("SPA serving surface", () => {
 
   it("does not serve files from outside the dist root", async () => {
     const encoded = await app.inject({ method: "GET", url: "/..%2Fsecret.txt" });
-    expect(encoded.statusCode).toBe(200);
-    expect(encoded.body).toBe(INDEX_HTML);
+    expect(encoded.statusCode).toBe(404);
+    expect(encoded.json()).toMatchObject({ error: { code: "NOT_FOUND" } });
 
     const plain = await app.inject({ method: "GET", url: "/../secret.txt" });
+    expect(plain.statusCode).toBe(404);
+    expect(plain.json()).toMatchObject({ error: { code: "NOT_FOUND" } });
     expect(plain.body).not.toContain(SECRET_OUTSIDE_DIST);
   });
 });
