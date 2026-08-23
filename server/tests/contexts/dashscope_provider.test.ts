@@ -69,13 +69,15 @@ describe("dashscope adapter request shape", () => {
     const result = await provider({ transport }).generateStructured(chapterTask("chapter_draft"));
 
     expect(capture).toHaveLength(1);
-    expect(capture[0].url).toBe(
+    const [request] = capture;
+    if (request === undefined) {
+      throw new Error("Expected a captured DashScope request.");
+    }
+    expect(request.url).toBe(
       "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
     );
-    expect(new Headers(capture[0].init.headers).get("authorization")).toBe(
-      "Bearer sk-dashscope-test",
-    );
-    const body = JSON.parse(String(capture[0].init.body));
+    expect(new Headers(request.init.headers).get("authorization")).toBe("Bearer sk-dashscope-test");
+    const body = JSON.parse(String(request.init.body));
     expect(body.model).toBe("qwen3.5-flash");
     expect(body.parameters).toMatchObject({
       result_format: "message",
@@ -117,9 +119,16 @@ describe("dashscope adapter request shape", () => {
       ],
       capture,
     );
-    await provider({ transport, transportMode: "responses", apiBase: "https://proxy.example.com/x" })
-      .generateStructured(chapterTask("chapter_draft"));
-    expect(capture[0].url).toBe(
+    await provider({
+      transport,
+      transportMode: "responses",
+      apiBase: "https://proxy.example.com/x",
+    }).generateStructured(chapterTask("chapter_draft"));
+    const [request] = capture;
+    if (request === undefined) {
+      throw new Error("Expected a captured DashScope request.");
+    }
+    expect(request.url).toBe(
       "https://proxy.example.com/api/v2/apps/protocols/compatible-mode/v1/responses",
     );
   });
