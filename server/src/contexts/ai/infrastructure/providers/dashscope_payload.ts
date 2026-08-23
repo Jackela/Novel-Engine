@@ -69,8 +69,9 @@ export function coercePayloadToSchema(payload: JsonObject, responseSchema: JsonO
 function parseJsonValue(candidate: string): unknown | undefined {
   try {
     return JSON.parse(candidate) as unknown;
-  } catch {
-    return undefined;
+  } catch (error) {
+    if (error instanceof SyntaxError) return undefined;
+    throw error;
   }
 }
 

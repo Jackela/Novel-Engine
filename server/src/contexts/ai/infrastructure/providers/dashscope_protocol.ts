@@ -77,8 +77,11 @@ function normalizedBase(apiBase: string | undefined, fallback: string): string {
 function parseBaseUrl(base: string): URL {
   try {
     return new URL(base);
-  } catch {
-    throw new TextGenerationProviderError("DashScope API base must be an absolute URL");
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new TextGenerationProviderError("DashScope API base must be an absolute URL");
+    }
+    throw error;
   }
 }
 

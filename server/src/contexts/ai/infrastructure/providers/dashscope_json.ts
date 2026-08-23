@@ -11,8 +11,9 @@ function isJsonObject(value: unknown): value is JsonObject {
 function parseJsonValue(candidate: string): unknown | undefined {
   try {
     return JSON.parse(candidate) as unknown;
-  } catch {
-    return undefined;
+  } catch (error) {
+    if (error instanceof SyntaxError) return undefined;
+    throw error;
   }
 }
 
