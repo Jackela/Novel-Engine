@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { parseDashscopeJsonObject } from "../../src/contexts/ai/infrastructure/providers/dashscope_json.js";
-import { coercePayloadToSchema } from "../../src/contexts/ai/infrastructure/providers/dashscope_payload.js";
-import { payloadFromResponseText } from "../../src/contexts/ai/infrastructure/providers/dashscope_payload.js";
+import {
+  coercePayloadToSchema,
+  payloadFromResponseText,
+} from "../../src/contexts/ai/infrastructure/providers/dashscope_payload.js";
 import {
   extractDashscopeGenerationText,
   extractDashscopeResponsesText,
@@ -68,7 +70,9 @@ describe("dashscope transport modes", () => {
   it("rewrites a compatible-mode base back to the native generation base", () => {
     const transport = resolveDashscopeTransport("multimodal_generation");
     expect(
-      transport.normalizeApiBase("https://dashscope.example.com/api/v2/apps/protocols/compatible-mode/v1/"),
+      transport.normalizeApiBase(
+        "https://dashscope.example.com/api/v2/apps/protocols/compatible-mode/v1/",
+      ),
     ).toBe("https://dashscope.example.com/api/v1");
   });
 
@@ -106,9 +110,7 @@ describe("dashscope response text extraction", () => {
         output: [{ type: "reasoning" }, { type: "message", content: [{ text: "answer" }] }],
       }),
     ).toBe("answer");
-    expect(() => extractDashscopeResponsesText({ output: [] })).toThrow(
-      /missing message text/,
-    );
+    expect(() => extractDashscopeResponsesText({ output: [] })).toThrow(/missing message text/);
   });
 });
 

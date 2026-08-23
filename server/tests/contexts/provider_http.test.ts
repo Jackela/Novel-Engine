@@ -144,8 +144,6 @@ describe("transport rejection classification", () => {
   });
 
   it("keeps programming errors visible instead of swallowing them", () => {
-    expect(() => classifyTransportRejection(new RangeError("boom"), "ctx", 30)).toThrow(
-      RangeError,
-    );
+    expect(() => classifyTransportRejection(new RangeError("boom"), "ctx", 30)).toThrow(RangeError);
   });
 });
