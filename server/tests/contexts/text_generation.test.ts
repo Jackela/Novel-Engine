@@ -13,6 +13,20 @@ import {
   textProviderFactory,
 } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
 
+const DASHSCOPE_ORIGIN = "https://dashscope.aliyuncs.com";
+const NATIVE_GENERATION_PATH_SEGMENTS = [
+  "api",
+  "v1",
+  "services",
+  "aigc",
+  "multimodal-generation",
+  "generation",
+] as const;
+
+function expectedDashscopeGenerationEndpoint(): string {
+  return new URL(NATIVE_GENERATION_PATH_SEGMENTS.join("/"), `${DASHSCOPE_ORIGIN}/`).toString();
+}
+
 function chapterTask(step: string, overrides: Record<string, unknown> = {}): TextGenerationTask {
   return {
     step,
@@ -162,9 +176,7 @@ describe("text provider factory", () => {
       model: "qwen3.5-flash",
       content: { chapter_markdown: "configured" },
     });
-    expect(requests).toEqual([
-      "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
-    ]);
+    expect(requests).toEqual([expectedDashscopeGenerationEndpoint()]);
   });
 
   it("applies server-only overrides and creates isolated OpenAI-compatible adapters", async () => {

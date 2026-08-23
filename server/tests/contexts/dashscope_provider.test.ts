@@ -9,6 +9,29 @@ interface CapturedRequest {
   init: RequestInit;
 }
 
+const DASHSCOPE_ORIGIN = "https://dashscope.aliyuncs.com";
+const NATIVE_GENERATION_PATH_SEGMENTS = [
+  "api",
+  "v1",
+  "services",
+  "aigc",
+  "multimodal-generation",
+  "generation",
+] as const;
+const COMPATIBLE_RESPONSES_PATH_SEGMENTS = [
+  "api",
+  "v2",
+  "apps",
+  "protocols",
+  "compatible-mode",
+  "v1",
+  "responses",
+] as const;
+
+function expectedEndpoint(origin: string, pathSegments: readonly string[]): string {
+  return new URL(pathSegments.join("/"), `${origin}/`).toString();
+}
+
 function chapterTask(step: string): TextGenerationTask {
   return {
     step,
@@ -73,9 +96,7 @@ describe("dashscope adapter request shape", () => {
     if (request === undefined) {
       throw new Error("Expected a captured DashScope request.");
     }
-    expect(request.url).toBe(
-      "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
-    );
+    expect(request.url).toBe(expectedEndpoint(DASHSCOPE_ORIGIN, NATIVE_GENERATION_PATH_SEGMENTS));
     expect(new Headers(request.init.headers).get("authorization")).toBe("Bearer sk-dashscope-test");
     const body = JSON.parse(String(request.init.body));
     expect(body.model).toBe("qwen3.5-flash");
@@ -129,7 +150,7 @@ describe("dashscope adapter request shape", () => {
       throw new Error("Expected a captured DashScope request.");
     }
     expect(request.url).toBe(
-      "https://proxy.example.com/api/v2/apps/protocols/compatible-mode/v1/responses",
+      expectedEndpoint("https://proxy.example.com", COMPATIBLE_RESPONSES_PATH_SEGMENTS),
     );
   });
 });
