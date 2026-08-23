@@ -27,6 +27,7 @@ export class HttpError extends Error {
     message: string,
     readonly status: number,
     readonly detail?: unknown,
+    readonly code?: string,
   ) {
     super(message);
     Object.setPrototypeOf(this, HttpError.prototype);
@@ -39,11 +40,23 @@ export function getCsrfToken(): string | undefined {
   if (typeof document === 'undefined') {
     return undefined;
   }
-  const match = document.cookie.match(/(?:^|; )novel_studio_csrf=([^;]*)/);
+  const match = document.cookie.match(/(?:^|; )novel_engine_csrf=([^;]*)/);
   return match?.[1];
 }
 
 type ResponseParser<T> = (value: unknown) => T;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+async function readHttpError(response: Response, fallbackMessage: string): Promise<HttpError> {
+  const payload = await response.json().catch(() => null);
+  const error = isRecord(payload) && isRecord(payload.error) ? payload.error : undefined;
+  const message = typeof error?.message === 'string' ? error.message : fallbackMessage;
+  const code = typeof error?.code === 'string' ? error.code : undefined;
+  return new HttpError(message, response.status, error?.details, code);
+}
 
 async function request<T>(
   path: string,
@@ -92,15 +105,7 @@ async function request<T>(
       throw error;
     }
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
-      const detail = payload?.detail;
-      const message =
-        typeof detail === 'string'
-          ? detail
-          : typeof detail === 'object' && detail && 'message' in detail
-            ? String((detail as { message: unknown }).message)
-            : `Request failed with status ${response.status}`;
-      throw new HttpError(message, response.status, detail);
+      throw await readHttpError(response, `Request failed with status ${response.status}`);
     }
     if (response.status === 204) return parse(undefined);
     return parse(await response.json());
@@ -125,7 +130,7 @@ async function downloadBlob(path: string): Promise<Blob> {
   try {
     const response = await fetch(url(path), { credentials: 'include', signal: controller.signal });
     if (!response.ok) {
-      throw new HttpError(`Download failed with status ${response.status}`, response.status);
+      throw await readHttpError(response, `Download failed with status ${response.status}`);
     }
     return await response.blob();
   } catch (error) {

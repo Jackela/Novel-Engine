@@ -34,18 +34,20 @@ describe('Studio API client', () => {
       ),
     );
 
-    await expect(api.projects()).rejects.toThrow('Invalid projects[0].title');
+    const error = await api.projects().catch((reason: unknown) => reason);
+    expect(error).toMatchObject({ message: 'Invalid projects[0].title' });
   });
 
-  it('preserves revision conflict detail', async () => {
+  it('preserves unified revision conflict code and details', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            detail: {
+            error: {
+              code: 'REVISION_CONFLICT',
               message: 'Document changed since the requested base revision.',
-              current_revision_id: 'revision-b',
+              details: { current_revision_id: 'revision-b' },
             },
           }),
           { status: 409, headers: { 'Content-Type': 'application/json' } },
@@ -59,7 +61,27 @@ describe('Studio API client', () => {
     });
     await expect(request).rejects.toMatchObject({
       status: 409,
+      code: 'REVISION_CONFLICT',
       detail: expect.objectContaining({ current_revision_id: 'revision-b' }),
+    });
+  });
+
+  it('does not interpret a legacy detail error payload', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: 'legacy error' }), {
+          status: 422,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    const error = await api.projects().catch((reason: unknown) => reason);
+    expect(error).toMatchObject({
+      message: 'Request failed with status 422',
+      status: 422,
+      detail: undefined,
     });
   });
 
@@ -80,11 +102,12 @@ describe('Studio API client', () => {
     const pending = api.projects({ signal: controller.signal });
     controller.abort();
 
-    await expect(pending).rejects.toThrow('Request cancelled.');
+    const error = await pending.catch((reason: unknown) => reason);
+    expect(error).toMatchObject({ message: 'Request cancelled.' });
   });
 
   it('sends X-CSRF-Token header on write requests when cookie is present', async () => {
-    vi.stubGlobal('document', { cookie: 'novel_studio_csrf=test-csrf-token' });
+    vi.stubGlobal('document', { cookie: 'novel_engine_csrf=test-csrf-token' });
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -115,7 +138,7 @@ describe('Studio API client', () => {
   });
 
   it('does not send X-CSRF-Token header on read requests', async () => {
-    vi.stubGlobal('document', { cookie: 'novel_studio_csrf=test-csrf-token' });
+    vi.stubGlobal('document', { cookie: 'novel_engine_csrf=test-csrf-token' });
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ projects: [] }), {
         status: 200,

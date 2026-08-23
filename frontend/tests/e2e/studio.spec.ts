@@ -163,9 +163,10 @@ test('offers explicit recovery actions after a save conflict', async ({ page }) 
         status: 409,
         contentType: 'application/json',
         body: JSON.stringify({
-          detail: {
+          error: {
+            code: 'REVISION_CONFLICT',
             message: 'Document changed since the requested base revision.',
-            current_revision_id: 'server-revision',
+            details: { current_revision_id: 'server-revision' },
           },
         }),
       });
