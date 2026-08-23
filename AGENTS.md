@@ -172,3 +172,4 @@ Use the five canonical triage roles mapped in
 
 This repository is single-context: use root `CONTEXT.md` for domain vocabulary
 and the relevant decision record in `docs/adr/` for architecture decisions.
+See `docs/agents/domain.md`.
