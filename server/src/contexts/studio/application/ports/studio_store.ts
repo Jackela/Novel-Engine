@@ -40,6 +40,13 @@ export interface DocumentWithCurrent extends DocumentRecord {
   currentRevision: RevisionRecord | null;
 }
 
+/** One full-text hit: the document id, its title, and a plain-text excerpt. */
+export interface DocumentMatchRecord {
+  documentId: string;
+  title: string;
+  excerpt: string;
+}
+
 /**
  * Principal scoping of every project query: owner data by owner id, guest
  * data by session id — exactly one of the two is set.
@@ -126,4 +133,15 @@ export interface StudioStore {
     documentId: string,
     revisionId: string,
   ): RevisionRecord;
+
+  /**
+   * Run a pre-reduced MATCH expression against the project's FTS index.
+   * The expression must come from `buildFtsMatchQuery`; the store never
+   * reduces raw user input itself.
+   */
+  matchProjectDocuments(
+    scope: ProjectScope,
+    projectId: string,
+    matchQuery: string,
+  ): DocumentMatchRecord[];
 }

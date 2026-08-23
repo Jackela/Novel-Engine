@@ -6,6 +6,7 @@ import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/con
 import type {
   AddDocumentInput,
   AdvanceDocumentInput,
+  DocumentMatchRecord,
   DocumentWithCurrent,
   ProjectScope,
   StudioStore,
@@ -15,6 +16,11 @@ import {
   NotFoundError,
   RevisionConflictError,
 } from "../domain/exceptions.js";
+import {
+  clearDocumentIndex,
+  matchDocumentIndex,
+  refreshDocumentIndex,
+} from "./db/document_search.js";
 import { documentRevisions, documents, projects } from "./db/schema.js";
 import {
   documentsWithCurrent,
@@ -86,6 +92,12 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
           .set({ currentRevisionId: revision.id, updatedAt: input.now })
           .where(eq(documents.id, document.id))
           .run();
+        refreshDocumentIndex(tx, {
+          documentId: document.id,
+          projectId: project.id,
+          title: input.title,
+          content: input.contentMarkdown,
+        });
         tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
         return {
           id: document.id,
@@ -141,6 +153,12 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
         .set({ currentRevisionId: revision.id, title, updatedAt: input.now })
         .where(eq(documents.id, document.id))
         .run();
+      refreshDocumentIndex(tx, {
+        documentId: document.id,
+        projectId: project.id,
+        title,
+        content: input.contentMarkdown,
+      });
       tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
       return {
         ...document,
@@ -155,7 +173,20 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   dropDocument(scope: ProjectScope, projectId: string, documentId: string): void {
     this.db.transaction((tx) => {
       scopedDocument(tx, scope, projectId, documentId);
+      // The FTS table carries no FK; its row leaves in this same transaction.
+      clearDocumentIndex(tx, documentId);
       tx.delete(documents).where(eq(documents.id, documentId)).run();
+    });
+  }
+
+  matchProjectDocuments(
+    scope: ProjectScope,
+    projectId: string,
+    matchQuery: string,
+  ): DocumentMatchRecord[] {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      return matchDocumentIndex(tx, project.id, matchQuery);
     });
   }
 

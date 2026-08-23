@@ -1,7 +1,8 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { isDocumentKind } from "../domain/kinds.js";
-import { documentPayload, dumpJson } from "./payloads.js";
+import { buildFtsMatchQuery } from "./fts_match_query.js";
+import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
 import {
   type DocumentWithCurrent,
   type StudioStore,
@@ -98,6 +99,25 @@ export class DocumentService {
 
   removeDocument(principal: Principal, projectId: string, documentId: string): void {
     this.store.dropDocument(scopeForPrincipal(principal), projectId, documentId);
+  }
+
+  /**
+   * Project-scoped full-text query over titles and current content. Raw
+   * input reduces to safe quoted tokens first; an irreducible query
+   * answers empty without touching the index.
+   */
+  queryProjectDocuments(
+    principal: Principal,
+    projectId: string,
+    query: string,
+  ): Record<string, unknown>[] {
+    const matchQuery = buildFtsMatchQuery(query);
+    if (matchQuery === null) {
+      return [];
+    }
+    return this.store
+      .matchProjectDocuments(scopeForPrincipal(principal), projectId, matchQuery)
+      .map((match) => documentMatchPayload(match));
   }
 
   /**

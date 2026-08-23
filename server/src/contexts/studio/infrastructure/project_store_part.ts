@@ -9,6 +9,7 @@ import type {
   DocumentWithCurrent,
   ProjectScope,
 } from "../application/ports/studio_store.js";
+import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
 import {
   insertRevision,
@@ -72,6 +73,12 @@ export class ProjectStorePart {
           .set({ currentRevisionId: revision.id })
           .where(eq(documents.id, document.id))
           .run();
+        refreshDocumentIndex(tx, {
+          documentId: document.id,
+          projectId: project.id,
+          title: input.seed.title,
+          content: input.seed.contentMarkdown,
+        });
         seeded.push({
           id: document.id,
           projectId: project.id,
@@ -104,8 +111,10 @@ export class ProjectStorePart {
   dropProject(scope: ProjectScope, projectId: string): void {
     this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      // Cascades remove documents and revisions; the export tree belongs to
-      // the deleted project alone and is removed after the commit.
+      // The FTS table has no FK, so its rows leave explicitly in this same
+      // transaction; cascades remove documents and revisions, and the export
+      // tree belongs to the deleted project alone and goes after the commit.
+      clearProjectDocumentIndex(tx, project.id);
       tx.delete(projects).where(eq(projects.id, project.id)).run();
     });
     rmSync(join(this.dataDirectory, "exports", projectId), { recursive: true, force: true });

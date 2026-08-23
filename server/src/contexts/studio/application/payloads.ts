@@ -1,5 +1,9 @@
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
-import type { DocumentWithCurrent, RevisionRecord } from "./ports/studio_store.js";
+import type {
+  DocumentMatchRecord,
+  DocumentWithCurrent,
+  RevisionRecord,
+} from "./ports/studio_store.js";
 
 /** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
 export function wordCount(markdown: string): number {
@@ -75,6 +79,15 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
     word_count: wordCount(revision.contentMarkdown),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
+  };
+}
+
+/** One full-text hit: identifier, title, and a plain-text excerpt. */
+export function documentMatchPayload(match: DocumentMatchRecord): Record<string, unknown> {
+  return {
+    document_id: match.documentId,
+    title: match.title,
+    excerpt: match.excerpt,
   };
 }
 

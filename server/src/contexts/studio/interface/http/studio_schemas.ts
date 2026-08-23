@@ -63,6 +63,16 @@ export const restoreSchema = {
   additionalProperties: false,
 } as const;
 
+/** The full-text query string: `q` is required (missing → 422). */
+export const projectMatchQuerySchema = {
+  type: "object",
+  properties: {
+    q: { type: "string" },
+  },
+  required: ["q"],
+  additionalProperties: false,
+} as const;
+
 /** Response payload shapes (fast-json-stringify passes unknown fields through). */
 
 export const documentResponseSchema = {
@@ -134,6 +144,25 @@ const projectResponseProperties = {
   created_at: timestamp,
   updated_at: timestamp,
   documents: { type: "array", items: documentResponseSchema },
+} as const;
+
+/** One ranked full-text hit: identifier, title, plain-text excerpt. */
+export const matchResultSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: {
+    document_id: { type: "string" },
+    title: { type: "string" },
+    excerpt: { type: "string" },
+  },
+  required: ["document_id", "title", "excerpt"],
+} as const;
+
+export const matchListResponseSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: { results: { type: "array", items: matchResultSchema } },
+  required: ["results"],
 } as const;
 
 const PROJECT_REQUIRED = [
