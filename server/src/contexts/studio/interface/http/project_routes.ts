@@ -6,8 +6,10 @@ import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import type { StudioServices } from "../../application/studio_services.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import {
+  matchListResponseSchema,
   projectCreateSchema,
   projectDetailResponseSchema,
+  projectMatchQuerySchema,
   projectResponseSchema,
 } from "./studio_schemas.js";
 
@@ -77,6 +79,25 @@ export const projectRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app
           requireServices(options).projects.projectDetail(request.principal as Principal, projectId)
             .payload,
       );
+    },
+  );
+
+  app.get(
+    "/api/projects/:projectId/search",
+    {
+      preHandler: [guard],
+      schema: { querystring: projectMatchQuerySchema, response: { 200: matchListResponseSchema } },
+    },
+    async (request) => {
+      const { projectId } = request.params as { projectId: string };
+      const { q } = request.query as { q: string };
+      return withStudioErrors(() => ({
+        results: requireServices(options).documents.queryProjectDocuments(
+          request.principal as Principal,
+          projectId,
+          q,
+        ),
+      }));
     },
   );
 
