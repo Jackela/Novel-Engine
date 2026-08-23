@@ -151,6 +151,9 @@ describe("restart persistence", () => {
 
     const studio = await openStudioDatabase(directory);
     try {
+      // The proposal workflow (#268) grew the persistence columns (project
+      // scoping, provider/model, request/result, retry chain) — everything
+      // the adjudicated synchronous jobs model carries, and nothing more.
       expect(columnNames(studio, "jobs")).toEqual([
         "id",
         "kind",
@@ -161,6 +164,13 @@ describe("restart persistence", () => {
         "updated_at",
         "started_at",
         "finished_at",
+        "project_id",
+        "document_id",
+        "provider",
+        "model",
+        "request_json",
+        "result_json",
+        "retry_of_job_id",
       ]);
       for (const name of columnNames(studio, "jobs")) {
         expect(name).not.toMatch(/lease|ttl|heartbeat|worker/i);

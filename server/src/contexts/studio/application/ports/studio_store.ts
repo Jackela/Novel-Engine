@@ -47,6 +47,61 @@ export interface DocumentMatchRecord {
   excerpt: string;
 }
 
+/** One durable job-event trail entry. */
+export interface JobEventRecord {
+  id: string;
+  jobId: string;
+  status: string;
+  detailsJson: string;
+  createdAt: Date;
+}
+
+/** A workflow job with its event trail (the synchronous jobs model's row). */
+export interface JobRecord {
+  id: string;
+  projectId: string;
+  documentId: string | null;
+  kind: string;
+  operation: string;
+  status: string;
+  provider: string;
+  model: string;
+  requestJson: string;
+  resultJson: string;
+  error: string | null;
+  retryOfJobId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  events: JobEventRecord[];
+}
+
+export interface AddJobInput {
+  projectId: string;
+  documentId: string | null;
+  kind: string;
+  operation: string;
+  status: string;
+  provider: string;
+  model: string;
+  requestJson: string;
+  resultJson: string;
+  error: string | null;
+  /** Details of the single event row written with the job. */
+  eventDetailsJson: string;
+  now: Date;
+}
+
+export interface AddUsageEventInput {
+  projectId: string;
+  jobId: string;
+  provider: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  requestEvidenceJson: string;
+  now: Date;
+}
+
 /**
  * Principal scoping of every project query: owner data by owner id, guest
  * data by session id — exactly one of the two is set.
@@ -144,4 +199,15 @@ export interface StudioStore {
     projectId: string,
     matchQuery: string,
   ): DocumentMatchRecord[];
+
+  addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
+  addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
+  findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord;
+  setJobResult(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    resultJson: string,
+    now: Date,
+  ): JobRecord;
 }

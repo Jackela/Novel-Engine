@@ -2,6 +2,7 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type {
   DocumentMatchRecord,
   DocumentWithCurrent,
+  JobRecord,
   RevisionRecord,
 } from "./ports/studio_store.js";
 
@@ -102,5 +103,30 @@ export function revisionPayload(revision: RevisionRecord): Record<string, unknow
     source: revision.source,
     word_count: wordCount(revision.contentMarkdown),
     created_at: iso(revision.createdAt),
+  };
+}
+
+export function jobPayload(job: JobRecord): Record<string, unknown> {
+  return {
+    id: job.id,
+    project_id: job.projectId,
+    document_id: job.documentId,
+    kind: job.kind,
+    operation: job.operation,
+    status: job.status,
+    provider: job.provider,
+    model: job.model,
+    request: safeLoadJson(job.requestJson),
+    result: safeLoadJson(job.resultJson),
+    error: job.error,
+    retry_of_job_id: job.retryOfJobId,
+    created_at: iso(job.createdAt),
+    updated_at: iso(job.updatedAt),
+    events: job.events.map((event) => ({
+      id: event.id,
+      status: event.status,
+      details: safeLoadJson(event.detailsJson),
+      created_at: iso(event.createdAt),
+    })),
   };
 }
