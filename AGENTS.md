@@ -154,3 +154,21 @@ Audit findings in `AUDIT_REPORT_Linus.md` are read-only references. Match one fi
 Issues and specs for this repo live as GitHub issues on `Jackela/Novel-Engine`.
 Tracker configuration, including the Wayfinding operations section, is
 `docs/agents/issue-tracker.md`; triage labels are `docs/agents/triage-labels.md`.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `Jackela/Novel-Engine` are the work tracker. Before creating,
+triaging, claiming, resolving, or mapping a ticket, read
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical triage roles mapped in
+`docs/agents/triage-labels.md` when triaging GitHub issues.
+
+### Domain docs
+
+This repository is single-context: use root `CONTEXT.md` for domain vocabulary
+and the relevant decision record in `docs/adr/` for architecture decisions.
