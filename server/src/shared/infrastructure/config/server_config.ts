@@ -4,7 +4,9 @@ import { dirname, resolve } from "node:path";
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
 import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
 
+export type { DashscopeTransportMode, LlmProvider, LlmServerConfig } from "./provider_config.js";
 export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
@@ -23,45 +25,8 @@ export const DEFAULT_SECRET_KEY = ["change-me", "in-production", "32-char-long"]
 const MIN_SECRET_LENGTH = 16;
 
 const ENVIRONMENTS = ["development", "testing", "staging", "production"] as const;
-const LLM_PROVIDERS = ["mock", "dashscope", "openai_compatible"] as const;
-const DASHSCOPE_TRANSPORT_MODES = [
-  "text_generation",
-  "multimodal_generation",
-  "responses",
-] as const;
-const DEFAULT_LLM_TIMEOUT_SECONDS = 30;
-const MIN_LLM_TIMEOUT_SECONDS = 5;
-const MAX_LLM_TIMEOUT_SECONDS = 300;
-const DEFAULT_LLM_RETRY_ATTEMPTS = 3;
-const MAX_LLM_RETRY_ATTEMPTS = 3;
-const DEFAULT_LLM_RETRY_DELAY_SECONDS = 1;
-const MIN_LLM_RETRY_DELAY_SECONDS = 0.1;
-const MAX_LLM_RETRY_DELAY_SECONDS = 10;
 
 export type ServerEnvironment = (typeof ENVIRONMENTS)[number];
-export type LlmProvider = (typeof LLM_PROVIDERS)[number];
-export type DashscopeTransportMode = (typeof DASHSCOPE_TRANSPORT_MODES)[number];
-
-/**
- * Server-only provider values. This stays a plain-scalar configuration seam:
- * app composition maps it to provider factory options without exposing a
- * client-selectable model or importing AI infrastructure types here.
- */
-export interface LlmServerConfig {
-  readonly defaultProvider: LlmProvider;
-  readonly genericModel: string | undefined;
-  readonly dashscopeModel: string | undefined;
-  readonly dashscopeReviewModel: string | undefined;
-  readonly openaiCompatibleModel: string | undefined;
-  readonly dashscopeApiKey: string | undefined;
-  readonly dashscopeApiBase: string | undefined;
-  readonly openaiCompatibleApiKey: string | undefined;
-  readonly openaiCompatibleApiBase: string | undefined;
-  readonly dashscopeTransportMode: DashscopeTransportMode;
-  readonly timeoutSeconds: number;
-  readonly retryAttempts: number;
-  readonly retryDelayMs: number;
-}
 
 export interface ServerConfig {
   readonly environment: ServerEnvironment;
@@ -117,7 +82,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? DEFAULT_CORS_ORIGINS,
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
-    llm: llmFrom(env),
+    llm: loadLlmServerConfig(env),
   };
   assertStartupGuards(config);
   return config;
@@ -241,113 +206,4 @@ function rateLimitFrom(env: Map<string, string>): number {
     );
   }
   return Number(match[1]);
-}
-
-function llmFrom(env: Map<string, string>): LlmServerConfig {
-  return {
-    defaultProvider: enumFrom(env, "LLM_PROVIDER", LLM_PROVIDERS, "mock"),
-    genericModel: nonBlankStringFrom(env, "LLM_MODEL"),
-    dashscopeModel: nonBlankStringFrom(env, "DASHSCOPE_MODEL"),
-    dashscopeReviewModel: nonBlankStringFrom(env, "DASHSCOPE_REVIEW_MODEL"),
-    openaiCompatibleModel: nonBlankStringFrom(env, "OPENAI_COMPATIBLE_MODEL"),
-    dashscopeApiKey: nonBlankStringFrom(env, "DASHSCOPE_API_KEY"),
-    dashscopeApiBase: nonBlankStringFrom(env, "DASHSCOPE_API_BASE"),
-    openaiCompatibleApiKey: firstNonBlankStringFrom(env, ["LLM_API_KEY", "OPENAI_API_KEY"]),
-    openaiCompatibleApiBase: firstNonBlankStringFrom(env, ["LLM_API_BASE", "OPENAI_API_BASE"]),
-    dashscopeTransportMode: enumFrom(
-      env,
-      "DASHSCOPE_TRANSPORT_MODE",
-      DASHSCOPE_TRANSPORT_MODES,
-      "multimodal_generation",
-    ),
-    timeoutSeconds: integerFrom(
-      env,
-      "LLM_TIMEOUT",
-      DEFAULT_LLM_TIMEOUT_SECONDS,
-      MIN_LLM_TIMEOUT_SECONDS,
-      MAX_LLM_TIMEOUT_SECONDS,
-    ),
-    retryAttempts: integerFrom(
-      env,
-      "LLM_RETRY_ATTEMPTS",
-      DEFAULT_LLM_RETRY_ATTEMPTS,
-      1,
-      MAX_LLM_RETRY_ATTEMPTS,
-    ),
-    retryDelayMs:
-      numberFrom(
-        env,
-        "LLM_RETRY_DELAY",
-        DEFAULT_LLM_RETRY_DELAY_SECONDS,
-        MIN_LLM_RETRY_DELAY_SECONDS,
-        MAX_LLM_RETRY_DELAY_SECONDS,
-      ) * 1_000,
-  };
-}
-
-function nonBlankStringFrom(env: Map<string, string>, key: string): string | undefined {
-  const value = stringFrom(env, key)?.trim();
-  return value === "" || value === undefined ? undefined : value;
-}
-
-function firstNonBlankStringFrom(
-  env: Map<string, string>,
-  keys: readonly string[],
-): string | undefined {
-  for (const key of keys) {
-    const value = nonBlankStringFrom(env, key);
-    if (value !== undefined) return value;
-  }
-  return undefined;
-}
-
-function enumFrom<Values extends readonly string[]>(
-  env: Map<string, string>,
-  key: string,
-  values: Values,
-  fallback: Values[number],
-): Values[number] {
-  const raw = stringFrom(env, key);
-  const value = raw?.trim().toLowerCase();
-  if (value === undefined || value === "") return fallback;
-  if (!values.includes(value)) {
-    throw new ConfigurationError(`${key} must be one of ${values.join(", ")} (got "${raw}")`);
-  }
-  return value as Values[number];
-}
-
-function integerFrom(
-  env: Map<string, string>,
-  key: string,
-  fallback: number,
-  minimum: number,
-  maximum: number,
-): number {
-  const raw = stringFrom(env, key);
-  if (raw === undefined || raw.trim() === "") return fallback;
-  const value = Number(raw);
-  if (!Number.isInteger(value) || value < minimum || value > maximum) {
-    throw new ConfigurationError(
-      `${key} must be an integer between ${minimum} and ${maximum} (got "${raw}")`,
-    );
-  }
-  return value;
-}
-
-function numberFrom(
-  env: Map<string, string>,
-  key: string,
-  fallback: number,
-  minimum: number,
-  maximum: number,
-): number {
-  const raw = stringFrom(env, key);
-  if (raw === undefined || raw.trim() === "") return fallback;
-  const value = Number(raw);
-  if (!Number.isFinite(value) || value < minimum || value > maximum) {
-    throw new ConfigurationError(
-      `${key} must be a number between ${minimum} and ${maximum} (got "${raw}")`,
-    );
-  }
-  return value;
 }
