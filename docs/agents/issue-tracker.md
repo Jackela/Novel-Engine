@@ -14,6 +14,21 @@ Issues and specs for this repo live as GitHub issues at
   their `## Blocked by` edges in the body and as native blocking links when
   available.
 
+## Skill conventions
+
+- When a skill says to publish to the issue tracker, create a GitHub issue in
+  `Jackela/Novel-Engine`.
+- When a skill says to fetch a ticket, use `gh issue view <number> --comments`
+  and inspect its labels.
+- Apply the five canonical triage roles through the tracker-label mapping in
+  `docs/agents/triage-labels.md`.
+
+## Pull requests as a triage surface
+
+**PRs as a request surface: no.** Work intake and triage use GitHub Issues;
+PRs may be linked as implementation evidence but are not part of the triage
+queue.
+
 ## Wayfinding operations
 
 - The map is a single GitHub issue labeled `wayfinder:map`; its decision
