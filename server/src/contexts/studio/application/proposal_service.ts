@@ -1,6 +1,7 @@
 import {
   isTextProviderName,
   type ProviderStep,
+  type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationProviderFactory,
   type TextProviderName,
@@ -34,6 +35,14 @@ const SYSTEM_PROMPT = [
 
 function resolvedTokenCount(reported: number | null, text: string): number {
   return reported ?? wordCount(text);
+}
+
+async function disposeProvider(provider: TextGenerationProvider): Promise<void> {
+  try {
+    await provider.dispose?.();
+  } catch {
+    // Cleanup is best effort: it must not change a proposal job's outcome.
+  }
 }
 
 export interface ProposalDraftInput {
@@ -103,9 +112,10 @@ export class AiProposalService {
       requestJson,
       now: this.now(),
     };
+    const provider = this.providerFactory(providerName);
 
     try {
-      const result = await this.providerFactory(providerName).generateStructured({
+      const result = await provider.generateStructured({
         step,
         systemPrompt: SYSTEM_PROMPT,
         userPrompt: [
@@ -174,6 +184,8 @@ export class AiProposalService {
           eventDetailsJson: dumpJson({ error: error.message }),
         }),
       );
+    } finally {
+      await disposeProvider(provider);
     }
   }
 

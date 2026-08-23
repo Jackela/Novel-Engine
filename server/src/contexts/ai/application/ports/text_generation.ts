@@ -53,6 +53,8 @@ export interface TextGenerationResult {
 
 export interface TextGenerationProvider {
   generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
+  /** Optional request-scoped cleanup for providers that hold transport resources. */
+  dispose?(): Promise<void>;
 }
 
 /**

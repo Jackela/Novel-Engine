@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  type TextGenerationProvider,
+  TextGenerationProviderError,
+  type TextGenerationProviderFactory,
+} from "../../src/contexts/ai/application/ports/text_generation.js";
 import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { capturingFactory, propose } from "./proposal_test_helpers.js";
 import {
@@ -10,6 +15,46 @@ import {
   seedDocument,
   seedProject,
 } from "./studio_helpers.js";
+
+type LifecycleOutcome = "complete" | "provider_error" | "programming_error";
+
+function disposableFactory(outcomes: readonly LifecycleOutcome[]): {
+  factory: TextGenerationProviderFactory;
+  created: number[];
+  disposed: number[];
+} {
+  const created: number[] = [];
+  const disposed: number[] = [];
+  const factory: TextGenerationProviderFactory = (provider) => {
+    const index = created.length;
+    const outcome = outcomes[index] ?? "programming_error";
+    created.push(index);
+    const implementation: TextGenerationProvider = {
+      async generateStructured(task) {
+        if (outcome === "provider_error") {
+          throw new TextGenerationProviderError("provider transport was unavailable");
+        }
+        if (outcome === "programming_error") {
+          throw new Error("unexpected provider bug");
+        }
+        return {
+          step: task.step,
+          provider,
+          model: "lifecycle-model",
+          rawText: "Lifecycle proof prose.",
+          content: { chapter_markdown: "Lifecycle proof prose." },
+          promptTokens: null,
+          completionTokens: null,
+        };
+      },
+      async dispose() {
+        disposed.push(index);
+      },
+    };
+    return implementation;
+  };
+  return { factory, created, disposed };
+}
 
 describe("proposal guards", () => {
   it("maps operations to provider steps at the port boundary with real task metadata", async () => {
@@ -41,6 +86,43 @@ describe("proposal guards", () => {
         expect(entry.task.userPrompt).toContain("Operation:");
       }
       expect(capture.tasks.every((entry) => entry.provider === "mock")).toBe(true);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("disposes each per-request provider without masking proposal outcomes", async () => {
+    const lifecycle = disposableFactory(["complete", "provider_error", "programming_error"]);
+    const { app } = await buildStudioApp(undefined, { textProviderFactory: lifecycle.factory });
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Lifecycle");
+      const document = project.documents[0];
+      if (document === undefined) {
+        throw new Error("Lifecycle fixture must create a default document.");
+      }
+
+      const completed = await propose(app, jar, project.id, document.id, { operation: "continue" });
+      expect(completed.statusCode, completed.body).toBe(200);
+      expect(completed.json().status).toBe("completed");
+      expect(lifecycle.disposed).toEqual([0]);
+
+      const providerFailure = await propose(app, jar, project.id, document.id, {
+        operation: "continue",
+      });
+      expect(providerFailure.statusCode, providerFailure.body).toBe(200);
+      expect(providerFailure.json().status).toBe("failed");
+      expect(providerFailure.json().error).toBe("provider transport was unavailable");
+      expect(lifecycle.disposed).toEqual([0, 1]);
+
+      const programmingFailure = await propose(app, jar, project.id, document.id, {
+        operation: "continue",
+      });
+      expect(programmingFailure.statusCode, programmingFailure.body).toBe(500);
+      expect(programmingFailure.json().error.code).toBe("INTERNAL_ERROR");
+      expect(programmingFailure.body).not.toContain("unexpected provider bug");
+      expect(lifecycle.created).toEqual([0, 1, 2]);
+      expect(lifecycle.disposed).toEqual([0, 1, 2]);
     } finally {
       await app.close();
     }
