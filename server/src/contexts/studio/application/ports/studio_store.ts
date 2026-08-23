@@ -102,6 +102,58 @@ export interface AddUsageEventInput {
   now: Date;
 }
 
+/** A document/revision pair frozen into an immutable review snapshot. */
+export interface ReviewSnapshotDocument {
+  /** The source document identifier, retained for finding-to-snapshot mapping. */
+  documentId: string;
+  snapshotDocumentId: string;
+  revisionId: string;
+  kind: string;
+  title: string;
+  contentMarkdown: string;
+  metadataJson: string;
+  position: number;
+}
+
+/** A pure evaluator's finding, before the adapter serializes its evidence. */
+export interface EditorialIssueInput {
+  documentId: string;
+  severity: string;
+  code: string;
+  message: string;
+  suggestion: string;
+  evidence: Record<string, unknown>;
+}
+
+/** One persisted editorial issue, returned without exposing database rows. */
+export interface EditorialIssueRecord extends EditorialIssueInput {
+  id: string;
+  reviewId: string;
+  snapshotDocumentId: string;
+}
+
+/** A snapshot-bound editorial assessment and its stably ordered issues. */
+export interface EditorialAssessmentRecord {
+  id: string;
+  projectId: string;
+  snapshotId: string;
+  provider: string;
+  model: string;
+  summary: string;
+  createdAt: Date;
+  issues: EditorialIssueRecord[];
+}
+
+export interface RecordSnapshotReviewInput {
+  provider: string;
+  model: string;
+  summary: string;
+  now: Date;
+  evaluator: (
+    documents: readonly Readonly<ReviewSnapshotDocument>[],
+  ) => readonly EditorialIssueInput[];
+}
+
 /**
  * Principal scoping of every project query: owner data by owner id, guest
  * data by session id — exactly one of the two is set.
@@ -210,4 +262,15 @@ export interface StudioStore {
     resultJson: string,
     now: Date,
   ): JobRecord;
+
+  /**
+   * Freeze current document content before evaluating it; review history can
+   * therefore never be rewritten by later author edits.
+   */
+  recordSnapshotReview(
+    scope: ProjectScope,
+    projectId: string,
+    input: RecordSnapshotReviewInput,
+  ): EditorialAssessmentRecord;
+  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[];
 }

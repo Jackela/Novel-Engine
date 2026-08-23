@@ -6,13 +6,16 @@ import type {
   AdvanceDocumentInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
+  EditorialAssessmentRecord,
   JobRecord,
   ProjectScope,
+  RecordSnapshotReviewInput,
   StudioStore,
 } from "../application/ports/studio_store.js";
 import { DocumentStorePart } from "./document_store_part.js";
 import { JobStorePart } from "./job_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
+import { ReviewStorePart } from "./review_store_part.js";
 
 export interface DrizzleStudioStoreOptions {
   database: StudioSqliteDatabase;
@@ -26,11 +29,13 @@ export interface DrizzleStudioStoreOptions {
  */
 export class DrizzleStudioStore extends ProjectStorePart implements StudioStore {
   private readonly documentStore: DocumentStorePart;
+  private readonly editorialReviews: ReviewStorePart;
   private readonly workflowJobs: JobStorePart;
 
   constructor(options: DrizzleStudioStoreOptions) {
     super(options.database, options.dataDirectory);
     this.documentStore = new DocumentStorePart(options.database);
+    this.editorialReviews = new ReviewStorePart(options.database);
     this.workflowJobs = new JobStorePart(options.database);
   }
 
@@ -112,5 +117,17 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     now: Date,
   ): JobRecord {
     return this.workflowJobs.setJobResult(scope, projectId, jobId, resultJson, now);
+  }
+
+  recordSnapshotReview(
+    scope: ProjectScope,
+    projectId: string,
+    input: RecordSnapshotReviewInput,
+  ): EditorialAssessmentRecord {
+    return this.editorialReviews.recordSnapshotReview(scope, projectId, input);
+  }
+
+  listEditorialAssessments(scope: ProjectScope, projectId: string): EditorialAssessmentRecord[] {
+    return this.editorialReviews.listEditorialAssessments(scope, projectId);
   }
 }
