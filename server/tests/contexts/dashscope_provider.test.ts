@@ -198,18 +198,30 @@ describe("dashscope generation timeout floor", () => {
   it("grants chapter steps at least 180 seconds via the abort signal", async () => {
     vi.useFakeTimers();
     try {
-      let settled: ((response: Response) => void) | undefined;
-      const transport: ProviderTransport = (_url, init) =>
-        new Promise<Response>((resolve) => {
-          settled = resolve;
-          init?.signal?.addEventListener("abort", () => resolve(jsonResponse(200, generationBody('{"chapter_markdown": "late"}'))), { once: true });
+      let requestDispatched = false;
+      let abortFired = false;
+      const transport: ProviderTransport = (_url, init) => {
+        requestDispatched = true;
+        return new Promise<Response>((resolve) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => {
+              abortFired = true;
+              resolve(jsonResponse(200, generationBody('{"chapter_markdown": "late"}')));
+            },
+            { once: true },
+          );
         });
+      };
       const generation = provider({ transport, timeoutSeconds: 30 }).generateStructured(
         chapterTask("chapter_revision"),
       );
+
+      expect(requestDispatched).toBe(true);
       await vi.advanceTimersByTimeAsync(179_999);
-      expect(settled).toBeUndefined(); // transport still pending: signal not aborted yet
+      expect(abortFired).toBe(false);
       await vi.advanceTimersByTimeAsync(1);
+      expect(abortFired).toBe(true);
       const result = await generation;
       expect(result.content.chapter_markdown).toBe("late");
     } finally {
