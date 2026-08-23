@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { desc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
 import type {
   AddProjectInput,
   DocumentWithCurrent,
@@ -111,10 +112,13 @@ export class ProjectStorePart {
   dropProject(scope: ProjectScope, projectId: string): void {
     this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      // The FTS table has no FK, so its rows leave explicitly in this same
+      // The FTS table and the workflow jobs reference the project without a
+      // cross-schema FK, so their rows leave explicitly in this same
       // transaction; cascades remove documents and revisions, and the export
       // tree belongs to the deleted project alone and goes after the commit.
       clearProjectDocumentIndex(tx, project.id);
+      tx.delete(usageEvents).where(eq(usageEvents.project_id, project.id)).run();
+      tx.delete(jobs).where(eq(jobs.project_id, project.id)).run();
       tx.delete(projects).where(eq(projects.id, project.id)).run();
     });
     rmSync(join(this.dataDirectory, "exports", projectId), { recursive: true, force: true });

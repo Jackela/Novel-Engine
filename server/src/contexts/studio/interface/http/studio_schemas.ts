@@ -1,3 +1,4 @@
+import { PROVIDER_NAMES } from "../../../ai/application/ports/text_generation.js";
 import { DOCUMENT_KINDS, REVISION_SOURCES } from "../../domain/kinds.js";
 
 const kindLiteral = {
@@ -51,6 +52,21 @@ export const reorderSchema = {
     document_ids: { type: "array", items: { type: "string" }, minItems: 1 },
   },
   required: ["document_ids"],
+  additionalProperties: false,
+} as const;
+
+/**
+ * The proposal request carries the frontend operation vocabulary and the
+ * provider choice only — models are resolved server-side, never sent.
+ */
+export const proposalCreateSchema = {
+  type: "object",
+  properties: {
+    operation: { type: "string", enum: ["continue", "rewrite", "generate"] },
+    instruction: { type: "string", maxLength: 10_000, default: "" },
+    provider: { type: "string", enum: [...PROVIDER_NAMES], default: "mock" },
+  },
+  required: ["operation"],
   additionalProperties: false,
 } as const;
 
@@ -228,4 +244,56 @@ export const documentConflictSchema = {
     },
   },
   required: ["error"],
+} as const;
+
+const jobEventSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: {
+    id: { type: "string" },
+    status: { type: "string" },
+    details: metadataObject,
+    created_at: timestamp,
+  },
+  required: ["id", "status", "details", "created_at"],
+} as const;
+
+/** The synchronous job payload: request/result JSON plus the event trail. */
+export const jobResponseSchema = {
+  type: "object",
+  additionalProperties: true,
+  properties: {
+    id: { type: "string" },
+    project_id: { type: "string" },
+    document_id: { type: "string", nullable: true },
+    kind: { type: "string" },
+    operation: { type: "string" },
+    status: { type: "string" },
+    provider: { type: "string" },
+    model: { type: "string" },
+    request: metadataObject,
+    result: metadataObject,
+    error: { type: "string", nullable: true },
+    retry_of_job_id: { type: "string", nullable: true },
+    created_at: timestamp,
+    updated_at: timestamp,
+    events: { type: "array", items: jobEventSchema },
+  },
+  required: [
+    "id",
+    "project_id",
+    "document_id",
+    "kind",
+    "operation",
+    "status",
+    "provider",
+    "model",
+    "request",
+    "result",
+    "error",
+    "retry_of_job_id",
+    "created_at",
+    "updated_at",
+    "events",
+  ],
 } as const;

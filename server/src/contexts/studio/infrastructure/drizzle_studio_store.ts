@@ -5,9 +5,12 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type {
   AddDocumentInput,
+  AddJobInput,
+  AddUsageEventInput,
   AdvanceDocumentInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
+  JobRecord,
   ProjectScope,
   StudioStore,
 } from "../application/ports/studio_store.js";
@@ -31,6 +34,7 @@ import {
   scopedProject,
   type Tx,
 } from "./db/studio_query_helpers.js";
+import { JobStorePart } from "./job_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
 
 export interface DrizzleStudioStoreOptions {
@@ -41,13 +45,38 @@ export interface DrizzleStudioStoreOptions {
 
 /**
  * Drizzle implementation of the authoring StudioStore (document and revision
- * half; the project half lives in ProjectStorePart): every mutation runs in
- * one transaction — revision create plus document advance are atomic — and
- * unique violations surface as domain conflicts.
+ * half; projects live in ProjectStorePart, workflow jobs in JobStorePart):
+ * every mutation runs in one transaction — revision create plus document
+ * advance are atomic — and unique violations surface as domain conflicts.
  */
 export class DrizzleStudioStore extends ProjectStorePart implements StudioStore {
+  private readonly workflowJobs: JobStorePart;
+
   constructor(options: DrizzleStudioStoreOptions) {
     super(options.database, options.dataDirectory);
+    this.workflowJobs = new JobStorePart(options.database);
+  }
+
+  addJob(scope: ProjectScope, input: AddJobInput): JobRecord {
+    return this.workflowJobs.addJob(scope, input);
+  }
+
+  addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
+    this.workflowJobs.addUsageEvent(scope, input);
+  }
+
+  findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {
+    return this.workflowJobs.findJob(scope, projectId, jobId);
+  }
+
+  setJobResult(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    resultJson: string,
+    now: Date,
+  ): JobRecord {
+    return this.workflowJobs.setJobResult(scope, projectId, jobId, resultJson, now);
   }
 
   findDocuments(scope: ProjectScope, projectId: string): DocumentWithCurrent[] {

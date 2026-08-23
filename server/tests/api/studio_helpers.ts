@@ -35,14 +35,23 @@ export interface StudioTestApp {
   directory: string;
 }
 
+/** Extra buildApp overrides used by the workflow tests (provider seams). */
+export interface StudioAppOverrides {
+  textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
+}
+
 /** Build the app with a real SQLite file and the studio surface mounted. */
-export async function buildStudioApp(clock?: () => Date): Promise<StudioTestApp> {
+export async function buildStudioApp(
+  clock?: () => Date,
+  overrides: StudioAppOverrides = {},
+): Promise<StudioTestApp> {
   const directory = await mkdtemp(join(tmpdir(), "novel-engine-studio-"));
   const app = await buildApp({
     logger: false,
     dataDirectory: directory,
     sessionSecret: TEST_SESSION_SECRET,
     clock,
+    ...overrides,
   });
   return { app, directory };
 }
@@ -181,4 +190,66 @@ export async function listRevisions(
   );
   expect(response.statusCode, response.body).toBe(200);
   return response.json().revisions;
+}
+
+export interface JobEventPayload {
+  id: string;
+  status: string;
+  details: Record<string, unknown>;
+  created_at: string;
+}
+
+/** The synchronous job payload shared by the proposal workflow tests. */
+export interface JobPayload {
+  id: string;
+  project_id: string;
+  document_id: string | null;
+  kind: string;
+  operation: string;
+  status: string;
+  provider: string;
+  model: string;
+  request: Record<string, unknown>;
+  result: Record<string, unknown>;
+  error: string | null;
+  retry_of_job_id: string | null;
+  created_at: string;
+  updated_at: string;
+  events: JobEventPayload[];
+}
+
+/** Generate a proposal for a document's current revision; asserts 200. */
+export async function draftProposal(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  documentId: string,
+  body: Record<string, unknown>,
+): Promise<JobPayload> {
+  const response = await call(
+    app,
+    jar,
+    "POST",
+    `/api/projects/${projectId}/documents/${documentId}/ai-proposals`,
+    body,
+  );
+  expect(response.statusCode, response.body).toBe(200);
+  return response.json();
+}
+
+/** Accept a proposal; asserts 200. */
+export async function admitProposal(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  jobId: string,
+): Promise<JobPayload> {
+  const response = await call(
+    app,
+    jar,
+    "POST",
+    `/api/projects/${projectId}/ai-proposals/${jobId}/accept`,
+  );
+  expect(response.statusCode, response.body).toBe(200);
+  return response.json();
 }

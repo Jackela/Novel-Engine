@@ -4,10 +4,13 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
+import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
+import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { documentRoutes } from "../../contexts/studio/interface/http/document_routes.js";
 import { projectRoutes } from "../../contexts/studio/interface/http/project_routes.js";
+import { proposalRoutes } from "../../contexts/studio/interface/http/proposal_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
@@ -58,6 +61,14 @@ export interface AppOptions {
   authRateLimitPerMinute?: number | undefined;
   /** Injectable time source for the session lifecycle (tests). */
   clock?: (() => Date) | undefined;
+  /**
+   * Per-request AI provider factory override (tests inject capturing
+   * providers). The default builds providers from `providerApiKeys`; HTTP
+   * providers without a key fail explicitly — the mock is never a fallback.
+   */
+  textProviderFactory?: TextGenerationProviderFactory | undefined;
+  /** Credentials for the HTTP providers; absent keys leave them unconfigured. */
+  providerApiKeys?: { dashscope?: string; openaiCompatible?: string } | undefined;
   /**
    * Resolved operational configuration (loadServerConfig). When present the
    * production guards fail fast here and unset options fall back to it.
@@ -147,13 +158,15 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             randomBytes(32).toString("base64url"),
           now: options.clock,
         });
+  const providerFactory: TextGenerationProviderFactory =
+    options.textProviderFactory ?? textProviderFactory(options.providerApiKeys ?? {});
   const studioServices =
     studioDb === undefined || dataDirectory === undefined
       ? undefined
-      : createStudioServices(
-          new DrizzleStudioStore({ database: studioDb.db, dataDirectory }),
-          options.clock,
-        );
+      : createStudioServices(new DrizzleStudioStore({ database: studioDb.db, dataDirectory }), {
+          now: options.clock,
+          providerFactory,
+        });
 
   const versionInfo: VersionInfo = {
     version: readWorkspaceVersion(),
@@ -223,6 +236,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(versionRoutes, { info: versionInfo });
   await app.register(projectRoutes, { authService, services: studioServices });
   await app.register(documentRoutes, { authService, services: studioServices });
+  await app.register(proposalRoutes, { authService, services: studioServices });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
