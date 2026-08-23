@@ -1,6 +1,7 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import type { AuthService } from "../../../../shared/application/auth_service.js";
 import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import {
   buildProviderCatalog,
   type ProviderCatalogOptions,
@@ -32,7 +33,13 @@ const providerCatalogResponseSchema = {
   required: ["providers"],
 } as const;
 
-/** Authenticated catalog of server-owned provider availability and model facts. */
+async function requireOwner(request: FastifyRequest): Promise<void> {
+  if (request.principal?.kind !== "owner" || request.principal.ownerId === null) {
+    throw new AppError({ statusCode: 403, code: "FORBIDDEN", message: "Owner session required." });
+  }
+}
+
+/** Owner-only catalog of server-owned provider availability and model facts. */
 export const providerCatalogRoutes: FastifyPluginAsync<ProviderCatalogRoutesOptions> = async (
   app,
   options,
@@ -41,7 +48,10 @@ export const providerCatalogRoutes: FastifyPluginAsync<ProviderCatalogRoutesOpti
 
   app.get(
     "/api/providers",
-    { preHandler: [guard], schema: { response: { 200: providerCatalogResponseSchema } } },
+    {
+      preHandler: [guard, requireOwner],
+      schema: { response: { 200: providerCatalogResponseSchema } },
+    },
     async () => ({ providers: buildProviderCatalog(options) }),
   );
 };

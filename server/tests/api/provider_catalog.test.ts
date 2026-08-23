@@ -31,7 +31,7 @@ function providerConfig(directory: string) {
 }
 
 describe("provider catalog API", () => {
-  it("requires a principal and returns only resolved provider facts", async () => {
+  it("requires an owner and returns only resolved provider facts", async () => {
     const directory = await makeDataDirectory();
     const config = providerConfig(directory);
     const app = await buildApp({ logger: false, config });
@@ -39,6 +39,17 @@ describe("provider catalog API", () => {
       const anonymous = await app.inject({ method: "GET", url: "/api/providers" });
       expect(anonymous.statusCode).toBe(401);
       expect(anonymous.json()).toMatchObject({ error: { code: "UNAUTHORIZED" } });
+
+      const guest = await app.inject({ method: "POST", url: "/api/session/guest" });
+      const guestResponse = await app.inject({
+        method: "GET",
+        url: "/api/providers",
+        headers: { cookie: cookieHeader(cookieJar(guest)) },
+      });
+      expect(guestResponse.statusCode).toBe(403);
+      expect(guestResponse.json()).toEqual({
+        error: { code: "FORBIDDEN", message: "Owner session required." },
+      });
 
       await setupOwner(app);
       const login = await loginOwner(app);
