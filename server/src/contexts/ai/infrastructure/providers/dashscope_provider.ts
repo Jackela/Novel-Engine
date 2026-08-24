@@ -22,13 +22,13 @@ import {
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
+  redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
 } from "./provider_http.js";
 
 const DEFAULT_MODEL = "qwen3.5-flash";
 const DEFAULT_TIMEOUT_SECONDS = 30;
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
-const MAX_ERROR_BODY_LENGTH = 1_000;
 
 type JsonObject = Record<string, unknown>;
 
@@ -76,10 +76,6 @@ function normalizedTimeoutSeconds(value: number | undefined): number {
     return DEFAULT_TIMEOUT_SECONDS;
   }
   return value;
-}
-
-function errorBodyWithoutCredential(body: string, apiKey: string): string {
-  return body.slice(0, MAX_ERROR_BODY_LENGTH).split(apiKey).join("[REDACTED]");
 }
 
 function supportedStep(step: string): ProviderStep {
@@ -181,7 +177,7 @@ export class DashScopeTextProvider implements TextGenerationProvider {
         throw httpStatusFailure(
           context,
           response.status,
-          errorBodyWithoutCredential(responseBody, this.apiKey),
+          redactCredentialAndTruncateResponseBody(responseBody, this.apiKey),
         );
       }
 

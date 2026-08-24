@@ -16,6 +16,7 @@ import {
   type ProviderRetryPolicy,
   type ProviderTransport,
   ProviderTransportError,
+  redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
 } from "./provider_http.js";
 
@@ -23,7 +24,6 @@ const DEFAULT_API_BASE = "https://api.openai.com/v1";
 const DEFAULT_MODEL = "gpt-4o-mini";
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_TIMEOUT_SECONDS = 30;
-const MAX_ERROR_BODY_LENGTH = 1_000;
 
 type JsonObject = Record<string, unknown>;
 
@@ -98,10 +98,6 @@ function supportedStep(step: string): ProviderStep {
     throw new TextGenerationProviderError(`Unsupported generation step: ${step}`);
   }
   return step;
-}
-
-function errorBodyWithoutCredential(body: string, apiKey: string): string {
-  return body.slice(0, MAX_ERROR_BODY_LENGTH).split(apiKey).join("[REDACTED]");
 }
 
 function chatCompletionPayload(model: string, task: TextGenerationTask): JsonObject {
@@ -240,7 +236,7 @@ export class OpenAICompatibleTextProvider implements TextGenerationProvider {
         throw httpStatusFailure(
           context,
           response.status,
-          errorBodyWithoutCredential(responseBody, this.apiKey),
+          redactCredentialAndTruncateResponseBody(responseBody, this.apiKey),
         );
       }
 
