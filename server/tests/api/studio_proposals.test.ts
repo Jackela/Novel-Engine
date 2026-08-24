@@ -45,7 +45,6 @@ describe("proposal flow", () => {
         `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
         { operation: "continue", instruction: "Continue.", provider: "openai_compatible" },
       );
-
       expect(response.statusCode, response.body).toBe(200);
       expect(response.json()).toMatchObject({
         status: "failed",
@@ -56,7 +55,6 @@ describe("proposal flow", () => {
     } finally {
       await known.app.close();
     }
-
     const unexpected = await buildStudioApp(undefined, {
       textProviderFactory: () => {
         throw new Error("factory implementation secret");
@@ -76,7 +74,6 @@ describe("proposal flow", () => {
         `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
         { operation: "continue", instruction: "Continue.", provider: "openai_compatible" },
       );
-
       expect(response.statusCode, response.body).toBe(500);
       const body = response.json();
       expect(body.error).toMatchObject({ code: "INTERNAL_ERROR" });
@@ -85,7 +82,6 @@ describe("proposal flow", () => {
       await unexpected.app.close();
     }
   });
-
   it("drafts prose from the deterministic provider and leaves the manuscript untouched", async () => {
     const { app } = await buildStudioApp();
     try {
@@ -93,13 +89,11 @@ describe("proposal flow", () => {
       const project = await seedProject(app, jar, "Prose");
       const document = project.documents[0] as DocumentPayload;
       const before = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
-
       const job = await draftProposal(app, jar, project.id, document.id, {
         operation: "continue",
         instruction: "Tighten the chase.",
         provider: "mock",
       });
-
       expect(job.kind).toBe("proposal");
       expect(job.status).toBe("completed");
       expect(job.operation).toBe("continue");
@@ -115,7 +109,6 @@ describe("proposal flow", () => {
       assertIsProse(job.result.proposal_markdown as string);
       expect(job.events.map((event) => event.status)).toEqual(["completed"]);
       expect(job.events[0]!.details).toEqual({ proposal_only: true });
-
       // No acceptance yet: the document still points at revision A, nothing new exists.
       const after = (await getProject(app, jar, project.id)).documents[0] as DocumentPayload;
       expect(after.current_revision_id).toBe(before.current_revision_id);
@@ -125,18 +118,25 @@ describe("proposal flow", () => {
       await app.close();
     }
   });
-
   it("keeps narrative echo and result prose while rejecting key-shaped provider scaffolding", async () => {
     const encodedScaffold = JSON.stringify(JSON.stringify({ result: "raw scaffold echo" }));
     const encodedUnicodeScaffold = JSON.stringify(
       JSON.stringify('{"meta":{},\u00a0"result":"raw scaffold echo"}'),
     );
+    const paddedScaffold = JSON.stringify(
+      JSON.stringify({
+        nested: { result: "raw scaffold echo" },
+        ...Object.fromEntries(
+          Array.from({ length: 129 }, (_, index) => [`padding_${index}`, index]),
+        ),
+      }),
+    );
     const failed = (scaffold: string) => ({
       markdown: `${validProposalProse}\n\n${scaffold}`,
       status: "failed" as const,
     });
-    const failedAfterLineSeparator = (scaffold: string) => ({
-      markdown: `${validProposalProse}\u2028${scaffold}`,
+    const failedAfterBreak = (lineBreak: string, scaffold: string) => ({
+      markdown: `${validProposalProse}${lineBreak}${scaffold}`,
       status: "failed" as const,
     });
     const completed = (prose: string) => ({
@@ -161,7 +161,13 @@ describe("proposal flow", () => {
       failed(encodedUnicodeScaffold),
       failed(`'${JSON.stringify({ result: "raw scaffold echo" })}'`),
       failed(`\`${JSON.stringify({ payload: JSON.stringify({ echo: "raw scaffold echo" }) })}\``),
-      failedAfterLineSeparator("\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo"),
+      failed(paddedScaffold),
+      failed("'{\"result\":\"Mara said 'stop'\"}'"),
+      failed('`{"result":"Mara wrote `stop`"}`'),
+      failed('```json\n{"result":"raw scaffold echo"}\n```'),
+      failed("\u200B\\u0072esult\\u003A raw scaffold echo"),
+      failedAfterBreak("\u0085", "\u200B\\u0065cho\\u003D raw scaffold echo"),
+      failedAfterBreak("\u2028", "\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo"),
       completed("Mara copied `{result: turn back}` into her notebook."),
     ] as const;
     for (const { markdown, status } of cases) {
@@ -177,7 +183,6 @@ describe("proposal flow", () => {
           operation: "continue",
           provider: "mock",
         });
-
         expect(job.status).toBe(status);
         if (status === "completed") {
           expect(job.result.proposal_markdown).toBe(markdown);
@@ -193,7 +198,6 @@ describe("proposal flow", () => {
       }
     }
   }, 15_000);
-
   it("reflects each document's own title and chapter number", async () => {
     const { app } = await buildStudioApp();
     try {
@@ -204,7 +208,6 @@ describe("proposal flow", () => {
         kind: "chapter",
         title: "The Crossing",
       });
-
       const firstJob = await draftProposal(app, jar, project.id, first.id, {
         operation: "generate",
         instruction: "",
@@ -213,7 +216,6 @@ describe("proposal flow", () => {
         operation: "generate",
         instruction: "",
       });
-
       const firstProse = firstJob.result.proposal_markdown as string;
       const secondProse = secondJob.result.proposal_markdown as string;
       expect(firstProse).not.toBe(secondProse);
@@ -224,7 +226,6 @@ describe("proposal flow", () => {
       await app.close();
     }
   });
-
   it("accepts a completed proposal into an ai-accepted revision", async () => {
     const { app } = await buildStudioApp();
     try {
@@ -232,7 +233,6 @@ describe("proposal flow", () => {
       const project = await seedProject(app, jar, "Accept");
       const document = project.documents[0] as DocumentPayload;
       const job = await draftProposal(app, jar, project.id, document.id, { operation: "rewrite" });
-
       const accepted = await admitProposal(app, jar, project.id, job.id);
       const acceptedRevisionId = accepted.result.accepted_revision_id as string;
       expect(acceptedRevisionId).not.toBeNull();

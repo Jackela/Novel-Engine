@@ -2,6 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import { hasProviderScaffolding } from "../../src/contexts/studio/application/provider_scaffold.js";
 
+const siblingPaddedScaffold = JSON.stringify(
+  JSON.stringify({
+    nested: { result: "raw provider scaffold" },
+    ...Object.fromEntries(Array.from({ length: 129 }, (_, index) => [`padding_${index}`, index])),
+  }),
+);
+
 describe("provider scaffold detection", () => {
   it.each([
     ["bare line key", "ReSuLt: raw provider scaffold"],
@@ -35,9 +42,15 @@ describe("provider scaffold detection", () => {
     ["extra closers", '{"meta": {note: "x"}}}, result = raw provider scaffold'],
     ["unbounded mixed closers", '{meta: "note"}]}]}]}]}], \\u0072esult: raw provider scaffold'],
     ["mismatched closer", '{"meta": [}, result = raw provider scaffold'],
+    ["sibling-padded nested serialized target", siblingPaddedScaffold],
     ["double-encoded target", JSON.stringify(JSON.stringify({ result: "raw provider scaffold" }))],
     ["single-quoted JSON target", "'" + JSON.stringify({ result: "raw provider scaffold" }) + "'"],
     ["backticked JSON target", `\`${JSON.stringify({ result: "raw provider scaffold" })}\``],
+    ["single-quoted JSON with delimiter value", "'{\"result\":\"Mara said 'stop'\"}'"],
+    ["backticked JSON with delimiter value", '`{"result":"Mara wrote `stop`"}`'],
+    ["fenced language JSON", '```json\n{"result":"raw provider scaffold"}\n```'],
+    ["zero-width layout indent", "\u200B\\u0072esult\\u003A raw provider scaffold"],
+    ["NEL line boundary", "prose\u0085\u200B\\u0065cho\\u003D raw provider scaffold"],
     [
       "nested serialized child",
       `\`${JSON.stringify({ payload: JSON.stringify({ meta: { echo: "raw provider scaffold" } }) })}\``,
