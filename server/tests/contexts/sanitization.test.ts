@@ -97,8 +97,49 @@ describe("proposal markdown prose predicate", () => {
       "a natural list bullet",
       `${LONG_NARRATIVE_PROSE}\n\n- The result: Mara kept the lantern lit until Tomas reached the quay.`,
     ],
+    [
+      "contractions outside structural candidates",
+      `${LONG_NARRATIVE_PROSE}\n\nMara's answer made Tomas say, "I don't know which road would keep them dry."`,
+    ],
+    [
+      "leading apostrophe prose without a candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n'Twas only rain on the slate roof, and no scaffold followed it.`,
+    ],
+    [
+      "a non-target object with a quoted result value",
+      `${LONG_NARRATIVE_PROSE}\n\n{meta: "the result = a promise Mara could finally trust"}`,
+    ],
   ])("accepts %s that is not a structural key", (_label, narrative) => {
     expect(isProposalMarkdownProse(narrative)).toBe(true);
+  });
+
+  it.each([
+    [
+      "a decoded quoted result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"\\u0072esult": "raw provider scaffold"}`,
+    ],
+    [
+      "a decoded bare result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{ \\u0072esult: "raw provider scaffold" }`,
+    ],
+    [
+      "an unclosed array candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": [ result: "raw provider scaffold"`,
+    ],
+    [
+      "an unterminated quoted candidate value",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": "unterminated, "result": "raw provider scaffold"}`,
+    ],
+    [
+      "an extra closer after a candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta":{"note":"x"}}}, result = "raw provider scaffold"`,
+    ],
+    [
+      "a candidate after leading apostrophe prose",
+      `${LONG_NARRATIVE_PROSE}\n\n'Twas a hard rain, then {meta: {}, result = "raw provider scaffold"}`,
+    ],
+  ])("rejects %s", (_label, markdown) => {
+    expect(isProposalMarkdownProse(markdown)).toBe(false);
   });
 
   it.each([
