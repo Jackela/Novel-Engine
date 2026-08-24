@@ -901,6 +901,44 @@
         "responses": {
           "204": {
             "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "SNAPSHOT_CONFLICT"
+                          ],
+                          "type": "string"
+                        },
+                        "message": {
+                          "enum": [
+                            "Document is referenced by an immutable snapshot."
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
           }
         }
       },
@@ -1610,6 +1648,240 @@
                   },
                   "required": [
                     "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/reviews": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "reviews": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "created_at": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "issues": {
+                            "items": {
+                              "additionalProperties": false,
+                              "properties": {
+                                "code": {
+                                  "type": "string"
+                                },
+                                "document_id": {
+                                  "type": "string"
+                                },
+                                "evidence": {
+                                  "additionalProperties": true,
+                                  "type": "object"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                },
+                                "severity": {
+                                  "enum": [
+                                    "blocker",
+                                    "warning",
+                                    "suggestion"
+                                  ],
+                                  "type": "string"
+                                },
+                                "suggestion": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "document_id",
+                                "severity",
+                                "code",
+                                "message",
+                                "suggestion",
+                                "evidence"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "project_id": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "snapshot_id": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "snapshot_id",
+                          "provider",
+                          "model",
+                          "summary",
+                          "created_at",
+                          "issues"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "reviews"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {},
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "created_at": {
+                      "format": "date-time",
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "document_id": {
+                            "type": "string"
+                          },
+                          "evidence": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          },
+                          "severity": {
+                            "enum": [
+                              "blocker",
+                              "warning",
+                              "suggestion"
+                            ],
+                            "type": "string"
+                          },
+                          "suggestion": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "document_id",
+                          "severity",
+                          "code",
+                          "message",
+                          "suggestion",
+                          "evidence"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "snapshot_id": {
+                      "type": "string"
+                    },
+                    "summary": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "snapshot_id",
+                    "provider",
+                    "model",
+                    "summary",
+                    "created_at",
+                    "issues"
                   ],
                   "type": "object"
                 }

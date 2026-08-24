@@ -1,8 +1,12 @@
+import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import {
   documentRevisions,
   documents,
+  projectSnapshots,
+  reviews,
+  snapshotDocuments,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
   buildStudioApp,
@@ -219,6 +223,82 @@ describe("documents surface", () => {
         `/api/projects/${project.id}/documents/${extra.id}`,
       );
       expect(missing.statusCode).toBe(404);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("rejects deletion of a review-snapshotted document without losing immutable records", async () => {
+    const { app } = await buildStudioApp(monotonicClock());
+    try {
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Protected review");
+      const protectedDocument = project.documents.at(0);
+      if (protectedDocument === undefined) {
+        throw new Error("Seeded projects must include a document.");
+      }
+      const createdReview = await call(app, jar, "POST", `/api/projects/${project.id}/reviews`);
+      expect(createdReview.statusCode, createdReview.body).toBe(201);
+      const review = createdReview.json();
+
+      const db = app.studioDb?.db;
+      if (db === undefined) {
+        throw new Error("Studio database must be available.");
+      }
+      const snapshotState = () => ({
+        document: db.select().from(documents).where(eq(documents.id, protectedDocument.id)).get(),
+        revisions: db
+          .select()
+          .from(documentRevisions)
+          .where(eq(documentRevisions.documentId, protectedDocument.id))
+          .all(),
+        snapshots: db
+          .select()
+          .from(projectSnapshots)
+          .where(eq(projectSnapshots.projectId, project.id))
+          .all(),
+        references: db
+          .select()
+          .from(snapshotDocuments)
+          .where(eq(snapshotDocuments.documentId, protectedDocument.id))
+          .all(),
+        assessments: db.select().from(reviews).where(eq(reviews.projectId, project.id)).all(),
+      });
+      const before = snapshotState();
+      expect(before.document).toMatchObject({ id: protectedDocument.id });
+      const revisionId = before.document?.currentRevisionId;
+      if (revisionId === null || revisionId === undefined) {
+        throw new Error("Seeded document must have a current revision.");
+      }
+      expect(before.revisions).toHaveLength(1);
+      expect(before.snapshots).toHaveLength(1);
+      expect(before.references).toEqual([
+        expect.objectContaining({
+          documentId: protectedDocument.id,
+          revisionId,
+        }),
+      ]);
+      expect(before.assessments).toEqual([
+        expect.objectContaining({
+          id: review.id,
+          snapshotId: review.snapshot_id,
+        }),
+      ]);
+
+      const deletion = await call(
+        app,
+        jar,
+        "DELETE",
+        `/api/projects/${project.id}/documents/${protectedDocument.id}`,
+      );
+      expect(deletion.statusCode, deletion.body).toBe(409);
+      const error = deletion.json().error;
+      expect(error.code).toBe("SNAPSHOT_CONFLICT");
+      expect(error.message).toBe("Document is referenced by an immutable snapshot.");
+      expect(deletion.json()).not.toHaveProperty("detail");
+      expect(error).not.toHaveProperty("detail");
+
+      expect(snapshotState()).toEqual(before);
     } finally {
       await app.close();
     }
