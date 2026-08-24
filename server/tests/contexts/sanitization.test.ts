@@ -78,11 +78,29 @@ describe("proposal markdown prose predicate", () => {
     expect(isProposalMarkdownProse(cleaned)).toBe(true);
   });
 
+  it("accepts ordinary narrative uses of echo and result", () => {
+    const narrative = `${LONG_NARRATIVE_PROSE}\n\nThe corridor echoed after Mara closed the archive door, and the result was a silence that let her hear the rain again.`;
+
+    expect(isProposalMarkdownProse(narrative)).toBe(true);
+  });
+
   it.each([
     ["too-short prose", "Rain fell over the quay."],
     ["a JSON document", JSON.stringify({ prose: LONG_NARRATIVE_PROSE })],
-    ["echo scaffolding", `${LONG_NARRATIVE_PROSE}\n\necho: chapter continuation`],
-    ["result scaffolding", `${LONG_NARRATIVE_PROSE}\n\n{"result": "chapter continuation"}`],
+    ["an unquoted mixed-case echo key", `${LONG_NARRATIVE_PROSE}\n\nEcho: chapter continuation`],
+    [
+      "a single-quoted mixed-case echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n'EcHo' = chapter continuation`,
+    ],
+    [
+      "a double-quoted upper-case result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"RESULT": "chapter continuation"}`,
+    ],
+    ["a backticked result key", `${LONG_NARRATIVE_PROSE}\n\n\`result\`: chapter continuation`],
+    [
+      "a comma-bounded result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"prose": "chapter", result = "chapter continuation"}`,
+    ],
   ])("rejects %s", (_label, markdown) => {
     expect(isProposalMarkdownProse(markdown)).toBe(false);
   });

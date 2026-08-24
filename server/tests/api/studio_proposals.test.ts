@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
-import { FORBIDDEN_PROSE_PHRASES } from "../../src/contexts/studio/application/sanitization.js";
+import { isProposalMarkdownProse } from "../../src/contexts/studio/application/sanitization.js";
+import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { capturingFactory, validProposalProse } from "./proposal_test_helpers.js";
 import {
   admitProposal,
   buildStudioApp,
@@ -16,13 +18,7 @@ import {
 } from "./studio_helpers.js";
 
 function assertIsProse(markdown: string): void {
-  expect(markdown.length).toBeGreaterThan(400);
-  expect(() => JSON.parse(markdown)).toThrow();
-  expect(markdown.toLowerCase()).not.toContain("echo");
-  expect(markdown).not.toContain('"result"');
-  for (const phrase of FORBIDDEN_PROSE_PHRASES) {
-    expect(markdown.toLowerCase()).not.toContain(phrase.toLowerCase());
-  }
+  expect(isProposalMarkdownProse(markdown)).toBe(true);
 }
 
 describe("proposal flow", () => {
@@ -127,6 +123,48 @@ describe("proposal flow", () => {
       expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
     } finally {
       await app.close();
+    }
+  });
+
+  it("keeps narrative echo and result prose while rejecting key-shaped provider scaffolding", async () => {
+    const cases = [
+      {
+        markdown: `${validProposalProse}\n\nThe corridor echoed at dawn, and the result was a promise Mara could finally trust.`,
+        status: "completed",
+      },
+      { markdown: `${validProposalProse}\n\nEcho: raw scaffold echo`, status: "failed" },
+      { markdown: `${validProposalProse}\n\n'EcHo' = raw scaffold echo`, status: "failed" },
+      { markdown: `${validProposalProse}\n\n{"RESULT": "raw scaffold echo"}`, status: "failed" },
+      { markdown: `${validProposalProse}\n\n\`result\`: raw scaffold echo`, status: "failed" },
+    ] as const;
+
+    for (const { markdown, status } of cases) {
+      const capture = capturingFactory({ markdown });
+      const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
+      try {
+        const database = app.studioDb?.db;
+        if (database === undefined) throw new Error("Studio test app must expose its database.");
+        const jar = await ownerJar(app);
+        const project = await seedProject(app, jar, "Prose guard");
+        const document = project.documents[0] as DocumentPayload;
+        const job = await draftProposal(app, jar, project.id, document.id, {
+          operation: "continue",
+          provider: "mock",
+        });
+
+        expect(job.status).toBe(status);
+        if (status === "completed") {
+          expect(job.result.proposal_markdown).toBe(markdown);
+          expect(database.select().from(usageEvents).all()).toHaveLength(1);
+          continue;
+        }
+        expect(job.result.proposal_markdown).toBe("");
+        expect(JSON.stringify(job)).not.toContain("raw scaffold echo");
+        expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
+        expect(database.select().from(usageEvents).all()).toHaveLength(0);
+      } finally {
+        await app.close();
+      }
     }
   });
 

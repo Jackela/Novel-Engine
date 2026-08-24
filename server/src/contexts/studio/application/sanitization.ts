@@ -121,6 +121,13 @@ function parsesAsJson(markdown: string): boolean {
 }
 
 /**
+ * Provider scaffold is only a key-shaped echo/result field, never a natural
+ * narrative word. Quotes, when present, must open and close with the same type.
+ */
+const PROVIDER_SCAFFOLDING_KEY =
+  /(?:^|[\n{,])\s*(?:(["'\x60])(?:echo|result)\1|(?:echo|result))\s*(?::|=)/i;
+
+/**
  * Check the final, already-sanitized form of proposal markdown before a job
  * is completed. Residual mechanical output is rejected rather than rewritten.
  */
@@ -129,10 +136,10 @@ export function isProposalMarkdownProse(markdown: string): boolean {
     return false;
   }
 
-  const normalized = markdown.toLowerCase();
-  if (normalized.includes("echo") || markdown.includes('"result"')) {
+  if (PROVIDER_SCAFFOLDING_KEY.test(markdown)) {
     return false;
   }
 
+  const normalized = markdown.toLowerCase();
   return FORBIDDEN_PROSE_PHRASES.every((phrase) => !normalized.includes(phrase.toLowerCase()));
 }
