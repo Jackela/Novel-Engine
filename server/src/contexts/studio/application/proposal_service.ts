@@ -37,11 +37,16 @@ function resolvedTokenCount(reported: number | null, text: string): number {
   return reported ?? wordCount(text);
 }
 
-async function disposeProvider(provider: TextGenerationProvider): Promise<void> {
+type ProviderCleanupFailureReporter = (failure: unknown) => void;
+
+async function disposeProvider(
+  provider: TextGenerationProvider,
+  reportCleanupFailure: ProviderCleanupFailureReporter,
+): Promise<void> {
   try {
     await provider.dispose?.();
-  } catch {
-    // Cleanup is best effort: it must not change a proposal job's outcome.
+  } catch (failure) {
+    reportCleanupFailure(failure);
   }
 }
 
@@ -82,6 +87,7 @@ export class AiProposalService {
     projectId: string,
     documentId: string,
     input: ProposalDraftInput,
+    reportCleanupFailure: ProviderCleanupFailureReporter,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
     const step = OPERATION_STEPS[input.operation];
@@ -185,7 +191,7 @@ export class AiProposalService {
         }),
       );
     } finally {
-      await disposeProvider(provider);
+      await disposeProvider(provider, reportCleanupFailure);
     }
   }
 

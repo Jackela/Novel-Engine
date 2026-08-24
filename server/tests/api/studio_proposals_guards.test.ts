@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   type TextGenerationProvider,
@@ -18,7 +18,10 @@ import {
 
 type LifecycleOutcome = "complete" | "provider_error" | "programming_error";
 
-function disposableFactory(outcomes: readonly LifecycleOutcome[]): {
+function disposableFactory(
+  outcomes: readonly LifecycleOutcome[],
+  disposeFailureMessage?: string,
+): {
   factory: TextGenerationProviderFactory;
   created: number[];
   disposed: number[];
@@ -49,6 +52,9 @@ function disposableFactory(outcomes: readonly LifecycleOutcome[]): {
       },
       async dispose() {
         disposed.push(index);
+        if (disposeFailureMessage !== undefined) {
+          throw new Error(disposeFailureMessage);
+        }
       },
     };
     return implementation;
@@ -91,9 +97,14 @@ describe("proposal guards", () => {
     }
   });
 
-  it("disposes each per-request provider without masking proposal outcomes", async () => {
-    const lifecycle = disposableFactory(["complete", "provider_error", "programming_error"]);
+  it("disposes each per-request provider without masking outcomes and reports cleanup failures", async () => {
+    const cleanupSecret = "cleanup-secret-must-not-reach-a-response";
+    const lifecycle = disposableFactory(
+      ["complete", "provider_error", "programming_error"],
+      cleanupSecret,
+    );
     const { app } = await buildStudioApp(undefined, { textProviderFactory: lifecycle.factory });
+    const logError = vi.spyOn(app.log, "error");
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Lifecycle");
@@ -105,6 +116,7 @@ describe("proposal guards", () => {
       const completed = await propose(app, jar, project.id, document.id, { operation: "continue" });
       expect(completed.statusCode, completed.body).toBe(200);
       expect(completed.json().status).toBe("completed");
+      expect(completed.body).not.toContain(cleanupSecret);
       expect(lifecycle.disposed).toEqual([0]);
 
       const providerFailure = await propose(app, jar, project.id, document.id, {
@@ -113,6 +125,7 @@ describe("proposal guards", () => {
       expect(providerFailure.statusCode, providerFailure.body).toBe(200);
       expect(providerFailure.json().status).toBe("failed");
       expect(providerFailure.json().error).toBe("provider transport was unavailable");
+      expect(providerFailure.body).not.toContain(cleanupSecret);
       expect(lifecycle.disposed).toEqual([0, 1]);
 
       const programmingFailure = await propose(app, jar, project.id, document.id, {
@@ -121,9 +134,25 @@ describe("proposal guards", () => {
       expect(programmingFailure.statusCode, programmingFailure.body).toBe(500);
       expect(programmingFailure.json().error.code).toBe("INTERNAL_ERROR");
       expect(programmingFailure.body).not.toContain("unexpected provider bug");
+      expect(programmingFailure.body).not.toContain(cleanupSecret);
       expect(lifecycle.created).toEqual([0, 1, 2]);
       expect(lifecycle.disposed).toEqual([0, 1, 2]);
+
+      const cleanupLogs = logError.mock.calls.filter(
+        ([details, message]) =>
+          message === "provider cleanup failed" &&
+          typeof details === "object" &&
+          details !== null &&
+          (details as Record<string, unknown>).provider_cleanup_failed === true,
+      );
+      expect(cleanupLogs).toHaveLength(3);
+      for (const [details] of cleanupLogs) {
+        expect(details).toMatchObject({ provider_cleanup_failed: true });
+        expect((details as { err?: unknown }).err).toBeInstanceOf(Error);
+        expect((details as { errorId?: unknown }).errorId).toBeTypeOf("string");
+      }
     } finally {
+      logError.mockRestore();
       await app.close();
     }
   });

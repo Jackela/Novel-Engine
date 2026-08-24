@@ -26,6 +26,12 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
         documentId: string;
       };
       const body = request.body as { operation: string; instruction?: string; provider?: string };
+      const reportCleanupFailure = (failure: unknown): void => {
+        request.log.error(
+          { err: failure, errorId: request.id, provider_cleanup_failed: true },
+          "provider cleanup failed",
+        );
+      };
       return withStudioErrors(() =>
         requireServices(options).proposals.draftProposal(
           principal(request),
@@ -36,6 +42,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
             instruction: body.instruction ?? "",
             provider: body.provider ?? "mock",
           },
+          reportCleanupFailure,
         ),
       );
     },
