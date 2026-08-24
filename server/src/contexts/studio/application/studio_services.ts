@@ -1,5 +1,10 @@
 import type { TextGenerationProviderFactory } from "../../../contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "./document_service.js";
+import {
+  type ExportArtifactGateway,
+  SnapshotArtifactService,
+} from "./export_artifact_service.js";
+import type { ExportStore } from "./ports/export_store.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
 import { AiProposalService } from "./proposal_service.js";
@@ -13,6 +18,7 @@ export interface StudioServices {
   revisions: RevisionService;
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
+  artifacts: SnapshotArtifactService;
 }
 
 export interface CreateStudioServicesOptions {
@@ -21,6 +27,10 @@ export interface CreateStudioServicesOptions {
   providerFactory: TextGenerationProviderFactory;
   /** Server-owned review provenance; model choice is never an HTTP input. */
   reviewProvenance?: ReviewProviderProvenance | undefined;
+  /** Export snapshots and artifact records have a focused persistence boundary. */
+  artifactStore: ExportStore;
+  /** Filesystem adapter for atomic artifact writes and confined retrieval. */
+  artifactFiles: ExportArtifactGateway;
 }
 
 export function createStudioServices(
@@ -35,5 +45,8 @@ export function createStudioServices(
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(store, documents, options.providerFactory, now),
     reviewAssessments: new ReviewService(store, { now, provenance: options.reviewProvenance }),
+    artifacts: new SnapshotArtifactService(options.artifactStore, store, options.artifactFiles, {
+      now,
+    }),
   };
 }
