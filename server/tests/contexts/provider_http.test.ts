@@ -8,6 +8,7 @@ import {
   malformedJsonFailure,
   ProviderTransportError,
   providerFailureIsRetryable,
+  redactCredentialAndTruncateResponseBody,
   runWithRetryPolicy,
   timeoutFailure,
 } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
@@ -110,6 +111,33 @@ describe("runWithRetryPolicy", () => {
       return 42;
     });
     expect(calls).toBe(1);
+  });
+
+  it("caps caller-supplied retry attempts at three total calls", async () => {
+    let calls = 0;
+    const attempt = runWithRetryPolicy(
+      { maxAttempts: 4, delayMs: 1, sleep: IMMEDIATE_SLEEP },
+      async () => {
+        calls += 1;
+        throw httpStatusFailure("context", 503, "unavailable");
+      },
+    );
+    await expect(attempt).rejects.toBeInstanceOf(ProviderTransportError);
+    expect(calls).toBe(3);
+  });
+});
+
+describe("provider error diagnostics", () => {
+  it("redacts a boundary-crossing credential before truncating the response body", () => {
+    const credential = "sk-boundary-credential-which-must-never-leak";
+    const responseBody = `${"x".repeat(990)}${credential}${"y".repeat(20)}`;
+
+    const detail = redactCredentialAndTruncateResponseBody(responseBody, credential);
+
+    expect(detail).toContain("[REDACTED]");
+    expect(detail).not.toContain(credential);
+    expect(detail).not.toContain(credential.slice(0, 12));
+    expect(detail).toHaveLength(1_000);
   });
 });
 

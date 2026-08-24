@@ -4,6 +4,8 @@ import {
 } from "../../application/ports/text_generation.js";
 
 const RETRYABLE_HTTP_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_PROVIDER_ATTEMPTS = 3;
+const MAX_PROVIDER_ERROR_BODY_LENGTH = 1_000;
 
 /** Chapter generation calls must outlive the enclosing request timeout. */
 export const GENERATION_TIMEOUT_FLOOR_SECONDS = 180;
@@ -48,7 +50,7 @@ export type ProviderTransport = (url: string, init?: RequestInit) => Promise<Res
 
 /** The shared provider policy: three total attempts, with one second between retries. */
 export const DEFAULT_PROVIDER_RETRY_POLICY: ProviderRetryPolicy = {
-  maxAttempts: 3,
+  maxAttempts: MAX_PROVIDER_ATTEMPTS,
   delayMs: 1_000,
 };
 
@@ -58,9 +60,9 @@ function defaultSleep(delayMs: number): Promise<void> {
 
 function positiveAttemptCount(value: number | undefined): number {
   if (value === undefined || !Number.isFinite(value)) {
-    return DEFAULT_PROVIDER_RETRY_POLICY.maxAttempts ?? 3;
+    return MAX_PROVIDER_ATTEMPTS;
   }
-  return Math.max(1, Math.floor(value));
+  return Math.min(MAX_PROVIDER_ATTEMPTS, Math.max(1, Math.floor(value)));
 }
 
 function nonNegativeDelay(value: number | undefined): number {
@@ -117,6 +119,16 @@ export function httpStatusFailure(
   const detail = responseBody.trim();
   const suffix = detail === "" ? "" : ` ${detail}`;
   return new ProviderTransportError(`${context}: ${status}${suffix}`, { status });
+}
+
+/** Redact complete provider credentials before bounding response diagnostics. */
+export function redactCredentialAndTruncateResponseBody(
+  responseBody: string,
+  credential: string,
+): string {
+  const redacted =
+    credential === "" ? responseBody : responseBody.split(credential).join("[REDACTED]");
+  return redacted.slice(0, MAX_PROVIDER_ERROR_BODY_LENGTH);
 }
 
 /** Normalize a response that failed JSON-object parsing. */
