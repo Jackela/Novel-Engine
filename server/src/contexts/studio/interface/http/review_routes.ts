@@ -69,6 +69,13 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
       },
       preHandler: [guard],
       schema: { body: reviewCreateSchema, response: { 201: reviewResponseSchema } },
+      config: {
+        swaggerTransform: ({ schema, url }) => {
+          const documentationSchema = { ...schema };
+          delete documentationSchema.body;
+          return { schema: documentationSchema, url };
+        },
+      },
     },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };

@@ -1786,18 +1786,6 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "additionalProperties": false,
-                "properties": {},
-                "type": "object"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
           "201": {
             "content": {

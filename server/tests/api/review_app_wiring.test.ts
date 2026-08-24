@@ -34,7 +34,7 @@ async function createAndReadReview(
 }
 
 describe("review application wiring", () => {
-  it("mounts review routes for an owner project and uses deterministic mock provenance by default", async () => {
+  it("mounts bodyless review routes for an owner project and uses deterministic mock provenance by default", async () => {
     const { app } = await buildStudioApp();
     try {
       const { created, listed } = await createAndReadReview(app, "Default review");
@@ -49,6 +49,12 @@ describe("review application wiring", () => {
         provider: "mock",
         model: "deterministic-story-v1",
       });
+
+      const openapi = await app.inject({ method: "GET", url: "/openapi.json" });
+      expect(openapi.statusCode, openapi.body).toBe(200);
+      expect(
+        openapi.json().paths["/api/projects/{projectId}/reviews"].post.requestBody,
+      ).toBeUndefined();
     } finally {
       await app.close();
     }
