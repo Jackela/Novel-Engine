@@ -158,6 +158,13 @@ describe("proposal flow", () => {
       failed(paddedScaffold),
       failed("'{\"result\":\"Mara said 'stop'\"}'"),
       failed('`{"result":"Mara wrote `stop`"}`'),
+      failed(
+        JSON.stringify({
+          note: ' \u00a0\u0085\u200B\'{"result":"raw scaffold echo"}\'\u200B\u0085\u00a0 ',
+        }),
+      ),
+      failed(["'", String.raw`{\u0022result\u0022:\u0022Mara: 'stop'\u0022}`, "'"].join("")),
+      failed(String.raw`1\u0029 result: raw scaffold echo`),
       failed('```json\n{"result":"raw scaffold echo"}\n```'),
       failed("\u200B\\u0072esult\\u003A raw scaffold echo"),
       failed(`prose\u0085\u200B\\u0065cho\\u003D raw scaffold echo`),

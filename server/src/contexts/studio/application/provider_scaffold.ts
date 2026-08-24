@@ -8,8 +8,6 @@ const isLineBreak = (v?: string) => v !== undefined && "\r\n\u0085\u2028\u2029".
 const isIdentifier = (value?: string) => /[A-Za-z0-9_-]/.test(value ?? "");
 const isQuote = (value?: string): value is Quote => value === '"' || value === "'" || value === "`";
 const isProviderKey = (key: string) => /^(echo|result)$/i.test(key);
-const isJsonContainer = (v: unknown) =>
-  typeof v === "string" || (v !== null && typeof v === "object");
 const isInWordApostrophe = (markdown: string, index: number) =>
   markdown[index] === "'" && isIdentifier(markdown[index - 1]) && isIdentifier(markdown[index + 1]);
 function skipWhitespace(markdown: string, index: number): number {
@@ -19,17 +17,14 @@ function skipWhitespace(markdown: string, index: number): number {
 type UnicodeEscape = { character: string; end: number };
 function readUnicodeEscape(markdown: string, index: number): UnicodeEscape | undefined {
   const codePoint = markdown.slice(index + 2, index + 6);
-  if (markdown[index] !== "\\" || markdown[index + 1] !== "u" || !/^[0-9a-f]{4}$/i.test(codePoint))
-    return undefined;
+  if (!markdown.startsWith("\\u", index) || !/^[0-9a-f]{4}$/i.test(codePoint)) return undefined;
   return { character: String.fromCharCode(Number.parseInt(codePoint, 16)), end: index + 6 };
 }
 const isKeyCharacter = (v: string, f: boolean) => (f ? /[A-Za-z_]/ : /[A-Za-z0-9_-]/).test(v);
 function readSeparator(markdown: string, index: number): number | undefined {
-  if (markdown[index] === ":" || markdown[index] === "=") return index + 1;
   const unicodeEscape = readUnicodeEscape(markdown, index);
-  return unicodeEscape?.character === ":" || unicodeEscape?.character === "="
-    ? unicodeEscape.end
-    : undefined;
+  const character = markdown[index] === "\\" ? unicodeEscape?.character : markdown[index];
+  return character === ":" || character === "=" ? (unicodeEscape?.end ?? index + 1) : undefined;
 }
 function readField(markdown: string, start: number): { key: string; end: number } | undefined {
   const delimiter = markdown[start],
@@ -68,28 +63,23 @@ function readQuoteEnd(markdown: string, start: number): number | undefined {
     const character = markdown[index];
     if (character === "\\") {
       const escaped = markdown[index + 1];
-      if (
-        escaped === undefined ||
-        (escaped === "u" && readUnicodeEscape(markdown, index) === undefined)
-      )
-        return undefined;
+      const unicodeEscape = escaped === "u" ? readUnicodeEscape(markdown, index) : true;
+      if (escaped === undefined || unicodeEscape === undefined) return undefined;
       index += escaped === "u" ? 5 : 1;
     } else if (character === delimiter && !isInWordApostrophe(markdown, index)) return index + 1;
   }
   return undefined;
 }
-const isStructuralToken = (v: string) => isWhitespace(v) || /[{}[\]"'`:=,;]/.test(v);
+const isStructuralToken = (v: string) => isWhitespace(v) || /[{}[\]"'`:=,;+*.)-]/.test(v);
 function projectStructuralTokens(markdown: string): string {
   let projected = "";
   for (let index = 0; index < markdown.length; ) {
     const character = markdown[index] ?? "";
-    if (isQuote(character)) {
-      const end = readQuoteEnd(markdown, index);
-      if (end !== undefined) {
-        projected += markdown.slice(index, end);
-        index = end;
-        continue;
-      }
+    const quotedEnd = isQuote(character) ? readQuoteEnd(markdown, index) : undefined;
+    if (quotedEnd !== undefined) {
+      projected += markdown.slice(index, quotedEnd);
+      index = quotedEnd;
+      continue;
     }
     if (character === "\\") {
       let slashEnd = index + 1;
@@ -101,9 +91,7 @@ function projectStructuralTokens(markdown: string): string {
       }
       const unicodeEscape = readUnicodeEscape(markdown, index);
       const shortEscape = markdown[index + 1];
-      const decoded =
-        unicodeEscape?.character ??
-        (shortEscape !== undefined && /["'`]/.test(shortEscape) ? shortEscape : undefined);
+      const decoded = unicodeEscape?.character ?? shortEscape?.match(/["'`]/)?.[0];
       if (decoded !== undefined && isStructuralToken(decoded)) {
         projected += decoded;
         index = unicodeEscape?.end ?? index + 2;
@@ -115,18 +103,35 @@ function projectStructuralTokens(markdown: string): string {
   }
   return projected;
 }
+function hasProjectedProviderJson(source: string): boolean {
+  return hasSerializedProviderKey(parseSerializedJson(projectStructuralTokens(source)));
+}
 function hasQuotedProjectedJson(markdown: string): boolean {
-  for (let index = 0; index < markdown.length; ) {
-    const end = isQuote(markdown[index]) ? readQuoteEnd(markdown, index) : undefined;
-    if (end === undefined) {
-      index += 1;
-      continue;
+  let candidates = 0;
+  for (let index = 0; index < markdown.length; index += 1) {
+    const quote = markdown[index];
+    if (quote === '"') {
+      const end = readQuoteEnd(markdown, index);
+      if (end === undefined) continue;
+      if (hasProjectedProviderJson(markdown.slice(index + 1, end - 1))) return true;
+      index = end - 1;
     }
-    const decoded = parseSerializedJson(
-      projectStructuralTokens(markdown.slice(index + 1, end - 1)),
-    );
-    if (decoded !== undefined && hasSerializedProviderKey(decoded)) return true;
-    index = end;
+    if (quote !== "'" && quote !== "`") continue;
+    if (isInWordApostrophe(markdown, index) || (quote === "`" && markdown.startsWith("```", index)))
+      continue;
+    const start = skipWhitespace(markdown, index + 1);
+    const first = projectStructuralTokens(markdown.slice(start, start + 6))[0];
+    if (first !== "{" && first !== "[" && first !== '"') continue;
+    const limit = Math.min(markdown.length, index + jsonLimits.candidateLength + 1);
+    for (let end = start; end < limit; end += 1) {
+      if (markdown[end] === "\\") {
+        end += 1;
+      } else if (markdown[end] === quote) {
+        if (++candidates > jsonLimits.candidates) return true;
+        if (hasProjectedProviderJson(markdown.slice(index + 1, end))) return true;
+      }
+    }
+    if (limit < markdown.length) return true;
   }
   return false;
 }
@@ -149,10 +154,8 @@ function parseSerializedJson(source: string): unknown | undefined {
 function readJsonStringEnd(markdown: string, start: number): JsonEnd {
   for (let index = start + 1; index < markdown.length; index += 1) {
     if (index - start > jsonLimits.candidateLength) return "limit";
-    if (markdown[index] === "\\") {
-      if (markdown[index + 1] === undefined) return undefined;
-      index += 1;
-    } else if (markdown[index] === '"') return index + 1;
+    if (markdown[index] === '"') return index + 1;
+    if (markdown[index] === "\\" && markdown[++index] === undefined) return undefined;
   }
   return undefined;
 }
@@ -187,13 +190,17 @@ function hasSerializedProviderKey(value: unknown): boolean {
     if (typeof candidateValue === "string") {
       if (seenStrings.has(candidateValue)) continue;
       seenStrings.add(candidateValue);
-      const quote = candidateValue[0];
+      const start = skipWhitespace(candidateValue, 0);
+      let end = candidateValue.length;
+      while (end > start && isWhitespace(candidateValue[end - 1])) end -= 1;
+      const quote = candidateValue[start];
       const source =
-        (quote === "'" || quote === "`") && candidateValue.at(-1) === quote
-          ? projectStructuralTokens(candidateValue.slice(1, -1))
+        (quote === "'" || quote === "`") && candidateValue[end - 1] === quote
+          ? projectStructuralTokens(candidateValue.slice(start + 1, end - 1))
           : candidateValue;
       const decoded = parseSerializedJson(source);
-      if (!isJsonContainer(decoded)) continue;
+      if (typeof decoded !== "string" && (decoded === null || typeof decoded !== "object"))
+        continue;
       if (worklist.length >= walkLimits.work) return true;
       worklist.push({ value: decoded, depth: depth + 1, layers: layers + 1 });
       continue;
@@ -208,21 +215,14 @@ function hasSerializedProviderKey(value: unknown): boolean {
 }
 function hasSerializedJsonScaffolding(markdown: string): boolean {
   let candidates = 0;
-  for (let index = 0; index < markdown.length; ) {
-    const start = markdown[index];
-    if (start !== '"' && start !== "{" && start !== "[") {
-      index += 1;
-      continue;
-    }
+  for (let index = 0; index < markdown.length; index += 1) {
+    if (!'"{['.includes(markdown[index] ?? "")) continue;
     const end = readJsonCandidateEnd(markdown, index);
     if (end === "limit" || ++candidates > jsonLimits.candidates) return true;
-    if (end === undefined) {
-      index += 1;
-      continue;
-    }
+    if (end === undefined) continue;
     const decoded = parseSerializedJson(markdown.slice(index, end));
     if (decoded !== undefined && hasSerializedProviderKey(decoded)) return true;
-    index = decoded === undefined ? index + 1 : end;
+    if (decoded !== undefined) index = end - 1;
   }
   return false;
 }
@@ -239,11 +239,6 @@ function hasLineKey(markdown: string, start: number): boolean {
       index = skipWhitespace(markdown, index + ordered.length);
     }
   }
-  return isProviderKey(readField(markdown, index)?.key ?? "");
-}
-function hasLooseContinuation(markdown: string, start: number): boolean {
-  let index = start;
-  while (isWhitespace(markdown[index]) || /[}\],;:=]/.test(markdown[index] ?? "")) index += 1;
   return isProviderKey(readField(markdown, index)?.key ?? "");
 }
 function scanComposite(markdown: string, start: number): number | true {
@@ -265,7 +260,15 @@ function scanComposite(markdown: string, start: number): number | true {
       frames.push(character === "{" ? "}" : "]");
     } else if (character === frames.at(-1)) {
       frames.pop();
-      if (frames.length === 0) return hasLooseContinuation(markdown, index + 1) ? true : index + 1;
+      if (frames.length === 0) {
+        let continuation = index + 1;
+        while (
+          isWhitespace(markdown[continuation]) ||
+          /[}\],;:=]/.test(markdown[continuation] ?? "")
+        )
+          continuation += 1;
+        return isProviderKey(readField(markdown, continuation)?.key ?? "") ? true : index + 1;
+      }
     }
     index += 1;
   }
@@ -289,10 +292,7 @@ function hasDirectProviderScaffolding(markdown: string): boolean {
   return false;
 }
 export function hasProviderScaffolding(markdown: string): boolean {
+  if (hasQuotedProjectedJson(markdown) || hasDirectProviderScaffolding(markdown)) return true;
   const projected = projectStructuralTokens(markdown);
-  return (
-    hasQuotedProjectedJson(markdown) ||
-    hasDirectProviderScaffolding(markdown) ||
-    (projected !== markdown && hasDirectProviderScaffolding(projected))
-  );
+  return projected !== markdown && hasDirectProviderScaffolding(projected);
 }

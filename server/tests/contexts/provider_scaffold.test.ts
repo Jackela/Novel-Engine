@@ -46,8 +46,30 @@ describe("provider scaffold detection", () => {
     ["double-encoded target", JSON.stringify(JSON.stringify({ result: "raw provider scaffold" }))],
     ["single-quoted JSON target", "'" + JSON.stringify({ result: "raw provider scaffold" }) + "'"],
     ["backticked JSON target", `\`${JSON.stringify({ result: "raw provider scaffold" })}\``],
+    [
+      "trimmed single-quoted decoded child",
+      JSON.stringify({
+        note: ' \u00a0\u0085\u200B\'{"result":"raw provider scaffold"}\'\u200B\u0085\u00a0 ',
+      }),
+    ],
+    [
+      "trimmed backticked decoded child",
+      JSON.stringify({
+        note: ' \u00a0\u0085\u200B`{"result":"raw provider scaffold"}`\u200B\u0085\u00a0 ',
+      }),
+    ],
     ["single-quoted JSON with delimiter value", "'{\"result\":\"Mara said 'stop'\"}'"],
     ["backticked JSON with delimiter value", '`{"result":"Mara wrote `stop`"}`'],
+    [
+      "single-quoted projected JSON with inner delimiter",
+      ["'", String.raw`{\u0022result\u0022:\u0022Mara: 'stop'\u0022}`, "'"].join(""),
+    ],
+    [
+      "backticked projected JSON with inner delimiter",
+      ["`", String.raw`{\u0022result\u0022:\u0022Mara: `, "`", String.raw`stop\u0022}`, "`"].join(
+        "",
+      ),
+    ],
     ["fenced language JSON", '```json\n{"result":"raw provider scaffold"}\n```'],
     ["zero-width layout indent", "\u200B\\u0072esult\\u003A raw provider scaffold"],
     ["NEL line boundary", "prose\u0085\u200B\\u0065cho\\u003D raw provider scaffold"],
@@ -75,6 +97,11 @@ describe("provider scaffold detection", () => {
     ["escaped layout field", String.raw`{meta:1,\u00a0result:raw provider scaffold}`],
     ["escaped NEL field", String.raw`prose\u0085result:raw provider scaffold`],
     ["escaped zero-width field", String.raw`\u200becho:raw provider scaffold`],
+    ["escaped plus list label", String.raw`\u002B result: raw provider scaffold`],
+    ["escaped dash list label", String.raw`\u002D result: raw provider scaffold`],
+    ["escaped star list label", String.raw`\u002A result: raw provider scaffold`],
+    ["escaped ordered dot label", String.raw`1\u002E result: raw provider scaffold`],
+    ["escaped ordered close label", String.raw`1\u0029 result: raw provider scaffold`],
     [
       "single-quoted projected JSON",
       String.raw`'{\u0022result\u0022:\u0022raw provider scaffold\u0022}'`,
@@ -116,6 +143,7 @@ describe("provider scaffold detection", () => {
       "double-escaped documentation",
       String.raw`\\u007b\\u0022result\\u0022\\u003a\\u0022raw provider scaffold\\u0022\\u007d`,
     ],
+    ["escaped unsupported ordered opener", String.raw`1\u0028 result: raw provider scaffold`],
     [
       "real JSON string escapes",
       String.raw`{"note":"Mara quoted \u0022result\u0022 and kept walking."}`,
