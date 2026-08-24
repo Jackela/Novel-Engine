@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { existsSync } from "node:fs";
 import { readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { eq } from "drizzle-orm";
@@ -191,6 +192,56 @@ describe("export artifact catalog and delivery", () => {
       for (const contentType of Object.values(deliveryTypes)) {
         expect(deliverySpec).toContain(contentType);
       }
+    } finally {
+      await app.close();
+    }
+  });
+
+  it("removes completed production artifacts when their project is deleted", async () => {
+    const clock = monotonicClock();
+    const { app, directory } = await buildStudioApp(clock);
+    try {
+      const owner = await ownerJar(app);
+      const session = await call(app, owner, "GET", "/api/session");
+      expect(session.statusCode, session.body).toBe(200);
+      const principal = principalFromSession(session.json() as SessionPayload);
+      const project = await seedProject(app, owner, "Completed export deletion evidence");
+      const database = app.studioDb?.db;
+      if (database === undefined) throw new Error("Expected the real Studio database.");
+
+      const completed = await new SnapshotArtifactService(
+        new ExportStorePart(database),
+        new DrizzleStudioStore({ database, dataDirectory: directory }),
+        new FilesystemExportArtifactGateway(directory),
+        { now: clock, newId: () => "completed-export-evidence" },
+      ).materializeSnapshotArtifact(principal, project.id, "markdown");
+      const exportDirectory = join(directory, "exports", project.id);
+      expect(
+        database
+          .select()
+          .from(exportArtifacts)
+          .where(eq(exportArtifacts.projectId, project.id))
+          .all(),
+      ).toEqual([expect.objectContaining({ id: completed.id, projectId: project.id })]);
+      expect(existsSync(join(directory, completed.relativePath))).toBe(true);
+
+      const removed = await call(app, owner, "DELETE", `/api/projects/${project.id}`);
+      expect(removed.statusCode, removed.body).toBe(204);
+      expect(
+        database
+          .select()
+          .from(exportArtifacts)
+          .where(eq(exportArtifacts.projectId, project.id))
+          .all(),
+      ).toEqual([]);
+      expect(existsSync(exportDirectory)).toBe(false);
+
+      const catalog = await call(app, owner, "GET", `/api/projects/${project.id}/exports`);
+      expect(catalog.statusCode, catalog.body).toBe(404);
+      expect(catalog.json().error.code).toBe("NOT_FOUND");
+      const download = await call(app, owner, "GET", downloadUrl(project.id, completed.id));
+      expect(download.statusCode, download.body).toBe(404);
+      expect(download.json().error.code).toBe("NOT_FOUND");
     } finally {
       await app.close();
     }
