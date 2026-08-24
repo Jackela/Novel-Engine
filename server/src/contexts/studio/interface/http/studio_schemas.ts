@@ -246,6 +246,27 @@ export const documentConflictSchema = {
   required: ["error"],
 } as const;
 
+/** The fixed 409 envelope when an immutable snapshot references the document. */
+export const snapshotConflictSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: ["SNAPSHOT_CONFLICT"] },
+        message: {
+          type: "string",
+          enum: ["Document is referenced by an immutable snapshot."],
+        },
+      },
+      required: ["code", "message"],
+    },
+  },
+  required: ["error"],
+} as const;
+
 const jobEventSchema = {
   type: "object",
   additionalProperties: true,

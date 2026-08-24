@@ -12,6 +12,7 @@ import {
   restoreSchema,
   revisionConflictSchema,
   revisionResponseSchema,
+  snapshotConflictSchema,
 } from "./studio_schemas.js";
 
 const documentListResponseSchema = {
@@ -138,7 +139,10 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
 
   app.delete(
     "/api/projects/:projectId/documents/:documentId",
-    { preHandler: [guard], schema: { response: { 204: { type: "null" } } } },
+    {
+      preHandler: [guard],
+      schema: { response: { 204: { type: "null" }, 409: snapshotConflictSchema } },
+    },
     async (request, reply) => {
       const { projectId, documentId } = request.params as {
         projectId: string;

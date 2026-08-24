@@ -4,6 +4,7 @@ import {
   DuplicateDocumentError,
   NotFoundError,
   RevisionConflictError,
+  SnapshotConflict,
 } from "../../domain/exceptions.js";
 
 /**
@@ -22,6 +23,9 @@ function toAppError(error: unknown): unknown {
       message: error.message,
       details: { current_revision_id: error.currentRevisionId },
     });
+  }
+  if (error instanceof SnapshotConflict) {
+    return new AppError({ statusCode: 409, code: "SNAPSHOT_CONFLICT", message: error.message });
   }
   if (error instanceof DuplicateDocumentError) {
     return new AppError({ statusCode: 409, code: "DOCUMENT_CONFLICT", message: error.message });
