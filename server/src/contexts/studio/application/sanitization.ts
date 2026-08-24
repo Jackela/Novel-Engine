@@ -120,12 +120,31 @@ function parsesAsJson(markdown: string): boolean {
   }
 }
 
-/**
- * Provider scaffold is only a key-shaped echo/result field, never a natural
- * narrative word. Quotes, when present, must open and close with the same type.
- */
+/** Provider keys are deliberately limited to the two adjudicated scaffold labels. */
 const PROVIDER_SCAFFOLDING_KEY =
-  /(?:^|[\n{,])\s*(?:(["'\x60])(?:echo|result)\1|(?:echo|result))\s*(?::|=)/i;
+  "(?:\"(?:echo|result)\"|'(?:echo|result)'|`(?:echo|result)`|(?:echo|result))";
+
+/**
+ * A provider key can begin a nested line or follow a Markdown/YAML list
+ * marker. Horizontal whitespace is intentional: a line boundary is structural.
+ */
+const PROVIDER_SCAFFOLDING_LINE_KEY = new RegExp(
+  `^[\\t ]*(?:(?:[-*+][\\t ]+(?:\\[[ xX]\\][\\t ]+)?)|(?:\\d+[.)][\\t ]+))?${PROVIDER_SCAFFOLDING_KEY}[\\t ]*(?::|=)`,
+  "im",
+);
+
+/** A non-scaffold object field needed to recognize a later inline scaffold key. */
+const PROVIDER_SCAFFOLDING_OBJECT_FIELD =
+  "(?:\"[^\"\\r\\n{}]*\"|'[^'\\r\\n{}]*'|`[^`\\r\\n{}]*`|[A-Za-z_][A-Za-z0-9_-]*)";
+
+/**
+ * Retain object-shaped echo/result detection without treating every comma in
+ * dialogue as a key boundary.
+ */
+const PROVIDER_SCAFFOLDING_INLINE_OBJECT_KEY = new RegExp(
+  `\\{(?:[\\t ]*${PROVIDER_SCAFFOLDING_KEY}[\\t ]*(?::|=)|[\\t ]*${PROVIDER_SCAFFOLDING_OBJECT_FIELD}[\\t ]*(?::|=)[^\\r\\n{}]*,[\\t ]*${PROVIDER_SCAFFOLDING_KEY}[\\t ]*(?::|=))`,
+  "i",
+);
 
 /**
  * Check the final, already-sanitized form of proposal markdown before a job
@@ -136,7 +155,10 @@ export function isProposalMarkdownProse(markdown: string): boolean {
     return false;
   }
 
-  if (PROVIDER_SCAFFOLDING_KEY.test(markdown)) {
+  if (
+    PROVIDER_SCAFFOLDING_LINE_KEY.test(markdown) ||
+    PROVIDER_SCAFFOLDING_INLINE_OBJECT_KEY.test(markdown)
+  ) {
     return false;
   }
 

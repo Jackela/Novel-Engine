@@ -84,6 +84,12 @@ describe("proposal markdown prose predicate", () => {
     expect(isProposalMarkdownProse(narrative)).toBe(true);
   });
 
+  it("accepts quoted result dialogue that is not a structural key", () => {
+    const narrative = `${LONG_NARRATIVE_PROSE}\n\nMara said, "result: then we run before the tide turns," and Tomas answered by lifting the lantern.`;
+
+    expect(isProposalMarkdownProse(narrative)).toBe(true);
+  });
+
   it.each([
     ["too-short prose", "Rain fell over the quay."],
     ["a JSON document", JSON.stringify({ prose: LONG_NARRATIVE_PROSE })],
@@ -100,6 +106,25 @@ describe("proposal markdown prose predicate", () => {
     [
       "a comma-bounded result key",
       `${LONG_NARRATIVE_PROSE}\n\n{"prose": "chapter", result = "chapter continuation"}`,
+    ],
+    ["an indented dash result key", `${LONG_NARRATIVE_PROSE}\n\n  - ReSuLt: chapter continuation`],
+    ["an asterisk quoted echo key", `${LONG_NARRATIVE_PROSE}\n\n\t* 'EcHo' = chapter continuation`],
+    [
+      "a plus backticked result key",
+      `${LONG_NARRATIVE_PROSE}\n\n    + \`RESULT\`: chapter continuation`,
+    ],
+    [
+      "an unchecked task echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n- [ ] "ECHO" = chapter continuation`,
+    ],
+    [
+      "a checked task result key",
+      `${LONG_NARRATIVE_PROSE}\n\n  - [x] result: chapter continuation`,
+    ],
+    ["an ordered dot result key", `${LONG_NARRATIVE_PROSE}\n\n  1. "Result": chapter continuation`],
+    [
+      "an ordered parenthesis echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n    2) 'ECHO' = chapter continuation`,
     ],
   ])("rejects %s", (_label, markdown) => {
     expect(isProposalMarkdownProse(markdown)).toBe(false);
