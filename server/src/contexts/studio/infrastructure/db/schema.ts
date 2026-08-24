@@ -163,3 +163,29 @@ export const reviewIssues = sqliteTable(
     index("idx_review_issues_snapshot_document").on(table.snapshotDocumentId),
   ],
 );
+
+/**
+ * Snapshot-bound export artifacts. The stored path is relative to the data
+ * root so the export service can confine downloads before reading a file.
+ */
+export const exports = sqliteTable(
+  "exports",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => projectSnapshots.id, { onDelete: "cascade" }),
+    format: text("format").notNull(),
+    relativePath: text("relative_path").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    checksumSha256: text("checksum_sha256").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("idx_exports_project_created").on(table.projectId, table.createdAt),
+    index("idx_exports_snapshot").on(table.snapshotId),
+  ],
+);
