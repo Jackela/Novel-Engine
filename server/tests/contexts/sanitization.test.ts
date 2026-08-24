@@ -90,6 +90,10 @@ describe("proposal markdown prose predicate", () => {
       `${LONG_NARRATIVE_PROSE}\n\nMara said, "result: then we run before the tide turns," and Tomas answered by lifting the lantern.`,
     ],
     [
+      "quoted dialogue containing an object-shaped result label",
+      `${LONG_NARRATIVE_PROSE}\n\nMara read the label "{ result: turn back }" and put it away before the rain reached the quay.`,
+    ],
+    [
       "a natural list bullet",
       `${LONG_NARRATIVE_PROSE}\n\n- The result: Mara kept the lantern lit until Tomas reached the quay.`,
     ],
@@ -113,6 +117,26 @@ describe("proposal markdown prose predicate", () => {
     [
       "a comma-bounded result key",
       `${LONG_NARRATIVE_PROSE}\n\n{"prose": "chapter", result = "chapter continuation"}`,
+    ],
+    [
+      "a tab-separated result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {},\t"result": "chapter continuation"}`,
+    ],
+    [
+      "a line-whitespace-separated result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {},\n\t"result": "chapter continuation"}`,
+    ],
+    [
+      "a JSON-escaped result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"\\u0072esult": "chapter continuation"}`,
+    ],
+    [
+      "a result key after malformed nesting",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta":[}, result = "chapter continuation"}`,
+    ],
+    [
+      "a result key after an apostrophe in an unquoted object value",
+      `${LONG_NARRATIVE_PROSE}\n\n{meta: it's raining, result = "chapter continuation"}`,
     ],
     [
       "a sibling result key after a nested object",

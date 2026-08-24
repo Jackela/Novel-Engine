@@ -137,7 +137,7 @@ type InlineContainer = "array" | "object";
 type InlineStringDelimiter = '"' | "'" | "`";
 
 function isInlineWhitespace(character: string | undefined): boolean {
-  return character === " " || character === "\\t" || character === "\\r" || character === "\\n";
+  return character === " " || character === "\t" || character === "\r" || character === "\n";
 }
 
 function isInlineStringDelimiter(character: string): character is InlineStringDelimiter {
@@ -152,6 +152,13 @@ function isInlineIdentifierCharacter(character: string | undefined): boolean {
   return character !== undefined && /[A-Za-z0-9_-]/.test(character);
 }
 
+function startsInlineString(markdown: string, index: number): InlineStringDelimiter | undefined {
+  const delimiter = markdown[index];
+  if (delimiter === undefined || !isInlineStringDelimiter(delimiter)) return undefined;
+  if (delimiter === "'" && isInlineIdentifierCharacter(markdown[index - 1])) return undefined;
+  return delimiter;
+}
+
 /** Read a quoted or identifier key positioned directly after an object delimiter. */
 function readsProviderScaffoldingObjectKey(markdown: string, start: number): boolean {
   let index = start;
@@ -161,15 +168,22 @@ function readsProviderScaffoldingObjectKey(markdown: string, start: number): boo
   const delimiter = markdown[index];
   if (delimiter !== undefined && isInlineStringDelimiter(delimiter)) {
     index += 1;
-    let escaped = false;
     let closed = false;
     for (; index < markdown.length; index += 1) {
       const character = markdown.charAt(index);
-      if (escaped) {
-        key += character;
-        escaped = false;
-      } else if (character === "\\") {
-        escaped = true;
+      if (character === "\\") {
+        const escapedCharacter = markdown[index + 1];
+        if (escapedCharacter === undefined) return false;
+        if (escapedCharacter === "u") {
+          const codePoint = markdown.slice(index + 2, index + 6);
+          if (/^[0-9a-f]{4}$/i.test(codePoint)) {
+            key += String.fromCharCode(Number.parseInt(codePoint, 16));
+            index += 5;
+            continue;
+          }
+        }
+        key += escapedCharacter;
+        index += 1;
       } else if (character === delimiter) {
         index += 1;
         closed = true;
@@ -217,8 +231,9 @@ function hasProviderScaffoldingInlineObjectKey(markdown: string): boolean {
       continue;
     }
 
-    if (containers.length > 0 && isInlineStringDelimiter(character)) {
-      stringDelimiter = character;
+    const delimiter = startsInlineString(markdown, index);
+    if (delimiter !== undefined) {
+      stringDelimiter = delimiter;
       continue;
     }
     if (character === "{") {
@@ -226,11 +241,13 @@ function hasProviderScaffoldingInlineObjectKey(markdown: string): boolean {
       if (readsProviderScaffoldingObjectKey(markdown, index + 1)) return true;
     } else if (character === "[") {
       containers.push("array");
-    } else if (character === "}" && containers.at(-1) === "object") {
+    } else if (character === "}") {
+      if (containers.length > 0 && containers.at(-1) !== "object") return true;
       containers.pop();
-    } else if (character === "]" && containers.at(-1) === "array") {
+    } else if (character === "]") {
+      if (containers.length > 0 && containers.at(-1) !== "array") return true;
       containers.pop();
-    } else if (character === "," && containers.at(-1) === "object") {
+    } else if (character === "," && containers.length > 0) {
       if (readsProviderScaffoldingObjectKey(markdown, index + 1)) return true;
     }
   }

@@ -139,6 +139,10 @@ describe("proposal flow", () => {
         markdown: `${validProposalProse}\n\n{"meta": {}, "result": "raw scaffold echo"}`,
         status: "failed",
       },
+      {
+        markdown: `${validProposalProse}\n\n{"meta":[},\t"\\u0072esult" = "raw scaffold echo"}`,
+        status: "failed",
+      },
       { markdown: `${validProposalProse}\n\n\`result\`: raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  - "ReSuLt" = raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  1) 'ECHO': raw scaffold echo`, status: "failed" },
