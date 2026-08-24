@@ -178,32 +178,35 @@ describe("proposal flow", () => {
       ),
       completed("Mara copied `{result: turn back}` into her notebook."),
     ] as const;
-    for (const { markdown, status } of cases) {
-      const capture = capturingFactory({ markdown });
-      const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
-      try {
-        const database = app.studioDb?.db;
-        if (database === undefined) throw new Error("Studio test app must expose its database.");
-        const jar = await ownerJar(app);
+    const result: { markdown?: string } = {};
+    const capture = capturingFactory(result);
+    const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
+    try {
+      const database = app.studioDb?.db;
+      if (database === undefined) throw new Error("Studio test app must expose its database.");
+      const jar = await ownerJar(app);
+      for (const { markdown, status } of cases) {
         const project = await seedProject(app, jar, "Prose guard");
         const document = project.documents[0] as DocumentPayload;
+        const usageBefore = database.select().from(usageEvents).all().length;
+        result.markdown = markdown;
         const job = await draftProposal(app, jar, project.id, document.id, {
           operation: "continue",
           provider: "mock",
         });
         expect(job.status).toBe(status);
+        expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
         if (status === "completed") {
           expect(job.result.proposal_markdown).toBe(markdown);
-          expect(database.select().from(usageEvents).all()).toHaveLength(1);
+          expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore + 1);
           continue;
         }
         expect(job.result.proposal_markdown).toBe("");
         expect(JSON.stringify(job)).not.toContain("raw scaffold echo");
-        expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
-        expect(database.select().from(usageEvents).all()).toHaveLength(0);
-      } finally {
-        await app.close();
+        expect(database.select().from(usageEvents).all()).toHaveLength(usageBefore);
       }
+    } finally {
+      await app.close();
     }
   }, 20_000);
   it("reflects each document's own title and chapter number", async () => {
