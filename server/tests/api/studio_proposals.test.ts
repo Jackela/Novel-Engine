@@ -131,16 +131,10 @@ describe("proposal flow", () => {
         ),
       }),
     );
-    const failed = (scaffold: string) => ({
-      markdown: `${validProposalProse}\n\n${scaffold}`,
-      status: "failed" as const,
-    });
-    const failedAfterBreak = (lineBreak: string, scaffold: string) => ({
-      markdown: `${validProposalProse}${lineBreak}${scaffold}`,
-      status: "failed" as const,
-    });
-    const completed = (prose: string) => ({
-      markdown: `${validProposalProse}\n\n${prose}`,
+    const prose = (content: string) => `${validProposalProse}\n\n${content}`;
+    const failed = (scaffold: string) => ({ markdown: prose(scaffold), status: "failed" as const });
+    const completed = (content: string) => ({
+      markdown: prose(content),
       status: "completed" as const,
     });
     const cases = [
@@ -159,15 +153,21 @@ describe("proposal flow", () => {
       failed('{"meta" \\u0072esult = "raw provider scaffold echo"}'),
       failed(encodedScaffold),
       failed(encodedUnicodeScaffold),
-      failed(`'${JSON.stringify({ result: "raw scaffold echo" })}'`),
+      failed(JSON.stringify({ note: '\'{"result":"raw scaffold echo"}\'' })),
       failed(`\`${JSON.stringify({ payload: JSON.stringify({ echo: "raw scaffold echo" }) })}\``),
       failed(paddedScaffold),
       failed("'{\"result\":\"Mara said 'stop'\"}'"),
       failed('`{"result":"Mara wrote `stop`"}`'),
       failed('```json\n{"result":"raw scaffold echo"}\n```'),
       failed("\u200B\\u0072esult\\u003A raw scaffold echo"),
-      failedAfterBreak("\u0085", "\u200B\\u0065cho\\u003D raw scaffold echo"),
-      failedAfterBreak("\u2028", "\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo"),
+      failed(`prose\u0085\u200B\\u0065cho\\u003D raw scaffold echo`),
+      failed(`prose\u2028\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo`),
+      failed(String.raw`\u007b\u0022result\u0022\u003a\u0022raw scaffold echo\u0022\u007d`),
+      failed(String.raw`{meta:1,\u00a0result:raw scaffold echo}`),
+      failed(String.raw`prose\u0085result:raw scaffold echo`),
+      completed(
+        String.raw`\\u007b\\u0022result\\u0022\\u003a\\u0022raw scaffold echo\\u0022\\u007d`,
+      ),
       completed("Mara copied `{result: turn back}` into her notebook."),
     ] as const;
     for (const { markdown, status } of cases) {

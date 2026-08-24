@@ -56,12 +56,36 @@ describe("provider scaffold detection", () => {
       `\`${JSON.stringify({ payload: JSON.stringify({ meta: { echo: "raw provider scaffold" } }) })}\``,
     ],
     [
+      "neutral outer JSON quoted target",
+      JSON.stringify({ note: '\'{"result":"raw provider scaffold"}\'' }),
+    ],
+    [
       "triple-encoded nested target",
       JSON.stringify(JSON.stringify(JSON.stringify({ meta: { echo: "raw provider scaffold" } }))),
     ],
     [
       "encoded Unicode structural whitespace",
       JSON.stringify(JSON.stringify('{"meta":{},\u00a0"result":"raw provider scaffold"}')),
+    ],
+    [
+      "fully escaped JSON",
+      String.raw`\u007b\u0022result\u0022\u003a\u0022raw provider scaffold\u0022\u007d`,
+    ],
+    ["slash-escaped JSON", String.raw`{\"result\":\"raw provider scaffold\"}`],
+    ["escaped layout field", String.raw`{meta:1,\u00a0result:raw provider scaffold}`],
+    ["escaped NEL field", String.raw`prose\u0085result:raw provider scaffold`],
+    ["escaped zero-width field", String.raw`\u200becho:raw provider scaffold`],
+    [
+      "single-quoted projected JSON",
+      String.raw`'{\u0022result\u0022:\u0022raw provider scaffold\u0022}'`,
+    ],
+    [
+      "double-quoted projected JSON",
+      String.raw`"{\u0022result\u0022:\u0022raw provider scaffold\u0022}"`,
+    ],
+    [
+      "backticked projected JSON",
+      ["`", String.raw`{\u0022result\u0022:\u0022raw provider scaffold\u0022}`, "`"].join(""),
     ],
   ])("finds a %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(true);
@@ -87,6 +111,18 @@ describe("provider scaffold detection", () => {
     [
       "backticked nested JSON without target",
       `\`${JSON.stringify({ payload: JSON.stringify({ note: "result but no field" }) })}\``,
+    ],
+    [
+      "double-escaped documentation",
+      String.raw`\\u007b\\u0022result\\u0022\\u003a\\u0022raw provider scaffold\\u0022\\u007d`,
+    ],
+    [
+      "real JSON string escapes",
+      String.raw`{"note":"Mara quoted \u0022result\u0022 and kept walking."}`,
+    ],
+    [
+      "quoted escaped dialogue",
+      String.raw`Mara read '{\u007bresult: turn back\u007d}' and kept walking.`,
     ],
   ])("preserves %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(false);
