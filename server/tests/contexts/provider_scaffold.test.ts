@@ -9,6 +9,10 @@ describe("provider scaffold detection", () => {
     ["list label", "  - RESULT: raw provider scaffold"],
     ["task label", "- [x] '\\u0065cho' = raw provider scaffold"],
     ["ordered label", "  2) \\u0072esult: raw provider scaffold"],
+    ["Unicode leading indent", "\u2003RESULT: raw provider scaffold"],
+    ["Unicode list spacing", "\u2003-\u00a0RESULT: raw provider scaffold"],
+    ["Unicode line separator", "prose\u2028\u00a0\\u0072esult\\u003A raw provider scaffold"],
+    ["Unicode paragraph separator", "prose\u2029\u00a0'\\u0065cho'\\u003d raw provider scaffold"],
     ["direct object key", "{ RESULT: raw provider scaffold }"],
     ["actual inline whitespace", '{\r\n\t"result" = raw provider scaffold}'],
     ["Unicode structural whitespace", '{"meta":{},\u00a0"result": raw provider scaffold}'],
@@ -32,6 +36,12 @@ describe("provider scaffold detection", () => {
     ["unbounded mixed closers", '{meta: "note"}]}]}]}]}], \\u0072esult: raw provider scaffold'],
     ["mismatched closer", '{"meta": [}, result = raw provider scaffold'],
     ["double-encoded target", JSON.stringify(JSON.stringify({ result: "raw provider scaffold" }))],
+    ["single-quoted JSON target", "'" + JSON.stringify({ result: "raw provider scaffold" }) + "'"],
+    ["backticked JSON target", `\`${JSON.stringify({ result: "raw provider scaffold" })}\``],
+    [
+      "nested serialized child",
+      `\`${JSON.stringify({ payload: JSON.stringify({ meta: { echo: "raw provider scaffold" } }) })}\``,
+    ],
     [
       "triple-encoded nested target",
       JSON.stringify(JSON.stringify(JSON.stringify({ meta: { echo: "raw provider scaffold" } }))),
@@ -52,9 +62,18 @@ describe("provider scaffold detection", () => {
     ["unpaired leading apostrophe", "'Twas only rain on the slate roof."],
     ["quoted non-target value", '{meta: "the result = a promise Mara could trust"}'],
     ["invalid unicode escape", '{"\\uZZZZesult": "not a decoded key"}'],
+    ["escaped non-field separator", "\\u0072esult\\u003b raw provider scaffold"],
     [
       "encoded object without target",
       JSON.stringify(JSON.stringify({ note: "result but no field" })),
+    ],
+    [
+      "single-quoted JSON without target",
+      "'" + JSON.stringify({ note: "result but no field" }) + "'",
+    ],
+    [
+      "backticked nested JSON without target",
+      `\`${JSON.stringify({ payload: JSON.stringify({ note: "result but no field" }) })}\``,
     ],
   ])("preserves %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(false);

@@ -4,6 +4,8 @@ type Frame = { closer: "}" | "]" };
 
 const isWhitespace = (character: string | undefined) =>
   character !== undefined && /^\s$/u.test(character);
+const isLineBreak = (character: string | undefined) =>
+  character === "\r" || character === "\n" || character === "\u2028" || character === "\u2029";
 const isIdentifier = (character: string | undefined) => /[A-Za-z0-9_-]/.test(character ?? "");
 const isQuote = (character: string | undefined): character is Quote =>
   character === '"' || character === "'" || character === "`";
@@ -29,37 +31,46 @@ function isKeyCharacter(character: string, first: boolean): boolean {
   return (first ? /[A-Za-z_]/ : /[A-Za-z0-9_-]/).test(character);
 }
 
+function readSeparator(markdown: string, index: number): number | undefined {
+  if (markdown[index] === ":" || markdown[index] === "=") return index + 1;
+  const unicodeEscape = readUnicodeEscape(markdown, index);
+  return unicodeEscape !== undefined &&
+    (unicodeEscape.character === ":" || unicodeEscape.character === "=")
+    ? unicodeEscape.end
+    : undefined;
+}
+
 function readField(markdown: string, start: number): Field {
   const delimiter = markdown[start];
-  let index = isQuote(delimiter) ? start + 1 : start;
+  const quoted = isQuote(delimiter);
+  let index = quoted ? start + 1 : start;
   let key = "";
   while (index < markdown.length) {
-    let character = markdown[index] ?? "";
-    if (isQuote(delimiter) && character === delimiter) {
+    const character = markdown[index] ?? "";
+    if (quoted && character === delimiter) {
       index += 1;
       break;
     }
     if (character === "\\") {
       const unicodeEscape = readUnicodeEscape(markdown, index);
       if (unicodeEscape === undefined) return undefined;
-      character = unicodeEscape.character;
+      if (!quoted && key.length > 0 && /[:=]/.test(unicodeEscape.character)) break;
+      if (!quoted && !isKeyCharacter(unicodeEscape.character, key.length === 0)) return undefined;
+      key += unicodeEscape.character;
       index = unicodeEscape.end;
-    } else {
-      if (!isQuote(delimiter) && !isKeyCharacter(character, key.length === 0)) break;
-      key += character;
-      index += 1;
       continue;
     }
-    if (!isQuote(delimiter) && !isKeyCharacter(character, key.length === 0)) return undefined;
+    if (!quoted && !isKeyCharacter(character, key.length === 0)) break;
     key += character;
-  }
-  if ((isQuote(delimiter) && markdown[index - 1] !== delimiter) || key.length === 0)
-    return undefined;
-  index = skipWhitespace(markdown, index);
-  if (!isQuote(delimiter) && isQuote(markdown[index]) && /[:=]/.test(markdown[index + 1] ?? "")) {
     index += 1;
   }
-  return markdown[index] === ":" || markdown[index] === "=" ? { key, end: index + 1 } : undefined;
+  if ((quoted && markdown[index - 1] !== delimiter) || key.length === 0) return undefined;
+  index = skipWhitespace(markdown, index);
+  if (!quoted && isQuote(markdown[index]) && readSeparator(markdown, index + 1) !== undefined) {
+    index += 1;
+  }
+  const end = readSeparator(markdown, index);
+  return end === undefined ? undefined : { key, end };
 }
 
 function readQuoteEnd(markdown: string, start: number): number | undefined {
@@ -102,10 +113,34 @@ function normalizeSerializedJsonWhitespace(source: string): string {
   return normalized;
 }
 
-function hasSerializedProviderKey(value: object | unknown[]): boolean {
+function parseSerializedJson(source: string): unknown | undefined {
+  try {
+    return JSON.parse(normalizeSerializedJsonWhitespace(source)) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function hasSerializedProviderKey(value: unknown): boolean {
   const worklist: unknown[] = [value];
-  while (worklist.length > 0) {
+  const seenStrings = new Set<string>();
+  let remaining = 128;
+  while (worklist.length > 0 && remaining > 0) {
+    remaining -= 1;
     const candidate = worklist.pop();
+    if (typeof candidate === "string") {
+      if (seenStrings.has(candidate)) continue;
+      seenStrings.add(candidate);
+      const decoded = parseSerializedJson(candidate);
+      if (
+        typeof decoded === "string" ||
+        Array.isArray(decoded) ||
+        (decoded !== null && typeof decoded === "object")
+      ) {
+        worklist.push(decoded);
+      }
+      continue;
+    }
     if (Array.isArray(candidate)) {
       worklist.push(...candidate);
       continue;
@@ -120,22 +155,12 @@ function hasSerializedProviderKey(value: object | unknown[]): boolean {
 }
 
 function hasSerializedProviderScaffolding(markdown: string, start: number, end: number): boolean {
-  if (markdown[start] !== '"') return false;
-  let source = markdown.slice(start, end);
-  while (source.length > 0) {
-    let decoded: unknown;
-    try {
-      decoded = JSON.parse(normalizeSerializedJsonWhitespace(source)) as unknown;
-    } catch {
-      return false;
-    }
-    if (Array.isArray(decoded) || (decoded !== null && typeof decoded === "object")) {
-      return hasSerializedProviderKey(decoded);
-    }
-    if (typeof decoded !== "string" || decoded.length >= source.length) return false;
-    source = decoded;
-  }
-  return false;
+  const delimiter = markdown[start];
+  if (!isQuote(delimiter)) return false;
+  const source =
+    delimiter === '"' ? markdown.slice(start, end) : markdown.slice(start + 1, end - 1);
+  const decoded = parseSerializedJson(source);
+  return decoded !== undefined && hasSerializedProviderKey(decoded);
 }
 
 function isFieldBoundary(markdown: string, index: number): boolean {
@@ -145,8 +170,8 @@ function isFieldBoundary(markdown: string, index: number): boolean {
 
 function hasLineKey(markdown: string, start: number): boolean {
   let index = start;
-  while (markdown[index] === " " || markdown[index] === "\t") index += 1;
-  if (/[+*-]/.test(markdown[index] ?? "") && /[ \t]/.test(markdown[index + 1] ?? "")) {
+  while (isWhitespace(markdown[index])) index += 1;
+  if (/[+*-]/.test(markdown[index] ?? "") && isWhitespace(markdown[index + 1])) {
     index = skipWhitespace(markdown, index + 1);
     if (
       markdown[index] === "[" &&
@@ -161,7 +186,7 @@ function hasLineKey(markdown: string, start: number): boolean {
     index =
       index > orderedStart &&
       /[.)]/.test(markdown[index] ?? "") &&
-      /[ \t]/.test(markdown[index + 1] ?? "")
+      isWhitespace(markdown[index + 1])
         ? skipWhitespace(markdown, index + 1)
         : orderedStart;
   }
@@ -211,7 +236,7 @@ function scanComposite(markdown: string, start: number): number | true {
 /** Detect provider-shaped echo/result fields without treating ordinary prose as a scaffold. */
 export function hasProviderScaffolding(markdown: string): boolean {
   for (let index = 0; index < markdown.length; ) {
-    if ((index === 0 || /[\r\n]/.test(markdown[index - 1] ?? "")) && hasLineKey(markdown, index)) {
+    if ((index === 0 || isLineBreak(markdown[index - 1])) && hasLineKey(markdown, index)) {
       return true;
     }
     const character = markdown[index];

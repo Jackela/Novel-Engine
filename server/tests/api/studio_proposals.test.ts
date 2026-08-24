@@ -131,37 +131,39 @@ describe("proposal flow", () => {
     const encodedUnicodeScaffold = JSON.stringify(
       JSON.stringify('{"meta":{},\u00a0"result":"raw scaffold echo"}'),
     );
+    const failed = (scaffold: string) => ({
+      markdown: `${validProposalProse}\n\n${scaffold}`,
+      status: "failed" as const,
+    });
+    const failedAfterLineSeparator = (scaffold: string) => ({
+      markdown: `${validProposalProse}\u2028${scaffold}`,
+      status: "failed" as const,
+    });
+    const completed = (prose: string) => ({
+      markdown: `${validProposalProse}\n\n${prose}`,
+      status: "completed" as const,
+    });
     const cases = [
-      {
-        markdown: `${validProposalProse}\n\nThe corridor echoed at dawn, and the result was a promise Mara could finally trust.`,
-        status: "completed",
-      },
-      { markdown: `${validProposalProse}\n\nEcho: raw scaffold echo`, status: "failed" },
-      { markdown: `${validProposalProse}\n\n'EcHo' = raw scaffold echo`, status: "failed" },
-      { markdown: `${validProposalProse}\n\n{"RESULT": "raw scaffold echo"}`, status: "failed" },
-      {
-        markdown: `${validProposalProse}\n\n{"meta": {}, "result": "raw scaffold echo"}`,
-        status: "failed",
-      },
-      {
-        markdown: `${validProposalProse}\n\n{"meta":[},\t"\\u0072esult" = "raw scaffold echo"}`,
-        status: "failed",
-      },
-      {
-        markdown: `${validProposalProse}\n\n{"meta":{"note":"x"}}}, result = "raw scaffold echo"}`,
-        status: "failed",
-      },
-      { markdown: `${validProposalProse}\n\n\`result\`: raw scaffold echo`, status: "failed" },
-      { markdown: `${validProposalProse}\n\n  - "ReSuLt" = raw scaffold echo`, status: "failed" },
-      { markdown: `${validProposalProse}\n\n  1) 'ECHO': raw scaffold echo`, status: "failed" },
-      {
-        markdown: `${validProposalProse}\n\n{"meta" \\u0072esult = "raw provider scaffold echo"}`,
-        status: "failed",
-      },
-      { markdown: `${validProposalProse}\n\n${encodedScaffold}`, status: "failed" },
-      { markdown: `${validProposalProse}\n\n${encodedUnicodeScaffold}`, status: "failed" },
+      completed(
+        "The corridor echoed at dawn, and the result was a promise Mara could finally trust.",
+      ),
+      failed("Echo: raw scaffold echo"),
+      failed("'EcHo' = raw scaffold echo"),
+      failed('{"RESULT": "raw scaffold echo"}'),
+      failed('{"meta": {}, "result": "raw scaffold echo"}'),
+      failed('{"meta":[},\t"\\u0072esult" = "raw scaffold echo"}'),
+      failed('{"meta":{"note":"x"}}}, result = "raw scaffold echo"}'),
+      failed("`result`: raw scaffold echo"),
+      failed('  - "ReSuLt" = raw scaffold echo'),
+      failed("  1) 'ECHO': raw scaffold echo"),
+      failed('{"meta" \\u0072esult = "raw provider scaffold echo"}'),
+      failed(encodedScaffold),
+      failed(encodedUnicodeScaffold),
+      failed(`'${JSON.stringify({ result: "raw scaffold echo" })}'`),
+      failed(`\`${JSON.stringify({ payload: JSON.stringify({ echo: "raw scaffold echo" }) })}\``),
+      failedAfterLineSeparator("\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo"),
+      completed("Mara copied `{result: turn back}` into her notebook."),
     ] as const;
-
     for (const { markdown, status } of cases) {
       const capture = capturingFactory({ markdown });
       const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
