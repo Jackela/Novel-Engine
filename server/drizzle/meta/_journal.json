@@ -36,6 +36,13 @@
       "when": 1787509173079,
       "tag": "0004_magenta_william_stryker",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787603905301,
+      "tag": "0005_steady_madripoor",
+      "breakpoints": true
     }
   ]
 }
