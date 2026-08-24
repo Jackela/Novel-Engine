@@ -1,3 +1,4 @@
+import { HARD_DEFAULT_MODELS } from "../../application/model_resolution.js";
 import {
   isProviderStep,
   type ProviderStep,
@@ -21,7 +22,6 @@ import {
 } from "./provider_http.js";
 
 const DEFAULT_API_BASE = "https://api.openai.com/v1";
-const DEFAULT_MODEL = "gpt-4o-mini";
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_TIMEOUT_SECONDS = 30;
 
@@ -66,7 +66,7 @@ function requiredApiKey(value: string): string {
 
 function modelName(value: string | undefined): string {
   const model = value?.trim();
-  return model === undefined || model === "" ? DEFAULT_MODEL : model;
+  return model === undefined || model === "" ? HARD_DEFAULT_MODELS.openai_compatible : model;
 }
 
 function normalizedTimeoutSeconds(value: number | undefined): number {

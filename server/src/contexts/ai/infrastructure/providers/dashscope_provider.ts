@@ -1,3 +1,4 @@
+import { HARD_DEFAULT_MODELS } from "../../application/model_resolution.js";
 import {
   isProviderStep,
   type ProviderStep,
@@ -26,7 +27,6 @@ import {
   runWithRetryPolicy,
 } from "./provider_http.js";
 
-const DEFAULT_MODEL = "qwen3.5-flash";
 const DEFAULT_TIMEOUT_SECONDS = 30;
 const DEFAULT_TRANSPORT_MODE: DashscopeTransportMode = "multimodal_generation";
 
@@ -68,7 +68,7 @@ function requiredApiKey(value: string): string {
 
 function modelName(value: string | undefined): string {
   const model = value?.trim();
-  return model === undefined || model === "" ? DEFAULT_MODEL : model;
+  return model === undefined || model === "" ? HARD_DEFAULT_MODELS.dashscope : model;
 }
 
 function normalizedTimeoutSeconds(value: number | undefined): number {
