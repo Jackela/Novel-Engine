@@ -166,9 +166,17 @@ describe("transport rejection classification", () => {
   });
 
   it("classifies network rejections as non-retryable", () => {
-    const failure = classifyTransportRejection(new TypeError("fetch failed"), "ctx", 30);
+    const credential = "transport-credential-that-must-not-reach-a-job";
+    const prefix = "transport-prefix-that-must-not-reach-a-job";
+    const failure = classifyTransportRejection(
+      new TypeError(`${prefix}:${credential}:${prefix}`),
+      "ctx",
+      30,
+    );
     expect(providerFailureIsRetryable(failure)).toBe(false);
-    expect(failure.message).toContain("fetch failed");
+    expect(failure.message).toBe("ctx: transport request failed.");
+    expect(failure.message).not.toContain(credential);
+    expect(failure.message).not.toContain(prefix);
   });
 
   it("keeps programming errors visible instead of swallowing them", () => {

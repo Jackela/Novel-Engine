@@ -180,8 +180,9 @@ export function classifyTransportRejection(
     return timeoutFailure(context, timeoutSeconds);
   }
   if (rejection instanceof TypeError) {
-    const detail = rejection.message === "" ? "transport failed" : rejection.message;
-    return new ProviderTransportError(`${context} transport failed: ${detail}.`);
+    // Fetch implementations can include request diagnostics in TypeError.message,
+    // while a failed job persists this text, so only the trusted context is retained.
+    return new ProviderTransportError(`${context}: transport request failed.`);
   }
   throw rejection;
 }
