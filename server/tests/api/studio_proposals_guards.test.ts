@@ -9,7 +9,6 @@ import { usageEvents } from "../../src/shared/infrastructure/db/schema.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {
   buildStudioApp,
-  call,
   listRevisions,
   ownerJar,
   seedDocument,
@@ -262,27 +261,29 @@ describe("proposal guards", () => {
     }
   });
 
-  it("rejects an empty completed proposal at acceptance", async () => {
-    const capture = capturingFactory({ markdown: "   " });
+  it("fails a non-string structured proposal before accounting", async () => {
+    const capture = capturingFactory({
+      markdown: validProposalProse,
+      chapterMarkdown: null,
+    });
     const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Empty");
       const document = project.documents[0]!;
-      const created = await propose(app, jar, project.id, document.id, { operation: "continue" });
-      const job = created.json();
-      expect(job.status).toBe("completed");
-      expect(job.result.proposal_markdown).toBe("");
-
-      const accepted = await call(
-        app,
-        jar,
-        "POST",
-        `/api/projects/${project.id}/ai-proposals/${job.id}/accept`,
-      );
-      expect(accepted.statusCode).toBe(422);
-      expect(accepted.json().error.code).toBe("INVALID_OPERATION");
+      const response = await propose(app, jar, project.id, document.id, { operation: "continue" });
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json()).toMatchObject({
+        status: "failed",
+        result: { proposal_markdown: "" },
+      });
+      expect(response.body).not.toContain(validProposalProse);
       expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
+      const database = app.studioDb?.db;
+      if (database === undefined) {
+        throw new Error("Studio test app must expose its database.");
+      }
+      expect(database.select().from(usageEvents).all()).toHaveLength(0);
     } finally {
       await app.close();
     }
