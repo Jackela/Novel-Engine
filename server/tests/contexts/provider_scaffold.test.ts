@@ -111,6 +111,23 @@ describe("provider scaffold detection", () => {
       String.raw`"{\u0022result\u0022:\u0022raw provider scaffold\u0022}"`,
     ],
     [
+      "Unicode-escaped outer double JSON",
+      String.raw`\u0022{\u0022result\u0022:\u0022raw provider scaffold\u0022}\u0022`,
+    ],
+    ["slash-escaped outer double JSON", String.raw`\"{\"result\":\"raw provider scaffold\"}\"`],
+    [
+      "Unicode-escaped outer double array JSON",
+      String.raw`\u0022[{\u0022result\u0022:\u0022raw provider scaffold\u0022}]\u0022`,
+    ],
+    [
+      "Unicode-escaped outer double spaced array JSON",
+      String.raw`\u0022[\u00a0{\u0022result\u0022:\u0022raw provider scaffold\u0022}]\u0022`,
+    ],
+    [
+      "slash-escaped outer double array JSON",
+      String.raw`\"[{\"result\":\"raw provider scaffold\"}]\"`,
+    ],
+    [
       "backticked projected JSON",
       ["`", String.raw`{\u0022result\u0022:\u0022raw provider scaffold\u0022}`, "`"].join(""),
     ],

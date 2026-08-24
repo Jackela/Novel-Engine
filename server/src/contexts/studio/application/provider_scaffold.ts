@@ -1,6 +1,5 @@
 type Quote = '"' | "'" | "`";
 type JsonNode = { value: unknown; depth: number; layers: number };
-type JsonEnd = number | "limit" | undefined;
 const jsonLimits = { candidates: 512, candidateLength: 24e3, depth: 24 };
 const walkLimits = { layers: 12, work: 512 };
 const isWhitespace = (value?: string) => value !== undefined && /[\s\u0085\u200B]/u.test(value);
@@ -151,7 +150,7 @@ function parseSerializedJson(source: string): unknown | undefined {
     return undefined;
   }
 }
-function readJsonStringEnd(markdown: string, start: number): JsonEnd {
+function readJsonStringEnd(markdown: string, start: number): number | "limit" | undefined {
   for (let index = start + 1; index < markdown.length; index += 1) {
     if (index - start > jsonLimits.candidateLength) return "limit";
     if (markdown[index] === '"') return index + 1;
@@ -159,7 +158,7 @@ function readJsonStringEnd(markdown: string, start: number): JsonEnd {
   }
   return undefined;
 }
-function readJsonCandidateEnd(markdown: string, start: number): JsonEnd {
+function readJsonCandidateEnd(markdown: string, start: number): number | "limit" | undefined {
   const first = markdown[start];
   if (first === '"') return readJsonStringEnd(markdown, start);
   if (first !== "{" && first !== "[") return undefined;
@@ -213,6 +212,9 @@ function hasSerializedProviderKey(value: unknown): boolean {
   }
   return false;
 }
+const isJsonOpeningFragment = (value: unknown) =>
+  typeof value === "string" &&
+  /^[\s\u0085\u200B]*[{[](?:[\s\u0085\u200B]*[{[])*[\s\u0085\u200B]*$/u.test(value);
 function hasSerializedJsonScaffolding(markdown: string): boolean {
   let candidates = 0;
   for (let index = 0; index < markdown.length; index += 1) {
@@ -222,7 +224,7 @@ function hasSerializedJsonScaffolding(markdown: string): boolean {
     if (end === undefined) continue;
     const decoded = parseSerializedJson(markdown.slice(index, end));
     if (decoded !== undefined && hasSerializedProviderKey(decoded)) return true;
-    if (decoded !== undefined) index = end - 1;
+    if (decoded !== undefined && !isJsonOpeningFragment(decoded)) index = end - 1;
   }
   return false;
 }

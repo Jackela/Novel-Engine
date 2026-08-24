@@ -170,6 +170,10 @@ describe("proposal flow", () => {
       failed(`prose\u0085\u200B\\u0065cho\\u003D raw scaffold echo`),
       failed(`prose\u2028\u00a0-\u00a0\\u0072esult\\u003A raw scaffold echo`),
       failed(String.raw`\u007b\u0022result\u0022\u003a\u0022raw scaffold echo\u0022\u007d`),
+      failed(String.raw`\u0022{\u0022result\u0022:\u0022raw scaffold echo\u0022}\u0022`),
+      failed(String.raw`\"{\"result\":\"raw scaffold echo\"}\"`),
+      failed(String.raw`\u0022[{\u0022result\u0022:\u0022raw scaffold echo\u0022}]\u0022`),
+      failed(String.raw`\"[{\"result\":\"raw scaffold echo\"}]\"`),
       failed(String.raw`{meta:1,\u00a0result:raw scaffold echo}`),
       failed(String.raw`prose\u0085result:raw scaffold echo`),
       completed(
@@ -204,7 +208,7 @@ describe("proposal flow", () => {
         await app.close();
       }
     }
-  }, 15_000);
+  }, 20_000);
   it("reflects each document's own title and chapter number", async () => {
     const { app } = await buildStudioApp();
     try {
