@@ -29,12 +29,24 @@ export interface ArtifactFileEvidence {
   readonly relativePath: string;
   readonly sizeBytes: number;
   readonly checksumSha256: string;
+  /** Removes this publication after a later persistence failure, best-effort. */
+  rollback(): Promise<void>;
+}
+
+/** The complete persisted evidence required for a safe artifact read. */
+export interface ArtifactReadRequest {
+  readonly projectId: string;
+  readonly artifactId: string;
+  readonly format: ExportArtifactFormat;
+  readonly relativePath: string;
+  readonly sizeBytes: number;
+  readonly checksumSha256: string;
 }
 
 /** Filesystem boundary for rendering and safe retrieval of export artifacts. */
 export interface ExportArtifactGateway {
   writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence>;
-  resolveArtifactFile(relativePath: string): Promise<string>;
+  readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer>;
 }
 
 /** The existing project port supplies only the title needed by renderers. */
@@ -88,31 +100,51 @@ export class SnapshotArtifactService {
       projectTitle: project.title,
       chapters,
     });
-    return this.exportStore.appendArtifact(scope, projectId, {
-      id,
-      snapshotId: snapshot.snapshotId,
-      format,
-      relativePath: file.relativePath,
-      sizeBytes: file.sizeBytes,
-      checksumSha256: file.checksumSha256,
-      createdAt,
-    });
+    try {
+      return this.exportStore.appendArtifact(scope, projectId, {
+        id,
+        snapshotId: snapshot.snapshotId,
+        format,
+        relativePath: file.relativePath,
+        sizeBytes: file.sizeBytes,
+        checksumSha256: file.checksumSha256,
+        createdAt,
+      });
+    } catch (error) {
+      await rollbackWithoutMasking(file);
+      throw error;
+    }
   }
 
   catalogProjectArtifacts(principal: Principal, projectId: string): ExportArtifactRecord[] {
     return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId);
   }
 
-  async locateArtifactFile(
+  async readArtifactBytes(
     principal: Principal,
     projectId: string,
     artifactId: string,
-  ): Promise<string> {
+  ): Promise<Buffer> {
     const artifact = this.exportStore.findProjectArtifact(
       scopeForPrincipal(principal),
       projectId,
       artifactId,
     );
-    return this.artifactGateway.resolveArtifactFile(artifact.relativePath);
+    return this.artifactGateway.readArtifactBytes({
+      projectId,
+      artifactId,
+      format: artifact.format,
+      relativePath: artifact.relativePath,
+      sizeBytes: artifact.sizeBytes,
+      checksumSha256: artifact.checksumSha256,
+    });
+  }
+}
+
+async function rollbackWithoutMasking(file: ArtifactFileEvidence): Promise<void> {
+  try {
+    await file.rollback();
+  } catch {
+    return;
   }
 }

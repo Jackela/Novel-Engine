@@ -1,14 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import {
-  lstat,
-  mkdir,
-  readFile,
-  realpath,
-  rename,
-  stat,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { constants } from "node:fs";
+import { link, mkdir, open, realpath, unlink } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { Document, HeadingLevel, Packer, Paragraph } from "docx";
 import JSZip from "jszip";
@@ -16,6 +8,7 @@ import JSZip from "jszip";
 import type {
   ArtifactChapter,
   ArtifactFileEvidence,
+  ArtifactReadRequest,
   ArtifactWriteRequest,
   ExportArtifactGateway,
 } from "../application/export_artifact_service.js";
@@ -27,110 +20,77 @@ const extensionByFormat: Record<ExportArtifactFormat, string> = {
   docx: "docx",
   epub: "epub",
 };
+const xmlAllowedRanges = String.raw`\u0009\u000A\u000D\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}`;
+const invalidXmlCharacters = new RegExp(`[^${xmlAllowedRanges}]`, "gu");
 
-/** Filesystem implementation of atomic rendering and confined artifact lookup. */
+// Filesystem implementation of atomic rendering and confined artifact lookup.
 export class FilesystemExportArtifactGateway implements ExportArtifactGateway {
   constructor(private readonly dataDirectory: string) {}
 
   async writeSnapshotArtifact(request: ArtifactWriteRequest): Promise<ArtifactFileEvidence> {
-    assertSafePart(request.projectId);
-    assertSafePart(request.artifactId);
-    const dataRoot = resolve(this.dataDirectory);
-    const exportsRoot = resolve(dataRoot, "exports");
-    const directory = resolve(exportsRoot, request.projectId);
-    if (!isDescendant(exportsRoot, directory)) {
-      throw new Error("Export directory is outside the configured root.");
-    }
-    await mkdir(directory, { recursive: true });
-    const realDataRoot = await realpath(dataRoot);
-    const realExportsRoot = await realpath(exportsRoot);
-    const realDirectory = await realpath(directory);
-    if (
-      !isDescendant(realDataRoot, realExportsRoot) ||
-      !isDescendant(realExportsRoot, realDirectory)
-    ) {
-      throw new Error("Export directory escapes the configured root.");
-    }
-    const filename = `${request.artifactId}.${extensionByFormat[request.format]}`;
-    const target = resolve(realDirectory, filename);
-    if (!isDescendant(realExportsRoot, target)) {
-      throw new Error("Export target is outside the configured root.");
-    }
-    const temporary = resolve(realDirectory, `.${filename}.${randomUUID()}.tmp`);
+    const names = artifactNames(request.projectId, request.artifactId, request.format);
     const contents = await serializeArtifact(request);
-    let replaced = false;
-    try {
-      await writeFile(temporary, contents, { flag: "wx" });
-      await rename(temporary, target);
-      replaced = true;
-      const relativePath = ["exports", request.projectId, filename].join("/");
-      const finalPath = await this.resolveArtifactFile(relativePath);
-      const finalContents = await readFile(finalPath);
-      const finalStat = await stat(finalPath);
-      return {
-        relativePath,
-        sizeBytes: finalStat.size,
-        checksumSha256: createHash("sha256").update(finalContents).digest("hex"),
-      };
-    } finally {
-      if (!replaced) {
-        await unlinkIfPresent(temporary);
-      }
-    }
+    const directory = await artifactDirectory(this.dataDirectory, request.projectId, true);
+    const target = resolve(directory, names.filename);
+    const temporary = resolve(directory, `.${request.artifactId}.${randomUUID()}.tmp`);
+    return publishArtifact(temporary, target, contents, names.relativePath);
   }
 
-  async resolveArtifactFile(relativePath: string): Promise<string> {
+  async readArtifactBytes(request: ArtifactReadRequest): Promise<Buffer> {
     try {
-      const dataRoot = resolve(this.dataDirectory);
-      const exportsRoot = resolve(dataRoot, "exports");
-      const candidate = resolveStoredPath(dataRoot, exportsRoot, relativePath);
-      const realDataRoot = await realpath(dataRoot);
-      const realExportsRoot = await realpath(exportsRoot);
-      const entry = await lstat(candidate);
-      if (entry.isSymbolicLink() || !entry.isFile()) {
-        throw new Error("Export entry is not a regular file.");
-      }
-      const realCandidate = await realpath(candidate);
-      if (
-        !isDescendant(realDataRoot, realExportsRoot) ||
-        !isDescendant(realExportsRoot, realCandidate) ||
-        !(await stat(realCandidate)).isFile()
-      ) {
-        throw new Error("Export entry escapes the configured root.");
-      }
-      return realCandidate;
+      const names = artifactNames(request.projectId, request.artifactId, request.format);
+      if (request.relativePath !== names.relativePath)
+        throw new Error("Stored export path is invalid.");
+      const directory = await artifactDirectory(this.dataDirectory, request.projectId, false);
+      return await readVerifiedArtifact(resolve(directory, names.filename), request);
     } catch {
       throw new NotFoundError("Export file not found.");
     }
   }
 }
 
-function resolveStoredPath(dataRoot: string, exportsRoot: string, relativePath: string): string {
-  const parts = relativePath.split("/");
+async function artifactDirectory(
+  dataDirectory: string,
+  projectId: string,
+  create: boolean,
+): Promise<string> {
+  assertSafePart(projectId);
+  const dataRoot = resolve(dataDirectory);
+  const exportsRoot = resolve(dataRoot, "exports");
+  const directory = resolve(exportsRoot, projectId);
+  if (!isDescendant(dataRoot, exportsRoot) || !isDescendant(exportsRoot, directory)) {
+    throw new Error("Export directory is outside the configured root.");
+  }
+  if (create) await mkdir(directory, { recursive: true });
+  const [realDataRoot, realExportsRoot, realDirectory] = await Promise.all([
+    realpath(dataRoot),
+    realpath(exportsRoot),
+    realpath(directory),
+  ]);
   if (
-    relativePath === "" ||
-    isAbsolute(relativePath) ||
-    relativePath.includes("\\") ||
-    parts[0] !== "exports" ||
-    parts.some((part) => part === "" || part === "." || part === "..")
+    !isDescendant(realDataRoot, realExportsRoot) ||
+    !isDescendant(realExportsRoot, realDirectory)
   ) {
-    throw new Error("Stored export path is invalid.");
+    throw new Error("Export directory escapes the configured root.");
   }
-  const candidate = resolve(dataRoot, ...parts);
-  if (!isDescendant(dataRoot, candidate) || !isDescendant(exportsRoot, candidate)) {
-    throw new Error("Stored export path is outside the configured root.");
-  }
-  return candidate;
+  return realDirectory;
+}
+
+function artifactNames(
+  projectId: string,
+  artifactId: string,
+  format: ExportArtifactFormat,
+): { filename: string; relativePath: string } {
+  assertSafePart(projectId);
+  assertSafePart(artifactId);
+  const extension = extensionByFormat[format];
+  if (extension === undefined) throw new Error("Export format is invalid.");
+  const filename = `${artifactId}.${extension}`;
+  return { filename, relativePath: `exports/${projectId}/${filename}` };
 }
 
 function assertSafePart(value: string): void {
-  if (
-    value === "" ||
-    value === "." ||
-    value === ".." ||
-    value.includes("/") ||
-    value.includes("\\")
-  ) {
+  if (value === "" || value === "." || value === ".." || /[\\/\0]/.test(value)) {
     throw new Error("Export identifier is invalid.");
   }
 }
@@ -140,28 +100,101 @@ function isDescendant(root: string, candidate: string): boolean {
   return offset !== "" && offset !== ".." && !offset.startsWith(`..${sep}`) && !isAbsolute(offset);
 }
 
-async function unlinkIfPresent(path: string): Promise<void> {
+async function publishArtifact(
+  temporary: string,
+  target: string,
+  contents: Buffer,
+  relativePath: string,
+): Promise<ArtifactFileEvidence> {
+  let handle: Awaited<ReturnType<typeof open>> | undefined;
+  let linked = false;
   try {
-    await unlink(path);
+    handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL);
+    await handle.writeFile(contents);
+    await handle.sync();
+    const identity = await handle.stat();
+    await handle.close();
+    handle = undefined;
+    await link(temporary, target);
+    linked = true;
+    await unlink(temporary);
+    const checksumSha256 = createHash("sha256").update(contents).digest("hex");
+    return {
+      relativePath,
+      sizeBytes: contents.length,
+      checksumSha256,
+      rollback: () => rollbackPublishedArtifact(target, contents, identity.dev, identity.ino),
+    };
   } catch (error) {
-    if (!(error instanceof Error) || !hasCode(error, "ENOENT")) {
-      throw error;
-    }
+    if (handle !== undefined) await ignore(handle.close());
+    if (linked) await ignore(unlink(target));
+    await ignore(unlink(temporary));
+    throw error;
   }
 }
 
-function hasCode(error: Error, code: string): error is Error & { code: string } {
-  return "code" in error && error.code === code;
+async function readVerifiedArtifact(target: string, request: ArtifactReadRequest): Promise<Buffer> {
+  // Node has no portable openat directory-fd API: parent checks precede leaf O_NOFOLLOW protection.
+  const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
+  try {
+    const details = await handle.stat();
+    const contents = await handle.readFile();
+    if (
+      !details.isFile() ||
+      details.size !== request.sizeBytes ||
+      contents.length !== request.sizeBytes ||
+      createHash("sha256").update(contents).digest("hex") !== request.checksumSha256
+    ) {
+      throw new Error("Export integrity evidence does not match.");
+    }
+    return contents;
+  } finally {
+    await handle.close();
+  }
+}
+
+async function rollbackPublishedArtifact(
+  target: string,
+  contents: Buffer,
+  dev: number,
+  ino: number,
+): Promise<void> {
+  try {
+    const handle = await open(target, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      const details = await handle.stat();
+      const actual = await handle.readFile();
+      if (
+        !details.isFile() ||
+        details.dev !== dev ||
+        details.ino !== ino ||
+        !actual.equals(contents)
+      ) {
+        return;
+      }
+    } finally {
+      await handle.close();
+    }
+    await unlink(target);
+  } catch {
+    return;
+  }
+}
+
+async function ignore(promise: Promise<unknown>): Promise<void> {
+  try {
+    await promise;
+  } catch {
+    return;
+  }
 }
 
 async function serializeArtifact(request: ArtifactWriteRequest): Promise<Buffer> {
-  if (request.format === "markdown") {
+  if (request.format === "markdown")
     return Buffer.from(markdownText(request.projectTitle, request.chapters), "utf8");
-  }
-  if (request.format === "docx") {
-    return docxBytes(request.projectTitle, request.chapters);
-  }
-  return epubBytes(request.projectTitle, request.artifactId, request.chapters);
+  return request.format === "docx"
+    ? docxBytes(request.projectTitle, request.chapters)
+    : epubBytes(request.projectTitle, request.artifactId, request.chapters);
 }
 
 function markdownText(title: string, chapters: readonly ArtifactChapter[]): string {
@@ -175,9 +208,7 @@ async function docxBytes(title: string, chapters: readonly ArtifactChapter[]): P
   for (const chapter of chapters) {
     children.push(new Paragraph({ text: chapter.title, heading: HeadingLevel.HEADING_1 }));
     for (const paragraph of plainText(chapter.contentMarkdown).split(/\n\s*\n/)) {
-      if (paragraph.trim() !== "") {
-        children.push(new Paragraph({ text: paragraph.trim() }));
-      }
+      if (paragraph.trim() !== "") children.push(new Paragraph({ text: paragraph.trim() }));
     }
   }
   return Packer.toBuffer(new Document({ sections: [{ children }] }));
@@ -198,11 +229,7 @@ async function epubBytes(
     '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
   );
   for (const [index, chapter] of chapters.entries()) {
-    const filename = chapterFiles[index];
-    if (filename === undefined) {
-      throw new Error("EPUB chapter name is unavailable.");
-    }
-    zip.file(`OEBPS/${filename}`, chapterXhtml(chapter));
+    zip.file(`OEBPS/chapter-${String(index + 1).padStart(3, "0")}.xhtml`, chapterXhtml(chapter));
   }
   zip.file("OEBPS/nav.xhtml", navigationXhtml(title, chapters, chapterFiles));
   zip.file("OEBPS/toc.ncx", tableOfContents(title, chapters, chapterFiles));
@@ -275,7 +302,7 @@ function packageDocument(
 }
 
 function escapeXml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
+  return value.replace(invalidXmlCharacters, "").replace(/[&<>"']/g, (character) => {
     const escaped: Record<string, string> = {
       "&": "&amp;",
       "<": "&lt;",
