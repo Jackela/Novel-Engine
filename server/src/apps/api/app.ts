@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import swagger from "@fastify/swagger";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
+import { resolveReviewModel } from "../../contexts/ai/application/model_resolution.js";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
@@ -12,6 +13,7 @@ import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle
 import { documentRoutes } from "../../contexts/studio/interface/http/document_routes.js";
 import { projectRoutes } from "../../contexts/studio/interface/http/project_routes.js";
 import { proposalRoutes } from "../../contexts/studio/interface/http/proposal_routes.js";
+import { reviewRoutes } from "../../contexts/studio/interface/http/review_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
@@ -170,6 +172,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     dashscopeReviewModel: llm?.dashscopeReviewModel,
     openaiCompatibleModel: llm?.openaiCompatibleModel,
   };
+  const defaultProvider = llm?.defaultProvider ?? "mock";
   const providerFactory: TextGenerationProviderFactory =
     options.textProviderFactory ??
     textProviderFactory(providerApiKeys, {
@@ -198,6 +201,10 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       : createStudioServices(new DrizzleStudioStore({ database: studioDb.db, dataDirectory }), {
           now: options.clock,
           providerFactory,
+          reviewProvenance: {
+            provider: defaultProvider,
+            model: resolveReviewModel(defaultProvider, providerModelSettings),
+          },
         });
 
   const versionInfo: VersionInfo = {
@@ -268,13 +275,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   await app.register(versionRoutes, { info: versionInfo });
   await app.register(providerCatalogRoutes, {
     authService,
-    defaultProvider: llm?.defaultProvider ?? "mock",
+    defaultProvider,
     settings: providerModelSettings,
     credentials: providerApiKeys,
   });
   await app.register(projectRoutes, { authService, services: studioServices });
   await app.register(documentRoutes, { authService, services: studioServices });
   await app.register(proposalRoutes, { authService, services: studioServices });
+  await app.register(reviewRoutes, { authService, services: studioServices });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 

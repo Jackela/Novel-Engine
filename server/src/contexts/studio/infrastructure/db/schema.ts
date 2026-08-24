@@ -62,3 +62,104 @@ export const documentRevisions = sqliteTable(
     index("idx_document_revisions_document").on(table.documentId),
   ],
 );
+
+/**
+ * Immutable project revision sets. A snapshot has a workflow reason so review
+ * can create one now and export can later reuse only export-reason snapshots.
+ */
+export const projectSnapshots = sqliteTable(
+  "project_snapshots",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    reason: text("reason").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("idx_project_snapshots_project_reason_created").on(
+      table.projectId,
+      table.reason,
+      table.createdAt,
+    ),
+  ],
+);
+
+/**
+ * Captures the document/revision pair and its presentation data at snapshot
+ * time. Restricting both references protects the immutable revision set from
+ * a document or revision deletion.
+ */
+export const snapshotDocuments = sqliteTable(
+  "snapshot_documents",
+  {
+    id: text("id").primaryKey(),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => projectSnapshots.id, { onDelete: "cascade" }),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "restrict" }),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => documentRevisions.id, { onDelete: "restrict" }),
+    documentKind: text("document_kind").notNull(),
+    documentTitle: text("document_title").notNull(),
+    revisionMetadataJson: text("revision_metadata_json").notNull().default("{}"),
+    position: integer("position").notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_snapshot_document").on(table.snapshotId, table.documentId),
+    index("idx_snapshot_documents_snapshot_position").on(table.snapshotId, table.position),
+  ],
+);
+
+/**
+ * Editorial review history is bound to a single immutable snapshot. Individual
+ * findings retain both their stable snapshot-document reference and an optional
+ * live-document link for later presentation.
+ */
+export const reviews = sqliteTable(
+  "reviews",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => projectSnapshots.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    summary: text("summary").notNull().default(""),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    index("idx_reviews_project_created").on(table.projectId, table.createdAt),
+    index("idx_reviews_snapshot").on(table.snapshotId),
+  ],
+);
+
+export const reviewIssues = sqliteTable(
+  "review_issues",
+  {
+    id: text("id").primaryKey(),
+    reviewId: text("review_id")
+      .notNull()
+      .references(() => reviews.id, { onDelete: "cascade" }),
+    snapshotDocumentId: text("snapshot_document_id")
+      .notNull()
+      .references(() => snapshotDocuments.id, { onDelete: "cascade" }),
+    documentId: text("document_id").references(() => documents.id, { onDelete: "set null" }),
+    severity: text("severity").notNull(),
+    code: text("code").notNull(),
+    message: text("message").notNull(),
+    suggestion: text("suggestion").notNull().default(""),
+    evidenceJson: text("evidence_json").notNull().default("{}"),
+  },
+  (table) => [
+    index("idx_review_issues_review_severity_code").on(table.reviewId, table.severity, table.code),
+    index("idx_review_issues_snapshot_document").on(table.snapshotDocumentId),
+  ],
+);

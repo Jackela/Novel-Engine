@@ -4,7 +4,7 @@ import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { expect } from "vitest";
 
-import { buildApp } from "../../src/apps/api/app.js";
+import { type AppOptions, buildApp } from "../../src/apps/api/app.js";
 import {
   cookieHeader,
   cookieJar,
@@ -38,6 +38,7 @@ export interface StudioTestApp {
 /** Extra buildApp overrides used by the workflow tests (provider seams). */
 export interface StudioAppOverrides {
   textProviderFactory?: NonNullable<Parameters<typeof buildApp>[0]>["textProviderFactory"];
+  config?: AppOptions["config"];
 }
 
 /** Build the app with a real SQLite file and the studio surface mounted. */
