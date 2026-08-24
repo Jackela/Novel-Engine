@@ -107,3 +107,32 @@ export function sanitizeProposalMarkdown(markdown: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+function parsesAsJson(markdown: string): boolean {
+  try {
+    JSON.parse(markdown);
+    return true;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Check the final, already-sanitized form of proposal markdown before a job
+ * is completed. Residual mechanical output is rejected rather than rewritten.
+ */
+export function isProposalMarkdownProse(markdown: string): boolean {
+  if (markdown.length <= 400 || parsesAsJson(markdown)) {
+    return false;
+  }
+
+  const normalized = markdown.toLowerCase();
+  if (normalized.includes("echo") || markdown.includes('"result"')) {
+    return false;
+  }
+
+  return FORBIDDEN_PROSE_PHRASES.every((phrase) => !normalized.includes(phrase.toLowerCase()));
+}

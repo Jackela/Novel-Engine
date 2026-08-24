@@ -4,6 +4,7 @@ import {
   FORBIDDEN_PROSE_PHRASES,
   formatAuthorInstruction,
   formatUntrustedManuscript,
+  isProposalMarkdownProse,
   sanitizeInstruction,
   sanitizeProposalMarkdown,
 } from "../../src/contexts/studio/application/sanitization.js";
@@ -54,6 +55,36 @@ describe("proposal output sanitization (single table-driven source)", () => {
 
   it("strips surrounding whitespace from the stored proposal", () => {
     expect(sanitizeProposalMarkdown("  \n# Chapter 1\n\nbody\n\n")).toBe("# Chapter 1\n\nbody");
+  });
+});
+
+const LONG_NARRATIVE_PROSE = [
+  "Rain held the harbor in a silver hush while Mara crossed the empty quay, counting each lamp that trembled in the wind.",
+  "At the locked warehouse she found Tomas waiting with a lantern cupped in both hands, his coat dark with spray and his apology already fading from his face.",
+  "Neither of them spoke until the tide struck the pilings below. Then Mara set the brass key between them and asked why he had carried it for three winters.",
+  "Tomas said he had feared the door it opened, but fear had become a smaller thing than leaving her alone with the question. The lantern hissed as rain reached its wick.",
+  "Mara took the key, felt its worn teeth press into her palm, and chose the narrow stairway beyond the warehouse rather than the safe road home.",
+].join("\n\n");
+
+describe("proposal markdown prose predicate", () => {
+  it("accepts long narrative prose only after sanitization removes mechanical phrasing", () => {
+    const mechanical = `${LONG_NARRATIVE_PROSE}\n\nThe chapter closes as her focus_motivation hardens.`;
+    const cleaned = sanitizeProposalMarkdown(mechanical);
+
+    expect(mechanical.length).toBeGreaterThan(400);
+    expect(isProposalMarkdownProse(mechanical)).toBe(false);
+    expect(cleaned).toContain("The scene settles");
+    expect(cleaned).toContain("central motivation");
+    expect(isProposalMarkdownProse(cleaned)).toBe(true);
+  });
+
+  it.each([
+    ["too-short prose", "Rain fell over the quay."],
+    ["a JSON document", JSON.stringify({ prose: LONG_NARRATIVE_PROSE })],
+    ["echo scaffolding", `${LONG_NARRATIVE_PROSE}\n\necho: chapter continuation`],
+    ["result scaffolding", `${LONG_NARRATIVE_PROSE}\n\n{"result": "chapter continuation"}`],
+  ])("rejects %s", (_label, markdown) => {
+    expect(isProposalMarkdownProse(markdown)).toBe(false);
   });
 });
 
