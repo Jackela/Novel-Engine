@@ -150,6 +150,10 @@ describe("proposal flow", () => {
       { markdown: `${validProposalProse}\n\n\`result\`: raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  - "ReSuLt" = raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  1) 'ECHO': raw scaffold echo`, status: "failed" },
+      {
+        markdown: `${validProposalProse}\n\n{"meta" \\u0072esult = "raw provider scaffold echo"}`,
+        status: "failed",
+      },
     ] as const;
 
     for (const { markdown, status } of cases) {
