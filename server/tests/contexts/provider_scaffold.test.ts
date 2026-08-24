@@ -27,6 +27,7 @@ describe("provider scaffold detection", () => {
     ["loose continuation", '{meta: "note"}, result: raw provider scaffold'],
     ["immediate continuation", '{meta: "note"} \\u0072esult: raw provider scaffold'],
     ["extra closers", '{"meta": {note: "x"}}}, result = raw provider scaffold'],
+    ["unbounded mixed closers", '{meta: "note"}]}]}]}]}], \\u0072esult: raw provider scaffold'],
     ["mismatched closer", '{"meta": [}, result = raw provider scaffold'],
   ])("finds a %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(true);

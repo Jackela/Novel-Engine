@@ -121,10 +121,8 @@ function hasLineKey(markdown: string, start: number): boolean {
 
 function hasLooseContinuation(markdown: string, start: number): boolean {
   let index = skipWhitespace(markdown, start);
-  let extraClosers = 0;
-  while ((markdown[index] === "}" || markdown[index] === "]") && extraClosers < 8) {
+  while (markdown[index] === "}" || markdown[index] === "]") {
     index = skipWhitespace(markdown, index + 1);
-    extraClosers += 1;
   }
   if (markdown[index] === ",") index = skipWhitespace(markdown, index + 1);
   const field = readField(markdown, index);
