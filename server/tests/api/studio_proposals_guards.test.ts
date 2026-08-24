@@ -99,12 +99,15 @@ describe("proposal guards", () => {
 
   it("disposes each per-request provider without masking outcomes and reports cleanup failures", async () => {
     const cleanupSecret = "cleanup-secret-must-not-reach-a-response";
+    const reporterSecret = "reporter-secret-must-not-reach-a-response";
     const lifecycle = disposableFactory(
       ["complete", "provider_error", "programming_error"],
       cleanupSecret,
     );
     const { app } = await buildStudioApp(undefined, { textProviderFactory: lifecycle.factory });
-    const logError = vi.spyOn(app.log, "error");
+    const logError = vi.spyOn(app.log, "error").mockImplementation((_details, message) => {
+      if (message === "provider cleanup failed") throw new Error(reporterSecret);
+    });
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Lifecycle");
@@ -116,7 +119,6 @@ describe("proposal guards", () => {
       const completed = await propose(app, jar, project.id, document.id, { operation: "continue" });
       expect(completed.statusCode, completed.body).toBe(200);
       expect(completed.json().status).toBe("completed");
-      expect(completed.body).not.toContain(cleanupSecret);
       expect(lifecycle.disposed).toEqual([0]);
 
       const providerFailure = await propose(app, jar, project.id, document.id, {
@@ -125,7 +127,6 @@ describe("proposal guards", () => {
       expect(providerFailure.statusCode, providerFailure.body).toBe(200);
       expect(providerFailure.json().status).toBe("failed");
       expect(providerFailure.json().error).toBe("provider transport was unavailable");
-      expect(providerFailure.body).not.toContain(cleanupSecret);
       expect(lifecycle.disposed).toEqual([0, 1]);
 
       const programmingFailure = await propose(app, jar, project.id, document.id, {
@@ -133,8 +134,11 @@ describe("proposal guards", () => {
       });
       expect(programmingFailure.statusCode, programmingFailure.body).toBe(500);
       expect(programmingFailure.json().error.code).toBe("INTERNAL_ERROR");
-      expect(programmingFailure.body).not.toContain("unexpected provider bug");
-      expect(programmingFailure.body).not.toContain(cleanupSecret);
+      for (const response of [completed, providerFailure, programmingFailure]) {
+        for (const secret of [cleanupSecret, reporterSecret, "unexpected provider bug"]) {
+          expect(response.body).not.toContain(secret);
+        }
+      }
       expect(lifecycle.created).toEqual([0, 1, 2]);
       expect(lifecycle.disposed).toEqual([0, 1, 2]);
 

@@ -39,6 +39,19 @@ function resolvedTokenCount(reported: number | null, text: string): number {
 
 type ProviderCleanupFailureReporter = (failure: unknown) => void;
 
+function reportCleanupFailureBestEffort(
+  reportCleanupFailure: ProviderCleanupFailureReporter,
+  failure: unknown,
+): void {
+  try {
+    reportCleanupFailure(failure);
+  } catch (reporterFailure) {
+    // This observer has no recovery path, so its own failure is intentionally
+    // suppressed and cannot replace the job/HTTP outcome already selected by draftProposal.
+    void reporterFailure;
+  }
+}
+
 async function disposeProvider(
   provider: TextGenerationProvider,
   reportCleanupFailure: ProviderCleanupFailureReporter,
@@ -46,7 +59,7 @@ async function disposeProvider(
   try {
     await provider.dispose?.();
   } catch (failure) {
-    reportCleanupFailure(failure);
+    reportCleanupFailureBestEffort(reportCleanupFailure, failure);
   }
 }
 
