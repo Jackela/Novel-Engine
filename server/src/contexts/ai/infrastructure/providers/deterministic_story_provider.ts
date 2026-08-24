@@ -1,3 +1,4 @@
+import { HARD_DEFAULT_MODELS } from "../../application/model_resolution.js";
 import {
   type TextGenerationProvider,
   TextGenerationProviderError,
@@ -5,8 +6,6 @@ import {
   type TextGenerationTask,
   type TextProviderName,
 } from "../../application/ports/text_generation.js";
-
-const DEFAULT_MODEL = "deterministic-story-v1";
 
 const CAST_OPTIONS = [
   ["Mira", "Tomas", "station", "ledger page"],
@@ -112,7 +111,7 @@ export class DeterministicStoryProvider implements TextGenerationProvider {
   private readonly providerName: TextProviderName;
   private readonly model: string;
 
-  constructor(providerName: TextProviderName = "mock", model = DEFAULT_MODEL) {
+  constructor(providerName: TextProviderName = "mock", model: string = HARD_DEFAULT_MODELS.mock) {
     this.providerName = providerName;
     this.model = model;
   }

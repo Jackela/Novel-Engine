@@ -1683,6 +1683,60 @@
         }
       }
     },
+    "/api/providers": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "providers": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "configured": {
+                            "type": "boolean"
+                          },
+                          "is_default": {
+                            "type": "boolean"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "enum": [
+                              "mock",
+                              "dashscope",
+                              "openai_compatible"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "provider",
+                          "configured",
+                          "model",
+                          "is_default"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "providers"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/session": {
       "delete": {
         "responses": {

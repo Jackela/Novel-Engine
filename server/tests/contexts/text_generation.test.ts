@@ -7,7 +7,25 @@ import {
   type TextGenerationTask,
 } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DeterministicStoryProvider } from "../../src/contexts/ai/infrastructure/providers/deterministic_story_provider.js";
-import { createTextGenerationProvider } from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
+import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
+import {
+  createTextGenerationProvider,
+  textProviderFactory,
+} from "../../src/contexts/ai/infrastructure/providers/text_provider_factory.js";
+
+const DASHSCOPE_ORIGIN = "https://dashscope.aliyuncs.com";
+const NATIVE_GENERATION_PATH_SEGMENTS = [
+  "api",
+  "v1",
+  "services",
+  "aigc",
+  "multimodal-generation",
+  "generation",
+] as const;
+
+function expectedDashscopeGenerationEndpoint(): string {
+  return new URL(NATIVE_GENERATION_PATH_SEGMENTS.join("/"), `${DASHSCOPE_ORIGIN}/`).toString();
+}
 
 function chapterTask(step: string, overrides: Record<string, unknown> = {}): TextGenerationTask {
   return {
@@ -22,6 +40,17 @@ function chapterTask(step: string, overrides: Record<string, unknown> = {}): Tex
 function proseBody(markdown: string | undefined): string {
   expect(markdown, "expected chapter_markdown prose").toBeDefined();
   return markdown as string;
+}
+
+function testCredential(provider: string): string {
+  return ["test", provider, "credential"].join("-");
+}
+
+function jsonResponse(body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
 }
 
 describe("provider step vocabulary", () => {
@@ -97,12 +126,19 @@ describe("deterministic story provider (mock)", () => {
 describe("text provider factory", () => {
   it("builds the deterministic mock without any credentials", async () => {
     const provider = createTextGenerationProvider({ provider: "mock", apiKeys: {} });
+    const nextProvider = createTextGenerationProvider({ provider: "mock", apiKeys: {} });
     const result = await provider.generateStructured(chapterTask("chapter_draft"));
+
+    expect(nextProvider).not.toBe(provider);
     expect(result.provider).toBe("mock");
+    expect(result.model).toBe("deterministic-story-v1");
   });
 
   it("fails loudly for an unconfigured dashscope provider — no mock fallback", async () => {
-    const provider = createTextGenerationProvider({ provider: "dashscope", apiKeys: {} });
+    const provider = createTextGenerationProvider({
+      provider: "dashscope",
+      apiKeys: { dashscope: "  " },
+    });
     await expect(provider.generateStructured(chapterTask("chapter_revision"))).rejects.toThrow(
       /DASHSCOPE_API_KEY is required when provider is dashscope/,
     );
@@ -118,13 +154,60 @@ describe("text provider factory", () => {
     );
   });
 
-  it("states the missing HTTP adapters honestly when a key is present", async () => {
+  it("constructs the configured DashScope adapter with the server-resolved default model", async () => {
+    const requests: string[] = [];
+    const transport: ProviderTransport = (url) => {
+      requests.push(String(url));
+      return Promise.resolve(
+        jsonResponse({
+          output: { choices: [{ message: { content: '{"chapter_markdown":"configured"}' } }] },
+        }),
+      );
+    };
     const provider = createTextGenerationProvider({
       provider: "dashscope",
-      apiKeys: { dashscope: "sk-test" },
+      apiKeys: { dashscope: testCredential("dashscope") },
+      adapterOptions: { dashscope: { transport } },
     });
-    await expect(provider.generateStructured(chapterTask("chapter_draft"))).rejects.toThrow(
-      /dashscope adapter/i,
+    const result = await provider.generateStructured(chapterTask("chapter_draft"));
+
+    expect(result).toMatchObject({
+      provider: "dashscope",
+      model: "qwen3.5-flash",
+      content: { chapter_markdown: "configured" },
+    });
+    expect(requests).toEqual([expectedDashscopeGenerationEndpoint()]);
+  });
+
+  it("applies server-only overrides and creates isolated OpenAI-compatible adapters", async () => {
+    const requests: string[] = [];
+    const transport: ProviderTransport = (url) => {
+      requests.push(String(url));
+      return Promise.resolve(
+        jsonResponse({
+          choices: [{ message: { content: '{"chapter_markdown":"overridden"}' } }],
+        }),
+      );
+    };
+    const factory = textProviderFactory(
+      { openaiCompatible: testCredential("openai-compatible") },
+      {
+        modelSettings: { openaiCompatibleModel: "server-openai-model" },
+        adapterOptions: {
+          openaiCompatible: { apiBase: "https://compatible.example.test/v1", transport },
+        },
+      },
     );
+    const first = factory("openai_compatible");
+    const second = factory("openai_compatible");
+    const result = await first.generateStructured(chapterTask("chapter_revision"));
+
+    expect(second).not.toBe(first);
+    expect(result).toMatchObject({
+      provider: "openai_compatible",
+      model: "server-openai-model",
+      content: { chapter_markdown: "overridden" },
+    });
+    expect(requests).toEqual(["https://compatible.example.test/v1/chat/completions"]);
   });
 });

@@ -4,6 +4,7 @@ import {
   FORBIDDEN_PROSE_PHRASES,
   formatAuthorInstruction,
   formatUntrustedManuscript,
+  isProposalMarkdownProse,
   sanitizeInstruction,
   sanitizeProposalMarkdown,
 } from "../../src/contexts/studio/application/sanitization.js";
@@ -54,6 +55,163 @@ describe("proposal output sanitization (single table-driven source)", () => {
 
   it("strips surrounding whitespace from the stored proposal", () => {
     expect(sanitizeProposalMarkdown("  \n# Chapter 1\n\nbody\n\n")).toBe("# Chapter 1\n\nbody");
+  });
+});
+
+const LONG_NARRATIVE_PROSE = [
+  "Rain held the harbor in a silver hush while Mara crossed the empty quay, counting each lamp that trembled in the wind.",
+  "At the locked warehouse she found Tomas waiting with a lantern cupped in both hands, his coat dark with spray and his apology already fading from his face.",
+  "Neither of them spoke until the tide struck the pilings below. Then Mara set the brass key between them and asked why he had carried it for three winters.",
+  "Tomas said he had feared the door it opened, but fear had become a smaller thing than leaving her alone with the question. The lantern hissed as rain reached its wick.",
+  "Mara took the key, felt its worn teeth press into her palm, and chose the narrow stairway beyond the warehouse rather than the safe road home.",
+].join("\n\n");
+
+describe("proposal markdown prose predicate", () => {
+  it("accepts long narrative prose only after sanitization removes mechanical phrasing", () => {
+    const mechanical = `${LONG_NARRATIVE_PROSE}\n\nThe chapter closes as her focus_motivation hardens.`;
+    const cleaned = sanitizeProposalMarkdown(mechanical);
+
+    expect(mechanical.length).toBeGreaterThan(400);
+    expect(isProposalMarkdownProse(mechanical)).toBe(false);
+    expect(cleaned).toContain("The scene settles");
+    expect(cleaned).toContain("central motivation");
+    expect(isProposalMarkdownProse(cleaned)).toBe(true);
+  });
+
+  it("accepts ordinary narrative uses of echo and result", () => {
+    const narrative = `${LONG_NARRATIVE_PROSE}\n\nThe corridor echoed after Mara closed the archive door, and the result was a silence that let her hear the rain again.`;
+
+    expect(isProposalMarkdownProse(narrative)).toBe(true);
+  });
+
+  it.each([
+    [
+      "quoted result dialogue",
+      `${LONG_NARRATIVE_PROSE}\n\nMara said, "result: then we run before the tide turns," and Tomas answered by lifting the lantern.`,
+    ],
+    [
+      "quoted dialogue containing an object-shaped result label",
+      `${LONG_NARRATIVE_PROSE}\n\nMara read the label "{ result: turn back }" and put it away before the rain reached the quay.`,
+    ],
+    [
+      "a natural list bullet",
+      `${LONG_NARRATIVE_PROSE}\n\n- The result: Mara kept the lantern lit until Tomas reached the quay.`,
+    ],
+    [
+      "contractions outside structural candidates",
+      `${LONG_NARRATIVE_PROSE}\n\nMara's answer made Tomas say, "I don't know which road would keep them dry."`,
+    ],
+    [
+      "leading apostrophe prose without a candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n'Twas only rain on the slate roof, and no scaffold followed it.`,
+    ],
+    [
+      "a non-target object with a quoted result value",
+      `${LONG_NARRATIVE_PROSE}\n\n{meta: "the result = a promise Mara could finally trust"}`,
+    ],
+  ])("accepts %s that is not a structural key", (_label, narrative) => {
+    expect(isProposalMarkdownProse(narrative)).toBe(true);
+  });
+
+  it.each([
+    [
+      "a decoded quoted result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"\\u0072esult": "raw provider scaffold"}`,
+    ],
+    [
+      "a decoded bare result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{ \\u0072esult: "raw provider scaffold" }`,
+    ],
+    [
+      "an unclosed array candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": [ result: "raw provider scaffold"`,
+    ],
+    [
+      "an unterminated quoted candidate value",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": "unterminated, "result": "raw provider scaffold"}`,
+    ],
+    [
+      "an extra closer after a candidate",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta":{"note":"x"}}}, result = "raw provider scaffold"`,
+    ],
+    [
+      "a candidate after leading apostrophe prose",
+      `${LONG_NARRATIVE_PROSE}\n\n'Twas a hard rain, then {meta: {}, result = "raw provider scaffold"}`,
+    ],
+  ])("rejects %s", (_label, markdown) => {
+    expect(isProposalMarkdownProse(markdown)).toBe(false);
+  });
+
+  it.each([
+    ["too-short prose", "Rain fell over the quay."],
+    ["a JSON document", JSON.stringify({ prose: LONG_NARRATIVE_PROSE })],
+    ["an unquoted mixed-case echo key", `${LONG_NARRATIVE_PROSE}\n\nEcho: chapter continuation`],
+    [
+      "a single-quoted mixed-case echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n'EcHo' = chapter continuation`,
+    ],
+    [
+      "a double-quoted upper-case result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"RESULT": "chapter continuation"}`,
+    ],
+    ["a backticked result key", `${LONG_NARRATIVE_PROSE}\n\n\`result\`: chapter continuation`],
+    [
+      "a comma-bounded result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"prose": "chapter", result = "chapter continuation"}`,
+    ],
+    [
+      "a tab-separated result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {},\t"result": "chapter continuation"}`,
+    ],
+    [
+      "a line-whitespace-separated result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {},\n\t"result": "chapter continuation"}`,
+    ],
+    [
+      "a JSON-escaped result key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"\\u0072esult": "chapter continuation"}`,
+    ],
+    [
+      "a result key after malformed nesting",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta":[}, result = "chapter continuation"}`,
+    ],
+    [
+      "a result key after an apostrophe in an unquoted object value",
+      `${LONG_NARRATIVE_PROSE}\n\n{meta: it's raining, result = "chapter continuation"}`,
+    ],
+    [
+      "a sibling result key after a nested object",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {}, "result": "chapter continuation"}`,
+    ],
+    [
+      "a sibling result key after a nested array",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": [{"kind": "note"}], result: "chapter continuation"}`,
+    ],
+    [
+      "a nested echo object key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {"echo": "chapter continuation"}}`,
+    ],
+    ["an indented dash result key", `${LONG_NARRATIVE_PROSE}\n\n  - ReSuLt: chapter continuation`],
+    ["an asterisk quoted echo key", `${LONG_NARRATIVE_PROSE}\n\n\t* 'EcHo' = chapter continuation`],
+    [
+      "a plus backticked result key",
+      `${LONG_NARRATIVE_PROSE}\n\n    + \`RESULT\`: chapter continuation`,
+    ],
+    [
+      "an unchecked task echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n- [ ] "ECHO" = chapter continuation`,
+    ],
+    [
+      "a checked task result key",
+      `${LONG_NARRATIVE_PROSE}\n\n  - [x] result: chapter continuation`,
+    ],
+    ["an ordered dot result key", `${LONG_NARRATIVE_PROSE}\n\n  1. "Result": chapter continuation`],
+    [
+      "an ordered parenthesis echo key",
+      `${LONG_NARRATIVE_PROSE}\n\n    2) 'ECHO' = chapter continuation`,
+    ],
+  ])("rejects %s", (_label, markdown) => {
+    expect(isProposalMarkdownProse(markdown)).toBe(false);
   });
 });
 

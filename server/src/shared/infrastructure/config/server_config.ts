@@ -2,7 +2,12 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { DEFAULT_CORS_ORIGINS } from "../../domain/cors_contract.js";
+import { ConfigurationError } from "./configuration_error.js";
 import { parseEnvFile } from "./env_file.js";
+import { type LlmServerConfig, loadLlmServerConfig } from "./provider_config.js";
+
+export type { DashscopeTransportMode, LlmProvider, LlmServerConfig } from "./provider_config.js";
+export { ConfigurationError };
 
 /** The single converged prefix family; nothing outside it is read. */
 const ENV_FILE_NAME = ".env.local";
@@ -23,13 +28,6 @@ const ENVIRONMENTS = ["development", "testing", "staging", "production"] as cons
 
 export type ServerEnvironment = (typeof ENVIRONMENTS)[number];
 
-export class ConfigurationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ConfigurationError";
-  }
-}
-
 export interface ServerConfig {
   readonly environment: ServerEnvironment;
   /**
@@ -45,6 +43,7 @@ export interface ServerConfig {
   readonly corsOrigins: string[];
   readonly trustedProxies: string[];
   readonly authRateLimitPerMinute: number;
+  readonly llm: LlmServerConfig;
 }
 
 export interface LoadServerConfigInput {
@@ -83,6 +82,7 @@ export function loadServerConfig(input: LoadServerConfigInput = {}): ServerConfi
     corsOrigins: listFrom(env, "SECURITY_CORS_ORIGINS") ?? DEFAULT_CORS_ORIGINS,
     trustedProxies: listFrom(env, "SECURITY_TRUSTED_PROXIES") ?? [],
     authRateLimitPerMinute: rateLimitFrom(env),
+    llm: loadLlmServerConfig(env),
   };
   assertStartupGuards(config);
   return config;

@@ -75,6 +75,79 @@ describe("environment configuration surface", () => {
     expect(config.authRateLimitPerMinute).toBe(5);
   });
 
+  it("gives process provider settings precedence over .env.local values", async () => {
+    const workspace = await makeWorkspace();
+    const envFile = join(workspace, ".env.local");
+    await writeFile(
+      envFile,
+      [
+        "LLM_PROVIDER=mock",
+        "LLM_MODEL=file-model",
+        "DASHSCOPE_API_KEY=file-dashscope-key",
+        "DASHSCOPE_API_BASE=https://file-dashscope.example/v1",
+        "DASHSCOPE_MODEL=file-dashscope-model",
+        "DASHSCOPE_REVIEW_MODEL=file-review-model",
+        "OPENAI_API_KEY=file-openai-key",
+        "OPENAI_API_BASE=https://file-openai.example/v1",
+        "OPENAI_COMPATIBLE_MODEL=file-openai-model",
+        "DASHSCOPE_TRANSPORT_MODE=text_generation",
+        "LLM_TIMEOUT=45",
+        "LLM_RETRY_ATTEMPTS=2",
+        "LLM_RETRY_DELAY=0.5",
+      ].join("\n"),
+    );
+
+    const config = load({
+      envFile,
+      workingDirectory: workspace,
+      env: {
+        LLM_PROVIDER: "dashscope",
+        LLM_MODEL: "env-model",
+        DASHSCOPE_API_KEY: "env-dashscope-key",
+        DASHSCOPE_API_BASE: "https://env-dashscope.example/v1",
+        DASHSCOPE_MODEL: "env-dashscope-model",
+        DASHSCOPE_REVIEW_MODEL: "env-review-model",
+        LLM_API_KEY: "env-openai-key",
+        LLM_API_BASE: "https://env-openai.example/v1",
+        OPENAI_COMPATIBLE_MODEL: "env-openai-model",
+        DASHSCOPE_TRANSPORT_MODE: "responses",
+        LLM_TIMEOUT: "180",
+        LLM_RETRY_ATTEMPTS: "3",
+        LLM_RETRY_DELAY: "2.5",
+      },
+    }) as ServerConfig;
+
+    expect(config.llm).toEqual({
+      defaultProvider: "dashscope",
+      genericModel: "env-model",
+      dashscopeModel: "env-dashscope-model",
+      dashscopeReviewModel: "env-review-model",
+      openaiCompatibleModel: "env-openai-model",
+      dashscopeApiKey: "env-dashscope-key",
+      dashscopeApiBase: "https://env-dashscope.example/v1",
+      openaiCompatibleApiKey: "env-openai-key",
+      openaiCompatibleApiBase: "https://env-openai.example/v1",
+      dashscopeTransportMode: "responses",
+      timeoutSeconds: 180,
+      retryAttempts: 3,
+      retryDelayMs: 2_500,
+    });
+  });
+
+  it("retains upper-bound provider validation without exposing credentials", () => {
+    const credential = "test-credential-must-not-leak";
+    const cases: readonly [Record<string, string>, string][] = [
+      [{ LLM_TIMEOUT: "301", LLM_API_KEY: credential }, "LLM_TIMEOUT"],
+      [{ LLM_RETRY_DELAY: "10.1", LLM_API_KEY: credential }, "LLM_RETRY_DELAY"],
+    ];
+
+    for (const [env, expectedSetting] of cases) {
+      const rejected = expectRejected(load({ env }));
+      expect(rejected.message).toContain(expectedSetting);
+      expect(rejected.message).not.toContain(credential);
+    }
+  });
+
   it("reads settings from the .env.local file without shell exports", async () => {
     const workspace = await makeWorkspace();
     const envFile = join(workspace, ".env.local");

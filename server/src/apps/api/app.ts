@@ -6,6 +6,7 @@ import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import Fastify, { type FastifyInstance, type FastifyLoggerOptions } from "fastify";
 import type { TextGenerationProviderFactory } from "../../contexts/ai/application/ports/text_generation.js";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
+import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { documentRoutes } from "../../contexts/studio/interface/http/document_routes.js";
@@ -158,8 +159,39 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             randomBytes(32).toString("base64url"),
           now: options.clock,
         });
+  const llm = options.config?.llm;
+  const providerApiKeys = options.providerApiKeys ?? {
+    dashscope: llm?.dashscopeApiKey,
+    openaiCompatible: llm?.openaiCompatibleApiKey,
+  };
+  const providerModelSettings = {
+    genericModel: llm?.genericModel,
+    dashscopeModel: llm?.dashscopeModel,
+    dashscopeReviewModel: llm?.dashscopeReviewModel,
+    openaiCompatibleModel: llm?.openaiCompatibleModel,
+  };
   const providerFactory: TextGenerationProviderFactory =
-    options.textProviderFactory ?? textProviderFactory(options.providerApiKeys ?? {});
+    options.textProviderFactory ??
+    textProviderFactory(providerApiKeys, {
+      modelSettings: providerModelSettings,
+      ...(llm === undefined
+        ? {}
+        : {
+            adapterOptions: {
+              dashscope: {
+                apiBase: llm.dashscopeApiBase,
+                transportMode: llm.dashscopeTransportMode,
+                timeoutSeconds: llm.timeoutSeconds,
+                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
+              },
+              openaiCompatible: {
+                apiBase: llm.openaiCompatibleApiBase,
+                timeoutSeconds: llm.timeoutSeconds,
+                retry: { maxAttempts: llm.retryAttempts, delayMs: llm.retryDelayMs },
+              },
+            },
+          }),
+    });
   const studioServices =
     studioDb === undefined || dataDirectory === undefined
       ? undefined
@@ -234,6 +266,12 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
   await app.register(healthRoutes, { healthProbe: options.healthProbe ?? emptyHealthProbe });
   await app.register(versionRoutes, { info: versionInfo });
+  await app.register(providerCatalogRoutes, {
+    authService,
+    defaultProvider: llm?.defaultProvider ?? "mock",
+    settings: providerModelSettings,
+    credentials: providerApiKeys,
+  });
   await app.register(projectRoutes, { authService, services: studioServices });
   await app.register(documentRoutes, { authService, services: studioServices });
   await app.register(proposalRoutes, { authService, services: studioServices });
