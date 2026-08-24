@@ -120,19 +120,43 @@ export class SnapshotArtifactService {
     return this.exportStore.listProjectArtifacts(scopeForPrincipal(principal), projectId);
   }
 
+  async readArtifactForDelivery(
+    principal: Principal,
+    projectId: string,
+    artifactId: string,
+  ): Promise<{ format: ExportArtifactFormat; bytes: Buffer }> {
+    const artifact = this.scopedArtifact(principal, projectId, artifactId);
+    return {
+      format: artifact.format,
+      bytes: await this.readArtifactBytesForRecord(artifact),
+    };
+  }
+
+  /** Compatibility-only internal buffer seam; HTTP delivery uses the typed result above. */
   async readArtifactBytes(
     principal: Principal,
     projectId: string,
     artifactId: string,
   ): Promise<Buffer> {
-    const artifact = this.exportStore.findProjectArtifact(
+    return this.readArtifactBytesForRecord(this.scopedArtifact(principal, projectId, artifactId));
+  }
+
+  private scopedArtifact(
+    principal: Principal,
+    projectId: string,
+    artifactId: string,
+  ): ExportArtifactRecord {
+    return this.exportStore.findProjectArtifact(
       scopeForPrincipal(principal),
       projectId,
       artifactId,
     );
+  }
+
+  private readArtifactBytesForRecord(artifact: ExportArtifactRecord): Promise<Buffer> {
     return this.artifactGateway.readArtifactBytes({
-      projectId,
-      artifactId,
+      projectId: artifact.projectId,
+      artifactId: artifact.id,
       format: artifact.format,
       relativePath: artifact.relativePath,
       sizeBytes: artifact.sizeBytes,
