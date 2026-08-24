@@ -182,6 +182,13 @@ describe("OpenAI-compatible adapter transient failure handling", () => {
 });
 
 describe("OpenAI-compatible adapter boundaries", () => {
+  it("normalizes an invalid configured API base at construction", () => {
+    expect(() => provider({ apiBase: "not an absolute URL" })).toThrow(TextGenerationProviderError);
+    expect(() => provider({ apiBase: "not an absolute URL" })).toThrow(
+      "OpenAI-compatible API base must be an absolute URL",
+    );
+  });
+
   it("rejects an unknown provider step before dispatch", async () => {
     const capture: CapturedRequest[] = [];
     const generation = provider({

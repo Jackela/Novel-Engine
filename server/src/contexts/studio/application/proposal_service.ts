@@ -131,9 +131,10 @@ export class AiProposalService {
       requestJson,
       now: this.now(),
     };
-    const provider = this.providerFactory(providerName);
+    let provider: TextGenerationProvider | undefined;
 
     try {
+      provider = this.providerFactory(providerName);
       const result = await provider.generateStructured({
         step,
         systemPrompt: SYSTEM_PROMPT,
@@ -204,7 +205,9 @@ export class AiProposalService {
         }),
       );
     } finally {
-      await disposeProvider(provider, reportCleanupFailure);
+      if (provider !== undefined) {
+        await disposeProvider(provider, reportCleanupFailure);
+      }
     }
   }
 

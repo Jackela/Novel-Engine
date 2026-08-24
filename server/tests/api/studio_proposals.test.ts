@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import { FORBIDDEN_PROSE_PHRASES } from "../../src/contexts/studio/application/sanitization.js";
 import {
@@ -25,6 +26,70 @@ function assertIsProse(markdown: string): void {
 }
 
 describe("proposal flow", () => {
+  it("records known factory failures while preserving unexpected factory failures", async () => {
+    const knownFailure = new TextGenerationProviderError(
+      "OpenAI-compatible API base must be an absolute URL",
+    );
+    const known = await buildStudioApp(undefined, {
+      textProviderFactory: () => {
+        throw knownFailure;
+      },
+    });
+    try {
+      const jar = await ownerJar(known.app);
+      const project = await seedProject(known.app, jar, "Known factory failure");
+      const document = project.documents[0];
+      if (document === undefined) {
+        throw new Error("Known factory failure fixture must create a default document.");
+      }
+      const response = await call(
+        known.app,
+        jar,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
+        { operation: "continue", instruction: "Continue.", provider: "openai_compatible" },
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+      expect(response.json()).toMatchObject({
+        status: "failed",
+        provider: "openai_compatible",
+        error: knownFailure.message,
+        result: { proposal_markdown: "" },
+      });
+    } finally {
+      await known.app.close();
+    }
+
+    const unexpected = await buildStudioApp(undefined, {
+      textProviderFactory: () => {
+        throw new Error("factory implementation secret");
+      },
+    });
+    try {
+      const jar = await ownerJar(unexpected.app);
+      const project = await seedProject(unexpected.app, jar, "Unexpected factory failure");
+      const document = project.documents[0];
+      if (document === undefined) {
+        throw new Error("Unexpected factory failure fixture must create a default document.");
+      }
+      const response = await call(
+        unexpected.app,
+        jar,
+        "POST",
+        `/api/projects/${project.id}/documents/${document.id}/ai-proposals`,
+        { operation: "continue", instruction: "Continue.", provider: "openai_compatible" },
+      );
+
+      expect(response.statusCode, response.body).toBe(500);
+      const body = response.json();
+      expect(body.error).toMatchObject({ code: "INTERNAL_ERROR" });
+      expect(JSON.stringify(body)).not.toContain("factory implementation secret");
+    } finally {
+      await unexpected.app.close();
+    }
+  });
+
   it("drafts prose from the deterministic provider and leaves the manuscript untouched", async () => {
     const { app } = await buildStudioApp();
     try {
