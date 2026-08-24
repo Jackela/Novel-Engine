@@ -1,17 +1,20 @@
 import { createHash } from "node:crypto";
 import { lstatSync, readdirSync, readFileSync, realpathSync } from "node:fs";
-import { basename, join } from "node:path";
+import { basename, dirname, isAbsolute, join, win32 } from "node:path";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type {
   LegacyWorkspace,
   LegacyWorkspaceReader,
 } from "../application/ports/legacy_workspace_reader.js";
+import { NotFoundError } from "../domain/exceptions.js";
 
 const STORY_ERROR = "Legacy workspace must contain story.yaml.";
 const SOURCE_ERROR = "Legacy workspace source must be a real directory.";
 const SYMLINK_ERROR = "Legacy workspace must not contain symbolic links.";
 const CHAPTER_ERROR = "Legacy workspace chapters must be regular files.";
+const WEB_SOURCE_ERROR = "Web imports must name a workspace directory under data/imports.";
+const IMPORT_NOT_FOUND_ERROR = "Import workspace not found under data/imports.";
 const CHAPTER_FILENAME = /^chapter-.*\.md$/;
 
 interface RawFile {
@@ -30,20 +33,74 @@ interface ReadChapter extends RawFile {
 export class FsLegacyWorkspaceReader implements LegacyWorkspaceReader {
   read(source: string): LegacyWorkspace {
     const canonicalSource = canonicalDirectory(source);
-    const story = readStory(canonicalSource);
-    const chapters = readChapters(canonicalSource);
+    return readWorkspace(canonicalSource);
+  }
 
-    return {
-      source: canonicalSource,
-      sourceHash: workspaceHash(canonicalSource, [story, ...chapters]),
-      title: legacyScalar(story.contents, "title") ?? basename(canonicalSource),
-      description: legacyScalar(story.contents, "premise") ?? "",
-      chapters: chapters.map((chapter) => ({
-        filename: chapter.filename,
-        contentMarkdown: chapter.contents.toString("utf8"),
-        bytes: chapter.contents.length,
-      })),
-    };
+  readConfinedLegacyWorkspace(dataDirectory: string, source: string): LegacyWorkspace {
+    assertConfinedSourceName(source);
+    const importRoot = canonicalConfinedImportRoot(dataDirectory);
+    const canonicalSource = canonicalConfinedSource(importRoot, source);
+    return readWorkspace(canonicalSource);
+  }
+}
+
+function readWorkspace(canonicalSource: string): LegacyWorkspace {
+  const story = readStory(canonicalSource);
+  const chapters = readChapters(canonicalSource);
+
+  return {
+    source: canonicalSource,
+    sourceHash: workspaceHash(canonicalSource, [story, ...chapters]),
+    title: legacyScalar(story.contents, "title") ?? basename(canonicalSource),
+    description: legacyScalar(story.contents, "premise") ?? "",
+    chapters: chapters.map((chapter) => ({
+      filename: chapter.filename,
+      contentMarkdown: chapter.contents.toString("utf8"),
+      bytes: chapter.contents.length,
+    })),
+  };
+}
+
+function canonicalConfinedImportRoot(dataDirectory: string): string {
+  return canonicalConfinedDirectory(join(dataDirectory, "imports"));
+}
+
+function canonicalConfinedSource(importRoot: string, source: string): string {
+  const candidate = join(importRoot, source);
+  const canonicalSource = canonicalConfinedDirectory(candidate);
+  if (dirname(canonicalSource) !== importRoot) {
+    throw new NotFoundError(IMPORT_NOT_FOUND_ERROR);
+  }
+  return canonicalSource;
+}
+
+function assertConfinedSourceName(source: string): void {
+  if (
+    source.trim() === "" ||
+    source === "." ||
+    source === ".." ||
+    source.includes("/") ||
+    source.includes("\\") ||
+    source.includes("\0") ||
+    isAbsolute(source) ||
+    win32.isAbsolute(source)
+  ) {
+    throw new InvalidOperationError(WEB_SOURCE_ERROR);
+  }
+}
+
+function canonicalConfinedDirectory(path: string): string {
+  const stat = lstatOrNull(path);
+  if (stat === null || stat.isSymbolicLink() || !stat.isDirectory()) {
+    throw new NotFoundError(IMPORT_NOT_FOUND_ERROR);
+  }
+  try {
+    return realpathSync(path);
+  } catch (error) {
+    if (isMissingPathError(error)) {
+      throw new NotFoundError(IMPORT_NOT_FOUND_ERROR);
+    }
+    throw error;
   }
 }
 
