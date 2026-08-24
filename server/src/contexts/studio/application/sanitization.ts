@@ -133,18 +133,110 @@ const PROVIDER_SCAFFOLDING_LINE_KEY = new RegExp(
   "im",
 );
 
-/** A non-scaffold object field needed to recognize a later inline scaffold key. */
-const PROVIDER_SCAFFOLDING_OBJECT_FIELD =
-  "(?:\"[^\"\\r\\n{}]*\"|'[^'\\r\\n{}]*'|`[^`\\r\\n{}]*`|[A-Za-z_][A-Za-z0-9_-]*)";
+type InlineContainer = "array" | "object";
+type InlineStringDelimiter = '"' | "'" | "`";
+
+function isInlineWhitespace(character: string | undefined): boolean {
+  return character === " " || character === "\\t" || character === "\\r" || character === "\\n";
+}
+
+function isInlineStringDelimiter(character: string): character is InlineStringDelimiter {
+  return character === '"' || character === "'" || character === "`";
+}
+
+function isInlineIdentifierStart(character: string | undefined): boolean {
+  return character !== undefined && /[A-Za-z_]/.test(character);
+}
+
+function isInlineIdentifierCharacter(character: string | undefined): boolean {
+  return character !== undefined && /[A-Za-z0-9_-]/.test(character);
+}
+
+/** Read a quoted or identifier key positioned directly after an object delimiter. */
+function readsProviderScaffoldingObjectKey(markdown: string, start: number): boolean {
+  let index = start;
+  while (isInlineWhitespace(markdown[index])) index += 1;
+
+  let key = "";
+  const delimiter = markdown[index];
+  if (delimiter !== undefined && isInlineStringDelimiter(delimiter)) {
+    index += 1;
+    let escaped = false;
+    let closed = false;
+    for (; index < markdown.length; index += 1) {
+      const character = markdown.charAt(index);
+      if (escaped) {
+        key += character;
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === delimiter) {
+        index += 1;
+        closed = true;
+        break;
+      } else {
+        key += character;
+      }
+    }
+    if (!closed) return false;
+  } else {
+    if (!isInlineIdentifierStart(delimiter)) return false;
+    do {
+      key += markdown.charAt(index);
+      index += 1;
+    } while (isInlineIdentifierCharacter(markdown[index]));
+  }
+
+  while (isInlineWhitespace(markdown[index])) index += 1;
+  const normalizedKey = key.toLowerCase();
+  return (
+    (normalizedKey === "echo" || normalizedKey === "result") &&
+    (markdown[index] === ":" || markdown[index] === "=")
+  );
+}
 
 /**
- * Retain object-shaped echo/result detection without treating every comma in
- * dialogue as a key boundary.
+ * Scan object syntax lexically so a scaffold key after nested object or array
+ * values remains structural, while commas and quotes in narrative prose do not.
  */
-const PROVIDER_SCAFFOLDING_INLINE_OBJECT_KEY = new RegExp(
-  `\\{(?:[\\t ]*${PROVIDER_SCAFFOLDING_KEY}[\\t ]*(?::|=)|[\\t ]*${PROVIDER_SCAFFOLDING_OBJECT_FIELD}[\\t ]*(?::|=)[^\\r\\n{}]*,[\\t ]*${PROVIDER_SCAFFOLDING_KEY}[\\t ]*(?::|=))`,
-  "i",
-);
+function hasProviderScaffoldingInlineObjectKey(markdown: string): boolean {
+  const containers: InlineContainer[] = [];
+  let stringDelimiter: InlineStringDelimiter | undefined;
+  let escaped = false;
+
+  for (let index = 0; index < markdown.length; index += 1) {
+    const character = markdown.charAt(index);
+    if (stringDelimiter !== undefined) {
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === stringDelimiter) {
+        stringDelimiter = undefined;
+      }
+      continue;
+    }
+
+    if (containers.length > 0 && isInlineStringDelimiter(character)) {
+      stringDelimiter = character;
+      continue;
+    }
+    if (character === "{") {
+      containers.push("object");
+      if (readsProviderScaffoldingObjectKey(markdown, index + 1)) return true;
+    } else if (character === "[") {
+      containers.push("array");
+    } else if (character === "}" && containers.at(-1) === "object") {
+      containers.pop();
+    } else if (character === "]" && containers.at(-1) === "array") {
+      containers.pop();
+    } else if (character === "," && containers.at(-1) === "object") {
+      if (readsProviderScaffoldingObjectKey(markdown, index + 1)) return true;
+    }
+  }
+
+  return false;
+}
 
 /**
  * Check the final, already-sanitized form of proposal markdown before a job
@@ -157,7 +249,7 @@ export function isProposalMarkdownProse(markdown: string): boolean {
 
   if (
     PROVIDER_SCAFFOLDING_LINE_KEY.test(markdown) ||
-    PROVIDER_SCAFFOLDING_INLINE_OBJECT_KEY.test(markdown)
+    hasProviderScaffoldingInlineObjectKey(markdown)
   ) {
     return false;
   }

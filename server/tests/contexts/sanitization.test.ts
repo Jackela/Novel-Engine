@@ -84,9 +84,16 @@ describe("proposal markdown prose predicate", () => {
     expect(isProposalMarkdownProse(narrative)).toBe(true);
   });
 
-  it("accepts quoted result dialogue that is not a structural key", () => {
-    const narrative = `${LONG_NARRATIVE_PROSE}\n\nMara said, "result: then we run before the tide turns," and Tomas answered by lifting the lantern.`;
-
+  it.each([
+    [
+      "quoted result dialogue",
+      `${LONG_NARRATIVE_PROSE}\n\nMara said, "result: then we run before the tide turns," and Tomas answered by lifting the lantern.`,
+    ],
+    [
+      "a natural list bullet",
+      `${LONG_NARRATIVE_PROSE}\n\n- The result: Mara kept the lantern lit until Tomas reached the quay.`,
+    ],
+  ])("accepts %s that is not a structural key", (_label, narrative) => {
     expect(isProposalMarkdownProse(narrative)).toBe(true);
   });
 
@@ -106,6 +113,18 @@ describe("proposal markdown prose predicate", () => {
     [
       "a comma-bounded result key",
       `${LONG_NARRATIVE_PROSE}\n\n{"prose": "chapter", result = "chapter continuation"}`,
+    ],
+    [
+      "a sibling result key after a nested object",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {}, "result": "chapter continuation"}`,
+    ],
+    [
+      "a sibling result key after a nested array",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": [{"kind": "note"}], result: "chapter continuation"}`,
+    ],
+    [
+      "a nested echo object key",
+      `${LONG_NARRATIVE_PROSE}\n\n{"meta": {"echo": "chapter continuation"}}`,
     ],
     ["an indented dash result key", `${LONG_NARRATIVE_PROSE}\n\n  - ReSuLt: chapter continuation`],
     ["an asterisk quoted echo key", `${LONG_NARRATIVE_PROSE}\n\n\t* 'EcHo' = chapter continuation`],

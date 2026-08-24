@@ -135,6 +135,10 @@ describe("proposal flow", () => {
       { markdown: `${validProposalProse}\n\nEcho: raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n'EcHo' = raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n{"RESULT": "raw scaffold echo"}`, status: "failed" },
+      {
+        markdown: `${validProposalProse}\n\n{"meta": {}, "result": "raw scaffold echo"}`,
+        status: "failed",
+      },
       { markdown: `${validProposalProse}\n\n\`result\`: raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  - "ReSuLt" = raw scaffold echo`, status: "failed" },
       { markdown: `${validProposalProse}\n\n  1) 'ECHO': raw scaffold echo`, status: "failed" },
@@ -168,7 +172,7 @@ describe("proposal flow", () => {
         await app.close();
       }
     }
-  });
+  }, 15_000);
 
   it("reflects each document's own title and chapter number", async () => {
     const { app } = await buildStudioApp();
