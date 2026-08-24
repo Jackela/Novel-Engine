@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
-import { capturingFactory, propose } from "./proposal_test_helpers.js";
+import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {
   buildStudioApp,
   call,
@@ -45,7 +45,7 @@ describe("proposal accounting and scoping", () => {
 
   it("prefers provider-reported token counts over the fallback", async () => {
     const capture = capturingFactory({
-      markdown: "Counted prose.",
+      markdown: validProposalProse,
       promptTokens: 11,
       completionTokens: 13,
     });
