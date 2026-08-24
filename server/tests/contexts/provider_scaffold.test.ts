@@ -11,6 +11,7 @@ describe("provider scaffold detection", () => {
     ["ordered label", "  2) \\u0072esult: raw provider scaffold"],
     ["direct object key", "{ RESULT: raw provider scaffold }"],
     ["actual inline whitespace", '{\r\n\t"result" = raw provider scaffold}'],
+    ["Unicode structural whitespace", '{"meta":{},\u00a0"result": raw provider scaffold}'],
     ["sibling object key", '{meta: "note", "result": raw provider scaffold}'],
     ["nested object key", "{meta: {EcHo: raw provider scaffold}}"],
     ["nested array key", "{items: [{note: 'x'}, {\\u0072esult: raw provider scaffold}]}"],
@@ -26,9 +27,19 @@ describe("provider scaffold detection", () => {
     ["invalid value separator", '{"meta": "note" result: raw provider scaffold}'],
     ["loose continuation", '{meta: "note"}, result: raw provider scaffold'],
     ["immediate continuation", '{meta: "note"} \\u0072esult: raw provider scaffold'],
+    ["punctuated loose continuation", '{meta: "note"},,,;:=\u00a0result: raw provider scaffold'],
     ["extra closers", '{"meta": {note: "x"}}}, result = raw provider scaffold'],
     ["unbounded mixed closers", '{meta: "note"}]}]}]}]}], \\u0072esult: raw provider scaffold'],
     ["mismatched closer", '{"meta": [}, result = raw provider scaffold'],
+    ["double-encoded target", JSON.stringify(JSON.stringify({ result: "raw provider scaffold" }))],
+    [
+      "triple-encoded nested target",
+      JSON.stringify(JSON.stringify(JSON.stringify({ meta: { echo: "raw provider scaffold" } }))),
+    ],
+    [
+      "encoded Unicode structural whitespace",
+      JSON.stringify(JSON.stringify('{"meta":{},\u00a0"result":"raw provider scaffold"}')),
+    ],
   ])("finds a %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(true);
   });
@@ -41,6 +52,10 @@ describe("provider scaffold detection", () => {
     ["unpaired leading apostrophe", "'Twas only rain on the slate roof."],
     ["quoted non-target value", '{meta: "the result = a promise Mara could trust"}'],
     ["invalid unicode escape", '{"\\uZZZZesult": "not a decoded key"}'],
+    [
+      "encoded object without target",
+      JSON.stringify(JSON.stringify({ note: "result but no field" })),
+    ],
   ])("preserves %s", (_label, markdown) => {
     expect(hasProviderScaffolding(markdown)).toBe(false);
   });

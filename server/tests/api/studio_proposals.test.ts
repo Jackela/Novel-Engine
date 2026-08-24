@@ -127,6 +127,10 @@ describe("proposal flow", () => {
   });
 
   it("keeps narrative echo and result prose while rejecting key-shaped provider scaffolding", async () => {
+    const encodedScaffold = JSON.stringify(JSON.stringify({ result: "raw scaffold echo" }));
+    const encodedUnicodeScaffold = JSON.stringify(
+      JSON.stringify('{"meta":{},\u00a0"result":"raw scaffold echo"}'),
+    );
     const cases = [
       {
         markdown: `${validProposalProse}\n\nThe corridor echoed at dawn, and the result was a promise Mara could finally trust.`,
@@ -154,6 +158,8 @@ describe("proposal flow", () => {
         markdown: `${validProposalProse}\n\n{"meta" \\u0072esult = "raw provider scaffold echo"}`,
         status: "failed",
       },
+      { markdown: `${validProposalProse}\n\n${encodedScaffold}`, status: "failed" },
+      { markdown: `${validProposalProse}\n\n${encodedUnicodeScaffold}`, status: "failed" },
     ] as const;
 
     for (const { markdown, status } of cases) {

@@ -2,7 +2,8 @@ type Quote = '"' | "'" | "`";
 type Field = { key: string; end: number } | undefined;
 type Frame = { closer: "}" | "]" };
 
-const isWhitespace = (character: string | undefined) => /[ \t\r\n]/.test(character ?? "");
+const isWhitespace = (character: string | undefined) =>
+  character !== undefined && /^\s$/u.test(character);
 const isIdentifier = (character: string | undefined) => /[A-Za-z0-9_-]/.test(character ?? "");
 const isQuote = (character: string | undefined): character is Quote =>
   character === '"' || character === "'" || character === "`";
@@ -88,6 +89,55 @@ function readQuoteEnd(markdown: string, start: number): number | undefined {
   return undefined;
 }
 
+function normalizeSerializedJsonWhitespace(source: string): string {
+  let quoted = false;
+  let escaped = false;
+  let normalized = "";
+  for (const character of source) {
+    normalized += !quoted && isWhitespace(character) ? " " : character;
+    if (quoted && escaped) escaped = false;
+    else if (quoted && character === "\\") escaped = true;
+    else if (character === '"') quoted = !quoted;
+  }
+  return normalized;
+}
+
+function hasSerializedProviderKey(value: object | unknown[]): boolean {
+  const worklist: unknown[] = [value];
+  while (worklist.length > 0) {
+    const candidate = worklist.pop();
+    if (Array.isArray(candidate)) {
+      worklist.push(...candidate);
+      continue;
+    }
+    if (candidate === null || typeof candidate !== "object") continue;
+    for (const [key, child] of Object.entries(candidate)) {
+      if (isProviderKey(key)) return true;
+      worklist.push(child);
+    }
+  }
+  return false;
+}
+
+function hasSerializedProviderScaffolding(markdown: string, start: number, end: number): boolean {
+  if (markdown[start] !== '"') return false;
+  let source = markdown.slice(start, end);
+  while (source.length > 0) {
+    let decoded: unknown;
+    try {
+      decoded = JSON.parse(normalizeSerializedJsonWhitespace(source)) as unknown;
+    } catch {
+      return false;
+    }
+    if (Array.isArray(decoded) || (decoded !== null && typeof decoded === "object")) {
+      return hasSerializedProviderKey(decoded);
+    }
+    if (typeof decoded !== "string" || decoded.length >= source.length) return false;
+    source = decoded;
+  }
+  return false;
+}
+
 function isFieldBoundary(markdown: string, index: number): boolean {
   const previous = markdown[index - 1];
   return previous === undefined || isWhitespace(previous) || /[[{,}\]:="'`]/.test(previous);
@@ -120,11 +170,8 @@ function hasLineKey(markdown: string, start: number): boolean {
 }
 
 function hasLooseContinuation(markdown: string, start: number): boolean {
-  let index = skipWhitespace(markdown, start);
-  while (markdown[index] === "}" || markdown[index] === "]") {
-    index = skipWhitespace(markdown, index + 1);
-  }
-  if (markdown[index] === ",") index = skipWhitespace(markdown, index + 1);
+  let index = start;
+  while (isWhitespace(markdown[index]) || /[}\],;:=]/.test(markdown[index] ?? "")) index += 1;
   const field = readField(markdown, index);
   return field !== undefined && isProviderKey(field.key);
 }
@@ -142,6 +189,7 @@ function scanComposite(markdown: string, start: number): number | true {
     }
     const quotedEnd = readQuoteEnd(markdown, index);
     if (quotedEnd !== undefined) {
+      if (hasSerializedProviderScaffolding(markdown, index, quotedEnd)) return true;
       index = quotedEnd;
       continue;
     }
@@ -174,6 +222,9 @@ export function hasProviderScaffolding(markdown: string): boolean {
       continue;
     }
     const quotedEnd = readQuoteEnd(markdown, index);
+    if (quotedEnd !== undefined && hasSerializedProviderScaffolding(markdown, index, quotedEnd)) {
+      return true;
+    }
     index = quotedEnd ?? index + 1;
   }
   return false;
