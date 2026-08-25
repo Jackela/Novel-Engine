@@ -52,7 +52,9 @@ test('owner setup, editing, AI proposal accept, search, and deep links', async (
   // Carried autosave behavior: edits persist through the debounced save.
   const editor = page.locator('.cm-content');
   await editor.click();
-  await page.keyboard.press('Control+A');
+  // ControlOrMeta resolves to the platform's select-all chord: CodeMirror maps
+  // plain Control+A on macOS to line-start movement, not selection.
+  await page.keyboard.press('ControlOrMeta+a');
   await page.keyboard.type('# Chapter 1\n\nThe harbor bell rang twice.');
   await expect(saveStatus).toHaveText(/saved/i, { timeout: 10_000 });
 
@@ -110,7 +112,7 @@ test('guest entry issues novel_engine cookies and renders the real error envelop
   await createProject(first, 'Conflict fixture');
   const editor = first.locator('.cm-content');
   await editor.click();
-  await first.keyboard.press('Control+A');
+  await first.keyboard.press('ControlOrMeta+a');
   await first.keyboard.type('First tab draft.');
   await expect(first.locator('.studio-editor .save-state')).toHaveText(/saved/i, {
     timeout: 10_000,
@@ -123,14 +125,14 @@ test('guest entry issues novel_engine cookies and renders the real error envelop
   await second.goto(first.url());
   await expect(second.locator('.cm-content')).toContainText('First tab draft.');
   await second.locator('.cm-content').click();
-  await second.keyboard.press('Control+A');
+  await second.keyboard.press('ControlOrMeta+a');
   await second.keyboard.type('Second tab wins.');
   await expect(second.locator('.studio-editor .save-state')).toHaveText(/saved/i, {
     timeout: 10_000,
   });
 
   await editor.click();
-  await first.keyboard.press('Control+A');
+  await first.keyboard.press('ControlOrMeta+a');
   await first.keyboard.type('Stale tab overwrite.');
   const conflict = first.locator('.editor-conflict');
   await expect(conflict).toBeVisible({ timeout: 10_000 });
