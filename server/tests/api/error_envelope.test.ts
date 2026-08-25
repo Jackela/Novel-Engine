@@ -120,11 +120,11 @@ describe("unified error envelope", () => {
     }
   });
 
-  it("wraps unknown routes in the envelope", async () => {
+  it("wraps unknown API routes in the envelope", async () => {
     const app = await buildQuietApp();
 
     try {
-      const response = await app.inject({ method: "GET", url: "/test/nowhere" });
+      const response = await app.inject({ method: "GET", url: "/api/test/nowhere" });
 
       expect(response.statusCode).toBe(404);
       const body = response.json();

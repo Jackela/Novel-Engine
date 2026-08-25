@@ -27,6 +27,7 @@ export class HttpError extends Error {
     message: string,
     readonly status: number,
     readonly detail?: unknown,
+    readonly code?: string,
   ) {
     super(message);
     Object.setPrototypeOf(this, HttpError.prototype);
@@ -39,11 +40,44 @@ export function getCsrfToken(): string | undefined {
   if (typeof document === 'undefined') {
     return undefined;
   }
-  const match = document.cookie.match(/(?:^|; )novel_studio_csrf=([^;]*)/);
-  return match?.[1];
+  // #274: the TS backend issues novel_engine_csrf; the Python stack still in
+  // CI's smoke until the #277 cutover issues novel_studio_csrf. Either cookie
+  // authorizes the double-submit header for its own backend.
+  const engine = document.cookie.match(/(?:^|; )novel_engine_csrf=([^;]*)/);
+  if (engine?.[1]) return engine[1];
+  const studio = document.cookie.match(/(?:^|; )novel_studio_csrf=([^;]*)/);
+  return studio?.[1];
 }
 
 type ResponseParser<T> = (value: unknown) => T;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Read an error response in either contract shape (#274): the TS unified
+ * envelope `{ error: { code, message, details } }` first, then the Python
+ * legacy `{ detail }` payload still served until the #277 cutover. Unknown
+ * bodies fall back to the caller's status message.
+ */
+async function readHttpError(response: Response, fallbackMessage: string): Promise<HttpError> {
+  const payload = await response.json().catch(() => null);
+  if (isRecord(payload) && isRecord(payload.error)) {
+    const envelope = payload.error;
+    const message = typeof envelope.message === 'string' ? envelope.message : fallbackMessage;
+    const code = typeof envelope.code === 'string' ? envelope.code : undefined;
+    return new HttpError(message, response.status, envelope.details, code);
+  }
+  const detail = isRecord(payload) ? payload.detail : undefined;
+  const message =
+    typeof detail === 'string'
+      ? detail
+      : isRecord(detail) && typeof detail.message === 'string'
+        ? detail.message
+        : fallbackMessage;
+  return new HttpError(message, response.status, detail, undefined);
+}
 
 async function request<T>(
   path: string,
@@ -92,15 +126,7 @@ async function request<T>(
       throw error;
     }
     if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as { detail?: unknown } | null;
-      const detail = payload?.detail;
-      const message =
-        typeof detail === 'string'
-          ? detail
-          : typeof detail === 'object' && detail && 'message' in detail
-            ? String((detail as { message: unknown }).message)
-            : `Request failed with status ${response.status}`;
-      throw new HttpError(message, response.status, detail);
+      throw await readHttpError(response, `Request failed with status ${response.status}`);
     }
     if (response.status === 204) return parse(undefined);
     return parse(await response.json());
@@ -125,7 +151,7 @@ async function downloadBlob(path: string): Promise<Blob> {
   try {
     const response = await fetch(url(path), { credentials: 'include', signal: controller.signal });
     if (!response.ok) {
-      throw new HttpError(`Download failed with status ${response.status}`, response.status);
+      throw await readHttpError(response, `Download failed with status ${response.status}`);
     }
     return await response.blob();
   } catch (error) {

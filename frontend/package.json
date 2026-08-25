@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
     "test:e2e": "node ./scripts/run-playwright.mjs test",
     "test:e2e:smoke": "node ./scripts/run-playwright.mjs test tests/e2e/studio.spec.ts",
+    "test:e2e:ts": "node ./scripts/run-playwright.mjs test -c playwright.ts.config.ts",
     "test:e2e:full-audit": "node ./scripts/run-playwright.mjs test tests/e2e",
     "test:e2e:headed": "node ./scripts/run-playwright.mjs test --headed",
     "test:e2e:ui": "node ./scripts/run-playwright.mjs test --ui",

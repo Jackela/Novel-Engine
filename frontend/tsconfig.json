@@ -26,7 +26,8 @@
     "generated",
     "vite.config.ts",
     "vitest.config.ts",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.ts.config.ts"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -143,6 +143,14 @@ jobs:
       - name: Validate Studio workflow
         working-directory: frontend
         run: pnpm test:e2e:smoke
+      # #274: the same SPA also runs against the TS backend through the
+      # emitted CLI (`serve`) serving frontend/dist — the post-cutover
+      # runtime. The frontend dist comes from the earlier `pnpm build`.
+      - name: Build the TS server for the SPA workflow
+        run: pnpm --dir server build
+      - name: Validate Studio workflow against the TS backend
+        working-directory: frontend
+        run: pnpm test:e2e:ts
       - name: Upload browser diagnostics
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

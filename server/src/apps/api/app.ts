@@ -30,6 +30,10 @@ import { authRoutes } from "../../shared/interface/http/auth_routes.js";
 import { corsAllowList } from "../../shared/interface/http/cors_policy.js";
 import { registerErrorEnvelope } from "../../shared/interface/http/error_envelope.js";
 import { healthRoutes } from "../../shared/interface/http/health_routes.js";
+import {
+  defaultSpaDistDirectory,
+  registerSpaServing,
+} from "../../shared/interface/http/spa_serving.js";
 import { type VersionInfo, versionRoutes } from "../../shared/interface/http/version_route.js";
 
 declare module "fastify" {
@@ -77,6 +81,13 @@ export interface AppOptions {
    * production guards fail fast here and unset options fall back to it.
    */
   config?: ServerConfig | undefined;
+  /**
+   * Directory holding the built SPA (frontend/dist by default, resolved
+   * relative to the server package). When present the Studio shell is served
+   * at the site root with an index.html fallback; when absent the app boots
+   * API-only and the root explains the missing build.
+   */
+  spaDistDirectory?: string | undefined;
 }
 
 const CORS_ALLOWED_HEADERS = [
@@ -289,6 +300,14 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
+
+  // The SPA surface registers last: its wildcard only fires when no API,
+  // health, or version route matched, so the JSON API stays distinct.
+  await registerSpaServing(app, {
+    distDirectory: options.spaDistDirectory ?? defaultSpaDistDirectory(),
+    productName: versionInfo.name,
+    version: versionInfo.version,
+  });
 
   return app;
 }
