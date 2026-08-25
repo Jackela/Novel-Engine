@@ -3,7 +3,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
-import type { Project, StudioExport } from '@/app/types/studio';
+import type { Project, StudioExport, StudioJob } from '@/app/types/studio';
 
 import { useExportDownload } from './useExportDownload';
 
@@ -15,6 +15,7 @@ vi.mock('@/app/api', async (importOriginal) => {
     api: {
       ...actual.api,
       createExport: vi.fn<typeof actual.api.createExport>(),
+      exports: vi.fn<typeof actual.api.exports>(),
       download: vi.fn<typeof actual.api.download>(),
     },
   };
@@ -46,6 +47,30 @@ const studioExport: StudioExport = {
   checksum_sha256: 'checksum-1',
   created_at: '2026-06-19T00:01:00Z',
   download_url: '/downloads/export-1',
+};
+const exportJob: StudioJob = {
+  id: 'job-1',
+  project_id: project.id,
+  document_id: null,
+  kind: 'export',
+  operation: 'export',
+  status: 'completed',
+  provider: 'studio',
+  model: '',
+  request: { format: 'markdown' },
+  result: { export_id: 'export-1' },
+  error: null,
+  retry_of_job_id: null,
+  events: [
+    {
+      id: 'event-1',
+      status: 'completed',
+      details: { export_id: 'export-1' },
+      created_at: '2026-06-19T00:01:00Z',
+    },
+  ],
+  created_at: '2026-06-19T00:01:00Z',
+  updated_at: '2026-06-19T00:01:00Z',
 };
 
 beforeEach(() => {
@@ -114,7 +139,8 @@ describe('useExportDownload', () => {
       clickedHref = this.href;
       clickedDownload = this.download;
     });
-    vi.mocked(api.createExport).mockResolvedValue(studioExport);
+    vi.mocked(api.createExport).mockResolvedValue(exportJob);
+    vi.mocked(api.exports).mockResolvedValue({ exports: [studioExport] });
     vi.mocked(api.download).mockResolvedValue(blob);
     const harness = renderExportHook();
 
@@ -149,6 +175,28 @@ describe('useExportDownload', () => {
     expect(harness.result().error).toBe('export unavailable');
     expect(harness.result().exports).toEqual([]);
     expect(click).not.toHaveBeenCalled();
+    expect(api.download).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed export job without refreshing the catalog', async () => {
+    // Given
+    const failedJob: StudioJob = {
+      ...exportJob,
+      status: 'failed',
+      error: 'A project needs at least one chapter before export.',
+    };
+    vi.mocked(api.createExport).mockResolvedValue(failedJob);
+    const harness = renderExportHook();
+
+    // When
+    await act(async () => {
+      await harness.result().exportProject('markdown');
+    });
+
+    // Then
+    expect(harness.result().error).toBe('A project needs at least one chapter before export.');
+    expect(harness.result().exports).toEqual([]);
+    expect(api.exports).not.toHaveBeenCalled();
     expect(api.download).not.toHaveBeenCalled();
   });
 

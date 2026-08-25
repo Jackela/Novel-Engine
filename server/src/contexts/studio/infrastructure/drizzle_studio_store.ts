@@ -8,6 +8,7 @@ import type {
   DocumentWithCurrent,
   EditorialAssessmentRecord,
   JobRecord,
+  MarkJobOutcomeInput,
   ProjectScope,
   RecordSnapshotReviewInput,
   StudioStore,
@@ -107,6 +108,19 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {
     return this.workflowJobs.findJob(scope, projectId, jobId);
+  }
+
+  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[] {
+    return this.workflowJobs.collectProjectJobs(scope, projectId);
+  }
+
+  markJobOutcome(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    input: MarkJobOutcomeInput,
+  ): JobRecord {
+    return this.workflowJobs.markJobOutcome(scope, projectId, jobId, input);
   }
 
   setJobResult(

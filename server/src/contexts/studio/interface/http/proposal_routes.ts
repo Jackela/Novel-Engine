@@ -1,9 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { Principal } from "../../../../shared/application/ports/auth.js";
 import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
+import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
-import { jobResponseSchema, proposalCreateSchema } from "./studio_schemas.js";
+import { proposalCreateSchema } from "./studio_schemas.js";
 
 /**
  * The AI proposal surface: synchronous generation that records a proposal on

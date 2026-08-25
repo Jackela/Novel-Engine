@@ -50,7 +50,7 @@ function parseIssue(value: unknown, label: string): ReviewIssue {
   };
 }
 
-export function parseReview(value: unknown, label = 'review'): Review {
+function parseReview(value: unknown, label = 'review'): Review {
   const item = objectValue(value, label);
   return {
     id: stringField(item, 'id', label),
@@ -113,6 +113,8 @@ export function parseJob(value: unknown, label = 'job'): StudioJob {
         result.accepted_revision_id === undefined
           ? undefined
           : nullableString(result.accepted_revision_id, `${label}.result.accepted_revision_id`),
+      export_id: optionalString(result, 'export_id', `${label}.result.export_id`),
+      review_id: optionalString(result, 'review_id', `${label}.result.review_id`),
     },
     error: nullableStringField(item, 'error', label),
     retry_of_job_id: nullableStringField(item, 'retry_of_job_id', label),
@@ -133,7 +135,7 @@ export function parseJobs(value: unknown): { jobs: StudioJob[] } {
   };
 }
 
-export function parseExport(value: unknown, label = 'export'): StudioExport {
+function parseExport(value: unknown, label = 'export'): StudioExport {
   const item = objectValue(value, label);
   return {
     id: stringField(item, 'id', label),
@@ -153,5 +155,64 @@ export function parseExports(value: unknown): { exports: StudioExport[] } {
     exports: arrayField(item, 'exports', 'exports response', (entry, index) =>
       parseExport(entry, `exports[${index}]`),
     ),
+  };
+}
+
+/**
+ * POST /reviews and POST /exports carry the synchronous terminal job under
+ * the TS backend. Until the cutover retires the Python stack, the CI smoke
+ * still drives the Python backend, whose POST responses are the legacy
+ * Review/Export shapes — accept both and normalize the legacy shape to the
+ * completed-job view the hooks consume. The cutover change removes the
+ * legacy branch.
+ */
+export function parseReviewJobResponse(value: unknown, label = 'review job response'): StudioJob {
+  const item = objectValue(value, label);
+  if ('kind' in item && 'status' in item) {
+    return parseJob(item, label);
+  }
+  const review = parseReview(item, label);
+  const createdAt = stringField(item, 'created_at', label);
+  return {
+    id: review.id,
+    project_id: review.project_id,
+    document_id: null,
+    kind: 'review',
+    operation: 'review',
+    status: 'completed',
+    provider: review.provider,
+    model: review.model,
+    request: {},
+    result: { review_id: review.id },
+    error: null,
+    retry_of_job_id: null,
+    events: [],
+    created_at: createdAt,
+    updated_at: createdAt,
+  };
+}
+
+export function parseExportJobResponse(value: unknown, label = 'export job response'): StudioJob {
+  const item = objectValue(value, label);
+  if ('kind' in item && 'status' in item) {
+    return parseJob(item, label);
+  }
+  const artifact = parseExport(item, label);
+  return {
+    id: artifact.id,
+    project_id: artifact.project_id,
+    document_id: null,
+    kind: 'export',
+    operation: 'export',
+    status: 'completed',
+    provider: 'studio',
+    model: '',
+    request: {},
+    result: { export_id: artifact.id },
+    error: null,
+    retry_of_job_id: null,
+    events: [],
+    created_at: artifact.created_at,
+    updated_at: artifact.created_at,
   };
 }

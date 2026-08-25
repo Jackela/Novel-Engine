@@ -184,7 +184,7 @@ describe("export artifact catalog and delivery", () => {
         .paths;
       const catalogPath = "/api/projects/{projectId}/exports";
       const deliveryPath = "/api/projects/{projectId}/exports/{exportId}/download";
-      expect(Object.keys(paths[catalogPath] ?? {}).sort()).toEqual(["get"]);
+      expect(Object.keys(paths[catalogPath] ?? {}).sort()).toEqual(["get", "post"]);
       expect(Object.keys(paths[deliveryPath] ?? {}).sort()).toEqual(["get"]);
       const deliverySpec = JSON.stringify(paths[deliveryPath]);
       expect(deliverySpec).toContain("binary");

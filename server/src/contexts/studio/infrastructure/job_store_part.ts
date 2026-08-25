@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
@@ -7,6 +7,7 @@ import type {
   AddJobInput,
   AddUsageEventInput,
   JobRecord,
+  MarkJobOutcomeInput,
   ProjectScope,
 } from "../application/ports/studio_store.js";
 import { NotFoundError } from "../domain/exceptions.js";
@@ -83,11 +84,12 @@ export class JobStorePart {
         request_json: input.requestJson,
         result_json: input.resultJson,
         error: input.error,
-        retry_of_job_id: null,
         created_at: input.now,
         updated_at: input.now,
       };
-      tx.insert(jobs).values(job).run();
+      tx.insert(jobs)
+        .values({ ...job, retry_of_job_id: input.retryOfJobId ?? null })
+        .run();
       tx.insert(jobEvents)
         .values({
           id: randomUUID(),
@@ -129,6 +131,79 @@ export class JobStorePart {
         throw new NotFoundError("Job not found.");
       }
       return jobWithEvents(tx, job.id);
+    });
+  }
+
+  /**
+   * The audit-trail listing: jobs newest first, and within each job the
+   * events newest first (the OpenSpec listing contract).
+   */
+  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[] {
+    return this.db.transaction((tx) => {
+      const project: ProjectRow = scopedProject(tx, scope, projectId);
+      const rows = tx
+        .select()
+        .from(jobs)
+        .where(eq(jobs.project_id, project.id))
+        .orderBy(desc(jobs.created_at))
+        .all();
+      if (rows.length === 0) {
+        return [];
+      }
+      const events = tx
+        .select()
+        .from(jobEvents)
+        .where(
+          inArray(
+            jobEvents.job_id,
+            rows.map((row) => row.id),
+          ),
+        )
+        .orderBy(desc(jobEvents.created_at))
+        .all();
+      const eventsByJob = new Map<string, JobEventRow[]>();
+      for (const event of events) {
+        const bucket = eventsByJob.get(event.job_id) ?? [];
+        bucket.push(event);
+        eventsByJob.set(event.job_id, bucket);
+      }
+      return rows.map((row) => toJobRecord(row, eventsByJob.get(row.id) ?? []));
+    });
+  }
+
+  markJobOutcome(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    input: MarkJobOutcomeInput,
+  ): JobRecord {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const job = tx.select().from(jobs).where(eq(jobs.id, jobId)).get();
+      if (job === undefined || job.project_id !== projectId) {
+        throw new NotFoundError("Job not found.");
+      }
+      tx.update(jobs)
+        .set({
+          status: input.status,
+          ...(input.resultJson === undefined ? {} : { result_json: input.resultJson }),
+          ...(input.model === undefined ? {} : { model: input.model }),
+          error: input.error,
+          updated_at: input.now,
+          finished_at: input.now,
+        })
+        .where(eq(jobs.id, jobId))
+        .run();
+      tx.insert(jobEvents)
+        .values({
+          id: randomUUID(),
+          job_id: jobId,
+          status: input.status,
+          details_json: input.eventDetailsJson,
+          created_at: input.now,
+        })
+        .run();
+      return jobWithEvents(tx, jobId);
     });
   }
 

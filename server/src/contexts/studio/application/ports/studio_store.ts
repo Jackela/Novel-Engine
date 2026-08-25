@@ -1,4 +1,10 @@
 import type { Principal } from "../../../../shared/application/ports/auth.js";
+import type {
+  AddJobInput,
+  AddUsageEventInput,
+  JobRecord,
+  MarkJobOutcomeInput,
+} from "./job_records.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -47,60 +53,14 @@ export interface DocumentMatchRecord {
   excerpt: string;
 }
 
-/** One durable job-event trail entry. */
-export interface JobEventRecord {
-  id: string;
-  jobId: string;
-  status: string;
-  detailsJson: string;
-  createdAt: Date;
-}
-
-/** A workflow job with its event trail (the synchronous jobs model's row). */
-export interface JobRecord {
-  id: string;
-  projectId: string;
-  documentId: string | null;
-  kind: string;
-  operation: string;
-  status: string;
-  provider: string;
-  model: string;
-  requestJson: string;
-  resultJson: string;
-  error: string | null;
-  retryOfJobId: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-  events: JobEventRecord[];
-}
-
-export interface AddJobInput {
-  projectId: string;
-  documentId: string | null;
-  kind: string;
-  operation: string;
-  status: string;
-  provider: string;
-  model: string;
-  requestJson: string;
-  resultJson: string;
-  error: string | null;
-  /** Details of the single event row written with the job. */
-  eventDetailsJson: string;
-  now: Date;
-}
-
-export interface AddUsageEventInput {
-  projectId: string;
-  jobId: string;
-  provider: string;
-  model: string;
-  promptTokens: number;
-  completionTokens: number;
-  requestEvidenceJson: string;
-  now: Date;
-}
+/** Job-row shapes live in their own module (file-size split); re-exported. */
+export type {
+  AddJobInput,
+  AddUsageEventInput,
+  JobEventRecord,
+  JobRecord,
+  MarkJobOutcomeInput,
+} from "./job_records.js";
 
 /** A document/revision pair frozen into an immutable review snapshot. */
 export interface ReviewSnapshotDocument {
@@ -287,6 +247,18 @@ export interface StudioStore {
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord;
+  /**
+   * The jobs audit trail, newest job first and each job's events newest
+   * first — the OpenSpec listing contract for the synchronous jobs model.
+   */
+  collectProjectJobs(scope: ProjectScope, projectId: string): JobRecord[];
+  /** Transition a persisted job and append its matching event atomically. */
+  markJobOutcome(
+    scope: ProjectScope,
+    projectId: string,
+    jobId: string,
+    input: MarkJobOutcomeInput,
+  ): JobRecord;
   setJobResult(
     scope: ProjectScope,
     projectId: string,

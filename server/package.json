@@ -11,6 +11,8 @@
     "lint:fix": "biome check --write .",
     "arch": "depcruise src --config .dependency-cruiser.cjs",
     "test": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "cli": "pnpm run build && node dist/apps/cli/main.js",
     "gate:ssot": "node scripts/qa/check_ssot.mjs",
     "gate:hygiene": "node scripts/qa/check_repo_hygiene.mjs",
     "gate:sizes": "node scripts/qa/check_file_sizes.mjs",

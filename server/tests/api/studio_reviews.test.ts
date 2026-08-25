@@ -101,6 +101,33 @@ class ReviewServiceDouble {
   }
 }
 
+class JobHistoryDouble {
+  readonly recordedReviewProjectIds: string[] = [];
+
+  recordReviewJob(_principal: unknown, projectId: string): Record<string, unknown> {
+    this.recordedReviewProjectIds.push(projectId);
+    return {
+      id: "job-review-1",
+      project_id: projectId,
+      document_id: null,
+      kind: "review",
+      operation: "review",
+      status: "completed",
+      provider: "mock",
+      model: "deterministic-story-v1",
+      request: {},
+      result: { review_id: "review-1", snapshot_id: "snapshot-1", summary: "Assessed." },
+      error: null,
+      retry_of_job_id: null,
+      events: [
+        { id: "event-1", status: "completed", details: { review_id: "review-1" }, created_at: 0 },
+      ],
+      created_at: 0,
+      updated_at: 0,
+    };
+  }
+}
+
 function assessmentFor(projectId: string): EditorialAssessment {
   return {
     id: "review-1",
@@ -124,10 +151,13 @@ function assessmentFor(projectId: string): EditorialAssessment {
   };
 }
 
-function reviewOnlyServices(reviewAssessments: ReviewServiceDouble): StudioServices {
-  // This route seam reaches only reviewAssessments; the production app wires
-  // the remaining services in its later composition-root segment.
-  return { reviewAssessments } as unknown as StudioServices;
+function reviewOnlyServices(
+  reviewAssessments: ReviewServiceDouble,
+  jobHistory: JobHistoryDouble,
+): StudioServices {
+  // This route seam reaches only the review/job services; the production app
+  // wires the remaining services in its composition root.
+  return { reviewAssessments, jobHistory } as unknown as StudioServices;
 }
 
 function sessionCookies(session: IssuedSession, includeCsrf = true): string {
@@ -141,6 +171,7 @@ function sessionCookies(session: IssuedSession, includeCsrf = true): string {
 async function buildReviewRouteApp(): Promise<{
   app: FastifyInstance;
   reviewService: ReviewServiceDouble;
+  jobHistory: JobHistoryDouble;
   session: IssuedSession;
 }> {
   const app = Fastify({ logger: false });
@@ -149,18 +180,19 @@ async function buildReviewRouteApp(): Promise<{
     sessionSecret: "review-route-seam-test-secret",
   });
   const reviewService = new ReviewServiceDouble();
+  const jobHistory = new JobHistoryDouble();
   registerErrorEnvelope(app);
   await app.register(cookie);
   await app.register(reviewRoutes, {
     authService,
-    services: reviewOnlyServices(reviewService),
+    services: reviewOnlyServices(reviewService, jobHistory),
   });
-  return { app, reviewService, session: authService.createGuestSession() };
+  return { app, reviewService, jobHistory, session: authService.createGuestSession() };
 }
 
 describe("review HTTP surface", () => {
-  it("creates and lists server-derived snapshot assessments in the frontend contract", async () => {
-    const { app, reviewService, session } = await buildReviewRouteApp();
+  it("answers POST with the terminal review job and lists assessments", async () => {
+    const { app, reviewService, jobHistory, session } = await buildReviewRouteApp();
     try {
       const headers = {
         cookie: sessionCookies(session),
@@ -173,27 +205,20 @@ describe("review HTTP surface", () => {
       });
 
       expect(created.statusCode, created.body).toBe(201);
-      expect(created.json()).toEqual({
-        id: "review-1",
+      const job = created.json();
+      expect(job).toMatchObject({
+        id: "job-review-1",
         project_id: "project-1",
-        snapshot_id: "snapshot-1",
+        kind: "review",
+        operation: "review",
+        status: "completed",
         provider: "mock",
         model: "deterministic-story-v1",
-        summary: "Editorial checks completed without modifying the manuscript.",
-        created_at: "2026-08-24T12:34:56.000Z",
-        issues: [
-          {
-            id: "issue-1",
-            document_id: "document-1",
-            severity: "warning",
-            code: "thin_chapter",
-            message: "Chapter 1 contains only 2 words.",
-            suggestion: "Develop the scene turn, consequence, and sensory detail.",
-            evidence: { word_count: 2 },
-          },
-        ],
+        retry_of_job_id: null,
+        result: { review_id: "review-1", snapshot_id: "snapshot-1" },
       });
-      expect(reviewService.evaluatedProjectIds).toEqual(["project-1"]);
+      expect(job.events[0].details).toEqual({ review_id: "review-1" });
+      expect(jobHistory.recordedReviewProjectIds).toEqual(["project-1"]);
 
       const listed = await app.inject({
         method: "GET",
@@ -232,8 +257,8 @@ describe("review HTTP surface", () => {
     }
   });
 
-  it("requires CSRF double-submit before creating a review", async () => {
-    const { app, reviewService, session } = await buildReviewRouteApp();
+  it("requires CSRF double-submit before creating a review job", async () => {
+    const { app, jobHistory, session } = await buildReviewRouteApp();
     try {
       const response = await app.inject({
         method: "POST",
@@ -245,14 +270,14 @@ describe("review HTTP surface", () => {
       expect(response.json()).toEqual({
         error: { code: "CSRF_TOKEN_MISSING", message: "CSRF token missing." },
       });
-      expect(reviewService.evaluatedProjectIds).toEqual([]);
+      expect(jobHistory.recordedReviewProjectIds).toEqual([]);
     } finally {
       await app.close();
     }
   });
 
-  it("rejects client-selected provider or model fields before invoking the review service", async () => {
-    const { app, reviewService, session } = await buildReviewRouteApp();
+  it("rejects client-selected provider or model fields before invoking the review job", async () => {
+    const { app, jobHistory, session } = await buildReviewRouteApp();
     try {
       const response = await app.inject({
         method: "POST",
@@ -267,7 +292,7 @@ describe("review HTTP surface", () => {
 
       expect(response.statusCode).toBe(422);
       expect(response.json().error.code).toBe("VALIDATION_ERROR");
-      expect(reviewService.evaluatedProjectIds).toEqual([]);
+      expect(jobHistory.recordedReviewProjectIds).toEqual([]);
     } finally {
       await app.close();
     }

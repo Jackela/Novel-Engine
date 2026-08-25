@@ -129,8 +129,14 @@ export function useStudioActions({
     if (!begin('runReview')) return;
     setError(null);
     try {
-      const review = await api.createReview(projectId);
-      setReviews((current) => [review, ...current]);
+      // The synchronous job contract (#272): the response is the terminal
+      // review job; the assessment list is refreshed afterwards.
+      const job = await api.createReview(projectId);
+      if (job.status !== 'completed') {
+        throw new Error(job.error ?? 'Unable to run review.');
+      }
+      const response = await api.reviews(projectId);
+      setReviews(response.reviews);
       setInspector('review');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to run review.');

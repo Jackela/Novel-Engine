@@ -130,3 +130,31 @@ export function jobPayload(job: JobRecord): Record<string, unknown> {
     })),
   };
 }
+
+/** The review-job result payload shared by the bridge and the retry path. */
+export function reviewJobResultJson(assessment: {
+  id: string;
+  snapshotId: string;
+  summary: string;
+}): string {
+  return dumpJson({
+    review_id: assessment.id,
+    snapshot_id: assessment.snapshotId,
+    summary: assessment.summary,
+  });
+}
+
+/** The export-job result payload shared by the bridge and the retry path. */
+export function exportJobResultJson(
+  projectId: string,
+  artifact: { id: string; snapshotId: string; format: string },
+): string {
+  return dumpJson({
+    export_id: artifact.id,
+    snapshot_id: artifact.snapshotId,
+    format: artifact.format,
+    download_url:
+      `/api/projects/${encodeURIComponent(projectId)}/exports/` +
+      `${encodeURIComponent(artifact.id)}/download`,
+  });
+}

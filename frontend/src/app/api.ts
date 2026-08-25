@@ -13,11 +13,11 @@ import {
   parseVoid,
 } from '@/app/apiContract';
 import {
-  parseExport,
+  parseExportJobResponse,
   parseExports,
   parseJob,
   parseJobs,
-  parseReview,
+  parseReviewJobResponse,
   parseReviews,
 } from '@/app/apiWorkflowContract';
 import type { DocumentKind, ExportFormat } from '@/app/types/studio';
@@ -224,11 +224,11 @@ export const api = {
   reviews: (projectId: string) =>
     request(`/api/projects/${projectId}/reviews`, undefined, parseReviews),
   createReview: (projectId: string) =>
-    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReview),
+    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReviewJobResponse),
   exports: (projectId: string) =>
     request(`/api/projects/${projectId}/exports`, undefined, parseExports),
   createExport: (projectId: string, format: ExportFormat) =>
-    postJson(`/api/projects/${projectId}/exports`, { format }, parseExport),
+    postJson(`/api/projects/${projectId}/exports`, { format }, parseExportJobResponse),
   updateProject: (
     projectId: string,
     payload: {
