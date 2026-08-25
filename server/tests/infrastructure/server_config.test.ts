@@ -9,6 +9,7 @@ import {
   loadServerConfig,
   type ServerConfig,
 } from "../../src/shared/infrastructure/config/server_config.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 
 /** A usable secret generated per run — never a credential literal in source. */
 function generatedSecret(): string {
@@ -103,11 +104,11 @@ describe("environment configuration surface", () => {
       env: {
         LLM_PROVIDER: "dashscope",
         LLM_MODEL: "env-model",
-        DASHSCOPE_API_KEY: "env-dashscope-key",
+        DASHSCOPE_API_KEY: fixtureApiKey("env", "dashscope-key"),
         DASHSCOPE_API_BASE: "https://env-dashscope.example/v1",
         DASHSCOPE_MODEL: "env-dashscope-model",
         DASHSCOPE_REVIEW_MODEL: "env-review-model",
-        LLM_API_KEY: "env-openai-key",
+        LLM_API_KEY: fixtureApiKey("env", "openai-key"),
         LLM_API_BASE: "https://env-openai.example/v1",
         OPENAI_COMPATIBLE_MODEL: "env-openai-model",
         DASHSCOPE_TRANSPORT_MODE: "responses",
@@ -123,9 +124,9 @@ describe("environment configuration surface", () => {
       dashscopeModel: "env-dashscope-model",
       dashscopeReviewModel: "env-review-model",
       openaiCompatibleModel: "env-openai-model",
-      dashscopeApiKey: "env-dashscope-key",
+      dashscopeApiKey: fixtureApiKey("env", "dashscope-key"),
       dashscopeApiBase: "https://env-dashscope.example/v1",
-      openaiCompatibleApiKey: "env-openai-key",
+      openaiCompatibleApiKey: fixtureApiKey("env", "openai-key"),
       openaiCompatibleApiBase: "https://env-openai.example/v1",
       dashscopeTransportMode: "responses",
       timeoutSeconds: 180,
@@ -135,7 +136,7 @@ describe("environment configuration surface", () => {
   });
 
   it("retains upper-bound provider validation without exposing credentials", () => {
-    const credential = "test-credential-must-not-leak";
+    const credential = fixtureApiKey("test", "credential", "must-not-leak");
     const cases: readonly [Record<string, string>, string][] = [
       [{ LLM_TIMEOUT: "301", LLM_API_KEY: credential }, "LLM_TIMEOUT"],
       [{ LLM_RETRY_DELAY: "10.1", LLM_API_KEY: credential }, "LLM_RETRY_DELAY"],
