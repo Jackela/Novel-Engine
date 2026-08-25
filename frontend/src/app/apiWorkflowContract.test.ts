@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  parseExportJobResponse,
-  parseReviewJobResponse,
-} from '@/app/apiWorkflowContract';
+import { parseExportJobResponse, parseReviewJobResponse } from '@/app/apiWorkflowContract';
 
 const legacyReview = {
   id: 'review-1',
