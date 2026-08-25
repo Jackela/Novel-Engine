@@ -66,11 +66,37 @@ describe('Studio API client', () => {
     });
   });
 
-  it('does not interpret a legacy detail error payload', async () => {
+  it('still interprets the legacy detail error payload until cutover', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ detail: 'legacy error' }), {
+        new Response(
+          JSON.stringify({
+            detail: {
+              message: 'Document changed since the requested base revision.',
+              current_revision_id: 'revision-b',
+            },
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    );
+
+    const request = api.saveDocument('project', 'document', {
+      content_markdown: 'stale',
+      base_revision_id: 'revision-a',
+    });
+    await expect(request).rejects.toMatchObject({
+      status: 409,
+      detail: expect.objectContaining({ current_revision_id: 'revision-b' }),
+    });
+  });
+
+  it('falls back to the status message for unrecognised error bodies', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ unexpected: 'shape' }), {
           status: 422,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -81,7 +107,6 @@ describe('Studio API client', () => {
     expect(error).toMatchObject({
       message: 'Request failed with status 422',
       status: 422,
-      detail: undefined,
     });
   });
 
@@ -151,5 +176,36 @@ describe('Studio API client', () => {
     const init = fetchMock.mock.calls[0][1] as RequestInit | undefined;
     const headers = init?.headers as Record<string, string> | undefined;
     expect(headers?.['X-CSRF-Token']).toBeUndefined();
+  });
+
+  it('falls back to the legacy novel_studio_csrf cookie until cutover', async () => {
+    vi.stubGlobal('document', { cookie: 'novel_studio_csrf=legacy-csrf-token' });
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'p1',
+          title: 'Title',
+          description: '',
+          settings: {},
+          import_hash: null,
+          created_at: '2026-06-25T00:00:00Z',
+          updated_at: '2026-06-25T00:00:00Z',
+        }),
+        {
+          status: 201,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(api.createProject('Title', '')).resolves.toMatchObject({ id: 'p1' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/projects',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({ 'X-CSRF-Token': 'legacy-csrf-token' }),
+      }),
+    );
   });
 });

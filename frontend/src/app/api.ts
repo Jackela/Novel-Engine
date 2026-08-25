@@ -40,8 +40,13 @@ export function getCsrfToken(): string | undefined {
   if (typeof document === 'undefined') {
     return undefined;
   }
-  const match = document.cookie.match(/(?:^|; )novel_engine_csrf=([^;]*)/);
-  return match?.[1];
+  // #274: the TS backend issues novel_engine_csrf; the Python stack still in
+  // CI's smoke until the #277 cutover issues novel_studio_csrf. Either cookie
+  // authorizes the double-submit header for its own backend.
+  const engine = document.cookie.match(/(?:^|; )novel_engine_csrf=([^;]*)/);
+  if (engine?.[1]) return engine[1];
+  const studio = document.cookie.match(/(?:^|; )novel_studio_csrf=([^;]*)/);
+  return studio?.[1];
 }
 
 type ResponseParser<T> = (value: unknown) => T;
@@ -50,12 +55,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Read an error response in either contract shape (#274): the TS unified
+ * envelope `{ error: { code, message, details } }` first, then the Python
+ * legacy `{ detail }` payload still served until the #277 cutover. Unknown
+ * bodies fall back to the caller's status message.
+ */
 async function readHttpError(response: Response, fallbackMessage: string): Promise<HttpError> {
   const payload = await response.json().catch(() => null);
-  const error = isRecord(payload) && isRecord(payload.error) ? payload.error : undefined;
-  const message = typeof error?.message === 'string' ? error.message : fallbackMessage;
-  const code = typeof error?.code === 'string' ? error.code : undefined;
-  return new HttpError(message, response.status, error?.details, code);
+  if (isRecord(payload) && isRecord(payload.error)) {
+    const envelope = payload.error;
+    const message = typeof envelope.message === 'string' ? envelope.message : fallbackMessage;
+    const code = typeof envelope.code === 'string' ? envelope.code : undefined;
+    return new HttpError(message, response.status, envelope.details, code);
+  }
+  const detail = isRecord(payload) ? payload.detail : undefined;
+  const message =
+    typeof detail === 'string'
+      ? detail
+      : isRecord(detail) && typeof detail.message === 'string'
+        ? detail.message
+        : fallbackMessage;
+  return new HttpError(message, response.status, detail, undefined);
 }
 
 async function request<T>(
