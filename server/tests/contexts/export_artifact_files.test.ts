@@ -138,32 +138,8 @@ describe("FilesystemExportArtifactGateway", () => {
     expect(await readdir(join(directory, "exports", "project-1"))).toEqual(["repeat.md"]);
   });
 
-  it("removes invalid XML 1.0 characters while preserving normal EPUB text", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "novel-engine-artifact-"));
-    const gateway = new FilesystemExportArtifactGateway(directory);
-    const dirty = request("epub", "xml");
-    const evidence = await gateway.writeSnapshotArtifact({
-      ...dirty,
-      projectTitle: "Clear\u0001\uD800 title",
-      chapters: [{ title: "Scene\u000B\uDC00", contentMarkdown: "Normal\u0001 prose\uD800" }],
-    });
-    const zip = await JSZip.loadAsync(
-      await gateway.readArtifactBytes(readRequest(evidence, "xml", "epub")),
-    );
-    const xml = (
-      await Promise.all(
-        ["OEBPS/chapter-001.xhtml", "OEBPS/nav.xhtml", "OEBPS/toc.ncx", "OEBPS/content.opf"].map(
-          (path) => zipText(zip, path),
-        ),
-      )
-    ).join("");
-    expect(xml).toContain("Clear title");
-    expect(xml).toContain("Normal prose");
-    expect(xml).not.toContain("\u0001");
-    expect(xml).not.toContain("\u000B");
-    expect(xml).not.toContain("\uD800");
-    expect(xml).not.toContain("\uFFFD");
-  });
+  // XML 1.0 sanitation regressions for both zipped formats live in
+  // export_artifact_xml.test.ts (file-size split).
 });
 
 class FakeExportStore implements E.ExportStore {

@@ -204,11 +204,19 @@ function markdownText(title: string, chapters: readonly ArtifactChapter[]): stri
 }
 
 async function docxBytes(title: string, chapters: readonly ArtifactChapter[]): Promise<Buffer> {
-  const children: Paragraph[] = [new Paragraph({ text: title, heading: HeadingLevel.TITLE })];
+  // The docx library escapes markup itself but does not strip characters that
+  // are invalid in XML 1.0; user-saved titles and prose must not corrupt
+  // word/document.xml (the EPUB path gets the same treatment via escapeXml).
+  const children: Paragraph[] = [
+    new Paragraph({ text: xmlSafeText(title), heading: HeadingLevel.TITLE }),
+  ];
   for (const chapter of chapters) {
-    children.push(new Paragraph({ text: chapter.title, heading: HeadingLevel.HEADING_1 }));
+    children.push(
+      new Paragraph({ text: xmlSafeText(chapter.title), heading: HeadingLevel.HEADING_1 }),
+    );
     for (const paragraph of plainText(chapter.contentMarkdown).split(/\n\s*\n/)) {
-      if (paragraph.trim() !== "") children.push(new Paragraph({ text: paragraph.trim() }));
+      const text = xmlSafeText(paragraph.trim());
+      if (text !== "") children.push(new Paragraph({ text }));
     }
   }
   return Packer.toBuffer(new Document({ sections: [{ children }] }));
@@ -299,6 +307,11 @@ function packageDocument(
     .map((_filename, index) => `<itemref idref="chapter-${index + 1}"/>`)
     .join("");
   return `<?xml version="1.0" encoding="utf-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="book-id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="book-id">${escapeXml(artifactId)}</dc:identifier><dc:title>${escapeXml(title)}</dc:title><dc:language>en</dc:language></metadata><manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="toc" href="toc.ncx" media-type="application/x-dtbncx+xml"/>${chapterItems}</manifest><spine toc="toc">${spine}</spine></package>`;
+}
+
+/** Strip characters invalid in XML 1.0 without markup escaping. */
+function xmlSafeText(value: string): string {
+  return value.replace(invalidXmlCharacters, "");
 }
 
 function escapeXml(value: string): string {
