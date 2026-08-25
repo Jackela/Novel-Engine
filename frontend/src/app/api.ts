@@ -12,7 +12,14 @@ import {
   parseStudioDocument,
   parseVoid,
 } from '@/app/apiContract';
-import { parseExports, parseJob, parseJobs, parseReviews } from '@/app/apiWorkflowContract';
+import {
+  parseExportJobResponse,
+  parseExports,
+  parseJob,
+  parseJobs,
+  parseReviewJobResponse,
+  parseReviews,
+} from '@/app/apiWorkflowContract';
 import type { DocumentKind, ExportFormat } from '@/app/types/studio';
 
 export class HttpError extends Error {
@@ -217,11 +224,11 @@ export const api = {
   reviews: (projectId: string) =>
     request(`/api/projects/${projectId}/reviews`, undefined, parseReviews),
   createReview: (projectId: string) =>
-    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseJob),
+    request(`/api/projects/${projectId}/reviews`, { method: 'POST' }, parseReviewJobResponse),
   exports: (projectId: string) =>
     request(`/api/projects/${projectId}/exports`, undefined, parseExports),
   createExport: (projectId: string, format: ExportFormat) =>
-    postJson(`/api/projects/${projectId}/exports`, { format }, parseJob),
+    postJson(`/api/projects/${projectId}/exports`, { format }, parseExportJobResponse),
   updateProject: (
     projectId: string,
     payload: {
