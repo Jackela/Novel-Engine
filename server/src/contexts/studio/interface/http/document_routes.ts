@@ -93,20 +93,6 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
     },
   );
 
-  app.get(
-    "/api/projects/:projectId/documents/:documentId",
-    { preHandler: [guard], schema: { response: { 200: documentResponseSchema } } },
-    async (request) => {
-      const { projectId, documentId } = request.params as {
-        projectId: string;
-        documentId: string;
-      };
-      return withStudioErrors(() =>
-        requireServices(options).documents.documentById(principal(request), projectId, documentId),
-      );
-    },
-  );
-
   app.put(
     "/api/projects/:projectId/documents/:documentId",
     { preHandler: [guard], schema: { body: documentSaveSchema, response: SAVE_RESPONSES } },

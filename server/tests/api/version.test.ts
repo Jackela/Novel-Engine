@@ -15,7 +15,7 @@ describe("GET /version", () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toEqual({
-        version: "0.3.1",
+        version: "0.4.0",
         name: "Novel Engine",
         runtime: { name: "node", version: process.versions.node },
         environment: "testing",

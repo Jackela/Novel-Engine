@@ -1,21 +1,26 @@
-import type { components } from '../../../generated/api-types';
+import type { paths } from '../../../generated/api-types';
 
 /**
- * Contract types are derived from the frozen Python OpenAPI snapshot
- * (`docs/api/openapi.current.json` → `generated/api-types.ts`).
- * That snapshot types request bodies precisely but leaves response bodies
- * untyped (`additionalProperties: true`), so the response views below remain
- * hand-written and are runtime-validated by the apiContract parsers; they move
- * to generated types when the TS snapshot becomes the regenerated baseline
- * (#260, at TS-first-green).
+ * Contract types are derived from the TS server OpenAPI baseline
+ * (`server/qa-baselines/openapi.current.json` → `generated/api-types.ts`).
+ * The baseline is code-first: request bodies are typed inline on their
+ * paths, while response views remain hand-written and are runtime-validated
+ * by the apiContract parsers (#260).
  */
 
-export type DocumentKind = components['schemas']['DocumentCreateRequest']['kind'];
-export type ExportFormat = components['schemas']['ExportRequest']['format'];
-export type StudioJobOperation =
-  | components['schemas']['AIProposalRequest']['operation']
-  | 'review'
-  | 'export';
+type DocumentCreateBody = NonNullable<
+  paths['/api/projects/{projectId}/documents']['post']
+>['requestBody']['content']['application/json'];
+type ExportRequestBody = NonNullable<
+  paths['/api/projects/{projectId}/exports']['post']
+>['requestBody']['content']['application/json'];
+type AIProposalBody = NonNullable<
+  paths['/api/projects/{projectId}/documents/{documentId}/ai-proposals']['post']
+>['requestBody']['content']['application/json'];
+
+export type DocumentKind = DocumentCreateBody['kind'];
+export type ExportFormat = ExportRequestBody['format'];
+export type StudioJobOperation = AIProposalBody['operation'] | 'review' | 'export';
 export type SessionKind = 'owner' | 'guest';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';

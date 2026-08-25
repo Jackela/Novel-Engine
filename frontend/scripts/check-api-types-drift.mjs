@@ -1,5 +1,5 @@
-// CI gate: regenerate the frontend API types from the frozen Python OpenAPI
-// snapshot into a temp file and fail when the committed artifact is not
+// CI gate: regenerate the frontend API types from the TS server OpenAPI
+// baseline into a temp file and fail when the committed artifact is not
 // byte-identical — catches hand edits to generated output and snapshot
 // changes that were not followed by `pnpm gen:api-types`.
 
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const frontendRoot = dirname(fileURLToPath(new URL('.', import.meta.url)));
 const projectRoot = join(frontendRoot, '..');
-const snapshotPath = join(projectRoot, 'docs', 'api', 'openapi.current.json');
+const snapshotPath = join(projectRoot, 'server', 'qa-baselines', 'openapi.current.json');
 const committedPath = join(frontendRoot, 'generated', 'api-types.ts');
 const cliPath = join(frontendRoot, 'node_modules', 'openapi-typescript', 'bin', 'cli.js');
 

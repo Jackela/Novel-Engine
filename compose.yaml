@@ -1,5 +1,5 @@
 services:
-  novel-studio:
+  novel-engine:
     build: .
     ports:
       - "8000:8000"
@@ -9,14 +9,13 @@ services:
       SECURITY_CORS_ORIGINS: ${SECURITY_CORS_ORIGINS:-https://app.example.com}
       DB_URL: sqlite:///./data/novel-engine.sqlite3
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
-      MONITORING_METRICS_ENABLED: "false"
     volumes:
-      - novel-studio-data:/app/data
+      - novel-engine-data:/app/data
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 5
 
 volumes:
-  novel-studio-data:
+  novel-engine-data:

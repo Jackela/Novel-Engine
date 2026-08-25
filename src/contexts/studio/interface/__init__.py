@@ -1,1 +1,0 @@
-"""Novel Engine interface adapters."""
