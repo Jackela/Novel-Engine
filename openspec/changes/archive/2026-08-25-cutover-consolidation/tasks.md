@@ -18,5 +18,5 @@
       (`0.4.0`)
 - [x] 9. Carry the six pure-frontend Requirements verbatim into
       `novel-engine` and retire `novel-studio`
-- [ ] 10. Close #240 as superseded-by-adjudication; release v0.4.0 with the
+- [x] 10. Close #240 as superseded-by-adjudication; release v0.4.0 with the
        one-way data door stated in the notes
