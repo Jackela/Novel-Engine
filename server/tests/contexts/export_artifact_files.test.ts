@@ -76,7 +76,7 @@ describe("FilesystemExportArtifactGateway", () => {
     const bytes = await gateway.readArtifactBytes(readRequest(evidence, "artifact-md", "markdown"));
 
     expect(bytes.toString("utf8")).toBe(
-      "# Ashfall\n\nFirst bold scene\n\nLinked words\n\nSecond paragraph.\n",
+      "# Ashfall\n\n## First *bold* scene\n\n[Linked words](https://example.test)\n\nSecond paragraph.\n",
     );
     expect(evidence.relativePath).toBe("exports/project-1/artifact-md.md");
     expect(evidence.sizeBytes).toBe(bytes.length);
