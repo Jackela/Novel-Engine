@@ -198,7 +198,7 @@ async function serializeArtifact(request: ArtifactWriteRequest): Promise<Buffer>
 }
 
 function markdownText(title: string, chapters: readonly ArtifactChapter[]): string {
-  return `${[`# ${title}`, ...chapters.map((chapter) => chapter.contentMarkdown.trim())]
+  return `${[`# ${title}`, ...chapters.map((chapter) => plainText(chapter.contentMarkdown))]
     .join("\n\n")
     .trim()}\n`;
 }
