@@ -12,8 +12,8 @@ import {
 } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { projectSnapshots } from "../../src/contexts/studio/infrastructure/db/schema.js";
+import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
@@ -85,7 +85,11 @@ describe("ExportStorePart", () => {
   it("rejects a zero-chapter project before recording an export snapshot", async () => {
     const harness = await openHarness();
     try {
-      const { projectId, chapter } = newProject(harness.projects, harness.principal, "Outline only");
+      const { projectId, chapter } = newProject(
+        harness.projects,
+        harness.principal,
+        "Outline only",
+      );
       harness.documents.removeDocument(harness.principal, projectId, chapter.id);
       harness.documents.newDocument(harness.principal, projectId, {
         kind: "outline",
