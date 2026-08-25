@@ -1,3 +1,7 @@
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -8,6 +12,13 @@ import { defineConfig, devices } from '@playwright/test';
  * stack that playwright.config.ts (tests/e2e) still drives until cutover.
  * Keep the two configs' test directories disjoint.
  */
+
+// #276: pin one fresh data directory per run and export it through the
+// environment. The webServer (start-ts-e2e-stack.mjs honors TS_E2E_DATA_DIR)
+// and the test workers both resolve the same directory, so the
+// content-acceptance specs can assert on-disk export artifacts and database
+// rows of the exact stack under test.
+process.env.TS_E2E_DATA_DIR ??= mkdtempSync(join(tmpdir(), 'ne-ts-e2e-'));
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
