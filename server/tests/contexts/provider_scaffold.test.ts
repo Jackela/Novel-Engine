@@ -44,7 +44,7 @@ describe("provider scaffold detection", () => {
     ["mismatched closer", '{"meta": [}, result = raw provider scaffold'],
     ["sibling-padded nested serialized target", siblingPaddedScaffold],
     ["double-encoded target", JSON.stringify(JSON.stringify({ result: "raw provider scaffold" }))],
-    ["single-quoted JSON target", "'" + JSON.stringify({ result: "raw provider scaffold" }) + "'"],
+    ["single-quoted JSON target", `'${JSON.stringify({ result: "raw provider scaffold" })}'`],
     ["backticked JSON target", `\`${JSON.stringify({ result: "raw provider scaffold" })}\``],
     [
       "trimmed single-quoted decoded child",
@@ -148,10 +148,7 @@ describe("provider scaffold detection", () => {
       "encoded object without target",
       JSON.stringify(JSON.stringify({ note: "result but no field" })),
     ],
-    [
-      "single-quoted JSON without target",
-      "'" + JSON.stringify({ note: "result but no field" }) + "'",
-    ],
+    ["single-quoted JSON without target", `'${JSON.stringify({ note: "result but no field" })}'`],
     [
       "backticked nested JSON without target",
       `\`${JSON.stringify({ payload: JSON.stringify({ note: "result but no field" }) })}\``,

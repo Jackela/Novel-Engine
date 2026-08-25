@@ -16,9 +16,9 @@ import { projectSnapshots } from "../../src/contexts/studio/infrastructure/db/sc
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
+import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
-import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 
 interface DocumentPayload {
   id: string;
@@ -118,10 +118,7 @@ describe("ExportStorePart", () => {
           .select()
           .from(projectSnapshots)
           .where(
-            and(
-              eq(projectSnapshots.projectId, projectId),
-              eq(projectSnapshots.reason, "export"),
-            ),
+            and(eq(projectSnapshots.projectId, projectId), eq(projectSnapshots.reason, "export")),
           )
           .all(),
       ).toEqual([]);
