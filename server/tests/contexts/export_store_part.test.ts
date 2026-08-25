@@ -1,9 +1,11 @@
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { and, eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
+import { SnapshotArtifactService } from "../../src/contexts/studio/application/export_artifact_service.js";
 import {
   type ProjectScope,
   scopeForPrincipal,
@@ -11,10 +13,12 @@ import {
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import { NotFoundError } from "../../src/contexts/studio/domain/exceptions.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { projectSnapshots } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
+import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
 
 interface DocumentPayload {
   id: string;
@@ -78,6 +82,50 @@ function snapshot(scope: ProjectScope, projectId: string, now: Date, store: Expo
 }
 
 describe("ExportStorePart", () => {
+  it("rejects a zero-chapter project before recording an export snapshot", async () => {
+    const harness = await openHarness();
+    try {
+      const { projectId, chapter } = newProject(harness.projects, harness.principal, "Outline only");
+      harness.documents.removeDocument(harness.principal, projectId, chapter.id);
+      harness.documents.newDocument(harness.principal, projectId, {
+        kind: "outline",
+        title: "Book map",
+        contentMarkdown: "The outline has no exportable chapters.",
+      });
+      let artifactWrites = 0;
+      const artifacts = new SnapshotArtifactService(harness.exportStore, harness.store, {
+        async writeSnapshotArtifact() {
+          artifactWrites += 1;
+          throw new Error("Zero-chapter export must not write an artifact.");
+        },
+        async readArtifactBytes() {
+          throw new Error("Zero-chapter export must not read an artifact.");
+        },
+      });
+
+      await expect(
+        artifacts.materializeSnapshotArtifact(harness.principal, projectId, "markdown"),
+      ).rejects.toThrow(InvalidOperationError);
+
+      expect(artifactWrites).toBe(0);
+      expect(harness.exportStore.listProjectArtifacts(harness.scope, projectId)).toEqual([]);
+      expect(
+        harness.studio.db
+          .select()
+          .from(projectSnapshots)
+          .where(
+            and(
+              eq(projectSnapshots.projectId, projectId),
+              eq(projectSnapshots.reason, "export"),
+            ),
+          )
+          .all(),
+      ).toEqual([]);
+    } finally {
+      harness.studio.close();
+    }
+  });
+
   it("captures every document in stable order and ignores later review snapshots for reuse", async () => {
     const harness = await openHarness();
     try {

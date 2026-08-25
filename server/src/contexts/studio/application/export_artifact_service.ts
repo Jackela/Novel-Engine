@@ -7,7 +7,12 @@ import type {
   ExportArtifactRecord,
   ExportStore,
 } from "./ports/export_store.js";
-import { type ProjectRecord, type ProjectScope, scopeForPrincipal } from "./ports/studio_store.js";
+import {
+  type DocumentWithCurrent,
+  type ProjectRecord,
+  type ProjectScope,
+  scopeForPrincipal,
+} from "./ports/studio_store.js";
 
 /** One frozen chapter handed to the file-format adapter in snapshot order. */
 export interface ArtifactChapter {
@@ -52,6 +57,15 @@ export interface ExportArtifactGateway {
 /** The existing project port supplies only the title needed by renderers. */
 export interface ProjectTitleLookup {
   findProject(scope: ProjectScope, projectId: string): Pick<ProjectRecord, "title">;
+  /**
+   * The live authoring read prevents a no-chapter request from creating an
+   * otherwise orphaned export snapshot. It remains optional for narrow
+   * artifact-only adapters, which still reject empty snapshot data below.
+   */
+  findDocuments?(
+    scope: ProjectScope,
+    projectId: string,
+  ): ReadonlyArray<Pick<DocumentWithCurrent, "kind">>;
 }
 
 export interface SnapshotArtifactServiceOptions {
@@ -84,6 +98,7 @@ export class SnapshotArtifactService {
   ): Promise<ExportArtifactRecord> {
     const scope = scopeForPrincipal(principal);
     const project = this.projectTitles.findProject(scope, projectId);
+    this.assertProjectHasChapter(scope, projectId);
     const createdAt = this.now();
     const snapshot = this.exportStore.materializeArtifactSnapshot(scope, projectId, createdAt);
     const chapters = snapshot.documents
@@ -151,6 +166,13 @@ export class SnapshotArtifactService {
       projectId,
       artifactId,
     );
+  }
+
+  private assertProjectHasChapter(scope: ProjectScope, projectId: string): void {
+    const documents = this.projectTitles.findDocuments?.(scope, projectId);
+    if (documents !== undefined && !documents.some((document) => document.kind === "chapter")) {
+      throw new InvalidOperationError("A project needs at least one chapter before export.");
+    }
   }
 
   private readArtifactBytesForRecord(artifact: ExportArtifactRecord): Promise<Buffer> {
