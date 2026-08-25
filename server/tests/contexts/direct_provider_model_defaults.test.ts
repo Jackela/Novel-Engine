@@ -15,6 +15,7 @@ import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/prov
 import { DeterministicStoryProvider } from "../../src/contexts/ai/infrastructure/providers/deterministic_story_provider.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 
 function chapterTask(): TextGenerationTask {
   return {
@@ -57,7 +58,7 @@ it("uses the mocked hard default when the deterministic adapter omits its model"
 it("uses the mocked DashScope default in both its result and outbound JSON", async () => {
   const payloads: Record<string, unknown>[] = [];
   const provider = new DashScopeTextProvider({
-    apiKey: "dashscope-test-key",
+    apiKey: fixtureApiKey("dashscope", "test-key"),
     retry: noDelayRetry(),
     transport: capturedJsonTransport(
       payloads,
@@ -78,7 +79,7 @@ it("uses the mocked DashScope default in both its result and outbound JSON", asy
 it("uses the mocked OpenAI-compatible default in both its result and outbound JSON", async () => {
   const payloads: Record<string, unknown>[] = [];
   const provider = new OpenAICompatibleTextProvider({
-    apiKey: "openai-compatible-test-key",
+    apiKey: fixtureApiKey("openai-compatible", "test-key"),
     retry: noDelayRetry(),
     transport: capturedJsonTransport(
       payloads,

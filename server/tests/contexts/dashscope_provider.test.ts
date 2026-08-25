@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { TextGenerationTask } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/providers/dashscope_provider.js";
 import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 
 interface CapturedRequest {
   url: string;
@@ -75,7 +76,7 @@ function scriptedTransport(
 
 function provider(overrides: Partial<ConstructorParameters<typeof DashScopeTextProvider>[0]> = {}) {
   return new DashScopeTextProvider({
-    apiKey: "sk-dashscope-test",
+    apiKey: fixtureApiKey("sk-dashscope", "test"),
     model: "qwen3.5-flash",
     retry: { maxAttempts: 3, delayMs: 1000, sleep: async () => {} },
     ...overrides,

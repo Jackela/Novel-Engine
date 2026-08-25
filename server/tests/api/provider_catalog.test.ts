@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildApp } from "../../src/apps/api/app.js";
 import { loadServerConfig } from "../../src/shared/infrastructure/config/server_config.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 import {
   cookieHeader,
   cookieJar,
@@ -20,10 +21,10 @@ function providerConfig(directory: string) {
       SECURITY_SECRET_KEY: TEST_SESSION_SECRET,
       DB_URL: "sqlite:///./novel-engine.sqlite3",
       LLM_PROVIDER: "dashscope",
-      DASHSCOPE_API_KEY: "test-dashscope-catalog-credential",
+      DASHSCOPE_API_KEY: fixtureApiKey("test", "dashscope-catalog-credential"),
       DASHSCOPE_API_BASE: "https://dashscope.catalog.example.test/v1",
       DASHSCOPE_MODEL: "catalog-qwen-model",
-      LLM_API_KEY: "test-compatible-catalog-credential",
+      LLM_API_KEY: fixtureApiKey("test", "compatible-catalog-credential"),
       LLM_API_BASE: "https://compatible.catalog.example.test/v1",
       OPENAI_COMPATIBLE_MODEL: "catalog-compatible-model",
     },

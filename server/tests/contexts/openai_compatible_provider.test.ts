@@ -4,6 +4,7 @@ import type { TextGenerationTask } from "../../src/contexts/ai/application/ports
 import { TextGenerationProviderError } from "../../src/contexts/ai/application/ports/text_generation.js";
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import type { ProviderTransport } from "../../src/contexts/ai/infrastructure/providers/provider_http.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 
 interface CapturedRequest {
   readonly url: string;
@@ -55,7 +56,7 @@ function provider(
   overrides: Partial<ConstructorParameters<typeof OpenAICompatibleTextProvider>[0]> = {},
 ): OpenAICompatibleTextProvider {
   return new OpenAICompatibleTextProvider({
-    apiKey: "sk-openai-compatible-test",
+    apiKey: fixtureApiKey("sk-openai", "compatible-test"),
     model: "server-selected-model",
     retry: { maxAttempts: 3, delayMs: 1_000, sleep: async () => {} },
     ...overrides,
@@ -206,7 +207,7 @@ describe("OpenAI-compatible adapter boundaries", () => {
     const firstCalls: CapturedRequest[] = [];
     const secondCalls: CapturedRequest[] = [];
     const first = provider({
-      apiKey: "first-key",
+      apiKey: fixtureApiKey("first", "key"),
       model: "first-model",
       transport: scriptedTransport(
         [jsonResponse(200, completionBody('{"chapter_markdown":"first"}'))],
@@ -214,7 +215,7 @@ describe("OpenAI-compatible adapter boundaries", () => {
       ),
     });
     const second = provider({
-      apiKey: "second-key",
+      apiKey: fixtureApiKey("second", "key"),
       model: "second-model",
       apiBase: "https://proxy.example.test/v1/",
       transport: scriptedTransport(

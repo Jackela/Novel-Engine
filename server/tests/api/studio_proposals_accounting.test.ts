@@ -5,6 +5,7 @@ import { DashScopeTextProvider } from "../../src/contexts/ai/infrastructure/prov
 import { OpenAICompatibleTextProvider } from "../../src/contexts/ai/infrastructure/providers/openai_compatible_provider.js";
 import { wordCount } from "../../src/contexts/studio/application/payloads.js";
 import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js";
+import { fixtureApiKey } from "../credential_fixtures.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {
   buildStudioApp,
@@ -35,8 +36,12 @@ function malformedStructuredFactory(
   const retry = { maxAttempts: 1, delayMs: 0, sleep: async () => {} };
   return () =>
     provider === "dashscope"
-      ? new DashScopeTextProvider({ apiKey: "dashscope-test", retry, transport })
-      : new OpenAICompatibleTextProvider({ apiKey: "openai-test", retry, transport });
+      ? new DashScopeTextProvider({ apiKey: fixtureApiKey("dashscope", "test"), retry, transport })
+      : new OpenAICompatibleTextProvider({
+          apiKey: fixtureApiKey("openai", "test"),
+          retry,
+          transport,
+        });
 }
 
 function transportRejectionFactory(
@@ -70,13 +75,13 @@ const malformedStructuredCases = [
 const transportRejectionCases = [
   {
     provider: "dashscope",
-    apiKey: "dashscope-transport-credential-that-must-not-leak",
+    apiKey: fixtureApiKey("dashscope-transport-credential", "that-must-not-leak"),
     prefix: "dashscope-transport-prefix-that-must-not-leak",
     error: "DashScope generation failed for step 'chapter_revision': transport request failed.",
   },
   {
     provider: "openai_compatible",
-    apiKey: "openai-transport-credential-that-must-not-leak",
+    apiKey: fixtureApiKey("openai-transport-credential", "that-must-not-leak"),
     prefix: "openai-transport-prefix-that-must-not-leak",
     error:
       "OpenAI-compatible generation failed for step 'chapter_revision': transport request failed.",
