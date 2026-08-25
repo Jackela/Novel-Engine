@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { mkdtempSync, existsSync } from 'node:fs';
+import { mkdtempSync, existsSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -41,6 +41,9 @@ if (!existsSync(path.join(frontendDist, 'index.html'))) {
 
 // Fresh per-boot SQLite store outside the repository: the TS pipeline backs
 // up and migrates this directory, and each run must start from a clean slate.
+// Standalone boots (no TS_E2E_DATA_DIR from the Playwright config) own their
+// directory and remove it on a clean exit; failures keep it for debugging.
+const ownsDataDir = process.env.TS_E2E_DATA_DIR === undefined;
 const dataDir = process.env.TS_E2E_DATA_DIR ?? mkdtempSync(join(tmpdir(), 'ne-ts-e2e-'));
 const databasePath = path.join(dataDir, 'novel-engine.sqlite3').replaceAll('\\', '/');
 
@@ -68,7 +71,12 @@ const shutdown = (exitCode = 0) => {
 
   shuttingDown = true;
   server.kill('SIGTERM');
-  setTimeout(() => process.exit(exitCode), 1000).unref();
+  setTimeout(() => {
+    if (ownsDataDir && exitCode === 0) {
+      rmSync(dataDir, { recursive: true, force: true });
+    }
+    process.exit(exitCode);
+  }, 1000).unref();
 };
 
 const isControlledExit = (code, signal) =>
