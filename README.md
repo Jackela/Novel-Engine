@@ -1,16 +1,19 @@
 # Novel Engine
 
-Novel Engine `0.3.1` is a self-hosted single-author novel writing IDE. SQLite is
-the content authority and Markdown is the document syntax.
+Novel Engine `0.4.0` is a self-hosted single-author novel writing IDE. SQLite is
+the content authority and Markdown is the document syntax. One Node.js process
+serves the Studio SPA and the JSON API.
 
 ## First-Time Setup
 
+Prerequisites: Node.js 24 (LTS) and pnpm 11.
+
 ```bash
-copy .env.example .env.local
-uv sync --extra dev --extra test
-corepack pnpm install --frozen-lockfile
-corepack pnpm --dir frontend build
-uv run novel-engine serve --reload
+cp .env.example .env.local
+pnpm install --frozen-lockfile
+pnpm --dir frontend build
+pnpm --dir server build
+pnpm --dir server cli serve
 ```
 
 Open `http://127.0.0.1:8000`, create the local Owner account on the setup
@@ -20,19 +23,21 @@ AI proposal flows work without external credentials.
 ## Configuration
 
 The canonical environment template is `.env.example`; copy it to `.env.local`.
+Process environment variables always win over the file.
 
 | Variable | Default | Notes |
 |---|---:|---|
 | `APP_ENVIRONMENT` | `development` | Use `production` only with explicit secrets and CORS origins. |
-| `APP_DATA_DIR` | `./data` | Stores SQLite data, imports, exports, and backups. |
 | `DB_URL` | `sqlite:///./data/novel-engine.sqlite3` | Only SQLite is supported. |
+| `API_HOST` | `0.0.0.0` | Bind address for `serve`. |
+| `API_PORT` | `8000` | Listen port. |
 | `SECURITY_SECRET_KEY` | sample value | Required in production; generate a unique value. |
 | `SECURITY_CORS_ORIGINS` | localhost origins | Must be explicit and non-localhost in production. |
+| `SECURITY_RATE_LIMIT` | `5/minute` | Auth endpoint rate limit. |
 | `LLM_PROVIDER` | `mock` | `mock`, `dashscope`, or `openai_compatible`. |
 | `LLM_MODEL` | `studio-copilot-v1` | Default model label for mock/local flows. |
 | `DASHSCOPE_API_KEY` | unset | Required when `LLM_PROVIDER=dashscope`. |
 | `LLM_API_KEY` | unset | Required when `LLM_PROVIDER=openai_compatible`. |
-| `MONITORING_METRICS_ENABLED` | `false` | Enable only when port `9090` is available. |
 
 Frontend-only variables live in `frontend/.env.example`:
 `VITE_API_BASE_URL`, `VITE_API_TIMEOUT`, and `VITE_API_PROXY_TARGET`.
@@ -48,13 +53,17 @@ PowerShell users can use `$env:SECURITY_SECRET_KEY="replace-with-a-long-random-s
 Docker Compose defaults `LLM_PROVIDER` to `mock`; set `LLM_PROVIDER`,
 `DASHSCOPE_API_KEY`, or `LLM_API_KEY` explicitly to use a real provider.
 
+The healthcheck polls `/health/ready` inside the container.
+
 ## Commands
 
+The operational CLI builds and runs through pnpm:
+
 ```bash
-uv run novel-engine --help
-uv run novel-engine serve --reload
-uv run novel-engine doctor
-uv run novel-engine backup
+pnpm --dir server cli -- --help
+pnpm --dir server cli serve
+pnpm --dir server cli doctor
+pnpm --dir server cli backup
 ```
 
 Legacy import expects a directory containing `story.yaml` and optional chapter
@@ -68,38 +77,44 @@ legacy-workspace/
       chapter-001.md
 ```
 
-Run `uv run novel-engine import --source path/to/legacy-workspace --owner <username>`
-after the Owner account has been created.
+Run `pnpm --dir server cli import --source path/to/legacy-workspace --owner <username>`
+after the Owner account has been created. The import is read-only against the
+source and idempotent per principal.
 
 ## Validation
 
 ```bash
-uv run python scripts/qa/check_file_sizes.py
-uv run python scripts/qa/check_ssot.py
-uv run python scripts/qa/check_repo_hygiene.py
-uv run ruff format --check src tests scripts
-uv run ruff check src tests scripts
-uv run bandit -r src
-uv run mypy src tests
-uv run lint-imports
-uv run pytest -q
-uv run python scripts/qa/check_openapi_snapshot.py
-corepack pnpm spec:validate
-corepack pnpm --dir frontend lint
-corepack pnpm --dir frontend format:check
-corepack pnpm --dir frontend type-check
-corepack pnpm --dir frontend test:unit
-corepack pnpm --dir frontend build
+pnpm --dir server gates
+pnpm --dir server type-check
+pnpm --dir server lint
+pnpm --dir server arch
+pnpm --dir server test
+pnpm spec:validate
+pnpm --dir frontend lint
+pnpm --dir frontend format:check
+pnpm --dir frontend type-check
+pnpm --dir frontend test:unit
+pnpm --dir frontend build
 ```
 
-On Windows without `make`, run the commands above directly. `pre-commit` and
-`trunk` are optional local wrappers around the same gates.
+`make validate` and `just validate` wrap the same gates. CI is the
+authoritative full contract (`.github/workflows/ci.yml`): it additionally runs
+the API-types drift check, React static diagnostics, Playwright workflows
+against the TS backend, and a container persistence check.
 
 ## Product Specification
 
-[`openspec/specs/novel-studio/spec.md`](openspec/specs/novel-studio/spec.md) is
+[`openspec/specs/novel-engine/spec.md`](openspec/specs/novel-engine/spec.md) is
 the product definition. Validate it with:
 
 ```bash
-corepack pnpm spec:validate
+pnpm spec:validate
 ```
+
+## Upgrading from 0.3.x (Python stack)
+
+0.4.0 is the TypeScript rewrite cutover. The database schema is not migrated:
+the TS server refuses to open a Python-era database by design. Back up or keep
+the old `data/` directory, start 0.4.0 with a fresh data directory, create the
+Owner account, then re-import legacy workspaces with the import command above.
+The pre-cutover Python stack remains available at git tag `python-final`.

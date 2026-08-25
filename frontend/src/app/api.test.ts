@@ -66,7 +66,7 @@ describe('Studio API client', () => {
     });
   });
 
-  it('still interprets the legacy detail error payload until cutover', async () => {
+  it('ignores the retired Python detail error payload', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
@@ -88,7 +88,7 @@ describe('Studio API client', () => {
     });
     await expect(request).rejects.toMatchObject({
       status: 409,
-      detail: expect.objectContaining({ current_revision_id: 'revision-b' }),
+      detail: undefined,
     });
   });
 
@@ -178,7 +178,7 @@ describe('Studio API client', () => {
     expect(headers?.['X-CSRF-Token']).toBeUndefined();
   });
 
-  it('falls back to the legacy novel_studio_csrf cookie until cutover', async () => {
+  it('does not authorize writes with the retired novel_studio_csrf cookie', async () => {
     vi.stubGlobal('document', { cookie: 'novel_studio_csrf=legacy-csrf-token' });
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
@@ -200,12 +200,8 @@ describe('Studio API client', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     await expect(api.createProject('Title', '')).resolves.toMatchObject({ id: 'p1' });
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/api/projects',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({ 'X-CSRF-Token': 'legacy-csrf-token' }),
-      }),
-    );
+    const init = fetchMock.mock.calls[0][1] as RequestInit | undefined;
+    const headers = init?.headers as Record<string, string> | undefined;
+    expect(headers?.['X-CSRF-Token']).toBeUndefined();
   });
 });

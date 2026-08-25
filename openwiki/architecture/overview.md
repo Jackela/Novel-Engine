@@ -64,7 +64,7 @@ jobs before merge.
 
 ## Change guidance
 
-- Change runtime ownership or request access through `src/apps/api/runtime.py`, `src/apps/api/main.py`, and `src/contexts/studio/interface/http/dependencies.py` together; preserve app-owned state and lifespan disposal.
-- Add application behavior behind an application port and service before changing repository infrastructure; `uv run lint-imports` in CI verifies the layer rules.
+- Change runtime ownership or request access through `server/src/apps/api/app.ts` and its injectable `AppOptions` together; preserve per-app database lifecycle and `onClose` disposal.
+- Add application behavior behind an application port and service before changing repository infrastructure; `pnpm --dir server arch` (dependency-cruiser) in CI verifies the layer rules.
 - Preserve revision IDs in snapshots and the restore-as-new-revision behavior when modifying history or export paths.
 - For export changes, keep snapshot comparison chapter-only selection and atomic output replacement intact; run the focused service tests plus the CI-equivalent backend/frontend checks as applicable.

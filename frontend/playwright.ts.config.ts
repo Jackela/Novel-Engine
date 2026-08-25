@@ -8,9 +8,8 @@ import { defineConfig, devices } from '@playwright/test';
  * #274: the TS-stack SPA suite. The emitted TS backend serves the built
  * frontend itself (scripts/start-ts-e2e-stack.mjs), so this project exercises
  * the same-origin contract — deep-link fallback, novel_engine_* cookies, the
- * unified error envelope — against the rewrite target rather than the Python
- * stack that playwright.config.ts (tests/e2e) still drives until cutover.
- * Keep the two configs' test directories disjoint.
+ * unified error envelope — against the post-cutover runtime. Since #277
+ * retired the Python stack, this is the only Playwright project.
  */
 
 // #276: pin one fresh data directory per run and export it through the

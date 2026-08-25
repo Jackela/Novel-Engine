@@ -48,7 +48,8 @@ _Avoid_: suggestion, AI edit
 The author's accept/reject pass over proposals, bound to a snapshot.
 
 **Job**:
-A durable asynchronous operation with explicit state, retryable.
+A durable operation with explicit state, executed synchronously inside the
+request and recorded with its events, retryable.
 
 **Export**:
 A deterministic Markdown, DOCX, or EPUB artifact written from a snapshot.

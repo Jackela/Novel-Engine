@@ -27,8 +27,8 @@ If applicable, add screenshots or logs to help explain your problem.
 ## Environment
  - OS: [e.g. Windows 11]
  - Browser [e.g. Chrome, Safari]
- - Version [e.g. 0.3.1]
- - Python Version: [e.g. 3.11]
+ - Version [e.g. 0.4.0]
+ - Node Version: [e.g. 24]
  - Install: [Docker Compose or local]
  - Session: [Owner or Guest]
 

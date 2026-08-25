@@ -12,7 +12,7 @@
   "info": {
     "description": "Self-hosted writing studio API (TypeScript rewrite).",
     "title": "Novel Engine API",
-    "version": "0.3.1"
+    "version": "0.4.0"
   },
   "openapi": "3.0.3",
   "paths": {
@@ -1017,104 +1017,6 @@
                   },
                   "required": [
                     "error"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Default Response"
-          }
-        }
-      },
-      "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "name": "projectId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "documentId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "content_markdown": {
-                      "type": "string"
-                    },
-                    "created_at": {
-                      "type": "string"
-                    },
-                    "current_revision_id": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    },
-                    "kind": {
-                      "enum": [
-                        "chapter",
-                        "outline",
-                        "character",
-                        "world",
-                        "note"
-                      ],
-                      "type": "string"
-                    },
-                    "metadata": {
-                      "additionalProperties": true,
-                      "type": "object"
-                    },
-                    "position": {
-                      "type": "integer"
-                    },
-                    "project_id": {
-                      "type": "string"
-                    },
-                    "revision_source": {
-                      "enum": [
-                        "author",
-                        "ai-accepted",
-                        "restore"
-                      ],
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "updated_at": {
-                      "type": "string"
-                    },
-                    "word_count": {
-                      "type": "integer"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "project_id",
-                    "kind",
-                    "title",
-                    "position",
-                    "current_revision_id",
-                    "content_markdown",
-                    "metadata",
-                    "revision_source",
-                    "word_count",
-                    "created_at",
-                    "updated_at"
                   ],
                   "type": "object"
                 }

@@ -1,5 +1,6 @@
 {
   "name": "novel-engine-server",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -16,7 +17,6 @@
     "gate:ssot": "node scripts/qa/check_ssot.mjs",
     "gate:hygiene": "node scripts/qa/check_repo_hygiene.mjs",
     "gate:sizes": "node scripts/qa/check_file_sizes.mjs",
-    "gate:freeze": "node scripts/qa/python_freeze_check.mjs",
     "gate:migrations": "node scripts/qa/check_migration_channel.mjs",
     "gate:openapi": "vitest run tests/qa/openapi_snapshot.test.ts",
     "openapi:snapshot": "OPENAPI_SNAPSHOT_WRITE=1 vitest run tests/qa/openapi_snapshot.test.ts",

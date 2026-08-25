@@ -14,9 +14,8 @@ snapshot msg="pre-ai-snapshot":
 rollback:
     git reset --hard HEAD~1
     git clean -fd
-    uv sync --extra dev --extra test
-    corepack pnpm install --frozen-lockfile
-    corepack pnpm --dir frontend install --frozen-lockfile
+    pnpm install --frozen-lockfile
+    pnpm --dir frontend install --frozen-lockfile
 
 # Kill all running AI processes (emergency brake)
 kill-ai:
@@ -34,7 +33,7 @@ check:
     git diff --name-only
     @echo ""
     @echo "=== Deleted safety keywords ==="
-    git diff | grep -E '^\-.*\b(raise|assert|validate|sanitize|escape|auth|permission)\b' || echo "None found"
+    git diff | grep -E '^\-.*\b(raise|assert|validate|sanitize|escape|auth|permission|guard)\b' || echo "None found"
     @echo ""
     @echo "=== New bare except patterns ==="
     git diff | grep -E '^\+.*except\s+Exception' || echo "None found"
@@ -44,33 +43,28 @@ check:
 
 # Full validation (run after any significant change)
 validate:
-    uv run pytest -q
-    uv run mypy src
-    uv run ruff check src tests
-    uv run bandit -r src
-    uv run lint-imports
-    corepack pnpm --dir frontend lint
-    corepack pnpm --dir frontend type-check
-    corepack pnpm --dir frontend test:unit
-    corepack pnpm --dir frontend build
-    corepack pnpm spec:validate
-    uv run python scripts/qa/check_openapi_snapshot.py
+    pnpm --dir server gates
+    pnpm --dir server type-check
+    pnpm --dir server lint
+    pnpm --dir server arch
+    pnpm --dir server test
+    pnpm --dir frontend lint
+    pnpm --dir frontend type-check
+    pnpm --dir frontend test:unit
+    pnpm --dir frontend build
+    pnpm spec:validate
 
-# Backend-only validation
-validate-backend:
-    uv run pytest -q
-    uv run mypy src
-    uv run ruff check src tests
-    uv run bandit -r src
-    uv run lint-imports
+# Server-only validation
+validate-server:
+    pnpm --dir server gates
+    pnpm --dir server type-check
+    pnpm --dir server lint
+    pnpm --dir server arch
+    pnpm --dir server test
 
 # Frontend-only validation
 validate-frontend:
-    corepack pnpm --dir frontend lint
-    corepack pnpm --dir frontend type-check
-    corepack pnpm --dir frontend test:unit
-    corepack pnpm --dir frontend build
-
-# Run performance baseline tests (if they exist)
-perf:
-    uv run pytest tests/performance/ -v || echo "No performance tests found"
+    pnpm --dir frontend lint
+    pnpm --dir frontend type-check
+    pnpm --dir frontend test:unit
+    pnpm --dir frontend build

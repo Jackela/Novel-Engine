@@ -4,35 +4,24 @@ Reference for what each CI gate enforces and what to do when it goes red.
 The authoritative definition of every gate is the workflow files under
 `.github/workflows/`; this document explains behavior and response playbooks.
 
+Since the #277 cutover the tree is TypeScript-only (pnpm workspace
+`frontend/` + `server/`); the Python gates and the `python-freeze` guard
+were retired with the Python tree (git tag `python-final`).
+
 ## Gate inventory
 
 | Gate (workflow / step) | Enforces | Red means |
 | --- | --- | --- |
-| `CI` / Validate dependency security | `pip-audit` (full Python env) + `pnpm audit --audit-level high --prod` (frontend production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
+| `CI` / Validate dependency security | `pnpm audit --audit-level high --prod` (production deps only) | The PR introduces or keeps a *production* dependency with a known high advisory |
 | `Dependency Audit` (scheduled, daily 03:17 UTC + manual dispatch) | Full audit including dev tooling; tracks failures in one reusable issue until green | A new upstream advisory affects any locked dependency, including dev-only paths |
-| `CI` / Check AI regression diff | `scripts/ai/regression_check.py` (main's copy) against the PR diff | The diff deletes safety-keyword lines, adds dangerous patterns, touches forbidden zones, or weakens the guardrail |
+| `CI` / Validate SSOT, hygiene, and OpenSpec | `pnpm --dir server gates` + `pnpm spec:validate` | Version/identity drift (release version authority is `server/package.json`), forbidden residues, file-size budget breach, migration-channel violations, OpenAPI snapshot drift, or invalid OpenSpec deltas |
 | `CI` / Validate React static diagnostics | `react-doctor` with **zero tolerance: warnings fail too**, not just errors | Any diagnostic, including `warning` severity (`unused-export`, `async-defer-await`, …) |
-| `CI` / Validate backend / frontend | ruff, bandit, mypy, lint-imports, pytest+coverage, vitest, build | Conventional test/lint/type failures |
-| `CI` / python-freeze | `server/scripts/qa/python_freeze_check.mjs` (run by the job with `--base-ref`/`--head-ref`): PR diffs must not touch `src/**`, `tests/**`, `alembic/**`, `scripts/**`, `pyproject.toml`, or `uv.lock` unless the PR is labeled `python-freeze-exception` | The PR modifies the frozen Python implementation outside an approved exception |
-| `CI` / Validate workspace gates (server) | Node twins of the Python QA gates (`server/scripts/qa/`, run via `pnpm --dir server gates`): SSOT, repo hygiene, file-size budgets over the pnpm workspace | Version/identity drift, forbidden residues, or a file over the 300 code-line budget in `server/` or `frontend/` |
-| `CI` / Validate server architecture | dependency-cruiser (`pnpm --dir server arch`): the six `.importlinter` contract twins plus the two audit gap closures — interface must not import shared infrastructure (F-8) and the ai context is a leaf reachable only through its application ports | A `server/src` module breaks layering or reaches into `contexts/ai` past its ports |
-| `CI` / Validate server types and lint / Test server | `tsc --strict`, Biome (server only), vitest with Fastify `inject()` | Conventional test/lint/type failures in the TS backend |
-
-## Runbook: python-freeze exceptions
-
-The Python tree is frozen for the TS rewrite (#260): PRs touching
-`src/**`, `tests/**`, `alembic/**`, `scripts/**`, `pyproject.toml`, or
-`uv.lock` fail the `python-freeze` job. The `python-freeze-exception`
-label is reserved for security and data-loss fixes in the frozen tree
-(and for the Python gates' own retirement at cutover):
-
-1. Apply the label only on a PR whose changes are strictly within the
-   exception's purpose; the label exempts the whole PR, so keep such PRs
-   minimal.
-2. Say why the label is warranted in the PR description, citing the
-   advisory or incident.
-3. The label is read from the PR event; if you add it after a red run,
-   re-run the job (push or re-run `python-freeze` only).
+| `CI` / Validate frontend | eslint `--max-warnings=0`, prettier, tsc, vitest, vite build | Conventional test/lint/type failures |
+| `CI` / Check generated API types drift | regenerates `frontend/generated/api-types.ts` from `server/qa-baselines/openapi.current.json` and compares byte-identical | The committed generated types are stale — run `pnpm --dir frontend gen:api-types` |
+| `CI` / Validate Studio workflow against the TS backend | Playwright (`playwright.ts.config.ts`) against the emitted CLI serving `frontend/dist` | A browser-level Studio workflow or content-acceptance assertion broke |
+| `CI` (server job) / gates, architecture, types, tests | Node QA gates, dependency-cruiser, `tsc --strict`, Biome, vitest with Fastify `inject()` | A `server/` module breaks layering or a conventional test/lint/type failure |
+| `CI` / container | `docker build` + fresh install, persistence across restart, deep link, drizzle-migration table check | The production image fails to boot, persist, or serve the SPA |
+| `CodeQL` | javascript-typescript analysis over `server/` + `frontend/` | A CodeQL alert on the TS workspace |
 
 ## Runbook: dependency advisory flaps
 
@@ -63,22 +52,13 @@ same way.
 diagnostic in the code; do not add suppressions (the diff check also rejects
 `# type: ignore`-style suppressions).
 
-## Runbook: safety-keyword deletions in large refactors
+## Runbook: OpenAPI baseline changes
 
-`Check AI regression diff` fails when a diff deletes lines containing
-`raise / validate / sanitize / escape / auth / permission` keywords. For
-planned, reviewed refactors (e.g. repo-wide renames) that must touch such
-lines, add an entry to `scripts/ai/regression_check_exemptions.txt` in the
-same PR:
-
-```text
-src/legacy/auth_wiring.py :: auth :: planned rename, ref #250
-```
-
-The registry is version-controlled so reviewers see the exemption next to the
-deletion it permits. Entries must cite a tracking issue, only exempt one
-exact path+keyword pair, and should be removed once the refactor lands. The
-guardrail file itself cannot be exempted; malformed entries fail closed.
+Any route-affecting server change must regenerate the frozen baseline with
+`pnpm --dir server openapi:snapshot` in the same PR; the drift gate and the
+frontend api-types drift gate both fail otherwise. Regeneration is
+deliberate — never hand-edit `server/qa-baselines/openapi.current.json` or
+`frontend/generated/api-types.ts`.
 
 ## Dependabot status
 

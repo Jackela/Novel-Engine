@@ -1,33 +1,36 @@
 .PHONY: install validate test frontend validate-frontend build e2e-smoke serve doctor
 
 install:
-	uv sync --extra dev --extra test
-	corepack pnpm install --frozen-lockfile
+	pnpm install --frozen-lockfile
 
 validate:
-	uv run python scripts/qa/check_ssot.py
-	uv run python scripts/qa/check_repo_hygiene.py
-	corepack pnpm spec:validate
+	pnpm --dir server gates
+	pnpm --dir server type-check
+	pnpm --dir server lint
+	pnpm --dir server arch
+	pnpm --dir server test
+	pnpm spec:validate
 
 test:
-	uv run pytest -q
+	pnpm --dir server test
 
 frontend:
-	corepack pnpm --dir frontend lint
-	corepack pnpm --dir frontend format:check
-	corepack pnpm --dir frontend type-check
-	corepack pnpm --dir frontend test:unit
+	pnpm --dir frontend lint
+	pnpm --dir frontend format:check
+	pnpm --dir frontend type-check
+	pnpm --dir frontend test:unit
 
 validate-frontend: frontend build
 
 build:
-	corepack pnpm --dir frontend build
+	pnpm --dir frontend build
+	pnpm --dir server build
 
 e2e-smoke:
-	corepack pnpm --dir frontend test:e2e:smoke
+	pnpm --dir frontend test:e2e:smoke
 
 serve:
-	uv run novel-engine serve --reload
+	pnpm --dir server cli serve
 
 doctor:
-	uv run novel-engine doctor
+	pnpm --dir server cli doctor

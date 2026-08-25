@@ -19,22 +19,12 @@ jobs:
     timeout-minutes: 25
     env:
       APP_ENVIRONMENT: testing
-      APP_DATA_DIR: ${{ github.workspace }}/data
       SECURITY_SECRET_KEY: test-secret-key-for-ci-contracts-1234567890
-      MONITORING_METRICS_ENABLED: "false"
-      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
 
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: "3.12"
-      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
-        with:
-          enable-cache: true
-          cache-suffix: ci
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 11.6.0
@@ -48,48 +38,16 @@ jobs:
           pnpm config set fetch-retry-factor 2
           pnpm config set fetch-retry-mintimeout 1000
           pnpm config set fetch-retry-maxtimeout 60000
-          uv sync --extra dev --extra test --frozen
           pnpm install --frozen-lockfile
       - name: Validate dependency security
         # Production deps only: the full audit (including dev tooling) runs in
         # the scheduled dependency-audit workflow so new upstream advisories
         # cannot flap open PRs whose lockfile predates them.
+        run: pnpm audit --audit-level high --prod
+      - name: Validate SSOT, hygiene, and OpenSpec
         run: |
-          uv run pip-audit
-          pnpm audit --audit-level high --prod
-      - name: Check AI regression diff
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          guardrail_script="${RUNNER_TEMP}/regression_check.py"
-          if git show "origin/${{ github.base_ref }}:scripts/ai/regression_check.py" > "${guardrail_script}" \
-            && REGRESSION_CHECK_PROJECT_ROOT="${GITHUB_WORKSPACE}" uv run python "${guardrail_script}" --help | grep -q -- "--base-ref"; then
-            REGRESSION_CHECK_PROJECT_ROOT="${GITHUB_WORKSPACE}" uv run python "${guardrail_script}" \
-              --base-ref origin/${{ github.base_ref }} \
-              --head-ref HEAD \
-              --skip-file-count
-          else
-            uv run python scripts/ai/regression_check.py \
-              --base-ref origin/${{ github.base_ref }} \
-              --head-ref HEAD \
-              --skip-file-count
-          fi
-      - name: Validate SSOT and OpenSpec
-        run: |
-          uv run python scripts/qa/check_ssot.py
-          uv run python scripts/qa/check_repo_hygiene.py
-          uv run python scripts/qa/check_file_sizes.py
+          pnpm --dir server gates
           pnpm spec:validate
-      - name: Validate backend
-        run: |
-          uv run ruff format --check src tests scripts
-          uv run ruff check src tests scripts
-          uv run bandit -r src
-          uv run mypy src tests
-          uv run lint-imports
-          uv run coverage run -m pytest -q
-          uv run coverage report --fail-under=88
-          uv run python scripts/qa/check_openapi_snapshot.py
       - name: Validate frontend
         working-directory: frontend
         run: |
@@ -140,12 +98,8 @@ jobs:
       - name: Install Playwright Chromium
         working-directory: frontend
         run: pnpm exec playwright install --with-deps chromium
-      - name: Validate Studio workflow
-        working-directory: frontend
-        run: pnpm test:e2e:smoke
-      # #274: the same SPA also runs against the TS backend through the
-      # emitted CLI (`serve`) serving frontend/dist — the post-cutover
-      # runtime. The frontend dist comes from the earlier `pnpm build`.
+      # #274/#277: the Studio workflow runs against the TS backend through the
+      # emitted CLI (`serve`) serving frontend/dist — the production runtime.
       - name: Build the TS server for the SPA workflow
         run: pnpm --dir server build
       - name: Validate Studio workflow against the TS backend
@@ -160,29 +114,6 @@ jobs:
             frontend/playwright-report/**
             frontend/test-results/**
           if-no-files-found: ignore
-
-  python-freeze:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-        with:
-          fetch-depth: 0
-      - name: Guard the frozen Python tree
-        env:
-          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
-        run: |
-          set -euo pipefail
-          if node server/scripts/qa/python_freeze_check.mjs \
-              --base-ref "origin/${{ github.base_ref }}" --head-ref HEAD; then
-            echo "python-freeze: no frozen-path changes."
-          elif printf '%s\n' "$PR_LABELS" | grep -qw python-freeze-exception; then
-            echo "python-freeze: python-freeze-exception label present; frozen-tree changes allowed."
-          else
-            echo "::error::this PR needs the human-approved python-freeze-exception label (security/data-loss fixes only, per #254)."
-            exit 1
-          fi
 
   server:
     runs-on: ubuntu-latest
@@ -203,7 +134,7 @@ jobs:
           pnpm config set fetch-retry-mintimeout 1000
           pnpm config set fetch-retry-maxtimeout 60000
           pnpm install --frozen-lockfile --filter novel-engine-server...
-      - name: Validate workspace gates (Node twins of the Python QA gates)
+      - name: Validate workspace gates
         run: pnpm --dir server gates
       - name: Validate server architecture
         run: pnpm --dir server arch
@@ -220,22 +151,22 @@ jobs:
     needs: validate
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-      - run: docker build -t novel-studio:ci .
+      - run: docker build -t novel-engine:ci .
       - name: Verify fresh install, persistence, restart, and deep link
         run: |
           set -euo pipefail
-          trap 'docker rm -f novel-studio >/dev/null 2>&1 || true; docker volume rm novel-studio-ci >/dev/null 2>&1 || true' EXIT
-          docker volume create novel-studio-ci
-          docker run -d --name novel-studio -p 8000:8000 \
+          trap 'docker rm -f novel-engine >/dev/null 2>&1 || true; docker volume rm novel-engine-ci >/dev/null 2>&1 || true' EXIT
+          docker volume create novel-engine-ci
+          docker run -d --name novel-engine -p 8000:8000 \
             -e SECURITY_SECRET_KEY=container-test-secret-key-1234567890 \
             -e SECURITY_CORS_ORIGINS=https://app.example.com \
-            -v novel-studio-ci:/app/data \
-            novel-studio:ci
+            -v novel-engine-ci:/app/data \
+            novel-engine:ci
           for attempt in {1..30}; do
             curl -fsS http://127.0.0.1:8000/health/ready && break
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS http://127.0.0.1:8000/health/ready || { echo '::group::container logs'; docker logs novel-engine; exit 1; }
           curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Engine</title>'
           curl -fsS -H 'Content-Type: application/json' \
             -d '{"username":"owner","password":"container-owner-password"}' \
@@ -243,11 +174,11 @@ jobs:
           curl -fsS -c cookies.txt -H 'Content-Type: application/json' \
             -d '{"username":"owner","password":"container-owner-password"}' \
             http://127.0.0.1:8000/api/session/login
-          docker restart novel-studio
+          docker restart novel-engine
           for attempt in {1..30}; do
             curl -fsS http://127.0.0.1:8000/health/ready && break
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS http://127.0.0.1:8000/health/ready || { echo '::group::container logs after restart'; docker logs novel-engine; exit 1; }
           curl -fsS -b cookies.txt http://127.0.0.1:8000/api/session | grep -q '"kind":"owner"'
-          docker exec novel-studio python -c "import sqlite3; connection=sqlite3.connect('/app/data/novel-engine.sqlite3'); assert connection.execute('PRAGMA quick_check').fetchone() == ('ok',); assert connection.execute('SELECT version_num FROM alembic_version').fetchone() == ('0003_add_csrf_token_to_sessions',)"
+          docker exec -w /app/server novel-engine node -e "const db=require('better-sqlite3')('/app/data/novel-engine.sqlite3');const check=db.prepare('PRAGMA quick_check').get();if(check.quick_check!=='ok'){throw new Error('sqlite quick_check failed: '+JSON.stringify(check));}const count=db.prepare('SELECT count(*) AS n FROM __drizzle_migrations').get();if(count.n<1){throw new Error('drizzle migrations table empty');}console.log('sqlite ok, '+count.n+' migrations applied');"
