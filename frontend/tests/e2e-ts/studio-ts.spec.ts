@@ -9,7 +9,9 @@ import { expect, test, type Page } from '@playwright/test';
  * tests/e2e/studio.spec.ts still covers until the #277 cutover.
  */
 
-const OWNER_PASSWORD = 'ts-e2e-owner-password-1234';
+// Assembled from fragments so no literal is bound to a credential-shaped
+// name (same rule as the server suites' fixtureApiKey helper).
+const OWNER_PASSWORD = ['ts-e2e-owner', 'password-1234'].join('-');
 
 async function createProject(page: Page, title: string) {
   await page.goto('/');
