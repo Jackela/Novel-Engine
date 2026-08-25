@@ -59,6 +59,17 @@ describe("legacy workspace reader", () => {
     expect(directoryFingerprint(source)).toBe(before);
   });
 
+  it("parses quoted, commented, and block scalars like yaml.safe_load", () => {
+    const source = makeWorkspace("scalars", {
+      title: '"Quoted Title" # trailing note',
+      premise: ">-\n  Folded premise\n  across lines",
+      chapters: [{ filename: "chapter-001.md", content: "# One\n" }],
+    });
+    const workspace = reader.read(source);
+    expect(workspace.title).toBe("Quoted Title");
+    expect(workspace.description).toBe("Folded premise across lines");
+  });
+
   it("binds the hash to the canonical source and eligible raw bytes", () => {
     const input: LegacyWorkspaceInput = {
       title: "Shared Story",

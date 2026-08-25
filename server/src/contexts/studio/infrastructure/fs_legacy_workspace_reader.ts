@@ -195,16 +195,65 @@ function workspaceHash(root: string, files: readonly RawFile[]): string {
   return digest.digest("hex");
 }
 
+/**
+ * Read one scalar `key` from the workspace's story.yaml the way the Python
+ * authority's yaml.safe_load would present it: surrounding quotes stripped,
+ * unquoted trailing comments removed, and indented block scalars folded
+ * (`>` joins with spaces, `|` keeps line breaks).
+ */
 function legacyScalar(contents: Buffer, key: "title" | "premise"): string | undefined {
   const prefix = `${key}:`;
-  for (const line of contents.toString("utf8").split(/\r?\n/)) {
+  const lines = contents.toString("utf8").split(/\r?\n/);
+  for (const [index, line] of lines.entries()) {
     if (!line.startsWith(prefix)) {
       continue;
     }
-    const value = line.slice(prefix.length).trim();
-    return value === "" ? undefined : value;
+    const value = stripYamlComment(line.slice(prefix.length).trim());
+    if (value === "") {
+      return undefined;
+    }
+    if (value.startsWith("|") || value.startsWith(">")) {
+      const block = blockScalarBody(lines.slice(index + 1), value.startsWith(">"));
+      return block === "" ? undefined : block;
+    }
+    return unquoteYamlScalar(value);
   }
   return undefined;
+}
+
+/** Drop a trailing `# comment`; inside quotes the hash is literal content. */
+function stripYamlComment(value: string): string {
+  const quote = value[0];
+  if (quote === '"' || quote === "'") {
+    const closing = value.indexOf(quote, 1);
+    return closing > 0 ? value.slice(0, closing + 1) : value;
+  }
+  const hash = value.indexOf(" #");
+  return hash >= 0 ? value.slice(0, hash).trimEnd() : value;
+}
+
+/** Remove one layer of matching surrounding quotes. */
+function unquoteYamlScalar(value: string): string {
+  const quote = value[0];
+  if ((quote === '"' || quote === "'") && value.length >= 2 && value[value.length - 1] === quote) {
+    return value.slice(1, -1);
+  }
+  return value;
+}
+
+/** Fold the indented continuation lines of a block scalar. */
+function blockScalarBody(lines: readonly string[], folded: boolean): string {
+  const body: string[] = [];
+  for (const line of lines) {
+    if (line.trim() === "") {
+      continue;
+    }
+    if (!line.startsWith(" ") && !line.startsWith("\t")) {
+      break;
+    }
+    body.push(line.trim());
+  }
+  return (folded ? body.join(" ") : body.join("\n")).trim();
 }
 
 function lexicalCompare(left: string, right: string): number {

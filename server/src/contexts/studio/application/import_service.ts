@@ -36,11 +36,6 @@ export class ImportService {
     return legacyPreviewPayload(this.reader.readConfinedLegacyWorkspace(dataDirectory, source));
   }
 
-  /** CLI preview over an explicit local path supplied by the trusted operator. */
-  previewLegacyWorkspace(source: string): Record<string, unknown> {
-    return legacyPreviewPayload(this.reader.read(source));
-  }
-
   /**
    * Import the workspace for this principal, or return the project an earlier
    * import of the same source hash already created in this principal's scope.
