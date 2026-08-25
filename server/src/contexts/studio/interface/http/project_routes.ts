@@ -17,6 +17,8 @@ export interface StudioRoutesOptions {
   /** Absent while the app is database-free; studio surfaces then answer 503. */
   authService?: AuthService | undefined;
   services?: StudioServices | undefined;
+  /** Data directory owning the confined data/imports web-import root. */
+  dataDirectory?: string | undefined;
 }
 
 export function requireServices(options: StudioRoutesOptions): StudioServices {

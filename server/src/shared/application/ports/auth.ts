@@ -48,6 +48,8 @@ export interface CreateSessionInput {
 export interface AuthStore {
   ownerExists(): boolean;
   getOwnerByUsername(username: string): OwnerRecord | null;
+  /** The configured owner of a single-owner installation, if any. */
+  getFirstOwner(): OwnerRecord | null;
   /** Rejects with InvalidOperationError when the single-owner invariant would break. */
   createOwner(username: string, passwordHash: string): OwnerRecord;
   createSession(input: CreateSessionInput): SessionRecord;

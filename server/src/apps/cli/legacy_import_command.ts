@@ -1,0 +1,49 @@
+import { randomBytes } from "node:crypto";
+import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
+import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
+import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
+import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
+import { AuthService } from "../../shared/application/auth_service.js";
+import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
+import { openStudioDatabase } from "../../shared/infrastructure/db/startup.js";
+
+export interface LegacyImportCommandInput {
+  /** Data directory owning novel-engine.sqlite3 (backup → migrate → recover runs first). */
+  dataDirectory: string;
+  /** Explicit legacy workspace path; the CLI is not confined to data/imports. */
+  source: string;
+  /** Owner username; omitted falls back to the installation's single owner. */
+  owner?: string | undefined;
+}
+
+/**
+ * The `novel-engine import` command body — the programmatic entry the CLI
+ * dispatcher (#272) registers. It owns a short-lived runtime (database
+ * lifecycle included), runs as the owner principal without HTTP
+ * authentication, and returns the imported project payload for the
+ * dispatcher to print. The legacy source directory is never modified.
+ */
+export async function runLegacyImportCommand(
+  input: LegacyImportCommandInput,
+): Promise<Record<string, unknown>> {
+  const database = await openStudioDatabase(input.dataDirectory);
+  try {
+    const authService = new AuthService({
+      store: new DrizzleAuthStore(database.db),
+      // The maintenance principal never mints or validates session tokens,
+      // so the HMAC key is an ephemeral per-run value.
+      sessionSecret: randomBytes(32).toString("base64url"),
+    });
+    const principal = authService.localOwnerPrincipal(input.owner);
+    const services = createStudioServices(
+      new DrizzleStudioStore({ database: database.db, dataDirectory: input.dataDirectory }),
+      {
+        providerFactory: textProviderFactory({}),
+        legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+      },
+    );
+    return services.imports.importLegacyWorkspace(principal, input.source);
+  } finally {
+    database.close();
+  }
+}

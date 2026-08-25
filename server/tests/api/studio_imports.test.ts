@@ -1,12 +1,14 @@
 import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-
+import { buildApp } from "../../src/apps/api/app.js";
+import { runLegacyImportCommand } from "../../src/apps/cli/legacy_import_command.js";
 import {
   directoryFingerprint,
-  makeLegacyWorkspace,
   type LegacyChapterInput,
+  makeLegacyWorkspace,
 } from "../legacy_workspace_fixtures.js";
+import { TEST_SESSION_SECRET } from "./auth_helpers.js";
 import { buildStudioApp, call, monotonicClock, ownerJar } from "./studio_helpers.js";
 
 const CHAPTERS: LegacyChapterInput[] = [
@@ -23,7 +25,17 @@ async function buildImportApp() {
     premise: "A precise migration.",
     chapters: CHAPTERS,
   });
-  return { app, source };
+  return { app, directory, source };
+}
+
+/** Reopen the same data directory after a CLI run to inspect it over HTTP. */
+async function reopenApp(directory: string) {
+  const app = await buildApp({
+    logger: false,
+    dataDirectory: directory,
+    sessionSecret: TEST_SESSION_SECRET,
+  });
+  return app;
 }
 
 describe("legacy import surface", () => {
@@ -55,54 +67,87 @@ describe("legacy import surface", () => {
   });
 
   it("imports chapters as Chapter 1..N by filename order with no extra documents", async () => {
-    const { app, source } = await buildImportApp();
+    const { app, directory } = await buildImportApp();
+    await ownerJar(app);
+    // The CLI takes an explicit local path: unlike the web surface it is not
+    // confined to data/imports, so the workspace lives beside it.
+    const source = makeLegacyWorkspace(join(directory, "cli-source"), {
+      title: "Imported Story",
+      premise: "A precise migration.",
+      chapters: CHAPTERS,
+    });
+    await app.close();
+    const before = directoryFingerprint(source);
+
+    const project = await runLegacyImportCommand({
+      dataDirectory: directory,
+      source,
+      owner: "owner",
+    });
+
+    expect(project.title).toBe("Imported Story");
+    expect(project.description).toBe("A precise migration.");
+    expect(project.settings).toEqual({ provider: "mock" });
+    expect(project.import_hash).toMatch(/^[0-9a-f]{64}$/);
+    const documents = project.documents as Record<string, unknown>[];
+    expect(documents).toHaveLength(CHAPTERS.length);
+    for (const [index, chapter] of CHAPTERS.entries()) {
+      const document = documents[index] as Record<string, unknown>;
+      expect(document.kind).toBe("chapter");
+      expect(document.title).toBe(`Chapter ${index + 1}`);
+      expect(document.position).toBe(index + 1);
+      expect(document.content_markdown).toBe(chapter.content);
+      expect(document.metadata).toEqual({ legacy_filename: chapter.filename });
+      expect(document.current_revision_id).toBeTruthy();
+      expect(document.revision_source).toBe("author");
+    }
+    expect(directoryFingerprint(source)).toBe(before);
+
+    const reopened = await reopenApp(directory);
     try {
-      const before = directoryFingerprint(source);
-      const jar = await ownerJar(app);
-      const response = await call(app, jar, "POST", "/api/imports", {
-        source: "legacy-story",
-      });
-      expect(response.statusCode, response.body).toBe(201);
-      const body = response.json();
-      expect(body.title).toBe("Imported Story");
-      expect(body.description).toBe("A precise migration.");
-      expect(body.settings).toEqual({ provider: "mock" });
-      expect(body.import_hash).toMatch(/^[0-9a-f]{64}$/);
-      expect(body.documents).toHaveLength(CHAPTERS.length);
-      for (const [index, chapter] of CHAPTERS.entries()) {
-        const document = body.documents[index];
-        expect(document.kind).toBe("chapter");
-        expect(document.title).toBe(`Chapter ${index + 1}`);
-        expect(document.position).toBe(index + 1);
-        expect(document.content_markdown).toBe(chapter.content);
-        expect(document.metadata).toEqual({ legacy_filename: chapter.filename });
-        expect(document.current_revision_id).toBeTruthy();
-        expect(document.revision_source).toBe("author");
-      }
-      expect(directoryFingerprint(source)).toBe(before);
+      const jar = await ownerJar(reopened);
+      const list = await call(reopened, jar, "GET", "/api/projects");
+      expect(list.statusCode, list.body).toBe(200);
+      expect(list.json().projects).toHaveLength(1);
     } finally {
-      await app.close();
+      await reopened.close();
     }
   });
 
   it("re-importing the same source returns the existing project without duplication", async () => {
-    const { app, source } = await buildImportApp();
-    try {
-      const before = directoryFingerprint(source);
-      const jar = await ownerJar(app);
-      const first = await call(app, jar, "POST", "/api/imports", { source: "legacy-story" });
-      expect(first.statusCode, first.body).toBe(201);
-      const second = await call(app, jar, "POST", "/api/imports", { source: "legacy-story" });
-      expect(second.statusCode, second.body).toBe(201);
-      expect(second.json().id).toBe(first.json().id);
-      expect(second.json().import_hash).toBe(first.json().import_hash);
+    const { app, directory } = await buildImportApp();
+    await ownerJar(app);
+    const source = makeLegacyWorkspace(join(directory, "cli-source"), {
+      title: "Imported Story",
+      premise: "A precise migration.",
+      chapters: CHAPTERS,
+    });
+    await app.close();
+    const before = directoryFingerprint(source);
 
-      const list = await call(app, jar, "GET", "/api/projects");
-      expect(list.statusCode).toBe(200);
+    const first = await runLegacyImportCommand({
+      dataDirectory: directory,
+      source,
+      owner: "owner",
+    });
+    const second = await runLegacyImportCommand({
+      dataDirectory: directory,
+      source,
+      owner: "owner",
+    });
+
+    expect(second.id).toBe(first.id);
+    expect(second.import_hash).toBe(first.import_hash);
+    expect(directoryFingerprint(source)).toBe(before);
+
+    const reopened = await reopenApp(directory);
+    try {
+      const jar = await ownerJar(reopened);
+      const list = await call(reopened, jar, "GET", "/api/projects");
+      expect(list.statusCode, list.body).toBe(200);
       expect(list.json().projects).toHaveLength(1);
-      expect(directoryFingerprint(source)).toBe(before);
     } finally {
-      await app.close();
+      await reopened.close();
     }
   });
 });

@@ -2,7 +2,9 @@ import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-
+import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
+import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { FsLegacyWorkspaceReader } from "../../src/contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../src/shared/domain/exceptions.js";
@@ -11,9 +13,6 @@ import {
   openStudioDatabase,
   type StudioDatabase,
 } from "../../src/shared/infrastructure/db/startup.js";
-import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
-import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
-import { FsLegacyWorkspaceReader } from "../../src/contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { capturingFactory } from "../api/proposal_test_helpers.js";
 import { directoryFingerprint, makeLegacyWorkspace } from "../legacy_workspace_fixtures.js";
 
@@ -87,7 +86,11 @@ describe("legacy import service", () => {
     const guestProject = services.imports.importLegacyWorkspace(guest, source);
 
     expect(guestProject.id).not.toBe(ownerProject.id);
-    expect(guestProject.import_hash).not.toBe(ownerProject.import_hash);
+    // The stored hash is the raw, principal-independent source hash: both
+    // scopes keep the same value while the principal-scoped unique indices
+    // keep the rows distinct.
+    expect(guestProject.import_hash).toBe(ownerProject.import_hash);
+    expect(String(ownerProject.import_hash)).toMatch(/^[0-9a-f]{64}$/);
     expect(services.projects.listProjects(owner)).toHaveLength(1);
     expect(services.projects.listProjects(guest)).toHaveLength(1);
   });
@@ -100,15 +103,14 @@ describe("legacy import service", () => {
     const project = services.imports.importLegacyWorkspace(owner, source);
     const detail = services.projects.projectDetail(owner, project.id as string);
 
-    expect((detail.payload.documents as unknown[]).map((document) => document.title)).toEqual([
-      "Chapter 1",
-      "Chapter 2",
-    ]);
+    expect(
+      (detail.payload.documents as Record<string, unknown>[]).map((document) => document.title),
+    ).toEqual(["Chapter 1", "Chapter 2"]);
     const first = detail.documents[0];
     const second = detail.documents[1];
-    expect(first.currentRevision?.contentMarkdown).toBe("# First\n");
-    expect(second.currentRevision?.contentMarkdown).toBe("# Second\n");
-    expect(JSON.parse(first.currentRevision?.metadataJson ?? "{}")).toEqual({
+    expect(first?.currentRevision?.contentMarkdown).toBe("# First\n");
+    expect(second?.currentRevision?.contentMarkdown).toBe("# Second\n");
+    expect(JSON.parse(first?.currentRevision?.metadataJson ?? "{}")).toEqual({
       legacy_filename: "chapter-001.md",
     });
   });

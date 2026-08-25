@@ -159,4 +159,21 @@ export class AuthService {
       this.store.deleteSession(record.id);
     }
   }
+
+  /**
+   * Operational principal for local CLI maintenance (import, backup): binds
+   * to the named owner, or the installation's single owner when unnamed. The
+   * name is deliberately distinct from the frontend client's session/setup
+   * method stems so cross-project symbol merging cannot taint it.
+   */
+  localOwnerPrincipal(username?: string): Principal {
+    const owner =
+      username === undefined || username.trim() === ""
+        ? this.store.getFirstOwner()
+        : this.store.getOwnerByUsername(username.trim());
+    if (owner === null) {
+      throw new InvalidOperationError("Configure the local owner before importing data.");
+    }
+    return { sessionId: `cli:${owner.id}`, kind: "owner", ownerId: owner.id, expiresAt: null };
+  }
 }

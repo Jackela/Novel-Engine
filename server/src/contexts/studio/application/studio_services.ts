@@ -2,6 +2,8 @@ import type { TextGenerationProviderFactory } from "../../../contexts/ai/applica
 import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
 import type { ExportStore } from "./ports/export_store.js";
+import { ImportService } from "./import_service.js";
+import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
 import { AiProposalService } from "./proposal_service.js";
@@ -16,6 +18,7 @@ export interface StudioServices {
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
   artifacts: SnapshotArtifactService;
+  imports: ImportService;
 }
 
 export interface CreateStudioServicesOptions {
@@ -28,6 +31,8 @@ export interface CreateStudioServicesOptions {
   artifactStore: ExportStore;
   /** Filesystem adapter for atomic artifact writes and confined retrieval. */
   artifactFiles: ExportArtifactGateway;
+  /** Read-only legacy workspace access; the composition root injects the FS adapter. */
+  legacyWorkspaceReader: LegacyWorkspaceReader;
 }
 
 export function createStudioServices(
@@ -45,5 +50,6 @@ export function createStudioServices(
     artifacts: new SnapshotArtifactService(options.artifactStore, store, options.artifactFiles, {
       now,
     }),
+    imports: new ImportService(store, options.legacyWorkspaceReader, now),
   };
 }

@@ -21,13 +21,13 @@ describe("web import confinement and guards", () => {
     const { app } = await buildStudioApp(monotonicClock());
     try {
       const jar = await guestJar(app);
-      for (const url of ["/api/imports/preview", "/api/imports"]) {
-        const response = await call(app, jar, "POST", url, { source: "legacy-story" });
-        expect(response.statusCode, response.body).toBe(403);
-        const error = response.json().error;
-        expect(error.code).toBe("FORBIDDEN");
-        expect(error.message).toBe("This operation requires the local Owner.");
-      }
+      const response = await call(app, jar, "POST", "/api/imports/preview", {
+        source: "legacy-story",
+      });
+      expect(response.statusCode, response.body).toBe(403);
+      const error = response.json().error;
+      expect(error.code).toBe("FORBIDDEN");
+      expect(error.message).toBe("This operation requires the local Owner.");
     } finally {
       await app.close();
     }
@@ -79,13 +79,11 @@ describe("web import confinement and guards", () => {
       mkdirSync(importsRoot, { recursive: true });
       symlinkSync(target, join(importsRoot, "sneaky"));
       const jar = await ownerJar(app);
-      for (const url of ["/api/imports/preview", "/api/imports"]) {
-        const response = await call(app, jar, "POST", url, { source: "sneaky" });
-        expect(response.statusCode, response.body).toBe(404);
-        const error = response.json().error;
-        expect(error.code).toBe("NOT_FOUND");
-        expect(error.message).toBe(NOT_FOUND_MESSAGE);
-      }
+      const response = await call(app, jar, "POST", "/api/imports/preview", { source: "sneaky" });
+      expect(response.statusCode, response.body).toBe(404);
+      const error = response.json().error;
+      expect(error.code).toBe("NOT_FOUND");
+      expect(error.message).toBe(NOT_FOUND_MESSAGE);
     } finally {
       await app.close();
     }
@@ -113,7 +111,9 @@ describe("web import confinement and guards", () => {
     try {
       mkdirSync(join(directory, "imports", "empty-story"), { recursive: true });
       const jar = await ownerJar(app);
-      const response = await call(app, jar, "POST", "/api/imports", { source: "empty-story" });
+      const response = await call(app, jar, "POST", "/api/imports/preview", {
+        source: "empty-story",
+      });
       expect(response.statusCode, response.body).toBe(422);
       const error = response.json().error;
       expect(error.code).toBe("INVALID_OPERATION");

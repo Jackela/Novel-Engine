@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { rmSync } from "node:fs";
 import { join } from "node:path";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
 import type {
+  AddImportedProjectInput,
   AddProjectInput,
   DocumentWithCurrent,
   ProjectScope,
@@ -13,6 +14,7 @@ import type {
 import { clearProjectDocumentIndex, refreshDocumentIndex } from "./db/document_search.js";
 import { documents, projects } from "./db/schema.js";
 import {
+  documentsWithCurrent,
   insertRevision,
   type ProjectRow,
   scopeCondition,
@@ -107,6 +109,80 @@ export class ProjectStorePart {
 
   findProject(scope: ProjectScope, projectId: string): ProjectRow {
     return this.db.transaction((tx) => scopedProject(tx, scope, projectId));
+  }
+
+  /** The principal-scoped idempotency probe: at most one row per (scope, hash). */
+  findProjectByImportHash(scope: ProjectScope, importHash: string): ProjectRow | null {
+    return (
+      this.db
+        .select()
+        .from(projects)
+        .where(and(eq(projects.importHash, importHash), scopeCondition(scope)))
+        .get() ?? null
+    );
+  }
+
+  /**
+   * The single legacy-import write: the project row carries its import hash
+   * from the start, and every chapter document, revision, and FTS entry
+   * commits in the same transaction — or not at all.
+   */
+  addImportedProject(
+    scope: ProjectScope,
+    input: AddImportedProjectInput,
+  ): { project: ProjectRow; documents: DocumentWithCurrent[] } {
+    return this.db.transaction((tx) => {
+      const project: typeof projects.$inferInsert = {
+        id: randomUUID(),
+        ownerId: scope.ownerId,
+        guestSessionId: scope.guestSessionId,
+        title: input.title,
+        description: input.description,
+        settingsJson: input.settingsJson,
+        importHash: input.importHash,
+        createdAt: input.now,
+        updatedAt: input.now,
+      };
+      tx.insert(projects).values(project).run();
+      for (const [index, chapter] of input.chapters.entries()) {
+        const position = index + 1;
+        const title = `Chapter ${position}`;
+        const document: typeof documents.$inferInsert = {
+          id: randomUUID(),
+          projectId: project.id,
+          kind: "chapter",
+          title,
+          position,
+          currentRevisionId: null,
+          createdAt: input.now,
+          updatedAt: input.now,
+        };
+        tx.insert(documents).values(document).run();
+        const revision = insertRevision(tx, {
+          documentId: document.id,
+          parentRevisionId: null,
+          revisionNumber: 1,
+          contentMarkdown: chapter.contentMarkdown,
+          metadataJson: chapter.metadataJson,
+          source: "author",
+          now: input.now,
+        });
+        tx.update(documents)
+          .set({ currentRevisionId: revision.id })
+          .where(eq(documents.id, document.id))
+          .run();
+        refreshDocumentIndex(tx, {
+          documentId: document.id,
+          projectId: project.id,
+          title,
+          content: chapter.contentMarkdown,
+        });
+      }
+      return {
+        project: project as ProjectRow,
+        documents: documentsWithCurrent(tx, project.id),
+      };
+    });
   }
 
   dropProject(scope: ProjectScope, projectId: string): void {

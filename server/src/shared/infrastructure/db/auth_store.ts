@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { count, eq } from "drizzle-orm";
+import { asc, count, eq } from "drizzle-orm";
 import type {
   AuthStore,
   CreateSessionInput,
@@ -54,6 +54,11 @@ export class DrizzleAuthStore implements AuthStore {
 
   getOwnerByUsername(username: string): OwnerRecord | null {
     const [row] = this.db.select().from(owners).where(eq(owners.username, username)).all();
+    return row === undefined ? null : toOwnerRecord(row);
+  }
+
+  getFirstOwner(): OwnerRecord | null {
+    const row = this.db.select().from(owners).orderBy(asc(owners.created_at)).get();
     return row === undefined ? null : toOwnerRecord(row);
   }
 
