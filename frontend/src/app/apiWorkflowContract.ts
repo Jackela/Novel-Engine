@@ -50,7 +50,7 @@ function parseIssue(value: unknown, label: string): ReviewIssue {
   };
 }
 
-export function parseReview(value: unknown, label = 'review'): Review {
+function parseReview(value: unknown, label = 'review'): Review {
   const item = objectValue(value, label);
   return {
     id: stringField(item, 'id', label),
@@ -135,7 +135,7 @@ export function parseJobs(value: unknown): { jobs: StudioJob[] } {
   };
 }
 
-export function parseExport(value: unknown, label = 'export'): StudioExport {
+function parseExport(value: unknown, label = 'export'): StudioExport {
   const item = objectValue(value, label);
   return {
     id: stringField(item, 'id', label),
