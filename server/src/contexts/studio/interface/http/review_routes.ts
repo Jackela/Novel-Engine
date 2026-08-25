@@ -3,12 +3,9 @@ import type { Principal } from "../../../../shared/application/ports/auth.js";
 import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
 import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import type { EditorialAssessment } from "../../application/review_service.js";
+import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
-import {
-  reviewCreateSchema,
-  reviewListResponseSchema,
-  reviewResponseSchema,
-} from "./review_schemas.js";
+import { reviewCreateSchema, reviewListResponseSchema } from "./review_schemas.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 
 function reviewPayload(assessment: EditorialAssessment) {
@@ -68,7 +65,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
         }
       },
       preHandler: [guard],
-      schema: { body: reviewCreateSchema, response: { 201: reviewResponseSchema } },
+      schema: { body: reviewCreateSchema, response: { 201: jobResponseSchema } },
       config: {
         swaggerTransform: ({ schema, url }) => {
           const documentationSchema = { ...schema };
@@ -80,9 +77,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
       const payload = withStudioErrors(() =>
-        reviewPayload(
-          requireServices(options).reviewAssessments.evaluateProject(principal(request), projectId),
-        ),
+        requireServices(options).jobHistory.recordReviewJob(principal(request), projectId),
       );
       reply.status(201);
       return payload;

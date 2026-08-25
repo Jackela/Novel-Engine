@@ -22,8 +22,18 @@ export function useExportDownload(
       setFailedFormat(null);
       setError(null);
       try {
-        const item = await api.createExport(projectId, format);
-        setExports((current) => [item, ...current]);
+        // The synchronous job contract (#272): the response is the terminal
+        // export job; the artifact catalog is refreshed from its export_id.
+        const job = await api.createExport(projectId, format);
+        if (job.status !== 'completed' || !job.result.export_id) {
+          throw new Error(job.error ?? 'Unable to export project.');
+        }
+        const catalog = await api.exports(projectId);
+        setExports(catalog.exports);
+        const item = catalog.exports.find((candidate) => candidate.id === job.result.export_id);
+        if (!item) {
+          throw new Error('Export artifact is not available.');
+        }
         const blob = await api.download(item.download_url);
         const blobUrl = URL.createObjectURL(blob);
         const extension = format === 'markdown' ? 'md' : format;

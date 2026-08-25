@@ -238,7 +238,8 @@ describe("documents surface", () => {
       }
       const createdReview = await call(app, jar, "POST", `/api/projects/${project.id}/reviews`);
       expect(createdReview.statusCode, createdReview.body).toBe(201);
-      const review = createdReview.json();
+      const reviewJob = createdReview.json();
+      const review = { id: reviewJob.result.review_id, snapshot_id: reviewJob.result.snapshot_id };
 
       const db = app.studioDb?.db;
       if (db === undefined) {

@@ -6,6 +6,7 @@ import type {
   ExportArtifactFormat,
   ExportArtifactRecord,
 } from "../../application/ports/export_store.js";
+import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 
@@ -45,6 +46,12 @@ const binaryExportSchema = {
   format: "binary",
   headers: { "Content-Disposition": { type: "string" } },
 } as const;
+const exportCreateSchema = {
+  type: "object",
+  properties: { format: { type: "string", enum: ["markdown", "docx", "epub"] } },
+  required: ["format"],
+  additionalProperties: false,
+} as const;
 const deliveryByFormat: Record<ExportArtifactFormat, { contentType: string; extension: string }> = {
   markdown: { contentType: "text/markdown; charset=utf-8", extension: "md" },
   docx: {
@@ -80,10 +87,30 @@ async function withDeliveryErrors<T>(operation: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Read-only project-scoped export catalog and confined binary artifact delivery. */
+/**
+ * Project-scoped export surface: the synchronous POST bridge that reports a
+ * terminal job, the read-only artifact catalog, and confined binary delivery.
+ */
 export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
   const guard = principalGuard(options.authService);
   const principal = (request: { principal?: Principal }) => request.principal as Principal;
+
+  app.post(
+    "/api/projects/:projectId/exports",
+    {
+      preHandler: [guard],
+      schema: { body: exportCreateSchema, response: { 201: jobResponseSchema } },
+    },
+    async (request, reply) => {
+      const { projectId } = request.params as { projectId: string };
+      const { format } = request.body as { format: ExportArtifactFormat };
+      const payload = await withDeliveryErrors(() =>
+        requireServices(options).jobHistory.recordExportJob(principal(request), projectId, format),
+      );
+      reply.status(201);
+      return payload;
+    },
+  );
 
   app.get(
     "/api/projects/:projectId/exports",

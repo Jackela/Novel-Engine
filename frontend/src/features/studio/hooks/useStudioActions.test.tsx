@@ -17,6 +17,7 @@ vi.mock('@/app/api', async (importOriginal) => {
       createDocument: vi.fn<typeof actual.api.createDocument>(),
       reorderDocuments: vi.fn<typeof actual.api.reorderDocuments>(),
       createReview: vi.fn<typeof actual.api.createReview>(),
+      reviews: vi.fn<typeof actual.api.reviews>(),
       updateProject: vi.fn<typeof actual.api.updateProject>(),
       retryJob: vi.fn<typeof actual.api.retryJob>(),
     },
@@ -73,6 +74,30 @@ const review: Review = {
   summary: 'Looks good.',
   created_at: '2026-06-20T00:01:00Z',
   issues: [],
+};
+const reviewJob: StudioJob = {
+  id: 'job-review-1',
+  project_id: projectFixture.id,
+  document_id: null,
+  kind: 'review',
+  operation: 'review',
+  status: 'completed',
+  provider: 'mock',
+  model: 'studio-copilot-v1',
+  request: {},
+  result: { review_id: 'review-1' },
+  error: null,
+  retry_of_job_id: null,
+  events: [
+    {
+      id: 'event-1',
+      status: 'completed',
+      details: { review_id: 'review-1' },
+      created_at: '2026-06-20T00:01:00Z',
+    },
+  ],
+  created_at: '2026-06-20T00:01:00Z',
+  updated_at: '2026-06-20T00:01:00Z',
 };
 const retriedJob: StudioJob = {
   id: 'job-1',
@@ -207,9 +232,10 @@ describe('useStudioActions', () => {
     expect(harness.result().project?.documents).toEqual(reordered);
   });
 
-  it('runs a review and opens the review inspector', async () => {
+  it('runs a review job and refreshes the assessment list', async () => {
     // Given
-    vi.mocked(api.createReview).mockResolvedValue(review);
+    vi.mocked(api.createReview).mockResolvedValue(reviewJob);
+    vi.mocked(api.reviews).mockResolvedValue({ reviews: [review] });
     const harness = renderActions();
 
     // When
@@ -218,8 +244,29 @@ describe('useStudioActions', () => {
     });
 
     // Then
+    expect(api.reviews).toHaveBeenCalledWith(projectFixture.id);
     expect(harness.result().reviews).toEqual([review]);
     expect(harness.result().inspector).toBe('review');
+  });
+
+  it('reports a failed review job without switching inspector', async () => {
+    // Given
+    vi.mocked(api.createReview).mockResolvedValue({
+      ...reviewJob,
+      status: 'failed',
+      error: 'Review could not be evaluated.',
+    });
+    const harness = renderActions();
+
+    // When
+    await act(async () => {
+      await harness.result().actions.runReview();
+    });
+
+    // Then
+    expect(api.reviews).not.toHaveBeenCalled();
+    expect(harness.result().reviews).toEqual([]);
+    expect(harness.result().error).toBe('Review could not be evaluated.');
   });
 
   it('updates settings while preserving unrelated project settings', async () => {

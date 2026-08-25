@@ -2,6 +2,7 @@ import type { TextGenerationProviderFactory } from "../../../contexts/ai/applica
 import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
+import { JobHistoryService } from "./job_history_service.js";
 import type { ExportStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { StudioStore } from "./ports/studio_store.js";
@@ -19,6 +20,7 @@ export interface StudioServices {
   reviewAssessments: ReviewService;
   artifacts: SnapshotArtifactService;
   imports: ImportService;
+  jobHistory: JobHistoryService;
 }
 
 export interface CreateStudioServicesOptions {
@@ -41,14 +43,25 @@ export function createStudioServices(
 ): StudioServices {
   const now = options.now ?? (() => new Date());
   const documents = new DocumentService(store, now);
+  const reviewAssessments = new ReviewService(store, { now, provenance: options.reviewProvenance });
+  const artifacts = new SnapshotArtifactService(
+    options.artifactStore,
+    store,
+    options.artifactFiles,
+    {
+      now,
+    },
+  );
   return {
     projects: new ProjectService(store, now),
     documents,
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(store, documents, options.providerFactory, now),
-    reviewAssessments: new ReviewService(store, { now, provenance: options.reviewProvenance }),
-    artifacts: new SnapshotArtifactService(options.artifactStore, store, options.artifactFiles, {
+    reviewAssessments,
+    artifacts,
+    jobHistory: new JobHistoryService(store, reviewAssessments, artifacts, {
       now,
+      providerFactory: options.providerFactory,
     }),
     imports: new ImportService(store, options.legacyWorkspaceReader, now),
   };

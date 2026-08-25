@@ -113,6 +113,8 @@ export function parseJob(value: unknown, label = 'job'): StudioJob {
         result.accepted_revision_id === undefined
           ? undefined
           : nullableString(result.accepted_revision_id, `${label}.result.accepted_revision_id`),
+      export_id: optionalString(result, 'export_id', `${label}.result.export_id`),
+      review_id: optionalString(result, 'review_id', `${label}.result.review_id`),
     },
     error: nullableStringField(item, 'error', label),
     retry_of_job_id: nullableStringField(item, 'retry_of_job_id', label),

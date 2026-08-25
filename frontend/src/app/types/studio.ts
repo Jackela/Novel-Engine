@@ -120,6 +120,10 @@ export interface StudioJob {
     proposal_markdown?: string;
     base_revision_id?: string;
     accepted_revision_id?: string | null;
+    /** Present on terminal export jobs (#272 job-wrapped export responses). */
+    export_id?: string;
+    /** Present on terminal review jobs (#272 job-wrapped review responses). */
+    review_id?: string;
   };
   error: string | null;
   retry_of_job_id: string | null;

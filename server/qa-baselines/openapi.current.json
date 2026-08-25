@@ -1827,6 +1827,149 @@
             "cookieAuth": []
           }
         ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "format": {
+                    "enum": [
+                      "markdown",
+                      "docx",
+                      "epub"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "format"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "properties": {
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "events": {
+                      "items": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "details": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "details",
+                          "created_at"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "operation": {
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "request": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "result": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "retry_of_job_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "document_id",
+                    "kind",
+                    "operation",
+                    "status",
+                    "provider",
+                    "model",
+                    "request",
+                    "result",
+                    "error",
+                    "retry_of_job_id",
+                    "created_at",
+                    "updated_at",
+                    "events"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
       }
     },
     "/api/projects/{projectId}/exports/{exportId}/download": {
@@ -1886,6 +2029,268 @@
             "cookieAuth": []
           }
         ]
+      }
+    },
+    "/api/projects/{projectId}/jobs": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "properties": {
+                    "jobs": {
+                      "items": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "document_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "error": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "events": {
+                            "items": {
+                              "additionalProperties": true,
+                              "properties": {
+                                "created_at": {
+                                  "type": "string"
+                                },
+                                "details": {
+                                  "additionalProperties": true,
+                                  "type": "object"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "status",
+                                "details",
+                                "created_at"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "operation": {
+                            "type": "string"
+                          },
+                          "project_id": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string"
+                          },
+                          "request": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "result": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "retry_of_job_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "updated_at": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "project_id",
+                          "document_id",
+                          "kind",
+                          "operation",
+                          "status",
+                          "provider",
+                          "model",
+                          "request",
+                          "result",
+                          "error",
+                          "retry_of_job_id",
+                          "created_at",
+                          "updated_at",
+                          "events"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "jobs"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/jobs/{jobId}/retry": {
+      "post": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "properties": {
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "events": {
+                      "items": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "details": {
+                            "additionalProperties": true,
+                            "type": "object"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "status",
+                          "details",
+                          "created_at"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string"
+                    },
+                    "operation": {
+                      "type": "string"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "request": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "result": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "retry_of_job_id": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "project_id",
+                    "document_id",
+                    "kind",
+                    "operation",
+                    "status",
+                    "provider",
+                    "model",
+                    "request",
+                    "result",
+                    "error",
+                    "retry_of_job_id",
+                    "created_at",
+                    "updated_at",
+                    "events"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
       }
     },
     "/api/projects/{projectId}/reviews": {
@@ -2021,61 +2426,57 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": false,
+                  "additionalProperties": true,
                   "properties": {
                     "created_at": {
-                      "format": "date-time",
                       "type": "string"
                     },
-                    "id": {
+                    "document_id": {
+                      "nullable": true,
                       "type": "string"
                     },
-                    "issues": {
+                    "error": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "events": {
                       "items": {
-                        "additionalProperties": false,
+                        "additionalProperties": true,
                         "properties": {
-                          "code": {
+                          "created_at": {
                             "type": "string"
                           },
-                          "document_id": {
-                            "type": "string"
-                          },
-                          "evidence": {
+                          "details": {
                             "additionalProperties": true,
                             "type": "object"
                           },
                           "id": {
                             "type": "string"
                           },
-                          "message": {
-                            "type": "string"
-                          },
-                          "severity": {
-                            "enum": [
-                              "blocker",
-                              "warning",
-                              "suggestion"
-                            ],
-                            "type": "string"
-                          },
-                          "suggestion": {
+                          "status": {
                             "type": "string"
                           }
                         },
                         "required": [
                           "id",
-                          "document_id",
-                          "severity",
-                          "code",
-                          "message",
-                          "suggestion",
-                          "evidence"
+                          "status",
+                          "details",
+                          "created_at"
                         ],
                         "type": "object"
                       },
                       "type": "array"
                     },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
                     "model": {
+                      "type": "string"
+                    },
+                    "operation": {
                       "type": "string"
                     },
                     "project_id": {
@@ -2084,22 +2485,41 @@
                     "provider": {
                       "type": "string"
                     },
-                    "snapshot_id": {
+                    "request": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "result": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "retry_of_job_id": {
+                      "nullable": true,
                       "type": "string"
                     },
-                    "summary": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "updated_at": {
                       "type": "string"
                     }
                   },
                   "required": [
                     "id",
                     "project_id",
-                    "snapshot_id",
+                    "document_id",
+                    "kind",
+                    "operation",
+                    "status",
                     "provider",
                     "model",
-                    "summary",
+                    "request",
+                    "result",
+                    "error",
+                    "retry_of_job_id",
                     "created_at",
-                    "issues"
+                    "updated_at",
+                    "events"
                   ],
                   "type": "object"
                 }

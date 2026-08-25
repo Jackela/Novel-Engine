@@ -3,6 +3,15 @@ import { describe, expect, it } from "vitest";
 import { loadServerConfig } from "../../src/shared/infrastructure/config/server_config.js";
 import { buildStudioApp, call, ownerJar, seedProject } from "./studio_helpers.js";
 
+interface JobPayload {
+  id: string;
+  kind: string;
+  provider: string;
+  model: string;
+  status: string;
+  result: { review_id?: string; snapshot_id?: string };
+}
+
 interface ReviewPayload {
   id: string;
   snapshot_id: string;
@@ -21,11 +30,12 @@ function dashscopeConfig(models: Record<string, string>) {
 async function createAndReadReview(
   app: Awaited<ReturnType<typeof buildStudioApp>>["app"],
   projectTitle: string,
-): Promise<{ created: ReviewPayload; listed: ReviewPayload }> {
+): Promise<{ created: JobPayload; listed: ReviewPayload }> {
   const jar = await ownerJar(app);
   const project = await seedProject(app, jar, projectTitle);
   const created = await call(app, jar, "POST", `/api/projects/${project.id}/reviews`);
   expect(created.statusCode, created.body).toBe(201);
+  expect(created.json().status).toBe("completed");
 
   const listed = await call(app, jar, "GET", `/api/projects/${project.id}/reviews`);
   expect(listed.statusCode, listed.body).toBe(200);
@@ -40,18 +50,19 @@ describe("review application wiring", () => {
       const { created, listed } = await createAndReadReview(app, "Default review");
 
       expect(created).toMatchObject({
+        kind: "review",
         provider: "mock",
         model: "deterministic-story-v1",
       });
       expect(listed).toMatchObject({
-        id: created.id,
-        snapshot_id: created.snapshot_id,
+        id: created.result.review_id,
+        snapshot_id: created.result.snapshot_id,
         provider: "mock",
         model: "deterministic-story-v1",
       });
 
       const openapi = await app.inject({ method: "GET", url: "/openapi.json" });
-      expect(openapi.statusCode, openapi.body).toBe(200);
+      expect(openapi.statusCode).toBe(200);
       expect(
         openapi.json().paths["/api/projects/{projectId}/reviews"].post.requestBody,
       ).toBeUndefined();
@@ -71,10 +82,14 @@ describe("review application wiring", () => {
     try {
       const { created, listed } = await createAndReadReview(app, "Review override");
 
-      expect(created).toMatchObject({ provider: "dashscope", model: "dashscope-review-model" });
+      expect(created).toMatchObject({
+        kind: "review",
+        provider: "dashscope",
+        model: "dashscope-review-model",
+      });
       expect(listed).toMatchObject({
-        id: created.id,
-        snapshot_id: created.snapshot_id,
+        id: created.result.review_id,
+        snapshot_id: created.result.snapshot_id,
         provider: "dashscope",
         model: "dashscope-review-model",
       });
@@ -93,10 +108,14 @@ describe("review application wiring", () => {
     try {
       const { created, listed } = await createAndReadReview(app, "Review fallback");
 
-      expect(created).toMatchObject({ provider: "dashscope", model: "dashscope-story-model" });
+      expect(created).toMatchObject({
+        kind: "review",
+        provider: "dashscope",
+        model: "dashscope-story-model",
+      });
       expect(listed).toMatchObject({
-        id: created.id,
-        snapshot_id: created.snapshot_id,
+        id: created.result.review_id,
+        snapshot_id: created.result.snapshot_id,
         provider: "dashscope",
         model: "dashscope-story-model",
       });
