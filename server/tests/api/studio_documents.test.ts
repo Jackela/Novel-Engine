@@ -11,7 +11,6 @@ import {
 import {
   buildStudioApp,
   call,
-  getProject,
   listDocuments,
   listRevisions,
   monotonicClock,
@@ -84,7 +83,7 @@ describe("documents surface", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Ordering");
-      const seedId = project.documents[0]!.id; // chapter "Chapter 1", position 1
+      const seedId = project.documents[0]?.id; // chapter "Chapter 1", position 1
 
       const note = await seedDocument(app, jar, project.id, {
         kind: "note",
@@ -213,8 +212,8 @@ describe("documents surface", () => {
       expect(response.statusCode).toBe(204);
 
       const db = app.studioDb?.db;
-      expect(db!.select().from(documents).all()).toHaveLength(1); // the seed remains
-      expect(db!.select().from(documentRevisions).all()).toHaveLength(1); // seed revision remains
+      expect(db?.select().from(documents).all()).toHaveLength(1); // the seed remains
+      expect(db?.select().from(documentRevisions).all()).toHaveLength(1); // seed revision remains
 
       const missing = await call(
         app,

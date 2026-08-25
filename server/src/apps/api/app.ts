@@ -10,10 +10,9 @@ import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/
 import { providerCatalogRoutes } from "../../contexts/ai/interface/http/provider_routes.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
-import { documentRoutes } from "../../contexts/studio/interface/http/document_routes.js";
-import { projectRoutes } from "../../contexts/studio/interface/http/project_routes.js";
-import { proposalRoutes } from "../../contexts/studio/interface/http/proposal_routes.js";
-import { reviewRoutes } from "../../contexts/studio/interface/http/review_routes.js";
+import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
+import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
+import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
 import { DEFAULT_CORS_ORIGINS } from "../../shared/domain/cors_contract.js";
@@ -205,6 +204,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
             provider: defaultProvider,
             model: resolveReviewModel(defaultProvider, providerModelSettings),
           },
+          artifactStore: new ExportStorePart(studioDb.db),
+          artifactFiles: new FilesystemExportArtifactGateway(dataDirectory),
         });
 
   const versionInfo: VersionInfo = {
@@ -279,10 +280,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     settings: providerModelSettings,
     credentials: providerApiKeys,
   });
-  await app.register(projectRoutes, { authService, services: studioServices });
-  await app.register(documentRoutes, { authService, services: studioServices });
-  await app.register(proposalRoutes, { authService, services: studioServices });
-  await app.register(reviewRoutes, { authService, services: studioServices });
+  await app.register(studioRoutes, { authService, services: studioServices });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 
