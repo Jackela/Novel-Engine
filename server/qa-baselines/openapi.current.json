@@ -572,6 +572,7 @@
                       "type": "string"
                     },
                     "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
                         "additionalProperties": true,
                         "properties": {
@@ -1380,6 +1381,7 @@
                       "type": "string"
                     },
                     "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
                         "additionalProperties": true,
                         "properties": {
@@ -1882,6 +1884,7 @@
                       "type": "string"
                     },
                     "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
                         "additionalProperties": true,
                         "properties": {
@@ -2066,6 +2069,7 @@
                             "type": "string"
                           },
                           "events": {
+                            "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                             "items": {
                               "additionalProperties": true,
                               "properties": {
@@ -2203,6 +2207,7 @@
                       "type": "string"
                     },
                     "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
                         "additionalProperties": true,
                         "properties": {
@@ -2440,6 +2445,7 @@
                       "type": "string"
                     },
                     "events": {
+                      "description": "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
                       "items": {
                         "additionalProperties": true,
                         "properties": {

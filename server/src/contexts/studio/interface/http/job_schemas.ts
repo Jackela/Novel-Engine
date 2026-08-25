@@ -32,7 +32,12 @@ export const jobResponseSchema = {
     retry_of_job_id: { type: "string", nullable: true },
     created_at: timestamp,
     updated_at: timestamp,
-    events: { type: "array", items: jobEventSchema },
+    events: {
+      type: "array",
+      items: jobEventSchema,
+      description:
+        "Chronological trail (oldest first) on a single job payload; the jobs LIST endpoint is the spec-mandated newest-first surface.",
+    },
   },
   required: [
     "id",

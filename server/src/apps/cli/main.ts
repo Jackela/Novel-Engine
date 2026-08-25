@@ -211,18 +211,25 @@ const legacyImportRunner: ImportRunner = async (args, context) => {
 export async function runCli(argv: readonly string[], context: CliContext = {}): Promise<number> {
   const writeLine = context.writeLine ?? console.log;
   const parsed = parseArguments(argv);
-  switch (parsed.command) {
-    case "serve":
-      return serveCommand(parsed, context, writeLine);
-    case "backup":
-      return backupCommand(context, writeLine);
-    case "doctor":
-      return doctorCommand(context, writeLine);
-    case "import":
-      return importCommand(parsed, context, writeLine);
-    default:
-      writeLine(USAGE);
-      return 2;
+  try {
+    switch (parsed.command) {
+      case "serve":
+        return await serveCommand(parsed, context, writeLine);
+      case "backup":
+        return await backupCommand(context, writeLine);
+      case "doctor":
+        return await doctorCommand(context, writeLine);
+      case "import":
+        return await importCommand(parsed, context, writeLine);
+      default:
+        writeLine(USAGE);
+        return 2;
+    }
+  } catch (error) {
+    // Every command reports failures through the same error channel; an
+    // unhandled rejection would still exit 1 but silently.
+    writeLine(error instanceof Error ? error.message : String(error));
+    return 1;
   }
 }
 
