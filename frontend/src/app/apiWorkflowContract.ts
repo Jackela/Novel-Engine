@@ -160,59 +160,15 @@ export function parseExports(value: unknown): { exports: StudioExport[] } {
 
 /**
  * POST /reviews and POST /exports carry the synchronous terminal job under
- * the TS backend. Until the cutover retires the Python stack, the CI smoke
- * still drives the Python backend, whose POST responses are the legacy
- * Review/Export shapes — accept both and normalize the legacy shape to the
- * completed-job view the hooks consume. The cutover change removes the
- * legacy branch.
+ * the TS backend — the only contract since the cutover retired the Python
+ * stack.
  */
 export function parseReviewJobResponse(value: unknown, label = 'review job response'): StudioJob {
   const item = objectValue(value, label);
-  if ('kind' in item && 'status' in item) {
-    return parseJob(item, label);
-  }
-  const review = parseReview(item, label);
-  const createdAt = stringField(item, 'created_at', label);
-  return {
-    id: review.id,
-    project_id: review.project_id,
-    document_id: null,
-    kind: 'review',
-    operation: 'review',
-    status: 'completed',
-    provider: review.provider,
-    model: review.model,
-    request: {},
-    result: { review_id: review.id },
-    error: null,
-    retry_of_job_id: null,
-    events: [],
-    created_at: createdAt,
-    updated_at: createdAt,
-  };
+  return parseJob(item, label);
 }
 
 export function parseExportJobResponse(value: unknown, label = 'export job response'): StudioJob {
   const item = objectValue(value, label);
-  if ('kind' in item && 'status' in item) {
-    return parseJob(item, label);
-  }
-  const artifact = parseExport(item, label);
-  return {
-    id: artifact.id,
-    project_id: artifact.project_id,
-    document_id: null,
-    kind: 'export',
-    operation: 'export',
-    status: 'completed',
-    provider: 'studio',
-    model: '',
-    request: {},
-    result: { export_id: artifact.id },
-    error: null,
-    retry_of_job_id: null,
-    events: [],
-    created_at: artifact.created_at,
-    updated_at: artifact.created_at,
-  };
+  return parseJob(item, label);
 }

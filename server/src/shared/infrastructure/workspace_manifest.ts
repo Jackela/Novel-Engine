@@ -26,7 +26,12 @@ function locateWorkspaceManifest(): string {
   for (let depth = 0; depth < SEARCH_DEPTH; depth += 1) {
     const candidate = join(directory, MANIFEST_NAME);
     if (existsSync(candidate)) {
-      const name = JSON.parse(readFileSync(candidate, "utf8")).name;
+      let name: unknown;
+      try {
+        name = JSON.parse(readFileSync(candidate, "utf8")).name;
+      } catch {
+        name = undefined;
+      }
       if (name === SERVER_PACKAGE_NAME) {
         return candidate;
       }

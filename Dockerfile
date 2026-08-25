@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3 make g+
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY frontend/package.json ./frontend/package.json
 COPY server/package.json ./server/package.json
-RUN pnpm install --frozen-lockfile --prod \
+RUN pnpm install --frozen-lockfile --prod --filter novel-engine-server... \
     && apt-get purge -y --auto-remove python3 make g++ \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 COPY --from=build /app/frontend/dist ./frontend/dist
