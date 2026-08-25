@@ -43,6 +43,13 @@
       "when": 1787603905301,
       "tag": "0005_steady_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787622165071,
+      "tag": "0006_slim_inhumans",
+      "breakpoints": true
     }
   ]
 }

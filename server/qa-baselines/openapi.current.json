@@ -16,6 +16,89 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/api/imports/preview": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "source": {
+                    "description": "Workspace directory name under data/imports.",
+                    "maxLength": 240,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "source"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "chapter_count": {
+                      "type": "integer"
+                    },
+                    "chapters": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "bytes": {
+                            "type": "integer"
+                          },
+                          "filename": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "filename",
+                          "bytes"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "string"
+                    },
+                    "source_hash": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "source",
+                    "source_hash",
+                    "title",
+                    "description",
+                    "chapter_count",
+                    "chapters"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/projects": {
       "get": {
         "responses": {

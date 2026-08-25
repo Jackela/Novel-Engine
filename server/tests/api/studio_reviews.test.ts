@@ -32,6 +32,10 @@ class MemoryAuthStore implements AuthStore {
     return this.owner?.username === username ? this.owner : null;
   }
 
+  getFirstOwner(): OwnerRecord | null {
+    return this.owner;
+  }
+
   createOwner(username: string, passwordHash: string): OwnerRecord {
     const owner: OwnerRecord = {
       id: "owner-1",

@@ -180,6 +180,25 @@ export interface AddProjectInput {
   now: Date;
 }
 
+/** One imported chapter: content plus its persisted metadata JSON. */
+export interface ImportedChapterInput {
+  contentMarkdown: string;
+  metadataJson: string;
+}
+
+/**
+ * The whole legacy-import write: the project row already carries its import
+ * hash, and every chapter document/revision lands in the same transaction.
+ */
+export interface AddImportedProjectInput {
+  title: string;
+  description: string;
+  settingsJson: string;
+  importHash: string;
+  chapters: ImportedChapterInput[];
+  now: Date;
+}
+
 export interface AddDocumentInput {
   kind: string;
   title: string;
@@ -213,6 +232,19 @@ export interface StudioStore {
   };
   findProjects(scope: ProjectScope): ProjectRecord[];
   findProject(scope: ProjectScope, projectId: string): ProjectRecord;
+  /** Existing project of this principal carrying the given import hash, if any. */
+  findProjectByImportHash(scope: ProjectScope, importHash: string): ProjectRecord | null;
+  /**
+   * Transactional legacy-import write: the project (with its import hash),
+   * one chapter document/revision per file, and the FTS rows commit together.
+   */
+  addImportedProject(
+    scope: ProjectScope,
+    input: AddImportedProjectInput,
+  ): {
+    project: ProjectRecord;
+    documents: DocumentWithCurrent[];
+  };
   dropProject(scope: ProjectScope, projectId: string): void;
 
   findDocuments(scope: ProjectScope, projectId: string): DocumentWithCurrent[];

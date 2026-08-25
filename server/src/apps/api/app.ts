@@ -12,6 +12,7 @@ import { createStudioServices } from "../../contexts/studio/application/studio_s
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
 import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
 import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
+import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { studioRoutes } from "../../contexts/studio/interface/http/studio_routes.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import type { HealthProbe } from "../../shared/application/ports/health.js";
@@ -200,6 +201,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
       : createStudioServices(new DrizzleStudioStore({ database: studioDb.db, dataDirectory }), {
           now: options.clock,
           providerFactory,
+          legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
           reviewProvenance: {
             provider: defaultProvider,
             model: resolveReviewModel(defaultProvider, providerModelSettings),
@@ -280,7 +282,11 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     settings: providerModelSettings,
     credentials: providerApiKeys,
   });
-  await app.register(studioRoutes, { authService, services: studioServices });
+  await app.register(studioRoutes, {
+    authService,
+    services: studioServices,
+    dataDirectory,
+  });
 
   app.get("/openapi.json", { schema: { hide: true } }, async () => app.swagger());
 

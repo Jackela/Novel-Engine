@@ -8,20 +8,32 @@ import { owners, sessions } from "../../../../shared/infrastructure/db/schema.js
  * (infrastructure/models.py): principal scoping columns, the identity and
  * revision-number unique constraints, and cascade deletes. Pointer columns
  * (current_revision_id) stay plain text exactly like the gold standard.
+ *
+ * The Python authority's single GLOBAL unique import_hash index would block
+ * the same-source owner/guest imports the rewrite spec requires, so the
+ * rewrite (#273) enforces idempotency per principal scope instead: one row
+ * per (owner_id, import_hash) and one per (guest_session_id, import_hash).
  */
-export const projects = sqliteTable("projects", {
-  id: text("id").primaryKey(),
-  ownerId: text("owner_id").references(() => owners.id, { onDelete: "cascade" }),
-  guestSessionId: text("guest_session_id").references(() => sessions.id, {
-    onDelete: "cascade",
-  }),
-  title: text("title").notNull(),
-  description: text("description").notNull().default(""),
-  settingsJson: text("settings_json").notNull().default("{}"),
-  importHash: text("import_hash").unique(),
-  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
-});
+export const projects = sqliteTable(
+  "projects",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id").references(() => owners.id, { onDelete: "cascade" }),
+    guestSessionId: text("guest_session_id").references(() => sessions.id, {
+      onDelete: "cascade",
+    }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    settingsJson: text("settings_json").notNull().default("{}"),
+    importHash: text("import_hash"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash),
+    uniqueIndex("uq_project_guest_import_hash").on(table.guestSessionId, table.importHash),
+  ],
+);
 
 export const documents = sqliteTable(
   "documents",
