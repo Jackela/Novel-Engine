@@ -18,7 +18,10 @@ import { defineConfig, devices } from '@playwright/test';
 // and the test workers both resolve the same directory, so the
 // content-acceptance specs can assert on-disk export artifacts and database
 // rows of the exact stack under test.
+const ownsDataDirectory = process.env.TS_E2E_DATA_DIR === undefined;
 process.env.TS_E2E_DATA_DIR ??= mkdtempSync(join(tmpdir(), 'ne-ts-e2e-'));
+// The teardown module reads the ownership marker from the environment.
+process.env.TS_E2E_OWN_DATA_DIR = ownsDataDirectory ? '1' : '';
 
 const chromiumExecutablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
 
@@ -32,6 +35,10 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:4274',
     trace: 'retain-on-failure',
   },
+  // A passing run leaves nothing behind (scripts/ts-e2e-teardown.mjs);
+  // failures keep the data directory for debugging, matching the trace
+  // retain-on-failure policy.
+  globalTeardown: './scripts/ts-e2e-teardown.mjs',
   webServer: {
     command: 'node ./scripts/start-ts-e2e-stack.mjs',
     url: 'http://127.0.0.1:4274/health/ready',

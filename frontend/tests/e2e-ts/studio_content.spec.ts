@@ -234,8 +234,9 @@ test.describe.serial('#276 content acceptance', () => {
     expect(((await operated.json()) as { results: unknown[] }).results).toHaveLength(0);
     await searchBox.fill('harbor OR bell');
     await searchBox.press('Enter');
-    // The previous query's results are on screen, so this poll cannot pass
-    // early: the section must first disappear once the reduced query lands.
+    // The previous query's results are still on screen, so this auto-retry
+    // assertion cannot pass early: the section must first disappear once the
+    // safely-reduced query returns its empty result set.
     await expect(studio.getByLabel('Search results')).toHaveCount(0);
 
     // Stale base revision: 409 with the unified envelope and the winner.

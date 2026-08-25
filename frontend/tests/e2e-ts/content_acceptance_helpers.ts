@@ -71,8 +71,9 @@ export async function assertNarrativeProse(markdown: string): Promise<void> {
   const prose = await loadServerProseContract();
   expect(prose.isNarrativeProse(markdown), 'compiled #240 guard accepts the content').toBe(true);
   expect(markdown.length).toBeGreaterThan(400);
+  const folded = markdown.toLowerCase();
   for (const phrase of prose.forbiddenPhrases) {
-    expect(markdown.toLowerCase()).not.toContain(phrase.toLowerCase());
+    expect(folded).not.toContain(phrase.toLowerCase());
   }
   expect(markdown).not.toContain('[REDACTED]');
   expect(markdown).not.toContain('[BEGIN AUTHOR INSTRUCTION]');
