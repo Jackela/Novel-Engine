@@ -36,6 +36,10 @@ RUN pnpm install --frozen-lockfile --prod \
     && rm -rf /var/lib/apt/lists/* /root/.cache
 COPY --from=build /app/frontend/dist ./frontend/dist
 COPY --from=build /app/server/dist ./server/dist
+# The startup pipeline locates migrations by the drizzle.config.ts marker and
+# applies every SQL file beneath server/drizzle before listening.
+COPY server/drizzle.config.ts ./server/drizzle.config.ts
+COPY server/drizzle ./server/drizzle
 COPY LICENSE README.md ./
 RUN mkdir -p /app/data
 EXPOSE 8000

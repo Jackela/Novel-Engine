@@ -166,7 +166,7 @@ jobs:
             curl -fsS http://127.0.0.1:8000/health/ready && break
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS http://127.0.0.1:8000/health/ready || { echo '::group::container logs'; docker logs novel-engine; exit 1; }
           curl -fsS http://127.0.0.1:8000/projects/demo/history | grep -q '<title>Novel Engine</title>'
           curl -fsS -H 'Content-Type: application/json' \
             -d '{"username":"owner","password":"container-owner-password"}' \
@@ -179,6 +179,6 @@ jobs:
             curl -fsS http://127.0.0.1:8000/health/ready && break
             sleep 2
           done
-          curl -fsS http://127.0.0.1:8000/health/ready
+          curl -fsS http://127.0.0.1:8000/health/ready || { echo '::group::container logs after restart'; docker logs novel-engine; exit 1; }
           curl -fsS -b cookies.txt http://127.0.0.1:8000/api/session | grep -q '"kind":"owner"'
           docker exec -w /app/server novel-engine node -e "const db=require('better-sqlite3')('/app/data/novel-engine.sqlite3');const check=db.prepare('PRAGMA quick_check').get();if(check.quick_check!=='ok'){throw new Error('sqlite quick_check failed: '+JSON.stringify(check));}const count=db.prepare('SELECT count(*) AS n FROM __drizzle_migrations').get();if(count.n<1){throw new Error('drizzle migrations table empty');}console.log('sqlite ok, '+count.n+' migrations applied');"
