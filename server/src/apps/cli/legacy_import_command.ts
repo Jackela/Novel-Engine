@@ -2,6 +2,8 @@ import { randomBytes } from "node:crypto";
 import { textProviderFactory } from "../../contexts/ai/infrastructure/providers/text_provider_factory.js";
 import { createStudioServices } from "../../contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../contexts/studio/infrastructure/drizzle_studio_store.js";
+import { FilesystemExportArtifactGateway } from "../../contexts/studio/infrastructure/export_artifact_files.js";
+import { ExportStorePart } from "../../contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { AuthService } from "../../shared/application/auth_service.js";
 import { DrizzleAuthStore } from "../../shared/infrastructure/db/auth_store.js";
@@ -40,6 +42,10 @@ export async function runLegacyImportCommand(
       {
         providerFactory: textProviderFactory({}),
         legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+        // The import command never touches exports, but the service graph is
+        // complete: the same store/gateway the API composition root wires.
+        artifactStore: new ExportStorePart(database.db),
+        artifactFiles: new FilesystemExportArtifactGateway(input.dataDirectory),
       },
     );
     return services.imports.importLegacyWorkspace(principal, input.source);

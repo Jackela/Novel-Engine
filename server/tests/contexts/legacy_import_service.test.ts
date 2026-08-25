@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { createStudioServices } from "../../src/contexts/studio/application/studio_services.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
+import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infrastructure/export_artifact_files.js";
+import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import { FsLegacyWorkspaceReader } from "../../src/contexts/studio/infrastructure/fs_legacy_workspace_reader.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
@@ -35,6 +37,8 @@ async function buildServices() {
     {
       providerFactory: capturingFactory({}).factory,
       legacyWorkspaceReader: new FsLegacyWorkspaceReader(),
+      artifactStore: new ExportStorePart(database.db),
+      artifactFiles: new FilesystemExportArtifactGateway(directory),
     },
   );
   return { auth, services };

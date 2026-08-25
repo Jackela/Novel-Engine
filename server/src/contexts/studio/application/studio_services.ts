@@ -1,8 +1,8 @@
 import type { TextGenerationProviderFactory } from "../../../contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
-import type { ExportStore } from "./ports/export_store.js";
 import { ImportService } from "./import_service.js";
+import type { ExportStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { ProjectService } from "./project_service.js";
