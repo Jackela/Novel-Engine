@@ -1370,6 +1370,63 @@
               }
             },
             "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
           }
         }
       }
@@ -1873,6 +1930,63 @@
               }
             },
             "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
           }
         }
       }
@@ -2190,6 +2304,63 @@
                     "created_at",
                     "updated_at",
                     "events"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "error": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "OPERATION_IN_FLIGHT"
+                          ],
+                          "type": "string"
+                        },
+                        "details": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "document_id": {
+                              "nullable": true,
+                              "type": "string"
+                            },
+                            "operation": {
+                              "type": "string"
+                            },
+                            "project_id": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "project_id",
+                            "document_id",
+                            "operation"
+                          ],
+                          "type": "object"
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message",
+                        "details"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "error"
                   ],
                   "type": "object"
                 }

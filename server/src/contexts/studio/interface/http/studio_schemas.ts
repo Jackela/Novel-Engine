@@ -246,6 +246,34 @@ export const documentConflictSchema = {
   required: ["error"],
 } as const;
 
+/** The 409 envelope when an identical pipeline operation is already running (#305). */
+export const operationInFlightSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    error: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        code: { type: "string", enum: ["OPERATION_IN_FLIGHT"] },
+        message: { type: "string" },
+        details: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            project_id: { type: "string" },
+            document_id: { type: "string", nullable: true },
+            operation: { type: "string" },
+          },
+          required: ["project_id", "document_id", "operation"],
+        },
+      },
+      required: ["code", "message", "details"],
+    },
+  },
+  required: ["error"],
+} as const;
+
 /** The fixed 409 envelope when an immutable snapshot references the document. */
 export const snapshotConflictSchema = {
   type: "object",

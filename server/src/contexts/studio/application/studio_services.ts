@@ -3,6 +3,7 @@ import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
+import { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { ExportStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
 import type { StudioStore } from "./ports/studio_store.js";
@@ -42,6 +43,9 @@ export function createStudioServices(
   options: CreateStudioServicesOptions,
 ): StudioServices {
   const now = options.now ?? (() => new Date());
+  // One guard per app instance: it serializes identical in-flight pipeline
+  // operations (#305) across the proposal and export/retry surfaces.
+  const inFlight = new InFlightOperationGuard();
   const documents = new DocumentService(store, now);
   const reviewAssessments = new ReviewService(store, { now, provenance: options.reviewProvenance });
   const artifacts = new SnapshotArtifactService(
@@ -56,12 +60,13 @@ export function createStudioServices(
     projects: new ProjectService(store, now),
     documents,
     revisions: new RevisionService(store, documents),
-    proposals: new AiProposalService(store, documents, options.providerFactory, now),
+    proposals: new AiProposalService(store, documents, options.providerFactory, inFlight, now),
     reviewAssessments,
     artifacts,
     jobHistory: new JobHistoryService(store, reviewAssessments, artifacts, {
       now,
       providerFactory: options.providerFactory,
+      inFlight,
     }),
     imports: new ImportService(store, options.legacyWorkspaceReader, now),
   };

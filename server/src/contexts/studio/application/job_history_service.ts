@@ -1,8 +1,9 @@
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
+import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, exportJobResultJson, jobPayload, reviewJobResultJson } from "./payloads.js";
-import type { ExportArtifactFormat } from "./ports/export_store.js";
+import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ReviewService } from "./review_service.js";
@@ -13,6 +14,8 @@ const STUDIO_EXPORTER_PROVIDER = "studio";
 export interface JobHistoryServiceOptions {
   readonly now?: JobRetryExecutorOptions["now"];
   readonly providerFactory: JobRetryExecutorOptions["providerFactory"];
+  /** Serializes identical exports and retries (#305); shared with proposals. */
+  readonly inFlight: InFlightOperationGuard;
 }
 
 /**
@@ -26,6 +29,7 @@ export class JobHistoryService {
   private readonly reviews: ReviewService;
   private readonly artifacts: SnapshotArtifactService;
   private readonly retries: JobRetryExecutor;
+  private readonly inFlight: InFlightOperationGuard;
   private readonly now: () => Date;
 
   constructor(
@@ -41,6 +45,7 @@ export class JobHistoryService {
       now: options.now,
       providerFactory: options.providerFactory,
     });
+    this.inFlight = options.inFlight;
     this.now = options.now ?? (() => new Date());
   }
 
@@ -79,7 +84,21 @@ export class JobHistoryService {
     format: ExportArtifactFormat,
   ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const artifact = await this.artifacts.materializeSnapshotArtifact(principal, projectId, format);
+    // #305: the artifact write runs before the terminal job row exists;
+    // identical concurrent exports deduplicate through the in-flight guard
+    // (different formats of one project may still run in parallel).
+    const inFlightTarget = {
+      projectId,
+      documentId: null,
+      operation: `export (${format})`,
+    };
+    this.inFlight.enter(inFlightTarget);
+    let artifact: ExportArtifactRecord;
+    try {
+      artifact = await this.artifacts.materializeSnapshotArtifact(principal, projectId, format);
+    } finally {
+      this.inFlight.exit(inFlightTarget);
+    }
     const job = this.store.addJob(scope, {
       projectId,
       documentId: null,
@@ -98,12 +117,29 @@ export class JobHistoryService {
   }
 
   /** Retry a failed/interrupted job; see JobRetryExecutor for the contract. */
-  reexecuteProjectJob(
+  async reexecuteProjectJob(
     principal: Principal,
     projectId: string,
     jobId: string,
     reportCleanupFailure: (failure: unknown) => void,
   ): Promise<Record<string, unknown>> {
-    return this.retries.reexecuteProjectJob(principal, projectId, jobId, reportCleanupFailure);
+    // #305: a retry runs real work after its running row is created, so a
+    // double-fired retry of the same job is deduplicated like the pipelines.
+    const inFlightTarget = {
+      projectId,
+      documentId: null,
+      operation: `retry (${jobId})`,
+    };
+    this.inFlight.enter(inFlightTarget);
+    try {
+      return await this.retries.reexecuteProjectJob(
+        principal,
+        projectId,
+        jobId,
+        reportCleanupFailure,
+      );
+    } finally {
+      this.inFlight.exit(inFlightTarget);
+    }
   }
 }
