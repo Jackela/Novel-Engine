@@ -43,3 +43,22 @@ export class DuplicateDocumentError extends Error {
     this.title = title;
   }
 }
+
+/** The same synchronous pipeline operation is already running for this target. */
+export class OperationInFlightError extends Error {
+  readonly projectId: string;
+  readonly documentId: string | null;
+  readonly operation: string;
+
+  constructor(projectId: string, documentId: string | null, operation: string) {
+    super(
+      documentId === null
+        ? `The ${operation} operation is already running for this project.`
+        : `The ${operation} operation is already running for this document.`,
+    );
+    this.name = "OperationInFlightError";
+    this.projectId = projectId;
+    this.documentId = documentId;
+    this.operation = operation;
+  }
+}

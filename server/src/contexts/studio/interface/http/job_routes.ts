@@ -4,6 +4,7 @@ import { principalGuard } from "../../../../shared/interface/http/auth_guard.js"
 import { jobListResponseSchema, jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { operationInFlightSchema } from "./studio_schemas.js";
 
 /** `withStudioErrors` is synchronous; the retry executes asynchronously. */
 async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
@@ -38,7 +39,10 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, op
 
   app.post(
     "/api/projects/:projectId/jobs/:jobId/retry",
-    { preHandler: [guard], schema: { response: { 200: jobResponseSchema } } },
+    {
+      preHandler: [guard],
+      schema: { response: { 200: jobResponseSchema, 409: operationInFlightSchema } },
+    },
     async (request) => {
       const { projectId, jobId } = request.params as { projectId: string; jobId: string };
       const reportCleanupFailure = (failure: unknown): void => {

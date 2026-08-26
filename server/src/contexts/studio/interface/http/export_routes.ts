@@ -9,6 +9,7 @@ import type {
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
+import { operationInFlightSchema } from "./studio_schemas.js";
 
 const timestampSchema = { type: "string", format: "date-time" } as const;
 const exportResponseSchema = {
@@ -99,7 +100,10 @@ export const exportRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
     "/api/projects/:projectId/exports",
     {
       preHandler: [guard],
-      schema: { body: exportCreateSchema, response: { 201: jobResponseSchema } },
+      schema: {
+        body: exportCreateSchema,
+        response: { 201: jobResponseSchema, 409: operationInFlightSchema },
+      },
     },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };

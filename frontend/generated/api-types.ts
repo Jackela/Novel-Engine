@@ -693,6 +693,26 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
             };
         };
         delete?: never;
@@ -942,6 +962,26 @@ export interface paths {
                         };
                     };
                 };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
             };
         };
         delete?: never;
@@ -1123,6 +1163,26 @@ export interface paths {
                             updated_at: string;
                         } & {
                             [key: string]: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
                         };
                     };
                 };

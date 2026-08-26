@@ -3,6 +3,7 @@ import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import {
   DuplicateDocumentError,
   NotFoundError,
+  OperationInFlightError,
   RevisionConflictError,
   SnapshotConflict,
 } from "../../domain/exceptions.js";
@@ -29,6 +30,18 @@ function toAppError(error: unknown): unknown {
   }
   if (error instanceof DuplicateDocumentError) {
     return new AppError({ statusCode: 409, code: "DOCUMENT_CONFLICT", message: error.message });
+  }
+  if (error instanceof OperationInFlightError) {
+    return new AppError({
+      statusCode: 409,
+      code: "OPERATION_IN_FLIGHT",
+      message: error.message,
+      details: {
+        project_id: error.projectId,
+        document_id: error.documentId,
+        operation: error.operation,
+      },
+    });
   }
   if (error instanceof InvalidOperationError) {
     return new AppError({ statusCode: 422, code: "INVALID_OPERATION", message: error.message });

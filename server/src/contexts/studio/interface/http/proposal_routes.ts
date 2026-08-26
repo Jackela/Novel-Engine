@@ -4,7 +4,18 @@ import { principalGuard } from "../../../../shared/interface/http/auth_guard.js"
 import { jobResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
-import { proposalCreateSchema } from "./studio_schemas.js";
+import { operationInFlightSchema, proposalCreateSchema } from "./studio_schemas.js";
+
+/** `withStudioErrors` is synchronous; generation executes asynchronously. */
+async function withGenerationErrors<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    return withStudioErrors<T>(() => {
+      throw error;
+    });
+  }
+}
 
 /**
  * The AI proposal surface: synchronous generation that records a proposal on
@@ -19,7 +30,10 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
     "/api/projects/:projectId/documents/:documentId/ai-proposals",
     {
       preHandler: [guard],
-      schema: { body: proposalCreateSchema, response: { 200: jobResponseSchema } },
+      schema: {
+        body: proposalCreateSchema,
+        response: { 200: jobResponseSchema, 409: operationInFlightSchema },
+      },
     },
     async (request) => {
       const { projectId, documentId } = request.params as {
@@ -33,7 +47,7 @@ export const proposalRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
           "provider cleanup failed",
         );
       };
-      return withStudioErrors(() =>
+      return withGenerationErrors(() =>
         requireServices(options).proposals.draftProposal(
           principal(request),
           projectId,

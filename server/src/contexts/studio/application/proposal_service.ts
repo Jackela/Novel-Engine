@@ -10,6 +10,7 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import type { DocumentService } from "./document_service.js";
+import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, jobPayload, safeLoadJson, wordCount } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
@@ -87,17 +88,20 @@ export class AiProposalService {
   private readonly store: StudioStore;
   private readonly documents: DocumentService;
   private readonly providerFactory: TextGenerationProviderFactory;
+  private readonly inFlight: InFlightOperationGuard;
   private readonly now: () => Date;
 
   constructor(
     store: StudioStore,
     documents: DocumentService,
     providerFactory: TextGenerationProviderFactory,
+    inFlight: InFlightOperationGuard,
     now: () => Date = () => new Date(),
   ) {
     this.store = store;
     this.documents = documents;
     this.providerFactory = providerFactory;
+    this.inFlight = inFlight;
     this.now = now;
   }
 
@@ -123,6 +127,15 @@ export class AiProposalService {
       throw new InvalidOperationError("Document has no current revision.");
     }
     const providerName: TextProviderName = input.provider;
+    // #305: the provider call runs before any job row exists, so identical
+    // concurrent submissions are deduplicated by the in-flight guard — the
+    // loser receives a 409 instead of running the work twice.
+    const inFlightTarget = {
+      projectId,
+      documentId,
+      operation: input.operation,
+    };
+    this.inFlight.enter(inFlightTarget);
 
     const requestJson = dumpJson({
       operation: input.operation,
@@ -215,6 +228,7 @@ export class AiProposalService {
         }),
       );
     } finally {
+      this.inFlight.exit(inFlightTarget);
       if (provider !== undefined) {
         await disposeProvider(provider, reportCleanupFailure);
       }
