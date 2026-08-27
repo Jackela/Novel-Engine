@@ -11,6 +11,65 @@ interface SearchResult {
   excerpt: string;
 }
 
+interface DocumentRowsProps {
+  rows: StudioDocument[];
+  activeId: string | null;
+  isMovingDocument: boolean;
+  onSelectDocument: (documentId: string) => void;
+  onMoveDocument: (documentId: string, direction: -1 | 1) => void;
+}
+
+/** The reorderable document rows of one group (or one volume). */
+function DocumentRows({
+  rows,
+  activeId,
+  isMovingDocument,
+  onSelectDocument,
+  onMoveDocument,
+}: DocumentRowsProps) {
+  return (
+    <>
+      {rows.map((document, index) => (
+        <div className="document-row-wrap" key={document.id}>
+          <button
+            aria-current={document.id === activeId ? 'page' : undefined}
+            className={
+              document.id === activeId ? 'document-row document-row--active' : 'document-row'
+            }
+            onClick={() => onSelectDocument(document.id)}
+            type="button"
+          >
+            <FileText aria-hidden="true" />
+            <span>{document.title}</span>
+          </button>
+          <span className="document-order" aria-label={`Reorder ${document.title}`}>
+            <button
+              aria-label={`Move ${document.title} up`}
+              aria-busy={isMovingDocument || undefined}
+              disabled={isMovingDocument || index === 0}
+              onClick={() => onMoveDocument(document.id, -1)}
+              title={isMovingDocument ? 'Reordering documents' : 'Move up'}
+              type="button"
+            >
+              <ArrowUp aria-hidden="true" />
+            </button>
+            <button
+              aria-label={`Move ${document.title} down`}
+              aria-busy={isMovingDocument || undefined}
+              disabled={isMovingDocument || index === rows.length - 1}
+              onClick={() => onMoveDocument(document.id, 1)}
+              title={isMovingDocument ? 'Reordering documents' : 'Move down'}
+              type="button"
+            >
+              <ArrowDown aria-hidden="true" />
+            </button>
+          </span>
+        </div>
+      ))}
+    </>
+  );
+}
+
 interface StudioNavigatorProps {
   project: Project;
   section: string;
@@ -51,44 +110,12 @@ export function StudioNavigator({
     return [group];
   });
 
-  const renderRows = (rows: StudioDocument[]) =>
-    rows.map((document, index) => (
-      <div className="document-row-wrap" key={document.id}>
-        <button
-          aria-current={document.id === activeId ? 'page' : undefined}
-          className={
-            document.id === activeId ? 'document-row document-row--active' : 'document-row'
-          }
-          onClick={() => onSelectDocument(document.id)}
-          type="button"
-        >
-          <FileText aria-hidden="true" />
-          <span>{document.title}</span>
-        </button>
-        <span className="document-order" aria-label={`Reorder ${document.title}`}>
-          <button
-            aria-label={`Move ${document.title} up`}
-            aria-busy={isMovingDocument || undefined}
-            disabled={isMovingDocument || index === 0}
-            onClick={() => onMoveDocument(document.id, -1)}
-            title={isMovingDocument ? 'Reordering documents' : 'Move up'}
-            type="button"
-          >
-            <ArrowUp aria-hidden="true" />
-          </button>
-          <button
-            aria-label={`Move ${document.title} down`}
-            aria-busy={isMovingDocument || undefined}
-            disabled={isMovingDocument || index === rows.length - 1}
-            onClick={() => onMoveDocument(document.id, 1)}
-            title={isMovingDocument ? 'Reordering documents' : 'Move down'}
-            type="button"
-          >
-            <ArrowDown aria-hidden="true" />
-          </button>
-        </span>
-      </div>
-    ));
+  const rowProps = {
+    activeId,
+    isMovingDocument,
+    onSelectDocument,
+    onMoveDocument,
+  };
 
   return (
     <aside className="studio-nav">
@@ -174,14 +201,16 @@ export function StudioNavigator({
                       )}
                     </button>
                   </header>
-                  {volumes && volumes.length > 0
-                    ? volumes.map((volume) => (
-                        <div className="volume-group" key={volume.id}>
-                          <p className="volume-header">{volume.title}</p>
-                          {renderRows(inVolume(volume.id))}
-                        </div>
-                      ))
-                    : renderRows(documents)}
+                  {volumes && volumes.length > 0 ? (
+                    volumes.map((volume) => (
+                      <div className="volume-group" key={volume.id}>
+                        <p className="volume-header">{volume.title}</p>
+                        <DocumentRows rows={inVolume(volume.id)} {...rowProps} />
+                      </div>
+                    ))
+                  ) : (
+                    <DocumentRows rows={documents} {...rowProps} />
+                  )}
                 </section>
               );
             })}
