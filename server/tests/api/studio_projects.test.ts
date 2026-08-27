@@ -8,10 +8,10 @@ import {
   projects,
 } from "../../src/contexts/studio/infrastructure/db/schema.js";
 import {
+  anonymousCall,
   buildStudioApp,
   call,
   getProject,
-  guestJar,
   monotonicClock,
   ownerJar,
   seedProject,
@@ -107,27 +107,18 @@ describe("projects surface", () => {
     }
   });
 
-  it("scopes projects per principal and returns not-found across principals", async () => {
+  it("answers 401 for unauthenticated list and read requests", async () => {
     const { app } = await buildStudioApp(monotonicClock());
     try {
       const owner = await ownerJar(app);
       const owned = await seedProject(app, owner, "Owner only");
 
-      const guest = await guestJar(app);
-      const guestList = await call(app, guest, "GET", "/api/projects");
-      expect(guestList.statusCode).toBe(200);
-      expect(guestList.json().projects).toEqual([]);
+      const anonymousList = await anonymousCall(app, "GET", "/api/projects");
+      expect(anonymousList.statusCode).toBe(401);
 
-      const crossRead = await call(app, guest, "GET", `/api/projects/${owned.id}`);
-      expect(crossRead.statusCode).toBe(404);
-      expect(crossRead.json().error.code).toBe("NOT_FOUND");
-
-      const otherGuest = await guestJar(app);
-      const otherList = await call(app, otherGuest, "GET", "/api/projects");
-      expect(otherList.json().projects).toEqual([]);
-
-      const own = await call(app, owner, "GET", `/api/projects/${owned.id}`);
-      expect(own.statusCode).toBe(200);
+      const anonymousRead = await anonymousCall(app, "GET", `/api/projects/${owned.id}`);
+      expect(anonymousRead.statusCode).toBe(401);
+      expect(anonymousRead.json().error.code).toBe("UNAUTHORIZED");
     } finally {
       await app.close();
     }

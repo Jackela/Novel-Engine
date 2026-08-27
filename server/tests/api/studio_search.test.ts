@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { buildFtsMatchQuery } from "../../src/contexts/studio/application/fts_match_query.js";
 import {
+  anonymousCall,
   buildStudioApp,
   call,
   getProject,
-  guestJar,
   ownerJar,
   seedDocument,
   seedProject,
@@ -268,10 +268,12 @@ describe("project full-text query surface", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Scoped");
-      const guest = await guestJar(app);
-
-      const foreign = await queryDocuments(app, guest, project.id, "chapter");
-      expect(foreign.statusCode).toBe(404);
+      const anonymous = await anonymousCall(
+        app,
+        "GET",
+        `/api/projects/${project.id}/search?q=chapter`,
+      );
+      expect(anonymous.statusCode).toBe(401);
 
       const unknown = await queryDocuments(
         app,

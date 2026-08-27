@@ -80,25 +80,6 @@ describe("legacy import service", () => {
     expect(services.projects.listProjects(owner)).toHaveLength(1);
   });
 
-  it("scopes idempotency per principal: owner and guest get distinct projects", async () => {
-    const { auth, services } = await buildServices();
-    const owner = await ownerPrincipal(auth);
-    const guest = auth.createGuestSession().principal;
-    const source = legacySource();
-
-    const ownerProject = services.imports.importLegacyWorkspace(owner, source);
-    const guestProject = services.imports.importLegacyWorkspace(guest, source);
-
-    expect(guestProject.id).not.toBe(ownerProject.id);
-    // The stored hash is the raw, principal-independent source hash: both
-    // scopes keep the same value while the principal-scoped unique indices
-    // keep the rows distinct.
-    expect(guestProject.import_hash).toBe(ownerProject.import_hash);
-    expect(String(ownerProject.import_hash)).toMatch(/^[0-9a-f]{64}$/);
-    expect(services.projects.listProjects(owner)).toHaveLength(1);
-    expect(services.projects.listProjects(guest)).toHaveLength(1);
-  });
-
   it("titles chapters Chapter 1..N by filename order with no additional documents", async () => {
     const { auth, services } = await buildServices();
     const owner = await ownerPrincipal(auth);

@@ -51,7 +51,7 @@ describe("database lifecycle at the app seam", () => {
       expect(db).toBeDefined();
       await db?.db.insert(sessions).values({
         id: "session-1",
-        kind: "guest",
+        kind: "owner",
         owner_id: null,
         token_hash: "b".repeat(64),
         csrf_token: null,

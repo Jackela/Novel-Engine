@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { BookOpen, Clock3, LogOut, Plus } from 'lucide-react';
+import { BookOpen, LogOut, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '@/app/api';
-import type { Project, Session } from '@/app/types/studio';
+import type { Project } from '@/app/types/studio';
 
 export function ProjectLibraryPage() {
   const navigate = useNavigate();
-  const [session, setSession] = useState<Session | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -15,8 +14,7 @@ export function ProjectLibraryPage() {
 
   const load = useCallback(async () => {
     try {
-      const [nextSession, response] = await Promise.all([api.session(), api.projects()]);
-      setSession(nextSession);
+      const [, response] = await Promise.all([api.session(), api.projects()]);
       setProjects(response.projects);
     } catch {
       navigate('/', { replace: true });
@@ -55,13 +53,6 @@ export function ProjectLibraryPage() {
           <BookOpen aria-hidden="true" /> Novel Engine
         </div>
         <div className="library__header-actions">
-          {session?.kind === 'guest' ? (
-            <span className="session-expiry">
-              <Clock3 aria-hidden="true" />
-              Guest expires{' '}
-              {session.expires_at ? new Date(session.expires_at).toLocaleString() : ''}
-            </span>
-          ) : null}
           <button
             aria-label="Sign out"
             className="icon-command"

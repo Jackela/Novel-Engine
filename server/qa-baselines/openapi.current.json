@@ -2747,50 +2747,7 @@
                     },
                     "kind": {
                       "enum": [
-                        "owner",
-                        "guest"
-                      ],
-                      "type": "string"
-                    },
-                    "owner_id": {
-                      "nullable": true,
-                      "type": "string"
-                    },
-                    "session_id": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "session_id",
-                    "kind",
-                    "owner_id",
-                    "expires_at"
-                  ],
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/api/session/guest": {
-      "post": {
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "expires_at": {
-                      "nullable": true,
-                      "type": "string"
-                    },
-                    "kind": {
-                      "enum": [
-                        "owner",
-                        "guest"
+                        "owner"
                       ],
                       "type": "string"
                     },
@@ -2854,8 +2811,7 @@
                     },
                     "kind": {
                       "enum": [
-                        "owner",
-                        "guest"
+                        "owner"
                       ],
                       "type": "string"
                     },

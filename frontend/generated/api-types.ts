@@ -1424,7 +1424,7 @@ export interface paths {
                         "application/json": {
                             expires_at: string | null;
                             /** @enum {string} */
-                            kind: "owner" | "guest";
+                            kind: "owner";
                             owner_id: string | null;
                             session_id: string;
                         };
@@ -1452,47 +1452,6 @@ export interface paths {
                 };
             };
         };
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/session/guest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Default Response */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            expires_at: string | null;
-                            /** @enum {string} */
-                            kind: "owner" | "guest";
-                            owner_id: string | null;
-                            session_id: string;
-                        };
-                    };
-                };
-            };
-        };
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1532,7 +1491,7 @@ export interface paths {
                         "application/json": {
                             expires_at: string | null;
                             /** @enum {string} */
-                            kind: "owner" | "guest";
+                            kind: "owner";
                             owner_id: string | null;
                             session_id: string;
                         };

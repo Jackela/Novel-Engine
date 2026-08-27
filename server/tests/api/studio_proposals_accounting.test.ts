@@ -8,10 +8,10 @@ import { jobs, usageEvents } from "../../src/shared/infrastructure/db/schema.js"
 import { fixtureApiKey } from "../credential_fixtures.js";
 import { capturingFactory, propose, validProposalProse } from "./proposal_test_helpers.js";
 import {
+  anonymousCall,
   buildStudioApp,
   call,
   getProject,
-  guestJar,
   listRevisions,
   ownerJar,
   seedProject,
@@ -237,14 +237,12 @@ describe("proposal accounting and scoping", () => {
       const created = await propose(app, jar, project.id, document.id, { operation: "continue" });
       const job = created.json();
 
-      const guest = await guestJar(app);
-      const foreign = await call(
+      const anonymous = await anonymousCall(
         app,
-        guest,
         "POST",
         `/api/projects/${project.id}/ai-proposals/${job.id}/accept`,
       );
-      expect(foreign.statusCode).toBe(404);
+      expect(anonymous.statusCode).toBe(401);
     } finally {
       await app.close();
     }

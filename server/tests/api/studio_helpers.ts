@@ -65,13 +65,6 @@ export async function ownerJar(app: FastifyInstance): Promise<CookieJar> {
   return cookieJar(login);
 }
 
-/** Create a guest sandbox session, returning its cookie jar. */
-export async function guestJar(app: FastifyInstance): Promise<CookieJar> {
-  const response = await app.inject({ method: "POST", url: "/api/session/guest" });
-  expect(response.statusCode).toBe(201);
-  return cookieJar(response);
-}
-
 /** Session cookie plus the matching CSRF header (double-submit pair). */
 export function authHeaders(jar: CookieJar): Record<string, string> {
   const csrf = jar.get("novel_engine_csrf");

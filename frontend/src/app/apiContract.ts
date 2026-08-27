@@ -19,7 +19,7 @@ class ApiContractError extends Error {
 type JsonRecord = Record<string, unknown>;
 
 const documentKinds = ['chapter', 'outline', 'character', 'world', 'note'] as const;
-const sessionKinds = ['owner', 'guest'] as const;
+const sessionKinds = ['owner'] as const;
 
 function fail(label: string): never {
   throw new ApiContractError(label);

@@ -161,7 +161,6 @@ export const api = {
     postJson('/api/setup', { username, password }, parseOwnerSetup),
   login: (username: string, password: string) =>
     postJson('/api/session/login', { username, password }, parseSession),
-  guest: () => request('/api/session/guest', { method: 'POST' }, parseSession),
   session: () => request('/api/session', undefined, parseSession),
   logout: () => request('/api/session', { method: 'DELETE' }, parseVoid),
   providers: () => request('/api/providers', undefined, parseProviders),

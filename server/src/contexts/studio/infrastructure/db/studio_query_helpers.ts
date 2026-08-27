@@ -23,12 +23,7 @@ export function isUniqueViolation(error: unknown): boolean {
 }
 
 export function scopeCondition(scope: ProjectScope) {
-  if (scope.ownerId !== null) {
-    return eq(projects.ownerId, scope.ownerId);
-  }
-  // Guest scope always carries its session id; the assertion documents the
-  // principal-derived invariant rather than widening the column comparison.
-  return eq(projects.guestSessionId, scope.guestSessionId as string);
+  return eq(projects.ownerId, scope.ownerId);
 }
 
 /** Fetch a project scoped to the principal, or raise not-found. */

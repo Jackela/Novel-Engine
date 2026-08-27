@@ -7,7 +7,6 @@ import {
   buildStudioApp,
   call,
   draftProposal,
-  guestJar,
   type JobPayload,
   monotonicClock,
   ownerJar,
@@ -132,9 +131,13 @@ describe("jobs surface", () => {
       });
       expect(anonymous.statusCode).toBe(401);
 
-      const guest = await guestJar(app);
-      const foreign = await call(app, guest, "GET", `/api/projects/${project.id}/jobs`);
-      expect(foreign.statusCode, foreign.body).toBe(404);
+      const unknown = await call(
+        app,
+        owner,
+        "GET",
+        "/api/projects/00000000-0000-0000-0000-000000000000/jobs",
+      );
+      expect(unknown.statusCode, unknown.body).toBe(404);
     } finally {
       await app.close();
     }

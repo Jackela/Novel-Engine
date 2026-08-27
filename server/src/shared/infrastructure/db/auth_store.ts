@@ -25,7 +25,7 @@ function toOwnerRecord(row: OwnerRow): OwnerRecord {
 function toSessionRecord(row: SessionRow): SessionRecord {
   return {
     id: row.id,
-    kind: row.kind === "owner" ? "owner" : "guest",
+    kind: "owner",
     ownerId: row.owner_id,
     tokenHash: row.token_hash,
     csrfToken: row.csrf_token,

@@ -17,7 +17,6 @@ import {
 } from "./auth_helpers.js";
 
 const OWNER_MAX_AGE = 60 * 60 * 24 * 30;
-const GUEST_MAX_AGE = 60 * 60 * 24;
 
 function cookieEntry(response: InjectedResponse, name: string): string {
   const entry = setCookieHeaders(response).find((header) => header.startsWith(`${name}=`));
@@ -81,7 +80,7 @@ describe("owner and guest sessions", () => {
       expect(body.kind).toBe("owner");
       expect(body.session_id).toEqual(expect.any(String));
       expect(body.owner_id).toBe(ownerId);
-      expect(body.expires_at).toBeNull();
+      expect(body.expires_at).toEqual(expect.any(String));
 
       const sessionCookie = cookieEntry(response, "novel_engine_session");
       expect(sessionCookie).toContain("HttpOnly");
@@ -99,25 +98,21 @@ describe("owner and guest sessions", () => {
     }
   });
 
-  it("creates a 24-hour guest session without credentials", async () => {
+  it("issues owner sessions with the thirty-day expiry", async () => {
     const start = new Date("2026-08-22T08:00:00.000Z");
     const { app } = await buildAuthApp({ clock: () => start });
     try {
-      const response = await app.inject({ method: "POST", url: "/api/session/guest" });
-      expect(response.statusCode).toBe(201);
+      await setupOwner(app);
+      const response = await loginOwner(app);
+      expect(response.statusCode).toBe(200);
       const body = response.json();
-      expect(body.kind).toBe("guest");
-      expect(body.owner_id).toBeNull();
-      expect(body.session_id).toEqual(expect.any(String));
-      const expectedExpiry = new Date(start.getTime() + GUEST_MAX_AGE * 1000).toISOString();
+      const expectedExpiry = new Date(start.getTime() + OWNER_MAX_AGE * 1000).toISOString();
       expect(body.expires_at).toBe(expectedExpiry);
 
       const sessionCookie = cookieEntry(response, "novel_engine_session");
-      expect(sessionCookie).toContain("HttpOnly");
-      expect(sessionCookie).toContain(`Max-Age=${GUEST_MAX_AGE}`);
+      expect(sessionCookie).toContain(`Max-Age=${OWNER_MAX_AGE}`);
       const csrfCookie = cookieEntry(response, "novel_engine_csrf");
-      expect(csrfCookie).not.toContain("HttpOnly");
-      expect(csrfCookie).toContain(`Max-Age=${GUEST_MAX_AGE}`);
+      expect(csrfCookie).toContain(`Max-Age=${OWNER_MAX_AGE}`);
     } finally {
       await app.close();
     }
@@ -145,16 +140,17 @@ describe("owner and guest sessions", () => {
     }
   });
 
-  it("lazily deletes an expired guest session on next use", async () => {
+  it("lazily deletes an expired owner session on next use", async () => {
     const start = new Date("2026-08-22T08:00:00.000Z");
     let current = start;
     const { app } = await buildAuthApp({ clock: () => current });
     try {
-      const guest = await app.inject({ method: "POST", url: "/api/session/guest" });
-      const jar = cookieJar(guest);
+      await setupOwner(app);
+      const login = await loginOwner(app);
+      const jar = cookieJar(login);
       expect(await sessionRows(app)).toHaveLength(1);
 
-      current = new Date(start.getTime() + (GUEST_MAX_AGE + 60) * 1000);
+      current = new Date(start.getTime() + (OWNER_MAX_AGE + 60) * 1000);
       const response = await app.inject({
         method: "GET",
         url: "/api/session",
@@ -268,9 +264,8 @@ describe("owner and guest sessions", () => {
     const issued = await buildApp({ logger: false, dataDirectory: directory });
     let jar: Map<string, string>;
     try {
-      const guest = await issued.inject({ method: "POST", url: "/api/session/guest" });
-      expect(guest.statusCode).toBe(201);
-      jar = cookieJar(guest);
+      await setupOwner(issued);
+      jar = cookieJar(await loginOwner(issued));
     } finally {
       await issued.close();
     }

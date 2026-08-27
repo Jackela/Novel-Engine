@@ -21,7 +21,7 @@ type AIProposalBody = NonNullable<
 export type DocumentKind = DocumentCreateBody['kind'];
 export type ExportFormat = ExportRequestBody['format'];
 export type StudioJobOperation = AIProposalBody['operation'] | 'review' | 'export';
-export type SessionKind = 'owner' | 'guest';
+export type SessionKind = 'owner';
 export type SaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error';
 export type StudioJobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'interrupted';
 

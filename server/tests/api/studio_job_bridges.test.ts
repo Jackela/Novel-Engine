@@ -12,9 +12,9 @@ import {
   studioDatabase,
 } from "./job_test_helpers.js";
 import {
+  anonymousCall,
   buildStudioApp,
   call,
-  guestJar,
   type JobPayload,
   monotonicClock,
   ownerJar,
@@ -61,11 +61,10 @@ describe("terminal job bridges", () => {
         job.result.export_id,
       );
 
-      const guest = await guestJar(app);
-      const foreign = await call(app, guest, "POST", `/api/projects/${projectId}/exports`, {
+      const anonymous = await anonymousCall(app, "POST", `/api/projects/${projectId}/exports`, {
         format: "markdown",
       });
-      expect(foreign.statusCode, foreign.body).toBe(404);
+      expect(anonymous.statusCode, anonymous.body).toBe(401);
     } finally {
       await app.close();
     }

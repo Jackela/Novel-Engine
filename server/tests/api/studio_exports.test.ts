@@ -16,9 +16,9 @@ import { FilesystemExportArtifactGateway } from "../../src/contexts/studio/infra
 import { ExportStorePart } from "../../src/contexts/studio/infrastructure/export_store_part.js";
 import type { Principal } from "../../src/shared/application/ports/auth.js";
 import {
+  anonymousCall,
   buildStudioApp,
   call,
-  guestJar,
   monotonicClock,
   ownerJar,
   seedProject,
@@ -45,7 +45,7 @@ const extensions: Record<ExportArtifactFormat, string> = {
 function principalFromSession(payload: SessionPayload): Principal {
   return {
     sessionId: payload.session_id,
-    kind: payload.kind,
+    kind: "owner",
     ownerId: payload.owner_id,
     expiresAt: payload.expires_at === null ? null : new Date(payload.expires_at),
   };
@@ -146,13 +146,20 @@ describe("export artifact catalog and delivery", () => {
       expect(anonymous.statusCode).toBe(401);
       expect(anonymous.json().error.code).toBe("UNAUTHORIZED");
 
-      const guest = await guestJar(app);
-      const foreignCatalog = await call(app, guest, "GET", `/api/projects/${project.id}/exports`);
-      expect(foreignCatalog.statusCode).toBe(404);
-      expect(foreignCatalog.json().error.code).toBe("NOT_FOUND");
-      const foreignDownload = await call(app, guest, "GET", downloadUrl(project.id, markdown.id));
-      expect(foreignDownload.statusCode).toBe(404);
-      expect(foreignDownload.json().error.code).toBe("NOT_FOUND");
+      const anonymousCatalog = await anonymousCall(
+        app,
+        "GET",
+        `/api/projects/${project.id}/exports`,
+      );
+      expect(anonymousCatalog.statusCode).toBe(401);
+      expect(anonymousCatalog.json().error.code).toBe("UNAUTHORIZED");
+      const anonymousDownload = await anonymousCall(
+        app,
+        "GET",
+        downloadUrl(project.id, markdown.id),
+      );
+      expect(anonymousDownload.statusCode).toBe(401);
+      expect(anonymousDownload.json().error.code).toBe("UNAUTHORIZED");
 
       const tampered = markdown;
       const sentinel = join(dirname(directory), `${project.id}-outside-root.txt`);

@@ -38,30 +38,41 @@ interface EnvelopeBody {
 test.describe.serial('#276 content acceptance', () => {
   test.setTimeout(120_000);
 
-  let guestContext: BrowserContext;
+  // Same fragment-assembled credential as studio-ts.spec.ts: that suite owns
+  // the one-time owner setup on the shared store, so this suite waits for the
+  // login form and signs in as the owner.
+  const OWNER_PASSWORD = ['ts-e2e-owner', 'password-1234'].join('-');
+
+  let studioContext: BrowserContext;
   let studio: Page;
   let csrfToken: string;
 
   test.beforeAll(async ({ browser }) => {
-    guestContext = await browser.newContext();
-    studio = await guestContext.newPage();
-    await studio.goto('/');
-    await studio.getByRole('button', { name: /24-hour guest studio/i }).click();
+    studioContext = await browser.newContext();
+    studio = await studioContext.newPage();
+    // The entry page probes setup once on mount, so poll by reloading until
+    // the sibling suite's one-time owner setup has flipped the heading.
+    await expect(async () => {
+      await studio.goto('/');
+      await expect(studio.getByRole('heading', { name: 'Open your writing studio' })).toBeVisible();
+    }).toPass({ timeout: 60_000 });
+    await studio.getByLabel('Password').fill(OWNER_PASSWORD);
+    await studio.getByRole('button', { name: 'Sign in' }).click();
     await expect(studio).toHaveURL(/\/projects$/);
 
     // Cookie contract restated for this suite's session: the double-submit
     // pair is novel_engine_* and no legacy cookie survives.
-    const cookieNames = (await guestContext.cookies()).map((cookie) => cookie.name);
+    const cookieNames = (await studioContext.cookies()).map((cookie) => cookie.name);
     expect(cookieNames).toContain('novel_engine_session');
     expect(cookieNames).not.toContain('novel_studio_csrf');
     csrfToken =
-      (await guestContext.cookies()).find((cookie) => cookie.name === 'novel_engine_csrf')?.value ??
-      '';
+      (await studioContext.cookies()).find((cookie) => cookie.name === 'novel_engine_csrf')
+        ?.value ?? '';
     expect(csrfToken).not.toBe('');
   });
 
   test.afterAll(async () => {
-    await guestContext.close();
+    await studioContext.close();
   });
 
   test('accepted proposal leaves narrative prose in the editor and the saved document', async () => {

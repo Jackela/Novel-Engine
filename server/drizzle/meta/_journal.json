@@ -50,6 +50,13 @@
       "when": 1787622165071,
       "tag": "0006_slim_inhumans",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1787801401064,
+      "tag": "0007_naive_morg",
+      "breakpoints": true
     }
   ]
 }

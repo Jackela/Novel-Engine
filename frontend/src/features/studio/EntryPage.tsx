@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { BookOpen, LogIn, Sparkles } from 'lucide-react';
+import { BookOpen, LogIn } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { api } from '@/app/api';
@@ -59,19 +59,6 @@ export function EntryPage() {
     }
   };
 
-  const guest = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await api.guest();
-      navigate('/projects');
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to open guest studio.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <main className="entry">
       <section className="entry__panel">
@@ -114,13 +101,6 @@ export function EntryPage() {
             {busy ? 'Opening...' : setup?.owner_configured ? 'Sign in' : 'Create owner'}
           </button>
         </form>
-        <div className="entry__divider">
-          <span>or</span>
-        </div>
-        <button className="command" disabled={busy} onClick={() => void guest()} type="button">
-          <Sparkles aria-hidden="true" />
-          Try a 24-hour guest studio
-        </button>
         <footer>Novel Engine {__APP_VERSION__}</footer>
       </section>
     </main>

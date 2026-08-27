@@ -26,17 +26,8 @@ export function useStudioPageModel(
 ): { project: StudioViewProps['project'] | null; viewProps: StudioViewProps | null } {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [restoringRevisionId, setRestoringRevisionId] = useState<string | null>(null);
-  const {
-    project,
-    setProject,
-    session,
-    reviews,
-    setReviews,
-    exports,
-    setExports,
-    error,
-    setError,
-  } = useStudioProject(projectId);
+  const { project, setProject, reviews, setReviews, exports, setExports, error, setError } =
+    useStudioProject(projectId);
   const activeDocument = useActiveDocument(project, section, activeId);
   const visibleActiveId = activeDocument?.id ?? activeId;
   const {
@@ -150,7 +141,6 @@ export function useStudioPageModel(
     project,
     viewProps: {
       project,
-      session,
       onBack: () => navigate('/projects'),
       navigator: buildStudioNavigatorProps(
         {

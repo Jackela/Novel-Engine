@@ -7,9 +7,8 @@ export const SESSION_COOKIE = "novel_engine_session";
 export const CSRF_COOKIE = "novel_engine_csrf";
 export const CSRF_HEADER = "x-csrf-token";
 
-/** Owner sessions last 30 days; guest sessions 24 hours. */
+/** Owner sessions last 30 days — mirrored by the server-side lazy expiry. */
 export const OWNER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-export const GUEST_COOKIE_MAX_AGE = 60 * 60 * 24;
 
 export function isSecureEnvironment(environment: string): boolean {
   return environment === "production" || environment === "staging";
@@ -19,10 +18,9 @@ export function issueSessionCookies(
   reply: FastifyReply,
   token: string,
   csrfToken: string,
-  kind: SessionKind,
   environment: string,
 ): void {
-  const maxAge = kind === "owner" ? OWNER_COOKIE_MAX_AGE : GUEST_COOKIE_MAX_AGE;
+  const maxAge = OWNER_COOKIE_MAX_AGE;
   const secure = isSecureEnvironment(environment);
   reply.setCookie(SESSION_COOKIE, token, {
     path: "/",

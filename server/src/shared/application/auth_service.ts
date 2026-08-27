@@ -4,7 +4,8 @@ import { compare, hash } from "bcryptjs";
 import { InvalidOperationError } from "../domain/exceptions.js";
 import type { AuthStore, Principal, SessionKind } from "./ports/auth.js";
 
-const GUEST_TTL_MS = 24 * 60 * 60 * 1000;
+/** Owner sessions last 30 days (the lazy-expiry contract validates against it). */
+const OWNER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 /** Cost factor matching the Python gold standard's gensalt() default. */
 const BCRYPT_ROUNDS = 12;
 
@@ -86,24 +87,15 @@ export class AuthService {
     if (owner === null || utf8ByteLength(password) > 72 || !passwordValid) {
       throw new InvalidOperationError("Invalid username or password.");
     }
-    return this.createSession("owner", owner.id, null);
+    return this.createSession(owner.id, new Date(this.now().getTime() + OWNER_TTL_MS));
   }
 
-  createGuestSession(): IssuedSession {
-    const now = this.now();
-    return this.createSession("guest", null, new Date(now.getTime() + GUEST_TTL_MS));
-  }
-
-  private createSession(
-    kind: SessionKind,
-    ownerId: string | null,
-    expiresAt: Date | null,
-  ): IssuedSession {
+  private createSession(ownerId: string, expiresAt: Date): IssuedSession {
     const token = randomBytes(36).toString("base64url");
     const csrfToken = randomBytes(32).toString("base64url");
     const now = this.now();
     const record = this.store.createSession({
-      kind,
+      kind: "owner",
       ownerId,
       tokenHash: this.tokenHash(token),
       csrfToken,
@@ -114,7 +106,7 @@ export class AuthService {
     return {
       token,
       csrfToken,
-      principal: { sessionId: record.id, kind, ownerId, expiresAt },
+      principal: { sessionId: record.id, kind: "owner", ownerId, expiresAt },
     };
   }
 
@@ -133,7 +125,12 @@ export class AuthService {
       return null;
     }
     const record = this.store.getSessionByTokenHash(this.tokenHash(token));
-    if (record === null) {
+    if (record === null || record.ownerId === null) {
+      // A session without an owner is a pre-#311 leftover (guest rows): it can
+      // no longer authenticate, so it is deleted on sight.
+      if (record !== null) {
+        this.store.deleteSession(record.id);
+      }
       return null;
     }
     const now = this.now();

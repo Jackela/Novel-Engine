@@ -9,8 +9,7 @@ import type {
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
   id: string;
-  ownerId: string | null;
-  guestSessionId: string | null;
+  ownerId: string;
   title: string;
   description: string;
   settingsJson: string;
@@ -115,20 +114,19 @@ export interface RecordSnapshotReviewInput {
 }
 
 /**
- * Principal scoping of every project query: owner data by owner id, guest
- * data by session id — exactly one of the two is set.
+ * Owner scoping of every project query: the single principal since #311
+ * retired the guest.
  */
 export interface ProjectScope {
-  ownerId: string | null;
-  guestSessionId: string | null;
+  ownerId: string;
 }
 
-/** Derive the store scope from the authenticated principal. */
+/** Derive the store scope from the authenticated owner principal. */
 export function scopeForPrincipal(principal: Principal): ProjectScope {
-  if (principal.kind === "owner" && principal.ownerId !== null) {
-    return { ownerId: principal.ownerId, guestSessionId: null };
+  if (principal.ownerId === null) {
+    throw new Error("A principal without an owner cannot scope studio data.");
   }
-  return { ownerId: null, guestSessionId: principal.sessionId };
+  return { ownerId: principal.ownerId };
 }
 
 export interface AddProjectInput {
