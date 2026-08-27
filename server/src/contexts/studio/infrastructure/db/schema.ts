@@ -69,6 +69,11 @@ export const documents = sqliteTable(
     // document-level state — it must survive the metadata-replacing revision
     // writes — and resolves only while an identically titled beat still exists.
     beatRef: text("beat_ref"),
+    // Lorebook aliases (#315): a character/world document's extra prompt keys
+    // as a JSON string array. Document-level state like the beat reference:
+    // ordinary saves replace revision metadata wholesale, so prompt keys live
+    // outside revisions to survive them.
+    loreAliasesJson: text("lore_aliases_json").notNull().default("[]"),
     currentRevisionId: text("current_revision_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),

@@ -49,6 +49,9 @@ export const PRIOR_STORY_BEGIN = "[BEGIN PRIOR STORY SUMMARY]";
 export const PRIOR_STORY_END = "[END PRIOR STORY SUMMARY]";
 export const RECENT_TEXT_BEGIN = "[BEGIN RECENT CHAPTER TAIL]";
 export const RECENT_TEXT_END = "[END RECENT CHAPTER TAIL]";
+/** Keyword-triggered lorebook markers (#315, ADR-0004 layer 2). */
+export const LOREBOOK_BEGIN = "[BEGIN LOREBOOK]";
+export const LOREBOOK_END = "[END LOREBOOK]";
 export function sanitizeInstruction(instruction: string): string {
   let cleaned = instruction.trim();
   for (const pattern of PROMPT_INJECTION_PATTERNS) {

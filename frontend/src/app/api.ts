@@ -1,5 +1,6 @@
 import { appConfig } from '@/app/config';
 import {
+  parseAliases,
   parseDocuments,
   parseOwnerSetup,
   parseProject,
@@ -199,6 +200,14 @@ export const api = {
       `/api/projects/${projectId}/documents/${documentId}/volume`,
       { volume_id: volumeId },
       parseStudioDocument,
+    ),
+  documentAliases: (projectId: string, documentId: string) =>
+    request(`/api/projects/${projectId}/documents/${documentId}/aliases`, undefined, parseAliases),
+  saveDocumentAliases: (projectId: string, documentId: string, aliases: string[]) =>
+    putJson(
+      `/api/projects/${projectId}/documents/${documentId}/aliases`,
+      { aliases },
+      parseAliases,
     ),
   saveDocument: (
     projectId: string,

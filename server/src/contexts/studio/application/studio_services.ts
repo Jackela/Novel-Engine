@@ -4,6 +4,7 @@ import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
 import { JobHistoryService } from "./job_history_service.js";
+import { LoreAliasService } from "./lore_alias_service.js";
 import { InFlightOperationGuard } from "./operation_in_flight.js";
 import type { ExportStore } from "./ports/export_store.js";
 import type { LegacyWorkspaceReader } from "./ports/legacy_workspace_reader.js";
@@ -20,6 +21,7 @@ export interface StudioServices {
   documents: DocumentService;
   volumes: VolumeService;
   beats: BeatAssociationService;
+  lore: LoreAliasService;
   revisions: RevisionService;
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
@@ -69,6 +71,7 @@ export function createStudioServices(
     documents,
     volumes: new VolumeService(store, now),
     beats: new BeatAssociationService(store, now),
+    lore: new LoreAliasService(store, now),
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(store, documents, options.providerFactory, inFlight, now),
     reviewAssessments,

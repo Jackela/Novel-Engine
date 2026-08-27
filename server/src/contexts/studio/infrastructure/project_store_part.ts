@@ -99,6 +99,7 @@ export class ProjectStorePart {
           position: 1,
           volumeId: defaultVolume.id,
           beatRef: null,
+          loreAliasesJson: "[]",
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,

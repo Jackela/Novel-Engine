@@ -10,6 +10,7 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import type { DocumentService } from "./document_service.js";
+import { collectLoreEntries } from "./lorebook.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, jobPayload, safeLoadJson, wordCount } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
@@ -159,6 +160,7 @@ export class AiProposalService {
           instruction: input.instruction,
           source: collectResidentContextSource(this.store, scope, projectId, document),
           manuscriptMarkdown: revision.contentMarkdown,
+          loreEntries: collectLoreEntries(this.store, scope, projectId),
         }),
         responseSchema: { chapter_markdown: { type: "string" } },
         metadata: {

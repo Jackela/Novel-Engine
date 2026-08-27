@@ -6,6 +6,7 @@ import type {
   JobRecord,
   MarkJobOutcomeInput,
 } from "./job_records.js";
+import type { StudioLoreStore } from "./lore_store.js";
 import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
@@ -30,6 +31,11 @@ export interface DocumentRecord {
   volumeId: string | null;
   /** The stored outline-beat reference; readers resolve it, dangling → unlinked. */
   beatRef: string | null;
+  /**
+   * Stored lore-alias JSON (#315, a `string[]`): document-level prompt keys
+   * that must survive metadata-replacing revision writes.
+   */
+  loreAliasesJson: string;
   currentRevisionId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -206,10 +212,10 @@ export interface AdvanceDocumentInput {
  * Persistence port of the authoring core. The application layer orchestrates
  * project, document, and revision behavior through this port; the Drizzle
  * store implements it transactionally in infrastructure. The volume surface
- * (ADR-0005) extends it from its own module, as does the beat association
- * (#313).
+ * (ADR-0005) extends it from its own module, as do the beat association
+ * (#313) and the lorebook aliases (#315).
  */
-export interface StudioStore extends StudioVolumeStore, StudioBeatStore {
+export interface StudioStore extends StudioVolumeStore, StudioBeatStore, StudioLoreStore {
   addProject(
     scope: ProjectScope,
     input: AddProjectInput,

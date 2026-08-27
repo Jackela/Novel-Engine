@@ -132,6 +132,16 @@ function parseDocument(value: unknown, label = 'document'): StudioDocument {
   };
 }
 
+/** The lore-alias envelope (#315): one document's extra prompt keys. */
+export function parseAliases(value: unknown): { aliases: string[] } {
+  const item = objectValue(value, 'aliases response');
+  return {
+    aliases: arrayField(item, 'aliases', 'aliases response', (entry, index) =>
+      stringValue(entry, `aliases[${index}]`),
+    ),
+  };
+}
+
 export function parseVolume(value: unknown, label = 'volume'): Volume {
   const item = objectValue(value, label);
   return {

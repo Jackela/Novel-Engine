@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `lore_aliases_json` text DEFAULT '[]' NOT NULL;
