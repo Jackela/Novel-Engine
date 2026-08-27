@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { Principal } from "../../../../shared/application/ports/auth.js";
 import { principalGuard } from "../../../../shared/interface/http/auth_guard.js";
-import { jobListResponseSchema, jobResponseSchema } from "./job_schemas.js";
+import { jobListResponseSchema, jobResponseSchema, usageResponseSchema } from "./job_schemas.js";
 import { requireServices, type StudioRoutesOptions } from "./project_routes.js";
 import { withStudioErrors } from "./studio_error_mapping.js";
 import { operationInFlightSchema } from "./studio_schemas.js";
@@ -59,6 +59,32 @@ export const jobRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, op
           reportCleanupFailure,
         ),
       );
+    },
+  );
+
+  app.get(
+    "/api/projects/:projectId/usage",
+    { preHandler: [guard], schema: { response: { 200: usageResponseSchema } } },
+    async (request) => {
+      const { projectId } = request.params as { projectId: string };
+      return withStudioErrors(() => {
+        const usage = requireServices(options).jobHistory.aggregateProjectUsage(
+          principal(request),
+          projectId,
+        );
+        return {
+          project_id: usage.projectId,
+          request_count: usage.requestCount,
+          prompt_tokens: usage.promptTokens,
+          completion_tokens: usage.completionTokens,
+          per_model: usage.perModel.map((entry) => ({
+            model: entry.model,
+            requests: entry.requests,
+            prompt_tokens: entry.promptTokens,
+            completion_tokens: entry.completionTokens,
+          })),
+        };
+      });
     },
   );
 };

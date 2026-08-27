@@ -5,7 +5,7 @@ import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_exec
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
 import { dumpJson, exportJobResultJson, jobPayload, reviewJobResultJson } from "./payloads.js";
 import type { ExportArtifactFormat, ExportArtifactRecord } from "./ports/export_store.js";
-import type { StudioStore } from "./ports/studio_store.js";
+import type { ProjectUsageAggregate, StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import type { ReviewService } from "./review_service.js";
 
@@ -55,6 +55,11 @@ export class JobHistoryService {
     return this.store
       .collectProjectJobs(scopeForPrincipal(principal), projectId)
       .map((job) => jobPayload(job));
+  }
+
+  /** The usage-ledger aggregation for the project surface (#317). */
+  aggregateProjectUsage(principal: Principal, projectId: string): ProjectUsageAggregate {
+    return this.store.aggregateProjectUsage(scopeForPrincipal(principal), projectId);
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */
