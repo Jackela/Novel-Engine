@@ -47,6 +47,32 @@ _Avoid_: suggestion, AI edit
 **Review**:
 The author's accept/reject pass over proposals, bound to a snapshot.
 
+**Review dimension**:
+A closed category of editorial finding the LLM review may report, such as
+pacing or continuity, so the Studio can render findings stably.
+
+**Beat**:
+The outline unit a chapter is generated against; each chapter links to the
+beat it fulfills.
+_Avoid_: scene, plot point
+
+**Volume**:
+A container that groups chapters in reading order — the level between the
+project and its chapters.
+_Avoid_: part, arc, act
+
+**Lore entry**:
+A keyword-triggered context unit derived from a character or world document;
+injected into generation prompts when its keys appear in recent manuscript
+text.
+_Avoid_: world info, memory, wiki
+
+**Resident context**:
+The context layer always injected into generation prompts: the outline
+position, a rolling summary of prior chapters, and the tail of the most
+recent chapter.
+_Avoid_: system context, background
+
 **Job**:
 A durable operation with explicit state, executed synchronously inside the
 request and recorded with its events, retryable.
@@ -62,11 +88,8 @@ The one-time, read-only ingestion of a legacy file workspace.
 **Owner**:
 The single local author account; owns every project.
 
-**Guest**:
-A temporary (24-hour) principal, isolated from Owner data.
-
 **Principal**:
-The authenticated actor of a request — Owner or Guest.
+The authenticated actor of a request — the Owner.
 
 **Session**:
-An authenticated Owner or Guest session, identified by an HMAC-derived token.
+An authenticated Owner session, identified by an HMAC-derived token.
