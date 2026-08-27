@@ -79,6 +79,7 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
     title: document.title,
     position: document.position,
     volume_id: document.volumeId,
+    beat_ref: document.beatRef,
     current_revision_id: revision.id,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),

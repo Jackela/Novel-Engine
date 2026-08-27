@@ -1,4 +1,5 @@
 import type { TextGenerationProviderFactory } from "../../../contexts/ai/application/ports/text_generation.js";
+import { BeatAssociationService } from "./beat_association_service.js";
 import { DocumentService } from "./document_service.js";
 import { type ExportArtifactGateway, SnapshotArtifactService } from "./export_artifact_service.js";
 import { ImportService } from "./import_service.js";
@@ -18,6 +19,7 @@ export interface StudioServices {
   projects: ProjectService;
   documents: DocumentService;
   volumes: VolumeService;
+  beats: BeatAssociationService;
   revisions: RevisionService;
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
@@ -66,6 +68,7 @@ export function createStudioServices(
     projects: new ProjectService(store, now),
     documents,
     volumes: new VolumeService(store, now),
+    beats: new BeatAssociationService(store, now),
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(store, documents, options.providerFactory, inFlight, now),
     reviewAssessments,

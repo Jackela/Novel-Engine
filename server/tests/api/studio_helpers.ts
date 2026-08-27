@@ -120,6 +120,8 @@ export interface DocumentPayload {
   title: string;
   position: number;
   volume_id?: string | null;
+  /** The stored outline-beat reference (#313); resolved reads use GET /beat. */
+  beat_ref?: string | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;

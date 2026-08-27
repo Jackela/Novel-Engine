@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 
+import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type {
   AddDocumentInput,
@@ -99,6 +100,7 @@ export class DocumentStorePart {
           title: input.title,
           position: input.position,
           volumeId: input.volumeId,
+          beatRef: null,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,
@@ -178,6 +180,33 @@ export class DocumentStorePart {
       // The FTS table carries no FK; its row leaves in this same transaction.
       clearDocumentIndex(tx, document.id);
       tx.delete(documents).where(eq(documents.id, document.id)).run();
+    });
+  }
+
+  setBeatReference(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: { beatRef: string | null; now: Date },
+  ): DocumentWithCurrent {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      const document = scopedDocument(tx, scope, projectId, documentId);
+      if (document.kind !== "chapter") {
+        throw new InvalidOperationError("Only chapters associate with outline beats.");
+      }
+      tx.update(documents)
+        .set({ beatRef: input.beatRef, updatedAt: input.now })
+        .where(eq(documents.id, document.id))
+        .run();
+      tx.update(projects).set({ updatedAt: input.now }).where(eq(projects.id, project.id)).run();
+      const [updated] = documentsWithCurrent(tx, project.id).filter(
+        (candidate) => candidate.id === document.id,
+      );
+      if (updated === undefined) {
+        throw new NotFoundError("Document not found.");
+      }
+      return updated;
     });
   }
 

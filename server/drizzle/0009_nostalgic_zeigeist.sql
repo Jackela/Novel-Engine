@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `beat_ref` text;

@@ -83,6 +83,7 @@ export interface paths {
                                 created_at: string;
                                 description: string;
                                 documents?: ({
+                                    beat_ref?: string | null;
                                     content_markdown: string;
                                     created_at: string;
                                     current_revision_id: string;
@@ -158,6 +159,7 @@ export interface paths {
                             created_at: string;
                             description: string;
                             documents: ({
+                                beat_ref?: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -236,6 +238,7 @@ export interface paths {
                             created_at: string;
                             description: string;
                             documents: ({
+                                beat_ref?: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -418,6 +421,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            beat_ref?: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -496,6 +500,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             documents: ({
+                                beat_ref?: string | null;
                                 content_markdown: string;
                                 created_at: string;
                                 current_revision_id: string;
@@ -568,6 +573,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            beat_ref?: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -757,6 +763,82 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/documents/{documentId}/beat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            beat: {
+                                content: string;
+                                title: string;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        beat: string | null;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            beat: {
+                                content: string;
+                                title: string;
+                            } | null;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/documents/{documentId}/revisions": {
         parameters: {
             query?: never;
@@ -849,6 +931,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            beat_ref?: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;
@@ -930,6 +1013,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
+                            beat_ref?: string | null;
                             content_markdown: string;
                             created_at: string;
                             current_revision_id: string;

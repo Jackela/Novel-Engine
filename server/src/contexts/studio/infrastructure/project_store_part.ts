@@ -98,6 +98,7 @@ export class ProjectStorePart {
           title: input.seed.title,
           position: 1,
           volumeId: defaultVolume.id,
+          beatRef: null,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,

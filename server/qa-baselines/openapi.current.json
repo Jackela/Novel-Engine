@@ -122,6 +122,10 @@
                             "items": {
                               "additionalProperties": true,
                               "properties": {
+                                "beat_ref": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
                                 "content_markdown": {
                                   "type": "string"
                                 },
@@ -317,6 +321,10 @@
                       "items": {
                         "additionalProperties": true,
                         "properties": {
+                          "beat_ref": {
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "content_markdown": {
                             "type": "string"
                           },
@@ -509,6 +517,10 @@
                       "items": {
                         "additionalProperties": true,
                         "properties": {
+                          "beat_ref": {
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "content_markdown": {
                             "type": "string"
                           },
@@ -849,6 +861,10 @@
                 "schema": {
                   "additionalProperties": true,
                   "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "content_markdown": {
                       "type": "string"
                     },
@@ -1008,6 +1024,10 @@
                       "items": {
                         "additionalProperties": true,
                         "properties": {
+                          "beat_ref": {
+                            "nullable": true,
+                            "type": "string"
+                          },
                           "content_markdown": {
                             "type": "string"
                           },
@@ -1216,6 +1236,10 @@
                 "schema": {
                   "additionalProperties": true,
                   "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "content_markdown": {
                       "type": "string"
                     },
@@ -1568,6 +1592,139 @@
         }
       }
     },
+    "/api/projects/{projectId}/documents/{documentId}/beat": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "beat": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "content": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "content"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "beat"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      },
+      "put": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "documentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "beat": {
+                    "maxLength": 240,
+                    "nullable": true,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "beat"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "beat": {
+                      "additionalProperties": false,
+                      "nullable": true,
+                      "properties": {
+                        "content": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "content"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "beat"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/documents/{documentId}/revisions": {
       "get": {
         "parameters": [
@@ -1717,6 +1874,10 @@
                 "schema": {
                   "additionalProperties": true,
                   "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "content_markdown": {
                       "type": "string"
                     },
@@ -1891,6 +2052,10 @@
                 "schema": {
                   "additionalProperties": true,
                   "properties": {
+                    "beat_ref": {
+                      "nullable": true,
+                      "type": "string"
+                    },
                     "content_markdown": {
                       "type": "string"
                     },

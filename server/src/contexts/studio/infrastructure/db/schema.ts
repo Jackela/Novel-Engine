@@ -64,6 +64,11 @@ export const documents = sqliteTable(
     title: text("title").notNull(),
     position: integer("position").notNull().default(0),
     volumeId: text("volume_id").references(() => volumes.id, { onDelete: "cascade" }),
+    // Beat association (#313): a chapter may reference one beat of its
+    // project's outline document (the beat's heading title). The reference is
+    // document-level state — it must survive the metadata-replacing revision
+    // writes — and resolves only while an identically titled beat still exists.
+    beatRef: text("beat_ref"),
     currentRevisionId: text("current_revision_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
