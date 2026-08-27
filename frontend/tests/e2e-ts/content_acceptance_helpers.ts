@@ -1,10 +1,10 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 import { DatabaseSync } from 'node:sqlite';
 
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * #276 content-level acceptance helpers. Two SSOT rules drive this module:
@@ -217,4 +217,62 @@ function readStoredEntry(
     throw new Error(`ZIP entry ${name} uses unsupported compression method ${method}.`);
   }
   return inflateRawSync(data);
+}
+
+export interface ChapterDocument {
+  id: string;
+  kind: string;
+  title: string;
+  position: number;
+  current_revision_id: string;
+  content_markdown: string;
+  revision_source: string;
+}
+
+export async function createProject(page: Page, title: string): Promise<string> {
+  await page.goto('/');
+  await page.getByLabel('Title').fill(title);
+  await page.getByRole('button', { name: /create project/i }).click();
+  await expect(page).toHaveURL(/\/projects\/([^/]+)\/manuscript/);
+  return page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1] ?? '';
+}
+
+export async function typeChapter(page: Page, markdown: string): Promise<void> {
+  const editor = page.locator('.cm-content');
+  await editor.click();
+  // ControlOrMeta resolves to the platform's select-all chord: CodeMirror maps
+  // Mod-A to selectAll, so the typed chapter REPLACES the seed content (a
+  // plain Control+A on macOS only moves to the line start).
+  await page.keyboard.press('ControlOrMeta+a');
+  await page.keyboard.type(markdown);
+  await expect(page.locator('.studio-editor .save-state')).toHaveText(/saved/i, {
+    timeout: 15_000,
+  });
+}
+
+export async function studioChapters(page: Page, projectId: string): Promise<ChapterDocument[]> {
+  // The project payload embeds its documents (#246 dropped the list route).
+  const response = await page.request.get(`/api/projects/${projectId}`);
+  expect(response.status(), await response.text()).toBe(200);
+  const body = (await response.json()) as { documents: ChapterDocument[] };
+  return body.documents
+    .filter((document) => document.kind === 'chapter')
+    .sort((left, right) => left.position - right.position);
+}
+
+export async function exportThroughUi(
+  page: Page,
+  formatLabel: string,
+  filename: string,
+): Promise<Buffer> {
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: new RegExp(formatLabel, 'i') }).click(),
+  ]);
+  const downloadPath = await download.path();
+  if (!downloadPath) {
+    throw new Error(`The ${formatLabel} export produced no downloaded file.`);
+  }
+  expect(download.suggestedFilename()).toBe(filename);
+  return readFileSync(downloadPath);
 }
