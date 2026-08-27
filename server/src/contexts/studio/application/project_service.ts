@@ -31,7 +31,8 @@ export class ProjectService {
       throw new InvalidOperationError("Project title is required.");
     }
     const description = (input.description ?? "").trim();
-    const created = this.store.addProject(scopeForPrincipal(principal), {
+    const scope = scopeForPrincipal(principal);
+    const created = this.store.addProject(scope, {
       title,
       description,
       settingsJson: DEFAULT_SETTINGS,
@@ -43,7 +44,13 @@ export class ProjectService {
       },
       now: this.now(),
     });
-    return projectPayload(created.project, created.documents);
+    // The seeded default volume arrives from the creation transaction's own
+    // structure; reading it back keeps this service persistence-neutral.
+    return projectPayload(
+      created.project,
+      created.documents,
+      this.store.findVolumes(scope, created.project.id),
+    );
   }
 
   /** Projects of the principal, most recently updated first. */
@@ -53,7 +60,7 @@ export class ProjectService {
       .map((project) => projectPayload(project));
   }
 
-  /** Project detail including its documents in the stable list order. */
+  /** Project detail including its reading-order documents and volumes. */
   projectDetail(
     principal: Principal,
     projectId: string,
@@ -61,7 +68,8 @@ export class ProjectService {
     const scope = scopeForPrincipal(principal);
     const project = this.store.findProject(scope, projectId);
     const documents = this.store.findDocuments(scope, projectId);
-    return { payload: projectPayload(project, documents), documents };
+    const payload = projectPayload(project, documents, this.store.findVolumes(scope, projectId));
+    return { payload, documents };
   }
 
   /** Delete the project; dependent rows cascade and the export dir is removed. */

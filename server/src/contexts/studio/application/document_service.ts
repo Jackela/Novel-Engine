@@ -3,6 +3,7 @@ import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { isDocumentKind } from "../domain/kinds.js";
 import { buildFtsMatchQuery } from "./fts_match_query.js";
 import { documentMatchPayload, documentPayload, dumpJson } from "./payloads.js";
+import type { ProjectScope } from "./ports/studio_store.js";
 import {
   type DocumentWithCurrent,
   type StudioStore,
@@ -38,9 +39,13 @@ export class DocumentService {
       throw new InvalidOperationError(`Unsupported document kind: ${input.kind}`);
     }
     const scope = scopeForPrincipal(principal);
+    // Chapters belong to exactly one volume (ADR-0005); an unassigned create
+    // lands at the tail of the project's first volume in reading order.
+    const targetVolumeId =
+      input.kind === "chapter" ? resolveFirstVolumeId(this.store, scope, projectId) : null;
     const position =
       input.position === undefined || input.position === null
-        ? this.store.nextPosition(scope, projectId, input.kind)
+        ? this.store.nextPosition(scope, projectId, input.kind, targetVolumeId)
         : input.position;
     return documentPayload(
       this.store.addDocument(scope, projectId, {
@@ -48,6 +53,7 @@ export class DocumentService {
         title: input.title,
         contentMarkdown: input.contentMarkdown ?? "",
         position,
+        volumeId: targetVolumeId,
         metadataJson: dumpJson(input.metadata ?? {}),
         now: this.now(),
       }),
@@ -121,8 +127,8 @@ export class DocumentService {
   }
 
   /**
-   * Whole-set reorder: the request must name every project document exactly
-   * once; positions are renumbered 1..n in the requested order.
+   * Whole-set reorder projected onto volumes by the store; the request must
+   * name every project document exactly once.
    */
   reorderProjectDocuments(
     principal: Principal,
@@ -133,4 +139,13 @@ export class DocumentService {
       .renumberDocuments(scopeForPrincipal(principal), projectId, documentIds, this.now())
       .map((document: DocumentWithCurrent) => documentPayload(document));
   }
+}
+
+/** The project's first volume in reading order — the chapter-create target. */
+function resolveFirstVolumeId(store: StudioStore, scope: ProjectScope, projectId: string): string {
+  const [first] = store.findVolumes(scope, projectId);
+  if (first === undefined) {
+    throw new InvalidOperationError("A project must keep at least one volume.");
+  }
+  return first.id;
 }

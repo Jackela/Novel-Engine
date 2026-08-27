@@ -19,8 +19,9 @@ import {
   reviewIssues,
   reviews,
   snapshotDocuments,
+  volumes,
 } from "./db/schema.js";
-import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
+import { compareReadingOrder, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 
 type ReviewRow = typeof reviews.$inferSelect;
 type ReviewIssueRow = typeof reviewIssues.$inferSelect;
@@ -107,13 +108,30 @@ function captureReviewSnapshot(
   snapshotId: string,
 ): ReviewSnapshotDocument[] {
   const rows = tx
-    .select({ document: documents, revision: documentRevisions })
+    .select({
+      document: documents,
+      revision: documentRevisions,
+      volumePosition: volumes.position,
+    })
     .from(documents)
     .innerJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .leftJoin(volumes, eq(documents.volumeId, volumes.id))
     .where(eq(documents.projectId, projectId))
-    .orderBy(asc(documents.position), asc(documents.createdAt), asc(documents.id))
     .all();
-  return rows.map(({ document, revision }) => {
+  const ordered = rows
+    .map((row) => ({
+      key: {
+        kind: row.document.kind,
+        position: row.document.position,
+        createdAt: row.document.createdAt,
+        id: row.document.id,
+        volumePosition: row.volumePosition ?? null,
+      },
+      row,
+    }))
+    .sort((left, right) => compareReadingOrder(left.key, right.key))
+    .map((entry) => entry.row);
+  return ordered.map(({ document, revision }, index) => {
     const snapshotDocument: ReviewSnapshotDocument = {
       documentId: document.id,
       snapshotDocumentId: randomUUID(),
@@ -122,7 +140,8 @@ function captureReviewSnapshot(
       title: document.title,
       contentMarkdown: revision.contentMarkdown,
       metadataJson: revision.metadataJson,
-      position: document.position,
+      // Dense reading-order index so review findings sort in reading order.
+      position: index + 1,
     };
     tx.insert(snapshotDocuments)
       .values({

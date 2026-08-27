@@ -5,6 +5,7 @@ import type {
   JobRecord,
   MarkJobOutcomeInput,
 } from "./job_records.js";
+import type { StudioVolumeStore } from "./volume_store.js";
 
 /** Persistence-neutral row shapes handed to the application layer. */
 export interface ProjectRecord {
@@ -24,6 +25,8 @@ export interface DocumentRecord {
   kind: string;
   title: string;
   position: number;
+  /** The owning volume of a chapter; documents outside volumes stay null. */
+  volumeId: string | null;
   currentRevisionId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -181,6 +184,8 @@ export interface AddDocumentInput {
   title: string;
   contentMarkdown: string;
   position: number;
+  /** Chapters must name their volume; other kinds stay null. */
+  volumeId: string | null;
   metadataJson: string;
   now: Date;
 }
@@ -197,9 +202,10 @@ export interface AdvanceDocumentInput {
 /**
  * Persistence port of the authoring core. The application layer orchestrates
  * project, document, and revision behavior through this port; the Drizzle
- * store implements it transactionally in infrastructure.
+ * store implements it transactionally in infrastructure. The volume surface
+ * (ADR-0005) extends it from its own module.
  */
-export interface StudioStore {
+export interface StudioStore extends StudioVolumeStore {
   addProject(
     scope: ProjectScope,
     input: AddProjectInput,
@@ -240,7 +246,13 @@ export interface StudioStore {
     documentIds: string[],
     now: Date,
   ): DocumentWithCurrent[];
-  nextPosition(scope: ProjectScope, projectId: string, kind: string): number;
+  /** Tail position for a kind; chapters position within their target volume. */
+  nextPosition(
+    scope: ProjectScope,
+    projectId: string,
+    kind: string,
+    volumeId?: string | null,
+  ): number;
 
   findRevisions(scope: ProjectScope, projectId: string, documentId: string): RevisionRecord[];
   findRevision(

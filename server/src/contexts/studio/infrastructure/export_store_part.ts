@@ -19,8 +19,9 @@ import {
   exports as exportArtifacts,
   projectSnapshots,
   snapshotDocuments,
+  volumes,
 } from "./db/schema.js";
-import { scopedProject, type Tx } from "./db/studio_query_helpers.js";
+import { compareReadingOrder, scopedProject, type Tx } from "./db/studio_query_helpers.js";
 
 interface CurrentDocument {
   documentId: string;
@@ -28,6 +29,7 @@ interface CurrentDocument {
   kind: string;
   title: string;
   metadataJson: string;
+  /** Sequential reading-order index (1..n), not the in-volume position. */
   position: number;
 }
 
@@ -134,13 +136,30 @@ export class ExportStorePart implements ExportStore {
 
 function readCurrentDocuments(tx: Tx, projectId: string): CurrentDocument[] {
   const rows = tx
-    .select({ document: documents, revision: documentRevisions })
+    .select({
+      document: documents,
+      revision: documentRevisions,
+      volumePosition: volumes.position,
+    })
     .from(documents)
     .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .leftJoin(volumes, eq(documents.volumeId, volumes.id))
     .where(eq(documents.projectId, projectId))
-    .orderBy(asc(documents.position), asc(documents.createdAt), asc(documents.id))
     .all();
-  return rows.map(({ document, revision }) => {
+  const ordered = rows
+    .map((row) => ({
+      key: {
+        kind: row.document.kind,
+        position: row.document.position,
+        createdAt: row.document.createdAt,
+        id: row.document.id,
+        volumePosition: row.volumePosition ?? null,
+      },
+      row,
+    }))
+    .sort((left, right) => compareReadingOrder(left.key, right.key))
+    .map((entry) => entry.row);
+  return ordered.map(({ document, revision }, index) => {
     if (
       document.currentRevisionId === null ||
       revision === null ||
@@ -151,13 +170,15 @@ function readCurrentDocuments(tx: Tx, projectId: string): CurrentDocument[] {
         "Every export snapshot document requires a current revision.",
       );
     }
+    // The frozen snapshot carries a dense reading-order index so every later
+    // consumer sorts chapters into the exact exported sequence.
     return {
       documentId: document.id,
       revisionId: revision.id,
       kind: document.kind,
       title: document.title,
       metadataJson: revision.metadataJson,
-      position: document.position,
+      position: index + 1,
     };
   });
 }

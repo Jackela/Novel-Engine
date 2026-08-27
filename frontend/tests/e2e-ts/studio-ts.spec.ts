@@ -42,6 +42,16 @@ test('owner setup, editing, AI proposal accept, search, and deep links', async (
   const saveStatus = page.locator('.studio-editor .save-state');
   await expect(saveStatus).toHaveText(/saved/i);
 
+  // Volume hierarchy (#312): the manuscript navigation groups chapters under
+  // volume headers, and a fresh project starts with its default volume.
+  const chapterGroup = page.locator('.document-group', {
+    has: page.getByRole('button', { name: 'Add Manuscript' }),
+  });
+  await expect(chapterGroup.locator('.volume-header')).toHaveText('Default Volume');
+  await expect(
+    chapterGroup.locator('.volume-group .document-row', { hasText: 'Chapter 1' }),
+  ).toBeVisible();
+
   // Carried naming behavior: generated document names per kind.
   await page.getByRole('button', { name: 'Add Outline' }).click();
   await expect(page.getByRole('textbox', { name: 'Document title' })).toHaveValue('Outline 1');

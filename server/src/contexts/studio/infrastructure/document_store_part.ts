@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq } from "drizzle-orm";
 
-import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type {
   AddDocumentInput,
@@ -67,6 +66,7 @@ export class DocumentStorePart {
           kind: input.kind,
           title: input.title,
           position: input.position,
+          volumeId: input.volumeId,
           currentRevisionId: null,
           createdAt: input.now,
           updatedAt: input.now,
@@ -98,6 +98,7 @@ export class DocumentStorePart {
           kind: input.kind,
           title: input.title,
           position: input.position,
+          volumeId: input.volumeId,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,
@@ -191,38 +192,23 @@ export class DocumentStorePart {
     });
   }
 
-  renumberDocuments(
-    scope: ProjectScope,
+  nextPosition(
+    _scope: ProjectScope,
     projectId: string,
-    documentIds: string[],
-    now: Date,
-  ): DocumentWithCurrent[] {
-    return this.db.transaction((tx) => {
-      const project = scopedProject(tx, scope, projectId);
-      const existing = tx.select().from(documents).where(eq(documents.projectId, project.id)).all();
-      const byId = new Map(existing.map((row) => [row.id, row]));
-      const unique = new Set(documentIds);
-      if (
-        documentIds.length !== existing.length ||
-        unique.size !== documentIds.length ||
-        documentIds.some((id) => !byId.has(id))
-      ) {
-        throw new InvalidOperationError("Reorder must include every project document once.");
-      }
-      for (const [index, id] of documentIds.entries()) {
-        tx.update(documents)
-          .set({ position: index + 1, updatedAt: now })
-          .where(eq(documents.id, id))
-          .run();
-      }
-      tx.update(projects).set({ updatedAt: now }).where(eq(projects.id, project.id)).run();
-      return documentsWithCurrent(tx, project.id).sort(
-        (left, right) => documentIds.indexOf(left.id) - documentIds.indexOf(right.id),
-      );
-    });
-  }
-
-  nextPosition(_scope: ProjectScope, projectId: string, kind: string): number {
+    kind: string,
+    volumeId?: string | null,
+  ): number {
+    // Chapters position within their target volume; other kinds stay flat.
+    if (kind === "chapter" && volumeId !== undefined && volumeId !== null) {
+      const inVolume = this.db
+        .select({ position: documents.position })
+        .from(documents)
+        .where(and(eq(documents.volumeId, volumeId), eq(documents.kind, kind)))
+        .orderBy(desc(documents.position))
+        .limit(1)
+        .all();
+      return (inVolume[0]?.position ?? 0) + 1;
+    }
     const rows = this.db
       .select({ position: documents.position })
       .from(documents)

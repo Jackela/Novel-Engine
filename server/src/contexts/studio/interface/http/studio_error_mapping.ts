@@ -2,6 +2,7 @@ import { InvalidOperationError } from "../../../../shared/domain/exceptions.js";
 import { AppError } from "../../../../shared/interface/http/error_envelope.js";
 import {
   DuplicateDocumentError,
+  DuplicateVolumeError,
   NotFoundError,
   OperationInFlightError,
   RevisionConflictError,
@@ -16,6 +17,9 @@ import {
 function toAppError(error: unknown): unknown {
   if (error instanceof NotFoundError) {
     return new AppError({ statusCode: 404, code: "NOT_FOUND", message: error.message });
+  }
+  if (error instanceof DuplicateVolumeError) {
+    return new AppError({ statusCode: 409, code: "VOLUME_CONFLICT", message: error.message });
   }
   if (error instanceof RevisionConflictError) {
     return new AppError({

@@ -100,6 +100,27 @@ describe("legacy import service", () => {
     });
   });
 
+  it("seeds one default volume holding the imported chapters", async () => {
+    const { auth, services } = await buildServices();
+    const owner = await ownerPrincipal(auth);
+    const source = legacySource();
+
+    const project = services.imports.importLegacyWorkspace(owner, source);
+    const volumes = services.volumes.listVolumes(owner, project.id as string);
+    expect(volumes).toHaveLength(1);
+    const only = volumes[0] as Record<string, unknown>;
+    expect(only).toMatchObject({ title: "Default Volume", position: 1 });
+
+    // Every imported document is a chapter and every chapter lands in the
+    // default volume — nothing stays unplaced.
+    const detail = services.projects.projectDetail(owner, project.id as string);
+    expect(detail.documents.length).toBeGreaterThan(0);
+    for (const document of detail.documents) {
+      expect(document.kind).toBe("chapter");
+      expect(document.volumeId).toBe(only.id);
+    }
+  });
+
   it("rejects a directory without story.yaml", async () => {
     const { auth, services } = await buildServices();
     const owner = await ownerPrincipal(auth);

@@ -1,5 +1,6 @@
 import { PROVIDER_NAMES } from "../../../ai/application/ports/text_generation.js";
 import { DOCUMENT_KINDS, REVISION_SOURCES } from "../../domain/kinds.js";
+import { volumeResponseSchema } from "./volume_schemas.js";
 
 const kindLiteral = {
   type: "string",
@@ -100,6 +101,7 @@ export const documentResponseSchema = {
     kind: kindLiteral,
     title: { type: "string" },
     position: { type: "integer" },
+    volume_id: { type: "string", nullable: true },
     current_revision_id: { type: "string" },
     content_markdown: { type: "string" },
     metadata: metadataObject,
@@ -114,6 +116,7 @@ export const documentResponseSchema = {
     "kind",
     "title",
     "position",
+    "volume_id",
     "current_revision_id",
     "content_markdown",
     "metadata",
@@ -160,6 +163,7 @@ const projectResponseProperties = {
   created_at: timestamp,
   updated_at: timestamp,
   documents: { type: "array", items: documentResponseSchema },
+  volumes: { type: "array", items: volumeResponseSchema },
 } as const;
 
 /** One ranked full-text hit: identifier, title, plain-text excerpt. */
@@ -202,7 +206,7 @@ export const projectDetailResponseSchema = {
   type: "object",
   additionalProperties: true,
   properties: projectResponseProperties,
-  required: [...PROJECT_REQUIRED, "documents"],
+  required: [...PROJECT_REQUIRED, "documents", "volumes"],
 } as const;
 
 /** The 409 conflict envelope: details.current_revision_id identifies the winner. */

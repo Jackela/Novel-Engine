@@ -14,6 +14,7 @@ import {
   revisionResponseSchema,
   snapshotConflictSchema,
 } from "./studio_schemas.js";
+import { documentPlaceSchema } from "./volume_schemas.js";
 
 const documentListResponseSchema = {
   type: "object",
@@ -119,6 +120,26 @@ export const documentRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (ap
             metadata: body.metadata,
           },
         ),
+      );
+    },
+  );
+
+  app.put(
+    "/api/projects/:projectId/documents/:documentId/volume",
+    {
+      preHandler: [guard],
+      schema: { body: documentPlaceSchema, response: { 200: documentResponseSchema } },
+    },
+    async (request) => {
+      const { projectId, documentId } = request.params as {
+        projectId: string;
+        documentId: string;
+      };
+      const body = request.body as { volume_id: string };
+      return withStudioErrors(() =>
+        requireServices(options).volumes.placeChapter(principal(request), projectId, documentId, {
+          volumeId: body.volume_id,
+        }),
       );
     },
   );

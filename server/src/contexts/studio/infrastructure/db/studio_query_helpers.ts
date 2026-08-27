@@ -1,14 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../../shared/infrastructure/db/connection.js";
 import type { DocumentWithCurrent, ProjectScope } from "../../application/ports/studio_store.js";
 import { NotFoundError } from "../../domain/exceptions.js";
-import { documentRevisions, documents, projects } from "./schema.js";
+import { documentRevisions, documents, projects, volumes } from "./schema.js";
 
 export type ProjectRow = typeof projects.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
 export type RevisionRow = typeof documentRevisions.$inferSelect;
+export type VolumeRow = typeof volumes.$inferSelect;
 
 /** The transaction executor handed to store callbacks. */
 export type Tx = Parameters<Parameters<StudioSqliteDatabase["transaction"]>[0]>[0];
@@ -39,6 +40,25 @@ export function scopedProject(tx: Tx, scope: ProjectScope, projectId: string): P
   return row;
 }
 
+/** Fetch a volume through its project so scoping applies to both. */
+export function scopedVolume(
+  tx: Tx,
+  scope: ProjectScope,
+  projectId: string,
+  volumeId: string,
+): VolumeRow {
+  const row = tx
+    .select({ volume: volumes })
+    .from(volumes)
+    .innerJoin(projects, eq(volumes.projectId, projects.id))
+    .where(and(eq(volumes.id, volumeId), eq(projects.id, projectId), scopeCondition(scope)))
+    .get();
+  if (row === undefined) {
+    throw new NotFoundError("Volume not found.");
+  }
+  return row.volume;
+}
+
 /** Fetch a document through its project so scoping applies to both. */
 export function scopedDocument(
   tx: Tx,
@@ -58,16 +78,61 @@ export function scopedDocument(
   return row.document;
 }
 
-/** Documents with their current revision, in the stable (kind, position, created) order. */
+/**
+ * Composite reading-order key (ADR-0005): chapters read volume by volume and
+ * in-volume position first; non-chapter documents keep the flat kind/position
+ * ordering outside volumes.
+ */
+export interface ReadingOrderKey {
+  readonly kind: string;
+  readonly position: number;
+  readonly createdAt: Date;
+  readonly id: string;
+  /** Position of the owning volume; null for documents outside volumes. */
+  readonly volumePosition: number | null;
+}
+
+export function compareReadingOrder(left: ReadingOrderKey, right: ReadingOrderKey): number {
+  // Only chapters belong to volumes; they always read ahead of the flat,
+  // non-chapter kinds (matching the previous alphabetical chapter-first list).
+  if (left.kind !== right.kind && (left.kind === "chapter" || right.kind === "chapter")) {
+    return left.kind === "chapter" ? -1 : 1;
+  }
+  if (left.kind === "chapter") {
+    const leftVolume = left.volumePosition ?? Number.POSITIVE_INFINITY;
+    const rightVolume = right.volumePosition ?? Number.POSITIVE_INFINITY;
+    if (leftVolume !== rightVolume) return leftVolume - rightVolume;
+  } else if (left.kind !== right.kind) {
+    return left.kind.localeCompare(right.kind);
+  }
+  return (
+    left.position - right.position ||
+    left.createdAt.getTime() - right.createdAt.getTime() ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+/** Documents with their current revision in the composite reading order. */
 export function documentsWithCurrent(tx: Tx, projectId: string): DocumentWithCurrent[] {
   const rows = tx
-    .select({ document: documents, revision: documentRevisions })
+    .select({
+      document: documents,
+      revision: documentRevisions,
+      volumePosition: volumes.position,
+    })
     .from(documents)
     .leftJoin(documentRevisions, eq(documents.currentRevisionId, documentRevisions.id))
+    .leftJoin(volumes, eq(documents.volumeId, volumes.id))
     .where(eq(documents.projectId, projectId))
-    .orderBy(asc(documents.kind), asc(documents.position), asc(documents.createdAt))
     .all();
-  return rows.map((row) => ({ ...row.document, currentRevision: row.revision }));
+  return rows
+    .map((row) => ({
+      ...row.document,
+      currentRevision: row.revision,
+      volumePosition: row.volumePosition ?? null,
+    }))
+    .sort(compareReadingOrder)
+    .map(({ volumePosition: _volumePosition, ...record }) => record);
 }
 
 /** Append one immutable revision row (the sole revision write path). */

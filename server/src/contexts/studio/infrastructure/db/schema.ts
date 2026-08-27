@@ -30,6 +30,29 @@ export const projects = sqliteTable(
   (table) => [uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash)],
 );
 
+/**
+ * The fixed two-level hierarchy (ADR-0005): every chapter belongs to exactly
+ * one volume, and a project always holds at least one volume. Non-chapter
+ * documents stay outside volumes (volume_id stays NULL for them).
+ */
+export const volumes = sqliteTable(
+  "volumes",
+  {
+    id: text("id").primaryKey(),
+    projectId: text("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    position: integer("position").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("uq_volume_identity").on(table.projectId, table.title),
+    index("idx_volumes_project_position").on(table.projectId, table.position),
+  ],
+);
+
 export const documents = sqliteTable(
   "documents",
   {
@@ -40,6 +63,7 @@ export const documents = sqliteTable(
     kind: text("kind").notNull(),
     title: text("title").notNull(),
     position: integer("position").notNull().default(0),
+    volumeId: text("volume_id").references(() => volumes.id, { onDelete: "cascade" }),
     currentRevisionId: text("current_revision_id"),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),

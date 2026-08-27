@@ -7,6 +7,7 @@ import type {
   SessionKind,
   SetupStatus,
   StudioDocument,
+  Volume,
 } from '@/app/types/studio';
 
 class ApiContractError extends Error {
@@ -109,6 +110,7 @@ export function literalField<T extends readonly string[]>(
 
 function parseDocument(value: unknown, label = 'document'): StudioDocument {
   const item = objectValue(value, label);
+  const volumeId = item.volume_id;
   return {
     id: stringField(item, 'id', label),
     project_id: stringField(item, 'project_id', label),
@@ -122,12 +124,39 @@ function parseDocument(value: unknown, label = 'document'): StudioDocument {
     word_count: numberField(item, 'word_count', label),
     created_at: stringField(item, 'created_at', label),
     updated_at: stringField(item, 'updated_at', label),
+    // Volume links are always present on the TS contract; the optional parse
+    // keeps hand-built fixtures in tests friction-free.
+    ...(volumeId === undefined || volumeId === null
+      ? { volume_id: null }
+      : { volume_id: stringValue(volumeId, `${label}.volume_id`) }),
+  };
+}
+
+export function parseVolume(value: unknown, label = 'volume'): Volume {
+  const item = objectValue(value, label);
+  return {
+    id: stringField(item, 'id', label),
+    project_id: stringField(item, 'project_id', label),
+    title: stringField(item, 'title', label),
+    position: numberField(item, 'position', label),
+    created_at: stringField(item, 'created_at', label),
+    updated_at: stringField(item, 'updated_at', label),
+  };
+}
+
+export function parseVolumes(value: unknown): { volumes: Volume[] } {
+  const item = objectValue(value, 'volumes response');
+  return {
+    volumes: arrayField(item, 'volumes', 'volumes response', (entry, index) =>
+      parseVolume(entry, `volumes[${index}]`),
+    ),
   };
 }
 
 export function parseProject(value: unknown, label = 'project'): Project {
   const item = objectValue(value, label);
   const documents = item.documents;
+  const volumes = item.volumes;
   return {
     id: stringField(item, 'id', label),
     title: stringField(item, 'title', label),
@@ -141,6 +170,13 @@ export function parseProject(value: unknown, label = 'project'): Project {
       : {
           documents: arrayValue(documents, `${label}.documents`, (entry, index) =>
             parseDocument(entry, `${label}.documents[${index}]`),
+          ),
+        }),
+    ...(volumes === undefined
+      ? {}
+      : {
+          volumes: arrayValue(volumes, `${label}.volumes`, (entry, index) =>
+            parseVolume(entry, `${label}.volumes[${index}]`),
           ),
         }),
   };
