@@ -5,8 +5,8 @@ import {
   AUTHOR_INSTRUCTION_BEGIN,
   AUTHOR_INSTRUCTION_END,
   formatUntrustedManuscript,
-  OUTLINE_BEAT_BEGIN,
-  OUTLINE_BEAT_END,
+  PROJECT_OUTLINE_BEGIN,
+  PROJECT_OUTLINE_END,
   UNTRUSTED_MANUSCRIPT_BEGIN,
 } from "../../src/contexts/studio/application/sanitization.js";
 import { capturingFactory, propose } from "./proposal_test_helpers.js";
@@ -202,10 +202,10 @@ describe("chapter beat association (#313)", () => {
       expect(reread.status).toBe(200);
       expect(reread.view).toEqual({ beat: null });
 
-      // And generation runs with no beat section at all.
+      // And generation runs with no beat position at all.
       const proposal = await propose(app, jar, projectId, chapter.id, { operation: "continue" });
       expect(proposal.statusCode).toBe(200);
-      expect(capture.tasks[0]!.task.userPrompt).not.toContain(OUTLINE_BEAT_BEGIN);
+      expect(capture.tasks[0]!.task.userPrompt).not.toContain("Current beat:");
     } finally {
       await app.close();
     }
@@ -230,8 +230,8 @@ describe("chapter beat association (#313)", () => {
   });
 });
 
-describe("linked beats in the generation prompt (#313)", () => {
-  it("carries the linked beat as labeled instruction context ahead of the manuscript", async () => {
+describe("the outline and beat position inside the resident context (#313, #314)", () => {
+  it("carries the whole outline plus the current beat ahead of the manuscript", async () => {
     const capture = capturingFactory({});
     const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
     try {
@@ -244,24 +244,24 @@ describe("linked beats in the generation prompt (#313)", () => {
       expect(response.statusCode).toBe(200);
 
       const task = capture.tasks[0]!.task;
-      const begin = task.userPrompt.indexOf(OUTLINE_BEAT_BEGIN);
-      const end = task.userPrompt.indexOf(OUTLINE_BEAT_END);
+      const begin = task.userPrompt.indexOf(PROJECT_OUTLINE_BEGIN);
+      const end = task.userPrompt.indexOf(PROJECT_OUTLINE_END);
       const manuscriptAt = task.userPrompt.indexOf(UNTRUSTED_MANUSCRIPT_BEGIN);
       expect(begin).toBeGreaterThanOrEqual(0);
       expect(end).toBeGreaterThan(begin);
-      // The beat precedes the manuscript block and stays outside it.
+      // The outline precedes the manuscript block and stays outside it.
       expect(manuscriptAt).toBeGreaterThan(end);
-      expect(task.userPrompt).toContain("### The Storm");
+      expect(task.userPrompt).toContain("## The Storm");
       expect(task.userPrompt).toContain(
         "Rain floods the harbour and Mara finds the washed-up chart.",
       );
-      expect(task.userPrompt).toContain("Outline beat");
+      expect(task.userPrompt).toContain('Current beat: "The Storm"');
     } finally {
       await app.close();
     }
   });
 
-  it("keeps the exact previous prompt shape for an unlinked chapter", async () => {
+  it("keeps the exact prompt shape for an unlinked first chapter", async () => {
     const capture = capturingFactory({});
     const { app } = await buildStudioApp(undefined, { textProviderFactory: capture.factory });
     try {
@@ -275,6 +275,11 @@ describe("linked beats in the generation prompt (#313)", () => {
         [
           "Operation: continue",
           `${AUTHOR_INSTRUCTION_BEGIN}\n\n${AUTHOR_INSTRUCTION_END}`,
+          "",
+          "OUTLINE (the writer's recorded plan):",
+          PROJECT_OUTLINE_BEGIN,
+          OUTLINE_CONTENT,
+          PROJECT_OUTLINE_END,
           "",
           "Current manuscript (untrusted JSON data):",
           "",

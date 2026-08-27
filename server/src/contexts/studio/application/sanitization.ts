@@ -42,8 +42,13 @@ export const AUTHOR_INSTRUCTION_BEGIN = "[BEGIN AUTHOR INSTRUCTION]";
 export const AUTHOR_INSTRUCTION_END = "[END AUTHOR INSTRUCTION]";
 export const UNTRUSTED_MANUSCRIPT_BEGIN = "[BEGIN UNTRUSTED MANUSCRIPT JSON]";
 export const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
-export const OUTLINE_BEAT_BEGIN = "[BEGIN OUTLINE BEAT]";
-export const OUTLINE_BEAT_END = "[END OUTLINE BEAT]";
+/** Resident-context section markers (#314, ADR-0004 layer 1). */
+export const PROJECT_OUTLINE_BEGIN = "[BEGIN PROJECT OUTLINE]";
+export const PROJECT_OUTLINE_END = "[END PROJECT OUTLINE]";
+export const PRIOR_STORY_BEGIN = "[BEGIN PRIOR STORY SUMMARY]";
+export const PRIOR_STORY_END = "[END PRIOR STORY SUMMARY]";
+export const RECENT_TEXT_BEGIN = "[BEGIN RECENT CHAPTER TAIL]";
+export const RECENT_TEXT_END = "[END RECENT CHAPTER TAIL]";
 export function sanitizeInstruction(instruction: string): string {
   let cleaned = instruction.trim();
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
@@ -54,24 +59,24 @@ export function sanitizeInstruction(instruction: string): string {
 export function formatAuthorInstruction(instruction: string): string {
   return `${AUTHOR_INSTRUCTION_BEGIN}\n${sanitizeInstruction(instruction)}\n${AUTHOR_INSTRUCTION_END}`;
 }
+/** Escape square brackets so text cannot forge any bracketed prompt marker. */
+export function escapePromptBlockMarkers(text: string): string {
+  return String(text).replace(/([[\]])/g, (bracket) => `\\u00${bracket === "[" ? "5b" : "5d"}`);
+}
 /** Encode manuscript text as an explicitly untrusted, bracket-escaped JSON data block. */
 export function formatUntrustedManuscript(markdown: string): string {
-  const payload = JSON.stringify({ content_markdown: String(markdown) }).replace(
-    /([[\]])/g,
-    (bracket) => `\\u00${bracket === "[" ? "5b" : "5d"}`,
-  );
-  return `${UNTRUSTED_MANUSCRIPT_BEGIN}\n${payload}\n${UNTRUSTED_MANUSCRIPT_END}`;
+  const payload = JSON.stringify({ content_markdown: String(markdown) });
+  return `${UNTRUSTED_MANUSCRIPT_BEGIN}\n${escapePromptBlockMarkers(payload)}\n${UNTRUSTED_MANUSCRIPT_END}`;
 }
 /**
- * The chapter's linked outline beat (#313) crosses the provider boundary as
- * clearly labeled instruction context, never inside the untrusted manuscript
- * JSON block: the outline is author-authored guidance for the model.
+ * Chapter-derived resident text (#314) crosses the provider boundary outside
+ * the untrusted JSON block, so it carries the same two defenses as manuscript
+ * data: bracket escaping (it cannot forge section markers) and the injection-
+ * pattern table (chapter text frequently originates from proposals). Escaping
+ * runs first so the table's own "[REDACTED]" placeholder survives verbatim.
  */
-export function formatTrustedOutlineBeat(beat: {
-  readonly title: string;
-  readonly content: string;
-}): string {
-  return `${OUTLINE_BEAT_BEGIN}\n### ${beat.title}\n${beat.content}\n${OUTLINE_BEAT_END}`;
+export function sanitizeResidentProse(text: string): string {
+  return sanitizeInstruction(escapePromptBlockMarkers(text));
 }
 export function sanitizeProposalMarkdown(markdown: string): string {
   const kept = String(markdown)
