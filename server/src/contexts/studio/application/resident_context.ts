@@ -1,4 +1,6 @@
 import { linkedChapterBeat } from "./beat_association_service.js";
+import type { LoreEntrySource } from "./lorebook.js";
+import { triggeredLoreSections } from "./lorebook.js";
 import type { OutlineBeat } from "./outline_beats.js";
 import type { DocumentWithCurrent, ProjectScope, StudioStore } from "./ports/studio_store.js";
 import {
@@ -219,6 +221,29 @@ export function collectResidentContextSource(
 }
 
 /**
+ * The searchable text of the assembled resident view (#315): outline, beat,
+ * every prior title/digest, and the recent tail. Keys match over this RAW
+ * view text — render-time sanitization alters markers, not word content, so
+ * hits are identical and matching stays independent of rendering.
+ */
+export function residentMatchCorpus(view: ResidentContextView): string {
+  const parts: string[] = [];
+  if (view.outline !== null) {
+    parts.push(view.outline.markdown);
+    if (view.outline.linkedBeat !== null) {
+      parts.push(view.outline.linkedBeat.title, view.outline.linkedBeat.content);
+    }
+  }
+  for (const prior of view.priorStory) {
+    parts.push(prior.title, prior.digest);
+  }
+  if (view.recentText !== null) {
+    parts.push(view.recentText);
+  }
+  return parts.join("\n");
+}
+
+/**
  * Render the resident sections in prompt order. Derived prose crosses through
  * sanitizeResidentProse so summary lines and tails can neither instruct nor
  * forge a bracketed marker; the outline itself stays writer-trusted (#313).
@@ -263,15 +288,25 @@ export function renderResidentContextSections(view: ResidentContextView): string
   return sections;
 }
 
-/** The whole proposal user prompt: resident context ahead of the manuscript block. */
+/** The whole proposal user prompt: resident context, triggered lorebook, manuscript. */
 export function buildProposalUserPrompt(input: {
   readonly operation: string;
   readonly instruction: string;
   readonly source: ResidentContextSource;
   readonly manuscriptMarkdown: string;
+  /** Character/world entries (#315); matches render after the resident sections. */
+  readonly loreEntries?: readonly LoreEntrySource[];
 }): string {
   const lines = [`Operation: ${input.operation}`, formatAuthorInstruction(input.instruction)];
-  lines.push(...renderResidentContextSections(assembleResidentContext(input.source)));
+  const view = assembleResidentContext(input.source);
+  lines.push(...renderResidentContextSections(view));
+  lines.push(
+    ...triggeredLoreSections({
+      entries: input.loreEntries ?? [],
+      resident: residentMatchCorpus(view),
+      manuscript: input.manuscriptMarkdown,
+    }),
+  );
   lines.push(
     "",
     "Current manuscript (untrusted JSON data):",

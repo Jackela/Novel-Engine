@@ -9,6 +9,7 @@ import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
+import { collectLoreEntries } from "./lorebook.js";
 import {
   dumpJson,
   exportJobResultJson,
@@ -158,6 +159,7 @@ export class JobRetryExecutor {
           instruction,
           source: collectResidentContextSource(this.store, scope, retry.projectId, document),
           manuscriptMarkdown: revision.contentMarkdown,
+          loreEntries: collectLoreEntries(this.store, scope, retry.projectId),
         }),
         responseSchema: { chapter_markdown: { type: "string" } },
         metadata: {

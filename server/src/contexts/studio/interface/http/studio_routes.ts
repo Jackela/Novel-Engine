@@ -5,6 +5,7 @@ import { documentRoutes } from "./document_routes.js";
 import { exportRoutes } from "./export_routes.js";
 import { importRoutes } from "./import_routes.js";
 import { jobRoutes } from "./job_routes.js";
+import { loreRoutes } from "./lore_routes.js";
 import { projectRoutes, type StudioRoutesOptions } from "./project_routes.js";
 import { proposalRoutes } from "./proposal_routes.js";
 import { reviewRoutes } from "./review_routes.js";
@@ -15,6 +16,7 @@ export const studioRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
   await app.register(projectRoutes, options);
   await app.register(documentRoutes, options);
   await app.register(beatRoutes, options);
+  await app.register(loreRoutes, options);
   await app.register(volumeRoutes, options);
   await app.register(proposalRoutes, options);
   await app.register(reviewRoutes, options);

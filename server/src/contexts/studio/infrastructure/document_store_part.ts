@@ -101,6 +101,7 @@ export class DocumentStorePart {
           position: input.position,
           volumeId: input.volumeId,
           beatRef: null,
+          loreAliasesJson: "[]",
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,

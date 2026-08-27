@@ -1,4 +1,5 @@
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
+import type { SetLoreAliasesInput } from "../application/ports/lore_store.js";
 import type {
   AddDocumentInput,
   AddJobInput,
@@ -23,6 +24,7 @@ import type {
 } from "../application/ports/volume_store.js";
 import { DocumentStorePart } from "./document_store_part.js";
 import { JobStorePart } from "./job_store_part.js";
+import { LoreStorePart } from "./lore_store_part.js";
 import { ProjectStorePart } from "./project_store_part.js";
 import { ReviewStorePart } from "./review_store_part.js";
 import { VolumeStorePart } from "./volume_store_part.js";
@@ -42,6 +44,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
   private readonly volumeStore: VolumeStorePart;
   private readonly editorialReviews: ReviewStorePart;
   private readonly workflowJobs: JobStorePart;
+  private readonly loreKeys: LoreStorePart;
 
   constructor(options: DrizzleStudioStoreOptions) {
     super(options.database, options.dataDirectory);
@@ -49,6 +52,7 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     this.volumeStore = new VolumeStorePart(options.database);
     this.editorialReviews = new ReviewStorePart(options.database);
     this.workflowJobs = new JobStorePart(options.database);
+    this.loreKeys = new LoreStorePart(options.database);
   }
 
   findVolumes(scope: ProjectScope, projectId: string) {
@@ -116,6 +120,15 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     input: { beatRef: string | null; now: Date },
   ): DocumentWithCurrent {
     return this.documentStore.setBeatReference(scope, projectId, documentId, input);
+  }
+
+  setLoreAliases(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: SetLoreAliasesInput,
+  ): DocumentWithCurrent {
+    return this.loreKeys.setLoreAliases(scope, projectId, documentId, input);
   }
 
   renumberDocuments(
