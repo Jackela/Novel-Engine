@@ -11,11 +11,13 @@ import { ProjectService } from "./project_service.js";
 import { AiProposalService } from "./proposal_service.js";
 import { type ReviewProviderProvenance, ReviewService } from "./review_service.js";
 import { RevisionService } from "./revision_service.js";
+import { VolumeService } from "./volume_service.js";
 
 /** The per-capability service graph handed to the studio HTTP surface. */
 export interface StudioServices {
   projects: ProjectService;
   documents: DocumentService;
+  volumes: VolumeService;
   revisions: RevisionService;
   proposals: AiProposalService;
   reviewAssessments: ReviewService;
@@ -63,6 +65,7 @@ export function createStudioServices(
   return {
     projects: new ProjectService(store, now),
     documents,
+    volumes: new VolumeService(store, now),
     revisions: new RevisionService(store, documents),
     proposals: new AiProposalService(store, documents, options.providerFactory, inFlight, now),
     reviewAssessments,

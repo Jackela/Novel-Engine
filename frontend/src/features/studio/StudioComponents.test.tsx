@@ -272,4 +272,55 @@ describe('Studio split components', () => {
     expect(callbacks.moveDocument).toHaveBeenCalledWith('doc-1', 1);
     expect(callbacks.searchSubmit).toHaveBeenCalledTimes(1);
   });
+
+  it('groups manuscript chapters under volume headers in reading order', () => {
+    const firstVolume = {
+      id: 'volume-1',
+      project_id: 'project-1',
+      title: 'Default Volume',
+      position: 1,
+      created_at: '2026-06-16T00:00:00Z',
+      updated_at: '2026-06-16T00:00:00Z',
+    };
+    const bookTwo = { ...firstVolume, id: 'volume-2', title: 'Book Two', position: 2 };
+    const chapterTwo: StudioDocument = {
+      ...baseDocument,
+      id: 'doc-2',
+      title: 'Second',
+      position: 2,
+      volume_id: 'volume-2',
+    };
+    const groupedProject: Project = {
+      ...baseProject,
+      documents: [baseDocument, chapterTwo],
+      volumes: [firstVolume, bookTwo],
+    };
+
+    const container = render(
+      <StudioNavigator
+        project={groupedProject}
+        section="manuscript"
+        activeId="doc-1"
+        search=""
+        isSearching={false}
+        searchResults={[]}
+        onSearchChange={() => undefined}
+        onSearchSubmit={(event) => event.preventDefault()}
+        onNavigateSection={() => undefined}
+        onSelectDocument={() => undefined}
+        onCreateDocument={() => undefined}
+        onMoveDocument={() => undefined}
+      />,
+    );
+
+    const headers = Array.from(container.querySelectorAll('.volume-header'));
+    expect(headers.map((header) => header.textContent)).toEqual(['Default Volume', 'Book Two']);
+
+    // Chapters land under their owning volume; the seed stays in the default
+    // volume and the second chapter follows Book Two's header.
+    const groups = Array.from(container.querySelectorAll('.volume-group'));
+    expect(groups[0]?.textContent).toContain('Opening');
+    expect(groups[0]?.textContent).not.toContain('Second');
+    expect(groups[1]?.textContent).toContain('Second');
+  });
 });

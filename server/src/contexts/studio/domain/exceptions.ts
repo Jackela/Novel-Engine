@@ -44,6 +44,17 @@ export class DuplicateDocumentError extends Error {
   }
 }
 
+/** A volume with the same (project, title) identity already exists. */
+export class DuplicateVolumeError extends Error {
+  readonly title: string;
+
+  constructor(title: string) {
+    super(`A volume titled "${title}" already exists in this project.`);
+    this.name = "DuplicateVolumeError";
+    this.title = title;
+  }
+}
+
 /** The same synchronous pipeline operation is already running for this target. */
 export class OperationInFlightError extends Error {
   readonly projectId: string;

@@ -119,6 +119,7 @@ export interface DocumentPayload {
   kind: string;
   title: string;
   position: number;
+  volume_id?: string | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;
@@ -246,4 +247,73 @@ export async function admitProposal(
   );
   expect(response.statusCode, response.body).toBe(200);
   return response.json();
+}
+
+export interface VolumePayload {
+  id: string;
+  project_id: string;
+  title: string;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Create a volume through the project surface; asserts 201. */
+export async function seedVolume(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  title: string,
+): Promise<VolumePayload> {
+  const response = await call(app, jar, "POST", `/api/projects/${projectId}/volumes`, { title });
+  expect(response.statusCode, response.body).toBe(201);
+  return response.json();
+}
+
+/** Volumes of a project in reading order; asserts 200. */
+export async function listVolumes(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+): Promise<VolumePayload[]> {
+  const response = await call(app, jar, "GET", `/api/projects/${projectId}/volumes`);
+  expect(response.statusCode, response.body).toBe(200);
+  return response.json().volumes;
+}
+
+/**
+ * Move a document into a volume without asserting — returns the status and,
+ * for accepted moves, the updated document payload (bare on success).
+ */
+export async function placeDocument(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  documentId: string,
+  volumeId: string,
+): Promise<{ status: number; document?: DocumentPayload }> {
+  const response = await call(
+    app,
+    jar,
+    "PUT",
+    `/api/projects/${projectId}/documents/${documentId}/volume`,
+    { volume_id: volumeId },
+  );
+  if (!response.statusCode.toString().startsWith("2")) {
+    return { status: response.statusCode };
+  }
+  return { status: response.statusCode, document: response.json() as DocumentPayload };
+}
+
+/** Place with an asserted 200 (the happy path used by ordering fixtures). */
+export async function moveChapterToVolume(
+  app: FastifyInstance,
+  jar: CookieJar,
+  projectId: string,
+  documentId: string,
+  volumeId: string,
+): Promise<DocumentPayload> {
+  const attempt = await placeDocument(app, jar, projectId, documentId, volumeId);
+  expect(attempt.status, JSON.stringify(attempt)).toBe(200);
+  return attempt.document as DocumentPayload;
 }

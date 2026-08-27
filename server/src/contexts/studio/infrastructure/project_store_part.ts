@@ -20,6 +20,7 @@ import {
   scopeCondition,
   scopedProject,
 } from "./db/studio_query_helpers.js";
+import { DEFAULT_VOLUME_TITLE, insertVolume } from "./volume_store_part.js";
 
 /**
  * The project half of the Drizzle studio store (mirrors the Python
@@ -49,6 +50,14 @@ export class ProjectStorePart {
         updatedAt: input.now,
       };
       tx.insert(projects).values(project).run();
+      // ADR-0005: the default volume exists before any seed chapter, so no
+      // document is ever unplaced.
+      const defaultVolume = insertVolume(tx, {
+        projectId: project.id,
+        title: DEFAULT_VOLUME_TITLE,
+        position: 1,
+        now: input.now,
+      });
       const seeded: DocumentWithCurrent[] = [];
       if (input.seed !== null) {
         const document: typeof documents.$inferInsert = {
@@ -57,6 +66,7 @@ export class ProjectStorePart {
           kind: input.seed.kind,
           title: input.seed.title,
           position: 1,
+          volumeId: defaultVolume.id,
           currentRevisionId: null,
           createdAt: input.now,
           updatedAt: input.now,
@@ -87,6 +97,7 @@ export class ProjectStorePart {
           kind: input.seed.kind,
           title: input.seed.title,
           position: 1,
+          volumeId: defaultVolume.id,
           currentRevisionId: revision.id,
           createdAt: input.now,
           updatedAt: input.now,
@@ -142,6 +153,13 @@ export class ProjectStorePart {
         updatedAt: input.now,
       };
       tx.insert(projects).values(project).run();
+      // Legacy chapters land in one default volume (ADR-0005 import seeding).
+      const defaultVolume = insertVolume(tx, {
+        projectId: project.id,
+        title: DEFAULT_VOLUME_TITLE,
+        position: 1,
+        now: input.now,
+      });
       for (const [index, chapter] of input.chapters.entries()) {
         const position = index + 1;
         const title = `Chapter ${position}`;
@@ -151,6 +169,7 @@ export class ProjectStorePart {
           kind: "chapter",
           title,
           position,
+          volumeId: defaultVolume.id,
           currentRevisionId: null,
           createdAt: input.now,
           updatedAt: input.now,

@@ -5,6 +5,7 @@ import type {
   JobRecord,
   RevisionRecord,
 } from "./ports/studio_store.js";
+import type { VolumeRecord } from "./ports/volume_store.js";
 
 /** Mirror of the Python authority's \b[\w'-]+\b word counter (UNICODE-aware). */
 export function wordCount(markdown: string): number {
@@ -46,6 +47,7 @@ export interface ProjectPayloadInput {
 export function projectPayload(
   project: ProjectPayloadInput,
   documents?: DocumentWithCurrent[],
+  volumes?: VolumeRecord[],
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     id: project.id,
@@ -58,6 +60,9 @@ export function projectPayload(
   };
   if (documents !== undefined) {
     payload.documents = documents.map((document) => documentPayload(document));
+  }
+  if (volumes !== undefined) {
+    payload.volumes = volumes.map((volume) => volumePayload(volume));
   }
   return payload;
 }
@@ -73,6 +78,7 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
     kind: document.kind,
     title: document.title,
     position: document.position,
+    volume_id: document.volumeId,
     current_revision_id: revision.id,
     content_markdown: revision.contentMarkdown,
     metadata: safeLoadJson(revision.metadataJson),
@@ -80,6 +86,18 @@ export function documentPayload(document: DocumentWithCurrent): Record<string, u
     word_count: wordCount(revision.contentMarkdown),
     created_at: iso(document.createdAt),
     updated_at: iso(document.updatedAt),
+  };
+}
+
+/** The ordered list-level volume shape handed to every HTTP surface. */
+export function volumePayload(volume: VolumeRecord): Record<string, unknown> {
+  return {
+    id: volume.id,
+    project_id: volume.projectId,
+    title: volume.title,
+    position: volume.position,
+    created_at: iso(volume.createdAt),
+    updated_at: iso(volume.updatedAt),
   };
 }
 

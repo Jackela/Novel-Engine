@@ -57,6 +57,13 @@
       "when": 1787801401064,
       "tag": "0007_naive_morg",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1787812144596,
+      "tag": "0008_premium_tiger_shark",
+      "breakpoints": true
     }
   ]
 }

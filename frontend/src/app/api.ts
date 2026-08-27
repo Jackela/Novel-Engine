@@ -11,6 +11,8 @@ import {
   parseSetupStatus,
   parseStudioDocument,
   parseVoid,
+  parseVolume,
+  parseVolumes,
 } from '@/app/apiContract';
 import {
   parseExportJobResponse,
@@ -181,6 +183,22 @@ export const api = {
       `/api/projects/${projectId}/documents/reorder`,
       { document_ids: documentIds },
       parseDocuments,
+    ),
+  volumes: (projectId: string) =>
+    request(`/api/projects/${projectId}/volumes`, undefined, parseVolumes),
+  createVolume: (projectId: string, title: string) =>
+    postJson(`/api/projects/${projectId}/volumes`, { title }, parseVolume),
+  renameVolume: (projectId: string, volumeId: string, title: string) =>
+    putJson(`/api/projects/${projectId}/volumes/${volumeId}`, { title }, parseVolume),
+  deleteVolume: (projectId: string, volumeId: string) =>
+    request(`/api/projects/${projectId}/volumes/${volumeId}`, { method: 'DELETE' }, parseVoid),
+  reorderVolumes: (projectId: string, volumeIds: string[]) =>
+    putJson(`/api/projects/${projectId}/volumes/reorder`, { volume_ids: volumeIds }, parseVolumes),
+  moveChapterToVolume: (projectId: string, documentId: string, volumeId: string) =>
+    putJson(
+      `/api/projects/${projectId}/documents/${documentId}/volume`,
+      { volume_id: volumeId },
+      parseStudioDocument,
     ),
   saveDocument: (
     projectId: string,

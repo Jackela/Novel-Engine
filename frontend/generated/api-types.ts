@@ -98,6 +98,7 @@ export interface paths {
                                     revision_source: "author" | "ai-accepted" | "restore";
                                     title: string;
                                     updated_at: string;
+                                    volume_id: string | null;
                                     word_count: number;
                                 } & {
                                     [key: string]: unknown;
@@ -109,6 +110,16 @@ export interface paths {
                                 };
                                 title: string;
                                 updated_at: string;
+                                volumes?: ({
+                                    created_at: string;
+                                    id: string;
+                                    position: number;
+                                    project_id: string;
+                                    title: string;
+                                    updated_at: string;
+                                } & {
+                                    [key: string]: unknown;
+                                })[];
                             } & {
                                 [key: string]: unknown;
                             })[];
@@ -162,6 +173,7 @@ export interface paths {
                                 revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
+                                volume_id: string | null;
                                 word_count: number;
                             } & {
                                 [key: string]: unknown;
@@ -173,6 +185,16 @@ export interface paths {
                             };
                             title: string;
                             updated_at: string;
+                            volumes: ({
+                                created_at: string;
+                                id: string;
+                                position: number;
+                                project_id: string;
+                                title: string;
+                                updated_at: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
                         } & {
                             [key: string]: unknown;
                         };
@@ -229,6 +251,7 @@ export interface paths {
                                 revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
+                                volume_id: string | null;
                                 word_count: number;
                             } & {
                                 [key: string]: unknown;
@@ -240,6 +263,16 @@ export interface paths {
                             };
                             title: string;
                             updated_at: string;
+                            volumes: ({
+                                created_at: string;
+                                id: string;
+                                position: number;
+                                project_id: string;
+                                title: string;
+                                updated_at: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
                         } & {
                             [key: string]: unknown;
                         };
@@ -400,6 +433,7 @@ export interface paths {
                             revision_source: "author" | "ai-accepted" | "restore";
                             title: string;
                             updated_at: string;
+                            volume_id: string | null;
                             word_count: number;
                         } & {
                             [key: string]: unknown;
@@ -477,6 +511,7 @@ export interface paths {
                                 revision_source: "author" | "ai-accepted" | "restore";
                                 title: string;
                                 updated_at: string;
+                                volume_id: string | null;
                                 word_count: number;
                             } & {
                                 [key: string]: unknown;
@@ -548,6 +583,7 @@ export interface paths {
                             revision_source: "author" | "ai-accepted" | "restore";
                             title: string;
                             updated_at: string;
+                            volume_id: string | null;
                             word_count: number;
                         } & {
                             [key: string]: unknown;
@@ -828,6 +864,7 @@ export interface paths {
                             revision_source: "author" | "ai-accepted" | "restore";
                             title: string;
                             updated_at: string;
+                            volume_id: string | null;
                             word_count: number;
                         } & {
                             [key: string]: unknown;
@@ -854,6 +891,70 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/documents/{documentId}/volume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        volume_id: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            content_markdown: string;
+                            created_at: string;
+                            current_revision_id: string;
+                            id: string;
+                            /** @enum {string} */
+                            kind: "chapter" | "outline" | "character" | "world" | "note";
+                            metadata: {
+                                [key: string]: unknown;
+                            };
+                            position: number;
+                            project_id: string;
+                            /** @enum {string} */
+                            revision_source: "author" | "ai-accepted" | "restore";
+                            title: string;
+                            updated_at: string;
+                            volume_id: string | null;
+                            word_count: number;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1399,6 +1500,251 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/volumes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            volumes: ({
+                                created_at: string;
+                                id: string;
+                                position: number;
+                                project_id: string;
+                                title: string;
+                                updated_at: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        title: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            id: string;
+                            position: number;
+                            project_id: string;
+                            title: string;
+                            updated_at: string;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "VOLUME_CONFLICT";
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/volumes/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        volume_ids: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            volumes: ({
+                                created_at: string;
+                                id: string;
+                                position: number;
+                                project_id: string;
+                                title: string;
+                                updated_at: string;
+                            } & {
+                                [key: string]: unknown;
+                            })[];
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{projectId}/volumes/{volumeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    volumeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        title: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            created_at: string;
+                            id: string;
+                            position: number;
+                            project_id: string;
+                            title: string;
+                            updated_at: string;
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "VOLUME_CONFLICT";
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    volumeId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
         options?: never;
         head?: never;
         patch?: never;

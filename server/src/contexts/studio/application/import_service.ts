@@ -45,7 +45,11 @@ export class ImportService {
     const scope = scopeForPrincipal(principal);
     const existing = this.store.findProjectByImportHash(scope, workspace.sourceHash);
     if (existing !== null) {
-      return projectPayload(existing, this.store.findDocuments(scope, existing.id));
+      return projectPayload(
+        existing,
+        this.store.findDocuments(scope, existing.id),
+        this.store.findVolumes(scope, existing.id),
+      );
     }
     const title = workspace.title.trim();
     if (title === "") {
@@ -62,7 +66,11 @@ export class ImportService {
       })),
       now: this.now(),
     });
-    return projectPayload(created.project, created.documents);
+    return projectPayload(
+      created.project,
+      created.documents,
+      this.store.findVolumes(scope, created.project.id),
+    );
   }
 }
 

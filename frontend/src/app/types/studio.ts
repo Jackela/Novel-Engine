@@ -51,11 +51,23 @@ export interface StudioDocument {
   kind: DocumentKind;
   title: string;
   position: number;
+  /** Owning volume of a chapter; non-chapter documents stay null (#312). */
+  volume_id?: string | null;
   current_revision_id: string;
   content_markdown: string;
   metadata: Record<string, unknown>;
   revision_source: string;
   word_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** The fixed two-level hierarchy container above chapters (ADR-0005). */
+export interface Volume {
+  id: string;
+  project_id: string;
+  title: string;
+  position: number;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +81,7 @@ export interface Project {
   created_at: string;
   updated_at: string;
   documents?: StudioDocument[];
+  volumes?: Volume[];
 }
 
 export interface Revision {

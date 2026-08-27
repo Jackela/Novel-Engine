@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp, ChevronDown, FileText, Loader2, Plus, Search } from 'lucide-react';
 import type { FormEvent } from 'react';
 
-import type { DocumentKind, Project } from '@/app/types/studio';
+import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
 
 import { GROUPS, SECTIONS } from './studioConstants';
 
@@ -50,6 +50,45 @@ export function StudioNavigator({
     if (section === 'world' && group.kind !== 'world') return [];
     return [group];
   });
+
+  const renderRows = (rows: StudioDocument[]) =>
+    rows.map((document, index) => (
+      <div className="document-row-wrap" key={document.id}>
+        <button
+          aria-current={document.id === activeId ? 'page' : undefined}
+          className={
+            document.id === activeId ? 'document-row document-row--active' : 'document-row'
+          }
+          onClick={() => onSelectDocument(document.id)}
+          type="button"
+        >
+          <FileText aria-hidden="true" />
+          <span>{document.title}</span>
+        </button>
+        <span className="document-order" aria-label={`Reorder ${document.title}`}>
+          <button
+            aria-label={`Move ${document.title} up`}
+            aria-busy={isMovingDocument || undefined}
+            disabled={isMovingDocument || index === 0}
+            onClick={() => onMoveDocument(document.id, -1)}
+            title={isMovingDocument ? 'Reordering documents' : 'Move up'}
+            type="button"
+          >
+            <ArrowUp aria-hidden="true" />
+          </button>
+          <button
+            aria-label={`Move ${document.title} down`}
+            aria-busy={isMovingDocument || undefined}
+            disabled={isMovingDocument || index === rows.length - 1}
+            onClick={() => onMoveDocument(document.id, 1)}
+            title={isMovingDocument ? 'Reordering documents' : 'Move down'}
+            type="button"
+          >
+            <ArrowDown aria-hidden="true" />
+          </button>
+        </span>
+      </div>
+    ));
 
   return (
     <aside className="studio-nav">
@@ -105,6 +144,15 @@ export function StudioNavigator({
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
               const documents =
                 project.documents?.filter((document) => document.kind === kind) ?? [];
+              // Volume grouping (ADR-0005): the manuscript group renders one
+              // headered volume per project volume in reading order; chapters
+              // without a resolved link fall back to the first volume. Other
+              // kinds keep their flat list.
+              const volumes = kind === 'chapter' ? (project.volumes ?? null) : null;
+              const inVolume = (volumeId: string | undefined) =>
+                documents.filter(
+                  (document) => (document.volume_id ?? volumes?.[0]?.id) === volumeId,
+                );
               return (
                 <section className="document-group" key={kind}>
                   <header>
@@ -126,45 +174,14 @@ export function StudioNavigator({
                       )}
                     </button>
                   </header>
-                  {documents.map((document, index) => (
-                    <div className="document-row-wrap" key={document.id}>
-                      <button
-                        aria-current={document.id === activeId ? 'page' : undefined}
-                        className={
-                          document.id === activeId
-                            ? 'document-row document-row--active'
-                            : 'document-row'
-                        }
-                        onClick={() => onSelectDocument(document.id)}
-                        type="button"
-                      >
-                        <FileText aria-hidden="true" />
-                        <span>{document.title}</span>
-                      </button>
-                      <span className="document-order" aria-label={`Reorder ${document.title}`}>
-                        <button
-                          aria-label={`Move ${document.title} up`}
-                          aria-busy={isMovingDocument || undefined}
-                          disabled={isMovingDocument || index === 0}
-                          onClick={() => onMoveDocument(document.id, -1)}
-                          title={isMovingDocument ? 'Reordering documents' : 'Move up'}
-                          type="button"
-                        >
-                          <ArrowUp aria-hidden="true" />
-                        </button>
-                        <button
-                          aria-label={`Move ${document.title} down`}
-                          aria-busy={isMovingDocument || undefined}
-                          disabled={isMovingDocument || index === documents.length - 1}
-                          onClick={() => onMoveDocument(document.id, 1)}
-                          title={isMovingDocument ? 'Reordering documents' : 'Move down'}
-                          type="button"
-                        >
-                          <ArrowDown aria-hidden="true" />
-                        </button>
-                      </span>
-                    </div>
-                  ))}
+                  {volumes && volumes.length > 0
+                    ? volumes.map((volume) => (
+                        <div className="volume-group" key={volume.id}>
+                          <p className="volume-header">{volume.title}</p>
+                          {renderRows(inVolume(volume.id))}
+                        </div>
+                      ))
+                    : renderRows(documents)}
                 </section>
               );
             })}
