@@ -1,13 +1,17 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import {
   assertNarrativeProse,
+  createProject,
   readStoreRowCounts,
   readZipEntries,
+  exportThroughUi,
+  studioChapters,
   tsStackDataDirectory,
+  typeChapter,
   zipFirstEntryIsStoredMimetype,
 } from './content_acceptance_helpers';
 
@@ -21,15 +25,6 @@ import {
  * project deletion. Prose invariants reuse the compiled server guard (see
  * content_acceptance_helpers) instead of forking the phrase list.
  */
-
-interface ChapterDocument {
-  id: string;
-  kind: string;
-  title: string;
-  position: number;
-  current_revision_id: string;
-  content_markdown: string;
-}
 
 interface EnvelopeBody {
   error: { code: string; message: string; details: Record<string, unknown> };
@@ -283,47 +278,3 @@ test.describe.serial('#276 content acceptance', () => {
     expect(((await tamperedToken.json()) as EnvelopeBody).error.code).toBe('CSRF_TOKEN_INVALID');
   });
 });
-
-async function createProject(page: Page, title: string): Promise<string> {
-  await page.goto('/');
-  await page.getByLabel('Title').fill(title);
-  await page.getByRole('button', { name: /create project/i }).click();
-  await expect(page).toHaveURL(/\/projects\/([^/]+)\/manuscript/);
-  return page.url().match(/\/projects\/([^/]+)\/manuscript/)?.[1] ?? '';
-}
-
-async function typeChapter(page: Page, markdown: string): Promise<void> {
-  const editor = page.locator('.cm-content');
-  await editor.click();
-  // ControlOrMeta resolves to the platform's select-all chord: CodeMirror maps
-  // Mod-A to selectAll, so the typed chapter REPLACES the seed content (a
-  // plain Control+A on macOS only moves to the line start).
-  await page.keyboard.press('ControlOrMeta+a');
-  await page.keyboard.type(markdown);
-  await expect(page.locator('.studio-editor .save-state')).toHaveText(/saved/i, {
-    timeout: 15_000,
-  });
-}
-
-async function studioChapters(page: Page, projectId: string): Promise<ChapterDocument[]> {
-  // The project payload embeds its documents (#246 dropped the list route).
-  const response = await page.request.get(`/api/projects/${projectId}`);
-  expect(response.status(), await response.text()).toBe(200);
-  const body = (await response.json()) as { documents: ChapterDocument[] };
-  return body.documents
-    .filter((document) => document.kind === 'chapter')
-    .sort((left, right) => left.position - right.position);
-}
-
-async function exportThroughUi(page: Page, formatLabel: string, filename: string): Promise<Buffer> {
-  const [download] = await Promise.all([
-    page.waitForEvent('download'),
-    page.getByRole('button', { name: new RegExp(formatLabel, 'i') }).click(),
-  ]);
-  const downloadPath = await download.path();
-  if (!downloadPath) {
-    throw new Error(`The ${formatLabel} export produced no downloaded file.`);
-  }
-  expect(download.suggestedFilename()).toBe(filename);
-  return readFileSync(downloadPath);
-}

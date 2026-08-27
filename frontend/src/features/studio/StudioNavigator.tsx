@@ -1,8 +1,9 @@
 import { ArrowDown, ArrowUp, ChevronDown, FileText, Loader2, Plus, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { ComponentProps, FormEvent } from 'react';
 
 import type { DocumentKind, Project, StudioDocument } from '@/app/types/studio';
 
+import { StudioWholeBookControl } from './components/StudioWholeBookControl';
 import { GROUPS, SECTIONS } from './studioConstants';
 
 interface SearchResult {
@@ -85,6 +86,8 @@ interface StudioNavigatorProps {
   onMoveDocument: (documentId: string, direction: -1 | 1) => void;
   isCreatingDocument?: boolean;
   isMovingDocument?: boolean;
+  /** Whole-book generation loop control (#318); manuscript section only. */
+  wholeBook?: ComponentProps<typeof StudioWholeBookControl>;
 }
 
 export function StudioNavigator({
@@ -102,6 +105,7 @@ export function StudioNavigator({
   onMoveDocument,
   isCreatingDocument = false,
   isMovingDocument = false,
+  wholeBook,
 }: StudioNavigatorProps) {
   const visibleGroups = GROUPS.flatMap((group) => {
     if (section === 'outline' && group.kind !== 'outline') return [];
@@ -167,6 +171,7 @@ export function StudioNavigator({
               ))}
             </section>
           ) : null}
+          {section === 'manuscript' && wholeBook ? <StudioWholeBookControl {...wholeBook} /> : null}
           <div className="document-tree">
             {visibleGroups.map(({ kind, label, icon: Icon }) => {
               const documents =
