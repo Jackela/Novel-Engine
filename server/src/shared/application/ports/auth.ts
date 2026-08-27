@@ -1,5 +1,5 @@
-/** Session flavors of the auth spine: the configured owner or a sandboxed guest. */
-export type SessionKind = "owner" | "guest";
+/** The single session flavor since #311 retired the guest principal: the owner. */
+export type SessionKind = "owner";
 
 export interface OwnerRecord {
   id: string;
@@ -20,8 +20,8 @@ export interface SessionRecord {
 }
 
 /**
- * The authenticated actor bound to a request — the principal-scoping
- * foundation: owner data is keyed by ownerId, guest data by sessionId.
+ * The authenticated actor bound to a request — the owner. Owner data is
+ * keyed by ownerId; identifiers outside it resolve to not-found.
  */
 export interface Principal {
   sessionId: string;

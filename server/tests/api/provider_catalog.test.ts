@@ -41,17 +41,6 @@ describe("provider catalog API", () => {
       expect(anonymous.statusCode).toBe(401);
       expect(anonymous.json()).toMatchObject({ error: { code: "UNAUTHORIZED" } });
 
-      const guest = await app.inject({ method: "POST", url: "/api/session/guest" });
-      const guestResponse = await app.inject({
-        method: "GET",
-        url: "/api/providers",
-        headers: { cookie: cookieHeader(cookieJar(guest)) },
-      });
-      expect(guestResponse.statusCode).toBe(403);
-      expect(guestResponse.json()).toEqual({
-        error: { code: "FORBIDDEN", message: "Owner session required." },
-      });
-
       await setupOwner(app);
       const login = await loginOwner(app);
       const response = await app.inject({

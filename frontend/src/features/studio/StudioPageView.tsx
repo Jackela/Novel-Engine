@@ -8,7 +8,6 @@ import { StudioTopbar } from './StudioTopbar';
 
 interface StudioPageViewProps {
   project: ComponentProps<typeof StudioTopbar>['project'];
-  session: ComponentProps<typeof StudioTopbar>['session'];
   onBack: () => void;
   navigator: ComponentProps<typeof StudioNavigator>;
   editor: ComponentProps<typeof StudioEditorPane>;
@@ -18,7 +17,6 @@ interface StudioPageViewProps {
 
 export function StudioPageView({
   project,
-  session,
   onBack,
   navigator,
   editor,
@@ -27,7 +25,7 @@ export function StudioPageView({
 }: StudioPageViewProps) {
   return (
     <main className="studio">
-      <StudioTopbar project={project} session={session} onBack={onBack} />
+      <StudioTopbar project={project} onBack={onBack} />
       <StudioNavigator {...navigator} />
       <StudioEditorPane {...editor} />
       <StudioInspector {...inspector} />

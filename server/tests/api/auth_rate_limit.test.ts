@@ -9,9 +9,17 @@ async function sessionCount(app: FastifyInstance): Promise<number> {
   return rows?.length ?? -1;
 }
 
-async function createGuest(app: FastifyInstance, forwardedFor?: string): Promise<InjectedResponse> {
+async function createContact(
+  app: FastifyInstance,
+  forwardedFor?: string,
+): Promise<InjectedResponse> {
   const headers = forwardedFor === undefined ? {} : { "x-forwarded-for": forwardedFor };
-  return app.inject({ method: "POST", url: "/api/session/guest", headers });
+  return app.inject({
+    method: "POST",
+    url: "/api/session/login",
+    headers,
+    payload: { username: "owner", password: "a-wrong-password" },
+  });
 }
 
 describe("auth endpoint rate limiting", () => {
@@ -19,11 +27,11 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp();
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createGuest(app);
-        expect(response.statusCode).toBe(201);
+        const response = await createContact(app);
+        expect(response.statusCode).toBe(422);
       }
 
-      const sixth = await createGuest(app);
+      const sixth = await createContact(app);
       expect(sixth.statusCode).toBe(429);
       const retryAfter = Number(sixth.headers["retry-after"]);
       expect(Number.isInteger(retryAfter)).toBe(true);
@@ -32,7 +40,7 @@ describe("auth endpoint rate limiting", () => {
       expect(body.error.code).toBe("RATE_LIMIT_EXCEEDED");
       expect(body).not.toHaveProperty("detail");
       // The rejected request must not create a session.
-      expect(await sessionCount(app)).toBe(5);
+      expect(await sessionCount(app)).toBe(0);
     } finally {
       await app.close();
     }
@@ -42,19 +50,19 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp();
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createGuest(app);
-        expect(response.statusCode).toBe(201);
+        const response = await createContact(app);
+        expect(response.statusCode).toBe(422);
       }
-      const blocked = await createGuest(app);
+      const blocked = await createContact(app);
       expect(blocked.statusCode).toBe(429);
 
-      // The login bucket is untouched even though the guest bucket is spent.
-      const login = await app.inject({
+      // The setup bucket is untouched even though the login bucket is spent.
+      const setup = await app.inject({
         method: "POST",
-        url: "/api/session/login",
-        payload: { username: "anyone", password: "any-failing-attempt" },
+        url: "/api/setup",
+        payload: { username: "owner", password: "short" },
       });
-      expect(login.statusCode).toBe(422);
+      expect(setup.statusCode).toBe(422);
     } finally {
       await app.close();
     }
@@ -90,13 +98,13 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp();
     try {
       for (let index = 0; index < 5; index += 1) {
-        await createGuest(app);
+        await createContact(app);
       }
       // The CORS contract (#275) answers preflights with 204 — the point is
       // that the exhausted rate limiter never answers instead.
       const preflight = await app.inject({
         method: "OPTIONS",
-        url: "/api/session/guest",
+        url: "/api/session/login",
         headers: { origin: "http://localhost:5173", "access-control-request-method": "POST" },
       });
       expect(preflight.statusCode).toBe(204);
@@ -109,12 +117,12 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp();
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createGuest(app, `198.51.100.${index}`);
-        expect(response.statusCode).toBe(201);
+        const response = await createContact(app, `198.51.100.${index}`);
+        expect(response.statusCode).toBe(422);
       }
       // Forged X-Forwarded-For values cannot shuffle identity: all requests
       // share the single bucket of the actual peer.
-      const shuffled = await createGuest(app, "203.0.113.77");
+      const shuffled = await createContact(app, "203.0.113.77");
       expect(shuffled.statusCode).toBe(429);
     } finally {
       await app.close();
@@ -125,14 +133,14 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.1"] });
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createGuest(app, "198.51.100.7");
-        expect(response.statusCode).toBe(201);
+        const response = await createContact(app, "198.51.100.7");
+        expect(response.statusCode).toBe(422);
       }
-      const sameIdentity = await createGuest(app, "198.51.100.7");
+      const sameIdentity = await createContact(app, "198.51.100.7");
       expect(sameIdentity.statusCode).toBe(429);
 
-      const otherIdentity = await createGuest(app, "198.51.100.8");
-      expect(otherIdentity.statusCode).toBe(201);
+      const otherIdentity = await createContact(app, "198.51.100.8");
+      expect(otherIdentity.statusCode).toBe(422);
     } finally {
       await app.close();
     }
@@ -142,14 +150,14 @@ describe("auth endpoint rate limiting", () => {
     const { app } = await buildAuthApp({ trustedProxies: ["127.0.0.0/8"] });
     try {
       for (let index = 0; index < 5; index += 1) {
-        const response = await createGuest(app, "198.51.100.7");
-        expect(response.statusCode).toBe(201);
+        const response = await createContact(app, "198.51.100.7");
+        expect(response.statusCode).toBe(422);
       }
-      const sameIdentity = await createGuest(app, "198.51.100.7");
+      const sameIdentity = await createContact(app, "198.51.100.7");
       expect(sameIdentity.statusCode).toBe(429);
 
-      const otherIdentity = await createGuest(app, "198.51.100.8");
-      expect(otherIdentity.statusCode).toBe(201);
+      const otherIdentity = await createContact(app, "198.51.100.8");
+      expect(otherIdentity.statusCode).toBe(422);
     } finally {
       await app.close();
     }

@@ -11,11 +11,7 @@ import { CSRF_COOKIE, CSRF_HEADER, SESSION_COOKIE } from "./session_cookies.js";
  * double-submit AND the paths whose abuse the per-IP rate limiter blunts.
  * One list on purpose — the two duties must never drift apart.
  */
-export const FIRST_CONTACT_PATHS = new Set([
-  "/api/setup",
-  "/api/session/login",
-  "/api/session/guest",
-]);
+export const FIRST_CONTACT_PATHS = new Set(["/api/setup", "/api/session/login"]);
 const WRITE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 declare module "fastify" {
@@ -53,7 +49,7 @@ export function principalGuard(
       throw new AppError({
         statusCode: 401,
         code: "UNAUTHORIZED",
-        message: "Owner or guest session required.",
+        message: "Owner session required.",
       });
     }
     const path = request.url.split("?")[0] ?? request.url;

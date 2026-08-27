@@ -2,7 +2,7 @@ import { act, type FormEvent, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { Project, Session, StudioDocument } from '@/app/types/studio';
+import type { Project, StudioDocument } from '@/app/types/studio';
 
 import { StudioInspector } from './StudioInspector';
 import { StudioNavigator } from './StudioNavigator';
@@ -216,16 +216,8 @@ describe('Studio split components', () => {
 
   it('keeps topbar navigation focused on returning to the project library', () => {
     const back = vi.fn();
-    const guestSession: Session = {
-      session_id: 'session-1',
-      kind: 'guest',
-      owner_id: null,
-      expires_at: '2026-06-16T12:00:00Z',
-    };
 
-    const container = render(
-      <StudioTopbar project={baseProject} session={guestSession} onBack={back} />,
-    );
+    const container = render(<StudioTopbar project={baseProject} onBack={back} />);
 
     expect(container.textContent).toContain('Clockwork Harbor');
     click(container.querySelector('button[aria-label="Back to projects"]'));

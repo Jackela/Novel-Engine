@@ -32,7 +32,7 @@ const principalResponseSchema = {
   type: "object",
   properties: {
     session_id: { type: "string" },
-    kind: { type: "string", enum: ["owner", "guest"] },
+    kind: { type: "string", enum: ["owner"] },
     owner_id: { type: "string", nullable: true },
     expires_at: { type: "string", nullable: true },
   },
@@ -62,14 +62,14 @@ function respondWithSession(
   issued: IssuedSession,
   environment: string,
 ): ReturnType<typeof principalPayload> {
-  issueSessionCookies(reply, issued.token, issued.csrfToken, issued.principal.kind, environment);
+  issueSessionCookies(reply, issued.token, issued.csrfToken, environment);
   return principalPayload(issued.principal);
 }
 
 /**
  * The auth and session spine: owner setup with same-origin validation and the
- * password policy, constant-time login, guest sandboxes, session probe and
- * logout, plus per-IP rate limiting of the unauthenticated endpoints.
+ * password policy, constant-time login, the session probe and logout, plus
+ * per-IP rate limiting of the unauthenticated endpoints.
  */
 export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, options) => {
   const guard = principalGuard(options.authService);
@@ -153,16 +153,6 @@ export const authRoutes: FastifyPluginAsync<AuthRoutesOptions> = async (app, opt
     async (request, reply) => {
       const body = request.body as { username: string; password: string };
       const issued = await requireService(options).createOwnerSession(body.username, body.password);
-      return respondWithSession(reply, issued, options.environment);
-    },
-  );
-
-  app.post(
-    "/api/session/guest",
-    { schema: { response: { 201: principalResponseSchema } } },
-    async (_request, reply) => {
-      const issued = requireService(options).createGuestSession();
-      reply.status(201);
       return respondWithSession(reply, issued, options.environment);
     },
   );

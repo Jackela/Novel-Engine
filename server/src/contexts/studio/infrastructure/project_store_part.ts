@@ -41,7 +41,6 @@ export class ProjectStorePart {
       const project: typeof projects.$inferInsert = {
         id: randomUUID(),
         ownerId: scope.ownerId,
-        guestSessionId: scope.guestSessionId,
         title: input.title,
         description: input.description,
         settingsJson: input.settingsJson,
@@ -135,7 +134,6 @@ export class ProjectStorePart {
       const project: typeof projects.$inferInsert = {
         id: randomUUID(),
         ownerId: scope.ownerId,
-        guestSessionId: scope.guestSessionId,
         title: input.title,
         description: input.description,
         settingsJson: input.settingsJson,

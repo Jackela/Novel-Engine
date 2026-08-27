@@ -83,7 +83,7 @@ test('owner setup, editing, AI proposal accept, search, and deep links', async (
   await expect(editor).toContainText('Chapter 1');
 });
 
-test('guest entry issues novel_engine cookies and renders the real error envelope', async ({
+test('owner login issues novel_engine cookies and the editor renders the real error envelope', async ({
   browser,
 }) => {
   test.setTimeout(120_000);
@@ -91,18 +91,20 @@ test('guest entry issues novel_engine cookies and renders the real error envelop
   const first = await context.newPage();
 
   // The owner from the previous test is configured: the login form renders
-  // and the guest entry stays available (spec: guest entry in every state).
+  // (username prefilled, current-password autocomplete).
   await first.goto('/');
   await expect(first.getByRole('heading', { name: 'Open your writing studio' })).toBeVisible();
+  await expect(first.getByLabel('Username')).toHaveValue('author');
   await expect(first.locator('input[type="password"]')).toHaveAttribute(
     'autocomplete',
     'current-password',
   );
-  await first.getByRole('button', { name: /24-hour guest studio/i }).click();
+  await first.getByLabel('Password').fill(OWNER_PASSWORD);
+  await first.getByRole('button', { name: 'Sign in' }).click();
   await expect(first).toHaveURL(/\/projects$/);
 
   // Cookie contract: both novel_engine_* cookies exist end-to-end; every
-  // write above succeeded through the double-submit header read from
+  // write below succeeds through the double-submit header read from
   // novel_engine_csrf.
   const cookieNames = (await context.cookies()).map((cookie) => cookie.name);
   expect(cookieNames).toContain('novel_engine_session');

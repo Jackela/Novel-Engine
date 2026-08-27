@@ -1,27 +1,25 @@
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
-import { owners, sessions } from "../../../../shared/infrastructure/db/schema.js";
+import { owners } from "../../../../shared/infrastructure/db/schema.js";
 
 /**
  * The authoring core (#266): projects, documents, and immutable revisions —
  * the single authoring authority. Mirrors the Python gold standard
- * (infrastructure/models.py): principal scoping columns, the identity and
- * revision-number unique constraints, and cascade deletes. Pointer columns
- * (current_revision_id) stay plain text exactly like the gold standard.
+ * (infrastructure/models.py): the identity and revision-number unique
+ * constraints, and cascade deletes. Pointer columns (current_revision_id)
+ * stay plain text exactly like the gold standard.
  *
- * The Python authority's single GLOBAL unique import_hash index would block
- * the same-source owner/guest imports the rewrite spec requires, so the
- * rewrite (#273) enforces idempotency per principal scope instead: one row
- * per (owner_id, import_hash) and one per (guest_session_id, import_hash).
+ * Import idempotency is per owner scope (#273): at most one row per
+ * (owner_id, import_hash). The guest scoping column and its unique index
+ * were removed with the guest principal (#311).
  */
 export const projects = sqliteTable(
   "projects",
   {
     id: text("id").primaryKey(),
-    ownerId: text("owner_id").references(() => owners.id, { onDelete: "cascade" }),
-    guestSessionId: text("guest_session_id").references(() => sessions.id, {
-      onDelete: "cascade",
-    }),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => owners.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
     settingsJson: text("settings_json").notNull().default("{}"),
@@ -29,10 +27,7 @@ export const projects = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [
-    uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash),
-    uniqueIndex("uq_project_guest_import_hash").on(table.guestSessionId, table.importHash),
-  ],
+  (table) => [uniqueIndex("uq_project_owner_import_hash").on(table.ownerId, table.importHash)],
 );
 
 export const documents = sqliteTable(

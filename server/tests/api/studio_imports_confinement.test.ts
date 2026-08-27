@@ -4,30 +4,21 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { makeLegacyWorkspace } from "../legacy_workspace_fixtures.js";
-import {
-  anonymousCall,
-  buildStudioApp,
-  call,
-  guestJar,
-  monotonicClock,
-  ownerJar,
-} from "./studio_helpers.js";
+import { anonymousCall, buildStudioApp, call, monotonicClock, ownerJar } from "./studio_helpers.js";
 
 const CONFINEMENT_MESSAGE = "Web imports must name a workspace directory under data/imports.";
 const NOT_FOUND_MESSAGE = "Import workspace not found under data/imports.";
 
 describe("web import confinement and guards", () => {
-  it("is owner-only: guests are rejected before the source is resolved", async () => {
+  it("is owner-only: unauthenticated requests are rejected before the source is resolved", async () => {
     const { app } = await buildStudioApp(monotonicClock());
     try {
-      const jar = await guestJar(app);
-      const response = await call(app, jar, "POST", "/api/imports/preview", {
+      const response = await anonymousCall(app, "POST", "/api/imports/preview", {
         source: "legacy-story",
       });
-      expect(response.statusCode, response.body).toBe(403);
+      expect(response.statusCode, response.body).toBe(401);
       const error = response.json().error;
-      expect(error.code).toBe("FORBIDDEN");
-      expect(error.message).toBe("This operation requires the local Owner.");
+      expect(error.code).toBe("UNAUTHORIZED");
     } finally {
       await app.close();
     }

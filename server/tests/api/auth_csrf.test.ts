@@ -88,9 +88,6 @@ describe("CSRF double-submit protection", () => {
   it("lets first-contact endpoints proceed without CSRF tokens", async () => {
     const { app } = await buildAuthApp();
     try {
-      const guest = await app.inject({ method: "POST", url: "/api/session/guest" });
-      expect(guest.statusCode).toBe(201);
-
       await setupOwner(app);
       const login = await app.inject({
         method: "POST",

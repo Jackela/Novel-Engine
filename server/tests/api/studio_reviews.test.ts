@@ -187,7 +187,9 @@ async function buildReviewRouteApp(): Promise<{
     authService,
     services: reviewOnlyServices(reviewService, jobHistory),
   });
-  return { app, reviewService, jobHistory, session: authService.createGuestSession() };
+  await authService.configureOwner("reviewer", "correct horse battery");
+  const session = await authService.createOwnerSession("reviewer", "correct horse battery");
+  return { app, reviewService, jobHistory, session };
 }
 
 describe("review HTTP surface", () => {
@@ -249,7 +251,7 @@ describe("review HTTP surface", () => {
 
       expect(response.statusCode).toBe(401);
       expect(response.json()).toEqual({
-        error: { code: "UNAUTHORIZED", message: "Owner or guest session required." },
+        error: { code: "UNAUTHORIZED", message: "Owner session required." },
       });
       expect(reviewService.listedProjectIds).toEqual([]);
     } finally {
