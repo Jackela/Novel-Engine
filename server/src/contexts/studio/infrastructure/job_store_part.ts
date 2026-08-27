@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, count, desc, eq, inArray, sum } from "drizzle-orm";
 
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import { jobEvents, jobs, usageEvents } from "../../../shared/infrastructure/db/schema.js";
@@ -9,6 +9,7 @@ import type {
   JobRecord,
   MarkJobOutcomeInput,
   ProjectScope,
+  ProjectUsageAggregate,
 } from "../application/ports/studio_store.js";
 import { NotFoundError } from "../domain/exceptions.js";
 import { type ProjectRow, scopedProject, type Tx } from "./db/studio_query_helpers.js";
@@ -120,6 +121,41 @@ export class JobStorePart {
           created_at: input.now,
         })
         .run();
+    });
+  }
+
+  /**
+   * The usage-ledger aggregation (#317): totals over the project's usage
+   * events plus a per-model breakdown, read inside a scoped transaction.
+   */
+  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate {
+    return this.db.transaction((tx) => {
+      scopedProject(tx, scope, projectId);
+      const rows = tx
+        .select({
+          model: usageEvents.model,
+          requests: count(),
+          promptTokens: sum(usageEvents.prompt_tokens),
+          completionTokens: sum(usageEvents.completion_tokens),
+        })
+        .from(usageEvents)
+        .where(eq(usageEvents.project_id, projectId))
+        .groupBy(usageEvents.model)
+        .orderBy(asc(usageEvents.model))
+        .all();
+      const perModel = rows.map((row) => ({
+        model: row.model,
+        requests: row.requests,
+        promptTokens: Number(row.promptTokens ?? 0),
+        completionTokens: Number(row.completionTokens ?? 0),
+      }));
+      return {
+        projectId,
+        requestCount: perModel.reduce((total, entry) => total + entry.requests, 0),
+        promptTokens: perModel.reduce((total, entry) => total + entry.promptTokens, 0),
+        completionTokens: perModel.reduce((total, entry) => total + entry.completionTokens, 0),
+        perModel,
+      };
     });
   }
 

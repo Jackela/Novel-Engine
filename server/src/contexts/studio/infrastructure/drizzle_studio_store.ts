@@ -10,6 +10,7 @@ import type {
   JobRecord,
   MarkJobOutcomeInput,
   ProjectScope,
+  ProjectUsageAggregate,
   RecordSnapshotReviewInput,
   StudioStore,
 } from "../application/ports/studio_store.js";
@@ -104,6 +105,10 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
 
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void {
     this.workflowJobs.addUsageEvent(scope, input);
+  }
+
+  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate {
+    return this.workflowJobs.aggregateProjectUsage(scope, projectId);
   }
 
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord {
