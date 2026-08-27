@@ -65,3 +65,30 @@ export const jobListResponseSchema = {
   properties: { jobs: { type: "array", items: jobResponseSchema } },
   required: ["jobs"],
 } as const;
+
+/** The project usage surface (#317): totals plus a per-model breakdown. */
+export const usageResponseSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    project_id: { type: "string" },
+    request_count: { type: "integer", minimum: 0 },
+    prompt_tokens: { type: "integer", minimum: 0 },
+    completion_tokens: { type: "integer", minimum: 0 },
+    per_model: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          model: { type: "string" },
+          requests: { type: "integer", minimum: 0 },
+          prompt_tokens: { type: "integer", minimum: 0 },
+          completion_tokens: { type: "integer", minimum: 0 },
+        },
+        required: ["model", "requests", "prompt_tokens", "completion_tokens"],
+      },
+    },
+  },
+  required: ["project_id", "request_count", "prompt_tokens", "completion_tokens", "per_model"],
+} as const;

@@ -121,6 +121,22 @@ export interface ProjectScope {
   ownerId: string;
 }
 
+/** The aggregated AI usage ledger of one project (#317). */
+export interface ProjectUsageBreakdownEntry {
+  model: string;
+  requests: number;
+  promptTokens: number;
+  completionTokens: number;
+}
+
+export interface ProjectUsageAggregate {
+  projectId: string;
+  requestCount: number;
+  promptTokens: number;
+  completionTokens: number;
+  perModel: ProjectUsageBreakdownEntry[];
+}
+
 /** Derive the store scope from the authenticated owner principal. */
 export function scopeForPrincipal(principal: Principal): ProjectScope {
   if (principal.ownerId === null) {
@@ -244,6 +260,7 @@ export interface StudioStore {
 
   addJob(scope: ProjectScope, input: AddJobInput): JobRecord;
   addUsageEvent(scope: ProjectScope, input: AddUsageEventInput): void;
+  aggregateProjectUsage(scope: ProjectScope, projectId: string): ProjectUsageAggregate;
   findJob(scope: ProjectScope, projectId: string, jobId: string): JobRecord;
   /**
    * The jobs audit trail, newest job first and each job's events newest

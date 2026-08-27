@@ -2672,6 +2672,87 @@
         }
       }
     },
+    "/api/projects/{projectId}/usage": {
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "completion_tokens": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "per_model": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "completion_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "model": {
+                            "type": "string"
+                          },
+                          "prompt_tokens": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "requests": {
+                            "minimum": 0,
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "model",
+                          "requests",
+                          "prompt_tokens",
+                          "completion_tokens"
+                        ],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "project_id": {
+                      "type": "string"
+                    },
+                    "prompt_tokens": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "request_count": {
+                      "minimum": 0,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "project_id",
+                    "request_count",
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "per_model"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/providers": {
       "get": {
         "responses": {
