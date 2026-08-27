@@ -1,9 +1,15 @@
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import {
+  type TextGenerationProvider,
+  TextGenerationProviderError,
+  type TextGenerationProviderFactory,
+} from "../../src/contexts/ai/application/ports/text_generation.js";
 import { DocumentService } from "../../src/contexts/studio/application/document_service.js";
+import type { StudioStore } from "../../src/contexts/studio/application/ports/studio_store.js";
 import { ProjectService } from "../../src/contexts/studio/application/project_service.js";
 import {
   type EditorialAssessment,
@@ -11,6 +17,7 @@ import {
 } from "../../src/contexts/studio/application/review_service.js";
 import { DrizzleStudioStore } from "../../src/contexts/studio/infrastructure/drizzle_studio_store.js";
 import { AuthService } from "../../src/shared/application/auth_service.js";
+import type { Principal } from "../../src/shared/application/ports/auth.js";
 import { DrizzleAuthStore } from "../../src/shared/infrastructure/db/auth_store.js";
 import { openStudioDatabase } from "../../src/shared/infrastructure/db/startup.js";
 
@@ -30,95 +37,177 @@ function assessmentCodes(assessment: EditorialAssessment): string[] {
   return assessment.issues.map((issue) => `${issue.severity}:${issue.code}`);
 }
 
-describe("ReviewService", () => {
-  it("evaluates frozen chapters, skips non-chapters, and lists newest assessments first", async () => {
-    const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-service-"));
-    const studio = await openStudioDatabase(directory);
+interface Harness {
+  store: StudioStore;
+  projects: ProjectService;
+  documents: DocumentService;
+  principal: Principal;
+  cleanup: () => Promise<void>;
+}
+
+async function openHarness(): Promise<Harness> {
+  const directory = await mkdtemp(join(tmpdir(), "novel-engine-review-service-"));
+  const studio = await openStudioDatabase(directory);
+  const clock = monotonicClock();
+  const store: StudioStore = new DrizzleStudioStore({
+    database: studio.db,
+    dataDirectory: directory,
+  });
+  const auth = new AuthService({
+    store: new DrizzleAuthStore(studio.db),
+    sessionSecret: "review-service-test-secret",
+    now: clock,
+  });
+  await auth.configureOwner("reviewer", "long-test-password");
+  return {
+    store,
+    projects: new ProjectService(store, clock),
+    documents: new DocumentService(store, clock),
+    principal: (await auth.createOwnerSession("reviewer", "long-test-password")).principal,
+    cleanup: async () => {
+      studio.close();
+      await rm(directory, { recursive: true, force: true });
+    },
+  };
+}
+
+/** Factory double whose generated findings the test controls. */
+function staticFactory(content: unknown): {
+  factory: TextGenerationProviderFactory;
+} {
+  const factory: TextGenerationProviderFactory = (provider) => {
+    const impl: TextGenerationProvider = {
+      generateStructured: async (task) => {
+        void task;
+        return {
+          step: "editorial_review",
+          provider,
+          model: "static-review-model",
+          rawText: JSON.stringify(content),
+          content: content as Record<string, unknown>,
+          promptTokens: null,
+          completionTokens: null,
+        };
+      },
+    };
+    return impl;
+  };
+  return { factory };
+}
+
+function failingFactory(): TextGenerationProviderFactory {
+  return () => ({
+    generateStructured: async () => {
+      throw new TextGenerationProviderError("review provider exploded");
+    },
+  });
+}
+
+describe("ReviewService (#316 provider-driven review)", () => {
+  it("persists coerced provider findings snapshot-bound and lists newest first", async () => {
+    const harness = await openHarness();
     try {
-      const clock = monotonicClock();
-      const store = new DrizzleStudioStore({ database: studio.db, dataDirectory: directory });
-      const projects = new ProjectService(store, clock);
-      const documents = new DocumentService(store, clock);
-      const auth = new AuthService({
-        store: new DrizzleAuthStore(studio.db),
-        sessionSecret: "review-service-test-secret",
-        now: clock,
-      });
-      await auth.configureOwner("reviewer", "long-test-password");
-      const principal = (await auth.createOwnerSession("reviewer", "long-test-password")).principal;
-      const reviewAssessments = new ReviewService(store, {
-        now: clock,
-        provenance: { provider: "mock", model: "deterministic-story-v1" },
-      });
-      const project = projects.newProject(principal, { title: "Frozen editorial evidence" }) as {
-        id: string;
-        documents: Array<{ id: string; current_revision_id: string }>;
-      };
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Frozen editorial evidence",
+      }) as { id: string; documents: Array<{ id: string; current_revision_id: string }> };
       const seed = project.documents[0];
       if (seed === undefined) {
         throw new Error("Project creation must provide its seed document.");
       }
-
-      documents.storeDocument(principal, project.id, seed.id, {
+      harness.documents.storeDocument(harness.principal, project.id, seed.id, {
         baseRevisionId: seed.current_revision_id,
         contentMarkdown: words(250),
       });
-      const emptyChapter = documents.newDocument(principal, project.id, {
-        kind: "chapter",
-        title: "Empty room",
-      }) as { id: string; current_revision_id: string };
-      const thinChapter = documents.newDocument(principal, project.id, {
+      const thin = harness.documents.newDocument(harness.principal, project.id, {
         kind: "chapter",
         title: "Short crossing",
         contentMarkdown: "two words",
       }) as { id: string };
-      documents.newDocument(principal, project.id, {
-        kind: "character",
-        title: "Unreviewed character",
+
+      const { factory } = staticFactory({
+        findings: [
+          {
+            document_id: thin.id,
+            severity: "warning",
+            dimension: "pacing",
+            message: "The crossing is over too fast.",
+            suggestion: "Let the scene breathe.",
+          },
+        ],
+      });
+      const reviews = new ReviewService(harness.store, {
+        now: monotonicClock(),
+        provenance: { provider: "mock", model: "deterministic-story-v1" },
+        providerFactory: factory,
       });
 
-      const first = reviewAssessments.evaluateProject(principal, project.id);
+      const first = await reviews.evaluateProject(harness.principal, project.id);
 
       expect(first.provider).toBe("mock");
-      expect(first.model).toBe("deterministic-story-v1");
-      expect(first.summary).toBe("Editorial checks completed without modifying the manuscript.");
-      expect(assessmentCodes(first)).toEqual([
-        "blocker:empty_chapter",
-        "warning:thin_chapter",
-        "warning:thin_chapter",
-      ]);
-      expect(first.issues.map((issue) => issue.documentId).sort()).toEqual(
-        [emptyChapter.id, emptyChapter.id, thinChapter.id].sort(),
-      );
-      const thinFinding = first.issues.find(
-        (issue) => issue.documentId === thinChapter.id && issue.code === "thin_chapter",
-      );
-      if (thinFinding === undefined) {
-        throw new Error("The persisted assessment must retain the thin-chapter finding.");
-      }
-      expect(thinFinding.evidence).toEqual({ word_count: 2 });
+      expect(first.model).toBe("static-review-model");
+      expect(assessmentCodes(first)).toEqual(["warning:pacing"]);
+      expect(first.issues[0]?.documentId).toBe(thin.id);
 
-      documents.storeDocument(principal, project.id, emptyChapter.id, {
-        baseRevisionId: emptyChapter.current_revision_id,
-        contentMarkdown: words(250),
-      });
-      const second = reviewAssessments.evaluateProject(principal, project.id);
-      const listed = reviewAssessments.listEditorialAssessments(principal, project.id);
+      const second = await reviews.evaluateProject(harness.principal, project.id);
+      const listed = reviews.listEditorialAssessments(harness.principal, project.id);
 
       expect(listed.map((assessment) => assessment.id)).toEqual([second.id, first.id]);
-      const latest = listed[0];
-      const original = listed[1];
-      if (latest === undefined || original === undefined) {
-        throw new Error("Both persisted assessments must be listed.");
-      }
-      expect(assessmentCodes(latest)).toEqual(["warning:thin_chapter"]);
-      expect(assessmentCodes(original)).toEqual([
-        "blocker:empty_chapter",
-        "warning:thin_chapter",
-        "warning:thin_chapter",
-      ]);
+      expect(assessmentCodes(listed[0] ?? second)).toEqual(["warning:pacing"]);
     } finally {
-      studio.close();
+      await harness.cleanup();
+    }
+  });
+
+  it("drops findings outside the closed dimension set instead of persisting them", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Closed vocabulary",
+      }) as { id: string };
+      const { factory } = staticFactory({
+        findings: [
+          {
+            document_id: "ghost",
+            severity: "blocker",
+            dimension: "vibes",
+            message: "fabricated",
+          },
+        ],
+      });
+      const reviews = new ReviewService(harness.store, {
+        now: monotonicClock(),
+        providerFactory: factory,
+      });
+
+      const assessment = await reviews.evaluateProject(harness.principal, project.id);
+      expect(assessment.issues).toEqual([]);
+    } finally {
+      await harness.cleanup();
+    }
+  });
+
+  it("propagates provider failures so the terminal job records them, without findings", async () => {
+    const harness = await openHarness();
+    try {
+      const project = harness.projects.newProject(harness.principal, {
+        title: "Provider failure",
+      }) as { id: string };
+      const reviews = new ReviewService(harness.store, {
+        now: monotonicClock(),
+        providerFactory: failingFactory(),
+      });
+
+      const failure = await reviews.evaluateProject(harness.principal, project.id).then(
+        () => null,
+        (error: unknown) => error,
+      );
+      expect(failure).toBeInstanceOf(TextGenerationProviderError);
+      expect((failure as TextGenerationProviderError).message).toContain(
+        "review provider exploded",
+      );
+      expect(reviews.listEditorialAssessments(harness.principal, project.id)).toEqual([]);
+    } finally {
+      await harness.cleanup();
     }
   });
 });

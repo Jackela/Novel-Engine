@@ -230,12 +230,12 @@ export class JobRetryExecutor {
     return { proposal };
   }
 
-  private reexecuteReviewJob(
+  private async reexecuteReviewJob(
     principal: Principal,
     scope: ProjectScope,
     retry: JobRecord,
-  ): Record<string, unknown> {
-    const assessment = this.reviews.evaluateProject(principal, retry.projectId);
+  ): Promise<Record<string, unknown>> {
+    const assessment = await this.reviews.evaluateProject(principal, retry.projectId);
     return jobPayload(
       this.store.markJobOutcome(scope, retry.projectId, retry.id, {
         status: "completed",

@@ -159,12 +159,16 @@ describe("ExportStorePart", () => {
           .map((document) => document.documentId),
       ).toEqual([firstChapter.id, secondChapter.id]);
 
+      const captured = harness.store.captureReviewSnapshot(harness.scope, projectId, {
+        now: harness.clock(),
+      });
       harness.store.recordSnapshotReview(harness.scope, projectId, {
+        snapshotId: captured.snapshotId,
         provider: "mock",
         model: "deterministic-story-v1",
         summary: "review only",
         now: harness.clock(),
-        evaluator: () => [],
+        issues: [],
       });
       const second = snapshot(harness.scope, projectId, harness.clock(), harness.exportStore);
 

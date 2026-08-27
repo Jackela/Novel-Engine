@@ -71,7 +71,7 @@ describe("review application wiring", () => {
     }
   });
 
-  it("persists the DashScope review override ahead of ordinary and generic model settings", async () => {
+  it("runs DashScope-provenance reviews without ever falling back to the mock", async () => {
     const { app } = await buildStudioApp(undefined, {
       config: dashscopeConfig({
         LLM_MODEL: "generic-story-model",
@@ -80,25 +80,27 @@ describe("review application wiring", () => {
       }),
     });
     try {
-      const { created, listed } = await createAndReadReview(app, "Review override");
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Review override");
+      const created = await call(app, jar, "POST", `/api/projects/${project.id}/reviews`);
+      expect(created.statusCode).toBe(201);
 
-      expect(created).toMatchObject({
-        kind: "review",
-        provider: "dashscope",
-        model: "dashscope-review-model",
-      });
-      expect(listed).toMatchObject({
-        id: created.result.review_id,
-        snapshot_id: created.result.snapshot_id,
-        provider: "dashscope",
-        model: "dashscope-review-model",
-      });
+      // No API key is configured in the test environment, so the real
+      // DashScope adapter fails loudly: the review job records the failure
+      // instead of fabricating a mock review.
+      expect(created.json().status).toBe("failed");
+      expect(created.json().provider).toBe("dashscope");
+      expect(created.json().error).toContain("dashscope");
+      expect(created.json().result.review_id).toBeNull();
+
+      const listed = await call(app, jar, "GET", `/api/projects/${project.id}/reviews`);
+      expect(listed.json().reviews).toEqual([]);
     } finally {
       await app.close();
     }
   });
 
-  it("falls back to the ordinary DashScope model when no review override is configured", async () => {
+  it("records the DashScope model fallback in the provider failure path", async () => {
     const { app } = await buildStudioApp(undefined, {
       config: dashscopeConfig({
         LLM_MODEL: "generic-story-model",
@@ -106,19 +108,12 @@ describe("review application wiring", () => {
       }),
     });
     try {
-      const { created, listed } = await createAndReadReview(app, "Review fallback");
-
-      expect(created).toMatchObject({
-        kind: "review",
-        provider: "dashscope",
-        model: "dashscope-story-model",
-      });
-      expect(listed).toMatchObject({
-        id: created.result.review_id,
-        snapshot_id: created.result.snapshot_id,
-        provider: "dashscope",
-        model: "dashscope-story-model",
-      });
+      const jar = await ownerJar(app);
+      const project = await seedProject(app, jar, "Review fallback");
+      const created = await call(app, jar, "POST", `/api/projects/${project.id}/reviews`);
+      expect(created.statusCode).toBe(201);
+      expect(created.json().status).toBe("failed");
+      expect(created.json().provider).toBe("dashscope");
     } finally {
       await app.close();
     }

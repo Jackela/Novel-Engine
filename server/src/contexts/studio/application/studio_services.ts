@@ -47,7 +47,11 @@ export function createStudioServices(
   // operations (#305) across the proposal and export/retry surfaces.
   const inFlight = new InFlightOperationGuard();
   const documents = new DocumentService(store, now);
-  const reviewAssessments = new ReviewService(store, { now, provenance: options.reviewProvenance });
+  const reviewAssessments = new ReviewService(store, {
+    now,
+    provenance: options.reviewProvenance,
+    providerFactory: options.providerFactory,
+  });
   const artifacts = new SnapshotArtifactService(
     options.artifactStore,
     store,

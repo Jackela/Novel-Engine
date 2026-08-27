@@ -4,6 +4,7 @@ import type {
   AddJobInput,
   AddUsageEventInput,
   AdvanceDocumentInput,
+  CaptureReviewSnapshotInput,
   DocumentMatchRecord,
   DocumentWithCurrent,
   EditorialAssessmentRecord,
@@ -11,6 +12,7 @@ import type {
   MarkJobOutcomeInput,
   ProjectScope,
   RecordSnapshotReviewInput,
+  ReviewSnapshotDocument,
   StudioStore,
 } from "../application/ports/studio_store.js";
 import { DocumentStorePart } from "./document_store_part.js";
@@ -131,6 +133,14 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     now: Date,
   ): JobRecord {
     return this.workflowJobs.setJobResult(scope, projectId, jobId, resultJson, now);
+  }
+
+  captureReviewSnapshot(
+    scope: ProjectScope,
+    projectId: string,
+    input: CaptureReviewSnapshotInput,
+  ): { snapshotId: string; documents: ReviewSnapshotDocument[] } {
+    return this.editorialReviews.captureReviewSnapshot(scope, projectId, input);
   }
 
   recordSnapshotReview(
