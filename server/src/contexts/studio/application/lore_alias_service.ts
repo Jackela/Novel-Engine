@@ -19,13 +19,13 @@ export class LoreAliasService {
   }
 
   /** The stored alias list of one document, normalized defensively on read. */
-  documentAliases(principal: Principal, projectId: string, documentId: string): string[] {
+  listDocumentLoreAliases(principal: Principal, projectId: string, documentId: string): string[] {
     const document = this.store.findDocument(scopeForPrincipal(principal), projectId, documentId);
     return normalizeLoreAliases(parseLoreAliases(document.loreAliasesJson));
   }
 
   /** Replace the alias list; no revision is minted and content stays untouched. */
-  setDocumentAliases(
+  overwriteDocumentAliases(
     principal: Principal,
     projectId: string,
     documentId: string,

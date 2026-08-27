@@ -23,7 +23,7 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, o
         documentId: string;
       };
       return withStudioErrors(() => ({
-        aliases: requireServices(options).lore.documentAliases(
+        aliases: requireServices(options).lore.listDocumentLoreAliases(
           principal(request),
           projectId,
           documentId,
@@ -45,7 +45,7 @@ export const loreRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, o
       };
       const body = request.body as { aliases: string[] };
       return withStudioErrors(() =>
-        requireServices(options).lore.setDocumentAliases(
+        requireServices(options).lore.overwriteDocumentAliases(
           principal(request),
           projectId,
           documentId,
