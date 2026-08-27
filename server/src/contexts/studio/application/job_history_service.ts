@@ -1,3 +1,4 @@
+import { TextGenerationProviderError } from "../../../contexts/ai/application/ports/text_generation.js";
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import type { SnapshotArtifactService } from "./export_artifact_service.js";
 import { JobRetryExecutor, type JobRetryExecutorOptions } from "./job_retry_executor.js";
@@ -62,24 +63,54 @@ export class JobHistoryService {
   }
 
   /** The terminal-Job bridge over a fresh editorial assessment. */
-  recordReviewJob(principal: Principal, projectId: string): Record<string, unknown> {
+  async recordReviewJob(
+    principal: Principal,
+    projectId: string,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<Record<string, unknown>> {
     const scope = scopeForPrincipal(principal);
-    const assessment = this.reviews.evaluateProject(principal, projectId);
-    const job = this.store.addJob(scope, {
-      projectId,
-      documentId: null,
-      kind: "review",
-      operation: "review",
-      status: "completed",
-      provider: assessment.provider,
-      model: assessment.model,
-      requestJson: dumpJson({}),
-      resultJson: reviewJobResultJson(assessment),
-      error: null,
-      eventDetailsJson: dumpJson({ review_id: assessment.id }),
-      now: this.now(),
-    });
-    return jobPayload(job);
+    try {
+      const assessment = await this.reviews.evaluateProject(
+        principal,
+        projectId,
+        reportCleanupFailure,
+      );
+      const job = this.store.addJob(scope, {
+        projectId,
+        documentId: null,
+        kind: "review",
+        operation: "review",
+        status: "completed",
+        provider: assessment.provider,
+        model: assessment.model,
+        requestJson: dumpJson({}),
+        resultJson: reviewJobResultJson(assessment),
+        error: null,
+        eventDetailsJson: dumpJson({ review_id: assessment.id }),
+        now: this.now(),
+      });
+      return jobPayload(job);
+    } catch (error) {
+      if (!(error instanceof TextGenerationProviderError)) {
+        throw error;
+      }
+      return jobPayload(
+        this.store.addJob(scope, {
+          projectId,
+          documentId: null,
+          kind: "review",
+          operation: "review",
+          status: "failed",
+          provider: this.reviews.providerName,
+          model: "",
+          requestJson: dumpJson({}),
+          resultJson: dumpJson({ review_id: null, snapshot_id: null, summary: "", issues: [] }),
+          error: error.message,
+          eventDetailsJson: dumpJson({ error: error.message }),
+          now: this.now(),
+        }),
+      );
+    }
   }
 
   /** The terminal-Job bridge over a materialized export artifact (#271). */

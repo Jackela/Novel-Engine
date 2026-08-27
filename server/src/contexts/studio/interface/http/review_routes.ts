@@ -29,6 +29,17 @@ function reviewPayload(assessment: EditorialAssessment) {
   };
 }
 
+/** `withStudioErrors` is synchronous; review generation runs asynchronously. */
+async function withOutcomeErrors<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    return withStudioErrors<T>(() => {
+      throw error;
+    });
+  }
+}
+
 /** Snapshot-bound editorial assessments, with server-owned provider provenance. */
 export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
   const guard = principalGuard(options.authService);
@@ -76,7 +87,7 @@ export const reviewRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app,
     },
     async (request, reply) => {
       const { projectId } = request.params as { projectId: string };
-      const payload = withStudioErrors(() =>
+      const payload = await withOutcomeErrors(() =>
         requireServices(options).jobHistory.recordReviewJob(principal(request), projectId),
       );
       reply.status(201);

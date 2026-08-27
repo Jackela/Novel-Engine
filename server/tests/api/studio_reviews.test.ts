@@ -87,8 +87,13 @@ class ReviewServiceDouble {
   readonly evaluatedProjectIds: string[] = [];
   readonly listedProjectIds: string[] = [];
 
-  evaluateProject(_principal: unknown, projectId: string): EditorialAssessment {
+  async evaluateProject(
+    _principal: unknown,
+    projectId: string,
+    reportCleanupFailure?: (failure: unknown) => void,
+  ): Promise<EditorialAssessment> {
     this.evaluatedProjectIds.push(projectId);
+    void reportCleanupFailure;
     return assessmentFor(projectId);
   }
 

@@ -101,11 +101,65 @@ function buildChapterRevision(task: TextGenerationTask): string {
 }
 
 /**
- * The deterministic (mock) provider: real prose for the chapter steps so the
- * offline default experience yields manuscripts, never machine residue. Any
+ * Deterministic editorial findings for the review step. The studio layer
+ * hands over an annotated chapter manifest (ids, word counts, and the thin
+ * threshold) so this provider stays inside the ai leaf: an empty chapter is
+ * a continuity blocker, a chapter under the handed threshold a pacing
+ * warning.
+ */
+function buildEditorialReview(task: TextGenerationTask): {
+  findings: Array<{
+    document_id: string;
+    severity: "blocker" | "warning";
+    dimension: "continuity" | "pacing";
+    message: string;
+    suggestion: string;
+  }>;
+} {
+  const documents = Array.isArray(task.metadata.documents) ? task.metadata.documents : [];
+  const findings: ReturnType<typeof buildEditorialReview>["findings"] = [];
+  for (const entry of documents) {
+    const chapter = entry as {
+      id?: unknown;
+      title?: unknown;
+      words?: unknown;
+      empty?: unknown;
+      thin_below?: unknown;
+    };
+    if (
+      typeof chapter.id !== "string" ||
+      typeof chapter.words !== "number" ||
+      typeof chapter.thin_below !== "number"
+    ) {
+      continue;
+    }
+    if (chapter.empty === true) {
+      findings.push({
+        document_id: chapter.id,
+        severity: "blocker",
+        dimension: "continuity",
+        message: `${String(chapter.title ?? "Untitled chapter")} has no manuscript content.`,
+        suggestion: "Draft the chapter before asking for an editorial pass.",
+      });
+    } else if (chapter.words < chapter.thin_below) {
+      findings.push({
+        document_id: chapter.id,
+        severity: "warning",
+        dimension: "pacing",
+        message: `${String(chapter.title ?? "Untitled chapter")} contains only ${chapter.words} words.`,
+        suggestion: "Develop the scene turn, consequence, and sensory detail.",
+      });
+    }
+  }
+  return { findings };
+}
+
+/**
+ * The deterministic (mock) provider: real prose for the chapter steps and
+ * deterministic dimensioned findings for the review step, so the offline
+ * default experience yields manuscripts and reviews without network. Any
  * step outside its supported set fails with a provider error — an unknown
- * step is never echoed back as a placeholder payload. The editorial review
- * payload grows with the review workflow.
+ * step is never echoed back as a placeholder payload.
  */
 export class DeterministicStoryProvider implements TextGenerationProvider {
   private readonly providerName: TextProviderName;
@@ -118,6 +172,19 @@ export class DeterministicStoryProvider implements TextGenerationProvider {
 
   async generateStructured(task: TextGenerationTask): Promise<TextGenerationResult> {
     const step = task.step.trim().toLowerCase();
+    if (step === "editorial_review") {
+      const findings = buildEditorialReview(task);
+      const rawText = JSON.stringify(findings);
+      return {
+        step: task.step,
+        provider: this.providerName,
+        model: this.model,
+        rawText,
+        content: findings,
+        promptTokens: null,
+        completionTokens: null,
+      };
+    }
     let markdown: string;
     if (step === "chapter_draft") {
       markdown = buildChapterDraft(task);

@@ -103,14 +103,17 @@ export interface EditorialAssessmentRecord {
   issues: EditorialIssueRecord[];
 }
 
+export interface CaptureReviewSnapshotInput {
+  now: Date;
+}
+
 export interface RecordSnapshotReviewInput {
+  snapshotId: string;
   provider: string;
   model: string;
   summary: string;
   now: Date;
-  evaluator: (
-    documents: readonly Readonly<ReviewSnapshotDocument>[],
-  ) => readonly EditorialIssueInput[];
+  issues: readonly EditorialIssueInput[];
 }
 
 /**
@@ -284,8 +287,15 @@ export interface StudioStore {
 
   /**
    * Freeze current document content before evaluating it; review history can
-   * therefore never be rewritten by later author edits.
+   * therefore never be rewritten by later author edits. The capture commits
+   * on its own so the (asynchronous) evaluation can run against immutable
+   * rows before the review record is persisted.
    */
+  captureReviewSnapshot(
+    scope: ProjectScope,
+    projectId: string,
+    input: CaptureReviewSnapshotInput,
+  ): { snapshotId: string; documents: ReviewSnapshotDocument[] };
   recordSnapshotReview(
     scope: ProjectScope,
     projectId: string,

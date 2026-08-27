@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import type { StudioSqliteDatabase } from "../../../shared/infrastructure/db/connection.js";
 import type {
+  CaptureReviewSnapshotInput,
   EditorialAssessmentRecord,
   EditorialIssueInput,
   EditorialIssueRecord,
@@ -35,6 +36,21 @@ export class ReviewStorePart {
     this.db = db;
   }
 
+  captureReviewSnapshot(
+    scope: ProjectScope,
+    projectId: string,
+    input: CaptureReviewSnapshotInput,
+  ): { snapshotId: string; documents: ReviewSnapshotDocument[] } {
+    return this.db.transaction((tx) => {
+      const project = scopedProject(tx, scope, projectId);
+      const snapshotId = randomUUID();
+      tx.insert(projectSnapshots)
+        .values({ id: snapshotId, projectId: project.id, reason: "review", createdAt: input.now })
+        .run();
+      return { snapshotId, documents: captureReviewSnapshot(tx, project.id, snapshotId) };
+    });
+  }
+
   recordSnapshotReview(
     scope: ProjectScope,
     projectId: string,
@@ -42,23 +58,31 @@ export class ReviewStorePart {
   ): EditorialAssessmentRecord {
     return this.db.transaction((tx) => {
       const project = scopedProject(tx, scope, projectId);
-      const snapshotId = randomUUID();
-      tx.insert(projectSnapshots)
-        .values({ id: snapshotId, projectId: project.id, reason: "review", createdAt: input.now })
-        .run();
-      const captured = captureReviewSnapshot(tx, project.id, snapshotId);
-      const findings = input.evaluator(captured);
+      const [snapshot] = tx
+        .select({ id: projectSnapshots.id })
+        .from(projectSnapshots)
+        .where(
+          and(
+            eq(projectSnapshots.id, input.snapshotId),
+            eq(projectSnapshots.projectId, project.id),
+          ),
+        )
+        .all();
+      if (snapshot === undefined) {
+        throw new InvalidOperationError("Review snapshot does not belong to this project.");
+      }
+      const captured = loadSnapshotDocuments(tx, input.snapshotId);
       const review: ReviewRow = {
         id: randomUUID(),
         projectId: project.id,
-        snapshotId,
+        snapshotId: input.snapshotId,
         provider: input.provider,
         model: input.model,
         summary: input.summary,
         createdAt: input.now,
       };
       tx.insert(reviews).values(review).run();
-      const issues = persistFindings(tx, review.id, findings, captured);
+      const issues = persistFindings(tx, review.id, input.issues, captured);
       return toEditorialAssessment(review, issues);
     });
   }
@@ -116,6 +140,29 @@ function captureReviewSnapshot(
   });
 }
 
+function loadSnapshotDocuments(tx: Tx, snapshotId: string): ReviewSnapshotDocument[] {
+  const rows = tx
+    .select({
+      snapshotDocument: snapshotDocuments,
+      revision: documentRevisions,
+    })
+    .from(snapshotDocuments)
+    .innerJoin(documentRevisions, eq(snapshotDocuments.revisionId, documentRevisions.id))
+    .where(eq(snapshotDocuments.snapshotId, snapshotId))
+    .orderBy(asc(snapshotDocuments.position), asc(snapshotDocuments.id))
+    .all();
+  return rows.map(({ snapshotDocument, revision }) => ({
+    documentId: snapshotDocument.documentId,
+    snapshotDocumentId: snapshotDocument.id,
+    revisionId: snapshotDocument.revisionId,
+    kind: snapshotDocument.documentKind,
+    title: snapshotDocument.documentTitle,
+    contentMarkdown: revision.contentMarkdown,
+    metadataJson: snapshotDocument.revisionMetadataJson,
+    position: snapshotDocument.position,
+  }));
+}
+
 function persistFindings(
   tx: Tx,
   reviewId: string,
@@ -146,17 +193,47 @@ function persistFindings(
   if (rows.length > 0) {
     tx.insert(reviewIssues).values(rows).run();
   }
-  return rows.map(toEditorialIssue).sort(compareEditorialIssues);
+  const positionByDocument = new Map(
+    captured.map((document) => [document.documentId, document.position]),
+  );
+  return rows
+    .map(toEditorialIssue)
+    .sort(
+      (left, right) =>
+        left.severity.localeCompare(right.severity) ||
+        left.code.localeCompare(right.code) ||
+        (positionByDocument.get(left.documentId) ?? 0) -
+          (positionByDocument.get(right.documentId) ?? 0),
+    );
 }
 
 function findReviewIssues(tx: Tx, reviewId: string): EditorialIssueRecord[] {
+  const captured = loadSnapshotDocumentsByReview(tx, reviewId);
+  const positionByDocument = new Map(
+    captured.map((document) => [document.documentId, document.position]),
+  );
   return tx
     .select()
     .from(reviewIssues)
     .where(eq(reviewIssues.reviewId, reviewId))
-    .orderBy(asc(reviewIssues.severity), asc(reviewIssues.code), asc(reviewIssues.id))
     .all()
-    .map(toEditorialIssue);
+    .map(toEditorialIssue)
+    .sort(
+      (left, right) =>
+        left.severity.localeCompare(right.severity) ||
+        left.code.localeCompare(right.code) ||
+        (positionByDocument.get(left.documentId) ?? 0) -
+          (positionByDocument.get(right.documentId) ?? 0),
+    );
+}
+
+/** Snapshot documents of one review, reloaded for read-path ordering. */
+function loadSnapshotDocumentsByReview(tx: Tx, reviewId: string): ReviewSnapshotDocument[] {
+  const [review] = tx.select().from(reviews).where(eq(reviews.id, reviewId)).all();
+  if (review === undefined) {
+    return [];
+  }
+  return loadSnapshotDocuments(tx, review.snapshotId);
 }
 
 function toEditorialAssessment(
@@ -206,12 +283,4 @@ function parseEvidence(serialized: string): Record<string, unknown> {
     throw new InvalidOperationError("Review issue evidence must be an object.");
   }
   return evidence as Record<string, unknown>;
-}
-
-function compareEditorialIssues(left: EditorialIssueRecord, right: EditorialIssueRecord): number {
-  return (
-    left.severity.localeCompare(right.severity) ||
-    left.code.localeCompare(right.code) ||
-    left.id.localeCompare(right.id)
-  );
 }
