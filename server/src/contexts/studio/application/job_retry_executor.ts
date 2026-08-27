@@ -24,13 +24,9 @@ import {
   resolvedTokenCount,
   SYSTEM_PROMPT,
 } from "./proposal_service.js";
+import { buildProposalUserPrompt, collectResidentContextSource } from "./resident_context.js";
 import type { ReviewService } from "./review_service.js";
-import {
-  formatAuthorInstruction,
-  formatUntrustedManuscript,
-  isProposalMarkdownProse,
-  sanitizeProposalMarkdown,
-} from "./sanitization.js";
+import { isProposalMarkdownProse, sanitizeProposalMarkdown } from "./sanitization.js";
 
 const RETRYABLE_STATUSES = new Set(["failed", "interrupted"]);
 
@@ -155,14 +151,14 @@ export class JobRetryExecutor {
       const result = await provider.generateStructured({
         step,
         systemPrompt: SYSTEM_PROMPT,
-        userPrompt: [
-          `Operation: ${retry.operation}`,
-          formatAuthorInstruction(instruction),
-          "",
-          "Current manuscript (untrusted JSON data):",
-          "",
-          formatUntrustedManuscript(revision.contentMarkdown),
-        ].join("\n"),
+        // A retried generation is a proposal generation too (#314): it assembles
+        // the same resident context instead of the amnesiac historical shape.
+        userPrompt: buildProposalUserPrompt({
+          operation: retry.operation,
+          instruction,
+          source: collectResidentContextSource(this.store, scope, retry.projectId, document),
+          manuscriptMarkdown: revision.contentMarkdown,
+        }),
         responseSchema: { chapter_markdown: { type: "string" } },
         metadata: {
           operation: retry.operation,
