@@ -16,6 +16,8 @@ import { useStudioProject } from './useStudioProject';
 import { useStudioProposal } from './useStudioProposal';
 import { useStudioProviders } from './useStudioProviders';
 import { useStudioSearch } from './useStudioSearch';
+import { wholeBookPlan } from './wholeBookPlan';
+import { useWholeBookLoop } from './useWholeBookLoop';
 
 type StudioViewProps = ComponentProps<typeof StudioPageView>;
 
@@ -88,6 +90,15 @@ export function useStudioPageModel(
     projectId,
     setError,
   );
+  // #318 whole-book loop: reuses the copilot accept refresh path so the
+  // editor cache resets whenever the loop accepts the active document.
+  const wholeBookLoop = useWholeBookLoop({
+    projectId,
+    provider: String(project?.settings.provider ?? 'mock'),
+    setProject,
+    loadJobs,
+    onAccepted: onProposalAccepted,
+  });
   const providers = useStudioProviders();
   const { exportProject, exportingFormat, failedFormat } = useExportDownload(
     project,
@@ -157,6 +168,12 @@ export function useStudioPageModel(
           moveDocument,
           isCreatingDocument,
           isMovingDocument,
+          wholeBook: {
+            phase: wholeBookLoop.phase,
+            remaining: wholeBookPlan(project).length,
+            onStart: () => void wholeBookLoop.start(wholeBookPlan(project)),
+            onStop: () => wholeBookLoop.stop(),
+          },
         },
         navigate,
       ),

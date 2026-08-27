@@ -458,6 +458,38 @@ svg {
   color: #4f595a;
   margin-top: 3px;
 }
+.whole-book {
+  margin: 6px 12px 2px;
+  padding: 10px;
+  border: 1px solid #dfe2e3;
+  border-radius: 5px;
+  background: var(--surface);
+  display: grid;
+  gap: 8px;
+}
+.whole-book__hint {
+  font-size: 11px;
+  color: #4f595a;
+}
+.whole-book__status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--teal-strong);
+}
+.whole-book__stop {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.whole-book__stop:hover {
+  border-color: var(--danger);
+}
+.whole-book__outcome {
+  font-size: 12px;
+  color: var(--teal-strong);
+}
+.whole-book__failure {
+  font-size: 12px;
+}
 .document-tree {
   padding: 3px 8px 30px;
 }
