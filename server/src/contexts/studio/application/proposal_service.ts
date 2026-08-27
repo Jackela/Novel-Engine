@@ -9,13 +9,16 @@ import {
 import type { Principal } from "../../../shared/application/ports/auth.js";
 import { InvalidOperationError } from "../../../shared/domain/exceptions.js";
 import { NotFoundError } from "../domain/exceptions.js";
+import { linkedChapterBeat } from "./beat_association_service.js";
 import type { DocumentService } from "./document_service.js";
 import type { InFlightOperationGuard } from "./operation_in_flight.js";
+import type { OutlineBeat } from "./outline_beats.js";
 import { dumpJson, jobPayload, safeLoadJson, wordCount } from "./payloads.js";
 import type { StudioStore } from "./ports/studio_store.js";
 import { scopeForPrincipal } from "./ports/studio_store.js";
 import {
   formatAuthorInstruction,
+  formatTrustedOutlineBeat,
   formatUntrustedManuscript,
   isProposalMarkdownProse,
   sanitizeProposalMarkdown,
@@ -43,6 +46,34 @@ export const INVALID_PROPOSAL_PROSE = "Generated proposal content is not valid s
 
 export function resolvedTokenCount(reported: number | null, text: string): number {
   return reported ?? wordCount(text);
+}
+
+/**
+ * The proposal user prompt (#313): for a chapter linked to an outline beat,
+ * that beat rides ahead of the manuscript as clearly labeled trusted author
+ * context; unlinked documents keep the historical shape with no beat section.
+ */
+function buildProposalUserPrompt(
+  input: ProposalDraftInput,
+  linkedBeat: OutlineBeat | null,
+  manuscriptMarkdown: string,
+): string {
+  const lines = [`Operation: ${input.operation}`, formatAuthorInstruction(input.instruction)];
+  if (linkedBeat !== null) {
+    lines.push(
+      "",
+      "Outline beat (the outline section this chapter fulfills, authored by the writer):",
+      "",
+      formatTrustedOutlineBeat(linkedBeat),
+    );
+  }
+  lines.push(
+    "",
+    "Current manuscript (untrusted JSON data):",
+    "",
+    formatUntrustedManuscript(manuscriptMarkdown),
+  );
+  return lines.join("\n");
 }
 
 type ProviderCleanupFailureReporter = (failure: unknown) => void;
@@ -158,14 +189,11 @@ export class AiProposalService {
       const result = await provider.generateStructured({
         step,
         systemPrompt: SYSTEM_PROMPT,
-        userPrompt: [
-          `Operation: ${input.operation}`,
-          formatAuthorInstruction(input.instruction),
-          "",
-          "Current manuscript (untrusted JSON data):",
-          "",
-          formatUntrustedManuscript(revision.contentMarkdown),
-        ].join("\n"),
+        userPrompt: buildProposalUserPrompt(
+          input,
+          linkedChapterBeat(this.store, scope, projectId, document),
+          revision.contentMarkdown,
+        ),
         responseSchema: { chapter_markdown: { type: "string" } },
         metadata: {
           operation: input.operation,

@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 
+import { beatRoutes } from "./beat_routes.js";
 import { documentRoutes } from "./document_routes.js";
 import { exportRoutes } from "./export_routes.js";
 import { importRoutes } from "./import_routes.js";
@@ -13,6 +14,7 @@ import { volumeRoutes } from "./volume_routes.js";
 export const studioRoutes: FastifyPluginAsync<StudioRoutesOptions> = async (app, options) => {
   await app.register(projectRoutes, options);
   await app.register(documentRoutes, options);
+  await app.register(beatRoutes, options);
   await app.register(volumeRoutes, options);
   await app.register(proposalRoutes, options);
   await app.register(reviewRoutes, options);

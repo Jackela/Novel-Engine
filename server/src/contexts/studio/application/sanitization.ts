@@ -42,6 +42,8 @@ export const AUTHOR_INSTRUCTION_BEGIN = "[BEGIN AUTHOR INSTRUCTION]";
 export const AUTHOR_INSTRUCTION_END = "[END AUTHOR INSTRUCTION]";
 export const UNTRUSTED_MANUSCRIPT_BEGIN = "[BEGIN UNTRUSTED MANUSCRIPT JSON]";
 export const UNTRUSTED_MANUSCRIPT_END = "[END UNTRUSTED MANUSCRIPT JSON]";
+export const OUTLINE_BEAT_BEGIN = "[BEGIN OUTLINE BEAT]";
+export const OUTLINE_BEAT_END = "[END OUTLINE BEAT]";
 export function sanitizeInstruction(instruction: string): string {
   let cleaned = instruction.trim();
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
@@ -59,6 +61,17 @@ export function formatUntrustedManuscript(markdown: string): string {
     (bracket) => `\\u00${bracket === "[" ? "5b" : "5d"}`,
   );
   return `${UNTRUSTED_MANUSCRIPT_BEGIN}\n${payload}\n${UNTRUSTED_MANUSCRIPT_END}`;
+}
+/**
+ * The chapter's linked outline beat (#313) crosses the provider boundary as
+ * clearly labeled instruction context, never inside the untrusted manuscript
+ * JSON block: the outline is author-authored guidance for the model.
+ */
+export function formatTrustedOutlineBeat(beat: {
+  readonly title: string;
+  readonly content: string;
+}): string {
+  return `${OUTLINE_BEAT_BEGIN}\n### ${beat.title}\n${beat.content}\n${OUTLINE_BEAT_END}`;
 }
 export function sanitizeProposalMarkdown(markdown: string): string {
   const kept = String(markdown)

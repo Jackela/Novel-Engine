@@ -102,6 +102,7 @@ export const documentResponseSchema = {
     title: { type: "string" },
     position: { type: "integer" },
     volume_id: { type: "string", nullable: true },
+    beat_ref: { type: "string", nullable: true },
     current_revision_id: { type: "string" },
     content_markdown: { type: "string" },
     metadata: metadataObject,

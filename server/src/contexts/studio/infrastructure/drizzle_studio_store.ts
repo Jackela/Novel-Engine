@@ -109,6 +109,15 @@ export class DrizzleStudioStore extends ProjectStorePart implements StudioStore 
     this.documentStore.dropDocument(scope, projectId, documentId);
   }
 
+  setBeatReference(
+    scope: ProjectScope,
+    projectId: string,
+    documentId: string,
+    input: { beatRef: string | null; now: Date },
+  ): DocumentWithCurrent {
+    return this.documentStore.setBeatReference(scope, projectId, documentId, input);
+  }
+
   renumberDocuments(
     scope: ProjectScope,
     projectId: string,

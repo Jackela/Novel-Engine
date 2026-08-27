@@ -1,4 +1,5 @@
 import type { Principal } from "../../../../shared/application/ports/auth.js";
+import type { StudioBeatStore } from "./beat_store.js";
 import type {
   AddJobInput,
   AddUsageEventInput,
@@ -27,6 +28,8 @@ export interface DocumentRecord {
   position: number;
   /** The owning volume of a chapter; documents outside volumes stay null. */
   volumeId: string | null;
+  /** The stored outline-beat reference; readers resolve it, dangling → unlinked. */
+  beatRef: string | null;
   currentRevisionId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -203,9 +206,10 @@ export interface AdvanceDocumentInput {
  * Persistence port of the authoring core. The application layer orchestrates
  * project, document, and revision behavior through this port; the Drizzle
  * store implements it transactionally in infrastructure. The volume surface
- * (ADR-0005) extends it from its own module.
+ * (ADR-0005) extends it from its own module, as does the beat association
+ * (#313).
  */
-export interface StudioStore extends StudioVolumeStore {
+export interface StudioStore extends StudioVolumeStore, StudioBeatStore {
   addProject(
     scope: ProjectScope,
     input: AddProjectInput,
