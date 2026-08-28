@@ -1,3 +1,10 @@
+> **HISTORICAL RECORD — READ-ONLY.** This report dates from **2026-06-20** and
+> describes the **retired Python-era stack** of Novel-Engine (archived at git
+> tag `python-final`, 0.3.x). It is kept **for archaeology only**; every
+> `uv`/`pytest`/`alembic` reference below refers to infrastructure that no
+> longer exists. For the current state of the repository, consult the root
+> `AGENTS.md` and `docs/audits/`. Do not act on the findings in this file.
+
 # Novel-Engine Remediation Report
 
 **Date:** 2026-06-20
