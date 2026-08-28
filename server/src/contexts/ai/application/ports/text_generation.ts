@@ -51,8 +51,40 @@ export interface TextGenerationResult {
   readonly completionTokens: number | null;
 }
 
+/** Identity and usage of a completed generation stream (#308). */
+export interface TextGenerationStreamOutcome {
+  readonly model: string;
+  readonly promptTokens: number | null;
+  readonly completionTokens: number | null;
+}
+
+export interface TextGenerationStreamOptions {
+  /**
+   * Aborts the upstream request and stops the stream; deltas already yielded
+   * stay valid, but the stream outcome is never reported after an abort.
+   */
+  readonly signal?: AbortSignal | undefined;
+  /**
+   * Invoked exactly once when the stream completes, carrying the provider
+   * model and the usage read from the final stream chunk when present
+   * (absent tokens stay null). Never invoked after an abort or failure.
+   */
+  readonly onOutcome?: ((outcome: TextGenerationStreamOutcome) => void) | undefined;
+}
+
 export interface TextGenerationProvider {
   generateStructured(task: TextGenerationTask): Promise<TextGenerationResult>;
+  /**
+   * Optional streaming capability (#308): yields raw chapter_markdown deltas
+   * as the provider produces them — the concatenation of every delta is the
+   * full proposal markdown. Providers without streaming support simply omit
+   * the method; the streaming proposal service rejects such providers before
+   * any stream starts instead of silently buffering.
+   */
+  generateStructuredStreaming?(
+    task: TextGenerationTask,
+    options?: TextGenerationStreamOptions,
+  ): AsyncGenerator<string, void, void>;
   /** Optional request-scoped cleanup for providers that hold transport resources. */
   dispose?(): Promise<void>;
 }

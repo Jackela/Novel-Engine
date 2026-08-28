@@ -3,6 +3,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/app/api';
+import { streamProposal } from '@/app/proposalStream';
+import type { ProposalStreamRequest } from '@/app/proposalStream';
 import type { Project, StudioDocument, StudioJob } from '@/app/types/studio';
 import type { InspectorTab } from '@/features/studio/studioConstants';
 
@@ -15,10 +17,18 @@ vi.mock('@/app/api', async (importOriginal) => {
     ...actual,
     api: {
       ...actual.api,
-      proposal: vi.fn<typeof actual.api.proposal>(),
       acceptProposal: vi.fn<typeof actual.api.acceptProposal>(),
       project: vi.fn<typeof actual.api.project>(),
     },
+  };
+});
+
+vi.mock('@/app/proposalStream', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/app/proposalStream')>();
+
+  return {
+    ...actual,
+    streamProposal: vi.fn<typeof actual.streamProposal>(),
   };
 });
 
@@ -147,31 +157,123 @@ function renderProposalHook(): {
   };
 }
 
+function deferredStream(): {
+  requests: ProposalStreamRequest[];
+  settle: (job: StudioJob | Promise<StudioJob>, failure?: unknown) => Promise<void>;
+} {
+  const requests: ProposalStreamRequest[] = [];
+  const pending: Array<{
+    resolve: (job: StudioJob) => void;
+    reject: (reason: unknown) => void;
+  }> = [];
+  vi.mocked(streamProposal).mockImplementation(async (request) => {
+    requests.push(request);
+    return new Promise<StudioJob>((resolve, reject) => {
+      pending.push({ resolve, reject });
+    });
+  });
+  return {
+    requests,
+    settle: async (job, failure) => {
+      const entry = pending.shift();
+      if (entry === undefined) throw new Error('Expected a pending stream.');
+      await act(async () => {
+        if (failure !== undefined) {
+          entry.reject(failure);
+        } else {
+          entry.resolve(await job);
+        }
+        await Promise.resolve();
+      });
+    },
+  };
+}
+
 describe('useStudioProposal', () => {
-  it('publishes a generated proposal with the mock provider fallback', async () => {
+  it('streams the proposal into the preview and lands the job on the done frame', async () => {
     // Given
-    vi.mocked(api.proposal).mockResolvedValue(proposalJob);
     const harness = renderProposalHook();
+    const deferred = deferredStream();
     act(() => {
       harness.result().hook.setInstruction('Expand the scene');
     });
+    let running: Promise<void> | undefined;
+    act(() => {
+      running = harness.result().hook.runProposal('continue');
+    });
+    if (running === undefined) throw new Error('Expected runProposal to start.');
+    await act(async () => {
+      deferred.requests[0]?.onDelta('A generated');
+    });
+    expect(harness.result().hook.streamingText).toBe('A generated');
+    await act(async () => {
+      deferred.requests[0]?.onDelta(' continuation.');
+    });
+    expect(harness.result().hook.streamingText).toBe('A generated continuation.');
 
     // When
+    await deferred.settle(proposalJob);
     await act(async () => {
-      await harness.result().hook.runProposal('continue');
+      await running;
     });
 
     // Then
-    expect(api.proposal).toHaveBeenCalledWith(
-      baseProject.id,
-      firstDocument.id,
-      'continue',
-      'Expand the scene',
-      'mock',
-    );
+    const request = deferred.requests[0];
+    expect(request).toMatchObject({
+      projectId: baseProject.id,
+      documentId: firstDocument.id,
+      operation: 'continue',
+      instruction: 'Expand the scene',
+      provider: 'mock',
+    });
+    expect(request?.signal).toBeInstanceOf(AbortSignal);
     expect(harness.result().hook.proposal).toEqual(proposalJob);
+    expect(harness.result().hook.streamingText).toBeNull();
+    expect(harness.result().hook.isRunningProposal).toBe(false);
     expect(harness.result().inspector).toBe('copilot');
     expect(harness.result().error).toBeNull();
+  });
+
+  it('stops a running stream without persisting anything or raising an error', async () => {
+    // Given
+    const harness = renderProposalHook();
+    const deferred = deferredStream();
+    await act(async () => {
+      void harness.result().hook.runProposal('continue');
+      await Promise.resolve();
+    });
+
+    // When
+    act(() => {
+      harness.result().hook.stopProposal();
+    });
+    const signal = deferred.requests[0]?.signal;
+    await deferred.settle(proposalJob, new Error('Request cancelled.'));
+
+    // Then
+    expect(signal?.aborted).toBe(true);
+    expect(harness.result().hook.proposal).toBeNull();
+    expect(harness.result().hook.streamingText).toBeNull();
+    expect(harness.result().hook.isRunningProposal).toBe(false);
+    expect(harness.result().error).toBeNull();
+  });
+
+  it('surfaces stream failures as the inspector error and clears the preview', async () => {
+    // Given
+    const harness = renderProposalHook();
+    const deferred = deferredStream();
+    await act(async () => {
+      void harness.result().hook.runProposal('rewrite');
+      await Promise.resolve();
+    });
+
+    // When
+    await deferred.settle(proposalJob, new Error('provider exploded'));
+
+    // Then
+    expect(harness.result().error).toBe('provider exploded');
+    expect(harness.result().hook.proposal).toBeNull();
+    expect(harness.result().hook.streamingText).toBeNull();
   });
 
   it('refreshes project state and the accepted document after accepting a proposal', async () => {

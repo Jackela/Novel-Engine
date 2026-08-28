@@ -3,6 +3,7 @@ import {
   type TextGenerationProvider,
   TextGenerationProviderError,
   type TextGenerationResult,
+  type TextGenerationStreamOptions,
   type TextGenerationTask,
   type TextProviderName,
 } from "../../application/ports/text_generation.js";
@@ -154,8 +155,11 @@ function buildEditorialReview(task: TextGenerationTask): {
   return { findings };
 }
 
+/** #308: deltas carry small word groups so consumers see progressive text. */
+const STREAM_WORDS_PER_DELTA = 4;
+
 /**
- * The deterministic (mock) provider: real prose for the chapter steps and
+ * Deterministic (mock) provider: real prose for the chapter steps and
  * deterministic dimensioned findings for the review step, so the offline
  * default experience yields manuscripts and reviews without network. Any
  * step outside its supported set fails with a provider error — an unknown
@@ -202,5 +206,40 @@ export class DeterministicStoryProvider implements TextGenerationProvider {
       promptTokens: null,
       completionTokens: null,
     };
+  }
+
+  /**
+   * Streams the same fixed prose as `generateStructured` in small word groups;
+   * joining every delta reproduces the chapter markdown byte-for-byte, so the
+   * streaming path stays assertable against the synchronous contract.
+   */
+  async *generateStructuredStreaming(
+    task: TextGenerationTask,
+    options?: TextGenerationStreamOptions,
+  ): AsyncGenerator<string, void, void> {
+    const step = task.step.trim().toLowerCase();
+    let markdown: string;
+    if (step === "chapter_draft") {
+      markdown = buildChapterDraft(task);
+    } else if (step === "chapter_revision") {
+      markdown = buildChapterRevision(task);
+    } else {
+      throw new TextGenerationProviderError(`Unsupported generation step: ${task.step}`);
+    }
+    // Whitespace is captured by the split so joined deltas equal the source.
+    let pending = "";
+    let words = 0;
+    for (const piece of markdown.split(/(\s+)/u)) {
+      if (options?.signal?.aborted === true) return;
+      pending += piece;
+      if (piece.trim() !== "") words += 1;
+      if (words >= STREAM_WORDS_PER_DELTA && pending !== "") {
+        yield pending;
+        pending = "";
+        words = 0;
+      }
+    }
+    if (pending !== "") yield pending;
+    options?.onOutcome?.({ model: this.model, promptTokens: null, completionTokens: null });
   }
 }

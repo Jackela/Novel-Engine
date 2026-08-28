@@ -167,6 +167,55 @@ function usageToken(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 }
 
+/**
+ * Content text without trimming: stream deltas (#308) carry significant
+ * whitespace, so unlike `textFromContent` nothing may be stripped.
+ */
+function rawTextFromContent(content: unknown): string | undefined {
+  if (typeof content === "string") return content === "" ? undefined : content;
+  if (!Array.isArray(content)) return undefined;
+  const text = content
+    .filter(
+      (part): part is JsonObject =>
+        isJsonObject(part) && typeof part.text === "string" && part.text !== "",
+    )
+    .map((part) => part.text as string)
+    .join("");
+  return text === "" ? undefined : text;
+}
+
+/**
+ * One incremental text piece from an SSE stream chunk (#308): native
+ * generation with `incremental_output` delivers partial message content,
+ * compatible-mode chunks use the OpenAI delta shape, and Responses-style
+ * events carry the piece in a top-level `delta` field. Returns undefined
+ * for chunks without text (role prelude, usage-only tail, keep-alives).
+ */
+export function extractDashscopeIncrementalText(data: JsonObject): string | undefined {
+  const topLevelDelta = data.delta;
+  if (typeof topLevelDelta === "string" && topLevelDelta !== "") return topLevelDelta;
+  const choices = Array.isArray(data.choices) ? data.choices : [];
+  const firstChoice = choices.find(isJsonObject);
+  if (firstChoice !== undefined) {
+    for (const holder of [firstChoice.delta, firstChoice.message]) {
+      if (!isJsonObject(holder)) continue;
+      const text = rawTextFromContent(holder.content);
+      if (text !== undefined) return text;
+    }
+  }
+  const output = data.output;
+  if (isJsonObject(output)) {
+    const outputChoices = Array.isArray(output.choices) ? output.choices : [];
+    const outputChoice = outputChoices.find(isJsonObject);
+    if (outputChoice !== undefined && isJsonObject(outputChoice.message)) {
+      const text = rawTextFromContent(outputChoice.message.content);
+      if (text !== undefined) return text;
+    }
+    if (typeof output.text === "string" && output.text !== "") return output.text;
+  }
+  return undefined;
+}
+
 /** Read provider usage structurally; callers fall back to the shared word count when absent. */
 export function extractDashscopeUsageTokens(
   data: JsonObject,

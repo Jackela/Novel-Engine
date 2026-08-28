@@ -14,6 +14,10 @@ interface StudioCopilotPanelProps {
   isRunningProposal?: boolean;
   /** True while accepting the currently displayed proposal. */
   isAcceptingProposal?: boolean;
+  /** #308: markdown received so far while the proposal stream is running. */
+  streamingText?: string | null;
+  /** #308: aborts the running stream; nothing is persisted. */
+  onStopProposal?: () => void;
 }
 
 export function StudioCopilotPanel({
@@ -25,8 +29,11 @@ export function StudioCopilotPanel({
   onAcceptProposal,
   isRunningProposal = false,
   isAcceptingProposal = false,
+  streamingText = null,
+  onStopProposal,
 }: StudioCopilotPanelProps) {
   const isBusy = isRunningProposal || isAcceptingProposal;
+  const isStreaming = streamingText !== null;
 
   return (
     <div aria-busy={isBusy} className="inspector-content">
@@ -60,7 +67,20 @@ export function StudioCopilotPanel({
           {isRunningProposal ? 'Generating…' : 'Continue'}
         </button>
       </div>
-      {proposal?.result.proposal_markdown ? (
+      {isStreaming ? (
+        <section aria-busy="true" className="proposal">
+          <header>
+            <strong>Proposed Markdown</strong>
+            <span>Streaming…</span>
+          </header>
+          <pre aria-live="polite">{streamingText}</pre>
+          <div className="inspector-actions">
+            <button className="command" onClick={() => onStopProposal?.()} type="button">
+              <X /> Stop
+            </button>
+          </div>
+        </section>
+      ) : proposal?.result.proposal_markdown ? (
         <section className="proposal">
           <header>
             <strong>Proposed Markdown</strong>

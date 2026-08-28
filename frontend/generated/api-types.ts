@@ -763,6 +763,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/projects/{projectId}/documents/{documentId}/ai-proposals/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    projectId: string;
+                    documentId: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @default  */
+                        instruction?: string;
+                        /** @enum {string} */
+                        operation: "continue" | "rewrite" | "generate";
+                        /**
+                         * @default mock
+                         * @enum {string}
+                         */
+                        provider?: "mock" | "dashscope" | "openai_compatible";
+                    };
+                };
+            };
+            responses: {
+                /** @description Server-Sent Events stream of proposal frames (delta/done/error). */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": string;
+                    };
+                };
+                /** @description Default Response */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            error: {
+                                /** @enum {string} */
+                                code: "OPERATION_IN_FLIGHT";
+                                details: {
+                                    document_id: string | null;
+                                    operation: string;
+                                    project_id: string;
+                                };
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/projects/{projectId}/documents/{documentId}/aliases": {
         parameters: {
             query?: never;

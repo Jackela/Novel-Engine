@@ -77,6 +77,9 @@ test.describe.serial('#276 content acceptance', () => {
     await studio.getByPlaceholder('Describe the change or direction...').fill('Deepen the storm.');
     await studio.getByRole('button', { name: 'Continue' }).click();
     await expect(studio.getByText('Proposed Markdown')).toBeVisible();
+    // #308 streams the preview progressively: the Accept affordance appears
+    // only when the done frame lands the completed proposal.
+    await expect(studio.getByRole('button', { name: 'Accept' })).toBeVisible();
 
     const preview = (await studio.locator('.proposal pre').textContent()) ?? '';
     await assertNarrativeProse(preview);
