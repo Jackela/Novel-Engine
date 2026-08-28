@@ -104,7 +104,9 @@ describe("volume hierarchy", () => {
       );
       expect(unknownDelete.statusCode).toBe(404);
 
-      const document = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const document = projectView.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const unknownTarget = await placeDocument(
         app,
         jar,
@@ -124,12 +126,13 @@ describe("volume hierarchy", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Last One");
       const [only] = await listVolumes(app, jar, project.id);
+      if (only === undefined) throw new Error("expected default volume");
 
       const refused = await call(
         app,
         jar,
         "DELETE",
-        `/api/projects/${project.id}/volumes/${only!.id}`,
+        `/api/projects/${project.id}/volumes/${only.id}`,
       );
       expect(refused.statusCode).toBe(422);
       expect(refused.json().error.code).toBe("INVALID_OPERATION");
@@ -149,6 +152,7 @@ describe("volume hierarchy", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Merge On Delete");
       const [defaultVolume] = await listVolumes(app, jar, project.id);
+      if (defaultVolume === undefined) throw new Error("expected default volume");
       const tailOf = async (volumeId: string): Promise<Array<{ id: string }>> =>
         ((await getProject(app, jar, project.id)).documents ?? [])
           .filter((document) => document.volume_id === volumeId)
@@ -185,7 +189,7 @@ describe("volume hierarchy", () => {
       expect(removed.statusCode).toBe(204);
       let survivors = await listVolumes(app, jar, project.id);
       expect(survivors.map((volume) => volume.title)).toEqual(["Default Volume", "Beta"]);
-      const defaultTailBeforeSecondDelete = await tailOf(defaultVolume!.id);
+      const defaultTailBeforeSecondDelete = await tailOf(defaultVolume.id);
 
       // Now delete the FIRST volume while others remain: no predecessor
       // exists, so its chapters merge into the FOLLOWING volume at the tail.
@@ -193,16 +197,20 @@ describe("volume hierarchy", () => {
         app,
         jar,
         "DELETE",
-        `/api/projects/${project.id}/volumes/${defaultVolume!.id}`,
+        `/api/projects/${project.id}/volumes/${defaultVolume.id}`,
       );
       expect(removedAgain.statusCode).toBe(204);
       survivors = await listVolumes(app, jar, project.id);
       expect(survivors.map((volume) => volume.title)).toEqual(["Beta"]);
 
-      const mergedTail = await tailOf(survivors[0]!.id);
+      const survivor = survivors[0];
+      if (survivor === undefined) throw new Error("expected surviving volume");
+      const mergedTail = await tailOf(survivor.id);
       const movedIds = mergedTail.map((document) => document.id);
       expect(movedIds).toContain(betaChapterId);
-      const firstMergedId = defaultTailBeforeSecondDelete[0]!.id;
+      const firstMerged = defaultTailBeforeSecondDelete[0];
+      if (firstMerged === undefined) throw new Error("expected default tail document");
+      const firstMergedId = firstMerged.id;
       expect(movedIds.slice(movedIds.indexOf(firstMergedId))).toEqual(
         defaultTailBeforeSecondDelete.map((document) => document.id),
       );
@@ -218,8 +226,9 @@ describe("volume hierarchy", () => {
       const project = await seedProject(app, jar, "Chapters Only");
       const outline = await seedDocument(app, jar, project.id, { kind: "outline", title: "Arc" });
       const [volume] = await listVolumes(app, jar, project.id);
+      if (volume === undefined) throw new Error("expected default volume");
 
-      const attempt = await placeDocument(app, jar, project.id, outline.id, volume!.id);
+      const attempt = await placeDocument(app, jar, project.id, outline.id, volume.id);
       expect(attempt.status).toBe(422);
       const documents = (await getProject(app, jar, project.id)).documents;
       expect(
@@ -235,7 +244,9 @@ describe("volume hierarchy", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Volume Order");
-      const alpha = (await listVolumes(app, jar, project.id))[0]!;
+      const volumes = await listVolumes(app, jar, project.id);
+      const alpha = volumes[0];
+      if (alpha === undefined) throw new Error("expected default volume");
       const beta = await seedVolume(app, jar, project.id, "Beta");
       const gamma = await seedVolume(app, jar, project.id, "Gamma");
 

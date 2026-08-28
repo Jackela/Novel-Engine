@@ -10,7 +10,8 @@ describe("project usage surface (#317)", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Counted");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const propose = () =>
         call(
           app,

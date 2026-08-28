@@ -27,7 +27,9 @@ describe("revision chain", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Atomic");
-      const document = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const document = projectView.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const baseId = document.current_revision_id;
 
       const saved = await putDocument(app, jar, project.id, document.id, {
@@ -45,8 +47,10 @@ describe("revision chain", () => {
 
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
-      const first = revisions[0]!;
-      const second = revisions[1]!;
+      const first = revisions[0];
+      if (first === undefined) throw new Error("expected first revision");
+      const second = revisions[1];
+      if (second === undefined) throw new Error("expected second revision");
       expect(first.id).toBe(baseId);
       expect(first.content_markdown).toBe("# Chapter 1\n\n");
       expect(second.parent_revision_id).toBe(baseId);
@@ -62,7 +66,9 @@ describe("revision chain", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Conflict");
-      const document = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const document = projectView.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const staleBase = document.current_revision_id;
 
       const first = await putDocument(app, jar, project.id, document.id, {
@@ -96,7 +102,9 @@ describe("revision chain", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Monotonic");
-      const document = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const document = projectView.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       let baseId: string = document.current_revision_id;
       for (const content of ["two", "three", "four", "five"]) {
@@ -122,7 +130,8 @@ describe("revision chain", () => {
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(6);
       expect(revisions.map((revision) => revision.revision_number)).toEqual([1, 2, 3, 4, 5, 6]);
-      const last = revisions[5]!;
+      const last = revisions[5];
+      if (last === undefined) throw new Error("expected last revision");
       expect(last.parent_revision_id).toBe(baseId);
       expect(last.source).toBe("restore");
       expect(last.content_markdown).toBe("five");
@@ -137,7 +146,9 @@ describe("revision chain", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Closed enum");
-      const document = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const document = projectView.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       // The save schema exposes no source field: smuggled values are stripped
       // before validation reaches the service, so the server-assigned enum
@@ -152,7 +163,9 @@ describe("revision chain", () => {
 
       const revisions = await listRevisions(app, jar, project.id, document.id);
       expect(revisions).toHaveLength(2);
-      expect(revisions[1]!.source).toBe("author");
+      const secondRevision = revisions[1];
+      if (secondRevision === undefined) throw new Error("expected second revision");
+      expect(secondRevision.source).toBe("author");
     } finally {
       await app.close();
     }

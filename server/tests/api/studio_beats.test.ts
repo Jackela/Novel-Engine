@@ -76,7 +76,8 @@ async function seedChapterWithOutline(
     title: "Outline",
     content_markdown: OUTLINE_CONTENT,
   });
-  const chapter = project.documents[0]!;
+  const chapter = project.documents[0];
+  if (chapter === undefined) throw new Error("expected seeded document");
   return { projectId: project.id, chapter: chapter as DocumentPayload, outline };
 }
 
@@ -205,7 +206,9 @@ describe("chapter beat association (#313)", () => {
       // And generation runs with no beat position at all.
       const proposal = await propose(app, jar, projectId, chapter.id, { operation: "continue" });
       expect(proposal.statusCode).toBe(200);
-      expect(capture.tasks[0]!.task.userPrompt).not.toContain("Current beat:");
+      const unlinkedTask = capture.tasks[0];
+      if (unlinkedTask === undefined) throw new Error("expected captured task");
+      expect(unlinkedTask.task.userPrompt).not.toContain("Current beat:");
     } finally {
       await app.close();
     }
@@ -243,7 +246,9 @@ describe("the outline and beat position inside the resident context (#313, #314)
       const response = await propose(app, jar, projectId, chapter.id, { operation: "continue" });
       expect(response.statusCode).toBe(200);
 
-      const task = capture.tasks[0]!.task;
+      const captured = capture.tasks[0];
+      if (captured === undefined) throw new Error("expected captured task");
+      const task = captured.task;
       const begin = task.userPrompt.indexOf(PROJECT_OUTLINE_BEGIN);
       const end = task.userPrompt.indexOf(PROJECT_OUTLINE_END);
       const manuscriptAt = task.userPrompt.indexOf(UNTRUSTED_MANUSCRIPT_BEGIN);
@@ -271,7 +276,9 @@ describe("the outline and beat position inside the resident context (#313, #314)
       const response = await propose(app, jar, projectId, chapter.id, { operation: "continue" });
       expect(response.statusCode).toBe(200);
 
-      expect(capture.tasks[0]!.task.userPrompt).toBe(
+      const unlinkedFirstTask = capture.tasks[0];
+      if (unlinkedFirstTask === undefined) throw new Error("expected captured task");
+      expect(unlinkedFirstTask.task.userPrompt).toBe(
         [
           "Operation: continue",
           `${AUTHOR_INSTRUCTION_BEGIN}\n\n${AUTHOR_INSTRUCTION_END}`,

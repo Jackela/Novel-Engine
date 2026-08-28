@@ -66,7 +66,8 @@ describe("project full-text query surface", () => {
       const found = await queryDocuments(app, jar, project.id, "chapter");
       expect(found.statusCode, found.body).toBe(200);
       expect(found.results.length).toBe(1);
-      const seed = found.results[0]!;
+      const seed = found.results[0];
+      if (seed === undefined) throw new Error("expected search result");
       expect(seed.title).toBe("Chapter 1");
       expect(seed.excerpt).not.toContain("<mark>");
       expect(seed.excerpt.length).toBeGreaterThan(0);
@@ -100,7 +101,8 @@ describe("project full-text query surface", () => {
         expect(item.excerpt).toContain("lantern");
         expect(item.excerpt).not.toContain("<mark>");
       }
-      const windowed = found.results.find((item) => item.document_id === rare.id)!;
+      const windowed = found.results.find((item) => item.document_id === rare.id);
+      if (windowed === undefined) throw new Error("expected windowed result");
       expect(windowed.excerpt).toContain(" … ");
       const excerptTokens = windowed.excerpt.match(/[\p{L}\p{N}_]+/gu) ?? [];
       expect(excerptTokens.length).toBeLessThanOrEqual(16);
@@ -169,7 +171,9 @@ describe("project full-text query surface", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Refresh");
-      const doc = (await getProject(app, jar, project.id)).documents[0]!;
+      const projectView = await getProject(app, jar, project.id);
+      const doc = projectView.documents[0];
+      if (doc === undefined) throw new Error("expected seeded document");
       const saved = await call(app, jar, "PUT", `/api/projects/${project.id}/documents/${doc.id}`, {
         content_markdown: "the moonrise ferry crosses at dawn",
         base_revision_id: doc.current_revision_id,
