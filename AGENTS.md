@@ -14,8 +14,8 @@ Domain vocabulary is defined in `CONTEXT.md`; use its canonical terms in code na
 server/                   # TS backend (ADR-0002): Fastify app, CLI, gates, Node QA twins
 ├── src/apps/             # api (buildApp factory) and cli composition roots
 ├── src/contexts/
-│   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports
-│   └── ai/               # Structured text-generation ports and providers
+│   ├── studio/           # Projects, documents, revisions, jobs, reviews, exports, volumes, lore, resident context, usage
+│   └── ai/               # Structured text generation: application services, provider HTTP routes, streaming adapters
 ├── src/shared/           # Cross-cutting domain and infrastructure
 ├── scripts/qa/           # SSOT, hygiene, size, migration-channel, OpenAPI gates
 ├── qa-baselines/         # Frozen OpenAPI snapshot (code-first, regenerated deliberately)
@@ -37,6 +37,10 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | Change workflows | `server/src/contexts/studio/application/` | Per-capability services behind ports |
 | Change persistence | `server/src/contexts/studio/infrastructure/` | Drizzle store parts; FTS5 SQL lives in `db/` helpers |
 | Change AI providers | `server/src/contexts/ai/infrastructure/` | Factory plus deterministic/DashScope/OpenAI-compatible adapters |
+| Change AI HTTP surface | `server/src/contexts/ai/interface/http/provider_routes.ts` | Provider routes mounted by `buildApp`; application ports in `server/src/contexts/ai/application/ports/` |
+| Change volumes/lore | `server/src/contexts/studio/interface/http/volume_routes.ts`, `server/src/contexts/studio/interface/http/lore_routes.ts` | Volume and lore entry HTTP behavior; services in `server/src/contexts/studio/application/volume_service.ts`, `lorebook.ts` |
+| Change usage reporting | `server/src/contexts/studio/interface/http/job_routes.ts` | `/api/projects/:projectId/usage`; aggregation via `jobHistory.aggregateProjectUsage` |
+| Change SSE streaming | `server/src/contexts/studio/interface/http/proposal_routes.ts` | `text/event-stream` proposal generation; stream orchestration in `server/src/contexts/studio/application/proposal_streaming.ts` |
 | Change config/env | `server/src/shared/infrastructure/config/server_config.ts` | `.env.local` + process env; startup guards |
 | Change frontend API contract | `frontend/src/app/api.ts`, `frontend/src/app/types/studio.ts` | Derive from `frontend/generated/api-types.ts` (`pnpm --dir frontend gen:api-types`) |
 | Change Studio UI | `frontend/src/features/studio/` | Page shell, hooks, and panels |
@@ -53,6 +57,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 | `loadServerConfig` | `server/src/shared/infrastructure/config/server_config.ts` | Env resolution + production startup guards |
 | `readWorkspaceVersion` | `server/src/shared/infrastructure/workspace_manifest.ts` | Release-version SSOT reader (server/package.json) |
 | `buildFtsMatchQuery` | `server/src/contexts/studio/application/fts_match_query.ts` | Strict token reduction before parameterized FTS5 MATCH |
+| `assembleResidentContext` | `server/src/contexts/studio/application/resident_context.ts:158` | Resident context assembler (ADR-0004 layer 1) feeding every proposal generation |
 | `api` | `frontend/src/app/api.ts` | Shared HTTP client used by pages, hooks, and tests |
 | `StudioPage` | `frontend/src/features/studio/StudioPage.tsx` | Route-level UI composition shell |
 
@@ -62,7 +67,7 @@ Generated/runtime trees such as caches, `htmlcov/`, `frontend/coverage/`, `front
 - Application orchestrates domain behavior through ports; it must not import infrastructure or interface.
 - Infrastructure implements ports and owns Drizzle, files, and external transports.
 - Interface owns HTTP/request/response concerns and must not import infrastructure directly.
-- Contexts do not import `src.apps`; `src.shared` does not import bounded contexts; `ai` stays a ports+adapters leaf.
+- Contexts do not import `src.apps`; `src.shared` does not import bounded contexts. The `ai` context has its own domain/application/interface/infrastructure layers, but code outside `ai` (except the composition root) may import it only through its application ports, and `ai` never imports `studio`.
 - `server/.dependency-cruiser.cjs` is executable policy, not documentation.
 
 ## ABSOLUTE FORBIDDEN ZONES
