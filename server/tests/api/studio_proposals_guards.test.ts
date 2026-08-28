@@ -178,7 +178,9 @@ describe("proposal guards", () => {
       });
       expect(response.statusCode, response.body).toBe(200);
 
-      const prompt = capture.tasks[0]!.task.userPrompt;
+      const captured = capture.tasks[0];
+      if (captured === undefined) throw new Error("expected captured task");
+      const prompt = captured.task.userPrompt;
       const begin = prompt.indexOf("[BEGIN UNTRUSTED MANUSCRIPT JSON]");
       const end = prompt.indexOf("[END UNTRUSTED MANUSCRIPT JSON]");
       expect(begin).toBeGreaterThanOrEqual(0);
@@ -198,7 +200,9 @@ describe("proposal guards", () => {
       );
       expect(instruction).toContain("[REDACTED]");
 
-      const system = capture.tasks[0]!.task.systemPrompt;
+      const systemCapture = capture.tasks[0];
+      if (systemCapture === undefined) throw new Error("expected captured task");
+      const system = systemCapture.task.systemPrompt;
       expect(system.toLowerCase()).toContain("untrusted");
     } finally {
       await app.close();
@@ -210,7 +214,8 @@ describe("proposal guards", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Unconfigured");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       const response = await propose(app, jar, project.id, document.id, {
         operation: "continue",
@@ -225,7 +230,9 @@ describe("proposal guards", () => {
 
       // No revision, and no usage was accounted for a failed generation.
       expect(await listRevisions(app, jar, project.id, document.id)).toHaveLength(1);
-      const usage = app.studioDb!.db.select().from(usageEvents).all();
+      const db = app.studioDb?.db;
+      if (db === undefined) throw new Error("expected studio database handle");
+      const usage = db.select().from(usageEvents).all();
       expect(usage).toHaveLength(0);
     } finally {
       await app.close();
@@ -237,7 +244,8 @@ describe("proposal guards", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Closed");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       const badProvider = await propose(app, jar, project.id, document.id, {
         operation: "continue",
@@ -270,7 +278,8 @@ describe("proposal guards", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Empty");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const response = await propose(app, jar, project.id, document.id, { operation: "continue" });
       expect(response.statusCode, response.body).toBe(200);
       expect(response.json()).toMatchObject({

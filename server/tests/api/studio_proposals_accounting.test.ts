@@ -94,7 +94,8 @@ describe("proposal accounting and scoping", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Usage");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const instruction = "Tighten the chase through the archive."; // 6 words by the shared counter
 
       const response = await propose(app, jar, project.id, document.id, {
@@ -102,15 +103,21 @@ describe("proposal accounting and scoping", () => {
         instruction,
       });
       const job = response.json();
-      const documentPayload = (await getProject(app, jar, project.id)).documents[0]!;
-      const usage = app.studioDb!.db.select().from(usageEvents).all();
+      const projectView = await getProject(app, jar, project.id);
+      const documentPayload = projectView.documents[0];
+      if (documentPayload === undefined) throw new Error("expected seeded document");
+      const db = app.studioDb?.db;
+      if (db === undefined) throw new Error("expected studio database handle");
+      const usage = db.select().from(usageEvents).all();
       expect(usage).toHaveLength(1);
-      expect(usage[0]!.job_id).toBe(job.id);
-      expect(usage[0]!.provider).toBe("mock");
-      expect(usage[0]!.model).toBe("deterministic-story-v1");
-      expect(usage[0]!.prompt_tokens).toBe(wordCount(instruction));
-      expect(usage[0]!.completion_tokens).toBe(wordCount(job.result.proposal_markdown));
-      expect(JSON.parse(usage[0]!.request_evidence_json)).toEqual({
+      const usageEvent = usage[0];
+      if (usageEvent === undefined) throw new Error("expected usage event");
+      expect(usageEvent.job_id).toBe(job.id);
+      expect(usageEvent.provider).toBe("mock");
+      expect(usageEvent.model).toBe("deterministic-story-v1");
+      expect(usageEvent.prompt_tokens).toBe(wordCount(instruction));
+      expect(usageEvent.completion_tokens).toBe(wordCount(job.result.proposal_markdown));
+      expect(JSON.parse(usageEvent.request_evidence_json)).toEqual({
         operation: "continue",
         base_revision_id: documentPayload.current_revision_id,
       });
@@ -129,14 +136,19 @@ describe("proposal accounting and scoping", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Counted");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       await propose(app, jar, project.id, document.id, { operation: "generate" });
 
-      const usage = app.studioDb!.db.select().from(usageEvents).all();
+      const db = app.studioDb?.db;
+      if (db === undefined) throw new Error("expected studio database handle");
+      const usage = db.select().from(usageEvents).all();
       expect(usage).toHaveLength(1);
-      expect(usage[0]!.prompt_tokens).toBe(11);
-      expect(usage[0]!.completion_tokens).toBe(13);
-      expect(usage[0]!.model).toBe("captured-model");
+      const usageEvent = usage[0];
+      if (usageEvent === undefined) throw new Error("expected usage event");
+      expect(usageEvent.prompt_tokens).toBe(11);
+      expect(usageEvent.completion_tokens).toBe(13);
+      expect(usageEvent.model).toBe("captured-model");
     } finally {
       await app.close();
     }
@@ -233,7 +245,8 @@ describe("proposal accounting and scoping", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Scoped");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const created = await propose(app, jar, project.id, document.id, { operation: "continue" });
       const job = created.json();
 
@@ -254,8 +267,9 @@ describe("proposal accounting and scoping", () => {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "WrongKind");
       const now = new Date();
-      app
-        .studioDb!.db.insert(jobs)
+      const db = app.studioDb?.db;
+      if (db === undefined) throw new Error("expected studio database handle");
+      db.insert(jobs)
         .values({
           id: "job-export-1",
           project_id: project.id,

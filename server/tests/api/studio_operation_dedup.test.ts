@@ -93,7 +93,8 @@ describe("in-flight operation deduplication (#305)", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Dedup");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
       const url = `/api/projects/${project.id}/documents/${document.id}/ai-proposals`;
 
       const first = startDrafting(app, jar, project.id, document.id, "continue");
@@ -136,7 +137,8 @@ describe("in-flight operation deduplication (#305)", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Parallel ops");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       const rewrite = startDrafting(app, jar, project.id, document.id, "rewrite");
       await deferred.waitForStart();
@@ -159,7 +161,8 @@ describe("in-flight operation deduplication (#305)", () => {
     try {
       const jar = await ownerJar(app);
       const project = await seedProject(app, jar, "Failed release");
-      const document = project.documents[0]!;
+      const document = project.documents[0];
+      if (document === undefined) throw new Error("expected seeded document");
 
       const first = startDrafting(app, jar, project.id, document.id, "continue");
       await deferred.waitForStart();

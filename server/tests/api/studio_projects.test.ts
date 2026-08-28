@@ -34,7 +34,8 @@ describe("projects surface", () => {
       expect(body.import_hash).toBeNull();
       expect(body.documents).toHaveLength(1);
 
-      const seed = body.documents[0]!;
+      const seed = body.documents[0];
+      if (seed === undefined) throw new Error("expected seeded document");
       expect(seed.kind).toBe("chapter");
       expect(seed.title).toBe("Chapter 1");
       expect(seed.position).toBe(1);
@@ -92,7 +93,9 @@ describe("projects surface", () => {
       const newer = await seedProject(app, jar, "Written second");
       // Any accepted write bumps the project's updated_at: a reorder of the
       // older project's seed document makes it the most recently updated.
-      const seed = (await getProject(app, jar, older.id)).documents[0]!;
+      const olderView = await getProject(app, jar, older.id);
+      const seed = olderView.documents[0];
+      if (seed === undefined) throw new Error("expected seeded document");
       const reorder = await call(app, jar, "PUT", `/api/projects/${older.id}/documents/reorder`, {
         document_ids: [seed.id],
       });
@@ -137,10 +140,10 @@ describe("projects surface", () => {
       expect(response.statusCode).toBe(204);
 
       const db = app.studioDb?.db;
-      expect(db).toBeDefined();
-      expect(db!.select().from(projects).all()).toEqual([]);
-      expect(db!.select().from(documents).all()).toEqual([]);
-      expect(db!.select().from(documentRevisions).all()).toEqual([]);
+      if (db === undefined) throw new Error("expected studio database handle");
+      expect(db.select().from(projects).all()).toEqual([]);
+      expect(db.select().from(documents).all()).toEqual([]);
+      expect(db.select().from(documentRevisions).all()).toEqual([]);
       expect(existsSync(exportDir)).toBe(false);
 
       const gone = await call(app, jar, "GET", `/api/projects/${project.id}`);
