@@ -98,6 +98,7 @@ describe("dashscope transport modes", () => {
     expect(payload.input).toContain("System:\n");
     expect(payload.input).toContain("User:\n");
     expect(payload.temperature).toBe(0.7);
+    expect(payload.response_format).toEqual({ type: "json_object" });
   });
 
   it("rewrites a compatible-mode base back to the native generation base", () => {
