@@ -26,6 +26,18 @@ The top bar contains project identity and back navigation only. Review, Export, 
 
 **Primary sources:** `frontend/src/features/studio/hooks/useStudioProject.ts`, `useActiveDocument.ts`, `useStudioInspectorState.ts`, `useStudioActions.ts`.
 
+## Epic-era orchestration: whole-book loop, providers, and search
+
+`StudioPage` delegates composition to `useStudioPageModel`, which wires the workspace hooks above plus the newer capabilities below and passes them to `StudioPageView`.
+
+**Whole-book loop.** `useWholeBookLoop` (#318) is a frontend-driven state machine over the existing synchronous proposal endpoints: `idle` → `running(current,total)` → `done(generated,stoppedEarly)` | `failed(generated,failedChapterTitle,message)`. Per planned chapter it drafts a `generate` proposal, auto-accepts it, refreshes the project and jobs, and notifies the active-editor cache. Chapters run strictly sequentially (each draft depends on the previous accept), stop is checked before drafting and again before accepting, and the plan is recomputed from persisted documents at every start — so resume simply begins at the first chapter without an `ai-accepted` revision. `StudioWholeBookControl` (`frontend/src/features/studio/components/StudioWholeBookControl.tsx`) renders the plan hint, a polite `role="status"` progress line ("chapter k / n"), a visible stop control while running, and the preserved-work outcome after a stop or failure. It is embedded in `StudioNavigator` on the manuscript surface.
+
+**Providers and search.** `useStudioProviders` loads the provider list from the API and falls back to `DEFAULT_PROVIDER_OPTIONS` (`studioConstants.ts`) on failure or an empty response, keeping the UI usable offline. `useStudioSearch` owns the navigator search form state via a reducer (`search`, `isSearching`, `searchResults`) and calls the shared `api.search` endpoint, which parameterizes the query into the project search route. Both are wired through `useStudioPageModel` into `StudioNavigator`.
+
+**Usage.** The backend exposes `GET /api/projects/:projectId/usage` (aggregate job usage in `server/src/contexts/studio/interface/http/job_routes.ts`), but the frontend has no consumer of that endpoint yet; `frontend/src` contains no `usage` call or type. Any future consumption should go through `frontend/src/app/api.ts` as usual.
+
+**Primary sources:** `frontend/src/features/studio/hooks/useStudioPageModel.ts`, `useWholeBookLoop.ts`, `wholeBookPlan.ts`, `useStudioProviders.ts`, `useStudioSearch.ts`; `frontend/src/features/studio/components/StudioWholeBookControl.tsx`; `frontend/src/features/studio/StudioNavigator.tsx`.
+
 ## API client behavior
 
 Studio code calls the shared `api` object in `frontend/src/app/api.ts`, rather than issuing component-level requests. JSON requests include cookies (`credentials: 'include'`). For `POST`, `PUT`, `PATCH`, and `DELETE`, the client reads the `novel_engine_csrf` cookie and sends it as `X-CSRF-Token` when present. Request calls combine an optional caller signal with an internal timeout signal. An abort becomes either `Request cancelled.` or `Request timed out. Please retry.`; a network `TypeError` becomes the local-service-unavailable message. Non-OK JSON responses become `HttpError` with status and the unified envelope's `code`, `message`, and `details`; 204 responses are passed to the supplied void parser.
@@ -64,4 +76,4 @@ The end-to-end workflow validates 1440, 1024, 949, 900, 800, and 375px widths, i
 
 **Change guidance:** run the Studio component tests and the Playwright Studio workflow after modifying ARIA roles/live regions, layout grid rules, editor focus, or responsive sizing. Keep the assertions focused on the exposed behavior above.
 
-**Primary sources:** `frontend/src/features/studio/StudioEditorPane.tsx`, `StudioInspector.tsx`, `MarkdownEditor.tsx`; `frontend/src/index.css`; `frontend/src/features/studio/StudioComponents.test.tsx`; `frontend/tests/e2e/studio.spec.ts`.
+**Primary sources:** `frontend/src/features/studio/StudioEditorPane.tsx`, `StudioInspector.tsx`, `MarkdownEditor.tsx`; `frontend/src/index.css`; `frontend/src/features/studio/StudioComponents.test.tsx`; `frontend/tests/e2e-ts/studio-ts.spec.ts`.
